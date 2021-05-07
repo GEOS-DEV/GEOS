@@ -137,6 +137,7 @@ public:
                                            real64 & dPorosity_dPressure,
                                            real64 & dPorosity_dVolStrainIncrement,
                                            real64 ( &stress )[6],
+                                           real64 & dTotalStress_dPressure,
                                            DiscretizationOps & stiffness ) const;
 
   GEOSX_HOST_DEVICE
@@ -323,6 +324,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate_porosity( localIndex const k,
                                                           real64 & dPorosity_dPressure,
                                                           real64 & dPorosity_dVolStrainIncrement,
                                                           real64 ( & stress )[6],
+                                                          real64 & dTotalStress_dPressure,
                                                           DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
@@ -331,7 +333,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate_porosity( localIndex const k,
   real64 const biotSkeletonModulusInverse = ( biotCoefficient - m_referencePorosity[k] ) / m_grainBulkModulus;
 
   porosity = m_oldPorosity[k][q] +
-             +biotCoefficient * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
+             + biotCoefficient * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
              + biotSkeletonModulusInverse * deltaPressure;
 
   dPorosity_dPressure = biotSkeletonModulusInverse;
@@ -340,11 +342,11 @@ void ElasticIsotropicUpdates::smallStrainUpdate_porosity( localIndex const k,
 
   savePorosity( k, q, porosity );
 
-  real64 const biotTimesPressure = biotCoefficient * ( pressure + deltaPressure );
+  real64 const biotTimesPressure = - biotCoefficient * ( pressure + deltaPressure );
 
-  stress[0] -= biotTimesPressure;
-  stress[1] -= biotTimesPressure;
-  stress[2] -= biotTimesPressure;
+  LvArray::tensorOps::symAddIdentity< 3 >( stress, biotTimesPressure );
+
+  dTotalStress_dPressure = biotCoefficient;
 }
 
 // TODO: need to confirm stress / strain measures before activating hyper inferface

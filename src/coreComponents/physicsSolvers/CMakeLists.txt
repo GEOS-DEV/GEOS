@@ -36,6 +36,7 @@ set( physicsSolvers_headers
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhaseReservoir.hpp
      multiphysics/SinglePhasePoroelasticKernel.hpp
+     multiphysics/SinglePhasePoroelasticEFEMKernel.hpp
      multiphysics/SinglePhasePoroelasticFluxKernels.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp

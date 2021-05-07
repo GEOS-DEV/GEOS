@@ -248,6 +248,7 @@ public:
                                            real64 & dPorosity_dPressure,
                                            real64 & dPorosity_dVolStrainIncrement,
                                            real64 ( & stress )[6],
+                                           real64 & dTotalStress_dPressure,
                                            DiscretizationOps & stiffness ) const final
   {
     // TODO: fill this function properly.
@@ -256,7 +257,8 @@ public:
     GEOSX_UNUSED_VAR( porosity );
     GEOSX_UNUSED_VAR( dPorosity_dPressure );
     GEOSX_UNUSED_VAR( dPorosity_dVolStrainIncrement );
-    smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
+    GEOSX_UNUSED_VAR( dTotalStress_dPressure );
+    smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
   }
 
 

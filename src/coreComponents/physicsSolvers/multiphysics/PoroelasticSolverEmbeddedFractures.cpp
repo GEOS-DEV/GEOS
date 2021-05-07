@@ -38,7 +38,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "SinglePhasePoroelasticKernel.hpp"
-//#include "SinglePhasePoroelasticEFEMKernel.hpp"
+#include "SinglePhasePoroelasticEFEMKernel.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -83,7 +83,7 @@ void PoroelasticSolverEmbeddedFractures::registerDataOnMesh( dataRepository::Gro
     {
       region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
       {
-        subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString() );
+        subRegion.registerWrapper< array1d< real64 > >( EmbeddedSurfaceSubRegion::viewKeyStruct::dTraction_dPressureString() );
       } );
     } );
   } );
@@ -392,15 +392,15 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
   MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
 
   NodeManager const & nodeManager = mesh.getNodeManager();
-  //ElementRegionManager const & elemManager = mesh.getElemManager();
-  //SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
-  //EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
+  EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
 
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-  // arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
+  arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
 
@@ -424,23 +424,25 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
                                                                        gravityVectorData,
                                                                        m_flowSolver->fluidModelNames() );
 
-  // 2.  Add EFEM poroelastic contribution
-//   m_solidSolver->getMaxForce() =
-//       finiteElement::
-//       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-//       constitutive::SolidBase,
-//       CellElementSubRegion,
-//       PoroelasticEFEMKernels::SinglePhase >( mesh,
-//                                              targetRegionNames(),
-//                                              this->getDiscretizationName(),
-//                                              m_solidSolver->solidMaterialNames(),
-//                                              dispDofNumber,
-//                                              pDofKey,
-//                                              dofManager.rankOffset(),
-//                                              localMatrix,
-//                                              localRhs,
-//                                              gravityVectorData,
-//                                              m_flowSolver->fluidModelNames() );
+   // 2.  Add EFEM poroelastic contribution
+     m_solidSolver->getMaxForce() =
+         finiteElement::
+         regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+         constitutive::SolidBase,
+         CellElementSubRegion,
+         PoroelasticEFEMKernels::SinglePhase >( mesh,
+                                                targetRegionNames(),
+                                                this->getDiscretizationName(),
+                                                m_solidSolver->solidMaterialNames(),
+                                                subRegion,
+                                                dispDofNumber,
+                                                jumpDofNumber,
+                                                pDofKey,
+                                                dofManager.rankOffset(),
+                                                localMatrix,
+                                                localRhs,
+                                                gravityVectorData,
+                                                m_flowSolver->fluidModelNames() );
 
 
   // 3. TODO assemble poroelastic fluxes and all derivatives
@@ -452,15 +454,6 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
 
 }
 
-void PoroelasticSolverEmbeddedFractures::assembleCouplingTerms( DomainPartition const & domain,
-                                                                DofManager const & dofManager,
-                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                arrayView1d< real64 > const & localRhs )
-{
-  GEOSX_MARK_FUNCTION;
-
-  assembleTractionBalanceResidualWrtPressure( domain, dofManager, localMatrix, localRhs );
-}
 
 void PoroelasticSolverEmbeddedFractures::
   assembleTractionBalanceResidualWrtPressure( DomainPartition const & domain,

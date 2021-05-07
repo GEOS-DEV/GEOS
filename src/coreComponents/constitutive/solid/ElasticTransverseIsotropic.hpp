@@ -151,6 +151,7 @@ public:
                                            real64 & dPorosity_dPressure,
                                            real64 & dPorosity_dVolStrainIncrement,
                                            real64 ( &stress )[6],
+                                           real64 & dTotalStress_dPressure,
                                            DiscretizationOps & stiffness ) const final;
   // hypo interface
 
@@ -314,6 +315,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_porosity( localIndex c
                                                                     real64 & dPorosity_dPressure,
                                                                     real64 & dPorosity_dVolStrainIncrement,
                                                                     real64 ( & stress )[6],
+                                                                    real64 & dTotalStress_dPressure,
                                                                     DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
@@ -324,6 +326,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_porosity( localIndex c
   GEOSX_UNUSED_VAR( porosity );
   GEOSX_UNUSED_VAR( dPorosity_dPressure );
   GEOSX_UNUSED_VAR( dPorosity_dVolStrainIncrement );
+  GEOSX_UNUSED_VAR( dTotalStress_dPressure );
 }
 
 

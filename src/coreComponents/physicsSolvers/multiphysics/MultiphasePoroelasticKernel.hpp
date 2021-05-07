@@ -250,7 +250,7 @@ public:
     // Evaluate total stress tensor
     real64 strainIncrement[6] = {0};
     real64 totalStress[6];
-    real64 porosityNew, dPorosity_dPressure, dPorosity_dVolStrainIncrement;
+    real64 porosityNew, dPorosity_dPressure, dPorosity_dVolStrainIncrement, dTotalStress_dPressure;
 
     // --- Update effective stress tensor (stored in totalStress)
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
@@ -263,6 +263,7 @@ public:
                                                      dPorosity_dPressure,
                                                      dPorosity_dVolStrainIncrement,
                                                      totalStress,
+                                                     dTotalStress_dPressure,
                                                      stiffness );
 
 
@@ -304,9 +305,9 @@ public:
 
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][0] * dPorosity_dVolStrainIncrement * detJxW;
-      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][1] * dPorosity_dVolStrainIncrement * detJxW;
-      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][2] * dPorosity_dVolStrainIncrement * detJxW;
+      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][0] * dTotalStress_dPressure * detJxW;
+      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][1] * dTotalStress_dPressure * detJxW;
+      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][2] * dTotalStress_dPressure * detJxW;
     }
 
     if( m_gravityAcceleration > 0.0 )

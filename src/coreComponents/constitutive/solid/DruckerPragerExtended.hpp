@@ -128,6 +128,7 @@ public:
                                            real64 & dPorosity_dPressure,
                                            real64 & dPorosity_dVolStrainIncrement,
                                            real64 ( &stress )[6],
+                                           real64 & dTotalStress_dPressure,
                                            DiscretizationOps & stiffness ) const final;
 
 private:
@@ -353,6 +354,7 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate_porosity( localIndex const 
                                                                real64 & dPorosity_dPressure,
                                                                real64 & dPorosity_dVolStrainIncrement,
                                                                real64 ( & stress )[6],
+                                                               real64 & dTotalStress_dPressure,
                                                                DiscretizationOps & stiffness ) const
 {
   GEOSX_UNUSED_VAR( pressure );
@@ -360,6 +362,7 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate_porosity( localIndex const 
   GEOSX_UNUSED_VAR( porosity );
   GEOSX_UNUSED_VAR( dPorosity_dPressure );
   GEOSX_UNUSED_VAR( dPorosity_dVolStrainIncrement );
+  GEOSX_UNUSED_VAR( dTotalStress_dPressure );
   smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
   //TODO fill in this.

@@ -48,23 +48,25 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class SinglePhase :
-  public PoroelasticKernels::SinglePhase< SUBREGION_TYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          FE_TYPE,
-                                          3,
-                                          3 >
+  public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
+                                            CONSTITUTIVE_TYPE,
+                                            FE_TYPE,
+                                            3,
+                                            3 >
 {
 public:
   /// Alias for the base class;
-  using Base = PoroelasticKernels::SinglePhase< SUBREGION_TYPE,
-                                                CONSTITUTIVE_TYPE,
-                                                FE_TYPE,
-                                                3,
-                                                3 >;
+  using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
+                                                  CONSTITUTIVE_TYPE,
+                                                  FE_TYPE,
+                                                  3,
+                                                  3 >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Compile time value for the number of quadrature points per element.
+   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
@@ -83,26 +85,53 @@ public:
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE & inputConstitutiveType,
-               arrayView1d< globalIndex const > const & inputDispDofNumber,
+               EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
+               arrayView1d< globalIndex const > const & dispDofNumber,
+               arrayView1d< globalIndex const > const & jumpDofNumber,
                string const & inputFlowDofKey,
                globalIndex const rankOffset,
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                arrayView1d< real64 > const & inputRhs,
                real64 const (&inputGravityVector)[3],
                arrayView1d< string const > const & fluidModelNames ):
-    Base( nodeManager,
-          edgeManager,
-          faceManager,
-          targetRegionIndex,
-          elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType,
-          inputDispDofNumber,
-          rankOffset,
-          inputMatrix,
-          inputRhs,
-          inputGravityVector,
-          fluidModelNames )
+           Base( nodeManager,
+                 edgeManager,
+                 faceManager,
+                 targetRegionIndex,
+                 elementSubRegion,
+                 finiteElementSpace,
+                 inputConstitutiveType,
+                 dispDofNumber,
+                 rankOffset,
+                 inputMatrix,
+                 inputRhs ),
+          m_X( nodeManager.referencePosition()),
+          m_disp( nodeManager.totalDisplacement()),
+          m_deltaDisp( nodeManager.incrementalDisplacement()),
+          m_w( embeddedSurfSubRegion.displacementJump() ),
+          m_matrixPresDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
+          m_fracturePresDofNumber( embeddedSurfSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
+          m_wDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
+          m_solidDensity( inputConstitutiveType.getDensity() ),
+          m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
+          m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
+          m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
+          m_matrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
+          m_deltaMatrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
+          m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
+          m_tractionVec( embeddedSurfSubRegion.tractionVector() ),
+          m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump() ),
+          m_dTraction_dPressure( embeddedSurfSubRegion.dTraction_dPressure() ),
+          m_nVec( embeddedSurfSubRegion.getNormalVector() ),
+          m_tVec1( embeddedSurfSubRegion.getTangentVector1() ),
+          m_tVec2( embeddedSurfSubRegion.getTangentVector2() ),
+          m_surfaceCenter( embeddedSurfSubRegion.getElementCenter() ),
+          m_surfaceArea( embeddedSurfSubRegion.getElementArea() ),
+          m_elementVolume( elementSubRegion.getElementVolume() ),
+          m_fracturedElems( elementSubRegion.fracturedElementsList() ),
+          m_cellsToEmbeddedSurfaces( elementSubRegion.embeddedSurfacesList().toViewConst() ),
+          m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
+          m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) )
   {}
 
   //*****************************************************************************
@@ -117,10 +146,9 @@ public:
   {
 public:
 
-    static constexpr int numDispDofPerElem =  Base::StackVariables::numRows;
+    /// The number of displacement dofs per element.
+    static constexpr int numUdofs = numNodesPerElem * 3;
 
-    // The number of displacement dofs per element.
-    static constexpr int numUdofs = numDispDofPerElem * 3;
 
     /// The number of jump dofs per element.
     static constexpr int numWdofs = 3;
@@ -138,10 +166,16 @@ public:
       localKww{ { 0.0 } },
       localKwu{ { 0.0 } },
       localKuw{ { 0.0 } },
+      localKwpm{ 0.0 },
+      localKwpf( 0.0 ),
       wLocal(),
-      uLocal(),
+      dispLocal(),
+      deltaDispLocal(),
       hInv(),
-      X()
+      xLocal(),
+      tractionVec(),
+      dTractiondw{ { 0.0 } },
+      constitutiveStiffness()
     {}
 
     /// C-array storage for the element local row degrees of freedom.
@@ -171,23 +205,35 @@ public:
     /// C-array storage for the element local Kuw matrix.
     real64 localKuw[numUdofs][numWdofs];
 
+    /// C-array storage for the element local Kwpm matrix.
+    real64 localKwpm[numWdofs];
+
+    /// C-array storage for the element local Kwpf matrix.
+    real64 localKwpf;
+
     /// Stack storage for the element local jump vector
     real64 wLocal[3];
 
-    /// Stack storage for the elenta displacement vector.
-    real64 uLocal[numUdofs];
+    /// Stack storage for the element displacement vector.
+    real64 dispLocal[numUdofs];
+
+    // Stack storage for incremental displacement
+    real64 deltaDispLocal[numNodesPerElem][numDofPerTrialSupportPoint];
 
     /// Stack storage for Area/Volume
     real64 hInv;
 
     /// local nodal coordinates
-    real64 X[ numNodesPerElem ][ 3 ];
+    real64 xLocal[ numNodesPerElem ][ 3 ];
 
     /// Stack storage for the traction
     real64 tractionVec[3];
 
     /// Stack storage for the derivative of the traction
     real64 dTractiondw[3][3];
+
+    /// Stack storage for the constitutive stiffness at a quadrature point.
+    real64 constitutiveStiffness[ 6 ][ 6 ];
   };
   //*****************************************************************************
 
@@ -238,27 +284,35 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
+    localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
+
+    stack.hInv = m_surfaceArea[embSurfIndex] / m_elementVolume[k];
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
       for( int i=0; i<3; ++i )
       {
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
-        stack.xLocal[a][i] = m_X[localNodeIndex][i];
-#endif
-        stack.u_local[a][i] = m_disp[localNodeIndex][i];
-        stack.uhat_local[a][i] = m_uhat[localNodeIndex][i];
-        stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
-        stack.localColDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
+        stack.dispEqnRowIndices[a*3+i] = m_dofNumber[localNodeIndex]+i-m_dofRankOffset;
+        stack.dispColIndices[a*3+i]    = m_dofNumber[localNodeIndex]+i;
+        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+        stack.dispLocal[ a*3 + i ] = m_disp[localNodeIndex][i];
+        stack.deltaDispLocal[ a ][ i ] = m_deltaDisp[localNodeIndex][i];
       }
     }
 
-    for( int flowDofIndex=0; flowDofIndex<1; ++flowDofIndex )
+    for( int i=0; i<3; ++i )
     {
-      stack.localFlowDofIndex[flowDofIndex] = m_flowDofNumber[k] + flowDofIndex;
+      // need to grab the index.
+      stack.jumpEqnRowIndices[i] = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
+      stack.jumpColIndices[i]    = m_wDofNumber[embSurfIndex] + i;
+      stack.wLocal[ i ] = m_w[ embSurfIndex ][i];
+      stack.tractionVec[ i ] = m_tractionVec[ embSurfIndex ][i] * m_surfaceArea[embSurfIndex];
+      for( int ii=0; ii < 3; ++ii )
+      {
+        stack.dTractiondw[ i ][ ii ] = m_dTraction_dJump[embSurfIndex][i][ii] * m_surfaceArea[embSurfIndex];
+      }
     }
-
   }
 
   GEOSX_HOST_DEVICE
@@ -267,53 +321,37 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
+
+    localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
+
     // Get displacement: (i) basis functions (N), (ii) basis function
     // derivatives (dNdX), and (iii) determinant of the Jacobian transformation
     // matrix times the quadrature weight (detJxW)
     real64 N[numNodesPerElem];
     real64 dNdX[numNodesPerElem][3];
     FE_TYPE::calcN( q, N );
-    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
-
-    // Evaluate total stress tensor
-    real64 strainIncrement[6] = {0};
-    real64 totalStress[6];
-    real64 porosityNew, dPorosity_dPressure, dPorosity_dVolStrainIncrement;
-
-    // --- Update total stress tensor
-    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
-    FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
-
-    m_constitutiveUpdate.smallStrainUpdate_porosity( k, q,
-                                                     m_fluidPressure[k],
-                                                     m_deltaFluidPressure[k],
-                                                     strainIncrement,
-                                                     porosityNew,
-                                                     dPorosity_dPressure,
-                                                     dPorosity_dVolStrainIncrement,
-                                                     totalStress,
-                                                     stiffness );
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     // EFEM part starts here
     constexpr int nUdof = numNodesPerElem*3;
 
     // Gauss contribution to Kww, Kwu and Kuw blocks
-    real64 Kww_gauss[3][3], Kwu_gauss[3][nUdof], Kuw_gauss[nUdof][3];
+    real64 Kww_gauss[3][3], Kwu_gauss[3][nUdof], Kuw_gauss[nUdof][3], Kwpm_gauss[3];
 
     //  Compatibility, equilibrium and strain operators. The compatibility operator is constructed as
     //  a 3 x 6 because it is more convenient for construction purposes (reduces number of local var).
     real64 compMatrix[3][6], strainMatrix[6][nUdof], eqMatrix[3][6];
     real64 matBD[nUdof][6], matED[3][6];
+    real64 const biotCoefficient = 1.0;
 
     int Heaviside[ numNodesPerElem ];
 
     // TODO: asking for the stiffness here will only work for elastic models.  most other models
     //       need to know the strain increment to compute the current stiffness value.
-
     m_constitutiveUpdate.getElasticStiffness( k, stack.constitutiveStiffness );
 
     SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
-                                                                                  stack.X,
+                                                                                  stack.xLocal,
                                                                                   m_nVec[embSurfIndex],
                                                                                   m_surfaceCenter[embSurfIndex] );
 
@@ -344,12 +382,19 @@ public:
     // transp(B)DB
     LvArray::tensorOps::Rij_eq_AikBjk< nUdof, 3, 6 >( Kuw_gauss, matBD, compMatrix );
 
+    LvArray::tensorOps::fill< 3 >( Kwpm_gauss, 0 );
+    for( int i=0; i < 3; ++i )
+    {
+      Kwpm_gauss[0] += eqMatrix[0][i];
+      Kwpm_gauss[1] += eqMatrix[1][i];
+      Kwpm_gauss[2] += eqMatrix[2][i];
+    }
+
     // multiply by determinant and add to element matrix
     LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, Kww_gauss, -detJ );
     LvArray::tensorOps::scaledAdd< 3, nUdof >( stack.localKwu, Kwu_gauss, -detJ );
     LvArray::tensorOps::scaledAdd< nUdof, 3 >( stack.localKuw, Kuw_gauss, -detJ );
-
-
+    LvArray::tensorOps::scaledAdd< 3 >( stack.localKwpm, Kwpm_gauss, -detJ*biotCoefficient );
   }
 
   /**
@@ -364,14 +409,21 @@ public:
     real64 maxForce = 0;
     constexpr int nUdof = numNodesPerElem*3;
 
+    globalIndex matrixPressureColIndex = m_matrixPresDofNumber[k];
+
     // Compute the local residuals
     LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( stack.localRw, stack.localKww, stack.wLocal );
-    LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.uLocal );
+    LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.dispLocal );
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
+    LvArray::tensorOps::scaledAdd< 3 >( stack.localRw, stack.localKwpm, m_matrixPressure[ k ] + m_deltaMatrixPressure[ k ] );
 
     // Add traction contribution tranction
     LvArray::tensorOps::scaledAdd< 3 >( stack.localRw, stack.tractionVec, -1 );
     LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, stack.dTractiondw, -1 );
+
+    localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
+
+    real64 dTdpf = -m_dTraction_dPressure[embSurfIndex] * m_surfaceArea[embSurfIndex];
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
@@ -405,8 +457,22 @@ public:
                                                                               stack.dispColIndices,
                                                                               stack.localKwu[i],
                                                                               numNodesPerElem*3 );
+
+
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                              &matrixPressureColIndex,
+                                                                              &stack.localKwpm[i],
+                                                                              1 );
     }
 
+    // it only affects the normal jump
+    if( stack.jumpEqnRowIndices[0] >= 0 && stack.jumpEqnRowIndices[0] < m_matrix.numRows() )
+    {
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.jumpEqnRowIndices[0],
+                                                                              &m_fracturePresDofNumber[ embSurfIndex ],
+                                                                              &dTdpf,
+                                                                              1 );
+    }
 
     return maxForce;
   }
@@ -414,13 +480,43 @@ public:
 
 
 protected:
-  arrayView1d< globalIndex const > const m_wDofNumber;
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  /// The rank-global displacement array.
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
+
+  /// The rank-global incremental displacement array.
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_deltaDisp;
 
   arrayView2d< real64 const > const m_w;
+
+  /// The global degree of freedom number
+  arrayView1d< globalIndex const > const m_matrixPresDofNumber;
+
+  arrayView1d< globalIndex const > const m_fracturePresDofNumber;
+
+  arrayView1d< globalIndex const > const m_wDofNumber;
+
+  /// The rank global densities
+  arrayView2d< real64 const > const m_solidDensity;
+  arrayView2d< real64 const > const m_fluidDensity;
+  arrayView1d< real64 const > const m_fluidDensityOld;
+  arrayView2d< real64 const > const m_dFluidDensity_dPressure;
+
+  /// The rank-global fluid pressure array.
+  arrayView1d< real64 const > const m_matrixPressure;
+
+  /// The rank-global delta-fluid pressure array.
+  arrayView1d< real64 const > const m_deltaMatrixPressure;
+
+  arrayView2d< real64 const > const m_oldPorosity;
 
   arrayView2d< real64 const > const m_tractionVec;
 
   arrayView3d< real64 const > const m_dTraction_dJump;
+
+  arrayView1d< real64 const > const m_dTraction_dPressure;
 
   arrayView2d< real64 const > const m_nVec;
 
@@ -437,6 +533,10 @@ protected:
   SortedArrayView< localIndex const > const m_fracturedElems;
 
   ArrayOfArraysView< localIndex const > const m_cellsToEmbeddedSurfaces;
+
+  /// The gravity vector.
+  real64 const m_gravityVector[3];
+  real64 const m_gravityAcceleration;
 
 };
 

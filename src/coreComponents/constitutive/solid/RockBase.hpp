@@ -179,8 +179,6 @@ protected:
 
   real64 m_defaultReferencePorosity;
 
-  real64 m_compressibility;
-
   real64 m_grainBulkModulus;
 
   /// The material density at a quadrature point.
