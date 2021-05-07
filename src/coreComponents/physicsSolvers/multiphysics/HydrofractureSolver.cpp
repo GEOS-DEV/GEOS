@@ -2336,7 +2336,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition & domain
         if (!allNodesBehindTip)
         {
           aperture[kfe] = partiallyOpenFaceElmtFluidVol[kfe]/partiallyOpenFaceElmtArea[kfe];
-          effectiveAperture[kfe] = aperture[kfe];
+          //effectiveAperture[kfe] = aperture[kfe];
         }
         //std::cout << partiallyOpenFaceElmtFluidVol.size() <<
         //             partiallyOpenFaceElmtArea.size() << std::endl;
