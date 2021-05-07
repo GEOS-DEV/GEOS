@@ -181,16 +181,21 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       real64 derivativesIntMean[VEM::maxSupportPoints][3] { { 0.0 } };
       globalIndex elemDofIndex[VEM::maxSupportPoints] { 0 };
       real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints] { { 0.0 } };
+      real64 cellCenter[3] { 0.0 };
+      real64 cellVolume = 0.0;
       forAll< parallelDevicePolicy< 32 > >( numCells, [=] ( localIndex const cellIndex ) mutable
       {
         VEM::BasisData basisData;
 
         if( elemGhostRank[cellIndex] < 0 )
         {
+          cellVolume = elemVolumes[cellIndex];
+          for(unsigned int i = 0; i < 3; ++i)
+            cellCenter[i] = elemCenters(cellIndex, i);
           VEM::computeProjectors( cellIndex, nodesCoords, elemToNodeMap, elementToFaceMap,
                                   faceToNodeMap, faceToEdgeMap, edgeToNodeMap,
                                   faceCenters, faceNormals, faceAreas,
-                                  elemCenters[cellIndex], elemVolumes[cellIndex], basisData );
+                                  cellCenter, cellVolume, basisData );
           localIndex const numSupportPoints = VEM::getNumSupportPoints( basisData );
           for( localIndex a = 0; a < numSupportPoints; ++a )
           {
