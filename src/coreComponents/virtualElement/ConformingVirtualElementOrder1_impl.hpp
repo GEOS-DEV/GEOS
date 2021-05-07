@@ -32,7 +32,7 @@ computeProjectors( localIndex const & cellIndex,
                    arrayView2d< real64 const > const faceCenters,
                    arrayView2d< real64 const > const faceNormals,
                    arrayView1d< real64 const > const faceAreas,
-                   arraySlice1d< real64 const > const & cellCenter,
+                   real64 const cellCenter[3],
                    real64 const & cellVolume,
                    BasisData & basisData
                    )
@@ -67,25 +67,36 @@ computeProjectors( localIndex const & cellIndex,
   {
     localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
     real64 const faceArea = faceAreas[faceIndex];
-    arraySlice1d< localIndex const > faceToNodes = faceToNodeMap[faceIndex];
+    localIndex const numFaceNodes = faceToNodeMap[faceIndex].size();
+    array1d< localIndex > faceToNodes( numFaceNodes );
+    array1d< localIndex > faceToEdges( numFaceNodes );
+    for( localIndex i = 0; i < numFaceNodes; ++i )
+    {
+      faceToNodes[i] = faceToNodeMap[ faceIndex ][ i ];
+      faceToEdges[i] = faceToEdgeMap[ faceIndex ][ i ];
+    }
+    // - get outward face normal and center
+    real64 faceNormal[3] = { faceNormals[faceIndex][0],
+                             faceNormals[faceIndex][1],
+                             faceNormals[faceIndex][2] };
+    real64 const faceCenter[3] { faceCenters[faceIndex][0],
+                                 faceCenters[faceIndex][1],
+                                 faceCenters[faceIndex][2] };
     // - compute integrals calling auxiliary method
     real64 faceBasisIntegrals[MFN];
     real64 threeDMonomialIntegrals[3] = { 0.0 };
     computeFaceIntegrals( nodesCoords,
                           faceToNodes,
-                          faceToEdgeMap[faceIndex],
+                          faceToEdges,
                           faceArea,
-                          faceCenters[faceIndex],
-                          faceNormals[faceIndex],
+                          faceCenter,
+                          faceNormal,
                           edgeToNodeMap,
                           invCellDiameter,
                           cellCenter,
                           faceBasisIntegrals,
                           threeDMonomialIntegrals );
-    // - get outward face normal
-    real64 faceNormal[3] { faceNormals[faceIndex][0],
-                           faceNormals[faceIndex][1],
-                           faceNormals[faceIndex][2] };
+
     real64 signTestVector[3];
     signTestVector[0] = faceCenters[faceIndex][0] - cellCenter[0];
     signTestVector[1] = faceCenters[faceIndex][1] - cellCenter[1];
@@ -103,7 +114,7 @@ computeProjectors( localIndex const & cellIndex,
     for( localIndex monomInd = 1; monomInd < 4; ++monomInd )
       monomBoundaryIntegrals[monomInd] += threeDMonomialIntegrals[monomInd-1];
     // - add contributions to integrals of basis functions
-    for( localIndex numFaceBasisFunction = 0; numFaceBasisFunction < faceToNodes.size();
+    for( localIndex numFaceBasisFunction = 0; numFaceBasisFunction < numFaceNodes;
          ++numFaceBasisFunction )
     {
       localIndex basisFunctionIndex = 0;
@@ -127,8 +138,13 @@ computeProjectors( localIndex const & cellIndex,
   for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
   {
     localIndex const faceIndex = elementToFaceMap[cellIndex][numFace];
-    arraySlice1d< localIndex const > faceToNodes = faceToNodeMap[faceIndex];
-    arraySlice1d< real64 const > faceCenter = faceCenters[faceIndex];
+    localIndex const numFaceNodes = faceToNodeMap[faceIndex].size();
+    array1d< localIndex > faceToNodes( numFaceNodes );
+    for( localIndex i = 0; i < numFaceNodes; ++i )
+      faceToNodes[i] = faceToNodeMap[ faceIndex ][ i ];
+    real64 const faceCenter[3] { faceCenters[faceIndex][0],
+                                 faceCenters[faceIndex][1],
+                                 faceCenters[faceIndex][2] };
     localIndex const numFaceVertices = faceToNodes.size();
     for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
     {
@@ -142,16 +158,16 @@ computeProjectors( localIndex const & cellIndex,
       {
         monomialValues[pos] = (nodesCoords( faceToNodes( numVertex ), pos ) +
                                nodesCoords( faceToNodes( numNextVertex ), pos ) +
-                               faceCenter( pos ) - 3*cellCenter( pos ))*invCellDiameter/4.0;
+                               faceCenter[ pos ] - 3*cellCenter[ pos ])*invCellDiameter/4.0;
       }
       // compute quadrature weight (the volume of the sub-tetrahedron).
       real64 edgeTangentsMatrix[3][3];
       for( localIndex i = 0; i < 3; ++i )
       {
-        edgeTangentsMatrix[0][i] = faceCenter( i ) - cellCenter( i );
-        edgeTangentsMatrix[1][i] = nodesCoords( faceToNodes( numVertex ), i ) - cellCenter( i );
+        edgeTangentsMatrix[0][i] = faceCenter[ i ] - cellCenter[ i ];
+        edgeTangentsMatrix[1][i] = nodesCoords( faceToNodes( numVertex ), i ) - cellCenter[ i ];
         edgeTangentsMatrix[2][i] = nodesCoords( faceToNodes( numNextVertex ), i ) -
-                                   cellCenter( i );
+                                   cellCenter[ i ];
       }
       real64 subTetVolume = LvArray::math::abs
                               ( edgeTangentsMatrix[0][0] *
@@ -181,7 +197,8 @@ computeProjectors( localIndex const & cellIndex,
   {
     for( localIndex pos = 0; pos < 3; ++pos )
       monomialVemDofs( pos, numVertex ) = invCellDiameter*
-                                          (nodesCoords( cellToNodeMap( cellIndex, numVertex ), pos ) - cellCenter( pos ));
+                                          (nodesCoords( cellToNodeMap( cellIndex, numVertex ), pos )
+                                           - cellCenter[ pos ]);
   }
   for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
   {
@@ -199,7 +216,8 @@ computeProjectors( localIndex const & cellIndex,
                       piNablaDofs[3]*monomBoundaryIntegrals[3] )/monomBoundaryIntegrals[0];
     // - integrate piNabla proj and compute integral means
     basisData.basisFunctionsIntegralMean[numBasisFunction] = piNablaDofs[0] + invCellVolume *
-                                                             (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]
+                                                             (piNablaDofs[1]*monomInternalIntegrals[0]
+                                                              + piNablaDofs[2]*monomInternalIntegrals[1]
                                                               + piNablaDofs[3] * monomInternalIntegrals[2]);
     // - compute integral means of derivatives
     for( localIndex i = 0; i < 3; ++i )
@@ -234,14 +252,14 @@ template< localIndex MCN, localIndex MFN >
 GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                      arraySlice1d< localIndex const > const & faceToNodes,
-                      arraySlice1d< localIndex const > const & faceToEdges,
+                      array1d< localIndex > const & faceToNodes,
+                      array1d< localIndex > const & faceToEdges,
                       real64 const & faceArea,
-                      arraySlice1d< real64 const > const & faceCenter,
-                      arraySlice1d< real64 const > const & faceNormal,
+                      real64 const faceCenter[3],
+                      real64 const faceNormal[3],
                       EdgeManager::NodeMapType const & edgeToNodes,
                       real64 const & invCellDiameter,
-                      arraySlice1d< real64 const > const & cellCenter,
+                      real64 const cellCenter[3],
                       real64 basisIntegrals[MFN],
                       real64 threeDMonomialIntegrals[3] )
 {
@@ -251,7 +269,11 @@ computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >
   // Compute other geometrical properties.
   //  - compute rotation matrix.
   array2d< real64 > faceRotationMatrix( 3, 3 );
-  computationalGeometry::RotationMatrix_3D( faceNormal, faceRotationMatrix );
+  array1d< real64 > faceNormalArray( 3 );
+  faceNormalArray[0] = faceNormal[0];
+  faceNormalArray[1] = faceNormal[1];
+  faceNormalArray[2] = faceNormal[2];
+  computationalGeometry::RotationMatrix_3D( faceNormalArray, faceRotationMatrix );
   //  - below we compute the diameter, the rotated vertices and the rotated center.
   array2d< real64 > faceRotatedVertices( numFaceVertices, 2 );
   real64 faceDiameter = 0;
@@ -375,7 +397,8 @@ computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >
     for( localIndex i = 0; i < 2; ++i )
       edgesTangents[1][i] = faceRotatedVertices[nextVertex][i] - faceRotatedCentroid[i];
     real64 subTriangleArea = 0.5*LvArray::math::abs
-                               ( edgesTangents[0][0]*edgesTangents[1][1] - edgesTangents[0][1]*edgesTangents[1][0] );
+                               ( edgesTangents[0][0]*edgesTangents[1][1] -
+                               edgesTangents[0][1]*edgesTangents[1][0] );
     // compute the integrals on the sub-triangle and add it to the global integrals
     for( localIndex i = 0; i < 2; ++i )
       monomInternalIntegrals[i] += monomialValues[i]*subTriangleArea;
@@ -416,7 +439,8 @@ computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >
                       piNablaDofs[1]*monomBoundaryIntegrals[1] -
                       piNablaDofs[2]*monomBoundaryIntegrals[2])/monomBoundaryIntegrals[0];
     basisIntegrals[numVertex] = piNablaDofs[0]*faceArea +
-                                (piNablaDofs[1]*monomInternalIntegrals[0] + piNablaDofs[2]*monomInternalIntegrals[1]);
+                                (piNablaDofs[1]*monomInternalIntegrals[0] +
+                                 piNablaDofs[2]*monomInternalIntegrals[1]);
   }
 }
 }

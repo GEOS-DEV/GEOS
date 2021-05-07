@@ -46,14 +46,14 @@ private:
   GEOSX_HOST_DEVICE
   static void
   computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                        arraySlice1d< localIndex const > const & faceToNodes,
-                        arraySlice1d< localIndex const > const & faceToEdges,
+                        array1d< localIndex > const & faceToNodes,
+                        array1d< localIndex > const & faceToEdges,
                         real64 const & faceArea,
-                        arraySlice1d< real64 const > const & faceCenter,
-                        arraySlice1d< real64 const > const & faceNormal,
+                        real64 const faceCenter[3],
+                        real64 const faceNormal[3],
                         EdgeManager::NodeMapType const & edgeToNodes,
                         real64 const & invCellDiameter,
-                        arraySlice1d< real64 const > const & cellCenter,
+                        real64 const cellCenter[3],
                         real64 basisIntegrals[MAXFACENODES],
                         real64 threeDMonomialIntegrals[3] );
 
@@ -73,7 +73,7 @@ public:
                      arrayView2d< real64 const > const faceCenters,
                      arrayView2d< real64 const > const faceNormals,
                      arrayView1d< real64 const > const faceAreas,
-                     arraySlice1d< real64 const > const & cellCenter,
+                     real64 const cellCenter[3],
                      real64 const & cellVolume,
                      BasisData & basisData
                      );
