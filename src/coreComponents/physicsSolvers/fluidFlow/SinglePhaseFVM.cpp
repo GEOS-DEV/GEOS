@@ -199,7 +199,7 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
                         m_mobility.toNestedViewConst(),
                         m_dMobility_dPres.toNestedViewConst(),
                         m_elementAperture0.toNestedViewConst(),
-                        m_effectiveAperture.toNestedViewConst(),
+                        m_elementAperture.toNestedViewConst(),
                         m_transTMultiplier.toNestedViewConst(),
                         this->gravityVector(),
                         this->m_meanPermCoeff,
