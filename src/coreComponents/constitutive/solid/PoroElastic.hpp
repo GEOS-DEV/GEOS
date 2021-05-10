@@ -62,6 +62,7 @@ public:
   using UPDATE_BASE::smallStrainUpdate_StressOnly;
   using UPDATE_BASE::hypoUpdate;
   using UPDATE_BASE::hyperUpdate;
+  using UPDATE_BASE::saveConvergedState;
 
   /**
    * @brief Get Biot coefficient

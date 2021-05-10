@@ -132,7 +132,7 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
   while( k <= m_params.krylov.maxIterations && m_result.status == LinearSolverResult::Status::NotConverged )
   {
     // Re-initialize Krylov subspace
-    g.setValues< serialPolicy >( 0.0 );
+    g.zero();
     g[0] = r.norm2();
     m_kspace[0].axpby( 1.0 / g[0], r, 0.0 );
 
