@@ -96,6 +96,20 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise" );
 
+  registerWrapper( viewKeyStruct::dtSismoTraceString(), &m_dtSismoTrace ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Time step size to compute the sismo trace" );
+
+  registerWrapper( viewKeyStruct::nSampleSismoTraceString(), &m_nSampleSismoTrace ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( " Number of sismo trace to be coputed" );
+
+  registerWrapper( viewKeyStruct::indexSismoTraceString(), &m_indexSismoTrace ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( " Index of the sismo trace " );
 }
 
 AcousticWaveEquationSEM::~AcousticWaveEquationSEM()
@@ -127,8 +141,8 @@ void AcousticWaveEquationSEM::postProcessInput()
   m_receiverNodeIds.resizeDimension< 0, 1 >( numReceiversGlobal, numNodesPerElem );
   m_receiverConstants.resizeDimension< 0, 1 >( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resizeDimension< 0 >( numReceiversGlobal );
-
-  m_pressureNp1AtReceivers.resizeDimension< 0 >( numReceiversGlobal );
+  
+  m_pressureNp1AtReceivers.resizeDimension< 0,1 >( numReceiversGlobal,m_nSampleSismoTrace );
 
 }
 
@@ -309,25 +323,30 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, a
 }
 
 
-void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayView1d< real64 > const pressure_np1 )
+void AcousticWaveEquationSEM::computeSismoTrace(real64 const time_n, real64 const dt, localIndex const iSismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n )
 {
   GEOSX_MARK_FUNCTION;
-  
+
+  real64 dtSismo = m_dtSismoTrace;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  arrayView1d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
-
+  arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
+  
   forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
   {
     if( receiverIsLocal[ircv] == 1 )
     {
-      p_rcvs[ircv] = 0.0;
+      p_rcvs[ircv][iSismo] = 0.0;
+      real64 ptmp_np1 = 0.0;
+      real64 ptmp_n = 0.0;
       for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
       {
-        p_rcvs[ircv] += pressure_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
+	ptmp_np1 += pressure_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
+	ptmp_n += pressure_n[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
       }
+      p_rcvs[ircv][iSismo] = ((time_n + dt - dtSismo)*ptmp_n+(dtSismo-dt)*ptmp_np1)/dtSismo;
     }
   } );
 
@@ -342,19 +361,19 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
         // TODO: remove the (sprintf+saveSismo) and replace with TimeHistory
         char filename[50];
         sprintf( filename, "sismoTraceReceiver%0d.txt", static_cast< int >( ircv ) );
-        this->saveSismo( isismo, p_rcvs[ircv], filename );
+        this->saveSismo( iSismo, p_rcvs[ircv][iSismo], filename );
       }
     }
   } );
 }
 
 /// Use for now until we get the same functionality in TimeHistory
-void AcousticWaveEquationSEM::saveSismo( localIndex isismo, real64 val_pressure, char *filename )
+void AcousticWaveEquationSEM::saveSismo( localIndex iSismo, real64 val_pressure, char *filename )
 {
   GEOSX_MARK_FUNCTION;
   
   std::ofstream f( filename, std::ios::app );
-  f<< isismo << " " << val_pressure << std::endl;
+  f<< iSismo << " " << val_pressure << std::endl;
   f.close();
 }
 
@@ -769,9 +788,12 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     stiffnessVector[a] = 0.0;
     rhs[a] = 0.0;
   });
-
-  ///computeSismoTrace( cycleNumber, p_np1 );
-
+  real64 checkSismo = m_dtSismoTrace*m_indexSismoTrace;
+  if( time_n <= checkSismo &&  checkSismo < (time_n + dt) )
+  {
+    computeSismoTrace( time_n, dt, m_indexSismoTrace, p_np1, p_n );
+    m_indexSismoTrace ++;
+  }
 
   return dt;
 }
