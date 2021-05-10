@@ -406,7 +406,7 @@ void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager c
       setGroupCell.forWrappers< SortedArray< localIndex > >( [&]( auto const & wrapper )
       {
         SortedArrayView< const localIndex > const & targetSetCell = wrapper.reference();
-        targetSetCell.move( LvArray::MemorySpace::CPU );
+        targetSetCell.move( LvArray::MemorySpace::host );
 
         SortedArray< localIndex > & targetSetEmbSurf =
           setGroupEmbSurf.getWrapper< SortedArray< localIndex > >( wrapper.getName() ).reference();

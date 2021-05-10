@@ -175,36 +175,78 @@ private:
  * @brief Helper struct to define a specialization of
  *   #::geosx::finiteElement::SparsityKernelBase that may be used to generate the sparsity pattern.
  * @tparam KERNEL_TEMPLATE Templated class that defines the physics kernel.
- *                         Most likely derives from SparsityKernelBase.
+ *   Most likely derives from SparsityKernelBase.
  */
 template< template< typename,
                     typename,
                     typename > class KERNEL_TEMPLATE >
-struct SparsityHelper
+class SparsityKernelFactory
 {
+public:
 
   /**
-   * Defines an alias for the specialization of
-   * #geosx::finiteElement::SparsityKernelBase from the compile time constants
-   * defined in @p KERNEL_TEMPLATE. Specifically, the
-   * NUM_TEST_SUPPORT_POINTS_PER_ELEM and NUM_TRIAL_SUPPORT_POINTS_PER_ELEM
-   * parameters are specified by the physics solver.
+   * @brief Constructor.
+   * @param inputDofNumber An array containing the input degree of freedom numbers.
+   * @param rankOffset The global rank offset.
+   * @param inputSparsityPattern The local sparsity pattern.
    */
-  template< typename SUBREGION_TYPE,
-            typename CONSTITUTIVE_TYPE,
-            typename FE_TYPE >
-  using Kernel = SparsityKernelBase< SUBREGION_TYPE,
-                                     CONSTITUTIVE_TYPE,
-                                     FE_TYPE,
-                                     KERNEL_TEMPLATE< SUBREGION_TYPE,
-                                                      CONSTITUTIVE_TYPE,
-                                                      FE_TYPE >::numDofPerTestSupportPoint,
-                                     KERNEL_TEMPLATE< SUBREGION_TYPE,
-                                                      CONSTITUTIVE_TYPE,
-                                                      FE_TYPE >::numDofPerTrialSupportPoint
-                                     >;
-};
+  SparsityKernelFactory( arrayView1d< globalIndex const > const & inputDofNumber,
+                         globalIndex const rankOffset,
+                         SparsityPattern< globalIndex > & inputSparsityPattern ):
+    m_inputDofNumber( inputDofNumber ),
+    m_rankOffset( rankOffset ),
+    m_inputSparsityPattern( inputSparsityPattern )
+  {}
 
+  /**
+   * @brief Return a new instance of @c SparsityKernelBase specialized for @c KERNEL_TEMPLATE.
+   * @tparam SUBREGION_TYPE The type of of @p elementSubRegion.
+   * @tparam CONSTITUTIVE_TYPE The type of @p inputConstitutiveType.
+   * @tparam FE_TYPE The type of @p finiteElementSpace.
+   * @param nodeManager The node manager.
+   * @param edgeManager The edge manager.
+   * @param faceManager The face manager.
+   * @param targetRegionIndex The target region index.
+   * @param elementSubRegion The sub region on which to generate the sparsity.
+   * @param finiteElementSpace The finite element space.
+   * @param inputConstitutiveType The constitutive relation.
+   * @return A new instance of @c SparsityKernelBase specialized for @c KERNEL_TEMPLATE.
+   */
+  template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
+  auto createKernel( NodeManager const & nodeManager,
+                     EdgeManager const & edgeManager,
+                     FaceManager const & faceManager,
+                     localIndex const targetRegionIndex,
+                     SUBREGION_TYPE const & elementSubRegion,
+                     FE_TYPE const & finiteElementSpace,
+                     CONSTITUTIVE_TYPE & inputConstitutiveType )
+  {
+    using Kernel = KERNEL_TEMPLATE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
+
+    return SparsityKernelBase< SUBREGION_TYPE,
+                               CONSTITUTIVE_TYPE,
+                               FE_TYPE,
+                               Kernel::numDofPerTestSupportPoint,
+                               Kernel::numDofPerTrialSupportPoint >( nodeManager,
+                                                                     edgeManager,
+                                                                     faceManager,
+                                                                     targetRegionIndex,
+                                                                     elementSubRegion,
+                                                                     finiteElementSpace,
+                                                                     inputConstitutiveType,
+                                                                     m_inputDofNumber,
+                                                                     m_rankOffset,
+                                                                     m_inputSparsityPattern );
+  }
+
+private:
+  /// The input degree of freedom numbers.
+  arrayView1d< globalIndex const > const & m_inputDofNumber;
+  /// The global rank offset.
+  globalIndex const m_rankOffset;
+  /// The local sparsity pattern.
+  SparsityPattern< globalIndex > & m_inputSparsityPattern;
+};
 
 //*****************************************************************************
 //*****************************************************************************
@@ -244,17 +286,15 @@ real64 fillSparsity( MeshLevel & mesh,
 {
   GEOSX_MARK_FUNCTION;
 
+  SparsityKernelFactory< KERNEL_TEMPLATE > KernelFactory( inputDofNumber, rankOffset, inputSparsityPattern );
+
   regionBasedKernelApplication< serialPolicy,
                                 constitutive::NullModel,
-                                REGION_TYPE,
-                                SparsityHelper< KERNEL_TEMPLATE >::template Kernel
-                                >( mesh,
-                                   targetRegions,
-                                   discretizationName,
-                                   arrayView1d< string const >(),
-                                   inputDofNumber,
-                                   rankOffset,
-                                   inputSparsityPattern );
+                                REGION_TYPE >( mesh,
+                                               targetRegions,
+                                               discretizationName,
+                                               arrayView1d< string const >(),
+                                               KernelFactory );
 
   return 0;
 }

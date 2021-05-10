@@ -136,7 +136,7 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
@@ -540,7 +540,7 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, string const &, Group * const )

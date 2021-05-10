@@ -258,9 +258,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
                                               dOneSidedVolFlux_dp,
                                               dOneSidedVolFlux_dfp );
 
-  jacobianFD.setValues< parallelHostPolicy >( 0.0 );
-  jacobian.setValues< parallelHostPolicy >( 0.0 );
-  rhs.setValues< parallelHostPolicy >( 0 );
+  jacobianFD.zero();
+  jacobian.zero();
+  rhs.zero();
 
   AssemblerKernelHelper::assembleFaceConstraints< NF >( faceDofNumber,
                                                         faceGhostRank,
@@ -299,8 +299,8 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
                                               dOneSidedVolFlux_dp,
                                               dOneSidedVolFlux_dfp );
 
-  jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
-  rhsPerturb.setValues< parallelHostPolicy >( 0.0 );
+  jacobianPerturb.zero();
+  rhsPerturb.zero();
 
   AssemblerKernelHelper::assembleFaceConstraints< NF >( faceDofNumber,
                                                         faceGhostRank,
@@ -330,7 +330,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   updateDensity( refPres, elemPres, dElemPres, elemDens, dElemDens_dp );
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    dFacePres.setValues< serialPolicy >( 0 );
+    dFacePres.zero();
     dFacePres[ifaceLoc] = perturbParameter * (facePres[ifaceLoc] + perturbParameter);
 
     LvArray::tensorOps::fill< NF >( oneSidedVolFlux, 0 );
@@ -351,8 +351,8 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
                                                 dOneSidedVolFlux_dp,
                                                 dOneSidedVolFlux_dfp );
 
-    jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
-    rhsPerturb.setValues< parallelHostPolicy >( 0.0 );
+    jacobianPerturb.zero();
+    rhsPerturb.zero();
 
     AssemblerKernelHelper::assembleFaceConstraints< NF >( faceDofNumber,
                                                           faceGhostRank,
@@ -486,9 +486,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
                                               dOneSidedVolFlux_dp,
                                               dOneSidedVolFlux_dfp );
 
-  jacobianFD.setValues< parallelHostPolicy >( 0.0 );
-  jacobian.setValues< parallelHostPolicy >( 0.0 );
-  rhs.setValues< parallelHostPolicy >( 0 );
+  jacobianFD.zero();
+  jacobian.zero();
+  rhs.zero();
 
   AssemblerKernelHelper::assembleFluxDivergence< NF >( localIds,
                                                        rankOffset,
@@ -535,8 +535,8 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
                                               dOneSidedVolFlux_dp,
                                               dOneSidedVolFlux_dfp );
 
-  jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
-  rhsPerturb.setValues< serialPolicy >( 0.0 );
+  jacobianPerturb.zero();
+  rhsPerturb.zero();
 
   AssemblerKernelHelper::assembleFluxDivergence< NF >( localIds,
                                                        rankOffset,
@@ -574,7 +574,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
 
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    dFacePres.setValues< serialPolicy >( 0 );
+    dFacePres.zero();
     dFacePres[ifaceLoc] = perturbParameter * (facePres[ifaceLoc] + perturbParameter);
 
     LvArray::tensorOps::fill< NF >( oneSidedVolFlux, 0 );
@@ -595,8 +595,8 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
                                                 dOneSidedVolFlux_dp,
                                                 dOneSidedVolFlux_dfp );
 
-    jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
-    rhsPerturb.setValues< parallelHostPolicy >( 0.0 );
+    jacobianPerturb.zero();
+    rhsPerturb.zero();
 
     AssemblerKernelHelper::assembleFluxDivergence< NF >( localIds,
                                                          rankOffset,
