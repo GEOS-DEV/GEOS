@@ -23,12 +23,12 @@ template< localIndex MCN, localIndex MFN >
 GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 computeProjectors( localIndex const & cellIndex,
-                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                   CellBlock::NodeMapType const & cellToNodeMap,
-                   CellBlock::FaceMapType const & elementToFaceMap,
-                   FaceManager::NodeMapType const & faceToNodeMap,
-                   FaceManager::EdgeMapType const & faceToEdgeMap,
-                   EdgeManager::NodeMapType const & edgeToNodeMap,
+                   InputNodeCoords const & nodesCoords,
+                   InputCellToNodeMap const & cellToNodeMap,
+                   InputCellToFaceMap const & elementToFaceMap,
+                   InputFaceToNodeMap const & faceToNodeMap,
+                   InputFaceToEdgeMap const & faceToEdgeMap,
+                   InputEdgeToNodeMap const & edgeToNodeMap,
                    arrayView2d< real64 const > const faceCenters,
                    arrayView2d< real64 const > const faceNormals,
                    arrayView1d< real64 const > const faceAreas,
@@ -215,10 +215,10 @@ computeProjectors( localIndex const & cellIndex,
                       piNablaDofs[2]*monomBoundaryIntegrals[2] -
                       piNablaDofs[3]*monomBoundaryIntegrals[3] )/monomBoundaryIntegrals[0];
     // - integrate piNabla proj and compute integral means
-    basisData.basisFunctionsIntegralMean[numBasisFunction] = piNablaDofs[0] + invCellVolume *
-                                                             (piNablaDofs[1]*monomInternalIntegrals[0]
-                                                              + piNablaDofs[2]*monomInternalIntegrals[1]
-                                                              + piNablaDofs[3] * monomInternalIntegrals[2]);
+    basisData.basisFunctionsIntegralMean[numBasisFunction] =
+      piNablaDofs[0] + invCellVolume * (piNablaDofs[1]*monomInternalIntegrals[0]
+                                        + piNablaDofs[2]*monomInternalIntegrals[1]
+                                        + piNablaDofs[3] * monomInternalIntegrals[2]);
     // - compute integral means of derivatives
     for( localIndex i = 0; i < 3; ++i )
       basisData.basisDerivativesIntegralMean[numBasisFunction][i] =
@@ -226,10 +226,10 @@ computeProjectors( localIndex const & cellIndex,
     // - compute VEM dofs of piNabla projection
     for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
     {
-      piNablaVemDofsMinusIdentity( numVertex, numBasisFunction ) = piNablaDofs[0] +
-                                                                   piNablaDofs[1]*monomialVemDofs( 0, numVertex ) +
-                                                                   piNablaDofs[2]*monomialVemDofs( 1, numVertex ) +
-                                                                   piNablaDofs[3]*monomialVemDofs( 2, numVertex );
+      piNablaVemDofsMinusIdentity( numVertex, numBasisFunction ) =
+        piNablaDofs[0] + piNablaDofs[1]*monomialVemDofs( 0, numVertex ) +
+        piNablaDofs[2]*monomialVemDofs( 1, numVertex ) +
+        piNablaDofs[3]*monomialVemDofs( 2, numVertex );
     }
     piNablaVemDofsMinusIdentity( numBasisFunction, numBasisFunction ) -= 1;
   }
@@ -251,13 +251,13 @@ computeProjectors( localIndex const & cellIndex,
 template< localIndex MCN, localIndex MFN >
 GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
-computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+computeFaceIntegrals( InputNodeCoords const & nodesCoords,
                       array1d< localIndex > const & faceToNodes,
                       array1d< localIndex > const & faceToEdges,
                       real64 const & faceArea,
                       real64 const faceCenter[3],
                       real64 const faceNormal[3],
-                      EdgeManager::NodeMapType const & edgeToNodes,
+                      InputEdgeToNodeMap const & edgeToNodes,
                       real64 const & invCellDiameter,
                       real64 const cellCenter[3],
                       real64 basisIntegrals[MFN],

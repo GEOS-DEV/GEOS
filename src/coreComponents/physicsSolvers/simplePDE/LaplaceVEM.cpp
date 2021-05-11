@@ -152,9 +152,9 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
   // Get geometric properties used to compute projectors.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
-  FaceManager::NodeMapType const & faceToNodeMap = faceManager.nodeList();
-  FaceManager::EdgeMapType const & faceToEdgeMap = faceManager.edgeList();
-  EdgeManager::NodeMapType const & edgeToNodeMap = edgeManager.nodeList();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList().toViewConst();
   arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
   arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
   arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
@@ -173,7 +173,7 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       ( [&]( CellElementSubRegion const & elemSubRegion )
     {
       CellBlock::NodeMapType const & elemToNodeMap = elemSubRegion.nodeList();
-      CellBlock::FaceMapType const & elementToFaceMap = elemSubRegion.faceList();
+      arrayView2d< localIndex const > const elementToFaceMap = elemSubRegion.faceList().toViewConst();
       arrayView2d< real64 const > elemCenters = elemSubRegion.getElementCenter();
       arrayView1d< real64 const > elemVolumes = elemSubRegion.getElementVolume();
       arrayView1d< integer const > const & elemGhostRank = elemSubRegion.ghostRank();
@@ -183,19 +183,30 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints] { { 0.0 } };
       real64 cellCenter[3] { 0.0 };
       real64 cellVolume = 0.0;
-      forAll< parallelDevicePolicy< 32 > >( numCells, [=] ( localIndex const cellIndex ) mutable
+      forAll< parallelDevicePolicy< 32 > >( numCells, [=] GEOSX_HOST_DEVICE
+                                            ( localIndex const cellIndex ) mutable
       {
         VEM::BasisData basisData;
 
         if( elemGhostRank[cellIndex] < 0 )
         {
           cellVolume = elemVolumes[cellIndex];
-          for(unsigned int i = 0; i < 3; ++i)
-            cellCenter[i] = elemCenters(cellIndex, i);
-          VEM::computeProjectors( cellIndex, nodesCoords, elemToNodeMap, elementToFaceMap,
-                                  faceToNodeMap, faceToEdgeMap, edgeToNodeMap,
-                                  faceCenters, faceNormals, faceAreas,
-                                  cellCenter, cellVolume, basisData );
+          cellCenter[0] = elemCenters( cellIndex, 0 );
+          cellCenter[1] = elemCenters( cellIndex, 1 );
+          cellCenter[2] = elemCenters( cellIndex, 2 );
+          VEM::computeProjectors( cellIndex,
+                                  nodesCoords,
+                                  elemToNodeMap,
+                                  elementToFaceMap,
+                                  faceToNodeMap,
+                                  faceToEdgeMap,
+                                  edgeToNodeMap,
+                                  faceCenters,
+                                  faceNormals,
+                                  faceAreas,
+                                  cellCenter,
+                                  cellVolume,
+                                  basisData );
           localIndex const numSupportPoints = VEM::getNumSupportPoints( basisData );
           for( localIndex a = 0; a < numSupportPoints; ++a )
           {

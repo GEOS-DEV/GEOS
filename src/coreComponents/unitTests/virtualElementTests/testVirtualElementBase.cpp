@@ -176,10 +176,10 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
   CellBlock::NodeMapType const & cellToNodeMap = cellSubRegion.nodeList();
-  CellBlock::FaceMapType const & elementToFaceMap = cellSubRegion.faceList();
-  FaceManager::NodeMapType const & faceToNodeMap = faceManager.nodeList();
-  FaceManager::EdgeMapType const & faceToEdgeMap = faceManager.edgeList();
-  EdgeManager::NodeMapType const & edgeToNodeMap = edgeManager.nodeList();
+  arrayView2d< localIndex const > const & elementToFaceMap = cellSubRegion.faceList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList().toViewConst();
   arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
   arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
   arrayView1d< real64 const > const faceAreas = faceManager.faceArea();

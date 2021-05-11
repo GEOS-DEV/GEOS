@@ -29,8 +29,16 @@ template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 class ConformingVirtualElementOrder1 final : public VirtualElementBase
 {
 public:
+  using InputNodeCoords = arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >;
+  using InputCellToNodeMap = CellBlock::NodeMapType;
+  using InputCellToFaceMap = arrayView2d< localIndex const >;
+  using InputFaceToNodeMap = ArrayOfArraysView< localIndex const >;
+  using InputFaceToEdgeMap = ArrayOfArraysView< localIndex const >;
+  using InputEdgeToNodeMap = arrayView2d< localIndex const >;
+
   static constexpr localIndex maxSupportPoints = MAXCELLNODES;
   static constexpr localIndex numQuadraturePoints = 1;
+
   struct BasisData
   {
     localIndex maxSupportPoints = MAXCELLNODES;
@@ -45,13 +53,13 @@ public:
 private:
   GEOSX_HOST_DEVICE
   static void
-  computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
+  computeFaceIntegrals( InputNodeCoords const & nodesCoords,
                         array1d< localIndex > const & faceToNodes,
                         array1d< localIndex > const & faceToEdges,
                         real64 const & faceArea,
                         real64 const faceCenter[3],
                         real64 const faceNormal[3],
-                        EdgeManager::NodeMapType const & edgeToNodes,
+                        InputEdgeToNodeMap const & edgeToNodes,
                         real64 const & invCellDiameter,
                         real64 const cellCenter[3],
                         real64 basisIntegrals[MAXFACENODES],
@@ -64,12 +72,12 @@ public:
   GEOSX_HOST_DEVICE
   static void
   computeProjectors( localIndex const & cellIndex,
-                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                     CellBlock::NodeMapType const & cellToNodeMap,
-                     CellBlock::FaceMapType const & elementToFaceMap,
-                     FaceManager::NodeMapType const & faceToNodeMap,
-                     FaceManager::EdgeMapType const & faceToEdgeMap,
-                     EdgeManager::NodeMapType const & edgeToNodeMap,
+                     InputNodeCoords const & nodesCoords,
+                     InputCellToNodeMap const & cellToNodeMap,
+                     InputCellToFaceMap const & elementToFaceMap,
+                     InputFaceToNodeMap const & faceToNodeMap,
+                     InputFaceToEdgeMap const & faceToEdgeMap,
+                     InputEdgeToNodeMap const & edgeToNodeMap,
                      arrayView2d< real64 const > const faceCenters,
                      arrayView2d< real64 const > const faceNormals,
                      arrayView1d< real64 const > const faceAreas,
@@ -153,6 +161,7 @@ public:
                             array1d< localIndex > const & >( points,
                                                              selectAllPoints,
                                                              numPoints );
+    return 0.0;
   }
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
