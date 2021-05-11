@@ -34,6 +34,7 @@ WrapperBase::WrapperBase( string const & name,
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_plotLevel( PlotLevel::NOPLOT ),
   m_inputFlag( InputFlags::INVALID ),
+  m_successfulReadFromInput( false ),
   m_description(),
   m_registeringObjects(),
   m_conduitNode( parent.getConduitNode()[ name ] )

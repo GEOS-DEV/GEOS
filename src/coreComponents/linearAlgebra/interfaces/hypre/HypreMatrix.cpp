@@ -190,10 +190,10 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
     offsets[row] = pOffsets[row];
   }
 
-  localMatrix.move( LvArray::MemorySpace::GPU, false );
-  rows.move( LvArray::MemorySpace::GPU, false );
-  sizes.move( LvArray::MemorySpace::GPU, false );
-  offsets.move( LvArray::MemorySpace::GPU, false );
+  localMatrix.move( LvArray::MemorySpace::cuda, false );
+  rows.move( LvArray::MemorySpace::cuda, false );
+  sizes.move( LvArray::MemorySpace::cuda, false );
+  offsets.move( LvArray::MemorySpace::cuda, false );
 
   open();
 
@@ -408,8 +408,8 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
   rowIndexDevice[0] = rowIndex0;
   ncolsDevice[0] = LvArray::integerConversion< HYPRE_Int >( size );
 
-  rowIndexDevice.move( LvArray::MemorySpace::GPU, false );
-  ncolsDevice.move( LvArray::MemorySpace::GPU, false );
+  rowIndexDevice.move( LvArray::MemorySpace::cuda, false );
+  ncolsDevice.move( LvArray::MemorySpace::cuda, false );
 
   globalIndex const * const rowIndex = rowIndexDevice.data();
   HYPRE_Int * const ncols = ncolsDevice.data();
@@ -787,7 +787,7 @@ void HypreMatrix::scale( real64 const scalingFactor )
   HYPRE_Int const diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
   HYPRE_Real * const ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
 
-  forAll< execPolicy >( diag_nnz, [=] GEOSX_HOST_DEVICE ( HYPRE_Int const i )
+  forAll< hypre::execPolicy >( diag_nnz, [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
   {
     ptr_diag_data[i] *= scalingFactor;
   } );
@@ -796,7 +796,7 @@ void HypreMatrix::scale( real64 const scalingFactor )
   HYPRE_Int const offdiag_nnz = hypre_CSRMatrixNumNonzeros( prt_offdiag_CSR );
   HYPRE_Real * const ptr_offdiag_data = hypre_CSRMatrixData( prt_offdiag_CSR );
 
-  forAll< execPolicy >( offdiag_nnz, [=] GEOSX_HOST_DEVICE ( HYPRE_Int const i )
+  forAll< hypre::execPolicy >( offdiag_nnz, [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
   {
     ptr_offdiag_data[i] *= scalingFactor;
   } );
@@ -819,7 +819,7 @@ void HypreMatrix::leftScale( HypreVector const & vec )
   HYPRE_Real * const va_diag = hypre_CSRMatrixData( csr_diag );
   HYPRE_Real * const va_offdiag = hypre_CSRMatrixData( csr_offdiag );
 
-  forAll< execPolicy >( numLocalRows(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
   {
     for( HYPRE_Int j = ia_diag[i]; j < ia_diag[i + 1]; ++j )
     {
@@ -971,7 +971,7 @@ void HypreMatrix::extractDiagonal( HypreVector & dst ) const
   HYPRE_Int const * const ja        = hypre_CSRMatrixJ( csr );
   HYPRE_Real const * const va       = hypre_CSRMatrixData( csr );
 
-  forAll< execPolicy >( numLocalRows(), [=] GEOSX_HOST_DEVICE ( localIndex const localRow )
+  forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const localRow )
   {
     for( HYPRE_Int j = ia[localRow]; j < ia[localRow + 1]; ++j )
     {
@@ -1173,7 +1173,7 @@ void HypreMatrix::print( std::ostream & os ) const
         {
 
           sprintf( str,
-#if defined(GEOSX_USE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
+#ifdef GEOSX_USE_HYPRE_CUDA
                    "%i%20i%20i%24.10e\n",
 #else
                    "%i%20lli%20lli%24.10e\n",
@@ -1187,7 +1187,7 @@ void HypreMatrix::print( std::ostream & os ) const
         for( HYPRE_Int j = offdiag_IA[i]; j < offdiag_IA[i + 1]; ++j )
         {
           sprintf( str,
-#if defined(GEOSX_USE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
+#ifdef GEOSX_USE_HYPRE_CUDA
                    "%i%20i%20i%24.10e\n",
 #else
                    "%i%20lli%20lli%24.10e\n",
@@ -1300,8 +1300,8 @@ real64 HypreMatrix::normInf() const
   HYPRE_Real const * const va_diag = hypre_CSRMatrixData( csr_diag );
   HYPRE_Real const * const va_offdiag = hypre_CSRMatrixData( csr_offdiag );
 
-  RAJA::ReduceMax< ReducePolicy< execPolicy >, HYPRE_Real > maxRowAbsSum( 0.0 );
-  forAll< execPolicy >( numLocalRows(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, HYPRE_Real > maxRowAbsSum( 0.0 );
+  forAll< hypre::execPolicy >( numLocalRows(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
   {
     HYPRE_Real rowAbsSum = 0.0;
     for( HYPRE_Int j = ia_diag[i]; j < ia_diag[i + 1]; ++j )

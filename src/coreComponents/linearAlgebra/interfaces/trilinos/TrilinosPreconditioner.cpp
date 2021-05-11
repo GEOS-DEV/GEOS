@@ -13,7 +13,7 @@
  */
 
 /**
- * @file PreconditionerAMG.cpp
+ * @file TrilinosPreconditioner.cpp
  */
 
 #include "TrilinosPreconditioner.hpp"

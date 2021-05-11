@@ -389,7 +389,9 @@ protected:
   virtual void extract( arrayView1d< real64 > const & localVector ) const
   {
     GEOSX_LAI_ASSERT_EQ( localSize(), localVector.size() );
+    localVector.move( LvArray::MemorySpace::host, true );
     real64 const * const data = extractLocalVector();
+    localVector.move( LvArray::MemorySpace::host, true );
     std::copy( data, data + localVector.size(), localVector.data() );
   }
 
