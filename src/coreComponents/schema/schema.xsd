@@ -964,7 +964,7 @@ the relative residual norm satisfies:
 		<!--dtSismoTrace => Time step size to compute the sismo trace-->
 		<xsd:attribute name="dtSismoTrace" type="real64" default="0" />
 		<!--indexSismoTrace =>  Index of the sismo trace -->
-		<xsd:attribute name="indexSismoTrace" type="localIndex" default="1" />
+		<xsd:attribute name="indexSismoTrace" type="localIndex" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->

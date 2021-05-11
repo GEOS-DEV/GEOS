@@ -168,11 +168,10 @@ private:
 
   /**
    * @brief Save the sismo trace in file
-   * @param isismo index number of the sismo trace
-   * @param val_pressure value of the pressure for isismo
+   * @param pressure_receivers array of pressure values at the receivers locations
    * @param filename name of the output file
    */
-  void saveSismo( localIndex isismo, real64 val_pressure, char *filename );
+  void saveSismo( arrayView2d< real64 const > const pressure_receivers );
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;

@@ -108,7 +108,7 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
 
   registerWrapper( viewKeyStruct::indexSismoTraceString(), &m_indexSismoTrace ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1 ).
+    setApplyDefaultValue( 0 ).
     setDescription( " Index of the sismo trace " );
 }
 
@@ -327,7 +327,8 @@ void AcousticWaveEquationSEM::computeSismoTrace(real64 const time_n, real64 cons
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 dtSismo = m_dtSismoTrace;
+  real64 const time_sismo = m_dtSismoTrace*iSismo;
+  real64 const time_np1 = time_n+dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
@@ -346,35 +347,36 @@ void AcousticWaveEquationSEM::computeSismoTrace(real64 const time_n, real64 cons
 	ptmp_np1 += pressure_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
 	ptmp_n += pressure_n[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
       }
-      p_rcvs[ircv][iSismo] = ((time_n + dt - dtSismo)*ptmp_n+(dtSismo-dt)*ptmp_np1)/dtSismo;
+      p_rcvs[ircv][iSismo] = ((time_np1 - time_sismo)*ptmp_n+(time_sismo-time_n)*ptmp_np1)/dt;
     }
   } );
-
-  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
-  {
-    if( this->m_outputSismoTrace == 1 )
-    {
-      if( receiverIsLocal[ircv] == 1 )
-      {
-        // Note: this "manual" output to file is temporary
-        //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-        // TODO: remove the (sprintf+saveSismo) and replace with TimeHistory
-        char filename[50];
-        sprintf( filename, "sismoTraceReceiver%0d.txt", static_cast< int >( ircv ) );
-        this->saveSismo( iSismo, p_rcvs[ircv][iSismo], filename );
-      }
-    }
-  } );
+  
 }
 
 /// Use for now until we get the same functionality in TimeHistory
-void AcousticWaveEquationSEM::saveSismo( localIndex iSismo, real64 val_pressure, char *filename )
+void AcousticWaveEquationSEM::saveSismo( arrayView2d< real64 const > const pressure_receivers )
 {
   GEOSX_MARK_FUNCTION;
+
+  arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
   
-  std::ofstream f( filename, std::ios::app );
-  f<< iSismo << " " << val_pressure << std::endl;
-  f.close();
+  forAll< serialPolicy >( pressure_receivers.size( 0 ), [=] ( localIndex const ircv )
+  {
+    if( receiverIsLocal[ircv] == 1 )
+    {
+      char filename[50];
+      sprintf( filename, "sismoTraceReceiver%0d.txt", static_cast< int >( ircv ) );
+      std::ofstream f( filename, std::ios::app );
+      
+      for( localIndex iSismo=0; iSismo < pressure_receivers.size( 1 ); iSismo++ )
+      {
+	//real64 timeSismo = iSismo*m_dtSismoTrace;
+	f<< iSismo << " " << pressure_receivers[ircv][iSismo] << std::endl;
+      }
+      
+      f.close();
+    }
+  } );
 }
 
 
@@ -770,6 +772,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     }
   } );
   }
+
   /// Synchronize pressure fields
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( "pressure_np1" );
@@ -788,6 +791,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     stiffnessVector[a] = 0.0;
     rhs[a] = 0.0;
   });
+  
   real64 checkSismo = m_dtSismoTrace*m_indexSismoTrace;
   if( time_n <= checkSismo &&  checkSismo < (time_n + dt) )
   {
@@ -795,6 +799,20 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     m_indexSismoTrace ++;
   }
 
+
+    // Note: this "manual" output to file is temporary
+  //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+  // TODO: remove the (sprintf+saveSismo) and replace with TimeHistory
+  if(m_outputSismoTrace == 1)
+  {
+    if(m_indexSismoTrace == m_nSampleSismoTrace)
+    {
+      arrayView2d< real64 const > const p_rcvs   = m_pressureNp1AtReceivers.toView();
+      this->saveSismo( p_rcvs);
+    }
+  }
+
+  
   return dt;
 }
 
