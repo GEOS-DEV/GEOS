@@ -75,7 +75,6 @@ public:
                                localIndex const GEOSX_UNUSED_PARAM( q ),
                                real64 const & GEOSX_UNUSED_PARAM( pressure )  ) const
   {
-    GEOSX_ERROR( "Called updatePorosity of RockBase." );
   }
 
 protected:

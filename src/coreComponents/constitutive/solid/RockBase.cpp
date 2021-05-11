@@ -83,6 +83,7 @@ void RockBase::allocateConstitutiveData( dataRepository::Group & parent,
   m_newPorosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_oldPorosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_dPorosity_dPressure.resize( 0, numConstitutivePointsPerParentIndex );
+  m_grainDensity.resize( 0, numConstitutivePointsPerParentIndex );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

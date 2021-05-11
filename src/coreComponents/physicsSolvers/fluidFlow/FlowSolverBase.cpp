@@ -23,6 +23,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseKernels.hpp"
 #include "constitutive/permeability/permeabilitySelector.hpp"
 #include "constitutive/solid/CompressibleRock.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -216,15 +217,20 @@ void FlowSolverBase::updateSolidFlowProperties( CellElementSubRegion & subRegion
   arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
   // update porosity
-  CompressibleRock & solidModel =
-    getConstitutiveModel< CompressibleRock >( subRegion, m_solidModelNames[targetIndex] );
+  RockBase & solidModel =
+    getConstitutiveModel< RockBase >( subRegion, m_solidModelNames[targetIndex] );
 
-  CompressibleRock::KernelWrapper porosityWrapper = solidModel.createKernelWrapper();
+  constitutive::ConstitutivePassThru< RockBase >::execute( solidModel, [&] ( auto & castedSolid )
+  {
+    typename TYPEOFREF( castedSolid ) ::KernelWrapper solidWrapper = castedSolid.createKernelUpdates();
 
-  PorosityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                    porosityWrapper,
-                                                    pressure,
-                                                    deltaPressure );
+    PorosityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                      solidWrapper,
+                                                      pressure,
+                                                      deltaPressure );
+  } );
+
+
 
   arrayView2d< real64 const > const & porosity = solidModel.getPorosity();
 
@@ -253,7 +259,7 @@ void FlowSolverBase::updateSolidFlowProperties( SurfaceElementSubRegion & subReg
   CompressibleRock & solidModel =
     getConstitutiveModel< CompressibleRock >( subRegion, m_solidModelNames[targetIndex] );
 
-  CompressibleRock::KernelWrapper porosityWrapper = solidModel.createKernelWrapper();
+  CompressibleRock::KernelWrapper porosityWrapper = solidModel.createKernelUpdates();
 
   PorosityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
                                                     porosityWrapper,

@@ -398,7 +398,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
   std::set< localIndex > tmpNonSendOrReceiveNodes;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
-  rho = elementRegionManager.constructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
+  rho = elementRegionManager.constructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "grainDensity",
                                                                                                               targetRegionNames(),
                                                                                                               solidMaterialNames() );
 

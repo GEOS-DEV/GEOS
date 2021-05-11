@@ -611,7 +611,7 @@ void PoroelasticSolver::updatePermeability( NodeManager const & nodeManager,
   constitutive::constitutiveUpdatePassThru( perm, [&] ( auto & castedPerm )
   {
     finiteElement::FiniteElementBase &
-    subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName() );
+    subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
 
     finiteElement::dispatch3D( subRegionFE,
                                [&solidName,

@@ -107,7 +107,7 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
     dFlux_dTrans[ke] = mobility * dPotDif_dTrans[ke];
 
     dFlux_dP[ke] = mobility * ( transmissibility[ke] - dDensMean_dP[ke] * sumWeightGrav )
-        + dMobility_dP[ke] * potDif + dFlux_dTrans[ke] * dTrans_dPres[ke];
+                   + dMobility_dP[ke] * potDif + dFlux_dTrans[ke] * dTrans_dPres[ke];
   }
 }
 

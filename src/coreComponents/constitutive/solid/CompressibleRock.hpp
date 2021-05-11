@@ -123,7 +123,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper()
+  KernelWrapper createKernelUpdates()
   {
     return KernelWrapper( m_newPorosity,
                           m_oldPorosity,

@@ -66,7 +66,7 @@ public:
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
   /// Compile time value for the number of quadrature points per element.
-   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+  static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
@@ -94,44 +94,44 @@ public:
                arrayView1d< real64 > const & inputRhs,
                real64 const (&inputGravityVector)[3],
                arrayView1d< string const > const & fluidModelNames ):
-           Base( nodeManager,
-                 edgeManager,
-                 faceManager,
-                 targetRegionIndex,
-                 elementSubRegion,
-                 finiteElementSpace,
-                 inputConstitutiveType,
-                 dispDofNumber,
-                 rankOffset,
-                 inputMatrix,
-                 inputRhs ),
-          m_X( nodeManager.referencePosition()),
-          m_disp( nodeManager.totalDisplacement()),
-          m_deltaDisp( nodeManager.incrementalDisplacement()),
-          m_w( embeddedSurfSubRegion.displacementJump() ),
-          m_matrixPresDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
-          m_fracturePresDofNumber( embeddedSurfSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
-          m_wDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
-          m_solidDensity( inputConstitutiveType.getDensity() ),
-          m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
-          m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
-          m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
-          m_matrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
-          m_deltaMatrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
-          m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
-          m_tractionVec( embeddedSurfSubRegion.tractionVector() ),
-          m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump() ),
-          m_dTraction_dPressure( embeddedSurfSubRegion.dTraction_dPressure() ),
-          m_nVec( embeddedSurfSubRegion.getNormalVector() ),
-          m_tVec1( embeddedSurfSubRegion.getTangentVector1() ),
-          m_tVec2( embeddedSurfSubRegion.getTangentVector2() ),
-          m_surfaceCenter( embeddedSurfSubRegion.getElementCenter() ),
-          m_surfaceArea( embeddedSurfSubRegion.getElementArea() ),
-          m_elementVolume( elementSubRegion.getElementVolume() ),
-          m_fracturedElems( elementSubRegion.fracturedElementsList() ),
-          m_cellsToEmbeddedSurfaces( elementSubRegion.embeddedSurfacesList().toViewConst() ),
-          m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-          m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) )
+    Base( nodeManager,
+          edgeManager,
+          faceManager,
+          targetRegionIndex,
+          elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType,
+          dispDofNumber,
+          rankOffset,
+          inputMatrix,
+          inputRhs ),
+    m_X( nodeManager.referencePosition()),
+    m_disp( nodeManager.totalDisplacement()),
+    m_deltaDisp( nodeManager.incrementalDisplacement()),
+    m_w( embeddedSurfSubRegion.displacementJump() ),
+    m_matrixPresDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
+    m_fracturePresDofNumber( embeddedSurfSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
+    m_wDofNumber( jumpDofNumber ),
+    m_solidDensity( inputConstitutiveType.getDensity() ),
+    m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
+    m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
+    m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
+    m_matrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
+    m_deltaMatrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
+    m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
+    m_tractionVec( embeddedSurfSubRegion.tractionVector() ),
+    m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump() ),
+    m_dTraction_dPressure( embeddedSurfSubRegion.dTraction_dPressure() ),
+    m_nVec( embeddedSurfSubRegion.getNormalVector() ),
+    m_tVec1( embeddedSurfSubRegion.getTangentVector1() ),
+    m_tVec2( embeddedSurfSubRegion.getTangentVector2() ),
+    m_surfaceCenter( embeddedSurfSubRegion.getElementCenter() ),
+    m_surfaceArea( embeddedSurfSubRegion.getElementArea() ),
+    m_elementVolume( elementSubRegion.getElementVolume() ),
+    m_fracturedElems( elementSubRegion.fracturedElementsList() ),
+    m_cellsToEmbeddedSurfaces( elementSubRegion.embeddedSurfacesList().toViewConst() ),
+    m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
+    m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) )
   {}
 
   //*****************************************************************************
@@ -296,8 +296,8 @@ public:
         stack.dispEqnRowIndices[a*3+i] = m_dofNumber[localNodeIndex]+i-m_dofRankOffset;
         stack.dispColIndices[a*3+i]    = m_dofNumber[localNodeIndex]+i;
         stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
-        stack.dispLocal[ a*3 + i ] = m_disp[localNodeIndex][i];
-        stack.deltaDispLocal[ a ][ i ] = m_deltaDisp[localNodeIndex][i];
+        stack.dispLocal[ a*3 + i ] = m_disp[ localNodeIndex ][ i ];
+        stack.deltaDispLocal[ a ][ i ] = m_deltaDisp[ localNodeIndex ][ i ];
       }
     }
 
@@ -327,9 +327,7 @@ public:
     // Get displacement: (i) basis functions (N), (ii) basis function
     // derivatives (dNdX), and (iii) determinant of the Jacobian transformation
     // matrix times the quadrature weight (detJxW)
-    real64 N[numNodesPerElem];
     real64 dNdX[numNodesPerElem][3];
-    FE_TYPE::calcN( q, N );
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     // EFEM part starts here
@@ -405,7 +403,6 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
     constexpr int nUdof = numNodesPerElem*3;
 
@@ -452,12 +449,10 @@ public:
                                                                               stack.jumpColIndices,
                                                                               stack.localKww[i],
                                                                               3 );
-
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.dispColIndices,
                                                                               stack.localKwu[i],
                                                                               numNodesPerElem*3 );
-
 
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               &matrixPressureColIndex,

@@ -489,16 +489,16 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       FaceElementSubRegion & fractureSubRegion  = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
 
       dataRepository::Group & setGroup =
-          fractureSubRegion.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+        fractureSubRegion.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
 
       SortedArray< localIndex > & targetSet =
-          setGroup.getWrapper< SortedArray< localIndex > >( "all" ).reference();
+        setGroup.getWrapper< SortedArray< localIndex > >( "all" ).reference();
 
       forAll< serialPolicy >( fractureSubRegion.size(), [&] ( localIndex const ei )
 
-     {
+      {
         targetSet.insert( ei );
-     } );
+      } );
     }
   }
 
