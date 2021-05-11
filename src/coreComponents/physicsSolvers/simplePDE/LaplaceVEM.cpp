@@ -184,7 +184,7 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       real64 cellCenter[3] { 0.0 };
       real64 cellVolume = 0.0;
       forAll< parallelDevicePolicy< 32 > >( numCells, [=] GEOSX_HOST_DEVICE
-                                            ( localIndex const cellIndex ) mutable
+                                              ( localIndex const cellIndex ) mutable
       {
         VEM::BasisData basisData;
 
