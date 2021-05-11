@@ -4,7 +4,6 @@ Created on 9/02/2021
 @author: macpro
 '''
 
-import pygeosx
 from processSpawn import firstInit, multiProcessing, daskProcessing
 from seismicAcquisition import equispaced_acquisition
 from source import ricker

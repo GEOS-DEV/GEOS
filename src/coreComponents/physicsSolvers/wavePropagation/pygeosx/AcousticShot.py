@@ -58,33 +58,35 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
 
     outputSismoTrace = acoustic_group.get_wrapper("outputSismoTrace").value()
 
-    dt_geosx        = problem.get_wrapper("Events/solverApplications/forceDt").value()
-    maxT            = problem.get_wrapper("Events/maxTime").value()
-    cycle_freq      = problem.get_wrapper("Events/python/cycleFrequency").value()
-    cycle           = problem.get_wrapper("Events/python/lastCycle").value()
-    cflFactor       = problem.get_wrapper("Solvers/acousticSolver/cflFactor").value()[0]
-    curr_time       = problem.get_wrapper("Events/time").value()
+    dt_geosx   = problem.get_wrapper("Events/solverApplications/forceDt").value()
+    maxT       = problem.get_wrapper("Events/maxTime").value()
+    cycle_freq = problem.get_wrapper("Events/python/cycleFrequency").value()
+    cycle      = problem.get_wrapper("Events/python/lastCycle").value()
+    cflFactor  = problem.get_wrapper("Solvers/acousticSolver/cflFactor").value()[0]
+    curr_time  = problem.get_wrapper("Events/time").value()
 
-    dt = shot_list[0].getSource().getTimeStep()
-    cycle_freq[0] = 1
+    dt            = shot_list[0].getSource().getTimeStep()
     dt_geosx[0]   = dt
     maxCycle      = int(maxT[0]/dt)
+    cycle_freq[0] = 1
     maxT[0]       = (maxCycle+1) * dt
     dt_cycle      = 1 #to be changed
 
     pressure_at_receivers = np.zeros((maxCycle+1, shot_list[0].getReceiverSet().getNumberOfReceivers()))
     nb_shot = len(shot_list)
 
-    if rank==0:
-        create_segy(shot_list, maxCycle+1, tracePath)
+    if outputSismoTrace == 1 :
+        if rank==0:
+            create_segy(shot_list, maxCycle+1, tracePath)
+
 
     ishot = 0
-    #if rank==0:
-    #    print_shot_config(shot_list, ishot)
+    if rank==0:
+        print_shot_config(shot_list, ishot)
 
     #Set first source and receivers positions in GEOSX
-    src_pos          = shot_list[ishot].getSource().getCoord()
-    rcv_pos_list     = shot_list[ishot].getReceiverSet().getSetCoord()
+    src_pos      = shot_list[ishot].getSource().getCoord()
+    rcv_pos_list = shot_list[ishot].getReceiverSet().getSetCoord()
 
     src_pos_geosx.to_numpy()[0] = src_pos
     rcv_pos_geosx.resize(len(rcv_pos_list))
@@ -100,11 +102,8 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
         if cycle[0] < (ishot+1) * maxCycle:
             pressure_at_receivers[cycle[0] - ishot * maxCycle, :] = pressure_geosx.to_numpy()[:]
 
-           # print("rank = " + str(rank) + "   pressure = " +str(pressure_geosx.to_numpy()[100]))
         else:
             pressure_at_receivers[maxCycle, :] = pressure_geosx.to_numpy()[:]
-            #if rank==0:
-            #    print_pressure(pressure_at_receivers, ishot)
 
             #Segy export and flag update
             if outputSismoTrace == 1 :
@@ -115,7 +114,7 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
 
             shot_list[ishot].flagUpdate("Done")
 
-            #Reset time/pressure to 0
+            #Reset time to -dt and pressure to 0
             curr_time[0]               = -dt
             pressure_nm1.to_numpy()[:] = 0.0
             pressure_n.to_numpy()[:]   = 0.0
@@ -124,8 +123,8 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
             #Increment shot
             ishot += 1
             if ishot < nb_shot:
-               # if rank==0:
-               #     print_shot_config(shot_list, ishot)
+                if rank==0:
+                    print_shot_config(shot_list, ishot)
 
                 #Set new receivers and source positions in GEOSX
                 src_pos          = shot_list[ishot].getSource().getCoord()
