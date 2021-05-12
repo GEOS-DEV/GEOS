@@ -793,25 +793,24 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   });
   
   real64 checkSismo = m_dtSismoTrace*m_indexSismoTrace;
-  if( time_n <= checkSismo &&  checkSismo < (time_n + dt) )
+  real64 epsilonLoc = 1e-12;
+  if( (time_n-epsilonLoc) <= checkSismo &&  checkSismo < (time_n + dt) )
   {
     computeSismoTrace( time_n, dt, m_indexSismoTrace, p_np1, p_n );
     m_indexSismoTrace ++;
   }
 
-
-    // Note: this "manual" output to file is temporary
+  // Note: this "manual" output to file is temporary
   //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
   // TODO: remove the (sprintf+saveSismo) and replace with TimeHistory
-  if(m_outputSismoTrace == 1)
+  if( m_outputSismoTrace == 1 )
   {
-    if(m_indexSismoTrace == m_nSampleSismoTrace)
+    if( m_indexSismoTrace % m_nSampleSismoTrace == 0 )
     {
-      arrayView2d< real64 const > const p_rcvs   = m_pressureNp1AtReceivers.toView();
-      this->saveSismo( p_rcvs);
+      arrayView2d< real64 const > const p_rcvs = m_pressureNp1AtReceivers.toView();
+      this->saveSismo( p_rcvs );
     }
   }
-
   
   return dt;
 }
