@@ -140,7 +140,7 @@ TEST( testPacking, testTensorPacking )
   parallelDeviceEvents unpackEvents;
   bufferOps::UnpackDevice( bc, unp.toView(), unpackEvents );
   waitAllDeviceEvents( unpackEvents );
-  unp.move( LvArray::MemorySpace::CPU );
+  unp.move( LvArray::MemorySpace::host );
   for( localIndex ii = 0; ii < 3; ++ii )
     EXPECT_TRUE( tns[0][ii] = unp[0][ii] );
 }
@@ -169,7 +169,7 @@ TEST( testPacking, testPackingDevice )
   parallelDeviceEvents unpackEvents;
   bufferOps::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents );
   waitAllDeviceEvents( unpackEvents );
-  unpacked.move( LvArray::MemorySpace::CPU );
+  unpacked.move( LvArray::MemorySpace::host );
   for( localIndex ii = 0; ii < size; ++ii )
     EXPECT_EQ( veloc[ii], unpacked[ii] );
 }
@@ -198,7 +198,7 @@ TEST( testPacking, testPackingDeviceHelper )
   buffer_unit_type const * cbuffer = &buf[0];
   dataRepository::wrapperHelpers::UnpackDevice( cbuffer, unpacked.toView(), unpackEvents );
   waitAllDeviceEvents( unpackEvents );
-  unpacked.move( LvArray::MemorySpace::CPU );
+  unpacked.move( LvArray::MemorySpace::host );
   for( localIndex ii = 0; ii < size; ++ii )
     EXPECT_EQ( veloc[ii], unpacked[ii] );
 }
@@ -207,7 +207,7 @@ TEST( testPacking, testPackByIndexDevice )
 {
   std::srand( std::time( nullptr ));
   constexpr localIndex size = 10000;
-  localIndex pack_count = std::rand() % size;
+  localIndex pack_count = 5000;
   array1d< R1Tensor > veloc( size );
   array1d< localIndex > indices( pack_count );
   array1d< R1Tensor > unpacked( size );
@@ -219,7 +219,7 @@ TEST( testPacking, testPackByIndexDevice )
   for( localIndex ii = 0; ii < pack_count; ++ii )
     indices[ii] = std::rand() % size;
 
-  // std::sort(indices.begin(),indices.end())
+  std::sort( indices.begin(), indices.end());
 
   buffer_unit_type * null_buf = NULL;
   // [ num_dim, stride_i.. , tensor_0, tensor_1, ..., tensor_n ]
@@ -236,7 +236,7 @@ TEST( testPacking, testPackByIndexDevice )
   localIndex unpacked_size = bufferOps::UnpackByIndexDevice( cbuffer, unpacked.toView(), indices.toViewConst(), unpackEvents );
   EXPECT_EQ ( unpacked_size, packed_size );
   waitAllDeviceEvents( unpackEvents );
-  unpacked.move( LvArray::MemorySpace::CPU );
+  unpacked.move( LvArray::MemorySpace::host );
   for( localIndex ii = 0; ii < size; ++ii )
   {
     if( std::find( indices.begin(), indices.end(), ii ) != indices.end() )

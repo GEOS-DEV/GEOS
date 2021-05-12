@@ -92,7 +92,7 @@ public:
               real64 const (&inputGravityVector)[3],
               localIndex const numComponents,
               localIndex const numPhases,
-              arrayView1d< string const > const & fluidModelNames,
+              arrayView1d< string const > const fluidModelNames,
               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
               arrayView1d< real64 > const & inputRhs ):
     Base( nodeManager,
@@ -371,7 +371,7 @@ public:
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * m_fluidPhaseCompFrac( k, q, ip, ic )
                                            + phaseAmountNew * m_dFluidPhaseCompFrac_dPressure( k, q, ip, ic );
 
-        componentAmount[ic] = fluidPhaseDensityTimesFluidPhaseSaturation * m_fluidPhaseCompFrac( k, q, ip, ic );
+        componentAmount[ic] += fluidPhaseDensityTimesFluidPhaseSaturation * m_fluidPhaseCompFrac( k, q, ip, ic );
 
         stack.localFlowResidual[ic] += ( phaseCompAmountNew - phaseCompAmountOld ) * detJxW;
         stack.localFlowFlowJacobian[ic][0] += dPhaseCompAmount_dP * detJxW;;
@@ -526,6 +526,16 @@ protected:
   real64 const m_biotCoefficient;
 };
 
+using MultiphaseKernelFactory = finiteElement::KernelFactory< Multiphase,
+                                                              arrayView1d< globalIndex const > const &,
+                                                              string const &,
+                                                              globalIndex const,
+                                                              real64 const (&)[3],
+                                                              localIndex const,
+                                                              localIndex const,
+                                                              arrayView1d< string const > const,
+                                                              CRSMatrixView< real64, globalIndex const > const &,
+                                                              arrayView1d< real64 > const & >;
 
 } // namespace PoroelasticKernels
 

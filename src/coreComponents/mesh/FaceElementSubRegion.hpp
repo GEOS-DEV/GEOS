@@ -193,9 +193,6 @@ public:
 
   ///@}
 
-  /// Unmapped face elements to nodes map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
-
   /// Unmapped face elements to edges map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToEdges;
 

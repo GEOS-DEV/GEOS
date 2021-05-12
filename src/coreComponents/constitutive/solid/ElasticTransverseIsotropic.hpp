@@ -84,6 +84,9 @@ public:
   // Use transverse isotropic form of inner product compression
   using DiscretizationOps = SolidModelDiscretizationOpsTransverseIsotropic;
 
+  /// Use base version of saveConvergedState
+  using SolidBaseUpdates::saveConvergedState;
+
   // total strain interfaces
 
   GEOSX_HOST_DEVICE
