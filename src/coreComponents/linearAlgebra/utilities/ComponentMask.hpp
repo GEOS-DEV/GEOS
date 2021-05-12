@@ -336,7 +336,7 @@ private:
   bool operator[]( int const i ) const
   {
     GEOSX_ASSERT_GT( m_numComp, i );
-    return m_mask & (mask_t(1) << i);
+    return m_mask & (mask_t( 1 ) << i);
   }
 
   ///@}
@@ -366,7 +366,7 @@ private:
     GEOSX_ASSERT_GE( MAX_COMP, numComp );
     if( numComp < m_numComp )
     {
-      m_mask &= (mask_t(1) << numComp) - 1;
+      m_mask &= (mask_t( 1 ) << numComp) - 1;
     }
     m_numComp = numComp;
   }
@@ -380,7 +380,7 @@ private:
   {
     GEOSX_ASSERT_GE( i, 0 );
     GEOSX_ASSERT_GT( m_numComp, i );
-    m_mask |= mask_t(1) << i;
+    m_mask |= mask_t( 1 ) << i;
   }
 
   /**
@@ -392,7 +392,7 @@ private:
   {
     GEOSX_ASSERT_GE( i, 0 );
     GEOSX_ASSERT_GT( m_numComp, i );
-    m_mask &= ~(mask_t(1) << i);
+    m_mask &= ~(mask_t( 1 ) << i);
   }
 
   /**
@@ -427,7 +427,7 @@ private:
   ComponentMask operator~() const
   {
     ComponentMask mask( m_numComp );
-    mask.m_mask = ~m_mask & ((mask_t(1) << m_numComp) - 1);
+    mask.m_mask = ~m_mask & ((mask_t( 1 ) << m_numComp) - 1);
     return mask;
   }
 
