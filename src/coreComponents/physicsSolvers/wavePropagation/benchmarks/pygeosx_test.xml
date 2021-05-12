@@ -14,7 +14,8 @@
       targetRegions="{ Region }"
       sourceCoordinates="{ { 1005.0, 1005.0, 1005.0 } }"
       timeSourceFrequency="5.0"
-      receiverCoordinates="{ { 1105,1005, 1005 } }"/>
+      receiverCoordinates="{ { 1105,1005, 1005 } }"
+      outputSismoTrace="1"/>
   </Solvers>
 
   <!-- hexahedral mesh generated internally by GEOSX -->

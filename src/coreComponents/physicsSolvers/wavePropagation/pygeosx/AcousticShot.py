@@ -8,6 +8,8 @@ import numpy as np
 import pygeosx
 
 from segyManager import *
+from fileManager import rootPath
+import os
 from print import *
 
 
@@ -77,6 +79,14 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
 
     if outputSismoTrace == 1 :
         if rank==0:
+            if os.path.exists(os.path.join(rootPath,"outputSismoTrace/")):
+                pass
+            else:
+                os.mkdir(os.path.join(rootPath,"outputSismoTrace/"))
+            if os.path.exists(tracePath):
+                pass
+            else:
+                os.mkdir(tracePath)
             create_segy(shot_list, maxCycle+1, tracePath)
 
 

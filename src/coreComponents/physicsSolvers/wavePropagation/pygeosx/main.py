@@ -13,8 +13,9 @@ args = parse_args()
 
 def main():
 
-    maxT, dt = firstInit(args.geosx, args.xml, mpiranks = 2, x = 2)
-
+   # maxT, dt = firstInit(args.geosx, args.xml, mpiranks = 2, x = 2)
+    maxT = 0.5
+    dt = 0.005
     frequency = 5.0
     wavelet   = ricker(maxT, dt, frequency)
 
@@ -30,7 +31,7 @@ def main():
                                        number_of_receivers = [10]
                                        )
 
-    #multiProcessing(shot_list, args.geosx, args.xml)
+    multiProcessing(shot_list, args.geosx, args.xml, processes=2, mpiranks=8, x=4, y=2, nodes=2, nodeName="bora")
     #daskProcessing(shot_list, args.geosx, args.xml)
 
 if __name__ == "__main__":

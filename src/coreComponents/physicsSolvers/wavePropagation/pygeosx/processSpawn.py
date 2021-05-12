@@ -7,6 +7,8 @@ from dask_jobqueue import SLURMCluster
 def multiProcessing(shot_list, GEOSX, xml,
                     processes = 1,
                     mpiranks = None,
+                    nodes = 1,
+                    nodeName = None,
                     x = 1, y = 1, z = 1):
 
     """Cut shot list into desired amount of processes and run each process in parrallel
@@ -51,7 +53,7 @@ def multiProcessing(shot_list, GEOSX, xml,
         shot_file = exportShotList(i, shot_list[ind:ind + nb_shot])
 
         p.append( mp.Process(target = callProcess,
-                             args   = (shot_file, GEOSX, xml, mpiranks, x, y, z)) )
+                             args   = (shot_file, GEOSX, xml, mpiranks, nodes, nodeName, x, y, z)) )
 
         ind = ind + nb_shot
         nb_shot_m1 = nb_shot_m1 - nb_shot
@@ -60,13 +62,13 @@ def multiProcessing(shot_list, GEOSX, xml,
         p[i].start()
 
 
-    for i in range(number_of_processes):
+    for i in range(processes):
         p[i].join()
 
-    remove_shots_files()
-def callProcess(shot_file, GEOSX, xml, mpiranks, x, y, z):
+    #remove_shots_files()
+def callProcess(shot_file, GEOSX, xml, mpiranks, nodes, nodeName, x, y, z):
 
-     """Sub function of multriProcessing(). Call of different processes
+    """Sub function of multriProcessing(). Call of different processes
 
     Parameters
     ----------
@@ -92,27 +94,33 @@ def callProcess(shot_file, GEOSX, xml, mpiranks, x, y, z):
         Number of MPI partition along x axe (domain partition)
     """
 
-
     wavePropagationPath = os.path.join(GEOSX, "GEOSX/src/coreComponents/physicsSolvers/wavePropagation/")
     pygeosxPath = os.path.join(wavePropagationPath, "pygeosx/")
 
     tracePath = os.path.join(rootPath, "outputSismoTrace/")
-    if os.path.exists(tracePath):
-        pass
-    else:
-        os.mkdir(tracePath)
-
     traceProcPath = os.path.join(tracePath, "traceProc" + str(mp.current_process()._identity)[1] + "/")
-    if os.path.exists(traceProcPath):
-        pass
-    else:
-        os.mkdir(traceProcPath)
-
+    
     if mpiranks == None:
         os.system("python " + pygeosxPath + "geosxProcess.py -i " + xml + " " + shot_file + " " + traceProcPath)
     else:
-        os.system("mpirun -np " + str(mpiranks) + " python " + pygeosxPath + "/geosxProcess.py -i " + xml + " -x " + str(x) + " -y " + str(y) + " -z " + str(z) + shot_file + " " + traceProcPath)
-
+        fname = "process"+str(mp.current_process()._identity)[1]+".sh"
+        fsh = open(fname, 'w+')
+        fsh.write("#!/usr/bin/bash \n")
+        fsh.write("#SBATCH --job-name=pygeosx_seismic_acquisition \n")
+        fsh.write("#SBATCH -n " + str(mpiranks) + " \n")
+        fsh.write("#SBATCH -N " + str(nodes) + " \n")
+        if nodeName != None:
+            fsh.write("#SBATCH -C " + nodeName + " \n")
+        fsh.write("cd /beegfs/jbesset/codes/GEOSX/build-test_module-release/lib/PYGEOSX/bin/ \n")
+        fsh.write("source activate \n")
+        fsh.write("cd /beegfs/jbesset/codes/GEOSX/src/coreComponents/physicsSolvers/wavePropagation/pygeosx/ \n")
+        fsh.write("module load physics/geosx_deps \n")
+        fsh.write("module load physics/pygeosx \n")
+        fsh.write("mpirun -np " + str(mpiranks) + " --map-by node python " + pygeosxPath + "/geosxProcess.py -i " + \
+                  xml + " -x " + str(x) + " -y " + str(y) + " -z " + \
+                  str(z) + " " + shot_file + " " + traceProcPath)
+        fsh.close()
+        os.system("/usr/bin/sbatch " + fname )
 
 
 
