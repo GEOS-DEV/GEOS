@@ -733,7 +733,8 @@ void ElasticWaveEquationSEM::applyABC( real64 const time, DomainPartition & doma
   
                   localIndex numNodeGl = facesToNodes[kf][a];
       
-                  // Damping in x direction
+                 
+                  // Damping in x=xpos direction
                   if ( faceNormal[kf][0] > 0.0 )
                   {
                     real64 const alpha_x = rho[k] * vp[k];
@@ -744,7 +745,18 @@ void ElasticWaveEquationSEM::applyABC( real64 const time, DomainPartition & doma
                     damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
 
                   }
-                  // //Damping in y direction
+                  // Damping in x=xneg direction
+                  if ( faceNormal[kf][0] < 0.0 )
+                  {
+                    real64 const alpha_x = rho[k] * vp[k];
+                    real64 const alpha_y = rho[k] * vs[k];
+                    real64 const alpha_z = rho[k] * vs[k];
+                    damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                    damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                    damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+
+                  }
+                  //Damping in y=ypos direction
                   if ( faceNormal[kf][1] > 0.0 )
                   {
                     real64 const alpha_x = rho[k] * vs[k];
@@ -755,6 +767,18 @@ void ElasticWaveEquationSEM::applyABC( real64 const time, DomainPartition & doma
                     damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
      
                   }
+                  //Damping in y=yneg direction
+                  if ( faceNormal[kf][1] < 0.0 )
+                  {
+                    real64 const alpha_x = rho[k] * vs[k];
+                    real64 const alpha_y = rho[k] * vp[k];
+                    real64 const alpha_z = rho[k] * vs[k];
+                    damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                    damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                    damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+     
+                  }
+                  //Damping in z=zpos direction
                   if ( faceNormal[kf][2] > 0.0 )
                   {
                     real64 const alpha_x = rho[k] * vs[k];
@@ -764,7 +788,18 @@ void ElasticWaveEquationSEM::applyABC( real64 const time, DomainPartition & doma
                     damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
                     damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
 
-                  }     
+                  }   
+                  //Damping in z=zneg direction
+                  if ( faceNormal[kf][2] < 0.0 )
+                  {
+                    real64 const alpha_x = rho[k] * vs[k];
+                    real64 const alpha_y = rho[k] * vs[k];
+                    real64 const alpha_z = rho[k] * vp[k];
+                    damping_x[numNodeGl] += alpha_x*detJ*ds*N[a];
+                    damping_y[numNodeGl] += alpha_y*detJ*ds*N[a];
+                    damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
+
+                  }   
                 }
               }
             }  
