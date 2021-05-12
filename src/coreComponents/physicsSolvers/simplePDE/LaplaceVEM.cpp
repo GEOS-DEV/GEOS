@@ -92,31 +92,10 @@ void LaplaceVEM::setupSystem( DomainPartition & domain,
                               CRSMatrix< real64, globalIndex > & localMatrix,
                               array1d< real64 > & localRhs,
                               array1d< real64 > & localSolution,
-                              bool const GEOSX_UNUSED_PARAM( setSparsity ) )
+                              bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-
-  // Note: here we cannot use SolverBase::setupSystem, because it does:
-  //       m_localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  //       and that creates problems (integratedTests failures) on Lassen for CPU-only implicit simulations
-
-  dofManager.setMesh( domain, 0, 0 );
-
-  setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
-  localIndex const numLocalRows = dofManager.numLocalDofs();
-
-  SparsityPattern< globalIndex > pattern;
-  dofManager.setSparsityPattern( pattern );
-  localMatrix.assimilate< parallelDevicePolicy< 32 > >( std::move( pattern ) );
-
-  localRhs.resize( numLocalRows );
-  localSolution.resize( numLocalRows );
-
-  localMatrix.setName( this->getName() + "/localMatrix" );
-  localRhs.setName( this->getName() + "/localRhs" );
-  localSolution.setName( this->getName() + "/localSolution" );
+  SolverBase::setupSystem(domain, dofManager, localMatrix, localRhs, localSolution, setSparsity);
 }
 
 /*
