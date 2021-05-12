@@ -180,10 +180,10 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition
                                                                  DofManager & dofManager,
                                                                  arrayView1d< localIndex > const & rowLengths ) const
 {
-  // Add the nonzeros from coupling jump-displacement
+  // 1. Add the number of nonzeros induced by coupling jump-displacement
   m_fracturesSolver->addCouplingNumNonzeros( domain, dofManager, rowLengths );
 
-  // Add the number of nonzeros induced by coupling jump-displacement
+  // 2. Add the number of nonzeros induced by coupling jump - matrix pressure
   MeshLevel const & mesh                   = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -192,7 +192,6 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  // Coupling jump - matrix pressure
   elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
   {
     localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
@@ -235,7 +234,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition
     }
   } );
 
-  // Coupling jump (aperture) - fracture pressure due to flux term
+  // 3. Add the number of nonzeros induced by coupling jump (aperture) - fracture pressure due to flux term
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
@@ -282,6 +281,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
                                                                      DofManager const & dofManager,
                                                                      SparsityPatternView< globalIndex > const & pattern ) const
 {
+  // 1. Add sparsity pattern induced by coupling jump-displacement
   m_fracturesSolver->addCouplingSparsityPattern( domain, dofManager, pattern );
 
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
@@ -292,7 +292,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  // Coupling jump - matrix pressure
+  // 2. Add the sparsity pattern induced by coupling jump - matrix pressure
   elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
   {
     localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
@@ -331,7 +331,7 @@ void PoroelasticSolverEmbeddedFractures::addCouplingSparsityPattern( DomainParti
     }
   } );
 
-  // Coupling fracture pressure - jump (aperture) due to flux term
+  // 3. Add the sparsity pattern induced by coupling jump (aperture) - fracture pressure due to flux term
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );

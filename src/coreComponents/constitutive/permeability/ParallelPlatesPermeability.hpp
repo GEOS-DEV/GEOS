@@ -120,8 +120,8 @@ void ParallelPlatesPermeabilityUpdate::compute( real64 const & effectiveAperture
                                                 arraySlice1d< real64 > const & dPerm_dAperture ) const
 {
   // Technically this is not a permeability but it's convenient to definite like this.
-  real64 const perm  = effectiveAperture*effectiveAperture*effectiveAperture / 12;
-  real64 const dPerm = effectiveAperture*effectiveAperture / 12;
+  real64 const perm  = effectiveAperture*effectiveAperture*effectiveAperture / 12.0;
+  real64 const dPerm = 3*effectiveAperture*effectiveAperture / 12.0;
 
   for( int dim=0; dim < 3; dim++ )
   {

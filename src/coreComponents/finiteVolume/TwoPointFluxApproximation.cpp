@@ -368,7 +368,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
         stencilCellsIndex[kfe] = fractureElementIndex;
         containsLocalElement = containsLocalElement || elemGhostRank[fractureRegionIndex][0][fractureElementIndex] < 0;
 
-        stencilWeights[kfe] =  1.0 / 12.0 * edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
+        stencilWeights[kfe] = edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
 
         LvArray::tensorOps::copy< 3 >( stencilCellCenterToEdgeCenters[kfe], cellCenterToEdgeCenter );
 
@@ -690,7 +690,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
         stencilCellsIndex[kes]          = fractureElementIndex;
 
         //TODO use the proper geometrical info to compute the weight.
-        stencilWeights[kes] =  1.0 / 12.0 * edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
+        stencilWeights[kes] = edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
 
         LvArray::tensorOps::copy< 3 >( stencilCellCenterToEdgeCenters[kes], cellCenterToEdgeCenter );
       }

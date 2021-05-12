@@ -135,6 +135,7 @@ struct FluxKernel
       for( localIndex i = 0; i < stencilSize; ++i )
       {
         dofColIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+
       }
 
       for( localIndex i = 0; i < numFluxElems; ++i )

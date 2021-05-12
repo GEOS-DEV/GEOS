@@ -218,14 +218,14 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];
 
-  localIndex const er1  =  m_elementRegionIndices[iconn][1];
-  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
-  localIndex const ei1  =  m_elementIndices[iconn][1];
+//  localIndex const er1  =  m_elementRegionIndices[iconn][1];
+//  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+//  localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 const t0 = m_weights[iconn][0] * permeability[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
-  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
+  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( permeability[er0][esr0][ei0][0] );
+//  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
 
-  real64 const harmonicWeight   = t0*t1 / (t0+t1);
+  real64 const harmonicWeight   = t0; // *t1 / (t0+t1);
 
   real64 const value =  harmonicWeight;
 
@@ -249,14 +249,14 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];
 
-  localIndex const er1  =  m_elementRegionIndices[iconn][1];
-  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
-  localIndex const ei1  =  m_elementIndices[iconn][1];
+  //  localIndex const er1  =  m_elementRegionIndices[iconn][1];
+  //  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+  //  localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 const t0 = m_weights[iconn][0] * permeability[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
-  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
+    real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( permeability[er0][esr0][ei0][0] );
+  //  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
 
-  real64 const harmonicWeight   = t0*t1 / (t0+t1);
+  real64 const harmonicWeight   = t0; // *t1 / (t0+t1);
 
   real64 const value =  harmonicWeight;
 

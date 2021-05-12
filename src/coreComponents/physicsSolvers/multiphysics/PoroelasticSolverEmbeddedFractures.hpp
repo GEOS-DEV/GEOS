@@ -129,17 +129,6 @@ public:
   virtual void updateState( DomainPartition & domain ) override final;
 
 
-  void assembleTractionBalanceResidualWrtPressure( DomainPartition const & domain,
-                                                   DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
-
-  void assembleFractureFlowResidualWrtJump( DomainPartition const & domain,
-                                            DofManager const & dofManager,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            arrayView1d< real64 > const & localRhs );
-
-
   struct viewKeyStruct : PoroelasticSolver::viewKeyStruct
   {
     constexpr static char const * fracturesSolverNameString() { return "fracturesSolverName"; }

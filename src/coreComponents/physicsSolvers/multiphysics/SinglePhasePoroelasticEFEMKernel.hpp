@@ -392,7 +392,9 @@ public:
     LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, Kww_gauss, -detJ );
     LvArray::tensorOps::scaledAdd< 3, nUdof >( stack.localKwu, Kwu_gauss, -detJ );
     LvArray::tensorOps::scaledAdd< nUdof, 3 >( stack.localKuw, Kuw_gauss, -detJ );
-    LvArray::tensorOps::scaledAdd< 3 >( stack.localKwpm, Kwpm_gauss, -detJ*biotCoefficient );
+    // No neg coz the effective stress is total stress - porePressure
+    // and all signs are flipped here.
+    LvArray::tensorOps::scaledAdd< 3 >( stack.localKwpm, Kwpm_gauss, detJ*biotCoefficient );
   }
 
   /**
@@ -412,6 +414,8 @@ public:
     LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( stack.localRw, stack.localKww, stack.wLocal );
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.dispLocal );
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
+
+    // add pore pressure contribution
     LvArray::tensorOps::scaledAdd< 3 >( stack.localRw, stack.localKwpm, m_matrixPressure[ k ] + m_deltaMatrixPressure[ k ] );
 
     // Add traction contribution tranction
@@ -420,7 +424,7 @@ public:
 
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
-    real64 dTdpf = -m_dTraction_dPressure[embSurfIndex] * m_surfaceArea[embSurfIndex];
+    real64 const dTdpf = - m_dTraction_dPressure[embSurfIndex] * m_surfaceArea[embSurfIndex];
 
     for( localIndex i = 0; i < nUdof; ++i )
     {

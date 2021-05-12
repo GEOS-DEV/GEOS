@@ -11,7 +11,7 @@
       fluidSolverName = "flowSolver"
       solidSolverName = "matrixMechSolver"
       couplingTypeOption="FIM"
-      logLevel="1">
+      logLevel="4">
       <NonlinearSolverParameters
         newtonMaxIter="5"
         maxTimeStepCuts="1"/>
@@ -61,8 +61,8 @@
       xCoords="{ 0, 3 }"
       yCoords="{ 0, 3 }"
       zCoords="{ 0, 1 }"
-      nx="{ 11 }"
-      ny="{ 11 }"
+      nx="{ 3 }"
+      ny="{ 3 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -90,7 +90,7 @@
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="10"
+      cycleFrequency="1"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
@@ -215,7 +215,6 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
       
-      
      <FieldSpecification
       name="leftPressure"
       objectPath="faceManager"
@@ -235,7 +234,7 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="PoroElastic_embedded"
-      plotLevel="2"
+      plotLevel="1"
       writeBinaryData="0"/>
 
     <Restart
