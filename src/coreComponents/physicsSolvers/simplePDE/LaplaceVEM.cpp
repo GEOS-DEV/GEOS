@@ -178,19 +178,15 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       arrayView1d< real64 const > elemVolumes = elemSubRegion.getElementVolume();
       arrayView1d< integer const > const & elemGhostRank = elemSubRegion.ghostRank();
       localIndex const numCells = elemSubRegion.size();
-      real64 derivativesIntMean[VEM::maxSupportPoints][3] { { 0.0 } };
-      globalIndex elemDofIndex[VEM::maxSupportPoints] { 0 };
-      real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints] { { 0.0 } };
-      real64 cellCenter[3] { 0.0 };
-      real64 cellVolume = 0.0;
       forAll< parallelDevicePolicy< 32 > >( numCells, [=] GEOSX_HOST_DEVICE
-                                            ( localIndex const cellIndex ) mutable
+                                              ( localIndex const cellIndex )
       {
         VEM::BasisData basisData;
 
         if( elemGhostRank[cellIndex] < 0 )
         {
-          cellVolume = elemVolumes[cellIndex];
+          real64 cellVolume = elemVolumes[cellIndex];
+          real64 cellCenter[3];
           cellCenter[0] = elemCenters( cellIndex, 0 );
           cellCenter[1] = elemCenters( cellIndex, 1 );
           cellCenter[2] = elemCenters( cellIndex, 2 );
@@ -207,6 +203,10 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                   cellCenter,
                                   cellVolume,
                                   basisData );
+
+          real64 derivativesIntMean[VEM::maxSupportPoints][3] { { 0.0 } };
+          globalIndex elemDofIndex[VEM::maxSupportPoints] { 0 };
+          real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints] { { 0.0 } };
           localIndex const numSupportPoints = VEM::getNumSupportPoints( basisData );
           for( localIndex a = 0; a < numSupportPoints; ++a )
           {
