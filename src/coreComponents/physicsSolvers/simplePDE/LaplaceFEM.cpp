@@ -171,40 +171,6 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 }
 //END_SPHINX_INCLUDE_ASSEMBLY
 
-/*
-   DIRICHLET BOUNDARY CONDITIONS
-   This is the boundary condition method applied for this particular solver.
-   It is called by the more generic "applyBoundaryConditions" method.
- */
-void LaplaceFEM::applyDirichletBCImplicit( real64 const time,
-                                           DofManager const & dofManager,
-                                           DomainPartition & domain,
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                           arrayView1d< real64 > const & localRhs )
-{
-  FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
-
-  fsManager.apply( time,
-                   domain,
-                   "nodeManager",
-                   m_fieldName,
-                   [&]( FieldSpecificationBase const & bc,
-                        string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group & targetGroup,
-                        string const & GEOSX_UNUSED_PARAM( fieldName ) )
-  {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >( targetSet,
-                                                                                              time,
-                                                                                              targetGroup,
-                                                                                              m_fieldName,
-                                                                                              dofManager.getKey( m_fieldName ),
-                                                                                              dofManager.rankOffset(),
-                                                                                              localMatrix,
-                                                                                              localRhs );
-  } );
-}
-
 //START_SPHINX_INCLUDE_REGISTER
 REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_REGISTER

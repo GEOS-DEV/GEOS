@@ -16,7 +16,6 @@
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_VEM_HPP_
 
 #include "physicsSolvers/simplePDE/LaplaceBaseH1.hpp"  // a base class shared by all Laplace solvers
-#include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 
 namespace geosx
 {
@@ -67,15 +66,6 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   /**@}*/
-
-  // This method is specific to this Laplace solver
-  // It is used to apply Dirichlet boundary condition
-  // and called when the base class applyBoundaryConditions() is called
-  void applyDirichletBCImplicit( real64 const time,
-                                 DofManager const & dofManager,
-                                 DomainPartition & domain,
-                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                 arrayView1d< real64 > const & localRhs ) override;
 
 private:
 
