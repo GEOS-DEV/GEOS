@@ -32,7 +32,7 @@ class AcousticWaveEquationSEM : public SolverBase
 public:
 
   using EXEC_POLICY = parallelDevicePolicy<32>;
-  //using OMP_EXEC_POLICY = RAJA::omp_parallel_for_exec;
+  using OMP_EXEC_POLICY = parallelHostPolicy;
   
   AcousticWaveEquationSEM( const std::string & name,
                            Group * const parent );

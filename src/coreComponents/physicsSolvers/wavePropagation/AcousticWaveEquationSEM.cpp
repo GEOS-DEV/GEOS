@@ -192,16 +192,16 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
   arrayView2d< real64 > const sourceConstants = m_sourceConstants.toView();
   arrayView1d< localIndex > const sourceIsLocal = m_sourceIsLocal.toView();
-  sourceNodeIds.setValues< serialPolicy >( -1 );
-  sourceConstants.setValues< serialPolicy >( -1 );
+  sourceNodeIds.setValues< OMP_EXEC_POLICY >( -1 );
+  sourceConstants.setValues< OMP_EXEC_POLICY >( -1 );
   sourceIsLocal.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
   arrayView2d< real64 > const receiverConstants = m_receiverConstants.toView();
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
-  receiverNodeIds.setValues< serialPolicy >( -1 );
-  receiverConstants.setValues< serialPolicy >( -1 );
+  receiverNodeIds.setValues< OMP_EXEC_POLICY >( -1 );
+  receiverConstants.setValues< OMP_EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
@@ -228,18 +228,18 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
 
-        forAll< serialPolicy >( elementSubRegion.size(), [=, &elementSubRegion] ( localIndex const k )
+        forAll< OMP_EXEC_POLICY >( elementSubRegion.size(), [=, &elementSubRegion] ( localIndex const k )
         {
-
+	  array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
+	  
           for( localIndex kf = 0; kf < numFacesPerElem; ++kf )
           {
             elementSubRegion.getFaceNodes( k, kf, faceNodes[kf] );
           }
 
           /// loop over all the source that haven't been found yet
-          forAll< serialPolicy >( sourceCoordinates.size( 0 ), [=] ( localIndex const isrc )
+          for( localIndex isrc=0; isrc < sourceCoordinates.size( 0 ); isrc++ )
           {
             if( sourceIsLocal[isrc] == 0 )
             {
@@ -263,11 +263,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 }
               }
             }
-          } ); // End loop over all source
+          } // End loop over all source
 
 
           /// loop over all the receiver that haven't been found yet
-          forAll< serialPolicy >( receiverCoordinates.size( 0 ), [=] ( localIndex const ircv )
+          for( localIndex ircv=0; ircv < receiverCoordinates.size( 0 ); ircv++ )
           {
             if( receiverIsLocal[ircv] == 0 )
             {
@@ -291,7 +291,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                 }
               }
             }
-          } ); // End loop over receiver
+          } // End loop over receiver
 
         } ); // End loop over elements
       } );
