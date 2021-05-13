@@ -15,14 +15,14 @@ set( constitutive_headers
      contact/Coulomb.hpp
      fluid/DeadOilFluid.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
-     fluid/PVTFunctions/BrineCO2DensityFunction.hpp
-     fluid/PVTFunctions/BrineViscosityFunction.hpp
-     fluid/PVTFunctions/CO2SolubilityFunction.hpp
-     fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
+     fluid/PVTFunctions/BrineCO2Density.hpp
+     fluid/PVTFunctions/BrineViscosity.hpp
+     fluid/PVTFunctions/CO2Solubility.hpp
+     fluid/PVTFunctions/FenghourCO2Viscosity.hpp
      fluid/PVTFunctions/FlashModelBase.hpp
      fluid/PVTFunctions/PVTFunctionBase.hpp
-     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp
-     fluid/PVTFunctions/UtilityFunctions.hpp
+     fluid/PVTFunctions/SpanWagnerCO2Density.hpp
+     fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/SingleFluidBase.hpp
      fluid/singleFluidSelector.hpp
      fluid/MultiFluidBase.hpp
@@ -78,13 +78,12 @@ set( constitutive_sources
      contact/Coulomb.cpp
      fluid/DeadOilFluid.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
-     fluid/MultiPhaseMultiComponentFluid.cpp     
-     fluid/PVTFunctions/BrineCO2DensityFunction.cpp
-     fluid/PVTFunctions/BrineViscosityFunction.cpp 
-     fluid/PVTFunctions/CO2SolubilityFunction.cpp
-     fluid/PVTFunctions/FenghourCO2ViscosityFunction.cpp
-     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp    
-     fluid/PVTFunctions/UtilityFunctions.cpp
+     fluid/MultiPhaseMultiComponentFluid.cpp
+     fluid/PVTFunctions/BrineCO2Density.cpp
+     fluid/PVTFunctions/BrineViscosity.cpp
+     fluid/PVTFunctions/CO2Solubility.cpp
+     fluid/PVTFunctions/FenghourCO2Viscosity.cpp
+     fluid/PVTFunctions/SpanWagnerCO2Density.cpp
      fluid/SingleFluidBase.cpp
      fluid/MultiFluidBase.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
@@ -115,13 +114,7 @@ set( constitutive_sources
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
    )
 
-if( BUILD_OBJ_LIBS)
-  set( dependencyList dataRepository)
-else()
-  set( dependencyList common )
-endif()
-
-
+set( dependencyList events dataRepository functions)
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers
@@ -136,7 +129,10 @@ if( ENABLE_PVTPackage )
          fluid/CompositionalMultiphaseFluid.cpp
          fluid/BlackOilFluid.cpp
        )
+       
+    add_subdirectory( PVTPackage )
     set( dependencyList ${dependencyList} PVTPackage )
+
 endif()
 
 if ( ENABLE_OPENMP )
@@ -151,11 +147,12 @@ blt_add_library( NAME                  constitutive
                  SOURCES               ${constitutive_sources}
                  HEADERS               ${constitutive_headers}
                  DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${buildAsObj}
+                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
                
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 add_subdirectory( unitTests )
 
-geosx_add_code_checks( PREFIX constitutive )
+geosx_add_code_checks( PREFIX constitutive 
+                       EXCLUDES PVTPackage )

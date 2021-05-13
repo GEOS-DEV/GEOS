@@ -5,7 +5,6 @@
     <TriaxialDriver
       name="triaxialDriver"
       material="modifiedCamclay"
-      useNumericalTangent="0"
       mode="triaxial" 
       strainFunction="strainFunction"
       stressFunction="stressFunction"

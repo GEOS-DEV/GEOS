@@ -79,6 +79,7 @@ public:
   QuasiStatic( NodeManager const & nodeManager,
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
+               localIndex const targetRegionIndex,
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE & inputConstitutiveType,
@@ -92,6 +93,7 @@ public:
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -471,6 +473,16 @@ protected:
 
   ArrayOfArraysView< localIndex const > const m_cellsToEmbeddedSurfaces;
 };
+
+/// The factory used to construct a QuasiStatic kernel.
+using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
+                                                         EmbeddedSurfaceSubRegion const &,
+                                                         arrayView1d< globalIndex const > const &,
+                                                         arrayView1d< globalIndex const > const &,
+                                                         globalIndex const,
+                                                         CRSMatrixView< real64, globalIndex const > const &,
+                                                         arrayView1d< real64 > const &,
+                                                         real64 const (&) [3] >;
 
 } // namespace SolidMechanicsEFEMKernels
 

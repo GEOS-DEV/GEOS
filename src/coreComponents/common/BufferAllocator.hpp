@@ -16,8 +16,8 @@
  * @file BufferAllocator.hpp
  */
 
-#ifndef GEOSX_BUFFER_ALLOCATOR_HPP
-#define GEOSX_BUFFER_ALLOCATOR_HPP
+#ifndef GEOSX_COMMON_BUFFERALLOCATOR_HPP
+#define GEOSX_COMMON_BUFFERALLOCATOR_HPP
 
 #include "common/GeosxConfig.hpp"
 

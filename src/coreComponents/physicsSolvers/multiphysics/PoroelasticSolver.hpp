@@ -17,10 +17,10 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVER_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
@@ -28,7 +28,7 @@ namespace geosx
 
 
 class SolidMechanicsLagrangianFEM;
-class FlowSolverBase;
+class SinglePhaseBase;
 
 class PoroelasticSolver : public SolverBase
 {
@@ -155,7 +155,7 @@ protected:
   CouplingTypeOption m_couplingTypeOption;
 
   // pointer to the flow sub-solver
-  FlowSolverBase * m_flowSolver;
+  SinglePhaseBase * m_flowSolver;
 
   // pointer to the solid mechanics sub-solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
@@ -170,4 +170,4 @@ ENUM_STRINGS( PoroelasticSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_POROELASTICSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVER_HPP_ */

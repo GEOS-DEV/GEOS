@@ -15,7 +15,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 #define GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 
 namespace geosx
