@@ -155,7 +155,8 @@ public:
                                 DomainPartition & domain,
                                 DofManager const & dofManager,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs ) override;
+                                arrayView1d< real64 > const & localRhs,
+                                string const & jumpDofKey ) override;
 
 
   /**@}*/

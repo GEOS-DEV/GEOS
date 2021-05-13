@@ -451,7 +451,8 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
                                               domain,
                                               dofManager,
                                               localMatrix,
-                                              localRhs );
+                                              localRhs,
+                                              jumpDofKey );
 
 }
 

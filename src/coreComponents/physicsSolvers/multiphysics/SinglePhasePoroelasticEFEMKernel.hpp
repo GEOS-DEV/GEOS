@@ -113,9 +113,9 @@ public:
     m_fracturePresDofNumber( embeddedSurfSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
     m_wDofNumber( jumpDofNumber ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
-    m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
-    m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
-    m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
+    m_fluidDensity( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
+    m_fluidDensityOld( embeddedSurfSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
+    m_dFluidDensity_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
     m_matrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
     m_deltaMatrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
     m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
@@ -161,8 +161,8 @@ public:
       dispColIndices{ 0 },
       jumpEqnRowIndices{ 0 },
       jumpColIndices{ 0 },
-      localRu{ 0.0 },
-      localRw{ 0.0 },
+      localDispResidual{ 0.0 },
+      localJumpResidual{ 0.0 },
       localKww{ { 0.0 } },
       localKwu{ { 0.0 } },
       localKuw{ { 0.0 } },
@@ -191,10 +191,10 @@ public:
     globalIndex jumpColIndices[numWdofs];
 
     /// C-array storage for the element local Ru residual vector.
-    real64 localRu[numUdofs];
+    real64 localDispResidual[numUdofs];
 
     /// C-array storage for the element local Rw residual vector.
-    real64 localRw[numWdofs];
+    real64 localJumpResidual[numWdofs];
 
     /// C-array storage for the element local Kww matrix.
     real64 localKww[numWdofs][numWdofs];
@@ -411,27 +411,35 @@ public:
     globalIndex matrixPressureColIndex = m_matrixPresDofNumber[k];
 
     // Compute the local residuals
-    LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( stack.localRw, stack.localKww, stack.wLocal );
-    LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.dispLocal );
-    LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
+    LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( stack.localJumpResidual, stack.localKww, stack.wLocal );
+    LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localJumpResidual, stack.localKwu, stack.dispLocal );
+    LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localDispResidual, stack.localKuw, stack.wLocal );
 
     // add pore pressure contribution
-    LvArray::tensorOps::scaledAdd< 3 >( stack.localRw, stack.localKwpm, m_matrixPressure[ k ] + m_deltaMatrixPressure[ k ] );
-
-    // Add traction contribution tranction
-    LvArray::tensorOps::scaledAdd< 3 >( stack.localRw, stack.tractionVec, -1 );
-    LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, stack.dTractiondw, -1 );
+//    LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.localKwpm, m_matrixPressure[ k ] + m_deltaMatrixPressure[ k ] );
 
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
-    real64 const dTdpf = - m_dTraction_dPressure[embSurfIndex] * m_surfaceArea[embSurfIndex];
+    // Add traction contribution tranction
+    LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.tractionVec, -1 );
+    LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, stack.dTractiondw, -1 );
+
+    // JumpFractureFlowJacobian
+    real64 const localJumpFracPressureJacobian = - m_dTraction_dPressure[embSurfIndex] * m_surfaceArea[embSurfIndex];
+
+    // Mass balance accumulation
+    real64 const newMass =  m_fluidDensity( embSurfIndex, 0 ) * m_elementVolume( embSurfIndex );
+    real64 const oldMass =  m_fluidDensityOld( embSurfIndex ) * m_elementVolume( embSurfIndex );
+    real64 const localFlowResidual = ( newMass - oldMass );
+    real64 const localFlowJumpJacobian = m_fluidDensity( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ];
+    real64 const localFlowFlowJacobian = m_dFluidDensity_dPressure( embSurfIndex, 0 ) * m_elementVolume( embSurfIndex );
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localDispResidual[i] );
 
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.jumpColIndices,
@@ -446,7 +454,7 @@ public:
 
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRw[i] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localJumpResidual[i] );
 
       // fill in matrix
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
@@ -464,13 +472,29 @@ public:
                                                                               1 );
     }
 
-    // it only affects the normal jump
+//    // it only affects the normal jump
+    localIndex const fracturePressureDof = m_fracturePresDofNumber[ embSurfIndex ];
     if( stack.jumpEqnRowIndices[0] >= 0 && stack.jumpEqnRowIndices[0] < m_matrix.numRows() )
     {
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.jumpEqnRowIndices[0],
                                                                               &m_fracturePresDofNumber[ embSurfIndex ],
-                                                                              &dTdpf,
+                                                                              &localJumpFracPressureJacobian,
                                                                               1 );
+    }
+
+    if( fracturePressureDof >= 0 && fracturePressureDof < m_matrix.numRows() )
+    {
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( fracturePressureDof,
+                                                                              &stack.jumpColIndices[0],
+                                                                              &localFlowJumpJacobian,
+                                                                              1 );
+
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( fracturePressureDof,
+                                                                              &m_fracturePresDofNumber[ embSurfIndex ],
+                                                                              &localFlowFlowJacobian,
+                                                                              1 );
+
+      RAJA::atomicAdd< serialAtomic >( &m_rhs[ fracturePressureDof ], localFlowResidual );
     }
 
     return maxForce;

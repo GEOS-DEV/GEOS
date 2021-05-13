@@ -336,8 +336,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   dArithmetic_dAper[0] = dt0_da / 2;
   dArithmetic_dAper[1] = dt1_da / 2;
 
-  dTrans_dAperture[0] = meanPermCoeff * dHarmonic_dAper[0] + (1 - meanPermCoeff) * dArithmetic_dAper[0];
-  dTrans_dAperture[1] = -( meanPermCoeff * dHarmonic_dAper[1] + (1 - meanPermCoeff) * dArithmetic_dAper[1] );
+  dTrans_dAperture[0] = 0.0* ( meanPermCoeff * dHarmonic_dAper[0] + (1 - meanPermCoeff) * dArithmetic_dAper[0] );
+  dTrans_dAperture[1] = 0.0* ( -( meanPermCoeff * dHarmonic_dAper[1] + (1 - meanPermCoeff) * dArithmetic_dAper[1] ) );
 }
 
 

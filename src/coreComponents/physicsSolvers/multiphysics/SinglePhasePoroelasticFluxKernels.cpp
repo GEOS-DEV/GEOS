@@ -175,6 +175,7 @@ void EmbeddedSurfaceFluxKernel::
                                             transmissibility,
                                             dTrans_dPres,
                                             dTrans_dAper );
+
     compute( stencilSize,
              seri[iconn],
              sesri[iconn],
@@ -192,7 +193,6 @@ void EmbeddedSurfaceFluxKernel::
              dt,
              localFlux,
              localFluxJacobian );
-
 
     // extract DOF numbers
     for( localIndex i = 0; i < stencilSize; ++i )
@@ -281,6 +281,8 @@ void EmbeddedSurfaceFluxKernel::
     fluxJacobian[1][dofIndex]   = -dt * dFlux_dP[ke];
     fluxJacobian[1][dofIndex+1] = -dt * dFlux_dAper[ke];
   }
+
+  std::cout << "flux jacobian: " << fluxJacobian << std::endl;
 }
 
 /******************************** FaceElementFluxKernel ********************************/

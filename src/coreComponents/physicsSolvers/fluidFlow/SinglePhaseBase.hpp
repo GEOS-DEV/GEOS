@@ -190,7 +190,8 @@ public:
                                 DomainPartition & domain,
                                 DofManager const & dofManager,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs ) = 0;
+                                arrayView1d< real64 > const & localRhs,
+                                string const & jumpDofKey ) = 0;
 
   void
   applyDirichletBC( real64 const time_n,

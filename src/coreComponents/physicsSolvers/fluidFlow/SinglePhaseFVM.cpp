@@ -223,7 +223,8 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
                                                            DomainPartition & domain,
                                                            DofManager const & dofManager,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                           arrayView1d< real64 > const & localRhs )
+                                                           arrayView1d< real64 > const & localRhs,
+                                                           string const & jumpDofKey )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -238,16 +239,15 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   pressureDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( pressureDofKey );
   pressureDofNumber.setName( this->getName() + "/accessors/" + pressureDofKey );
 
-  string const & jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   jumpDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( jumpDofKey );
   jumpDofNumber.setName( this->getName() + "/accessors/" + jumpDofKey );
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
-                                                                           targetRegionNames(),
-                                                                           m_permeabilityModelNames,
-                                                                           true );
+          mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
+                                                                                 targetRegionNames(),
+                                                                                 m_permeabilityModelNames,
+                                                                                 true );
 
   fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
   {
