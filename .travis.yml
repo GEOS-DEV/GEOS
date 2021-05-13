@@ -78,7 +78,7 @@ geosx_osx_build: &geosx_osx_build
     -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe"
   - cd build-darwin-clang-debug
   - make -j $(nproc) VERBOSE=1
-  - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
+  # - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
 geosx_pangea_build: &geosx_pangea_build
   <<: *geosx_linux_build

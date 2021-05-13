@@ -1286,19 +1286,19 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
                                wellElementDofName(),
                                viewKeyStruct::deltaPressureString(),
                                scalingFactor,
-                               0, 1 );
+                               { m_numDofPerWellElement, 0, 1 } );
 
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
                                viewKeyStruct::deltaGlobalCompDensityString(),
                                scalingFactor,
-                               1, m_numDofPerWellElement - 1 );
+                               { m_numDofPerWellElement, 1, m_numDofPerWellElement - 1 } );
 
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
                                viewKeyStruct::deltaMixtureConnRateString(),
                                scalingFactor,
-                               m_numDofPerWellElement - 1, m_numDofPerWellElement );
+                               { m_numDofPerWellElement, m_numDofPerWellElement - 1, m_numDofPerWellElement } );
 
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function

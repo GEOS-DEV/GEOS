@@ -100,7 +100,7 @@ void LaplaceVEM::setupSystem( DomainPartition & domain,
   //       m_localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   //       and that creates problems (integratedTests failures) on Lassen for CPU-only implicit simulations
 
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
 
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();

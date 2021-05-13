@@ -74,7 +74,7 @@ protected:
   {
     geosx::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
     mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 );
-    dofManager.setMesh( state.getProblemManager().getDomainPartition(), 0, 0 );
+    dofManager.setMesh( *mesh );
   }
 
   GeosxState state;
@@ -496,12 +496,18 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
     numCompTotal += f.components;
   }
 
-  Matrix pattern, patternExpected;
+  Matrix pattern;
+  {
+    // Create a sparsity pattern via DofManager
+    SparsityPattern< globalIndex > localPattern;
+    dofManager.setSparsityPattern( localPattern );
+    CRSMatrix< real64, globalIndex > localMatrix;
+    localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
+    pattern.create( localMatrix.toViewConst(), MPI_COMM_GEOSX );
+    pattern.set( 1.0 );
+  }
 
-  // Create a sparsity pattern via DofManager
-  pattern.createWithLocalSize( dofManager.numLocalDofs(), dofManager.numLocalDofs(), 27 * numCompTotal, MPI_COMM_GEOSX );
-  this->dofManager.setSparsityPattern( pattern );
-
+  Matrix patternExpected;
   patternExpected.createWithLocalSize( numLocalDof, numLocalDof, 27 * numCompTotal, MPI_COMM_GEOSX );
   patternExpected.open();
 
@@ -773,9 +779,14 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
 
   // Create and fill the full matrix
   Matrix A;
-  A.createWithLocalSize( dofManager.numLocalDofs(), dofManager.numLocalDofs(), 21, MPI_COMM_GEOSX );
-  dofManager.setSparsityPattern( A );
-  A.set( 1 );
+  {
+    SparsityPattern< globalIndex > localPattern;
+    dofManager.setSparsityPattern( localPattern );
+    CRSMatrix< real64, globalIndex > localMatrix;
+    localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
+    A.create( localMatrix.toViewConst(), MPI_COMM_GEOSX );
+    A.set( 1.0 );
+  }
 
   // Create prolongation and restriction to 2 out of 3 components
   Matrix R, P;
@@ -796,7 +807,7 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
   {
     selectedFields[k] = *std::find_if( fields.begin(), fields.end(),
                                        [&]( FieldDesc const & f ) { return f.name == selection[k].fieldName; } );
-    selectedFields[k].components = selection[k].hiComp - selection[k].loComp;
+    selectedFields[k].components = selection[k].mask.size();
   }
 
   // Filter the couplings of selected fields
@@ -820,9 +831,14 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
 
   // Compute the expected matrix
   Matrix B;
-  B.createWithLocalSize( dofManager.numLocalDofs(), dofManager.numLocalDofs(), 14, MPI_COMM_GEOSX );
-  dofManager.setSparsityPattern( B );
-  B.set( 1 );
+  {
+    SparsityPattern< globalIndex > localPattern;
+    dofManager.setSparsityPattern( localPattern );
+    CRSMatrix< real64, globalIndex > localMatrix;
+    localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
+    B.create( localMatrix.toViewConst(), MPI_COMM_GEOSX );
+    B.set( 1.0 );
+  }
 
   // Check if the matrices match
   {
@@ -849,7 +865,7 @@ TYPED_TEST_P( DofManagerRestrictorTest, SingleBlock )
     }
   },
   {
-    { "pressure", 1, 3 }
+    { "pressure", { 3, 1, 3 } }
   }
     );
 }
@@ -872,7 +888,7 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_First )
     }
   },
   {
-    { "displacement", 1, 3 }
+    { "displacement", { 3, 1, 3 } }
   },
   {
     {
@@ -905,7 +921,7 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Second )
     }
   },
   {
-    { "pressure", 1, 2 }
+    { "pressure", { 2, 1, 2 } }
   },
   {
     {
@@ -938,7 +954,7 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Both )
     }
   },
   {
-    { "displacement", 1, 3 }, { "pressure", 1, 2 }
+    { "displacement", { 3, 1, 3 } }, { "pressure", { 2, 1, 2 } }
   },
   {
     {
