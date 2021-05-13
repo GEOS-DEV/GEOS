@@ -36,7 +36,12 @@ BlockPreconditionerGeneral< LAI >::BlockPreconditionerGeneral( localIndex const 
   m_rhs( 2*numBlocks ),
   m_sol( 2*numBlocks )
 {
-  GEOSX_LAI_ASSERT_GT( DofManager::MAX_FIELDS, m_numBlocks );
+  m_schurOption.resize( numBlocks );
+  m_blockDofs.resize( numBlocks );
+  m_restrictors.resize( numBlocks );
+  m_prolongators.resize( numBlocks );
+  m_solvers.resize( numBlocks );
+
   for( localIndex iBlock = 0; iBlock < m_numBlocks-1; ++iBlock )
   {
     m_schurOption[iBlock] = schurOption[iBlock];

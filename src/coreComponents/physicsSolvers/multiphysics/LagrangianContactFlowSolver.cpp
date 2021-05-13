@@ -120,7 +120,7 @@ void LagrangianContactFlowSolver::setupSystem( DomainPartition & domain,
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   m_flowSolver->resetViews( mesh );
 
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( mesh );
 
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
@@ -383,7 +383,7 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
                         domain,
                         m_dofManager,
                         m_localMatrix.toViewConstSizes(),
-                        m_localRhs.toView() );
+                        m_localRhs );
 
         // apply boundary conditions to system
         applyBoundaryConditions( time_n,
@@ -391,7 +391,7 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
                                  domain,
                                  m_dofManager,
                                  m_localMatrix.toViewConstSizes(),
-                                 m_localRhs.toView() );
+                                 m_localRhs );
 
         // TODO: maybe add scale function here?
         // Scale()
@@ -400,7 +400,7 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
         // get residual norm
         if( computeResidual )
         {
-          residualNorm = calculateResidualNorm( domain, m_dofManager, m_localRhs.toViewConst() );
+          residualNorm = calculateResidualNorm( domain, m_dofManager, m_localRhs );
         }
         else
         {
@@ -438,7 +438,7 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
 
         // Compose parallel LA matrix/rhs out of local LA matrix/rhs
         m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-        m_rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
+        m_rhs.create( m_localRhs, MPI_COMM_GEOSX );
         m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
 
         // Output the linear system matrix/rhs for debugging purposes
@@ -465,7 +465,7 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
                                                domain,
                                                m_dofManager,
                                                m_localMatrix.toViewConstSizes(),
-                                               m_localRhs.toView(),
+                                               m_localRhs,
                                                m_localSolution.toViewConst(),
                                                scaleFactor,
                                                residualNorm );
@@ -947,11 +947,11 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
                                                                              schurOptions );
 
     precond->setupBlock( 0,
-                         { { m_tractionKey, 0, 3 } },
+                         { { m_tractionKey, { 3, 0, 3 } } },
                          std::move( tracPrecond ) );
 
     precond->setupBlock( 1,
-                         { { m_pressureKey, 0, 1 } },
+                         { { m_pressureKey, { 1, 0, 1 } } },
                          std::move( flowPrecond ) );
 
     if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
@@ -969,7 +969,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
     // Preconditioner for the Schur complement: mechPrecond
     std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_contactSolver->getSolidSolver()->getRigidBodyModes() );
     precond->setupBlock( 2,
-                         { { keys::TotalDisplacement, 0, 3 } },
+                         { { keys::TotalDisplacement, { 3, 0, 3 } } },
                          std::move( mechPrecond ) );
 
     m_precond = std::move( precond );
@@ -1020,7 +1020,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
                                                                              schurOptions );
 
     precond->setupBlock( 0,
-                         { { m_tractionKey, 0, 3 } },
+                         { { m_tractionKey, { 3, 0, 3 } } },
                          std::move( tracPrecond ) );
 
     if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
@@ -1038,11 +1038,11 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
     // Preconditioner for the Schur complement: mechPrecond
     std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_contactSolver->getSolidSolver()->getRigidBodyModes() );
     precond->setupBlock( 1,
-                         { { keys::TotalDisplacement, 0, 3 } },
+                         { { keys::TotalDisplacement, { 3, 0, 3 } } },
                          std::move( mechPrecond ) );
 
     precond->setupBlock( 2,
-                         { { m_pressureKey, 0, 1 } },
+                         { { m_pressureKey, { 1, 0, 1 } } },
                          std::move( flowPrecond ) );
 
     m_precond = std::move( precond );

@@ -182,22 +182,22 @@ private:
   BlockShapeOption m_shapeOption;
 
   /// Types of Schur complement to construct
-  std::array< SchurComplementOption, DofManager::MAX_FIELDS > m_schurOption;
+  std::vector< SchurComplementOption > m_schurOption;
 
   /// Description of dof components making up each of the two main blocks
-  std::array< std::vector< DofManager::SubComponent >, DofManager::MAX_FIELDS > m_blockDofs;
+  std::vector< std::vector< DofManager::SubComponent > > m_blockDofs;
 
   /// Restriction operators for each sub-block
-  std::array< moveOperator, DofManager::MAX_FIELDS > m_restrictors;
+  std::vector< moveOperator > m_restrictors;
 
   /// Prolongation operators for each sub-block
-  std::array< moveOperator, DofManager::MAX_FIELDS > m_prolongators;
+  std::vector< moveOperator > m_prolongators;
 
   /// Matrix blocks
   BlockOperator< Vector, Matrix > m_matBlocks;
 
   /// Individual block preconditioners
-  std::array< std::unique_ptr< PreconditionerBase< LAI > >, DofManager::MAX_FIELDS > m_solvers;
+  std::vector< std::unique_ptr< PreconditionerBase< LAI > > > m_solvers;
 
   /// Internal vector of block residuals
   mutable BlockVector< Vector > m_rhs;

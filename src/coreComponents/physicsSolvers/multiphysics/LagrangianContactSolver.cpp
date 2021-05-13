@@ -1162,7 +1162,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
 
     // Preconditioner for the leading block: tracPrecond
     precond->setupBlock( 0,
-                         { { viewKeyStruct::tractionString(), 0, 3 } },
+                         { { viewKeyStruct::tractionString(), { 3, true } } },
                          std::move( tracPrecond ) );
 
     if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
@@ -1180,7 +1180,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
     // Preconditioner for the Schur complement: mechPrecond
     std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_solidSolver->getRigidBodyModes() );
     precond->setupBlock( 1,
-                         { { keys::TotalDisplacement, 0, 3 } },
+                         { { keys::TotalDisplacement, { 3, true } } },
                          std::move( mechPrecond ) );
 
     m_precond = std::move( precond );
