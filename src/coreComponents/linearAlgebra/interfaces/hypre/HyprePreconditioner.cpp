@@ -359,7 +359,7 @@ void createMGR( LinearSolverParameters const & params,
   GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.logLevel ) ) );
 
-  array1d< localIndex > const numComponentsPerField = dofManager->numComponentsPerField();
+  array1d< integer > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
 
   if( params.logLevel >= 1 )
@@ -513,7 +513,7 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
     GEOSX_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "MGR preconditioner requires a DofManager instance" );
     HypreMatrix Pu;
     HypreMatrix Auu;
-    mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, 0, 3 } }, mat.getComm(), true, Pu );
+    mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
     mat.multiplyPtAP( Pu, Auu );
     LAIHelperFunctions::separateComponentFilter( Auu, m_precondMatrix, m_params.dofsPerNode );
   }

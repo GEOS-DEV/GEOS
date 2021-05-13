@@ -247,7 +247,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
   array1d< globalIndex > globalNodeList;
   for( localIndex k = 0; k < LvArray::integerConversion< localIndex >( selection.size() ); ++k )
   {
-    if( dofManager.getLocation( selection[k] ) == DofManager::Location::Node )
+    if( dofManager.location( selection[k] ) == DofManager::Location::Node )
     {
       string const & dispDofKey = dofManager.getKey( selection[k] );
       arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );

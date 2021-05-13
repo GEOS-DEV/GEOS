@@ -28,6 +28,7 @@ set( linearAlgebra_headers
      utilities/BlockVectorView.hpp
      utilities/BlockVectorWrapper.hpp
      utilities/BlockVector.hpp
+     utilities/ComponentMask.hpp
      utilities/LAIHelperFunctions.hpp
      utilities/LinearSolverParameters.hpp
      utilities/LinearSolverResult.hpp

@@ -52,7 +52,7 @@ namespace mgr
  */
 template< typename STRATEGY >
 void setStrategy( LinearSolverParameters::MGR const & params,
-                  arrayView1d< localIndex const > const & numComponentsPerField,
+                  arrayView1d< integer const > const & numComponentsPerField,
                   HyprePrecWrapper & precond,
                   HypreMGRData & mgrData )
 {
@@ -136,7 +136,7 @@ public:
   /**
    * @brief Constructor.
    */
-  explicit SinglePhasePoroelastic( arrayView1d< localIndex const > const & )
+  explicit SinglePhasePoroelastic( arrayView1d< integer const > const & )
     : MGRStrategyBase( 4 )
   {
     m_labels[0].push_back( 3 );
@@ -213,7 +213,7 @@ public:
    * @brief Constructor.
    * @param numComponentsPerField array with number of components for each field
    */
-  explicit CompositionalMultiphaseFVM( arrayView1d< localIndex const > const & numComponentsPerField )
+  explicit CompositionalMultiphaseFVM( arrayView1d< integer const > const & numComponentsPerField )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] ) )
   {
     // Level 0: eliminate last density which corresponds to the volume constraint equation
@@ -293,7 +293,7 @@ public:
    * @brief Constructor.
    * @param numComponentsPerField array with number of components for each field
    */
-  explicit CompositionalMultiphaseReservoir( arrayView1d< localIndex const > const & numComponentsPerField )
+  explicit CompositionalMultiphaseReservoir( arrayView1d< integer const > const & numComponentsPerField )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] ) )
   {
     HYPRE_Int const numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
@@ -381,7 +381,7 @@ public:
    * @brief Constructor.
    * @param numComponentsPerField array with number of components for each field
    */
-  explicit CompositionalMultiphaseHybridFVM( arrayView1d< localIndex const > const & numComponentsPerField )
+  explicit CompositionalMultiphaseHybridFVM( arrayView1d< integer const > const & numComponentsPerField )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] ) )
   {
     // Level 0: eliminate the last density of the cell-centered block
@@ -469,7 +469,7 @@ public:
   /**
    * @brief Constructor.
    */
-  explicit LagrangianContactMechanics( arrayView1d< localIndex const > const & )
+  explicit LagrangianContactMechanics( arrayView1d< integer const > const & )
     : MGRStrategyBase( 2 )
   {
     // Level 0: all three displacements kept

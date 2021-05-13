@@ -547,12 +547,12 @@ void PoroelasticSolver::createPreconditioner()
 
     auto mechPrecond = LAInterface::createPreconditioner( m_solidSolver->getLinearSolverParameters() );
     precond->setupBlock( 0,
-                         { { keys::TotalDisplacement, 0, 3 } },
+                         { { keys::TotalDisplacement, { 3, true } } },
                          std::make_unique< SeparateComponentPreconditioner< LAInterface > >( 3, std::move( mechPrecond ) ) );
 
     auto flowPrecond = LAInterface::createPreconditioner( m_flowSolver->getLinearSolverParameters() );
     precond->setupBlock( 1,
-                         { { SinglePhaseBase::viewKeyStruct::pressureString(), 0, 1 } },
+                         { { SinglePhaseBase::viewKeyStruct::pressureString(), { 1, true } } },
                          std::move( flowPrecond ) );
 
     m_precond = std::move( precond );

@@ -197,7 +197,7 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
 
   GEOSX_UNUSED_VAR( setSparsity );
 
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
 

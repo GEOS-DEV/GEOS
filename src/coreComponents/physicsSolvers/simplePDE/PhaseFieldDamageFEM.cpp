@@ -191,18 +191,19 @@ void PhaseFieldDamageFEM::setupSystem( DomainPartition & domain,
   SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 }
 
-void PhaseFieldDamageFEM::implicitStepComplete(
-  real64 const & GEOSX_UNUSED_PARAM( time_n ),
-  real64 const & GEOSX_UNUSED_PARAM( dt ),
-  DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void PhaseFieldDamageFEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                                real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-void PhaseFieldDamageFEM::setupDofs(
-  DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-  DofManager & dofManager ) const
+void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+                                     DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
-  dofManager.addField( m_fieldName, DofManager::Location::Node );
+  dofManager.addField( m_fieldName,
+                       DofManager::Location::Node,
+                       1,
+                       targetRegionNames() );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
