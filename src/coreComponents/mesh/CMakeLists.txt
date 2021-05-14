@@ -48,6 +48,7 @@ set( mesh_headers
      simpleGeometricObjects/ThickPlane.hpp
      simpleGeometricObjects/BoundedPlane.hpp
      utilities/ComputationalGeometry.hpp
+     utilities/MeshMapUtilities.hpp
      utilities/MeshUtilities.hpp
      utilities/StructuredGridUtilities.hpp
   )

@@ -495,7 +495,7 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   m_flowSolver->resetViews( mesh );
 
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( mesh );
 
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();

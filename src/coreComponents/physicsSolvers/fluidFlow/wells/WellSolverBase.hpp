@@ -294,10 +294,10 @@ protected:
   array1d< string > m_fluidModelNames;
 
   /// the number of Degrees of Freedom per well element
-  localIndex m_numDofPerWellElement;
+  integer m_numDofPerWellElement;
 
   /// the number of Degrees of Freedom per reservoir element
-  localIndex m_numDofPerResElement;
+  integer m_numDofPerResElement;
 
   /// copy of the time step size saved in this class for residual normalization
   real64 m_currentDt;
