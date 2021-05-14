@@ -333,7 +333,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate_porosity( localIndex const k,
   real64 const biotSkeletonModulusInverse = ( biotCoefficient - m_referencePorosity[k] ) / m_grainBulkModulus;
 
   porosity = m_oldPorosity[k][q] +
-             +biotCoefficient * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
+             + biotCoefficient * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
              + biotSkeletonModulusInverse * deltaPressure;
 
   dPorosity_dPressure = biotSkeletonModulusInverse;

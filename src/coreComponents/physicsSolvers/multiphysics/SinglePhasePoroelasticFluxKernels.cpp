@@ -120,7 +120,6 @@ void EmbeddedSurfaceFluxKernel::
                                              gravityVector,
                                              localMatrix,
                                              localRhs );
-
 }
 
 
@@ -216,7 +215,7 @@ void EmbeddedSurfaceFluxKernel::
         localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
                                                                           dofColIndices.data(),
                                                                           localFluxJacobian[i].dataIfContiguous(),
-                                                                          stencilSize );
+                                                                          numDofs );
 
       }
     }
@@ -281,8 +280,6 @@ void EmbeddedSurfaceFluxKernel::
     fluxJacobian[1][dofIndex]   = -dt * dFlux_dP[ke];
     fluxJacobian[1][dofIndex+1] = -dt * dFlux_dAper[ke];
   }
-
-  std::cout << "flux jacobian: " << fluxJacobian << std::endl;
 }
 
 /******************************** FaceElementFluxKernel ********************************/

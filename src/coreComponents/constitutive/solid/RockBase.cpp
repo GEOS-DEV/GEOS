@@ -39,7 +39,7 @@ RockBase::RockBase( string const & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::newPorosityString(), &m_newPorosity ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( -1.0 ); // will be overwritten
+    setApplyDefaultValue( 0.2 ); // will be overwritten
 
   registerWrapper( viewKeyStruct::oldPorosityString(), &m_oldPorosity ).
     setApplyDefaultValue( -1.0 );// will be overwritten

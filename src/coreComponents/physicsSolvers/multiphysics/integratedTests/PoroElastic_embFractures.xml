@@ -61,8 +61,8 @@
       xCoords="{ 0, 3 }"
       yCoords="{ 0, 3 }"
       zCoords="{ 0, 1 }"
-      nx="{ 3 }"
-      ny="{ 3 }"
+      nx="{ 11 }"
+      ny="{ 11 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -137,7 +137,7 @@
       defaultShearModulus="4166666666.6667"
       defaultReferencePorosity ="0.2"
       defaultGrainDensity="1"
-      grainBulkModulus="1.0e9"/>
+      grainBulkModulus="1.0e15"/>
 
     <CompressibleSinglePhaseFluid
       name="water"
@@ -175,6 +175,14 @@
   </Constitutive>
   
 <FieldSpecifications>
+   <FieldSpecification
+      name="initialPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rock_porosity"
+      scale="0.2"/>
+
    <FieldSpecification
       name="initialPressure"
       initialCondition="1"

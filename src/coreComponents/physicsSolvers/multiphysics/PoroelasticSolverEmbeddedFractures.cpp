@@ -587,6 +587,8 @@ void PoroelasticSolverEmbeddedFractures::updateState( DomainPartition & domain )
 
   /// 2. update the fractures
 
+  m_fracturesSolver->updateState( domain );
+
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   //ElementRegionManager & elemManager = meshLevel.getElemManager();
 

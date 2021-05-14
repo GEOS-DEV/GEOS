@@ -128,6 +128,7 @@ public:
     m_surfaceCenter( embeddedSurfSubRegion.getElementCenter() ),
     m_surfaceArea( embeddedSurfSubRegion.getElementArea() ),
     m_elementVolume( elementSubRegion.getElementVolume() ),
+    m_deltaVolume( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() ) ),
     m_fracturedElems( elementSubRegion.fracturedElementsList() ),
     m_cellsToEmbeddedSurfaces( elementSubRegion.embeddedSurfacesList().toViewConst() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
@@ -416,7 +417,7 @@ public:
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localDispResidual, stack.localKuw, stack.wLocal );
 
     // add pore pressure contribution
-//    LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.localKwpm, m_matrixPressure[ k ] + m_deltaMatrixPressure[ k ] );
+    LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.localKwpm, m_matrixPressure[ k ] + m_deltaMatrixPressure[ k ] );
 
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
@@ -428,20 +429,21 @@ public:
     real64 const localJumpFracPressureJacobian = - m_dTraction_dPressure[embSurfIndex] * m_surfaceArea[embSurfIndex];
 
     // Mass balance accumulation
-    real64 const newMass =  m_fluidDensity( embSurfIndex, 0 ) * m_elementVolume( embSurfIndex );
+    real64 const newVolume = m_elementVolume( embSurfIndex ) + m_deltaVolume( embSurfIndex );
+    real64 const newMass =  m_fluidDensity( embSurfIndex, 0 ) * newVolume ;
     real64 const oldMass =  m_fluidDensityOld( embSurfIndex ) * m_elementVolume( embSurfIndex );
     real64 const localFlowResidual = ( newMass - oldMass );
     real64 const localFlowJumpJacobian = m_fluidDensity( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ];
-    real64 const localFlowFlowJacobian = m_dFluidDensity_dPressure( embSurfIndex, 0 ) * m_elementVolume( embSurfIndex );
+    real64 const localFlowFlowJacobian = m_dFluidDensity_dPressure( embSurfIndex, 0 ) * newVolume;
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
-      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+      localIndex const uDof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
+      if( uDof < 0 || uDof >= m_matrix.numRows() ) continue;
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localDispResidual[i] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[uDof], stack.localDispResidual[i] );
 
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( uDof,
                                                                               stack.jumpColIndices,
                                                                               stack.localKuw[i],
                                                                               3 );
@@ -473,17 +475,20 @@ public:
     }
 
 //    // it only affects the normal jump
-    localIndex const fracturePressureDof = m_fracturePresDofNumber[ embSurfIndex ];
+
     if( stack.jumpEqnRowIndices[0] >= 0 && stack.jumpEqnRowIndices[0] < m_matrix.numRows() )
     {
+
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.jumpEqnRowIndices[0],
                                                                               &m_fracturePresDofNumber[ embSurfIndex ],
                                                                               &localJumpFracPressureJacobian,
                                                                               1 );
     }
 
+    localIndex const fracturePressureDof = m_fracturePresDofNumber[ embSurfIndex ] - m_dofRankOffset;
     if( fracturePressureDof >= 0 && fracturePressureDof < m_matrix.numRows() )
     {
+
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( fracturePressureDof,
                                                                               &stack.jumpColIndices[0],
                                                                               &localFlowJumpJacobian,
@@ -552,6 +557,8 @@ protected:
   arrayView1d< real64 const > const m_surfaceArea;
 
   arrayView1d< real64 const > const m_elementVolume;
+
+  arrayView1d< real64 const > const m_deltaVolume;
 
   SortedArrayView< localIndex const > const m_fracturedElems;
 
