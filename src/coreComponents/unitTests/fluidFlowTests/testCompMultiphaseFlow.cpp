@@ -313,7 +313,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -345,7 +345,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -426,7 +426,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -458,7 +458,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -560,7 +560,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateState( subRegion2, targetIndex2 );
+          solver.updateFluidState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();
@@ -585,7 +585,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateState( subRegion2, targetIndex2 );
+          solver.updateFluidState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();

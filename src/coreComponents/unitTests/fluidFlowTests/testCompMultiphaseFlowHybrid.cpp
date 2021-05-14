@@ -251,7 +251,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateState( subRegion2, targetIndex2 );
+          solver.updateFluidState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();
@@ -276,7 +276,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateState( subRegion2, targetIndex2 );
+          solver.updateFluidState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();
