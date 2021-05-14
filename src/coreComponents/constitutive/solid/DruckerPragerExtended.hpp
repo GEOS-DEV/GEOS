@@ -131,6 +131,15 @@ public:
                                            real64 & dTotalStress_dPressure,
                                            DiscretizationOps & stiffness ) const final;
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void saveConvergedState( localIndex const k,
+                                   localIndex const q ) const override final
+  {
+    ElasticIsotropicUpdates::saveConvergedState( k, q );
+    m_oldState[k][q] = m_newState[k][q];
+  }
+
 private:
   /// A reference to the ArrayView holding the initial friction param for each element.
   arrayView1d< real64 const > const m_initialFriction;

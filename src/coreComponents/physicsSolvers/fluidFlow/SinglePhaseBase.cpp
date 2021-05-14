@@ -312,8 +312,8 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     arrayView1d< real64 > const & dPres = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
     arrayView1d< real64 > const & dVol = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString() );
 
-    dPres.setValues< parallelDevicePolicy<> >( 0.0 );
-    dVol.setValues< parallelDevicePolicy<> >( 0.0 );
+    dPres.zero();
+    dVol.zero();
 
     // This should fix NaN density in newly created fracture elements
     updateSolidFlowProperties( subRegion, targetIndex );
@@ -680,7 +680,7 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
     arrayView1d< real64 > const & dPres =
       subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-    dPres.setValues< parallelDevicePolicy<> >( 0.0 );
+    dPres.zero();
 
     updateSolidFlowProperties( subRegion, targetIndex );
     updateFluidState( subRegion, targetIndex );

@@ -967,7 +967,7 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
                                viewKeyStruct::proppantConcentrationString(),
                                viewKeyStruct::deltaProppantConcentrationString(),
                                scalingFactor,
-                               0, 1 );
+                               { m_numDofPerCell, 0, 1 } );
 
 
   if( m_numDofPerCell > 1 )
@@ -976,7 +976,7 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
                                  viewKeyStruct::proppantConcentrationString(),
                                  viewKeyStruct::deltaComponentConcentrationString(),
                                  scalingFactor,
-                                 1, m_numDofPerCell );
+                                 { m_numDofPerCell, 1, m_numDofPerCell } );
   }
 
   std::map< string, string_array > fieldNames;

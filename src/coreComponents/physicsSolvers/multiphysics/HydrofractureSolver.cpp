@@ -307,9 +307,9 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
     } );
 
 //#if defined(USE_CUDA)
-//    deltaVolume.move( LvArray::MemorySpace::GPU );
-//    aperture.move( LvArray::MemorySpace::GPU );
-//    effectiveAperture.move( LvArray::MemorySpace::GPU );
+//    deltaVolume.move( LvArray::MemorySpace::cuda );
+//    aperture.move( LvArray::MemorySpace::cuda );
+//    effectiveAperture.move( LvArray::MemorySpace::cuda );
 //#endif
   } );
 }
@@ -481,7 +481,7 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   m_flowSolver->resetViews( mesh );
 
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( mesh );
 
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
@@ -737,7 +737,7 @@ HydrofractureSolver::
 
   arrayView2d< real64 > const &
   fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() );
-  fext.setValues< serialPolicy >( 0 );
+  fext.zero();
 
   string const presDofKey = m_dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
   string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );

@@ -234,8 +234,8 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   implicitStepSetup( time_n, dt, domain );
 
   // zero out matrix/rhs before assembly
-  m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
-  m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
+  m_localMatrix.zero();
+  m_localRhs.zero();
 
   // call assemble to fill the matrix and the rhs
   assembleSystem( time_n,
@@ -341,8 +341,8 @@ bool SolverBase::lineSearch( real64 const & time_n,
     updateState( domain );
 
     // re-assemble system
-    localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
-    localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
+    localMatrix.zero();
+    localRhs.zero();
     assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
     // apply boundary conditions to system
@@ -473,8 +473,8 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       }
 
       // zero out matrix/rhs before assembly
-      m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
-      m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
+      m_localMatrix.zero();
+      m_localRhs.zero();
 
       // call assemble to fill the matrix and the rhs
       assembleSystem( time_n,
@@ -673,7 +673,7 @@ void SolverBase::setupSystem( DomainPartition & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
 
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();

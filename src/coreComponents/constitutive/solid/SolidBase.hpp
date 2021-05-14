@@ -384,6 +384,19 @@ public:
 
   ///@}
 
+  /**
+   * @brief Save converged state data at index (k,q)
+   *
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void saveConvergedState( localIndex const k,
+                                   localIndex const q ) const
+  {
+    LvArray::tensorOps::copy< 6 >( m_oldStress[k][q], m_newStress[k][q] );
+  }
 
   /**
    * @brief Return the current elastic strain at a given material point (small-strain interface)

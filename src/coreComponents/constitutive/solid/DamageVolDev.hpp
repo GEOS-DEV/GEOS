@@ -49,7 +49,7 @@ public:
 
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate_porosity;
-
+  using DamageUpdates< UPDATE_BASE >::saveConvergedState;
   using DamageUpdates< UPDATE_BASE >::getDegradationValue;
   using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;
   using DamageUpdates< UPDATE_BASE >::getDegradationSecondDerivative;

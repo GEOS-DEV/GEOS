@@ -647,13 +647,13 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
                                wellElementDofName(),
                                viewKeyStruct::deltaPressureString(),
                                scalingFactor,
-                               0, 1 );
+                               { m_numDofPerWellElement, 0, 1 } );
 
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
                                viewKeyStruct::deltaConnRateString(),
                                scalingFactor,
-                               1, m_numDofPerWellElement );
+                               { m_numDofPerWellElement, 1, m_numDofPerWellElement } );
 
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString() ) );

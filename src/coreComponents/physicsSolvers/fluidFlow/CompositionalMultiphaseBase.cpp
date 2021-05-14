@@ -1051,8 +1051,8 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
     arrayView2d< real64 > const & dCompDens =
       subRegion.template getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString() );
 
-    dPres.setValues< parallelDevicePolicy<> >( 0.0 );
-    dCompDens.setValues< parallelDevicePolicy<> >( 0.0 );
+    dPres.zero();
+    dCompDens.zero();
 
     // update porosity and permeability
     updateSolidFlowProperties( subRegion, targetIndex );

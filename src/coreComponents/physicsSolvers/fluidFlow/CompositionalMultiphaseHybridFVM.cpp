@@ -236,7 +236,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 
@@ -296,8 +296,7 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_
   // setup coupling between pressure and face pressure
   dofManager.addCoupling( viewKeyStruct::faceDofFieldString(),
                           viewKeyStruct::elemDofFieldString(),
-                          DofManager::Connector::Elem,
-                          true );
+                          DofManager::Connector::Elem );
 
 }
 
@@ -785,18 +784,19 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // 1. apply the elem-based update
+  DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
                                viewKeyStruct::deltaPressureString(),
                                scalingFactor,
-                               0, 1 );
+                               pressureMask );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
                                viewKeyStruct::deltaGlobalCompDensityString(),
                                scalingFactor,
-                               1, m_numDofPerCell );
+                               ~pressureMask );
 
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function
@@ -841,7 +841,7 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 

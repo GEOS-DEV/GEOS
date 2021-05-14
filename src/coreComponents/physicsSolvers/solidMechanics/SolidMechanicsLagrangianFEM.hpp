@@ -23,6 +23,7 @@
 #include "common/TimingMacros.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
@@ -166,9 +167,7 @@ public:
 
 
   template< typename CONSTITUTIVE_BASE,
-            template< typename SUBREGION_TYPE,
-                      typename CONSTITUTIVE_TYPE,
-                      typename FE_TYPE > class KERNEL_TEMPLATE,
+            typename KERNEL_WRAPPER,
             typename ... PARAMS >
   void assemblyLaunch( DomainPartition & domain,
                        DofManager const & dofManager,
@@ -178,7 +177,12 @@ public:
 
 
   template< typename ... PARAMS >
-  real64 explicitKernelDispatch( PARAMS && ... params );
+  real64 explicitKernelDispatch( MeshLevel & mesh,
+                                 arrayView1d< string const > const & targetRegions,
+                                 string const & finiteElementName,
+                                 arrayView1d< string const > const & constitutiveNames,
+                                 real64 const dt,
+                                 std::string const & elementListName );
 
   /**
    * Applies displacement boundary conditions to the system for implicit time integration
@@ -318,9 +322,7 @@ ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption, "QuasiStatic",
 
 
 template< typename CONSTITUTIVE_BASE,
-          template< typename SUBREGION_TYPE,
-                    typename CONSTITUTIVE_TYPE,
-                    typename FE_TYPE > class KERNEL_TEMPLATE,
+          typename KERNEL_WRAPPER,
           typename ... PARAMS >
 void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   DofManager const & dofManager,
@@ -338,27 +340,24 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
+  KERNEL_WRAPPER kernelWrapper( dofNumber,
+                                dofManager.rankOffset(),
+                                localMatrix,
+                                localRhs,
+                                gravityVectorData,
+                                std::forward< PARAMS >( params )... );
+
   m_maxForce = finiteElement::
                  regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                                CONSTITUTIVE_BASE,
-                                               CellElementSubRegion,
-                                               KERNEL_TEMPLATE >( mesh,
-                                                                  targetRegionNames(),
-                                                                  this->getDiscretizationName(),
-                                                                  m_solidMaterialNames,
-                                                                  dofNumber,
-                                                                  dofManager.rankOffset(),
-                                                                  localMatrix,
-                                                                  localRhs,
-                                                                  gravityVectorData,
-                                                                  std::forward< PARAMS >( params )... );
+                                               CellElementSubRegion >( mesh,
+                                                                       targetRegionNames(),
+                                                                       this->getDiscretizationName(),
+                                                                       m_solidMaterialNames,
+                                                                       kernelWrapper );
 
 
-  applyContactConstraint( dofManager,
-                          domain,
-                          localMatrix,
-                          localRhs );
-
+  applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }
 
 } /* namespace geosx */

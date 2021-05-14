@@ -153,7 +153,7 @@ protected:
   integer m_coupledWellsFlag;
 
   /// the number of Degrees of Freedom per cell
-  localIndex m_numDofPerCell;
+  integer m_numDofPerCell;
 
   real64 m_fluxEstimate;
 

@@ -213,9 +213,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   SurfaceElementStencil & fractureStencil = getStencil< SurfaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
   CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
   FaceElementToCellStencil & faceToCellStencil = getStencil< FaceElementToCellStencil >( mesh, viewKeyStruct::faceToCellStencilString() );
-  fractureStencil.move( LvArray::MemorySpace::CPU );
-  cellStencil.move( LvArray::MemorySpace::CPU );
-  faceToCellStencil.move( LvArray::MemorySpace::CPU );
+  fractureStencil.move( LvArray::MemorySpace::host );
+  cellStencil.move( LvArray::MemorySpace::host );
+  faceToCellStencil.move( LvArray::MemorySpace::host );
 
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
@@ -630,9 +630,9 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   SurfaceElementStencil & fractureStencil = getStencil< SurfaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
   CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
   EmbeddedSurfaceToCellStencil & edfmStencil = getStencil< EmbeddedSurfaceToCellStencil >( mesh, viewKeyStruct::edfmStencilString() );
-  fractureStencil.move( LvArray::MemorySpace::CPU );
-  cellStencil.move( LvArray::MemorySpace::CPU );
-  edfmStencil.move( LvArray::MemorySpace::CPU );
+  fractureStencil.move( LvArray::MemorySpace::host );
+  cellStencil.move( LvArray::MemorySpace::host );
+  edfmStencil.move( LvArray::MemorySpace::host );
 
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( embeddedSurfaceRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
