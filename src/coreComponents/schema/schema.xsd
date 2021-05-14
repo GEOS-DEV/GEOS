@@ -587,6 +587,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 	<xsd:complexType name="InternalWellboreType">
 		<!--autoSpaceRadialElems => Automatically set number and spacing of elements in the radial direction. This overrides the values of nr-->
 		<xsd:attribute name="autoSpaceRadialElems" type="integer_array" default="{0}" />
+		<!--cartesianMappingInnerRadius => If using a Cartesian aligned outer boundary, this is inner radius at which to start the mapping.-->
+		<xsd:attribute name="cartesianMappingInnerRadius" type="real64" default="1e+99" />
 		<!--cellBlockNames => Names of each mesh block-->
 		<xsd:attribute name="cellBlockNames" type="string_array" use="required" />
 		<!--elementTypes => Element types of each mesh block-->

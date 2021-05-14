@@ -678,6 +678,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   coordinateTransformation( nodeManager );
 
+  GEOSX_LOG_RANK_0( "Total number of nodes:"<<(m_numElemsTotal[0]+1)*(m_numElemsTotal[1]+1)*(m_numElemsTotal[2]+1) );
+  GEOSX_LOG_RANK_0( "Total number of elems:"<<m_numElemsTotal[0]*m_numElemsTotal[1]*m_numElemsTotal[2] );
 }
 
 /**

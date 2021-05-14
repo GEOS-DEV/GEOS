@@ -80,6 +80,7 @@ protected:
     constexpr static char const * rBiasString() { return "rBias"; }
     constexpr static char const * trajectoryString() { return "trajectory"; }
     constexpr static char const * cartesianOuterBoundaryString() { return "useCartesianOuterBoundary"; }
+    constexpr static char const * cartesianMappingInnerRadiusString() { return "cartesianMappingInnerRadius"; }
     constexpr static char const * autoSpaceRadialElemsString() { return "autoSpaceRadialElems"; }
   };
   /// @endcond
@@ -93,6 +94,8 @@ private:
 
   /// Parameter defining whether or not the outer boundary is cartesian
   int m_cartesianOuterBoundary;
+
+  real64 m_cartesianMappingInnerRadius;
 
   /// Parameter defining whether or not the full wellbore geometry is considered: max theta = 360
   bool m_isFullAnnulus;
