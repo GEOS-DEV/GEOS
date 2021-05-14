@@ -253,7 +253,7 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
   //  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
   //  localIndex const ei1  =  m_elementIndices[iconn][1];
 
-    real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( permeability[er0][esr0][ei0][0] );
+  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( permeability[er0][esr0][ei0][0] );
   //  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
 
   real64 const harmonicWeight   = t0; // *t1 / (t0+t1);

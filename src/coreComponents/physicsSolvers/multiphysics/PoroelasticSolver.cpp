@@ -369,7 +369,7 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
                                               dofManager,
                                               localMatrix,
                                               localRhs,
-                                              " ");
+                                              " " );
 
 }
 

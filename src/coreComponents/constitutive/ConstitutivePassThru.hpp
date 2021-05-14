@@ -124,7 +124,7 @@ struct ConstitutivePassThru< RockBase >
     }
     else if( auto * const ptr2 = dynamic_cast< SolidBase * >( &constitutiveRelation ) )
     {
-      ConstitutivePassThru< SolidBase >::execute( constitutiveRelation, lambda);
+      ConstitutivePassThru< SolidBase >::execute( constitutiveRelation, lambda );
     }
     else
     {

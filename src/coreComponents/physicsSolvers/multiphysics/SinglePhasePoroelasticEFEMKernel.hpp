@@ -426,11 +426,11 @@ public:
     LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, stack.dTractiondw, -1 );
 
     // JumpFractureFlowJacobian
-    real64 const localJumpFracPressureJacobian = - m_dTraction_dPressure[embSurfIndex] * m_surfaceArea[embSurfIndex];
+    real64 const localJumpFracPressureJacobian = -m_dTraction_dPressure[embSurfIndex] * m_surfaceArea[embSurfIndex];
 
     // Mass balance accumulation
     real64 const newVolume = m_elementVolume( embSurfIndex ) + m_deltaVolume( embSurfIndex );
-    real64 const newMass =  m_fluidDensity( embSurfIndex, 0 ) * newVolume ;
+    real64 const newMass =  m_fluidDensity( embSurfIndex, 0 ) * newVolume;
     real64 const oldMass =  m_fluidDensityOld( embSurfIndex ) * m_elementVolume( embSurfIndex );
     real64 const localFlowResidual = ( newMass - oldMass );
     real64 const localFlowJumpJacobian = m_fluidDensity( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ];

@@ -293,7 +293,7 @@ struct ResidualNormKernel
         localIndex const lid = presDofNumber[a] - rankOffset;
         real64 const val = localResidual[lid];
         localSum += val * val;
-        normSum += densOld[a] * volume[a];
+        normSum += poroOld[a][0] * densOld[a] * volume[a];
         count += 1;
       }
     } );
