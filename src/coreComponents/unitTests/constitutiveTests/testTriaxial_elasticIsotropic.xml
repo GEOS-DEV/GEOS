@@ -11,7 +11,7 @@
       steps="50" 
       output="none"
       baseline="testTriaxial_elasticIsotropic.txt"
-      logLevel="1" />
+      logLevel="0" />
   </Tasks>
 
   <Events
