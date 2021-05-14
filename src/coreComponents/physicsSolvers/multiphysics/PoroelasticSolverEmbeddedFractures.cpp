@@ -406,47 +406,50 @@ void PoroelasticSolverEmbeddedFractures::assembleSystem( real64 const time_n,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
+
   // 1. Cell-based contributions of standard poroelasticity
+  PoroelasticKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+                                                              pDofKey,
+                                                              dofManager.rankOffset(),
+                                                              localMatrix,
+                                                              localRhs,
+                                                              gravityVectorData,
+                                                              m_flowSolver->fluidModelNames() );
+
   m_solidSolver->getMaxForce() =
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::SolidBase,
-                                    CellElementSubRegion,
-                                    PoroelasticKernels::SinglePhase >( mesh,
-                                                                       targetRegionNames(),
-                                                                       m_solidSolver->getDiscretizationName(),
-                                                                       m_solidSolver->solidMaterialNames(),
-                                                                       dispDofNumber,
-                                                                       pDofKey,
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs,
-                                                                       gravityVectorData,
-                                                                       m_flowSolver->fluidModelNames() );
+                                    CellElementSubRegion >( mesh,
+                                                            targetRegionNames(),
+                                                            m_solidSolver->getDiscretizationName(),
+                                                            m_solidSolver->solidMaterialNames(),
+                                                            kernelFactory );
 
   // 2.  Add EFEM poroelastic contribution
+  PoroelasticEFEMKernels::SinglePhaseKernelFactory EFEMkernelFactory( subRegion,
+                                                                      dispDofNumber,
+                                                                      jumpDofNumber,
+                                                                      pDofKey,
+                                                                      dofManager.rankOffset(),
+                                                                      localMatrix,
+                                                                      localRhs,
+                                                                      gravityVectorData,
+                                                                      m_flowSolver->fluidModelNames() );
+
   real64 maxTraction =
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::SolidBase,
-                                    CellElementSubRegion,
-                                    PoroelasticEFEMKernels::SinglePhase >( mesh,
-                                                                           targetRegionNames(),
-                                                                           m_solidSolver->getDiscretizationName(),
-                                                                           m_solidSolver->solidMaterialNames(),
-                                                                           subRegion,
-                                                                           dispDofNumber,
-                                                                           jumpDofNumber,
-                                                                           pDofKey,
-                                                                           dofManager.rankOffset(),
-                                                                           localMatrix,
-                                                                           localRhs,
-                                                                           gravityVectorData,
-                                                                           m_flowSolver->fluidModelNames() );
+                                    CellElementSubRegion >( mesh,
+                                                            targetRegionNames(),
+                                                            m_solidSolver->getDiscretizationName(),
+                                                            m_solidSolver->solidMaterialNames(),
+                                                            EFEMkernelFactory );
 
   GEOSX_UNUSED_VAR( maxTraction );
 
-  // 3. TODO assemble poroelastic fluxes and all derivatives
+  // 3. Assemble poroelastic fluxes and all derivatives
   m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
                                               domain,
                                               dofManager,

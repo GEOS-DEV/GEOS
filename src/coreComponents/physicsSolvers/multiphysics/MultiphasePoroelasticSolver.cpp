@@ -208,7 +208,7 @@ void MultiphasePoroelasticSolver::assembleSystem( real64 const time_n,
   m_solidSolver->getMaxForce() =
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::PoroElasticBase,
+                                    constitutive::SolidBase,
                                     CellElementSubRegion >( mesh,
                                                             targetRegionNames(),
                                                             this->getDiscretizationName(),
