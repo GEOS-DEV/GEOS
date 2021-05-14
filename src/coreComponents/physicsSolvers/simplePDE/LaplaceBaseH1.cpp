@@ -123,7 +123,9 @@ void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domai
                                DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
-                       DofManager::Location::Node );
+                       DofManager::Location::Node,
+                       1,
+                       targetRegionNames() );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
