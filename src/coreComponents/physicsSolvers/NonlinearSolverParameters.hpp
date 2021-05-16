@@ -161,7 +161,10 @@ public:
 
 };
 
-ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction, "None", "Attempt", "Require" )
+ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
+              "None",
+              "Attempt",
+              "Require" );
 
 } /* namespace geosx */
 

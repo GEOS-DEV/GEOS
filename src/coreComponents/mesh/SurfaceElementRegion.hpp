@@ -170,7 +170,10 @@ private:
 
 };
 
-ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType, "faceElement", "embeddedElement" )
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType,
+              "faceElement",
+              "embeddedElement" );
 
 } /* namespace geosx */
 
