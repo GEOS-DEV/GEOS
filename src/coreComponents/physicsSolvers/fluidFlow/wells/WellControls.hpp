@@ -316,9 +316,14 @@ private:
 
 };
 
-ENUM_STRINGS( WellControls::Type, "producer", "injector" )
+ENUM_STRINGS( WellControls::Type,
+              "producer",
+              "injector" );
 
-ENUM_STRINGS( WellControls::Control, "BHP", "phaseVolRate", "totalVolRate" )
+ENUM_STRINGS( WellControls::Control,
+              "BHP",
+              "phaseVolRate",
+              "totalVolRate" );
 
 } //namespace geosx
 

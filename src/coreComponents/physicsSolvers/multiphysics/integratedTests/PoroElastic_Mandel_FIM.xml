@@ -278,7 +278,7 @@
       name="zposconstraint"
       objectPath="faceManager"
       direction="{0,0,1}"
-      tractionType="0"
+      tractionType="vector"
       scale="-2.0e0"
       setNames="{ zpos }"
       functionName="timeFunction"/>

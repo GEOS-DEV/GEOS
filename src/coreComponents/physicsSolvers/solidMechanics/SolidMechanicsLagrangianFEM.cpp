@@ -718,10 +718,10 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
   } );
 }
 
-void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
-                                                      DofManager const & dofManager,
-                                                      DomainPartition & domain,
-                                                      arrayView1d< real64 > const & localRhs )
+void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
+                                                   DofManager const & dofManager,
+                                                   DomainPartition & domain,
+                                                   arrayView1d< real64 > const & localRhs )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -733,23 +733,22 @@ void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
   arrayView1d< globalIndex const > const blockLocalDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
   globalIndex const dofRankOffset = dofManager.rankOffset();
 
-  fsManager.apply( time,
-                   domain,
-                   "faceManager",
-                   string( "Traction" ),
-                   [&]( FieldSpecificationBase const & bc,
-                        string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group &,
-                        string const & )
+  fsManager.apply< TractionBoundaryCondition >( time,
+                                                domain,
+                                                "faceManager",
+                                                TractionBoundaryCondition::catalogName(),
+                                                [&]( TractionBoundaryCondition const & bc,
+                                                     string const &,
+                                                     SortedArrayView< localIndex const > const & targetSet,
+                                                     Group &,
+                                                     string const & )
   {
-    TractionBoundaryCondition const & tbc = dynamic_cast< TractionBoundaryCondition const & >(bc);
-    tbc.launch( time,
-                blockLocalDofNumber,
-                dofRankOffset,
-                faceManager,
-                targetSet,
-                localRhs );
+    bc.launch( time,
+               blockLocalDofNumber,
+               dofRankOffset,
+               faceManager,
+               targetSet,
+               localRhs );
   } );
 }
 
@@ -1080,7 +1079,7 @@ SolidMechanicsLagrangianFEM::
                                                                      localRhs );
   } );
 
-  crsApplyTractionBC( time_n + dt, dofManager, domain, localRhs );
+  applyTractionBC( time_n + dt, dofManager, domain, localRhs );
 
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
