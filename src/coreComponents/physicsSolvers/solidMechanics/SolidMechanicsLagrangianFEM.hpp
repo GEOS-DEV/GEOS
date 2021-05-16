@@ -193,10 +193,10 @@ public:
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                     arrayView1d< real64 > const & localRhs );
 
-  void crsApplyTractionBC( real64 const time,
-                           DofManager const & dofManager,
-                           DomainPartition & domain,
-                           arrayView1d< real64 > const & localRhs );
+  void applyTractionBC( real64 const time,
+                        DofManager const & dofManager,
+                        DomainPartition & domain,
+                        arrayView1d< real64 > const & localRhs );
 
   void applyChomboPressure( DofManager const & dofManager,
                             DomainPartition & domain,
@@ -301,14 +301,15 @@ protected:
   /// variant of the solid mechanics kernels.
   integer m_effectiveStress;
 
-  SolidMechanicsLagrangianFEM();
-
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
 
 };
 
-ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption, "QuasiStatic", "ImplicitDynamic", "ExplicitDynamic" )
+ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
+              "QuasiStatic",
+              "ImplicitDynamic",
+              "ExplicitDynamic" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************
