@@ -388,8 +388,7 @@
 		<xsd:attribute name="functionName" type="string" default="" />
 		<!--initialCondition => BC is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
-		<!--inputStress => Input stress for tractionType option 2.
--->
+		<!--inputStress => Input stress for tractionType = stress-->
 		<xsd:attribute name="inputStress" type="R2SymTensor" default="{0,0,0,0,0,0}" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
@@ -398,13 +397,18 @@
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
 		<!--tractionType => Type of traction boundary condition. Options are:
-0 - Traction is applied to the faces as specified from the scale and direction,
-1 - Traction is applied to the faces as a pressure specified from the product of scale and the outward face normal, 
-2 - Traction is applied to the faces as specified by the inner product of input stress and face normal.-->
-		<xsd:attribute name="tractionType" type="integer" default="0" />
+vector - traction is applied to the faces as specified from the scale and direction,
+normal - traction is applied to the faces as a pressure specified from the product of scale and the outward face normal,
+stress - traction is applied to the faces as specified by the inner product of input stress and face normal.-->
+		<xsd:attribute name="tractionType" type="geosx_TractionBoundaryCondition_TractionType" default="vector" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_TractionBoundaryCondition_TractionType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|vector|normal|stress" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />

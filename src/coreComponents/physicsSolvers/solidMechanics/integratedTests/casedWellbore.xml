@@ -152,7 +152,7 @@
     <Traction
       name="innerPressure"
       objectPath="faceManager"
-      tractionType="1"
+      tractionType="normal"
       scale="-1.0e6"
       functionName="timeFunction"
       setNames="{ rneg }"/>

@@ -180,13 +180,14 @@ public:
     {
       // parse the string/attribute into a value
       stringToInputVariable( rval, xmlatt.value() );
+      return true;
     }
     else
     {
       // set the value to the default value
       equate( rval, defVal );
+      return false;
     }
-    return true;
   }
 
   /**
