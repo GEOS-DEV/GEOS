@@ -26,8 +26,6 @@
 #include "events/tasks/TaskBase.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
-//#include "mainInterface/GeosxState.hpp"
-//#include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 
 namespace geosx
@@ -69,6 +67,14 @@ public:
   void runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table );
 
   /**
+   * @brief Run a stress-controlled test using loading protocol in table
+   * @param solid Solid constitutive model
+   * @param table Table with stress / strain time history
+   */
+  template< typename SOLID_TYPE >
+  void runStressControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table );
+
+  /**
    * @brief Run a mixed stress/strain-controlled test using loading protocol in table
    * @param solid Solid constitutive model
    * @param table Table with stress / strain time history
@@ -95,8 +101,9 @@ private:
   {
     constexpr static char const * solidMaterialNameString() { return "material"; }
     constexpr static char const * modeString() { return "mode"; }
-    constexpr static char const * strainFunctionString() { return "strainFunction"; }
-    constexpr static char const * stressFunctionString() { return "stressFunction"; }
+    constexpr static char const * axialFunctionString() { return "axialControl"; }
+    constexpr static char const * radialFunctionString() { return "radialControl"; }
+    constexpr static char const * initialStressString() { return "initialStress"; }
     constexpr static char const * numStepsString() { return "steps"; }
     constexpr static char const * outputString() { return "output"; }
     constexpr static char const * baselineString() { return "baseline"; }
@@ -104,9 +111,10 @@ private:
 
   int m_numSteps;              ///< Number of load steps
   string m_solidMaterialName;  ///< Material identifier
-  string m_mode;               ///< Test mode: triaxial, volumetric, oedometer
-  string m_strainFunctionName; ///< Time-dependent function controlling strain (role depends on test mode)
-  string m_stressFunctionName; ///< Time-dependent function controlling stress (role depends on test mode)
+  string m_mode;               ///< Test mode: strainControl, stressControl, mixedControl
+  string m_axialFunctionName;  ///< Time-dependent function controlling axial stress or strain (depends on test mode)
+  string m_radialFunctionName; ///< Time-dependent function controlling radial stress or strain (depends on test mode)
+  real64 m_initialStress;      ///< Initial stress value (scalar used to set an isotropic stress state)
   string m_outputFile;         ///< Output file (optional, no output if not specified)
   Path m_baselineFile;         ///< Baseline file (optional, for unit testing of solid models)
   array2d< real64 > m_table;   ///< Table storing time-history of axial/radial stresses and strains

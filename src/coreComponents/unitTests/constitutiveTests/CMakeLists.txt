@@ -8,8 +8,10 @@ set( gtest_geosx_tests
    )
 
 set( gtest_triaxial_xmls
-     testTriaxial_elasticIsotropic.xml
      testTriaxial_druckerPragerExtended.xml
+     testTriaxial_elasticIsotropic.xml
+     testTriaxial_elasticIsotropicPressureDependent.xml
+     testTriaxial_modifiedCamClay.xml
    )
 
 set( dependencyList gtest geosx_core conduit )

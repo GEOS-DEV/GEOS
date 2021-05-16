@@ -5,9 +5,10 @@
     <TriaxialDriver
       name="triaxialDriver"
       material="elasticIPD"
-      mode="volumetric" 
-      strainFunction="strainFunction"
-      stressFunction="stressFunction"
+      mode="strainControl" 
+      axialControl="strainFunction"
+      radialControl="strainFunction"
+      initialStress="-1.0"
       steps="20"
       logLevel="0"
       output="none"
@@ -39,11 +40,6 @@
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
       values="{ 0, -0.02}"/>
-    <TableFunction
-      name="stressFunction"
-      inputVarNames="{ time }"
-      coordinates="{ 0.0, 1.0 }"
-      values="{ -1.0, -1.0 }"/>
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->

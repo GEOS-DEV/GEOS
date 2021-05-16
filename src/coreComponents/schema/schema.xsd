@@ -1772,22 +1772,24 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TriaxialDriverType">
+		<!--axialControl => Function controlling axial stress or strain (depending on test mode)-->
+		<xsd:attribute name="axialControl" type="string" use="required" />
 		<!--baseline => Baseline file-->
 		<xsd:attribute name="baseline" type="path" default="none" />
+		<!--initialStress => Initial stress (scalar used to set an isotropic stress state)-->
+		<xsd:attribute name="initialStress" type="real64" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--material => Solid material to test-->
 		<xsd:attribute name="material" type="string" use="required" />
-		<!--mode => Test mode [triaxial, volumetric, oedometer]-->
+		<!--mode => Test mode [stressControl, strainControl, mixedControl]-->
 		<xsd:attribute name="mode" type="string" use="required" />
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="none" />
+		<!--radialControl => Function controlling radial stress or strain (depending on test mode)-->
+		<xsd:attribute name="radialControl" type="string" use="required" />
 		<!--steps => Number of load steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
-		<!--strainFunction => Function controlling strain loading (role depends on test mode)-->
-		<xsd:attribute name="strainFunction" type="string" use="required" />
-		<!--stressFunction => Function controlling stress loading (role depends on test mode)-->
-		<xsd:attribute name="stressFunction" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

@@ -5,9 +5,10 @@
     <TriaxialDriver
       name="triaxialDriver"
       material="elastic"
-      mode="triaxial" 
-      strainFunction="strainFunction"
-      stressFunction="stressFunction"
+      mode="mixedControl" 
+      axialControl="strainFunction"
+      radialControl="stressFunction"
+      initialStress="-1.0"
       steps="50" 
       output="none"
       baseline="testTriaxial_elasticIsotropic.txt"
