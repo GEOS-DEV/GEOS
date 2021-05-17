@@ -1,20 +1,23 @@
 set( subdirs
      math
      common
-     linearAlgebra
      codingUtilities
-     fileIO
      dataRepository
-     managers
+     schema
+     functions
+     events
      constitutive
+     mesh
+     linearAlgebra
+     fieldSpecification
      finiteElement
      finiteVolume
-     mesh
-     meshUtilities
-     mpiCommunications
-     physicsSolvers
-     python
      virtualElement
+     discretizationMethods
+     fileIO
+     physicsSolvers
+     mainInterface
+     python
      )
 
 
@@ -23,9 +26,8 @@ set( geosx_core_include_dirs "" )
 set( geosx_core_defines "" )
 
 
-set( buildAsObj FALSE)
-if ( BUILD_OBJ_LIBS)
-  set(buildAsObj TRUE)
+if ( GEOSX_BUILD_OBJ_LIBS )
+  set( LVARRAY_BUILD_OBJ_LIBS TRUE CACHE BOOL "" FORCE)
 endif()
 
 list( APPEND coreLibs lvarray)
@@ -75,19 +77,27 @@ else()
   set( CSL_TYPE STATIC )
 endif()
 
-if( BUILD_OBJ_LIBS )
+if( GEOSX_BUILD_OBJ_LIBS )
+  message( "Using cmake  Object Libraries" )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
-                    DEPENDS_ON  ${coreLibs}
+                    DEPENDS_ON  mainInterface physicsSolvers
+                    OBJECT ${GEOSX_BUILD_OBJ_LIBS}
                     SHARED ${GEOSX_BUILD_SHARED_BOOL}
                   )
 else()
+  message( "Using blt blt_combine_static_libraries" )
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
                                 LIB_TYPE ${CSL_TYPE}
                                 LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
                                 LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
                               )
+endif()
+
+# Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
+if( ENABLE_HYPRE_CUDA )
+  set_target_properties( geosx_core PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
 endif()
 
 # To install the library with the runtime path used during the building
@@ -100,7 +110,9 @@ target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents
 
 
 geosx_add_code_checks( PREFIX coreComponents 
-                       EXCLUDES cmake )
+                       EXCLUDES cmake 
+                                src/coreComponents/constitutive/PVTPackage
+                                src/coreComponents/mesh/PAMELA )
 
 if( ENABLE_UNCRUSTIFY )
   add_test( NAME testUncrustifyCheck

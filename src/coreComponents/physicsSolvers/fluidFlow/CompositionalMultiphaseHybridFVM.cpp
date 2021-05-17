@@ -23,9 +23,8 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
@@ -55,7 +54,7 @@ CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::s
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (relative) change in (face) pressure between two Newton iterations" );
 
-  m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseHybridFVM";
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM;
 
 }
 
@@ -86,7 +85,7 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
@@ -105,7 +104,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = mesh.getElemManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -237,7 +236,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 
@@ -297,8 +296,7 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_
   // setup coupling between pressure and face pressure
   dofManager.addCoupling( viewKeyStruct::faceDofFieldString(),
                           viewKeyStruct::elemDofFieldString(),
-                          DofManager::Connector::Elem,
-                          true );
+                          DofManager::Connector::Elem );
 
 }
 
@@ -784,18 +782,19 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // 1. apply the elem-based update
+  DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
                                viewKeyStruct::deltaPressureString(),
                                scalingFactor,
-                               0, 1 );
+                               pressureMask );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
                                viewKeyStruct::deltaGlobalCompDensityString(),
                                scalingFactor,
-                               1, m_numDofPerCell );
+                               ~pressureMask );
 
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function
@@ -817,10 +816,10 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
   fieldNames["face"].emplace_back( string( viewKeyStruct::deltaFacePressureString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString() ) );
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              mesh,
-                                                              domain.getNeighbors(),
-                                                              true );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       mesh,
+                                                       domain.getNeighbors(),
+                                                       true );
 
   // 4. update secondary variables
 
@@ -848,7 +847,7 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 

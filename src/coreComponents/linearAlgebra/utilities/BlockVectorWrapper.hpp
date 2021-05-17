@@ -20,7 +20,7 @@
 #define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORWRAPPER_HPP_
 
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
-#include "linearAlgebra/common.hpp"
+#include "common/common.hpp"
 
 namespace geosx
 {

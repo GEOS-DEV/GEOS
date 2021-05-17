@@ -214,7 +214,7 @@ public:
 
   ///@}
 
-  /// @copydoc geosx::WrapperBase::getHistoryMetadata
+  /// @copydoc WrapperBase::getHistoryMetadata
   virtual
   HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
@@ -227,7 +227,7 @@ public:
   ///@{
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::isPackable
+  /// @copydoc WrapperBase::isPackable
   virtual
   bool isPackable( bool onDevice ) const override
   {
@@ -243,9 +243,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::pack
+  /// @copydoc WrapperBase::pack
   virtual
-  localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const override final
+  localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     localIndex packedSize = 0;
     if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
@@ -253,11 +253,11 @@ public:
     {
       if( withMetadata )
       {
-        packedSize += wrapperHelpers::PackDevice< true >( buffer, reference() );
+        packedSize += wrapperHelpers::PackDevice< true >( buffer, reference(), events );
       }
       else
       {
-        packedSize += wrapperHelpers::PackDataDevice< true >( buffer, reference() );
+        packedSize += wrapperHelpers::PackDataDevice< true >( buffer, reference(), events );
       }
     }
     else
@@ -268,9 +268,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::packByIndex
+  /// @copydoc WrapperBase::packByIndex
   virtual
-  localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
+  localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     localIndex packedSize = 0;
     if( sizedFromParent() == 1 )
@@ -280,11 +280,11 @@ public:
       {
         if( withMetadata )
         {
-          packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList );
+          packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList, events );
         }
         else
         {
-          packedSize += wrapperHelpers::PackDataByIndexDevice< true >( buffer, reference(), packList );
+          packedSize += wrapperHelpers::PackDataByIndexDevice< true >( buffer, reference(), packList, events );
         }
       }
       else
@@ -296,9 +296,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::packSize
+  /// @copydoc WrapperBase::packSize
   virtual
-  localIndex packSize( bool withMetadata, bool onDevice ) const override final
+  localIndex packSize( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     buffer_unit_type * buffer = nullptr;
     localIndex packedSize = 0;
@@ -307,11 +307,11 @@ public:
     {
       if( withMetadata )
       {
-        packedSize += wrapperHelpers::PackDevice< false >( buffer, reference() );
+        packedSize += wrapperHelpers::PackDevice< false >( buffer, reference(), events );
       }
       else
       {
-        packedSize += wrapperHelpers::PackDataDevice< false >( buffer, reference() );
+        packedSize += wrapperHelpers::PackDataDevice< false >( buffer, reference(), events );
       }
     }
     else
@@ -322,9 +322,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::packByIndexSize
+  /// @copydoc WrapperBase::packByIndexSize
   virtual
-  localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
+  localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     localIndex packedSize = 0;
     buffer_unit_type * buffer = nullptr;
@@ -335,11 +335,11 @@ public:
       {
         if( withMetadata )
         {
-          packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList );
+          packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList, events );
         }
         else
         {
-          packedSize += wrapperHelpers::PackDataByIndexDevice< false >( buffer, reference(), packList );
+          packedSize += wrapperHelpers::PackDataByIndexDevice< false >( buffer, reference(), packList, events );
         }
       }
       else
@@ -351,9 +351,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::unpack
+  /// @copydoc WrapperBase::unpack
   virtual
-  localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) override final
+  localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
   {
     localIndex unpackedSize = 0;
     if( withMetadata )
@@ -366,11 +366,11 @@ public:
     {
       if( withMetadata )
       {
-        unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView() );
+        unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView(), events );
       }
       else
       {
-        unpackedSize += wrapperHelpers::UnpackDataDevice( buffer, referenceAsView() );
+        unpackedSize += wrapperHelpers::UnpackDataDevice( buffer, referenceAsView(), events );
       }
     }
     else
@@ -381,9 +381,9 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc geosx::WrapperBase::unpackByIndex
+  /// @copydoc WrapperBase::unpackByIndex
   virtual
-  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) override final
+  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
   {
     localIndex unpackedSize = 0;
     if( sizedFromParent()==1 )
@@ -398,11 +398,11 @@ public:
       {
         if( withMetadata )
         {
-          unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices );
+          unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
         }
         else
         {
-          unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices );
+          unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
         }
       }
       else
@@ -438,14 +438,14 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( int ndims, localIndex const * const dims ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
     wrapperHelpers::resizeDimensions( *m_data, ndims, dims );
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void reserve( localIndex const newCapacity ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
     wrapperHelpers::reserve( reference(), newCapacity );
   }
 
@@ -459,7 +459,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( localIndex const newSize ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
     wrapperHelpers::resizeDefault( reference(), newSize, m_default );
   }
 
@@ -670,7 +670,8 @@ public:
     {
       value_dim = 2;
     }
-    else if( wrapper_type.find( "array" ) != string::npos )
+    else if( ( wrapper_type.find( "array" ) != string::npos ) ||
+             ( wrapper_type.find( "Tensor" ) != string::npos ) )
     {
       value_dim = 1;
     }
@@ -700,11 +701,11 @@ public:
     {
       if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
       {
-        bool const readSuccess = xmlWrapper::readAttributeAsType( reference(),
-                                                                  getName(),
-                                                                  targetNode,
-                                                                  inputFlag == InputFlags::REQUIRED );
-        GEOSX_THROW_IF( !readSuccess,
+        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                     getName(),
+                                                                     targetNode,
+                                                                     inputFlag == InputFlags::REQUIRED );
+        GEOSX_THROW_IF( !m_successfulReadFromInput,
                         "Input variable " << getName() << " is required in " << targetNode.path() <<
                         ". Available options are: \n" << dumpInputOptions( true ) <<
                         "\nFor more details, please refer to documentation at: \n" <<
@@ -713,7 +714,10 @@ public:
       }
       else
       {
-        xmlWrapper::readAttributeAsType( reference(), getName(), targetNode, getDefaultValueStruct() );
+        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                     getName(),
+                                                                     targetNode,
+                                                                     getDefaultValueStruct() );
       }
 
       return true;
@@ -765,7 +769,7 @@ public:
       return;
     }
 
-    move( LvArray::MemorySpace::CPU, false );
+    move( LvArray::MemorySpace::host, false );
 
     m_conduitNode[ "__sizedFromParent__" ].set( sizedFromParent() );
 

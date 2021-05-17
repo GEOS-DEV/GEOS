@@ -21,7 +21,7 @@
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
-#include "managers/Functions/TableFunction.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geosx
 {

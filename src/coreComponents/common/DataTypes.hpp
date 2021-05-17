@@ -24,11 +24,11 @@
 
 // Source includes
 #include "common/GeosxConfig.hpp"
-#include "common/GeosxMacros.hpp"
-#include "common/BufferAllocator.hpp"
-#include "common/DataLayouts.hpp"
-#include "common/Tensor.hpp"
-#include "common/Logger.hpp"
+#include "GeosxMacros.hpp"
+#include "BufferAllocator.hpp"
+#include "DataLayouts.hpp"
+#include "Tensor.hpp"
+#include "Logger.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
@@ -190,6 +190,10 @@ using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZ
 
 /// Alias for a local (stack-based) rank-1 tensor type
 using R1Tensor = Tensor< real64, 3 >;
+
+/// Alias for a local (stack-based) rank-2 Voigt tensor type
+using R2SymTensor = Tensor< real64, 6 >;
+
 
 /// Alias for 1D array.
 template< typename T >
@@ -507,6 +511,7 @@ public:
       {std::type_index( typeid(localIndex)), "localIndex"},
       {std::type_index( typeid(globalIndex)), "globalIndex"},
       {std::type_index( typeid(R1Tensor)), "R1Tensor"},
+      {std::type_index( typeid(R2SymTensor)), "R2SymTensor"},
       {std::type_index( typeid(integer_array)), "integer_array"},
       {std::type_index( typeid(real32_array)), "real32_array"},
       {std::type_index( typeid(real64_array)), "real64_array"},
@@ -602,6 +607,7 @@ public:
       { std::type_index( typeid(real32)), TypeIDs::real32_id },
       { std::type_index( typeid(real64)), TypeIDs::real64_id },
       { std::type_index( typeid(R1Tensor)), TypeIDs::r1Tensor_id },
+      { std::type_index( typeid(R2SymTensor)), TypeIDs::r2SymTensor_id },
       { std::type_index( typeid(integer_array)), TypeIDs::integer_array_id },
       { std::type_index( typeid(localIndex_array)), TypeIDs::localIndex_array_id },
       { std::type_index( typeid(globalIndex_array)), TypeIDs::globalIndex_array_id },
@@ -729,7 +735,10 @@ private:
     string rs = "[^,\\{\\}]*";
 
     // Regex to match a R1Tensor
-    string r1 = "\\s*(" + rr + ",\\s*){2}" + rr;
+    string r1 = "\\s*\\{\\s*(" + rr + ",\\s*){2}" + rr + "\\s*\\}";
+
+    // Regex to match a R2SymTensor
+    string r2s = "\\s*\\{\\s*(" + rr + ",\\s*){5}" + rr + "\\s*\\}";
 
     // Build master list of regexes
     regexMapType regexMap =
@@ -740,6 +749,7 @@ private:
       {"real32", rr},
       {"real64", rr},
       {"R1Tensor", r1},
+      {"R2SymTensor", r2s},
       {"integer_array", constructArrayRegex( ri, 1 )},
       {"localIndex_array", constructArrayRegex( ri, 1 )},
       {"globalIndex_array", constructArrayRegex( ri, 1 )},

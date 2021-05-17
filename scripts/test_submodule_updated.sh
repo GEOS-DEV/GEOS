@@ -11,8 +11,8 @@ git lfs uninstall &> /dev/null
 #git submodule update --init integratedTests
 git submodule update --init src/cmake/blt
 git submodule update --init src/coreComponents/LvArray
-git submodule update --init src/externalComponents/PVTPackage
-git submodule update --init src/externalComponents/PAMELA
+git submodule update --init src/coreComponents/constitutive/PVTPackage
+git submodule update --init src/coreComponents/mesh/PAMELA
 git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
 git submodule update --init src/coreComponents/physicsSolvers/GEOSX_PTP
 

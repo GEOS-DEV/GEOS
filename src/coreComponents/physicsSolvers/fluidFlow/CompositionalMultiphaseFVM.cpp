@@ -27,12 +27,11 @@
 #include "dataRepository/Group.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "common/MpiWrapper.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVMKernels.hpp"
 
@@ -50,7 +49,7 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
   CompositionalMultiphaseBase( name, parent )
 {
 
-  m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseFVM";
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 
 }
 
@@ -58,7 +57,7 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
@@ -342,17 +341,19 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                                       DomainPartition & domain )
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
+
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
                                viewKeyStruct::deltaPressureString(),
                                scalingFactor,
-                               0, 1 );
+                               pressureMask );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
                                viewKeyStruct::deltaGlobalCompDensityString(),
                                scalingFactor,
-                               1, m_numDofPerCell );
+                               ~pressureMask );
 
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function
@@ -364,7 +365,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString() ) );
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {

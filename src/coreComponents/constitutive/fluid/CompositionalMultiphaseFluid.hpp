@@ -30,6 +30,8 @@ class CompositionalMultiphaseFluid : public MultiFluidPVTPackageWrapper
 {
 public:
 
+  using exec_policy = serialPolicy;
+
   CompositionalMultiphaseFluid( string const & name, Group * const parent );
 
   virtual ~CompositionalMultiphaseFluid() override;
