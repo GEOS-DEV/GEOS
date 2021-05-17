@@ -27,62 +27,66 @@ using namespace dataRepository;
 
 TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group * parent ):
   FieldSpecificationBase( name, parent ),
-  m_tractionType( 0 ),
+  m_tractionType( TractionType::vector ),
   m_inputStress{}//,
 //  m_stressFunctionNames(),
 //  m_useStressFunctions(false),
 //  m_stressFunctions{nullptr}
 {
   registerWrapper( viewKeyStruct::tractionTypeString(), &m_tractionType ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( TractionType::vector ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
-    setDescription( "Type of traction boundary condition. Options are:\n"
-                    "0 - Traction is applied to the faces as specified from the scale and direction,\n"
-                    "1 - Traction is applied to the faces as a pressure specified from the product of scale and the outward face normal, \n"
-                    "2 - Traction is applied to the faces as specified by the inner product of input stress and face normal." );
+    setDescription( "Type of traction boundary condition. Options are:\n" +
+                    toString( TractionType::vector ) + " - traction is applied to the faces as specified from the scale and direction,\n" +
+                    toString( TractionType::normal ) + " - traction is applied to the faces as a pressure specified from the product of scale and the outward face normal,\n" +
+                    toString( TractionType::stress ) + " - traction is applied to the faces as specified by the inner product of input stress and face normal." );
 
   registerWrapper( viewKeyStruct::inputStressString(), &m_inputStress ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Input stress for tractionType option 2.\n" );
+    setDescription( string( "Input stress for " ) + viewKeyStruct::tractionTypeString() + " = " + toString( TractionType::stress ) );
 
 //  registerWrapper( viewKeyStruct::stressFunctionString(), &m_stressFunctionNames ).
 //    setInputFlag( InputFlags::OPTIONAL ).
-//    setDescription( "Function names for description of stress for tractionType "
-//                    "option 2. Overrides m_inputStress.\n" );
-
+//    setDescription( string("Function names for description of stress for ") + viewKeyStruct::tractionTypeString() +
+//                    " = " + toString( TractionType::stress ) + ". Overrides " + viewKeyStruct::inputStressString() + "." );
 
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
-  setFieldName( catalogName());
+  setFieldName( catalogName() );
 
   getWrapper< int >( FieldSpecificationBase::viewKeyStruct::componentString() ).
     setInputFlag( InputFlags::FALSE );
-
-
 }
 
 
 void TractionBoundaryCondition::postProcessInput()
 {
-
-  if( m_tractionType == 0 )
+  if( m_tractionType == TractionType::vector )
   {
     GEOSX_ERROR_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
-                    "m_direction is required for m_tractionType==0, but appears to be unspecified" );
+                    viewKeyStruct::directionString() << " is required for " <<
+                    viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
+                    ", but appears to be unspecified" );
   }
   else
   {
     GEOSX_LOG_RANK_0_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) > 1e-20,
-                         "m_direction is not required unless m_tractionType==0, but appears to be specified" );
+                         viewKeyStruct::directionString() << " is not required unless " <<
+                         viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
+                         ", but appears to be specified" );
   }
 
   bool const inputStressRead = getWrapper< R2SymTensor >( viewKeyStruct::inputStressString() ).getSuccessfulReadFromInput();
-  GEOSX_LOG_RANK_0_IF( inputStressRead && m_tractionType!=2,
-                       "m_inputStress is specified, but m_tractionType!=2 so value of m_inputStress is unused." );
 
-  GEOSX_ERROR_IF( !inputStressRead && m_tractionType==2,
-                  "m_tractionType==2, but m_inputStress is not specified." );
+  GEOSX_LOG_RANK_0_IF( inputStressRead && m_tractionType != TractionType::stress,
+                       viewKeyStruct::inputStressString() << " is specified, but " <<
+                       viewKeyStruct::tractionTypeString() << " != " << TractionType::stress <<
+                       ", so value of " << viewKeyStruct::inputStressString() << " is unused." );
+
+  GEOSX_ERROR_IF( !inputStressRead && m_tractionType == TractionType::stress,
+                  viewKeyStruct::tractionTypeString() << " = " << TractionType::stress <<
+                  ", but " << viewKeyStruct::inputStressString() << " is not specified." );
 
 
 //  localIndex const numStressFunctionsNames = m_stressFunctionNames.size();
@@ -130,7 +134,7 @@ void TractionBoundaryCondition::launch( real64 const time,
   real64_array nodeRHS;
 
   R1Tensor const direction = this->getDirection();
-  int const tractionType = m_tractionType;
+  TractionType const tractionType = m_tractionType;
   R2SymTensor inputStress = m_inputStress;
 
   real64 tractionMagnitude0;
@@ -150,7 +154,7 @@ void TractionBoundaryCondition::launch( real64 const time,
     }
     else
     {
-      tractionMagnitudeArray.setName( "SolidMechanicsLagrangianFEM::TractionBC function results" );
+      tractionMagnitudeArray.setName( getName() + " function results" );
       function.evaluate( faceManager, time, targetSet, tractionMagnitudeArray );
       spatialFunction = true;
       tractionMagnitude0 = 1e99;
@@ -170,7 +174,7 @@ void TractionBoundaryCondition::launch( real64 const time,
 
       real64 traction[3] = { 0 };
       // TODO consider dispatch if appropriate
-      if( tractionType==0 )
+      if( tractionType == TractionType::vector )
       {
         traction[0] = tractionMagnitude * direction[0];
         traction[1] = tractionMagnitude * direction[1];
@@ -182,13 +186,13 @@ void TractionBoundaryCondition::launch( real64 const time,
                                  tractionMagnitude * faceNormal( kf, 1 ),
                                  tractionMagnitude * faceNormal( kf, 2 ) };
 
-        if( tractionType==1 )
+        if( tractionType == TractionType::normal )
         {
           traction[0] = temp[0];
           traction[1] = temp[1];
           traction[2] = temp[2];
         }
-        else if( tractionType==2 )
+        else if( tractionType == TractionType::stress )
         {
           traction[0] = inputStress[0] * temp[0] + inputStress[5] * temp[1] + inputStress[4] * temp[2];
           traction[1] = inputStress[5] * temp[0] + inputStress[1] * temp[1] + inputStress[3] * temp[2];

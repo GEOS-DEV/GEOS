@@ -79,11 +79,12 @@ struct LinearSolverResult
   }
 };
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverResult::Status,
               "InProgress",
               "Success",
               "NotConverged",
-              "Breakdown" )
+              "Breakdown" );
 
 }
 
