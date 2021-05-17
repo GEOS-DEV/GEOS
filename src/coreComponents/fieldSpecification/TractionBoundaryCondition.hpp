@@ -83,7 +83,7 @@ public:
   /**
    * @brief View keys
    */
-  struct viewKeyStruct
+  struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
   {
     /// @return The key for tractionType
     constexpr static char const * tractionTypeString() { return "tractionType"; }
@@ -96,15 +96,26 @@ public:
 
   };
 
+  /**
+   * @brief Type of traction boundary condition.
+   */
+  enum class TractionType : integer
+  {
+    vector, ///< traction is applied to the faces as specified from the scale and direction
+    normal, ///< traction is applied to the faces as a pressure specified from the product of scale and the outward face normal
+    stress  ///< traction is applied to the faces as specified by the inner product of input stress and face normal
+  };
+
 protected:
+
   virtual void postProcessInput() override final;
 
   virtual void initializePreSubGroups() override final;
 
   /// The type of traction to be applied, i.e. how to generate the traction.
-  int m_tractionType;
+  TractionType m_tractionType;
 
-  /// single specified value for stress used to generate the traction if m_tractionType==2.
+  /// single specified value for stress used to generate the traction if m_tractionType == stress.
   R2SymTensor m_inputStress;
 
 //  /// names of the functions used to specify stress for the generation of tractions.
@@ -116,6 +127,12 @@ protected:
 
 };
 
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( TractionBoundaryCondition::TractionType,
+              "vector",
+              "normal",
+              "stress" );
+
 } /* namespace geosx */
 
-#endif /* GEOSX_MANAGERS_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP */
+#endif /* GEOSX_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP */

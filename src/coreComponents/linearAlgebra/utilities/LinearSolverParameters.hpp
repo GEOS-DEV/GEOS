@@ -240,14 +240,16 @@ struct LinearSolverParameters
   dd;                      ///< Domain decomposition parameter struct
 };
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::SolverType,
               "direct",
               "cg",
               "gmres",
               "fgmres",
               "bicgstab",
-              "preconditioner" )
+              "preconditioner" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "none",
               "jacobi",
@@ -264,20 +266,23 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "mgr",
               "block",
               "block_fs",
-              "direct" )
+              "direct" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
               "none",
               "MMD_AtplusA",
               "MMD_AtA",
               "colAMD",
               "metis",
-              "parmetis" )
+              "parmetis" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::Direct::RowPerm,
               "none",
-              "mc64" )
+              "mc64" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "compositionalMultiphaseFVM",
               "compositionalMultiphaseHybridFVM",
@@ -285,17 +290,20 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "hydrofracture",
               "lagrangianContactMechanics",
               "singlePhasePoroelastic",
-              "hybridSinglePhasePoroelastic" )
+              "hybridSinglePhasePoroelastic" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::CycleType,
               "V",
-              "W" )
+              "W" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::PreOrPost,
               "pre",
               "post",
-              "both" )
+              "both" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::SmootherType,
               "default",
               "jacobi",
@@ -307,8 +315,9 @@ ENUM_STRINGS( LinearSolverParameters::AMG::SmootherType,
               "ilu0",
               "ilut",
               "ic0",
-              "ict" )
+              "ict" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::CoarseType,
               "default",
               "jacobi",
@@ -317,11 +326,12 @@ ENUM_STRINGS( LinearSolverParameters::AMG::CoarseType,
               "sgs",
               "l1sgs",
               "chebyshev",
-              "direct" )
+              "direct" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::NullSpaceType,
               "constantModes",
-              "rigidBodyModes" )
+              "rigidBodyModes" );
 
 } /* namespace geosx */
 
