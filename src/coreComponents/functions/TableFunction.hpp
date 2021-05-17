@@ -479,7 +479,12 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input, real64 & value, O
   }
 }
 
-ENUM_STRINGS( TableFunction::InterpolationType, "linear", "nearest", "upper", "lower" )
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( TableFunction::InterpolationType,
+              "linear",
+              "nearest",
+              "upper",
+              "lower" );
 
 } /* namespace geosx */
 
