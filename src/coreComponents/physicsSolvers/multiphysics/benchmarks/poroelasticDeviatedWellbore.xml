@@ -64,14 +64,14 @@
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8 }"
-      radius="{ 0.1, 2 }"
+      radius="{ 0.1, 4 }"
       theta="{ 0, 180 }"
-      zCoords="{ -0.05, 0.05 }"
+      zCoords="{ -1, 1 }"
       nr="{ 30 }"
       nt="{ 80 }"
-      nz="{ 1 }"
-      trajectory="{ { -0.137374, 0.0, -0.05 },
-                    {  0.137374, 0.0,  0.05 } }"
+      nz="{ 10 }"
+      trajectory="{ { -1, 0.0, -1 },
+                    {  1, 0.0,  1 } }"
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
@@ -216,22 +216,22 @@
       name="Sx"
       objectPath="faceManager"
       tractionType="1"
-      scale="-29.0e6"
-      setNames="{ xpos }"/>
+      scale="-20.0e6"
+      setNames="{ xpos }"/-->
 
-    <Traction
+    <!--Traction
       name="Sy"
       objectPath="faceManager"
       tractionType="1"
       scale="-20.0e6"
-      setNames="{ ypos }"/>
+      setNames="{ ypos }"/-->
 
-    <Traction
+    <!--Traction
       name="Sz"
       objectPath="faceManager"
       tractionType="1"
       scale="-25.0e6"
-      setNames="{ zpos }"/!-->
+      setNames="{ zpos }"/-->
       
     <FieldSpecification 
       name="innerPorePressure"
@@ -240,20 +240,20 @@
       scale="10e6"
       setNames="{ rneg }"/>
 
-    <!--FieldSpecification 
+    <FieldSpecification 
       name="initialPorePressure"
       initialCondition="1"
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
       fieldName="pressure"
-      scale="10e6"/-->
+      scale="0e6"/>
 
-    <FieldSpecification 
+    <!--FieldSpecification 
       name="topBottomPressure"
       objectPath="faceManager"
       fieldName="pressure"
       scale="0e6"
-      setNames="{ zneg, zpos }"/>
+      setNames="{ zpos }"/-->
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->
