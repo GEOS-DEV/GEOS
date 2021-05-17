@@ -55,15 +55,6 @@ public:
   { return 4; }
 
   /**
-   * @brief Trigger the computation of all the mappings.
-   *
-   * Call this member function to compute all the mappings.
-   * Computations could be done lazily when calling getters.
-   * But this is not yet implemented.
-   */
-  virtual void buildMaps() = 0;
-
-  /**
    * @brief Returns a group containing the cell blocks as CellBlockABC instances
    * @return Mutable reference to the cell blocks group.
    *

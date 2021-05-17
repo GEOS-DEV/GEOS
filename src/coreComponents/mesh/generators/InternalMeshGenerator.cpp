@@ -673,6 +673,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   }
 
   coordinateTransformation( X, nodeSets );
+
+  cellBlockManager.buildMaps();
 }
 
 /**

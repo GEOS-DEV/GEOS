@@ -368,6 +368,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
     }
   }
 
+  cellBlockManager.buildMaps();
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, string const &, Group * const )

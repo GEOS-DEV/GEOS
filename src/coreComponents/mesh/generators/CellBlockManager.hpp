@@ -122,7 +122,14 @@ public:
                string_array const & regionNames,
                string_array const & elementTypes );
 
-  void buildMaps() override;
+  /**
+   * @brief Trigger the computation of all the mappings.
+   *
+   * Call this member function to compute all the mappings.
+   * Computations could be done lazily when calling getters.
+   * But this is not yet implemented.
+   */
+  void buildMaps();
 
   /**
    * @brief Get cell block by name.
