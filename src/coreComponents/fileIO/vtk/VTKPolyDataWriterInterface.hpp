@@ -17,7 +17,7 @@
 
 #include "common/DataTypes.hpp"
 
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 #include "mesh/CellElementSubRegion.hpp"
 
@@ -209,7 +209,7 @@ private:
    */
   std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >
   getEmbeddedSurface( EmbeddedSurfaceSubRegion const & esr,
-                      NodeManager const & nodeManager ) const;
+                      EmbeddedSurfaceNodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes the files containing the faces elements
@@ -220,7 +220,8 @@ private:
    */
   void writeSurfaceElementRegions( real64 time,
                                    ElementRegionManager const & elemManager,
-                                   NodeManager const & nodeManager ) const;
+                                   NodeManager const & nodeManager,
+                                   EmbeddedSurfaceNodeManager const & embSurfNodeManager ) const;
 
   /*!
    * @brief Writes a VTM file for the time-step \p time.
@@ -277,6 +278,14 @@ private:
   void writeUnstructuredGrid( vtkSmartPointer< vtkUnstructuredGrid > ug,
                               real64 time,
                               string const & name ) const;
+
+  /*!
+   * @brief Writes timestamp information required by VisIt
+   * @param[in] ug a VTK SmartPointer to the VTK unstructured grid.
+   * @param[in] time the current time-step
+   */
+  void writeTimestamp( vtkSmartPointer< vtkUnstructuredGrid > ug,
+                       real64 time ) const;
 
 private:
 

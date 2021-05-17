@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_BLACKOILFLUID_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/MultiFluidPVTPackageWrapper.hpp"
 
 namespace geosx
@@ -31,6 +31,8 @@ namespace constitutive
 class BlackOilFluid : public MultiFluidPVTPackageWrapper
 {
 public:
+
+  using exec_policy = serialPolicy;
 
   BlackOilFluid( string const & name, Group * const parent );
 

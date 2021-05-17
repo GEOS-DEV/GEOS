@@ -23,8 +23,8 @@
 
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
@@ -36,9 +36,9 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "managers/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -191,18 +191,19 @@ void PhaseFieldDamageFEM::setupSystem( DomainPartition & domain,
   SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 }
 
-void PhaseFieldDamageFEM::implicitStepComplete(
-  real64 const & GEOSX_UNUSED_PARAM( time_n ),
-  real64 const & GEOSX_UNUSED_PARAM( dt ),
-  DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void PhaseFieldDamageFEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                                real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-void PhaseFieldDamageFEM::setupDofs(
-  DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-  DofManager & dofManager ) const
+void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+                                     DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
-  dofManager.addField( m_fieldName, DofManager::Location::Node );
+  dofManager.addField( m_fieldName,
+                       DofManager::Location::Node,
+                       1,
+                       targetRegionNames() );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
@@ -225,23 +226,24 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
 
   // Initialize all entries to zero
 #if 1 // Andre...this is the new code
-  localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
-  localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
+  localMatrix.zero();
+  localRhs.zero();
+
+  PhaseFieldDamageKernelFactory kernelFactory( dofIndex,
+                                               dofManager.rankOffset(),
+                                               localMatrix,
+                                               localRhs,
+                                               m_fieldName,
+                                               m_localDissipationOption=="Linear" ? 1 : 2 );
 
   finiteElement::
-    regionBasedKernelApplication< serialPolicy,
+    regionBasedKernelApplication< parallelDevicePolicy<>,
                                   constitutive::DamageBase,
-                                  CellElementSubRegion,
-                                  PhaseFieldDamageKernel >( mesh,
-                                                            targetRegionNames(),
-                                                            this->getDiscretizationName(),
-                                                            m_solidModelNames,
-                                                            dofIndex,
-                                                            dofManager.rankOffset(),
-                                                            localMatrix,
-                                                            localRhs,
-                                                            m_fieldName,
-                                                            m_localDissipationOption=="Linear" ? 1 : 2 );
+                                  CellElementSubRegion >( mesh,
+                                                          targetRegionNames(),
+                                                          this->getDiscretizationName(),
+                                                          m_solidModelNames,
+                                                          kernelFactory );
 #else // this has your changes to the old base code
   matrix.zero();
   rhs.zero();
@@ -427,9 +429,10 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( m_fieldName );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              mesh,
-                                                              domain.getNeighbors() );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       mesh,
+                                                       domain.getNeighbors(),
+                                                       false );
 }
 
 void PhaseFieldDamageFEM::applyBoundaryConditions(
@@ -563,7 +566,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                     arrayView1d< real64 > const & localRhs )
 
 {
-  FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
   fsManager.apply( time,
                    domain,
                    "nodeManager",

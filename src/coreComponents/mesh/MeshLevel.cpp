@@ -18,9 +18,9 @@
 
 #include "MeshLevel.hpp"
 
+#include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "NodeManager.hpp"
-//#include "EdgeManager.hpp"
 #include "FaceManager.hpp"
 
 namespace geosx
@@ -34,6 +34,7 @@ MeshLevel::MeshLevel( string const & name,
   m_edgeManager( groupStructKeys::edgeManagerString, this ),
   m_faceManager( groupStructKeys::faceManagerString, this ),
   m_elementManager( groupStructKeys::elemManagerString, this ),
+  m_embSurfNodeManager( groupStructKeys::embSurfNodeManagerString, this ),
   m_embSurfEdgeManager( groupStructKeys::embSurfEdgeManagerString, this )
 
 {
@@ -50,6 +51,8 @@ MeshLevel::MeshLevel( string const & name,
   registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString, &m_elementManager );
 
   registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, &m_embSurfEdgeManager );
+
+  registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, &m_embSurfNodeManager );
 
   registerWrapper< integer >( viewKeys.meshLevel );
 }

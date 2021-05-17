@@ -41,23 +41,23 @@
   <Geometry>
     <Box
       name="source"
-      xMin="-0.01, 26.99, -0.01"
-      xMax="3.01, 30.01, 10.01"/>
+      xMin="{-0.01, 26.99, -0.01}"
+      xMax="{ 3.01, 30.01, 10.01}"/>
 
     <Box
       name="sink1"
-      xMin="26.99, -0.01, -0.01"
-      xMax="30.01, 30.01, 30.01"/>
+      xMin="{26.99, -0.01, -0.01}"
+      xMax="{ 30.01, 30.01, 30.01}"/>
 
     <Box
       name="sink2"
-      xMin="-0.01, -0.01, 26.99"
-      xMax="30.01, 30.01, 30.01"/>
+      xMin="{-0.01, -0.01, 26.99}"
+      xMax="{ 30.01, 30.01, 30.01}"/>
 
     <Box
       name="barrier"
-      xMin="-0.01, 20.99, 20.99"
-      xMax="12.01, 30.01, 21.01"/>
+      xMin="{-0.01, 20.99, 20.99}"
+      xMax="{12.01, 30.01, 21.01}"/>
     
   </Geometry>
 
@@ -98,7 +98,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <MultiPhaseMultiComponentFluid
+    <CO2BrineFluid
       name="fluid1"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"

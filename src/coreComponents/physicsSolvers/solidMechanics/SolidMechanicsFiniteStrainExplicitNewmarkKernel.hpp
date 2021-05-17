@@ -79,6 +79,7 @@ public:
   ExplicitFiniteStrain( NodeManager & nodeManager,
                         EdgeManager const & edgeManager,
                         FaceManager const & faceManager,
+                        localIndex const targetRegionIndex,
                         SUBREGION_TYPE const & elementSubRegion,
                         FE_TYPE const & finiteElementSpace,
                         CONSTITUTIVE_TYPE & inputConstitutiveType,
@@ -87,6 +88,7 @@ public:
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -194,12 +196,13 @@ public:
 
     FE_TYPE::plusGradNajAij( dNdX, P, stack.fLocal );
   }
-
-
-
 };
 #undef UPDATE_STRESS
 
+/// The factory used to construct a ExplicitFiniteStrain kernel.
+using ExplicitFiniteStrainFactory = finiteElement::KernelFactory< ExplicitFiniteStrain,
+                                                                  real64,
+                                                                  string const & >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

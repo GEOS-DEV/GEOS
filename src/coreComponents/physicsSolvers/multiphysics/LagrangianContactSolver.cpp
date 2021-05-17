@@ -25,15 +25,15 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/solvers/PreconditionerJacobi.hpp"
 #include "linearAlgebra/solvers/PreconditionerBlockJacobi.hpp"
@@ -89,7 +89,7 @@ LagrangianContactSolver::LagrangianContactSolver( const string & name,
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 
-  m_linearSolverParameters.get().mgr.strategy = "LagrangianContactMechanics";
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
   m_linearSolverParameters.get().dofsPerNode = 3;
@@ -181,7 +181,7 @@ void LagrangianContactSolver::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   ConstitutiveBase const & contactRelation = cm.getConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
@@ -259,10 +259,10 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
   // Need a synchronization of deltaTraction as will be used in AssembleStabilization
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTractionString() ) );
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
 
   GEOSX_LOG_LEVEL_RANK_0( 1, " ***** ImplicitStepComplete *****" );
 }
@@ -619,8 +619,8 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
         }
 
         // zero out matrix/rhs before assembly
-        m_localMatrix.setValues< parallelHostPolicy >( 0.0 );
-        m_localRhs.setValues< parallelHostPolicy >( 0.0 );
+        m_localMatrix.zero();
+        m_localRhs.zero();
 
         // call assemble to fill the matrix and the rhs
         assembleSystem( time_n,
@@ -858,8 +858,8 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
   applySystemSolution( dofManager, localSolution, scaleFactor, domain );
 
   // re-assemble system
-  localMatrix.setValues< parallelHostPolicy >( 0.0 );
-  localRhs.setValues< parallelHostPolicy >( 0.0 );
+  localMatrix.zero();
+  localRhs.zero();
   assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
   // apply boundary conditions to system
@@ -903,8 +903,8 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
     // Keep the books on the function norms
     // re-assemble system
     // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
-    localMatrix.setValues< parallelHostPolicy >( 0.0 );
-    localRhs.setValues< parallelHostPolicy >( 0.0 );
+    localMatrix.zero();
+    localRhs.zero();
     assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
     // apply boundary conditions to system
@@ -1063,7 +1063,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
   array1d< real64 > globalR2( 2 * size );
-  globalR2.setValues< serialPolicy >( 0 );
+  globalR2.zero();
 
   // Everything is done on rank 0
   MpiWrapper::gather( localR2,
@@ -1160,15 +1160,15 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
 
     // Preconditioner for the leading block: tracPrecond
     precond->setupBlock( 0,
-                         { { viewKeyStruct::tractionString(), 0, 3 } },
+                         { { viewKeyStruct::tractionString(), { 3, true } } },
                          std::move( tracPrecond ) );
 
-    if( mechParams.amg.nullSpaceType == "rigidBodyModes" )
+    if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
     {
       if( m_solidSolver->getRigidBodyModes().empty() )
       {
         MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-        LAIHelperFunctions::ComputeRigidBodyModes( mesh,
+        LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { keys::TotalDisplacement },
                                                    m_solidSolver->getRigidBodyModes() );
@@ -1178,7 +1178,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
     // Preconditioner for the Schur complement: mechPrecond
     std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_solidSolver->getRigidBodyModes() );
     precond->setupBlock( 1,
-                         { { keys::TotalDisplacement, 0, 3 } },
+                         { { keys::TotalDisplacement, { 3, true } } },
                          std::move( mechPrecond ) );
 
     m_precond = std::move( precond );
@@ -2000,7 +2000,6 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
 
         // Compute rhs
         stackArray1d< real64, 3 > rhs0( 3 );
-        rhs0.setValues< serialPolicy >( 0.0 );
         if( nDof[0] > 0 )
         {
           for( localIndex j = 0; j < nDof[0]; ++j )
@@ -2025,7 +2024,6 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
         }
 
         stackArray1d< real64, 3 > rhs1( 3 );
-        rhs1.setValues< serialPolicy >( 0.0 );
         if( nDof[1] > 0 )
         {
           for( localIndex j = 0; j < nDof[0]; ++j )
@@ -2108,10 +2106,10 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
   // fractureStateString is synchronized in UpdateFractureState
   // previousFractureStateString and previousLocalJumpString used locally only
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
 
   computeFaceDisplacementJump( domain );
 }
@@ -2268,10 +2266,10 @@ void LagrangianContactSolver::synchronizeFractureState( DomainPartition & domain
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
 }
 
 bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition const & domain ) const

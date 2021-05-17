@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="0.0, 0.0, -9.81">
+  <Solvers gravityVector="{0.0, 0.0, -9.81}">
     <CompositionalMultiphaseHybridFVM
       name="compflow"
       logLevel="1"
@@ -42,13 +42,13 @@
   <Geometry>
     <Box
       name="sink"
-      xMin="11.99, -0.01, -0.01"
-      xMax="15.01,  1.01,  1.01"/>
+      xMin="{11.99, -0.01, -0.01}"
+      xMax="{15.01,  1.01,  1.01}"/>
 
     <Box
       name="source"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 3.01,  1.01,  1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 3.01,  1.01,  1.01}"/>
   </Geometry>
 
   <Events
@@ -89,7 +89,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <MultiPhaseMultiComponentFluid
+    <CO2BrineFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
@@ -191,7 +191,7 @@
       name="sourceTerm"
       objectPath="ElementRegions/region/cb"
       fieldName="pressure"
-      scale="5e7"
+      scale="1.45e7"
       setNames="{ source }"/>
 
     <FieldSpecification

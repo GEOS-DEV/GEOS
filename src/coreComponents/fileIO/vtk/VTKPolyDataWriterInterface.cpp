@@ -21,6 +21,7 @@
 #include <vtkCellData.h>
 #include <vtkPointData.h>
 #include <vtkExtentTranslator.h>
+#include <vtkDoubleArray.h>
 
 // System includes
 #include <unordered_set>
@@ -201,12 +202,13 @@ VTKPolyDataWriterInterface::getSurface( FaceElementSubRegion const & esr,
 }
 std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >
 VTKPolyDataWriterInterface::getEmbeddedSurface( EmbeddedSurfaceSubRegion const & esr,
-                                                NodeManager const & nodeManager ) const
+                                                EmbeddedSurfaceNodeManager const & nodeManager ) const
 {
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
   vtkSmartPointer< vtkPoints > points = vtkPoints::New();
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & intersectionPoints = nodeManager.embSurfNodesPosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & intersectionPoints
+    = nodeManager.referencePosition();
 
   points->SetNumberOfPoints( intersectionPoints.size( 0 ) );
   for( localIndex pointIndex = 0; pointIndex < intersectionPoints.size( 0 ); pointIndex++ )
@@ -316,11 +318,13 @@ void VTKPolyDataWriterInterface::writeElementFields( vtkSmartPointer< vtkCellDat
                                                      ElementRegionBase const & er ) const
 {
   std::unordered_set< string > allFields;
+
   er.forElementSubRegions< SUBREGION >( [&]( auto const & esr )
   {
     for( auto const & wrapperIter : esr.wrappers() )
     {
       auto const * const wrapper = wrapperIter.second;
+
       if( wrapper->getPlotLevel() <= m_plotLevel )
       {
         allFields.insert( wrapperIter.first );
@@ -356,6 +360,7 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 time,
       ug->SetPoints( VTKPoints );
       auto VTKCells = getVtkCells( er );
       ug->SetCells( VTKCells.first.data(), VTKCells.second );
+      writeTimestamp( ug, time );
       writeElementFields< CellElementSubRegion >( ug->GetCellData(), er );
       writeNodeFields( ug->GetPointData(), nodeManager );
       writeUnstructuredGrid( ug, time, er.getName() );
@@ -380,7 +385,8 @@ void VTKPolyDataWriterInterface::writeWellElementRegions( real64 time, ElementRe
 
 void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 time,
                                                              ElementRegionManager const & elemManager,
-                                                             NodeManager const & nodeManager ) const
+                                                             NodeManager const & nodeManager,
+                                                             EmbeddedSurfaceNodeManager const & embSurfNodeManager ) const
 {
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & er )
   {
@@ -389,7 +395,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 time,
     {
       EmbeddedSurfaceSubRegion const & esr = dynamicCast< EmbeddedSurfaceSubRegion const & >( er.getSubRegion( 0 ) );
 
-      auto VTKSurface = getEmbeddedSurface( esr, nodeManager );
+      auto VTKSurface = getEmbeddedSurface( esr, embSurfNodeManager );
       ug->SetPoints( VTKSurface.first );
       ug->SetCells( VTK_POLYGON, VTKSurface.second );
 
@@ -478,6 +484,16 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( vtkSmartPointer< vtkUnst
   vtuWriter->Write();
 }
 
+void VTKPolyDataWriterInterface::writeTimestamp( vtkSmartPointer< vtkUnstructuredGrid > ug,
+                                                 real64 const time ) const
+{
+  vtkDoubleArray *t = vtkDoubleArray::New();
+  t->SetName( "TIME" );
+  t->SetNumberOfTuples( 1 );
+  t->SetTuple1( 0, time );
+  ug->GetFieldData()->AddArray( t );
+}
+
 string VTKPolyDataWriterInterface::getTimeStepSubFolder( real64 const time ) const
 {
   return joinPath( m_outputName, std::to_string( time ) );
@@ -500,9 +516,10 @@ void VTKPolyDataWriterInterface::write( real64 const time,
 
   ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
   NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
+  EmbeddedSurfaceNodeManager const & embSurfNodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getEmbSurfNodeManager();
   writeCellElementRegions( time, elemManager, nodeManager );
   writeWellElementRegions( time, elemManager, nodeManager );
-  writeSurfaceElementRegions( time, elemManager, nodeManager );
+  writeSurfaceElementRegions( time, elemManager, nodeManager, embSurfNodeManager );
 
   string const vtmName = stepSubFolder + ".vtm";
   VTKVTMWriter vtmWriter( joinPath( m_outputDir, vtmName ) );

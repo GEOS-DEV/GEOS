@@ -27,13 +27,12 @@
 #include "dataRepository/Group.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "common/MpiWrapper.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 
 #if defined( __INTEL_COMPILER )
@@ -240,7 +239,7 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // 1. Set key dimensions of the problem
@@ -388,15 +387,16 @@ void CompositionalMultiphaseBase::updateFluidModel( Group & dataGroup, localInde
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
-    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    using FluidType = TYPEOFREF( castedFluid );
+    using ExecPolicy = typename FluidType::exec_policy;
+    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    // MultiFluid models are not thread-safe or device-capable yet
-    FluidUpdateKernel::launch< serialPolicy >( dataGroup.size(),
-                                               fluidWrapper,
-                                               pres,
-                                               dPres,
-                                               m_temperature,
-                                               compFrac );
+    FluidUpdateKernel::launch< ExecPolicy >( dataGroup.size(),
+                                             fluidWrapper,
+                                             pres,
+                                             dPres,
+                                             m_temperature,
+                                             compFrac );
   } );
 }
 
@@ -511,7 +511,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
@@ -519,7 +519,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
   fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::globalCompDensityString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors() );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
 
   // set mass fraction flag on fluid models
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
@@ -812,7 +812,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                      arrayView1d< real64 > const & localRhs ) const
 {
 
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
@@ -867,7 +867,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 {
   localIndex const NC = m_numComponents;
 
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   map< string, map< string, array1d< bool > > > bcStatusMap; // map to check consistent application of BC
 
@@ -973,14 +973,15 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 
     constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
     {
-      typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+      using FluidType = TYPEOFREF( castedFluid );
+      using ExecPolicy = typename FluidType::exec_policy;
+      typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-      // MultiFluid models are not thread-safe or device-capable yet
-      FluidUpdateKernel::launch< serialPolicy >( targetSet,
-                                                 fluidWrapper,
-                                                 bcPres,
-                                                 m_temperature,
-                                                 compFrac );
+      FluidUpdateKernel::launch< ExecPolicy >( targetSet,
+                                               fluidWrapper,
+                                               bcPres,
+                                               m_temperature,
+                                               compFrac );
     } );
 
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -1073,8 +1074,8 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
     arrayView2d< real64 > const & dCompDens =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString() );
 
-    dPres.setValues< parallelDevicePolicy<> >( 0.0 );
-    dCompDens.setValues< parallelDevicePolicy<> >( 0.0 );
+    dPres.zero();
+    dCompDens.zero();
 
     updateState( subRegion, targetIndex );
   } );
