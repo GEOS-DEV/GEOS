@@ -23,6 +23,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
 
 namespace geosx
 {
@@ -76,12 +77,15 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
     // get the string to access the permeability
-    string const permeabilityKey = FlowSolverBase::viewKeyStruct::permeabilityString();
+    string const permeabilityKey = PermeabilityBase::viewKeyStruct::permeabilityString();
 
     PerforationData * const perforationData = subRegion.getPerforationData();
 
     // compute the Peaceman index (if not read from XML)
-    perforationData->computeWellTransmissibility( meshLevel, subRegion, permeabilityKey );
+    perforationData->computeWellTransmissibility( meshLevel, subRegion,
+                                                  permeabilityKey,
+                                                  m_flowSolver->targetRegionNames(),
+                                                  m_flowSolver->permeabilityModelNames() );
   } );
 
   // bind the stored reservoir views to the current domain

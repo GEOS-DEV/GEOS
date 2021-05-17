@@ -178,7 +178,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh )
   real64 const lengthTolerance = m_lengthTolerance;
 
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh,
-                                                       [&]( localIndex const,
+                                                       [&]( localIndex const targetIndex,
                                                             localIndex const,
                                                             localIndex const,
                                                             ElementRegionBase const &,
@@ -186,12 +186,15 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh )
   {
     arrayView2d< real64 const > const & elemCenter =
       subRegion.template getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString() );
-    arrayView2d< real64 const > const & elemPerm =
-      subRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::permeabilityString() );
     arrayView1d< real64 const > const elemGravCoef =
       subRegion.template getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
     arrayView1d< real64 const > const & elemVolume = subRegion.getElementVolume();
     arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
+
+    PermeabilityBase const & permeabilityModel =
+      getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
+
+    arrayView3d< real64 const > const elemPerm = permeabilityModel.permeability();
 
     // here we precompute some quantities (mimFaceFracCoef) used in the FluxKernel to assemble the one-sided gravity term in the transport
     // scheme
