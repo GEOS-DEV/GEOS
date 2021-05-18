@@ -165,10 +165,9 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
         if( elemGhostRank[cellIndex] < 0 )
         {
           real64 cellVolume = elemVolumes[cellIndex];
-          real64 cellCenter[3];
-          cellCenter[0] = elemCenters( cellIndex, 0 );
-          cellCenter[1] = elemCenters( cellIndex, 1 );
-          cellCenter[2] = elemCenters( cellIndex, 2 );
+          real64 const cellCenter[3] { elemCenters( cellIndex, 0 ),
+                                       elemCenters( cellIndex, 1 ),
+                                       elemCenters( cellIndex, 2 ) };
           VEM::computeProjectors( cellIndex,
                                   nodesCoords,
                                   elemToNodeMap,

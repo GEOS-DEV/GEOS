@@ -141,7 +141,9 @@ computeProjectors( localIndex const & cellIndex,
     localIndex const numFaceNodes = faceToNodeMap[faceIndex].size();
     array1d< localIndex > faceToNodes( numFaceNodes );
     for( localIndex i = 0; i < numFaceNodes; ++i )
+    {
       faceToNodes[i] = faceToNodeMap[ faceIndex ][ i ];
+    }
     real64 const faceCenter[3] { faceCenters[faceIndex][0],
                                  faceCenters[faceIndex][1],
                                  faceCenters[faceIndex][2] };
@@ -221,8 +223,10 @@ computeProjectors( localIndex const & cellIndex,
                                         + piNablaDofs[3] * monomInternalIntegrals[2]);
     // - compute integral means of derivatives
     for( localIndex i = 0; i < 3; ++i )
+    {
       basisData.basisDerivativesIntegralMean[numBasisFunction][i] =
         -invCellVolume *basisTimesNormalBoundaryInt[numBasisFunction][i];
+    }
     // - compute VEM dofs of piNabla projection
     for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
     {
@@ -242,7 +246,9 @@ computeProjectors( localIndex const & cellIndex,
     {
       real64 rowColProd = 0;
       for( localIndex k = 0; k < numCellPoints; ++k )
+      {
         rowColProd += piNablaVemDofsMinusIdentity( k, i )*piNablaVemDofsMinusIdentity( k, j );
+      }
       basisData.stabilizationMatrix[i][j] = cellDiameter*rowColProd;
     }
   }
@@ -395,7 +401,9 @@ computeFaceIntegrals( InputNodeCoords const & nodesCoords,
     for( localIndex i = 0; i < 2; ++i )
       edgesTangents[0][i] = faceRotatedVertices[numSubTriangle][i] - faceRotatedCentroid[i];
     for( localIndex i = 0; i < 2; ++i )
+    {
       edgesTangents[1][i] = faceRotatedVertices[nextVertex][i] - faceRotatedCentroid[i];
+    }
     real64 subTriangleArea = 0.5*LvArray::math::abs
                                ( edgesTangents[0][0]*edgesTangents[1][1] -
                                edgesTangents[0][1]*edgesTangents[1][0] );
