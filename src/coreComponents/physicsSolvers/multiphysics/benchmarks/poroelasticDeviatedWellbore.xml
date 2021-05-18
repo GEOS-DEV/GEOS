@@ -229,7 +229,7 @@
     <!--Traction
       name="Sz"
       objectPath="faceManager"
-      tractionType="1"
+      tractionType="normal"
       scale="-25.0e6"
       setNames="{ zpos }"/-->
       
