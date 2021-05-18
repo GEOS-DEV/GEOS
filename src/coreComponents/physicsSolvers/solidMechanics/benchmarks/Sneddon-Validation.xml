@@ -187,14 +187,12 @@
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="displacementJump"
-      minSetSize="120"/>
+      fieldName="displacementJump" />
       
     <PackCollection
       name="cellCentersCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="elementCenter"
-      minSetSize="120"/>      
+      fieldName="elementCenter" />
   </Tasks>
 
   <Outputs>
