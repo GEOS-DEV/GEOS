@@ -215,7 +215,7 @@
     <!--Traction
       name="Sx"
       objectPath="faceManager"
-      tractionType="1"
+      tractionType="normal"
       scale="-20.0e6"
       setNames="{ xpos }"/-->
 
