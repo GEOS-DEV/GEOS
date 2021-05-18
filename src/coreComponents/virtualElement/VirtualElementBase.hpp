@@ -70,7 +70,9 @@ public:
                                        localIndex const jBasisFunction,
                                        LEAFBASISDATA const & basisData
                                        )
-  { return LEAF::calcStabilizationValues( iBasisFunction, jBasisFunction, basisData ); }
+  {
+    return LEAF::calcStabilizationValues( iBasisFunction, jBasisFunction, basisData );
+  }
 
   /**
    * @brief Get the shape function projections at a given quadrature point.

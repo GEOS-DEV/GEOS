@@ -183,7 +183,9 @@ public:
           candidateDiameter += coordDiff * coordDiff;
         }
         if( diameter < candidateDiameter )
+        {
           diameter = candidateDiameter;
+        }
       }
       diameter = LvArray::math::sqrt< real64 >( diameter );
     }

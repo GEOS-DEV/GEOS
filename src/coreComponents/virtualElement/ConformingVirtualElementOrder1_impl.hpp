@@ -58,9 +58,13 @@ computeProjectors( localIndex const & cellIndex,
   {
     basisBoundaryIntegrals[numBasisFunction] = 0.0;
     for( localIndex i = 0; i < 3; ++i )
+    {
       basisTimesNormalBoundaryInt[numBasisFunction][i] = 0.0;
+    }
     for( localIndex i = 0; i < 3; ++i )
+    {
       basisTimesMonomNormalDerBoundaryInt[numBasisFunction][i] = 0.0;
+    }
   }
   // - loop over faces and perform computations on the boundary
   for( localIndex numFace = 0; numFace < numCellFaces; ++numFace )
@@ -112,7 +116,9 @@ computeProjectors( localIndex const & cellIndex,
     // - add contributions to integrals of monomials
     monomBoundaryIntegrals[0] += faceArea;
     for( localIndex monomInd = 1; monomInd < 4; ++monomInd )
+    {
       monomBoundaryIntegrals[monomInd] += threeDMonomialIntegrals[monomInd-1];
+    }
     // - add contributions to integrals of basis functions
     for( localIndex numFaceBasisFunction = 0; numFaceBasisFunction < numFaceNodes;
          ++numFaceBasisFunction )
@@ -120,7 +126,9 @@ computeProjectors( localIndex const & cellIndex,
       localIndex basisFunctionIndex = 0;
       // find the position of the current face vertex within cell vertices
       while( cellToNodeMap[cellIndex][basisFunctionIndex] != faceToNodes[numFaceBasisFunction] )
+      {
         ++basisFunctionIndex;
+      }
 
       basisBoundaryIntegrals[basisFunctionIndex] += faceBasisIntegrals[numFaceBasisFunction];
       for( localIndex pos = 0; pos < 3; ++pos )
@@ -183,7 +191,9 @@ computeProjectors( localIndex const & cellIndex,
                                 edgeTangentsMatrix[0][2] * edgeTangentsMatrix[1][1] )
                               ) / 6.0;
       for( localIndex i = 0; i < 3; ++i )
+      {
         monomInternalIntegrals[i] += monomialValues[i]*subTetVolume;
+      }
     }
   }
 
@@ -198,9 +208,11 @@ computeProjectors( localIndex const & cellIndex,
   for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
   {
     for( localIndex pos = 0; pos < 3; ++pos )
+    {
       monomialVemDofs( pos, numVertex ) = invCellDiameter*
                                           (nodesCoords( cellToNodeMap( cellIndex, numVertex ), pos )
                                            - cellCenter[ pos ]);
+    }
   }
   for( localIndex numBasisFunction = 0; numBasisFunction < numCellPoints; ++numBasisFunction )
   {
@@ -383,18 +395,22 @@ computeFaceIntegrals( InputNodeCoords const & nodesCoords,
     //   = (v(0) + v(1) - 2*faceCenter)/(3*faceDiameter).
     real64 monomialValues[2];
     for( localIndex i = 0; i < 2; ++i )
+    {
       monomialValues[i] = (faceRotatedVertices[numSubTriangle][i] +
                            faceRotatedVertices[nextVertex][i] -
                            2.0*faceRotatedCentroid[i]) / (3.0*faceDiameter);
+    }
     // compute value of 3D monomials at the quadrature point on the sub-triangle (the
     // barycenter).  The result is
     // ((v(0) + v(1) + faceCenter)/3 - cellCenter)/cellDiameter.
     real64 threeDMonomialValues[3];
     for( localIndex i = 0; i < 3; ++i )
+    {
       threeDMonomialValues[i] = ( (faceCenter[i] +
                                    nodesCoords[faceToNodes( numSubTriangle )][i] +
                                    nodesCoords[faceToNodes( nextVertex )][i]) / 3.0 -
                                   cellCenter[i] ) * invCellDiameter;
+    }
     // compute quadrature weight associated to the quadrature point (the area of the
     // sub-triangle).
     real64 edgesTangents[2][2];               // used to compute the area of the sub-triangle
@@ -409,17 +425,25 @@ computeFaceIntegrals( InputNodeCoords const & nodesCoords,
                                edgesTangents[0][1]*edgesTangents[1][0] );
     // compute the integrals on the sub-triangle and add it to the global integrals
     for( localIndex i = 0; i < 2; ++i )
+    {
       monomInternalIntegrals[i] += monomialValues[i]*subTriangleArea;
+    }
     for( localIndex i = 0; i < 3; ++i )
+    {
       // threeDMonomialIntegrals is assumed to be initialized to 0 by the caller
       threeDMonomialIntegrals[i] += threeDMonomialValues[i]*subTriangleArea;
+    }
   }
 
   // Compute integral of basis functions times normal derivative of monomials on the boundary.
   array2d< real64 > basisTimesMonomNormalDerBoundaryInt( numFaceVertices, 2 );
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
+  {
     for( localIndex i = 0; i < 2; ++i )
+    {
       basisTimesMonomNormalDerBoundaryInt[numVertex][i] = 0.0;
+    }
+  }
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
   {
     for( localIndex i = 0; i < 2; ++i )
@@ -430,8 +454,12 @@ computeFaceIntegrals( InputNodeCoords const & nodesCoords,
     }
   }
   for( localIndex numVertex = 0; numVertex < numFaceVertices; ++numVertex )
+  {
     for( localIndex i = 0; i < 2; ++i )
+    {
       basisTimesMonomNormalDerBoundaryInt[numVertex][i] *= 0.5*invFaceDiameter;
+    }
+  }
 
   // Compute integral mean of basis functions on this face.
   real64 const invFaceArea = 1.0/faceArea;
