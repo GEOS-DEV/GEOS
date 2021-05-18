@@ -62,8 +62,8 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
     collector.registerBufferCall( ii, [this, ii, ioCount, &domain, &collector]()
     {
       collector.updateSetsIndices( domain );
-      HistoryMetadata metadata = collector.getMetadata( domain, ii );
-      m_io[ioCount]->updateCollectingCount( metadata.getDims( )[0] );
+      HistoryMetadata md = collector.getMetadata( domain, ii );
+      m_io[ioCount]->updateCollectingCount( md.getDims( )[0] );
       return m_io[ioCount]->getBufferHead( );
     } );
     m_io.back()->init( !freshInit );
@@ -83,8 +83,8 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
       metaCollector.registerBufferCall( ii, [this, ii, ioCount, &domain, &metaCollector] ()
       {
         metaCollector.updateSetsIndices( domain );
-        HistoryMetadata metaMetadata = metaCollector.getMetadata( domain, ii );
-        m_io[ ioCount ]->updateCollectingCount( metaMetadata.getDims()[0] );
+        HistoryMetadata md = metaCollector.getMetadata( domain, ii );
+        m_io[ ioCount ]->updateCollectingCount( md.getDims()[0] );
         return m_io[ ioCount ]->getBufferHead( );
       } );
       m_io.back()->init( !freshInit );
