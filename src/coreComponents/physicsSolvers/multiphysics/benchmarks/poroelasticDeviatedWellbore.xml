@@ -222,7 +222,7 @@
     <!--Traction
       name="Sy"
       objectPath="faceManager"
-      tractionType="1"
+      tractionType="normal"
       scale="-20.0e6"
       setNames="{ ypos }"/-->
 
