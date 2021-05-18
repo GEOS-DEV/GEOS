@@ -167,7 +167,9 @@ private:
 
 };
 
-ENUM_STRINGS( PoroelasticSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
+ENUM_STRINGS( PoroelasticSolver::CouplingTypeOption,
+              "FIM",
+              "SIM_FixedStress" );
 
 } /* namespace geosx */
 
