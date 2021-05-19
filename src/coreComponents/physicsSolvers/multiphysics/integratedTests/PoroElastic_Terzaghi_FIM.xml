@@ -98,14 +98,6 @@
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput" />
 
-    <SoloEvent
-      name="cellCentersCollection" 
-      target="/Tasks/cellCentersCollection" />
-
-    <SoloEvent
-      name="cellCentersOutput" 
-      target="/Outputs/cellCentersOutput" />
-
   </Events>
 
   <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS -->
@@ -272,11 +264,6 @@
       name="timeHistoryOutput"
       sources="{/Tasks/pressureCollection}"
       filename="pressure_history" />
-
-    <TimeHistory
-      name="cellCentersOutput"
-      sources="{/Tasks/cellCentersCollection}"
-      filename="cell_centers" />
   </Outputs>
 
   <Tasks>
@@ -284,11 +271,6 @@
       name="pressureCollection"
       objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"/>
-
-    <PackCollection
-      name="cellCentersCollection"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="elementCenter"/>
   </Tasks>
 
 </Problem>
