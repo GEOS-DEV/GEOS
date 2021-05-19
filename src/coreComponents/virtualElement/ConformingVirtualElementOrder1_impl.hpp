@@ -286,11 +286,8 @@ computeFaceIntegrals( InputNodeCoords const & nodesCoords,
 
   // Compute other geometrical properties.
   //  - compute rotation matrix.
-  array2d< real64 > faceRotationMatrix( 3, 3 );
-  array1d< real64 > faceNormalArray( 3 );
-  faceNormalArray[0] = faceNormal[0];
-  faceNormalArray[1] = faceNormal[1];
-  faceNormalArray[2] = faceNormal[2];
+  real64 faceRotationMatrix[ 3 ][ 3 ];
+  real64 faceNormalArray[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal );
   computationalGeometry::RotationMatrix_3D( faceNormalArray, faceRotationMatrix );
   //  - below we compute the diameter, the rotated vertices and the rotated center.
   array2d< real64 > faceRotatedVertices( numFaceVertices, 2 );
@@ -301,13 +298,13 @@ computeFaceIntegrals( InputNodeCoords const & nodesCoords,
     // NOTE:
     // the second and third rows of the transpose of the rotation matrix rotate on the 2D face.
     faceRotatedVertices[numVertex][0] =
-      faceRotationMatrix( 0, 1 )*nodesCoords( faceToNodes( numVertex ), 0 ) +
-      faceRotationMatrix( 1, 1 )*nodesCoords( faceToNodes( numVertex ), 1 ) +
-      faceRotationMatrix( 2, 1 )*nodesCoords( faceToNodes( numVertex ), 2 );
+      faceRotationMatrix[ 0 ][ 1 ]*nodesCoords( faceToNodes( numVertex ), 0 ) +
+      faceRotationMatrix[ 1 ][ 1 ]*nodesCoords( faceToNodes( numVertex ), 1 ) +
+      faceRotationMatrix[ 2 ][ 1 ]*nodesCoords( faceToNodes( numVertex ), 2 );
     faceRotatedVertices[numVertex][1] =
-      faceRotationMatrix( 0, 2 )*nodesCoords( faceToNodes( numVertex ), 0 ) +
-      faceRotationMatrix( 1, 2 )*nodesCoords( faceToNodes( numVertex ), 1 ) +
-      faceRotationMatrix( 2, 2 )*nodesCoords( faceToNodes( numVertex ), 2 );
+      faceRotationMatrix[ 0 ][ 2 ]*nodesCoords( faceToNodes( numVertex ), 0 ) +
+      faceRotationMatrix[ 1 ][ 2 ]*nodesCoords( faceToNodes( numVertex ), 1 ) +
+      faceRotationMatrix[ 2 ][ 2 ]*nodesCoords( faceToNodes( numVertex ), 2 );
   }
   faceDiameter = ConformingVirtualElementOrder1< MCN, MFN >::
                  computeDiameter< 2,
@@ -317,13 +314,13 @@ computeFaceIntegrals( InputNodeCoords const & nodesCoords,
   // - rotate the face centroid as done for the vertices.
   real64 faceRotatedCentroid[2];
   faceRotatedCentroid[0] =
-    faceRotationMatrix( 0, 1 )*faceCenter[0] +
-    faceRotationMatrix( 1, 1 )*faceCenter[1] +
-    faceRotationMatrix( 2, 1 )*faceCenter[2];
+    faceRotationMatrix[ 0 ][ 1 ]*faceCenter[0] +
+    faceRotationMatrix[ 1 ][ 1 ]*faceCenter[1] +
+    faceRotationMatrix[ 2 ][ 1 ]*faceCenter[2];
   faceRotatedCentroid[1] =
-    faceRotationMatrix( 0, 2 )*faceCenter[0] +
-    faceRotationMatrix( 1, 2 )*faceCenter[1] +
-    faceRotationMatrix( 2, 2 )*faceCenter[2];
+    faceRotationMatrix[ 0 ][ 2 ]*faceCenter[0] +
+    faceRotationMatrix[ 1 ][ 2 ]*faceCenter[1] +
+    faceRotationMatrix[ 2 ][ 2 ]*faceCenter[2];
   // - compute edges' lengths, outward pointing normals and local edge-to-nodes map.
   array2d< real64 > edgeOutwardNormals( numFaceVertices, 2 );
   array1d< real64 > edgeLengths( numFaceVertices );
