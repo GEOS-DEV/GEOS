@@ -207,16 +207,24 @@ void HDFHistIO::setupPartition( globalIndex localIdxCount )
       m_globalIdxOffset = globalIdxCount;
     }
     globalIdxCount += counts[ii];
-    if( counts[ii] > 0 &&  LvArray::integerConversion< hsize_t >( counts[ii] ) < m_chunkSize )
+    if( counts[ii] > 0 && LvArray::integerConversion< hsize_t >( counts[ii] ) < m_chunkSize )
     {
       m_chunkSize = LvArray::integerConversion< hsize_t >( counts[ii] );
     }
   }
-  if( globalIdxCount > m_globalIdxHighwater )
-  {
-    m_globalIdxHighwater = globalIdxCount;
-  }
+
+  // update global index count, account for no indices prior to init
   m_globalIdxCount = globalIdxCount;
+  if( m_globalIdxCount == 0 )
+  {
+    m_chunkSize = 1;
+  }
+
+  // update global index highwater
+  if( m_globalIdxCount > m_globalIdxHighwater )
+  {
+    m_globalIdxHighwater = m_globalIdxCount;
+  }
 
   // free the previous partition comm
   if( m_subcomm != MPI_COMM_NULL )
@@ -229,9 +237,16 @@ void HDFHistIO::setupPartition( globalIndex localIdxCount )
 void HDFHistIO::init( bool existsOkay )
 {
   setupPartition( m_dims[0] );
-  // create a dataset in the file if needed, don't erase file
-  if( m_subcomm != MPI_COMM_NULL )
+  int rank = MpiWrapper::commRank( m_comm );
+  MPI_Comm subcomm = m_subcomm;
+  if( m_globalIdxCount == 0 && rank == 0 )
   {
+    subcomm = MPI_COMM_SELF;
+  }
+  // create a dataset in the file if needed, don't erase file
+  if( subcomm != MPI_COMM_NULL )
+  {
+
     std::vector< hsize_t > historyFileDims( m_rank+1 );
     historyFileDims[0] = LvArray::integerConversion< hsize_t >( m_writeLimit );
 
@@ -240,16 +255,14 @@ void HDFHistIO::init( bool existsOkay )
 
     for( hsize_t dd = 1; dd < m_rank+1; ++dd )
     {
-      // a process with chunk size 0 is considered incorrect by hdf5, hence the subcomm
+      // hdf5 doesn't like chunk size 0, hence the subcomm
       dimChunks[dd] = m_dims[dd-1];
       historyFileDims[dd] = m_dims[dd-1];
     }
-    // TODO : figure out how to deal with min size potentially changing w.r.t. chunking, (maybe chunk = 1? but that would have poor
-    // performance prolly)
     dimChunks[1] = m_chunkSize;
     historyFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
 
-    HDFFile target( m_filename, false, true, m_subcomm );
+    HDFFile target( m_filename, false, true, subcomm );
     bool inTarget = target.checkInTarget( m_name );
     if( !inTarget )
     {

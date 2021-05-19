@@ -213,11 +213,11 @@ inline
 typename std::enable_if< ( traits::is_array_type< ARRAY_T >) && (ARRAY_T::NDIM > 1) && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
 getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex sizeOverride = -1 )
 {
-  localIndex perIndexSize = 0;
+  // Array dim > 1 so this should be valid
+  localIndex perIndexSize = arr.size( 1 );
   localIndex numIndices = 0;
   if( !arr.empty( ) )
   {
-    perIndexSize = arr[ 0 ].size( );
     numIndices = ( sizeOverride >= 0 ? sizeOverride :  arr.size( ) / perIndexSize );
   }
   localIndex sizes[2] = { numIndices, perIndexSize };
