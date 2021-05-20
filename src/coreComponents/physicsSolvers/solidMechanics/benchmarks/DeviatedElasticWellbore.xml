@@ -133,8 +133,6 @@
       scale="-1.0e6"
       functionName="timeFunction"
       setNames="{ rneg }"/>
-      
-      
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->

@@ -101,7 +101,6 @@
 
   <!-- SPHINX_BoundaryConditions -->
   <FieldSpecifications>
-
     <FieldSpecification
       name="xConstraint"
       objectPath="nodeManager"
@@ -154,18 +153,8 @@
       scale="-25.0e6"
       setNames="{ zpos }"/>
   </FieldSpecifications>
-
   <!-- SPHINX_BoundaryConditionsEnd -->
-  <!-- SPHINX_TableFunction -->
-  <!--Functions>
-    <TableFunction
-      name="timeFunction"
-      inputVarNames="{ time }"
-      coordinates="{ 0.0, 1.0, 10.0 }"
-      values=     "{ 0.0, 0.0, 10.0 }"/>
-  </Functions-->
 
-  <!-- SPHINX_TableFunctionEnd -->
   <Outputs>
     <Silo
       name="siloOutput"

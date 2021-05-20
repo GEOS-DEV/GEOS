@@ -70,8 +70,8 @@
       nr="{ 30 }"
       nt="{ 80 }"
       nz="{ 10 }"
-      trajectory="{ { -1, 0.0, -1 },
-                    {  1, 0.0,  1 } }"
+      trajectory="{ { -1.0, 0.0, -1.0 },
+                    {  1.0, 0.0,  1.0 } }"
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
@@ -211,27 +211,6 @@
       component="2"
       scale="0.0"
       setNames="{ zneg }"/>
-
-    <!--Traction
-      name="Sx"
-      objectPath="faceManager"
-      tractionType="normal"
-      scale="-20.0e6"
-      setNames="{ xpos }"/-->
-
-    <!--Traction
-      name="Sy"
-      objectPath="faceManager"
-      tractionType="normal"
-      scale="-20.0e6"
-      setNames="{ ypos }"/-->
-
-    <!--Traction
-      name="Sz"
-      objectPath="faceManager"
-      tractionType="normal"
-      scale="-25.0e6"
-      setNames="{ zpos }"/-->
       
     <FieldSpecification 
       name="innerPorePressure"
@@ -247,13 +226,6 @@
       objectPath="ElementRegions/Omega/cb1"
       fieldName="pressure"
       scale="0e6"/>
-
-    <!--FieldSpecification 
-      name="topBottomPressure"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="0e6"
-      setNames="{ zpos }"/-->
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->
