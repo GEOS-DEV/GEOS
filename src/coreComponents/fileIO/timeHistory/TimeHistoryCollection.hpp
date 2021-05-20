@@ -139,7 +139,7 @@ public:
    */
   HistoryMetadata getTimeMetadata( ) const
   {
-    return HistoryMetadata( "Time", 1, std::type_index( typeid(real64) ) );
+    return HistoryMetadata( this->getTargetName( ) + " Time", 1, std::type_index( typeid(real64) ) );
   }
 
   /**
