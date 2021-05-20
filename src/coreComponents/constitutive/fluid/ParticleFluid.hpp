@@ -35,7 +35,10 @@ enum class ParticleSettlingModel : integer
   Turbulence
 };
 
-ENUM_STRINGS( ParticleSettlingModel, "Stokes", "Intermediate", "Turbulence" )
+ENUM_STRINGS( ParticleSettlingModel,
+              "Stokes",
+              "Intermediate",
+              "Turbulence" );
 
 /**
  * @brief Kernel wrapper for ParticleFluid.
