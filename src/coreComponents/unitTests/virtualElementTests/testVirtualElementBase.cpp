@@ -192,6 +192,9 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   {
     using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
     typename VEM::BasisData basisData;
+    real64 const cellCenter[3] { cellCenters( cellIndex, 0 ),
+                                 cellCenters( cellIndex, 1 ),
+                                 cellCenters( cellIndex, 2 ) };
     VEM::computeProjectors( cellIndex,
                             nodesCoords,
                             cellToNodeMap,
@@ -202,7 +205,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
                             faceCenters,
                             faceNormals,
                             faceAreas,
-                            cellCenters[cellIndex],
+                            cellCenter,
                             cellVolumes[cellIndex],
                             basisData
                             );

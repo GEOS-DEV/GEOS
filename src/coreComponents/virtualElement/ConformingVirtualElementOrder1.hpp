@@ -53,17 +53,18 @@ public:
 private:
   GEOSX_HOST_DEVICE
   static void
-  computeFaceIntegrals( InputNodeCoords const & nodesCoords,
-                        array1d< localIndex > const & faceToNodes,
-                        array1d< localIndex > const & faceToEdges,
-                        real64 const & faceArea,
-                        real64 const faceCenter[3],
-                        real64 const faceNormal[3],
-                        InputEdgeToNodeMap const & edgeToNodes,
-                        real64 const & invCellDiameter,
-                        real64 const cellCenter[3],
-                        real64 basisIntegrals[MAXFACENODES],
-                        real64 threeDMonomialIntegrals[3] );
+    computeFaceIntegrals( InputNodeCoords const & nodesCoords,
+                          localIndex const (&faceToNodes)[MAXFACENODES],
+                          localIndex const (&faceToEdges)[MAXFACENODES],
+                          localIndex const & numFaceVertices,
+                          real64 const & faceArea,
+                          real64 const (&faceCenter)[3],
+                          real64 const (&faceNormal)[3],
+                          InputEdgeToNodeMap const & edgeToNodes,
+                          real64 const & invCellDiameter,
+                          real64 const (&cellCenter)[3],
+                          real64 ( &basisIntegrals )[MAXFACENODES],
+                          real64 ( &threeDMonomialIntegrals )[3] );
 
 public:
   virtual ~ConformingVirtualElementOrder1() override
@@ -81,7 +82,7 @@ public:
                      arrayView2d< real64 const > const faceCenters,
                      arrayView2d< real64 const > const faceNormals,
                      arrayView1d< real64 const > const faceAreas,
-                     real64 const cellCenter[3],
+                     real64 const (&cellCenter)[3],
                      real64 const & cellVolume,
                      BasisData & basisData
                      );
@@ -152,16 +153,25 @@ public:
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  localIndex const & numPoints )
   {
-    array1d< localIndex > selectAllPoints( numPoints );
-    for( localIndex i = 0; i < numPoints; ++i )
+    real64 diameter = 0;
+    for( localIndex numPoint = 0; numPoint < numPoints; ++numPoint )
     {
-      selectAllPoints[i] = i;
+      for( localIndex numOthPoint = 0; numOthPoint < numPoint; ++numOthPoint )
+      {
+        real64 candidateDiameter = 0.0;
+        for( localIndex i = 0; i < DIMENSION; ++i )
+        {
+          real64 coordDiff = points[numPoint][i] - points[numOthPoint][i];
+          candidateDiameter += coordDiff * coordDiff;
+        }
+        if( diameter < candidateDiameter )
+        {
+          diameter = candidateDiameter;
+        }
+      }
+      diameter = LvArray::math::sqrt< real64 >( diameter );
     }
-    return computeDiameter< DIMENSION, POINT_COORDS_TYPE,
-                            array1d< localIndex > const & >( points,
-                                                             selectAllPoints,
-                                                             numPoints );
-    return 0.0;
+    return diameter;
   }
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
