@@ -41,8 +41,8 @@ public:
 
   struct BasisData
   {
-    localIndex maxSupportPoints = MAXCELLNODES;
-    localIndex numQuadraturePoints = 1;
+    static constexpr localIndex maxSupportPoints = MAXCELLNODES;
+    static constexpr localIndex numQuadraturePoints = 1;
     localIndex numSupportPoints;
     real64 quadratureWeight;
     real64 basisFunctionsIntegralMean[MAXCELLNODES];
