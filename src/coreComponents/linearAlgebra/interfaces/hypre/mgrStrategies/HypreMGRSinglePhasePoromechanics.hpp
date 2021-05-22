@@ -19,6 +19,8 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICS_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICS_HPP_
 
+#include "common/common.hpp"
+
 #include <interfaces/hypre/HypreMGR.hpp>
 
 namespace geosx
@@ -51,7 +53,7 @@ public:
   /**
    * @brief Constructor.
    */
-  explicit SinglePhasePoromechanics( arrayView1d< localIndex const > const & )
+  explicit SinglePhasePoromechanics( arrayView1d< int const > const & )
     : MGRStrategyBase( 4 )
   {
     m_labels[0].push_back( 3 );

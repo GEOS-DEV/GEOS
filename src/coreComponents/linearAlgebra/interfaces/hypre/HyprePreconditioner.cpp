@@ -424,7 +424,7 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
     GEOSX_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "MGR preconditioner requires a DofManager instance" );
     HypreMatrix Pu;
     HypreMatrix Auu;
-    mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, 0, 3 } }, mat.getComm(), true, Pu );
+    mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
     mat.multiplyPtAP( Pu, Auu );
     LAIHelperFunctions::separateComponentFilter( Auu, m_precondMatrix, m_params.dofsPerNode );
   }

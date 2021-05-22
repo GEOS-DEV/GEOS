@@ -55,7 +55,7 @@ namespace mgr
  */
 template< typename STRATEGY >
 void setStrategy( LinearSolverParameters::MGR const & params,
-                  arrayView1d< localIndex const > const & numComponentsPerField,
+                  arrayView1d< int const > const & numComponentsPerField,
                   HyprePrecWrapper & precond,
                   HypreMGRData & mgrData )
 {

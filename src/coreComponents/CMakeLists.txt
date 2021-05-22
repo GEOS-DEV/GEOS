@@ -5,6 +5,7 @@ set( subdirs
      dataRepository
      schema
      functions
+     events
      constitutive
      mesh
      linearAlgebra
@@ -15,7 +16,6 @@ set( subdirs
      discretizationMethods
      fileIO
      physicsSolvers
-     events
      mainInterface
      python
      )

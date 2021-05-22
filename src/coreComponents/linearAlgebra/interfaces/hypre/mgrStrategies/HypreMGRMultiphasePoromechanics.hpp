@@ -56,7 +56,7 @@ public:
    * @brief Constructor.
    * @param numComponentsPerField array with number of components for each field
    */
-  explicit MultiphasePoromechanics( arrayView1d< localIndex const > const & numComponentsPerField )
+  explicit MultiphasePoromechanics( arrayView1d< int const > const & numComponentsPerField )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] ) )
   {
     // Level 0: eliminate displacement degrees of freedom

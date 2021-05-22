@@ -154,19 +154,16 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
   dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofKey );
 
 
+  LaplaceFEMKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, m_fieldName );
+
   finiteElement::
     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                   constitutive::NullModel,
-                                  CellElementSubRegion,
-                                  LaplaceFEMKernel >( mesh,
-                                                      targetRegionNames(),
-                                                      this->getDiscretizationName(),
-                                                      arrayView1d< string const >(),
-                                                      dofIndex,
-                                                      dofManager.rankOffset(),
-                                                      localMatrix,
-                                                      localRhs,
-                                                      m_fieldName );
+                                  CellElementSubRegion >( mesh,
+                                                          targetRegionNames(),
+                                                          this->getDiscretizationName(),
+                                                          arrayView1d< string const >(),
+                                                          kernelFactory );
 
 }
 //END_SPHINX_INCLUDE_ASSEMBLY

@@ -16,7 +16,8 @@
  * @file HypreMGR.cpp
  */
 
-#include <interfaces/hypre/HypreMGR.hpp>
+#include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
+
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRSinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRHybridSinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRMultiphasePoromechanics.hpp"
@@ -24,6 +25,8 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRCompositionalMultiphaseReservoir.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRCompositionalMultiphaseHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRLagrangianContactMechanics.hpp"
+
+#include "LvArray/src/output.hpp"
 
 namespace geosx
 {
@@ -42,7 +45,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.logLevel ) ) );
 
-  array1d< localIndex > const numComponentsPerField = dofManager->numComponentsPerField();
+  array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
 
   if( params.logLevel >= 1 )

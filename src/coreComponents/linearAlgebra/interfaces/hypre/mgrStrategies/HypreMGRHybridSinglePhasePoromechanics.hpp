@@ -53,7 +53,7 @@ public:
   /**
    * @brief Constructor.
    */
-  explicit HybridSinglePhasePoromechanics( arrayView1d< localIndex const > const & )
+  explicit HybridSinglePhasePoromechanics( arrayView1d< int const > const & )
     : MGRStrategyBase( 5 )
   {
     // Level 0: eliminate displacement degrees of freedom

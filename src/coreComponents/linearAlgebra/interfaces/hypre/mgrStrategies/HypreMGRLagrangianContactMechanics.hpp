@@ -57,7 +57,7 @@ public:
   /**
    * @brief Constructor.
    */
-  explicit LagrangianContactMechanics( arrayView1d< localIndex const > const & )
+  explicit LagrangianContactMechanics( arrayView1d< int const > const & )
     : MGRStrategyBase( 2 )
   {
     // Level 0: all three displacements kept

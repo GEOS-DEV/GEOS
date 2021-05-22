@@ -55,7 +55,7 @@ public:
    * @brief Constructor.
    * @param numComponentsPerField array with number of components for each field
    */
-  explicit CompositionalMultiphaseFVM( arrayView1d< localIndex const > const & numComponentsPerField )
+  explicit CompositionalMultiphaseFVM( arrayView1d< int const > const & numComponentsPerField )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] ) )
   {
     // Level 0: eliminate last density which corresponds to the volume constraint equation

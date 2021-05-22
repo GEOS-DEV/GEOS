@@ -53,7 +53,7 @@ public:
    * @brief Constructor.
    * @param numComponentsPerField array with number of components for each field
    */
-  explicit CompositionalMultiphaseHybridFVM( arrayView1d< localIndex const > const & numComponentsPerField )
+  explicit CompositionalMultiphaseHybridFVM( arrayView1d< int const > const & numComponentsPerField )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] ) )
   {
     // Level 0: eliminate the last density of the cell-centered block

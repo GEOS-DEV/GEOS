@@ -137,7 +137,7 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
@@ -174,6 +174,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   // in AssembleOneSidedMassFluxes
   dofManager.addField( viewKeyStruct::pressureString(),
                        DofManager::Location::Elem,
+                       1,
                        targetRegionNames() );
 
   dofManager.addCoupling( viewKeyStruct::pressureString(),
@@ -183,6 +184,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   // setup the connectivity of face fields
   dofManager.addField( viewKeyStruct::facePressureString(),
                        DofManager::Location::Face,
+                       1,
                        targetRegionNames() );
 
   dofManager.addCoupling( viewKeyStruct::facePressureString(),
@@ -192,8 +194,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   // setup coupling between pressure and face pressure
   dofManager.addCoupling( viewKeyStruct::facePressureString(),
                           viewKeyStruct::pressureString(),
-                          DofManager::Connector::Elem,
-                          true );
+                          DofManager::Connector::Elem );
 }
 
 void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -541,7 +542,7 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, string const &, Group * const )

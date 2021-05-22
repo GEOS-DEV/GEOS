@@ -197,7 +197,7 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
 
   GEOSX_UNUSED_VAR( setSparsity );
 
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
@@ -274,22 +274,23 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
+  SolidMechanicsEFEMKernels::QuasiStaticFactory kernelFactory( subRegion,
+                                                               dispDofNumber,
+                                                               jumpDofNumber,
+                                                               dofManager.rankOffset(),
+                                                               localMatrix,
+                                                               localRhs,
+                                                               gravityVectorData );
+
   real64 maxTraction = finiteElement::
                          regionBasedKernelApplication
                        < parallelDevicePolicy< 32 >,
                          constitutive::SolidBase,
-                         CellElementSubRegion,
-                         SolidMechanicsEFEMKernels::QuasiStatic >( mesh,
-                                                                   targetRegionNames(),
-                                                                   m_solidSolver->getDiscretizationName(),
-                                                                   m_solidSolver->solidMaterialNames(),
-                                                                   subRegion,
-                                                                   dispDofNumber,
-                                                                   jumpDofNumber,
-                                                                   dofManager.rankOffset(),
-                                                                   localMatrix,
-                                                                   localRhs,
-                                                                   gravityVectorData );
+                         CellElementSubRegion >( mesh,
+                                                 targetRegionNames(),
+                                                 m_solidSolver->getDiscretizationName(),
+                                                 m_solidSolver->solidMaterialNames(),
+                                                 kernelFactory );
 
   GEOSX_UNUSED_VAR( maxTraction );
 }

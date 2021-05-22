@@ -133,7 +133,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupSystem( DomainPartiti
 
   GEOSX_UNUSED_VAR( setSparsity );
 
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
@@ -831,7 +831,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
     arrayView1d< real64 const > const & deltaPressure =
       subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
 
-    forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const k )
+    forAll< serialPolicy >( subRegion.size(), [=, &contactRelation] ( localIndex const k )
     {
       aperture[k] = dispJump[k][0];   // the first component of the jump is the normal one.
 

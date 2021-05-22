@@ -166,7 +166,7 @@ private:
 
 };
 
-ENUM_STRINGS( SinglePhasePoromechanicsSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" )
+ENUM_STRINGS( SinglePhasePoromechanicsSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" );
 
 } /* namespace geosx */
 

@@ -196,28 +196,26 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
+  PoromechanicsKernels::MultiphaseKernelFactory kernelFactory( displacementDofNumber,
+                                                               flowDofKey,
+                                                               dofManager.rankOffset(),
+                                                               gravityVectorData,
+                                                               numComponents,
+                                                               numPhases,
+                                                               m_flowSolver->fluidModelNames(),
+                                                               localMatrix,
+                                                               localRhs );
+
   // Cell-based contributions
   m_solidSolver->getMaxForce() =
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::PoroElasticBase,
-                                    CellElementSubRegion,
-                                    PoromechanicsKernels::Multiphase >( mesh,
-                                                                        targetRegionNames(),
-                                                                        this->getDiscretizationName(),
-                                                                        m_solidSolver->solidMaterialNames(),
-                                                                        //
-                                                                        displacementDofNumber,
-                                                                        flowDofKey,
-                                                                        dofManager.rankOffset(),
-                                                                        //
-                                                                        gravityVectorData,
-                                                                        numComponents,
-                                                                        numPhases,
-                                                                        m_flowSolver->fluidModelNames(),
-                                                                        //
-                                                                        localMatrix,
-                                                                        localRhs );
+                                    CellElementSubRegion >( mesh,
+                                                            targetRegionNames(),
+                                                            this->getDiscretizationName(),
+                                                            m_solidSolver->solidMaterialNames(),
+                                                            kernelFactory );
 
 
 

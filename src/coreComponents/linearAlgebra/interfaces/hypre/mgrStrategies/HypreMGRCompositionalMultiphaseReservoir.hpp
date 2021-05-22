@@ -61,7 +61,7 @@ public:
    * @brief Constructor.
    * @param numComponentsPerField array with number of components for each field
    */
-  explicit CompositionalMultiphaseReservoir( arrayView1d< localIndex const > const & numComponentsPerField )
+  explicit CompositionalMultiphaseReservoir( arrayView1d< int const > const & numComponentsPerField )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] ) )
   {
     HYPRE_Int const numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
