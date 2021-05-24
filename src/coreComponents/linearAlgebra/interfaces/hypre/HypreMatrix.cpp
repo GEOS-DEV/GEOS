@@ -165,11 +165,11 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
   RAJA::ReduceMax< parallelDeviceReduce, localIndex > maxRowEntries( 0 );
 
   forAll< parallelDevicePolicy< 32 > >( localMatrix.numRows(),
-    [localMatrix, maxRowEntries] GEOSX_HOST_DEVICE ( localIndex const row )
-    {
-      maxRowEntries.max( localMatrix.numNonZeros( row ) );
-    }
-  );
+                                        [localMatrix, maxRowEntries] GEOSX_HOST_DEVICE ( localIndex const row )
+  {
+    maxRowEntries.max( localMatrix.numNonZeros( row ) );
+  }
+                                        );
 
   createWithLocalSize( localMatrix.numRows(),
                        localMatrix.numRows(),
@@ -191,13 +191,13 @@ void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const
   arrayView1d< HYPRE_Int > const offsetsV = offsets;
 
   forAll< parallelDevicePolicy< 32 > >( localMatrix.numRows(),
-    [localMatrix, rankOffset, rowsV, sizesV, offsetsV] GEOSX_HOST_DEVICE ( localIndex const row )
-    {
-      rowsV[ row ] = row + rankOffset;
-      sizesV[ row ] = localMatrix.numNonZeros( row );
-      offsetsV[ row ] = localMatrix.getOffsets()[ row ];
-    }
-  );
+                                        [localMatrix, rankOffset, rowsV, sizesV, offsetsV] GEOSX_HOST_DEVICE ( localIndex const row )
+  {
+    rowsV[ row ] = row + rankOffset;
+    sizesV[ row ] = localMatrix.numNonZeros( row );
+    offsetsV[ row ] = localMatrix.getOffsets()[ row ];
+  }
+                                        );
 
   // This is necessary so that localMatrix.getColumns() and localMatrix.getEntries() return the device pointers.
   localMatrix.move( LvArray::MemorySpace::cuda, false );
