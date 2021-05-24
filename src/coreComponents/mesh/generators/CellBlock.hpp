@@ -51,6 +51,9 @@ public:
    */
   CellBlock( const CellBlock & init ) = delete;
 
+  /**
+   * @brief Default destructor.
+   */
   ~CellBlock() override = default;
 
   ///@}

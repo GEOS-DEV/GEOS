@@ -48,9 +48,17 @@ public:
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
+  /**
+   * @brief Maximum number of faces allowed (in memory) per each node.
+   * @return The number as an integer.
+   */
   static constexpr int maxFacesPerNode()
   { return 200; }
 
+  /**
+   * @brief Extra space for node to faces mapping.
+   * @return Number of extra values as an integer.
+   */
   static constexpr localIndex getFaceMapOverallocation()
   { return 8; }
 
@@ -82,6 +90,12 @@ public:
 
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 
+  /**
+   * @brief Returns a mutable reference to vector holding the node to global mapping.
+   * @return The reference
+   *
+   * @note This is meant to be used as a setter. Do not resize the vector yourself.
+   */
   array1d< globalIndex > & getNodeLocalToGlobal();
 
   const std::map< string, SortedArray< localIndex > > & getNodeSets() const override;

@@ -28,6 +28,12 @@ namespace geosx
 class CellBlockManagerABC : public dataRepository::Group
 {
 public:
+
+  /**
+   * @brief Constructor
+   * @param name The name of this Group.
+   * @param parent The parent Group.
+   */
   CellBlockManagerABC( string const & name, Group * const parent ):
     Group( name, parent )
   {
@@ -36,21 +42,45 @@ public:
 
   virtual ~CellBlockManagerABC() = default;
 
+  /**
+   * @brief Maximum number of edges allowed (in memory) per each node.
+   * @return The number as an integer.
+   */
   static constexpr int maxEdgesPerNode()
   { return 200; }
 
+  /**
+   * @brief Extra space for node to edges mapping.
+   * @return Number of extra values as an integer.
+   */
   static constexpr localIndex getEdgeMapOverallocation()
   { return 8; }
 
+  /**
+   * @brief Extra space for node to elements mapping.
+   * @return Number of extra values as an integer.
+   */
   static constexpr localIndex getElemMapOverAllocation()
   { return 8; }
 
+  /**
+   * @brief Extra space for extra nodes.
+   * @return Number of extra values as an integer.
+   */
   static constexpr localIndex nodeMapExtraSpacePerFace()
   { return 4; }
 
+  /**
+   * @brief Extra space for extra faces.
+   * @return Number of extra values as an integer.
+   */
   static constexpr localIndex edgeMapExtraSpacePerFace()
   { return 4; }
 
+  /**
+   * @brief Extra space for extra edges.
+   * @return Number of extra values as an integer.
+   */
   static constexpr localIndex faceMapExtraSpacePerEdge()
   { return 4; }
 
