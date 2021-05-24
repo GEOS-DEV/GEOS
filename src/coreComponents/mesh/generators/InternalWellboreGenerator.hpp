@@ -52,15 +52,15 @@ public:
 protected:
 
   void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
-                                          integer ( & numNodes )[3] ) final;
+                                          integer ( &numNodes )[3] ) final;
 
   void setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
                                                int ( & index )[3] ) final;
 
   void setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],
-                                             integer const ( & numNodesInDir )[3],
-                                             int const ( & firstElemIndexInPartition )[3],
-                                             localIndex ( & nodeOfBox )[8] ) final;
+                                             integer const ( &numNodesInDir )[3],
+                                             int const ( &firstElemIndexInPartition )[3],
+                                             localIndex ( &nodeOfBox )[8] ) final;
 
   void coordinateTransformation( array2d< real64, nodes::REFERENCE_POSITION_PERM > & X,
                                  std::map< string, SortedArray< localIndex > > & nodeSets ) final;
