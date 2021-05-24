@@ -54,7 +54,7 @@ public:
   static constexpr localIndex getFaceMapOverallocation()
   { return 8; }
 
-  array2d< real64 > const & getNodesPositions() const override;
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > const & getNodesPositions() const override;
 
   /**
    * @brief Returns a mutable reference to vector holding the nodes coordinates
@@ -62,7 +62,7 @@ public:
    *
    * @note This is meant to be used as a setter. Do not resize the vector yourself.
    */
-  array2d< real64 > & getNodesPositions();
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > & getNodesPositions();
 
   ArrayOfSets< localIndex > getNodeToEdges() const override;
 
@@ -200,7 +200,7 @@ private:
    */
   void buildFaceMaps();
 
-  array2d< real64 > m_nodesPositions;
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_nodesPositions;
 
   ArrayOfSets< localIndex > m_nodeToEdges;
   ArrayOfSets< localIndex > m_edgeToFaces;

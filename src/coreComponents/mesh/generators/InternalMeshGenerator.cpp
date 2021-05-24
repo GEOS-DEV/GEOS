@@ -451,7 +451,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   cellBlockManager.setNumNodes( numNodes );
 
-  array2d< real64 > & X = cellBlockManager.getNodesPositions();
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > & X = cellBlockManager.getNodesPositions();
 
   array1d< globalIndex > & nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 

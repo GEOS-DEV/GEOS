@@ -62,7 +62,7 @@ protected:
                                              int const ( & firstElemIndexInPartition )[3],
                                              localIndex ( & nodeOfBox )[8] ) final;
 
-  void coordinateTransformation( array2d< real64 > & X,
+  void coordinateTransformation( array2d< real64, nodes::REFERENCE_POSITION_PERM > & X,
                                  std::map< string, SortedArray< localIndex > > & nodeSets ) final;
 
   virtual inline bool isCartesian() const override final

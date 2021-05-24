@@ -86,7 +86,7 @@ public:
    * @brief Returns the node coordinates in a (numNodes, 3) 2d array.
    * @return A const view to the array.
    */
-  virtual array2d< real64 > const & getNodesPositions() const = 0;
+  virtual array2d< real64, nodes::REFERENCE_POSITION_PERM > const & getNodesPositions() const = 0;
 
   /**
    * @brief Returns the node to edges mapping.

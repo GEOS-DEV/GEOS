@@ -700,12 +700,12 @@ CellBlock & CellBlockManager::registerCellBlock( string name )
   return this->getCellBlocks().registerGroup< CellBlock >( name );
 }
 
-array2d< real64 > const & CellBlockManager::getNodesPositions() const
+array2d< real64, nodes::REFERENCE_POSITION_PERM > const & CellBlockManager::getNodesPositions() const
 {
   return m_nodesPositions;
 }
 
-array2d< real64 > & CellBlockManager::getNodesPositions()
+array2d< real64, nodes::REFERENCE_POSITION_PERM > & CellBlockManager::getNodesPositions()
 {
   return m_nodesPositions;
 }

@@ -97,7 +97,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
   auto const polyhedronPartMap = std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ));
 
   // Vertices are written first
-  array2d< real64 > & X = cellBlockManager.getNodesPositions();
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > & X = cellBlockManager.getNodesPositions();
   localIndex const numNodes = m_pamelaMesh->get_PointCollection()->size_all();
   cellBlockManager.setNumNodes( numNodes );
 
