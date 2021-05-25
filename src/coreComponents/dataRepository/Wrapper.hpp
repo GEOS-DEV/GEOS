@@ -438,14 +438,14 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( int ndims, localIndex const * const dims ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
     wrapperHelpers::resizeDimensions( *m_data, ndims, dims );
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void reserve( localIndex const newCapacity ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
     wrapperHelpers::reserve( reference(), newCapacity );
   }
 
@@ -459,7 +459,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( localIndex const newSize ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
     wrapperHelpers::resizeDefault( reference(), newSize, m_default );
   }
 
@@ -670,7 +670,8 @@ public:
     {
       value_dim = 2;
     }
-    else if( wrapper_type.find( "array" ) != string::npos )
+    else if( ( wrapper_type.find( "array" ) != string::npos ) ||
+             ( wrapper_type.find( "Tensor" ) != string::npos ) )
     {
       value_dim = 1;
     }
@@ -700,11 +701,11 @@ public:
     {
       if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
       {
-        bool const readSuccess = xmlWrapper::readAttributeAsType( reference(),
-                                                                  getName(),
-                                                                  targetNode,
-                                                                  inputFlag == InputFlags::REQUIRED );
-        GEOSX_THROW_IF( !readSuccess,
+        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                     getName(),
+                                                                     targetNode,
+                                                                     inputFlag == InputFlags::REQUIRED );
+        GEOSX_THROW_IF( !m_successfulReadFromInput,
                         "Input variable " << getName() << " is required in " << targetNode.path() <<
                         ". Available options are: \n" << dumpInputOptions( true ) <<
                         "\nFor more details, please refer to documentation at: \n" <<
@@ -713,7 +714,10 @@ public:
       }
       else
       {
-        xmlWrapper::readAttributeAsType( reference(), getName(), targetNode, getDefaultValueStruct() );
+        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                     getName(),
+                                                                     targetNode,
+                                                                     getDefaultValueStruct() );
       }
 
       return true;
@@ -765,7 +769,7 @@ public:
       return;
     }
 
-    move( LvArray::MemorySpace::CPU, false );
+    move( LvArray::MemorySpace::host, false );
 
     m_conduitNode[ "__sizedFromParent__" ].set( sizedFromParent() );
 

@@ -56,11 +56,6 @@ FaceManager::FaceManager( string const &, Group * const parent ):
 
   m_toElements.resize( 0, 2 );
 
-  //0-based; note that the following field is ALSO 0
-  //for faces that are not external faces, so check isExternal before using
-//  this->AddKeylessDataField<localIndex>("externalFaceIndex", true, true);
-//
-//  this->AddKeylessDataField<R1Tensor>("FaceCenter",true,true);
 }
 
 FaceManager::~FaceManager()
@@ -602,9 +597,6 @@ void FaceManager::computeGeometry( NodeManager const & nodeManager )
                                                                       m_faceCenter[ faceID ],
                                                                       m_faceNormal[ faceID ] );
 
-    // This needs to be done somewhere else, also we probably shouldn't be orienting the normals like this.
-    // Set normal orientation according to a global criterion
-    computationalGeometry::FixNormalOrientation_3D( m_faceNormal[ faceID ] );
   } );
 }
 
@@ -613,7 +605,7 @@ void FaceManager::setDomainBoundaryObjects( NodeManager & nodeManager )
   // Set value of domainBoundaryIndicator to one if it is found to have only one elements that it
   // is connected to.
   arrayView1d< integer > const & faceDomainBoundaryIndicator = this->getDomainBoundaryIndicator();
-  faceDomainBoundaryIndicator.setValues< serialPolicy >( 0 );
+  faceDomainBoundaryIndicator.zero();
 
   arrayView2d< localIndex const > const elemRegionList = this->elementRegionList();
 
@@ -626,7 +618,7 @@ void FaceManager::setDomainBoundaryObjects( NodeManager & nodeManager )
   } );
 
   arrayView1d< integer > const & nodeDomainBoundaryIndicator = nodeManager.getDomainBoundaryIndicator();
-  nodeDomainBoundaryIndicator.setValues< serialPolicy >( 0 );
+  nodeDomainBoundaryIndicator.zero();
 
   ArrayOfArraysView< localIndex const > const faceToNodesMap = this->nodeList().toViewConst();
 
@@ -648,7 +640,7 @@ void FaceManager::setIsExternal()
 {
   arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
 
-  m_isExternal.setValues< serialPolicy >( 0 );
+  m_isExternal.zero();
   for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k]==1 )

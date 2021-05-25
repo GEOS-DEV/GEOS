@@ -139,6 +139,14 @@ using QuasiStaticPoroElastic = PoroElastic< SUBREGION_TYPE,
                                             FE_TYPE,
                                             QuasiStatic >;
 
+/// The factory used to construct a QuasiStaticPoroElastic kernel.
+using QuasiStaticPoroElasticFactory = finiteElement::KernelFactory< QuasiStaticPoroElastic,
+                                                                    arrayView1d< globalIndex const > const &,
+                                                                    globalIndex,
+                                                                    CRSMatrixView< real64, globalIndex const > const &,
+                                                                    arrayView1d< real64 > const &,
+                                                                    real64 const (&)[3] >;
+
 } // namespace SolidMechanicsLagrangianFEMKernels
 
 } // namespace geosx

@@ -342,23 +342,24 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
+  PoroelasticKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+                                                              pDofKey,
+                                                              dofManager.rankOffset(),
+                                                              localMatrix,
+                                                              localRhs,
+                                                              gravityVectorData,
+                                                              m_flowSolver->fluidModelNames() );
+
   // Cell-based contributions
   m_solidSolver->getMaxForce() =
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::PoroElasticBase,
-                                    CellElementSubRegion,
-                                    PoroelasticKernels::SinglePhase >( mesh,
-                                                                       targetRegionNames(),
-                                                                       this->getDiscretizationName(),
-                                                                       m_solidSolver->solidMaterialNames(),
-                                                                       dispDofNumber,
-                                                                       pDofKey,
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs,
-                                                                       gravityVectorData,
-                                                                       m_flowSolver->fluidModelNames() );
+                                    CellElementSubRegion >( mesh,
+                                                            targetRegionNames(),
+                                                            this->getDiscretizationName(),
+                                                            m_solidSolver->solidMaterialNames(),
+                                                            kernelFactory );
 
   // Face-based contributions
   m_flowSolver->assembleFluxTerms( time_n, dt,
@@ -546,12 +547,12 @@ void PoroelasticSolver::createPreconditioner()
 
     auto mechPrecond = LAInterface::createPreconditioner( m_solidSolver->getLinearSolverParameters() );
     precond->setupBlock( 0,
-                         { { keys::TotalDisplacement, 0, 3 } },
+                         { { keys::TotalDisplacement, { 3, true } } },
                          std::make_unique< SeparateComponentPreconditioner< LAInterface > >( 3, std::move( mechPrecond ) ) );
 
     auto flowPrecond = LAInterface::createPreconditioner( m_flowSolver->getLinearSolverParameters() );
     precond->setupBlock( 1,
-                         { { SinglePhaseBase::viewKeyStruct::pressureString(), 0, 1 } },
+                         { { SinglePhaseBase::viewKeyStruct::pressureString(), { 1, true } } },
                          std::move( flowPrecond ) );
 
     m_precond = std::move( precond );

@@ -366,7 +366,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
   node[ "__values__" ].set_external( dtype, ptr );
 
   // Create a copy of the dimensions
-  localIndex temp[ NDIM + 1 ];
+  camp::idx_t temp[ NDIM + 1 ];
   for( int i = 0; i < NDIM; ++i )
   {
     temp[ i ] = var.size( i );
@@ -382,7 +382,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
   }
 
   // push the dimensions into the node
-  conduit::DataType const dimensionType( conduitTypeInfo< localIndex >::id, totalNumDimensions );
+  conduit::DataType const dimensionType( conduitTypeInfo< camp::idx_t >::id, totalNumDimensions );
   node[ "__dimensions__" ].set( dimensionType, temp );
 
   // Create a copy of the permutation
@@ -432,7 +432,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   // Now pull out the dimensions and resize the array.
   conduit::Node const & dimensionNode = node.fetch_child( "__dimensions__" );
   GEOSX_ERROR_IF_NE( dimensionNode.dtype().number_of_elements(), totalNumDimensions );
-  localIndex const * const dims = dimensionNode.value();
+  camp::idx_t const * const dims = dimensionNode.value();
 
   if( hasImplicitDimension )
   {
@@ -480,7 +480,7 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
     GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), totalNumberOfComponents );
   }
 
-  var.move( LvArray::MemorySpace::CPU, false );
+  var.move( LvArray::MemorySpace::host, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
@@ -548,7 +548,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
     GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), numComponentsPerValue * var.size() / var.size( 0 ) );
   }
 
-  var.move( LvArray::MemorySpace::CPU, false );
+  var.move( LvArray::MemorySpace::host, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );

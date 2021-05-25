@@ -23,6 +23,7 @@ set( mesh_headers
      Perforation.hpp
      PerforationData.hpp
      NodeManager.hpp
+     EmbeddedSurfaceNodeManager.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
@@ -31,7 +32,10 @@ set( mesh_headers
      generators/MeshGeneratorBase.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
+     generators/InternalWellboreGenerator.hpp
+     mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
+     mpiCommunications/MPI_iCommData.hpp
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/PartitionBase.hpp
      mpiCommunications/SpatialPartition.hpp
@@ -42,6 +46,7 @@ set( mesh_headers
      simpleGeometricObjects/ThickPlane.hpp
      simpleGeometricObjects/BoundedPlane.hpp
      utilities/ComputationalGeometry.hpp
+     utilities/MeshMapUtilities.hpp
      utilities/MeshUtilities.hpp
      utilities/StructuredGridUtilities.hpp
   )
@@ -66,6 +71,7 @@ set(mesh_sources
     MeshLevel.cpp
     MeshManager.cpp
     NodeManager.cpp
+    EmbeddedSurfaceNodeManager.cpp
     ObjectManagerBase.cpp
     PerforationData.cpp
     Perforation.cpp
@@ -76,8 +82,11 @@ set(mesh_sources
     WellElementSubRegion.cpp
     generators/InternalMeshGenerator.cpp
     generators/InternalWellGenerator.cpp
+    generators/InternalWellboreGenerator.cpp
     generators/MeshGeneratorBase.cpp
+    mpiCommunications/CommID.cpp
     mpiCommunications/CommunicationTools.cpp
+    mpiCommunications/MPI_iCommData.cpp    
     mpiCommunications/NeighborCommunicator.cpp
     mpiCommunications/PartitionBase.cpp
     mpiCommunications/SpatialPartition.cpp

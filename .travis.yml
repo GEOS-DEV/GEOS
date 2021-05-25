@@ -78,7 +78,7 @@ geosx_osx_build: &geosx_osx_build
     -DBLT_MPI_COMMAND_APPEND:STRING="--oversubscribe"
   - cd build-darwin-clang-debug
   - make -j $(nproc) VERBOSE=1
-  - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
+  # - ctest -V -E "testUncrustifyCheck|testDoxygenCheck|blt_mpi_smoke"
 
 geosx_pangea_build: &geosx_pangea_build
   <<: *geosx_linux_build
@@ -212,7 +212,6 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
     - CMAKE_BUILD_TYPE=Release
-    - BUILD_AND_TEST_ARGS="--disable-unit-tests"
   - stage: builds
     name: Mac_OSX
     <<: *geosx_osx_build
