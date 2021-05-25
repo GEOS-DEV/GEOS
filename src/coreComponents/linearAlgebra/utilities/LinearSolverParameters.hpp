@@ -292,7 +292,7 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "lagrangianContactMechanics",
               "singlePhaseHybridFVM",
               "singlePhasePoromechanics",
-              "hybridSinglePhasePoromechanics,"
+              "hybridSinglePhasePoromechanics",
               "multiphasePoromechanics" );
 
 /// Declare strings associated with enumeration values.
