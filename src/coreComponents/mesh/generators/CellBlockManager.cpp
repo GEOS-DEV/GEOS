@@ -49,7 +49,7 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
 {
   // The functions works in three steps.
   // First finds the number of elements attached to each node.
-  // Ths second then allocates the vectors.
+  // Then second then allocates the vectors, including extra allocations.
   // Last, the output vector is filled.
 
   // First step: how many elements for each node, stored in the elemsPerNode array.
@@ -110,7 +110,7 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
 /**
  * @brief Convenience programming structure that holds the nodes for a given Face. No information about which cell though.
  *
- * This structure holds `<` and `==` such that equal instances in a sorted array
+ * This structure holds `<` and `==` operators such that equal instances in a sorted array
  * are meant to be consecutive. (see `std::unique` for example).
  * Two instances with same nodes in different order are considered equal.
  * Such a case often happen since the same surface is shared by two adjacent elements
@@ -226,7 +226,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< NodesAndElementOfFace
 }
 
 /**
- * @brief Fills the appropriate subpart @p faceToNodes for face @p faceID and nodes contained in @p nodesAndElementOfFace.
+ * @brief Copies the nodes from @p nodesAndElementOfFace into @p faceToNodes[@p faceID ].
  * @param [in] faceID The face index.
  * @param [in] nodesAndElementOfFace The nodes and element for @p faceID.
  * @param [out] faceToNodes No input data is used.
@@ -244,7 +244,6 @@ void insertFaceToNodesEntry( localIndex const faceID,
   GEOSX_ASSERT_EQ( numFaceNodes, faceToNodes.sizeOfArray( faceID ) );
   GEOSX_DEBUG_VAR( numFaceNodes );
 }
-
 
 /**
  * @brief Fills the face to nodes map and face to element maps

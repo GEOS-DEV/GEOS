@@ -72,6 +72,8 @@ public:
   /**
    * @brief Defines the underlying element type (hex, tet...)
    * @param elementType The element type (C3D8...)
+   *
+   * @note Allocates the values of the element to nodes, edges, faces accordingly.
    */
   void setElementType( string const & elementType );
 

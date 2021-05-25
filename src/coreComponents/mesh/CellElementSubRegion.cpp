@@ -24,11 +24,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 CellElementSubRegion::CellElementSubRegion( string const & name, Group * const parent ):
-  ElementSubRegionBase( name, parent ),
-  m_toNodesRelation(),
-  m_toEdgesRelation(),
-  m_toFacesRelation(),
-  m_externalPropertyNames()
+  ElementSubRegionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
   registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
