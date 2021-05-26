@@ -15,10 +15,10 @@
       solidMaterialNames="{ casing, cement, rock }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
+        newtonTol="1.0e-9"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
+        solverType="gmres"
         directParallel="0"
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
@@ -32,8 +32,8 @@
       radius="{ 0.1, 0.106, 0.133, 2.0 }"
       theta="{ 0, 360 }"
       zCoords="{ 0, 1 }"
-      nr="{ 10, 10, 10 }"
-      nt="{ 160 }"
+      nr="{ 10, 20, 10 }"
+      nt="{ 320 }"
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 1.0 } }"

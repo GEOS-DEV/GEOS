@@ -68,5 +68,5 @@ plt.plot(r_anal, sig_tt_anal,  'k', linewidth=2, label='Analytic')
 plt.xlim(r_casing_out, r_hole)
 plt.xlabel("r (m)")
 plt.ylabel("Tangent stress (MPa)")
-
+plt.legend()
 plt.show()
