@@ -29,14 +29,14 @@
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8, C3D8, C3D8 }"
-      radius="{ 0.1, 0.11, 0.15, 2.0 }"
+      radius="{ 0.1, 0.106, 0.133, 2.0 }"
       theta="{ 0, 360 }"
-      zCoords="{ 0, 4 }"
-      nr="{ 2, 2, 5 }"
-      nt="{ 16 }"
-      nz="{ 4 }"
+      zCoords="{ 0, 1 }"
+      nr="{ 10, 10, 10 }"
+      nt="{ 160 }"
+      nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
-                    { 0.0, 0.0, 4.0 } }"
+                    { 0.0, 0.0, 1.0 } }"
       autoSpaceRadialElems="{ 0, 0, 1 }"
       useCartesianOuterBoundary="2"
       cellBlockNames="{ casing, cement, rock }"
@@ -45,13 +45,13 @@
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
-    maxTime="4.0">
+    maxTime="1.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <!-- SPHINX_Execution -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1.0"
+      forceDt="0.1"
       target="/Solvers/lagsolve"/>
 
     <!-- SPHINX_ExecutionEnd -->
@@ -153,20 +153,19 @@
       name="innerPressure"
       objectPath="faceManager"
       tractionType="normal"
-      scale="-1.0e6"
-      functionName="timeFunction"
+      scale="-10.0e6"
       setNames="{ rneg }"/>
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->
   <!-- SPHINX_TableFunction -->
-  <Functions>
+  <!--Functions>
     <TableFunction
       name="timeFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0, 10.0 }"
       values=     "{ 0.0, 0.0, 10.0 }"/>
-  </Functions>
+  </Functions-->
 
   <!-- SPHINX_TableFunctionEnd -->
   <Outputs>
