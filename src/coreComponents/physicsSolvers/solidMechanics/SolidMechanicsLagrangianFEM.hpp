@@ -235,6 +235,7 @@ public:
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
     static constexpr char const * effectiveStressString() { return "effectiveStress"; }
+    static constexpr char const * thermalStressString() { return "thermalStress"; }
 
     dataRepository::ViewKey vTilde = { vTildeString() };
     dataRepository::ViewKey uhatTilde = { uhatTildeString() };
@@ -300,6 +301,10 @@ protected:
   /// stress divergence in the kernels. This means calling the poroelastic
   /// variant of the solid mechanics kernels.
   integer m_effectiveStress;
+
+  /// Indicates whether or not to use thermal stress when integrating the
+  /// stress divergence in the kernels.
+  integer m_thermalStress;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;

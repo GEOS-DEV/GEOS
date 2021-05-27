@@ -18,6 +18,7 @@
 
 #include "SolidMechanicsLagrangianFEM.hpp"
 #include "SolidMechanicsPoroElasticKernel.hpp"
+#include "SolidMechanicsThermoElasticKernel.hpp"
 #include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
 #include "SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
 #include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
@@ -66,7 +67,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_nonSendOrReceiveNodes(),
   m_targetNodes(),
   m_iComm( CommunicationTools::getInstance().getCommID() ),
-  m_effectiveStress( 0 )
+  m_effectiveStress( 0 ),
+  m_thermalStress( 0 )
 {
   m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
   m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
@@ -138,6 +140,11 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Apply fluid pressure to produce effective stress when integrating stress." );
+
+  registerWrapper( viewKeyStruct::thermalStressString(), &m_thermalStress ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Apply thermal stress when integrating stress." );
 
 }
 
@@ -231,6 +238,9 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE );
+
+      subRegion.registerWrapper< array1d< real64 > >( "temperature" ).
+        setPlotLevel( PlotLevel::LEVEL_0 );
     } );
 
   } );
@@ -994,6 +1004,15 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   localMatrix.zero();
   localRhs.zero();
 
+  if( m_thermalStress==1 )
+  {
+    assemblyLaunch< constitutive::ThermoElasticBase,
+                    SolidMechanicsLagrangianFEMKernels::QuasiStaticThermoElasticFactory >( domain,
+                                                                                           dofManager,
+                                                                                           localMatrix,
+                                                                                           localRhs );
+  }
+
   if( m_effectiveStress==1 )
   {
     GEOSX_UNUSED_VAR( dt );
@@ -1003,7 +1022,8 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
                                                                                          localMatrix,
                                                                                          localRhs );
   }
-  else
+
+  if( m_thermalStress==0 && m_effectiveStress==0 )
   {
     if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
     {
