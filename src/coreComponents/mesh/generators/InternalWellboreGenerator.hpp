@@ -101,7 +101,7 @@ private:
   bool m_isFullAnnulus;
 
   /// Parameter for automatic increasing element size in the radial direction
-  array1d< int > m_autoSpaceRadialElems;
+  array1d< real64 > m_autoSpaceRadialElems;
 
   /// Radial coordinates defining the wellbore geometry
   array1d< real64 > & m_radialCoords;

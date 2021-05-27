@@ -96,10 +96,13 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name,
                     "radius at which to start the mapping." );
 
   registerWrapper( viewKeyStruct::autoSpaceRadialElemsString(), &m_autoSpaceRadialElems ).
+    setApplyDefaultValue( -1.0 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Automatically set number and spacing of elements in the radial direction. "
-                    "This overrides the values of nr" );
+                    "This overrides the values of nr!"
+                    "Value in each block indicates factor to scale the radial increment."
+                    "Larger numbers indicate larger radial elements." );
 
 }
 
@@ -163,7 +166,7 @@ void InternalWellboreGenerator::postProcessInput()
       }
 
       // Are we going to auto-size this block??
-      if( m_autoSpaceRadialElems[iBlock] == 1 )
+      if( m_autoSpaceRadialElems[iBlock] > 0 )
       {
         // We have to set the starting index for this block so that we skip any
         // values that are fixed from the last block when we scale the radial
@@ -192,7 +195,7 @@ void InternalWellboreGenerator::postProcessInput()
 
           // set the next radius a some combination of the inner and outer radius for this "element".
           constexpr real64 c = 0.5;
-          real64 const r_ip1 = m_radialCoords.back() + ( 1.0 - c ) * t_i + c * tElemSize_ip1_0;
+          real64 const r_ip1 = m_radialCoords.back() + m_autoSpaceRadialElems[iBlock] * ( ( 1.0 - c ) * t_i + c * tElemSize_ip1_0 );
 
           // if the radius of the next layer is bigger than rOuter, we figure
           // out where to cut off the layer.
@@ -250,6 +253,7 @@ void InternalWellboreGenerator::postProcessInput()
   }
 
 
+  if( m_cartesianOuterBoundary < 1000000 )
   {
     GEOSX_ERROR_IF( m_cartesianOuterBoundary < 0, "useCartesianOuterBoundary must be > 0" );
     real64 const innerLimit = m_vertices[0][m_cartesianOuterBoundary];
@@ -491,10 +495,14 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
       }
     }
   }
-//  std::cout<<xnegNodes<<std::endl;
-//  std::cout<<xposNodes<<std::endl;
-//  std::cout<<ynegNodes<<std::endl;
-//  std::cout<<yposNodes<<std::endl;
+  std::cout<<"xnegNodes: "<<xnegNodes<<std::endl;
+  std::cout<<"xposNodes: "<<xposNodes<<std::endl;
+  std::cout<<"ynegNodes: "<<ynegNodes<<std::endl;
+  std::cout<<"yposNodes: "<<yposNodes<<std::endl;
+  std::cout<<"rnegNodes: "<<rnegNodes<<std::endl;
+  std::cout<<"rposNodes: "<<rposNodes<<std::endl;
+  std::cout<<"tnegNodes: "<<tnegNodes<<std::endl;
+  std::cout<<"tposNodes: "<<tposNodes<<std::endl;
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellboreGenerator, string const &, Group * const )
