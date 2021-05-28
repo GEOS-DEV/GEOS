@@ -71,6 +71,8 @@ public:
   RockBaseUpdates & operator=( RockBaseUpdates && ) = delete;
 
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual void updatePorosity( localIndex const GEOSX_UNUSED_PARAM( k ),
                                localIndex const GEOSX_UNUSED_PARAM( q ),
                                real64 const & GEOSX_UNUSED_PARAM( pressure )  ) const

@@ -80,8 +80,10 @@ class SurfaceElementStencilWrapper : public StencilWrapperBase< SurfaceElementSt
   public SurfaceElementStencil_Traits
 {
 public:
+
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
   template< typename VIEWTYPE >
   using CoefficientAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
 
@@ -119,6 +121,8 @@ public:
    * @param[in] index the index of which the stencil size is request
    * @return The number of stencil entries for the provided index
    */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   localIndex stencilSize( localIndex index ) const
   { return m_elementRegionIndices.sizeOfArray( index ); }
 
@@ -128,20 +132,26 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the number of points.
    */
-  constexpr localIndex numPointsInFlux( localIndex index ) const
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  localIndex numPointsInFlux( localIndex index ) const
   {
     return stencilSize( index );
   }
 
-
   template< typename PERMTYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void computeTransmissibility( localIndex iconn,
                                 PERMTYPE permeability,
                                 PERMTYPE dPerm_dPressure,
                                 real64 ( &transmissibility )[2],
                                 real64 ( &dTrans_dPressure )[2] ) const;
 
+
   template< typename PERMTYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void computeTransmissibility( localIndex iconn,
                                 PERMTYPE permeability,
                                 PERMTYPE dPerm_dPressure,
@@ -238,6 +248,8 @@ private:
 };
 
 template< typename PERMTYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
                                                             PERMTYPE permeability,
                                                             PERMTYPE dPerm_dPressure,
@@ -282,6 +294,7 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
 
 
 template< typename PERMTYPE >
+GEOSX_HOST_DEVICE
 void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
                                                             PERMTYPE permeability,
                                                             PERMTYPE dPerm_dPressure,

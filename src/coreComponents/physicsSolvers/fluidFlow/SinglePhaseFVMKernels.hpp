@@ -25,12 +25,15 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 
 namespace geosx
 {
 
 namespace SinglePhaseFVMKernels
 {
+
+using namespace FluxKernelsHelper;
 
 /******************************** FluxKernel ********************************/
 
@@ -87,8 +90,8 @@ struct FluxKernel
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
-    constexpr localIndex maxNumFluxElems = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
-    constexpr localIndex maxStencilSize = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
+//    constexpr localIndex maxNumFluxElems = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
+//    constexpr localIndex maxStencilSize  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
 
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
@@ -101,9 +104,9 @@ struct FluxKernel
       localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
 
       // working arrays
-      stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( stencilSize );
-      stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
-      stackArray2d< real64, maxNumFluxElems * maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
+      stackArray1d< globalIndex, STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX > dofColIndices( stencilSize );
+      stackArray1d< real64, STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX > localFlux( numFluxElems );
+      stackArray2d< real64, STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX * STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, stencilSize );
 
       // compute transmissibility
       real64 transmissiblity[2], dTrans_dPres[2];
@@ -182,7 +185,39 @@ struct FluxKernel
            ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
            real64 const dt,
            arraySlice1d< real64 > const & flux,
-           arraySlice2d< real64 > const & fluxJacobian );
+           arraySlice2d< real64 > const & fluxJacobian )
+  {
+    GEOSX_UNUSED_VAR( numFluxElems );
+
+    real64 fluxVal = 0.0;
+    real64 dFlux_dTrans[2] = {0.0, 0.0};
+    real64 dFlux_dP[2] = {0.0, 0.0};
+
+    computeSinglePhaseFlux( seri, sesri, sei,
+                            transmissibility,
+                            dTrans_dPres,
+                            pres,
+                            dPres,
+                            gravCoef,
+                            dens,
+                            dDens_dPres,
+                            mob,
+                            dMob_dPres,
+                            fluxVal,
+                            dFlux_dP,
+                            dFlux_dTrans );
+
+    // populate local flux vector and derivatives
+    flux[0] =  dt * fluxVal;
+    flux[1] = -dt * fluxVal;
+
+
+    for( localIndex ke = 0; ke < 2; ++ke )
+    {
+      fluxJacobian[0][ke] =  dt * dFlux_dP[ke];
+      fluxJacobian[1][ke] = -dt * dFlux_dP[ke];
+    }
+  }
 };
 
 struct FaceDirichletBCKernel

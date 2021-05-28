@@ -40,14 +40,15 @@
 
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "SinglePhasePoroelasticKernel.hpp"
-#include "SinglePhasePoroelasticFluxKernels.hpp"
+#include "constitutive/permeability/PoroMechanicsPermeabilityKernel.hpp"
+
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhasePoroelasticFluxKernels;
+using namespace PermeabilityKernels;
 
 PoroelasticSolver::PoroelasticSolver( const string & name,
                                       Group * const parent ):
@@ -495,6 +496,12 @@ void PoroelasticSolver::updatePermeability( NodeManager const & nodeManager,
                                 &nodeManager] ( auto const finiteElement )
     {
 
+      using FE_TYPE = TYPEOFREF( finiteElement );
+
+      auto permKernel = PoroMechanicsPermeabilityKernel< CellElementSubRegion, FE_TYPE >( subRegion,
+                                                                                          finiteElement,
+                                                                                          nodeManager );
+
       typename TYPEOFREF( castedPerm ) ::KernelWrapper permWrapper = castedPerm.createKernelWrapper();
 
       arrayView3d< real64 > const & dPerm_dDisplacement =
@@ -514,16 +521,12 @@ void PoroelasticSolver::updatePermeability( NodeManager const & nodeManager,
       array2d< real64 > dPorosity_dVolStrain;
       dPorosity_dVolStrain.setValues< serialPolicy >( 0.0 );
 
-      PermeabilityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                            finiteElement,
+      permKernel.template launch< parallelDevicePolicy<> >( subRegion.size(),
                                                             permWrapper,
                                                             pressure,
                                                             deltaPressure,
                                                             porosity,
                                                             dPorosity_dVolStrain.toViewConst(),
-                                                            nodeManager.referencePosition(),
-                                                            nodeManager.totalDisplacement(),
-                                                            subRegion.nodeList().toViewConst(),
                                                             dPerm_dDisplacement );
     } );
   } );

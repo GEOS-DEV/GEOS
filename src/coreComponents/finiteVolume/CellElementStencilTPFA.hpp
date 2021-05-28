@@ -60,8 +60,10 @@ class CellElementStencilTPFAWrapper : public StencilWrapperBase< CellElementSten
   public CellElementStencilTPFA_Traits
 {
 public:
+
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
   template< typename VIEWTYPE >
   using PermeabilityViewAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
 
@@ -93,6 +95,8 @@ public:
 
 
   template< typename PERMTYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void computeTransmissibility( localIndex iconn,
                                 PERMTYPE permeability,
                                 PERMTYPE dPerm_dPressure,
@@ -111,7 +115,9 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry
    */
-  constexpr localIndex stencilSize( localIndex index ) const
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  localIndex stencilSize( localIndex index ) const
   {
     GEOSX_UNUSED_VAR( index );
     return MAX_STENCIL_SIZE;
@@ -122,7 +128,9 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the number of points.
    */
-  constexpr localIndex numPointsInFlux( localIndex index ) const
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  localIndex numPointsInFlux( localIndex index ) const
   {
     GEOSX_UNUSED_VAR( index );
     return NUM_POINT_IN_FLUX;
@@ -210,6 +218,8 @@ private:
 };
 
 template< typename PERMTYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
                                                              PERMTYPE permeability,
                                                              PERMTYPE dPerm_dPressure,

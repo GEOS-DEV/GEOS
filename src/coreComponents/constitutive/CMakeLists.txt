@@ -64,6 +64,7 @@ set( constitutive_headers
      permeability/ParallelPlatesPermeability.hpp
      permeability/permeabilitySelector.hpp
      permeability/StrainDependentPermeability.hpp
+     permeability/PoroMechanicsPermeabilityKernel.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp

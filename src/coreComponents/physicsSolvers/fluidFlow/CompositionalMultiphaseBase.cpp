@@ -458,7 +458,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh ) const
 
   localIndex const NC = m_numComponents;
 
-  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex, auto & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     // 1. Assume global component fractions have been prescribed.
     // Initialize constitutive state to get fluid density.
@@ -481,7 +481,13 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh ) const
         compDens[ei][ic] = totalDens[ei][0] * compFrac[ei][ic];
       }
     } );
+  } );
 
+  // CUDA does not want the host_device lambda to be defined inside the generic lambda
+  // I need the exact type of the subRegion for updateSolidflowProperties to work well.
+  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                                                   auto & subRegion )
+  {
     // 3. Update dependent state quantities
     updatePhaseVolumeFraction( subRegion, targetIndex );
     updateSolidFlowProperties( subRegion, targetIndex );
