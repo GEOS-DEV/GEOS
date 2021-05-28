@@ -108,7 +108,7 @@ private:
    * @details The node ordering from VTK differs from the node ordering in GEOSX
    * @param[in,out] cellToVertex list of nodes organized per cells
    */
-  void WriteHexahedronVertices( CellBlock::NodeMapType & cellToVertex, int region_id );
+  void WriteHexahedronVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal  );
 
   /**
    * @brief Write the pyramid vertices

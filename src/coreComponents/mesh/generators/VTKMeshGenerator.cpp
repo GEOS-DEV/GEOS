@@ -74,6 +74,12 @@ Group * VTKMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childK
   return nullptr;
 }
 
+bool CheckIntersection(double box1[6], double box2[6])
+{
+    //GEOSX_LOG_RANK(box2[0] << " and " box1[0] and)
+    return box1[0] < box2[1] && box1[1]> box2[0] && box1[2] < box2[3] && box1[3]> box2[2] && box1[4] < box2[5] && box1[5]> box2[4];
+}
+
 void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 {
 
@@ -119,8 +125,6 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     loadedMesh = vtkSmartPointer<vtkUnstructuredGrid>::New();
   }
   MpiWrapper::barrier();
-  std::cout <<"number of cells : "<< loadedMesh->GetNumberOfCells() << std::endl;
-  std::cout <<"number of points : "<< loadedMesh->GetNumberOfPoints() << std::endl;
 
   // Redistribute data all over the available ranks
   vtkNew<vtkRedistributeDataSetFilter> rdsf;
@@ -130,8 +134,6 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   rdsf->Update();
   m_vtkMesh = vtkUnstructuredGrid::SafeDownCast( rdsf->GetOutputDataObject(0));
   MpiWrapper::barrier();
-  std::cout <<"number of cells after : "<< m_vtkMesh->GetNumberOfCells() << std::endl;
-  std::cout <<"number of points after : "<< m_vtkMesh->GetNumberOfPoints() << std::endl;
 
   vtkNew<vtkGenerateGlobalIds> generator;
   generator->SetInputDataObject(m_vtkMesh);
@@ -146,6 +148,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   //TODO for the moment we only consider on mesh level "Level0"
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
   NodeManager & nodeManager = meshLevel0.getNodeManager();
+  nodeManager.resize( m_vtkMesh->GetNumberOfPoints() );
   arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
   // Writing the points
@@ -153,13 +156,11 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_LOG_RANK_0("Writing " << m_vtkMesh->GetNumberOfPoints() << " vertices");
 
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-  nodeManager.resize( m_vtkMesh->GetNumberOfPoints() );
   Group & nodeSets = nodeManager.sets();
   SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
   real64 xMax[3] = { std::numeric_limits< real64 >::min() };
   real64 xMin[3] = { std::numeric_limits< real64 >::max() };
 
-std::cout << 1 << std::endl;
   vtkPointData * pointData = m_vtkMesh->GetPointData();
   int globalPointIdIndex = -1;
   vtkAbstractArray * globalPointIdArray = pointData->GetAbstractArray("GlobalPointIds", globalPointIdIndex);
@@ -170,15 +171,10 @@ std::cout << 1 << std::endl;
   {
     globalPointIdDataArray = vtkIdTypeArray::SafeDownCast( globalPointIdArray );
   }
-std::cout << 2 << std::endl;
-std::cout << globalPointIdDataArray << std::endl;
-std::cout << globalPointIdDataArray->GetNumberOfValues() << " vs " << nodeLocalToGlobal.size()<< std::endl;
   for( vtkIdType v = 0; v < m_vtkMesh->GetNumberOfPoints(); v++)
   {
     double * point = m_vtkMesh->GetPoint( v );
-    std::cout << "allo" << std::endl;
     nodeLocalToGlobal[v] = globalPointIdDataArray->GetValue( v );
-    std::cout << "oui" << std::endl;
     for( integer i = 0; i < 3; i++)
     {
       X(v,i) = point[i];
@@ -195,7 +191,45 @@ std::cout << globalPointIdDataArray->GetNumberOfValues() << " vs " << nodeLocalT
   }
   LvArray::tensorOps::subtract< 3 >( xMax, xMin );
   meshBody.setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( xMax ) );
-std::cout << 3 << std::endl;
+
+  /// Compute potential neighbor list
+  double * rankBounds = m_vtkMesh->GetBounds();
+  std::vector<double> allBounds(6 * MpiWrapper::commSize());
+  MpiWrapper::allgather<double, double>(rankBounds, 6, allBounds.data(),6,MPI_COMM_GEOSX);
+
+  /// compute the halo 
+  for(unsigned int i = 0; i < allBounds.size();i++)
+  {
+    if( i%2)
+   {
+     allBounds[i]-=0.01;
+   } 
+   else
+   {
+     allBounds[i]+=0.01;
+   }
+  }
+
+  //Checking the intersection
+  std::set< int > rankNeighbor;
+  for(int i = 0; i < MpiWrapper::commSize(); i++)
+  {
+    if( i == MpiWrapper::commRank())
+    {
+      continue;
+    }
+    std::vector< double >::const_iterator first = allBounds.begin() + 6*i;
+    std::vector< double >::const_iterator last = allBounds.begin() + 6*(i+1);
+    std::vector< double > curBound(first,last);
+    if(CheckIntersection(rankBounds, curBound.data()))
+    {
+      domain.getMetisNeighborList().insert(i);
+      std::cout << "on est laaaaaaaaaa" << std::endl;
+    }
+  }
+
+
+
 
   // TODO For the moment, we only deal with classical elements (tetra, hexa, wedges and pyramids)
   /// First pass to count the cells, and the regions
@@ -363,6 +397,22 @@ std::cout << 3 << std::endl;
       WriteCellBlock("pyramids", nbPyr, -1, VTK_PYRAMID, cellBlockManager, arrayToBeImported);
 
   }
+
+  /*
+  if( controller->GetLocalProcessId() == 0)
+  {
+    std::set<int> neigh;
+    neigh.insert(1);
+    domain.getMetisNeighborList() =  neigh;
+  }
+  if( controller->GetLocalProcessId() == 1)
+  {
+    std::set<int> neigh;
+    neigh.insert(0);
+    domain.getMetisNeighborList() =  neigh;
+  }
+  */
+  
   std::cout << "C FINI" << std::endl;
 }
 
@@ -393,7 +443,7 @@ localIndex VTKMeshGenerator::GetNumberOfPoints( int cellType )
 
 }
 
-void VTKMeshGenerator::WriteHexahedronVertices( CellBlock::NodeMapType & cellToVertex, int region_id )
+void VTKMeshGenerator::WriteHexahedronVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal  )
 {
   localIndex cellCount = 0;
   //TODO : duplicate code to get the attribute array
@@ -406,6 +456,15 @@ void VTKMeshGenerator::WriteHexahedronVertices( CellBlock::NodeMapType & cellToV
   if( attributeIndex >= 0)
   {
     attributeDataArray = vtkIntArray::SafeDownCast( attributeArray );
+  }
+  int globalCellIdsIndex = -1;
+  vtkAbstractArray * globalCellIdsArray = cellData->GetAbstractArray("GlobalCellIds", globalCellIdsIndex);
+  GEOSX_ERROR_IF(globalCellIdsIndex >=0 && globalCellIdsArray->GetDataType() != VTK_ID_TYPE, "Array name \"GlobalCellIds\" is not present or do not have " 
+                << " the underlying type id type");
+  vtkIdTypeArray * globalCellIdsDataArray =  nullptr;
+  if( globalCellIdsIndex >= 0)
+  {
+    globalCellIdsDataArray = vtkIdTypeArray::SafeDownCast( globalCellIdsArray );
   }
   for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
   {
@@ -421,6 +480,7 @@ void VTKMeshGenerator::WriteHexahedronVertices( CellBlock::NodeMapType & cellToV
 		  cellToVertex[cellCount][5] = currentCell->GetPointId(5);
 		  cellToVertex[cellCount][6] = currentCell->GetPointId(7);
 		  cellToVertex[cellCount][7] = currentCell->GetPointId(6);
+      localToGlobal[cellCount] = globalCellIdsDataArray->GetValue(c);
       cellCount++;
     }
   }
@@ -467,6 +527,7 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
     cellBlock.setElementType( "C3D" + std::to_string(nbPointsPerCell));
     CellBlock::NodeMapType & cellToVertex = cellBlock.nodeList();
     cellBlock.resize( nbCells );
+    arrayView1d< globalIndex > const & localToGlobal = cellBlock.localToGlobalMap();
 
     //TODO : duplicate code to get the attribute array
     int attributeIndex = -1;
@@ -479,6 +540,7 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
     {
       attributeDataArray = vtkIntArray::SafeDownCast( attributeArray );
     }
+
 
     /// Writing properties
     for( vtkDataArray * array : arraysTobeImported )
@@ -519,12 +581,22 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
       }
     }
 
-    /// Writing connectivity
+    /// Writing connectivity and Local to Global
     cellToVertex.resize( nbCells, nbPointsPerCell );
+    std::cout << "writin conn" << std::endl;
     if( cellType == VTK_HEXAHEDRON ) // Special case for hexahedron because of the ordering
     {
-      WriteHexahedronVertices( cellToVertex, region_id );
+      WriteHexahedronVertices( cellToVertex, region_id, localToGlobal );
       return;
+    }
+    int globalCellIdsIndex = -1;
+    vtkAbstractArray * globalCellIdsArray = cellData->GetAbstractArray("GlobalCellIds", globalCellIdsIndex);
+    GEOSX_ERROR_IF(globalCellIdsIndex >=0 && globalCellIdsArray->GetDataType() != VTK_ID_TYPE, "Array name \"GlobalCellIds\" is not present or do not have " 
+                  << " the underlying type id type");
+    vtkIdTypeArray * globalCellIdsDataArray =  nullptr;
+    if( globalCellIdsIndex >= 0)
+    {
+      globalCellIdsDataArray = vtkIdTypeArray::SafeDownCast( globalCellIdsArray );
     }
     localIndex cellCount = 0;
     for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
@@ -537,6 +609,7 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
         {
           cellToVertex[cellCount][v] = currentCell->GetPointId(v);
         }
+        localToGlobal[cellCount] = globalCellIdsDataArray->GetValue(c);
         cellCount++;
       }
     }
