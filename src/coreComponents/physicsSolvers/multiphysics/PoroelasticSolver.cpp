@@ -498,9 +498,13 @@ void PoroelasticSolver::updatePermeability( NodeManager const & nodeManager,
 
       using FE_TYPE = TYPEOFREF( finiteElement );
 
-      auto permKernel = PoroMechanicsPermeabilityKernel< CellElementSubRegion, FE_TYPE >( subRegion,
-                                                                                          finiteElement,
-                                                                                          nodeManager );
+
+      using KERNEL_TYPE = PoroMechanicsPermeabilityKernel< CellElementSubRegion,
+                                                           FE_TYPE >;
+
+      KERNEL_TYPE permKernel( subRegion,
+                              finiteElement,
+                              nodeManager );
 
       typename TYPEOFREF( castedPerm ) ::KernelWrapper permWrapper = castedPerm.createKernelWrapper();
 
@@ -521,13 +525,14 @@ void PoroelasticSolver::updatePermeability( NodeManager const & nodeManager,
       array2d< real64 > dPorosity_dVolStrain;
       dPorosity_dVolStrain.setValues< serialPolicy >( 0.0 );
 
-      permKernel.template launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                            permWrapper,
-                                                            pressure,
-                                                            deltaPressure,
-                                                            porosity,
-                                                            dPorosity_dVolStrain.toViewConst(),
-                                                            dPerm_dDisplacement );
+      KERNEL_TYPE::template launch< parallelDevicePolicy<>, KERNEL_TYPE >( subRegion.size(),
+                                                                           permKernel,
+                                                                           permWrapper,
+                                                                           pressure,
+                                                                           deltaPressure,
+                                                                           porosity,
+                                                                           dPorosity_dVolStrain.toViewConst(),
+                                                                           dPerm_dDisplacement );
     } );
   } );
 

@@ -52,55 +52,78 @@ public:
   {}
 
   template< typename POLICY,
+            typename KERNEL_TYPE,
             typename PERM_WRAPPER >
+  static
   void
   launch( localIndex const size,
+          KERNEL_TYPE const & permKernel,
           PERM_WRAPPER const & permWrapper,
           arrayView1d< real64 const > const & pressure,
           arrayView1d< real64 const > const & deltaPressure,
           arrayView2d< real64 const > const & porosity,
           arrayView2d< real64 const > const & dPorosity_dVolStrain,
-          arrayView3d< real64 > const & GEOSX_UNUSED_PARAM ( dPerm_dDisplacement ) )
+          arrayView3d< real64 > const & dPerm_dDisplacement )
   {
-    GEOSX_UNUSED_VAR( dPorosity_dVolStrain );
 
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      real64 displacementLocal[numNodesPerElem][3];
-      real64 xLocal[numNodesPerElem][3];
+      permKernel.update( k,
+                         permWrapper,
+                         pressure,
+                         deltaPressure,
+                         porosity,
+                         dPorosity_dVolStrain,
+                         dPerm_dDisplacement );
 
-      for( localIndex a=0; a<numNodesPerElem; ++a )
-      {
-        localIndex const localNodeIndex = m_elemsToNodes( k, a );
-
-        for( int i=0; i<3; ++i )
-        {
-          xLocal[a][i] = m_nodeLocations[localNodeIndex][i];
-          displacementLocal[a][i] = m_disp[localNodeIndex][i];
-        }
-      }
-
-      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-      {
-        real64 N[numNodesPerElem];
-        real64 dNdX[numNodesPerElem][3];
-        FE_TYPE::calcN( q, N );
-        m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, xLocal, dNdX );
-
-        real64 strainIncrement[6] = {0};
-        real64 dPerm_dVolStrain[3] = {0};
-
-        FE_TYPE::symmetricGradient( dNdX, displacementLocal, strainIncrement );
-
-        real64 const volStrain = LvArray::tensorOps::symTrace< 3 >( strainIncrement );
-
-        permWrapper.updatePorosity( k, q, porosity( k, q ) );
-
-        permWrapper.updatePressureStrain( k, q, pressure[k] + deltaPressure[k], volStrain, dPerm_dVolStrain );
-
-        // TODO: chain rule all dependencies to get to dPerm_dDisplacement
-      }
     } );
+  }
+
+  template< typename PERM_WRAPPER >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void update( localIndex const k,
+               PERM_WRAPPER const & permWrapper,
+               arrayView1d< real64 const > const & pressure,
+               arrayView1d< real64 const > const & deltaPressure,
+               arrayView2d< real64 const > const & porosity,
+               arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM ( dPorosity_dVolStrain ),
+               arrayView3d< real64 > const & GEOSX_UNUSED_PARAM ( dPerm_dDisplacement ) ) const
+  {
+    real64 displacementLocal[numNodesPerElem][3];
+    real64 xLocal[numNodesPerElem][3];
+
+    for( localIndex a=0; a<numNodesPerElem; ++a )
+    {
+      localIndex const localNodeIndex = m_elemsToNodes( k, a );
+
+      for( int i=0; i<3; ++i )
+      {
+        xLocal[a][i] = m_nodeLocations[localNodeIndex][i];
+        displacementLocal[a][i] = m_disp[localNodeIndex][i];
+      }
+    }
+
+    for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+    {
+      real64 N[numNodesPerElem];
+      real64 dNdX[numNodesPerElem][3];
+      FE_TYPE::calcN( q, N );
+      m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, xLocal, dNdX );
+
+      real64 strainIncrement[6] = {0};
+      real64 dPerm_dVolStrain[3] = {0};
+
+      FE_TYPE::symmetricGradient( dNdX, displacementLocal, strainIncrement );
+
+      real64 const volStrain = LvArray::tensorOps::symTrace< 3 >( strainIncrement );
+
+      permWrapper.updatePorosity( k, q, porosity( k, q ) );
+
+      permWrapper.updatePressureStrain( k, q, pressure[k] + deltaPressure[k], volStrain, dPerm_dVolStrain );
+
+    }
+    // TODO: chain rule all dependencies to get to dPerm_dDisplacement
   }
 
 protected:

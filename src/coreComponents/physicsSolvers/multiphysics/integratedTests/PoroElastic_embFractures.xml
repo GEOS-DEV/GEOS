@@ -11,7 +11,7 @@
       fluidSolverName = "flowSolver"
       solidSolverName = "matrixMechSolver"
       couplingTypeOption="FIM"
-      logLevel="1">
+      logLevel="4">
       <NonlinearSolverParameters
         newtonMaxIter="5"
         maxTimeStepCuts="1"/>
