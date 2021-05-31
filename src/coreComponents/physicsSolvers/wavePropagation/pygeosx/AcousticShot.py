@@ -87,7 +87,7 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
                 pass
             else:
                 os.mkdir(tracePath)
-            create_segy(shot_list, maxCycle+1, tracePath)
+            create_segy(shot_list, "pressure", maxCycle+1, tracePath)
 
 
     ishot = 0
@@ -117,10 +117,10 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
 
             #Segy export and flag update
             if outputSismoTrace == 1 :
+                segyFile = os.path.join(tracePath, "pressure_Shot"+ str(ishot) + ".sgy")
                 export_to_segy(pressure_at_receivers,
                                shot_list[ishot].getReceiverSet().getSetCoord(),
-                               ishot,
-                               tracePath)
+                               segyFile)
 
             shot_list[ishot].flagUpdate("Done")
 

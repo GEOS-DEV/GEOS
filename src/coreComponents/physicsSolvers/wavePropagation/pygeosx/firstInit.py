@@ -4,6 +4,7 @@ import sys
 
 from mesh import calculDt, domainBoundary
 from fileManager import exportInitVariable
+from print import print_group
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()

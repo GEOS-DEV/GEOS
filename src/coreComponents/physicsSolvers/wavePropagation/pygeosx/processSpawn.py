@@ -6,7 +6,8 @@ from dask_jobqueue import SLURMCluster
 
 def multiProcessing(shot_list, GEOSX, xml,
                     processes = 1,
-                    mpiranks = None,
+                    cluster = False,
+                    mpiranks = 1,
                     nodes = 1,
                     nodeName = None,
                     x = 1, y = 1, z = 1):
@@ -53,7 +54,7 @@ def multiProcessing(shot_list, GEOSX, xml,
         shot_file = exportShotList(i, shot_list[ind:ind + nb_shot])
 
         p.append( mp.Process(target = callProcess,
-                             args   = (shot_file, GEOSX, xml, mpiranks, nodes, nodeName, x, y, z)) )
+                             args   = (shot_file, GEOSX, xml, cluster, mpiranks, nodes, nodeName, x, y, z)) )
 
         ind = ind + nb_shot
         nb_shot_m1 = nb_shot_m1 - nb_shot
@@ -66,7 +67,7 @@ def multiProcessing(shot_list, GEOSX, xml,
         p[i].join()
 
     #remove_shots_files()
-def callProcess(shot_file, GEOSX, xml, mpiranks, nodes, nodeName, x, y, z):
+def callProcess(shot_file, GEOSX, xml, cluster, mpiranks, nodes, nodeName, x, y, z):
 
     """Sub function of multriProcessing(). Call of different processes
 
@@ -99,9 +100,10 @@ def callProcess(shot_file, GEOSX, xml, mpiranks, nodes, nodeName, x, y, z):
 
     tracePath = os.path.join(rootPath, "outputSismoTrace/")
     traceProcPath = os.path.join(tracePath, "traceProc" + str(mp.current_process()._identity)[1] + "/")
-    
-    if mpiranks == None:
-        os.system("python " + pygeosxPath + "geosxProcess.py -i " + xml + " " + shot_file + " " + traceProcPath)
+
+    if cluster == False:
+        os.system("mpirun -np " + str(mpiranks) + " python " + pygeosxPath + "geosxProcess.py -i " + \
+                  xml + " -x " + str(x) + " -y " + str(y) + " -z " + str(z) + " " + shot_file + " " + traceProcPath)
     else:
         fname = "process"+str(mp.current_process()._identity)[1]+".sh"
         fsh = open(fname, 'w+')
@@ -117,8 +119,7 @@ def callProcess(shot_file, GEOSX, xml, mpiranks, nodes, nodeName, x, y, z):
         fsh.write("module load physics/geosx_deps \n")
         fsh.write("module load physics/pygeosx \n")
         fsh.write("mpirun -np " + str(mpiranks) + " --map-by node python " + pygeosxPath + "/geosxProcess.py -i " + \
-                  xml + " -x " + str(x) + " -y " + str(y) + " -z " + \
-                  str(z) + " " + shot_file + " " + traceProcPath)
+                  xml + " -x " + str(x) + " -y " + str(y) + " -z " + str(z) + " " + shot_file + " " + traceProcPath)
         fsh.close()
         os.system("/usr/bin/sbatch " + fname )
 

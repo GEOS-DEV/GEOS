@@ -62,7 +62,14 @@ def shot_simul(rank, xml, shot_list, tracePath):
     """
 
     problem = initialize(rank, xml)
-    acoustic_shots(rank, problem, shot_list, tracePath)
+    solver = str(problem.get_group("Solvers").groups()[0]).split("::")[1][:-2]
+
+    if solver == "AcousticWaveEquationSEM":
+        print("coucou")
+        acoustic_shots(rank, problem, shot_list, tracePath)
+    elif solver == "ElasticWaveEquationSEM":
+        elastic_shots(rank, problem, shot_list, tracePath)
+
 
 
 

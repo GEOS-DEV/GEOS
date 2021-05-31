@@ -1,7 +1,7 @@
 import segyio
 import os
 
-def create_segy(shot_list, nsamples, tracePath):
+def create_segy(shot_list, physicalName, nsamples, tracePath):
 
     if os.path.exists(tracePath):
         pass
@@ -20,7 +20,8 @@ def create_segy(shot_list, nsamples, tracePath):
         spec.sorting = 2
         spec.format  = 1
 
-        with segyio.create(tracePath + "/sismoTraceShot"+str(ishot)+".sgy", spec) as f:
+        fileName = fileName = physicalName + "_Shot"+ str(ishot) + ".sgy"
+        with segyio.create(os.path.join(tracePath, fileName), spec) as f:
             for i in range(len(rcvCoord)):
                 f.header[i] = {segyio.su.scalco : -100,
                                segyio.su.scalel : -100,
@@ -34,28 +35,25 @@ def create_segy(shot_list, nsamples, tracePath):
             f.bin.update(tsort = segyio.TraceSortingFormat.INLINE_SORTING)
 
 
-def export_to_segy(pressure, rcvCoord, ishot, tracePath):
+def export_to_segy(physicalValue, rcvCoord, segyFile):
     """Export the pressure value calculated by GEOSX to a segy file
 
     Parameters
     ----------
-    pressure :
-        Numpy array with pressure values at all receivers coordinates
+    physicalVAlue :
+        Numpy array with physical values at all receivers coordinates
 
     rcvCoord :
         Receiver coordinates
 
-    ishot :
-        Number of current shot
-
-    dt_cycle :
-        Frequency of value export
+    segyFile :
+        File to which we export the values
     """
 
-    with segyio.open(tracePath + "/sismoTraceShot"+str(ishot)+".sgy", 'r+', ignore_geometry=True) as f:
+    with segyio.open(segyFile, 'r+', ignore_geometry=True) as f:
         for i in range(len(rcvCoord)):
-            if any(pressure[:,i])==True:
-                f.trace[i] = pressure[:, i]
+            if any(physicalValue[:,i])==True:
+                f.trace[i] = physicalValue[:, i]
 
 
 def export_for_acquisition(shot_list, acq_name):
