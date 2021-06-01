@@ -3,6 +3,7 @@ from mpi4py import MPI
 import sys
 
 from AcousticShot import *
+from ElasticShot import *
 from fileManager import *
 
 comm = MPI.COMM_WORLD
@@ -44,7 +45,7 @@ def main():
 
 
 
-def shot_simul(rank, xml, shot_list, tracePath):
+def shot_simul(rank, args, shot_list, tracePath):
     """
     Parameters
     ----------
@@ -61,7 +62,9 @@ def shot_simul(rank, xml, shot_list, tracePath):
         Directory for .sgy files output
     """
 
-    problem = initialize(rank, xml)
+    problem = pygeosx.initialize(rank, args)
+    pygeosx.apply_initial_conditions()
+
     solver = str(problem.get_group("Solvers").groups()[0]).split("::")[1][:-2]
 
     if solver == "AcousticWaveEquationSEM":
@@ -70,30 +73,6 @@ def shot_simul(rank, xml, shot_list, tracePath):
     elif solver == "ElasticWaveEquationSEM":
         elastic_shots(rank, problem, shot_list, tracePath)
 
-
-
-
-def initialize(rank, xml):
-    """ Grouping of pygeox initializations
-
-    Parameters
-    ----------
-    rank : int
-        MPI rank
-
-    xml : string
-        XML file
-
-    Return
-    ------
-    problem :
-        The pygeosx ProblemManager
-    """
-
-    problem = pygeosx.initialize(rank, xml)
-    pygeosx.apply_initial_conditions()
-
-    return problem
 
 
 if __name__ == "__main__":

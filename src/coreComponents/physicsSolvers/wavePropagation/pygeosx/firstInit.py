@@ -10,6 +10,7 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 def main():
+
     problem = pygeosx.initialize(rank, sys.argv)
     pygeosx.apply_initial_conditions()
 

@@ -13,7 +13,7 @@ args = parse_args()
 
 def main():
 
-    #maxT, dt = firstInit(args.geosx, args.xml, mpiranks = 2, x = 2)
+    #maxT, dt = firstInit(args.geosx, args.xml)
     maxT = 0.5
     dt = 0.005
     frequency = 5.0
@@ -23,15 +23,15 @@ def main():
     shot_list = equispaced_acquisition([[0,2000],[0,2000],[0,2000]],
                                        wavelet,
                                        dt,
-                                       start_source_pos    = [101, 1001],
-                                       end_source_pos      = [1901, 1001],
+                                       start_source_pos    = [751, 1001],
+                                       end_source_pos      = [1501, 1001],
                                        start_receivers_pos = [[21, 1001], [1001, 21]],
                                        end_receivers_pos   = [[1981, 1001], [1001, 1981]],
                                        number_of_sources   = 2,
                                        number_of_receivers = [10]
                                        )
 
-    multiProcessing(shot_list, args.geosx, args.xml, mpiranks=2, x=2)
+    multiProcessing(shot_list, args.geosx, args.xml, mpiranks=4, x=2, y=2)
     #daskProcessing(shot_list, args.geosx, args.xml)
 
 if __name__ == "__main__":

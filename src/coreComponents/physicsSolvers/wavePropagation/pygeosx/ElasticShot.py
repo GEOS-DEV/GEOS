@@ -33,7 +33,6 @@ def elastic_shots(rank, problem, shot_list, tracePath):
     #Get Acoustic group
     elastic_group  = problem.get_group("Solvers/elasticSolver")
 
-
     #Get Wrappers
     src_pos_geosx   = elastic_group.get_wrapper("sourceCoordinates").value()
     src_pos_geosx.set_access_level(pygeosx.pylvarray.MODIFIABLE)
@@ -98,9 +97,9 @@ def elastic_shots(rank, problem, shot_list, tracePath):
                 pass
             else:
                 os.mkdir(tracePath)
-            create_segy(shot_list, "displacementx" maxCycle+1, tracePath)
-            create_segy(shot_list, "displacementy" maxCycle+1, tracePath)
-            create_segy(shot_list, "displacementz" maxCycle+1, tracePath)
+            create_segy(shot_list, "displacementx", maxCycle+1, tracePath)
+            create_segy(shot_list, "displacementy", maxCycle+1, tracePath)
+            create_segy(shot_list, "displacementz", maxCycle+1, tracePath)
 
 
     ishot = 0
