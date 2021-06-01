@@ -52,6 +52,7 @@ set( physicsSolvers_headers
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
+     wavePropagation/ElasticWaveEquationSEM.hpp
      )
 
 #
@@ -92,6 +93,7 @@ set( physicsSolvers_sources
      surfaceGeneration/SurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
+     wavePropagation/ElasticWaveEquationSEM.cpp
      )
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
