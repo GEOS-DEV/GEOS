@@ -27,7 +27,7 @@ def elastic_shots(rank, problem, shot_list, tracePath):
 
     Notes
     -----
-    Export pressure to segy depending on output flag defined in XML
+    Export displacement values to different segy based on direction of displacement (x, y, z), if output flag defined in XML == 1
     """
 
     #Get Acoustic group
@@ -42,29 +42,28 @@ def elastic_shots(rank, problem, shot_list, tracePath):
     rcv_pos_geosx.set_access_level(pygeosx.pylvarray.RESIZEABLE)
 
 
-    displacementx_geosx  = elastic_group.get_wrapper("displacementxNp1AtReceivers").value()
-    displacementy_geosx  = elastic_group.get_wrapper("displacementyNp1AtReceivers").value()
-    displacementz_geosx  = elastic_group.get_wrapper("displacementzNp1AtReceivers").value()
+    displacement_geosx  = elastic_group.get_wrapper("displacementNp1AtReceivers").value()
+
 
     displacementx_nm1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementx_nm1").value()
     displacementx_nm1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
     displacementy_nm1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementy_nm1").value()
     displacementy_nm1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-    displacementz_nm1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementy_nm1").value()
+    displacementz_nm1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementz_nm1").value()
     displacementz_nm1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
 
     displacementx_n = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementx_n").value()
     displacementx_n.set_access_level(pygeosx.pylvarray.MODIFIABLE)
     displacementy_n = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementy_n").value()
     displacementy_n.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-    displacementz_n = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementy_n").value()
+    displacementz_n = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementz_n").value()
     displacementz_n.set_access_level(pygeosx.pylvarray.MODIFIABLE)
 
     displacementx_np1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementx_np1").value()
     displacementx_np1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
     displacementy_np1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementy_np1").value()
     displacementy_np1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-    displacementz_np1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementy_np1").value()
+    displacementz_np1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/displacementz_np1").value()
     displacementz_np1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
 
 
@@ -74,7 +73,6 @@ def elastic_shots(rank, problem, shot_list, tracePath):
     maxT       = problem.get_wrapper("Events/maxTime").value()
     cycle_freq = problem.get_wrapper("Events/python/cycleFrequency").value()
     cycle      = problem.get_wrapper("Events/python/lastCycle").value()
-    cflFactor  = problem.get_wrapper("Solvers/elasticSolver/cflFactor").value()[0]
     curr_time  = problem.get_wrapper("Events/time").value()
 
     dt            = shot_list[0].getSource().getTimeStep()
@@ -125,15 +123,14 @@ def elastic_shots(rank, problem, shot_list, tracePath):
     while (np.array([shot.getFlag() for shot in shot_list]) == "Done").all() != True and pygeosx.run() != pygeosx.COMPLETED:
         #Save pressure
         if cycle[0] < (ishot+1) * maxCycle:
-            displacementx_at_receivers[cycle[0] - ishot * maxCycle, :] = displacementx_geosx.to_numpy()[:]
-            displacementy_at_receivers[cycle[0] - ishot * maxCycle, :] = displacementy_geosx.to_numpy()[:]
-            displacementz_at_receivers[cycle[0] - ishot * maxCycle, :] = displacementz_geosx.to_numpy()[:]
-
+            displacementx_at_receivers[cycle[0] - ishot * maxCycle, :] = displacement_geosx.to_numpy()[:, 0]
+            displacementy_at_receivers[cycle[0] - ishot * maxCycle, :] = displacement_geosx.to_numpy()[:, 1]
+            displacementz_at_receivers[cycle[0] - ishot * maxCycle, :] = displacement_geosx.to_numpy()[:, 2]
 
         else:
-            displacementx_at_receivers[maxCycle, :] = displacementx_geosx.to_numpy()[:]
-            displacementy_at_receivers[maxCycle, :] = displacementy_geosx.to_numpy()[:]
-            displacementz_at_receivers[maxCycle, :] = displacementz_geosx.to_numpy()[:]
+            displacementx_at_receivers[maxCycle, :] = displacement_geosx.to_numpy()[:, 0]
+            displacementy_at_receivers[maxCycle, :] = displacement_geosx.to_numpy()[:, 1]
+            displacementz_at_receivers[maxCycle, :] = displacement_geosx.to_numpy()[:, 2]
 
             #Segy export and flag update
             if outputSismoTrace == 1 :
@@ -156,7 +153,7 @@ def elastic_shots(rank, problem, shot_list, tracePath):
             shot_list[ishot].flagUpdate("Done")
 
             #Reset time to -dt and pressure to 0
-            curr_time[0]               = -dt
+            curr_time[0] = -dt
             displacementx_nm1.to_numpy()[:] = 0.0
             displacementx_n.to_numpy()[:]   = 0.0
             displacementx_np1.to_numpy()[:] = 0.0

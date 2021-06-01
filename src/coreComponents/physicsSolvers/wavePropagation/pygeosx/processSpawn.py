@@ -99,7 +99,7 @@ def callProcess(shot_file, GEOSX, xml, cluster, mpiranks, nodes, nodeName, x, y,
     pygeosxPath = os.path.join(wavePropagationPath, "pygeosx/")
 
     tracePath = os.path.join(rootPath, "outputSismoTrace/")
-    traceProcPath = os.path.join(tracePath, "traceProc" + str(mp.current_process()._identity)[1] + "/")
+    traceProcPath = os.path.join(tracePath, "Process" + str(mp.current_process()._identity)[1] + "/")
 
     if cluster == False:
         os.system("mpirun -np " + str(mpiranks) + " python " + pygeosxPath + "geosxProcess.py -i " + \

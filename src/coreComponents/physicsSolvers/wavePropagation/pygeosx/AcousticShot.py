@@ -64,7 +64,6 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
     maxT       = problem.get_wrapper("Events/maxTime").value()
     cycle_freq = problem.get_wrapper("Events/python/cycleFrequency").value()
     cycle      = problem.get_wrapper("Events/python/lastCycle").value()
-    cflFactor  = problem.get_wrapper("Solvers/acousticSolver/cflFactor").value()[0]
     curr_time  = problem.get_wrapper("Events/time").value()
 
     dt            = shot_list[0].getSource().getTimeStep()
