@@ -21,7 +21,7 @@
 
 #include "common/common.hpp"
 
-#include <interfaces/hypre/HypreMGR.hpp>
+#include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
 namespace geosx
 {

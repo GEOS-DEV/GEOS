@@ -16,7 +16,7 @@
  * @file HypreMGR.cpp
  */
 
-#include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
+#include "HypreMGR.hpp"
 
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRSinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRHybridSinglePhasePoromechanics.hpp"

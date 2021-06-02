@@ -17,6 +17,7 @@
  */
 
 #include "HyprePreconditioner.hpp"
+#include "HypreMGR.hpp"
 
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
@@ -25,7 +26,6 @@
 
 #include <_hypre_utilities.h>
 #include <_hypre_parcsr_ls.h>
-#include <interfaces/hypre/HypreMGR.hpp>
 
 #include <_hypre_IJ_mv.h>
 
