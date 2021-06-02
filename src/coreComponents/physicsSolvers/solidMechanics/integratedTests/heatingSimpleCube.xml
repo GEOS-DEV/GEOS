@@ -24,6 +24,18 @@
         logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
+    <LaplaceFEM
+      name="laplace"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="temperature"
+      logLevel="0"
+      targetRegions="{ Region2 }">
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
+    </LaplaceFEM>
   </Solvers>
 
   <!-- SPHINX_Mesh -->
@@ -39,9 +51,28 @@
       nz="{ 5 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
+
+
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ +0.01, +1.01, +1.01}"/>
+
+    <Box
+      name="sink"
+      xMin="{+0.99, -0.01, -0.01}"
+      xMax="{ +1.01, +1.01, +1.01}"/>
+  </Geometry>
+
   <!-- SPHINX_MeshEnd -->
   <Events
     maxTime="1">
+
+    <PeriodicEvent
+      name="solverApplications1"
+      forceDt="1.0"
+      target="/Solvers/laplace"/>
 
     <PeriodicEvent
       name="solverApplications"
@@ -70,7 +101,7 @@
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb1 }"
-      materialList="{ shale }"/>
+      materialList="{ shale, nullModel }"/>
 
   </ElementRegions>
 
@@ -82,6 +113,8 @@
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"
       thermalStressCoefficient="1e4"/>
+    <NullModel
+      name="nullModel"/>
   </Constitutive>
 
   <!-- SPHINX_BoundaryConditions -->
@@ -92,7 +125,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ xneg}"/>
+      setNames="{ xneg, xpos}"/>
 
     <FieldSpecification
       name="yconstraint"
@@ -100,7 +133,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ yneg }"/>
+      setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -108,7 +141,7 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ zneg }"/>
+      setNames="{ zneg, zpos }"/>
 
     <!--Traction
       name="innerPressure"
@@ -117,13 +150,20 @@
       scale="-0.0e6"
       setNames="{ zpos }"/-->
 
-    <FieldSpecification 
-      name="initialTemperature"
-      initialCondition="1"
-      setNames="{all}"
-      objectPath="ElementRegions/Region2/cb1"
+
+    <FieldSpecification
+      name="sourceTerm"
       fieldName="temperature"
-      scale="100"/>
+      objectPath="nodeManager"
+      scale="100.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="sinkTerm"
+      fieldName="temperature"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ xpos }"/>
   </FieldSpecifications>
 
   <Outputs>
