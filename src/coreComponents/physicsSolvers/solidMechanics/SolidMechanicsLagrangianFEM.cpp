@@ -238,9 +238,6 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE );
-
-      subRegion.registerWrapper< array1d< real64 > >( "temperature" ).
-        setPlotLevel( PlotLevel::LEVEL_0 );
     } );
 
   } );

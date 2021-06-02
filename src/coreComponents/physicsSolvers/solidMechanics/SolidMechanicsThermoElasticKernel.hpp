@@ -62,6 +62,7 @@ public:
 
   using Base::m_constitutiveUpdate;
   using typename Base::StackVariables;
+  using Base::m_elemsToNodes;
 
   /**
    * @brief Constructor
@@ -92,7 +93,7 @@ public:
           inputMatrix,
           inputRhs,
           inputGravityVector ),
-    m_temperature( elementSubRegion.template getReference< array1d< real64 > >( "temperature" ) )
+    m_temperature( nodeManager.template getReference< array1d< real64 > >( "temperature" ) )
   {}
 
 
@@ -112,7 +113,8 @@ public:
     real64 const thermalStressCoefficient = m_constitutiveUpdate.getThermalStressCoefficient();
     Base::quadraturePointKernel( k, q, stack, [=] GEOSX_HOST_DEVICE ( real64 (& stress)[6] )
     {
-      real64 const thermalStress = thermalStressCoefficient * m_temperature[k];
+      localIndex const localNodeIndex = m_elemsToNodes( k, q );
+      real64 const thermalStress = thermalStressCoefficient * m_temperature[localNodeIndex];
       stress[0] -= thermalStress;
       stress[1] -= thermalStress;
       stress[2] -= thermalStress;
