@@ -66,6 +66,7 @@ class Geosx(CMakePackage, CudaPackage):
     variant('suite-sparse', default=True, description='Build SuiteSparse support.')
     variant('trilinos', default=True, description='Build Trilinos support.')
     variant('hypre', default=True, description='Build HYPRE support.')
+    variant('hypre-cuda', default=False, description='Build HYPRE with CUDA support.')
     variant('petsc', default=True, description='Build PETSc support.')
     variant('lai', default='trilinos', description='Linear algebra interface.',
             values=('trilinos', 'hypre', 'petsc'), multi=False)
@@ -140,7 +141,8 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
     # depends_on('trilinos +force-new-lapack', when='+trilinos +essl')
 
-    depends_on('hypre@2.21.0: +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
+    depends_on('hypre@2.20.1 +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
+    depends_on('hypre@2.20.1 +cuda +shared +superlu-dist +mpi +openmp +unified-memory +cusparse', when='+hypre-cuda')
  
     petsc_build_options = '+shared +mpi'
     petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
@@ -175,8 +177,11 @@ class Geosx(CMakePackage, CudaPackage):
     conflicts('+essl ~cuda', msg='Cannot use ESSL without CUDA.')
 
     conflicts('~trilinos lai=trilinos', msg='To use Trilinos as the Linear Algebra Interface you must build it.')
-    conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
+    conflicts('~hypre ~hypre-cuda lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
     conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
+
+    conflicts('+hypre +hypre-cuda', msg='Only one of the two can be used at a time.')
+    conflicts('+hypre-cuda ~cuda', msg='When building hypre-cuda CUDA must be enabled.')
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
@@ -288,6 +293,9 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_RELWITHDEBINFO", reldebinf_flags))
             debug_flags = "-O0 -g"
             cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_DEBUG", debug_flags))
+
+            if "%clang arch=linux-rhel7-ppc64le" in spec:
+                cfg.write(cmake_cache_entry("CMAKE_EXE_LINKER_FLAGS", "-Wl,--no-toc-optimize"))
 
             cfg.write("#{0}\n".format("-" * 80))
             cfg.write("# MPI\n")
@@ -401,7 +409,7 @@ class Geosx(CMakePackage, CudaPackage):
                         ('superlu-dist', 'SUPERLU_DIST', True),
                         ('suite-sparse', 'SUITESPARSE', '+suite-sparse' in spec),
                         ('trilinos', 'TRILINOS', '+trilinos' in spec),
-                        ('hypre', 'HYPRE', '+hypre' in spec),
+                        ('hypre', 'HYPRE', '+hypre' in spec or '+hypre-cuda' in spec),
                         ('petsc', 'PETSC', '+petsc' in spec))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Math TPLs\n')
@@ -409,6 +417,8 @@ class Geosx(CMakePackage, CudaPackage):
             for tpl, cmake_name, enable in math_tpls:
                 if enable:
                     cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
+                    if tpl == 'hypre' and '+hypre-cuda' in spec:
+                        cfg.write(cmake_cache_option('ENABLE_HYPRE_CUDA'.format(cmake_name), True))
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
