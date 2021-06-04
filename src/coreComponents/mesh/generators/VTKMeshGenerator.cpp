@@ -59,6 +59,14 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "path to the mesh file" );
+    /*
+  registerWrapper( viewKeyStruct::regionsToImportString(), &m_regionsToImport ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Region names to import" );
+  registerWrapper( viewKeyStruct::regionsToImportString(), &m_surfacesToImport ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Surface names to import" );
+    */
 }
 
 VTKMeshGenerator::~VTKMeshGenerator()
@@ -145,7 +153,6 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
 
-  //TODO for the moment we only consider on mesh level "Level0"
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
   NodeManager & nodeManager = meshLevel0.getNodeManager();
   nodeManager.resize( m_vtkMesh->GetNumberOfPoints() );
@@ -224,12 +231,8 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     if(CheckIntersection(rankBounds, curBound.data()))
     {
       domain.getMetisNeighborList().insert(i);
-      std::cout << "on est laaaaaaaaaa" << std::endl;
     }
   }
-
-
-
 
   // TODO For the moment, we only deal with classical elements (tetra, hexa, wedges and pyramids)
   /// First pass to count the cells, and the regions
@@ -397,23 +400,6 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
       WriteCellBlock("pyramids", nbPyr, -1, VTK_PYRAMID, cellBlockManager, arrayToBeImported);
 
   }
-
-  /*
-  if( controller->GetLocalProcessId() == 0)
-  {
-    std::set<int> neigh;
-    neigh.insert(1);
-    domain.getMetisNeighborList() =  neigh;
-  }
-  if( controller->GetLocalProcessId() == 1)
-  {
-    std::set<int> neigh;
-    neigh.insert(0);
-    domain.getMetisNeighborList() =  neigh;
-  }
-  */
-  
-  std::cout << "C FINI" << std::endl;
 }
 
 
@@ -583,7 +569,6 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
 
     /// Writing connectivity and Local to Global
     cellToVertex.resize( nbCells, nbPointsPerCell );
-    std::cout << "writin conn" << std::endl;
     if( cellType == VTK_HEXAHEDRON ) // Special case for hexahedron because of the ordering
     {
       WriteHexahedronVertices( cellToVertex, region_id, localToGlobal );

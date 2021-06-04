@@ -60,6 +60,10 @@ public:
   struct viewKeyStruct
   {
     constexpr static char const * filePathString() { return "file"; }
+    /*
+    constexpr static char const * regionsToImportString() { return "regionsToImport"; }
+    constexpr static char const * surfacesToImportString() { return "surfacesToImport"; }
+    */
   };
 /// @endcond
 
@@ -124,6 +128,14 @@ private:
 
   /// Path to the mesh file
   Path m_filePath;
+
+  /*
+  /// Names of the surfaces to be imported
+  string_array m_surfacesToImport;
+
+  /// Names of the regions to be imported
+  string_array m_regionsToImport;
+  */
 };
 
 }
