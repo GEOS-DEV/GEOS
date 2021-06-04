@@ -35,6 +35,11 @@ def get_global_array_range(local_values):
     if (rank == 0):
         global_min = np.amin(np.array(all_min), axis=0)
         global_max = np.amax(np.array(all_max), axis=0)
+
+    # Broadcast
+    global_min = comm.bcast(global_min, root=0)
+    global_max = comm.bcast(global_max, root=0)
+
     return global_min, global_max
 
 

@@ -60,8 +60,8 @@ class InSAR_Analysis():
         xb = x[set_ids, :]
         gb = ghost_rank[set_ids]
         xc = xb[gb < 0, :]
-
         global_min, global_max = parallel_io.get_global_array_range(xc)
+
         if (len(x_range) == 0):
             x_range = [global_min[0], global_max[0]]
         if (len(y_range) == 0):
@@ -74,7 +74,7 @@ class InSAR_Analysis():
         self.y_grid = np.linspace(y_range[0], y_range[1], Ny + 1)
 
         # Save the average elevation for vtk outputs
-        self.elevation = np.mean(xc[:, 2])
+        self.elevation = global_min[0]
 
         # Trigger the map build
         self.build_map(problem)
@@ -108,13 +108,14 @@ class InSAR_Analysis():
         y_bins = np.concatenate([[self.y_grid[0] - 0.5 * dy],
                                  0.5*(self.y_grid[1:] + self.y_grid[:-1]),
                                  [self.y_grid[-1] + 0.5 * dy]])
-        Ix = np.digitize(np.squeeze(xc[:, 0]), x_bins) - 1
-        Iy = np.digitize(np.squeeze(xc[:, 1]), y_bins) - 1
-        for ii in range(len(self.x_grid)):
-            for jj in range(len(self.y_grid)):
-                tmp = np.where((Ix == ii) & (Iy == jj))[0]
-                if len(tmp):
-                    self.local_insar_map.append([ii, jj, tmp])
+        if len(xc):
+            Ix = np.digitize(np.squeeze(xc[:, 0]), x_bins) - 1
+            Iy = np.digitize(np.squeeze(xc[:, 1]), y_bins) - 1
+            for ii in range(len(self.x_grid)):
+                for jj in range(len(self.y_grid)):
+                    tmp = np.where((Ix == ii) & (Iy == jj))[0]
+                    if len(tmp):
+                        self.local_insar_map.append([ii, jj, tmp])
 
     def extract_insar(self, problem):
         """
