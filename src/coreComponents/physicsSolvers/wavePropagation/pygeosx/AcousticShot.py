@@ -71,7 +71,6 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
     maxCycle      = int(maxT[0]/dt)
     cycle_freq[0] = 1
     maxT[0]       = (maxCycle+1) * dt
-    dt_cycle      = 1 #to be changed
 
     pressure_at_receivers = np.zeros((maxCycle+1, shot_list[0].getReceiverSet().getNumberOfReceivers()))
     nb_shot = len(shot_list)
