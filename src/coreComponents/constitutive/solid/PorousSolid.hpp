@@ -77,6 +77,8 @@ public:
   {
     m_solidUpdate.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
+    updateBiotCoefficient( k, q );
+
     m_porosityUpdate.updatePorosity( k,
                                      q,
                                      pressure,
@@ -85,6 +87,17 @@ public:
                                      dPorosity_dPressure,
                                      dPorosity_dVolStrainIncrement,
                                      dTotalStress_dPressure );
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void updateBiotCoefficient( localIndex const k,
+                              localIndex const q ) const
+  {
+   // This call is not general like this.
+    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+
+    m_porosityUpdate.updateBiotCoefficient( k, q, bulkModulus );
   }
 
 };

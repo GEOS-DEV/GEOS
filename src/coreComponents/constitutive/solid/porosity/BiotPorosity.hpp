@@ -80,7 +80,7 @@ public:
                        real64 const ( &strainIncrement )[6],
                        real64 & dPorosity_dPressure,
                        real64 & dPorosity_dVolStrainIncrement,
-                       real64 & dTotalStress_dPressure ) const override final
+                       real64 & dTotalStress_dPressure ) const
   {
     real64 const biotSkeletonModulusInverse = ( m_biotCoefficient[k][q] - m_referencePorosity[k] ) / m_grainBulkModulus;
 
@@ -95,6 +95,16 @@ public:
     savePorosity( k, q, porosity, biotSkeletonModulusInverse );
 
     dTotalStress_dPressure = m_biotCoefficient[k][q];
+  }
+
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void updateBiotCoefficient( localIndex const k,
+                              localIndex const q,
+                              real64 const bulkModulus ) const
+  {
+    m_biotCoefficient[k][q] = 1 - bulkModulus / m_grainBulkModulus;
   }
 
 protected:
