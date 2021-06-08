@@ -35,7 +35,7 @@ CompressibleSolid< PORO_TYPE >::CompressibleSolid( string const & name, Group * 
 }
 
 template< typename PORO_TYPE >
-void CompressibleSolid< PORO_TYPE >::~CompressibleSolid()
+CompressibleSolid< PORO_TYPE >::~CompressibleSolid()
 {}
 
 // Register all CoupleSolid model types.

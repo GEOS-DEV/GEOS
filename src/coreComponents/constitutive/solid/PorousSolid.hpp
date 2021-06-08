@@ -108,7 +108,7 @@ public:
 };
 
 
-class PorousSolidBase : public ConstitutiveBase
+class PorousSolidBase : public SolidBase
 {};
 
 /**
@@ -148,4 +148,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_ */

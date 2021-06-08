@@ -28,7 +28,7 @@
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/PoroElastic.hpp"
-//#include "solid/PorousSolid.hpp"
+#include "solid/PorousSolid.hpp"
 
 namespace geosx
 {
@@ -201,25 +201,25 @@ struct ConstitutivePassThru< PorousSolidBase >
   template< typename LAMBDA >
   static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
-    if( auto * const ptr1 = dynamic_cast< CoupledSolid< DruckerPragerExtended > * >( &constitutiveRelation ) )
+    if( auto * const ptr1 = dynamic_cast< PorousSolid< DruckerPragerExtended > * >( &constitutiveRelation ) )
     {
       lambda( *ptr1 );
     }
-    else if( auto * const ptr2 = dynamic_cast< CoupledSolid< DruckerPrager > * >( &constitutiveRelation ) )
+    else if( auto * const ptr2 = dynamic_cast< PorousSolid< DruckerPrager > * >( &constitutiveRelation ) )
     {
       lambda( *ptr2 );
     }
-    else if( auto * const ptr3 = dynamic_cast< CoupledSolid< ElasticIsotropic > * >( &constitutiveRelation ) )
+    else if( auto * const ptr3 = dynamic_cast< PorousSolid< ElasticIsotropic > * >( &constitutiveRelation ) )
     {
       lambda( *ptr3 );
     }
-    else if( auto * const ptr4 = dynamic_cast< CoupledSolid< ElasticTransverseIsotropic > * >( &constitutiveRelation ) )
+    else if( auto * const ptr4 = dynamic_cast< PorousSolid< ElasticTransverseIsotropic > * >( &constitutiveRelation ) )
     {
       lambda( *ptr4 );
     }
     else
     {
-      GEOSX_ERROR( "ConstitutivePassThru< CoupledSolid >::execute failed. The constitutive relation is named "
+      GEOSX_ERROR( "ConstitutivePassThru< PorousSolidBase >::execute failed. The constitutive relation is named "
                    << constitutiveRelation.getName() << " with type "
                    << LvArray::system::demangleType( constitutiveRelation ) );
     }
