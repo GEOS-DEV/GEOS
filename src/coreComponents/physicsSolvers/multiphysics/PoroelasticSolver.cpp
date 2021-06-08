@@ -354,7 +354,7 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
   m_solidSolver->getMaxForce() =
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::PoroElasticBase,
+                                    constitutive::PorousSolidBase,
                                     CellElementSubRegion >( mesh,
                                                             targetRegionNames(),
                                                             this->getDiscretizationName(),

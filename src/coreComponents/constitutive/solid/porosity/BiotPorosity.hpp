@@ -94,10 +94,6 @@ public:
 
     savePorosity( k, q, porosity, biotSkeletonModulusInverse );
 
-    real64 const biotTimesPressure = -biotCoefficient * ( pressure + deltaPressure );
-
-    LvArray::tensorOps::symAddIdentity< 3 >( stress, biotTimesPressure );
-
     dTotalStress_dPressure = m_biotCoefficient[k][q];
   }
 

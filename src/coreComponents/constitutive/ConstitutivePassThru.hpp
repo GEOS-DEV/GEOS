@@ -28,7 +28,7 @@
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/PoroElastic.hpp"
-#include "solid/CoupledSolid.hpp"
+#include "solid/PorousSolid.hpp"
 
 namespace geosx
 {
@@ -193,10 +193,10 @@ struct ConstitutivePassThru< DamageBase >
 
 
 /**
- * Specialization for the CoupledSolid models.
+ * Specialization for the PorousSolid models.
  */
 template<>
-struct ConstitutivePassThru< CoupledSolid< SolidBase > >
+struct ConstitutivePassThru< PorousSolidBase >
 {
   template< typename LAMBDA >
   static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )

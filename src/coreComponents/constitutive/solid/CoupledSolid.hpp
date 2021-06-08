@@ -28,14 +28,9 @@ namespace geosx
 namespace constitutive
 {
 
-/**
- * @brief Provides kernel-callable constitutive update routines
- *
- *
- * @tparam SOLID_TYPE
- */
 template< typename SOLID_TYPE,
           typename PORO_TYPE >
+
 class CoupledSolidUpdates
 {
 public:
@@ -63,47 +58,12 @@ public:
   /// Deleted move assignment operator
   CoupledSolidUpdates & operator=( CoupledSolidUpdates && ) =  delete;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void smallStrainUpdate( localIndex const k,
-                          localIndex const q,
-                          real64 const & pressure,
-                          real64 const & deltaPressure,
-                          real64 const ( &strainIncrement )[6],
-                          real64 ( &stress )[6],
-                          real64 & dPorosity_dPressure,
-                          real64 & dPorosity_dVolStrainIncrement,
-                          real64 & dTotalStress_dPressure ) const
-  {
-    SOLID_TYPE::KernelWrapper::DiscretizationOps stiffness;
-
-    m_solidUpdate.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
-
-    m_porosityUpdate.updatePorosity( k,
-                                     q,
-                                     pressure,
-                                     deltaPressure,
-                                     strainIncrement,
-                                     dPorosity_dPressure,
-                                     dPorosity_dVolStrainIncrement,
-                                     dTotalStress_dPressure );
-  }
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void pressureUpdate( localIndex const k,
-                       localIndex const q,
-                       real64 const & pressure,
-                       real64 const & deltaPressure ) const
-  {
-    m_porosityUpdate.updatePorosity( k, q, pressure, deltaPressure );
-  }
-
-private:
+protected:
   typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
 
   typename PORO_TYPE::KernelWrapper const m_porosityUpdate;
 };
+
 
 
 /**
@@ -146,20 +106,20 @@ public:
      static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
   };
 
-
   /**
-   * @brief Create a instantiation of the CoupledSolidUpdates class
+   * @brief Create a instantiation of the PorousSolidUpdates class
    *        that refers to the data in this.
-   * @return An instantiation of CoupledSolidUpdates.
+   * @return An instantiation of PorousSolidUpdates.
    */
-  CoupledSolidUpdates< SOLID_TYPE > createKernelUpdates() const
+  CoupledSolidUpdates< SOLID_TYPE, PORO_TYPE > createKernelUpdates() const
   {
 
     return CoupledSolidUpdates( m_solidModel,
                                 m_porosityModel );
   }
 
-private:
+
+protected:
 
   // the solid model
   SOLID_TYPE * m_solidModel;
@@ -175,11 +135,10 @@ private:
 
 
   // PERMEABILITY_TYPE * m_permModel;
-
-
 };
+
 
 }
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */
