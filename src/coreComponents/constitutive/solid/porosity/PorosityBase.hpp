@@ -45,9 +45,9 @@ public:
   localIndex numGauss() const { return m_newPorosity.size( 1 ); }
 
   PorosityBaseUpdates( arrayView2d< real64 > const & newPorosity,
-                        arrayView2d< real64 > const & oldPorosity,
-                        arrayView2d< real64 > const & dPorosity_dPressure,
-                        arrayView1d< real64 > const & referencePorosity ):
+                       arrayView2d< real64 > const & oldPorosity,
+                       arrayView2d< real64 > const & dPorosity_dPressure,
+                       arrayView1d< real64 > const & referencePorosity ):
     m_newPorosity( newPorosity ),
     m_oldPorosity( oldPorosity ),
     m_dPorosity_dPressure( dPorosity_dPressure ),
@@ -61,7 +61,7 @@ public:
   PorosityBaseUpdates( PorosityBaseUpdates && ) = default;
 
   /// Deleted copy assignment operator
-  PorosityBaseUpdates & operator=( POROSITYBASEUpdates const & ) = delete;
+  PorosityBaseUpdates & operator=( PorosityBaseUpdates const & ) = delete;
 
   /// Deleted move assignment operator
   PorosityBaseUpdates & operator=( PorosityBaseUpdates && ) = delete;
@@ -88,7 +88,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 const getPorosity( localIndex const k,
+  real64 getPorosity( localIndex const k,
                             localIndex const q ) const
   {
     return m_newPorosity[k][q];
@@ -97,7 +97,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 const getOldPorosity( localIndex const k,
+  real64 getOldPorosity( localIndex const k,
                                localIndex const q ) const
   {
     return m_oldPorosity[k][q];

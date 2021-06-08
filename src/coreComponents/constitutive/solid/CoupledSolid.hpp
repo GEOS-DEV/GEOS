@@ -39,8 +39,8 @@ public:
    */
   CoupledSolidUpdates( SOLID_TYPE * solidModel,
                        PORO_TYPE * porosityModel ):
-  m_solidModel( solidModel.createKernelUpdates() ),
-  m_porosityModel( porosityModel.createKernelUpdates() )
+  m_solidUpdate( solidModel->createKernelUpdates() ),
+  m_porosityUpdate( porosityModel->createKernelUpdates() )
   {}
 
    /// Deleted default constructor
@@ -114,10 +114,9 @@ public:
   CoupledSolidUpdates< SOLID_TYPE, PORO_TYPE > createKernelUpdates() const
   {
 
-    return CoupledSolidUpdates( m_solidModel,
-                                m_porosityModel );
+    return CoupledSolidUpdates< SOLID_TYPE, PORO_TYPE >( m_solidModel,
+                                                         m_porosityModel );
   }
-
 
 protected:
 

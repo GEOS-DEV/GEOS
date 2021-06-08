@@ -21,6 +21,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_COMPRESSIBLESOLILD_HPP_
 
 #include "constitutive/solid/CoupledSolid.hpp"
+#include "constitutive/NullModel.hpp"
 
 namespace geosx
 {
@@ -34,9 +35,13 @@ namespace constitutive
  * @tparam SOLID_TYPE
  */
 template< typename PORO_TYPE >
-class CompressibleSolidUpdates : public CoupledSolid< NullModel, PORO_TYPE>
+class CompressibleSolidUpdates : public CoupledSolidUpdates< NullModel, PORO_TYPE>
 {
 public:
+
+  using CoupledSolidUpdates< NullModel, PORO_TYPE>::m_solidUpdate;
+  using CoupledSolidUpdates< NullModel, PORO_TYPE>::m_porosityUpdate;
+
   /**
    * @brief Constructor
    */
@@ -77,6 +82,9 @@ class CompressibleSolid : public CoupledSolid < NullModel, PORO_TYPE >
 {
 public:
 
+  using CoupledSolid < NullModel, PORO_TYPE >::m_solidModel;
+  using CoupledSolid < NullModel, PORO_TYPE >::m_porosityModel;
+
   /**
    * @brief Constructor
    * @param name Object name
@@ -108,8 +116,8 @@ public:
   CompressibleSolidUpdates< PORO_TYPE > createKernelUpdates() const
   {
 
-    return CompressibleSolidUpdates( m_solidModel,
-                                     m_porosityModel );
+    return CompressibleSolidUpdates< PORO_TYPE >( m_solidModel,
+                                                  m_porosityModel );
   }
 
 };

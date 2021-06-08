@@ -39,6 +39,11 @@ template< typename SOLID_TYPE >
 class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >
 {
 public:
+
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_solidUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_porosityUpdate;
+
+
   /**
    * @brief Constructor
    */
@@ -71,9 +76,9 @@ public:
                           real64 const ( &strainIncrement )[6],
                           real64 ( &stress )[6],
                           real64 & dPorosity_dPressure,
-                          real64 & dPorosity_dVolStrainIncrement,
+                          real64 & dPorosity_dVolStrain,
                           real64 & dTotalStress_dPressure,
-                          SOLID_TYPE::KernelWrapper::DiscretizationOps & stiffness ) const
+                          typename SOLID_TYPE::KernelWrapper::DiscretizationOps & stiffness ) const
   {
     m_solidUpdate.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
@@ -85,7 +90,7 @@ public:
                                      deltaPressure,
                                      strainIncrement,
                                      dPorosity_dPressure,
-                                     dPorosity_dVolStrainIncrement,
+                                     dPorosity_dVolStrain,
                                      dTotalStress_dPressure );
   }
 
@@ -113,6 +118,9 @@ template< typename SOLID_TYPE >
 class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity >
 {
 public:
+
+  using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_solidModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_porosityModel;
 
   /**
    * @brief Constructor

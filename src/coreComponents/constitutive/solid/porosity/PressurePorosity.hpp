@@ -73,7 +73,7 @@ public:
   GEOSX_FORCE_INLINE
   virtual void updatePorosity( localIndex const k,
                                localIndex const q,
-                               real64 const & pressure ) const override
+                               real64 const & pressure ) const
   {
     computePorosity( pressure,
                      m_newPorosity[k][q],
@@ -107,7 +107,7 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  struct viewKeyStruct : public RockBase::viewKeyStruct
+  struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
     static constexpr char const * referencePressureString() { return "referencePressure"; }
     static constexpr char const * compressibilityString() { return "compressibility"; }

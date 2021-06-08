@@ -52,10 +52,10 @@ CoupledSolid< SOLID_TYPE, PORO_TYPE >::~CoupledSolid()
 
 template< typename SOLID_TYPE,
           typename PORO_TYPE >
-CoupledSolid< SOLID_TYPE, PORO_TYPE >::postProcessInput()
+void CoupledSolid< SOLID_TYPE, PORO_TYPE >::postProcessInput()
 {
-  m_solidModel = &this->getParent().getGroup< SOLID_TYPE >( m_solidModelName );
-  m_porosityModel = &this->getParent().getGroup< PORO_TYPE >( m_porosityModelName );
+  m_solidModel = &this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName );
+  m_porosityModel = &this->getParent().template getGroup< PORO_TYPE >( m_porosityModelName );
 }
 
 }

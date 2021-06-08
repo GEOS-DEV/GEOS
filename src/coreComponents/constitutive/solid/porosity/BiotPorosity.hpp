@@ -54,7 +54,7 @@ public:
                          oldPorosity,
                          dPorosity_dPressure,
                          referencePorosity ),
-    m_biotCoefficient( grainBulkModulus ),
+    m_biotCoefficient( biotCoefficient ),
     m_grainBulkModulus( grainBulkModulus )
   {}
 
@@ -65,7 +65,7 @@ public:
   BiotPorosityUpdates( BiotPorosityUpdates && ) = default;
 
   /// Deleted copy assignment operator
-  BiotPorosityUpdates & operator=( BIOTPOROSITYUpdates const & ) = delete;
+  BiotPorosityUpdates & operator=( BiotPorosityUpdates const & ) = delete;
 
   /// Deleted move assignment operator
   BiotPorosityUpdates & operator=( BiotPorosityUpdates && ) = delete;
@@ -79,12 +79,12 @@ public:
                        real64 const & deltaPressure,
                        real64 const ( &strainIncrement )[6],
                        real64 & dPorosity_dPressure,
-                       real64 & dPorosity_dVolStrainIncrement,
+                       real64 & dPorosity_dVolStrain,
                        real64 & dTotalStress_dPressure ) const
   {
     real64 const biotSkeletonModulusInverse = ( m_biotCoefficient[k][q] - m_referencePorosity[k] ) / m_grainBulkModulus;
 
-    porosity = m_oldPorosity[k][q] +
+    real64 const porosity = m_oldPorosity[k][q] +
         + m_biotCoefficient[k][q] * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
         + biotSkeletonModulusInverse * deltaPressure;
 
@@ -114,7 +114,7 @@ protected:
 };
 
 
-class BiotPorosity : public ConstitutiveBase
+class BiotPorosity : public PorosityBase
 {
 public:
   BiotPorosity( string const & name, Group * const parent );
@@ -131,13 +131,12 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
-    static constexpr char const * newPorosityString() { return "porosity"; }
-    static constexpr char const * oldPorosityString() { return "oldPorosity"; }
-    static constexpr char const * dPorosity_dPressureString() { return "dPorosity_dPressure"; }
-    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
-    static constexpr char const * defaultRefererencePorosityString() { return "defaultReferencePorosity"; }
+    static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
+    static constexpr char const * grainBulkModulusString() { return "grainBulkModulus"; }
+
+
   } viewKeys;
 
   using KernelWrapper = BiotPorosityUpdates;
@@ -159,16 +158,6 @@ public:
 
 protected:
   virtual void postProcessInput() override;
-
-  array2d< real64 > m_newPorosity;
-
-  array2d< real64 > m_oldPorosity;
-
-  array2d< real64 > m_dPorosity_dPressure;
-
-  array1d< real64 > m_referencePorosity;
-
-  real64 m_defaultReferencePorosity;
 
   array2d< real64 > m_biotCoefficient;
 

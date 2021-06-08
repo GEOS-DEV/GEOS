@@ -18,14 +18,7 @@
  */
 
 #include "CompressibleSolid.hpp"
-#include "ElasticIsotropic.hpp"
-#include "ElasticTransverseIsotropic.hpp"
-#include "DruckerPrager.hpp"
-#include "DruckerPragerExtended.hpp"
-#include "NullModel.hpp"
-#include "porosity/BiotPorosity.hpp"
 #include "porosity/PressurePorosity.hpp"
-
 
 namespace geosx
 {
@@ -42,13 +35,13 @@ CompressibleSolid< PORO_TYPE >::CompressibleSolid( string const & name, Group * 
 }
 
 template< typename PORO_TYPE >
-CompressibleSolid< PORO_TYPE >::~CompressibleSolid()
+void CompressibleSolid< PORO_TYPE >::~CompressibleSolid()
 {}
 
 // Register all CoupleSolid model types.
-typedef CompressibleSolid< NullModel, PressurePorosity > CompressibleRock;
+typedef CompressibleSolid< PressurePorosity > CompressibleRock;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPragerExtended, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRock, string const &, Group * const )
 
 }
 } /* namespace geosx */

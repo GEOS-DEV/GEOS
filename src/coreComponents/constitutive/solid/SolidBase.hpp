@@ -120,8 +120,8 @@ public:
 
   /**
    * @brief Get bulkModulus
-   *
    * @param[in] k Element index.
+   * @return the bulkModulus of element k
    */
   GEOSX_HOST_DEVICE
   virtual real64 getBulkModulus( localIndex const k ) const
