@@ -22,7 +22,6 @@
 #include "ElasticTransverseIsotropic.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
-#include "NullModel.hpp"
 #include "porosity/BiotPorosity.hpp"
 #include "porosity/PressurePorosity.hpp"
 
@@ -45,11 +44,11 @@ template< typename SOLID_TYPE >
 PorousSolid< SOLID_TYPE >::~PorousSolid()
 {}
 
-// Register all CoupleSolid model types.
-typedef PorousSolid< ElasticIsotropic, BiotPorosity > PoroElasticIsotropic;
-typedef PorousSolid< ElasticTransverseIsotropic, BiotPorosity > PoroElasticTransverseIsotropic;
-typedef PorousSolid< DruckerPrager, BiotPorosity > PoroDruckerPrager;
-typedef PorousSolid< DruckerPragerExtended, BiotPorosity > PoroDruckerPragerExtended;
+// Register all PorousSolid model types.
+typedef PorousSolid< ElasticIsotropic > PoroElasticIsotropic;
+typedef PorousSolid< ElasticTransverseIsotropic > PoroElasticTransverseIsotropic;
+typedef PorousSolid< DruckerPrager > PoroDruckerPrager;
+typedef PorousSolid< DruckerPragerExtended > PoroDruckerPragerExtended;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticTransverseIsotropic, string const &, Group * const )

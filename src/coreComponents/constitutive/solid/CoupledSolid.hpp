@@ -30,7 +30,6 @@ namespace constitutive
 
 template< typename SOLID_TYPE,
           typename PORO_TYPE >
-
 class CoupledSolidUpdates
 {
 public:
