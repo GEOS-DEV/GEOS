@@ -72,10 +72,9 @@ public:
                           real64 ( &stress )[6],
                           real64 & dPorosity_dPressure,
                           real64 & dPorosity_dVolStrainIncrement,
-                          real64 & dTotalStress_dPressure ) const
+                          real64 & dTotalStress_dPressure,
+                          SOLID_TYPE::KernelWrapper::DiscretizationOps & stiffness ) const
   {
-    SOLID_TYPE::KernelWrapper::DiscretizationOps stiffness;
-
     m_solidUpdate.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
     m_porosityUpdate.updatePorosity( k,

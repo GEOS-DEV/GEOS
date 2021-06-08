@@ -66,30 +66,6 @@ public:
   /// Deleted move assignment operator
   PorosityBaseUpdates & operator=( PorosityBaseUpdates && ) = delete;
 
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void updatePorosity( localIndex const k,
-                               localIndex const q,
-                               real64 const & pressure ) const
-  {
-    GEOSX_ERROR( "Call to PorosityBase updatePorosity." );
-  }
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void updatePorosity( localIndex const k,
-                               localIndex const q,
-                               real64 const & pressure,
-                               real64 const & deltaPressure,
-                               real64 const ( &strainIncrement )[6],
-                               real64 & dPorosity_dPressure,
-                               real64 & dPorosity_dVolStrainIncrement,
-                               real64 & dTotalStress_dPressure ) const
-    {
-      GEOSX_ERROR( "Call to PorosityBase updatePorosity." );
-    }
-
   /**
    * @brief Helper to save point stress back to m_newPorosity array
    *
