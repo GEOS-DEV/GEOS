@@ -119,6 +119,21 @@ public:
   ///@{
 
   /**
+   * @brief Get bulkModulus
+   *
+   * @param[in] k Element index.
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
+
+    return 0;
+  }
+
+
+  /**
    * @brief Small strain update.
    *
    * @param[in] k Element index.

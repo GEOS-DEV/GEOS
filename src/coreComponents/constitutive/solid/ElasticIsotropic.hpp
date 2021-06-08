@@ -126,6 +126,13 @@ public:
                                  localIndex const q,
                                  real64 ( &elasticStrain )[6] ) const override final;
 
+  GEOSX_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const override final
+  {
+    return m_bulkModulus[k];
+  }
+
+
   // TODO: confirm hyper stress/strain measures before activatiing
 
   /*
