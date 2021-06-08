@@ -13,10 +13,10 @@
  */
 
 /**
- * @file PorosityModel.cpp
+ * @file PressurePorosityModel.cpp
  */
 
-#include "PorosityModel.hpp"
+#include "PressurePorosity.hpp"
 
 namespace geosx
 {
@@ -26,37 +26,43 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-
-PorosityModel::PorosityModel( string const & name, Group * const parent ):
-  PorosityBase( name, parent )
+PressurePorosityModel::PressurePorosityModel( string const & name, Group * const parent ):
+  PorosityBase( name, parent ),
+  m_referencePressure(),
+  m_compressibility()
 {
+  registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Reference pressure for solid compressibility" );
+
+  registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Solid compressibility" );
 }
 
-PorosityModel::~PorosityModel() = default;
+PressurePorosityModel::~PressurePorosityModel() = default;
 
 std::unique_ptr< ConstitutiveBase >
-PorosityModel::deliverClone( string const & name,
-                        Group * const parent ) const
+PressurePorosityModel::deliverClone( string const & name,
+                                Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
 
   return clone;
 }
 
-void PorosityModel::allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex )
+void PressurePorosityModel::allocateConstitutiveData( dataRepository::Group & parent,
+                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-
 }
 
-void PorosityModel::postProcessInput()
+void PressurePorosityModel::postProcessInput()
 {
   this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
     setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorosityModel, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PressurePorosityModel, string const &, Group * const )
 }
 } /* namespace geosx */

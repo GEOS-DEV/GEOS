@@ -22,9 +22,9 @@
 #include "ElasticTransverseIsotropic.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
-#include "porosity/PorosityModel.hpp"
-#include "porosity/PressurePorosityModel.hpp"
 #include "NullModel.hpp"
+#include "porosity/BiotPorosity.hpp"
+#include "porosity/PressurePorosity.hpp"
 
 
 namespace geosx
@@ -68,13 +68,13 @@ CoupledSolid< SOLID_TYPE, PORO_TYPE >::postProcessInput()
 
 // Register all CoupleSolid model types.
 typedef CoupledSolid< NullModel, PressurePorosity > CompressibleRock;
-typedef CoupledSolid< ElasticIsotropic, PorosityModel > PoroElasticIsotropic;
-typedef CoupledSolid< ElasticTransverseIsotropic, PorosityModel > PoroElasticTransverseIsotropic;
-typedef CoupledSolid< DruckerPrager, PorosityModel > PoroDruckerPrager;
-typedef CoupledSolid< DruckerPragerExtended, PorosityModel > PoroDruckerPragerExtended;
+typedef CoupledSolid< ElasticIsotropic, BiotPorosity > PoroElasticIsotropic;
+typedef CoupledSolid< ElasticTransverseIsotropic, BiotPorosity > PoroElasticTransverseIsotropic;
+typedef CoupledSolid< DruckerPrager, BiotPorosity > PoroDruckerPrager;
+typedef CoupledSolid< DruckerPragerExtended, BiotPorosity > PoroDruckerPragerExtended;
 
 
-REGISTER_CATALOG_ENTRY( NullModel, PressurePorosityModel, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRock, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticTransverseIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPrager, string const &, Group * const )

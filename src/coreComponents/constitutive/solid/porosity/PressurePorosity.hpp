@@ -13,11 +13,11 @@
  */
 
 /**
- * @file PressurePorosityModel.hpp
+ * @file PressurePorosity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITYMODEL_HPP_
-#define GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITYMODEL_HPP_
+#ifndef GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
+#define GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
 
 #include "constitutive/ExponentialRelation.hpp"
 #include "PorosityBase.hpp"
@@ -27,11 +27,11 @@ namespace geosx
 namespace constitutive
 {
 
-class PressurePorosityModelUpdates : public PorosityBaseUpdates
+class PressurePorosityUpdates : public PorosityBaseUpdates
 {
 public:
 
-  PressurePorosityModelUpdates( arrayView2d< real64 > const & newPorosity,
+  PressurePorosityUpdates( arrayView2d< real64 > const & newPorosity,
                            arrayView2d< real64 > const & oldPorosity,
                            arrayView2d< real64 > const & dPorosity_dPressure,
                            arrayView1d< real64 > const & referencePorosity,
@@ -46,16 +46,16 @@ public:
   {}
 
   /// Default copy constructor
-  PressurePorosityModelUpdates( PressurePorosityModelUpdates const & ) = default;
+  PressurePorosityUpdates( PressurePorosityUpdates const & ) = default;
 
   /// Default move constructor
-  PressurePorosityModelUpdates( PressurePorosityModelUpdates && ) = default;
+  PressurePorosityUpdates( PressurePorosityUpdates && ) = default;
 
   /// Deleted copy assignment operator
-  PressurePorosityModelUpdates & operator=( PressurePorosityModelUpdates const & ) = delete;
+  PressurePorosityUpdates & operator=( PressurePorosityUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-  PressurePorosityModelUpdates & operator=( PressurePorosityModelUpdates && ) = delete;
+  PressurePorosityUpdates & operator=( PressurePorosityUpdates && ) = delete;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -90,12 +90,12 @@ private:
 };
 
 
-class PressurePorosityModel : public PorosityBase
+class PressurePorosity : public PorosityBase
 {
 public:
-  PressurePorosityModel( string const & name, Group * const parent );
+  PressurePorosity( string const & name, Group * const parent );
 
-  virtual ~PressurePorosityModel() override;
+  virtual ~PressurePorosity() override;
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -103,7 +103,7 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static string catalogName() { return "PressurePorosityModel"; }
+  static string catalogName() { return "PressurePorosity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -113,7 +113,7 @@ public:
     static constexpr char const * compressibilityString() { return "compressibility"; }
   } viewKeys;
 
-  using KernelWrapper = PressurePorosityModelUpdates;
+  using KernelWrapper = PressurePorosityUpdates;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -145,4 +145,4 @@ protected:
 } /* namespace geosx */
 
 
-#endif //GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITYMODEL_HPP_
+#endif //GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_

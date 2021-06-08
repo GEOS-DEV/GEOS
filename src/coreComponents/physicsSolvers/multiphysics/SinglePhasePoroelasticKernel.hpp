@@ -228,39 +228,59 @@ public:
     real64 strainIncrement[6] = {0};
     real64 totalStress[6];
 
+    //// OLD code  /////
     // --- Update effective stress tensor (stored in totalStress)
-    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
-    FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
-    m_constitutiveUpdate.smallStrainUpdate( k, q, strainIncrement, totalStress, stiffness );
+//    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
+//    FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
+//    m_constitutiveUpdate.smallStrainUpdate( k, q, strainIncrement, totalStress, stiffness );
+//
+//    // --- Subtract pressure term
+//    real64 const biotTimesPressure = m_biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
+//    totalStress[0] -= biotTimesPressure;
+//    totalStress[1] -= biotTimesPressure;
+//    totalStress[2] -= biotTimesPressure;
+//
+//    // Evaluate fluid phase mass content
+//    // --- TODO: temporary solution -----------------------------------------------------------------------------------//
+//    //           update PoroElastic Constitutive Model (PECM) such that:                                               //
+//    //           (  i) the kernel has a view m_porosityOld to the field stored in PECM                                 //
+//    //           ( ii) the newPororosity, stored in PECM, is updated as                                                //
+//    //                 m_constitutiveUpdate.porosityUpdate( k, q, m_deltaFluidPressure, volStrainIncrement );          //
+//    //           (iii) get methods for porosityNew, dPorosity_dFluidPressure, dPorosity_dVolStrainIncrement            //
+//    real64 const biotSkeletonModulusInverse = 0.0; //TODO: 1/N = 0 correct only for biotCoefficient = 1                //
+//    real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local );                         //
+//    real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local );//
+//    real64 const porosityOld = m_poroRef( k ) + m_biotCoefficient * volumetricStrainOld;// +  DeltaPoro                //
+//    real64 const dPorosity_dPressure = biotSkeletonModulusInverse;                                                     //
+//    real64 const dPorosity_dVolStrainIncrement =  m_biotCoefficient;                                                   //
+//                                                                                                                       //
+//    GEOSX_ERROR_IF_GT_MSG( fabs( m_biotCoefficient - 1.0 ),                                                            //
+//                           1e-10,                                                                                      //
+//                           "Correct only for Biot's coefficient equal to 1" );                                         //
+//    // --------------------------------------------------------------------------------------------------------------- //
+//    real64 const porosityNew = porosityOld
+//                               + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
+//                               + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
 
-    // --- Subtract pressure term
-    real64 const biotTimesPressure = m_biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
-    totalStress[0] -= biotTimesPressure;
-    totalStress[1] -= biotTimesPressure;
-    totalStress[2] -= biotTimesPressure;
+    //// End of OLD code  /////
 
-    // Evaluate fluid phase mass content
-    // --- TODO: temporary solution -----------------------------------------------------------------------------------//
-    //           update PoroElastic Constitutive Model (PECM) such that:                                               //
-    //           (  i) the kernel has a view m_porosityOld to the field stored in PECM                                 //
-    //           ( ii) the newPororosity, stored in PECM, is updated as                                                //
-    //                 m_constitutiveUpdate.porosityUpdate( k, q, m_deltaFluidPressure, volStrainIncrement );          //
-    //           (iii) get methods for porosityNew, dPorosity_dFluidPressure, dPorosity_dVolStrainIncrement            //
-    real64 const biotSkeletonModulusInverse = 0.0; //TODO: 1/N = 0 correct only for biotCoefficient = 1                //
-    real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local );                         //
-    real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local );//
-    real64 const porosityOld = m_poroRef( k ) + m_biotCoefficient * volumetricStrainOld;// +  DeltaPoro                //
-    real64 const dPorosity_dPressure = biotSkeletonModulusInverse;                                                     //
-    real64 const dPorosity_dVolStrainIncrement =  m_biotCoefficient;                                                   //
-                                                                                                                       //
-    GEOSX_ERROR_IF_GT_MSG( fabs( m_biotCoefficient - 1.0 ),                                                            //
-                           1e-10,                                                                                      //
-                           "Correct only for Biot's coefficient equal to 1" );                                         //
-    // --------------------------------------------------------------------------------------------------------------- //
-    real64 const porosityNew = porosityOld
-                               + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
-                               + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
+    real64 dPorosity_dPressure;                                                     //
+    real64 dPorosity_dVolStrainIncrement;
+    real64 dTotalStress_dPressure;
+    m_constitutiveUpdate.smallStrainUpdate( k,
+                                            q,
+                                            strainIncrement,
+                                            totalStress,
+                                            dPorosity_dPressure,
+                                            dPorosity_dPressure,
+                                            dTotalStress_dPressure );
 
+    real64 const porosityNew = m_constitutiveUpdate.getPorosityModel().getPorosity( k, q );
+    real64 const porosityOld = m_constitutiveUpdate.getPorosityModel().getOldPorosity( k, q );
+
+    real64 const pressureStressTerm = -dTotalStress_dPressure * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
+
+    LvArray::tensorOps::symAddIdentity< 3 >( stress, pressureStressTerm );
 
     // Evaluate body force vector
     real64 bodyForce[3] = { m_gravityVector[0],
@@ -293,9 +313,9 @@ public:
 
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][0] * m_biotCoefficient * detJxW;
-      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][1] * m_biotCoefficient * detJxW;
-      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][2] * m_biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][0] * dTotalStress_dPressure * detJxW;
+      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][1] * dTotalStress_dPressure * detJxW;
+      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][2] * dTotalStress_dPressure * detJxW;
     }
 
     if( m_gravityAcceleration > 0.0 )

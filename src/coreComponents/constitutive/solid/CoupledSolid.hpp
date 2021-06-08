@@ -70,19 +70,39 @@ public:
                           real64 const & pressure,
                           real64 const & deltaPressure,
                           real64 const ( &strainIncrement )[6],
-                          real64 const ( &stress )[6] ) const
+                          real64 ( &stress )[6],
+                          real64 & dPorosity_dPressure,
+                          real64 & dPorosity_dVolStrainIncrement,
+                          real64 & dTotalStress_dPressure ) const
   {
     SOLID_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
     m_solidUpdate.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
-    m_porosityUpdate.updatePorosity( k, q, pressure, deltaPressure, strainIncrement );
+    m_porosityUpdate.updatePorosity( k,
+                                     q,
+                                     pressure,
+                                     deltaPressure,
+                                     strainIncrement,
+                                     dPorosity_dPressure,
+                                     dPorosity_dVolStrainIncrement,
+                                     dTotalStress_dPressure );
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void pressureUpdate( localIndex const k,
+                       localIndex const q,
+                       real64 const & pressure,
+                       real64 const & deltaPressure ) const
+  {
+    m_porosityUpdate.updatePorosity( k, q, pressure, deltaPressure );
   }
 
 private:
   typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
 
-  typename PORO_TYPE::KernelWrapper const const  m_porosityUpdate;
+  typename PORO_TYPE::KernelWrapper const m_porosityUpdate;
 };
 
 
@@ -109,7 +129,7 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return "CoupledSolid"; }
+  static string catalogName() { return string( "Poro" ) + SOLID_TYPE::m_catalogNameString; }
 
   /**
    * @brief Get catalog name
