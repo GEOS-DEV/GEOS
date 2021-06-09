@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-PressurePorosityModel::PressurePorosityModel( string const & name, Group * const parent ):
+PressurePorosity::PressurePorosity( string const & name, Group * const parent ):
   PorosityBase( name, parent ),
   m_referencePressure(),
   m_compressibility()
@@ -40,10 +40,10 @@ PressurePorosityModel::PressurePorosityModel( string const & name, Group * const
     setDescription( "Solid compressibility" );
 }
 
-PressurePorosityModel::~PressurePorosityModel() = default;
+PressurePorosity::~PressurePorosity() = default;
 
 std::unique_ptr< ConstitutiveBase >
-PressurePorosityModel::deliverClone( string const & name,
+PressurePorosity::deliverClone( string const & name,
                                 Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
@@ -51,18 +51,18 @@ PressurePorosityModel::deliverClone( string const & name,
   return clone;
 }
 
-void PressurePorosityModel::allocateConstitutiveData( dataRepository::Group & parent,
+void PressurePorosity::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-void PressurePorosityModel::postProcessInput()
+void PressurePorosity::postProcessInput()
 {
   this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
     setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PressurePorosityModel, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PressurePorosity, string const &, Group * const )
 }
 } /* namespace geosx */

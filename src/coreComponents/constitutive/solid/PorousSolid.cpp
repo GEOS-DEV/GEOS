@@ -23,7 +23,6 @@
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
 #include "porosity/BiotPorosity.hpp"
-#include "porosity/PressurePorosity.hpp"
 
 
 namespace geosx
@@ -44,16 +43,16 @@ template< typename SOLID_TYPE >
 PorousSolid< SOLID_TYPE >::~PorousSolid()
 {}
 
-// Register all PorousSolid model types.
-typedef PorousSolid< ElasticIsotropic > PoroElasticIsotropic;
-typedef PorousSolid< ElasticTransverseIsotropic > PoroElasticTransverseIsotropic;
-typedef PorousSolid< DruckerPrager > PoroDruckerPrager;
-typedef PorousSolid< DruckerPragerExtended > PoroDruckerPragerExtended;
-
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticTransverseIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPrager, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPragerExtended, string const &, Group * const )
+//// Register all PorousSolid model types.
+//typedef PorousSolid< ElasticIsotropic > PorousElasticIsotropic;
+//typedef PorousSolid< ElasticTransverseIsotropic > PorousElasticTransverseIsotropic;
+//typedef PorousSolid< DruckerPrager > PorousDruckerPrager;
+//typedef PorousSolid< DruckerPragerExtended > PorousDruckerPragerExtended;
+//
+//REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticIsotropic, string const &, Group * const )
+//REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticTransverseIsotropic, string const &, Group * const )
+//REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPrager, string const &, Group * const )
+//REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPragerExtended, string const &, Group * const )
 
 }
 } /* namespace geosx */

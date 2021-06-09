@@ -19,7 +19,6 @@
 #ifndef GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
 #define GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
 
-#include "constitutive/ExponentialRelation.hpp"
 #include "PorosityBase.hpp"
 
 namespace geosx
