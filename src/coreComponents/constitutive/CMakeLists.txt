@@ -35,7 +35,7 @@ set( constitutive_headers
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
      #solid/CompressibleSolid.hpp
-     #solid/CoupledSolid.hpp
+     solid/CoupledSolid.hpp
      solid/Damage.hpp
      solid/DamageVolDev.hpp
      solid/DamageSpectral.hpp
@@ -46,7 +46,7 @@ set( constitutive_headers
      solid/ElasticTransverseIsotropic.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
-     #solid/PorousSolid.hpp
+     solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
      solid/SolidModelDiscretizationOps.hpp
@@ -96,7 +96,7 @@ set( constitutive_sources
      fluid/ParticleFluidBase.cpp
      fluid/ParticleFluid.cpp
      #solid/CompressibleSolid.cpp
-     #solid/CoupledSolid.cpp        
+     solid/CoupledSolid.cpp        
      solid/Damage.cpp
      solid/DamageVolDev.cpp
      solid/DamageSpectral.cpp
@@ -106,7 +106,7 @@ set( constitutive_sources
      solid/ElasticTransverseIsotropic.cpp
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
-     #solid/PorousSolid.cpp
+     solid/PorousSolid.cpp
      solid/SolidBase.cpp
      solid/TriaxialDriver.cpp
      solid/porosity/BiotPorosity.cpp

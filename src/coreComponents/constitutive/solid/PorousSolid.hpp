@@ -49,10 +49,10 @@ public:
    */
   PorousSolidUpdates( SOLID_TYPE * solidModel,
                       BiotPorosity * porosityModel ):
-  CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >( solidModel, porosityModel )
+    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >( solidModel, porosityModel )
   {}
 
-   /// Deleted default constructor
+  /// Deleted default constructor
   PorousSolidUpdates() = delete;
 
   /// Default copy constructor
@@ -74,7 +74,7 @@ public:
                           real64 const & pressure,
                           real64 const & deltaPressure,
                           real64 const ( &strainIncrement )[6],
-                          real64 ( &stress )[6],
+                          real64 ( & stress )[6],
                           real64 & dPorosity_dPressure,
                           real64 & dPorosity_dVolStrain,
                           real64 & dTotalStress_dPressure,
@@ -99,7 +99,7 @@ public:
   void updateBiotCoefficient( localIndex const k,
                               localIndex const q ) const
   {
-   // This call is not general like this.
+    // This call is not general like this.
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
     m_porosityUpdate.updateBiotCoefficient( k, q, bulkModulus );

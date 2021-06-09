@@ -28,7 +28,7 @@
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/PoroElastic.hpp"
-// #include "solid/PorousSolid.hpp"
+//#include "solid/PorousSolid.hpp"
 
 namespace geosx
 {

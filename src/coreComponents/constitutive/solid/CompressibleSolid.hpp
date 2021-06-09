@@ -35,22 +35,22 @@ namespace constitutive
  * @tparam SOLID_TYPE
  */
 template< typename PORO_TYPE >
-class CompressibleSolidUpdates : public CoupledSolidUpdates< NullModel, PORO_TYPE>
+class CompressibleSolidUpdates : public CoupledSolidUpdates< NullModel, PORO_TYPE >
 {
 public:
 
-  using CoupledSolidUpdates< NullModel, PORO_TYPE>::m_solidUpdate;
-  using CoupledSolidUpdates< NullModel, PORO_TYPE>::m_porosityUpdate;
+  using CoupledSolidUpdates< NullModel, PORO_TYPE >::m_solidUpdate;
+  using CoupledSolidUpdates< NullModel, PORO_TYPE >::m_porosityUpdate;
 
   /**
    * @brief Constructor
    */
   CompressibleSolidUpdates( NullModel * solidModel,
                             PORO_TYPE * porosityModel ):
-  CoupledSolid< NullModel, PORO_TYPE >(solidModel, porosityModel)
+    CoupledSolid< NullModel, PORO_TYPE >( solidModel, porosityModel )
   {}
 
-   /// Deleted default constructor
+  /// Deleted default constructor
   CompressibleSolidUpdates() = delete;
 
   /// Default copy constructor
@@ -77,13 +77,13 @@ public:
 
 };
 
-template< typename PORO_TYPE>
-class CompressibleSolid : public CoupledSolid < NullModel, PORO_TYPE >
+template< typename PORO_TYPE >
+class CompressibleSolid : public CoupledSolid< NullModel, PORO_TYPE >
 {
 public:
 
-  using CoupledSolid < NullModel, PORO_TYPE >::m_solidModel;
-  using CoupledSolid < NullModel, PORO_TYPE >::m_porosityModel;
+  using CoupledSolid< NullModel, PORO_TYPE >::m_solidModel;
+  using CoupledSolid< NullModel, PORO_TYPE >::m_porosityModel;
 
   /**
    * @brief Constructor

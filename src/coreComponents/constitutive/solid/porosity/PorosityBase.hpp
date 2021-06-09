@@ -89,7 +89,7 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 getPorosity( localIndex const k,
-                            localIndex const q ) const
+                      localIndex const q ) const
   {
     return m_newPorosity[k][q];
   }
@@ -98,7 +98,7 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 getOldPorosity( localIndex const k,
-                               localIndex const q ) const
+                         localIndex const q ) const
   {
     return m_oldPorosity[k][q];
   }
@@ -169,17 +169,17 @@ public:
 
   using KernelWrapper = PorosityBaseUpdates;
 
-   /**
-    * @brief Create an update kernel wrapper.
-    * @return the wrapper
-    */
-   KernelWrapper createKernelUpdates()
-   {
-     return KernelWrapper( m_newPorosity,
-                           m_oldPorosity,
-                           m_dPorosity_dPressure,
-                           m_referencePorosity );
-   }
+  /**
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
+   */
+  KernelWrapper createKernelUpdates()
+  {
+    return KernelWrapper( m_newPorosity,
+                          m_oldPorosity,
+                          m_dPorosity_dPressure,
+                          m_referencePorosity );
+  }
 
 
 protected:

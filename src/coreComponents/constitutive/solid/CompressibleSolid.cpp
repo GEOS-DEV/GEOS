@@ -30,9 +30,8 @@ namespace constitutive
 
 template< typename PORO_TYPE >
 CompressibleSolid< PORO_TYPE >::CompressibleSolid( string const & name, Group * const parent ):
-  CoupledSolid< NullModel, PORO_TYPE>( name, parent )
-{
-}
+  CoupledSolid< NullModel, PORO_TYPE >( name, parent )
+{}
 
 template< typename PORO_TYPE >
 CompressibleSolid< PORO_TYPE >::~CompressibleSolid()

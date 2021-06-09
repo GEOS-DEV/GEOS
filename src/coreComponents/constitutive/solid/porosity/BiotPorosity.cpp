@@ -29,14 +29,13 @@ namespace constitutive
 
 BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   PorosityBase( name, parent )
-{
-}
+{}
 
 BiotPorosity::~BiotPorosity() = default;
 
 std::unique_ptr< ConstitutiveBase >
 BiotPorosity::deliverClone( string const & name,
-                        Group * const parent ) const
+                            Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
 
@@ -44,7 +43,7 @@ BiotPorosity::deliverClone( string const & name,
 }
 
 void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex )
+                                             localIndex const numConstitutivePointsPerParentIndex )
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 

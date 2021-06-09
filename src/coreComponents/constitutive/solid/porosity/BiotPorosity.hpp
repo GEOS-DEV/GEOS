@@ -20,6 +20,7 @@
 #define GEOSX_CONSTITUTIVE_POROSITY_BIOTPOROSITY_HPP_
 
 #include "PorosityBase.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -45,11 +46,11 @@ public:
   localIndex numGauss() const { return m_newPorosity.size( 1 ); }
 
   BiotPorosityUpdates( arrayView2d< real64 > const & newPorosity,
-                        arrayView2d< real64 > const & oldPorosity,
-                        arrayView2d< real64 > const & dPorosity_dPressure,
-                        arrayView1d< real64 > const & referencePorosity,
-                        arrayView2d< real64 > const & biotCoefficient,
-                        real64 const & grainBulkModulus ):
+                       arrayView2d< real64 > const & oldPorosity,
+                       arrayView2d< real64 > const & dPorosity_dPressure,
+                       arrayView1d< real64 > const & referencePorosity,
+                       arrayView2d< real64 > const & biotCoefficient,
+                       real64 const & grainBulkModulus ):
     PorosityBaseUpdates( newPorosity,
                          oldPorosity,
                          dPorosity_dPressure,
@@ -85,8 +86,8 @@ public:
     real64 const biotSkeletonModulusInverse = ( m_biotCoefficient[k][q] - m_referencePorosity[k] ) / m_grainBulkModulus;
 
     real64 const porosity = m_oldPorosity[k][q] +
-        + m_biotCoefficient[k][q] * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
-        + biotSkeletonModulusInverse * deltaPressure;
+                            +m_biotCoefficient[k][q] * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
+                            + biotSkeletonModulusInverse * deltaPressure;
 
     dPorosity_dPressure = biotSkeletonModulusInverse;
 
@@ -141,19 +142,19 @@ public:
 
   using KernelWrapper = BiotPorosityUpdates;
 
-   /**
-    * @brief Create an update kernel wrapper.
-    * @return the wrapper
-    */
-   KernelWrapper createKernelUpdates()
-   {
-     return KernelWrapper( m_newPorosity,
-                           m_oldPorosity,
-                           m_dPorosity_dPressure,
-                           m_referencePorosity,
-                           m_biotCoefficient,
-                           m_grainBulkModulus );
-   }
+  /**
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
+   */
+  KernelWrapper createKernelUpdates()
+  {
+    return KernelWrapper( m_newPorosity,
+                          m_oldPorosity,
+                          m_dPorosity_dPressure,
+                          m_referencePorosity,
+                          m_biotCoefficient,
+                          m_grainBulkModulus );
+  }
 
 
 protected:

@@ -38,11 +38,11 @@ public:
    */
   CoupledSolidUpdates( SOLID_TYPE * solidModel,
                        PORO_TYPE * porosityModel ):
-  m_solidUpdate( solidModel->createKernelUpdates() ),
-  m_porosityUpdate( porosityModel->createKernelUpdates() )
+    m_solidUpdate( solidModel->createKernelUpdates() ),
+    m_porosityUpdate( porosityModel->createKernelUpdates() )
   {}
 
-   /// Deleted default constructor
+  /// Deleted default constructor
   CoupledSolidUpdates() = delete;
 
   /// Default copy constructor
@@ -101,8 +101,8 @@ public:
 
   struct viewKeyStruct
   {
-     static constexpr char const * solidModelNameString() { return "solidModelName"; }
-     static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
+    static constexpr char const * solidModelNameString() { return "solidModelName"; }
+    static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
   };
 
   /**

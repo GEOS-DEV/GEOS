@@ -57,7 +57,7 @@ PorosityBase::~PorosityBase() = default;
 
 std::unique_ptr< ConstitutiveBase >
 PorosityBase::deliverClone( string const & name,
-                        Group * const parent ) const
+                            Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
 
@@ -65,7 +65,7 @@ PorosityBase::deliverClone( string const & name,
 }
 
 void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex )
+                                             localIndex const numConstitutivePointsPerParentIndex )
 {
   m_newPorosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_oldPorosity.resize( 0, numConstitutivePointsPerParentIndex );

@@ -37,12 +37,12 @@ CoupledSolid< SOLID_TYPE, PORO_TYPE >::CoupledSolid( string const & name, Group 
   m_porosityModelName()
 {
   registerWrapper( viewKeyStruct::solidModelNameString(), &m_solidModelName ).
-      setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "Name of the solid model." );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the solid model." );
 
-    registerWrapper( viewKeyStruct::porosityModelNameString(), &m_porosityModelName ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Name of the porosity model." );
+  registerWrapper( viewKeyStruct::porosityModelNameString(), &m_porosityModelName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the porosity model." );
 }
 
 template< typename SOLID_TYPE,
