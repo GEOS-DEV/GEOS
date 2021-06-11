@@ -387,8 +387,6 @@ struct ResidualNormKernel
                       arrayView1d< real64 const > const & totalDensOld,
                       real64 & localResidualNorm )
   {
-    localResidualNorm = 0.0;
-
     RAJA::ReduceSum< REDUCE_POLICY, real64 > localSum( 0.0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
