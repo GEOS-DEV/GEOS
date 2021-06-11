@@ -28,7 +28,7 @@
       name="laplace"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      fieldName="temperature"
+      fieldName="Temperature"
       logLevel="0"
       targetRegions="{ Region2 }">
       <LinearSolverParameters
@@ -140,14 +140,14 @@
 
     <FieldSpecification
       name="sourceTerm"
-      fieldName="temperature"
+      fieldName="Temperature"
       objectPath="nodeManager"
       scale="100.0"
       setNames="{ xneg }"/>
 
     <FieldSpecification
       name="sinkTerm"
-      fieldName="temperature"
+      fieldName="Temperature"
       objectPath="nodeManager"
       scale="0.0"
       setNames="{ xpos }"/>

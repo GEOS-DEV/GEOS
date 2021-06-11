@@ -93,7 +93,7 @@ public:
           inputMatrix,
           inputRhs,
           inputGravityVector ),
-    m_temperature( nodeManager.template getReference< array1d< real64 > >( "temperature" ) )
+    m_temperature( nodeManager.template getReference< array1d< real64 > >( dataRepository::keys::Temperature ) )
   {}
 
 

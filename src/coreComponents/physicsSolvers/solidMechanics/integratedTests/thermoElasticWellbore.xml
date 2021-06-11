@@ -28,7 +28,7 @@
       name="laplace"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      fieldName="temperature"
+      fieldName="Temperature"
       logLevel="0"
       targetRegions="{ Omega }">
       <LinearSolverParameters
@@ -159,14 +159,14 @@
       
     <FieldSpecification
       name="boreholeTemperature"
-      fieldName="temperature"
+      fieldName="Temperature"
       objectPath="nodeManager"
       scale="100.0"
       setNames="{ rneg }"/>  
 
     <FieldSpecification
       name="farfieldTemperature"
-      fieldName="temperature"
+      fieldName="Temperature"
       objectPath="nodeManager"
       scale="0.0"
       setNames="{ xpos, ypos }"/>
