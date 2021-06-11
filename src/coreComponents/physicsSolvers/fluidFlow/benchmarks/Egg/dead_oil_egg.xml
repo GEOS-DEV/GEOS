@@ -744,7 +744,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/DEFAULT_HEX"
       fieldName="globalCompFraction"
-      component="2"
+      component="1"
       scale="0.1"/>
   </FieldSpecifications>
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS_END -->
