@@ -76,7 +76,12 @@
       timeFrequency="1e5"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
-
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e5"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
+    
     <PeriodicEvent
       name="solverApplications1"
       forceDt="1e4"
@@ -311,7 +316,9 @@
   <Outputs>
     <Silo
       name="siloOutput"/>
-
+    <VTK
+      name="vtkOutput"/>
+    
     <Restart
       name="restartOutput"/>
   </Outputs>

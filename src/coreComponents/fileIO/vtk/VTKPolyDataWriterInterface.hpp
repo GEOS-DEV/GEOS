@@ -252,6 +252,31 @@ private:
                            ElementRegionBase const & er ) const;
 
   /*!
+   * @brief Writes all the fields with up to 3 dimensions associated to the elements of \p er if their plotlevel is <= m_plotLevel
+   * @param[in] celldata a VTK object containing all the fields associated with the elements
+   * @param[in] er ElementRegion being written
+   * @param[in] field the name of the field being written
+   */
+  template< class SUBREGION >
+  void writeElementField2D3D( vtkSmartPointer< vtkCellData > const celldata,
+                              ElementRegionBase const & er,
+                              string const & field ) const;
+
+  /*!
+   * @brief Writes all the 4D fields associated to the elements of \p er if their plotlevel is <= m_plotLevel
+   *        Considering that the second dimension has size N and the third dimension has size M, this
+   *        function will write MxN fields to VTK
+   * @param[in] celldata a VTK object containing all the fields associated with the elements
+   * @param[in] er ElementRegion being written
+   * @param[in] field the name of the 4D field being written
+   */
+  template< class SUBREGION >
+  void writeElementField4D( vtkSmartPointer< vtkCellData > const celldata,
+                            ElementRegionBase const & er,
+                            string const & field ) const;
+
+
+  /*!
    * @brief Writes a field from \p wrapperBase
    * @details Sets the number of components, the number of value and fill the VTK data structure using
    * a wrapper around a field.

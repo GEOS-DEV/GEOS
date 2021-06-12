@@ -292,7 +292,6 @@ void VTKPolyDataWriterInterface::writeField( WrapperBase const & wrapperBase,
       } );
     }
   } );
-
 }
 
 void VTKPolyDataWriterInterface::writeNodeFields( vtkSmartPointer< vtkPointData > const pointdata,
@@ -332,21 +331,127 @@ void VTKPolyDataWriterInterface::writeElementFields( vtkSmartPointer< vtkCellDat
     }
   } );
 
-  for( auto const & field : allFields )
+  for( string const & field : allFields )
   {
-    vtkSmartPointer< VTKGEOSXData > data = VTKGEOSXData::New();
-    data->SetNumberOfValues( er.getNumberOfElements< SUBREGION >() );
-    data->SetName( field.c_str() );
 
-    localIndex count = 0;
+    // Here is why we need a special treatment for some fields here.
+    // - Fields that have 3 dimensions or less can be treated in a purely generic fashion using the writeField function
+    // - Some fields have more than 3 dimensions (cell id, plus 3 others) and cannot be easily visualized in Paraview.
+    //   For now, we apply a special component-by-component treatment to 4-dimension fields (see below), but we do not output fields with 5
+    // dimensions or more.
+
+    // First, check if the field requires a special treatment. For now, array4d< real64 > (for instance, for phaseCompFraction) are
+    // treated separately to make sure that they can be easily visualized in Paraview.
+    bool is4DField = false;
     er.forElementSubRegions< SUBREGION >( [&]( auto const & esr )
     {
       WrapperBase const & wrapper = esr.getWrapperBase( field );
-      writeField( wrapper, data, esr.size(), count );
+      std::type_info const & typeID = wrapper.getTypeId();
+      if( typeID==typeid(array4d< real64 >) )
+      {
+        is4DField = true;
+      }
     } );
-    celldata->AddArray( data );
+
+    // Then, output the field to VTK
+    // Note: fields with 5 dimensions or more are not supported and are not output to file below
+    if( is4DField )
+    {
+      // If the field has four dimensions, we apply it a special treatment in the following function
+      writeElementField4D< SUBREGION >( celldata, er, field );
+    }
+    else
+    {
+      // If the field has three dimensions or less, it can be output in a generic fashion
+      writeElementField2D3D< SUBREGION >( celldata, er, field );
+    }
   }
 }
+
+template< class SUBREGION >
+void VTKPolyDataWriterInterface::writeElementField2D3D( vtkSmartPointer< vtkCellData > const celldata,
+                                                        ElementRegionBase const & er,
+                                                        string const & field ) const
+{
+  localIndex count = 0;
+
+  vtkSmartPointer< VTKGEOSXData > data = VTKGEOSXData::New();
+  data->SetNumberOfValues( er.getNumberOfElements< SUBREGION >() );
+  data->SetName( field.c_str() );
+
+  er.forElementSubRegions< SUBREGION >( [&]( auto const & esr )
+  {
+    WrapperBase const & wrapper = esr.getWrapperBase( field );
+    writeField( wrapper, data, esr.size(), count );
+  } );
+  celldata->AddArray( data );
+}
+
+template< class SUBREGION >
+void VTKPolyDataWriterInterface::writeElementField4D( vtkSmartPointer< vtkCellData > const celldata,
+                                                      ElementRegionBase const & er,
+                                                      string const & field ) const
+{
+  // Step 1: we need to figure out the size of the two dimensions of the array that we are going to output component by component
+  localIndex nCompInSecondDim = 0;
+  localIndex nCompInThirdDim = 0;
+  er.forElementSubRegions< SUBREGION >( [&]( auto const & esr )
+  {
+    WrapperBase const & wrapper = esr.getWrapperBase( field );
+    std::type_info const & typeID = wrapper.getTypeId();
+    GEOSX_THROW_IF( typeID!=typeid(array4d< real64 >),
+                    "This function is specific to array4d< real64 >", InputError );
+
+    Wrapper< array4d< real64 > > const & wrapperT = dynamicCast< Wrapper< array4d< real64 > > const & >( wrapper );
+    traits::ViewTypeConst< array4d< real64 > > const sourceArray = wrapperT.reference().toViewConst();
+    nCompInSecondDim = sourceArray.size( 1 );
+    nCompInThirdDim = sourceArray.size( 2 );
+  } );
+
+  // Step 2: we know how many components we have in the two dimensions that will be displayed component by component
+  //         we can now loop over the components of these dimensions and output to VTK in separate instances of VTKGEOSXData
+  for( localIndex iComp2 = 0; iComp2 < nCompInSecondDim; ++iComp2 )
+  {
+    for( localIndex iComp3 = 0; iComp3 < nCompInThirdDim; ++iComp3 )
+    {
+      localIndex count = 0;
+
+      // Step 2.1: write the name of the specific component iComp we consider here
+      vtkSmartPointer< VTKGEOSXData > data = VTKGEOSXData::New();
+      data->SetNumberOfValues( er.getNumberOfElements< SUBREGION >() );
+
+      if( nCompInSecondDim == 1 )
+      {
+        data->SetName( (field+"_"+std::to_string( iComp3 )).c_str() ); // special case for nice display of constitutive fields
+      }
+      else
+      {
+        data->SetName( (field+"_"+std::to_string( iComp2 )+"_"+std::to_string( iComp3 )).c_str() );
+      }
+
+      // Step 2.2: for each subregion, only output to VTK the data corresponding to the pair of components (iComp2,iComp3)
+      er.forElementSubRegions< SUBREGION >( [&]( auto const & esr )
+      {
+        WrapperBase const & wrapper = esr.getWrapperBase( field );
+        Wrapper< array4d< real64 > > const & wrapperT = dynamicCast< Wrapper< array4d< real64 > > const & >( wrapper );
+        traits::ViewTypeConst< array4d< real64 > > const sourceArray = wrapperT.reference().toViewConst();
+
+        data->SetNumberOfComponents( sourceArray.size( 3 ) );
+        for( localIndex i = 0; i < sourceArray.size( 0 ); ++i )
+        {
+          for( localIndex j = 0; j < sourceArray.size( 3 ); ++j )
+          {
+            data->customInsertValue( count++, sourceArray[i][iComp2][iComp3][j] );
+          }
+        }
+      } );
+
+      // Step 2.3: wrap-up
+      celldata->AddArray( data );
+    }
+  }
+}
+
 void VTKPolyDataWriterInterface::writeCellElementRegions( real64 time,
                                                           ElementRegionManager const & elemManager,
                                                           NodeManager const & nodeManager ) const
