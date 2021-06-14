@@ -41,12 +41,11 @@ namespace mgr
  *
  * 2-level MGR reduction strategy which seems to work well for 2 components:
  *   - 1st level: eliminate the reservoir density associated with the volume constraint
- *   - 2nd level: eliminate the pressure
- *   - The coarse grid solved with ILU(0).
+ *   - 2nd level: eliminate the other reservoir density
+ *   - The coarse grid (pressure system) is solved with BoomerAMG.
  *
  * @todo:
  *   - Experiment with block Jacobi for F-relaxation/interpolation of the reservoir densities
- *   - Explore ways to reduce onto the pressure variable and use AMG for coarse-grid solve
  */
 class CompositionalMultiphaseFVM : public MGRStrategyBase< 2 >
 {
@@ -61,17 +60,21 @@ public:
     // Level 0: eliminate last density which corresponds to the volume constraint equation
     m_labels[0].resize( m_numBlocks - 1 );
     std::iota( m_labels[0].begin(), m_labels[0].end(), 0 );
-    // Level 1: eliminate pressure
-    m_labels[1].resize( m_numBlocks - 2 );
-    std::iota( m_labels[1].begin(), m_labels[1].end(), 1 );
+    // Level 1: eliminate the other density
+    m_labels[1].push_back( 0 );
 
     setupLabels();
 
     m_levelFRelaxMethod[0] = 0; // Jacobi
-    m_levelFRelaxMethod[1] = 2; // AMG V-cycle
+    m_levelFRelaxMethod[1] = 0; // Jacobi
+
+    m_levelInterpType[0] = 2;       // diagonal scaling (Jacobi)
+    m_levelCoarseGridMethod[0] = 0; // standard Galerkin
+    m_levelInterpType[1] = 2;       // diagonal scaling (Jacobi)
+    m_levelCoarseGridMethod[1] = 0; // standard Galerkin
 
     m_globalSmoothType = 16; // ILU(0)
-    m_numGlobalSmoothSweeps = 1;
+    m_numGlobalSmoothSweeps = 0; // No global smoother
   }
 
   /**
@@ -91,16 +94,28 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( precond.ptr, m_globalSmoothType ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
+#ifdef GEOSX_USE_HYPRE_CUDA
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, 18 )); // l1-Jacobi
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // truncate intermediate/coarse grids
+#endif
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &mgrData.coarseSolver.ptr ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( mgrData.coarseSolver.ptr, 0 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( mgrData.coarseSolver.ptr, 0 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
+#ifdef GEOSX_USE_HYPRE_CUDA
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.coarseSolver.ptr, 8 ) ); // PMIS
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, 18 ) ); // l1-Jacobi
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.coarseSolver.ptr, 2 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.coarseSolver.ptr, 1.0 ) );
+#else
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
+#endif
 
-    mgrData.coarseSolver.setup = HYPRE_ILUSetup;
-    mgrData.coarseSolver.solve = HYPRE_ILUSolve;
-    mgrData.coarseSolver.destroy = HYPRE_ILUDestroy;
+    mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
+    mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;
+    mgrData.coarseSolver.destroy = HYPRE_BoomerAMGDestroy;
   }
 };
 

@@ -79,7 +79,7 @@ public:
     m_levelInterpType[2] = 2;
 
     m_globalSmoothType = 16; // ILU(0)
-    m_numGlobalSmoothSweeps = 0;
+    m_numGlobalSmoothSweeps = 0; // No global smoother
   }
 
   /**
