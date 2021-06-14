@@ -146,6 +146,7 @@ public:
 
 };
 
+}
 } /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_ */
