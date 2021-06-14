@@ -99,16 +99,22 @@ struct PVTFunctionHelpers
       real64 const PEnd = stod( inputParameters[3] );
       real64 const dP = stod( inputParameters[4] );
 
+      GEOSX_THROW_IF( PStart >= PEnd, "PStart must be strictly smaller than PEnd",
+                      InputError );
+
       constexpr real64 T_K = 273.15;
 
       real64 const TStart = stod( inputParameters[5] ) - T_K;
       real64 const TEnd = stod( inputParameters[6] ) - T_K;
       real64 const dT = stod( inputParameters[7] );
 
-      GEOSX_THROW_IF( TStart < 0, "Temperature must be in Kelvin and must be positive",
+      GEOSX_THROW_IF( TStart < 10, "Temperature must be in Kelvin and must be larger than 283.15 K",
                       InputError );
-      GEOSX_THROW_IF( TEnd < 0, "Temperature must be in Kelvin and must be positive",
+      GEOSX_THROW_IF( TEnd > 350, "Temperature must be in Kelvin and must be smaller than 623.15 K",
                       InputError );
+      GEOSX_THROW_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
+                      InputError );
+
 
       for( real64 P = PStart; P <= PEnd; P += dP )
       {
