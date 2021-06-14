@@ -81,7 +81,7 @@ public:
     m_levelInterpType[1] = 2;       // diagonal scaling (Jacobi)
     m_levelCoarseGridMethod[1] = 0; // standard Galerkin
     m_levelInterpType[2] = 2;       // diagonal scaling (Jacobi)
-    m_levelCoarseGridMethod[0] = 0; // standard Galerkin
+    m_levelCoarseGridMethod[2] = 0; // standard Galerkin
 
 //    m_globalSmoothType = 16; // ILU(0)
     m_numGlobalSmoothSweeps = 0;
