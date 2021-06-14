@@ -69,60 +69,62 @@ for R in listR:
 	listSrr.append(result[2])
 	listStt.append(result[3])
 
-listr = [R*a for R in listR]
-listT = [P*T0 for P in listP]
+r_anal = [R*a for R in listR]
+T_anal = [P*T0 for P in listP]
 
-listSigrrTot = [1e-6*Srr*thermalStressCoeff*(1.-2.*nu)/(1.-nu)*T0 for Srr in listSrr]
-listSigttTot = [1e-6*Stt*thermalStressCoeff*(1.-2.*nu)/(1.-nu)*T0 for Stt in listStt]
-listSigrr = [1e-6*thermalStressCoeff*val1+val2 for val1,val2 in zip(listT, listSigrrTot)]
-listSigtt = [1e-6*thermalStressCoeff*val1+val2 for val1,val2 in zip(listT, listSigttTot)]
+sigrr_anal = [1e-6*Srr*thermalStressCoeff*(1.-2.*nu)/(1.-nu)*T0 for Srr in listSrr]
+sigtt_anal = [1e-6*Stt*thermalStressCoeff*(1.-2.*nu)/(1.-nu)*T0 for Stt in listStt]
 
 fig = plt.figure(figsize=[13,10])
 
-plt.subplot(221)
-plt.plot(listr,listT, 'k', linewidth=2, label='Analytic')
-
-
-x, y = [], []
+# Temperature
+r_geosx, T_geosx = [], []
 for line in open('temperature.curve', 'r'):
 	if not (line.strip().startswith("#") or line.strip()==''):
 		values = [float(s) for s in line.split()]
-		x.append(values[0])
-		y.append(values[1])
-plt.plot(x,y,'ko', label='GEOSX result')
+		rVal = values[0]
+		TVal = values[1]
+
+		r_geosx.append( rVal )
+		T_geosx.append( TVal )
+
+plt.subplot(221)
+plt.plot(r_geosx, T_geosx, 'ko', label='GEOSX result')
+plt.plot(r_anal, T_anal,  'r', linewidth=2, label='Analytic')
 plt.ylabel('Temperature (C)')
-plt.xlim(a, 10*a)
-plt.ylim(0, 100)
+plt.xlabel('Radial coordinate (m)')
+plt.xlim(a,10*a)
 plt.legend()
 
-plt.subplot(223)
-plt.plot(listr,listSigrr, 'k', linewidth=2, label='Analytic')
-
-x, y = [], []
+# Radial stress
+sigrr_geosx = []
 for line in open('radialStress.curve', 'r'):
 	if not (line.strip().startswith("#") or line.strip()==''):
 		values = [float(s) for s in line.split()]
-		x.append(values[0])
-		y.append(values[1]*1e-6)
-plt.plot(x,y,'ko', label='GEOSX result')
-plt.xlabel('r (m)')
-plt.ylabel('Radial stress - thermal stress (MPa)')
-plt.xlim(a, 10*a)
-plt.ylim(0, 1)
+		sigrrVal = values[1]
+		sigrr_geosx.append( sigrrVal*1e-6 ) 
+
+plt.subplot(223)
+plt.plot(r_geosx, [val1-1e4*val2*1e-6 for val1, val2 in zip(sigrr_geosx, T_geosx) ], 'ko', label='GEOSX result')
+plt.plot(r_anal, sigrr_anal,  'r', linewidth=2, label='Analytic')
+plt.ylabel('Radial stress (MPa)')
+plt.xlabel('Radial coordinate (m)')
+plt.xlim(a,10*a)
 
 
-plt.subplot(224)
-plt.plot(listr,listSigtt, 'k', linewidth=2, label='Analytic')
-
-x, y = [], []
+# Tangent stress
+sigtt_geosx = []
 for line in open('tangentStress.curve', 'r'):
 	if not (line.strip().startswith("#") or line.strip()==''):
 		values = [float(s) for s in line.split()]
-		x.append(values[0])
-		y.append(values[1]*1e-6)
-plt.plot(x,y,'ko', label='GEOSX result')
-plt.xlabel('r (m)')
-plt.ylabel('Tangent stress - thermal stress (MPa)')
-plt.xlim(a, 10*a)
-plt.ylim(0, 0.5)
+		sigttVal = values[1]
+		sigtt_geosx.append( sigttVal*1e-6 ) 
+
+plt.subplot(224)
+plt.plot(r_geosx, [val1-1e4*val2*1e-6 for val1, val2 in zip(sigtt_geosx, T_geosx) ], 'ko', label='GEOSX result')
+plt.plot(r_anal, sigtt_anal,  'r', linewidth=2, label='Analytic')
+plt.ylabel('Tangent stress (MPa)')
+plt.xlabel('Radial coordinate (m)')
+plt.xlim(a,10*a)
+
 plt.show()
