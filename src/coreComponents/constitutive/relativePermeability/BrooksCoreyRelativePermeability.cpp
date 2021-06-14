@@ -59,6 +59,19 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
 BrooksCoreyRelativePermeability::~BrooksCoreyRelativePermeability()
 {}
 
+namespace
+{
+
+template< typename ARRAY >
+void checkInputSize( ARRAY const & array, localIndex const expected, string const & attr )
+{
+  GEOSX_THROW_IF_NE_MSG( array.size(), expected,
+                         "BrooksCoreyRelativePermeability: invalid number of entries in " << attr << " attribute",
+                         InputError );
+
+}
+
+}
 
 void BrooksCoreyRelativePermeability::postProcessInput()
 {
@@ -66,36 +79,28 @@ void BrooksCoreyRelativePermeability::postProcessInput()
 
   localIndex const numPhases = numFluidPhases();
 
-  #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
-    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-    { \
-      GEOSX_ERROR( "BrooksCoreyRelativePermeability: invalid number of entries in " \
-                   << (attr) << " attribute (" \
-                   << (data).size() << "given, " \
-                   << (expected) << " expected)" ); \
-    }
-
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString() )
-  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermExponent, numPhases, viewKeyStruct::phaseRelPermExponentString() )
-  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermMaxValue, numPhases, viewKeyStruct::phaseRelPermMaxValueString() )
-
-#undef COREY_CHECK_INPUT_LENGTH
+  checkInputSize( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString() );
+  checkInputSize( m_phaseRelPermExponent, numPhases, viewKeyStruct::phaseRelPermExponentString() );
+  checkInputSize( m_phaseRelPermMaxValue, numPhases, viewKeyStruct::phaseRelPermMaxValueString() );
 
   m_volFracScale = 1.0;
   for( localIndex ip = 0; ip < numPhases; ++ip )
   {
-    GEOSX_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
-                    "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
+    GEOSX_THROW_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
+                    "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip],
+                    InputError );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
-    GEOSX_ERROR_IF( m_phaseRelPermExponent[ip] < 0.0,
-                    "BrooksCoreyRelativePermeability: invalid exponent value: " << m_phaseRelPermExponent[ip] );
+    GEOSX_THROW_IF( m_phaseRelPermExponent[ip] < 0.0,
+                    "BrooksCoreyRelativePermeability: invalid exponent value: " << m_phaseRelPermExponent[ip],
+                    InputError );
 
-    GEOSX_ERROR_IF( m_phaseRelPermMaxValue[ip] < 0.0 || m_phaseRelPermMaxValue[ip] > 1.0,
-                    "BrooksCoreyRelativePermeability: invalid maximum value: " << m_phaseRelPermMaxValue[ip] );
+    GEOSX_THROW_IF( m_phaseRelPermMaxValue[ip] < 0.0 || m_phaseRelPermMaxValue[ip] > 1.0,
+                    "BrooksCoreyRelativePermeability: invalid maximum value: " << m_phaseRelPermMaxValue[ip],
+                    InputError );
   }
 
-  GEOSX_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0" );
+  GEOSX_THROW_IF( m_volFracScale < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0", InputError );
 }
 
 BrooksCoreyRelativePermeability::KernelWrapper BrooksCoreyRelativePermeability::createKernelWrapper()
