@@ -37,10 +37,10 @@ template< typename PORO_TYPE >
 CompressibleSolid< PORO_TYPE >::~CompressibleSolid()
 {}
 
-//// Register all CoupleSolid model types.
-//typedef CompressibleSolid< PressurePorosity > CompressibleRock;
-//
-//REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRock, string const &, Group * const )
+// Register all CoupleSolid model types.
+typedef CompressibleSolid< PressurePorosity > CompressibleRock;
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRock, string const &, Group * const )
 
 }
 } /* namespace geosx */

@@ -57,6 +57,16 @@ public:
   /// Deleted move assignment operator
   CoupledSolidUpdates & operator=( CoupledSolidUpdates && ) =  delete;
 
+  typename SOLID_TYPE::KernelWrapper const getSolidModel() const
+  {
+    return m_solidUpdate;
+  }
+
+  typename PORO_TYPE::KernelWrapper const getPorosityModel() const
+  {
+    return m_porosityUpdate;
+  }
+
 protected:
   typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
 
@@ -134,6 +144,38 @@ protected:
 
   // PERMEABILITY_TYPE * m_permModel;
 };
+
+
+template< typename SOLID_TYPE,
+          typename PORO_TYPE >
+CoupledSolid< SOLID_TYPE, PORO_TYPE >::CoupledSolid( string const & name, Group * const parent ):
+  ConstitutiveBase( name, parent ),
+  m_solidModel( nullptr ),
+  m_porosityModel( nullptr ),
+  m_solidModelName(),
+  m_porosityModelName()
+{
+  registerWrapper( viewKeyStruct::solidModelNameString(), &m_solidModelName ).
+    setInputFlag( dataRepository::InputFlags::REQUIRED ).
+    setDescription( "Name of the solid model." );
+
+  registerWrapper( viewKeyStruct::porosityModelNameString(), &m_porosityModelName ).
+    setInputFlag( dataRepository::InputFlags::REQUIRED ).
+    setDescription( "Name of the porosity model." );
+}
+
+template< typename SOLID_TYPE,
+          typename PORO_TYPE >
+CoupledSolid< SOLID_TYPE, PORO_TYPE >::~CoupledSolid()
+{}
+
+template< typename SOLID_TYPE,
+          typename PORO_TYPE >
+void CoupledSolid< SOLID_TYPE, PORO_TYPE >::postProcessInput()
+{
+  m_solidModel = &this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName );
+  m_porosityModel = &this->getParent().template getGroup< PORO_TYPE >( m_porosityModelName );
+}
 
 
 }

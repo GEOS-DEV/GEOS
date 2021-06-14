@@ -43,6 +43,7 @@ public:
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_solidUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_porosityUpdate;
 
+  using DiscretizationOps = typename SOLID_TYPE::KernelWrapper::DiscretizationOps;
 
   /**
    * @brief Constructor
@@ -78,7 +79,7 @@ public:
                           real64 & dPorosity_dPressure,
                           real64 & dPorosity_dVolStrain,
                           real64 & dTotalStress_dPressure,
-                          typename SOLID_TYPE::KernelWrapper::DiscretizationOps & stiffness ) const
+                          DiscretizationOps & stiffness ) const
   {
     m_solidUpdate.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
@@ -122,6 +123,9 @@ public:
   using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_solidModel;
   using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_porosityModel;
 
+  /// Alias for ElasticIsotropicUpdates
+  using KernelWrapper = PorousSolidUpdates< SOLID_TYPE >;
+
   /**
    * @brief Constructor
    * @param name Object name
@@ -143,6 +147,36 @@ public:
    * @return Catalog name string
    */
   virtual string getCatalogName() const override { return catalogName(); }
+
+  /**
+   * @brief Create a instantiation of the PorousSolidUpdates class
+   *        that refers to the data in this.
+   * @return An instantiation of PorousSolidUpdates.
+   */
+  KernelWrapper createKernelUpdates() const
+  {
+
+    return KernelWrapper( m_solidModel,
+                          m_porosityModel );
+  }
+
+  /**
+   * @brief Non-const/Mutable accessor for density.
+   * @return Accessor
+   */
+  arrayView2d< real64 > const getDensity()
+  {
+    return m_solidModel->getDensity();
+  }
+
+  /**
+   * @brief Const/non-mutable accessor for density
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const getDensity() const
+  {
+    return m_solidModel->getDensity();
+  }
 
 };
 

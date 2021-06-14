@@ -22,6 +22,7 @@
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
+#include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
@@ -208,7 +209,7 @@ void MultiphasePoroelasticSolver::assembleSystem( real64 const time_n,
   m_solidSolver->getMaxForce() =
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::PoroElasticBase,
+                                    constitutive::PorousSolidBase,
                                     CellElementSubRegion >( mesh,
                                                             targetRegionNames(),
                                                             this->getDiscretizationName(),
