@@ -46,7 +46,7 @@
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 40 }"
+      nx="{ 25 }"
       ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>

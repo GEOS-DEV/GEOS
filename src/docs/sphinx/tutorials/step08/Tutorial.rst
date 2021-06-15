@@ -328,18 +328,8 @@ times with the numerical solution (markers).
 
    def getAppliedTractionFromXML( xmlFilePath ):
        tree = ElementTree.parse(xmlFilePath)
-
-       param = tree.findall('FieldSpecifications/FieldSpecification')
-
-       found_traction = False
-       for elem in param:
-           if elem.get("fieldName") == "Traction" and elem.get("component") == "0":
-               traction = float(elem.get("scale"))
-               found_traction = True
-
-           if found_traction: break
-
-       return traction
+       param = tree.find('FieldSpecifications/Traction')
+       return float(param.get("scale"))
 
 
    def getDomainMaxMinXCoordFromXML(xmlFilePath):
