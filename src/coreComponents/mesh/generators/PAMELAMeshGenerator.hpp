@@ -147,7 +147,27 @@ public:
     static string retrieveSurfaceOrRegionName( string const & pamelaLabel )
     {
       string_array const splitLabel = stringutilities::tokenize( pamelaLabel, m_separator );
-      return splitLabel[splitLabel.size() -2 ];
+
+      // The PAMELA label looks like: PART00002_POLYGON_POLYGON_GROUP_Ovbd1_Ovbd2_14
+      // But we only want to keep Ovbd1_Ovbd2
+      // So we find the word GROUP, and then we keep what is after, except the last piece
+
+      auto it = std::find( std::begin( splitLabel ), std::end( splitLabel ), "GROUP" );
+
+      GEOSX_THROW_IF( it == std::end( splitLabel ),
+                      "GEOSX assumes that PAMELA places the word GROUP before the region/surface name", InputError );
+
+      localIndex const id = std::distance( std::begin( splitLabel ), it );
+      string name = "";
+      for( localIndex i = id+1; i < splitLabel.size()-1; ++i )
+      {
+        name += ( i == id+1 ) ? splitLabel[i] : "_"+splitLabel[i];
+      }
+
+      GEOSX_THROW_IF( name == "",
+                      "Something unexpected happened when converting the PAMELA label into a GEOSX label", InputError );
+
+      return name;
     }
 private:
     static string const m_separator;
