@@ -342,28 +342,28 @@ void VTKPolyDataWriterInterface::writeElementFields( vtkSmartPointer< vtkCellDat
 
     // First, check if the field requires a special treatment. For now, array4d< real64 > (for instance, for phaseCompFraction) are
     // treated separately to make sure that they can be easily visualized in Paraview.
-    bool is4DField = false;
+    int numArrayDims = 0;
+
     er.forElementSubRegions< SUBREGION >( [&]( auto const & esr )
     {
       WrapperBase const & wrapper = esr.getWrapperBase( field );
-      std::type_info const & typeID = wrapper.getTypeId();
-      if( typeID==typeid(array4d< real64 >) )
-      {
-        is4DField = true;
-      }
+      numArrayDims = wrapper.numArrayDims();
     } );
 
     // Then, output the field to VTK
     // Note: fields with 5 dimensions or more are not supported and are not output to file below
-    if( is4DField )
+    if( numArrayDims < 4 )
     {
-      // If the field has four dimensions, we apply it a special treatment in the following function
+      // If the field has three dimensions or less, it can be output in a generic fashion
+      writeElementField1D2D3D< SUBREGION >( celldata, er, field );
+    }
+    else if( numArrayDims == 4 )
+    {
       writeElementField4D< SUBREGION >( celldata, er, field );
     }
     else
     {
-      // If the field has three dimensions or less, it can be output in a generic fashion
-      writeElementField1D2D3D< SUBREGION >( celldata, er, field );
+      GEOSX_ERROR( "Fields with more than 4 dimensions cannot be output to VTK" );
     }
   }
 }
