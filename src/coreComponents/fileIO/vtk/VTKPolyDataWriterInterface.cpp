@@ -363,15 +363,15 @@ void VTKPolyDataWriterInterface::writeElementFields( vtkSmartPointer< vtkCellDat
     else
     {
       // If the field has three dimensions or less, it can be output in a generic fashion
-      writeElementField2D3D< SUBREGION >( celldata, er, field );
+      writeElementField1D2D3D< SUBREGION >( celldata, er, field );
     }
   }
 }
 
 template< class SUBREGION >
-void VTKPolyDataWriterInterface::writeElementField2D3D( vtkSmartPointer< vtkCellData > const celldata,
-                                                        ElementRegionBase const & er,
-                                                        string const & field ) const
+void VTKPolyDataWriterInterface::writeElementField1D2D3D( vtkSmartPointer< vtkCellData > const celldata,
+                                                          ElementRegionBase const & er,
+                                                          string const & field ) const
 {
   localIndex count = 0;
 
@@ -433,6 +433,10 @@ void VTKPolyDataWriterInterface::writeElementField4D( vtkSmartPointer< vtkCellDa
       er.forElementSubRegions< SUBREGION >( [&]( auto const & esr )
       {
         WrapperBase const & wrapper = esr.getWrapperBase( field );
+        std::type_info const & typeID = wrapper.getTypeId();
+        GEOSX_THROW_IF( typeID!=typeid(array4d< real64 >),
+                        "This function is specific to array4d< real64 >", InputError );
+
         Wrapper< array4d< real64 > > const & wrapperT = dynamicCast< Wrapper< array4d< real64 > > const & >( wrapper );
         traits::ViewTypeConst< array4d< real64 > > const sourceArray = wrapperT.reference().toViewConst();
 

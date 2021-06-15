@@ -45,19 +45,19 @@ enum struct VTKOutputMode
   ASCII
 };
 
-/*!
+/**
  * @brief Encapsulate output methods for vtk
  */
 class VTKPolyDataWriterInterface
 {
 public:
-  /*!
+  /**
    * @brief Constructor
    * @param[in] outputName folder name in which all the files will be written
    */
   explicit VTKPolyDataWriterInterface( string outputName );
 
-  /*!
+  /**
    * @brief Sets the plot level
    * @details All fields have an associated plot level. If it is <= to \p plotLevel,
    * the field will be output.
@@ -68,7 +68,7 @@ public:
     m_plotLevel = dataRepository::toPlotLevel( plotLevel );
   }
 
-  /*!
+  /**
    * @brief Set the binary mode
    * @param[in] mode output mode to be set
    */
@@ -77,7 +77,7 @@ public:
     m_outputMode = mode;
   }
 
-  /*!
+  /**
    * @brief Set the output directory name
    * @param[in] outputDir global output directory location
    * @param[in] outputName name of the VTK output subdirectory and corresponding PVD file
@@ -89,7 +89,7 @@ public:
     m_pvd.setFileName( joinPath( m_outputDir, m_outputName ) + ".pvd" );
   }
 
-  /*!
+  /**
    * @brief Main method of this class. Write all the files for one time step.
    * @details This method writes a .pvd file (if a previous one was created from a precedent time step,
    * it is overwritten). The .pvd file contains relative path to every .vtm files (one vtm file per time step).
@@ -126,7 +126,7 @@ public:
 
 private:
 
-  /*!
+  /**
    * @brief Given a time-step \p time, returns the relative path
    * to the subfolder containing the files concerning this time-step
    * @param[in] time the time-step
@@ -134,7 +134,7 @@ private:
    */
   string getTimeStepSubFolder( real64 time ) const;
 
-  /*!
+  /**
    * @brief Writes the files for all the CellElementRegions.
    * @details There will be one file written per CellElementRegion and per rank.
    * @param[in] time the time-step
@@ -145,7 +145,7 @@ private:
                                 ElementRegionManager const & elemManager,
                                 NodeManager const & nodeManager ) const;
 
-  /*!
+  /**
    * @brief Gets the cell connectivities as
    * a VTK object for the CellElementRegion \p er
    * @param[in] er the CellElementRegion to be written
@@ -156,14 +156,14 @@ private:
   std::pair< std::vector< int >, vtkSmartPointer< vtkCellArray > >
   getVtkCells( CellElementRegion const & er ) const;
 
-  /*!
+  /**
    * @brief Gets the vertices coordinates
    * as a VTK Object for \p nodeManager
    * @param[in] nodeManager the NodeManager associated with the domain being written
    */
   vtkSmartPointer< vtkPoints > getVtkPoints( NodeManager const & nodeManager ) const;
 
-  /*!
+  /**
    * @brief Writes the files containing the well representation
    * @details There will be one file written per WellElementRegion and per rank
    * @param[in] time the time-step
@@ -173,7 +173,7 @@ private:
   void writeWellElementRegions( real64 time, ElementRegionManager const & elemManager,
                                 NodeManager const & nodeManager ) const;
 
-  /*!
+  /**
    * @brief Gets the cell connectivities and the vertices coordinates
    * as VTK objects for a specific WellElementSubRegion
    * @param[in] esr the WellElementSubRegion to be output
@@ -185,7 +185,7 @@ private:
   getWell( WellElementSubRegion const & esr,
            NodeManager const & nodeManager ) const;
 
-  /*!
+  /**
    * @brief Gets the cell connectivities and the vertices coordinates
    * as VTK objects for a specific FaceElementSubRegion
    * @param[in] esr the FaceElementSubRegion to be output
@@ -197,7 +197,7 @@ private:
   getSurface( FaceElementSubRegion const & esr,
               NodeManager const & nodeManager ) const;
 
-  /*!
+  /**
    * @brief Gets the cell connectivities and the vertices coordinates
    * as VTK objects for a specific EmbeddedSurafaceSubRegion
    * @param[in] esr the EmbeddedSurfaceSubRegion to be output
@@ -211,7 +211,7 @@ private:
   getEmbeddedSurface( EmbeddedSurfaceSubRegion const & esr,
                       EmbeddedSurfaceNodeManager const & nodeManager ) const;
 
-  /*!
+  /**
    * @brief Writes the files containing the faces elements
    * @details There will be one file written per FaceElementRegion and per rank
    * @param[in] time the time-step
@@ -223,7 +223,7 @@ private:
                                    NodeManager const & nodeManager,
                                    EmbeddedSurfaceNodeManager const & embSurfNodeManager ) const;
 
-  /*!
+  /**
    * @brief Writes a VTM file for the time-step \p time.
    * @details a VTM file is a VTK Multiblock file. It contains reltive path to different files organized in blocks.
    * @param[in] time the time-step
@@ -234,7 +234,7 @@ private:
                      ElementRegionManager const & elemManager,
                      VTKVTMWriter const & vtmWriter ) const;
 
-  /*!
+  /**
    * @brief Write all the fields associated to the nodes of \p nodeManager if their plotlevel is <= m_plotLevel
    * @param[in] pointdata a VTK object containing all the fields associated with the nodes
    * @param[in] nodeManager the NodeManager associated with the domain being written
@@ -242,7 +242,7 @@ private:
   void writeNodeFields( vtkSmartPointer< vtkPointData > pointdata,
                         NodeManager const & nodeManager ) const;
 
-  /*!
+  /**
    * @brief Writes all the fields associated to the elements of \p er if their plotlevel is <= m_plotLevel
    * @param[in] celldata a VTK object containing all the fields associated with the elements
    * @param[in] er ElementRegion being written
@@ -251,21 +251,29 @@ private:
   void writeElementFields( vtkSmartPointer< vtkCellData > celldata,
                            ElementRegionBase const & er ) const;
 
-  /*!
+  /**
    * @brief Writes all the fields with up to 3 dimensions associated to the elements of \p er if their plotlevel is <= m_plotLevel
    * @param[in] celldata a VTK object containing all the fields associated with the elements
    * @param[in] er ElementRegion being written
    * @param[in] field the name of the field being written
    */
   template< class SUBREGION >
-  void writeElementField2D3D( vtkSmartPointer< vtkCellData > const celldata,
-                              ElementRegionBase const & er,
-                              string const & field ) const;
+  void writeElementField1D2D3D( vtkSmartPointer< vtkCellData > const celldata,
+                                ElementRegionBase const & er,
+                                string const & field ) const;
 
-  /*!
-   * @brief Writes all the 4D fields associated to the elements of \p er if their plotlevel is <= m_plotLevel
+  /**
+   * @brief Writes all the fields with 4 dimensions associated to the elements of \p er if their plotlevel is <= m_plotLevel
    *        Considering that the second dimension has size N and the third dimension has size M, this
-   *        function will write MxN fields to VTK
+   *        function will write NxM fields to VTK. In Paraview, one will be able to select the NxM fields:
+   *            field_0_0
+   *              |
+   *            field_0_(M-1)
+   *              |
+   *            field_(N-1)_0
+   *              |
+   *            field_(N-1)_(M-1)
+   *
    * @param[in] celldata a VTK object containing all the fields associated with the elements
    * @param[in] er ElementRegion being written
    * @param[in] field the name of the 4D field being written
@@ -276,7 +284,7 @@ private:
                             string const & field ) const;
 
 
-  /*!
+  /**
    * @brief Writes a field from \p wrapperBase
    * @details Sets the number of components, the number of value and fill the VTK data structure using
    * a wrapper around a field.
@@ -291,7 +299,7 @@ private:
                    localIndex size,
                    localIndex & count ) const;
 
-  /*!
+  /**
    * @brief Writes an unstructured grid
    * @details The unstructured grid is the last element in the hiearchy of the output,
    * it contains the cells connectivities and the vertices coordinates as long as the
@@ -304,7 +312,7 @@ private:
                               real64 time,
                               string const & name ) const;
 
-  /*!
+  /**
    * @brief Writes timestamp information required by VisIt
    * @param[in] ug a VTK SmartPointer to the VTK unstructured grid.
    * @param[in] time the current time-step
