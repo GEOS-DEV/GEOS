@@ -6,6 +6,7 @@ Created on 8/02/2021
 
 import numpy as np
 import pygeosx
+from math import ceil
 
 from segyManager import *
 from fileManager import rootPath
@@ -41,13 +42,13 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
 
 
     #Get Wrappers
-    src_pos_geosx   = acoustic_group.get_wrapper("sourceCoordinates").value()
+    src_pos_geosx  = acoustic_group.get_wrapper("sourceCoordinates").value()
     src_pos_geosx.set_access_level(pygeosx.pylvarray.MODIFIABLE)
 
-    rcv_pos_geosx   = acoustic_group.get_wrapper("receiverCoordinates").value()
+    rcv_pos_geosx  = acoustic_group.get_wrapper("receiverCoordinates").value()
     rcv_pos_geosx.set_access_level(pygeosx.pylvarray.RESIZEABLE)
 
-    pressure_geosx  = acoustic_group.get_wrapper("pressureNp1AtReceivers").value()
+    pressure_geosx = acoustic_group.get_wrapper("pressureNp1AtReceivers").value()
 
     pressure_nm1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/pressure_nm1").value()
     pressure_nm1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
@@ -58,9 +59,12 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
     pressure_np1 = problem.get_wrapper("domain/MeshBodies/mesh/Level0/nodeManager/pressure_np1").value()
     pressure_np1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
 
+    nsamples = acoustic_group.get_wrapper("nSampleSismoTrace").value()
     outputSismoTrace = acoustic_group.get_wrapper("outputSismoTrace").value()
+    indexSismoTrace = acoustic_group.get_wrapper("indexSismoTrace").value()
 
     dt_geosx   = problem.get_wrapper("Events/solverApplications/forceDt").value()
+    dt_sismo   = acoustic_group.get_wrapper("dtSismoTrace").value()
     maxT       = problem.get_wrapper("Events/maxTime").value()
     cycle_freq = problem.get_wrapper("Events/python/cycleFrequency").value()
     cycle      = problem.get_wrapper("Events/python/lastCycle").value()
@@ -68,11 +72,12 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
 
     dt            = shot_list[0].getSource().getTimeStep()
     dt_geosx[0]   = dt
-    maxCycle      = int(maxT[0]/dt)
-    cycle_freq[0] = 1
-    maxT[0]       = (maxCycle+1) * dt
+    maxCycle      = int(ceil(maxT[0]/dt))
+    cycle_freq[0] = maxCycle
+    maxT[0]       = (maxCycle+1)*dt
+    nsamples[0]   = int(maxT[0]/dt_sismo)
 
-    pressure_at_receivers = np.zeros((maxCycle+1, shot_list[0].getReceiverSet().getNumberOfReceivers()))
+    pressure_at_receivers = np.zeros((nsamples[0], shot_list[0].getReceiverSet().getNumberOfReceivers()))
     nb_shot = len(shot_list)
 
     if outputSismoTrace == 1 :
@@ -85,7 +90,7 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
                 pass
             else:
                 os.mkdir(tracePath)
-            create_segy(shot_list, "pressure", maxCycle+1, tracePath)
+            create_segy(shot_list, "pressure", nsamples[0], tracePath)
 
 
     ishot = 0
@@ -107,11 +112,8 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
 
     while (np.array([shot.getFlag() for shot in shot_list]) == "Done").all() != True and pygeosx.run() != pygeosx.COMPLETED:
         #Save pressure
-        if cycle[0] < (ishot+1) * maxCycle:
-            pressure_at_receivers[cycle[0] - ishot * maxCycle, :] = pressure_geosx.to_numpy()[:]
-
-        else:
-            pressure_at_receivers[maxCycle, :] = pressure_geosx.to_numpy()[:]
+        if cycle[0] !=0 :
+            pressure_at_receivers[:, :] = pressure_geosx.to_numpy().transpose()
 
             #Segy export and flag update
             if outputSismoTrace == 1 :
@@ -124,9 +126,11 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
 
             #Reset time to -dt and pressure to 0
             curr_time[0]               = -dt
+            cycle_freq[0]              = maxCycle + 1
             pressure_nm1.to_numpy()[:] = 0.0
             pressure_n.to_numpy()[:]   = 0.0
             pressure_np1.to_numpy()[:] = 0.0
+            indexSismoTrace[0]         = 0
 
             #Increment shot
             ishot += 1

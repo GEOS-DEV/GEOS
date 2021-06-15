@@ -4,7 +4,7 @@ Created on 9/02/2021
 @author: macpro
 '''
 
-from processSpawn import firstInit, multiProcessing, daskProcessing
+from scheduler import firstInit, multiProcessing, daskProcessing
 from seismicAcquisition import equispaced_acquisition
 from source import ricker
 from fileManager import parse_args
