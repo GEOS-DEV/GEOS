@@ -46,7 +46,7 @@
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
+      nx="{ 40 }"
       ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
@@ -248,13 +248,14 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
 
-    <FieldSpecification
+    <Traction
       name="xposconstraint"
-      component="0"
-      setNames="{ xneg }"
       objectPath="faceManager"
-      fieldName="Traction"
-      scale="1.0"/>
+      direction="{1,0,0}"
+      tractionType="vector"
+      scale="1.0e0"
+      setNames="{ xneg }"
+      functionName="timeFunction"/>
 
     <FieldSpecification
       name="boundaryPressure"
@@ -263,6 +264,14 @@
       fieldName="pressure"
       scale="0.0"/>
   </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 0.1e-09, 1e7 }"
+      values="{ 0.0, 1.0, 1.0 }"/>
+  </Functions>
 
   <Outputs>
     <Silo

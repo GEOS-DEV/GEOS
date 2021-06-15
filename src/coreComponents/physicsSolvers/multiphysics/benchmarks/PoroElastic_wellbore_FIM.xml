@@ -11,15 +11,18 @@
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="SIM_FixedStress"
+      couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Omega }">
       <!-- SPHINX_PoroelasticSolverEnd -->
       <NonlinearSolverParameters
-        newtonMaxIter="40"/>
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
       <LinearSolverParameters
-        logLevel="2"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="1"/>
     </SinglePhasePoromechanics>
 
     <!-- SPHINX_SolidMechanicsSolver -->
@@ -31,13 +34,6 @@
       targetRegions="{ Omega }"
       solidMaterialNames="{ rock }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"/>
-      <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <!-- SPHINX_SinglePhaseFVM -->
@@ -49,13 +45,6 @@
       fluidNames="{ water }"
       solidNames="{ rock }">
       <!-- SPHINX_SinglePhaseFVMEnd -->
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-8"
-        logLevel="2"/>
     </SinglePhaseFVM>
   </Solvers>
 
