@@ -72,7 +72,6 @@ public:
   GEOSX_FORCE_INLINE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
-                          real64 const & pressure,
                           real64 const & deltaPressure,
                           real64 const ( &strainIncrement )[6],
                           real64 ( & stress )[6],
@@ -87,7 +86,6 @@ public:
 
     m_porosityUpdate.updatePorosity( k,
                                      q,
-                                     pressure,
                                      deltaPressure,
                                      strainIncrement,
                                      dPorosity_dPressure,

@@ -57,11 +57,15 @@ public:
   /// Deleted move assignment operator
   CoupledSolidUpdates & operator=( CoupledSolidUpdates && ) =  delete;
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   typename SOLID_TYPE::KernelWrapper const getSolidModel() const
   {
     return m_solidUpdate;
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   typename PORO_TYPE::KernelWrapper const getPorosityModel() const
   {
     return m_porosityUpdate;

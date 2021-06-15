@@ -260,7 +260,6 @@ public:
 
     m_constitutiveUpdate.smallStrainUpdate( k,
                                             q,
-                                            m_fluidPressure[k],
                                             m_deltaFluidPressure[k],
                                             strainIncrement,
                                             totalStress,

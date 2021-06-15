@@ -219,7 +219,7 @@ struct ConstitutivePassThru< PorousSolidBase >
     }
     else if( auto * const ptr5 = dynamic_cast< PorousSolid< DamageSpectral< ElasticIsotropic > > * >( &constitutiveRelation ) )
     {
-         lambda( *ptr5 );
+      lambda( *ptr5 );
     }
     else if( auto * const ptr6 = dynamic_cast< PorousSolid< DamageVolDev< ElasticIsotropic > > * >( &constitutiveRelation ) )
     {
