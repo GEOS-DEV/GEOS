@@ -252,7 +252,7 @@ template< typename T, int USD=3 >
 using arrayView4d = ArrayView< T, 4, USD >;
 
 /// Alias for 4D array slice.
-template< typename T, int USD=4 >
+template< typename T, int USD=3 >
 using arraySlice4d = ArraySlice< T, 4, USD >;
 
 /// Alias for 4D stack array.

@@ -398,14 +398,14 @@ void VTKPolyDataWriterInterface::writeElementField4D( vtkSmartPointer< vtkCellDa
   er.forElementSubRegions< SUBREGION >( [&]( auto const & esr )
   {
     WrapperBase const & wrapper = esr.getWrapperBase( field );
-    std::type_info const & typeID = wrapper.getTypeId();
-    GEOSX_THROW_IF( typeID!=typeid(array4d< real64 >),
-                    "This function is specific to array4d< real64 >", InputError );
+    Wrapper< array4d< real64 > > const & wrapperT = reinterpret_cast< Wrapper< array4d< real64 > > const & >( wrapper );
+    arrayView4d< real64 const > const & sourceArray = wrapperT.reference();
+    sourceArray.move( LvArray::MemorySpace::host, true );
+    arraySlice4d< real64 const > const & tmp = sourceArray.toSliceConst();
+    arraySlice4d< real64 const, -1 > const & sourceSlice = reinterpret_cast< arraySlice4d< real64 const, -1 > const & >( tmp );
 
-    Wrapper< array4d< real64 > > const & wrapperT = dynamicCast< Wrapper< array4d< real64 > > const & >( wrapper );
-    traits::ViewTypeConst< array4d< real64 > > const sourceArray = wrapperT.reference().toViewConst();
-    nCompInSecondDim = sourceArray.size( 1 );
-    nCompInThirdDim = sourceArray.size( 2 );
+    nCompInSecondDim = sourceSlice.size( 1 );
+    nCompInThirdDim = sourceSlice.size( 2 );
   } );
 
   // Step 2: we know how many components we have in the two dimensions that will be displayed component by component
@@ -433,19 +433,18 @@ void VTKPolyDataWriterInterface::writeElementField4D( vtkSmartPointer< vtkCellDa
       er.forElementSubRegions< SUBREGION >( [&]( auto const & esr )
       {
         WrapperBase const & wrapper = esr.getWrapperBase( field );
-        std::type_info const & typeID = wrapper.getTypeId();
-        GEOSX_THROW_IF( typeID!=typeid(array4d< real64 >),
-                        "This function is specific to array4d< real64 >", InputError );
+        Wrapper< array4d< real64 > > const & wrapperT = reinterpret_cast< Wrapper< array4d< real64 > > const & >( wrapper );
+        arrayView4d< real64 const > const & sourceArray = wrapperT.reference();
+        // data has already been moved back to host at this point
+        arraySlice4d< real64 const > const & tmp = sourceArray.toSliceConst();
+        arraySlice4d< real64 const, -1 > const & sourceSlice = reinterpret_cast< arraySlice4d< real64 const, -1 > const & >( tmp );
 
-        Wrapper< array4d< real64 > > const & wrapperT = dynamicCast< Wrapper< array4d< real64 > > const & >( wrapper );
-        traits::ViewTypeConst< array4d< real64 > > const sourceArray = wrapperT.reference().toViewConst();
-
-        data->SetNumberOfComponents( sourceArray.size( 3 ) );
-        for( localIndex i = 0; i < sourceArray.size( 0 ); ++i )
+        data->SetNumberOfComponents( sourceSlice.size( 3 ) );
+        for( localIndex i = 0; i < sourceSlice.size( 0 ); ++i )
         {
-          for( localIndex j = 0; j < sourceArray.size( 3 ); ++j )
+          for( localIndex j = 0; j < sourceSlice.size( 3 ); ++j )
           {
-            data->customInsertValue( count++, sourceArray[i][iComp2][iComp3][j] );
+            data->customInsertValue( count++, sourceSlice[i][iComp2][iComp3][j] );
           }
         }
       } );
