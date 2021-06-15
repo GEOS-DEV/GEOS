@@ -112,13 +112,13 @@ static const char * pvdwTableContent = "# Pref[bar] Bw[m3/sm3] Cp[1/bar]     Vis
 
 // CO2-brine model
 
-static const char * pvtLiquidTableContent = "DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0.2\n"
+static const char * pvtLiquidTableContent = "DensityFun BrineCO2Density 1e6 1.5e7 5e4 367.15 369.15 1 0.2\n"
                                             "ViscosityFun BrineViscosity 0.1";
 
-static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 94 96 1\n"
-                                         "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 94 96 1";
+static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 367.15 369.15 1\n"
+                                         "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 367.15 369.15 1";
 
-static const char * co2FlashTableContent = "FlashModel CO2Solubility 1e6 1.5e7 5e4 94 96 1 0.15";
+static const char * co2FlashTableContent = "FlashModel CO2Solubility 1e6 1.5e7 5e4 367.15 369.15 1 0.15";
 
 void testNumericalDerivatives( MultiFluidBase & fluid,
                                Group & parent,
