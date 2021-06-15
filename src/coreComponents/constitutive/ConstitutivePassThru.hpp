@@ -217,6 +217,18 @@ struct ConstitutivePassThru< PorousSolidBase >
     {
       lambda( *ptr4 );
     }
+    else if( auto * const ptr5 = dynamic_cast< PorousSolid< DamageSpectral< ElasticIsotropic > > * >( &constitutiveRelation ) )
+    {
+         lambda( *ptr5 );
+    }
+    else if( auto * const ptr6 = dynamic_cast< PorousSolid< DamageVolDev< ElasticIsotropic > > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr6 );
+    }
+    else if( auto * const ptr7 = dynamic_cast< PorousSolid< Damage< ElasticIsotropic > > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr7 );
+    }
     else
     {
       GEOSX_ERROR( "ConstitutivePassThru< PorousSolidBase >::execute failed. The constitutive relation is named "
