@@ -152,14 +152,12 @@ public:
       // But we only want to keep Ovbd1_Ovbd2
       // So we find the word GROUP, and then we keep what is after, except the last piece
 
-      using std::begin;
-      using std::end;
-      auto it = std::find( begin( splitLabel ), end( splitLabel ), "GROUP" );
+      auto it = std::find( std::begin( splitLabel ), std::end( splitLabel ), "GROUP" );
 
-      GEOSX_THROW_IF( it == end( splitLabel ),
+      GEOSX_THROW_IF( it == std::end( splitLabel ),
                       "GEOSX assumes that PAMELA places the word GROUP before the region/surface name", InputError );
 
-      localIndex const id = std::distance( begin( splitLabel ), it );
+      localIndex const id = std::distance( std::begin( splitLabel ), it );
       string name = "";
       for( localIndex i = id+1; i < splitLabel.size()-1; ++i )
       {
