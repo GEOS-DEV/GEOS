@@ -18,7 +18,8 @@
  */
 
 
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp"
+#include "SinglePhasePoromechanicsSolverEmbeddedFractures.hpp"
+
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
@@ -37,7 +38,6 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx

@@ -17,7 +17,8 @@
  *
  */
 
-#include "physicsSolvers/multiphysics/MultiphasePoromechanicsSolver.hpp"
+#include "MultiphasePoromechanicsSolver.hpp"
+
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
@@ -33,7 +34,6 @@
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 #include "physicsSolvers/multiphysics/MultiphasePoromechanicsKernel.hpp"

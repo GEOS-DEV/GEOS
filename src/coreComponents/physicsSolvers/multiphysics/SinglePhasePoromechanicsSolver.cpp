@@ -18,8 +18,8 @@
  */
 
 
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
-#include "../solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
+#include "SinglePhasePoromechanicsSolver.hpp"
+
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
