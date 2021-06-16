@@ -10,7 +10,7 @@ from scipy import interpolate
 
 
 class InSAR_Analysis():
-    def __init__(self):
+    def __init__(self, restart_fname=''):
         """
         InSAR Analysis class
         """
@@ -33,6 +33,21 @@ class InSAR_Analysis():
         self.displacement = []
         self.range_change = []
         self.phase = []
+
+        if restart_fname:
+            self.resume_from_restart(restart_fname)
+
+    def resume_from_restart(self, fname):
+        with hdf5_wrapper.hdf5_wrapper(fname) as r:
+            for k in dir(self):
+                if ('_' not in k):
+                    setattr(self, k, r[k])
+
+    def write_restart(self, fname):
+        with hdf5_wrapper.hdf5_wrapper(fname, mode='w') as r:
+            for k in dir(self):
+                if ('_' not in k):
+                    r[k] = getattr(self, k)
 
     def setup_grid(self, problem, set_names=[], x_range=[], y_range=[], dx=1.0, dy=1.0):
         """
@@ -159,7 +174,7 @@ class InSAR_Analysis():
                 d = np.squeeze(global_displacement_sum[:, :, ii]) / (global_N + 1e-10)
                 d[global_N == 0] = np.NaN
                 global_displacement[:, :, ii] = self.fill_nan_gaps(d)
-                range_change += d * self.satellite_vector[ii]
+                range_change += global_displacement[:, :, ii] * self.satellite_vector[ii]
 
             # Filter nans
             self.displacement.append(global_displacement)
@@ -193,86 +208,90 @@ class InSAR_Analysis():
         return values
 
     def save_hdf5(self, header='insar', output_root='./results'):
-        os.makedirs(output_root, exist_ok=True)
-        with hdf5_wrapper.hdf5_wrapper('%s/%s.hdf5' % (output_root, header), mode='w') as data:
-            data['x'] = self.x_grid
-            data['y'] = self.y_grid
-            data['time'] = self.times
-            data['displacement'] = np.array(self.displacement)
-            data['range_change'] = np.array(self.range_change)
-            data['phase'] = np.array(self.phase)
+        if (parallel_io.rank == 0):
+            os.makedirs(output_root, exist_ok=True)
+            with hdf5_wrapper.hdf5_wrapper('%s/%s.hdf5' % (output_root, header), mode='w') as data:
+                data['x'] = self.x_grid
+                data['y'] = self.y_grid
+                data['time'] = self.times
+                data['displacement'] = np.array(self.displacement)
+                data['range_change'] = np.array(self.range_change)
+                data['phase'] = np.array(self.phase)
 
     def save_csv(self, header='insar', output_root='./results'):
-        os.makedirs(output_root, exist_ok=True)
-        np.savetxt('%s/%s_x_grid.csv' % (output_root, header),
-                   self.x_grid,
-                   delimiter=', ')
-        np.savetxt('%s/%s_y_grid.csv' % (output_root, header),
-                   self.y_grid,
-                   delimiter=', ')
-        for ii, t in enumerate(self.times):
-            comments = 'T (days), %1.8e' % (t / (60 * 60 * 24))
-            np.savetxt('%s/%s_range_change_%03d.csv' % (output_root, header, ii),
-                       self.range_change[ii],
-                       delimiter=', ',
-                       header=comments)
-            np.savetxt('%s/%s_phase_%03d.csv' % (output_root, header, ii),
-                       self.phase[ii],
-                       delimiter=', ',
-                       header=comments)
+        if (parallel_io.rank == 0):
+            os.makedirs(output_root, exist_ok=True)
+            np.savetxt('%s/%s_x_grid.csv' % (output_root, header),
+                       self.x_grid,
+                       delimiter=', ')
+            np.savetxt('%s/%s_y_grid.csv' % (output_root, header),
+                       self.y_grid,
+                       delimiter=', ')
+            for ii, t in enumerate(self.times):
+                comments = 'T (days), %1.8e' % (t / (60 * 60 * 24))
+                np.savetxt('%s/%s_range_change_%03d.csv' % (output_root, header, ii),
+                           self.range_change[ii],
+                           delimiter=', ',
+                           header=comments)
+                np.savetxt('%s/%s_phase_%03d.csv' % (output_root, header, ii),
+                           self.phase[ii],
+                           delimiter=', ',
+                           header=comments)
 
     def save_vtk(self, header='insar', output_root='./results'):
-        os.makedirs(output_root, exist_ok=True)
-        x = np.ascontiguousarray(self.x_grid)
-        y = np.ascontiguousarray(self.y_grid)
-        z = np.array([self.elevation])
+        if (parallel_io.rank == 0):
+            os.makedirs(output_root, exist_ok=True)
+            x = np.ascontiguousarray(self.x_grid)
+            y = np.ascontiguousarray(self.y_grid)
+            z = np.array([self.elevation])
 
-        for ii, t in enumerate(self.times):
-            data = {'range_change': np.ascontiguousarray(np.expand_dims(self.range_change[ii], -1)),
-                    'phase': np.ascontiguousarray(np.expand_dims(self.phase[ii], -1)),
-                    'dx': np.ascontiguousarray(np.expand_dims(self.displacement[ii][:, :, 0], -1)),
-                    'dy': np.ascontiguousarray(np.expand_dims(self.displacement[ii][:, :, 1], -1)),
-                    'dz': np.ascontiguousarray(np.expand_dims(self.displacement[ii][:, :, 2], -1))}
+            for ii, t in enumerate(self.times):
+                data = {'range_change': np.ascontiguousarray(np.expand_dims(self.range_change[ii], -1)),
+                        'phase': np.ascontiguousarray(np.expand_dims(self.phase[ii], -1)),
+                        'dx': np.ascontiguousarray(np.expand_dims(self.displacement[ii][:, :, 0], -1)),
+                        'dy': np.ascontiguousarray(np.expand_dims(self.displacement[ii][:, :, 1], -1)),
+                        'dz': np.ascontiguousarray(np.expand_dims(self.displacement[ii][:, :, 2], -1))}
 
-            gridToVTK('%s/%s_%03d' % (output_root, header, ii),
-                      x,
-                      y,
-                      z,
-                      pointData=data)
+                gridToVTK('%s/%s_%03d' % (output_root, header, ii),
+                          x,
+                          y,
+                          z,
+                          pointData=data)
 
     def save_image(self, header='insar', output_root='./results', interp_method='quadric'):
-        os.makedirs(output_root, exist_ok=True)
-        fig = plot_tools.HighResPlot()
+        if (parallel_io.rank == 0):
+            os.makedirs(output_root, exist_ok=True)
+            fig = plot_tools.HighResPlot()
 
-        for ii, t in enumerate(self.times):
-            # Range change
-            fig.reset()
-            extents = [self.x_grid[0], self.x_grid[-1], self.y_grid[0], self.y_grid[-1]]
-            ca = plt.imshow(np.transpose(np.flipud(self.range_change[ii])),
-                            extent=extents,
-                            cmap=cm.jet,
-                            aspect='auto',
-                            interpolation=interp_method)
-            plt.title('T = %1.4e (days)' % (t / (60 * 60 * 24)))
-            plt.xlabel('X (m)')
-            plt.ylabel('Y (m)')
-            cb = plt.colorbar(ca)
-            cb.set_label('Range Change (m)')
-            fig.save('%s/%s_range_change_%03d' % (output_root, header, ii))
+            for ii, t in enumerate(self.times):
+                # Range change
+                fig.reset()
+                extents = [self.x_grid[0], self.x_grid[-1], self.y_grid[0], self.y_grid[-1]]
+                ca = plt.imshow(np.transpose(np.flipud(self.range_change[ii])),
+                                extent=extents,
+                                cmap=cm.jet,
+                                aspect='auto',
+                                interpolation=interp_method)
+                plt.title('T = %1.4e (days)' % (t / (60 * 60 * 24)))
+                plt.xlabel('X (m)')
+                plt.ylabel('Y (m)')
+                cb = plt.colorbar(ca)
+                cb.set_label('Range Change (m)')
+                fig.save('%s/%s_range_change_%03d' % (output_root, header, ii))
 
-            # Wrapped phase
-            fig.reset()
-            extents = [self.x_grid[0], self.x_grid[-1], self.y_grid[0], self.y_grid[-1]]
-            ca = plt.imshow(np.transpose(np.flipud(self.phase[ii])),
-                            extent=extents,
-                            cmap=cm.jet,
-                            aspect='auto',
-                            interpolation=interp_method)
-            plt.title('T = %1.4e (days)' % (t / (60 * 60 * 24)))
-            plt.xlabel('X (m)')
-            plt.ylabel('Y (m)')
-            cb = plt.colorbar(ca)
-            cb.set_label('Phase (radians)')
-            fig.save('%s/%s_wrapped_phase_%03d' % (output_root, header, ii))
+                # Wrapped phase
+                fig.reset()
+                extents = [self.x_grid[0], self.x_grid[-1], self.y_grid[0], self.y_grid[-1]]
+                ca = plt.imshow(np.transpose(np.flipud(self.phase[ii])),
+                                extent=extents,
+                                cmap=cm.jet,
+                                aspect='auto',
+                                interpolation=interp_method)
+                plt.title('T = %1.4e (days)' % (t / (60 * 60 * 24)))
+                plt.xlabel('X (m)')
+                plt.ylabel('Y (m)')
+                cb = plt.colorbar(ca)
+                cb.set_label('Phase (radians)')
+                fig.save('%s/%s_wrapped_phase_%03d' % (output_root, header, ii))
 
 
