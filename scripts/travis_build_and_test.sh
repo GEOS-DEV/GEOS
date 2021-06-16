@@ -35,15 +35,7 @@ or_die python scripts/config-build.py \
               -bt ${CMAKE_BUILD_TYPE} \
               -bp ${GEOSX_BUILD_DIR} \
               -ip ${GEOSX_DIR} \
-              -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root \
-              -DENABLE_CUDA:BOOL=${ENABLE_CUDA:-OFF} \
-              -DCMAKE_CUDA_FLAGS:STRING=\""${CMAKE_CUDA_FLAGS:-Unused}"\" \
-              -DCUDA_TOOLKIT_ROOT_DIR:PATH=${CUDA_TOOLKIT_ROOT_DIR:-/usr/local/cuda} \
-              -DCUDA_ARCH:STRING=${CUDA_ARCH:sm_70} \
-              -DENABLE_HYPRE:BOOL=${ENABLE_HYPRE:-ON} \
-              -DENABLE_HYPRE_CUDA:BOOL=${ENABLE_HYPRE_CUDA:-OFF} \
-              -DENABLE_TRILINOS:BOOL=${ENABLE_TRILINOS:-ON} \
-              -DGEOSX_LA_INTERFACE:STRING=${GEOSX_LA_INTERFACE}
+              -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root
 
 or_die cd ${GEOSX_BUILD_DIR}
 
