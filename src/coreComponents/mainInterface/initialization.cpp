@@ -176,7 +176,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       break;
       case INPUT:
       {
-        commandLineOptions->inputFileName = opt.arg;
+        commandLineOptions->inputFileNames.emplace_back( opt.arg );
       }
       break;
       case RESTART:
@@ -243,7 +243,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 
   if( commandLineOptions->problemName == "" )
   {
-    string & inputFileName = commandLineOptions->inputFileName;
+    string & inputFileName = commandLineOptions->inputFileNames[0];
     if( inputFileName.length() > 4 && inputFileName.substr( inputFileName.length() - 4, 4 ) == ".xml" )
     {
       string::size_type start = inputFileName.find_last_of( '/' ) + 1;
