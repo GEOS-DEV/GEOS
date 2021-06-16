@@ -45,7 +45,6 @@ public:
 
   virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
 
-
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
@@ -115,18 +114,10 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override;
 
-  void updateDeformationForCoupling( DomainPartition & domain );
-
-  real64 splitOperatorStep( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain );
-
 
   enum class CouplingTypeOption : integer
   {
-    FIM,
-    SIM_FixedStress
+    FIM
   };
 
 
@@ -135,9 +126,6 @@ public:
   {
     constexpr static char const * couplingTypeOptionString() { return "couplingTypeOptionEnum"; }
     constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
-
-    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
-    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
 
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
@@ -166,7 +154,7 @@ private:
 
 };
 
-ENUM_STRINGS( SinglePhasePoromechanicsSolver::CouplingTypeOption, "FIM", "SIM_FixedStress" );
+ENUM_STRINGS( SinglePhasePoromechanicsSolver::CouplingTypeOption, "FIM" );
 
 } /* namespace geosx */
 

@@ -131,9 +131,6 @@ void MultiphasePoromechanicsSolver::postProcessInput()
 
   m_flowSolver = &this->getParent().getGroup< CompositionalMultiphaseBase >( m_flowSolverName );
   m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-
-  m_solidSolver->setEffectiveStress( 1 );
-
 }
 
 MultiphasePoromechanicsSolver::~MultiphasePoromechanicsSolver()

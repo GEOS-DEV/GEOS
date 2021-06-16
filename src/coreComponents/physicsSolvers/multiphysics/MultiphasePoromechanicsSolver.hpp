@@ -45,7 +45,6 @@ public:
 
   virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
 
-
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
@@ -122,8 +121,6 @@ public:
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
   };
-
-
 
 protected:
 

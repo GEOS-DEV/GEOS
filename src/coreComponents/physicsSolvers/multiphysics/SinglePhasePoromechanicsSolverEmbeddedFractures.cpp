@@ -708,21 +708,6 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::resetStateToBeginningOfSte
 {
   m_flowSolver->resetStateToBeginningOfStep( domain );
   m_fracturesSolver->resetStateToBeginningOfStep( domain );
-
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  forTargetSubRegions( mesh, [&] ( localIndex const, ElementSubRegionBase & subRegion )
-  {
-    arrayView1d< real64 const > const & oldTotalMeanStress =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
-    arrayView1d< real64 > const & totalMeanStress =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalMeanStressString() );
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      totalMeanStress[ei] = oldTotalMeanStress[ei];
-    } );
-  } );
 }
 
 real64 SinglePhasePoromechanicsSolverEmbeddedFractures::solverStep( real64 const & time_n,
