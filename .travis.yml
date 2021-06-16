@@ -218,6 +218,7 @@ jobs:
     env:
       - DOCKER_REPOSITORY=totogaz/pecan-gcc8.2.0-openmpi4.0.1
       - CMAKE_BUILD_TYPE=Release
+      - BUILD_AND_TEST_ARGS=--disable-unit-tests
 #  - stage: builds
 #    name: Mac_OSX
 #    <<: *geosx_osx_build
