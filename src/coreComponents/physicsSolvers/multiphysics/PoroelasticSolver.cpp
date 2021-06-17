@@ -38,6 +38,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 
 #include "SinglePhasePoroelasticKernel.hpp"
+#include "SinglePhaseWeakTHMCouplingKernel.hpp"
 
 
 
@@ -52,8 +53,8 @@ PoroelasticSolver::PoroelasticSolver( const string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_couplingTypeOption( CouplingTypeOption::FIM )
-
+  m_couplingTypeOption( CouplingTypeOption::FIM ),
+  m_thermalCoupling(0)
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -66,6 +67,10 @@ PoroelasticSolver::PoroelasticSolver( const string & name,
   registerWrapper( viewKeyStruct::couplingTypeOptionStringString(), &m_couplingTypeOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::thermalCouplingString(), &m_thermalCoupling ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Enable weak thermal coupling" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoroelastic;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -327,7 +332,6 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                         arrayView1d< real64 > const & localRhs )
 {
-
   GEOSX_MARK_FUNCTION;
   MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
 
@@ -341,25 +345,49 @@ void PoroelasticSolver::assembleSystem( real64 const time_n,
 //  m_solidSolver->resetStressToBeginningOfStep( domain );
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+ 
+  if( m_thermalCoupling == 0 )
+  {
+    PoroelasticKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+                                                                pDofKey,
+                                                                dofManager.rankOffset(),
+                                                                localMatrix,
+                                                                localRhs,
+                                                                gravityVectorData,
+                                                                m_flowSolver->fluidModelNames() );
 
-  PoroelasticKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                              pDofKey,
-                                                              dofManager.rankOffset(),
-                                                              localMatrix,
-                                                              localRhs,
-                                                              gravityVectorData,
-                                                              m_flowSolver->fluidModelNames() );
+    // Cell-based contributions
+    m_solidSolver->getMaxForce() =
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                      constitutive::PoroElasticBase,
+                                      CellElementSubRegion >( mesh,
+                                                              targetRegionNames(),
+                                                              this->getDiscretizationName(),
+                                                              m_solidSolver->solidMaterialNames(),
+                                                              kernelFactory );
+  }
+  else if( m_thermalCoupling == 1 )
+  {
+    THMKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+                                                        pDofKey,
+                                                        dofManager.rankOffset(),
+                                                        localMatrix,
+                                                        localRhs,
+                                                        gravityVectorData,
+                                                        m_flowSolver->fluidModelNames() );
 
-  // Cell-based contributions
-  m_solidSolver->getMaxForce() =
-    finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::PoroElasticBase,
-                                    CellElementSubRegion >( mesh,
-                                                            targetRegionNames(),
-                                                            this->getDiscretizationName(),
-                                                            m_solidSolver->solidMaterialNames(),
-                                                            kernelFactory );
+    // Cell-based contributions
+    m_solidSolver->getMaxForce() =
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                      constitutive::PoroElasticBase,
+                                      CellElementSubRegion >( mesh,
+                                                              targetRegionNames(),
+                                                              this->getDiscretizationName(),
+                                                              m_solidSolver->solidMaterialNames(),
+                                                              kernelFactory );
+  }
 
   // Face-based contributions
   m_flowSolver->assembleFluxTerms( time_n, dt,

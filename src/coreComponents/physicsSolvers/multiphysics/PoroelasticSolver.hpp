@@ -141,6 +141,7 @@ public:
 
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
+    constexpr static char const * thermalCouplingString() { return "thermalCoupling"; }
   };
 
 protected:
@@ -159,6 +160,9 @@ protected:
 
   // pointer to the solid mechanics sub-solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
+
+  /// Indicates whether or not thermal coupling is considered.
+  integer m_thermalCoupling;
 
 private:
 
