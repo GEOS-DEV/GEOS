@@ -26,11 +26,6 @@ if [[ -z "${CMAKE_BUILD_TYPE}" ]]; then
   exit 1
 fi
 
-if [[ -z "${GEOSX_BUILD_DIR}" ]]; then
-  echo "Environment variable \"GEOSX_BUILD_DIR\" is undefined."
-  exit 1
-fi
-
 if [[ -z "${GEOSX_DIR}" ]]; then
   echo "Environment variable \"GEOSX_DIR\" is undefined."
   exit 1
