@@ -91,16 +91,6 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
       ++ioCount;
     }
 
-    // // invoke metadata collectors and write data from them during first-time init (not on restart),
-    // //  if there is actually any data to collect
-    // if( freshInit )
-    // {
-    //   metaCollector.execute( 0.0, 0.0, 0, 0, 0, domain );
-    //   for( localIndex ii = nonMetaCount; ii < ioCount; ++ii )
-    //   {
-    //     m_io[ii]->write( );
-    //   }
-    // }
   }
 
   // do the time output last so its at the end of the m_io list, since writes are parallel we need

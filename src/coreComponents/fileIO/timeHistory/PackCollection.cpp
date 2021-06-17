@@ -39,8 +39,8 @@ void PackCollection::initializePostSubGroups( )
     localIndex numSets = m_setNames.size( );
     m_collectionCount = numSets == 0 ? 1 : numSets;
     // determine whether we're collecting from a mesh object manager
-    Group const * targetObject = this->getTargetObject( domain, m_objectPath );
-    ObjectManagerBase const * objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( targetObject );
+    Group const * const targetObject = this->getTargetObject( domain, m_objectPath );
+    ObjectManagerBase const * const objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( targetObject );
     m_targetIsMeshObject = objectManagerTarget != nullptr;
     // update sets after we know whether to filter ghost indices ( m_targetIsMeshObject )
     updateSetsIndices( domain );

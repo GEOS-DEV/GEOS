@@ -53,7 +53,7 @@ public:
   {
     resizeBuffer( );
     m_bufferedCount++;
-    buffer_unit_type * currentBufferHead = m_bufferHead;
+    buffer_unit_type * const currentBufferHead = m_bufferHead;
     m_bufferHead += getRowBytes( );
     return currentBufferHead;
   }
