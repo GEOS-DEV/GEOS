@@ -280,11 +280,11 @@ void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartit
 {
   if( m_isFullAnnulus )
   {
-    if( partition.m_Partitions[1]==0 )
+    if( partition.m_Partitions[1] == 1 )
     {
       numNodesInDir[1] -= 1;
     }
-    else if( partition.m_Partitions[1]>2 )
+    else if( partition.m_Partitions[1] > 1 )
     {
       partition.m_Periodic[1] = 1;
     }
@@ -300,8 +300,7 @@ void InternalWellboreGenerator::
   GEOSX_UNUSED_VAR( partition );
   if( m_isFullAnnulus )
   {
-    // TODO this only works for single theta partition.
-    if( globalIJK[1] == m_nElems[1].back() )
+    if( globalIJK[1] == m_nElems[1].back() + 1 )
     {
       globalIJK[1] = 0;
     }
