@@ -77,7 +77,7 @@ class ParallelPlatesPermeability : public PermeabilityBase
 public:
   ParallelPlatesPermeability( string const & name, Group * const parent );
 
-  virtual ~ParallelPlatesPermeability() override;
+  ~ParallelPlatesPermeability() = default;
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;

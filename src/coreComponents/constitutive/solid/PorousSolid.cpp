@@ -42,8 +42,7 @@ PorousSolid< SOLID_TYPE >::PorousSolid( string const & name, Group * const paren
 {}
 
 template< typename SOLID_TYPE >
-PorousSolid< SOLID_TYPE >::~PorousSolid()
-{}
+PorousSolid< SOLID_TYPE >::~PorousSolid() = default;
 
 // Register all PorousSolid model types.
 typedef PorousSolid< ElasticIsotropic > PorousElasticIsotropic;

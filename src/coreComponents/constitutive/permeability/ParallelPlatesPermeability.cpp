@@ -33,15 +33,11 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
   registerWrapper( viewKeyStruct::dPerm_dApertureString(), &m_dPerm_dAperture );
 }
 
-ParallelPlatesPermeability::~ParallelPlatesPermeability() = default;
-
 std::unique_ptr< ConstitutiveBase >
 ParallelPlatesPermeability::deliverClone( string const & name,
                                           Group * const parent ) const
 {
-  std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
-
-  return clone;
+  return ConstitutiveBase::deliverClone( name, parent );
 }
 
 void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group & parent,

@@ -49,9 +49,7 @@ std::unique_ptr< ConstitutiveBase >
 PermeabilityBase::deliverClone( string const & name,
                                 Group * const parent ) const
 {
-  std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
-
-  return clone;
+  return ConstitutiveBase::deliverClone( name, parent );
 }
 
 void PermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,

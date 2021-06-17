@@ -268,8 +268,8 @@ public:
                                             dTotalStress_dPressure,
                                             stiffness );
 
-    real64 const porosityNew = m_constitutiveUpdate.getPorosityModel().getPorosity( k, q );
-    real64 const porosityOld = m_constitutiveUpdate.getPorosityModel().getOldPorosity( k, q );
+    real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
+    real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
 
     real64 const pressureStressTerm = -dTotalStress_dPressure * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
 

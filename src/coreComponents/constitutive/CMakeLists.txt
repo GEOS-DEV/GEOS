@@ -95,8 +95,7 @@ set( constitutive_sources
      fluid/ProppantSlurryFluid.cpp
      fluid/ParticleFluidBase.cpp
      fluid/ParticleFluid.cpp
-     solid/CompressibleSolid.cpp
-     solid/CoupledSolid.cpp        
+     solid/CompressibleSolid.cpp      
      solid/Damage.cpp
      solid/DamageVolDev.cpp
      solid/DamageSpectral.cpp

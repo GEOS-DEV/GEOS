@@ -41,15 +41,11 @@ CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group *
   registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity );
 }
 
-CarmanKozenyPermeability::~CarmanKozenyPermeability() = default;
-
 std::unique_ptr< ConstitutiveBase >
 CarmanKozenyPermeability::deliverClone( string const & name,
                                         Group * const parent ) const
 {
-  std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
-
-  return clone;
+  return ConstitutiveBase::deliverClone( name, parent );
 }
 
 void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group & parent,

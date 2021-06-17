@@ -40,9 +40,6 @@ class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity 
 {
 public:
 
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_solidUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_porosityUpdate;
-
   using DiscretizationOps = typename SOLID_TYPE::KernelWrapper::DiscretizationOps;
 
   /**
@@ -104,9 +101,16 @@ public:
     m_porosityUpdate.updateBiotCoefficient( k, q, bulkModulus );
   }
 
+private:
+
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_solidUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_porosityUpdate;
+
 };
 
-
+/**
+ * @brief PorousSolidBase class used for dispatch of all Porous solids.
+ */
 class PorousSolidBase : public SolidBase
 {};
 
@@ -132,7 +136,7 @@ public:
   PorousSolid( string const & name, dataRepository::Group * const parent );
 
   /// Destructor
-  virtual ~PorousSolid() override;
+  ~PorousSolid();
 
   /**
    * @brief Catalog name

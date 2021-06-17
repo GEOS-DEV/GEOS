@@ -90,7 +90,7 @@ class CarmanKozenyPermeability : public PermeabilityBase
 public:
   CarmanKozenyPermeability( string const & name, Group * const parent );
 
-  virtual ~CarmanKozenyPermeability() override;
+  ~CarmanKozenyPermeability() = default;
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
