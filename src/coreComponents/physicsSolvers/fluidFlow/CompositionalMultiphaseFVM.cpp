@@ -175,6 +175,110 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
   } );
 }
 
+void CompositionalMultiphaseFVM::implicitStepComplete( real64 const & time,
+                                                       real64 const & dt,
+                                                       DomainPartition & domain )
+{
+  CompositionalMultiphaseBase::implicitStepComplete( time, dt, domain );
+
+  if( m_computeCFLNumbers )
+  {
+    computeCFLNumbers( dt, domain );
+  }
+}
+
+void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
+                                                    DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  // Step 1: reset the arrays involved in the computation of CFL numbers
+  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
+  {
+    arrayView2d< real64 > const & phaseOutflux = subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseOutfluxString() );
+    arrayView2d< real64 > const & compOutflux = subRegion.getReference< array2d< real64 > >( viewKeyStruct::compOutfluxString() );
+    phaseOutflux.zero();
+    compOutflux.zero();
+  } );
+
+  // Step 2: compute the total volumetric outflux for each reservoir cell by looping over faces
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const & phaseOutfluxAccessor =
+    mesh.getElemManager().constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::phaseOutfluxString() );
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const & compOutfluxAccessor =
+    mesh.getElemManager().constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::compOutfluxString() );
+
+  fluxApprox.forAllStencils( mesh, [&] ( auto const & stencil )
+  {
+    KernelLaunchSelector1< CFLFluxKernel >( m_numComponents,
+                                            m_numPhases,
+                                            dt,
+                                            stencil,
+                                            m_pressure.toNestedViewConst(),
+                                            m_gravCoef.toNestedViewConst(),
+                                            m_phaseRelPerm.toNestedViewConst(),
+                                            m_phaseVisc.toNestedViewConst(),
+                                            m_phaseDens.toNestedViewConst(),
+                                            m_phaseMassDens.toNestedViewConst(),
+                                            m_phaseCompFrac.toNestedViewConst(),
+                                            phaseOutfluxAccessor.toNestedView(),
+                                            compOutfluxAccessor.toNestedView() );
+  } );
+
+  // Step 3: finalize the (cell-based) computation of the CFL numbers
+  real64 localMaxPhaseCFLNumber = 0.0;
+  real64 localMaxCompCFLNumber = 0.0;
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
+  {
+
+    arrayView2d< real64 const > const & phaseOutflux = subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseOutfluxString() );
+    arrayView2d< real64 const > const & compOutflux = subRegion.getReference< array2d< real64 > >( viewKeyStruct::compOutfluxString() );
+
+    arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
+    arrayView1d< real64 const > const & porosityRef =
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
+
+    arrayView2d< real64 const > const & compDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString() );
+
+    ConstitutiveBase const & solid = getConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
+    arrayView2d< real64 const > const & pvMult =
+      solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() );
+
+    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+    arrayView3d< real64 const > const & phaseVisc = fluid.phaseViscosity();
+
+    RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, m_relPermModelNames[targetIndex] );
+    arrayView3d< real64 const > const & phaseRelPerm = relperm.phaseRelPerm();
+    arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
+
+    KernelLaunchSelector2< CFLKernel >( m_numComponents, m_numPhases,
+                                        subRegion.size(),
+                                        volume,
+                                        porosityRef,
+                                        pvMult,
+                                        compDens,
+                                        phaseRelPerm,
+                                        dPhaseRelPerm_dPhaseVolFrac,
+                                        phaseVisc,
+                                        phaseOutflux,
+                                        compOutflux,
+                                        localMaxPhaseCFLNumber,
+                                        localMaxCompCFLNumber );
+  } );
+
+  real64 const globalMaxPhaseCFLNumber = MpiWrapper::max( localMaxPhaseCFLNumber );
+  real64 const globalMaxCompCFLNumber = MpiWrapper::max( localMaxCompCFLNumber );
+
+  GEOSX_LOG_RANK_0( "Max phase CFL number: " << globalMaxPhaseCFLNumber );
+  GEOSX_LOG_RANK_0( "Max component CFL number: " << globalMaxCompCFLNumber );
+}
+
 real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const & domain,
                                                           DofManager const & dofManager,
                                                           arrayView1d< real64 const > const & localRhs )

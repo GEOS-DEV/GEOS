@@ -247,6 +247,8 @@ public:
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 
+    static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
+
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
 
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
@@ -281,6 +283,11 @@ public:
     static constexpr char const * dPhaseMobility_dPressureString() { return "dPhaseMobility_dPressure"; }
 
     static constexpr char const * dPhaseMobility_dGlobalCompDensityString() { return "dPhaseMobility_dGlobalCompDensity"; }
+
+    // intermediate values for CFL number computation
+    static constexpr char const * phaseOutfluxString() { return "phaseOutflux"; }
+
+    static constexpr char const * compOutfluxString() { return "compOutflux"; }
 
     // these are used to store last converged time step values
     static constexpr char const * phaseVolumeFractionOldString() { return "phaseVolumeFractionOld"; }
@@ -397,6 +404,9 @@ protected:
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
+  /// flag indicating whether CFL numbers will be computed or not
+  integer m_computeCFLNumbers;
+
   /// name of the rel perm constitutive model
   array1d< string > m_relPermModelNames;
 
@@ -427,6 +437,10 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_phaseMob;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseMob_dPres;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseMob_dCompDens;
+
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseRelPerm;
+
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseVisc;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseDens;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseDens_dPres;

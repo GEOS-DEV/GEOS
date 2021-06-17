@@ -663,6 +663,339 @@ INST_FluxKernel( 5, FaceElementStencil );
 
 #undef INST_FluxKernel
 
+
+/******************************** CFLFluxKernel ********************************/
+
+template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+CFLFluxKernel::
+  compute( localIndex const numPhases,
+           localIndex const stencilSize,
+           real64 const & dt,
+           arraySlice1d< localIndex const > const seri,
+           arraySlice1d< localIndex const > const sesri,
+           arraySlice1d< localIndex const > const sei,
+           arraySlice1d< real64 const > const stencilWeights,
+           ElementViewConst< arrayView1d< real64 const > > const & pres,
+           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+           ElementViewConst< arrayView3d< real64 const > > const & phaseRelPerm,
+           ElementViewConst< arrayView3d< real64 const > > const & phaseVisc,
+           ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
+           ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+           ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
+           ElementView< arrayView2d< real64 > > const & phaseOutflux,
+           ElementView< arrayView2d< real64 > > const & compOutflux )
+{
+  // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
+  for( localIndex ip = 0; ip < numPhases; ++ip )
+  {
+    // clear working arrays
+    real64 densMean{};
+
+    // create local work arrays
+    real64 presGrad{};
+    real64 gravHead{};
+
+    // calculate quantities on primary connected cells
+    for( localIndex i = 0; i < NUM_ELEMS; ++i )
+    {
+      localIndex const er  = seri[i];
+      localIndex const esr = sesri[i];
+      localIndex const ei  = sei[i];
+
+      // average density across the face
+      densMean += 0.5 * phaseMassDens[er][esr][ei][0][ip];
+    }
+
+    //***** calculation of phase volumetric flux *****
+
+    // compute potential difference MPFA-style
+    for( localIndex i = 0; i < stencilSize; ++i )
+    {
+      localIndex const er  = seri[i];
+      localIndex const esr = sesri[i];
+      localIndex const ei  = sei[i];
+      real64 const weight  = stencilWeights[i];
+
+      presGrad += weight * pres[er][esr][ei];
+      gravHead += weight * densMean * gravCoef[er][esr][ei];
+    }
+
+    // *** upwinding ***
+
+    // compute phase potential gradient
+    real64 const potGrad = presGrad - gravHead;
+
+    // choose upstream cell
+    localIndex const k_up = (potGrad >= 0) ? 0 : 1;
+
+    localIndex const er_up  = seri[k_up];
+    localIndex const esr_up = sesri[k_up];
+    localIndex const ei_up  = sei[k_up];
+
+    real64 const mobility = phaseRelPerm[er_up][esr_up][ei_up][0][ip] / phaseVisc[er_up][esr_up][ei_up][0][ip];
+
+    // increment the phase (volumetric) outflux of the upstream cell
+    real64 const absPhaseFlux = fabs( dt * mobility * potGrad );
+    phaseOutflux[er_up][esr_up][ei_up][ip] += absPhaseFlux;
+
+    // increment the component (mass/molar) outflux of the upstream cell
+    for( localIndex ic = 0; ic < NC; ++ic )
+    {
+      compOutflux[er_up][esr_up][ei_up][ic] += phaseCompFrac[er_up][esr_up][ei_up][0][ip][ic]
+                                               * phaseDens[er_up][esr_up][ei_up][0][ip]
+                                               * absPhaseFlux;
+    }
+  }
+}
+
+template< localIndex NC, typename STENCIL_TYPE >
+void
+CFLFluxKernel::
+  launch( localIndex const numPhases,
+          real64 const & dt,
+          STENCIL_TYPE const & stencil,
+          ElementViewConst< arrayView1d< real64 const > > const & pres,
+          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView3d< real64 const > > const & phaseRelPerm,
+          ElementViewConst< arrayView3d< real64 const > > const & phaseVisc,
+          ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
+          ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
+          ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
+          ElementView< arrayView2d< real64 > > const & phaseOutflux,
+          ElementView< arrayView2d< real64 > > const & compOutflux )
+{
+  typename STENCIL_TYPE::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  typename STENCIL_TYPE::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  typename STENCIL_TYPE::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  typename STENCIL_TYPE::WeightContainerViewConstType const & weights = stencil.getWeights();
+
+  localIndex constexpr NUM_ELEMS   = STENCIL_TYPE::NUM_POINT_IN_FLUX;
+  localIndex constexpr MAX_STENCIL = STENCIL_TYPE::MAX_STENCIL_SIZE;
+
+  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  {
+    CFLFluxKernel::compute< NC, NUM_ELEMS, MAX_STENCIL >( numPhases,
+                                                          MAX_STENCIL,
+                                                          dt,
+                                                          seri[iconn],
+                                                          sesri[iconn],
+                                                          sei[iconn],
+                                                          weights[iconn],
+                                                          pres,
+                                                          gravCoef,
+                                                          phaseRelPerm,
+                                                          phaseVisc,
+                                                          phaseDens,
+                                                          phaseMassDens,
+                                                          phaseCompFrac,
+                                                          phaseOutflux,
+                                                          compOutflux );
+  } );
+}
+
+#define INST_CFLFluxKernel( NC, STENCIL_TYPE ) \
+  template \
+  void CFLFluxKernel:: \
+    launch< NC, STENCIL_TYPE >( localIndex const numPhases, \
+                                real64 const & dt, \
+                                STENCIL_TYPE const & stencil, \
+                                ElementViewConst< arrayView1d< real64 const > > const & pres, \
+                                ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
+                                ElementViewConst< arrayView3d< real64 const > > const & phaseRelPerm, \
+                                ElementViewConst< arrayView3d< real64 const > > const & phaseVisc, \
+                                ElementViewConst< arrayView3d< real64 const > > const & phaseDens, \
+                                ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens, \
+                                ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac, \
+                                ElementView< arrayView2d< real64 > > const & phaseOutflux, \
+                                ElementView< arrayView2d< real64 > > const & compOutflux )
+
+INST_CFLFluxKernel( 1, CellElementStencilTPFA );
+INST_CFLFluxKernel( 2, CellElementStencilTPFA );
+INST_CFLFluxKernel( 3, CellElementStencilTPFA );
+INST_CFLFluxKernel( 4, CellElementStencilTPFA );
+INST_CFLFluxKernel( 5, CellElementStencilTPFA );
+
+INST_CFLFluxKernel( 1, FaceElementStencil );
+INST_CFLFluxKernel( 2, FaceElementStencil );
+INST_CFLFluxKernel( 3, FaceElementStencil );
+INST_CFLFluxKernel( 4, FaceElementStencil );
+INST_CFLFluxKernel( 5, FaceElementStencil );
+
+#undef INST_CFLFluxKernel
+
+/******************************** CFLKernel ********************************/
+
+template<>
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+CFLKernel::
+  computePhaseCFL< 2 >( real64 const & volume,
+                        real64 const & porosityRef,
+                        real64 const & pvMult,
+                        arraySlice1d< real64 const > phaseRelPerm,
+                        arraySlice2d< real64 const > dPhaseRelPerm_dPhaseVolFrac,
+                        arraySlice1d< real64 const > phaseVisc,
+                        arraySlice1d< real64 const > phaseOutflux,
+                        real64 & phaseCFLNumber )
+{
+  // computation from Hui Cao's thesis
+  real64 const poreVol = volume * porosityRef * pvMult;
+
+  real64 const mob0 = phaseRelPerm[0] / phaseVisc[0];
+  real64 const dMob0_dVolFrac0 = dPhaseRelPerm_dPhaseVolFrac[0][0] / phaseVisc[0];
+  real64 const mob1 = phaseRelPerm[1] / phaseVisc[1];
+  real64 const dMob1_dVolFrac0 = -dPhaseRelPerm_dPhaseVolFrac[1][0] / phaseVisc[1];  // using S0 = 1 - S1
+
+  // single-phase flow regime
+  if( mob0 < 1e-12 )
+  {
+    phaseCFLNumber = phaseOutflux[1] / poreVol;
+  }
+  else if( mob1 < 1e-12 )
+  {
+    phaseCFLNumber = phaseOutflux[0] / poreVol;
+  }
+  // two-phase flow regime
+  else
+  {
+    real64 const denom = 1. / ( poreVol * ( mob0 + mob1 ) );
+    real64 const coef0 = denom * mob1 / mob0 * dMob0_dVolFrac0;
+    real64 const coef1 = -denom * mob0 / mob1 * dMob1_dVolFrac0;
+
+    phaseCFLNumber = fabs( coef0*phaseOutflux[0] + coef1*phaseOutflux[1] );
+  }
+}
+
+
+template<>
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+CFLKernel::
+  computePhaseCFL< 3 >( real64 const & volume,
+                        real64 const & porosityRef,
+                        real64 const & pvMult,
+                        arraySlice1d< real64 const > phaseRelPerm,
+                        arraySlice2d< real64 const > dPhaseRelPerm_dPhaseVolFrac,
+                        arraySlice1d< real64 const > phaseVisc,
+                        arraySlice1d< real64 const > phaseOutflux,
+                        real64 & phaseCFLNumber )
+{
+  GEOSX_ERROR( "Not implemented yet" );
+}
+
+template< localIndex NC >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+CFLKernel::
+  computeCompCFL( real64 const & volume,
+                  real64 const & porosityRef,
+                  real64 const & pvMult,
+                  arraySlice1d< real64 const > compDens,
+                  arraySlice1d< real64 const > compOutflux,
+                  real64 & compCFLNumber )
+{
+  real64 const poreVol = volume * porosityRef * pvMult;
+
+  compCFLNumber = 0.0;
+  for( localIndex ic = 0; ic < NC; ++ic )
+  {
+    real64 const compMoles = compDens[ic] * poreVol;
+    if( compMoles > 1e-4 )
+    {
+      real64 const CFL = compOutflux[ic] / compMoles;
+      if( CFL > compCFLNumber )
+      {
+        compCFLNumber = CFL;
+      }
+    }
+  }
+}
+
+template< localIndex NC, localIndex NP >
+void
+CFLKernel::
+  launch( localIndex const size,
+          arrayView1d< real64 const > const & volume,
+          arrayView1d< real64 const > const & porosityRef,
+          arrayView2d< real64 const > const & pvMult,
+          arrayView2d< real64 const > const & compDens,
+          arrayView3d< real64 const > const & phaseRelPerm,
+          arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView3d< real64 const > const & phaseVisc,
+          arrayView2d< real64 const > const & phaseOutflux,
+          arrayView2d< real64 const > const & compOutflux,
+          real64 & maxPhaseCFLNumber,
+          real64 & maxCompCFLNumber )
+{
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > regionPhaseCFLNumber( 0.0 );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > regionCompCFLNumber( 0.0 );
+
+  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+  {
+
+    // phase CFL number
+    real64 cellPhaseCFLNumber = 0.0;
+    computePhaseCFL< NP >( volume[ei],
+                           porosityRef[ei],
+                           pvMult[ei][0],
+                           phaseRelPerm[ei][0],
+                           dPhaseRelPerm_dPhaseVolFrac[ei][0],
+                           phaseVisc[ei][0],
+                           phaseOutflux[ei],
+                           cellPhaseCFLNumber );
+    regionPhaseCFLNumber.max( cellPhaseCFLNumber );
+
+    // component CFL number
+    real64 cellCompCFLNumber = 0.0;
+    computeCompCFL< NC >( volume[ei],
+                          porosityRef[ei],
+                          pvMult[ei][0],
+                          compDens[ei],
+                          compOutflux[ei],
+                          cellCompCFLNumber );
+    regionCompCFLNumber.max( cellCompCFLNumber );
+
+  } );
+
+  maxPhaseCFLNumber = LvArray::math::max( maxPhaseCFLNumber, regionPhaseCFLNumber.get() );
+  maxCompCFLNumber = LvArray::math::max( maxCompCFLNumber, regionCompCFLNumber.get() );
+}
+
+#define INST_CFLKernel( NC, NP ) \
+  template \
+  void CFLKernel:: \
+    launch< NC, NP >( localIndex const size, \
+                      arrayView1d< real64 const > const & volume, \
+                      arrayView1d< real64 const > const & porosityRef, \
+                      arrayView2d< real64 const > const & pvMult, \
+                      arrayView2d< real64 const > const & compDens, \
+                      arrayView3d< real64 const > const & phaseRelPerm, \
+                      arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac, \
+                      arrayView3d< real64 const > const & phaseVisc, \
+                      arrayView2d< real64 const > const & phaseOutflux, \
+                      arrayView2d< real64 const > const & compOutflux, \
+                      real64 & maxPhaseCFLNumber, \
+                      real64 & maxCompCFLNumber )
+INST_CFLKernel( 1, 2 );
+INST_CFLKernel( 2, 2 );
+INST_CFLKernel( 3, 2 );
+INST_CFLKernel( 4, 2 );
+INST_CFLKernel( 5, 2 );
+
+INST_CFLKernel( 1, 3 );
+INST_CFLKernel( 2, 3 );
+INST_CFLKernel( 3, 3 );
+INST_CFLKernel( 4, 3 );
+INST_CFLKernel( 5, 3 );
+
+#undef INST_CFLKernel
+
 } // namespace CompositionalMultiphaseFVMKernels
 
 } // namespace geosx
