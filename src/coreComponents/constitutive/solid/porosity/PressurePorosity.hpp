@@ -129,7 +129,7 @@ public:
   }
 
 
-protected:
+private:
   virtual void postProcessInput() override;
 
   real64 m_referencePressure;
