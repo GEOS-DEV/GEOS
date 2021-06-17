@@ -106,6 +106,10 @@
       name="cellCentersOutput" 
       target="/Outputs/cellCentersOutput" />
 
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="50"
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS -->
@@ -286,6 +290,9 @@
       name="cellCentersOutput"
       sources="{/Tasks/cellCentersCollection}"
       filename="cell_centers" />
+
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 
   <Tasks>
