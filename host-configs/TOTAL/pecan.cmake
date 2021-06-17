@@ -3,7 +3,6 @@ set(MPI_HOME "/hrtc/apps/mpi/openmpi/4.0.1/RDHPC/gcc/8.2.0")
 
 set(CMAKE_C_COMPILER ${COMPILER_HOME}/bin/gcc CACHE PATH "" FORCE)
 set(CMAKE_CXX_COMPILER ${COMPILER_HOME}/bin/g++ CACHE PATH "" FORCE)
-#set(CMAKE_Fortran_COMPILER ${COMPILER_HOME}/bin/gfortran CACHE PATH "" FORCE)
 set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 
 set(ENABLE_MPI ON CACHE PATH "" FORCE)
@@ -11,9 +10,7 @@ set(ENABLE_OPENMP ON CACHE PATH "" FORCE)
 
 set(MPI_C_COMPILER "${MPI_HOME}/bin/mpicc" CACHE PATH "" FORCE)
 set(MPI_CXX_COMPILER "${MPI_HOME}/bin/mpicxx" CACHE PATH "" FORCE)
-#set(MPI_Fortran_COMPILER "${MPI_HOME}/bin/mpifort" CACHE PATH "" FORCE)
 set(MPIEXEC_EXECUTABLE "${MPI_HOME}/bin/mpirun" CACHE PATH "" FORCE)
-#set(MPIEXEC_EXECUTABLE /apps/slurm/x86/20.02.0/bin/srun CACHE PATH "" FORCE)
 #set(MPIEXEC_NUMPROC_FLAG   "-p pecan -n" CACHE STRING "")
 set(ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC ON CACHE BOOL "")
 
@@ -46,6 +43,5 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
                   ${INTEL_ROOT}/compiler/lib/intel64_lin/libiomp5.so
                   CACHE STRING "")
 
-#set(GEOSX_TPL_DIR "/data/gpfs/Users/j0436735/deployments/TPL-GPU" CACHE PATH "" FORCE)
 set(GEOSX_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)

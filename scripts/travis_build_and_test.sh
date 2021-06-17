@@ -16,6 +16,26 @@ function or_die () {
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
+if [[ -z "${HOST_CONFIG}" ]]; then
+  echo "Environment variable \"HOST_CONFIG\" is undefined."
+  exit 1
+fi
+
+if [[ -z "${CMAKE_BUILD_TYPE}" ]]; then
+  echo "Environment variable \"CMAKE_BUILD_TYPE\" is undefined."
+  exit 1
+fi
+
+if [[ -z "${GEOSX_BUILD_DIR}" ]]; then
+  echo "Environment variable \"GEOSX_BUILD_DIR\" is undefined."
+  exit 1
+fi
+
+if [[ -z "${GEOSX_DIR}" ]]; then
+  echo "Environment variable \"GEOSX_DIR\" is undefined."
+  exit 1
+fi
+
 if [[ $ENABLE_HYPRE == ON ]]; then
     GEOSX_LA_INTERFACE="Hypre"
 else
@@ -31,7 +51,7 @@ echo $GEOSX_LA_INTERFACE
 # to run the unit tests.
 GEOSX_BUILD_DIR=/tmp/build
 or_die python scripts/config-build.py \
-              -hc host-configs/TOTAL/pecan.cmake \
+              -hc host-configs/${HOST_CONFIG} \
               -bt ${CMAKE_BUILD_TYPE} \
               -bp ${GEOSX_BUILD_DIR} \
               -ip ${GEOSX_DIR} \
