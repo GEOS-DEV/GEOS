@@ -38,26 +38,12 @@ public:
     m_dPerm_dAperture( dPerm_dAperture )
   {}
 
-  /// Default copy constructor
-  ParallelPlatesPermeabilityUpdate( ParallelPlatesPermeabilityUpdate const & ) = default;
-
-  /// Default move constructor
-  ParallelPlatesPermeabilityUpdate( ParallelPlatesPermeabilityUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  ParallelPlatesPermeabilityUpdate & operator=( ParallelPlatesPermeabilityUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  ParallelPlatesPermeabilityUpdate & operator=( ParallelPlatesPermeabilityUpdate && ) = delete;
-
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void compute( real64 const & effectiveAperture,
                 arraySlice1d< real64 > const & permeability,
                 arraySlice1d< real64 > const & dPerm_dAperture ) const;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void updateAperture( localIndex const k,
                        localIndex const q,
                        real64 const & effectiveAperture ) const override
@@ -114,7 +100,6 @@ private:
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void ParallelPlatesPermeabilityUpdate::compute( real64 const & effectiveAperture,
                                                 arraySlice1d< real64 > const & permeability,
                                                 arraySlice1d< real64 > const & dPerm_dAperture ) const

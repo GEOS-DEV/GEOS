@@ -42,27 +42,14 @@ public:
     m_porosityUpdate( porosityModel->createKernelUpdates() )
   {}
 
-  /// Deleted default constructor
-  CoupledSolidUpdates() = delete;
-
-  /// Default copy constructor
-  CoupledSolidUpdates( CoupledSolidUpdates const & ) = default;
-
-  /// Default move constructor
-  CoupledSolidUpdates( CoupledSolidUpdates && ) = default;
-
-  /// Deleted copy assignment operator
-  CoupledSolidUpdates & operator=( CoupledSolidUpdates const & ) = delete;
-
-  /// Deleted move assignment operator
-  CoupledSolidUpdates & operator=( CoupledSolidUpdates && ) =  delete;
-
+  GEOSX_HOST_DEVICE
   real64 getOldPorosity( localIndex const k,
                          localIndex const q ) const
   {
     return m_porosityUpdate.getOldPorosity( k, q);
   }
 
+  GEOSX_HOST_DEVICE
   real64 getPorosity( localIndex const k,
                       localIndex const q ) const
   {
@@ -113,8 +100,9 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr char const * solidModelNameString() { return "solidModelName"; }
-    static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
+    static constexpr char const * solidModelNameString() { return "solidName"; }
+    static constexpr char const * porosityModelNameString() { return "porosityName"; }
+    static constexpr char const * permeabilityModelNameString() { return "permeabilityName"; }
   };
 
   /**
@@ -143,8 +131,8 @@ protected:
   // the name of the porosity model
   string m_porosityModelName;
 
-
-  // PERMEABILITY_TYPE * m_permModel;
+  // the name of the porosity model
+  string m_permeabilityModelName;
 };
 
 
@@ -164,6 +152,11 @@ CoupledSolid< SOLID_TYPE, PORO_TYPE >::CoupledSolid( string const & name, Group 
   registerWrapper( viewKeyStruct::porosityModelNameString(), &m_porosityModelName ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Name of the porosity model." );
+
+  // TODO: as soon as we start using the permeability models this has to become REQUIRED
+  registerWrapper( viewKeyStruct::permeabilityModelNameString(), &m_permeabilityModelName ).
+      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+      setDescription( "Name of the porosity model." );
 }
 
 template< typename SOLID_TYPE,

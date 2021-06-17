@@ -50,21 +50,6 @@ public:
     CoupledSolid< NullModel, PORO_TYPE >( solidModel, porosityModel )
   {}
 
-  /// Deleted default constructor
-  CompressibleSolidUpdates() = delete;
-
-  /// Default copy constructor
-  CompressibleSolidUpdates( CompressibleSolidUpdates const & ) = default;
-
-  /// Default move constructor
-  CompressibleSolidUpdates( CompressibleSolidUpdates && ) = default;
-
-  /// Deleted copy assignment operator
-  CompressibleSolidUpdates & operator=( CompressibleSolidUpdates const & ) = delete;
-
-  /// Deleted move assignment operator
-  CompressibleSolidUpdates & operator=( CompressibleSolidUpdates && ) =  delete;
-
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void pressureUpdate( localIndex const k,

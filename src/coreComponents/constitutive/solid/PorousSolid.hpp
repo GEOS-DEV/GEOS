@@ -23,6 +23,7 @@
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
+#include "constitutive/permeability/StrainDependentPermeability.hpp"
 
 namespace geosx
 {
@@ -46,27 +47,13 @@ public:
    * @brief Constructor
    */
   PorousSolidUpdates( SOLID_TYPE * solidModel,
-                      BiotPorosity * porosityModel ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >( solidModel, porosityModel )
+                      BiotPorosity * porosityModel,
+                      StrainDependentPermeability * permModel ):
+    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >( solidModel, porosityModel ),
+    m_permUpdate( permModel->createKernelWrapper() )
   {}
 
-  /// Deleted default constructor
-  PorousSolidUpdates() = delete;
-
-  /// Default copy constructor
-  PorousSolidUpdates( PorousSolidUpdates const & ) = default;
-
-  /// Default move constructor
-  PorousSolidUpdates( PorousSolidUpdates && ) = default;
-
-  /// Deleted copy assignment operator
-  PorousSolidUpdates & operator=( PorousSolidUpdates const & ) = delete;
-
-  /// Deleted move assignment operator
-  PorousSolidUpdates & operator=( PorousSolidUpdates && ) =  delete;
-
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
                           real64 const & deltaPressure,
@@ -91,7 +78,6 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void updateBiotCoefficient( localIndex const k,
                               localIndex const q ) const
   {
@@ -105,6 +91,8 @@ private:
 
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_solidUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_porosityUpdate;
+
+  StrainDependentPermeability::KernelWrapper m_permUpdate;
 
 };
 
@@ -122,9 +110,6 @@ class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity >
 {
 public:
 
-  using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_solidModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_porosityModel;
-
   /// Alias for ElasticIsotropicUpdates
   using KernelWrapper = PorousSolidUpdates< SOLID_TYPE >;
 
@@ -136,13 +121,13 @@ public:
   PorousSolid( string const & name, dataRepository::Group * const parent );
 
   /// Destructor
-  ~PorousSolid();
+  virtual ~PorousSolid() override;
 
   /**
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "Poro" ) + SOLID_TYPE::m_catalogNameString; }
+  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::m_catalogNameString; }
 
   /**
    * @brief Get catalog name
@@ -159,7 +144,8 @@ public:
   {
 
     return KernelWrapper( m_solidModel,
-                          m_porosityModel );
+                          m_porosityModel,
+                          m_permModel );
   }
 
   /**
@@ -180,7 +166,17 @@ public:
     return m_solidModel->getDensity();
   }
 
+  virtual void postProcessInput() override final;
+
+private:
+
+  using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_solidModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_porosityModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_permeabilityModelName;
+
+  StrainDependentPermeability * m_permModel;
 };
+
 
 }
 } /* namespace geosx */

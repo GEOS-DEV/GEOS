@@ -42,26 +42,12 @@ public:
     m_sphericity( sphericity )
   {}
 
-  /// Default copy constructor
-  CarmanKozenyPermeabilityUpdate( CarmanKozenyPermeabilityUpdate const & ) = default;
-
-  /// Default move constructor
-  CarmanKozenyPermeabilityUpdate( CarmanKozenyPermeabilityUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  CarmanKozenyPermeabilityUpdate & operator=( CarmanKozenyPermeabilityUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  CarmanKozenyPermeabilityUpdate & operator=( CarmanKozenyPermeabilityUpdate && ) = delete;
-
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void compute( real64 const & porosity,
                 arraySlice1d< real64 > const & permeability,
                 arraySlice1d< real64 > const & dPerm_dPorosity ) const;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   virtual void updatePorosity( localIndex const k,
                                localIndex const q,
                                real64 const & porosity ) const override
@@ -90,7 +76,7 @@ class CarmanKozenyPermeability : public PermeabilityBase
 public:
   CarmanKozenyPermeability( string const & name, Group * const parent );
 
-  ~CarmanKozenyPermeability() = default;
+  virtual ~CarmanKozenyPermeability() override = default;
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;

@@ -36,20 +36,7 @@ public:
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure )
   {}
 
-  /// Default copy constructor
-  StrainDependentPermeabilityUpdate( StrainDependentPermeabilityUpdate const & ) = default;
-
-  /// Default move constructor
-  StrainDependentPermeabilityUpdate( StrainDependentPermeabilityUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  StrainDependentPermeabilityUpdate & operator=( StrainDependentPermeabilityUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  StrainDependentPermeabilityUpdate & operator=( StrainDependentPermeabilityUpdate && ) = delete;
-
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   virtual void updatePressureStrain( localIndex const k,
                                      localIndex const q,
                                      real64 const & pressure,

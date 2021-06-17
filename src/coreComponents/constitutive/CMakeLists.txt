@@ -57,6 +57,11 @@ set( constitutive_headers
      solid/porosity/BiotPorosity.hpp
      solid/porosity/PorosityBase.hpp
      solid/porosity/PressurePorosity.hpp
+     permeability/CarmanKozenyPermeability.hpp
+     permeability/ConstantPermeability.hpp
+     permeability/ParallelPlatesPermeability.hpp
+     permeability/PermeabilityBase.hpp
+     permeability/StrainDependentPermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
@@ -111,6 +116,11 @@ set( constitutive_sources
      solid/porosity/BiotPorosity.cpp
      solid/porosity/PorosityBase.cpp
      solid/porosity/PressurePorosity.cpp
+     permeability/CarmanKozenyPermeability.cpp
+     permeability/ConstantPermeability.cpp
+     permeability/ParallelPlatesPermeability.cpp
+     permeability/PermeabilityBase.cpp
+     permeability/StrainDependentPermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp

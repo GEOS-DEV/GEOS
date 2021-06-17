@@ -36,18 +36,6 @@ public:
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure )
   {}
 
-  /// Default copy constructor
-  ConstantPermeabilityUpdate( ConstantPermeabilityUpdate const & ) = default;
-
-  /// Default move constructor
-  ConstantPermeabilityUpdate( ConstantPermeabilityUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  ConstantPermeabilityUpdate & operator=( ConstantPermeabilityUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  ConstantPermeabilityUpdate & operator=( ConstantPermeabilityUpdate && ) = delete;
-
 private:
 
 };
