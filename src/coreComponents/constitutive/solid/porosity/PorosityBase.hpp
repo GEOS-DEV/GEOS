@@ -54,18 +54,6 @@ public:
     m_referencePorosity ( referencePorosity )
   {}
 
-  /// Default copy constructor
-  PorosityBaseUpdates( PorosityBaseUpdates const & ) = default;
-
-  /// Default move constructor
-  PorosityBaseUpdates( PorosityBaseUpdates && ) = default;
-
-  /// Deleted copy assignment operator
-  PorosityBaseUpdates & operator=( PorosityBaseUpdates const & ) = delete;
-
-  /// Deleted move assignment operator
-  PorosityBaseUpdates & operator=( PorosityBaseUpdates && ) = delete;
-
   /**
    * @brief Helper to save point stress back to m_newPorosity array
    *

@@ -48,9 +48,9 @@ public:
                 arraySlice1d< real64 > const & dPerm_dPorosity ) const;
 
   GEOSX_HOST_DEVICE
-  virtual void updatePorosity( localIndex const k,
-                               localIndex const q,
-                               real64 const & porosity ) const override
+  virtual void updateFromPorosity( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & porosity ) const override
   {
     compute( porosity,
              m_permeability[k][q],

@@ -25,8 +25,6 @@
 #include "Damage.hpp"
 #include "DamageSpectral.hpp"
 #include "DamageVolDev.hpp"
-#include "porosity/BiotPorosity.hpp"
-
 
 namespace geosx
 {
@@ -38,18 +36,11 @@ namespace constitutive
 
 template< typename SOLID_TYPE >
 PorousSolid< SOLID_TYPE >::PorousSolid( string const & name, Group * const parent ):
-  CoupledSolid< SOLID_TYPE, BiotPorosity >( name, parent )
+  CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >( name, parent )
 {}
 
 template< typename SOLID_TYPE >
 PorousSolid< SOLID_TYPE >::~PorousSolid() = default;
-
-template< typename SOLID_TYPE >
-void PorousSolid< SOLID_TYPE >::postProcessInput()
-{
-  CoupledSolid< SOLID_TYPE, BiotPorosity >::postProcessInput();
-  m_permModel = &this->getParent().template getGroup< StrainDependentPermeability >( m_permeabilityModelName );
-}
 
 // Register all PorousSolid model types.
 typedef PorousSolid< ElasticIsotropic > PorousElasticIsotropic;

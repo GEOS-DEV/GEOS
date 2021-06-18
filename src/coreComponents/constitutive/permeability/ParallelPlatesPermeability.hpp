@@ -44,9 +44,9 @@ public:
                 arraySlice1d< real64 > const & dPerm_dAperture ) const;
 
   GEOSX_HOST_DEVICE
-  void updateAperture( localIndex const k,
-                       localIndex const q,
-                       real64 const & effectiveAperture ) const override
+  void updateFromAperture( localIndex const k,
+                           localIndex const q,
+                           real64 const & effectiveAperture ) const override
   {
     compute( effectiveAperture,
              m_permeability[k][q],
@@ -63,7 +63,7 @@ class ParallelPlatesPermeability : public PermeabilityBase
 public:
   ParallelPlatesPermeability( string const & name, Group * const parent );
 
-  ~ParallelPlatesPermeability() = default;
+  virtual ~ParallelPlatesPermeability() override = default;
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;

@@ -29,7 +29,8 @@ namespace constitutive
 {
 
 template< typename SOLID_TYPE,
-          typename PORO_TYPE >
+          typename PORO_TYPE,
+          typename PERM_TYPE >
 class CoupledSolidUpdates
 {
 public:
@@ -37,29 +38,33 @@ public:
    * @brief Constructor
    */
   CoupledSolidUpdates( SOLID_TYPE * solidModel,
-                       PORO_TYPE * porosityModel ):
+                       PORO_TYPE * porosityModel,
+                       PERM_TYPE * permModel ):
     m_solidUpdate( solidModel->createKernelUpdates() ),
-    m_porosityUpdate( porosityModel->createKernelUpdates() )
+    m_porosityUpdate( porosityModel->createKernelUpdates() ),
+    m_permUpdate( permModel->createKernelWrapper() )
   {}
 
   GEOSX_HOST_DEVICE
   real64 getOldPorosity( localIndex const k,
                          localIndex const q ) const
   {
-    return m_porosityUpdate.getOldPorosity( k, q);
+    return m_porosityUpdate.getOldPorosity( k, q );
   }
 
   GEOSX_HOST_DEVICE
   real64 getPorosity( localIndex const k,
                       localIndex const q ) const
   {
-    return m_porosityUpdate.getPorosity( k, q);
+    return m_porosityUpdate.getPorosity( k, q );
   }
 
 protected:
   typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
 
   typename PORO_TYPE::KernelWrapper const m_porosityUpdate;
+
+  typename PERM_TYPE::KernelWrapper const m_permUpdate;
 };
 
 
@@ -68,7 +73,8 @@ protected:
  * @brief Class to represent a coupled solid model
  */
 template< typename SOLID_TYPE,
-          typename PORO_TYPE >
+          typename PORO_TYPE,
+          typename PERM_TYPE >
 class CoupledSolid : public ConstitutiveBase
 {
 public:
@@ -110,11 +116,11 @@ public:
    *        that refers to the data in this.
    * @return An instantiation of PorousSolidUpdates.
    */
-  CoupledSolidUpdates< SOLID_TYPE, PORO_TYPE > createKernelUpdates() const
+  CoupledSolidUpdates< SOLID_TYPE, PORO_TYPE, PERM_TYPE > createKernelUpdates() const
   {
 
-    return CoupledSolidUpdates< SOLID_TYPE, PORO_TYPE >( m_solidModel,
-                                                         m_porosityModel );
+    return CoupledSolidUpdates< SOLID_TYPE, PORO_TYPE, PERM_TYPE >( m_solidModel,
+                                                                    m_porosityModel );
   }
 
 protected:
@@ -124,6 +130,8 @@ protected:
 
   // the porosity model
   PORO_TYPE * m_porosityModel;
+
+  PERM_TYPE * m_permModel;
 
   // the name of the solid model
   string m_solidModelName;
@@ -137,8 +145,9 @@ protected:
 
 
 template< typename SOLID_TYPE,
-          typename PORO_TYPE >
-CoupledSolid< SOLID_TYPE, PORO_TYPE >::CoupledSolid( string const & name, Group * const parent ):
+          typename PORO_TYPE,
+          typename PERM_TYPE >
+CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::CoupledSolid( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_solidModel( nullptr ),
   m_porosityModel( nullptr ),
@@ -155,18 +164,20 @@ CoupledSolid< SOLID_TYPE, PORO_TYPE >::CoupledSolid( string const & name, Group 
 
   // TODO: as soon as we start using the permeability models this has to become REQUIRED
   registerWrapper( viewKeyStruct::permeabilityModelNameString(), &m_permeabilityModelName ).
-      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-      setDescription( "Name of the porosity model." );
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Name of the porosity model." );
 }
 
 template< typename SOLID_TYPE,
-          typename PORO_TYPE >
-CoupledSolid< SOLID_TYPE, PORO_TYPE >::~CoupledSolid()
+          typename PORO_TYPE,
+          typename PERM_TYPE >
+CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::~CoupledSolid()
 {}
 
 template< typename SOLID_TYPE,
-          typename PORO_TYPE >
-void CoupledSolid< SOLID_TYPE, PORO_TYPE >::postProcessInput()
+          typename PORO_TYPE,
+          typename PERM_TYPE >
+void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::postProcessInput()
 {
   m_solidModel = &this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName );
   m_porosityModel = &this->getParent().template getGroup< PORO_TYPE >( m_porosityModelName );

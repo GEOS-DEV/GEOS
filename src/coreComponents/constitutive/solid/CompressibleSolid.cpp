@@ -19,6 +19,8 @@
 
 #include "CompressibleSolid.hpp"
 #include "porosity/PressurePorosity.hpp"
+#include "constitutive/permeability/ConstantPermeability.hpp"
+#include "constitutive/permeability/CarmanKozenyPermeability.hpp"
 
 namespace geosx
 {
@@ -28,19 +30,23 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-template< typename PORO_TYPE >
-CompressibleSolid< PORO_TYPE >::CompressibleSolid( string const & name, Group * const parent ):
-  CoupledSolid< NullModel, PORO_TYPE >( name, parent )
+template< typename PORO_TYPE,
+          typename PERM_TYPE >
+CompressibleSolid< PORO_TYPE, PERM_TYPE >::CompressibleSolid( string const & name, Group * const parent ):
+  CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >( name, parent )
 {}
 
-template< typename PORO_TYPE >
-CompressibleSolid< PORO_TYPE >::~CompressibleSolid()
-{}
+template< typename PORO_TYPE,
+          typename PERM_TYPE >
+CompressibleSolid< PORO_TYPE, PERM_TYPE >::~CompressibleSolid() = default;
 
-// Register all CoupleSolid model types.
-typedef CompressibleSolid< PressurePorosity > CompressibleRock;
+// Register all CompressibleSolid model types.
+typedef CompressibleSolid< PressurePorosity, ConstantPermeability > CompressibleRockConstant;
+typedef CompressibleSolid< PressurePorosity, CarmanKozenyPermeability > CompressibleRockCK;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRock, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockConstant, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockCK, string const &, Group * const )
+
 
 }
 } /* namespace geosx */

@@ -37,7 +37,7 @@ namespace constitutive
  * @tparam SOLID_TYPE
  */
 template< typename SOLID_TYPE >
-class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >
+class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >
 {
 public:
 
@@ -49,8 +49,7 @@ public:
   PorousSolidUpdates( SOLID_TYPE * solidModel,
                       BiotPorosity * porosityModel,
                       StrainDependentPermeability * permModel ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >( solidModel, porosityModel ),
-    m_permUpdate( permModel->createKernelWrapper() )
+    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >( solidModel, porosityModel, permModel )
   {}
 
   GEOSX_HOST_DEVICE
@@ -89,10 +88,9 @@ public:
 
 private:
 
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_solidUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity >::m_porosityUpdate;
-
-  StrainDependentPermeability::KernelWrapper m_permUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_solidUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_porosityUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_permUpdate;
 
 };
 
@@ -106,7 +104,7 @@ class PorousSolidBase : public SolidBase
  * @brief Class to represent a coupled solid model
  */
 template< typename SOLID_TYPE >
-class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity >
+class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >
 {
 public:
 
@@ -166,15 +164,11 @@ public:
     return m_solidModel->getDensity();
   }
 
-  virtual void postProcessInput() override final;
-
 private:
 
-  using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_solidModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_porosityModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity >::m_permeabilityModelName;
-
-  StrainDependentPermeability * m_permModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_solidModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_porosityModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_permModel;
 };
 
 

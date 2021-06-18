@@ -44,20 +44,7 @@ public:
     m_compressibility( compressibility )
   {}
 
-  /// Default copy constructor
-  PressurePorosityUpdates( PressurePorosityUpdates const & ) = default;
-
-  /// Default move constructor
-  PressurePorosityUpdates( PressurePorosityUpdates && ) = default;
-
-  /// Deleted copy assignment operator
-  PressurePorosityUpdates & operator=( PressurePorosityUpdates const & ) = delete;
-
-  /// Deleted move assignment operator
-  PressurePorosityUpdates & operator=( PressurePorosityUpdates && ) = delete;
-
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void computePorosity( real64 const & pressure,
                         real64 & porosity,
                         real64 & dPorosity_dPressure,
@@ -69,7 +56,6 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   virtual void updatePorosity( localIndex const k,
                                localIndex const q,
                                real64 const & pressure ) const

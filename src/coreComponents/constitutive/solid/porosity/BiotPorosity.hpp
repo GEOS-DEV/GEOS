@@ -59,21 +59,8 @@ public:
     m_grainBulkModulus( grainBulkModulus )
   {}
 
-  /// Default copy constructor
-  BiotPorosityUpdates( BiotPorosityUpdates const & ) = default;
-
-  /// Default move constructor
-  BiotPorosityUpdates( BiotPorosityUpdates && ) = default;
-
-  /// Deleted copy assignment operator
-  BiotPorosityUpdates & operator=( BiotPorosityUpdates const & ) = delete;
-
-  /// Deleted move assignment operator
-  BiotPorosityUpdates & operator=( BiotPorosityUpdates && ) = delete;
-
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void updatePorosity( localIndex const k,
                        localIndex const q,
                        real64 const & deltaPressure,
@@ -99,7 +86,6 @@ public:
 
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void updateBiotCoefficient( localIndex const k,
                               localIndex const q,
                               real64 const bulkModulus ) const

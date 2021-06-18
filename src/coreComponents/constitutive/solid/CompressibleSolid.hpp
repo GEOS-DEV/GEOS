@@ -34,41 +34,44 @@ namespace constitutive
  *
  * @tparam SOLID_TYPE
  */
-template< typename PORO_TYPE >
-class CompressibleSolidUpdates : public CoupledSolidUpdates< NullModel, PORO_TYPE >
+template< typename PORO_TYPE,
+          typename PERM_TYPE >
+class CompressibleSolidUpdates : public CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >
 {
 public:
-
-  using CoupledSolidUpdates< NullModel, PORO_TYPE >::m_solidUpdate;
-  using CoupledSolidUpdates< NullModel, PORO_TYPE >::m_porosityUpdate;
 
   /**
    * @brief Constructor
    */
   CompressibleSolidUpdates( NullModel * solidModel,
-                            PORO_TYPE * porosityModel ):
-    CoupledSolid< NullModel, PORO_TYPE >( solidModel, porosityModel )
+                            PORO_TYPE * porosityModel,
+                            PERM_TYPE * permModel ):
+    CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel )
   {}
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void pressureUpdate( localIndex const k,
                        localIndex const q,
                        real64 const & pressure,
                        real64 const & deltaPressure ) const
   {
     m_porosityUpdate.updatePorosity( k, q, pressure, deltaPressure );
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+    m_permUpdate.updateFromPorosity( k, q, porosity );
   }
+
+private:
+  using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_solidUpdate;
+  using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_porosityUpdate;
+  using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_permUpdate;
 
 };
 
-template< typename PORO_TYPE >
-class CompressibleSolid : public CoupledSolid< NullModel, PORO_TYPE >
+template< typename PORO_TYPE,
+          typename PERM_TYPE >
+class CompressibleSolid : public CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >
 {
 public:
-
-  using CoupledSolid< NullModel, PORO_TYPE >::m_solidModel;
-  using CoupledSolid< NullModel, PORO_TYPE >::m_porosityModel;
 
   /**
    * @brief Constructor
@@ -84,7 +87,7 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "CompressibleSolid" ); }
+  static string catalogName() { return string( "CompressibleSolid" ) + PORO_TYPE::catalogName() + PERM_TYPE::catalogName(); }
 
   /**
    * @brief Get catalog name
@@ -98,12 +101,17 @@ public:
    *        that refers to the data in this.
    * @return An instantiation of CompressibleSolidUpdates.
    */
-  CompressibleSolidUpdates< PORO_TYPE > createKernelUpdates() const
+  CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE > createKernelUpdates() const
   {
 
-    return CompressibleSolidUpdates< PORO_TYPE >( m_solidModel,
-                                                  m_porosityModel );
+    return CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE >( m_solidModel,
+                                                             m_porosityModel,
+                                                             m_permModel );
   }
+private:
+  using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::m_solidModel;
+  using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::m_porosityModel;
+  using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::m_permModel;
 
 };
 
