@@ -179,6 +179,7 @@ jobs:
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
     - ENABLE_HYPRE=OFF
+    - ENABLE_TRILINOS=ON
   - stage: builds
     name: Ubuntu18.04_clang8.0.0_cuda10.1.243_release_hypreGPU
     <<: *geosx_linux_build
@@ -198,6 +199,7 @@ jobs:
     - CMAKE_BUILD_TYPE=Debug
     - BUILD_AND_TEST_ARGS="--disable-unit-tests --build-exe-only"
     - ENABLE_HYPRE=OFF
+    - ENABLE_TRILINOS=ON
   - stage: builds
     name: Centos7.6_gcc8.3.1_cuda10.1.243_release
     <<: *geosx_linux_build
@@ -206,6 +208,7 @@ jobs:
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
     - ENABLE_HYPRE=OFF
+    - ENABLE_TRILINOS=ON
   - stage: builds
     name: Pangea2_gcc8.3.0_release
     <<: *geosx_totalenergies_cluster_build
