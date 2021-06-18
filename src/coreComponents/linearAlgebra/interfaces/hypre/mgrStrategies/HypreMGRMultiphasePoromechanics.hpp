@@ -45,8 +45,8 @@ namespace mgr
  * 3-level MGR reduction strategy based on CompositionalMultiphaseFVM
  *   - 1st level: eliminate displacements (0,1,2)
  *   - 2nd level: eliminate the reservoir density associated with the volume constraint (numLabels - 1)
- *   - 3nd level: eliminate the pressure
- *   - The coarse grid solved with ILU(0).
+ *   - 3nd level: eliminate the other reservoir densities
+ *   - The coarse grid is solved with BoomerAMG.
  *
  */
 class MultiphasePoromechanics : public MGRStrategyBase< 3 >
