@@ -220,7 +220,7 @@ jobs:
     - DOCKER_REPOSITORY=geosx/pecan-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
-    - HOST_CONFIG=TOTAL/pecan.cmake
+    - HOST_CONFIG=host-configs/TOTAL/pecan.cmake
     - GCP_BUCKET=geosx/Pecan
   - stage: builds
     name: Mac_OSX

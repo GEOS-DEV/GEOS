@@ -46,7 +46,7 @@ echo $GEOSX_LA_INTERFACE
 # to run the unit tests.
 GEOSX_BUILD_DIR=/tmp/build
 or_die python scripts/config-build.py \
-              -hc host-configs/${HOST_CONFIG} \
+              -hc ${HOST_CONFIG} \
               -bt ${CMAKE_BUILD_TYPE} \
               -bp ${GEOSX_BUILD_DIR} \
               -ip ${GEOSX_DIR} \
