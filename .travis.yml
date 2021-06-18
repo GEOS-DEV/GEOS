@@ -46,9 +46,9 @@ geosx_linux_build: &geosx_linux_build
     -e HOST_CONFIG=${HOST_CONFIG:-host-configs/environment.cmake}
     -e CMAKE_BUILD_TYPE
     -e GEOSX_DIR=${GEOSX_DIR}
-    -e ENABLE_HYPRE=${ENABLE_HYPRE}
-    -e ENABLE_HYPRE_CUDA=${ENABLE_HYPRE_CUDA}
-    -e ENABLE_TRILINOS=${ENABLE_TRILINOS}
+    -e ENABLE_HYPRE=${ENABLE_HYPRE:-ON}
+    -e ENABLE_HYPRE_CUDA=${ENABLE_HYPRE_CUDA:-OFF}
+    -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-OFF}
     ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG}
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
 
