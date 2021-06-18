@@ -65,7 +65,7 @@ public:
     // Level 1: eliminate last density which corresponds to the volume constraint equation
     m_labels[1].resize( m_numBlocks - 4 );
     std::iota( m_labels[1].begin(), m_labels[1].end(), 3 );
-    // Level 2: eliminate pressure
+    // Level 2: eliminate the remaining reservoir densities
     m_labels[2].resize( m_numBlocks - 5 );
     std::iota( m_labels[2].begin(), m_labels[2].end(), 3 );
 
