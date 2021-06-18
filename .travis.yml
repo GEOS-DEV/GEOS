@@ -214,7 +214,7 @@ jobs:
     - CMAKE_BUILD_TYPE=Release
     - GCP_BUCKET=geosx/Pangea2
   - stage: builds
-    name: Pecan
+    name: Pecan_gcc8.2.0_cuda10.2.89p2_release
     <<: *geosx_totalenergies_cluster_build
     env:
     - DOCKER_REPOSITORY=geosx/pecan-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
