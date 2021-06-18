@@ -17,7 +17,7 @@ We do so by coupling a single phase flow solver with a small-strain Lagrangian m
 
 At the end of this tutorial you will know:
 
-  - how to use multiple solvers for poroelastic problems,
+  - how to use multiple solvers for poromechanical problems,
   - how to define finite elements and finite volume numerical methods.
 
 
@@ -79,9 +79,6 @@ Knowledge of :math:`t_c` is useful for choosing appropriately the  timestep size
 Preparing the input files
 ------------------------------------------------------------------
 
-All inputs for this case are contained inside a single XML file.
-In this tutorial, we focus our attention on the ``Solvers`` tags,
-the ``NumericalMethods`` tags, and we will briefly inspect the mesh
 and field specification tags.
 
 
@@ -94,8 +91,7 @@ in different regions of the mesh at different moments of the simulation.
 The XML ``Solvers`` tag is used to list and parameterize these solvers.
 
 
-To specify a coupling between two solvers, as done here,
-we define and characterize each single-physics solver separately.
+We define and characterize each single-physics solver separately.
 Then, we define a *coupling solver* between these single-physics
 solvers as another, separate, solver.
 This approach allows for generality and flexibility in our multi-physics resolutions.
@@ -104,29 +100,27 @@ It is important, though, to instantiate each single-physic solvers
 with meaningful names. The names given to these single-physics solver instances
 will be used to recognize them and create the coupling.
 
-To define a poroelastic coupling, we will effectively define three solvers:
+To define a poromechanical coupling, we will effectively define three solvers:
 
  - the single-physics flow solver, a solver of type ``SinglePhaseFVM`` called here ``SinglePhaseFlowSolver`` (more information on these solvers at :ref:`SinglePhaseFlow`),
  - the small-stress Lagrangian mechanics solver, a solver of type ``SolidMechanicsLagrangianSSLE`` called here ``LinearElasticitySolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
- - the coupling solver that will bind the two single-physics solvers above, an object of type ``Poroelastic`` called here ``PoroelasticitySolver`` (more information at :ref:`PoroelasticSolver`).
+ - the coupling solver that will bind the two single-physics solvers above, an object of type ``SinglePhasePoromechanics`` called here ``PoroelasticitySolver`` (more information at :ref:`PoroelasticSolver`).
 
 Note that the ``name`` attribute of these solvers is
 chosen by the user and is not imposed by GEOSX.
 
 The two single-physics solvers are parameterized as explained
-in their respective documentation, each with their own tolerances,
-verbosity levels, target regions,
-and other solver-specific attributes.
+in their respective documentation.
 
 Let us focus our attention on the coupling solver.
-This solver (``PoroelasticitySolver``) uses a set of attributes that specifically describe the coupling for a poroelastic framework.
+This solver (``PoroelasticitySolver``) uses a set of attributes that specifically describe the coupling for a poromechanical framework.
 For instance, we must point this solver to the correct fluid solver (here: ``SinglePhaseFlowSolver``), the correct solid solver (here: ``LinearElasticitySolver``).
 Now that these two solvers are tied together inside the coupling solver,
 we have a coupled multiphysics problem defined.
 More parameters are required to characterize a coupling.
-Here, we specify the coupling type (``FIM``, fully implicit method; a choice among several possible options),
+Here, we specify 
 the discretization method (``FE1``, defined further in the input file),
-and the target regions (here, we only have one, ``Region1``).
+and the target regions (here, we only have one, ``Domain``).
 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml
@@ -223,12 +217,12 @@ Here, we see for instance the ``RSolid`` and ``RFluid`` at a representative time
 .. code-block:: sh
 
    Attempt:  0, NewtonIter:  0
-   ( RSolid ) = (2.54e-16) ;     ( Rsolid, Rfluid ) = ( 2.54e-16, 8.44e-06 )
-   ( R ) = ( 8.44e-06 ) ;
+   ( RSolid ) = (5.00e-01) ;     ( Rsolid, Rfluid ) = ( 5.00e-01, 0.00e+00 )
+   ( R ) = ( 5.00e-01 ) ; 
    Attempt:  0, NewtonIter:  1
-   ( RSolid ) = (2.22e-16) ;     ( Rsolid, Rfluid ) = ( 2.22e-16, 2.76e-20 )
-   ( R ) = ( 2.22e-16 ) ;
-   Last LinSolve(iter,res) = (   1, 1.15e-11 ) ;
+   ( RSolid ) = (4.26e-16) ;     ( Rsolid, Rfluid ) = ( 4.26e-16, 4.22e-17 )
+   ( R ) = ( 4.28e-16 ) ; 
+   
 
 As expected, since we are dealing with a linear problem,
 the fully implicit solver coverges in a single iteration.
