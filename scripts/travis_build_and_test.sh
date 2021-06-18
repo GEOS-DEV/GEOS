@@ -31,14 +31,6 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
-if [[ $ENABLE_HYPRE == ON ]]; then
-    GEOSX_LA_INTERFACE="Hypre"
-else
-    GEOSX_LA_INTERFACE="Trilinos"
-fi
-
-echo $GEOSX_LA_INTERFACE
-
 # The -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root option is added for openmpi
 # which prevents from running as root user by default.
 # And by default, you are root in a docker container.
