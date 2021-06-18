@@ -43,8 +43,6 @@ public:
    */
   static string catalogName() { return "SinglePhasePoromechanics"; }
 
-  virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
-
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,

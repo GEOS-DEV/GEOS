@@ -70,11 +70,6 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
-void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
-{
-  GEOSX_UNUSED_VAR( meshBodies );
-}
-
 void MultiphasePoromechanicsSolver::setupDofs( DomainPartition const & domain,
                                                DofManager & dofManager ) const
 {

@@ -18,13 +18,15 @@
 
 #include "HypreMGR.hpp"
 
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRSinglePhasePoromechanics.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRHybridSinglePhasePoromechanics.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRMultiphasePoromechanics.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRCompositionalMultiphaseFVM.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRCompositionalMultiphaseReservoir.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRCompositionalMultiphaseHybridFVM.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/HypreMGRLagrangianContactMechanics.hpp"
+#include "linearAlgebra/common/common.hpp"
+
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoir.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp"
 
 #include "LvArray/src/output.hpp"
 

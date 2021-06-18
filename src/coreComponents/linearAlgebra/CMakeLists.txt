@@ -99,13 +99,13 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreSolver.hpp
           interfaces/hypre/HypreInterface.hpp
           interfaces/hypre/HypreUtils.hpp 
-          interfaces/hypre/mgrStrategies/HypreMGRSinglePhasePoromechanics.hpp
-          interfaces/hypre/mgrStrategies/HypreMGRHybridSinglePhasePoromechanics.hpp
-          interfaces/hypre/mgrStrategies/HypreMGRMultiphasePoromechanics.hpp
-          interfaces/hypre/mgrStrategies/HypreMGRCompositionalMultiphaseFVM.hpp
-          interfaces/hypre/mgrStrategies/HypreMGRCompositionalMultiphaseReservoir.hpp
-          interfaces/hypre/mgrStrategies/HypreMGRCompositionalMultiphaseHybridFVM.hpp
-          interfaces/hypre/mgrStrategies/HypreMGRLagrangianContactMechanics.hpp)
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp
+          interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoir.hpp
+          interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp
+          interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp)
 
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreExport.cpp

@@ -19,8 +19,6 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICS_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICS_HPP_
 
-#include "common/common.hpp"
-
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
 namespace geosx
