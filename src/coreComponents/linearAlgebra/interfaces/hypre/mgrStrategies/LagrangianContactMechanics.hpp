@@ -13,7 +13,7 @@
  */
 
 /**
- * @file HypreMGRLagrangianContactMechanics.hpp
+ * @file LagrangianContactMechanics.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRLAGRANGIACONTACTMECHANICS_HPP_

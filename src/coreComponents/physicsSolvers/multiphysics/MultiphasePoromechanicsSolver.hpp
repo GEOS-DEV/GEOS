@@ -106,16 +106,8 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override;
 
-  enum class CouplingTypeOption : integer
-  {
-    FIM
-  };
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOptionEnum"; }
-    constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
-
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
   };
@@ -127,8 +119,6 @@ protected:
   string m_solidSolverName;
   string m_flowSolverName;
 
-  CouplingTypeOption m_couplingTypeOption;
-
   // pointer to the flow sub-solver
   CompositionalMultiphaseBase * m_flowSolver;
 
@@ -136,8 +126,6 @@ protected:
   SolidMechanicsLagrangianFEM * m_solidSolver;
 
 };
-
-ENUM_STRINGS( MultiphasePoromechanicsSolver::CouplingTypeOption, "FIM" );
 
 } /* namespace geosx */
 

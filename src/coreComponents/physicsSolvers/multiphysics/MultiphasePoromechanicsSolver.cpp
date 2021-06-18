@@ -48,8 +48,7 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
                                                               Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
-  m_flowSolverName(),
-  m_couplingTypeOption( CouplingTypeOption::FIM )
+  m_flowSolverName()
 
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
@@ -59,10 +58,6 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
   registerWrapper( viewKeyStruct::fluidSolverNameString(), &m_flowSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
-
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString(), &m_couplingTypeOption ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -146,20 +141,18 @@ real64 MultiphasePoromechanicsSolver::solverStep( real64 const & time_n,
 {
   real64 dt_return = dt;
 
-  if( m_couplingTypeOption == CouplingTypeOption::FIM )
-  {
-    setupSystem( domain,
-                 m_dofManager,
-                 m_localMatrix,
-                 m_localRhs,
-                 m_localSolution );
+  setupSystem( domain,
+               m_dofManager,
+               m_localMatrix,
+               m_localRhs,
+               m_localSolution );
 
-    implicitStepSetup( time_n, dt, domain );
+  implicitStepSetup( time_n, dt, domain );
 
-    dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+  dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
-    implicitStepComplete( time_n, dt_return, domain );
-  }
+  implicitStepComplete( time_n, dt_return, domain );
+
   return dt_return;
 }
 

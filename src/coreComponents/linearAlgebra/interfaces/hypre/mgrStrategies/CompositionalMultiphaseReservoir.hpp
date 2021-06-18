@@ -13,7 +13,7 @@
  */
 
 /**
- * @file HypreMGRCompositionalMultiphaseReservoir.hpp
+ * @file CompositionalMultiphaseReservoir.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIR_HPP_

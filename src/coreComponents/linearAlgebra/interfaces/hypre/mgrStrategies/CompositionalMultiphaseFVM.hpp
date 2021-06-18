@@ -13,7 +13,7 @@
  */
 
 /**
- * @file HypreMGRCompositionalMultiphaseFVM.hpp
+ * @file CompositionalMultiphaseFVM.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASEFVM_HPP_

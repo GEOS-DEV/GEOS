@@ -13,7 +13,7 @@
  */
 
 /**
- * @file HypreMGRMultiphasePoromechanics.hpp
+ * @file MultiphasePoromechanics.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRMULTIPHASEPOROMECHANICS_HPP_
