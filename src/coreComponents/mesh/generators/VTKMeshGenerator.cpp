@@ -550,18 +550,18 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
       {
         array2d< real64 > & property = cellBlock.addProperty< array2d< real64 > >( array->GetName() );
         property.resizeDimension< 1 >( dimension );
+        localIndex cellCount = 0;
         for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
         {
           vtkCell * currentCell = m_vtkMesh->GetCell(c);
-          localIndex cellCount = 0;
           if( currentCell->GetCellType() == cellType )
           {
             if( attributeDataArray != nullptr && attributeDataArray->GetValue(c) != region_id) continue;
-            double * tuple = array->GetTuple(c);
             for(int i = 0; i < dimension; i++ )
             {
-              property(cellCount,i) = tuple[i];
+              property(cellCount,i) = array->GetComponent(c,i);
             }
+            cellCount++;
           }
         }
       }
