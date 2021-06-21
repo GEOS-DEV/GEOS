@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROELASTICSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROELASTICSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
@@ -30,21 +30,18 @@ namespace geosx
 class SolidMechanicsLagrangianFEM;
 class CompositionalMultiphaseBase;
 
-class MultiphasePoroelasticSolver : public SolverBase
+class MultiphasePoromechanicsSolver : public SolverBase
 {
 public:
-  MultiphasePoroelasticSolver( const string & name,
-                               Group * const parent );
-  ~MultiphasePoroelasticSolver() override;
+  MultiphasePoromechanicsSolver( const string & name,
+                                 Group * const parent );
+  ~MultiphasePoromechanicsSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string catalogName() { return "MultiphasePoroelastic"; }
-
-  virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
-
+  static string catalogName() { return "MultiphasePoromechanics"; }
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -109,21 +106,11 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override;
 
-  enum class CouplingTypeOption : integer
-  {
-    FIM
-  };
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOptionEnum"; }
-    constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
-
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
   };
-
-
 
 protected:
 
@@ -131,8 +118,6 @@ protected:
 
   string m_solidSolverName;
   string m_flowSolverName;
-
-  CouplingTypeOption m_couplingTypeOption;
 
   // pointer to the flow sub-solver
   CompositionalMultiphaseBase * m_flowSolver;
@@ -142,9 +127,6 @@ protected:
 
 };
 
-ENUM_STRINGS( MultiphasePoroelasticSolver::CouplingTypeOption,
-              "FIM" );
-
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROELASTICSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSSOLVER_HPP_ */
