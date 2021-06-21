@@ -69,7 +69,6 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
     m_io.back()->init( !freshInit );
     ++ioCount;
   }
-  // localIndex nonMetaCount = ioCount;
 
   localIndex metaCollectorCount = collector.getNumMetaCollectors( );
   for( localIndex metaIdx = 0; metaIdx < metaCollectorCount; ++metaIdx )
