@@ -123,6 +123,8 @@ void HypreVector::createWithLocalSize( localIndex const localSize,
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( localSize, 0 );
 
+  reset();
+
   HYPRE_BigInt const jlower = MpiWrapper::prefixSum< HYPRE_BigInt >( LvArray::integerConversion< HYPRE_BigInt >( localSize ), comm );
   HYPRE_BigInt const jupper = jlower + LvArray::integerConversion< HYPRE_BigInt >( localSize ) - 1;
 
@@ -136,6 +138,8 @@ void HypreVector::createWithGlobalSize( globalIndex const globalSize,
 {
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( globalSize, 0 );
+
+  reset();
 
   HYPRE_Int const rank  = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::commRank( comm ) );
   HYPRE_Int const nproc = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::commSize( comm ) );
