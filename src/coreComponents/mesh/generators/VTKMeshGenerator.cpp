@@ -34,6 +34,7 @@
 #include "mesh/MeshBody.hpp"
 
 #include <vtkXMLUnstructuredGridReader.h>
+#include <vtkXMLPUnstructuredGridReader.h>
 #include <vtkUnstructuredGridReader.h>
 #include <vtkCellData.h>
 #include <vtkPointData.h>
@@ -123,6 +124,14 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
       vtkUgReader->Update();
 	    loadedMesh = vtkUgReader->GetOutput();
     }
+    else if( extension == "pvtu")
+    {
+      vtkSmartPointer<vtkXMLPUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkXMLPUnstructuredGridReader>::New();
+      GEOSX_LOG_RANK_0(m_filePath);
+	    vtkUgReader->SetFileName( m_filePath.c_str() );
+      vtkUgReader->Update();
+	    loadedMesh = vtkUgReader->GetOutput();
+    }
     else
     {
       GEOSX_ERROR( extension << " is not a recognized extension for using the VTK reader with GEOSX. Please use .vtk or .vtu" );
@@ -140,6 +149,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   rdsf->SetNumberOfPartitions( controller->GetNumberOfProcesses() );
   rdsf->GenerateGlobalCellIdsOn();
   rdsf->Update();
+
   m_vtkMesh = vtkUnstructuredGrid::SafeDownCast( rdsf->GetOutputDataObject(0));
   MpiWrapper::barrier();
 
