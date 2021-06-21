@@ -770,7 +770,6 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/mesh/ExtrinsicMeshData.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp \
-        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp \

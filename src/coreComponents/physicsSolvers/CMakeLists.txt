@@ -29,11 +29,11 @@ set( physicsSolvers_headers
      multiphysics/HydrofractureSolver.hpp
      multiphysics/LagrangianContactSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
-     multiphysics/PoroelasticSolver.hpp
-     multiphysics/PoroelasticSolverEmbeddedFractures.hpp
+     multiphysics/SinglePhasePoromechanicsSolver.hpp
+     multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhaseReservoir.hpp
-     multiphysics/SinglePhasePoroelasticKernel.hpp
+     multiphysics/SinglePhasePoromechanicsKernel.hpp
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
@@ -45,7 +45,6 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsEFEMKernels.hpp
      solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp
-     solidMechanics/SolidMechanicsPoroElasticKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
@@ -78,8 +77,8 @@ set( physicsSolvers_sources
      multiphysics/HydrofractureSolver.cpp
      multiphysics/LagrangianContactSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
-     multiphysics/PoroelasticSolver.cpp
-     multiphysics/PoroelasticSolverEmbeddedFractures.cpp
+     multiphysics/SinglePhasePoromechanicsSolver.cpp
+     multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
      multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhaseReservoir.cpp
      simplePDE/LaplaceBaseH1.cpp
@@ -121,9 +120,9 @@ if( ENABLE_PVTPackage )
          fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
          fluidFlow/wells/CompositionalMultiphaseWell.hpp
          fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
-         multiphysics/MultiphasePoroelasticSolver.hpp
+         multiphysics/MultiphasePoromechanicsSolver.hpp
          multiphysics/CompositionalMultiphaseReservoir.hpp
-         multiphysics/MultiphasePoroelasticKernel.hpp
+         multiphysics/MultiphasePoromechanicsKernel.hpp
          )
 
     list( APPEND physicsSolvers_sources
@@ -134,7 +133,7 @@ if( ENABLE_PVTPackage )
          fluidFlow/CompositionalMultiphaseFVMKernels.cpp
          fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
          multiphysics/CompositionalMultiphaseReservoir.cpp
-         multiphysics/MultiphasePoroelasticSolver.cpp
+         multiphysics/MultiphasePoromechanicsSolver.cpp
          fluidFlow/wells/CompositionalMultiphaseWell.cpp
          )
 endif()
