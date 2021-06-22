@@ -257,6 +257,9 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   std::map<int,localIndex> regions_hex;
   std::map<int,localIndex> regions_wedges;
   std::map<int,localIndex> regions_pyramids;
+
+  // surface ids
+  std::set<int> surfaces;
   vtkCellData * cellData = m_vtkMesh->GetCellData();
   int attributeIndex = -1;
   vtkAbstractArray * attributeArray = cellData->GetAbstractArray("attribute", attributeIndex);
@@ -347,6 +350,13 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
         }
       }
     }
+    else if( m_vtkMesh->GetCellType(c) == VTK_TRIANGLE || m_vtkMesh->GetCellType(c) == VTK_QUAD )
+    {
+      if (attributeDataArray != nullptr)
+      {
+        surfaces.insert(attributeDataArray->GetValue(c));
+      }
+    }
     else
     {
       nbOthers++;
@@ -409,6 +419,24 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
       WriteCellBlock("wedges", nbWedge, -1, VTK_WEDGE, cellBlockManager, arrayToBeImported);
       WriteCellBlock("pyramids", nbPyr, -1, VTK_PYRAMID, cellBlockManager, arrayToBeImported);
 
+  }
+
+  // Write the surfaces
+  for( int surface : surfaces)
+  {
+    SortedArray< localIndex > & curNodeSet  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::to_string( surface) ).reference();
+    GEOSX_LOG_RANK_0("Adding surface : " << surface);
+    for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
+    {
+      vtkCell * currentCell = m_vtkMesh->GetCell(c);
+      if( m_vtkMesh->GetCellType(c) == VTK_TRIANGLE ||  m_vtkMesh->GetCellType(c) == VTK_QUAD)
+      {
+        for( localIndex v = 0; v < currentCell->GetNumberOfPoints(); v++)
+        {
+          curNodeSet.insert(currentCell->GetPointId(v) );
+        }
+      } 
+    }
   }
 }
 
