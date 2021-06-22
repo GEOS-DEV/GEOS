@@ -29,7 +29,11 @@ namespace constitutive
 
 BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   PorosityBase( name, parent )
-{}
+{
+  registerWrapper( viewKeyStruct::grainBulkModulusString(), &m_grainBulkModulus ).
+      setInputFlag( InputFlags::REQUIRED ).
+      setDescription( "Grain bulk modulus" );
+}
 
 BiotPorosity::~BiotPorosity() = default;
 

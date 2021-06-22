@@ -156,10 +156,19 @@
   <Constitutive>
     <PoroElasticIsotropic
       name="shale"
+      solidName="shaleSolid"
+      porosityName="shalePorosity"/>
+      
+   <ElasticIsotropic
+      name="shaleSolid"
       defaultDensity="0"
       defaultBulkModulus="5.55555555555555555556e3"
-      defaultShearModulus="4.16666666666666666667e3"
-      BiotCoefficient="1.0"/>
+      defaultShearModulus="4.16666666666666666667e3"/>
+   
+   <BiotPorosity
+      name="shalePorosity"
+      grainBulkModulus="1.0e27"
+      defaultReferencePorosity="0.05"/>       
 
     <CompressibleSinglePhaseFluid
       name="water"
@@ -241,7 +250,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="permeability"
       scale="1.000e-4"/>
-
+<!--  
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
@@ -249,7 +258,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="referencePorosity"
       scale="0.0"/>
-
+-->
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"

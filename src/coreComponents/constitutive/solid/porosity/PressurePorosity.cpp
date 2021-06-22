@@ -46,9 +46,7 @@ std::unique_ptr< ConstitutiveBase >
 PressurePorosity::deliverClone( string const & name,
                                 Group * const parent ) const
 {
-  std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
-
-  return clone;
+  return ConstitutiveBase::deliverClone( name, parent );
 }
 
 void PressurePorosity::allocateConstitutiveData( dataRepository::Group & parent,

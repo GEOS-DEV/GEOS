@@ -21,7 +21,6 @@
 #include <physicsSolvers/multiphysics/MultiphasePoroelasticSolver.hpp>
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/solid/PoroElastic.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"

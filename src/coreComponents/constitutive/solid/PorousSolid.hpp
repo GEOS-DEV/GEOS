@@ -74,6 +74,12 @@ public:
                                      dPorosity_dPressure,
                                      dPorosity_dVolStrain,
                                      dTotalStress_dPressure );
+
+// TODO uncomment once we start using permeability model in flow.
+//    m_permUpdate.updateFromPressureStrain( k,
+//                                           q,
+//                                           pressure,
+//                                           volStrain );
   }
 
   GEOSX_HOST_DEVICE
@@ -125,7 +131,7 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::m_catalogNameString; }
+  static string catalogName() { return string( "Poro" ) + SOLID_TYPE::m_catalogNameString; }
 
   /**
    * @brief Get catalog name
