@@ -16,15 +16,15 @@
  * @file MultiphasePoroelasticKernel.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROELASTICKERNEL_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROELASTICKERNEL_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geosx
 {
 
-namespace PoroelasticKernels
+namespace PoromechanicsKernels
 {
 
 /**
@@ -535,4 +535,4 @@ using MultiphaseKernelFactory = finiteElement::KernelFactory< Multiphase,
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROELASTICKERNEL_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
