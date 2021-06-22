@@ -13,34 +13,35 @@
  */
 
 /**
- * @file PoroelasticSolverEmbeddedFractures.hpp
+ * @file PoroelasticSolver.hpp
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVEREMBEDDEDFRACTURES_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVEREMBEDDEDFRACTURES_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
 
-#include "physicsSolvers/multiphysics/PoroelasticSolver.hpp"
+#include "codingUtilities/EnumStrings.hpp"
+#include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
 {
 
-class SolidMechanicsEmbeddedFractures;
 
-class PoroelasticSolverEmbeddedFractures : public PoroelasticSolver
+class SolidMechanicsLagrangianFEM;
+class SinglePhaseBase;
+
+class SinglePhasePoromechanicsSolver : public SolverBase
 {
 public:
-  PoroelasticSolverEmbeddedFractures( const std::string & name,
-                                      Group * const parent );
-  ~PoroelasticSolverEmbeddedFractures() override;
+  SinglePhasePoromechanicsSolver( const string & name,
+                                  Group * const parent );
+  ~SinglePhasePoromechanicsSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string catalogName() { return "PoroelasticEmbeddedFractures"; }
-
-  virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
+  static string catalogName() { return "SinglePhasePoromechanics"; }
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -56,7 +57,7 @@ public:
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition & domain ) override final;
+                     DomainPartition & domain ) override;
 
   virtual void
   assembleSystem( real64 const time,
@@ -86,6 +87,12 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
+  solveSystem( DofManager const & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
+
+  virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
@@ -94,7 +101,7 @@ public:
   virtual void
   implicitStepComplete( real64 const & time_n,
                         real64 const & dt,
-                        DomainPartition & domain ) override final;
+                        DomainPartition & domain ) override;
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -105,67 +112,33 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override;
 
-  /**
-   * @Brief add extra nnz to each row induced by the coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param rowLengths the number of NNZ of each row
-   */
-  void addCouplingNumNonzeros( DomainPartition & domain,
-                               DofManager & dofManager,
-                               arrayView1d< localIndex > const & rowLengths ) const;
-
-  /**
-   * @Brief add the sparsity pattern induced by the coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param pattern the sparsity pattern
-   */
-  void addCouplingSparsityPattern( DomainPartition const & domain,
-                                   DofManager const & dofManager,
-                                   SparsityPatternView< globalIndex > const & pattern ) const;
-
-
-  void updateState( DomainPartition & domain );
-
-
-  void assembleTractionBalanceResidualWrtPressure( DomainPartition const & domain,
-                                                   DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
-
-  void assembleFractureFlowResidualWrtJump( DomainPartition const & domain,
-                                            DofManager const & dofManager,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            arrayView1d< real64 > const & localRhs );
-
-
-  struct viewKeyStruct : PoroelasticSolver::viewKeyStruct
+  struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static char const * fracturesSolverNameString() { return "fracturesSolverName"; }
-
-    constexpr static char const * dTraction_dPressureString() { return "dTraction_dPressure"; }
+    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
+    constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
   };
-
 
 protected:
 
-  virtual void postProcessInput() override final;
+  virtual void postProcessInput() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  string m_solidSolverName;
+  string m_flowSolverName;
 
-  // virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
+  // pointer to the flow sub-solver
+  SinglePhaseBase * m_flowSolver;
+
+  // pointer to the solid mechanics sub-solver
+  SolidMechanicsLagrangianFEM * m_solidSolver;
 
 private:
 
-  string m_fracturesSolverName;
-
-  SolidMechanicsEmbeddedFractures * m_fracturesSolver;
+  void createPreconditioner();
 
 };
 
-
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVEREMBEDDEDFRACTURES_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_ */

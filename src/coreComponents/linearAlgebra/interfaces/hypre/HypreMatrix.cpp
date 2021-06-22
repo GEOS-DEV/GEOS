@@ -162,38 +162,45 @@ void HypreMatrix::createWithGlobalSize( globalIndex const globalRows,
 void HypreMatrix::create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                           MPI_Comm const & comm )
 {
-  localIndex maxEntriesPerRow = 0;
-  for( localIndex i = 0; i < localMatrix.numRows(); ++i )
+  RAJA::ReduceMax< parallelDeviceReduce, localIndex > maxRowEntries( 0 );
+
+  forAll< parallelDevicePolicy< 32 > >( localMatrix.numRows(),
+                                        [localMatrix, maxRowEntries] GEOSX_HOST_DEVICE ( localIndex const row )
   {
-    maxEntriesPerRow = std::max( maxEntriesPerRow, localMatrix.numNonZeros( i ) );
+    maxRowEntries.max( localMatrix.numNonZeros( row ) );
   }
+                                        );
 
   createWithLocalSize( localMatrix.numRows(),
                        localMatrix.numRows(),
-                       maxEntriesPerRow,
+                       maxRowEntries.get(),
                        comm );
 
   globalIndex const rankOffset = ilower();
 
-  array1d< globalIndex > rows( localMatrix.numRows() );
-  array1d< HYPRE_Int > sizes( localMatrix.numRows() );
-  array1d< HYPRE_Int > offsets( localMatrix.numRows() );
-  localIndex const * const pSizes = localMatrix.getSizes();
-  localIndex const * const pOffsets = localMatrix.getOffsets();
+  array1d< globalIndex > rows;
+  rows.resizeWithoutInitializationOrDestruction( LvArray::MemorySpace::cuda, localMatrix.numRows() );
+  arrayView1d< globalIndex > const rowsV = rows;
 
-  // Note: this relies on the fact the localMatrix has correct sparsity on the host
-  // (e.g. it was built or synced there) because we don't move sizes/offsets to host here.
-  for( localIndex row=0; row<localMatrix.numRows(); ++row )
+  array1d< HYPRE_Int > sizes;
+  sizes.resizeWithoutInitializationOrDestruction( LvArray::MemorySpace::cuda, localMatrix.numRows() );
+  arrayView1d< HYPRE_Int > const sizesV = sizes;
+
+  array1d< HYPRE_Int > offsets;
+  offsets.resizeWithoutInitializationOrDestruction( LvArray::MemorySpace::cuda, localMatrix.numRows() );
+  arrayView1d< HYPRE_Int > const offsetsV = offsets;
+
+  forAll< parallelDevicePolicy< 32 > >( localMatrix.numRows(),
+                                        [localMatrix, rankOffset, rowsV, sizesV, offsetsV] GEOSX_HOST_DEVICE ( localIndex const row )
   {
-    rows[row] = row + rankOffset;
-    sizes[row] = pSizes[row];
-    offsets[row] = pOffsets[row];
+    rowsV[ row ] = row + rankOffset;
+    sizesV[ row ] = localMatrix.numNonZeros( row );
+    offsetsV[ row ] = localMatrix.getOffsets()[ row ];
   }
+                                        );
 
+  // This is necessary so that localMatrix.getColumns() and localMatrix.getEntries() return the device pointers.
   localMatrix.move( LvArray::MemorySpace::cuda, false );
-  rows.move( LvArray::MemorySpace::cuda, false );
-  sizes.move( LvArray::MemorySpace::cuda, false );
-  offsets.move( LvArray::MemorySpace::cuda, false );
 
   open();
 
