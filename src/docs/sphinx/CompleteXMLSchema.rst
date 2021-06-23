@@ -407,11 +407,11 @@ Element: Mesh
 .. include:: ../../coreComponents/schema/docs/Mesh.rst
 
 
-.. _XML_MultiphasePoroelastic:
+.. _XML_MultiphasePoromechanics:
 
-Element: MultiphasePoroelastic
-==============================
-.. include:: ../../coreComponents/schema/docs/MultiphasePoroelastic.rst
+Element: MultiphasePoromechanics
+================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
 .. _XML_NonlinearSolverParameters:
@@ -540,20 +540,6 @@ Element: PoroExtendedDruckerPrager
 .. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager.rst
 
 
-.. _XML_Poroelastic:
-
-Element: Poroelastic
-====================
-.. include:: ../../coreComponents/schema/docs/Poroelastic.rst
-
-
-.. _XML_PoroelasticEmbeddedFractures:
-
-Element: PoroelasticEmbeddedFractures
-=====================================
-.. include:: ../../coreComponents/schema/docs/PoroelasticEmbeddedFractures.rst
-
-
 .. _XML_Problem:
 
 Element: Problem
@@ -615,6 +601,20 @@ Element: SinglePhaseFVM
 Element: SinglePhaseHybridFVM
 =============================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseHybridFVM.rst
+
+
+.. _XML_SinglePhasePoromechanics:
+
+Element: SinglePhasePoromechanics
+=================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics.rst
+
+
+.. _XML_SinglePhasePoromechanicsEmbeddedFractures:
+
+Element: SinglePhasePoromechanicsEmbeddedFractures
+==================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
 
 
 .. _XML_SinglePhaseProppantFVM:
@@ -1237,11 +1237,11 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/schema/docs/MeshBodies_other.rst
 
 
-.. _DATASTRUCTURE_MultiphasePoroelastic:
+.. _DATASTRUCTURE_MultiphasePoromechanics:
 
-Datastructure: MultiphasePoroelastic
-====================================
-.. include:: ../../coreComponents/schema/docs/MultiphasePoroelastic_other.rst
+Datastructure: MultiphasePoromechanics
+======================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
 .. _DATASTRUCTURE_NonlinearSolverParameters:
@@ -1370,20 +1370,6 @@ Datastructure: PoroExtendedDruckerPrager
 .. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager_other.rst
 
 
-.. _DATASTRUCTURE_Poroelastic:
-
-Datastructure: Poroelastic
-==========================
-.. include:: ../../coreComponents/schema/docs/Poroelastic_other.rst
-
-
-.. _DATASTRUCTURE_PoroelasticEmbeddedFractures:
-
-Datastructure: PoroelasticEmbeddedFractures
-===========================================
-.. include:: ../../coreComponents/schema/docs/PoroelasticEmbeddedFractures_other.rst
-
-
 .. _DATASTRUCTURE_Problem:
 
 Datastructure: Problem
@@ -1445,6 +1431,20 @@ Datastructure: SinglePhaseFVM
 Datastructure: SinglePhaseHybridFVM
 ===================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseHybridFVM_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanics:
+
+Datastructure: SinglePhasePoromechanics
+=======================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:
+
+Datastructure: SinglePhasePoromechanicsEmbeddedFractures
+========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseProppantFVM:
