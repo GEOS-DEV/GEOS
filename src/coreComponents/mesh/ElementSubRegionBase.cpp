@@ -80,7 +80,7 @@ std::vector< int > ElementSubRegionBase::getSiloNodeOrdering() const
   if( !m_elementTypeString.compare( 0, 4, "C3D8" ))
     return { 0, 1, 3, 2, 4, 5, 7, 6 };
   if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
-    return { 0, 1, 3, 2, 4, 5, 0, 0 };
+    return { 1, 0, 2, 3, 5, 4, 0, 0 };
   if( !m_elementTypeString.compare( 0, 4, "C3D5" ))
     return { 0, 3, 2, 1, 4, 0, 0, 0 };
   if( !m_elementTypeString.compare( 0, 4, "BEAM" ))
