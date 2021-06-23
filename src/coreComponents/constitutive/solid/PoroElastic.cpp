@@ -122,15 +122,15 @@ void PoroElastic< BASE >::stateUpdateBatchPressure( arrayView1d< real64 const > 
   } );
 }
 
-typedef PoroElastic< ElasticIsotropic > OldPoroElasticIsotropic;
-typedef PoroElastic< ElasticTransverseIsotropic > OldPoroElasticTransverseIsotropic;
-typedef PoroElastic< DruckerPrager > OldPoroDruckerPrager;
-typedef PoroElastic< DruckerPragerExtended > OldPoroDruckerPragerExtended;
+typedef PoroElastic< ElasticIsotropic > PoroElasticIsotropic;
+typedef PoroElastic< ElasticTransverseIsotropic > PoroElasticTransverseIsotropic;
+typedef PoroElastic< DruckerPrager > PoroDruckerPrager;
+typedef PoroElastic< DruckerPragerExtended > PoroDruckerPragerExtended;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, OldPoroElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, OldPoroElasticTransverseIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, OldPoroDruckerPrager, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, OldPoroDruckerPragerExtended, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticTransverseIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPrager, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPragerExtended, string const &, Group * const )
 
 }
 } /* namespace geosx */

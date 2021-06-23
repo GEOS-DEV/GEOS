@@ -43,21 +43,21 @@ template< typename SOLID_TYPE >
 PorousSolid< SOLID_TYPE >::~PorousSolid() = default;
 
 // Register all PorousSolid model types.
-typedef PorousSolid< ElasticIsotropic > PoroElasticIsotropic;
-typedef PorousSolid< ElasticTransverseIsotropic > PoroElasticTransverseIsotropic;
-typedef PorousSolid< DruckerPrager > PoroDruckerPrager;
-typedef PorousSolid< DruckerPragerExtended > PoroDruckerPragerExtended;
-typedef PorousSolid< Damage< ElasticIsotropic > > PoroDamageElasticIsotropic;
-typedef PorousSolid< DamageSpectral< ElasticIsotropic > > PoroDamageSpectralElasticIsotropic;
-typedef PorousSolid< DamageVolDev< ElasticIsotropic > > PoroDamageVolDevElasticIsotropic;
+typedef PorousSolid< ElasticIsotropic > PorousElasticIsotropic;
+typedef PorousSolid< ElasticTransverseIsotropic > PorousElasticTransverseIsotropic;
+typedef PorousSolid< DruckerPrager > PorousDruckerPrager;
+typedef PorousSolid< DruckerPragerExtended > PorousDruckerPragerExtended;
+typedef PorousSolid< Damage< ElasticIsotropic > > PorousDamageElasticIsotropic;
+typedef PorousSolid< DamageSpectral< ElasticIsotropic > > PorousDamageSpectralElasticIsotropic;
+typedef PorousSolid< DamageVolDev< ElasticIsotropic > > PorousDamageVolDevElasticIsotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroElasticTransverseIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPrager, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDruckerPragerExtended, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDamageElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDamageSpectralElasticIsotropic, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroDamageVolDevElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticTransverseIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPrager, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPragerExtended, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageSpectralElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageVolDevElasticIsotropic, string const &, Group * const )
 
 }
 } /* namespace geosx */

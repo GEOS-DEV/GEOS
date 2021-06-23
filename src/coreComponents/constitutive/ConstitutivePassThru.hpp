@@ -28,6 +28,8 @@
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/PorousSolid.hpp"
+#include "solid/PoroElastic.hpp"
+
 
 namespace geosx
 {
@@ -99,6 +101,42 @@ struct ConstitutivePassThru< SolidBase >
     }
   }
 };
+
+
+/**
+ * Specialization for the PoroElastic models.
+ */
+template<>
+struct ConstitutivePassThru< PoroElasticBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    if( auto * const ptr1 = dynamic_cast< PoroElastic< DruckerPragerExtended > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr1 );
+    }
+    else if( auto * const ptr2 = dynamic_cast< PoroElastic< DruckerPrager > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr2 );
+    }
+    else if( auto * const ptr3 = dynamic_cast< PoroElastic< ElasticIsotropic > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr3 );
+    }
+    else if( auto * const ptr4 = dynamic_cast< PoroElastic< ElasticTransverseIsotropic > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr4 );
+    }
+    else
+    {
+      GEOSX_ERROR( "ConstitutivePassThru< PoroElasticBase >::execute failed. The constitutive relation is named "
+                   << constitutiveRelation.getName() << " with type "
+                   << LvArray::system::demangleType( constitutiveRelation ) );
+    }
+  }
+};
+
 
 
 /**

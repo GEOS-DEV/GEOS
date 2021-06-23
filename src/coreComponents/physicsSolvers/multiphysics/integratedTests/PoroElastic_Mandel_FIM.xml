@@ -154,7 +154,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <PoroElasticIsotropic
+    <PorousElasticIsotropic
       name="shale"
       solidName="shaleSolid"
       porosityName="shalePorosity"
