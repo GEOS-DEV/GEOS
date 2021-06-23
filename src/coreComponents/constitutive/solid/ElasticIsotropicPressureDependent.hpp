@@ -81,6 +81,8 @@ public:
   /// Use the "isotropic" form of inner product compression
   using DiscretizationOps = SolidModelDiscretizationOpsIsotropic;
 
+  /// Use base version of saveConvergedState
+  using SolidBaseUpdates::saveConvergedState;
 
   GEOSX_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,

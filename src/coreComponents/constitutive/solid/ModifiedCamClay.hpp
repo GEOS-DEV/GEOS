@@ -121,6 +121,15 @@ public:
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void saveConvergedState( localIndex const k,
+                                   localIndex const q ) const override final
+  {
+    ElasticIsotropicPressureDependentUpdates::saveConvergedState( k, q );
+    m_oldPreConsolidationPressure[k][q] = m_newPreConsolidationPressure[k][q];
+  }
+
 private:
 
   /// A reference to the ArrayView holding the virgin compression index for each element.
