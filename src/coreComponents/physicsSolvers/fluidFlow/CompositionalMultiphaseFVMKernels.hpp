@@ -232,7 +232,7 @@ struct CFLFluxKernel
 /******************************** CFLKernel ********************************/
 
 /**
- * @brief Functions to compute the CFL number using the total volumetric outflux in each cell
+ * @brief Functions to compute the CFL number using the phase volumetric outflux and the component mass outflux in each cell
  */
 struct CFLKernel
 {
@@ -241,9 +241,7 @@ struct CFLKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  computePhaseCFL( real64 const & volume,
-                   real64 const & porosityRef,
-                   real64 const & pvMult,
+  computePhaseCFL( real64 const & poreVol,
                    arraySlice1d< real64 const > phaseRelPerm,
                    arraySlice2d< real64 const > dPhaseRelPerm_dPhaseVolFrac,
                    arraySlice1d< real64 const > phaseVisc,
@@ -254,9 +252,7 @@ struct CFLKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  computeCompCFL( real64 const & volume,
-                  real64 const & porosityRef,
-                  real64 const & pvMult,
+  computeCompCFL( real64 const & poreVol,
                   arraySlice1d< real64 const > compDens,
                   arraySlice1d< real64 const > compOutflux,
                   real64 & compCFLNumber );

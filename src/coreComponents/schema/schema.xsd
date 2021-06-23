@@ -995,6 +995,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="capPressureNames" type="string_array" default="{}" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeCFLNumbers => Flag indicating whether CFL numbers are computed or not-->
+		<xsd:attribute name="computeCFLNumbers" type="integer" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidNames => Names of fluid constitutive models for each region.-->
@@ -1033,6 +1035,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="capPressureNames" type="string_array" default="{}" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeCFLNumbers => Flag indicating whether CFL numbers are computed or not-->
+		<xsd:attribute name="computeCFLNumbers" type="integer" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidNames => Names of fluid constitutive models for each region.-->

@@ -739,14 +739,15 @@ CFLFluxKernel::
 
     // increment the phase (volumetric) outflux of the upstream cell
     real64 const absPhaseFlux = fabs( dt * mobility * potGrad );
-    phaseOutflux[er_up][esr_up][ei_up][ip] += absPhaseFlux;
+    RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseOutflux[er_up][esr_up][ei_up][ip], absPhaseFlux );
 
     // increment the component (mass/molar) outflux of the upstream cell
     for( localIndex ic = 0; ic < NC; ++ic )
     {
-      compOutflux[er_up][esr_up][ei_up][ic] += phaseCompFrac[er_up][esr_up][ei_up][0][ip][ic]
-                                               * phaseDens[er_up][esr_up][ei_up][0][ip]
-                                               * absPhaseFlux;
+      real64 const absCompFlux = phaseCompFrac[er_up][esr_up][ei_up][0][ip][ic]
+                                 * phaseDens[er_up][esr_up][ei_up][0][ip]
+                                 * absPhaseFlux;
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &compOutflux[er_up][esr_up][ei_up][ic], absCompFlux );
     }
   }
 }
@@ -828,85 +829,104 @@ INST_CFLFluxKernel( 5, FaceElementStencil );
 
 /******************************** CFLKernel ********************************/
 
-template<>
+template< localIndex NP >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 CFLKernel::
-  computePhaseCFL< 2 >( real64 const & volume,
-                        real64 const & porosityRef,
-                        real64 const & pvMult,
-                        arraySlice1d< real64 const > phaseRelPerm,
-                        arraySlice2d< real64 const > dPhaseRelPerm_dPhaseVolFrac,
-                        arraySlice1d< real64 const > phaseVisc,
-                        arraySlice1d< real64 const > phaseOutflux,
-                        real64 & phaseCFLNumber )
+  computePhaseCFL( real64 const & poreVol,
+                   arraySlice1d< real64 const > phaseRelPerm,
+                   arraySlice2d< real64 const > dPhaseRelPerm_dPhaseVolFrac,
+                   arraySlice1d< real64 const > phaseVisc,
+                   arraySlice1d< real64 const > phaseOutflux,
+                   real64 & phaseCFLNumber )
 {
-  // computation from Hui Cao's thesis
-  real64 const poreVol = volume * porosityRef * pvMult;
+  // first, check which phases are mobile in the cell
+  real64 mob[NP]{};
+  localIndex mobilePhases[NP]{};
+  localIndex numMobilePhases = 0;
+  for( localIndex ip = 0; ip < NP; ++ip )
+  {
+    mob[ip] = phaseRelPerm[ip] / phaseVisc[ip];
+    if( mob[ip] > 1e-12 )
+    {
+      mobilePhases[numMobilePhases] = ip;
+      numMobilePhases++;
+    }
+  }
 
-  real64 const mob0 = phaseRelPerm[0] / phaseVisc[0];
-  real64 const dMob0_dVolFrac0 = dPhaseRelPerm_dPhaseVolFrac[0][0] / phaseVisc[0];
-  real64 const mob1 = phaseRelPerm[1] / phaseVisc[1];
-  real64 const dMob1_dVolFrac0 = -dPhaseRelPerm_dPhaseVolFrac[1][0] / phaseVisc[1];  // using S0 = 1 - S1
+  // then, depending on the regime, apply the appropriate CFL formula
+  phaseCFLNumber = 0;
 
   // single-phase flow regime
-  if( mob0 < 1e-12 )
+  if( numMobilePhases == 1 )
   {
-    phaseCFLNumber = phaseOutflux[1] / poreVol;
-  }
-  else if( mob1 < 1e-12 )
-  {
-    phaseCFLNumber = phaseOutflux[0] / poreVol;
+    phaseCFLNumber = phaseOutflux[mobilePhases[0]] / poreVol;
   }
   // two-phase flow regime
-  else
+  else if( numMobilePhases == 2 )
   {
-    real64 const denom = 1. / ( poreVol * ( mob0 + mob1 ) );
-    real64 const coef0 = denom * mob1 / mob0 * dMob0_dVolFrac0;
-    real64 const coef1 = -denom * mob0 / mob1 * dMob1_dVolFrac0;
+    // from Hui Cao's PhD thesis
+    localIndex const ip0 = mobilePhases[0];
+    localIndex const ip1 = mobilePhases[1];
+    real64 const dMob_dVolFrac[2] = { dPhaseRelPerm_dPhaseVolFrac[ip0][ip0] / phaseVisc[ip0],
+                                      -dPhaseRelPerm_dPhaseVolFrac[ip1][ip1] / phaseVisc[ip1] }; // using S0 = 1 - S1
+    real64 const denom = 1. / ( poreVol * ( mob[ip0] + mob[ip1] ) );
+    real64 const coef0 = denom * mob[ip1] / mob[ip0] * dMob_dVolFrac[ip0];
+    real64 const coef1 = -denom * mob[ip0] / mob[ip1] * dMob_dVolFrac[ip1];
 
-    phaseCFLNumber = fabs( coef0*phaseOutflux[0] + coef1*phaseOutflux[1] );
+    phaseCFLNumber = fabs( coef0*phaseOutflux[ip0] + coef1*phaseOutflux[ip1] );
+  }
+  // three-phase flow regime
+  else if( numMobilePhases == 3 )
+  {
+    // from Keith Coats, IMPES stability: Selection of stable timesteps (2003)
+    real64 totalMob = 0.0;
+    for( localIndex ip = 0; ip < numMobilePhases; ++ip )
+    {
+      totalMob += mob[ip];
+    }
+
+    real64 f[2][2]{};
+    for( localIndex i = 0; i < 2; ++i )
+    {
+      for( localIndex j = 0; j < 2; ++j )
+      {
+        f[i][j]  = ( i == j )*totalMob - mob[i];
+        f[i][j] /= (totalMob * mob[j]);
+        real64 sum = 0;
+        for( localIndex k = 0; k < 3; ++k )
+        {
+          sum += dPhaseRelPerm_dPhaseVolFrac[k][j] / phaseVisc[k]
+                 * phaseOutflux[j];
+        }
+        f[i][j] *= sum;
+      }
+    }
+    phaseCFLNumber = f[0][0] + f[1][1];
+    phaseCFLNumber += sqrt( phaseCFLNumber*phaseCFLNumber - 4 * ( f[0][0]*f[1][1] - f[1][0]*f[0][1] ) );
+    phaseCFLNumber = 0.5 * fabs( phaseCFLNumber ) / poreVol;
   }
 }
 
-
-template<>
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-CFLKernel::
-  computePhaseCFL< 3 >( real64 const & volume,
-                        real64 const & porosityRef,
-                        real64 const & pvMult,
-                        arraySlice1d< real64 const > phaseRelPerm,
-                        arraySlice2d< real64 const > dPhaseRelPerm_dPhaseVolFrac,
-                        arraySlice1d< real64 const > phaseVisc,
-                        arraySlice1d< real64 const > phaseOutflux,
-                        real64 & phaseCFLNumber )
-{
-  GEOSX_ERROR( "Not implemented yet" );
-}
 
 template< localIndex NC >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 CFLKernel::
-  computeCompCFL( real64 const & volume,
-                  real64 const & porosityRef,
-                  real64 const & pvMult,
+  computeCompCFL( real64 const & poreVol,
                   arraySlice1d< real64 const > compDens,
                   arraySlice1d< real64 const > compOutflux,
                   real64 & compCFLNumber )
 {
-  real64 const poreVol = volume * porosityRef * pvMult;
+
 
   compCFLNumber = 0.0;
   for( localIndex ic = 0; ic < NC; ++ic )
   {
     real64 const compMoles = compDens[ic] * poreVol;
-    if( compMoles > 1e-4 )
+    if( compMoles > 1e-12 )
     {
       real64 const CFL = compOutflux[ic] / compMoles;
       if( CFL > compCFLNumber )
@@ -938,12 +958,11 @@ CFLKernel::
 
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {
+    real64 const poreVol = volume[ei] * porosityRef[ei] * pvMult[ei][0];
 
     // phase CFL number
     real64 cellPhaseCFLNumber = 0.0;
-    computePhaseCFL< NP >( volume[ei],
-                           porosityRef[ei],
-                           pvMult[ei][0],
+    computePhaseCFL< NP >( poreVol,
                            phaseRelPerm[ei][0],
                            dPhaseRelPerm_dPhaseVolFrac[ei][0],
                            phaseVisc[ei][0],
@@ -953,9 +972,7 @@ CFLKernel::
 
     // component CFL number
     real64 cellCompCFLNumber = 0.0;
-    computeCompCFL< NC >( volume[ei],
-                          porosityRef[ei],
-                          pvMult[ei][0],
+    computeCompCFL< NC >( poreVol,
                           compDens[ei],
                           compOutflux[ei],
                           cellCompCFLNumber );
