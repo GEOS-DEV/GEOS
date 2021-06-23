@@ -46,9 +46,9 @@ public:
   /**
    * @brief Constructor
    */
-  PorousSolidUpdates( SOLID_TYPE * solidModel,
-                      BiotPorosity * porosityModel,
-                      StrainDependentPermeability * permModel ):
+  PorousSolidUpdates( SOLID_TYPE const & solidModel,
+                      BiotPorosity const & porosityModel,
+                      StrainDependentPermeability const & permModel ):
     CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >( solidModel, porosityModel, permModel )
   {}
 
@@ -65,7 +65,7 @@ public:
   {
     m_solidUpdate.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
 
-    updateBiotCoefficient( k, q );
+    updateBiotCoefficient( k );
 
     m_porosityUpdate.updatePorosity( k,
                                      q,
@@ -83,13 +83,12 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  void updateBiotCoefficient( localIndex const k,
-                              localIndex const q ) const
+  void updateBiotCoefficient( localIndex const k ) const
   {
     // This call is not general like this.
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
-    m_porosityUpdate.updateBiotCoefficient( k, q, bulkModulus );
+    m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
   }
 
 private:
@@ -146,19 +145,9 @@ public:
    */
   KernelWrapper createKernelUpdates() const
   {
-
-    return KernelWrapper( m_solidModel,
-                          m_porosityModel,
-                          m_permModel );
-  }
-
-  /**
-   * @brief Non-const/Mutable accessor for density.
-   * @return Accessor
-   */
-  arrayView2d< real64 > const getDensity()
-  {
-    return m_solidModel->getDensity();
+    return KernelWrapper( getSolidModel(),
+                          getPorosityModel(),
+                          getPermModel() );
   }
 
   /**
@@ -167,15 +156,15 @@ public:
    */
   arrayView2d< real64 const > const getDensity() const
   {
-    return m_solidModel->getDensity();
+    return getSolidModel().getDensity();
   }
 
 private:
-
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_solidModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_porosityModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_permModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::getSolidModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::getPorosityModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::getPermModel;
 };
+
 
 
 }

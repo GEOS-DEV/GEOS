@@ -53,11 +53,15 @@ SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & n
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the solid mechanics solver to use in the poroelastic solver" );
+    setDescription( "Name of the solid mechanics solver to use in the poromechanics solver" );
 
   registerWrapper( viewKeyStruct::fluidSolverNameString(), &m_flowSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
+    setDescription( "Name of the fluid mechanics solver to use in the poromechanics solver" );
+
+  registerWrapper( viewKeyStruct::porousMaterialNamesString(), &m_porousMaterialNames ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "The name of the material that should be used in the constitutive updates" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -201,7 +205,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                     CellElementSubRegion >( mesh,
                                                             targetRegionNames(),
                                                             this->getDiscretizationName(),
-                                                            m_solidSolver->solidMaterialNames(),
+                                                            porousMaterialNames(),
                                                             kernelFactory );
 
   // Face-based contributions

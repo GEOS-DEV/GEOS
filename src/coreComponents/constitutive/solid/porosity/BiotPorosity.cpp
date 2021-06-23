@@ -31,8 +31,11 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   PorosityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::grainBulkModulusString(), &m_grainBulkModulus ).
-      setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "Grain bulk modulus" );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Grain bulk modulus" );
+
+  registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
+    setDescription( "Biot coefficient." );
 }
 
 BiotPorosity::~BiotPorosity() = default;
@@ -50,8 +53,6 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-
 }
 
 void BiotPorosity::postProcessInput()

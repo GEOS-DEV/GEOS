@@ -43,9 +43,9 @@ public:
   /**
    * @brief Constructor
    */
-  CompressibleSolidUpdates( NullModel * solidModel,
-                            PORO_TYPE * porosityModel,
-                            PERM_TYPE * permModel ):
+  CompressibleSolidUpdates( NullModel const & solidModel,
+                            PORO_TYPE const & porosityModel,
+                            PERM_TYPE const & permModel ):
     CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel )
   {}
 
@@ -104,14 +104,14 @@ public:
   CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE > createKernelUpdates() const
   {
 
-    return CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE >( m_solidModel,
-                                                             m_porosityModel,
-                                                             m_permModel );
+    return CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE >( getSolidModel(),
+                                                             getPorosityModel(),
+                                                             getPermModel() );
   }
 private:
-  using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::m_solidModel;
-  using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::m_porosityModel;
-  using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::m_permModel;
+  using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getSolidModel;
+  using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getPorosityModel;
+  using CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >::getPermModel;
 
 };
 

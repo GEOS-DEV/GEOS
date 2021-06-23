@@ -37,12 +37,12 @@ public:
   /**
    * @brief Constructor
    */
-  CoupledSolidUpdates( SOLID_TYPE * solidModel,
-                       PORO_TYPE * porosityModel,
-                       PERM_TYPE * permModel ):
-    m_solidUpdate( solidModel->createKernelUpdates() ),
-    m_porosityUpdate( porosityModel->createKernelUpdates() ),
-    m_permUpdate( permModel->createKernelWrapper() )
+  CoupledSolidUpdates( SOLID_TYPE const & solidModel,
+                       PORO_TYPE const & porosityModel,
+                       PERM_TYPE const & permModel ):
+    m_solidUpdate( solidModel.createKernelUpdates() ),
+    m_porosityUpdate( porosityModel.createKernelUpdates() ),
+    m_permUpdate( permModel.createKernelWrapper() )
   {}
 
   GEOSX_HOST_DEVICE
@@ -101,8 +101,8 @@ public:
    */
   virtual string getCatalogName() const override { return catalogName(); }
 
-  /// Post-process XML input
-  virtual void postProcessInput() override;
+//  /// Post-process XML input
+//  virtual void postProcessInput() override;
 
   struct viewKeyStruct
   {
@@ -119,19 +119,21 @@ public:
   CoupledSolidUpdates< SOLID_TYPE, PORO_TYPE, PERM_TYPE > createKernelUpdates() const
   {
 
-    return CoupledSolidUpdates< SOLID_TYPE, PORO_TYPE, PERM_TYPE >( m_solidModel,
-                                                                    m_porosityModel );
+    return CoupledSolidUpdates< SOLID_TYPE, PORO_TYPE, PERM_TYPE >( getSolidModel(),
+                                                                    getPorosityModel(),
+                                                                    getPermModel() );
   }
 
 protected:
 
-  // the solid model
-  SOLID_TYPE * m_solidModel;
+  SOLID_TYPE const & getSolidModel() const
+  { return this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName ); }
 
-  // the porosity model
-  PORO_TYPE * m_porosityModel;
+  PORO_TYPE const & getPorosityModel() const
+  { return this->getParent().template getGroup< PORO_TYPE >( m_porosityModelName ); }
 
-  PERM_TYPE * m_permModel;
+  PERM_TYPE const & getPermModel() const
+  { return this->getParent().template getGroup< PERM_TYPE >( m_permeabilityModelName ); }
 
   // the name of the solid model
   string m_solidModelName;
@@ -149,8 +151,6 @@ template< typename SOLID_TYPE,
           typename PERM_TYPE >
 CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::CoupledSolid( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent ),
-  m_solidModel( nullptr ),
-  m_porosityModel( nullptr ),
   m_solidModelName(),
   m_porosityModelName()
 {
@@ -162,9 +162,8 @@ CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::CoupledSolid( string const & n
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Name of the porosity model." );
 
-  // TODO: as soon as we start using the permeability models this has to become REQUIRED
   registerWrapper( viewKeyStruct::permeabilityModelNameString(), &m_permeabilityModelName ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Name of the porosity model." );
 }
 
@@ -173,15 +172,6 @@ template< typename SOLID_TYPE,
           typename PERM_TYPE >
 CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::~CoupledSolid()
 {}
-
-template< typename SOLID_TYPE,
-          typename PORO_TYPE,
-          typename PERM_TYPE >
-void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::postProcessInput()
-{
-  m_solidModel = &this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName );
-  m_porosityModel = &this->getParent().template getGroup< PORO_TYPE >( m_porosityModelName );
-}
 
 
 }

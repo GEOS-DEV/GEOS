@@ -49,7 +49,7 @@ public:
                        arrayView2d< real64 > const & oldPorosity,
                        arrayView2d< real64 > const & dPorosity_dPressure,
                        arrayView1d< real64 > const & referencePorosity,
-                       arrayView2d< real64 > const & biotCoefficient,
+                       arrayView1d< real64 > const & biotCoefficient,
                        real64 const & grainBulkModulus ):
     PorosityBaseUpdates( newPorosity,
                          oldPorosity,
@@ -69,32 +69,31 @@ public:
                        real64 & dPorosity_dVolStrain,
                        real64 & dTotalStress_dPressure ) const
   {
-    real64 const biotSkeletonModulusInverse = ( m_biotCoefficient[k][q] - m_referencePorosity[k] ) / m_grainBulkModulus;
+    real64 const biotSkeletonModulusInverse = ( m_biotCoefficient[k] - m_referencePorosity[k] ) / m_grainBulkModulus;
 
     real64 const porosity = m_oldPorosity[k][q] +
-                            +m_biotCoefficient[k][q] * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
+                            +m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
                             + biotSkeletonModulusInverse * deltaPressure;
 
     dPorosity_dPressure = biotSkeletonModulusInverse;
 
-    dPorosity_dVolStrain = m_biotCoefficient[k][q];
+    dPorosity_dVolStrain = m_biotCoefficient[k];
 
     savePorosity( k, q, porosity, biotSkeletonModulusInverse );
 
-    dTotalStress_dPressure = m_biotCoefficient[k][q];
+    dTotalStress_dPressure = m_biotCoefficient[k];
   }
 
 
   GEOSX_HOST_DEVICE
   void updateBiotCoefficient( localIndex const k,
-                              localIndex const q,
                               real64 const bulkModulus ) const
   {
-    m_biotCoefficient[k][q] = 1 - bulkModulus / m_grainBulkModulus;
+    m_biotCoefficient[k] = 1 - bulkModulus / m_grainBulkModulus;
   }
 
 protected:
-  arrayView2d< real64 > m_biotCoefficient;
+  arrayView1d< real64 > m_biotCoefficient;
 
   real64 m_grainBulkModulus;
 };
@@ -131,7 +130,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelUpdates()
+  KernelWrapper createKernelUpdates() const
   {
     return KernelWrapper( m_newPorosity,
                           m_oldPorosity,
@@ -145,7 +144,7 @@ public:
 protected:
   virtual void postProcessInput() override;
 
-  array2d< real64 > m_biotCoefficient;
+  array1d< real64 > m_biotCoefficient;
 
   real64 m_grainBulkModulus;
 };

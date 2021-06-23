@@ -77,7 +77,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper()
+  KernelWrapper createKernelWrapper() const
   {
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure );

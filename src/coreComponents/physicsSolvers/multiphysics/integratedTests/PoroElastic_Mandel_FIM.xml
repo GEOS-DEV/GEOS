@@ -7,6 +7,7 @@
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
+      porousMaterialNames="{shale}"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -27,7 +28,7 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ shale }">
+      solidMaterialNames="{ shaleSolid }">
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
@@ -36,7 +37,7 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }"
       fluidNames="{ water }"
-      solidNames="{ shale }">
+      solidNames="{ shaleSolid }">
     </SinglePhaseFVM>
   </Solvers>
 
@@ -95,12 +96,12 @@
     <!--This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <PeriodicEvent
+    <!--  <PeriodicEvent
       name="outputs"
       timeFrequency="4.5000000e-03"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
-
+    -->
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent
@@ -149,14 +150,15 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ shale, water }"/>
+      materialList="{ shale, water, shaleSolid, shalePorosity, shalePerm }"/>
   </ElementRegions>
 
   <Constitutive>
     <PoroElasticIsotropic
       name="shale"
       solidName="shaleSolid"
-      porosityName="shalePorosity"/>
+      porosityName="shalePorosity"
+      permeabilityName="shalePerm"/>
       
    <ElasticIsotropic
       name="shaleSolid"
@@ -167,7 +169,10 @@
    <BiotPorosity
       name="shalePorosity"
       grainBulkModulus="1.0e27"
-      defaultReferencePorosity="0.05"/>       
+      defaultReferencePorosity="0.05"/> 
+      
+   <StrainDependentPermeability
+      name="shalePerm"/>              
 
     <CompressibleSinglePhaseFluid
       name="water"
@@ -314,9 +319,9 @@
   </Functions>
 
   <Outputs>
-    <Silo
+    <!--  <Silo
       name="siloOutput"/>
-
+    -->
     <Restart
       name="restartOutput"/>
 
