@@ -363,6 +363,23 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     }
   }
 
+
+  // Communicate all the surfaces attributes to the ranks
+  std::vector< int > surface_vector;
+  surface_vector.reserve( surfaces.size() );
+  for( int surface : surfaces)
+  {
+    surface_vector.push_back(surface);
+  }
+  int nbSurfaceId = surface_vector.size();
+  int totalNbSurfaceId = 0;
+  MpiWrapper::allReduce( &nbSurfaceId, &totalNbSurfaceId, 1, MPI_SUM,MPI_COMM_GEOSX );
+  std::vector< int > allSurfaces(totalNbSurfaceId);
+  MpiWrapper::allgather<int, int>(surface_vector.data(),  surface_vector.size(), allSurfaces.data(),surface_vector.size(),MPI_COMM_GEOSX);
+
+  std::sort(allSurfaces.begin(), allSurfaces.end());
+  auto last = std::unique( allSurfaces.begin(), allSurfaces.end());
+  allSurfaces.erase(last, allSurfaces.end());
   GEOSX_ERROR_IF( nbHex + nbTet + nbWedge + nbPyr == 0, "Mesh contains no cell");
   GEOSX_LOG_RANK_0_IF( nbOthers > 0, nbOthers << " cells with unsupported types will be ignored and not written");
   GEOSX_LOG_RANK_0( regions.size() << " regions will be defined");
@@ -422,7 +439,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   }
 
   // Write the surfaces
-  for( int surface : surfaces)
+  for( int surface : allSurfaces)
   {
     SortedArray< localIndex > & curNodeSet  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::to_string( surface) ).reference();
     GEOSX_LOG_RANK_0("Adding surface : " << surface);
@@ -431,11 +448,14 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
       vtkCell * currentCell = m_vtkMesh->GetCell(c);
       if( m_vtkMesh->GetCellType(c) == VTK_TRIANGLE ||  m_vtkMesh->GetCellType(c) == VTK_QUAD)
       {
-        for( localIndex v = 0; v < currentCell->GetNumberOfPoints(); v++)
+        if( attributeDataArray->GetValue(c) == surface )
         {
-          curNodeSet.insert(currentCell->GetPointId(v) );
-        }
-      } 
+          for( localIndex v = 0; v < currentCell->GetNumberOfPoints(); v++)
+          {
+            curNodeSet.insert(currentCell->GetPointId(v) );
+          }
+        } 
+      }
     }
   }
 }
