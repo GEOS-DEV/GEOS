@@ -1414,7 +1414,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
 
 
       string const & elementType = elementSubRegion.getElementTypeString();
-      std::vector< int > const & nodeOrdering = elementSubRegion.getVTKNodeOrdering();
+      std::vector< int > const & nodeOrdering = elementSubRegion.getSiloNodeOrdering();
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
         integer numNodesPerElement = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( k ));
