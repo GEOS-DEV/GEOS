@@ -198,7 +198,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
   {
     arrayView2d< real64 > const & phaseOutflux = subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseOutfluxString() );
-    arrayView2d< real64 > const & compOutflux = subRegion.getReference< array2d< real64 > >( viewKeyStruct::compOutfluxString() );
+    arrayView2d< real64 > const & compOutflux = subRegion.getReference< array2d< real64 > >( viewKeyStruct::componentOutfluxString() );
     phaseOutflux.zero();
     compOutflux.zero();
   } );
@@ -212,7 +212,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     mesh.getElemManager().constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::phaseOutfluxString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const & compOutfluxAccessor =
-    mesh.getElemManager().constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::compOutfluxString() );
+    mesh.getElemManager().constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::componentOutfluxString() );
 
   fluxApprox.forAllStencils( mesh, [&] ( auto const & stencil )
   {
@@ -238,13 +238,17 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   {
 
     arrayView2d< real64 const > const & phaseOutflux = subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseOutfluxString() );
-    arrayView2d< real64 const > const & compOutflux = subRegion.getReference< array2d< real64 > >( viewKeyStruct::compOutfluxString() );
+    arrayView2d< real64 const > const & compOutflux = subRegion.getReference< array2d< real64 > >( viewKeyStruct::componentOutfluxString() );
+
+    arrayView1d< real64 > const & phaseCFLNumber = subRegion.getReference< array1d< real64 > >( viewKeyStruct::phaseCFLNumberString() );
+    arrayView1d< real64 > const & compCFLNumber = subRegion.getReference< array1d< real64 > >( viewKeyStruct::componentCFLNumberString() );
 
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const & porosityRef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
 
     arrayView2d< real64 const > const & compDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString() );
+    arrayView2d< real64 const > const compFrac = subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompFractionString() );
 
     ConstitutiveBase const & solid = getConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
     arrayView2d< real64 const > const & pvMult =
@@ -257,26 +261,35 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     arrayView3d< real64 const > const & phaseRelPerm = relperm.phaseRelPerm();
     arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
 
+    real64 subRegionMaxPhaseCFLNumber = 0.0;
+    real64 subRegionMaxCompCFLNumber = 0.0;
     KernelLaunchSelector2< CFLKernel >( m_numComponents, m_numPhases,
                                         subRegion.size(),
                                         volume,
                                         porosityRef,
                                         pvMult,
                                         compDens,
+                                        compFrac,
                                         phaseRelPerm,
                                         dPhaseRelPerm_dPhaseVolFrac,
                                         phaseVisc,
                                         phaseOutflux,
                                         compOutflux,
-                                        localMaxPhaseCFLNumber,
-                                        localMaxCompCFLNumber );
+                                        phaseCFLNumber,
+                                        compCFLNumber,
+                                        subRegionMaxPhaseCFLNumber,
+                                        subRegionMaxCompCFLNumber );
+
+    localMaxPhaseCFLNumber = LvArray::math::max( localMaxPhaseCFLNumber, subRegionMaxPhaseCFLNumber );
+    localMaxCompCFLNumber = LvArray::math::max( localMaxCompCFLNumber, subRegionMaxCompCFLNumber );
+
   } );
 
   real64 const globalMaxPhaseCFLNumber = MpiWrapper::max( localMaxPhaseCFLNumber );
   real64 const globalMaxCompCFLNumber = MpiWrapper::max( localMaxCompCFLNumber );
 
-  GEOSX_LOG_RANK_0( "Max phase CFL number: " << globalMaxPhaseCFLNumber );
-  GEOSX_LOG_RANK_0( "Max component CFL number: " << globalMaxCompCFLNumber );
+  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max phase CFL number: " << globalMaxPhaseCFLNumber );
+  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max component CFL number: " << globalMaxCompCFLNumber );
 }
 
 real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const & domain,
@@ -297,6 +310,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
     arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
     arrayView1d< real64 const > const & totalDensOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
 
+    real64 subRegionResidualNorm = 0.0;
     ResidualNormKernel::launch< parallelDevicePolicy<>,
                                 parallelDeviceReduce >( localRhs,
                                                         rankOffset,
@@ -306,7 +320,8 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
                                                         refPoro,
                                                         volume,
                                                         totalDensOld,
-                                                        localResidualNorm );
+                                                        subRegionResidualNorm );
+    localResidualNorm += subRegionResidualNorm;
 
   } );
 

@@ -157,8 +157,14 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       {
         elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseOutfluxString() ).
           setRestartFlags( RestartFlags::NO_WRITE );
-        elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::compOutfluxString() ).
+        elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::componentOutfluxString() ).
           setRestartFlags( RestartFlags::NO_WRITE );
+        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::phaseCFLNumberString() ).
+          setPlotLevel( PlotLevel::LEVEL_0 ).
+          setRestartFlags( RestartFlags::NO_WRITE );
+        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::componentCFLNumberString() )
+          .setPlotLevel( PlotLevel::LEVEL_0 )
+          .setRestartFlags( RestartFlags::NO_WRITE );
       }
 
       elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionOldString() );
@@ -309,7 +315,7 @@ void CompositionalMultiphaseBase::resizeFields( MeshLevel & meshLevel ) const
     if( m_computeCFLNumbers )
     {
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseOutfluxString() ).resizeDimension< 1 >( NP );
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::compOutfluxString() ).resizeDimension< 1 >( NC );
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::componentOutfluxString() ).resizeDimension< 1 >( NC );
     }
   } );
 }

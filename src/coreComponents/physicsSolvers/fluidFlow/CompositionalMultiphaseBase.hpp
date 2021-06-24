@@ -284,10 +284,14 @@ public:
 
     static constexpr char const * dPhaseMobility_dGlobalCompDensityString() { return "dPhaseMobility_dGlobalCompDensity"; }
 
-    // intermediate values for CFL number computation
+    // intermediate values for CFL number computation and actual cell CFL numbers
     static constexpr char const * phaseOutfluxString() { return "phaseOutflux"; }
 
-    static constexpr char const * compOutfluxString() { return "compOutflux"; }
+    static constexpr char const * componentOutfluxString() { return "componentOutflux"; }
+
+    static constexpr char const * phaseCFLNumberString() { return "phaseCFLNumber"; }
+
+    static constexpr char const * componentCFLNumberString() { return "componentCFLNumber"; }
 
     // these are used to store last converged time step values
     static constexpr char const * phaseVolumeFractionOldString() { return "phaseVolumeFractionOld"; }

@@ -848,7 +848,7 @@ CFLKernel::
   for( localIndex ip = 0; ip < NP; ++ip )
   {
     mob[ip] = phaseRelPerm[ip] / phaseVisc[ip];
-    if( mob[ip] > 1e-12 )
+    if( mob[ip] > minPhaseMobility )
     {
       mobilePhases[numMobilePhases] = ip;
       numMobilePhases++;
@@ -917,6 +917,7 @@ void
 CFLKernel::
   computeCompCFL( real64 const & poreVol,
                   arraySlice1d< real64 const > compDens,
+                  arraySlice1d< real64 const > compFrac,
                   arraySlice1d< real64 const > compOutflux,
                   real64 & compCFLNumber )
 {
@@ -925,9 +926,9 @@ CFLKernel::
   compCFLNumber = 0.0;
   for( localIndex ic = 0; ic < NC; ++ic )
   {
-    real64 const compMoles = compDens[ic] * poreVol;
-    if( compMoles > 1e-12 )
+    if( compFrac[ic] > minComponentFraction )
     {
+      real64 const compMoles = compDens[ic] * poreVol;
       real64 const CFL = compOutflux[ic] / compMoles;
       if( CFL > compCFLNumber )
       {
@@ -945,16 +946,19 @@ CFLKernel::
           arrayView1d< real64 const > const & porosityRef,
           arrayView2d< real64 const > const & pvMult,
           arrayView2d< real64 const > const & compDens,
+          arrayView2d< real64 const > const & compFrac,
           arrayView3d< real64 const > const & phaseRelPerm,
           arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
           arrayView3d< real64 const > const & phaseVisc,
           arrayView2d< real64 const > const & phaseOutflux,
           arrayView2d< real64 const > const & compOutflux,
+          arrayView1d< real64 > const & phaseCFLNumber,
+          arrayView1d< real64 > const & compCFLNumber,
           real64 & maxPhaseCFLNumber,
           real64 & maxCompCFLNumber )
 {
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > regionPhaseCFLNumber( 0.0 );
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > regionCompCFLNumber( 0.0 );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionPhaseCFLNumber( 0.0 );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionCompCFLNumber( 0.0 );
 
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {
@@ -968,20 +972,22 @@ CFLKernel::
                            phaseVisc[ei][0],
                            phaseOutflux[ei],
                            cellPhaseCFLNumber );
-    regionPhaseCFLNumber.max( cellPhaseCFLNumber );
+    subRegionPhaseCFLNumber.max( cellPhaseCFLNumber );
+    phaseCFLNumber[ei] = cellPhaseCFLNumber;
 
     // component CFL number
     real64 cellCompCFLNumber = 0.0;
     computeCompCFL< NC >( poreVol,
                           compDens[ei],
+                          compFrac[ei],
                           compOutflux[ei],
                           cellCompCFLNumber );
-    regionCompCFLNumber.max( cellCompCFLNumber );
-
+    subRegionCompCFLNumber.max( cellCompCFLNumber );
+    compCFLNumber[ei] = cellCompCFLNumber;
   } );
 
-  maxPhaseCFLNumber = LvArray::math::max( maxPhaseCFLNumber, regionPhaseCFLNumber.get() );
-  maxCompCFLNumber = LvArray::math::max( maxCompCFLNumber, regionCompCFLNumber.get() );
+  maxPhaseCFLNumber = subRegionPhaseCFLNumber.get();
+  maxCompCFLNumber = subRegionCompCFLNumber.get();
 }
 
 #define INST_CFLKernel( NC, NP ) \
@@ -992,11 +998,14 @@ CFLKernel::
                       arrayView1d< real64 const > const & porosityRef, \
                       arrayView2d< real64 const > const & pvMult, \
                       arrayView2d< real64 const > const & compDens, \
+                      arrayView2d< real64 const > const & compFrac, \
                       arrayView3d< real64 const > const & phaseRelPerm, \
                       arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac, \
                       arrayView3d< real64 const > const & phaseVisc, \
                       arrayView2d< real64 const > const & phaseOutflux, \
                       arrayView2d< real64 const > const & compOutflux, \
+                      arrayView1d< real64 > const & phaseCFLNumber, \
+                      arrayView1d< real64 > const & compCFLNumber, \
                       real64 & maxPhaseCFLNumber, \
                       real64 & maxCompCFLNumber )
 INST_CFLKernel( 1, 2 );

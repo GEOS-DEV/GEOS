@@ -237,6 +237,9 @@ struct CFLFluxKernel
 struct CFLKernel
 {
 
+  static constexpr real64 minPhaseMobility = 1e-12;
+  static constexpr real64 minComponentFraction = 1e-12;
+
   template< localIndex NP >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -254,6 +257,7 @@ struct CFLKernel
   static void
   computeCompCFL( real64 const & poreVol,
                   arraySlice1d< real64 const > compDens,
+                  arraySlice1d< real64 const > compFrac,
                   arraySlice1d< real64 const > compOutflux,
                   real64 & compCFLNumber );
 
@@ -264,11 +268,14 @@ struct CFLKernel
           arrayView1d< real64 const > const & porosityRef,
           arrayView2d< real64 const > const & pvMult,
           arrayView2d< real64 const > const & compDens,
+          arrayView2d< real64 const > const & compFrac,
           arrayView3d< real64 const > const & phaseRelPerm,
           arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
           arrayView3d< real64 const > const & phaseVisc,
           arrayView2d< real64 const > const & phaseOutflux,
           arrayView2d< real64 const > const & compOutflux,
+          arrayView1d< real64 > const & phaseCFLNumber,
+          arrayView1d< real64 > const & compCFLNumber,
           real64 & maxPhaseCFLNumber,
           real64 & maxCompCFLNumber );
 
