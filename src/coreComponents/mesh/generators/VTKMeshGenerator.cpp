@@ -130,6 +130,8 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   WriteCellBlocks( domain, nbHex, nbTet, nbWedge, nbPyr,regions_hex, regions_tetra, regions_wedges, regions_pyramids, regions, arraysToBeImported );
 
   WriteSurfaces( nodeManager, allSurfaces);
+
+  GEOSX_LOG_RANK_0("Mesh was loaded successfully");
 }
 
 vtkSmartPointer<vtkMultiProcessController> VTKMeshGenerator::GetVTKController()
@@ -151,38 +153,42 @@ vtkSmartPointer<vtkUnstructuredGrid> VTKMeshGenerator::LoadVTKMesh()
   string_array filePathTokenized = stringutilities::tokenize( m_filePath, "."); //TODO maybe code a method in Path to get the file extension?
   string extension = filePathTokenized[filePathTokenized.size() - 1];
   vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
-  if( MpiWrapper::commRank() == 0 )
+  if( extension == "pvtu" )
   {
-  if( extension == "vtk")
-    {
-      vtkSmartPointer<vtkUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkUnstructuredGridReader>::New();
-	    vtkUgReader->SetFileName( m_filePath.c_str() );
-      vtkUgReader->Update();
-	    loadedMesh = vtkUgReader->GetOutput();
-    }
-    else if( extension == "vtu")
-    {
-      vtkSmartPointer<vtkXMLUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
-	    vtkUgReader->SetFileName( m_filePath.c_str() );
-      vtkUgReader->Update();
-	    loadedMesh = vtkUgReader->GetOutput();
-    }
-    else if( extension == "pvtu")
-    {
-      vtkSmartPointer<vtkXMLPUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkXMLPUnstructuredGridReader>::New();
-	    vtkUgReader->SetFileName( m_filePath.c_str() );
-      vtkUgReader->Update();
-	    loadedMesh = vtkUgReader->GetOutput();
-    }
-    else
-    {
-      GEOSX_ERROR( extension << " is not a recognized extension for using the VTK reader with GEOSX. Please use .vtk or .vtu" );
-    }
-  } 
-  else // Empty mesh for those ranks. It will be filled afther
-  {
-    loadedMesh = vtkSmartPointer<vtkUnstructuredGrid>::New();
+    vtkSmartPointer<vtkXMLPUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkXMLPUnstructuredGridReader>::New();
+	  vtkUgReader->SetFileName( m_filePath.c_str() );
+    vtkUgReader->Update();
+	  loadedMesh = vtkUgReader->GetOutput();
   }
+  else
+  {
+    if( MpiWrapper::commRank() == 0 )
+    {
+    if( extension == "vtk")
+      {
+        vtkSmartPointer<vtkUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkUnstructuredGridReader>::New();
+	      vtkUgReader->SetFileName( m_filePath.c_str() );
+        vtkUgReader->Update();
+	      loadedMesh = vtkUgReader->GetOutput();
+      }
+      else if( extension == "vtu")
+      {
+        vtkSmartPointer<vtkXMLUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+	      vtkUgReader->SetFileName( m_filePath.c_str() );
+        vtkUgReader->Update();
+	      loadedMesh = vtkUgReader->GetOutput();
+      }
+      else
+      {
+        GEOSX_ERROR( extension << " is not a recognized extension for using the VTK reader with GEOSX. Please use .vtk or .vtu" );
+      }
+    } 
+    else // Empty mesh for those ranks. It will be filled afther
+    {
+      loadedMesh = vtkSmartPointer<vtkUnstructuredGrid>::New();
+    }
+  }
+  GEOSX_LOG_RANK( loadedMesh->GetNumberOfCells());
 
   return loadedMesh;
 }
@@ -202,6 +208,7 @@ void VTKMeshGenerator::RedistributeMesh( vtkUnstructuredGrid * loadedMesh)
   generator->SetInputDataObject(vtkUnstructuredGrid::SafeDownCast( rdsf->GetOutputDataObject(0)));
   generator->Update();
   m_vtkMesh = vtkUnstructuredGrid::SafeDownCast( generator->GetOutputDataObject(0));
+  GEOSX_LOG_RANK( m_vtkMesh->GetNumberOfCells());
 }
 
 double VTKMeshGenerator::WriteMeshNodes(NodeManager & nodeManager)
@@ -574,19 +581,42 @@ void VTKMeshGenerator::WriteHexahedronVertices( CellBlock::NodeMapType & cellToV
   }
 }
 
-void VTKMeshGenerator::WritePyramidVertices( CellBlock::NodeMapType & cellToVertex )
+void VTKMeshGenerator::WriteWedgeVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal )
 {
   localIndex cellCount = 0;
+  //TODO : duplicate code to get the attribute array
+  int attributeIndex = -1;
+  vtkCellData * cellData = m_vtkMesh->GetCellData();
+  vtkAbstractArray * attributeArray = cellData->GetAbstractArray("attribute", attributeIndex);
+  GEOSX_ERROR_IF(attributeIndex >=0 && attributeArray->GetDataType() != VTK_INT, "Array name \"attribute\" is reserved to store the regions " 
+                << "used by GEOSX. The underlying type has to be an INT");
+  vtkIntArray * attributeDataArray =  nullptr;
+  if( attributeIndex >= 0)
+  {
+    attributeDataArray = vtkIntArray::SafeDownCast( attributeArray );
+  }
+  int globalCellIdsIndex = -1;
+  vtkAbstractArray * globalCellIdsArray = cellData->GetAbstractArray("GlobalCellIds", globalCellIdsIndex);
+  GEOSX_ERROR_IF(globalCellIdsIndex >=0 && globalCellIdsArray->GetDataType() != VTK_ID_TYPE, "Array name \"GlobalCellIds\" is not present or do not have " 
+                << " the underlying type id type");
+  vtkIdTypeArray * globalCellIdsDataArray =  nullptr;
+  if( globalCellIdsIndex >= 0)
+  {
+    globalCellIdsDataArray = vtkIdTypeArray::SafeDownCast( globalCellIdsArray );
+  }
   for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
   {
     vtkCell * currentCell = m_vtkMesh->GetCell(c);
-    if( currentCell->GetCellType() == VTK_PYRAMID )
+    if( currentCell->GetCellType() == VTK_WEDGE )
     {
+      if( attributeDataArray != nullptr && attributeDataArray->GetValue(c) != region_id) continue;
 		  cellToVertex[cellCount][0] = currentCell->GetPointId(0);
-		  cellToVertex[cellCount][1] = currentCell->GetPointId(1);
-		  cellToVertex[cellCount][2] = currentCell->GetPointId(2);
-		  cellToVertex[cellCount][3] = currentCell->GetPointId(3);
-		  cellToVertex[cellCount][4] = currentCell->GetPointId(4);
+		  cellToVertex[cellCount][1] = currentCell->GetPointId(3);
+		  cellToVertex[cellCount][2] = currentCell->GetPointId(1);
+		  cellToVertex[cellCount][3] = currentCell->GetPointId(4);
+		  cellToVertex[cellCount][4] = currentCell->GetPointId(2);
+		  cellToVertex[cellCount][4] = currentCell->GetPointId(5);
+      localToGlobal[cellCount] = globalCellIdsDataArray->GetValue(c);
       cellCount++;
     }
   }
@@ -658,7 +688,7 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
           vtkCell * currentCell = m_vtkMesh->GetCell(c);
           if( currentCell->GetCellType() == cellType )
           {
-            if( attributeDataArray != nullptr && attributeDataArray->GetValue(c) != region_id) continue;
+            if( attributeDataArray != nullptr && attributeDataArray->GetValue(c) != region_id ) continue;
             for(int i = 0; i < dimension; i++ )
             {
               property(cellCount,i) = array->GetComponent(c,i);
@@ -674,6 +704,11 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
     if( cellType == VTK_HEXAHEDRON ) // Special case for hexahedron because of the ordering
     {
       WriteHexahedronVertices( cellToVertex, region_id, localToGlobal );
+      return;
+    }
+    if( cellType == VTK_WEDGE ) // Special case for hexahedron because of the ordering
+    {
+      WriteWedgeVertices( cellToVertex, region_id, localToGlobal );
       return;
     }
     int globalCellIdsIndex = -1;

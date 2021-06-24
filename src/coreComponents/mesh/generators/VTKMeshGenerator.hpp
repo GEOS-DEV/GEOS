@@ -246,11 +246,11 @@ private:
   void WriteHexahedronVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal  );
 
   /**
-   * @brief Write the pyramid vertices
+   * @brief Write the wedge vertices
    * @details The node ordering from VTK differs from the node ordering in GEOSX
    * @param[in,out] cellToVertex list of nodes organized per cells
    */
-  void WritePyramidVertices( CellBlock::NodeMapType & cellToVertex );
+  void WriteWedgeVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal );
 
 private:
 
