@@ -452,6 +452,11 @@ using localIndex_array3d = array3d< localIndex >;
 /// A 3-dimensional array of geosx::globalIndex types.
 using globalIndex_array3d = array3d< globalIndex >;
 
+
+/// A 4-dimensional array of geosx::real64 types.
+using real64_array4d = array4d< real64 >;
+
+
 ///@}
 
 /// @cond DO_NOT_DOCUMENT
@@ -528,6 +533,7 @@ public:
       {std::type_index( typeid(real64_array3d)), "real64_array3d"},
       {std::type_index( typeid(localIndex_array3d)), "localIndex_array3d"},
       {std::type_index( typeid(globalIndex_array3d)), "globalIndex_array3d"},
+      {std::type_index( typeid(real64_array4d)), "real64_array4d"},
       {std::type_index( typeid(r1_array2d)), "r1_array2d"},
       {std::type_index( typeid(string)), "string"},
       {std::type_index( typeid(Path)), "path"},
@@ -584,6 +590,8 @@ public:
     real64_array3d_id,     //!< real64_array3d_id
     real64_array3d_kji_id,  //!< real64_array3d_kji_id
 
+    real64_array4d_id,     //!< real64_array4d_id
+
     string_id,           //!< string_id
     Path_id,             //!< Path_id
     string_array_id,     //!< string_array_id
@@ -629,6 +637,8 @@ public:
       { std::type_index( typeid(real32_array3d)), TypeIDs::real32_array3d_id },
       { std::type_index( typeid(real64_array3d)), TypeIDs::real64_array3d_id },
       { std::type_index( typeid(array3d< real64, RAJA::PERM_KJI >)), TypeIDs::real64_array3d_kji_id },
+
+      { std::type_index( typeid(real64_array4d)), TypeIDs::real64_array4d_id },
 
       { std::type_index( typeid(string)), TypeIDs::string_id },
       { std::type_index( typeid(Path)), TypeIDs::Path_id },
@@ -767,6 +777,7 @@ private:
       {"globalIndex_array3d", constructArrayRegex( ri, 3 )},
       {"real32_array3d", constructArrayRegex( rr, 3 )},
       {"real64_array3d", constructArrayRegex( rr, 3 )},
+      {"real64_array4d", constructArrayRegex( rr, 4 )},
       {"string", rs},
       {"path", rs},
       {"string_array", constructArrayRegex( rs, 1 )},
@@ -923,6 +934,10 @@ private:
       case ( TypeIDs::real64_array3d_kji_id ):
       {
         return lambda( array3d< real64, RAJA::PERM_KJI >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_id ):
+      {
+        return lambda( real64_array4d(), real64( 1 ) );
       }
       default:
       {
