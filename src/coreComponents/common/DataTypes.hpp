@@ -453,8 +453,20 @@ using localIndex_array3d = array3d< localIndex >;
 using globalIndex_array3d = array3d< globalIndex >;
 
 
+/// A 4-dimensional array of geosx::integer types.
+using integer_array4d = array4d< integer >;
+
+/// A 4-dimensional array of geosx::real32 types.
+using real32_array4d = array4d< real32 >;
+
 /// A 4-dimensional array of geosx::real64 types.
 using real64_array4d = array4d< real64 >;
+
+/// A 4-dimensional array of geosx::localIndex types.
+using localIndex_array4d = array4d< localIndex >;
+
+/// A 4-dimensional array of geosx::globalIndex types.
+using globalIndex_array4d = array4d< globalIndex >;
 
 
 ///@}
@@ -590,7 +602,30 @@ public:
     real64_array3d_id,     //!< real64_array3d_id
     real64_array3d_kji_id,  //!< real64_array3d_kji_id
 
-    real64_array4d_id,     //!< real64_array4d_id
+    real64_array4d_id,      //!< real64_array4d_id
+    real64_array4d_jikl_id, //!< real64_array4d_jikl_id
+    real64_array4d_ikjl_id, //!< real64_array4d_ikjl_id
+    real64_array4d_kijl_id, //!< real64_array4d_kijl_id
+    real64_array4d_jkil_id, //!< real64_array4d_jkil_id
+    real64_array4d_kjil_id, //!< real64_array4d_kjil_id
+    real64_array4d_ijlk_id, //!< real64_array4d_ijlk_id
+    real64_array4d_jilk_id, //!< real64_array4d_jilk_id
+    real64_array4d_iljk_id, //!< real64_array4d_iljk_id
+    real64_array4d_lijk_id, //!< real64_array4d_lijk_id
+    real64_array4d_jlik_id, //!< real64_array4d_jlik_id
+    real64_array4d_ljik_id, //!< real64_array4d_ljik_id
+    real64_array4d_iklj_id, //!< real64_array4d_iklj_id
+    real64_array4d_kilj_id, //!< real64_array4d_kilj_id
+    real64_array4d_ilkj_id, //!< real64_array4d_ilkj_id
+    real64_array4d_likj_id, //!< real64_array4d_likj_id
+    real64_array4d_klij_id, //!< real64_array4d_klij_id
+    real64_array4d_lkij_id, //!< real64_array4d_lkij_id
+    real64_array4d_jkli_id, //!< real64_array4d_jkli_id
+    real64_array4d_kjli_id, //!< real64_array4d_kjli_id
+    real64_array4d_jlki_id, //!< real64_array4d_jlki_id
+    real64_array4d_ljki_id, //!< real64_array4d_ljki_id
+    real64_array4d_klji_id, //!< real64_array4d_klji_id
+    real64_array4d_lkji_id, //!< real64_array4d_lkji_id
 
     string_id,           //!< string_id
     Path_id,             //!< Path_id
@@ -639,6 +674,29 @@ public:
       { std::type_index( typeid(array3d< real64, RAJA::PERM_KJI >)), TypeIDs::real64_array3d_kji_id },
 
       { std::type_index( typeid(real64_array4d)), TypeIDs::real64_array4d_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_JIKL >)), TypeIDs::real64_array4d_jikl_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_IKJL >)), TypeIDs::real64_array4d_ikjl_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_KIJL >)), TypeIDs::real64_array4d_kijl_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_JKIL >)), TypeIDs::real64_array4d_jkil_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_KJIL >)), TypeIDs::real64_array4d_kjil_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_IJLK >)), TypeIDs::real64_array4d_ijlk_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_JILK >)), TypeIDs::real64_array4d_jilk_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_ILJK >)), TypeIDs::real64_array4d_iljk_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_LIJK >)), TypeIDs::real64_array4d_lijk_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_JLIK >)), TypeIDs::real64_array4d_jlik_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_LJIK >)), TypeIDs::real64_array4d_ljik_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_IKLJ >)), TypeIDs::real64_array4d_iklj_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_KILJ >)), TypeIDs::real64_array4d_kilj_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_ILKJ >)), TypeIDs::real64_array4d_ilkj_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_LIKJ >)), TypeIDs::real64_array4d_likj_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_KLIJ >)), TypeIDs::real64_array4d_klij_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_LKIJ >)), TypeIDs::real64_array4d_lkij_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_JKLI >)), TypeIDs::real64_array4d_jkli_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_KJLI >)), TypeIDs::real64_array4d_kjli_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_JLKI >)), TypeIDs::real64_array4d_jlki_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_LJKI >)), TypeIDs::real64_array4d_ljki_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_KLJI >)), TypeIDs::real64_array4d_klji_id },
+      { std::type_index( typeid(array4d< real64, RAJA::PERM_LKJI >)), TypeIDs::real64_array4d_lkji_id },
 
       { std::type_index( typeid(string)), TypeIDs::string_id },
       { std::type_index( typeid(Path)), TypeIDs::Path_id },
@@ -938,6 +996,98 @@ private:
       case ( TypeIDs::real64_array4d_id ):
       {
         return lambda( real64_array4d(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_jikl_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_JIKL >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_ikjl_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_IKJL >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_kijl_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_KIJL >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_jkil_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_JKIL >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_kjil_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_KJIL >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_ijlk_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_IJLK >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_jilk_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_JILK >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_iljk_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_ILJK >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_lijk_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_LIJK >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_jlik_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_JLIK >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_ljik_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_LJIK >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_iklj_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_IKLJ >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_kilj_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_KILJ >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_ilkj_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_ILKJ >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_likj_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_LIKJ >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_klij_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_KLIJ >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_lkij_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_LKIJ >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_jkli_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_JKLI >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_kjli_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_KJLI >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_jlki_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_JLKI >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_ljki_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_LJKI >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_klji_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_KLJI >(), real64( 1 ) );
+      }
+      case ( TypeIDs::real64_array4d_lkji_id ):
+      {
+        return lambda( array4d< real64, RAJA::PERM_LKJI >(), real64( 1 ) );
       }
       default:
       {
