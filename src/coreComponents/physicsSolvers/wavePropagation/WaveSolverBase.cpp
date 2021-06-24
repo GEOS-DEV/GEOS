@@ -73,6 +73,11 @@ void WaveSolverBase::initializePreSubGroups()
   SolverBase::initializePreSubGroups();
 }
 
+void WaveSolverBase::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
+{
+  GEOSX_UNUSED_VAR( time, domain );
+  GEOSX_ERROR( "WaveSolverBase::applyFreeSurfaceBC called!. Should be overridden." );
+}
 
 void WaveSolverBase::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 {
