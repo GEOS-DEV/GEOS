@@ -79,7 +79,7 @@
       name="water"
       defaultDensity="1000"
       defaultViscosity="0.001"
-      referencePressure="0.0"
+      referencePressure="1e6"
       referenceDensity="1000"
       compressibility="1e-9"
       referenceViscosity="0.001"
@@ -87,7 +87,7 @@
 
     <PoreVolumeCompressibleSolid
       name="rock"
-      referencePressure="0.0"
+      referencePressure="1e6"
       compressibility="1e-9"/>
   </Constitutive>
 
@@ -133,13 +133,13 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain/DEFAULT_PYRAMID"
       fieldName="pressure"
-      scale="1e3"/>
+      scale="1e6"/>
 
     <FieldSpecification
       name="boundaryPressure"
       objectPath="faceManager"
-      fieldName="facePressure"
-      scale="1.1e3"
+      fieldName="pressure"
+      scale="1.1e6"
       setNames="{ left }"/>
   </FieldSpecifications>
 
