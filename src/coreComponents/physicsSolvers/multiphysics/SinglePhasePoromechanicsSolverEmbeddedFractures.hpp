@@ -20,25 +20,25 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVEREMBEDDEDFRACTURES_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVEREMBEDDEDFRACTURES_HPP_
 
-#include "physicsSolvers/multiphysics/PoroelasticSolver.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
 
 namespace geosx
 {
 
 class SolidMechanicsEmbeddedFractures;
 
-class PoroelasticSolverEmbeddedFractures : public PoroelasticSolver
+class SinglePhasePoromechanicsSolverEmbeddedFractures : public SinglePhasePoromechanicsSolver
 {
 public:
-  PoroelasticSolverEmbeddedFractures( const std::string & name,
-                                      Group * const parent );
-  ~PoroelasticSolverEmbeddedFractures() override;
+  SinglePhasePoromechanicsSolverEmbeddedFractures( const std::string & name,
+                                                   Group * const parent );
+  ~SinglePhasePoromechanicsSolverEmbeddedFractures() override;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string catalogName() { return "PoroelasticEmbeddedFractures"; }
+  static string catalogName() { return "SinglePhasePoromechanicsEmbeddedFractures"; }
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
@@ -140,7 +140,7 @@ public:
                                             arrayView1d< real64 > const & localRhs );
 
 
-  struct viewKeyStruct : PoroelasticSolver::viewKeyStruct
+  struct viewKeyStruct : SinglePhasePoromechanicsSolver::viewKeyStruct
   {
     constexpr static char const * fracturesSolverNameString() { return "fracturesSolverName"; }
 

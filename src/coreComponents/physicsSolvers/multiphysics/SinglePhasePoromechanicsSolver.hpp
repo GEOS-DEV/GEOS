@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
@@ -30,21 +30,18 @@ namespace geosx
 class SolidMechanicsLagrangianFEM;
 class SinglePhaseBase;
 
-class PoroelasticSolver : public SolverBase
+class SinglePhasePoromechanicsSolver : public SolverBase
 {
 public:
-  PoroelasticSolver( const string & name,
-                     Group * const parent );
-  ~PoroelasticSolver() override;
+  SinglePhasePoromechanicsSolver( const string & name,
+                                  Group * const parent );
+  ~SinglePhasePoromechanicsSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string catalogName() { return "Poroelastic"; }
-
-  virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
-
+  static string catalogName() { return "SinglePhasePoromechanics"; }
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -115,30 +112,8 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override;
 
-  void updateDeformationForCoupling( DomainPartition & domain );
-
-  real64 splitOperatorStep( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain );
-
-
-  enum class CouplingTypeOption : integer
-  {
-    FIM,
-    SIM_FixedStress
-  };
-
-
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOptionEnum"; }
-    constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
-
-    constexpr static char const * totalMeanStressString() { return "totalMeanStress"; }
-    constexpr static char const * oldTotalMeanStressString() { return "oldTotalMeanStress"; }
-
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
     constexpr static char const * thermalCouplingString() { return "thermalCoupling"; }
@@ -152,8 +127,6 @@ protected:
 
   string m_solidSolverName;
   string m_flowSolverName;
-
-  CouplingTypeOption m_couplingTypeOption;
 
   // pointer to the flow sub-solver
   SinglePhaseBase * m_flowSolver;
@@ -170,10 +143,6 @@ private:
 
 };
 
-ENUM_STRINGS( PoroelasticSolver::CouplingTypeOption,
-              "FIM",
-              "SIM_FixedStress" );
-
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROELASTICSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_ */

@@ -19,7 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEWEAKTHMCOUPLINGKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEWEAKTHMCOUPLINGKERNEL_HPP_
 
-#include "SinglePhasePoroelasticKernel.hpp"
+#include "SinglePhasePoromechanicsKernel.hpp"
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
 namespace geosx
@@ -36,13 +36,13 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class SinglePhase :
-  public PoroelasticKernels::SinglePhase< SUBREGION_TYPE,
+  public PoromechanicsKernels::SinglePhase< SUBREGION_TYPE,
                                           CONSTITUTIVE_TYPE,
                                           FE_TYPE >
 {
 public:
 
-  using Base = PoroelasticKernels::SinglePhase< SUBREGION_TYPE,
+  using Base = PoromechanicsKernels::SinglePhase< SUBREGION_TYPE,
                                           CONSTITUTIVE_TYPE,
                                           FE_TYPE >;
 

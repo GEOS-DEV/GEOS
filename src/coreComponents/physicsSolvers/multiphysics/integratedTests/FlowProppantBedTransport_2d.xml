@@ -56,7 +56,8 @@
       fractureRegion="Fracture"
       targetRegions="{ Fracture }"
       solidMaterialNames="{ granite }"
-      rockToughness="1e6"/>
+      rockToughness="1e6"
+      mpiCommOrder="1"/>
   </Solvers>
 
   <Mesh>

@@ -259,11 +259,6 @@ public:
     return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() );
   }
 
-  void setEffectiveStress( integer const input )
-  {
-    m_effectiveStress = input;
-  }
-
   real64 & getMaxForce() { return m_maxForce; }
 
   arrayView1d< ParallelVector > const & getRigidBodyModes() const
@@ -296,11 +291,6 @@ protected:
   SortedArray< localIndex > m_nonSendOrReceiveNodes;
   SortedArray< localIndex > m_targetNodes;
   MPI_iCommData m_iComm;
-
-  /// Indicates whether or not to use effective stress when integrating the
-  /// stress divergence in the kernels. This means calling the poroelastic
-  /// variant of the solid mechanics kernels.
-  integer m_effectiveStress;
 
   /// Indicates whether or not to use thermal stress when integrating the
   /// stress divergence in the kernels.
