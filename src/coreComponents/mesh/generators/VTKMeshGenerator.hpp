@@ -165,6 +165,12 @@ private:
    */
   vtkIntArray * GetAttributeDataArray();
 
+  /** 
+   * @brief Get the cell global id data array from the VTK mesh
+   * @return a pointer to the vtkIdTypeArray containing the global ids
+   */
+  vtkIdTypeArray * GetCellGlobalIdDataArray();
+
   /**
    * @brief This methos is used to preprocess the the VTK mesh and count the number of cells, facets, regions
    * and surfaces.

@@ -54,14 +54,6 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "path to the mesh file" );
-    /*
-  registerWrapper( viewKeyStruct::regionsToImportString(), &m_regionsToImport ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Region names to import" );
-  registerWrapper( viewKeyStruct::regionsToImportString(), &m_surfacesToImport ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface names to import" );
-    */
 }
 
 VTKMeshGenerator::~VTKMeshGenerator()
@@ -308,6 +300,20 @@ vtkIntArray * VTKMeshGenerator::GetAttributeDataArray()
   }
   return attributeDataArray;
 }
+  vtkIdTypeArray * VTKMeshGenerator::GetCellGlobalIdDataArray()
+  {
+    int globalCellIdsIndex = -1;
+    vtkCellData * cellData = m_vtkMesh->GetCellData();
+    vtkAbstractArray * globalCellIdsArray = cellData->GetAbstractArray("GlobalCellIds", globalCellIdsIndex);
+    GEOSX_ERROR_IF(globalCellIdsIndex >=0 && globalCellIdsArray->GetDataType() != VTK_ID_TYPE, "Array name \"GlobalCellIds\" is not present or do not have " 
+                  << " the underlying type id type");
+    vtkIdTypeArray * globalCellIdsDataArray =  nullptr;
+    if( globalCellIdsIndex >= 0)
+    {
+      globalCellIdsDataArray = vtkIdTypeArray::SafeDownCast( globalCellIdsArray );
+    }
+    return globalCellIdsDataArray;
+  }
 void VTKMeshGenerator::CountCellsAndFaces( localIndex & nbHex, localIndex & nbTet, localIndex & nbWedge, localIndex & nbPyr,
                                            std::map<int,localIndex> & regions_hex, std::map<int,localIndex> & regions_tetra,
                                            std::map<int,localIndex> & regions_wedges, std::map<int,localIndex> & regions_pyramids,
@@ -541,26 +547,8 @@ localIndex VTKMeshGenerator::GetNumberOfPoints( int cellType )
 void VTKMeshGenerator::WriteHexahedronVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal  )
 {
   localIndex cellCount = 0;
-  //TODO : duplicate code to get the attribute array
-  int attributeIndex = -1;
-  vtkCellData * cellData = m_vtkMesh->GetCellData();
-  vtkAbstractArray * attributeArray = cellData->GetAbstractArray("attribute", attributeIndex);
-  GEOSX_ERROR_IF(attributeIndex >=0 && attributeArray->GetDataType() != VTK_INT, "Array name \"attribute\" is reserved to store the regions " 
-                << "used by GEOSX. The underlying type has to be an INT");
-  vtkIntArray * attributeDataArray =  nullptr;
-  if( attributeIndex >= 0)
-  {
-    attributeDataArray = vtkIntArray::SafeDownCast( attributeArray );
-  }
-  int globalCellIdsIndex = -1;
-  vtkAbstractArray * globalCellIdsArray = cellData->GetAbstractArray("GlobalCellIds", globalCellIdsIndex);
-  GEOSX_ERROR_IF(globalCellIdsIndex >=0 && globalCellIdsArray->GetDataType() != VTK_ID_TYPE, "Array name \"GlobalCellIds\" is not present or do not have " 
-                << " the underlying type id type");
-  vtkIdTypeArray * globalCellIdsDataArray =  nullptr;
-  if( globalCellIdsIndex >= 0)
-  {
-    globalCellIdsDataArray = vtkIdTypeArray::SafeDownCast( globalCellIdsArray );
-  }
+  vtkIntArray * attributeDataArray =  GetAttributeDataArray();
+  vtkIdTypeArray * globalCellIdsDataArray = GetCellGlobalIdDataArray();
   for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
   {
     vtkCell * currentCell = m_vtkMesh->GetCell(c);
@@ -584,26 +572,8 @@ void VTKMeshGenerator::WriteHexahedronVertices( CellBlock::NodeMapType & cellToV
 void VTKMeshGenerator::WriteWedgeVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal )
 {
   localIndex cellCount = 0;
-  //TODO : duplicate code to get the attribute array
-  int attributeIndex = -1;
-  vtkCellData * cellData = m_vtkMesh->GetCellData();
-  vtkAbstractArray * attributeArray = cellData->GetAbstractArray("attribute", attributeIndex);
-  GEOSX_ERROR_IF(attributeIndex >=0 && attributeArray->GetDataType() != VTK_INT, "Array name \"attribute\" is reserved to store the regions " 
-                << "used by GEOSX. The underlying type has to be an INT");
-  vtkIntArray * attributeDataArray =  nullptr;
-  if( attributeIndex >= 0)
-  {
-    attributeDataArray = vtkIntArray::SafeDownCast( attributeArray );
-  }
-  int globalCellIdsIndex = -1;
-  vtkAbstractArray * globalCellIdsArray = cellData->GetAbstractArray("GlobalCellIds", globalCellIdsIndex);
-  GEOSX_ERROR_IF(globalCellIdsIndex >=0 && globalCellIdsArray->GetDataType() != VTK_ID_TYPE, "Array name \"GlobalCellIds\" is not present or do not have " 
-                << " the underlying type id type");
-  vtkIdTypeArray * globalCellIdsDataArray =  nullptr;
-  if( globalCellIdsIndex >= 0)
-  {
-    globalCellIdsDataArray = vtkIdTypeArray::SafeDownCast( globalCellIdsArray );
-  }
+  vtkIntArray * attributeDataArray =  GetAttributeDataArray();
+  vtkIdTypeArray * globalCellIdsDataArray = GetCellGlobalIdDataArray();
   for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
   {
     vtkCell * currentCell = m_vtkMesh->GetCell(c);
@@ -647,17 +617,7 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
     cellBlock.resize( nbCells );
     arrayView1d< globalIndex > const & localToGlobal = cellBlock.localToGlobalMap();
 
-    //TODO : duplicate code to get the attribute array
-    int attributeIndex = -1;
-    vtkCellData * cellData = m_vtkMesh->GetCellData();
-    vtkAbstractArray * attributeArray = cellData->GetAbstractArray("attribute", attributeIndex);
-    GEOSX_ERROR_IF(attributeIndex >=0 && attributeArray->GetDataType() != VTK_INT, "Array name \"attribute\" is reserved to store the regions " 
-                  << "used by GEOSX. The underlying type has to be an INT");
-    vtkIntArray * attributeDataArray =  nullptr;
-    if( attributeIndex >= 0)
-    {
-      attributeDataArray = vtkIntArray::SafeDownCast( attributeArray );
-    }
+    vtkIntArray * attributeDataArray =  GetAttributeDataArray();
 
 
     /// Writing properties
@@ -711,15 +671,7 @@ void VTKMeshGenerator::WriteCellBlock( string const & name, localIndex nbCells, 
       WriteWedgeVertices( cellToVertex, region_id, localToGlobal );
       return;
     }
-    int globalCellIdsIndex = -1;
-    vtkAbstractArray * globalCellIdsArray = cellData->GetAbstractArray("GlobalCellIds", globalCellIdsIndex);
-    GEOSX_ERROR_IF(globalCellIdsIndex >=0 && globalCellIdsArray->GetDataType() != VTK_ID_TYPE, "Array name \"GlobalCellIds\" is not present or do not have " 
-                  << " the underlying type id type");
-    vtkIdTypeArray * globalCellIdsDataArray =  nullptr;
-    if( globalCellIdsIndex >= 0)
-    {
-      globalCellIdsDataArray = vtkIdTypeArray::SafeDownCast( globalCellIdsArray );
-    }
+    vtkIdTypeArray * globalCellIdsDataArray = GetCellGlobalIdDataArray();
     localIndex cellCount = 0;
     for( vtkIdType c = 0; c < m_vtkMesh->GetNumberOfCells(); c++)
     {
