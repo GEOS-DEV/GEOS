@@ -20,12 +20,16 @@
 
 #include "linearAlgebra/common/common.hpp"
 
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoir.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp"
 
 #include "LvArray/src/output.hpp"
@@ -62,6 +66,21 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
 //  using namespace hypre::mgr;
   switch( params.mgr.strategy )
   {
+    case LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM:
+    {
+      setStrategy< SinglePhaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM:
+    {
+      setStrategy< SinglePhaseHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM:
+    {
+      setStrategy< SinglePhaseReservoirHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
     case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics:
     case LinearSolverParameters::MGR::StrategyType::hydrofracture:
     {
@@ -78,19 +97,24 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< CompositionalMultiphaseFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
-    case LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics:
+    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM:
     {
-      setStrategy< MultiphasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
-    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoir:
-    {
-      setStrategy< CompositionalMultiphaseReservoir >( params.mgr, numComponentsPerField, precond, mgrData );
+      setStrategy< CompositionalMultiphaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM:
     {
       setStrategy< CompositionalMultiphaseHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM:
+    {
+      setStrategy< CompositionalMultiphaseReservoirHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics:
+    {
+      setStrategy< MultiphasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics:
