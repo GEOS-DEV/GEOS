@@ -52,6 +52,7 @@ set( physicsSolvers_headers
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      wavePropagation/WaveSolverBase.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
+     wavePropagation/AcousticWaveEquationSEMKernel.hpp
      )
 
 #

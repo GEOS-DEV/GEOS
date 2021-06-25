@@ -72,33 +72,7 @@ void WaveSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 }
-
-void WaveSolverBase::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
-{
-  GEOSX_UNUSED_VAR( time, domain );
-  GEOSX_ERROR( "WaveSolverBase::applyFreeSurfaceBC called!. Should be overridden." );
-}
-
-void WaveSolverBase::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
-{
-  GEOSX_UNUSED_VAR( mesh );
-  GEOSX_ERROR( "WaveSolverBase::precomputeSourceAndReceiverTerm called!. Should be overridden." );
-}
-
-
-void WaveSolverBase::addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs )
-{
-  GEOSX_UNUSED_VAR( time_n, rhs );
-  GEOSX_ERROR( "WaveSolverBase::addSourceToRightHandSide called!. Should be overridden." );
-}
-
-
-void WaveSolverBase::computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const val_np1 )
-{
-  GEOSX_UNUSED_VAR( iseismo, val_np1 );
-  GEOSX_ERROR( "WaveSolverBase::computeSeismoTrace called!. Should be overridden." );
-}
-
+  
   
 real64 WaveSolverBase::evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order )
 {
@@ -142,7 +116,5 @@ void WaveSolverBase::saveSeismo( localIndex iseismo, real64 val_pressure, char *
   f.close();
 }
 
-
-REGISTER_CATALOG_ENTRY( SolverBase, WaveSolverBase, string const &, dataRepository::Group * const )
 
 } /* namespace geosx */

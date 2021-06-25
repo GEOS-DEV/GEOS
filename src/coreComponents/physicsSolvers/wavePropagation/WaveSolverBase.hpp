@@ -41,9 +41,6 @@ public:
 
   WaveSolverBase & operator=( WaveSolverBase const & ) = delete;
   WaveSolverBase & operator=( WaveSolverBase && ) = delete;
-
-
-  static string catalogName() { return "WaveSolverBase"; }
   
   virtual void initializePreSubGroups() override;
   
@@ -61,7 +58,13 @@ public:
   };
 
  protected:
-
+  
+  /**
+   * @brief Apply free surface condition to the face define in the geometry box from the xml
+   * @param time the time to apply the BC
+   * @param domain the partition domain
+   */
+  virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) = 0;
   
   /**
    * @brief Compute the value of a Ricker (a Gaussian function)
@@ -96,28 +99,21 @@ public:
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh ) = 0;
 
   /**
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
    * @param time_n the time of evaluation of the source
    * @param rhs the right hand side vector to be computed
    */
-  virtual void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs );
-
-  /**
-   * @brief Apply free surface condition to the face define in the geometry box from the xml
-   * @param time the time to apply the BC
-   * @param domain the partition domain
-   */
-  virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain );
+  virtual void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs ) = 0;
 
   /**
    * @brief Compute the pressure at each receiver coordinate in one time step
    * @param iseismo index number of the seismo trace
    * @param val_np1 the array to save the value at the receiver position
    */
-  virtual void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 );
+  virtual void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 ) = 0;
 
   /**
    * @brief Save the sismo trace in file

@@ -18,6 +18,7 @@
  */
 
 #include "AcousticWaveEquationSEM.hpp"
+#include "AcousticWaveEquationSEMKernel.hpp"
 
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
@@ -580,7 +581,22 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
+
+  
+  auto kernelFactory = AcousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
+
+  finiteElement::
+    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                  constitutive::NullModel,
+                                  CellElementSubRegion >( mesh,
+                                                          targetRegionNames(),
+                                                          getDiscretizationName(),
+                                                          arrayView1d< string const >(),
+                                                          kernelFactory );
+
+  
+  
+  /*forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
                                        ElementRegionBase & elemRegion )
   {
@@ -632,7 +648,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       } );
     } );
   } );
-
+  */
+  
   addSourceToRightHandSide( time_n, rhs );
 
   /// Calculate your time integrators
