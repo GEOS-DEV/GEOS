@@ -189,6 +189,13 @@ public:
    */
   std::vector< int > getVTKNodeOrdering() const;
 
+  /**
+   * @brief Get the Silo ordering for this subregion.
+   * @return the Silo node ordering
+   */
+  std::vector< int > getSiloNodeOrdering() const;
+
+
   ///@}
 
   /**
