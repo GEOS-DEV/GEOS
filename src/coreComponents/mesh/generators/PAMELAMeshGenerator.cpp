@@ -254,13 +254,13 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
           cellToVertex[cellLocalIndex][0] =
             cornerList[0]->get_localIndex();
           cellToVertex[cellLocalIndex][1] =
-            cornerList[1]->get_localIndex();
-          cellToVertex[cellLocalIndex][2] =
-            cornerList[2]->get_localIndex();
-          cellToVertex[cellLocalIndex][3] =
             cornerList[3]->get_localIndex();
-          cellToVertex[cellLocalIndex][4] =
+          cellToVertex[cellLocalIndex][2] =
+            cornerList[1]->get_localIndex();
+          cellToVertex[cellLocalIndex][3] =
             cornerList[4]->get_localIndex();
+          cellToVertex[cellLocalIndex][4] =
+            cornerList[2]->get_localIndex();
           cellToVertex[cellLocalIndex][5] =
             cornerList[5]->get_localIndex();
 
