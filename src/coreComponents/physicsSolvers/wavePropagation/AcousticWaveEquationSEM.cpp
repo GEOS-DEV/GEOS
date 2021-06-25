@@ -34,7 +34,7 @@ using namespace dataRepository;
 AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
                                                   Group * const parent ):
   WaveSolverBase( name,
-		  parent )
+                  parent )
 {
 
   registerWrapper( viewKeyStruct::sourceNodeIdsString(), &m_sourceNodeIds ).
@@ -582,7 +582,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
 
-  
+
   auto kernelFactory = AcousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
   finiteElement::
@@ -594,62 +594,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                                           arrayView1d< string const >(),
                                                           kernelFactory );
 
-  
-  
-  /*forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const,
-                                       ElementRegionBase & elemRegion )
-  {
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
-                                                                       CellElementSubRegion & elementSubRegion )
-    {
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-      finiteElement::dispatch3D( fe,
-                                 [&]
-                                   ( auto const finiteElement )
-      {
-        using FE_TYPE = TYPEOFREF( finiteElement );
-
-        forAll< serialPolicy >( elemsToNodes.size( 0 ), [=] ( localIndex const k )
-        {
-          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-          constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-          real64 xLocal[numNodesPerElem][3];
-
-          for( localIndex a=0; a< numNodesPerElem; ++a )
-          {
-            for( localIndex i=0; i<3; ++i )
-            {
-              xLocal[a][i] = X( elemsToNodes( k, a ), i );
-            }
-          }
-
-          real64 gradN[ numNodesPerElem ][ 3 ];
-          for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-          {
-
-            real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
-
-            for( localIndex i=0; i<numNodesPerElem; ++i )
-            {
-              for( localIndex j=0; j<numNodesPerElem; ++j )
-              {
-                real64 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
-
-                stiffnessVector[elemsToNodes[k][i]] += Rh_ij*p_n[elemsToNodes[k][j]];
-              }
-            }
-          }
-        } );
-      } );
-    } );
-  } );
-  */
-  
   addSourceToRightHandSide( time_n, rhs );
 
   /// Calculate your time integrators

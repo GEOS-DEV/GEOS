@@ -31,7 +31,7 @@ class WaveSolverBase : public SolverBase
 {
 public:
   WaveSolverBase( const std::string & name,
-		  Group * const parent );
+                  Group * const parent );
 
   virtual ~WaveSolverBase() override;
 
@@ -41,9 +41,9 @@ public:
 
   WaveSolverBase & operator=( WaveSolverBase const & ) = delete;
   WaveSolverBase & operator=( WaveSolverBase && ) = delete;
-  
+
   virtual void initializePreSubGroups() override;
-  
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * sourceCoordinatesString() { return "sourceCoordinates"; }
@@ -57,15 +57,15 @@ public:
 
   };
 
- protected:
-  
+protected:
+
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
    * @param time the time to apply the BC
    * @param domain the partition domain
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) = 0;
-  
+
   /**
    * @brief Compute the value of a Ricker (a Gaussian function)
    * @param time_n time to evaluate the Ricker
@@ -145,11 +145,11 @@ public:
 
 template< typename FE_TYPE >
 bool WaveSolverBase::computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
-							   real64 (& coordsOnRefElem)[3],
-							   localIndex const & indexElement,
-							   array1d< array1d< localIndex > > const & faceNodes,
-							   arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-							   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X )
+                                                           real64 (& coordsOnRefElem)[3],
+                                                           localIndex const & indexElement,
+                                                           array1d< array1d< localIndex > > const & faceNodes,
+                                                           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X )
 {
   if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
   {

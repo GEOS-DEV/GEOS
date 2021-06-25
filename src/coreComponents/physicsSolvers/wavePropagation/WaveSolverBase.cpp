@@ -31,7 +31,7 @@ namespace geosx
 using namespace dataRepository;
 
 WaveSolverBase::WaveSolverBase( const std::string & name,
-                                                  Group * const parent ):
+                                Group * const parent ):
   SolverBase( name,
               parent )
 {
@@ -72,8 +72,8 @@ void WaveSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 }
-  
-  
+
+
 real64 WaveSolverBase::evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order )
 {
   real64 const o_tpeak = 1.0/f0;

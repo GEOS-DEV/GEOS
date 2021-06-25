@@ -96,7 +96,7 @@ public:
                        SUBREGION_TYPE const & elementSubRegion,
                        FE_TYPE const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       real64 const dt):
+                       real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -143,11 +143,11 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    /// numDofPerTrialSupportPoint = 1 
+    /// numDofPerTrialSupportPoint = 1
     for( localIndex a=0; a< numNodesPerElem; ++a )
     {
       localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i< 3 ; ++i )
+      for( int i=0; i< 3; ++i )
       {
         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
       }
@@ -159,7 +159,7 @@ public:
    *
    * ### ExplicitAcousticSEM Description
    * Calculates stiffness vector
-   * 
+   *
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -168,16 +168,16 @@ public:
                               StackVariables & stack ) const
   {
     real64 gradN[ numNodesPerElem ][ 3 ];
-    
+
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, gradN );
 
     for( localIndex i=0; i<numNodesPerElem; ++i )
     {
       for( localIndex j=0; j<numNodesPerElem; ++j )
       {
-	real64 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
-	
-	m_stiffnessVector[m_elemsToNodes[k][i]] += Rh_ij*m_p_n[m_elemsToNodes[k][j]];
+        real64 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
+
+        m_stiffnessVector[m_elemsToNodes[k][i]] += Rh_ij*m_p_n[m_elemsToNodes[k][j]];
 
       }
     }
@@ -190,10 +190,10 @@ protected:
 
   /// The array containing the nodal pressure array.
   arrayView1d< real64 const > const m_p_n;
-  
+
   /// The array containing the product of the stiffness matrix and the nodal pressure.
   arrayView1d< real64 > const m_stiffnessVector;
-  
+
   /// The time increment for this time integration step.
   real64 const m_dt;
 
