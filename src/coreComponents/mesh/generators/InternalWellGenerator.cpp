@@ -486,11 +486,15 @@ void InternalWellGenerator::mergePerforations()
           continue;
         }
 
-        GEOSX_LOG_RANK_0( "Moving perforation #" << elemToPerfMap[iwelem][ip]
-                                                 << " of well " << getName()
-                                                 << " from " << m_perfCoords[elemToPerfMap[iwelem][ip]]
-                                                 << " to " << m_perfCoords[iperfMaxTransmissibility] <<
-                          " to make sure that no well element is shared between two MPI ranks" );
+        GEOSX_LOG_RANK_0( "\n \nThe GEOSX wells currently have the following limitation in parallel: \n"
+                          << "We cannot allow an element of the well mesh to have two or more perforations associated with it. \n"
+                          << "So, in the present simulation, perforation #" << elemToPerfMap[iwelem][ip]
+                          << " of well " << getName()
+                          << " is moved from " << m_perfCoords[elemToPerfMap[iwelem][ip]]
+                          << " to " << m_perfCoords[iperfMaxTransmissibility]
+                          << " to make sure that no element of the well mesh has two perforations associated with it. \n"
+                          << "To circumvent this issue, please increase the value of \"numElementsPerSegment\" that controls the number of (uniformly distributed) well mesh elements per segment of the well polyline. \n"
+                          << "Our recommendation is to choose \"numElementsPerSegment\" such that each well mesh element has at most one perforation. \n \n" );
         LvArray::tensorOps::copy< 3 >( m_perfCoords[elemToPerfMap[iwelem][ip]], m_perfCoords[iperfMaxTransmissibility] );
       }
     }

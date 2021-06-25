@@ -126,8 +126,12 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
 
     // if the well transmissibility has been read from the XML
     // then skip the computation of the well transmissibility carried out below
-    if( m_wellTransmissibility[iperf] > 0 )
+    if( m_wellTransmissibility[iperf] >= 0 )
     {
+      GEOSX_LOG_RANK_IF( isZero( m_wellTransmissibility[iperf] ),
+                         "\n \nWarning! A perforation is defined with a zero transmissibility! \n"
+                         << "The simulation is going to proceed with this zero transmissibility,\n"
+                         << "but a better strategy to shut down a perforation is to remove the <Perforation> block from the XML\n \n" );
       continue;
     }
 
