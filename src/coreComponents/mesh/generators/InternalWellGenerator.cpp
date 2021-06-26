@@ -45,41 +45,43 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
   m_nDims( 3 ),
   m_polylineHeadNodeId( -1 )
 {
-  registerWrapper( keys::nodeCoords, &m_polyNodeCoords ).
+  // TODO: enable log level input
+  //enableLogLevelInput();
+
+  registerWrapper( viewKeyStruct::polylineNodeCoordsString(), &m_polyNodeCoords ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Physical coordinates of the well polyline nodes" );
 
-  registerWrapper( keys::segmentConn, &m_segmentToPolyNodeMap ).
+  registerWrapper( viewKeyStruct::polylineSegmentConnString(), &m_segmentToPolyNodeMap ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Connectivity of the polyline segments" );
 
-  registerWrapper( keys::radius, &m_radius ).
+  registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Radius of the well" );
 
-  registerWrapper( keys::nElems, &m_numElemsPerSegment ).
+  registerWrapper( viewKeyStruct::numElementsPerSegmentString(), &m_numElemsPerSegment ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Number of well elements per polyline segment" );
 
-  registerWrapper( keys::wellRegionName, &m_wellRegionName ).
+  registerWrapper( viewKeyStruct::wellRegionNameString(), &m_wellRegionName ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the well element region" );
 
-  registerWrapper( keys::wellControlsName, &m_wellControlsName ).
+  registerWrapper( viewKeyStruct::wellControlsNameString(), &m_wellControlsName ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
 
-  registerWrapper( keys::meshBodyName, &m_meshBodyName ).
+  registerWrapper( viewKeyStruct::meshNameString(), &m_meshBodyName ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the reservoir mesh associated with this well" );
-
 }
 
 InternalWellGenerator::~InternalWellGenerator()
@@ -89,29 +91,37 @@ InternalWellGenerator::~InternalWellGenerator()
 
 void InternalWellGenerator::postProcessInput()
 {
-  GEOSX_ERROR_IF( getName().find( "well" ) == string::npos,
-                  "Currently, the well generator must contain the word well in its name " );
+  GEOSX_THROW_IF( getName().find( "well" ) == string::npos,
+                  "For now, we require that the name of a well contain the word \"well\", which is not the case for " << getName(),
+                  InputError );
 
-  GEOSX_ERROR_IF( m_polyNodeCoords.size( 1 ) != m_nDims,
-                  "Invalid number of physical coordinates in " << keys::nodeCoords << " for well " << getName() );
+  GEOSX_THROW_IF( m_polyNodeCoords.size( 1 ) != m_nDims,
+                  "Invalid number of physical coordinates in " << viewKeyStruct::polylineNodeCoordsString() << " for well " << getName(),
+                  InputError );
 
-  GEOSX_ERROR_IF( m_segmentToPolyNodeMap.size( 1 ) != 2,
-                  "Invalid size in " << keys::segmentConn << " for well " << getName() );
+  GEOSX_THROW_IF( m_segmentToPolyNodeMap.size( 1 ) != 2,
+                  "Invalid size in " << viewKeyStruct::polylineSegmentConnString() << " for well " << getName(),
+                  InputError );
 
-  GEOSX_ERROR_IF( m_polyNodeCoords.size( 0 )-1 != m_segmentToPolyNodeMap.size( 0 ),
-                  "Incompatible sizes of " << keys::nodeCoords << " and " << keys::segmentConn << " in well " << getName() );
+  GEOSX_THROW_IF( m_polyNodeCoords.size( 0 )-1 != m_segmentToPolyNodeMap.size( 0 ),
+                  "Incompatible sizes of " << viewKeyStruct::polylineNodeCoordsString() << " and " << viewKeyStruct::polylineSegmentConnString() << " in well " << getName(),
+                  InputError );
 
-  GEOSX_ERROR_IF( m_radius <= 0,
-                  "Invalid " << keys::radius << " in well " << getName() );
+  GEOSX_THROW_IF( m_radius <= 0,
+                  "Invalid " << viewKeyStruct::radiusString() << " in well " << getName(),
+                  InputError );
 
-  GEOSX_ERROR_IF( m_wellRegionName.empty(),
-                  "Invalid well region name in well " << getName() );
+  GEOSX_THROW_IF( m_wellRegionName.empty(),
+                  "Invalid well region name in well " << getName(),
+                  InputError );
 
-  GEOSX_ERROR_IF( m_meshBodyName.empty(),
-                  "Invalid mesh name in well " << getName() );
+  GEOSX_THROW_IF( m_meshBodyName.empty(),
+                  "Invalid mesh name in well " << getName(),
+                  InputError );
 
-  GEOSX_ERROR_IF( m_wellControlsName.empty(),
-                  "Invalid well constraint name in well " << getName() );
+  GEOSX_THROW_IF( m_wellControlsName.empty(),
+                  "Invalid well constraint name in well " << getName(),
+                  InputError );
 
   // TODO: add more checks here
   // TODO: check that the connectivity of the well is valid
@@ -120,7 +130,7 @@ void InternalWellGenerator::postProcessInput()
 
 Group * InternalWellGenerator::createChild( string const & childKey, string const & childName )
 {
-  if( childKey == keys::perforation )
+  if( childKey == viewKeyStruct::perforationString() )
   {
     ++m_numPerforations;
 
@@ -131,14 +141,14 @@ Group * InternalWellGenerator::createChild( string const & childKey, string cons
   }
   else
   {
-    GEOSX_ERROR( "Unrecognized node: " << childKey );
+    GEOSX_THROW( "Unrecognized node: " << childKey, InputError );
   }
   return nullptr;
 }
 
 void InternalWellGenerator::expandObjectCatalogs()
 {
-  createChild( keys::perforation, keys::perforation );
+  createChild( viewKeyStruct::perforationString(), viewKeyStruct::perforationString() );
 }
 
 void InternalWellGenerator::generateMesh( DomainPartition & domain )
@@ -175,13 +185,12 @@ void InternalWellGenerator::generateMesh( DomainPartition & domain )
   // map the perforations to the well elements
   connectPerforationsToWellElements();
 
-  // merge perforations to make sure that no well element is shared between two MPI domains
-  // TODO: instead of merging perforations, split the well elements and do not change the physical location of the
-  // perforation
-  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-  if( mpiSize > 1 )
+  // make sure that the perforation locations are valid
+  checkPerforationLocationsValidity();
+
+  if( getLogLevel() >= 1 )
   {
-    mergePerforations();
+    debugWellGeometry();
   }
 
   // get the element (sub) region to populate and save the well generator and constraints names
@@ -195,8 +204,6 @@ void InternalWellGenerator::generateMesh( DomainPartition & domain )
   wellRegion.setWellGeneratorName( this->getName() );
   wellRegion.setWellControlsName( m_wellControlsName );
 }
-
-
 
 void InternalWellGenerator::constructPolylineNodeToSegmentMap()
 {
@@ -214,19 +221,22 @@ void InternalWellGenerator::constructPolylineNodeToSegmentMap()
     real64 const segmentLength = LvArray::tensorOps::l2Norm< 3 >( vSeg );
 
     // various checks and warnings on the segment and element length
-    GEOSX_ERROR_IF( segmentLength < 1e-2,
+    GEOSX_THROW_IF( segmentLength < 1e-2,
                     "Error in the topology of well " << getName() <<
-                    ": we detected a polyline segment measuring less than 1 cm" );
+                    ": we detected a polyline segment measuring less than 1 cm",
+                    InputError );
 
     if( segmentLength < 1.0 )
     {
-      GEOSX_LOG_RANK_0( "Warning: we detected a segment measuring less than 1 m in the topology of well " << getName() );
+      GEOSX_LOG_RANK_0(
+        "\n \nWarning: we detected a segment measuring less than 1 m in the topology of well " << getName() << "\n"
+                                                                                               << "The simulation can proceed like that, but very small segments may cause numerical issues, so it is something to keep an eye on.\n \n" );
     }
 
     if( segmentLength / m_numElemsPerSegment < 1e-2 )
     {
-      GEOSX_LOG_RANK_0( "Warning: the chosen number of elements per polyline segment (" << m_numElemsPerSegment <<
-                        ") leads to well elements measuring less than 1 cm in the topology of well " << getName() );
+      GEOSX_LOG_RANK_0( "\n \nWarning: the chosen number of elements per polyline segment (" << m_numElemsPerSegment <<
+                        ") leads to well elements measuring less than 1 cm in the topology of well " << getName() << "\n \n" );
     }
 
     // map the polyline node ids to the polyline segment ids
@@ -246,10 +256,12 @@ void InternalWellGenerator::findPolylineHeadNodeIndex()
 
   // we determine which node is the head node based on depth
   // therefore here we throw an error if the well head segment is horizontal
-  GEOSX_ERROR_IF( !(m_polyNodeCoords[ipolyNode_a][2] < m_polyNodeCoords[ipolyNode_b][2])
+  GEOSX_THROW_IF( !(m_polyNodeCoords[ipolyNode_a][2] < m_polyNodeCoords[ipolyNode_b][2])
                   && !(m_polyNodeCoords[ipolyNode_a][2] > m_polyNodeCoords[ipolyNode_b][2]),
                   "The head polyline segment cannot be horizontal in well " << getName()
-                                                                            << " since we use depth to determine which of its nodes is to head node of the well" );
+                                                                            << " since we use depth to determine which of its nodes is to head node of the well.\n"
+                                                                            << "If you are trying to set up a horizontal well, please simply add a non-horizontal segment at the top of the well, and this error will go away",
+                  InputError );
 
   // detect the top node, assuming z oriented upwards
   m_polylineHeadNodeId =
@@ -266,9 +278,10 @@ void InternalWellGenerator::findPolylineHeadNodeIndex()
     }
     real64 const currentZcoord = m_polyNodeCoords[inode][2];
 
-    GEOSX_ERROR_IF( !(currentZcoord < headZcoord),
+    GEOSX_THROW_IF( !(currentZcoord < headZcoord),
                     "Error in the topology of well " << getName()
-                                                     << " since we found a well node that is above the head node" );
+                                                     << " since we found a well node that is above the head node",
+                    InputError );
   }
 }
 
@@ -291,8 +304,9 @@ void InternalWellGenerator::discretizePolyline()
   for( globalIndex is = 0; is < m_segmentToPolyNodeMap.size( 0 ); ++is )
   {
 
-    GEOSX_ERROR_IF( isegCurrent == -1,
-                    "Invalid segmentToNode map in well " << getName() );
+    GEOSX_THROW_IF( isegCurrent == -1,
+                    "Invalid segmentToNode map in well " << getName(),
+                    InputError );
 
     globalIndex const ipolyNodeBottom = ( ipolyNodeTop == m_segmentToPolyNodeMap[isegCurrent][0] )
                                       ? m_segmentToPolyNodeMap[isegCurrent][1]
@@ -311,8 +325,9 @@ void InternalWellGenerator::discretizePolyline()
       LvArray::tensorOps::scale< 3 >( m_elemCenterCoords[iwelemCurrent], scaleCenter );
       LvArray::tensorOps::add< 3 >( m_elemCenterCoords[iwelemCurrent], m_polyNodeCoords[ipolyNodeTop] );
 
-      GEOSX_ERROR_IF( iwelemCurrent >= m_numElems,
-                      "Invalid well topology in well " << getName() );
+      GEOSX_THROW_IF( iwelemCurrent >= m_numElems,
+                      "Invalid well topology in well " << getName(),
+                      InputError );
 
       globalIndex const iwelemTop    = iwelemCurrent - 1;
       globalIndex const iwelemBottom = iwelemCurrent + 1;
@@ -375,11 +390,14 @@ void InternalWellGenerator::connectPerforationsToWellElements()
     globalIndex iwelemBottom = m_numElems - 1;
 
     // check the validity of the perforation before starting
-    real64 const wellLength =
-      m_nodeDistFromHead[m_elemToNodesMap[iwelemBottom][NodeLocation::BOTTOM]];
+    real64 const wellLength = m_nodeDistFromHead[m_elemToNodesMap[iwelemBottom][NodeLocation::BOTTOM]];
 
-    GEOSX_ERROR_IF( m_perfDistFromHead[iperf] > wellLength,
-                    "Distance from perforation " << perf.getName() << " to head is larger than well length for well " << getName() );
+    GEOSX_THROW_IF( m_perfDistFromHead[iperf] > wellLength,
+                    "Distance from perforation " << perf.getName() << " to head is larger than well polyline length for well " << getName() << "\n \n"
+                                                 << "Here is how the \"distanceFromHead\" keyword is used in the definition of the perforation location: \n"
+                                                 << "We start from the well head (top of the well) and we measure the linear distance along the well polyline as we go down the well.\n"
+                                                 << "When we reach the distanceFromHead specified by the user, we place a perforation on the well at this location of the polyline, and connect it to the reservoir element that contains this perforation",
+                    InputError );
 
     // start binary search
     const globalIndex maxNumSteps = m_numElems + 1;
@@ -400,16 +418,18 @@ void InternalWellGenerator::connectPerforationsToWellElements()
         iwelemBottom = iwelemMid;
       }
 
-      GEOSX_ERROR_IF( currentNumSteps > maxNumSteps,
-                      "Perforation " << perf.getName() << " cannot be mapped to a well element in well " << getName() );
+      GEOSX_THROW_IF( currentNumSteps > maxNumSteps,
+                      "Perforation " << perf.getName() << " cannot be mapped to a well element in well " << getName(),
+                      InputError );
 
       currentNumSteps++;
     }
 
     // set the index of the matched element
     globalIndex iwelemMatched = iwelemTop;
-    GEOSX_ERROR_IF( iwelemMatched >= m_numElems,
-                    "Invalid topology in well " << getName() );
+    GEOSX_THROW_IF( iwelemMatched >= m_numElems,
+                    "Invalid topology in well " << getName(),
+                    InputError );
 
     m_perfElemId[iperf] = iwelemMatched;
 
@@ -419,8 +439,9 @@ void InternalWellGenerator::connectPerforationsToWellElements()
     real64 const elemLength       = m_nodeDistFromHead[inodeBottom] - m_nodeDistFromHead[inodeTop];
     real64 const topToPerfDist    = m_perfDistFromHead[iperf] - m_nodeDistFromHead[inodeTop];
 
-    GEOSX_ERROR_IF( (elemLength <= 0) || (topToPerfDist < 0),
-                    "Invalid topology in well " << getName() );
+    GEOSX_THROW_IF( (elemLength <= 0) || (topToPerfDist < 0),
+                    "Invalid topology in well " << getName(),
+                    InputError );
 
     LvArray::tensorOps::copy< 3 >( m_perfCoords[iperf], m_nodeCoords[inodeBottom] );
     LvArray::tensorOps::subtract< 3 >( m_perfCoords[iperf], m_nodeCoords[inodeTop] );
@@ -450,8 +471,7 @@ globalIndex InternalWellGenerator::getNextSegmentIndex( globalIndex topSegId,
   return nextSegId;
 }
 
-
-void InternalWellGenerator::mergePerforations()
+void InternalWellGenerator::checkPerforationLocationsValidity()
 {
   array1d< array1d< localIndex > > elemToPerfMap;
   elemToPerfMap.resize( m_numElems );
@@ -460,6 +480,37 @@ void InternalWellGenerator::mergePerforations()
   {
     elemToPerfMap[m_perfElemId[iperf]].emplace_back( iperf );
   }
+
+  // merge perforations to make sure that no well element is shared between two MPI domains
+  // TODO: instead of merging perforations, split the well elements and do not change the physical location of the
+  // perforation
+  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  if( mpiSize > 1 )
+  {
+    mergePerforations( elemToPerfMap );
+  }
+
+  for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
+  {
+    // check that there is always a perforation in the last well element (otherwise, the problem is not well posed)
+    for( localIndex iwelemPrev = 0; iwelemPrev < m_prevElemId[iwelem].size(); ++iwelemPrev )
+    {
+      GEOSX_THROW_IF( m_prevElemId[iwelem][iwelemPrev] == -1 && elemToPerfMap[iwelem].size() == 0,
+                      "The bottom element of well " << getName() << " does not have a perforation. "
+                                                    << "This is needed to have a well-posed problem. \n\n"
+                                                    << "Here are the two possible ways to solve this problem: \n\n"
+                                                    << "1) Adding a perforation located close to the bottom of the well. "
+                                                    << "To do that, compute the total length of the well polyline (by summing the length of the well segments defined by the keywords \"polylineNodeCoords\" and \"polylineSegmentConn\") "
+                                                    << "and place a perforation whose \"distanceFromHead\" is slightly smaller than this total length. \n \n"
+                                                    << "2) Shorten  the well polyline. "
+                                                    << "To do that, reduce the length of the well polyline by shortening the segments defined by the keywords \"polylineNodeCoords\" and \"polylineSegmentConn\", or by removing a segment.",
+                      InputError );
+    }
+  }
+}
+
+void InternalWellGenerator::mergePerforations( array1d< array1d< localIndex > > const & elemToPerfMap )
+{
 
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
@@ -494,22 +545,12 @@ void InternalWellGenerator::mergePerforations()
                           << " to " << m_perfCoords[iperfMaxTransmissibility]
                           << " to make sure that no element of the well mesh has two perforations associated with it. \n"
                           << "To circumvent this issue, please increase the value of \"numElementsPerSegment\" that controls the number of (uniformly distributed) well mesh elements per segment of the well polyline. \n"
-                          << "Our recommendation is to choose \"numElementsPerSegment\" such that each well mesh element has at most one perforation. \n \n" );
+                          << "Our recommendation is to choose \"numElementsPerSegment\" such that each well mesh element has at most one perforation. \n\n" );
         LvArray::tensorOps::copy< 3 >( m_perfCoords[elemToPerfMap[iwelem][ip]], m_perfCoords[iperfMaxTransmissibility] );
       }
     }
-
-    // in passing, check that there is always a perforation in the last well element (otherwise, the problem is not well
-    // posed)
-    for( localIndex iwelemPrev = 0; iwelemPrev < m_prevElemId[iwelem].size(); ++iwelemPrev )
-    {
-      GEOSX_ERROR_IF( m_prevElemId[iwelem][iwelemPrev] == -1 && elemToPerfMap[iwelem].size() == 0,
-                      "The bottom element of well " << getName() << " does not have a perforation"
-                                                    << " This is needed to have a well-posed problem" );
-    }
   }
 }
-
 
 void InternalWellGenerator::debugWellGeometry() const
 {
@@ -521,45 +562,68 @@ void InternalWellGenerator::debugWellGeometry() const
   std::cout << std::endl;
   std::cout << "++++++++++++++++++++++++++" << std::endl;
   std::cout << "InternalWellGenerator = " << getName() << std::endl;
-  std::cout << "MPI rank = " << MpiWrapper::commRank( MPI_COMM_GEOSX ) << std::endl;
+  std::cout << "MPI rank = " << MpiWrapper::commRank( MPI_COMM_GEOSX ) << std::endl << std::endl;
   std::cout << "Number of well elements = " << m_numElems << std::endl;
 
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
-    std::cout << "m_elemCenterCoords[" << iwelem << "] = " << m_elemCenterCoords[iwelem]
-              << std::endl;
-    std::cout << "m_nextElemId[" << iwelem << "] = " << m_nextElemId[iwelem]
-              << std::endl;
-    std::cout << "m_prevElemId[" << iwelem << "] = " << m_prevElemId[iwelem][0]
-              << std::endl;
+    std::cout << "Well element #" << iwelem << std::endl;
+    std::cout << "Coordinates of the element center: " << m_elemCenterCoords[iwelem] << std::endl;
+    if( m_nextElemId[iwelem] < 0 )
+    {
+      std::cout << "No next well element" << std::endl;
+    }
+    else
+    {
+      std::cout << "Next well element # = " << m_nextElemId[iwelem] << std::endl;
+    }
+    if( m_prevElemId[iwelem][0] < 0 )
+    {
+      std::cout << "No previous well element" << std::endl;
+    }
+    else
+    {
+      std::cout << "Previous well element #" << m_prevElemId[iwelem][0] << std::endl;
+    }
     for( globalIndex inode = 0; inode < m_numNodesPerElem; ++inode )
     {
-      std::cout << "m_elemToNodesMap[" << iwelem << "][" << inode << "] = " << m_elemToNodesMap[iwelem][inode]
-                << std::endl;
+      if( inode == 0 )
+      {
+        std::cout << "First well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
+      }
+      else
+      {
+        std::cout << "Second well node: #" << m_elemToNodesMap[iwelem][inode] << std::endl;
+      }
     }
   }
 
-  std::cout << "Number of well nodes = " << m_numNodes << std::endl;
+  std::cout << std::endl << "Number of well nodes = " << m_numNodes << " (well nodes are connecting well elements)" << std::endl;
 
   for( globalIndex inode = 0; inode < m_numNodes; ++inode )
   {
-    std::cout << "m_nodeCoords[" << inode << "] = " << m_nodeCoords[inode]
-              << std::endl;
-    std::cout << "m_nodeDistFromHead[" << inode << "] = " << m_nodeDistFromHead[inode]
-              << std::endl;
+    std::cout << "Well node #" << inode << std::endl;
+    std::cout << "Coordinates of the well node: " << m_nodeCoords[inode] << std::endl;
+    std::cout << "Node distance from head: " << m_nodeDistFromHead[inode] << std::endl;
   }
 
-  std::cout << "Number of perforations = " << m_numPerforations << std::endl;
+  std::cout << std::endl << "Number of perforations = " << m_numPerforations << std::endl;
 
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
   {
-    std::cout << "m_perfCoords[" << iperf << "] = " << m_perfCoords[iperf]
-              << std::endl;
-    std::cout << "m_perfTransmissibility[" << iperf << "] = " << m_perfTransmissibility[iperf]
-              << std::endl;
-    std::cout << "m_perfElemId[" << iperf << "] = " << m_perfElemId[iperf]
-              << std::endl;
+    std::cout << "Perforation #" << iperf << std::endl;
+    std::cout << "Coordinates of the perforation: " << m_perfCoords[iperf] << std::endl;
+    if( m_perfTransmissibility[iperf] < 0 )
+    {
+      std::cout << "Transmissibility computed internally" << std::endl;
+    }
+    else
+    {
+      std::cout << "Transmissibility: " << m_perfTransmissibility[iperf] << std::endl;
+    }
+    std::cout << "Is connected to well element #" << m_perfElemId[iperf] << std::endl;
   }
+  std::cout << std::endl;
 
 }
 
