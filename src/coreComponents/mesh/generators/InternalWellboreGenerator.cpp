@@ -104,6 +104,12 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name,
                     "Value in each block indicates factor to scale the radial increment."
                     "Larger numbers indicate larger radial elements." );
 
+  registerWrapper( viewKeyStruct::setRadialCoordsString(), &m_radialCoords ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Sets the radial spacing to specified values" );
+
+
 }
 
 void InternalWellboreGenerator::postProcessInput()
@@ -249,8 +255,11 @@ void InternalWellboreGenerator::postProcessInput()
         }
       }
     }
-    GEOSX_LOG_RANK_0( "Auto- Spaced Radial Coordinates: "<<m_radialCoords );
   }
+
+
+  GEOSX_LOG_RANK_0( "radial elements: "<<m_nElems[0] );
+  GEOSX_LOG_RANK_0( "Radial Coordinates: "<<m_radialCoords );
 
 
   if( m_cartesianOuterBoundary < 1000000 )
@@ -494,6 +503,7 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
       }
     }
   }
+  /*
   std::cout<<"xnegNodes: "<<xnegNodes<<std::endl;
   std::cout<<"xposNodes: "<<xposNodes<<std::endl;
   std::cout<<"ynegNodes: "<<ynegNodes<<std::endl;
@@ -502,6 +512,7 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
   std::cout<<"rposNodes: "<<rposNodes<<std::endl;
   std::cout<<"tnegNodes: "<<tnegNodes<<std::endl;
   std::cout<<"tposNodes: "<<tposNodes<<std::endl;
+  */
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellboreGenerator, string const &, Group * const )

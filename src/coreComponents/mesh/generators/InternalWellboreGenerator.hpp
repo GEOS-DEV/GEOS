@@ -82,6 +82,8 @@ protected:
     constexpr static char const * cartesianOuterBoundaryString() { return "useCartesianOuterBoundary"; }
     constexpr static char const * cartesianMappingInnerRadiusString() { return "cartesianMappingInnerRadius"; }
     constexpr static char const * autoSpaceRadialElemsString() { return "autoSpaceRadialElems"; }
+    constexpr static char const * setRadialCoordsString() { return "hardRadialCoords"; }
+
   };
   /// @endcond
 
