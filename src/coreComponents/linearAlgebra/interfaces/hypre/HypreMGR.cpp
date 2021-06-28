@@ -30,6 +30,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/Hydrofracture.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp"
 
 #include "LvArray/src/output.hpp"
@@ -82,7 +83,6 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics:
-    case LinearSolverParameters::MGR::StrategyType::hydrofracture:
     {
       setStrategy< SinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
@@ -115,6 +115,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     case LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics:
     {
       setStrategy< MultiphasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::hydrofracture:
+    {
+      setStrategy< Hydrofracture >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics:
