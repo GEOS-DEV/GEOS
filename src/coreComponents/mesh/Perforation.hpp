@@ -24,15 +24,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-static constexpr auto perforation = "Perforation";
-}
-}
-
-
 /**
  * @class Perforation
  *
