@@ -75,7 +75,7 @@ int toVTKCellType( const string & elementType )
   return geosx2VTKCellTypes.at( elementType );
 }
 
-/*!
+/**
  * @brief Ask rank \p rank for the number of elements in its ElementRegionBase \p er.
  * @param[in] er the element region for which we want to know the number of elements
  * @param[out] nbElemsInRegion output array
@@ -91,44 +91,42 @@ gatherNbElementsInRegion( ElementRegionBase const & er,
   return nbElemsInRegion;
 }
 
-/*!
+/**
  * @brief Insert the value at (i,j,k,l) inside the VTKGEOSXData object
- * @param[in] data the pointer to the VTKGEOSXData object
- * @param[in] x the array that contains the field
+ * @param[in] data the reference to the VTKGEOSXData object
+ * @param[in] field the array that contains the field
  * @param[inout] count a counter to increment every time we insert a value
  * @param[in] i the first index
  * @param[in] j the second index
  * @param[in] k the third index
  * @param[in] l the fourth index
  */
-template< typename T >
-typename std::enable_if_t< traits::is_array_type< T > && T::NDIM == 4 >
-insertValueFrom4DField( vtkSmartPointer< VTKGEOSXData > const data,
-                        T const & x,
-                        localIndex & count,
-                        localIndex i, localIndex j, localIndex k, localIndex l )
+template< typename T, int USD >
+void insertValueFrom4DField( VTKGEOSXData & data,
+                             ArrayView< T, 4, USD > const & field,
+                             localIndex & count,
+                             localIndex i, localIndex j, localIndex k, localIndex l )
 {
-  data->customInsertValue( count++, x( i, j, k, l ) );
+  data.customInsertValue( count++, field( i, j, k, l ) );
 }
 
-/*!
+/**
  * @brief Insert the value at (i,j,k,l) inside the VTKGEOSXData object
- * @param[in] data the pointer to the VTKGEOSXData object
- * @param[in] x the array that contains the field
+ * @param[in] data the reference to the VTKGEOSXData object
+ * @param[in] field the array that contains the field
  * @param[inout] count a counter to increment every time we insert a value
  * @param[in] i the first index
  * @param[in] j the second index
  * @param[in] k the third index
  * @param[in] l the fourth index
  */
-template< typename T >
-typename std::enable_if_t< !traits::is_array_type< T > || T::NDIM != 4 >
-insertValueFrom4DField( vtkSmartPointer< VTKGEOSXData > const data,
-                        T const & x,
-                        localIndex & count,
-                        localIndex i, localIndex j, localIndex k, localIndex l )
+template< typename T, int NDIM, int USD >
+void insertValueFrom4DField( VTKGEOSXData & data,
+                             ArrayView< T, NDIM, USD > const & field,
+                             localIndex & count,
+                             localIndex i, localIndex j, localIndex k, localIndex l )
 {
-  GEOSX_UNUSED_VAR( data, x, count, i, j, k, l );
+  GEOSX_UNUSED_VAR( data, field, count, i, j, k, l );
   GEOSX_ERROR( "This function should not be called" );
 }
 
@@ -314,7 +312,7 @@ void VTKPolyDataWriterInterface::writeField( WrapperBase const & wrapperBase,
                                   true,
                                   [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )
   {
-    typedef decltype( array ) arrayType;
+    using arrayType = decltype( array );
     Wrapper< arrayType > const & wrapperT = dynamicCast< Wrapper< arrayType > const & >( wrapperBase );
     traits::ViewTypeConst< arrayType > const sourceArray = wrapperT.reference().toViewConst();
     if( typeID!=typeid(r1_array) )
@@ -445,7 +443,7 @@ void VTKPolyDataWriterInterface::writeElementField4D( vtkSmartPointer< vtkCellDa
                                     true,
                                     [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )
     {
-      typedef decltype( array ) arrayType;
+      using arrayType = decltype( array );
       Wrapper< arrayType > const & wrapperT = dynamicCast< Wrapper< arrayType > const & >( wrapperBase );
       traits::ViewTypeConst< arrayType > const sourceArray = wrapperT.reference().toViewConst();
 
@@ -492,7 +490,7 @@ void VTKPolyDataWriterInterface::writeElementField4D( vtkSmartPointer< vtkCellDa
                                         true,
                                         [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )
         {
-          typedef decltype( array ) arrayType;
+          using arrayType = decltype( array );
           Wrapper< arrayType > const & wrapperT = dynamicCast< Wrapper< arrayType > const & >( wrapperBase );
           traits::ViewTypeConst< arrayType > const sourceArray = wrapperT.reference().toViewConst();
 
@@ -505,7 +503,7 @@ void VTKPolyDataWriterInterface::writeElementField4D( vtkSmartPointer< vtkCellDa
           {
             for( localIndex l = 0; l < sourceArray.size( 3 ); ++l )
             {
-              insertValueFrom4DField( data,
+              insertValueFrom4DField( *data,
                                       sourceArray,
                                       count,
                                       i, iComp2, iComp3, l );
