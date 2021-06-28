@@ -399,7 +399,7 @@ bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
  */
 template< typename VEC_TYPE >
 GEOSX_HOST_DEVICE
-void GetBoundingBox( localIndex const elemIndex,
+void getBoundingBox( localIndex const elemIndex,
                      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & pointIndices,
                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates,
                      VEC_TYPE && boxDims )
