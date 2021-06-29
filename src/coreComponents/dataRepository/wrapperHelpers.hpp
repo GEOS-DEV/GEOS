@@ -627,6 +627,19 @@ std::unique_ptr< int > averageOverSecondDim( T const & )
   return std::unique_ptr< int >( nullptr );
 }
 
+template< typename T >
+typename std::enable_if_t< traits::is_array_type< T >, int >
+numArrayDims( T const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return T::NDIM;
+}
+
+template< typename T >
+typename std::enable_if_t< !traits::is_array_type< T >, int >
+numArrayDims( T const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return 0;
+}
 
 
 template< bool DO_PACKING, typename T, typename IDX >
