@@ -31,9 +31,9 @@ class CarmanKozenyPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  CarmanKozenyPermeabilityUpdate( arrayView3d< real64 > const & permeability,
-                                  arrayView3d< real64 > const & dPerm_dPressure,
-                                  arrayView3d< real64 > const & dPerm_dPorosity,
+  CarmanKozenyPermeabilityUpdate( arrayView2d< real64 > const & permeability,
+                                  arrayView2d< real64 > const & dPerm_dPressure,
+                                  arrayView2d< real64 > const & dPerm_dPorosity,
                                   real64 const particleDiameter,
                                   real64 const sphericity )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
@@ -52,15 +52,17 @@ public:
                                    localIndex const q,
                                    real64 const & porosity ) const override
   {
+    GEOSX_UNUSED_VAR(q); // to do: perm will have to be define per quadrature point.
+
     compute( porosity,
-             m_permeability[k][q],
-             m_dPerm_dPorosity[k][q] );
+             m_permeability[k],
+             m_dPerm_dPorosity[k] );
   }
 
 private:
 
   /// dPermeability_dPorosity
-  arrayView3d< real64 > m_dPerm_dPorosity;
+  arrayView2d< real64 > m_dPerm_dPorosity;
 
   /// Particle diameter
   real64 m_particleDiameter;
@@ -117,7 +119,7 @@ protected:
 
 private:
   /// dPermeability_dPorosity
-  array3d< real64 > m_dPerm_dPorosity;
+  array2d< real64 > m_dPerm_dPorosity;
 
   /// Particle diameter
   real64 m_particleDiameter;
@@ -133,9 +135,11 @@ void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
                                               arraySlice1d< real64 > const & permeability,
                                               arraySlice1d< real64 > const & dPerm_dPorosity ) const
 {
-  real64 const permValue = pow( m_sphericity*m_particleDiameter, 2 ) * pow( porosity, 3 )
-                           / (150 * pow( (1 - porosity), 2 ) );
-  real64 const dPerm_dPorValue = pow( m_sphericity*m_particleDiameter, 2 ) * pow( porosity, 3 );
+  real64 const constant = pow( m_sphericity*m_particleDiameter, 2 ) / 150;
+
+  real64 const permValue = constant * pow( porosity, 3 )/ pow( (1 - porosity), 2 );
+
+  real64 const dPerm_dPorValue = - constant * ( (porosity - 3) *  pow( porosity, 2 ) / pow( (1-porosity), 3)  );
 
   for( localIndex i=0; i < permeability.size(); i++ )
   {

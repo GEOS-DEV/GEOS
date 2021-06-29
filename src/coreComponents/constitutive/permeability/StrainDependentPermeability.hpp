@@ -31,8 +31,8 @@ class StrainDependentPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  StrainDependentPermeabilityUpdate( arrayView3d< real64 > const & permeability,
-                                     arrayView3d< real64 > const & dPerm_dPressure )
+  StrainDependentPermeabilityUpdate( arrayView2d< real64 > const & permeability,
+                                     arrayView2d< real64 > const & dPerm_dPressure )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure )
   {}
 

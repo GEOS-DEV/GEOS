@@ -51,7 +51,7 @@ CarmanKozenyPermeability::deliverClone( string const & name,
 void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_dPerm_dPorosity.resize( 0, numConstitutivePointsPerParentIndex, 3 );
+  m_dPerm_dPorosity.resize( 0, 3 );
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 

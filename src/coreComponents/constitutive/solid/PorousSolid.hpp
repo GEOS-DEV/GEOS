@@ -23,7 +23,7 @@
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
-#include "constitutive/permeability/StrainDependentPermeability.hpp"
+#include "constitutive/permeability/ConstantPermeability.hpp"
 
 namespace geosx
 {
@@ -37,7 +37,7 @@ namespace constitutive
  * @tparam SOLID_TYPE
  */
 template< typename SOLID_TYPE >
-class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >
+class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >
 {
 public:
 
@@ -48,8 +48,8 @@ public:
    */
   PorousSolidUpdates( SOLID_TYPE const & solidModel,
                       BiotPorosity const & porosityModel,
-                      StrainDependentPermeability const & permModel ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >( solidModel, porosityModel, permModel )
+                      ConstantPermeability const & permModel ):
+    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel )
   {}
 
   GEOSX_HOST_DEVICE
@@ -93,9 +93,9 @@ public:
 
 private:
 
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_solidUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_porosityUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::m_permUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_solidUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_porosityUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_permUpdate;
 
 };
 
@@ -109,7 +109,7 @@ class PorousSolidBase : public SolidBase
  * @brief Class to represent a coupled solid model
  */
 template< typename SOLID_TYPE >
-class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >
+class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >
 {
 public:
 
@@ -160,9 +160,9 @@ public:
   }
 
 private:
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::getSolidModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::getPorosityModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, StrainDependentPermeability >::getPermModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getSolidModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPorosityModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPermModel;
 };
 
 
