@@ -564,6 +564,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Perforation" type="PerforationType" />
 		</xsd:choice>
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--meshName => Name of the reservoir mesh associated with this well-->
 		<xsd:attribute name="meshName" type="string" use="required" />
 		<!--numElementsPerSegment => Number of well elements per polyline segment-->
