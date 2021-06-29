@@ -34,13 +34,6 @@ int main( int argc, char *argv[] )
 {
   try
   {
-    int ifl = 0;
-    char hostname[256];
-    gethostname(hostname, sizeof(hostname));
-    printf("PID %d on %s ready for attach\n", getpid(), hostname);
-    fflush(stdout);
-    while (0 == ifl)
-      sleep(5);
     std::chrono::system_clock::time_point const startTime = std::chrono::system_clock::now();
 
     std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );

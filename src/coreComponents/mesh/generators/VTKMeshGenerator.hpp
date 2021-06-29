@@ -54,24 +54,13 @@ public:
   VTKMeshGenerator( const string & name,
                        Group * const parent );
 
-  virtual ~VTKMeshGenerator() override;
+  ~VTKMeshGenerator() override = default;
 
 /**
  * @brief Return the name of the VTKMeshGenerator in object Catalog.
  * @return string that contains the key name to VTKMeshGenerator in the Catalog
  */
   static string catalogName() { return "VTKMeshGenerator"; }
-
-///@cond DO_NOT_DOCUMENT
-  struct viewKeyStruct
-  {
-    constexpr static char const * filePathString() { return "file"; }
-    /*
-    constexpr static char const * regionsToImportString() { return "regionsToImport"; }
-    constexpr static char const * surfacesToImportString() { return "surfacesToImport"; }
-    */
-  };
-/// @endcond
 
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
@@ -81,8 +70,24 @@ public:
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
+protected:
+  /**
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
+  void postProcessInput() override final;
+
+private:
+///@cond DO_NOT_DOCUMENT
+  struct viewKeyStruct
+  {
+    constexpr static char const * filePathString() { return "file"; }
+  };
+/// @endcond
+
   /**
    * @brief Generate the mesh using the VTK library.
+   * @param[in] domain the DomainPartition to be written
    * @details This method leverages the VTK library to load the meshes.
    * The supported formats are the official VTK ones dedicated to
    * unstructured grids (.vtu, .pvtu and .vtk).
@@ -114,81 +119,72 @@ public:
    * input mesh. The pointsets will hold a name that is just the attribute index. For instance, if a mesh has three
    * surfaces of interest, with triangles and/or quads holding an attribute value of 1, 2 or 3, three pointsets named
    * "1", "2" and "3" will be instantiated by this method
-   * @param[in] domain the DomainPartition to be written
    */
   virtual void generateMesh( DomainPartition & domain ) override;
-
-protected:
-
-  /**
-   * @brief This function provides capability to post process input values prior to
-   * any other initialization operations.
-   */
-  void postProcessInput() override final;
-
-private:
 
   /**
    * @brief Return a VTK controller for multiprocessing.
    */
-  vtkSmartPointer<vtkMultiProcessController> GetVTKController();
+  vtkSmartPointer<vtkMultiProcessController> getVTKController();
 
   /**
    * @brief Load the VTK file into the VTK data structure
    */
-  vtkSmartPointer<vtkUnstructuredGrid> LoadVTKMesh();
+  vtkSmartPointer<vtkUnstructuredGrid> loadVTKMesh();
 
   /**
    * @brief Redistribute the mesh among the available MPI ranks
    * @details this method will also generate global ids for points and cells in the VTK Mesh
    * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
    */
-  void RedistributeMesh(vtkUnstructuredGrid * loadedMesh);
+  void redistributeMesh(vtkUnstructuredGrid * loadedMesh);
 
   /**
    * @brief Copy the VTK mesh nodes into the nodeManager of GEOSX
    * @param[in] nodeManager the NodeManager of the domain in which the poiints will be copied.
-   * @return the global length of the mesh
+   * @return the global length of the mesh (diagonal of the bounding box)
    */
-  double WriteMeshNodes(NodeManager & nodeManager);
+  double writeMeshNodes(NodeManager & nodeManager);
 
   /**
    * @brief Compute the potential rank neighbor list
-   * @details Fills the metisNeighbor list in \p domain.
+   * @details Fills the metisNeighbor list in \p domain. This method computes the bounding box
+   * of each domains. If these boundings boxes are crossing, it is possible that the corresponsing
+   * domains are neighbors.
    * @param[in] domain the DomainPartition in which the neighbhor list will be computed
    */
-  void ComputePotentialNeighborLists( DomainPartition & domain);
+  void computePotentialNeighborLists( DomainPartition & domain);
 
   /** 
    * @brief Get the attribute data array from the VTK mesh
    * @return a pointer to the vtkIntArray containing the attributes if it exists, nullptr otherwise.
    */
-  vtkIntArray * GetAttributeDataArray();
+  vtkIntArray * getAttributeDataArray();
 
   /** 
    * @brief Get the cell global id data array from the VTK mesh
    * @return a pointer to the vtkIdTypeArray containing the global ids
    */
-  vtkIdTypeArray * GetCellGlobalIdDataArray();
+  vtkIdTypeArray * getCellGlobalIdDataArray();
 
   /**
    * @brief This methos is used to preprocess the the VTK mesh and count the number of cells, facets, regions
    * and surfaces.
-   * @param[out] nbHex number of hexahedra
-   * @param[out] nbTet number of tetra
-   * @param[out] nbWedge number of wedges
-   * @param[out] nbPyr number of pyramids
-   * @param[out] regions_hex map from region index to the number of hexahedron in this region
-   * @param[out] regions_tetra map from region index to the number of tetra in this region
-   * @param[out] regions_wedges map from region index to the number of wedges in this region
-   * @param[out] regions_pyramids map from region index to the number of pyramids in this region
+   * @param[out] numHex number of hexahedra
+   * @param[out] numTet number of tetra
+   * @param[out] numWedge number of wedges
+   * @param[out] numPyr number of pyramids
+   * @param[out] regionsHex map from region index to the number of hexahedron in this region
+   * @param[out] regionsTetra map from region index to the number of tetra in this region
+   * @param[out] regionsWedges map from region index to the number of wedges in this region
+   * @param[out] regionsPyramids map from region index to the number of pyramids in this region
    * @param[out] regions a set containing all the region indexes
    * @param[out] surfaces a set containing all the surface indexes, from this MPI rank
    * @param[out] allSurfaces a vector containing all the surfaces among all the MPI rank
    */
-  void CountCellsAndFaces( localIndex & nbHex, localIndex & nbTet, localIndex & nbWedge, localIndex & nbPyr,
-                           std::map<int,localIndex> & regions_hex, std::map<int,localIndex> & regions_tetra,
-                           std::map<int,localIndex> & regions_wedges, std::map<int,localIndex> & regions_pyramids,
+  void countCellsAndFaces( localIndex & numHex, localIndex & numTet, localIndex & numWedge, localIndex & numPyr,
+                           std::map<int,localIndex> & regionsHex, std::map<int,localIndex> & regionsTetra,
+                           std::map<int,localIndex> & regionsWedges, std::map<int,localIndex> & regionsPyramids,
                            std::set< int > & regions, std::set< int > & surfaces, std::vector<int> & allSurfaces);
 
   /**
@@ -196,25 +192,25 @@ private:
    * @details all the float and double vtkArrays will be imported
    * @return a vector containing all the vtkDataArray that can be imported
    */
-  std::vector< vtkDataArray * > FindArrayToBeImported();
+  std::vector< vtkDataArray * > findArrayToBeImported();
 
   /**
    * @brief Write all the cell blocks
    * @param[in] domain the domain in which the cell blocks will be written
-   * @param[in] nbHex number of hexahedra
-   * @param[in] nbTet number of tetra
-   * @param[in] nbWedge number of wedges
-   * @param[in] nbPyr number of pyramids
-   * @param[in] regions_hex map from region index to the number of hexahedron in this region
-   * @param[in] regions_tetra map from region index to the number of tetra in this region
-   * @param[in] regions_wedges map from region index to the number of wedges in this region
-   * @param[in] regions_pyramids map from region index to the number of pyramids in this region
+   * @param[in] numHex number of hexahedra
+   * @param[in] numTet number of tetra
+   * @param[in] numWedge number of wedges
+   * @param[in] numPyr number of pyramids
+   * @param[in] regionsHex map from region index to the number of hexahedron in this region
+   * @param[in] regionsTetra map from region index to the number of tetra in this region
+   * @param[in] regionsWedges map from region index to the number of wedges in this region
+   * @param[in] regionsPyramids map from region index to the number of pyramids in this region
    * @param[in] regions a set containing all the region indexes
    * @param[in] arraysToBeImported a vector containing all the vtkDataArray that can be imported
    */
-  void WriteCellBlocks( DomainPartition & domain, localIndex nbHex, localIndex nbTet, localIndex nbWedge, localIndex nbPyr,
-                        std::map<int,localIndex> & regions_hex, std::map<int,localIndex> & regions_tetra,
-                        std::map<int,localIndex> & regions_wedges, std::map<int,localIndex> & regions_pyramids,
+  void writeCellBlocks( DomainPartition & domain, localIndex numHex, localIndex numTet, localIndex numWedge, localIndex numPyr,
+                        std::map<int,localIndex> & regionsHex, std::map<int,localIndex> & regionsTetra,
+                        std::map<int,localIndex> & regionsWedges, std::map<int,localIndex> & regionsPyramids,
                         std::set< int > & regions, std::vector< vtkDataArray * > & arraysToBeImported);
 
 
@@ -222,25 +218,25 @@ private:
    * @param[in] nodeManager the NodeManager of the domain in which the poiints will be copied.
    * @param[in] allSurfaces the surfaces id to be imported
    */
-  void WriteSurfaces( NodeManager & nodeManager, std::vector<int> const & allSurfaces );
+  void writeSurfaces( NodeManager & nodeManager, std::vector<int> const & allSurfaces );
 
   /**
    * @brief Get the number of points of a cell knowing its vtk cell type
    * @param[in] cellType the vtk cell type
    * @return the number of points contained in the cell
    */
-  localIndex GetNumberOfPoints(int cellType );
+  localIndex getNumberOfPoints(int cellType );
 
   /**
    * @brief Write a CellBlock of a given cell type
    * @param[in] name the name of the cellBlock to be written
-   * @param[in] nbcells number of cells the CellBlock will contain
+   * @param[in] numcells number of cells the CellBlock will contain
    * @param[in] region_id the id of the region
    * @param[in] cellType the vtk cell type for cells of the CellBlock being written
    * @param[in] cellBlockManager the CellBlockManager
    * @param[in] arraysTobeImported the list of arrays to be imported
    */
-  void WriteCellBlock( string const & name, localIndex nbCells, int region_id, int cellType,
+  void writeCellBlock( string const & name, localIndex numCells, int region_id, int cellType,
                        CellBlockManager & cellBlockManager,
                        std::vector< vtkDataArray * > const & arraysTobeImported ); 
 
@@ -249,14 +245,14 @@ private:
    * @details The node ordering from VTK differs from the node ordering in GEOSX
    * @param[in,out] cellToVertex list of nodes organized per cells
    */
-  void WriteHexahedronVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal  );
+  void writeHexahedronVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal  );
 
   /**
    * @brief Write the wedge vertices
    * @details The node ordering from VTK differs from the node ordering in GEOSX
    * @param[in,out] cellToVertex list of nodes organized per cells
    */
-  void WriteWedgeVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal );
+  void writeWedgeVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal );
 
 private:
 
@@ -265,14 +261,6 @@ private:
 
   /// Path to the mesh file
   Path m_filePath;
-
-  /*
-  /// Names of the surfaces to be imported
-  string_array m_surfacesToImport;
-
-  /// Names of the regions to be imported
-  string_array m_regionsToImport;
-  */
 };
 
 }
