@@ -81,7 +81,8 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString(), &m_dPhaseViscosity_dGlobalCompFraction ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerWrapper( viewKeyStruct::phaseCompFractionString(), &m_phaseCompFraction );
+  registerWrapper( viewKeyStruct::phaseCompFractionString(), &m_phaseCompFraction ).
+    setPlotLevel( PlotLevel::LEVEL_0 );
   registerWrapper( viewKeyStruct::dPhaseCompFraction_dPressureString(), &m_dPhaseCompFraction_dPressure ).
     setRestartFlags( RestartFlags::NO_WRITE );
   registerWrapper( viewKeyStruct::dPhaseCompFraction_dTemperatureString(), &m_dPhaseCompFraction_dTemperature ).
