@@ -547,6 +547,12 @@ public:
    */
   virtual std::type_info const & getTypeId() const = 0;
 
+  /**
+   * @brief Return the number of dimensions of the array if T is an array, and 0 otherwise
+   * @return the number of dimensions of the array if T is an array, and 0 otherwise
+   */
+  virtual int numArrayDims() const = 0;
+
   ///@}
 
 #if defined(USE_TOTALVIEW_OUTPUT)

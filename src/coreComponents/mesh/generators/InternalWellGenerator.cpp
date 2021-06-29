@@ -45,8 +45,7 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
   m_nDims( 3 ),
   m_polylineHeadNodeId( -1 )
 {
-  // TODO: enable log level input
-  //enableLogLevelInput();
+  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::polylineNodeCoordsString(), &m_polyNodeCoords ).
     setInputFlag( InputFlags::REQUIRED ).
