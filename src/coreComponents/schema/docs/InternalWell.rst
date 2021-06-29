@@ -3,6 +3,7 @@
 ===================== =================== ======== ======================================================== 
 Name                  Type                Default  Description                                              
 ===================== =================== ======== ======================================================== 
+logLevel              integer             0        Log level                                                
 meshName              string              required Name of the reservoir mesh associated with this well     
 name                  string              required A name is required for any non-unique nodes              
 numElementsPerSegment integer             required Number of well elements per polyline segment             
