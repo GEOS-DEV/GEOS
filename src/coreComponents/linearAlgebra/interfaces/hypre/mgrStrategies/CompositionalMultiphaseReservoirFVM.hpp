@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CompositionalMultiphaseReservoir.hpp
+ * @file CompositionalMultiphaseReservoirFVM.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIR_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIR_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIRFVM_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIRFVM_HPP_
 
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
@@ -31,7 +31,7 @@ namespace mgr
 {
 
 /**
- * @brief CompositionalMultiphaseReservoir strategy.
+ * @brief CompositionalMultiphaseReservoirFVM strategy.
  *
  * Labels description stored in point_marker_array
  *                0 = reservoir pressure
@@ -53,7 +53,7 @@ namespace mgr
  * @todo:
  *   - Use block Jacobi for F-relaxation/interpolation of the reservoir densities (2nd level)
  */
-class CompositionalMultiphaseReservoir : public MGRStrategyBase< 3 >
+class CompositionalMultiphaseReservoirFVM : public MGRStrategyBase< 3 >
 {
 public:
 
@@ -61,7 +61,7 @@ public:
    * @brief Constructor.
    * @param numComponentsPerField array with number of components for each field
    */
-  explicit CompositionalMultiphaseReservoir( arrayView1d< int const > const & numComponentsPerField )
+  explicit CompositionalMultiphaseReservoirFVM( arrayView1d< int const > const & numComponentsPerField )
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] ) )
   {
     HYPRE_Int const numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
@@ -91,7 +91,6 @@ public:
     m_levelInterpType[1] = 2;
     m_levelInterpType[2] = 2;
 
-    m_globalSmoothType = 16; // ILU(0)
     m_numGlobalSmoothSweeps = 0;
   }
 
@@ -115,7 +114,6 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 15 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, m_levelInterpType ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, m_levelCoarseGridMethod ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( precond.ptr, m_globalSmoothType ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRDirectSolverCreate( &mgrData.coarseSolver.ptr ) );
@@ -132,4 +130,4 @@ public:
 
 } // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIR_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRCOMPOSITIONALMULTIPHASERESERVOIRFVM_HPP_*/
