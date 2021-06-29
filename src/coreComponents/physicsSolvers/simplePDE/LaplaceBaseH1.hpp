@@ -139,9 +139,11 @@ protected:
    at the namespace scope (in this case, right after the ``LaplaceBaseH1`` class definition is complete):
  */
 //START_SPHINX_INCLUDE_REGENUM
-ENUM_STRINGS( LaplaceBaseH1::TimeIntegrationOption, "SteadyState", "ImplicitTransient" )
+ENUM_STRINGS( LaplaceBaseH1::TimeIntegrationOption,
+              "SteadyState",
+              "ImplicitTransient" );
 //END_SPHINX_INCLUDE_REGENUM
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP */

@@ -140,7 +140,7 @@
     <Traction
       name="insituStress"
       objectPath="faceManager"
-      tractionType="2"
+      tractionType="stress"
       scale="1.0e6"
       inputStress="{ -1,-1.5,-2, 0, 0, 0 }"
       setNames="{ rpos }"/>
@@ -148,7 +148,7 @@
     <Traction
       name="innerPressure"
       objectPath="faceManager"
-      tractionType="1"
+      tractionType="normal"
       scale="-1.0e6"
       functionName="timeFunction"
       setNames="{ rneg }"/>

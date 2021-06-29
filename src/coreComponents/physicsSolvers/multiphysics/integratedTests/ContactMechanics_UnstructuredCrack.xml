@@ -237,7 +237,7 @@
     <Traction
       name="xload1"
       objectPath="faceManager"
-      tractionType="0"
+      tractionType="vector"
       direction="{1,0,0}"
       scale="-1.0e2"
       functionName="ForceTimeFunction"
@@ -246,7 +246,7 @@
     <Traction
       name="xload2"
       objectPath="faceManager"
-      tractionType="0"
+      tractionType="vector"
       direction="{1,0,0}"
       scale="+1.0e2"
       functionName="ForceTimeFunction"

@@ -23,8 +23,8 @@ config:
   template_dirs:
     - $spack/templates
 
-  # install directory layout
-  install_path_scheme: "${ARCHITECTURE}-${COMPILERNAME}@${COMPILERVER}/${PACKAGE}@${VERSION}"
+  # # install directory layout
+  # install_path_scheme: "${ARCHITECTURE}-${COMPILERNAME}@${COMPILERVER}/${PACKAGE}@${VERSION}"
 
   # Locations where different types of modules should be installed.
   module_roots:
