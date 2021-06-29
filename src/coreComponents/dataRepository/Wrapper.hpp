@@ -212,6 +212,15 @@ public:
     return typeid(T);
   }
 
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+  virtual int numArrayDims() const override
+  {
+    return wrapperHelpers::numArrayDims( reference() );
+  }
+
+
+
   ///@}
 
   /// @copydoc WrapperBase::getHistoryMetadata
