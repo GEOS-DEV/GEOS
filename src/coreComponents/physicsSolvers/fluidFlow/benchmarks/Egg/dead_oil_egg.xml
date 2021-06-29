@@ -700,9 +700,9 @@
     <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ oil, water }"
-      phaseMinVolumeFraction="{ 0.1, 0.2 }"
-      phaseRelPermExponent="{ 4.0, 3.0 }"
-      phaseRelPermMaxValue="{ 0.8, 0.75 }"/>
+      defaultPhaseMinVolumeFraction="{ 0.1, 0.2 }"
+      defaultPhaseRelPermExponent="{ 4.0, 3.0 }"
+      defaultPhaseRelPermMaxValue="{ 0.8, 0.75 }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"

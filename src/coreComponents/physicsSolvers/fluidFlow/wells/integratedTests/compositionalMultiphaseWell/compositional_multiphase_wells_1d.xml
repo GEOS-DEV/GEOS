@@ -167,9 +167,9 @@
     <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ oil, gas }"
-      phaseMinVolumeFraction="{ 0.1, 0.15 }"
-      phaseRelPermExponent="{ 2.0, 2.0 }"
-      phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
+      defaultPhaseMinVolumeFraction="{ 0.1, 0.15 }"
+      defaultPhaseRelPermExponent="{ 2.0, 2.0 }"
+      defaultPhaseRelPermMaxValue="{ 0.8, 0.9 }"/>
   </Constitutive>
 
   <FieldSpecifications>

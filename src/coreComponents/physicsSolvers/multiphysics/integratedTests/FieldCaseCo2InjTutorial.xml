@@ -163,9 +163,9 @@
     <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ gas, water }"
-      phaseMinVolumeFraction="{ 0.05, 0.30 }"
-      phaseRelPermExponent="{ 2.0, 2.0 }"
-      phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
+      defaultPhaseMinVolumeFraction="{ 0.05, 0.30 }"
+      defaultPhaseRelPermExponent="{ 2.0, 2.0 }"
+      defaultPhaseRelPermMaxValue="{ 1.0, 1.0 }"/>
   </Constitutive>
   <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
 

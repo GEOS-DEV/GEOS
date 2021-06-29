@@ -67,9 +67,9 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseRelPerm,
-                        arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
+  void compute( arraySlice1d< real64 const > const & phaseVolFraction,
+                arraySlice1d< real64 > const & phaseRelPerm,
+                arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

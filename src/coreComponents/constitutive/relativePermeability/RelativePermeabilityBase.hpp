@@ -86,11 +86,6 @@ protected:
 private:
 
   GEOSX_HOST_DEVICE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseRelPerm,
-                        arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const = 0;
-
-  GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const > const & phaseVolFraction ) const = 0;
@@ -155,7 +150,7 @@ protected:
    * @param size primary dimension (e.g. number of cells)
    * @param numPts secondary dimension (e.g. number of gauss points per cell)
    */
-  void resizeFields( localIndex const size, localIndex const numPts );
+  virtual void resizeFields( localIndex const size, localIndex const numPts );
 
   // phase names read from input
   string_array m_phaseNames;

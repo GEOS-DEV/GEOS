@@ -107,6 +107,8 @@ void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group &
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
+
+  std::cout << "b" << std::endl;
 }
 
 } // namespace constitutive

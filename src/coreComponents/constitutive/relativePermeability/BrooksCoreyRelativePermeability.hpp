@@ -30,10 +30,10 @@ class BrooksCoreyRelativePermeabilityUpdate final : public RelativePermeabilityB
 {
 public:
 
-  BrooksCoreyRelativePermeabilityUpdate( arrayView1d< real64 const > const & phaseMinVolumeFraction,
-                                         arrayView1d< real64 const > const & phaseRelPermExponent,
-                                         arrayView1d< real64 const > const & phaseRelPermMaxValue,
-                                         real64 const volFracScale,
+  BrooksCoreyRelativePermeabilityUpdate( arrayView2d< real64 const > const & phaseMinVolumeFraction,
+                                         arrayView2d< real64 const > const & phaseRelPermExponent,
+                                         arrayView2d< real64 const > const & phaseRelPermMaxValue,
+                                         arrayView1d< real64 const > const & volFracScale,
                                          arrayView1d< integer const > const & phaseTypes,
                                          arrayView1d< integer const > const & phaseOrder,
                                          arrayView3d< real64 > const & phaseRelPerm,
@@ -62,9 +62,13 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseRelPerm,
-                        arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
+  void compute( arraySlice1d< real64 const > const & phaseVolFraction,
+                arraySlice1d< real64 > const & phaseRelPerm,
+                arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac,
+                arraySlice1d< real64 const > const & phaseMinVolumeFraction,
+                arraySlice1d< real64 const > const & phaseRelPermExponent,
+                arraySlice1d< real64 const > const & phaseRelPermMaxValue,
+                real64 const & volFracScale ) const;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -74,15 +78,19 @@ public:
   {
     compute( phaseVolFraction,
              m_phaseRelPerm[k][q],
-             m_dPhaseRelPerm_dPhaseVolFrac[k][q] );
+             m_dPhaseRelPerm_dPhaseVolFrac[k][q],
+             m_phaseMinVolumeFraction[k],
+             m_phaseRelPermExponent[k],
+             m_phaseRelPermMaxValue[k],
+             m_volFracScale[k] );
   }
 
 private:
 
-  arrayView1d< real64 const > m_phaseMinVolumeFraction;
-  arrayView1d< real64 const > m_phaseRelPermExponent;
-  arrayView1d< real64 const > m_phaseRelPermMaxValue;
-  real64 m_volFracScale;
+  arrayView2d< real64 const > m_phaseMinVolumeFraction;
+  arrayView2d< real64 const > m_phaseRelPermExponent;
+  arrayView2d< real64 const > m_phaseRelPermMaxValue;
+  arrayView1d< real64 const > m_volFracScale;
 };
 
 class BrooksCoreyRelativePermeability : public RelativePermeabilityBase
@@ -110,11 +118,18 @@ public:
 //START_SPHINX_INCLUDE_01
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
+    static constexpr char const * defaultPhaseMinVolumeFractionString() { return "defaultPhaseMinVolumeFraction"; }
+    static constexpr char const * defaultPhaseRelPermExponentString() { return "defaultPhaseRelPermExponent"; }
+    static constexpr char const * defaultPhaseRelPermMaxValueString() { return "defaultPhaseRelPermMaxValue"; }
+
     static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
     static constexpr char const * phaseRelPermExponentString() { return "phaseRelPermExponent"; }
     static constexpr char const * phaseRelPermMaxValueString() { return "phaseRelPermMaxValue"; }
     static constexpr char const * volFracScaleString() { return "volFracScale"; }
 
+    dataRepository::ViewKey defaultPhaseMinVolumeFraction = { defaultPhaseMinVolumeFractionString() };
+    dataRepository::ViewKey defaultPhaseRelPermExponent   = { defaultPhaseRelPermExponentString() };
+    dataRepository::ViewKey defaultPhaseRelPermMaxValue   = { defaultPhaseRelPermMaxValueString() };
     dataRepository::ViewKey phaseMinVolumeFraction = { phaseMinVolumeFractionString() };
     dataRepository::ViewKey phaseRelPermExponent   = { phaseRelPermExponentString() };
     dataRepository::ViewKey phaseRelPermMaxValue   = { phaseRelPermMaxValueString() };
@@ -125,12 +140,21 @@ protected:
 
   virtual void postProcessInput() override;
 
-//START_SPHINX_INCLUDE_02
-  array1d< real64 > m_phaseMinVolumeFraction;
-  array1d< real64 > m_phaseRelPermExponent;
-  array1d< real64 > m_phaseRelPermMaxValue;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  real64 m_volFracScale;
+  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
+
+//START_SPHINX_INCLUDE_02
+  array1d< real64 > m_defaultPhaseMinVolumeFraction;
+  array1d< real64 > m_defaultPhaseRelPermExponent;
+  array1d< real64 > m_defaultPhaseRelPermMaxValue;
+
+  // TODO: add the quadrature point dimension
+  array2d< real64 > m_phaseMinVolumeFraction;
+  array2d< real64 > m_phaseRelPermExponent;
+  array2d< real64 > m_phaseRelPermMaxValue;
+
+  array1d< real64 > m_volFracScale;
 //END_SPHINX_INCLUDE_02
 };
 
@@ -140,20 +164,24 @@ void
 BrooksCoreyRelativePermeabilityUpdate::
   compute( arraySlice1d< real64 const > const & phaseVolFraction,
            arraySlice1d< real64 > const & phaseRelPerm,
-           arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
+           arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac,
+           arraySlice1d< real64 const > const & phaseMinVolumeFraction,
+           arraySlice1d< real64 const > const & phaseRelPermExponent,
+           arraySlice1d< real64 const > const & phaseRelPermMaxValue,
+           real64 const & volFracScale ) const
 {
   for( real64 & val : dPhaseRelPerm_dPhaseVolFrac )
   {
     val = 0.0;
   }
 
-  real64 const satScaleInv = 1.0 / m_volFracScale;
+  real64 const satScaleInv = 1.0 / volFracScale;
 
   for( localIndex ip = 0; ip < numPhases(); ++ip )
   {
-    real64 const satScaled = (phaseVolFraction[ip] - m_phaseMinVolumeFraction[ip]) * satScaleInv;
-    real64 const exponent  = m_phaseRelPermExponent[ip];
-    real64 const scale     = m_phaseRelPermMaxValue[ip];
+    real64 const satScaled = (phaseVolFraction[ip] - phaseMinVolumeFraction[ip]) * satScaleInv;
+    real64 const exponent  = phaseRelPermExponent[ip];
+    real64 const scale     = phaseRelPermMaxValue[ip];
 
     if( satScaled > 0.0 && satScaled < 1.0 )
     {

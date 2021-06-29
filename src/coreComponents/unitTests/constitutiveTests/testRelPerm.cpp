@@ -31,15 +31,15 @@ RelativePermeabilityBase & makeBrooksCoreyRelPerm( string const & name, Group & 
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas";
 
-  array1d< real64 > & phaseMinSat = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString() );
+  array1d< real64 > & phaseMinSat = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::defaultPhaseMinVolumeFractionString() );
   phaseMinSat.resize( 2 );
   phaseMinSat[0] = 0.1; phaseMinSat[1] = 0.15;
 
-  array1d< real64 > & phaseRelPermExp = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseRelPermExponentString() );
+  array1d< real64 > & phaseRelPermExp = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::defaultPhaseRelPermExponentString() );
   phaseRelPermExp.resize( 2 );
   phaseRelPermExp[0] = 2.0; phaseRelPermExp[1] = 2.0;
 
-  array1d< real64 > & phaseRelPermMaxVal = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseRelPermMaxValueString() );
+  array1d< real64 > & phaseRelPermMaxVal = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::defaultPhaseRelPermMaxValueString() );
   phaseRelPermMaxVal.resize( 2 );
   phaseRelPermMaxVal[0] = 0.8; phaseRelPermMaxVal[1] = 0.9;
 

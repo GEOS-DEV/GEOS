@@ -1851,14 +1851,14 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
-		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
-		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
+		<!--defaultPhaseMinVolumeFraction => Default minimum volume fraction value for each phase-->
+		<xsd:attribute name="defaultPhaseMinVolumeFraction" type="real64_array" default="{0}" />
+		<!--defaultPhaseRelPermExponent => Default minimum rel perm power law exponent for each phase-->
+		<xsd:attribute name="defaultPhaseRelPermExponent" type="real64_array" default="{1}" />
+		<!--defaultPhaseRelPermMaxValue => Default maximum rel perm value for each phase-->
+		<xsd:attribute name="defaultPhaseRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
-		<!--phaseRelPermExponent => MinimumRel perm power law exponent for each phase-->
-		<xsd:attribute name="phaseRelPermExponent" type="real64_array" default="{1}" />
-		<!--phaseRelPermMaxValue => Maximum rel perm value for each phase-->
-		<xsd:attribute name="phaseRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

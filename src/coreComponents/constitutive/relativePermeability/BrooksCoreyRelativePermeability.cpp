@@ -34,24 +34,39 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
                                                                   Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
+  registerWrapper( viewKeyStruct::defaultPhaseMinVolumeFractionString(), &m_defaultPhaseMinVolumeFraction ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default minimum volume fraction value for each phase" );
+
+  registerWrapper( viewKeyStruct::defaultPhaseRelPermExponentString(), &m_defaultPhaseRelPermExponent ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default minimum rel perm power law exponent for each phase" );
+
+  registerWrapper( viewKeyStruct::defaultPhaseRelPermMaxValueString(), &m_defaultPhaseRelPermMaxValue ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default maximum rel perm value for each phase" );
+
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
+    setSizedFromParent( 1 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Minimum volume fraction value for each phase" );
 
   registerWrapper( viewKeyStruct::phaseRelPermExponentString(), &m_phaseRelPermExponent ).
-    setApplyDefaultValue( 1.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "MinimumRel perm power law exponent for each phase" );
-
+    setSizedFromParent( 1 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Minimum rel perm power law exponent for each phase" );
 
   registerWrapper( viewKeyStruct::phaseRelPermMaxValueString(), &m_phaseRelPermMaxValue ).
-    setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 1 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Maximum rel perm value for each phase" );
 
   registerWrapper( viewKeyStruct::volFracScaleString(), &m_volFracScale ).
-    setApplyDefaultValue( 1.0 ).
+    setSizedFromParent( 1 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
 
 }
@@ -75,27 +90,61 @@ void BrooksCoreyRelativePermeability::postProcessInput()
                    << (expected) << " expected)" ); \
     }
 
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString() )
-  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermExponent, numPhases, viewKeyStruct::phaseRelPermExponentString() )
-  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermMaxValue, numPhases, viewKeyStruct::phaseRelPermMaxValueString() )
+  COREY_CHECK_INPUT_LENGTH( m_defaultPhaseMinVolumeFraction, numPhases, viewKeyStruct::defaultPhaseMinVolumeFractionString() )
+  COREY_CHECK_INPUT_LENGTH( m_defaultPhaseRelPermExponent, numPhases, viewKeyStruct::defaultPhaseRelPermExponentString() )
+  COREY_CHECK_INPUT_LENGTH( m_defaultPhaseRelPermMaxValue, numPhases, viewKeyStruct::defaultPhaseRelPermMaxValueString() )
 
 #undef COREY_CHECK_INPUT_LENGTH
 
-  m_volFracScale = 1.0;
   for( localIndex ip = 0; ip < numPhases; ++ip )
   {
-    GEOSX_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
-                    "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
-    m_volFracScale -= m_phaseMinVolumeFraction[ip];
+    GEOSX_ERROR_IF( m_defaultPhaseMinVolumeFraction[ip] < 0.0 || m_defaultPhaseMinVolumeFraction[ip] > 1.0,
+                    "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_defaultPhaseMinVolumeFraction[ip] );
 
-    GEOSX_ERROR_IF( m_phaseRelPermExponent[ip] < 0.0,
-                    "BrooksCoreyRelativePermeability: invalid exponent value: " << m_phaseRelPermExponent[ip] );
+    GEOSX_ERROR_IF( m_defaultPhaseRelPermExponent[ip] < 0.0,
+                    "BrooksCoreyRelativePermeability: invalid exponent value: " << m_defaultPhaseRelPermExponent[ip] );
 
-    GEOSX_ERROR_IF( m_phaseRelPermMaxValue[ip] < 0.0 || m_phaseRelPermMaxValue[ip] > 1.0,
-                    "BrooksCoreyRelativePermeability: invalid maximum value: " << m_phaseRelPermMaxValue[ip] );
+    GEOSX_ERROR_IF( m_defaultPhaseRelPermMaxValue[ip] < 0.0 || m_defaultPhaseRelPermMaxValue[ip] > 1.0,
+                    "BrooksCoreyRelativePermeability: invalid maximum value: " << m_defaultPhaseRelPermMaxValue[ip] );
   }
 
-  GEOSX_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0" );
+}
+
+void BrooksCoreyRelativePermeability::resizeFields( localIndex const size, localIndex const numPts )
+{
+  RelativePermeabilityBase::resizeFields( size, numPts );
+
+  m_phaseMinVolumeFraction.resize( size, numFluidPhases() );
+  m_phaseRelPermExponent.resize( size, numFluidPhases() );
+  m_phaseRelPermMaxValue.resize( size, numFluidPhases() );
+  m_volFracScale.resize( size );
+
+  // TODO: forAll
+  for( localIndex ei = 0; ei < size; ++ei )
+  {
+    m_volFracScale[ei] = 1.0;
+    for( localIndex ip = 0; ip < numFluidPhases(); ++ip )
+    {
+      m_phaseMinVolumeFraction[ei][ip] = m_defaultPhaseMinVolumeFraction[ip];
+      m_phaseRelPermExponent[ei][ip] = m_defaultPhaseRelPermExponent[ip];
+      m_phaseRelPermMaxValue[ei][ip] = m_defaultPhaseRelPermMaxValue[ip];
+      m_volFracScale[ei] -= m_phaseMinVolumeFraction[ei][ip];
+    }
+    GEOSX_ERROR_IF( m_volFracScale[ei] < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0" );
+  }
+}
+
+void BrooksCoreyRelativePermeability::initializePostInitialConditionsPreSubGroups()
+{
+  // TODO: forAll
+  for( localIndex ei = 0; ei < size(); ++ei )
+  {
+    m_volFracScale[ei] = 1.0;
+    for( localIndex ip = 0; ip < numFluidPhases(); ++ip )
+    {
+      m_volFracScale[ei] -= m_phaseMinVolumeFraction[ei][ip];
+    }
+  }
 }
 
 BrooksCoreyRelativePermeability::KernelWrapper BrooksCoreyRelativePermeability::createKernelWrapper()
