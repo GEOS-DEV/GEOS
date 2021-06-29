@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhasePoromechanics.hpp
+ * @file Hydrofracture.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICS_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRHYDROFRACTURE_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRHYDROFRACTURE_HPP_
 
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
@@ -31,7 +31,7 @@ namespace mgr
 {
 
 /**
- * @brief SinglePhasePoromechanics strategy.
+ * @brief Hydrofracture strategy.
  *
  * dofLabel: 0 = displacement, x-component
  * dofLabel: 1 = displacement, y-component
@@ -44,21 +44,21 @@ namespace mgr
  * 3. C-points coarse-grid/Schur complement solver: boomer AMG
  * 4. Global smoother: none
  */
-class SinglePhasePoromechanics : public MGRStrategyBase< 1 >
+class Hydrofracture : public MGRStrategyBase< 1 >
 {
 public:
 
   /**
    * @brief Constructor.
    */
-  explicit SinglePhasePoromechanics( arrayView1d< int const > const & )
+  explicit Hydrofracture( arrayView1d< int const > const & )
     : MGRStrategyBase( 4 )
   {
     m_labels[0].push_back( 3 );
     setupLabels();
 
     m_levelInterpType[0] = 2; // diagonal scaling (Jacobi)
-    m_levelCoarseGridMethod[0] = 1; // diagonal sparsification
+    m_levelCoarseGridMethod[0] = 0; // Galerkin coarse grid computation using RAP
 
     m_fRelaxMethod = 2; // AMG V-cycle
     m_numGlobalSmoothSweeps = 0;
@@ -103,4 +103,4 @@ public:
 
 } // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICS_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRHYDROFRACTURE_HPP_*/
