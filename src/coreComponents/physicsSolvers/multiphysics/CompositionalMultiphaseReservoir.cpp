@@ -35,11 +35,21 @@ CompositionalMultiphaseReservoir::CompositionalMultiphaseReservoir( const string
                                                                     Group * const parent ):
   ReservoirSolverBase( name, parent )
 {
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoir;
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
 }
 
 CompositionalMultiphaseReservoir::~CompositionalMultiphaseReservoir()
 {}
+
+void CompositionalMultiphaseReservoir::initializePostInitialConditionsPreSubGroups()
+{
+  ReservoirSolverBase::initializePostInitialConditionsPreSubGroups();
+
+  if( m_flowSolver->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirHybridFVM;
+  }
+}
 
 void CompositionalMultiphaseReservoir::addCouplingSparsityPattern( DomainPartition const & domain,
                                                                    DofManager const & dofManager,
