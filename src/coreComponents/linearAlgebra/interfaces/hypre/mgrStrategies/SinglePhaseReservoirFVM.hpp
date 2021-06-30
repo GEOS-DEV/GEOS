@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhasePoromechanics.hpp
+ * @file SinglePhaseReservoirFVM.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICS_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASERESERVOIRFVM_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASERESERVOIRFVM_HPP_
 
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
@@ -31,34 +31,36 @@ namespace mgr
 {
 
 /**
- * @brief SinglePhasePoromechanics strategy.
+ * @brief SinglePhaseReservoirFVM strategy.
  *
- * dofLabel: 0 = displacement, x-component
- * dofLabel: 1 = displacement, y-component
- * dofLabel: 2 = displacement, z-component
- * dofLabel: 3 = pressure
+ * Labels description stored in point_marker_array
+ *   dofLabel: 0 = reservoir pressure (numResLabels = 1)
+ *   dofLabel: 1 = well pressure
+ *   dofLabel: 2 = well rate (numWellLabels = 2)
  *
- * Ingredients:
- * 1. F-points displacement (0,1,2), C-points pressure (3)
- * 2. F-points smoother: AMG, single V-cycle, separate displacement components
- * 3. C-points coarse-grid/Schur complement solver: boomer AMG
+ * Ingredients
+ *
+ * 1. F-points cell-centered pressure, C-points well vars
+ * 2. F-points smoother: boomer AMG
+ * 3. C-points coarse-grid/Schur complement solver: direct solver
  * 4. Global smoother: none
  */
-class SinglePhasePoromechanics : public MGRStrategyBase< 1 >
+class SinglePhaseReservoirFVM : public MGRStrategyBase< 1 >
 {
 public:
-
   /**
    * @brief Constructor.
    */
-  explicit SinglePhasePoromechanics( arrayView1d< int const > const & )
-    : MGRStrategyBase( 4 )
+  explicit SinglePhaseReservoirFVM( arrayView1d< int const > const & )
+    : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( 3 ) )
   {
-    m_labels[0].push_back( 3 );
+    // Level 0: eliminate the cell-centered pressure
+    m_labels[0].push_back( 1 );
+    m_labels[0].push_back( 2 );
     setupLabels();
 
-    m_levelInterpType[0] = 2; // diagonal scaling (Jacobi)
-    m_levelCoarseGridMethod[0] = 1; // diagonal sparsification
+    m_levelInterpType[0] = 2; // diagonal scaling
+    m_levelCoarseGridMethod[0] = 0; // Galerkin coarse grid computation using RAP
 
     m_fRelaxMethod = 2; // AMG V-cycle
     m_numGlobalSmoothSweeps = 0;
@@ -80,20 +82,15 @@ public:
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetFRelaxMethod( precond.ptr, m_fRelaxMethod ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 0 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, m_levelInterpType ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, m_levelCoarseGridMethod ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRDirectSolverCreate( &mgrData.coarseSolver.ptr ) );
 
-    mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
-    mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;
-    mgrData.coarseSolver.destroy = HYPRE_BoomerAMGDestroy;
+    mgrData.coarseSolver.setup = HYPRE_MGRDirectSolverSetup;
+    mgrData.coarseSolver.solve = HYPRE_MGRDirectSolverSolve;
+    mgrData.coarseSolver.destroy = HYPRE_MGRDirectSolverDestroy;
   }
 };
 
@@ -103,4 +100,4 @@ public:
 
 } // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICS_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASERESERVOIRFVM_HPP_*/
