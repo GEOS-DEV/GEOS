@@ -81,15 +81,15 @@ public:
 
 protected:
 
-  PermeabilityBaseUpdate( arrayView3d< real64 > const & permeability,
-                          arrayView3d< real64 > const & dPerm_dPressure )
+  PermeabilityBaseUpdate( arrayView2d< real64 > const & permeability,
+                          arrayView2d< real64 > const & dPerm_dPressure )
     : m_permeability( permeability ),
     m_dPerm_dPressure( dPerm_dPressure )
   {}
 
-  arrayView3d< real64 > m_permeability;
+  arrayView2d< real64 > m_permeability;
 
-  arrayView3d< real64 > m_dPerm_dPressure;
+  arrayView2d< real64 > m_dPerm_dPressure;
 };
 
 
@@ -110,9 +110,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  arrayView3d< real64 const > const permeability() const { return m_permeability; }
+  arrayView2d< real64 const > const permeability() const { return m_permeability; }
 
-  arrayView3d< real64 const > const dPerm_dPressure() const { return m_dPerm_dPressure; }
+  arrayView2d< real64 const > const dPerm_dPressure() const { return m_dPerm_dPressure; }
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -124,9 +124,9 @@ public:
 protected:
   virtual void postProcessInput() override;
 
-  array3d< real64 > m_permeability;
+  array2d< real64 > m_permeability;
 
-  array3d< real64 > m_dPerm_dPressure;
+  array2d< real64 > m_dPerm_dPressure;
 };
 
 }/* namespace constitutive */

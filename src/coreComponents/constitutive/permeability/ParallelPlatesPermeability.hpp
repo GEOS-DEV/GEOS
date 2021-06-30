@@ -31,9 +31,9 @@ class ParallelPlatesPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
-                                    arrayView3d< real64 > const & dPerm_dPressure,
-                                    arrayView3d< real64 > const & dPerm_dAperture )
+  ParallelPlatesPermeabilityUpdate( arrayView2d< real64 > const & permeability,
+                                    arrayView2d< real64 > const & dPerm_dPressure,
+                                    arrayView2d< real64 > const & dPerm_dAperture )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dAperture( dPerm_dAperture )
   {}
@@ -48,12 +48,14 @@ public:
                            localIndex const q,
                            real64 const & effectiveAperture ) const override
   {
+    GEOSX_UNUSED_VAR(q);
+
     compute( effectiveAperture,
-             m_permeability[k][q],
-             m_dPerm_dAperture[k][q] );
+             m_permeability[k],
+             m_dPerm_dAperture[k] );
   }
 private:
-  arrayView3d< real64 > m_dPerm_dAperture;
+  arrayView2d< real64 > m_dPerm_dAperture;
 
 };
 
@@ -94,7 +96,7 @@ public:
   {} viewKeys;
 
 private:
-  array3d< real64 > m_dPerm_dAperture;
+  array2d< real64 > m_dPerm_dAperture;
 
 };
 
