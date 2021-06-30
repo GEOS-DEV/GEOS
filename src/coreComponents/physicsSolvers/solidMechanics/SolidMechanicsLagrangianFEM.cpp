@@ -17,7 +17,6 @@
  */
 
 #include "SolidMechanicsLagrangianFEM.hpp"
-#include "SolidMechanicsPoroElasticKernel.hpp"
 #include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
 #include "SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
 #include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
@@ -65,8 +64,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_sendOrReceiveNodes(),
   m_nonSendOrReceiveNodes(),
   m_targetNodes(),
-  m_iComm( CommunicationTools::getInstance().getCommID() ),
-  m_effectiveStress( 0 )
+  m_iComm( CommunicationTools::getInstance().getCommID() )
 {
   m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
   m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
@@ -133,11 +131,6 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   registerWrapper( viewKeyStruct::maxForceString(), &m_maxForce ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "The maximum force contribution in the problem domain." );
-
-  registerWrapper( viewKeyStruct::effectiveStressString(), &m_effectiveStress ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Apply fluid pressure to produce effective stress when integrating stress." );
 
 }
 
@@ -994,39 +987,27 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   localMatrix.zero();
   localRhs.zero();
 
-  if( m_effectiveStress==1 )
+  if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
     GEOSX_UNUSED_VAR( dt );
-    assemblyLaunch< constitutive::PoroElasticBase,
-                    SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElasticFactory >( domain,
-                                                                                         dofManager,
-                                                                                         localMatrix,
-                                                                                         localRhs );
+    assemblyLaunch< constitutive::SolidBase,
+                    SolidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
+                                                                              dofManager,
+                                                                              localMatrix,
+                                                                              localRhs );
   }
-  else
+  else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
-    if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
-    {
-      GEOSX_UNUSED_VAR( dt );
-      assemblyLaunch< constitutive::SolidBase,
-                      SolidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
-                                                                                dofManager,
-                                                                                localMatrix,
-                                                                                localRhs );
-    }
-    else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
-    {
-      assemblyLaunch< constitutive::SolidBase,
-                      SolidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
-                                                                                    dofManager,
-                                                                                    localMatrix,
-                                                                                    localRhs,
-                                                                                    m_newmarkGamma,
-                                                                                    m_newmarkBeta,
-                                                                                    m_massDamping,
-                                                                                    m_stiffnessDamping,
-                                                                                    dt );
-    }
+    assemblyLaunch< constitutive::SolidBase,
+                    SolidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
+                                                                                  dofManager,
+                                                                                  localMatrix,
+                                                                                  localRhs,
+                                                                                  m_newmarkGamma,
+                                                                                  m_newmarkBeta,
+                                                                                  m_massDamping,
+                                                                                  m_stiffnessDamping,
+                                                                                  dt );
   }
 
   if( getLogLevel() >= 2 )
