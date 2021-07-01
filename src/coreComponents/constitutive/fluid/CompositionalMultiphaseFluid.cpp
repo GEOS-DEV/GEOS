@@ -81,8 +81,7 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name,
     setDescription( "Table of binary interaction coefficients" );
 }
 
-CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid()
-{}
+CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid() = default;
 
 std::unique_ptr< ConstitutiveBase >
 CompositionalMultiphaseFluid::deliverClone( string const & name,
@@ -95,6 +94,20 @@ CompositionalMultiphaseFluid::deliverClone( string const & name,
   return clone;
 }
 
+namespace
+{
+
+template< typename ARRAY >
+void checkInputSize( ARRAY const & array, localIndex const expected, string const & attr )
+{
+  GEOSX_THROW_IF_NE_MSG( array.size(), expected,
+                         "CompositionalMultiphaseFluid: invalid number of entries in " << attr << " attribute",
+                         InputError );
+
+}
+
+}
+
 void CompositionalMultiphaseFluid::postProcessInput()
 {
   MultiFluidPVTPackageWrapper::postProcessInput();
@@ -102,36 +115,25 @@ void CompositionalMultiphaseFluid::postProcessInput()
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
 
-  #define COMPFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
-    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-    { \
-      GEOSX_ERROR( "CompositionalMultiphaseFluid: invalid number of entries in " \
-                   << (attr) << " attribute (" \
-                   << (data).size() << "given, " \
-                   << (expected) << " expected)" ); \
-    }
+  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
+  checkInputSize( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
+  checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
+  checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
+  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
 
-  COMPFLUID_CHECK_INPUT_LENGTH( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() )
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() )
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() )
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() )
-
-  if( m_componentVolumeShift.empty())
+  if( m_componentVolumeShift.empty() )
   {
     m_componentVolumeShift.resize( NC );
     m_componentVolumeShift.zero();
   }
+  checkInputSize( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString() );
 
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString() )
-  //if (m_componentBinaryCoeff.empty()) TODO needs reading of 2D arrays
+  if( m_componentBinaryCoeff.empty() )
   {
     m_componentBinaryCoeff.resize( NC, NC );
     m_componentBinaryCoeff.zero();
   }
-
-  COMPFLUID_CHECK_INPUT_LENGTH( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() )
-
-#undef COMPFLUID_CHECK_INPUT_LENGTH
+  checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
 }
 
 void CompositionalMultiphaseFluid::createFluid()
@@ -152,6 +154,7 @@ void CompositionalMultiphaseFluid::createFluid()
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, string const &, Group * const )
+
 } // namespace constitutive
 
 } // namespace geosx

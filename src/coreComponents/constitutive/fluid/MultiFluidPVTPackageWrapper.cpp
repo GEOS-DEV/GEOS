@@ -31,8 +31,7 @@ MultiFluidPVTPackageWrapper::MultiFluidPVTPackageWrapper( string const & name,
   m_fluid( nullptr )
 { }
 
-MultiFluidPVTPackageWrapper::~MultiFluidPVTPackageWrapper()
-{ }
+MultiFluidPVTPackageWrapper::~MultiFluidPVTPackageWrapper() = default;
 
 namespace
 {

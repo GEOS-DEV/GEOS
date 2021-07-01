@@ -38,8 +38,8 @@ public:
                                        real64 const volFracScale,
                                        arrayView1d< integer const > const & phaseTypes,
                                        arrayView1d< integer const > const & phaseOrder,
-                                       arrayView3d< real64 > const & phaseCapPressure,
-                                       arrayView4d< real64 > const & dPhaseCapPressure_dPhaseVolFrac )
+                                       arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPressure,
+                                       arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPressure_dPhaseVolFrac )
     : CapillaryPressureBaseUpdate( phaseTypes,
                                    phaseOrder,
                                    phaseCapPressure,
@@ -51,29 +51,15 @@ public:
     m_volFracScale( volFracScale )
   {}
 
-  /// Default copy constructor
-  VanGenuchtenCapillaryPressureUpdate( VanGenuchtenCapillaryPressureUpdate const & ) = default;
-
-  /// Default move constructor
-  VanGenuchtenCapillaryPressureUpdate( VanGenuchtenCapillaryPressureUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  VanGenuchtenCapillaryPressureUpdate & operator=( VanGenuchtenCapillaryPressureUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  VanGenuchtenCapillaryPressureUpdate & operator=( VanGenuchtenCapillaryPressureUpdate && ) = delete;
+  GEOSX_HOST_DEVICE
+  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                        arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseCapPres,
-                        arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const override;
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & phaseVolFraction ) const override
+                       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
   {
     compute( phaseVolFraction,
              m_phaseCapPressure[k][q],
@@ -145,22 +131,13 @@ protected:
 };
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
+inline void
 VanGenuchtenCapillaryPressureUpdate::
-  compute( arraySlice1d< real64 const > const & phaseVolFraction,
-           arraySlice1d< real64 > const & phaseCapPres,
-           arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const
+  compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+           arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+           arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
 {
-  localIndex const NP = numPhases();
-
-  for( localIndex ip = 0; ip < NP; ++ip )
-  {
-    for( localIndex jp = 0; jp < NP; ++jp )
-    {
-      dPhaseCapPres_dPhaseVolFrac[ip][jp] = 0.0;
-    }
-  }
+  LvArray::forValuesInSlice( dPhaseCapPres_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
   // the VanGenuchten model does not support volFracScaled = 0 and = 1
   // hence we need an epsilon value to avoid a division by zero
