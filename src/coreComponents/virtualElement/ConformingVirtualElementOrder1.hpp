@@ -30,7 +30,7 @@ class ConformingVirtualElementOrder1 final : public VirtualElementBase
 {
 public:
   using InputNodeCoords = arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >;
-  using InputCellToNodeMap = CellBlock::NodeMapType;
+  using InputCellToNodeMap = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
   using InputCellToFaceMap = arrayView2d< localIndex const >;
   using InputFaceToNodeMap = ArrayOfArraysView< localIndex const >;
   using InputFaceToEdgeMap = ArrayOfArraysView< localIndex const >;
