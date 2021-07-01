@@ -52,6 +52,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   FlowSolverBase( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
+  m_computeCFLNumbers( 0 ),
   m_capPressureFlag( 0 ),
   m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
@@ -66,6 +67,11 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
+
+  this->registerWrapper( viewKeyStruct::computeCFLNumbersString(), &m_computeCFLNumbers ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether CFL numbers are computed or not" );
 
   this->registerWrapper( viewKeyStruct::relPermNamesString(), &m_relPermModelNames ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -146,6 +152,20 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
       elementSubRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
+
+      if( m_computeCFLNumbers )
+      {
+        elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseOutfluxString() ).
+          setRestartFlags( RestartFlags::NO_WRITE );
+        elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::componentOutfluxString() ).
+          setRestartFlags( RestartFlags::NO_WRITE );
+        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::phaseCFLNumberString() ).
+          setPlotLevel( PlotLevel::LEVEL_0 ).
+          setRestartFlags( RestartFlags::NO_WRITE );
+        elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::componentCFLNumberString() )
+          .setPlotLevel( PlotLevel::LEVEL_0 )
+          .setRestartFlags( RestartFlags::NO_WRITE );
+      }
 
       elementSubRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionOldString() );
       elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
@@ -291,6 +311,12 @@ void CompositionalMultiphaseBase::resizeFields( MeshLevel & meshLevel ) const
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseMobilityOldString() ).resizeDimension< 1 >( NP );
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseDensityOldString() ).resizeDimension< 1 >( NP );
     subRegion.getReference< array3d< real64 > >( viewKeyStruct::phaseComponentFractionOldString() ).resizeDimension< 1, 2 >( NP, NC );
+
+    if( m_computeCFLNumbers )
+    {
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseOutfluxString() ).resizeDimension< 1 >( NP );
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::componentOutfluxString() ).resizeDimension< 1 >( NC );
+    }
   } );
 }
 
@@ -1160,6 +1186,11 @@ void CompositionalMultiphaseBase::resetViews( MeshLevel & mesh )
   {
     using keys = MultiFluidBase::viewKeyStruct;
 
+    m_phaseVisc.clear();
+    m_phaseVisc = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::phaseViscosityString(),
+                                                                               targetRegionNames(),
+                                                                               fluidModelNames() );
+    m_phaseVisc.setName( getName() + "/accessors/" + keys::phaseViscosityString() );
     m_phaseDens.clear();
     m_phaseDens = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::phaseDensityString(),
                                                                                targetRegionNames(),
@@ -1213,6 +1244,15 @@ void CompositionalMultiphaseBase::resetViews( MeshLevel & mesh )
                                                                                           targetRegionNames(),
                                                                                           fluidModelNames() );
     m_dPhaseCompFrac_dComp.setName( getName() + "/accessors/" + keys::dPhaseCompFraction_dGlobalCompFractionString() );
+  }
+  {
+    using keys = RelativePermeabilityBase::viewKeyStruct;
+
+    m_phaseRelPerm.clear();
+    m_phaseRelPerm = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::phaseRelPermString(),
+                                                                                  targetRegionNames(),
+                                                                                  relPermModelNames() );
+    m_phaseRelPerm.setName( getName() + "/accessors/" + keys::phaseRelPermString() );
   }
   if( m_capPressureFlag )
   {
