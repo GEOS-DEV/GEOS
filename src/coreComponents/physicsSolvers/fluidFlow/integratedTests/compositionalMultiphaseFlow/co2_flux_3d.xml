@@ -11,6 +11,7 @@
       relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
+      computeCFLNumbers="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
@@ -65,7 +66,7 @@
     maxTime="1e6">
     <PeriodicEvent
       name="solverApplications"
-      forceDt="5e4"
+      forceDt="5e4"     
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
