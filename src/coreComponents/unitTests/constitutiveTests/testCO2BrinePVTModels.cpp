@@ -45,10 +45,11 @@ static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e6 1.
 
 static const char * co2FlashTableContent = "FlashModel CO2Solubility 1e6 1.5e7 5e4 367.15 369.15 1 0.15";
 
-void testValuesAgainstPreviousImplementation( PVTFunctionBaseUpdate const & pvtFunctionWrapper,
+template< typename PVT_WRAPPER >
+void testValuesAgainstPreviousImplementation( PVT_WRAPPER const & pvtFunctionWrapper,
                                               real64 const pressure,
                                               real64 const temperature,
-                                              arraySlice1d< real64 > const & phaseComposition,
+                                              arraySlice1d< real64 const > const & phaseComposition,
                                               real64 const & oldImplValue,
                                               bool const useMass,
                                               real64 const relTol )
@@ -63,22 +64,23 @@ void testValuesAgainstPreviousImplementation( PVTFunctionBaseUpdate const & pvtF
   pvtFunctionWrapper.compute( pressure,
                               temperature,
                               phaseComposition,
-                              dPhaseComposition_dPressure,
-                              dPhaseComposition_dTemperature,
-                              dPhaseComposition_dGlobalCompFraction,
+                              dPhaseComposition_dPressure.toSliceConst(),
+                              dPhaseComposition_dTemperature.toSliceConst(),
+                              dPhaseComposition_dGlobalCompFraction.toSliceConst(),
                               value,
                               dValue_dPressure,
                               dValue_dTemperature,
-                              dValue_dGlobalCompFraction,
+                              dValue_dGlobalCompFraction.toSlice(),
                               useMass );
 
   checkRelativeError( value, oldImplValue, relTol );
 }
 
-void testValuesAgainstPreviousImplementation( FlashModelBaseUpdate const & flashModelWrapper,
+template< typename FLASH_WRAPPER >
+void testValuesAgainstPreviousImplementation( FLASH_WRAPPER const & flashModelWrapper,
                                               real64 const & pressure,
                                               real64 const & temperature,
-                                              arraySlice1d< real64 > const & compFraction,
+                                              arraySlice1d< real64 const > const & compFraction,
                                               real64 const & savedGasPhaseFrac,
                                               real64 const & savedWaterPhaseGasComp,
                                               real64 const relTol )
@@ -94,14 +96,14 @@ void testValuesAgainstPreviousImplementation( FlashModelBaseUpdate const & flash
   flashModelWrapper.compute( pressure,
                              temperature,
                              compFraction,
-                             phaseFraction,
-                             dPhaseFraction_dPres,
-                             dPhaseFraction_dTemp,
-                             dPhaseFraction_dCompFraction,
-                             phaseCompFraction,
-                             dPhaseCompFraction_dPres,
-                             dPhaseCompFraction_dTemp,
-                             dPhaseCompFraction_dCompFraction );
+                             phaseFraction.toSlice(),
+                             dPhaseFraction_dPres.toSlice(),
+                             dPhaseFraction_dTemp.toSlice(),
+                             dPhaseFraction_dCompFraction.toSlice(),
+                             phaseCompFraction.toSlice(),
+                             dPhaseCompFraction_dPres.toSlice(),
+                             dPhaseCompFraction_dTemp.toSlice(),
+                             dPhaseCompFraction_dCompFraction.toSlice() );
 
   for( localIndex i = 0; i < 2; ++i )
   {
@@ -124,10 +126,11 @@ void testValuesAgainstPreviousImplementation( FlashModelBaseUpdate const & flash
   }
 }
 
-void testNumericalDerivatives( PVTFunctionBaseUpdate const & pvtFunctionWrapper,
+template< typename PVT_WRAPPER >
+void testNumericalDerivatives( PVT_WRAPPER const & pvtFunctionWrapper,
                                real64 const pressure,
                                real64 const temperature,
-                               arraySlice1d< real64 > const & phaseComposition,
+                               arraySlice1d< real64 const > const & phaseComposition,
                                bool const useMass,
                                real64 const perturbParameter,
                                real64 const relTol )
@@ -145,13 +148,13 @@ void testNumericalDerivatives( PVTFunctionBaseUpdate const & pvtFunctionWrapper,
   pvtFunctionWrapper.compute( pressure,
                               temperature,
                               phaseComposition,
-                              dPhaseComposition_dPressure,
-                              dPhaseComposition_dTemperature,
-                              dPhaseComposition_dGlobalCompFraction,
+                              dPhaseComposition_dPressure.toSliceConst(),
+                              dPhaseComposition_dTemperature.toSliceConst(),
+                              dPhaseComposition_dGlobalCompFraction.toSliceConst(),
                               value,
                               dValue_dPressure,
                               dValue_dTemperature,
-                              dValue_dGlobalCompFraction,
+                              dValue_dGlobalCompFraction.toSlice(),
                               useMass );
   real64 perturbedValue = 0.0;
   real64 dPerturbedValue_dPressure = 0.0;
@@ -163,13 +166,13 @@ void testNumericalDerivatives( PVTFunctionBaseUpdate const & pvtFunctionWrapper,
   pvtFunctionWrapper.compute( pressure + dP,
                               temperature,
                               phaseComposition,
-                              dPhaseComposition_dPressure,
-                              dPhaseComposition_dTemperature,
-                              dPhaseComposition_dGlobalCompFraction,
+                              dPhaseComposition_dPressure.toSliceConst(),
+                              dPhaseComposition_dTemperature.toSliceConst(),
+                              dPhaseComposition_dGlobalCompFraction.toSliceConst(),
                               perturbedValue,
                               dPerturbedValue_dPressure,
                               dPerturbedValue_dTemperature,
-                              dPerturbedValue_dGlobalCompFraction,
+                              dPerturbedValue_dGlobalCompFraction.toSlice(),
                               useMass );
   checkRelativeError( (perturbedValue-value)/dP, dValue_dPressure, relTol );
 
@@ -178,13 +181,13 @@ void testNumericalDerivatives( PVTFunctionBaseUpdate const & pvtFunctionWrapper,
   pvtFunctionWrapper.compute( pressure,
                               temperature + dT,
                               phaseComposition,
-                              dPhaseComposition_dPressure,
-                              dPhaseComposition_dTemperature,
-                              dPhaseComposition_dGlobalCompFraction,
+                              dPhaseComposition_dPressure.toSliceConst(),
+                              dPhaseComposition_dTemperature.toSliceConst(),
+                              dPhaseComposition_dGlobalCompFraction.toSliceConst(),
                               perturbedValue,
                               dPerturbedValue_dPressure,
                               dPerturbedValue_dTemperature,
-                              dPerturbedValue_dGlobalCompFraction,
+                              dPerturbedValue_dGlobalCompFraction.toSlice(),
                               useMass );
   checkRelativeError( (perturbedValue-value)/dT, dValue_dTemperature, relTol );
 
@@ -199,23 +202,24 @@ void testNumericalDerivatives( PVTFunctionBaseUpdate const & pvtFunctionWrapper,
     }
     pvtFunctionWrapper.compute( pressure,
                                 temperature,
-                                perturbedPhaseComposition,
-                                dPhaseComposition_dPressure,
-                                dPhaseComposition_dTemperature,
-                                dPhaseComposition_dGlobalCompFraction,
+                                perturbedPhaseComposition.toSliceConst(),
+                                dPhaseComposition_dPressure.toSliceConst(),
+                                dPhaseComposition_dTemperature.toSliceConst(),
+                                dPhaseComposition_dGlobalCompFraction.toSliceConst(),
                                 perturbedValue,
                                 dPerturbedValue_dPressure,
                                 dPerturbedValue_dTemperature,
-                                dPerturbedValue_dGlobalCompFraction,
+                                dPerturbedValue_dGlobalCompFraction.toSlice(),
                                 useMass );
     checkRelativeError( (perturbedValue-value)/dC, dValue_dGlobalCompFraction[i], relTol );
   }
 }
 
-void testNumericalDerivatives( FlashModelBaseUpdate const & flashModelWrapper,
+template< typename FLASH_WRAPPER >
+void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
                                real64 const pressure,
                                real64 const temperature,
-                               arraySlice1d< real64 > const & compFraction,
+                               arraySlice1d< real64 const > const & compFraction,
                                real64 const perturbParameter,
                                real64 const relTol )
 {
@@ -231,14 +235,14 @@ void testNumericalDerivatives( FlashModelBaseUpdate const & flashModelWrapper,
   flashModelWrapper.compute( pressure,
                              temperature,
                              compFraction,
-                             phaseFraction,
-                             dPhaseFraction_dPres,
-                             dPhaseFraction_dTemp,
-                             dPhaseFraction_dCompFraction,
-                             phaseCompFraction,
-                             dPhaseCompFraction_dPres,
-                             dPhaseCompFraction_dTemp,
-                             dPhaseCompFraction_dCompFraction );
+                             phaseFraction.toSlice(),
+                             dPhaseFraction_dPres.toSlice(),
+                             dPhaseFraction_dTemp.toSlice(),
+                             dPhaseFraction_dCompFraction.toSlice(),
+                             phaseCompFraction.toSlice(),
+                             dPhaseCompFraction_dPres.toSlice(),
+                             dPhaseCompFraction_dTemp.toSlice(),
+                             dPhaseCompFraction_dCompFraction.toSlice() );
   stackArray1d< real64, 2 > perturbedPhaseFraction( 2 );
   stackArray1d< real64, 2 > dPerturbedPhaseFraction_dPres( 2 );
   stackArray1d< real64, 2 > dPerturbedPhaseFraction_dTemp( 2 );
@@ -253,14 +257,14 @@ void testNumericalDerivatives( FlashModelBaseUpdate const & flashModelWrapper,
   flashModelWrapper.compute( pressure + dP,
                              temperature,
                              compFraction,
-                             perturbedPhaseFraction,
-                             dPerturbedPhaseFraction_dPres,
-                             dPerturbedPhaseFraction_dTemp,
-                             dPerturbedPhaseFraction_dCompFraction,
-                             perturbedPhaseCompFraction,
-                             dPerturbedPhaseCompFraction_dPres,
-                             dPerturbedPhaseCompFraction_dTemp,
-                             dPerturbedPhaseCompFraction_dCompFraction );
+                             perturbedPhaseFraction.toSlice(),
+                             dPerturbedPhaseFraction_dPres.toSlice(),
+                             dPerturbedPhaseFraction_dTemp.toSlice(),
+                             dPerturbedPhaseFraction_dCompFraction.toSlice(),
+                             perturbedPhaseCompFraction.toSlice(),
+                             dPerturbedPhaseCompFraction_dPres.toSlice(),
+                             dPerturbedPhaseCompFraction_dTemp.toSlice(),
+                             dPerturbedPhaseCompFraction_dCompFraction.toSlice() );
   for( localIndex i = 0; i < 2; ++i )
   {
     checkRelativeError( (perturbedPhaseFraction[i]-phaseFraction[i])/dP, dPhaseFraction_dPres[i], relTol );
@@ -275,14 +279,14 @@ void testNumericalDerivatives( FlashModelBaseUpdate const & flashModelWrapper,
   flashModelWrapper.compute( pressure,
                              temperature + dT,
                              compFraction,
-                             perturbedPhaseFraction,
-                             dPerturbedPhaseFraction_dPres,
-                             dPerturbedPhaseFraction_dTemp,
-                             dPerturbedPhaseFraction_dCompFraction,
-                             perturbedPhaseCompFraction,
-                             dPerturbedPhaseCompFraction_dPres,
-                             dPerturbedPhaseCompFraction_dTemp,
-                             dPerturbedPhaseCompFraction_dCompFraction );
+                             perturbedPhaseFraction.toSlice(),
+                             dPerturbedPhaseFraction_dPres.toSlice(),
+                             dPerturbedPhaseFraction_dTemp.toSlice(),
+                             dPerturbedPhaseFraction_dCompFraction.toSlice(),
+                             perturbedPhaseCompFraction.toSlice(),
+                             dPerturbedPhaseCompFraction_dPres.toSlice(),
+                             dPerturbedPhaseCompFraction_dTemp.toSlice(),
+                             dPerturbedPhaseCompFraction_dCompFraction.toSlice() );
   for( localIndex i = 0; i < 2; ++i )
   {
     checkRelativeError( (perturbedPhaseFraction[i]-phaseFraction[i])/dT, dPhaseFraction_dTemp[i], relTol );
@@ -303,15 +307,15 @@ void testNumericalDerivatives( FlashModelBaseUpdate const & flashModelWrapper,
     }
     flashModelWrapper.compute( pressure,
                                temperature,
-                               perturbedCompFraction,
-                               perturbedPhaseFraction,
-                               dPerturbedPhaseFraction_dPres,
-                               dPerturbedPhaseFraction_dTemp,
-                               dPerturbedPhaseFraction_dCompFraction,
-                               perturbedPhaseCompFraction,
-                               dPerturbedPhaseCompFraction_dPres,
-                               dPerturbedPhaseCompFraction_dTemp,
-                               dPerturbedPhaseCompFraction_dCompFraction );
+                               perturbedCompFraction.toSliceConst(),
+                               perturbedPhaseFraction.toSlice(),
+                               dPerturbedPhaseFraction_dPres.toSlice(),
+                               dPerturbedPhaseFraction_dTemp.toSlice(),
+                               dPerturbedPhaseFraction_dCompFraction.toSlice(),
+                               perturbedPhaseCompFraction.toSlice(),
+                               dPerturbedPhaseCompFraction_dPres.toSlice(),
+                               dPerturbedPhaseCompFraction_dTemp.toSlice(),
+                               dPerturbedPhaseCompFraction_dCompFraction.toSlice() );
     for( localIndex j = 0; j < 2; ++j )
     {
       checkRelativeError( (perturbedPhaseFraction[j]-phaseFraction[j])/dC, dPhaseFraction_dCompFraction[j][i], relTol );

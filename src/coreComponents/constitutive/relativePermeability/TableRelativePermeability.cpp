@@ -53,14 +53,19 @@ void TableRelativePermeability::postProcessInput()
 {
   RelativePermeabilityBase::postProcessInput();
 
-  GEOSX_ERROR_IF( m_phaseOrder[PhaseType::OIL] < 0,
-                  "TableRelativePermeability: reference oil phase has not been defined and must be included in model" );
+  GEOSX_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
+                  "TableRelativePermeability: reference oil phase has not been defined and must be included in model",
+                  InputError );
 
-  GEOSX_ERROR_IF( m_phaseOrder[PhaseType::WATER] >= 0 && !(m_waterOilRelPermTableNames.size() == 2),
-                  "TableRelativePermeability: since water is present you must define two tables for the oil-water relperms: one for the oil phase and one for the water phase" );
+  GEOSX_THROW_IF( m_phaseOrder[PhaseType::WATER] >= 0 && !(m_waterOilRelPermTableNames.size() == 2),
+                  "TableRelativePermeability: since water is present you must define two tables for the oil-water relperms: "
+                  "one for the oil phase and one for the water phase",
+                  InputError );
 
-  GEOSX_ERROR_IF( m_phaseOrder[PhaseType::GAS] >= 0 && !(m_gasOilRelPermTableNames.size() == 2),
-                  "TableRelativePermeability: since gas is present you must define two tables for the oil-gas relperms: one for the oil phase and one for the gas phase" );
+  GEOSX_THROW_IF( m_phaseOrder[PhaseType::GAS] >= 0 && !(m_gasOilRelPermTableNames.size() == 2),
+                  "TableRelativePermeability: since gas is present you must define two tables for the oil-gas relperms: "
+                  "one for the oil phase and one for the gas phase",
+                  InputError );
 
 }
 
@@ -76,8 +81,7 @@ void TableRelativePermeability::createAllTableKernelWrappers()
 
   m_phaseMinVolumeFraction.resize( PhaseType::MAX_NUM_PHASES );
 
-  if( m_waterOilRelPermTableKernelWrappers.size() == 0 &&
-      m_gasOilRelPermTableKernelWrappers.size() == 0 )
+  if( m_waterOilRelPermTableKernelWrappers.empty() && m_gasOilRelPermTableKernelWrappers.empty() )
   {
 
     // check water-oil relperms
@@ -95,7 +99,7 @@ void TableRelativePermeability::createAllTableKernelWrappers()
       }
       else
       {
-        GEOSX_ERROR( "There should be only two table names for the water-oil pair" );
+        GEOSX_THROW( "There should be only two table names for the water-oil pair", InputError );
       }
       m_waterOilRelPermTableKernelWrappers.emplace_back( relPermTable.createKernelWrapper() );
     }
@@ -115,7 +119,7 @@ void TableRelativePermeability::createAllTableKernelWrappers()
       }
       else
       {
-        GEOSX_ERROR( "There should be only two table names for the gas-oil pair" );
+        GEOSX_THROW( "There should be only two table names for the gas-oil pair", InputError );
       }
 
       m_gasOilRelPermTableKernelWrappers.emplace_back( relPermTable.createKernelWrapper() );
@@ -130,34 +134,40 @@ real64 TableRelativePermeability::validateRelativePermeabilityTable( TableFuncti
   array1d< real64 > const & relPerm = relPermTable.getValues();
   real64 minVolFraction = phaseVolFrac[0];
 
-  GEOSX_ERROR_IF( relPermTable.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                  "The interpolation method for the relative permeability tables must be linear" );
+  GEOSX_THROW_IF( relPermTable.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
+                  "The interpolation method for the relative permeability tables must be linear",
+                  InputError );
 
-  GEOSX_ERROR_IF( coords.size() != 1,
-                  "The relative permeability table must contain one vector of phase volume fraction, and one vector of relative permeabilities" );
-  GEOSX_ERROR_IF( coords.sizeOfArray( 0 ) < 2,
-                  "The relative permeability table must contain at least two values" );
+  GEOSX_THROW_IF( coords.size() != 1,
+                  "The relative permeability table must contain one vector of phase volume fraction, and one vector of relative permeabilities",
+                  InputError );
+  GEOSX_THROW_IF( coords.sizeOfArray( 0 ) < 2,
+                  "The relative permeability table must contain at least two values",
+                  InputError );
 
   // note that the TableFunction class has already checked that coords.sizeOfArray( 0 ) == relPerm.size()
   for( localIndex i = 0; i < coords.sizeOfArray( 0 ); ++i )
   {
 
     // check phase volume fraction
-    GEOSX_ERROR_IF( phaseVolFrac[i] < 0 || phaseVolFrac[i] > 1,
-                    "In the relative permeability table, the phase volume fraction (i.e., saturation) must be between 0 and 1" );
+    GEOSX_THROW_IF( phaseVolFrac[i] < 0 || phaseVolFrac[i] > 1,
+                    "In the relative permeability table, the phase volume fraction (i.e., saturation) must be between 0 and 1",
+                    InputError );
 
     // note that the TableFunction class has already checked that the coordinates are monotone
 
     // check phase relative permeability
     if( i == 0 )
     {
-      GEOSX_ERROR_IF( !isZero( relPerm[i] ),
-                      "In the relative permeability table, the first relative permeability value must be equal to zero" );
+      GEOSX_THROW_IF( !isZero( relPerm[i] ),
+                      "In the relative permeability table, the first relative permeability value must be equal to zero",
+                      InputError );
     }
     else
     {
-      GEOSX_ERROR_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-10,
-                      "In the relative permeability table, the relative permeability must be strictly increasing" );
+      GEOSX_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-10,
+                      "In the relative permeability table, the relative permeability must be strictly increasing",
+                      InputError );
 
       if( isZero( relPerm[i-1] ) && !isZero( relPerm[i] ) )
       {

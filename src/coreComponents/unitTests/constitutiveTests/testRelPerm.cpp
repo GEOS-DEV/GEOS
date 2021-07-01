@@ -21,6 +21,7 @@
 using namespace geosx;
 using namespace geosx::testing;
 using namespace geosx::constitutive;
+using namespace geosx::constitutive::relperm;
 using namespace geosx::dataRepository;
 
 RelativePermeabilityBase & makeBrooksCoreyRelPerm( string const & name, Group & parent )
@@ -317,8 +318,8 @@ class RelPermTest : public ConstitutiveTestBase< RelativePermeabilityBase >
 public:
   void test( arraySlice1d< real64 const > const sat, real64 const eps, real64 const tol )
   {
-    arrayView3d< real64 const > phaseRelPerm;
-    arrayView4d< real64 const > dPhaseRelPerm_dPhaseVolFraction;
+    arrayView3d< real64 const, USD_RELPERM > phaseRelPerm;
+    arrayView4d< real64 const, USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction;
     testNumericalDerivatives( m_parent,
                               *m_model,
                               sat,

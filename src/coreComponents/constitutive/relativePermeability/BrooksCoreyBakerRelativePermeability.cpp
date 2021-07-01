@@ -73,6 +73,20 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( stri
 BrooksCoreyBakerRelativePermeability::~BrooksCoreyBakerRelativePermeability()
 {}
 
+namespace
+{
+
+template< typename ARRAY >
+void checkInputSize( ARRAY const & array, localIndex const expected, string const & attr )
+{
+  GEOSX_THROW_IF_NE_MSG( array.size(), expected,
+                         "BrooksCoreyBakerRelativePermeability: invalid number of entries in " << attr << " attribute",
+                         InputError );
+
+}
+
+}
+
 void BrooksCoreyBakerRelativePermeability::postProcessInput()
 {
   RelativePermeabilityBase::postProcessInput();
@@ -82,57 +96,51 @@ void BrooksCoreyBakerRelativePermeability::postProcessInput()
   GEOSX_ERROR_IF( m_phaseOrder[PhaseType::OIL] < 0,
                   "BrooksCoreyBakerRelativePermeability: reference oil phase has not been defined and must be included in model" );
 
-  #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
-    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-    { \
-      GEOSX_ERROR( "BrooksCoreyBakerRelativePermeability: invalid number of entries in " \
-                   << (attr) << " attribute (" \
-                   << (data).size() << " given, " \
-                   << (expected) << " expected)" ); \
-    }
-
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString() )
+  checkInputSize( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString() );
 
   if( m_phaseOrder[PhaseType::WATER] >= 0 )
   {
-    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermExponent, 2, viewKeyStruct::waterOilRelPermExponentString() )
-    COREY_CHECK_INPUT_LENGTH( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString() )
+    checkInputSize( m_waterOilRelPermExponent, 2, viewKeyStruct::waterOilRelPermExponentString() );
+    checkInputSize( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString() );
   }
 
   if( m_phaseOrder[PhaseType::GAS] >=0 )
   {
-    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermExponent, 2, viewKeyStruct::gasOilRelPermExponentString() )
-    COREY_CHECK_INPUT_LENGTH( m_gasOilRelPermMaxValue, 2, viewKeyStruct::gasOilRelPermMaxValueString() )
+    checkInputSize( m_gasOilRelPermExponent, 2, viewKeyStruct::gasOilRelPermExponentString() );
+    checkInputSize( m_gasOilRelPermMaxValue, 2, viewKeyStruct::gasOilRelPermMaxValueString() );
   }
-
-#undef COREY_CHECK_INPUT_LENGTH
 
   m_volFracScale = 1.0;
   for( localIndex ip = 0; ip < numPhases; ++ip )
   {
-    GEOSX_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
-                    "BrooksCoreyBakerRelativePermeability: invalid phase min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
+    GEOSX_THROW_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
+                    "BrooksCoreyBakerRelativePermeability: invalid phase min volume fraction value: " << m_phaseMinVolumeFraction[ip],
+                    InputError );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
   }
-  GEOSX_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyBakerRelativePermeability: sum of min volume fractions exceeds 1.0" );
+  GEOSX_THROW_IF( m_volFracScale < 0.0, "BrooksCoreyBakerRelativePermeability: sum of min volume fractions exceeds 1.0", InputError );
 
 
   for( localIndex ip = 0; ip < 2; ++ip )
   {
     if( m_phaseOrder[PhaseType::WATER] >= 0 )
     {
-      GEOSX_ERROR_IF( m_waterOilRelPermExponent[ip] < 0.0,
-                      "BrooksCoreyBakerRelativePermeability: invalid water-oil exponent value: " << m_waterOilRelPermExponent[ip] );
-      GEOSX_ERROR_IF( m_waterOilRelPermMaxValue[ip] < 0.0 || m_waterOilRelPermMaxValue[ip] > 1.0,
-                      "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_waterOilRelPermMaxValue[ip] );
+      GEOSX_THROW_IF( m_waterOilRelPermExponent[ip] < 0.0,
+                      "BrooksCoreyBakerRelativePermeability: invalid water-oil exponent value: " << m_waterOilRelPermExponent[ip],
+                      InputError );
+      GEOSX_THROW_IF( m_waterOilRelPermMaxValue[ip] < 0.0 || m_waterOilRelPermMaxValue[ip] > 1.0,
+                      "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_waterOilRelPermMaxValue[ip],
+                      InputError );
     }
 
     if( m_phaseOrder[PhaseType::GAS] >= 0 )
     {
-      GEOSX_ERROR_IF( m_gasOilRelPermExponent[ip] < 0.0,
-                      "BrooksCoreyBakerRelativePermeability: invalid gas-oil exponent value: " << m_gasOilRelPermExponent[ip] );
-      GEOSX_ERROR_IF( m_gasOilRelPermMaxValue[ip] < 0.0 || m_gasOilRelPermMaxValue[ip] > 1.0,
-                      "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_gasOilRelPermMaxValue[ip] );
+      GEOSX_THROW_IF( m_gasOilRelPermExponent[ip] < 0.0,
+                      "BrooksCoreyBakerRelativePermeability: invalid gas-oil exponent value: " << m_gasOilRelPermExponent[ip],
+                      InputError );
+      GEOSX_THROW_IF( m_gasOilRelPermMaxValue[ip] < 0.0 || m_gasOilRelPermMaxValue[ip] > 1.0,
+                      "BrooksCoreyBakerRelativePermeability: invalid maximum value: " << m_gasOilRelPermMaxValue[ip],
+                      InputError );
     }
   }
 

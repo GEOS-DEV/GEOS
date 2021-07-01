@@ -24,16 +24,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
-
-namespace constitutive
-{
-class MultiFluidBase;
-}
-
 /**
  * @class CompositionalMultiphaseFVM
  *

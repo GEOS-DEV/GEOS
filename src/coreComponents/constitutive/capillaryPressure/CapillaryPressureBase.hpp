@@ -19,7 +19,9 @@
 #ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
 #define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
 
+#include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
+#include "constitutive/capillaryPressure/layouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -57,43 +59,31 @@ protected:
 
   CapillaryPressureBaseUpdate( arrayView1d< integer const > const & phaseTypes,
                                arrayView1d< integer const > const & phaseOrder,
-                               arrayView3d< real64 > const & phaseCapPressure,
-                               arrayView4d< real64 > const & dPhaseCapPressure_dPhaseVolFrac )
+                               arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPressure,
+                               arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPressure_dPhaseVolFrac )
     : m_phaseTypes( phaseTypes ),
     m_phaseOrder( phaseOrder ),
     m_phaseCapPressure( phaseCapPressure ),
     m_dPhaseCapPressure_dPhaseVolFrac( dPhaseCapPressure_dPhaseVolFrac )
   {}
 
-  /// Default copy constructor
-  CapillaryPressureBaseUpdate( CapillaryPressureBaseUpdate const & ) = default;
-
-  /// Default move constructor
-  CapillaryPressureBaseUpdate( CapillaryPressureBaseUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  CapillaryPressureBaseUpdate & operator=( CapillaryPressureBaseUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  CapillaryPressureBaseUpdate & operator=( CapillaryPressureBaseUpdate && ) = delete;
-
   arrayView1d< integer const > m_phaseTypes;
   arrayView1d< integer const > m_phaseOrder;
 
-  arrayView3d< real64 > m_phaseCapPressure;
-  arrayView4d< real64 > m_dPhaseCapPressure_dPhaseVolFrac;
+  arrayView3d< real64, cappres::USD_CAPPRES > m_phaseCapPressure;
+  arrayView4d< real64, cappres::USD_CAPPRES_DS > m_dPhaseCapPressure_dPhaseVolFrac;
 
 private:
 
   GEOSX_HOST_DEVICE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseCapPres,
-                        arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const = 0;
+  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                        arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const = 0;
 
   GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & phaseVolFraction ) const = 0;
+                       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const = 0;
 };
 
 class CapillaryPressureBase : public ConstitutiveBase
@@ -123,8 +113,8 @@ public:
 
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
-  arrayView3d< real64 const > phaseCapPressure() const { return m_phaseCapPressure; }
-  arrayView4d< real64 const > dPhaseCapPressure_dPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
+  arrayView3d< real64 const, cappres::USD_CAPPRES > phaseCapPressure() const { return m_phaseCapPressure; }
+  arrayView4d< real64 const, cappres::USD_CAPPRES_DS > dPhaseCapPressure_dPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -155,8 +145,8 @@ protected:
   array1d< integer > m_phaseOrder;
 
   // output quantities
-  array3d< real64 >  m_phaseCapPressure;
-  array4d< real64 >  m_dPhaseCapPressure_dPhaseVolFrac;
+  array3d< real64, cappres::LAYOUT_CAPPRES >  m_phaseCapPressure;
+  array4d< real64, cappres::LAYOUT_CAPPRES_DS >  m_dPhaseCapPressure_dPhaseVolFrac;
 
 };
 

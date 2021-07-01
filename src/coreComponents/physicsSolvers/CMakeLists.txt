@@ -25,12 +25,23 @@ set( physicsSolvers_headers
      fluidFlow/wells/SinglePhaseWell.hpp
      fluidFlow/wells/SinglePhaseWellKernels.hpp     
      fluidFlow/wells/WellControls.hpp
+     fluidFlow/CompositionalMultiphaseBase.hpp
+     fluidFlow/CompositionalMultiphaseFVM.hpp
+     fluidFlow/CompositionalMultiphaseHybridFVM.hpp
+     fluidFlow/CompositionalMultiphaseBaseKernels.hpp
+     fluidFlow/CompositionalMultiphaseFVMKernels.hpp
+     fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
+     fluidFlow/wells/CompositionalMultiphaseWell.hpp
+     fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
+     multiphysics/CompositionalMultiphaseReservoir.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/LagrangianContactSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
      multiphysics/SinglePhasePoromechanicsSolver.hpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
+     multiphysics/MultiphasePoromechanicsSolver.hpp
+     multiphysics/MultiphasePoromechanicsKernel.hpp
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhaseReservoir.hpp
      multiphysics/SinglePhasePoromechanicsKernel.hpp
@@ -72,13 +83,22 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseProppantBase.cpp     
      fluidFlow/wells/WellSolverBase.cpp
      fluidFlow/wells/SinglePhaseWell.cpp          
-     fluidFlow/wells/WellControls.cpp     
+     fluidFlow/wells/WellControls.cpp
+     fluidFlow/CompositionalMultiphaseBase.cpp
+     fluidFlow/CompositionalMultiphaseFVM.cpp
+     fluidFlow/CompositionalMultiphaseHybridFVM.cpp
+     fluidFlow/CompositionalMultiphaseBaseKernels.cpp
+     fluidFlow/CompositionalMultiphaseFVMKernels.cpp
+     fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
+     fluidFlow/wells/CompositionalMultiphaseWell.cpp
+     multiphysics/CompositionalMultiphaseReservoir.cpp
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/LagrangianContactSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
      multiphysics/SinglePhasePoromechanicsSolver.cpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
+     multiphysics/MultiphasePoromechanicsSolver.cpp
      multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhaseReservoir.cpp
      simplePDE/LaplaceBaseH1.cpp
@@ -108,34 +128,6 @@ endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_PVTPackage )
-    list( APPEND physicsSolvers_headers
-         fluidFlow/CompositionalMultiphaseBase.hpp
-         fluidFlow/CompositionalMultiphaseFVM.hpp
-         fluidFlow/CompositionalMultiphaseHybridFVM.hpp
-         fluidFlow/CompositionalMultiphaseBaseKernels.hpp
-         fluidFlow/CompositionalMultiphaseFVMKernels.hpp
-         fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
-         fluidFlow/wells/CompositionalMultiphaseWell.hpp
-         fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
-         multiphysics/MultiphasePoromechanicsSolver.hpp
-         multiphysics/CompositionalMultiphaseReservoir.hpp
-         multiphysics/MultiphasePoromechanicsKernel.hpp
-         )
-
-    list( APPEND physicsSolvers_sources
-         fluidFlow/CompositionalMultiphaseBase.cpp
-         fluidFlow/CompositionalMultiphaseFVM.cpp
-         fluidFlow/CompositionalMultiphaseHybridFVM.cpp
-         fluidFlow/CompositionalMultiphaseBaseKernels.cpp
-         fluidFlow/CompositionalMultiphaseFVMKernels.cpp
-         fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
-         multiphysics/CompositionalMultiphaseReservoir.cpp
-         multiphysics/MultiphasePoromechanicsSolver.cpp
-         fluidFlow/wells/CompositionalMultiphaseWell.cpp
-         )
 endif()
 
 blt_add_library( NAME                  physicsSolvers

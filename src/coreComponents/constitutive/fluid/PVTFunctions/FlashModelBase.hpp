@@ -19,7 +19,6 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_FLASHMODELBASE_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_FLASHMODELBASE_HPP_
 
-#include "codingUtilities/StringUtilities.hpp"
 #include "dataRepository/ObjectCatalog.hpp"
 
 namespace geosx
@@ -35,38 +34,14 @@ class FlashModelBaseUpdate
 {
 public:
 
-  FlashModelBaseUpdate( arrayView1d< real64 const > const & componentMolarWeight )
+  /**
+   * @brief Constructor.
+   * @param componentMolarWeight component molar weights
+   */
+  explicit FlashModelBaseUpdate( arrayView1d< real64 const > const & componentMolarWeight )
     :
     m_componentMolarWeight( componentMolarWeight )
   {}
-
-  /// Default virtual destructor
-  virtual ~FlashModelBaseUpdate() = default;
-
-  /// Default copy constructor
-  FlashModelBaseUpdate( FlashModelBaseUpdate const & ) = default;
-
-  /// Default move constructor
-  FlashModelBaseUpdate( FlashModelBaseUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  FlashModelBaseUpdate & operator=( FlashModelBaseUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  FlashModelBaseUpdate & operator=( FlashModelBaseUpdate && ) = delete;
-
-  GEOSX_HOST_DEVICE
-  virtual void compute( real64 const & pressure,
-                        real64 const & temperature,
-                        arraySlice1d< real64 const > const & compFraction,
-                        arraySlice1d< real64 > const & phaseFraction,
-                        arraySlice1d< real64 > const & dPhaseFraction_dPressure,
-                        arraySlice1d< real64 > const & dPhaseFraction_dTemperature,
-                        arraySlice2d< real64 > const & dPhaseFraction_dCompFraction,
-                        arraySlice2d< real64 > const & phaseCompFraction,
-                        arraySlice2d< real64 > const & dPhaseCompFraction_dPressure,
-                        arraySlice2d< real64 > const & dPhaseCompFraction_dTemperature,
-                        arraySlice3d< real64 > const & dPhaseCompFraction_dCompFraction ) const = 0;
 
   /**
    * @brief Move the KernelWrapper to the given execution space, optionally touching it.

@@ -19,6 +19,7 @@
 using namespace geosx;
 using namespace geosx::testing;
 using namespace geosx::constitutive;
+using namespace geosx::constitutive::cappres;
 using namespace geosx::dataRepository;
 
 CapillaryPressureBase & makeBrooksCoreyCapPressureTwoPhase( string const & name, Group & parent )
@@ -143,8 +144,8 @@ class CapillaryPressureTest : public ConstitutiveTestBase< CapillaryPressureBase
 public:
   void test( arraySlice1d< real64 const > const sat, real64 const eps, real64 const tol )
   {
-    arrayView3d< real64 const > phaseCapPressure;
-    arrayView4d< real64 const > dPhaseCapPressure_dPhaseVolFraction;
+    arrayView3d< real64 const, USD_CAPPRES > phaseCapPressure;
+    arrayView4d< real64 const, USD_CAPPRES_DS > dPhaseCapPressure_dPhaseVolFraction;
     testNumericalDerivatives( m_parent,
                               *m_model,
                               sat,

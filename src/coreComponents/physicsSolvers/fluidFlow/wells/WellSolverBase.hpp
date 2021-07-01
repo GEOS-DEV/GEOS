@@ -26,10 +26,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
 class DomainPartition;
 class WellControls;
 class WellElementSubRegion;

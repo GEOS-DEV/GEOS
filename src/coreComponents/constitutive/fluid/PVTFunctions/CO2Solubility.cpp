@@ -32,6 +32,9 @@ namespace constitutive
 namespace PVTProps
 {
 
+namespace
+{
+
 constexpr real64 T_K_f  = 273.15;
 constexpr real64 P_Pa_f = 1e+5;
 constexpr real64 P_c    = 73.773 * P_Pa_f;
@@ -44,10 +47,7 @@ constexpr real64 acoef[] =
 { 8.99288497e-2, -4.94783127e-1, 4.77922245e-2, 1.03808883e-2, -2.82516861e-2, 9.49887563e-2, 5.20600880e-4,
   -2.93540971e-4, -1.77265112e-3, -2.51101973e-5, 8.93353441e-5, 7.88998563e-5, -1.66727022e-2, 1.398, 2.96e-2 };
 
-namespace detail
-{
-
-real64 ff( real64 const & T, real64 const & P, real64 const & V_r )
+real64 co2EOS( real64 const & T, real64 const & P, real64 const & V_r )
 {
   // reduced pressure
   real64 const P_r = P*P_Pa_f/P_c;
@@ -125,94 +125,43 @@ real64 Par( real64 const & T, real64 const & P, real64 const * cc )
   return x;
 }
 
-}
-
-CO2Solubility::CO2Solubility( string_array const & inputPara,
-                              string_array const & phaseNames,
-                              string_array const & componentNames,
-                              array1d< real64 > const & componentMolarWeight ):
-  FlashModelBase( inputPara[1],
-                  componentNames,
-                  componentMolarWeight )
+real64 CO2SolubilityFunction( real64 const & tolerance,
+                              real64 const & T,
+                              real64 const & P,
+                              real64 (* f)( real64 const & x1, real64 const & x2, real64 const & x3 ) )
 {
-  GEOSX_THROW_IF( phaseNames.size() != 2,
-                  "The CO2Solubility model is a two-phase model",
-                  InputError );
-  GEOSX_THROW_IF( componentNames.size() != 2,
-                  "The CO2Solubility model is a two-component model",
-                  InputError );
+  constexpr integer maxIter = 50;
+  constexpr real64 dx = 1e-10;
 
-  char const * expectedCO2ComponentNames[] = { "CO2", "co2" };
-  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
-  GEOSX_THROW_IF( m_CO2Index < 0 || m_CO2Index >= componentNames.size(),
-                  "Component CO2 is not found!",
-                  InputError );
+  real64 Vr_int = 0.05;
+  real64 V_r = 0.75*Rgas*(T_K_f+T)/(P*P_Pa_f)*(1/V_c);
 
-  char const * expectedWaterComponentNames[] = { "Water", "water" };
-  m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames );
-  GEOSX_THROW_IF( m_waterIndex < 0 || m_waterIndex >= componentNames.size(),
-                  "Component Water/Brine is not found!",
-                  InputError );
-
-  char const * expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
-  m_phaseGasIndex = PVTFunctionHelpers::findName( phaseNames,
-                                                  expectedGasPhaseNames );
-  GEOSX_THROW_IF( m_phaseGasIndex < 0 || m_phaseGasIndex >= phaseNames.size(),
-                  "Phase co2/gas is not found!",
-                  InputError );
-
-  char const * expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
-  m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames,
-                                                     expectedWaterPhaseNames );
-  GEOSX_THROW_IF( m_phaseLiquidIndex < 0 || m_phaseLiquidIndex >= phaseNames.size(),
-                  "Phase water/liquid is not found!",
-                  InputError );
-
-  makeTable( inputPara );
-}
-
-void CO2Solubility::makeTable( string_array const & inputPara )
-{
-  // initialize the (p,T) coordinates
-  PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputPara, tableCoords );
-
-  // initialize salinity and tolerance
-  GEOSX_THROW_IF( inputPara.size() < 9,
-                  "Invalid property input!",
-                  InputError );
-
-  real64 tolerance = 1e-9;
-  real64 salinity = 0.0;
-  try
+  // iterate until the solution of the CO2 equation of state is found
+  integer count = 0;
+  real64 dre = LvArray::NumericLimits< real64 >::infinity;
+  for(; count < maxIter && fabs( dre ) >= tolerance; ++count )
   {
-    salinity = stod( inputPara[8] );
-    if( inputPara.size() >= 10 )
+    if( V_r < 0.0 )
     {
-      tolerance = stod( inputPara[9] );
+      V_r = Vr_int;
+      Vr_int += 0.05;
     }
-  }
-  catch( const std::invalid_argument & e )
-  {
-    GEOSX_THROW( "Invalid property argument:" + string( e.what()),
-                 InputError );
+    real64 const v0 = (*f)( T, P, V_r );
+    real64 const v1 = (*f)( T, P, V_r+dx );
+    dre = -v0/((v1-v0)/dx);
+    V_r += dre;
   }
 
-  array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  calculateCO2Solubility( tolerance, tableCoords, salinity, values );
-
-  FunctionManager & functionManager = FunctionManager::getInstance();
-  m_CO2SolubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2SolubilityTable" ) );
-  m_CO2SolubilityTable->setTableCoordinates( tableCoords.getCoords() );
-  m_CO2SolubilityTable->setTableValues( values );
-  m_CO2SolubilityTable->reInitializeFunction();
-  m_CO2SolubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  GEOSX_THROW_IF( count == maxIter,
+                  "CO2Solubility NR convergence fails! " << "dre = " << dre << ", tolerance = " << tolerance,
+                  InputError );
+  return V_r;
 }
 
-void CO2Solubility::calculateCO2Solubility( real64 const & tolerance,
-                                            PTTableCoordinates const & tableCoords,
-                                            real64 const & salinity,
-                                            array1d< real64 > const & values )
+void calculateCO2Solubility( real64 const & tolerance,
+                             PTTableCoordinates const & tableCoords,
+                             real64 const & salinity,
+                             array1d< real64 > const & values )
 {
   // Interaction parameters, see Table 2 of Duan and Sun (2003)
   constexpr real64 mu[] =
@@ -233,66 +182,94 @@ void CO2Solubility::calculateCO2Solubility( real64 const & tolerance,
       real64 const T = tableCoords.getTemperature( j );
 
       // compute reduced volume by solving the CO2 equation of state
-      real64 V_r = 0.0;
-      CO2SolubilityFunction( tolerance, T, P, V_r, &detail::ff );
+      real64 const V_r = CO2SolubilityFunction( tolerance, T, P, &co2EOS );
 
       // compute equation (6) of Duan and Sun (2003)
-      real64 const logK = detail::Par( T+T_K_f, P, mu )
-                          - detail::logF( T, P, V_r )
-                          + 2*detail::Par( T+T_K_f, P, lambda ) * salinity
-                          + detail::Par( T+T_K_f, P, zeta ) * salinity * salinity;
+      real64 const logK = Par( T+T_K_f, P, mu )
+                          - logF( T, P, V_r )
+                          + 2*Par( T+T_K_f, P, lambda ) * salinity
+                          + Par( T+T_K_f, P, zeta ) * salinity * salinity;
 
       // mole fraction of CO2 in vapor phase, equation (4) of Duan and Sun (2003)
-      real64 const y_CO2 = (P - detail::PWater( T ))/P;
+      real64 const y_CO2 = (P - PWater( T ))/P;
       values[j*nPressures+i] = y_CO2 * P / exp( logK );
     }
   }
 }
 
-void CO2Solubility::CO2SolubilityFunction( real64 const & tolerance,
-                                           real64 const & T,
-                                           real64 const & P,
-                                           real64 & V_r,
-                                           real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ) )
+TableFunction const * makeSolubilityTable( string_array const & inputParams,
+                                           FunctionManager & functionManager )
 {
-  constexpr real64 dx = 1e-10;
-  int count = 0;
-  real64 Vr_int = 0.05;
+  // initialize the (p,T) coordinates
+  PTTableCoordinates tableCoords;
+  PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
 
-  V_r = 0.75*Rgas*(T_K_f+T)/(P*P_Pa_f)*(1/V_c);
+  // initialize salinity and tolerance
+  GEOSX_THROW_IF( inputParams.size() < 9, "Invalid property input!", InputError );
 
-  // iterate until the solution of the CO2 equation of state is found
-  for(;; )
+  real64 tolerance = 1e-9;
+  real64 salinity = 0.0;
+  try
   {
-    if( V_r < 0.0 )
+    salinity = stod( inputParams[8] );
+    if( inputParams.size() >= 10 )
     {
-      V_r = Vr_int;
-      Vr_int += 0.05;
+      tolerance = stod( inputParams[9] );
     }
-
-    real64 const v0 = (*f)( T, P, V_r );
-    real64 const v1 = (*f)( T, P, V_r+dx );
-    real64 const dre = -v0/((v1-v0)/dx);
-
-    if( fabs( dre ) < tolerance )
-    {
-      break;
-    }
-
-    GEOSX_THROW_IF( count > 50,
-                    "CO2Solubility NR convergence fails! " << "dre = " << dre << ", tolerance = " << tolerance,
-                    InputError );
-
-    count++;
-    V_r += dre;
   }
+  catch( const std::invalid_argument & e )
+  {
+    GEOSX_THROW( "Invalid property argument:" + string( e.what() ), InputError );
+  }
+
+  array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
+  calculateCO2Solubility( tolerance, tableCoords, salinity, values );
+
+  TableFunction * const solubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2SolubilityTable" ) );
+  solubilityTable->setTableCoordinates( tableCoords.getCoords() );
+  solubilityTable->setTableValues( values );
+  solubilityTable->reInitializeFunction();
+  solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  return solubilityTable;
 }
 
+} // namespace
 
-CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper()
+CO2Solubility::CO2Solubility( string_array const & inputParams,
+                              string_array const & phaseNames,
+                              string_array const & componentNames,
+                              array1d< real64 > const & componentMolarWeight ):
+  FlashModelBase( inputParams[1],
+                  componentNames,
+                  componentMolarWeight )
+{
+  GEOSX_THROW_IF_NE_MSG( phaseNames.size(), 2,
+                         "The CO2Solubility model is a two-phase model",
+                         InputError );
+  GEOSX_THROW_IF_NE_MSG( componentNames.size(), 2,
+                         "The CO2Solubility model is a two-component model",
+                         InputError );
+
+  string const expectedCO2ComponentNames[] = { "CO2", "co2" };
+  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
+
+  string const expectedWaterComponentNames[] = { "Water", "water" };
+  m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames );
+
+  string const expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
+  m_phaseGasIndex = PVTFunctionHelpers::findName( phaseNames, expectedGasPhaseNames );
+
+  string const expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
+  m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames );
+
+  m_CO2SolubilityTable = makeSolubilityTable( inputParams, FunctionManager::getInstance() );
+}
+
+CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
-                        m_CO2SolubilityTable,
+                        *m_CO2SolubilityTable,
                         m_CO2Index,
                         m_waterIndex,
                         m_phaseGasIndex,

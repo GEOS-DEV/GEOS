@@ -49,9 +49,10 @@ void checkDerivative( real64 const valueEps,
                       string const & var )
 { return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var ); }
 
-void checkDerivative( arraySlice1d< real64 const > const & valueEps,
-                      arraySlice1d< real64 const > const & value,
-                      arraySlice1d< real64 const > const & deriv,
+template< int USD1, int USD2, int USD3 >
+void checkDerivative( arraySlice1d< real64 const, USD1 > const & valueEps,
+                      arraySlice1d< real64 const, USD2 > const & value,
+                      arraySlice1d< real64 const, USD3 > const & deriv,
                       real64 const eps,
                       real64 const relTol,
                       real64 const absTol,
@@ -68,10 +69,10 @@ void checkDerivative( arraySlice1d< real64 const > const & valueEps,
   }
 }
 
-template< int DIM, typename ... Args >
-void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
-                      ArraySlice< real64 const, DIM > const & value,
-                      ArraySlice< real64 const, DIM > const & deriv,
+template< int DIM, int USD1, int USD2, int USD3, typename ... Args >
+void checkDerivative( ArraySlice< real64 const, DIM, USD1 > const & valueEps,
+                      ArraySlice< real64 const, DIM, USD2 > const & value,
+                      ArraySlice< real64 const, DIM, USD3 > const & deriv,
                       real64 const eps,
                       real64 const relTol,
                       real64 const absTol,
@@ -89,10 +90,10 @@ void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
   }
 }
 
-template< int DIM, typename ... Args >
-void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
-                      ArraySlice< real64 const, DIM > const & value,
-                      ArraySlice< real64 const, DIM > const & deriv,
+template< int DIM, int USD1, int USD2, int USD3, typename ... Args >
+void checkDerivative( ArraySlice< real64 const, DIM, USD1 > const & valueEps,
+                      ArraySlice< real64 const, DIM, USD2 > const & value,
+                      ArraySlice< real64 const, DIM, USD3 > const & deriv,
                       real64 const eps,
                       real64 const relTol,
                       string const & name,
@@ -103,7 +104,8 @@ void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
 
 // invert compositional derivative array layout to move innermost slice on the top
 // (this is needed so we can use checkDerivative() to check derivative w.r.t. for each compositional var)
-array1d< real64 > invertLayout( arraySlice1d< real64 const > const & input,
+template< int USD >
+array1d< real64 > invertLayout( arraySlice1d< real64 const, USD > const & input,
                                 localIndex N )
 {
   array1d< real64 > output( N );
@@ -115,7 +117,8 @@ array1d< real64 > invertLayout( arraySlice1d< real64 const > const & input,
   return output;
 }
 
-array2d< real64 > invertLayout( arraySlice2d< real64 const > const & input,
+template< int USD >
+array2d< real64 > invertLayout( arraySlice2d< real64 const, USD > const & input,
                                 localIndex N1,
                                 localIndex N2 )
 {
@@ -132,7 +135,8 @@ array2d< real64 > invertLayout( arraySlice2d< real64 const > const & input,
   return output;
 }
 
-array3d< real64 > invertLayout( arraySlice3d< real64 const > const & input,
+template< int USD >
+array3d< real64 > invertLayout( arraySlice3d< real64 const, USD > const & input,
                                 localIndex N1,
                                 localIndex N2,
                                 localIndex N3 )

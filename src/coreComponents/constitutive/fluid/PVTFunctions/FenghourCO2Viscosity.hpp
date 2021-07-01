@@ -38,36 +38,32 @@ class FenghourCO2ViscosityUpdate final : public PVTFunctionBaseUpdate
 public:
 
   FenghourCO2ViscosityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                              TableFunction * CO2ViscosityTable )
+                              TableFunction const & CO2ViscosityTable )
     : PVTFunctionBaseUpdate( componentMolarWeight ),
-    m_CO2ViscosityTable( CO2ViscosityTable->createKernelWrapper() )
+    m_CO2ViscosityTable( CO2ViscosityTable.createKernelWrapper() )
   {}
 
-  /// Default copy constructor
-  FenghourCO2ViscosityUpdate( FenghourCO2ViscosityUpdate const & ) = default;
-
-  /// Default move constructor
-  FenghourCO2ViscosityUpdate( FenghourCO2ViscosityUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  FenghourCO2ViscosityUpdate & operator=( FenghourCO2ViscosityUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  FenghourCO2ViscosityUpdate & operator=( FenghourCO2ViscosityUpdate && ) = delete;
-
+  template< int USD1 >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void compute( real64 const & pressure,
-                        real64 const & temperature,
-                        arraySlice1d< real64 const > const & phaseComposition,
-                        arraySlice1d< real64 const > const & dPhaseComposition_dPressure,
-                        arraySlice1d< real64 const > const & dPhaseComposition_dTemperature,
-                        arraySlice2d< real64 const > const & dPhaseComposition_dGlobalCompFraction,
-                        real64 & value,
-                        real64 & dValue_dPressure,
-                        real64 & dValue_dTemperature,
-                        arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
-                        bool useMass ) const override;
+  void compute( real64 const & pressure,
+                real64 const & temperature,
+                arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                real64 & value,
+                bool useMass ) const;
+
+  template< int USD1, int USD2, int USD3, int USD4 >
+  GEOSX_HOST_DEVICE
+  void compute( real64 const & pressure,
+                real64 const & temperature,
+                arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
+                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
+                arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                real64 & value,
+                real64 & dValue_dPressure,
+                real64 & dValue_dTemperature,
+                arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                bool useMass ) const;
 
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
   {
@@ -86,10 +82,11 @@ class FenghourCO2Viscosity : public PVTFunctionBase
 {
 public:
 
-  FenghourCO2Viscosity( string_array const & inputPara,
+  FenghourCO2Viscosity( string_array const & inputParams,
                         string_array const & componentNames,
                         array1d< real64 > const & componentMolarWeight );
-  ~FenghourCO2Viscosity() override {}
+
+  virtual ~FenghourCO2Viscosity() override = default;
 
   static string catalogName() { return "FenghourCO2Viscosity"; }
 
@@ -111,51 +108,53 @@ public:
 
 private:
 
-  void makeTable( string_array const & inputPara );
-
-  void calculateCO2Viscosity( PVTProps::PTTableCoordinates const & tableCoords,
-                              array1d< real64 > const & density,
-                              array1d< real64 > const & viscosity );
-
-  void fenghourCO2ViscosityFunction( real64 const & temperatureCent,
-                                     real64 const & density,
-                                     real64 & viscosity );
-
   /// Table with CO2 viscosity tabulated as a function of (P,T)
-  TableFunction * m_CO2ViscosityTable;
+  TableFunction const * m_CO2ViscosityTable;
 
 };
 
+template< int USD1 >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void FenghourCO2ViscosityUpdate::compute( real64 const & pressure,
                                           real64 const & temperature,
-                                          arraySlice1d< real64 const > const & phaseComposition,
-                                          arraySlice1d< real64 const > const & dPhaseComposition_dPressure,
-                                          arraySlice1d< real64 const > const & dPhaseComposition_dTemperature,
-                                          arraySlice2d< real64 const > const & dPhaseComposition_dGlobalCompFraction,
+                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                                          real64 & value,
+                                          bool useMass ) const
+{
+  GEOSX_UNUSED_VAR( phaseComposition, useMass )
+
+  real64 const input[2] = { pressure, temperature };
+  real64 densityDeriv[2];
+  m_CO2ViscosityTable.compute( input, value, densityDeriv );
+}
+
+template< int USD1, int USD2, int USD3, int USD4 >
+GEOSX_HOST_DEVICE
+void FenghourCO2ViscosityUpdate::compute( real64 const & pressure,
+                                          real64 const & temperature,
+                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                                          arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
+                                          arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
+                                          arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
                                           real64 & value,
                                           real64 & dValue_dPressure,
                                           real64 & dValue_dTemperature,
-                                          arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
+                                          arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
                                           bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition );
-  GEOSX_UNUSED_VAR( dPhaseComposition_dPressure );
-  GEOSX_UNUSED_VAR( dPhaseComposition_dTemperature );
-  GEOSX_UNUSED_VAR( dPhaseComposition_dGlobalCompFraction );
-  GEOSX_UNUSED_VAR( useMass );
+  GEOSX_UNUSED_VAR( phaseComposition,
+                    dPhaseComposition_dPressure,
+                    dPhaseComposition_dTemperature,
+                    dPhaseComposition_dGlobalCompFraction,
+                    useMass )
 
   real64 const input[2] = { pressure, temperature };
-  real64 densityDeriv[2]{};
+  real64 densityDeriv[2];
   m_CO2ViscosityTable.compute( input, value, densityDeriv );
+
   dValue_dPressure = densityDeriv[0];
   dValue_dTemperature = densityDeriv[1];
-
-  for( real64 & val : dValue_dGlobalCompFraction )
-  {
-    val = 0.0;
-  }
+  LvArray::forValuesInSlice( dValue_dGlobalCompFraction, []( real64 & val ){ val = 0.0; } );
 }
 
 } // end namespace PVTProps

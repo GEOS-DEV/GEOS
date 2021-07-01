@@ -24,13 +24,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-class DomainPartition;
-
 /**
  * @class FlowSolverBase
  *
