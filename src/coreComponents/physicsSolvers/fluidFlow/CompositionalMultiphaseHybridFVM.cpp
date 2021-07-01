@@ -104,6 +104,11 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 {
   GEOSX_MARK_FUNCTION;
 
+  if( m_computeCFLNumbers )
+  {
+    GEOSX_LOG_RANK_0( "The computation of CFL numbers in not supported by CompositionalMultiphaseHybridFVM yet" );
+  }
+
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -722,6 +727,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
     arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
     arrayView1d< real64 const > const & totalDensOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
 
+    real64 subRegionResidualNorm = 0.0;
     CompositionalMultiphaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                                     parallelDeviceReduce >( localRhs,
                                                                                             rankOffset,
@@ -731,7 +737,8 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                                                             refPoro,
                                                                                             volume,
                                                                                             totalDensOld,
-                                                                                            localResidualNorm );
+                                                                                            subRegionResidualNorm );
+    localResidualNorm += subRegionResidualNorm;
   } );
 
   arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
@@ -743,6 +750,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
   arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
 
   // 2. Compute the residual for the face-based constraints
+  real64 faceResidualNorm = 0.0;
   CompositionalMultiphaseHybridFVMKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                                        parallelDeviceReduce >( localRhs,
                                                                                                rankOffset,
@@ -755,7 +763,8 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                                                                elemList.toNestedViewConst(),
                                                                                                m_volume.toNestedViewConst(),
                                                                                                m_phaseMobOld.toNestedViewConst(),
-                                                                                               localResidualNorm );
+                                                                                               faceResidualNorm );
+  localResidualNorm += faceResidualNorm;
 
   // 3. Combine the two norms
 

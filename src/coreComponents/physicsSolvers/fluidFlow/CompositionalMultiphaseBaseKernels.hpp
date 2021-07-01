@@ -375,7 +375,7 @@ struct VolumeBalanceKernel
 
 struct ResidualNormKernel
 {
-  // TODO: template on NC??
+
   template< typename POLICY, typename REDUCE_POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
