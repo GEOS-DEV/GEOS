@@ -17,6 +17,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
 #include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
+#include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 
 namespace geosx
 {
@@ -87,7 +88,6 @@ public:
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
-  //END_SPHINX_INCLUDE_SOLVERINTERFACE
 
   /// This method is specific to this Laplace solver.
   /// It is used to apply Dirichlet boundary condition
@@ -96,7 +96,9 @@ public:
                                          DofManager const & dofManager,
                                          DomainPartition & domain,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                         arrayView1d< real64 > const & localRhs ) = 0;
+                                         arrayView1d< real64 > const & localRhs );
+
+  //END_SPHINX_INCLUDE_SOLVERINTERFACE
 
   /// Choice of transient treatment options (steady or backward Euler scheme):
   //START_SPHINX_INCLUDE_TIMEINTOPT
