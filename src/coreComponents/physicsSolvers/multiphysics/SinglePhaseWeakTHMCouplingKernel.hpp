@@ -50,6 +50,7 @@ public:
   using typename Base::StackVariables;
   using Base::m_elemsToNodes;
 
+
   SinglePhase( NodeManager const & nodeManager,
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
@@ -78,7 +79,8 @@ public:
           inputRhs,
           inputGravityVector,
           fluidModelNames ),
-    m_temperature( nodeManager.template getReference< array1d< real64 > >( dataRepository::keys::Temperature ) )
+    m_temperature( nodeManager.template getReference< array1d< real64 > >( dataRepository::keys::Temperature ) ),
+    m_deltaTemperature( nodeManager.template getReference< array1d< real64 > >( "newDeltaTemperature" ) )
   {}
 
   /**
@@ -94,26 +96,34 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    real64 const thermalStressCoefficient = 2013194.44444; //6e5; //TODO m_constitutiveUpdate.getThermalStressCoefficient();
-    real64 const thermalPorosityCoefficient = 0.; //TODO m_constitutiveUpdate.getThermalPorosityCoefficient();
-    Base::quadraturePointKernel( k, q, stack, [=] GEOSX_HOST_DEVICE ( real64 (& stress)[6], real64 porosity )
+    real64 const thermalStressCoefficient = 1e6;//TODO m_constitutiveUpdate.getThermalStressCoefficient();
+    real64 const thermalPorosityCoefficient = 0.;//TODO m_constitutiveUpdate.getThermalPorosityCoefficient();
+    Base::quadraturePointKernel( k, q, stack, [=] GEOSX_HOST_DEVICE ( real64 (& stress)[6], real64 & porosity, real64 & porosityOld )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, q );
       real64 const thermalStress = thermalStressCoefficient * m_temperature[localNodeIndex];
       
-      stress[0] += thermalStress;
-      stress[1] += thermalStress;
-      stress[2] += thermalStress;
+      stress[0] -= thermalStress;
+      stress[1] -= thermalStress;
+      stress[2] -= thermalStress;
 
+
+
+      porosityOld -= thermalPorosityCoefficient * ( m_temperature[localNodeIndex] - m_deltaTemperature[localNodeIndex] );
+
+      
       porosity -= thermalPorosityCoefficient * m_temperature[localNodeIndex];
+
     } );
 
   }
 
-
 protected:
   /// The rank-global temperature array.
   arrayView1d< real64 const > const m_temperature;
+
+  /// The rank-global incremental temperature array.
+  arrayView1d< real64 const > const m_deltaTemperature;
   
 };
 

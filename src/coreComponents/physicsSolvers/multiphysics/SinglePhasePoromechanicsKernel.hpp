@@ -221,12 +221,15 @@ public:
      * @brief operator() no-op used for modifying the stress tensor ( prior to
      *   integrating the divergence to produce nodal forces) and the porosity.
      * @param stress The stress array.
+     * @param porosity The porosity.
      */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( real64 (& stress)[6], real64 & porosity )
+    GEOSX_HOST_DEVICE 
+    GEOSX_FORCE_INLINE constexpr
+    void operator() ( real64 (& stress)[6], real64 & porosity, real64 & porosityOld )
     {
       GEOSX_UNUSED_VAR( stress );
       GEOSX_UNUSED_VAR( porosity );
+      GEOSX_UNUSED_VAR( porosityOld );
     }
   };
 
@@ -273,7 +276,7 @@ public:
     real64 const biotSkeletonModulusInverse = 0.0; //TODO: 1/N = 0 correct only for biotCoefficient = 1                //
     real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local );                         //
     real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local );//
-    real64 const porosityOld = m_poroRef( k ) + m_biotCoefficient * volumetricStrainOld;// +  DeltaPoro                //
+    real64 porosityOld = m_poroRef( k ) + m_biotCoefficient * volumetricStrainOld;// +  DeltaPoro                //
     real64 const dPorosity_dPressure = biotSkeletonModulusInverse;                                                     //
     real64 const dPorosity_dVolStrainIncrement =  m_biotCoefficient;                                                   //
                                                                                                                        //
@@ -285,9 +288,8 @@ public:
                                + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
                                + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
 
-
-    // Modify stress and porosity in case of thermal coupling
-    modifier( totalStress, porosityNew );
+    // Modify stress and porosity in case of thermal coupling  
+    modifier( totalStress, porosityNew, porosityOld );
 
     // Evaluate body force vector
     real64 bodyForce[3] = { m_gravityVector[0],
@@ -356,12 +358,14 @@ public:
   /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    */
+  template< typename MODIFIER = NoOpFunctors >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
+
     real64 maxForce = 0;
 
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
