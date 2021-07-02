@@ -90,7 +90,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   GEOSX_LOG_RANK_0(" Successfully redistributed the mesh on the " << controller->GetNumberOfProcesses() << " MPI processes");
 
-  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
+  Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
 
   MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
