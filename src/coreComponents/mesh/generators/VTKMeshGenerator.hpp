@@ -62,14 +62,6 @@ public:
  */
   static string catalogName() { return "VTKMeshGenerator"; }
 
-  /**
-   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
-   * @param childKey the catalog key of the new geometric object to create
-   * @param childName the name of the new geometric object in the repository
-   * @return the group child
-   */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
-
 protected:
   /**
    * @brief This function provides capability to post process input values prior to
@@ -144,16 +136,17 @@ private:
    * @param[in] nodeManager the NodeManager of the domain in which the poiints will be copied.
    * @return the global length of the mesh (diagonal of the bounding box)
    */
-  double writeMeshNodes(NodeManager & nodeManager);
+  double writeMeshNodes(NodeManager & nodeManager) const;
 
   /**
    * @brief Compute the potential rank neighbor list
+   * @param[in] domain the DomainPartition in which the neighbhor list will be computed
+   * @param[in] globalLength the globalLength of the model
    * @details Fills the metisNeighbor list in \p domain. This method computes the bounding box
    * of each domains. If these boundings boxes are crossing, it is possible that the corresponsing
    * domains are neighbors.
-   * @param[in] domain the DomainPartition in which the neighbhor list will be computed
    */
-  void computePotentialNeighborLists( DomainPartition & domain);
+  void computePotentialNeighborLists( DomainPartition & domain, double globalLength);
 
   /** 
    * @brief Get the attribute data array from the VTK mesh
@@ -168,8 +161,8 @@ private:
   vtkIdTypeArray * getCellGlobalIdDataArray();
 
   /**
-   * @brief This methos is used to preprocess the the VTK mesh and count the number of cells, facets, regions
-   * and surfaces.
+   * @brief This method is used to preprocess the the VTK mesh and count the number of cells, facets, regions
+   * and surfaces over the current MPI rank
    * @param[out] numHex number of hexahedra
    * @param[out] numTet number of tetra
    * @param[out] numWedge number of wedges
@@ -253,6 +246,14 @@ private:
    * @param[in,out] cellToVertex list of nodes organized per cells
    */
   void writeWedgeVertices( CellBlock::NodeMapType & cellToVertex, int region_id,  arrayView1d< globalIndex > const & localToGlobal );
+
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
+  Group * createChild( string const & childKey, string const & childName ) override;
 
 private:
 
