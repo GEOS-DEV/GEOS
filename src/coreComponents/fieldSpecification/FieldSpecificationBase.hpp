@@ -1019,24 +1019,13 @@ FieldSpecificationBase::
   array1d< real64 > rhsContributionArray( targetSet.size() );
   arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
 
-  real64 sizeScalingFactor = 0.0;
+  real64 sizeScalingFactor = 1.0;
   if( m_normalizeBySetSize )
   {
     // note: this assumes that the ghost elements have been filtered out
-
     // recompute the set size here to make sure that topology changes are accounted for
-    integer const localSetSize = targetSet.size();
-    integer globalSetSize = 0;
-
-    // synchronize
-    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
-
-    // set the scaling factor
-    sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
-  }
-  else
-  {
-    sizeScalingFactor = 1;
+    globalIndex const globalSetSize = MpiWrapper::sum( LvArray::integerConversion< globalIndex >( targetSet.size() ), MPI_COMM_GEOSX );
+    sizeScalingFactor = ( globalSetSize > 0 ) ? ( 1.0 / globalSetSize ) : 1.0;
   }
 
 

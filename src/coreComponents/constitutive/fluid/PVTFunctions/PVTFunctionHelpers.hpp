@@ -56,83 +56,86 @@ private:
   array1d< array1d< real64 > > coords;
 };
 
-struct PVTFunctionHelpers
+namespace PVTFunctionHelpers
 {
 
-  /**
-   * @brief Look for the expectedNames in the names provided by the user
-   * @tparam InputRange type of the input range
-   * @tparam ExpectedRange type of the expected range
-   * @param[in] inputNames phase or component names provided by the user
-   * @param[in] expectedNames expected names that can be accepted by GEOSX
-   * @return the index of the phase or component that was found
-   */
-  template< typename InputRange, typename ExpectedRange >
-  static localIndex
-  findName( InputRange const & inputNames,
-            ExpectedRange const & expectedNames )
-  {
-    using std::begin;
-    using std::end;
-    auto it = std::find_first_of( begin( inputNames ), end( inputNames ), begin( expectedNames ), end( expectedNames ) );
-    localIndex const id = std::distance( begin( inputNames ), it );
-    return id;
-  }
+/**
+ * @brief Look for the expectedNames in the names provided by the user
+ * @tparam InputRange type of the input range
+ * @tparam ExpectedRange type of the expected range
+ * @param[in] input phase or component names provided by the user
+ * @param[in] expected expected names that can be accepted by GEOSX
+ * @return the index of the phase or component that was found
+ */
+template< typename InputRange, typename ExpectedRange >
+inline integer
+findName( InputRange const & input,
+          ExpectedRange const & expected,
+          string const & attribute = {} )
+{
+  using std::begin;
+  using std::end;
+  auto const it = std::find_first_of( begin( input ), end( input ), begin( expected ), end( expected ) );
+  GEOSX_THROW_IF( it == end( input ),
+                  "Name " << *begin( expected ) << " not found" << ( attribute.empty() ? "" : " in " + attribute ) << ".\n" <<
+                  "Expected one of: " << stringutilities::join( begin( expected ), end( expected ), ", " ) << ".\n" <<
+                  "Input provided: " << stringutilities::join( begin( input ), end( input ) )  << '.',
+                  InputError );
+  return std::distance( begin( input ), it );
+}
 
-  /**
-   * @brief Populate the coordinate table with pressure and temperature
-   * @param[in] inputParameters the strings reads in the file provided by the user
-   * @param[inout] tableCoords the (p,T) coordinates of the table
-   */
-  static void
-  initializePropertyTable( string_array const & inputParameters,
-                           PTTableCoordinates & tableCoords )
+/**
+ * @brief Populate the coordinate table with pressure and temperature
+ * @param[in] inputParameters the strings reads in the file provided by the user
+ * @param[inout] tableCoords the (p,T) coordinates of the table
+ */
+inline void
+initializePropertyTable( string_array const & inputParameters,
+                         PTTableCoordinates & tableCoords )
 
+{
+  GEOSX_THROW_IF( inputParameters.size() < 8,
+                  "Invalid property input!",
+                  InputError );
+
+  try
   {
-    GEOSX_THROW_IF( inputParameters.size() < 8,
-                    "Invalid property input!",
+    real64 const PStart = stod( inputParameters[2] );
+    real64 const PEnd = stod( inputParameters[3] );
+    real64 const dP = stod( inputParameters[4] );
+
+    GEOSX_THROW_IF( PStart >= PEnd, "PStart must be strictly smaller than PEnd",
                     InputError );
 
-    try
+    constexpr real64 T_K = 273.15;
+
+    real64 const TStart = stod( inputParameters[5] ) - T_K;
+    real64 const TEnd = stod( inputParameters[6] )- T_K;
+    real64 const dT = stod( inputParameters[7] );
+
+    GEOSX_THROW_IF( TStart < 10, "Temperature must be in Kelvin and must be larger than 283.15 K",
+                    InputError );
+    GEOSX_THROW_IF( TEnd > 350, "Temperature must be in Kelvin and must be smaller than 623.15 K",
+                    InputError );
+    GEOSX_THROW_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
+                    InputError );
+
+    for( real64 P = PStart; P <= PEnd; P += dP )
     {
-      real64 const PStart = stod( inputParameters[2] );
-      real64 const PEnd = stod( inputParameters[3] );
-      real64 const dP = stod( inputParameters[4] );
-
-      GEOSX_THROW_IF( PStart >= PEnd, "PStart must be strictly smaller than PEnd",
-                      InputError );
-
-      constexpr real64 T_K = 273.15;
-
-      real64 const TStart = stod( inputParameters[5] ) - T_K;
-      real64 const TEnd = stod( inputParameters[6] ) - T_K;
-      real64 const dT = stod( inputParameters[7] );
-
-      GEOSX_THROW_IF( TStart < 10, "Temperature must be in Kelvin and must be larger than 283.15 K",
-                      InputError );
-      GEOSX_THROW_IF( TEnd > 350, "Temperature must be in Kelvin and must be smaller than 623.15 K",
-                      InputError );
-      GEOSX_THROW_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
-                      InputError );
-
-
-      for( real64 P = PStart; P <= PEnd; P += dP )
-      {
-        tableCoords.appendPressure( P );
-      }
-      for( real64 T = TStart; T <= TEnd; T += dT )
-      {
-        tableCoords.appendTemperature( T );
-      }
+      tableCoords.appendPressure( P );
     }
-    catch( const std::invalid_argument & e )
+    for( real64 T = TStart; T <= TEnd; T += dT )
     {
-      GEOSX_THROW( "Invalid property argument:" + string( e.what()),
-                   InputError );
+      tableCoords.appendTemperature( T );
     }
   }
+  catch( const std::invalid_argument & e )
+  {
+    GEOSX_THROW( "Invalid property argument:" + string( e.what() ), InputError );
+  }
+}
 
-};
+} // namespace PVTFunctionHelpers
 
 } // namespace PVTProps
 

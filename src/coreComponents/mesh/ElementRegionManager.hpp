@@ -764,12 +764,13 @@ public:
    * @brief This is a function to construct a ElementViewAccessor to access array data registered on the mesh.
    * @tparam T data type
    * @tparam NDIM number of array dimensions
+   * @tparam PERM layout permutation sequence type
    * @param name view name of the data
    * @param neighborName neighbor data name
    * @return ElementViewAccessor that contains ArrayView<T const, NDIM> of data
    */
-  template< typename T, int NDIM >
-  ElementViewAccessor< ArrayView< T const, NDIM > >
+  template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
   constructArrayViewAccessor( string const & name, string const & neighborName = string() ) const;
 
   /**
@@ -858,14 +859,15 @@ public:
    * @brief Construct a view accessor for material data, assuming array as storage type
    * @tparam T underlying data type
    * @tparam NDIM number of array dimensions
+   * @tparam PERM layout permutation sequence type
    * @param viewName view name of the data
    * @param regionNames list of region names
    * @param materialNames list of corresponding material names
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material list
    * @return MaterialViewAccessor that contains the data views
    */
-  template< typename T, int NDIM >
-  ElementViewAccessor< ArrayView< T const, NDIM > >
+  template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
   constructMaterialArrayViewAccessor( string const & viewName,
                                       arrayView1d< string const > const & regionNames,
                                       arrayView1d< string const > const & materialNames,
@@ -1174,12 +1176,14 @@ ElementRegionManager::
   return viewAccessor;
 }
 
-template< typename T, int NDIM >
-ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM > >
+template< typename T, int NDIM, typename PERM >
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
 ElementRegionManager::
   constructArrayViewAccessor( string const & name, string const & neighborName ) const
 {
-  return constructViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( name, neighborName );
+  return constructViewAccessor< Array< T, NDIM, PERM >,
+         ArrayView< T const, NDIM, getUSD( PERM{} ) >
+         >( name, neighborName );
 }
 
 template< typename VIEWTYPE >
@@ -1409,18 +1413,20 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   return accessor;
 }
 
-template< typename T, int NDIM >
-ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM > >
+template< typename T, int NDIM, typename PERM >
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
 ElementRegionManager::
   constructMaterialArrayViewAccessor( string const & viewName,
                                       arrayView1d< string const > const & regionNames,
                                       arrayView1d< string const > const & materialNames,
                                       bool const allowMissingViews ) const
 {
-  return constructMaterialViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( viewName,
-                                                                                        regionNames,
-                                                                                        materialNames,
-                                                                                        allowMissingViews );
+  return constructMaterialViewAccessor< Array< T, NDIM, PERM >,
+         ArrayView< T const, NDIM, getUSD( PERM{} ) >
+         >( viewName,
+            regionNames,
+            materialNames,
+            allowMissingViews );
 }
 
 template< typename CONSTITUTIVE_TYPE >
