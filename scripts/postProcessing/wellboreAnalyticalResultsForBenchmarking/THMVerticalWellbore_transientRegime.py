@@ -65,18 +65,14 @@ ri=0.1
 T1 = 60. 
 #p1 = T1/(6.)*1e6
 
-#Westerly Granite, see Tab 1 in Wang and Papamichos (1994)
+#Thermal stress coefficient
+alpha_d = 1e6
 
-# Notations by Cheng (2016)
-alpha_e = 0.39e6 #equivalent to parameter cp,PaC
+#Thermal porosity coefficient
+beta_e = 0.
+
 c =0.22e-4 #m2/s
-kappaT = 0.5*c/0.23 #equivalent to parameter c0, the ratio given in Tab1 of Wang and Papamichos (1994) is for c/c0, not c0/c; Also, a factor 0.5 was added to match the results given by the Figs of Wang and Papamichos.
-
-# Equivalent notations by Wang and Papamichos (1994)
-cp = alpha_e
-c0 = kappaT
-Tw = T1
-#pw = p1
+kappaT = 4.78260869565e-05
 
 # Additional parameters to calculate stresses and displacement
 #Westerly Granite, see Tab 3.2 in Cheng (2016)
@@ -84,22 +80,28 @@ Tw = T1
 Ku = 39.3e9
 nuu = 0.331
 nu = 0.25
-G = 3.*Ku*(1.-2.*nuu)/2./(1.+nuu)
+bBiot =1.0 
 
-bBiot = 1.0 #eta / ( (1.-2.*nu)/2./(1.-nu) ) Note: actual GEOSX version does only accept b=1
-eta = bBiot * (1.-2.*nu)/2./(1.-nu) # 0.15
-#eta_d = alpha_d * (1.-2.*nu)/2./(1.-nu)
+G = 3.*Ku*(1.-2.*nuu)/2./(1.+nuu)
+eta = bBiot * (1.-2.*nu)/2./(1.-nu) 
+S = 2.* (eta**2.) * (1.-nu)*(1.-nuu)/G/(nuu-nu)
+
+alpha_e = ( beta_e - eta / G * alpha_d ) / S  #see Eqs. B.137 and B.146 in Cheng (2016)
+
 
 # Prepare input parameter for GEOSX
-tstar = 0.1
+tstar = 1.0
 fluidViscosity = 1e-3
 porosity = 0.01
 
 a = ri 
 t = tstar * a * a / c 
 
-#bBiot = eta / ( (1.-2.*nu)/2./(1.-nu) )
+
+
+
 BSkempton = 3.*(nuu-nu)/( bBiot*(1.-2.*nu)*(1.+nuu) )
+
 kappa = c / ( 2.*(BSkempton**2.)*G*(1.-nu)*( (1.+nuu)**2.)/9./(1.-nuu)/(nuu-nu) )
 
 permeability = kappa * fluidViscosity
@@ -107,12 +109,7 @@ permeability = kappa * fluidViscosity
 K = 2.*G*(1.+nu) / 3. / (1.-2.*nu)
 MBiot = (Ku - K) / bBiot / bBiot
 fluidCompressibility = 1./MBiot/porosity
-
-#alpha_m = alpha_d * 3. * (1.-2.*nu) /2./G/(1.+nu)
-#alpha_f = ( ( cp*kappa/alpha_m/c - 2.*(nuu-nu)/BSkempton/(1.+nuu)/(1.-nu) ) / porosity + 1. ) * alpha_m
-alpha_m = cp*kappa/c / ( 2.*(nuu-nu)/BSkempton/(1.+nuu)/(1.-nu) )
-alpha_d = alpha_m / ( 3. * (1.-2.*nu) /2./G/(1.+nu) )
-alpha_f = alpha_m
+ 
 eta_d = alpha_d * (1.-2.*nu)/2./(1.-nu)
 
 print("Bulk modulus: " + str(K))
@@ -125,62 +122,93 @@ print("Fluid compressibility: " + str(fluidCompressibility))
 
 print("Thermal diffusion coefficient: " + str(kappaT))
 print("Thermal stress coefficient: " + str(alpha_d))
-print("Thermal porosity coefficient: " + str( (alpha_f-alpha_m)*porosity ))
+print("Thermal porosity coefficient: " + str( beta_e ))
 print("Diffusion time: " + str(t))
 
 fig = plt.figure(figsize=[10,10])
-list_tstar = [0.01,0.1,1.]
-for iTime in range(len(list_tstar)):
-    tstar = list_tstar[iTime]
-    t = tstar*ri**2./c
-    
-    listr = np.arange(ri,4.*ri,0.01*ri)
-    listT = []
-    listp = []
-    listUr = []
-    listSigRR = []
-    listSigTT = []
-    for r in listr:
-        result = StehfestTransform(t, r)
-        listT.append(result[0])
-        listp.append(result[1])
-        listUr.append(result[2])
-        listSigRR.append(result[3])
-        listSigTT.append(result[4])
-        
-    
-    if (iTime  == 0):
-        line_type = 'k'
-    if (iTime  == 1):
-        line_type = 'k--'
-    if (iTime  == 2):
-        line_type = 'k-.'
-    if (iTime  == 3):
-        line_type = 'k:'
-    if (iTime  == 4):
-        line_type = 'b'
-        
 
-    #plt.subplot(111)
-    plt.plot(listr/ri,listp, line_type, linewidth=2, label=r'$tstar$='+str(tstar))
+t = tstar*ri**2./c
 
-    plt.ylabel('Ppore (Pa)')
-    plt.xlabel('Normalized Radial Distance')
-    plt.xlim(1, 4)
-    #plt.ylim(-0.8,1.2)
-    plt.legend()
-	
+listr = np.arange(ri,4.*ri,0.01*ri)
+listT = []
+listp = []
+listUr = []
+listSigRR = []
+listSigTT = []
+for r in listr:
+    result = StehfestTransform(t, r)
+    listT.append(result[0])
+    listp.append(result[1])
+    listUr.append(result[2])
+    listSigRR.append(result[3])
+    listSigTT.append(result[4])
+        
+   
 
 # Geosx results
-r_geosx, p_geosx = [], []
-for line in open('pressure.curve', 'r'):
+# Temperature
+r_geosx, T_geosx = [], []
+for line in open('temperature.curve', 'r'):
 	if not (line.strip().startswith("#") or line.strip()==''):
 		values = [float(s) for s in line.split()]
 		rVal = values[0]
-		pVal = values[1]
+		TVal = values[1]
 		r_geosx.append( rVal/ri )
+		T_geosx.append( TVal )
+
+# Pore pressure
+p_geosx = []
+for line in open('pressure.curve', 'r'):
+	if not (line.strip().startswith("#") or line.strip()==''):
+		values = [float(s) for s in line.split()]
+		pVal = values[1]
 		p_geosx.append( pVal )
 
+# Stress: the contribution of pore pressure and temperature need to be added
+sigrr_geosx = []
+for line in open('radialStress.curve', 'r'):
+	if not (line.strip().startswith("#") or line.strip()==''):
+		values = [float(s) for s in line.split()]
+		sigrrVal = values[1]
+		sigrr_geosx.append( sigrrVal )
+
+sigtt_geosx = []
+for line in open('tangentStress.curve', 'r'):
+	if not (line.strip().startswith("#") or line.strip()==''):
+		values = [float(s) for s in line.split()]
+		sigttVal = values[1]
+		sigtt_geosx.append( sigttVal )
+
+plt.subplot(221)
+plt.plot(r_geosx, T_geosx, 'ko', label='GEOSX result')
+plt.plot(listr/ri,listT, "k", linewidth=2, label="Analytic")
+plt.ylabel('Temperature (C)')
+plt.xlabel('Normalized Radial Distance')
+plt.xlim(1, 4)
+
+plt.subplot(222)
 plt.plot(r_geosx, p_geosx, 'ko', label='GEOSX result')
+plt.plot(listr/ri,listp, "k", linewidth=2, label="Analytic")
+plt.ylabel('Ppore (Pa)')
+plt.xlabel('Normalized Radial Distance')
+plt.xlim(1, 4)
+plt.legend()
+
+
+plt.subplot(223)
+plt.plot(r_geosx, [val1-bBiot*val2-alpha_d*val3 for val1, val2, val3 in zip(sigrr_geosx, p_geosx, T_geosx) ], 'ko', label='GEOSX result')
+plt.plot(listr/ri,listSigRR, "k", linewidth=2, label="Analytic")
+plt.ylabel('SigRR (Pa)')
+plt.xlabel('Normalized Radial Distance')
+plt.xlim(1, 4)
+
+
+plt.subplot(224)
+plt.plot(r_geosx, [val1-bBiot*val2-alpha_d*val3 for val1, val2, val3 in zip(sigtt_geosx, p_geosx, T_geosx) ], 'ko', label='GEOSX result')
+plt.plot(listr/ri,listSigTT, "k", linewidth=2, label="Analytic")
+plt.ylabel('SigTT (Pa)')
+plt.xlabel('Normalized Radial Distance')
+plt.xlim(1, 4)
+
 
 plt.show()
