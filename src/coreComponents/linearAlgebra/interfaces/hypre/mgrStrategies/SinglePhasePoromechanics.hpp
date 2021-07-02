@@ -66,19 +66,13 @@ public:
 
   /**
    * @brief Setup the MGR strategy.
-   * @param params MGR parameters
    * @param precond preconditioner wrapper
    * @param mgrData auxiliary MGR data
    */
-  void setup( LinearSolverParameters::MGR const & params,
+  void setup( LinearSolverParameters::MGR const &,
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    if( params.strategy == LinearSolverParameters::MGR::StrategyType::hydrofracture )
-    {
-      m_levelCoarseGridMethod[0] = 0; // Galerkin coarse grid computation using RAP
-    }
-
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( precond.ptr,
                                                                   m_numBlocks, numLevels,
                                                                   m_numLabels, m_ptrLabels,

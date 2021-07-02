@@ -81,7 +81,8 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString(), &m_dPhaseViscosity_dGlobalCompFraction ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerWrapper( viewKeyStruct::phaseCompFractionString(), &m_phaseCompFraction );
+  registerWrapper( viewKeyStruct::phaseCompFractionString(), &m_phaseCompFraction ).
+    setPlotLevel( PlotLevel::LEVEL_0 );
   registerWrapper( viewKeyStruct::dPhaseCompFraction_dPressureString(), &m_dPhaseCompFraction_dPressure ).
     setRestartFlags( RestartFlags::NO_WRITE );
   registerWrapper( viewKeyStruct::dPhaseCompFraction_dTemperatureString(), &m_dPhaseCompFraction_dTemperature ).
@@ -145,10 +146,6 @@ void MultiFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
   resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
 
-MultiFluidBase::~MultiFluidBase()
-{}
-
-
 void MultiFluidBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
@@ -156,15 +153,10 @@ void MultiFluidBase::postProcessInput()
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
 
-  GEOSX_ERROR_IF( NC == 0, "MultiFluidBase: No fluid components specified" );
-
-  GEOSX_ERROR_IF( NC > MAX_NUM_COMPONENTS,
-                  "MultiFluidBase: Number of fluid components exceeds the maximum of " << MAX_NUM_COMPONENTS );
-
-  GEOSX_ERROR_IF( NP == 0, "MultiFluidBase: No fluid phases specified" );
-
-  GEOSX_ERROR_IF( NP > MAX_NUM_PHASES,
-                  "MultiFluidBase: Number of fluid phases exceeds the maximum of " << MAX_NUM_PHASES );
+  GEOSX_THROW_IF( NC == 0, "MultiFluidBase: No fluid components specified", InputError );
+  GEOSX_THROW_IF( NC > MAX_NUM_COMPONENTS, "MultiFluidBase: Number of fluid components exceeds the maximum of " << MAX_NUM_COMPONENTS, InputError );
+  GEOSX_THROW_IF( NP == 0, "MultiFluidBase: No fluid phases specified", InputError );
+  GEOSX_THROW_IF( NP > MAX_NUM_PHASES, "MultiFluidBase: Number of fluid phases exceeds the maximum of " << MAX_NUM_PHASES, InputError );
 
   #define MULTIFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
     if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
@@ -179,16 +171,6 @@ void MultiFluidBase::postProcessInput()
 
   // call to correctly set member array tertiary sizes on the 'main' material object
   resizeFields( 0, 0 );
-}
-
-bool MultiFluidBase::getMassFlag() const
-{
-  return m_useMass;
-}
-
-void MultiFluidBase::setMassFlag( bool const flag )
-{
-  m_useMass = flag;
 }
 
 } //namespace constitutive
