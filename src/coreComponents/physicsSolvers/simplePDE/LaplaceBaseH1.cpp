@@ -168,6 +168,36 @@ void LaplaceBaseH1::applyBoundaryConditions( real64 const time_n,
 }
 
 /*
+   DIRICHLET BOUNDARY CONDITIONS
+   This is the boundary condition method applied for this particular solver.
+   It is called by the more generic "applyBoundaryConditions" method.
+ */
+void LaplaceBaseH1::
+  applyDirichletBCImplicit( real64 const time,
+                            DofManager const & dofManager,
+                            DomainPartition & domain,
+                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                            arrayView1d< real64 > const & localRhs )
+{
+  FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
+
+  fsManager.apply( time,
+                   domain,
+                   "nodeManager",
+                   m_fieldName,
+                   [&]( FieldSpecificationBase const & bc,
+                        string const &,
+                        SortedArrayView< localIndex const > const & targetSet,
+                        Group & targetGroup,
+                        string const & GEOSX_UNUSED_PARAM( fieldName ) )
+  {
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >
+      ( targetSet, time, targetGroup, m_fieldName, dofManager.getKey( m_fieldName ),
+      dofManager.rankOffset(), localMatrix, localRhs );
+  } );
+}
+
+/*
    SOLVE SYSTEM
    This method is simply initiating the solution and right-hand side
    and pass it to the base class solver.

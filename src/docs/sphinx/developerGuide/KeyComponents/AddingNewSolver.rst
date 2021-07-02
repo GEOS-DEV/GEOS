@@ -30,17 +30,11 @@ before diving into specifying a new solver class that meets our needs.
 
 Declaration file (reference)
 ----------------------------
-The two included headers are:
-
- - ``physicsSolvers/simplePDE/LaplaceBase.hpp`` which declares the base class ``LaplaceBase``, shared by all
-   Laplace solvers;
- - ``managers/FieldSpecification/FieldSpecificationManager.hpp`` which declares a manager used to
-   access and to set field on the discretized domain.
-
-Moreover, ``physicsSolver/simplePDE/LaplaceBase.hpp`` includes the following headers:
+The included header is ``physicsSolvers/simplePDE/LaplaceBaseH1.hpp`` which declares the base class ``LaplaceBaseH1``, shared by all Laplace solvers. Moreover, ``physicsSolver/simplePDE/LaplaceBaseH1.hpp`` includes the following headers:
 
  - ``common/EnumStrings.hpp`` which includes facilities for enum-string conversion (useful for reading enum values from input);
  - ``physicsSolver/SolverBase.hpp`` which declares the abstraction class shared by all physics solvers.
+ - ``managers/FieldSpecification/FieldSpecificationManager.hpp`` which declares a manager used to access and to set field on the discretized domain.
 
 Let us jump forward to the class enum and variable as they contain the data used
 specifically in the implementation of *LaplaceFEM*.
@@ -56,7 +50,7 @@ The class exhibits two member variables:
 respectively between *SteadyState* and *ImplicitTransient* depending on whether we are interested in
 the transient state.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBaseH1.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_TIMEINTOPT
    :end-before: //END_SPHINX_INCLUDE_TIMEINTOPT
@@ -64,9 +58,9 @@ the transient state.
 In order to register an enumeration type with the Data Repository and have its value read from input,
 we must define stream insertion/extraction operators. This is a common task, so GEOSX provides
 a facility for automating it. Upon including ``common/EnumStrings.hpp``, we can call the following macro
-at the namespace scope (in this case, right after the ``LaplaceBase`` class definition is complete):
+at the namespace scope (in this case, right after the ``LaplaceBaseH1`` class definition is complete):
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBaseH1.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_REGENUM
    :end-before: //END_SPHINX_INCLUDE_REGENUM
@@ -92,9 +86,9 @@ The next method ``catalogName()`` is static and returns the key to be added to t
    :start-after: //START_SPHINX_INCLUDE_REGISTER
    :end-before: //END_SPHINX_INCLUDE_REGISTER
 
-Finally, the member function ``registerDataOnMesh()`` is declared in the ``LaplaceBase`` class as
+Finally, the member function ``registerDataOnMesh()`` is declared in the ``LaplaceBaseH1`` class as
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBaseH1.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_REGISTERDATAONMESH
    :end-before: //END_SPHINX_INCLUDE_REGISTERDATAONMESH
@@ -112,7 +106,7 @@ and specialize every time step from the system matrix assembly to the solver sta
 
 Furthermore, the following functions are inherited from the base class.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBaseH1.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_SOLVERINTERFACE
    :end-before: //END_SPHINX_INCLUDE_SOLVERINTERFACE
@@ -138,7 +132,7 @@ This embedded instantiated structure is a common pattern shared by all solvers.
 It stores ``dataRepository::ViewKey`` type objects that are used as binding data
 between the input XML file and the source code.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBaseH1.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_VIEWKEY
    :end-before: //END_SPHINX_INCLUDE_VIEWKEY
@@ -164,9 +158,9 @@ to other tutorials. The ``LaplaceFEM`` constructor is implemented as follows.
    :start-after: //START_SPHINX_INCLUDE_CONSTRUCTOR
    :end-before: //END_SPHINX_INCLUDE_CONSTRUCTOR
 
-As we see, it calls the ``LaplaceBase`` constructor, that is implemented as follows.
+As we see, it calls the ``LaplaceBaseH1`` constructor, that is implemented as follows.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBaseH1.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_CONSTRUCTOR
    :end-before: //END_SPHINX_INCLUDE_CONSTRUCTOR
@@ -179,7 +173,7 @@ allows us to register the key value from the `enum` ``viewKeyStruct`` defining t
 
 and their associated descriptions for auto-generated docs.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBase.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceBaseH1.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_REGISTERDATAONMESH
    :end-before: //END_SPHINX_INCLUDE_REGISTERDATAONMESH
