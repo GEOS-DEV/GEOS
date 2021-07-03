@@ -7,20 +7,22 @@
     <!-- SPHINX_GravityEnd -->
     
     <!-- SPHINX_PoroelasticSolver -->
-    <Poroelastic
+    <SinglePhasePoromechanics
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="SIM_FixedStress"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Omega }">
       <!-- SPHINX_PoroelasticSolverEnd -->
       <NonlinearSolverParameters
-        newtonMaxIter="40"/>
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
       <LinearSolverParameters
-        logLevel="2"/>
-    </Poroelastic>
+        solverType="direct"
+        directParallel="0"
+        logLevel="1"/>
+    </SinglePhasePoromechanics>
 
     <!-- SPHINX_SolidMechanicsSolver -->
     <SolidMechanicsLagrangianSSLE
@@ -31,13 +33,6 @@
       targetRegions="{ Omega }"
       solidMaterialNames="{ rock }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"/>
-      <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <!-- SPHINX_SinglePhaseFVM -->
@@ -49,13 +44,6 @@
       fluidNames="{ water }"
       solidNames="{ rock }">
       <!-- SPHINX_SinglePhaseFVMEnd -->
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-8"
-        logLevel="2"/>
     </SinglePhaseFVM>
   </Solvers>
 
@@ -67,8 +55,8 @@
       radius="{ 0.1, 2 }"
       theta="{ 0, 90 }"
       zCoords="{ 0, 1 }"
-      nr="{ 30 }"
-      nt="{ 40 }"
+      nr="{ 4 }"
+      nt="{ 4 }"
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 1.0 } }"
@@ -85,7 +73,7 @@
     <!-- SPHINX_Execution -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.78"
+      forceDt="78.0"
       target="/Solvers/poroSolve"/>
 
     <!-- SPHINX_ExecutionEnd -->
@@ -94,15 +82,15 @@
     integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
-      timeFrequency="7.8"
+      timeFrequency="78.0"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
-    <PeriodicEvent
+    <!--PeriodicEvent
       name="restarts"
-      timeFrequency="1"
+      timeFrequency="1e99"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/-->
   </Events>
 
   <!-- SPHINX_FEDiscretization -->
@@ -223,7 +211,7 @@
     <!--Traction
       name="innerPressure"
       objectPath="faceManager"
-      tractionType="1"
+      tractionType="normal"
       scale="-1.0e6"
       setNames="{ rneg }"/-->
       
@@ -233,7 +221,6 @@
       fieldName="pressure"
       scale="10e6"
       setNames="{ rneg }"/>
-
  
   </FieldSpecifications>
 
@@ -247,7 +234,7 @@
       plotFileRoot="plot"
       childDirectory="sub"/>
 
-    <Restart
-      name="restartOutput"/>
+    <!--Restart
+      name="restartOutput"/-->
   </Outputs>
 </Problem>

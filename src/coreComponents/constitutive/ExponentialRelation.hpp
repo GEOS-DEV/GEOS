@@ -40,7 +40,10 @@ enum class ExponentApproximationType : integer
   Quadratic
 };
 
-ENUM_STRINGS( ExponentApproximationType, "exponential", "linear", "quadratic" )
+ENUM_STRINGS( ExponentApproximationType,
+              "exponential",
+              "linear",
+              "quadratic" );
 
 namespace detail
 {

@@ -102,7 +102,9 @@ private:
 
 };
 
-ENUM_STRINGS( PhaseFieldFractureSolver::CouplingTypeOption, "FixedStress", "TightlyCoupled" )
+ENUM_STRINGS( PhaseFieldFractureSolver::CouplingTypeOption,
+              "FixedStress",
+              "TightlyCoupled" );
 
 } /* namespace geosx */
 

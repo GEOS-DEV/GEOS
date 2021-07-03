@@ -366,7 +366,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
   node[ "__values__" ].set_external( dtype, ptr );
 
   // Create a copy of the dimensions
-  localIndex temp[ NDIM + 1 ];
+  camp::idx_t temp[ NDIM + 1 ];
   for( int i = 0; i < NDIM; ++i )
   {
     temp[ i ] = var.size( i );
@@ -382,7 +382,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
   }
 
   // push the dimensions into the node
-  conduit::DataType const dimensionType( conduitTypeInfo< localIndex >::id, totalNumDimensions );
+  conduit::DataType const dimensionType( conduitTypeInfo< camp::idx_t >::id, totalNumDimensions );
   node[ "__dimensions__" ].set( dimensionType, temp );
 
   // Create a copy of the permutation
@@ -432,7 +432,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   // Now pull out the dimensions and resize the array.
   conduit::Node const & dimensionNode = node.fetch_child( "__dimensions__" );
   GEOSX_ERROR_IF_NE( dimensionNode.dtype().number_of_elements(), totalNumDimensions );
-  localIndex const * const dims = dimensionNode.value();
+  camp::idx_t const * const dims = dimensionNode.value();
 
   if( hasImplicitDimension )
   {
@@ -627,6 +627,19 @@ std::unique_ptr< int > averageOverSecondDim( T const & )
   return std::unique_ptr< int >( nullptr );
 }
 
+template< typename T >
+typename std::enable_if_t< traits::is_array_type< T >, int >
+numArrayDims( T const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return T::NDIM;
+}
+
+template< typename T >
+typename std::enable_if_t< !traits::is_array_type< T >, int >
+numArrayDims( T const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return 0;
+}
 
 
 template< bool DO_PACKING, typename T, typename IDX >

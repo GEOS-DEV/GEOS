@@ -11,6 +11,7 @@
       solidNames="{ rock }"
       relPermNames="{ relperm }"
       temperature="300"
+      computeCFLNumbers="1"
       useMass="0">
       <NonlinearSolverParameters
         newtonTol="1.0e-9"

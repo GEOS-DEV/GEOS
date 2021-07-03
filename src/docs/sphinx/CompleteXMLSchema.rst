@@ -416,9 +416,9 @@ Element: ModifiedCamClay
 
 .. _XML_MultiphasePoroelastic:
 
-Element: MultiphasePoroelastic
-==============================
-.. include:: ../../coreComponents/schema/docs/MultiphasePoroelastic.rst
+Element: MultiphasePoromechanics
+================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
 .. _XML_NonlinearSolverParameters:
@@ -629,6 +629,20 @@ Element: SinglePhaseFVM
 Element: SinglePhaseHybridFVM
 =============================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseHybridFVM.rst
+
+
+.. _XML_SinglePhasePoromechanics:
+
+Element: SinglePhasePoromechanics
+=================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics.rst
+
+
+.. _XML_SinglePhasePoromechanicsEmbeddedFractures:
+
+Element: SinglePhasePoromechanicsEmbeddedFractures
+==================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
 
 
 .. _XML_SinglePhaseProppantFVM:
@@ -1260,9 +1274,10 @@ Datastructure: ModifiedCamClay
 
 .. _DATASTRUCTURE_MultiphasePoroelastic:
 
-Datastructure: MultiphasePoroelastic
-====================================
-.. include:: ../../coreComponents/schema/docs/MultiphasePoroelastic_other.rst
+
+Datastructure: MultiphasePoromechanics
+======================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
 .. _DATASTRUCTURE_NonlinearSolverParameters:
@@ -1473,6 +1488,20 @@ Datastructure: SinglePhaseFVM
 Datastructure: SinglePhaseHybridFVM
 ===================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseHybridFVM_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanics:
+
+Datastructure: SinglePhasePoromechanics
+=======================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:
+
+Datastructure: SinglePhasePoromechanicsEmbeddedFractures
+========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseProppantFVM:
