@@ -468,28 +468,7 @@ using localIndex_array4d = array4d< localIndex >;
 /// A 4-dimensional array of geosx::globalIndex types.
 using globalIndex_array4d = array4d< globalIndex >;
 
-
 ///@}
-
-/// @cond DO_NOT_DOCUMENT
-
-/**
- * @name Legacy typedefs.
- */
-///@{
-
-
-/// A 1-dimensional array of ::R1Tensor types.
-using r1_array = array1d< R1Tensor >;
-
-/// A 2-dimensional array of ::R1Tensor types.
-using r1_array2d= array2d< R1Tensor >;
-
-/// A 1-dimensional array of ::R1Tensor types.
-using mapPair_array = std::pair< localIndex_array, localIndex_array >;
-
-///@}
-/// @endcond DO_NOT_DOCUMENT
 
 /// A variable for the maximum value of a geosx::globalIndex.
 constexpr static auto GLOBALINDEX_MAX = std::numeric_limits< globalIndex >::max();
@@ -534,7 +513,6 @@ public:
       {std::type_index( typeid(real64_array)), "real64_array"},
       {std::type_index( typeid(localIndex_array)), "localIndex_array"},
       {std::type_index( typeid(globalIndex_array)), "globalIndex_array"},
-      {std::type_index( typeid(r1_array)), "r1_array"},
       {std::type_index( typeid(integer_array2d)), "integer_array2d"},
       {std::type_index( typeid(real32_array2d)), "real32_array2d"},
       {std::type_index( typeid(real64_array2d)), "real64_array2d"},
@@ -546,12 +524,10 @@ public:
       {std::type_index( typeid(localIndex_array3d)), "localIndex_array3d"},
       {std::type_index( typeid(globalIndex_array3d)), "globalIndex_array3d"},
       {std::type_index( typeid(real64_array4d)), "real64_array4d"},
-      {std::type_index( typeid(r1_array2d)), "r1_array2d"},
       {std::type_index( typeid(string)), "string"},
       {std::type_index( typeid(Path)), "path"},
       {std::type_index( typeid(string_array)), "string_array"},
       {std::type_index( typeid(path_array)), "path_array"},
-      {std::type_index( typeid(mapPair_array)), "mapPair_array"}
     };
 
     // If the data type is not defined here, return type_info.name()
@@ -585,7 +561,6 @@ public:
     globalIndex_array_id,//!< globalIndex_array_id
     real32_array_id,     //!< real32_array_id
     real64_array_id,     //!< real64_array_id
-    r1_array_id,         //!< r1_array_id
 
     integer_array2d_id,    //!< integer_array2d_id
     localIndex_array2d_id, //!< localIndex_array2d_id
@@ -593,7 +568,6 @@ public:
     real32_array2d_id,     //!< real32_array2d_id
     real64_array2d_id,     //!< real64_array2d_id
     real64_array2d_ji_id,   //!< real64_array2d_ji_id
-    r1_array2d_id,         //!< r1_array2d_id
 
     integer_array3d_id,    //!< integer_array3d_id
     localIndex_array3d_id, //!< localIndex_array3d_id
@@ -632,7 +606,6 @@ public:
     Path_id,             //!< Path_id
     string_array_id,     //!< string_array_id
     path_array_id,       //!< path_array_Iid
-    mapPair_array_id,    //!< mapPair_array_id
     none_id              //!< none_id
   };
 
@@ -657,7 +630,6 @@ public:
       { std::type_index( typeid(globalIndex_array)), TypeIDs::globalIndex_array_id },
       { std::type_index( typeid(real32_array)), TypeIDs::real32_array_id },
       { std::type_index( typeid(real64_array)), TypeIDs::real64_array_id },
-      { std::type_index( typeid(r1_array)), TypeIDs::r1_array_id },
 
       { std::type_index( typeid(integer_array2d)), TypeIDs::integer_array2d_id },
       { std::type_index( typeid(localIndex_array2d)), TypeIDs::localIndex_array2d_id },
@@ -665,7 +637,6 @@ public:
       { std::type_index( typeid(real32_array2d)), TypeIDs::real32_array2d_id },
       { std::type_index( typeid(real64_array2d)), TypeIDs::real64_array2d_id },
       { std::type_index( typeid(array2d< real64, RAJA::PERM_JI >)), TypeIDs::real64_array2d_ji_id },
-      { std::type_index( typeid(r1_array2d)), TypeIDs::r1_array2d_id },
 
       { std::type_index( typeid(integer_array3d)), TypeIDs::integer_array3d_id },
       { std::type_index( typeid(localIndex_array3d)), TypeIDs::localIndex_array3d_id },
@@ -704,7 +675,6 @@ public:
       { std::type_index( typeid(Path)), TypeIDs::Path_id },
       { std::type_index( typeid(string_array)), TypeIDs::string_array_id },
       { std::type_index( typeid(path_array)), TypeIDs::path_array_id },
-      { std::type_index( typeid(mapPair_array)), TypeIDs::mapPair_array_id }
     };
     auto iterType = type_names.find( typeIndex );
     if( iterType != type_names.end() )
@@ -825,13 +795,11 @@ private:
       {"globalIndex_array", constructArrayRegex( ri, 1 )},
       {"real32_array", constructArrayRegex( rr, 1 )},
       {"real64_array", constructArrayRegex( rr, 1 )},
-      {"r1_array", constructArrayRegex( r1, 1 )},
       {"integer_array2d", constructArrayRegex( ri, 2 )},
       {"localIndex_array2d", constructArrayRegex( ri, 2 )},
       {"globalIndex_array2d", constructArrayRegex( ri, 2 )},
       {"real32_array2d", constructArrayRegex( rr, 2 )},
       {"real64_array2d", constructArrayRegex( rr, 2 )},
-      {"r1_array2d", constructArrayRegex( r1, 2 )},
       {"integer_array3d", constructArrayRegex( ri, 3 )},
       {"localIndex_array3d", constructArrayRegex( ri, 3 )},
       {"globalIndex_array3d", constructArrayRegex( ri, 3 )},
@@ -843,7 +811,6 @@ private:
       {"string_array", constructArrayRegex( rs, 1 )},
       {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
-      {"mapPair_array", constructArrayRegex( rs, 1 )},
       {"geosx_dataRepository_PlotLevel", ri}
     };
   };
@@ -881,10 +848,6 @@ private:
       case ( TypeIDs::real64_array_id ):
       {
         return lambda( real64_array( 1 ) );
-      }
-      case ( TypeIDs::r1_array_id ):
-      {
-        return lambda( r1_array( 1 ) );
       }
       case ( TypeIDs::real64_array2d_id ):
       {
@@ -939,10 +902,6 @@ private:
       {
         return lambda( real64_array( 1 ), real64( 1 ) );
       }
-      case ( TypeIDs::r1_array_id ):
-      {
-        return lambda( r1_array( 1 ), R1Tensor() );
-      }
       case ( TypeIDs::integer_array2d_id ):
       {
         return lambda( integer_array2d(), integer( 1 ) );
@@ -966,10 +925,6 @@ private:
       case ( TypeIDs::real64_array2d_ji_id ):
       {
         return lambda( array2d< real64, RAJA::PERM_JI >(), real64( 1 ) );
-      }
-      case ( TypeIDs::r1_array2d_id ):
-      {
-        return lambda( r1_array2d(), R1Tensor() );
       }
       case ( TypeIDs::integer_array3d_id ):
       {

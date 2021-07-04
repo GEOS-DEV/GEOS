@@ -356,14 +356,15 @@ private:
   /**
    * @brief Resize the allocated multidimensional fields
    * @param well the well for which the fields are resized
+   * @param targetIndex index of the target region
    */
-  void resizeFields( WellElementSubRegion & subRegion );
+  void resizeFields( WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /// the max number of fluid phases
-  localIndex m_numPhases;
+  integer m_numPhases;
 
   /// the number of fluid components
-  localIndex m_numComponents;
+  integer m_numComponents;
 
   /// the (uniform) temperature
   real64 m_temperature;

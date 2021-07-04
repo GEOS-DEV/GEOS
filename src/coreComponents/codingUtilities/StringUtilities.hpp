@@ -60,6 +60,16 @@ string join( IT first, IT last, S const & delim = S())
   return oss.str();
 }
 
+template< typename S = char, typename T, typename ... Ts >
+string concat( S const & delim, T const & v, Ts const & ... vs )
+{
+  std::ostringstream oss;
+  oss << v;
+  using expander = int[];
+  (void) expander{ 0, ( void (oss << delim << vs ), 0 )... };
+  return oss.str();
+}
+
 /// Subdivide string by delimiters
 string_array tokenize( string const & str, string const & delimiters );
 

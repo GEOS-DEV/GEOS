@@ -179,22 +179,16 @@ public:
   virtual std::unique_ptr< WrapperBase > clone( string const & name,
                                                 Group & parent ) override
   {
-    std::unique_ptr< WrapperBase >
-    clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, m_data );
+    std::unique_ptr< Wrapper< T > > clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, m_data );
     clonedWrapper->copyWrapperAttributes( *this );
-
     return clonedWrapper;
   }
 
   virtual void copyWrapper( WrapperBase const & source ) override
   {
     GEOSX_ERROR_IF( source.getName() != m_name, "Tried to clone wrapper of with different name" );
-    WrapperBase::copyWrapperAttributes( source );
-    Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
-    m_ownsData = castedSource.m_ownsData;
-    m_default = castedSource.m_default;
+    copyWrapperAttributes( source );
     copyData( source );
-
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,6 +198,7 @@ public:
     Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
+    m_dimLabels = castedSource.m_dimLabels;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -219,7 +214,21 @@ public:
     return wrapperHelpers::numArrayDims( reference() );
   }
 
+  virtual localIndex numArrayComp() const override
+  {
+    return wrapperHelpers::numArrayComp( reference() );
+  }
 
+  virtual Wrapper & setDimLabels( integer const dim, Span< string const > const labels ) override
+  {
+    m_dimLabels.set( dim, labels );
+    return *this;
+  }
+
+  virtual Span< string const > getDimLabels( integer const dim ) const override
+  {
+    return m_dimLabels.get( dim );
+  }
 
   ///@}
 
@@ -765,7 +774,13 @@ public:
 
     GEOSX_ERROR_IF( ptr == nullptr, "Failed to average over the second dimension of." );
 
-    return std::make_unique< Wrapper< U > >( name, group, std::move( ptr ) );
+    auto ret = std::make_unique< Wrapper< U > >( name, group, std::move( ptr ) );
+    for( integer dim = 2; dim < numArrayDims(); ++dim )
+    {
+      ret->setDimLabels( dim - 1, getDimLabels( dim ) );
+    }
+
+    return ret;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -911,7 +926,8 @@ private:
   /// the default value of the object being wrapped
   DefaultValue< T > m_default;
 
-  Wrapper() = delete;
+  /// stores dimension labels (used mainly for plotting) for multidimensional arrays, empty member otherwise
+  wrapperHelpers::ArrayDimLabels< T > m_dimLabels;
 };
 
 }
