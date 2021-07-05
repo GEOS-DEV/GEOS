@@ -50,7 +50,7 @@ SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & n
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_thermalCoupling(0)
+  m_thermalCoupling( 0 )
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -188,27 +188,27 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 //  m_solidSolver->resetStressToBeginningOfStep( domain );
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
- 
+
   if( m_thermalCoupling == 0 )
   {
-  PoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                pDofKey,
-                                                                dofManager.rankOffset(),
-                                                                localMatrix,
-                                                                localRhs,
-                                                                gravityVectorData,
-                                                                m_flowSolver->fluidModelNames() );
+    PoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+                                                                  pDofKey,
+                                                                  dofManager.rankOffset(),
+                                                                  localMatrix,
+                                                                  localRhs,
+                                                                  gravityVectorData,
+                                                                  m_flowSolver->fluidModelNames() );
 
-  // Cell-based contributions
-  m_solidSolver->getMaxForce() =
-    finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::PoroElasticBase,
-                                    CellElementSubRegion >( mesh,
-                                                            targetRegionNames(),
-                                                            this->getDiscretizationName(),
-                                                            m_solidSolver->solidMaterialNames(),
-                                                            kernelFactory );
+    // Cell-based contributions
+    m_solidSolver->getMaxForce() =
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                      constitutive::PoroElasticBase,
+                                      CellElementSubRegion >( mesh,
+                                                              targetRegionNames(),
+                                                              this->getDiscretizationName(),
+                                                              m_solidSolver->solidMaterialNames(),
+                                                              kernelFactory );
   }
   else if( m_thermalCoupling == 1 )
   {

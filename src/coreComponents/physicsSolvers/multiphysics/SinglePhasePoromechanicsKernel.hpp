@@ -223,7 +223,7 @@ public:
      * @param stress The stress array.
      * @param porosity The porosity.
      */
-    GEOSX_HOST_DEVICE 
+    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE constexpr
     void operator() ( real64 (& stress)[6], real64 & porosity, real64 & porosityOld )
     {
@@ -285,10 +285,10 @@ public:
                            "Correct only for Biot's coefficient equal to 1" );                                         //
     // --------------------------------------------------------------------------------------------------------------- //
     real64 porosityNew = porosityOld
-                               + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
-                               + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
+                         + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
+                         + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
 
-    // Modify stress and porosity in case of thermal coupling  
+    // Modify stress and porosity in case of thermal coupling
     modifier( totalStress, porosityNew, porosityOld );
 
     // Evaluate body force vector

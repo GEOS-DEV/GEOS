@@ -61,7 +61,7 @@
     <ThermalDiffusion
       name="thermalDiffusion"
       discretization="FE1"
-      thermalDiffusion="0.1"
+      thermalDiffusion="4.78260869565e-05"
       logLevel="0"
       targetRegions="{ Omega }">
       <LinearSolverParameters
@@ -76,11 +76,11 @@
     <InternalWellbore
       name="mesh1"
       elementTypes="{ C3D8 }"
-      radius="{ 0.1, 2 }"
+      radius="{ 0.1, 4 }"
       theta="{ 0, 90 }"
       zCoords="{ 0, 1 }"
       nr="{ 4 }"
-      nt="{ 4 }"
+      nt="{ 40 }"
       nz="{ 1 }"
       trajectory="{ { 0.0, 0.0, 0.0 },
                     { 0.0, 0.0, 1.0 } }"
@@ -91,17 +91,17 @@
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
-    maxTime="78.0">
+    maxTime="45.45">
 
     <PeriodicEvent
       name="solverApplications1"
-      forceDt="78.0"
+      forceDt="4.545"
       target="/Solvers/thermalDiffusion"/>
 
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="78.0"
+      forceDt="4.545"
       target="/Solvers/poroSolve"/>
 
     <!-- SPHINX_ExecutionEnd -->
@@ -110,7 +110,7 @@
     integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
-      timeFrequency="78.0"
+      timeFrequency="4.545"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
@@ -150,8 +150,8 @@
     <PoroElasticIsotropic 
       name="rock"
       defaultDensity="0"
-      defaultBulkModulus="11039657020.4"
-      defaultShearModulus="8662741799.83"
+      defaultBulkModulus="25e9"
+      defaultShearModulus="15e9"
       BiotCoefficient="1.0"
     />
     <CompressibleSinglePhaseFluid 
@@ -160,7 +160,7 @@
       defaultViscosity="0.001"
       referencePressure="0e6"
       referenceDensity="1000"
-      compressibility="1.78403329184e-10"
+      compressibility="6.96865935769e-9"
       referenceViscosity="0.001"
       viscosibility="0.0"
     />
@@ -178,7 +178,7 @@
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
       fieldName="permeability"
-      scale="1e-17"/>
+      scale="2.02297294727e-18"/>
 
     <FieldSpecification 
       name="permy"
@@ -187,7 +187,7 @@
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
       fieldName="permeability"
-      scale="1e-17"/>
+      scale="2.02297294727e-18"/>
 
     <FieldSpecification 
       name="permz"
@@ -196,7 +196,7 @@
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
       fieldName="permeability"
-      scale="1e-17"/>
+      scale="2.02297294727e-18"/>
 
     <FieldSpecification 
       name="referencePorosity"
@@ -204,7 +204,7 @@
       setNames="{all}"
       objectPath="ElementRegions/Omega/cb1"
       fieldName="referencePorosity"
-      scale="0.3"/>
+      scale="0.01"/>
 
     <FieldSpecification 
       name="initialPressure"
@@ -213,6 +213,13 @@
       objectPath="ElementRegions/Omega/cb1"
       fieldName="pressure"
       scale="0e6"/>
+
+    <!--FieldSpecification 
+      name="initialPressure"
+      setNames="{all}"
+      objectPath="ElementRegions/Omega/cb1"
+      fieldName="pressure"
+      scale="0e6"/-->
 
     <FieldSpecification
       name="xConstraint"
@@ -238,12 +245,18 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
 
-      
+    <FieldSpecification 
+      name="boreholePorePressure"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0e6"
+      setNames="{ rneg }"/>
+  
     <FieldSpecification
       name="boreholeTemperature"
       fieldName="Temperature"
       objectPath="nodeManager"
-      scale="100.0"
+      scale="60.0"
       setNames="{ rneg }"/>  
 
     <FieldSpecification

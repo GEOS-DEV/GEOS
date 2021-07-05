@@ -37,14 +37,14 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 class SinglePhase :
   public PoromechanicsKernels::SinglePhase< SUBREGION_TYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          FE_TYPE >
+                                            CONSTITUTIVE_TYPE,
+                                            FE_TYPE >
 {
 public:
 
   using Base = PoromechanicsKernels::SinglePhase< SUBREGION_TYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          FE_TYPE >;
+                                                  CONSTITUTIVE_TYPE,
+                                                  FE_TYPE >;
 
   //using Base::m_constitutiveUpdate;
   using typename Base::StackVariables;
@@ -102,7 +102,7 @@ public:
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, q );
       real64 const thermalStress = thermalStressCoefficient * m_temperature[localNodeIndex];
-      
+
       stress[0] -= thermalStress;
       stress[1] -= thermalStress;
       stress[2] -= thermalStress;
@@ -111,7 +111,7 @@ public:
 
       porosityOld -= thermalPorosityCoefficient * ( m_temperature[localNodeIndex] - m_deltaTemperature[localNodeIndex] );
 
-      
+
       porosity -= thermalPorosityCoefficient * m_temperature[localNodeIndex];
 
     } );
@@ -124,7 +124,7 @@ protected:
 
   /// The rank-global incremental temperature array.
   arrayView1d< real64 const > const m_deltaTemperature;
-  
+
 };
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,

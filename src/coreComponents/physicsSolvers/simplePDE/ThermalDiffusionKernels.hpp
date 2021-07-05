@@ -55,18 +55,18 @@ public:
   static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
 
   ThermalDiffusionKernel( NodeManager const & nodeManager,
-                    EdgeManager const & edgeManager,
-                    FaceManager const & faceManager,
-                    localIndex const targetRegionIndex,
-                    SUBREGION_TYPE const & elementSubRegion,
-                    FE_TYPE const & finiteElementSpace,
-                    CONSTITUTIVE_TYPE & inputConstitutiveType,
-                    arrayView1d< globalIndex const > const & inputDofNumber,
-                    globalIndex const rankOffset,
-                    CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                    arrayView1d< real64 > const & inputRhs,
-                    real64 const & thermalDiffusion,
-                    real64 const dt ):
+                          EdgeManager const & edgeManager,
+                          FaceManager const & faceManager,
+                          localIndex const targetRegionIndex,
+                          SUBREGION_TYPE const & elementSubRegion,
+                          FE_TYPE const & finiteElementSpace,
+                          CONSTITUTIVE_TYPE & inputConstitutiveType,
+                          arrayView1d< globalIndex const > const & inputDofNumber,
+                          globalIndex const rankOffset,
+                          CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+                          arrayView1d< real64 > const & inputRhs,
+                          real64 const & thermalDiffusion,
+                          real64 const dt ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -208,7 +208,7 @@ protected:
 };
 
 /// The factory used to construct a ThermalDiffusionKernel.
-using ThermalDiffusionKernelFactory = 
+using ThermalDiffusionKernelFactory =
   finiteElement::KernelFactory< ThermalDiffusionKernel,
                                 arrayView1d< globalIndex const > const &,
                                 globalIndex, CRSMatrixView< real64, globalIndex const > const &,
