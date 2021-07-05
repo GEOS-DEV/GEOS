@@ -46,7 +46,7 @@ public:
                                                   CONSTITUTIVE_TYPE,
                                                   FE_TYPE >;
 
-  //using Base::m_constitutiveUpdate;
+  using Base::m_constitutiveUpdate;
   using typename Base::StackVariables;
   using Base::m_elemsToNodes;
 
@@ -96,7 +96,7 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    real64 const thermalStressCoefficient = 1e6;//TODO m_constitutiveUpdate.getThermalStressCoefficient();
+    real64 const thermalStressCoefficient = m_constitutiveUpdate.getThermalStressCoefficient();
     real64 const thermalPorosityCoefficient = 0.;//TODO m_constitutiveUpdate.getThermalPorosityCoefficient();
     Base::quadraturePointKernel( k, q, stack, [=] GEOSX_HOST_DEVICE ( real64 (& stress)[6], real64 & porosity, real64 & porosityOld )
     {
