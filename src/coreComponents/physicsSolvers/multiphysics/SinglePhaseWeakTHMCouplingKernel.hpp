@@ -97,7 +97,7 @@ public:
                               StackVariables & stack ) const
   {
     real64 const thermalStressCoefficient = m_constitutiveUpdate.getThermalStressCoefficient();
-    real64 const thermalPorosityCoefficient = 0.;//TODO m_constitutiveUpdate.getThermalPorosityCoefficient();
+    real64 const thermalPorosityCoefficient = m_constitutiveUpdate.getThermalPorosityCoefficient();
     Base::quadraturePointKernel( k, q, stack, [=] GEOSX_HOST_DEVICE ( real64 (& stress)[6], real64 & porosity, real64 & porosityOld )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, q );

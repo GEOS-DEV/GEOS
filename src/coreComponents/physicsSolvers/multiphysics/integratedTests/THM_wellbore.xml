@@ -147,12 +147,14 @@
 
   <Constitutive>
     <!-- SPHINX_Material -->
-    <PoroElasticIsotropic 
+    <ThermoPoroElasticIsotropic 
       name="rock"
       defaultDensity="0"
       defaultBulkModulus="25e9"
       defaultShearModulus="15e9"
       BiotCoefficient="1.0"
+      thermalStressCoefficient="1e6"
+      thermalPorosityCoefficient="0"
     />
     <CompressibleSinglePhaseFluid 
       name="water"

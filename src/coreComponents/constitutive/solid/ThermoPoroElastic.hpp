@@ -50,10 +50,14 @@ public:
    * @param baseParams Constructor parameters passed from base class
    */
   template< typename ... PARAMS >
-  ThermoPoroElasticUpdates( real64 const & inputThermalStressCoefficient,
-                        PARAMS && ... baseParams ):
+  ThermoPoroElasticUpdates( real64 const & inputBiotCoefficient,
+                            real64 const & inputThermalStressCoefficient,
+                            real64 const & inputThermalPorosityCoefficient,
+                            PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
-    m_thermalStressCoefficient( inputThermalStressCoefficient )
+    m_biotCoefficient( inputBiotCoefficient ),
+    m_thermalStressCoefficient( inputThermalStressCoefficient ),
+    m_thermalPorosityCoefficient( inputThermalPorosityCoefficient )
   {}
 
   using UPDATE_BASE::getElasticStiffness;
@@ -85,9 +89,20 @@ public:
     return m_thermalStressCoefficient;
   }
 
+  /**
+   * @brief Get thermal porosity coefficient
+   * @return thermal porosity coefficient
+   */
+  GEOSX_HOST_DEVICE
+  real64 getThermalPorosityCoefficient() const
+  {
+    return m_thermalPorosityCoefficient;
+  }
+
 private:
-  real64 m_biotCoefficient=1.0; ///< Scalar Biot coefficient
+  real64 m_biotCoefficient; ///< Scalar Biot coefficient
   real64 m_thermalStressCoefficient; ///< Scalar thermal stress coefficient
+  real64 m_thermalPorosityCoefficient; ///< Scalar thermal porosity coefficient
 
 };
 
@@ -109,6 +124,7 @@ public:
   /// Alias for ThermoPoroElasticUpdates
   using KernelWrapper = ThermoPoroElasticUpdates< typename BASE::KernelWrapper >;
 
+  using PoroElastic< BASE >::m_biotCoefficient;
   /**
    * @brief Constructor
    * @param name Object name
@@ -137,13 +153,16 @@ public:
    */
   KernelWrapper createKernelUpdates()
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_thermalStressCoefficient );
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_biotCoefficient,
+                                                                       m_thermalStressCoefficient,
+                                                                       m_thermalPorosityCoefficient );
   }
 
   /// Data view keys
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
     static constexpr char const * thermalStressCoefficientString() { return "thermalStressCoefficient"; }
+    static constexpr char const * thermalPorosityCoefficientString() { return "thermalPorosityCoefficient"; }
   };
 
 
@@ -152,6 +171,8 @@ protected:
   /// scalar thermal stress coefficient
   real64 m_thermalStressCoefficient;
 
+  /// scalar thermal porosity coefficient
+  real64 m_thermalPorosityCoefficient;
 };
 
 }

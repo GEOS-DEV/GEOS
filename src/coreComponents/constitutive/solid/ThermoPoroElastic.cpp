@@ -34,12 +34,18 @@ namespace constitutive
 template< typename BASE >
 ThermoPoroElastic< BASE >::ThermoPoroElastic( string const & name, Group * const parent ):
   PoroElastic< BASE >( name, parent ),
-  m_thermalStressCoefficient()
+  m_thermalStressCoefficient(),
+  m_thermalPorosityCoefficient()  
 {
   this->registerWrapper( viewKeyStruct::thermalStressCoefficientString(), &m_thermalStressCoefficient ).
-    setApplyDefaultValue( 1.0 ).
+    setApplyDefaultValue( 1e6 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Thermal stress coefficient" );
+
+  this->registerWrapper( viewKeyStruct::thermalPorosityCoefficientString(), &m_thermalPorosityCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Thermal porosity coefficient" );
 }
 
 template< typename BASE >
