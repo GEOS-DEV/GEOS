@@ -195,7 +195,15 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
   {
     real64 stress[6] = {};
     real64 strainIncrement[6] = {};
+    real64 deltaStrainIncrement;
     real64 stiffness[6][6] = {{}};
+
+    real64 scale = 0;
+    for( localIndex n=1; n<=m_numSteps; ++n )
+    {
+      scale += fabs(table(n, SIG0)) + fabs(table(n, SIG1)) + fabs(table(n, SIG2));
+    }
+    scale = 3*m_numSteps / scale;
 
     for( localIndex n=1; n<=m_numSteps; ++n )
     {
@@ -203,23 +211,37 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
 
-      real64 norm;
+      real64 norm, normZero;
       localIndex k = 0;
+      localIndex cuts = 0;
 
       for(; k<m_maxIter; ++k )
       {
         updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
 
-        norm = fabs( stress[1]-table( n, SIG1 ) )/(fabs( table( n, SIG1 ) )+1);
+        norm = scale*fabs( stress[1]-table( n, SIG1 ) );
 
-        if( norm < m_newtonTol )
+        if( k == 0)
+        {
+          normZero = norm;
+        }
+
+        if( norm < m_newtonTol ) // success
         {
           break;
         }
-        else
+        else if( k > 0 && norm > normZero && cuts < m_maxCuts) // backtrack by half delta
         {
-          strainIncrement[1] -= (stress[1]-table( n, SIG1 )) / (stiffness[1][1]+stiffness[1][2]);
-          strainIncrement[2] = strainIncrement[1];
+          cuts++;
+          deltaStrainIncrement *= 0.5;
+          strainIncrement[1] += deltaStrainIncrement;
+          strainIncrement[2]  = strainIncrement[1];
+        }
+        else // newton update
+        {
+          deltaStrainIncrement  = (stress[1]-table( n, SIG1 )) / (stiffness[1][1]+stiffness[1][2]);
+          strainIncrement[1]   -= deltaStrainIncrement;
+          strainIncrement[2]    = strainIncrement[1];
         }
       }
 
@@ -245,10 +267,18 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
   {
     real64 stress[6] = {};
     real64 strainIncrement[6] = {};
+    real64 deltaStrainIncrement[6] = {};
     real64 stiffness[6][6] = {{}};
 
     real64 resid[2] = {};
     real64 jacobian[2][2] = {{}};
+
+    real64 scale = 0;
+    for( localIndex n=1; n<=m_numSteps; ++n )
+    {
+      scale += fabs(table(n, SIG0)) + fabs(table(n, SIG1)) + fabs(table(n, SIG2));
+    }
+    scale = 3*m_numSteps / scale;
 
     for( localIndex n=1; n<=m_numSteps; ++n )
     {
@@ -256,33 +286,55 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
 
-      real64 norm, det;
+      real64 norm, normZero, det;
       localIndex k = 0;
+      localIndex cuts = 0;
 
       for(; k<m_maxIter; ++k )
       {
         updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
 
-        resid[0] = stress[0]-table( n, SIG0 );
-        resid[1] = stress[1]-table( n, SIG1 );
+        resid[0] = scale * (stress[0]-table( n, SIG0 ));
+        resid[1] = scale * (stress[1]-table( n, SIG1 ));
 
-        norm = sqrt( resid[0]*resid[0] + resid[1]*resid[1] ) / ( fabs( table( n, SIG0 ) ) + 1.0 );
-        if( norm < m_newtonTol )
+        norm = sqrt( resid[0]*resid[0] + resid[1]*resid[1] );
+
+        if( k == 0)
+        {
+          normZero = norm;
+        }
+
+        if( norm < m_newtonTol ) // success
         {
           break;
         }
-        else
+        else if( k > 0 && norm > normZero && cuts < m_maxCuts) // backtrack by half delta
         {
-          jacobian[0][0] = stiffness[0][0];
-          jacobian[1][0] = stiffness[1][0];
-          jacobian[0][1] = stiffness[0][1] + stiffness[0][2];
-          jacobian[1][1] = stiffness[1][1] + stiffness[1][2];
+          printf("%.2e %.2e %.2e\n",normZero,norm,det);
+
+          cuts++;
+          deltaStrainIncrement[0] *= 0.5;
+          deltaStrainIncrement[1] *= 0.5;
+          strainIncrement[0] += deltaStrainIncrement[0];
+          strainIncrement[1] += deltaStrainIncrement[1];
+          strainIncrement[2]  = strainIncrement[1];
+        }
+        else // newton update
+        {
+          cuts = 0;
+          jacobian[0][0] = scale*stiffness[0][0];
+          jacobian[1][0] = scale*stiffness[1][0];
+          jacobian[0][1] = scale*(stiffness[0][1] + stiffness[0][2]);
+          jacobian[1][1] = scale*(stiffness[1][1] + stiffness[1][2]);
 
           det = jacobian[0][0]*jacobian[1][1]-jacobian[0][1]*jacobian[1][0];
 
-          strainIncrement[0] -= (jacobian[1][1]*resid[0]-jacobian[0][1]*resid[1] )/ det;
-          strainIncrement[1] -= (jacobian[0][0]*resid[1]-jacobian[1][0]*resid[0] )/ det;
-          strainIncrement[2] = strainIncrement[1];
+          deltaStrainIncrement[0] = (jacobian[1][1]*resid[0]-jacobian[0][1]*resid[1] )/ det;
+          deltaStrainIncrement[1] = (jacobian[0][0]*resid[1]-jacobian[1][0]*resid[0] )/ det;
+
+          strainIncrement[0] -= deltaStrainIncrement[0];
+          strainIncrement[1] -= deltaStrainIncrement[1];
+          strainIncrement[2]  = strainIncrement[1];
         }
       }
 

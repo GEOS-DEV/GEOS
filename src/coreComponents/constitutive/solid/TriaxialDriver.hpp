@@ -123,6 +123,7 @@ private:
   enum columnKeys { TIME, EPS0, EPS1, EPS2, SIG0, SIG1, SIG2, ITER, NORM }; ///< Enumeration of column keys
 
   static constexpr localIndex m_maxIter = 25;   ///< Max Newton iterations for mixed-control tests
+  static constexpr localIndex m_maxCuts = 8;    ///< Max backtracking cuts in line search algorithm
   static constexpr real64 m_newtonTol = 1e-6;   ///< Newton tolerance for mixed-control tests
   static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
 };

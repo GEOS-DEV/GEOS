@@ -414,7 +414,7 @@ Element: ModifiedCamClay
 .. include:: ../../coreComponents/schema/docs/ModifiedCamClay.rst
 
 
-.. _XML_MultiphasePoroelastic:
+.. _XML_MultiphasePoromechanics:
 
 Element: MultiphasePoromechanics
 ================================
@@ -552,20 +552,6 @@ Element: PoroExtendedDruckerPrager
 Element: PoroModifiedCamClay
 ============================
 .. include:: ../../coreComponents/schema/docs/PoroModifiedCamClay.rst
-
-
-.. _XML_Poroelastic:
-
-Element: Poroelastic
-====================
-.. include:: ../../coreComponents/schema/docs/Poroelastic.rst
-
-
-.. _XML_PoroelasticEmbeddedFractures:
-
-Element: PoroelasticEmbeddedFractures
-=====================================
-.. include:: ../../coreComponents/schema/docs/PoroelasticEmbeddedFractures.rst
 
 
 .. _XML_Problem:
@@ -1272,8 +1258,7 @@ Datastructure: ModifiedCamClay
 .. include:: ../../coreComponents/schema/docs/ModifiedCamClay_other.rst
 
 
-.. _DATASTRUCTURE_MultiphasePoroelastic:
-
+.. _DATASTRUCTURE_MultiphasePoromechanics:
 
 Datastructure: MultiphasePoromechanics
 ======================================
@@ -1411,20 +1396,6 @@ Datastructure: PoroExtendedDruckerPrager
 Datastructure: PoroModifiedCamClay
 ==================================
 .. include:: ../../coreComponents/schema/docs/PoroModifiedCamClay_other.rst
-
-
-.. _DATASTRUCTURE_Poroelastic:
-
-Datastructure: Poroelastic
-==========================
-.. include:: ../../coreComponents/schema/docs/Poroelastic_other.rst
-
-
-.. _DATASTRUCTURE_PoroelasticEmbeddedFractures:
-
-Datastructure: PoroelasticEmbeddedFractures
-===========================================
-.. include:: ../../coreComponents/schema/docs/PoroelasticEmbeddedFractures_other.rst
 
 
 .. _DATASTRUCTURE_Problem:
