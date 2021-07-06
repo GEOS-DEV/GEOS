@@ -45,6 +45,7 @@ set( physicsSolvers_headers
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhaseReservoir.hpp
      multiphysics/SinglePhasePoromechanicsKernel.hpp
+     multiphysics/SinglePhaseTHMSolver.hpp
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
@@ -102,6 +103,7 @@ set( physicsSolvers_sources
      multiphysics/MultiphasePoromechanicsSolver.cpp
      multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhaseReservoir.cpp
+     multiphysics/SinglePhaseTHMSolver.cpp
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/LaplaceVEM.cpp
