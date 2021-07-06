@@ -73,10 +73,11 @@ void CapillaryPressureBase::postProcessInput()
 
   localIndex const NP = numFluidPhases();
 
-  GEOSX_ERROR_IF( NP < 2, "CapillaryPressureBase: number of fluid phases should be at least 2" );
+  GEOSX_THROW_IF( NP < 2, "CapillaryPressureBase: number of fluid phases should be at least 2", InputError );
 
-  GEOSX_ERROR_IF( NP > PhaseType::MAX_NUM_PHASES,
-                  "CapillaryPressureBase: number of fluid phases exceeds the maximum of " << PhaseType::MAX_NUM_PHASES );
+  GEOSX_THROW_IF( NP > PhaseType::MAX_NUM_PHASES,
+                  "CapillaryPressureBase: number of fluid phases exceeds the maximum of " << PhaseType::MAX_NUM_PHASES,
+                  InputError );
 
   m_phaseTypes.resize( NP );
   m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
@@ -85,17 +86,17 @@ void CapillaryPressureBase::postProcessInput()
   for( localIndex ip = 0; ip < NP; ++ip )
   {
     auto it = phaseDict.find( m_phaseNames[ip] );
-    GEOSX_ERROR_IF( it == phaseDict.end(), "CapillaryPressureBase: phase not supported: " << m_phaseNames[ip] );
+    GEOSX_THROW_IF( it == phaseDict.end(), "CapillaryPressureBase: phase not supported: " << m_phaseNames[ip], InputError );
     integer const phaseIndex = it->second;
-    GEOSX_ERROR_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "CapillaryPressureBase: invalid phase index " << phaseIndex );
+    GEOSX_THROW_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "CapillaryPressureBase: invalid phase index " << phaseIndex, InputError );
 
     m_phaseTypes[ip] = phaseIndex;
     m_phaseOrder[phaseIndex] = LvArray::integerConversion< integer >( ip );
 
   }
 
-  GEOSX_ERROR_IF( m_phaseOrder[CapillaryPressureBase::REFERENCE_PHASE] < 0,
-                  "CapillaryPressureBase: reference oil phase has not been defined and should be included in model" );
+  GEOSX_THROW_IF( m_phaseOrder[CapillaryPressureBase::REFERENCE_PHASE] < 0,
+                  "CapillaryPressureBase: reference oil phase has not been defined and should be included in model", InputError );
 
   // call to correctly set member array tertiary sizes on the 'main' material object
   resizeFields( 0, 0 );
