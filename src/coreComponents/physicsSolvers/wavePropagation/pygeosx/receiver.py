@@ -87,7 +87,10 @@ class ReceiverSet:
             self.n = len(receiver_list)
 
     def __repr__(self):
-        return str(self.receiver_list)
+        if self.n >=10:
+            return str(self.receiver_list[0:4])[:-1] + '...' + '\n' + str(self.receiver_list[-4:])[1:]
+        else:
+            return str(self.receiver_list)
 
     def getInsideDomain(self, meshBoundaries):
         list=[]

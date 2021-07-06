@@ -50,9 +50,10 @@ def export_to_segy(physicalValue, rcvCoord, segyFile):
         File to which we export the values
     """
 
+    print(physicalValue[:,51])
     with segyio.open(segyFile, 'r+', ignore_geometry=True) as f:
         for i in range(len(rcvCoord)):
-            if any(physicalValue[:,i])==True:
+            if any(physicalValue[1:,i])==True:
                 f.trace[i] = physicalValue[:, i]
 
 

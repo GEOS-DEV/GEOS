@@ -68,6 +68,7 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
     maxT       = problem.get_wrapper("Events/maxTime").value()
     cycle_freq = problem.get_wrapper("Events/python/cycleFrequency").value()
     cycle      = problem.get_wrapper("Events/python/lastCycle").value()
+    cycle2     = problem.get_wrapper("Events/cycle").value()
     curr_time  = problem.get_wrapper("Events/time").value()
 
     dt            = shot_list[0].getSource().getTimeStep()
@@ -127,6 +128,7 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
             #Reset time to -dt and pressure to 0
             curr_time[0]               = -dt
             cycle_freq[0]              = maxCycle + 1
+            #cycle2[0]                  = 0
             pressure_nm1.to_numpy()[:] = 0.0
             pressure_n.to_numpy()[:]   = 0.0
             pressure_np1.to_numpy()[:] = 0.0
