@@ -195,7 +195,7 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
   {
     real64 stress[6] = {};
     real64 strainIncrement[6] = {};
-    real64 deltaStrainIncrement;
+    real64 deltaStrainIncrement = 0;
     real64 stiffness[6][6] = {{}};
 
     real64 scale = 0;
@@ -211,7 +211,7 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
 
-      real64 norm, normZero;
+      real64 norm, normZero = 1e30;
       localIndex k = 0;
       localIndex cuts = 0;
 
@@ -286,7 +286,7 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
 
-      real64 norm, normZero, det;
+      real64 norm, normZero = 1e30, det;
       localIndex k = 0;
       localIndex cuts = 0;
 
