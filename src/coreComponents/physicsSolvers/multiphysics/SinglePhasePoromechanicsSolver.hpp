@@ -33,7 +33,7 @@ class SinglePhaseBase;
 class SinglePhasePoromechanicsSolver : public SolverBase
 {
 public:
-  SinglePhasePoromechanicsSolver( const string & name,
+  SinglePhasePoromechanicsSolver( string const & name,
                                   Group * const parent );
   ~SinglePhasePoromechanicsSolver() override;
 
@@ -66,12 +66,6 @@ public:
                   DofManager const & dofManager,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
-
-  void
-  assembleCouplingTerms( DomainPartition const & domain,
-                         DofManager const & dofManager,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                         arrayView1d< real64 > const & localRhs );
 
   virtual void
   applyBoundaryConditions( real64 const time_n,

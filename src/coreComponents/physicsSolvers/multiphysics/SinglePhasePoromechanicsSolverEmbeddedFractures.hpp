@@ -30,7 +30,7 @@ class SolidMechanicsEmbeddedFractures;
 class SinglePhasePoromechanicsSolverEmbeddedFractures : public SinglePhasePoromechanicsSolver
 {
 public:
-  SinglePhasePoromechanicsSolverEmbeddedFractures( const std::string & name,
+  SinglePhasePoromechanicsSolverEmbeddedFractures( string const & name,
                                                    Group * const parent );
   ~SinglePhasePoromechanicsSolverEmbeddedFractures() override;
 
