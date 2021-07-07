@@ -289,23 +289,21 @@ void CompositionalMultiphaseBase::resizeFields( MeshLevel & meshLevel ) const
   forTargetSubRegions( meshLevel, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
-    Span< string const > const compNames( fluid.componentNames().begin(), fluid.componentNames().end() );
-    Span< string const > const phaseNames( fluid.phaseNames().begin(), fluid.phaseNames().end() );
 
     subRegion.getWrapper< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() ).
-      setDimLabels( 1, compNames ).
+      setDimLabels( 1, fluid.componentNames() ).
       reference().resizeDimension< 1 >( m_numComponents );
     subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() ).
       resizeDimension< 1 >( m_numComponents );
 
     subRegion.getWrapper< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() ).
-      setDimLabels( 1, compNames ).
+      setDimLabels( 1, fluid.componentNames() ).
       reference().resizeDimension< 1 >( m_numComponents );
     subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() ).
       resizeDimension< 1, 2 >( m_numComponents, m_numComponents );
 
     subRegion.getWrapper< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() ).
-      setDimLabels( 1, phaseNames ).
+      setDimLabels( 1, fluid.phaseNames() ).
       reference().resizeDimension< 1 >( m_numPhases );
     subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() ).
       resizeDimension< 1 >( m_numPhases );
@@ -313,7 +311,7 @@ void CompositionalMultiphaseBase::resizeFields( MeshLevel & meshLevel ) const
       resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
 
     subRegion.getWrapper< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseMobilityString() ).
-      setDimLabels( 1, phaseNames ).
+      setDimLabels( 1, fluid.phaseNames() ).
       reference().resizeDimension< 1 >( m_numPhases );
     subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseMobility_dPressureString() ).
       resizeDimension< 1 >( m_numPhases );

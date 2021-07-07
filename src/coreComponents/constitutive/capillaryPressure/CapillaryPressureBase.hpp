@@ -90,6 +90,8 @@ class CapillaryPressureBase : public ConstitutiveBase
 {
 public:
 
+  static constexpr integer MAX_NUM_PHASES = 3;
+
   struct PhaseType
   {
     enum : integer
@@ -97,7 +99,6 @@ public:
       OIL            = 0,
       GAS            = 1,
       WATER          = 2,
-      MAX_NUM_PHASES = 3,
     };
   };
 

@@ -16,14 +16,15 @@
  * @file Span.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_SPAN_HPP
-#define GEOSX_CODINGUTILITIES_SPAN_HPP
+#ifndef GEOSX_COMMON_SPAN_HPP
+#define GEOSX_COMMON_SPAN_HPP
 
 #include "codingUtilities/traits.hpp"
 #include "common/Logger.hpp"
 
 #include <memory>
 #include <iterator>
+#include <type_traits>
 
 namespace geosx
 {
@@ -41,10 +42,16 @@ class Span
 public:
 
   /// Type of range element
-  using value_type = T;
+  using element_type = T;
+
+  /// Type of underlying value
+  using value_type = std::remove_cv_t< T >;
 
   /// Type used for indexing the range
   using size_type = std::ptrdiff_t;
+
+  /// Type used for indexing the range
+  using difference_type = std::ptrdiff_t;
 
   /**
    * @brief Construct an empty span.
@@ -101,6 +108,14 @@ public:
   constexpr size_type size() const noexcept
   {
     return m_size;
+  }
+
+  /**
+   * @brief @return size of the range in bytes
+   */
+  constexpr size_type size_bytes() const noexcept
+  {
+    return size() * sizeof( element_type );
   }
 
   /**
@@ -183,6 +198,37 @@ public:
     return m_data[i];
   }
 
+  /**
+   * @brief @return a new span of @p count starting elements
+   * @param count
+   */
+  Span< element_type > first( size_type const count ) const
+  {
+    GEOSX_ASSERT_GE( m_size, count );
+    return { m_data, count };
+  }
+
+  /**
+   * @brief @return a new span of @p count trailing elements
+   * @param count number of elements
+   */
+  Span< element_type > last( size_type const count ) const
+  {
+    GEOSX_ASSERT_GE( m_size, count );
+    return { m_data + (m_size - count), count };
+  }
+
+  /**
+   * @brief @return a new span of @p count elements starting at @p offset
+   * @param offset starting index
+   * @param count number of elements
+   */
+  Span< element_type > subspan( size_type const offset, size_type const count ) const
+  {
+    GEOSX_ASSERT_GE( m_size, offset + count );
+    return { m_data + offset, count };
+  }
+
 private:
 
   /// Pointer to contiguous range of elements
@@ -195,4 +241,4 @@ private:
 
 }
 
-#endif //GEOSX_CODINGUTILITIES_SPAN_HPP
+#endif //GEOSX_COMMON_SPAN_HPP

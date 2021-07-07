@@ -77,12 +77,12 @@ void CapillaryPressureBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   integer const numPhases = numFluidPhases();
-  GEOSX_THROW_IF( numPhases< 2 || numPhases > PhaseType::MAX_NUM_PHASES,
-                  getName() << ": number of fluid phases must be between 2 and " << PhaseType::MAX_NUM_PHASES << ", got " << numPhases,
+  GEOSX_THROW_IF( numPhases< 2 || numPhases > MAX_NUM_PHASES,
+                  getName() << ": number of fluid phases must be between 2 and " << MAX_NUM_PHASES << ", got " << numPhases,
                   InputError );
 
   m_phaseTypes.resize( numPhases );
-  m_phaseOrder.resizeDefault( PhaseType::MAX_NUM_PHASES, -1 );
+  m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );
 
   for( integer ip = 0; ip < numPhases; ++ip )
   {
@@ -112,10 +112,8 @@ void CapillaryPressureBase::resizeFields( localIndex const size,
 
 void CapillaryPressureBase::setLabels()
 {
-  Span< string const > const phaseNames( m_phaseNames.begin(), m_phaseNames.end() );
-
   getWrapper< array3d< real64, cappres::LAYOUT_CAPPRES > >( viewKeyStruct::phaseCapPressureString() ).
-    setDimLabels( 2, phaseNames );
+    setDimLabels( 2, m_phaseNames );
 }
 
 void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & parent,

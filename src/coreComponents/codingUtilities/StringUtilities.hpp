@@ -60,13 +60,24 @@ string join( IT first, IT last, S const & delim = S())
   return oss.str();
 }
 
+/**
+ * @brief Concatenate variadic arguments into a string with a delimiter.
+ * @tparam S type of delimiter (printable to std::ostringstream)
+ * @tparam T type of first argument (printable to std::ostringstream)
+ * @tparam Ts types of remaining arguments (printable to std::ostringstream)
+ * @param delim delimiter
+ * @param v first value
+ * @param vs remaining values
+ * @return string containing concatenated printed arguments
+ */
 template< typename S = char, typename T, typename ... Ts >
 string concat( S const & delim, T const & v, Ts const & ... vs )
 {
   std::ostringstream oss;
   oss << v;
+  // Use array initializer and comma trick to get "fold expression" pre C++-17
   using expander = int[];
-  (void) expander{ 0, ( void (oss << delim << vs ), 0 )... };
+  (void) expander{ 0, ( void ( oss << delim << vs ), 0) ... };
   return oss.str();
 }
 

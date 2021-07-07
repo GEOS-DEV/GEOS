@@ -292,20 +292,16 @@ Span< string const > getDefaultLabels( localIndex const size )
 }
 
 /**
- * @brief Checks consistency of per-dimension labels (must either be not present, or match the size of array).
+ * @brief Checks consistency of user-provided per-dimension labels (must match the size of array).
  * @param wrapper the array wrapper
  * @param dim dimension index to check
  */
 template< typename T, int NDIM, typename PERM >
 void checkLabels( Wrapper< Array< T, NDIM, PERM > > const & wrapper, int const dim )
 {
-  Span< string const > const labels = wrapper.getDimLabels( dim );
-  if( !labels.empty() )
-  {
-    GEOSX_ERROR_IF_NE_MSG( labels.size(), wrapper.reference().size( dim ),
-                           "VTK writer: component names are set, but don't match the array size.\n"
-                           "This is likely a bug in physics module (solver or constitutive model)." );
-  }
+  GEOSX_ERROR_IF_NE_MSG( wrapper.getDimLabels( dim ).size(), wrapper.reference().size( dim ),
+                         "VTK writer: component names are set, but don't match the array size.\n"
+                         "This is likely a bug in physics module (solver or constitutive model)." );
 }
 
 /**
@@ -313,17 +309,18 @@ void checkLabels( Wrapper< Array< T, NDIM, PERM > > const & wrapper, int const d
  * @param wrapper array wrapper
  * @param dim dimension index
  * @return a span over range of strings representing labels
- *
- * Also checks consistency of user-provided per-dimension labels
- * (must either be not present, or match the actual size of array).
  */
 template< typename T, int NDIM, typename PERM >
 Span< string const > getDimLabels( Wrapper< Array< T, NDIM, PERM > > const & wrapper,
                                    int const dim )
 {
-  checkLabels( wrapper, dim );
   Span< string const > const labels = wrapper.getDimLabels( dim );
-  return !labels.empty() ? labels : getDefaultLabels( wrapper.reference().size( dim ) );
+  if( labels.empty() )
+  {
+    return getDefaultLabels( wrapper.reference().size( dim ) );
+  }
+  checkLabels( wrapper, dim );
+  return labels;
 }
 
 /**
@@ -370,10 +367,10 @@ void setComponentMetadata( Wrapper< Array< T, 2, PERM > > const & wrapper,
   auto const view = wrapper.referenceAsView();
   data.SetNumberOfComponents( view.size( 1 ) );
 
-  checkLabels( wrapper, 1 );
   Span< string const > const labels = wrapper.getDimLabels( 1 );
   if( !labels.empty() )
   {
+    checkLabels( wrapper, 1 );
     for( localIndex i = 0; i < view.size( 1 ); ++i )
     {
       data.SetComponentName( i, labels[i].c_str() );
@@ -425,7 +422,6 @@ void writeElementField( vtkCellData & cellData,
     {
       rtTypes::applyArrayTypeLambda2( rtTypes::typeID( wrapper.getTypeId() ), true, [&]( auto array, auto scalar )
       {
-        data = vtkAOSDataArrayTemplate< decltype( scalar ) >::New();
         auto typedData = vtkAOSDataArrayTemplate< decltype( scalar ) >::New();
         data = typedData;
         setComponentMetadata( wrapper.cast< decltype( array ) >(), *typedData );

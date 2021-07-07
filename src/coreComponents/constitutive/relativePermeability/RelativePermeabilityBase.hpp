@@ -89,6 +89,8 @@ class RelativePermeabilityBase : public ConstitutiveBase
 {
 public:
 
+  static constexpr integer MAX_NUM_PHASES = 3;
+
   struct PhaseType
   {
     enum : integer
@@ -96,27 +98,26 @@ public:
       OIL = 0,
       GAS = 1,
       WATER = 2,
-      MAX_NUM_PHASES = 3
     };
   };
 
-  // order of the phase properties in the water-oil data
+  /// order of the phase properties in the water-oil data
   struct WaterOilPairPhaseType
   {
     enum : integer
     {
-      WATER = 0, // first water phase property
-      OIL = 1,   // second oil phase property
+      WATER = 0, ///< first water phase property
+      OIL = 1,   ///< second oil phase property
     };
   };
 
-  // order of the phase properties in the gas-oil data
+  /// order of the phase properties in the gas-oil data
   struct GasOilPairPhaseType
   {
     enum : integer
     {
-      GAS = 0, // first gas phase property
-      OIL = 1, // second oil phase property
+      GAS = 0, ///< first gas phase property
+      OIL = 1, ///< second oil phase property
     };
   };
 

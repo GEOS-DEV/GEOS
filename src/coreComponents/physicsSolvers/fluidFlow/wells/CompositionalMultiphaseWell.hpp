@@ -355,7 +355,7 @@ private:
 
   /**
    * @brief Resize the allocated multidimensional fields
-   * @param well the well for which the fields are resized
+   * @param subRegion the well element region for which the fields are resized
    * @param targetIndex index of the target region
    */
   void resizeFields( WellElementSubRegion & subRegion, localIndex const targetIndex );

@@ -141,24 +141,21 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
 
 void MultiFluidBase::setLabels()
 {
-  Span< string const > const compNames( m_componentNames.begin(), m_componentNames.end() );
-  Span< string const > const phaseNames( m_phaseNames.begin(), m_phaseNames.end() );
-
   getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseFractionString() ).
-    setDimLabels( 2, phaseNames );
+    setDimLabels( 2, m_phaseNames );
 
   getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseDensityString() ).
-    setDimLabels( 2, phaseNames );
+    setDimLabels( 2, m_phaseNames );
 
   getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseMassDensityString() ).
-    setDimLabels( 2, phaseNames );
+    setDimLabels( 2, m_phaseNames );
 
   getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseViscosityString() ).
-    setDimLabels( 2, phaseNames );
+    setDimLabels( 2, m_phaseNames );
 
   getWrapper< array4d< real64, multifluid::LAYOUT_PHASE_COMP > >( viewKeyStruct::phaseCompFractionString() ).
-    setDimLabels( 2, phaseNames ).
-    setDimLabels( 3, compNames );
+    setDimLabels( 2, m_phaseNames ).
+    setDimLabels( 3, m_componentNames );
 }
 
 void MultiFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
