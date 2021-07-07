@@ -13,7 +13,7 @@
  */
 
 /**
- * @file ConformingVirtualElement_1.hpp
+ * @file ConformingVirtualElementOrder1.hpp
  */
 
 #ifndef GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
@@ -31,120 +31,153 @@ template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 class ConformingVirtualElementOrder1 final : public VirtualElementBase
 {
 public:
+  using InputNodeCoords = arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >;
+  using InputCellToNodeMap = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
+  using InputCellToFaceMap = arrayView2d< localIndex const >;
+  using InputFaceToNodeMap = ArrayOfArraysView< localIndex const >;
+  using InputFaceToEdgeMap = ArrayOfArraysView< localIndex const >;
+  using InputEdgeToNodeMap = arrayView2d< localIndex const >;
+
   static constexpr localIndex maxSupportPoints = MAXCELLNODES;
   static constexpr localIndex numQuadraturePoints = 1;
 
-private:
-  // GEOSX_HOST_DEVICE
-  static void
-  computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                        arraySlice1d< localIndex const > const & faceToNodes,
-                        arraySlice1d< localIndex const > const & faceToEdges,
-                        real64 const & faceArea,
-                        arraySlice1d< real64 const > const & faceCenter,
-                        arraySlice1d< real64 const > const & faceNormal,
-                        EdgeManager::NodeMapType const & edgeToNodes,
-                        real64 const & invCellDiameter,
-                        arraySlice1d< real64 const > const & cellCenter,
-                        real64 basisIntegrals[MAXFACENODES],
-                        real64 threeDMonomialIntegrals[3] );
+  struct BasisData
+  {
+    static constexpr localIndex maxSupportPoints = MAXCELLNODES;
+    static constexpr localIndex numQuadraturePoints = 1;
+    localIndex numSupportPoints;
+    real64 quadratureWeight;
+    real64 basisFunctionsIntegralMean[MAXCELLNODES];
+    real64 stabilizationMatrix[MAXCELLNODES][MAXCELLNODES];
+    real64 basisDerivativesIntegralMean[MAXCELLNODES][3];
+  };
 
-  static localIndex m_numSupportPoints;
-  static real64 m_quadratureWeight;
-  static real64 m_basisFunctionsIntegralMean[maxSupportPoints];
-  static real64 m_stabilizationMatrix[maxSupportPoints][maxSupportPoints];
-  static real64 m_basisDerivativesIntegralMean[maxSupportPoints][3];
+private:
+  GEOSX_HOST_DEVICE
+  static void
+    computeFaceIntegrals( InputNodeCoords const & nodesCoords,
+                          localIndex const (&faceToNodes)[MAXFACENODES],
+                          localIndex const (&faceToEdges)[MAXFACENODES],
+                          localIndex const & numFaceVertices,
+                          real64 const & faceArea,
+                          real64 const (&faceCenter)[3],
+                          real64 const (&faceNormal)[3],
+                          InputEdgeToNodeMap const & edgeToNodes,
+                          real64 const & invCellDiameter,
+                          real64 const (&cellCenter)[3],
+                          real64 ( &basisIntegrals )[MAXFACENODES],
+                          real64 ( &threeDMonomialIntegrals )[3] );
 
 public:
   virtual ~ConformingVirtualElementOrder1() override
   {}
 
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static void
   computeProjectors( localIndex const & cellIndex,
-                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
-                     CellElementSubRegion::NodeMapType const & cellToNodeMap,
-                     CellElementSubRegion::FaceMapType const & elementToFaceMap,
-                     FaceManager::NodeMapType const & faceToNodeMap,
-                     FaceManager::EdgeMapType const & faceToEdgeMap,
-                     EdgeManager::NodeMapType const & edgeToNodeMap,
+                     InputNodeCoords const & nodesCoords,
+                     InputCellToNodeMap const & cellToNodeMap,
+                     InputCellToFaceMap const & elementToFaceMap,
+                     InputFaceToNodeMap const & faceToNodeMap,
+                     InputFaceToEdgeMap const & faceToEdgeMap,
+                     InputEdgeToNodeMap const & edgeToNodeMap,
                      arrayView2d< real64 const > const faceCenters,
                      arrayView2d< real64 const > const faceNormals,
                      arrayView1d< real64 const > const faceAreas,
-                     arraySlice1d< real64 const > const & cellCenter,
-                     real64 const & cellVolume
+                     real64 const (&cellCenter)[3],
+                     real64 const & cellVolume,
+                     BasisData & basisData
                      );
 
-  // GEOSX_HOST_DEVICE
-  static localIndex getNumQuadraturePoints()
+  GEOSX_HOST_DEVICE
+  static localIndex getMaxSupportPoints( BasisData const & basisData )
   {
-    return numQuadraturePoints;
+    return basisData.maxSupportPoints;
   }
 
-  // GEOSX_HOST_DEVICE
-  static localIndex getNumSupportPoints()
+  GEOSX_HOST_DEVICE
+  static localIndex getNumQuadraturePoints( BasisData const & basisData )
   {
-    return m_numSupportPoints;
+    return basisData.numQuadraturePoints;
   }
 
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
+  static localIndex getNumSupportPoints( BasisData const & basisData )
+  {
+    return basisData.numSupportPoints;
+  }
+
+  GEOSX_HOST_DEVICE
   static real64 calcStabilizationValue( localIndex const iBasisFunction,
-                                        localIndex const jBasisFunction
-                                        )
-  { return m_stabilizationMatrix[iBasisFunction][jBasisFunction]; }
+                                        localIndex const jBasisFunction,
+                                        BasisData const & basisData )
+  { return basisData.stabilizationMatrix[iBasisFunction][jBasisFunction]; }
 
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static real64 calcGradN( localIndex const q,
+                           BasisData const & basisData,
                            real64 ( & gradN )[maxSupportPoints][3] )
   {
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
       for( localIndex j = 0; j < 3; ++j )
       {
-        gradN[i][j] = m_basisDerivativesIntegralMean[i][j];
+        gradN[i][j] = basisData.basisDerivativesIntegralMean[i][j];
       }
     }
-    return transformedQuadratureWeight( q );
+    return transformedQuadratureWeight( q, basisData );
   }
 
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static void calcN( localIndex const q,
+                     BasisData const & basisData,
                      real64 ( & N )[maxSupportPoints] )
   {
     GEOSX_UNUSED_VAR( q );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
-      N[i] = m_basisFunctionsIntegralMean[i];
+      N[i] = basisData.basisFunctionsIntegralMean[i];
     }
   }
 
-  // GEOSX_HOST_DEVICE
-  static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ) )
+  GEOSX_HOST_DEVICE
+  static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
+                                             BasisData const & basisData )
   {
-    return m_quadratureWeight;
+    return basisData.quadratureWeight;
   }
 
 
 public:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  localIndex const & numPoints )
   {
-    array1d< localIndex > selectAllPoints( numPoints );
-    for( localIndex i = 0; i < numPoints; ++i )
+    real64 diameter = 0;
+    for( localIndex numPoint = 0; numPoint < numPoints; ++numPoint )
     {
-      selectAllPoints[i] = i;
+      for( localIndex numOthPoint = 0; numOthPoint < numPoint; ++numOthPoint )
+      {
+        real64 candidateDiameter = 0.0;
+        for( localIndex i = 0; i < DIMENSION; ++i )
+        {
+          real64 coordDiff = points[numPoint][i] - points[numOthPoint][i];
+          candidateDiameter += coordDiff * coordDiff;
+        }
+        if( diameter < candidateDiameter )
+        {
+          diameter = candidateDiameter;
+        }
+      }
+      diameter = LvArray::math::sqrt< real64 >( diameter );
     }
-    return computeDiameter< DIMENSION, POINT_COORDS_TYPE,
-                            array1d< localIndex > const & >( points,
-                                                             selectAllPoints,
-                                                             numPoints );
+    return diameter;
   }
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
-  // GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  POINT_SELECTION_TYPE selectedPoints,
                                  localIndex const & numSelectedPoints )
@@ -162,7 +195,9 @@ public:
           candidateDiameter += coordDiff * coordDiff;
         }
         if( diameter < candidateDiameter )
+        {
           diameter = candidateDiameter;
+        }
       }
       diameter = LvArray::math::sqrt< real64 >( diameter );
     }

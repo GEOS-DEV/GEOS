@@ -38,7 +38,7 @@ constexpr bool always_false( T )
 }
 
 template< int N >
-struct ComponentMaskTypeImpl
+struct ComponentMaskType
 {
   static_assert( always_false( N ), "Unsupported template parameter N for ComponentMask. Use a value between 8 and 64." );
 };
@@ -48,7 +48,7 @@ struct ComponentMaskTypeImpl
  */
 #define GEOSX_LAI_COMPONENTMASK_DECL( N ) \
   template<> \
-  struct ComponentMaskTypeImpl< N > \
+  struct ComponentMaskType< N > \
   { \
     using type = std::uint ## N ## _t; \
   }
@@ -73,9 +73,6 @@ constexpr std::uint32_t roundToNextPowerOfTwo( std::uint32_t v )
   return v;
 }
 
-template< int N >
-using ComponentMaskType = typename ComponentMaskTypeImpl< roundToNextPowerOfTwo( N ) >::type;
-
 }
 
 /**
@@ -93,8 +90,11 @@ class ComponentMask
 {
 private:
 
+  /// Number of bits in mask storage
+  static constexpr int NUM_BITS = internal::roundToNextPowerOfTwo( MAX_COMP );
+
   /// Type used to represent the bit mask
-  using mask_t = internal::ComponentMaskType< MAX_COMP >;
+  using mask_t = typename internal::ComponentMaskType< NUM_BITS >::type;
 
 public:
 
@@ -110,11 +110,9 @@ public:
    */
   GEOSX_HOST_DEVICE
   ComponentMask( int const numComp, bool const includeAll )
-    : m_mask( includeAll ? -1 : 0 ),
-    m_numComp( numComp )
+    : m_mask( includeAll ? -1 : 0 )
   {
-    GEOSX_ASSERT_GE( m_numComp, 0 );
-    GEOSX_ASSERT_GE( MAX_COMP, m_numComp );
+    setNumComp( numComp );
   }
 
   /**
@@ -122,7 +120,7 @@ public:
    * @param numComp total number of components
    */
   GEOSX_HOST_DEVICE
-  explicit ComponentMask( int const numComp )
+  explicit ComponentMask( int const numComp = 0 )
     : ComponentMask( numComp, false )
   {}
 
@@ -151,9 +149,13 @@ public:
   template< int N, typename = std::enable_if_t< ( N < MAX_COMP ) > >
   GEOSX_HOST_DEVICE
   ComponentMask( ComponentMask< N > const & other )
-    : m_mask( other.m_mask ),
-    m_numComp( other.m_numComp )
-  {}
+    : m_numComp( other.numComp() )
+  {
+    for( int i : other )
+    {
+      set( i );
+    }
+  }
 
   ///@}
 
@@ -173,7 +175,7 @@ public:
     using difference_type = int;                         ///< difference type
     using value_type = int;                              ///< value type
     using pointer = void;                                ///< pointer type (meaningless but makes it iterator_traits compatible)
-    using reference_type = int;                          ///< reference type (no real references since this is a const iterator)
+    using reference = int;                               ///< reference type (no real references since this is a const iterator)
     using iterator_category = std::forward_iterator_tag; ///< iterator category
 
     /**
@@ -182,7 +184,7 @@ public:
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    reference_type operator*() const
+    reference operator*() const
     {
       return m_index;
     }
@@ -360,15 +362,15 @@ private:
    * @param numComp new max components value
    */
   GEOSX_HOST_DEVICE
-  void setNumComp( int numComp )
+  void setNumComp( int const numComp )
   {
     GEOSX_ASSERT_GE( numComp, 0 );
     GEOSX_ASSERT_GE( MAX_COMP, numComp );
-    if( numComp < m_numComp )
-    {
-      m_mask &= (mask_t( 1 ) << numComp) - 1;
-    }
     m_numComp = numComp;
+    if( numComp < NUM_BITS )
+    {
+      m_mask &= ( mask_t( 1 ) << numComp ) - 1;
+    }
   }
 
   /**
@@ -393,6 +395,16 @@ private:
     GEOSX_ASSERT_GE( i, 0 );
     GEOSX_ASSERT_GT( m_numComp, i );
     m_mask &= ~(mask_t( 1 ) << i);
+  }
+
+  /**
+   * @brief Invert component selection.
+   */
+  GEOSX_HOST_DEVICE
+  void invert()
+  {
+    m_mask = ~m_mask;
+    setNumComp( m_numComp );
   }
 
   /**
@@ -426,8 +438,8 @@ private:
   GEOSX_HOST_DEVICE
   ComponentMask operator~() const
   {
-    ComponentMask mask( m_numComp );
-    mask.m_mask = ~m_mask & ((mask_t( 1 ) << m_numComp) - 1);
+    ComponentMask mask( *this );
+    mask.invert();
     return mask;
   }
 
@@ -491,7 +503,7 @@ private:
   mask_t m_mask = 0;
 
   /// Runtime number of components (included or excluded) represented by this mask
-  int m_numComp = 0;
+  int m_numComp = MAX_COMP;
 };
 
 }

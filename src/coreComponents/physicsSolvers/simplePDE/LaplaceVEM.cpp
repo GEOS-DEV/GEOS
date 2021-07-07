@@ -92,31 +92,10 @@ void LaplaceVEM::setupSystem( DomainPartition & domain,
                               CRSMatrix< real64, globalIndex > & localMatrix,
                               array1d< real64 > & localRhs,
                               array1d< real64 > & localSolution,
-                              bool const GEOSX_UNUSED_PARAM( setSparsity ) )
+                              bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-
-  // Note: here we cannot use SolverBase::setupSystem, because it does:
-  //       m_localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  //       and that creates problems (integratedTests failures) on Lassen for CPU-only implicit simulations
-
-  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
-
-  setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
-  localIndex const numLocalRows = dofManager.numLocalDofs();
-
-  SparsityPattern< globalIndex > pattern;
-  dofManager.setSparsityPattern( pattern );
-  localMatrix.assimilate< serialPolicy >( std::move( pattern ) );
-
-  localRhs.resize( numLocalRows );
-  localSolution.resize( numLocalRows );
-
-  localMatrix.setName( this->getName() + "/localMatrix" );
-  localRhs.setName( this->getName() + "/localRhs" );
-  localSolution.setName( this->getName() + "/localSolution" );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 }
 
 /*
@@ -152,9 +131,9 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
   // Get geometric properties used to compute projectors.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
-  FaceManager::NodeMapType const & faceToNodeMap = faceManager.nodeList();
-  FaceManager::EdgeMapType const & faceToEdgeMap = faceManager.edgeList();
-  EdgeManager::NodeMapType const & edgeToNodeMap = edgeManager.nodeList();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList().toViewConst();
   arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
   arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
   arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
@@ -172,45 +151,61 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
     elementRegion.forElementSubRegions< CellElementSubRegion >
       ( [&]( CellElementSubRegion const & elemSubRegion )
     {
-      CellElementSubRegion::NodeMapType const & elemToNodeMap = elemSubRegion.nodeList();
-      CellElementSubRegion::FaceMapType const & elementToFaceMap = elemSubRegion.faceList();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > elemToNodeMap = elemSubRegion.nodeList().toViewConst();
+      arrayView2d< localIndex const > const elementToFaceMap = elemSubRegion.faceList().toViewConst();
       arrayView2d< real64 const > elemCenters = elemSubRegion.getElementCenter();
       arrayView1d< real64 const > elemVolumes = elemSubRegion.getElementVolume();
       arrayView1d< integer const > const & elemGhostRank = elemSubRegion.ghostRank();
       localIndex const numCells = elemSubRegion.size();
-      forAll< serialPolicy >( numCells, [=] ( localIndex const cellIndex )
+      forAll< parallelDevicePolicy< 32 > >( numCells, [=] GEOSX_HOST_DEVICE
+                                              ( localIndex const cellIndex )
       {
-        real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
-        globalIndex elemDofIndex[VEM::maxSupportPoints];
-        real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints];
+        VEM::BasisData basisData;
 
         if( elemGhostRank[cellIndex] < 0 )
         {
-          VEM::computeProjectors( cellIndex, nodesCoords, elemToNodeMap, elementToFaceMap,
-                                  faceToNodeMap, faceToEdgeMap, edgeToNodeMap,
-                                  faceCenters, faceNormals, faceAreas,
-                                  elemCenters[cellIndex], elemVolumes[cellIndex] );
-          localIndex const numSupportPoints = VEM::getNumSupportPoints();
+          real64 cellVolume = elemVolumes[cellIndex];
+          real64 const cellCenter[3] { elemCenters( cellIndex, 0 ),
+                                       elemCenters( cellIndex, 1 ),
+                                       elemCenters( cellIndex, 2 ) };
+          VEM::computeProjectors( cellIndex,
+                                  nodesCoords,
+                                  elemToNodeMap,
+                                  elementToFaceMap,
+                                  faceToNodeMap,
+                                  faceToEdgeMap,
+                                  edgeToNodeMap,
+                                  faceCenters,
+                                  faceNormals,
+                                  faceAreas,
+                                  cellCenter,
+                                  cellVolume,
+                                  basisData );
+
+          real64 derivativesIntMean[VEM::maxSupportPoints][3] { { 0.0 } };
+          globalIndex elemDofIndex[VEM::maxSupportPoints] { 0 };
+          real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints] { { 0.0 } };
+          localIndex const numSupportPoints = VEM::getNumSupportPoints( basisData );
           for( localIndex a = 0; a < numSupportPoints; ++a )
           {
             elemDofIndex[a] = dofIndex[ elemToNodeMap( cellIndex, a ) ];
             for( localIndex b = 0; b < numSupportPoints; ++b )
             {
-              element_matrix[a][b] = VEM::calcStabilizationValue( a, b );
+              element_matrix[a][b] = VEM::calcStabilizationValue( a, b, basisData );
             }
             localRhs[a] = 0.0;
           }
-          for( localIndex q = 0; q < VEM::getNumQuadraturePoints(); ++q )
+          for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
           {
-            VEM::calcGradN( q, basisDerivativesIntegralMean );
+            VEM::calcGradN( q, basisData, derivativesIntMean );
             for( localIndex a = 0; a < numSupportPoints; ++a )
             {
               for( localIndex b = 0; b < numSupportPoints; ++b )
               {
-                element_matrix[a][b] += diffusion * VEM::transformedQuadratureWeight( q ) *
-                                        (basisDerivativesIntegralMean[a][0] * basisDerivativesIntegralMean[b][0] +
-                                         basisDerivativesIntegralMean[a][1] * basisDerivativesIntegralMean[b][1] +
-                                         basisDerivativesIntegralMean[a][2] * basisDerivativesIntegralMean[b][2] );
+                element_matrix[a][b] += diffusion*VEM::transformedQuadratureWeight( q, basisData ) *
+                                        (derivativesIntMean[a][0] * derivativesIntMean[b][0] +
+                                         derivativesIntMean[a][1] * derivativesIntMean[b][1] +
+                                         derivativesIntMean[a][2] * derivativesIntMean[b][2] );
               }
             }
           }
@@ -220,7 +215,7 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                      ( elemDofIndex[a] - rankOffset );
             if( dof < 0 || dof >= localMatrix.numRows() )
               continue;
-            localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >
+            localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >
               ( dof, elemDofIndex, element_matrix[ a ], numSupportPoints );
           }
         }
@@ -228,40 +223,6 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
     } );
   } );
 
-}
-
-/*
-   DIRICHLET BOUNDARY CONDITIONS
-   This is the boundary condition method applied for this particular solver.
-   It is called by the more generic "applyBoundaryConditions" method.
- */
-void LaplaceVEM::applyDirichletBCImplicit( real64 const time,
-                                           DofManager const & dofManager,
-                                           DomainPartition & domain,
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                           arrayView1d< real64 > const & localRhs )
-{
-  FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
-
-  fsManager.apply( time,
-                   domain,
-                   "nodeManager",
-                   m_fieldName,
-                   [&]( FieldSpecificationBase const & bc,
-                        string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group & targetGroup,
-                        string const & GEOSX_UNUSED_PARAM( fieldName ) )
-  {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, serialPolicy >( targetSet,
-                                                                                time,
-                                                                                targetGroup,
-                                                                                m_fieldName,
-                                                                                dofManager.getKey( m_fieldName ),
-                                                                                dofManager.rankOffset(),
-                                                                                localMatrix,
-                                                                                localRhs );
-  } );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, LaplaceVEM, string const &, Group * const )

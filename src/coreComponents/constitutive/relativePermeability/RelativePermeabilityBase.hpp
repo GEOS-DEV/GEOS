@@ -19,12 +19,13 @@
 #ifndef GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP
 #define GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP
 
+#include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
+#include "constitutive/relativePermeability/layouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
-
 namespace constitutive
 {
 
@@ -57,43 +58,31 @@ protected:
 
   RelativePermeabilityBaseUpdate( arrayView1d< integer const > const & phaseTypes,
                                   arrayView1d< integer const > const & phaseOrder,
-                                  arrayView3d< real64 > const & phaseRelPerm,
-                                  arrayView4d< real64 > const & dPhaseRelPerm_dPhaseVolFrac )
+                                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
     : m_phaseTypes( phaseTypes ),
     m_phaseOrder( phaseOrder ),
     m_phaseRelPerm( phaseRelPerm ),
     m_dPhaseRelPerm_dPhaseVolFrac( dPhaseRelPerm_dPhaseVolFrac )
   {}
 
-  /// Default copy constructor
-  RelativePermeabilityBaseUpdate( RelativePermeabilityBaseUpdate const & ) = default;
-
-  /// Default move constructor
-  RelativePermeabilityBaseUpdate( RelativePermeabilityBaseUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  RelativePermeabilityBaseUpdate & operator=( RelativePermeabilityBaseUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  RelativePermeabilityBaseUpdate & operator=( RelativePermeabilityBaseUpdate && ) = delete;
-
   arrayView1d< integer const > m_phaseTypes;
   arrayView1d< integer const > m_phaseOrder;
 
-  arrayView3d< real64 > m_phaseRelPerm;
-  arrayView4d< real64 > m_dPhaseRelPerm_dPhaseVolFrac;
+  arrayView3d< real64, relperm::USD_RELPERM > m_phaseRelPerm;
+  arrayView4d< real64, relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
 
 private:
 
   GEOSX_HOST_DEVICE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseRelPerm,
-                        arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const = 0;
+  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                        arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                        arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const = 0;
 
   GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & phaseVolFraction ) const = 0;
+                       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const = 0;
 };
 
 class RelativePermeabilityBase : public ConstitutiveBase
@@ -133,8 +122,8 @@ public:
 
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
-  arrayView3d< real64 const > phaseRelPerm() const { return m_phaseRelPerm; }
-  arrayView4d< real64 const > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
+  arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm() const { return m_phaseRelPerm; }
+  arrayView4d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -165,8 +154,8 @@ protected:
   array1d< integer > m_phaseOrder;
 
   // output quantities
-  array3d< real64 >  m_phaseRelPerm;
-  array4d< real64 >  m_dPhaseRelPerm_dPhaseVolFrac;
+  array3d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPerm;
+  array4d< real64, relperm::LAYOUT_RELPERM_DS >  m_dPhaseRelPerm_dPhaseVolFrac;
 };
 
 } // namespace constitutive
