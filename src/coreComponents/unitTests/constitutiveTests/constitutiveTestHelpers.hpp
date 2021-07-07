@@ -33,7 +33,7 @@ namespace testing
 template< typename MODEL, typename VAR, typename D_VAR_D_SAT >
 void testNumericalDerivatives( dataRepository::Group & parent,
                                MODEL & model,
-                               arraySlice1d< real64 const > const saturation,
+                               arraySlice1d< real64 const > const saturationInput,
                                real64 const perturbParameter,
                                real64 const relTol,
                                string const & varName,
@@ -43,6 +43,14 @@ void testNumericalDerivatives( dataRepository::Group & parent,
   localIndex const NP = model.numFluidPhases();
   auto const & phases = model.phaseNames();
 
+  // Copy input values into an array with expected layout
+  array2d< real64, compflow::LAYOUT_PHASE > saturationValues( 1, NP );
+  for( localIndex i = 0; i < NP; ++i )
+  {
+    saturationValues[0][i] = saturationInput[i];
+  }
+  arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const saturation = saturationValues[0];
+
   // create a clone of the rel perm to run updates on
   std::unique_ptr< constitutive::ConstitutiveBase > modelCopyPtr = model.deliverClone( "fluidCopy", &parent );
   MODEL & modelCopy = dynamicCast< MODEL & >( *modelCopyPtr );
@@ -50,9 +58,10 @@ void testNumericalDerivatives( dataRepository::Group & parent,
   model.allocateConstitutiveData( model.getParent(), 1 );
   modelCopy.allocateConstitutiveData( model.getParent(), 1 );
 
-  arraySlice1d< real64 const > const var = varAccessor( model );
-  arraySlice2d< real64 const > const dPhaseRelPerm_dSat = dVar_dSat_accessor( model );
-  arraySlice1d< real64 const > const varCopy = varAccessor( modelCopy );
+  // auto to avoid having to spell out unknown layout permutations
+  auto const var = varAccessor( model );
+  auto const dPhaseRelPerm_dSat = dVar_dSat_accessor( model );
+  auto const varCopy = varAccessor( modelCopy );
 
   // set the fluid state to current
   constitutive::constitutiveUpdatePassThru( model, [&] ( auto & castedModel )
@@ -64,20 +73,20 @@ void testNumericalDerivatives( dataRepository::Group & parent,
   // update saturation and check derivatives
   auto dPhaseRelPerm_dS = testing::invertLayout( dPhaseRelPerm_dSat, NP, NP );
 
-  array1d< real64 > satNew( NP );
+  array2d< real64, compflow::LAYOUT_PHASE > satNew( 1, NP );
   for( localIndex jp = 0; jp < NP; ++jp )
   {
     real64 const dS = perturbParameter * (saturation[jp] + perturbParameter);
     for( localIndex ip = 0; ip < NP; ++ip )
     {
-      satNew[ip] = saturation[ip];
+      satNew[0][ip] = saturation[ip];
     }
-    satNew[jp] += dS;
+    satNew[0][jp] += dS;
 
     constitutive::constitutiveUpdatePassThru( modelCopy, [&] ( auto & castedRelPerm )
     {
       typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
-      relPermWrapper.update( 0, 0, satNew );
+      relPermWrapper.update( 0, 0, satNew[0] );
     } );
 
     checkDerivative( varCopy.toSliceConst(),

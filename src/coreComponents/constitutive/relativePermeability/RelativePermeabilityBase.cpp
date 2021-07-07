@@ -70,10 +70,11 @@ void RelativePermeabilityBase::postProcessInput()
 
   localIndex const numPhases = numFluidPhases();
 
-  GEOSX_ERROR_IF( numPhases < 2, "RelativePermeabilityBase: number of fluid phases should be at least 2" );
+  GEOSX_THROW_IF( numPhases < 2, "RelativePermeabilityBase: number of fluid phases should be at least 2", InputError );
 
-  GEOSX_ERROR_IF( numPhases > PhaseType::MAX_NUM_PHASES,
-                  "RelativePermeabilityBase: number of fluid phases exceeds the maximum of " << PhaseType::MAX_NUM_PHASES );
+  GEOSX_THROW_IF( numPhases > PhaseType::MAX_NUM_PHASES,
+                  "RelativePermeabilityBase: number of fluid phases exceeds the maximum of " << PhaseType::MAX_NUM_PHASES,
+                  InputError );
 
   m_phaseTypes.resize( numPhases );
   m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
@@ -82,9 +83,9 @@ void RelativePermeabilityBase::postProcessInput()
   for( localIndex ip = 0; ip < numPhases; ++ip )
   {
     auto it = phaseDict.find( m_phaseNames[ip] );
-    GEOSX_ERROR_IF( it == phaseDict.end(), "RelativePermeabilityBase: phase not supported: " << m_phaseNames[ip] );
+    GEOSX_THROW_IF( it == phaseDict.end(), "RelativePermeabilityBase: phase not supported: " << m_phaseNames[ip], InputError );
     integer const phaseIndex = it->second;
-    GEOSX_ERROR_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "RelativePermeabilityBase: invalid phase index " << phaseIndex );
+    GEOSX_THROW_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "RelativePermeabilityBase: invalid phase index " << phaseIndex, InputError );
 
     m_phaseTypes[ip] = phaseIndex;
     m_phaseOrder[phaseIndex] = LvArray::integerConversion< integer >( ip );
