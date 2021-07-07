@@ -52,18 +52,18 @@ public:
 protected:
 
   void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
-                                          integer ( &numNodes )[3] ) final;
+                                          integer ( &numNodes )[3] ) override final;
 
   void setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
-                                               int ( & index )[3] ) final;
+                                               int ( & index )[3] ) override final;
 
   void setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],
                                              integer const ( &numNodesInDir )[3],
                                              int const ( &firstElemIndexInPartition )[3],
-                                             localIndex ( &nodeOfBox )[8] ) final;
+                                             localIndex ( &nodeOfBox )[8] ) override final;
 
   void coordinateTransformation( array2d< real64, nodes::REFERENCE_POSITION_PERM > & X,
-                                 std::map< string, SortedArray< localIndex > > & nodeSets ) final;
+                                 std::map< string, SortedArray< localIndex > > & nodeSets ) override final;
 
   virtual inline bool isCartesian() const override final
   {

@@ -144,13 +144,15 @@ void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager, 
     [&toElementRegionList, &toElementSubRegionList] ( localIndex const er, localIndex const esr, ElementRegionBase const &, CellElementSubRegion const & subRegion )
   {
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
-    for( localIndex k = 0; k < subRegion.size(); ++k )
+    for( localIndex elemIdx = 0; elemIdx < subRegion.size(); ++elemIdx )
     {
-      for( localIndex a = 0; a < subRegion.numNodesPerElement(); ++a )
+      for( localIndex localNodeIdx = 0; localNodeIdx < subRegion.numNodesPerElement(); ++localNodeIdx )
       {
-        localIndex const nodeIndex = elemToNodeMap( k, a );
-        toElementRegionList.emplaceBack( nodeIndex, er );
-        toElementSubRegionList.emplaceBack( nodeIndex, esr );
+        // localNodeIdx is the node index in the referential of each cell (0 to 7 for a cube, e.g.).
+        // While nodeIdx is the global index of the node.
+        localIndex const nodeIdx = elemToNodeMap( elemIdx, localNodeIdx );
+        toElementRegionList.emplaceBack( nodeIdx, er );
+        toElementSubRegionList.emplaceBack( nodeIdx, esr );
       }
     }
   } );
