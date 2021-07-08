@@ -53,7 +53,7 @@ public:
    * @return number of phases
    */
   GEOSX_HOST_DEVICE
-  localIndex numPhases() const { return m_phaseTypes.size(); }
+  integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseTypes.size() ); }
 
 protected:
 
@@ -90,12 +90,16 @@ class CapillaryPressureBase : public ConstitutiveBase
 {
 public:
 
+  static constexpr integer MAX_NUM_PHASES = 3;
+
   struct PhaseType
   {
-    static constexpr integer OIL            = 0;
-    static constexpr integer GAS            = 1;
-    static constexpr integer WATER          = 2;
-    static constexpr integer MAX_NUM_PHASES = 3;
+    enum : integer
+    {
+      OIL            = 0,
+      GAS            = 1,
+      WATER          = 2,
+    };
   };
 
   // choose the reference pressure to be the oil pressure for all models
@@ -104,12 +108,12 @@ public:
   CapillaryPressureBase( string const & name,
                          dataRepository::Group * const parent );
 
-  virtual ~CapillaryPressureBase() override;
+  virtual ~CapillaryPressureBase() override = default;
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  localIndex numFluidPhases() const { return m_phaseNames.size(); }
+  integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
 
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
@@ -126,9 +130,7 @@ public:
     static constexpr char const * dPhaseCapPressure_dPhaseVolFractionString() { return "dPhaseCapPressure_dPhaseVolFraction"; }
   };
 
-protected:
-
-  virtual void postProcessInput() override;
+private:
 
   /**
    * @brief Function called internally to resize member arrays
@@ -136,6 +138,15 @@ protected:
    * @param numPts secondary dimension (e.g. number of gauss points per cell)
    */
   void resizeFields( localIndex const size, localIndex const numPts );
+
+  /**
+   * @brief Called internally to set array dim labels.
+   */
+  void setLabels();
+
+protected:
+
+  virtual void postProcessInput() override;
 
   // phase names read from input
   string_array m_phaseNames;

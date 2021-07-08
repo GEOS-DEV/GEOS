@@ -79,7 +79,7 @@ void TableRelativePermeability::createAllTableKernelWrappers()
 {
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
-  m_phaseMinVolumeFraction.resize( PhaseType::MAX_NUM_PHASES );
+  m_phaseMinVolumeFraction.resize( MAX_NUM_PHASES );
 
   if( m_waterOilRelPermTableKernelWrappers.empty() && m_gasOilRelPermTableKernelWrappers.empty() )
   {

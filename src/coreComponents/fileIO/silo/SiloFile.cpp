@@ -2085,12 +2085,6 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
         this->writeDataField< real64 >( meshname.c_str(), fieldName,
                                         wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
-      if( typeID==typeid(r1_array) )
-      {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< r1_array > const & >( *wrapper );
-        this->writeDataField< real64 >( meshname.c_str(), fieldName,
-                                        wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
-      }
       if( typeID==typeid(integer_array) )
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< integer_array > const & >( *wrapper );
