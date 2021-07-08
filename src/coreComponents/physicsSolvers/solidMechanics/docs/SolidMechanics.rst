@@ -52,7 +52,7 @@ The `SolidMechanics_LagrangianFEM` solves the equations of motion as given by
    T_{ij,j} + \rho(b_{i}-\ddot{x}_{i}) = 0,
 
 which is a 3-dimensional expression for the well known expression of Newtons Second Law (:math:`F = m a`).
-These equations of motion are discritized using the Finite Element Method,
+These equations of motion are discretized using the Finite Element Method,
 which leads to a discrete set of residual equations:
 
 .. math::
