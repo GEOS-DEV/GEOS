@@ -58,8 +58,8 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
     {
       if( wrapper.second->sizedFromParent() )
       {
-        string const & wrapperName = wrapper.first;
-        parent.registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) ).
+        string const wrapperName = makeFieldName( this->getName(), wrapper.first );
+        parent.registerWrapper( wrapperName, wrapper.second->clone( wrapperName, parent ) ).
           setRestartFlags( RestartFlags::NO_WRITE );
       }
     }
@@ -69,8 +69,8 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
   {
     if( wrapper.second->sizedFromParent() )
     {
-      string const wrapperName = wrapper.first;
-      parent.registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) ).
+      string const wrapperName = makeFieldName( this->getName(), wrapper.first );
+      parent.registerWrapper( wrapperName, wrapper.second->clone( wrapperName, parent ) ).
         setRestartFlags( RestartFlags::NO_WRITE );
     }
   }

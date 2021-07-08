@@ -18,8 +18,6 @@
 #include "common/DataTypes.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "dataRepository/Wrapper.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mesh/CellElementSubRegion.hpp"
 #include "fileIO/vtk/VTKPVDWriter.hpp"
 #include "fileIO/vtk/VTKVTMWriter.hpp"
 
@@ -29,7 +27,13 @@ class vtkCellData;
 
 namespace geosx
 {
-//using namespace dataRepository;
+
+class DomainPartition;
+class ElementRegionBase;
+class EmbeddedSurfaceNodeManager;
+class ElementRegionManager;
+class NodeManager;
+
 namespace vtk
 {
 
@@ -146,7 +150,8 @@ private:
    * @param[in] elemManager the ElementRegionManager containing the WellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
-  void writeWellElementRegions( real64 time, ElementRegionManager const & elemManager,
+  void writeWellElementRegions( real64 time,
+                                ElementRegionManager const & elemManager,
                                 NodeManager const & nodeManager ) const;
 
   /**
@@ -166,30 +171,30 @@ private:
    * @param[in] pointData a VTK object containing all the fields associated with the nodes
    * @param[in] nodeManager the NodeManager associated with the domain being written
    */
-  void writeNodeFields( vtkPointData & pointData,
-                        NodeManager const & nodeManager ) const;
+  void writeNodeFields( NodeManager const & nodeManager,
+                        vtkPointData & pointData ) const;
 
   /**
    * @brief Writes all the fields associated to the elements of \p er if their plotlevel is <= m_plotLevel
+   * @param[in] subRegion ElementRegion being written
    * @param[in] cellData a VTK object containing all the fields associated with the elements
-   * @param[in] er ElementRegion being written
    */
   template< class SUBREGION >
-  void writeElementFields( vtkCellData & cellData,
-                           ElementRegionBase const & er ) const;
+  void writeElementFields( ElementRegionBase const & subRegion,
+                           vtkCellData & cellData ) const;
 
   /**
    * @brief Writes an unstructured grid
-   * @details The unstructured grid is the last element in the hiearchy of the output,
+   * @details The unstructured grid is the last element in the hierarchy of the output,
    * it contains the cells connectivities and the vertices coordinates as long as the
    * data fields associated with it
    * @param[in] ug a VTK SmartPointer to the VTK unstructured grid.
    * @param[in] time the current time-step
    * @param[in] name the name of the ElementRegionBase to be written
    */
-  void writeUnstructuredGrid( vtkUnstructuredGrid & ug,
-                              real64 time,
-                              string const & name ) const;
+  void writeUnstructuredGrid( real64 time,
+                              string const & name,
+                              vtkUnstructuredGrid & ug ) const;
 
 private:
 
