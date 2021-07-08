@@ -221,19 +221,19 @@ public:
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr localIndex MAX_NUM_COMPONENTS = 16;
+  static constexpr integer MAX_NUM_COMPONENTS = 16;
 
   /**
    * @brief Maximum supported number of fluid phases
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr localIndex MAX_NUM_PHASES = 4;
+  static constexpr integer MAX_NUM_PHASES = 4;
 
   /**
    * @return number of fluid components (species) in the model
    */
-  localIndex numFluidComponents() const { return m_componentNames.size(); }
+  integer numFluidComponents() const { return LvArray::integerConversion< integer >( m_componentNames.size() ); }
 
   /**
    * @param ic component index
@@ -244,7 +244,7 @@ public:
   /**
    * @return number of fluid phases in the model
    */
-  localIndex numFluidPhases() const { return m_phaseNames.size(); }
+  integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
 
   /**
    * @param ip phase index
@@ -379,17 +379,23 @@ public:
     static constexpr char const * useMassString() { return "useMass"; }
   };
 
-protected:
-
-  virtual void postProcessInput() override;
+private:
 
   /**
    * @brief Function called internally to resize member arrays
    * @param size primary dimension (e.g. number of cells)
    * @param numPts secondary dimension (e.g. number of gauss points per cell)
    */
-  void resizeFields( localIndex const size,
-                     localIndex const numPts );
+  void resizeFields( localIndex const size, localIndex const numPts );
+
+  /**
+   * @brief Called internally to set array dim labels.
+   */
+  void setLabels();
+
+protected:
+
+  virtual void postProcessInput() override;
 
   // flag indicating whether input/output component fractions are treated as mass fractions
   int m_useMass;

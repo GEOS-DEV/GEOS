@@ -105,38 +105,57 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
 
 void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPts )
 {
-  localIndex const NP = numFluidPhases();
-  localIndex const NC = numFluidComponents();
+  integer const numPhase = numFluidPhases();
+  integer const numComp = numFluidComponents();
 
-  m_phaseFraction.resize( size, numPts, NP );
-  m_dPhaseFraction_dPressure.resize( size, numPts, NP );
-  m_dPhaseFraction_dTemperature.resize( size, numPts, NP );
-  m_dPhaseFraction_dGlobalCompFraction.resize( size, numPts, NP, NC );
+  m_phaseFraction.resize( size, numPts, numPhase );
+  m_dPhaseFraction_dPressure.resize( size, numPts, numPhase );
+  m_dPhaseFraction_dTemperature.resize( size, numPts, numPhase );
+  m_dPhaseFraction_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
 
-  m_phaseDensity.resize( size, numPts, NP );
-  m_dPhaseDensity_dPressure.resize( size, numPts, NP );
-  m_dPhaseDensity_dTemperature.resize( size, numPts, NP );
-  m_dPhaseDensity_dGlobalCompFraction.resize( size, numPts, NP, NC );
+  m_phaseDensity.resize( size, numPts, numPhase );
+  m_dPhaseDensity_dPressure.resize( size, numPts, numPhase );
+  m_dPhaseDensity_dTemperature.resize( size, numPts, numPhase );
+  m_dPhaseDensity_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
 
-  m_phaseMassDensity.resize( size, numPts, NP );
-  m_dPhaseMassDensity_dPressure.resize( size, numPts, NP );
-  m_dPhaseMassDensity_dTemperature.resize( size, numPts, NP );
-  m_dPhaseMassDensity_dGlobalCompFraction.resize( size, numPts, NP, NC );
+  m_phaseMassDensity.resize( size, numPts, numPhase );
+  m_dPhaseMassDensity_dPressure.resize( size, numPts, numPhase );
+  m_dPhaseMassDensity_dTemperature.resize( size, numPts, numPhase );
+  m_dPhaseMassDensity_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
 
-  m_phaseViscosity.resize( size, numPts, NP );
-  m_dPhaseViscosity_dPressure.resize( size, numPts, NP );
-  m_dPhaseViscosity_dTemperature.resize( size, numPts, NP );
-  m_dPhaseViscosity_dGlobalCompFraction.resize( size, numPts, NP, NC );
+  m_phaseViscosity.resize( size, numPts, numPhase );
+  m_dPhaseViscosity_dPressure.resize( size, numPts, numPhase );
+  m_dPhaseViscosity_dTemperature.resize( size, numPts, numPhase );
+  m_dPhaseViscosity_dGlobalCompFraction.resize( size, numPts, numPhase, numComp );
 
-  m_phaseCompFraction.resize( size, numPts, NP, NC );
-  m_dPhaseCompFraction_dPressure.resize( size, numPts, NP, NC );
-  m_dPhaseCompFraction_dTemperature.resize( size, numPts, NP, NC );
-  m_dPhaseCompFraction_dGlobalCompFraction.resize( size, numPts, NP, NC, NC );
+  m_phaseCompFraction.resize( size, numPts, numPhase, numComp );
+  m_dPhaseCompFraction_dPressure.resize( size, numPts, numPhase, numComp );
+  m_dPhaseCompFraction_dTemperature.resize( size, numPts, numPhase, numComp );
+  m_dPhaseCompFraction_dGlobalCompFraction.resize( size, numPts, numPhase, numComp, numComp );
 
   m_totalDensity.resize( size, numPts );
   m_dTotalDensity_dPressure.resize( size, numPts );
   m_dTotalDensity_dTemperature.resize( size, numPts );
-  m_dTotalDensity_dGlobalCompFraction.resize( size, numPts, NC );
+  m_dTotalDensity_dGlobalCompFraction.resize( size, numPts, numComp );
+}
+
+void MultiFluidBase::setLabels()
+{
+  getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseFractionString() ).
+    setDimLabels( 2, m_phaseNames );
+
+  getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseDensityString() ).
+    setDimLabels( 2, m_phaseNames );
+
+  getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseMassDensityString() ).
+    setDimLabels( 2, m_phaseNames );
+
+  getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseViscosityString() ).
+    setDimLabels( 2, m_phaseNames );
+
+  getWrapper< array4d< real64, multifluid::LAYOUT_PHASE_COMP > >( viewKeyStruct::phaseCompFractionString() ).
+    setDimLabels( 2, m_phaseNames ).
+    setDimLabels( 3, m_componentNames );
 }
 
 void MultiFluidBase::allocateConstitutiveData( dataRepository::Group & parent,
@@ -150,27 +169,24 @@ void MultiFluidBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
 
-  localIndex const NC = numFluidComponents();
-  localIndex const NP = numFluidPhases();
+  integer const numComp = numFluidComponents();
+  integer const numPhase = numFluidPhases();
 
-  GEOSX_THROW_IF( NC == 0, "MultiFluidBase: No fluid components specified", InputError );
-  GEOSX_THROW_IF( NC > MAX_NUM_COMPONENTS, "MultiFluidBase: Number of fluid components exceeds the maximum of " << MAX_NUM_COMPONENTS, InputError );
-  GEOSX_THROW_IF( NP == 0, "MultiFluidBase: No fluid phases specified", InputError );
-  GEOSX_THROW_IF( NP > MAX_NUM_PHASES, "MultiFluidBase: Number of fluid phases exceeds the maximum of " << MAX_NUM_PHASES, InputError );
-
-  #define MULTIFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
-    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-    { \
-      GEOSX_ERROR( "MultiFluidBase: invalid number of entries in " \
-                   << (attr) << " attribute (" \
-                   << (data).size() << "given, " \
-                   << (expected) << " expected)" ); \
-    }
-
-  MULTIFLUID_CHECK_INPUT_LENGTH( m_componentMolarWeight, NC, viewKeyStruct::componentMolarWeightString() )
+  GEOSX_THROW_IF( numComp == 0 || numComp > MAX_NUM_COMPONENTS,
+                  getName() << ": number of fluid components must be between 1 and " << MAX_NUM_COMPONENTS << ", got " << numComp,
+                  InputError );
+  GEOSX_THROW_IF( numPhase == 0 || numPhase > MAX_NUM_PHASES,
+                  getName() << ": number of fluid phases must be between 1 and " << MAX_NUM_PHASES << ", got " << numPhase,
+                  InputError );
+  GEOSX_THROW_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
+                         getName() << ": invalid number of entries in " << viewKeyStruct::componentMolarWeightString() << " attribute",
+                         InputError );
 
   // call to correctly set member array tertiary sizes on the 'main' material object
   resizeFields( 0, 0 );
+
+  // set labels on array wrappers for plottable fields
+  setLabels();
 }
 
 } //namespace constitutive
