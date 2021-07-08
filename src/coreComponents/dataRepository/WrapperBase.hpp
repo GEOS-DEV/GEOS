@@ -45,7 +45,6 @@ namespace dataRepository
 {
 
 class Group;
-template< typename T > class Wrapper;
 
 /**
  * @class WrapperBase
@@ -548,32 +547,6 @@ public:
    * @return type_info of the wrapped type "typeid(T)"
    */
   virtual std::type_info const & getTypeId() const = 0;
-
-  /**
-   * @brief Downcast @p this to a typed wrapper.
-   * @tparam T wrapped type to cast to
-   * @pre @p this must be in instance of Wrapper<T>
-   * @return reference to @p this cast to a typed wrapper.
-   */
-  template< typename T >
-  Wrapper< T > & cast()
-  {
-    GEOSX_ERROR_IF( getTypeId() != typeid( T ), "WrapperBase: invalid downcast" );
-    return dynamicCast< Wrapper< T > & >( *this );
-  }
-
-  /**
-   * @brief Downcast @p this to a const typed wrapper.
-   * @tparam T wrapped type to cast to
-   * @pre @p this must be in instance of Wrapper<T>
-   * @return const reference to @p this cast to a typed wrapper.
-   */
-  template< typename T >
-  Wrapper< T > const & cast() const
-  {
-    GEOSX_ERROR_IF( getTypeId() != typeid( T ), "WrapperBase: invalid downcast" );
-    return dynamicCast< Wrapper< T > const & >( *this );
-  }
 
   /**
    * @brief Return the number of dimensions of the array.

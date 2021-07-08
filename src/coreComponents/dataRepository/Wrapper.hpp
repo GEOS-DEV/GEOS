@@ -207,6 +207,32 @@ public:
     return typeid(T);
   }
 
+  /**
+   * @brief Downcast base to a typed wrapper.
+   * @param wrapper the base wrapper reference
+   * @pre @p wrapper must be an instance of Wrapper<T>
+   * @return reference to @p wrapper cast to a typed wrapper.
+   */
+  static Wrapper & cast( WrapperBase & wrapper )
+  {
+    GEOSX_ERROR_IF( wrapper.getTypeId() != typeid( T ),
+                    "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
+    return static_cast< Wrapper< T > & >( wrapper );
+  }
+
+  /**
+   * @brief Downcast base to a const typed wrapper.
+   * @param wrapper the base wrapper reference
+   * @pre @p wrapper must be an instance of Wrapper<T>
+   * @return const reference to @p wrapper cast to a typed wrapper.
+   */
+  static Wrapper< T > const & cast( WrapperBase const & wrapper )
+  {
+    GEOSX_ERROR_IF( wrapper.getTypeId() != typeid( T ),
+                    "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
+    return static_cast< Wrapper< T > const & >( wrapper );
+  }
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 
   virtual int numArrayDims() const override

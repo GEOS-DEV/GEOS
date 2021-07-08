@@ -264,7 +264,7 @@ void writeField( WrapperBase const & wrapper,
   {
     using T = decltype( scalar );
     vtkAOSDataArrayTemplate< T > & typedData = *vtkAOSDataArrayTemplate< T >::FastDownCast( &data );
-    auto const sourceArray = wrapper.cast< decltype( array ) >().reference().toViewConst();
+    auto const sourceArray = Wrapper< decltype( array ) >::cast( wrapper ).reference().toViewConst();
 
     // TODO: check if parallel host policy is faster/slower
     forAll< serialPolicy >( sourceArray.size( 0 ), [sourceArray, offset, &typedData]( localIndex const i )
@@ -299,7 +299,8 @@ Span< string const > getDefaultLabels( localIndex const size )
 template< typename T, int NDIM, typename PERM >
 void checkLabels( Wrapper< Array< T, NDIM, PERM > > const & wrapper, int const dim )
 {
-  GEOSX_ERROR_IF_NE_MSG( wrapper.getDimLabels( dim ).size(), wrapper.reference().size( dim ),
+  GEOSX_ERROR_IF_NE_MSG( LvArray::integerConversion< localIndex >( wrapper.getDimLabels( dim ).size() ),
+                         wrapper.reference().size( dim ),
                          "VTK writer: component names are set, but don't match the array size.\n"
                          "This is likely a bug in physics module (solver or constitutive model)." );
 }
@@ -424,7 +425,7 @@ void writeElementField( vtkCellData & cellData,
       {
         auto typedData = vtkAOSDataArrayTemplate< decltype( scalar ) >::New();
         data = typedData;
-        setComponentMetadata( wrapper.cast< decltype( array ) >(), *typedData );
+        setComponentMetadata( Wrapper< decltype( array ) >::cast( wrapper ), *typedData );
       } );
       first = false;
       numDims = wrapper.numArrayDims();
@@ -466,7 +467,7 @@ void VTKPolyDataWriterInterface::writeNodeFields( vtkPointData & pointData,
       {
         auto typedData = vtkAOSDataArrayTemplate< decltype( scalar ) >::New();
         data = typedData;
-        setComponentMetadata( wrapper.cast< decltype( array ) >(), *typedData );
+        setComponentMetadata( Wrapper< decltype( array ) >::cast( wrapper ), *typedData );
       } );
 
       data->SetNumberOfTuples( nodeManager.size() );

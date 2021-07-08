@@ -48,7 +48,7 @@ public:
   using value_type = std::remove_cv_t< T >;
 
   /// Type used for indexing the range
-  using size_type = std::ptrdiff_t;
+  using size_type = std::size_t;
 
   /// Type used for indexing the range
   using difference_type = std::ptrdiff_t;
