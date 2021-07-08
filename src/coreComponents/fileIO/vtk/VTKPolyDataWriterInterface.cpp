@@ -566,13 +566,13 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
   std::unordered_set< string > regularFields;
   region.forElementSubRegions< SUBREGION >( [&]( ElementSubRegionBase const & subRegion )
   {
-    subRegion.forWrappers( [&]( WrapperBase const & wrapper )
+    for( auto const & wrapperIter : subRegion.wrappers() )
     {
-      if( wrapper.getPlotLevel() <= m_plotLevel && materialFields.count( wrapper.getName() ) == 0 )
+      if( wrapperIter.second->getPlotLevel() <= m_plotLevel && materialFields.count( wrapperIter.first ) == 0 )
       {
-        regularFields.insert( wrapper.getName() );
+        regularFields.insert( wrapperIter.first );
       }
-    } );
+    }
   } );
 
   // Write regular fields
