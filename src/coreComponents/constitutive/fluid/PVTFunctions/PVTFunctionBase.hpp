@@ -19,7 +19,6 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_
 
-#include "codingUtilities/StringUtilities.hpp"
 #include "dataRepository/ObjectCatalog.hpp"
 
 namespace geosx
@@ -36,38 +35,10 @@ enum class PVTFunctionType { UNKNOWN, DENSITY, VISCOSITY };
 class PVTFunctionBaseUpdate
 {
 public:
-  PVTFunctionBaseUpdate( arrayView1d< real64 const > const & componentMolarWeight )
-    :
-    m_componentMolarWeight( componentMolarWeight )
+
+  explicit PVTFunctionBaseUpdate( arrayView1d< real64 const > const & componentMolarWeight )
+    : m_componentMolarWeight( componentMolarWeight )
   {}
-
-  /// Default virtual destructor
-  virtual ~PVTFunctionBaseUpdate() = default;
-
-  /// Default copy constructor
-  PVTFunctionBaseUpdate( PVTFunctionBaseUpdate const & ) = default;
-
-  /// Default move constructor
-  PVTFunctionBaseUpdate( PVTFunctionBaseUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  PVTFunctionBaseUpdate & operator=( PVTFunctionBaseUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  PVTFunctionBaseUpdate & operator=( PVTFunctionBaseUpdate && ) = delete;
-
-  GEOSX_HOST_DEVICE
-  virtual void compute( real64 const & pressure,
-                        real64 const & temperature,
-                        arraySlice1d< real64 const > const & phaseComposition,
-                        arraySlice1d< real64 const > const & dPhaseComposition_dPressure,
-                        arraySlice1d< real64 const > const & dPhaseComposition_dTemperature,
-                        arraySlice2d< real64 const > const & dPhaseComposition_dGlobalCompFraction,
-                        real64 & value,
-                        real64 & dValue_dPressure,
-                        real64 & dValue_dTemperature,
-                        arraySlice1d< real64 > const & dValue_dGlobalCompFraction,
-                        bool useMass ) const = 0;
 
   /**
    * @brief Move the KernelWrapper to the given execution space, optionally touching it.

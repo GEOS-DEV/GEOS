@@ -219,14 +219,16 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
     arrayView1d< real64 const > const & pres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::pressureString() );
     pres.move( LvArray::MemorySpace::host, false );
+
     arrayView1d< real64 > const & dPres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaPressureString() );
 
-    arrayView2d< real64 const > const & compDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::globalCompDensityString() );
+    arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::globalCompDensityString() );
     compDens.move( LvArray::MemorySpace::host, false );
-    arrayView2d< real64 > const & dCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaGlobalCompDensityString() );
+
+    arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaGlobalCompDensityString() );
 
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
