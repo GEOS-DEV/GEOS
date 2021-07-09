@@ -815,6 +815,8 @@ the relative residual norm satisfies:
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--areaRelTol => Relative tolerance for area calculations.-->
 		<xsd:attribute name="areaRelTol" type="real64" default="1e-08" />
+		<!--coefficientModelNames => List of constitutive models that contain the coefficient used to build the stencil-->
+		<xsd:attribute name="coefficientModelNames" type="string_array" default="{}" />
 		<!--coefficientName => Name of coefficient field-->
 		<xsd:attribute name="coefficientName" type="string" use="required" />
 		<!--fieldName => Name of primary solution field-->
@@ -1016,6 +1018,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
+		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
+		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--relPermNames => Name of the relative permeability constitutive model to use-->
 		<xsd:attribute name="relPermNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
@@ -1056,6 +1060,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="maxRelativePressureChange" type="real64" default="1" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
+		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
+		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--relPermNames => Name of the relative permeability constitutive model to use-->
 		<xsd:attribute name="relPermNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
@@ -1424,6 +1430,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="maxProppantConcentration" type="real64" default="0.6" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
+		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
+		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--proppantDensity => Proppant density-->
 		<xsd:attribute name="proppantDensity" type="real64" default="2500" />
 		<!--proppantDiameter => Proppant diameter-->
@@ -1458,6 +1466,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
+		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
+		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -1484,6 +1494,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
+		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
+		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -1558,6 +1570,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
+		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
+		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
