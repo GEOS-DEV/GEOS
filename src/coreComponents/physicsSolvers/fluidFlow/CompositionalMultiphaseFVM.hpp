@@ -24,16 +24,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
-
-namespace constitutive
-{
-class MultiFluidBase;
-}
-
 /**
  * @class CompositionalMultiphaseFVM
  *
@@ -116,6 +106,12 @@ public:
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
+  virtual void
+  implicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition & domain ) override;
+
+
   /**@}*/
 
   /**
@@ -141,6 +137,15 @@ public:
    */
   virtual void
   updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const override;
+
+  /**
+   * @brief Compute the largest CFL number in the domain
+   * @param dt the time step size
+   * @param domain the domain containing the mesh and fields
+   */
+  void
+  computeCFLNumbers( real64 const & dt, DomainPartition & domain );
+
 
   virtual void initializePreSubGroups() override;
 

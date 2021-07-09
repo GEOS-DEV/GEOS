@@ -106,9 +106,9 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr char const * solidModelNameString() { return "solidName"; }
-    static constexpr char const * porosityModelNameString() { return "porosityName"; }
-    static constexpr char const * permeabilityModelNameString() { return "permeabilityName"; }
+    static constexpr char const * solidModelNameString() { return "solidModelName"; }
+    static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
+    static constexpr char const * permeabilityModelNameString() { return "permeabilityModelName"; }
   };
 
   /**
@@ -164,7 +164,7 @@ CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::CoupledSolid( string const & n
 
   registerWrapper( viewKeyStruct::permeabilityModelNameString(), &m_permeabilityModelName ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
-    setDescription( "Name of the porosity model." );
+    setDescription( "Name of the permeability model." );
 }
 
 template< typename SOLID_TYPE,
