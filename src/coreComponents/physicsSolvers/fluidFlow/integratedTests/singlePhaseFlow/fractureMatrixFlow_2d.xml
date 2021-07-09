@@ -10,7 +10,7 @@
       targetRegions="{ Region2, Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      permeabilityNames=" { rockPerm, fracPerm } ">
+      permeabilityNames="{ rockPerm, fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
         newtonMaxIter="8"
@@ -112,7 +112,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{ rockPerm, fracPerm }"/>
+        coefficientModelNames="{rockPerm, fracPerm}"/>
     </FiniteVolume>
   </NumericalMethods>
 

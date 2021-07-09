@@ -107,8 +107,7 @@
       <HybridMimeticDiscretization
         name="fluidHM"
         innerProductType="beiraoDaVeigaLipnikovManzini"
-        coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
