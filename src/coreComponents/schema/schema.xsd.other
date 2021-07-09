@@ -766,14 +766,14 @@
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="NullModel" type="NullModelType" />
-			<xsd:element name="OldPoroDruckerPrager" type="OldPoroDruckerPragerType" />
-			<xsd:element name="OldPoroElasticIsotropic" type="OldPoroElasticIsotropicType" />
-			<xsd:element name="OldPoroElasticTransverseIsotropic" type="OldPoroElasticTransverseIsotropicType" />
-			<xsd:element name="OldPoroExtendedDruckerPrager" type="OldPoroExtendedDruckerPragerType" />
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
+			<xsd:element name="PoroDruckerPrager" type="PoroDruckerPragerType" />
+			<xsd:element name="PoroElasticIsotropic" type="PoroElasticIsotropicType" />
+			<xsd:element name="PoroElasticTransverseIsotropic" type="PoroElasticTransverseIsotropicType" />
+			<xsd:element name="PoroExtendedDruckerPrager" type="PoroExtendedDruckerPragerType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
 			<xsd:element name="PorousElasticTransverseIsotropic" type="PorousElasticTransverseIsotropicType" />
@@ -1205,100 +1205,6 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="NullModelType" />
-	<xsd:complexType name="OldPoroDruckerPragerType">
-		<!--bulkModulus => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="bulkModulus" type="real64_array" />
-		<!--cohesion => New cohesion state-->
-		<xsd:attribute name="cohesion" type="real64_array2d" />
-		<!--dPVMult_dDensity => (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--dilation => Plastic potential slope-->
-		<xsd:attribute name="dilation" type="real64_array" />
-		<!--friction => Yield surface slope-->
-		<xsd:attribute name="friction" type="real64_array" />
-		<!--hardening => Hardening rate-->
-		<xsd:attribute name="hardening" type="real64_array" />
-		<!--oldCohesion => Old cohesion state-->
-		<xsd:attribute name="oldCohesion" type="real64_array2d" />
-		<!--oldStress => Previous Material Stress-->
-		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--poreVolumeMultiplier => (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--shearModulus => Elastic Shear Modulus-->
-		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--stress => Current Material Stress-->
-		<xsd:attribute name="stress" type="real64_array3d" />
-	</xsd:complexType>
-	<xsd:complexType name="OldPoroElasticIsotropicType">
-		<!--bulkModulus => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="bulkModulus" type="real64_array" />
-		<!--dPVMult_dDensity => (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--oldStress => Previous Material Stress-->
-		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--poreVolumeMultiplier => (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--shearModulus => Elastic Shear Modulus-->
-		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--stress => Current Material Stress-->
-		<xsd:attribute name="stress" type="real64_array3d" />
-	</xsd:complexType>
-	<xsd:complexType name="OldPoroElasticTransverseIsotropicType">
-		<!--c11 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c11" type="real64_array" />
-		<!--c13 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c13" type="real64_array" />
-		<!--c33 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c33" type="real64_array" />
-		<!--c44 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c44" type="real64_array" />
-		<!--c66 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c66" type="real64_array" />
-		<!--dPVMult_dDensity => (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--oldStress => Previous Material Stress-->
-		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--poreVolumeMultiplier => (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--stress => Current Material Stress-->
-		<xsd:attribute name="stress" type="real64_array3d" />
-	</xsd:complexType>
-	<xsd:complexType name="OldPoroExtendedDruckerPragerType">
-		<!--bulkModulus => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="bulkModulus" type="real64_array" />
-		<!--dPVMult_dDensity => (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--dilationRatio => Plastic potential slope ratio-->
-		<xsd:attribute name="dilationRatio" type="real64_array" />
-		<!--hardening => Hardening parameter-->
-		<xsd:attribute name="hardening" type="real64_array" />
-		<!--initialFriction => Initial yield surface slope-->
-		<xsd:attribute name="initialFriction" type="real64_array" />
-		<!--oldStateVariable => Old equivalent plastic shear strain-->
-		<xsd:attribute name="oldStateVariable" type="real64_array2d" />
-		<!--oldStress => Previous Material Stress-->
-		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--poreVolumeMultiplier => (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--pressureIntercept => Pressure point at cone vertex-->
-		<xsd:attribute name="pressureIntercept" type="real64_array" />
-		<!--residualFriction => Residual yield surface slope-->
-		<xsd:attribute name="residualFriction" type="real64_array" />
-		<!--shearModulus => Elastic Shear Modulus-->
-		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--stateVariable => New equivalent plastic shear strain-->
-		<xsd:attribute name="stateVariable" type="real64_array2d" />
-		<!--stress => Current Material Stress-->
-		<xsd:attribute name="stress" type="real64_array3d" />
-	</xsd:complexType>
 	<xsd:complexType name="ParallelPlatesPermeabilityType">
 		<!--dPerm_dAperture => (no description available)-->
 		<xsd:attribute name="dPerm_dAperture" type="real64_array2d" />
@@ -1334,6 +1240,100 @@
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroDruckerPragerType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--cohesion => New cohesion state-->
+		<xsd:attribute name="cohesion" type="real64_array2d" />
+		<!--dPVMult_dDensity => (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--dilation => Plastic potential slope-->
+		<xsd:attribute name="dilation" type="real64_array" />
+		<!--friction => Yield surface slope-->
+		<xsd:attribute name="friction" type="real64_array" />
+		<!--hardening => Hardening rate-->
+		<xsd:attribute name="hardening" type="real64_array" />
+		<!--oldCohesion => Old cohesion state-->
+		<xsd:attribute name="oldCohesion" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poreVolumeMultiplier => (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--shearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroElasticIsotropicType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--dPVMult_dDensity => (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poreVolumeMultiplier => (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--shearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroElasticTransverseIsotropicType">
+		<!--c11 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c11" type="real64_array" />
+		<!--c13 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c13" type="real64_array" />
+		<!--c33 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c33" type="real64_array" />
+		<!--c44 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c44" type="real64_array" />
+		<!--c66 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c66" type="real64_array" />
+		<!--dPVMult_dDensity => (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poreVolumeMultiplier => (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroExtendedDruckerPragerType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--dPVMult_dDensity => (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--dilationRatio => Plastic potential slope ratio-->
+		<xsd:attribute name="dilationRatio" type="real64_array" />
+		<!--hardening => Hardening parameter-->
+		<xsd:attribute name="hardening" type="real64_array" />
+		<!--initialFriction => Initial yield surface slope-->
+		<xsd:attribute name="initialFriction" type="real64_array" />
+		<!--oldStateVariable => Old equivalent plastic shear strain-->
+		<xsd:attribute name="oldStateVariable" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poreVolumeMultiplier => (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--pressureIntercept => Pressure point at cone vertex-->
+		<xsd:attribute name="pressureIntercept" type="real64_array" />
+		<!--residualFriction => Residual yield surface slope-->
+		<xsd:attribute name="residualFriction" type="real64_array" />
+		<!--shearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stateVariable => New equivalent plastic shear strain-->
+		<xsd:attribute name="stateVariable" type="real64_array2d" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousDruckerPragerType" />
 	<xsd:complexType name="PorousElasticIsotropicType" />

@@ -463,34 +463,6 @@ Element: NumericalMethods
 .. include:: ../../coreComponents/schema/docs/NumericalMethods.rst
 
 
-.. _XML_OldPoroDruckerPrager:
-
-Element: OldPoroDruckerPrager
-=============================
-.. include:: ../../coreComponents/schema/docs/OldPoroDruckerPrager.rst
-
-
-.. _XML_OldPoroElasticIsotropic:
-
-Element: OldPoroElasticIsotropic
-================================
-.. include:: ../../coreComponents/schema/docs/OldPoroElasticIsotropic.rst
-
-
-.. _XML_OldPoroElasticTransverseIsotropic:
-
-Element: OldPoroElasticTransverseIsotropic
-==========================================
-.. include:: ../../coreComponents/schema/docs/OldPoroElasticTransverseIsotropic.rst
-
-
-.. _XML_OldPoroExtendedDruckerPrager:
-
-Element: OldPoroExtendedDruckerPrager
-=====================================
-.. include:: ../../coreComponents/schema/docs/OldPoroExtendedDruckerPrager.rst
-
-
 .. _XML_Outputs:
 
 Element: Outputs
@@ -580,6 +552,34 @@ Element: PhaseFieldFracture
 Element: PoreVolumeCompressibleSolid
 ====================================
 .. include:: ../../coreComponents/schema/docs/PoreVolumeCompressibleSolid.rst
+
+
+.. _XML_PoroDruckerPrager:
+
+Element: PoroDruckerPrager
+==========================
+.. include:: ../../coreComponents/schema/docs/PoroDruckerPrager.rst
+
+
+.. _XML_PoroElasticIsotropic:
+
+Element: PoroElasticIsotropic
+=============================
+.. include:: ../../coreComponents/schema/docs/PoroElasticIsotropic.rst
+
+
+.. _XML_PoroElasticTransverseIsotropic:
+
+Element: PoroElasticTransverseIsotropic
+=======================================
+.. include:: ../../coreComponents/schema/docs/PoroElasticTransverseIsotropic.rst
+
+
+.. _XML_PoroExtendedDruckerPrager:
+
+Element: PoroExtendedDruckerPrager
+==================================
+.. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager.rst
 
 
 .. _XML_PorousDruckerPrager:
@@ -1377,34 +1377,6 @@ Datastructure: NumericalMethods
 .. include:: ../../coreComponents/schema/docs/NumericalMethods_other.rst
 
 
-.. _DATASTRUCTURE_OldPoroDruckerPrager:
-
-Datastructure: OldPoroDruckerPrager
-===================================
-.. include:: ../../coreComponents/schema/docs/OldPoroDruckerPrager_other.rst
-
-
-.. _DATASTRUCTURE_OldPoroElasticIsotropic:
-
-Datastructure: OldPoroElasticIsotropic
-======================================
-.. include:: ../../coreComponents/schema/docs/OldPoroElasticIsotropic_other.rst
-
-
-.. _DATASTRUCTURE_OldPoroElasticTransverseIsotropic:
-
-Datastructure: OldPoroElasticTransverseIsotropic
-================================================
-.. include:: ../../coreComponents/schema/docs/OldPoroElasticTransverseIsotropic_other.rst
-
-
-.. _DATASTRUCTURE_OldPoroExtendedDruckerPrager:
-
-Datastructure: OldPoroExtendedDruckerPrager
-===========================================
-.. include:: ../../coreComponents/schema/docs/OldPoroExtendedDruckerPrager_other.rst
-
-
 .. _DATASTRUCTURE_Outputs:
 
 Datastructure: Outputs
@@ -1494,6 +1466,34 @@ Datastructure: PhaseFieldFracture
 Datastructure: PoreVolumeCompressibleSolid
 ==========================================
 .. include:: ../../coreComponents/schema/docs/PoreVolumeCompressibleSolid_other.rst
+
+
+.. _DATASTRUCTURE_PoroDruckerPrager:
+
+Datastructure: PoroDruckerPrager
+================================
+.. include:: ../../coreComponents/schema/docs/PoroDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_PoroElasticIsotropic:
+
+Datastructure: PoroElasticIsotropic
+===================================
+.. include:: ../../coreComponents/schema/docs/PoroElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroElasticTransverseIsotropic:
+
+Datastructure: PoroElasticTransverseIsotropic
+=============================================
+.. include:: ../../coreComponents/schema/docs/PoroElasticTransverseIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroExtendedDruckerPrager:
+
+Datastructure: PoroExtendedDruckerPrager
+========================================
+.. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager_other.rst
 
 
 .. _DATASTRUCTURE_PorousDruckerPrager:
