@@ -92,7 +92,7 @@
         name="fluidTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="rockPerm"/>
+        coefficientModelNames="{rockPerm}"/>
     </FiniteVolume>
   </NumericalMethods>
 

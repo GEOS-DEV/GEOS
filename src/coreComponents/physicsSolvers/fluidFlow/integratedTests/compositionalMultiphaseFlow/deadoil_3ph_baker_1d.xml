@@ -9,7 +9,7 @@
       targetRegions="{ region }"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
-      permeabilityNaems="{rockPerm}"
+      permeabilityNames="{rockPerm}"
       relPermNames="{ relperm }"
       temperature="300"
       computeCFLNumbers="1"
@@ -86,7 +86,7 @@
         name="fluidTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="rockPerm"/>
+        coefficientModelNames="{rockPerm}"/>
     </FiniteVolume>
   </NumericalMethods>
 
