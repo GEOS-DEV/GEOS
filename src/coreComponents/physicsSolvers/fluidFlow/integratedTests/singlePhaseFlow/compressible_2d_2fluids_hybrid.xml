@@ -87,8 +87,7 @@
       <HybridMimeticDiscretization
         name="singlePhaseHybridMimetic"
         innerProductType="quasiTPFA"
-        coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 

@@ -8,6 +8,7 @@
       logLevel="0"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
@@ -63,7 +64,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -71,7 +73,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ DEFAULT_PYRAMID }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -89,6 +91,10 @@
       name="rock"
       referencePressure="1e6"
       compressibility="1e-9"/>
+      
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{2.0e-14, 2.0e-14, 2.0e-14}"/>   
   </Constitutive>
 
   <FieldSpecifications>

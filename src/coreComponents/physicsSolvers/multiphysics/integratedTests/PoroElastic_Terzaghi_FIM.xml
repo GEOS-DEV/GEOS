@@ -33,7 +33,8 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }"
       fluidNames="{ fluid }"
-      solidNames="{ skeleton }">
+      solidNames="{ skeleton }"
+      permeabilityNames="{ skeletonPerm }">
     </SinglePhaseFVM>
   </Solvers>
   <!-- SPHINX_POROELASTIC_SOLVER_END -->
@@ -165,7 +166,11 @@
     <BiotPorosity
       name="skeletonPorosity"
       grainBulkModulus="1.0e27"
-      defaultReferencePorosity="0.3"/>   
+      defaultReferencePorosity="0.3"/>  
+      
+     <ConstantPermeability
+      name="skeletonPerm"
+      permeabilityComponents="{1.0e-4, 1.0e-4, 1.0e-4}"/>   
   </Constitutive>
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->

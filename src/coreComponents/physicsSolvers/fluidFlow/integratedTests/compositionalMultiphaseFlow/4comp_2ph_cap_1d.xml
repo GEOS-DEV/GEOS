@@ -9,6 +9,7 @@
       targetRegions="{ Region1 }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       capPressureNames="{ capPressure }"
       temperature="297.15"
