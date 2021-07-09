@@ -10,6 +10,7 @@
       fracturesSolverName = "fractureMechSolver"
       fluidSolverName = "flowSolver"
       solidSolverName = "matrixMechSolver"
+      porousMaterialName="{porousRock}"
       logLevel="1">
       <NonlinearSolverParameters
         newtonMaxIter="5"
@@ -140,8 +141,7 @@
       name="rock"
       defaultDensity="1"
       defaultBulkModulus="5555555555.5556"
-      defaultShearModulus="4166666666.6667"
-      BiotCoefficient="1.0"/>
+      defaultShearModulus="4166666666.6667"/>
 
     <CompressibleSinglePhaseFluid
       name="water"

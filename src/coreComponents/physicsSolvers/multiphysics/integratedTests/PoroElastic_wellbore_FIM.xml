@@ -11,6 +11,7 @@
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
+      porousMaterilaName="{porousRock}"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Omega }">

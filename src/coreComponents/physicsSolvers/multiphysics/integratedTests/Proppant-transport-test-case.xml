@@ -15,7 +15,8 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       proppantNames="{ sand }"
-      solidNames="{ rock }">
+      solidNames="{ rock }"
+      permeabilityNames="{ fracperm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
