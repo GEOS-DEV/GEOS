@@ -67,8 +67,12 @@ private:
                           real64 ( &threeDMonomialIntegrals )[3] );
 
 public:
-  virtual ~ConformingVirtualElementOrder1() override
-  {}
+
+  BasisData m_basisData;
+
+  ConformingVirtualElementOrder1() = default;
+
+  virtual ~ConformingVirtualElementOrder1() = default;
 
   GEOSX_HOST_DEVICE
   static void
@@ -88,9 +92,55 @@ public:
                      );
 
   GEOSX_HOST_DEVICE
+  void processLocalGeometry( localIndex const & cellIndex,
+                             InputNodeCoords const & nodesCoords,
+                             InputCellToNodeMap const & cellToNodeMap,
+                             InputCellToFaceMap const & elementToFaceMap,
+                             InputFaceToNodeMap const & faceToNodeMap,
+                             InputFaceToEdgeMap const & faceToEdgeMap,
+                             InputEdgeToNodeMap const & edgeToNodeMap,
+                             arrayView2d< real64 const > const faceCenters,
+                             arrayView2d< real64 const > const faceNormals,
+                             arrayView1d< real64 const > const faceAreas,
+                             real64 const (&cellCenter)[3],
+                             real64 const & cellVolume
+                             )
+  {
+    computeProjectors( cellIndex,
+                       nodesCoords,
+                       cellToNodeMap,
+                       elementToFaceMap,
+                       faceToNodeMap,
+                       faceToEdgeMap,
+                       edgeToNodeMap,
+                       faceCenters,
+                       faceNormals,
+                       faceAreas,
+                       cellCenter,
+                       cellVolume,
+                       m_basisData );
+  }
+
+  GEOSX_HOST_DEVICE
   static localIndex getMaxSupportPoints( BasisData const & basisData )
   {
     return basisData.maxSupportPoints;
+  }
+
+  GEOSX_HOST_DEVICE
+  static constexpr localIndex getMaxSupportPoints()
+  {
+    return maxSupportPoints;
+  }
+
+  localIndex getNumQuadraturePoints() const override
+  {
+    return numQuadraturePoints;
+  }
+
+  localIndex getNumSupportPoints() const override
+  {
+    return m_basisData.numSupportPoints;
   }
 
   GEOSX_HOST_DEVICE

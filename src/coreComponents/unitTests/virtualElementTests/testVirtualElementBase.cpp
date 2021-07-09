@@ -32,11 +32,12 @@ CommandLineOptions g_commandLineOptions;
 template< typename VEM, typename VEMBASISDATATYPE >
 static void checkIntegralMeanConsistency( VEMBASISDATATYPE const & basisData )
 {
-  real64 basisFunctionsIntegralMean[VEM::maxSupportPoints];
-  VEM::calcN( 0, basisData, basisFunctionsIntegralMean );
+  VEM virtualElement;
+  real64 basisFunctionsIntegralMean[virtualElement.getMaxSupportPoints()];
+  virtualElement.calcN( 0, basisData, basisFunctionsIntegralMean );
   real64 sum = 0;
   for( localIndex iBasisFun = 0; iBasisFun <
-       VEM::getNumSupportPoints( basisData ); ++iBasisFun )
+       virtualElement.getNumSupportPoints( basisData ); ++iBasisFun )
   {
     sum += basisFunctionsIntegralMean[iBasisFun];
   }
@@ -195,20 +196,34 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
     real64 const cellCenter[3] { cellCenters( cellIndex, 0 ),
                                  cellCenters( cellIndex, 1 ),
                                  cellCenters( cellIndex, 2 ) };
-    VEM::computeProjectors( cellIndex,
-                            nodesCoords,
-                            cellToNodeMap,
-                            elementToFaceMap,
-                            faceToNodeMap,
-                            faceToEdgeMap,
-                            edgeToNodeMap,
-                            faceCenters,
-                            faceNormals,
-                            faceAreas,
-                            cellCenter,
-                            cellVolumes[cellIndex],
-                            basisData
-                            );
+    VEM virtualElement;
+    virtualElement.processLocalGeometry( cellIndex,
+                                         nodesCoords,
+                                         cellToNodeMap,
+                                         elementToFaceMap,
+                                         faceToNodeMap,
+                                         faceToEdgeMap,
+                                         edgeToNodeMap,
+                                         faceCenters,
+                                         faceNormals,
+                                         faceAreas,
+                                         cellCenter,
+                                         cellVolumes[cellIndex] );
+    basisData = virtualElement.m_basisData;
+    // VEM::computeProjectors( cellIndex,
+    //                         nodesCoords,
+    //                         cellToNodeMap,
+    //                         elementToFaceMap,
+    //                         faceToNodeMap,
+    //                         faceToEdgeMap,
+    //                         edgeToNodeMap,
+    //                         faceCenters,
+    //                         faceNormals,
+    //                         faceAreas,
+    //                         cellCenter,
+    //                         cellVolumes[cellIndex],
+    //                         basisData
+    //                         );
 
     checkIntegralMeanConsistency< VEM >( basisData );
     checkIntegralMeanDerivativesConsistency< VEM >( basisData );
