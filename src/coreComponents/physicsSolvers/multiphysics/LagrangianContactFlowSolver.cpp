@@ -442,7 +442,7 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
         m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
 
         // Output the linear system matrix/rhs for debugging purposes
-        debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
+        debugOutputSystem( time_n, cycleNumber, 10*activeSetIter+newtonIter, m_matrix, m_rhs );
 
         // Solve the linear system
         solveSystem( m_dofManager, m_matrix, m_rhs, m_solution );
