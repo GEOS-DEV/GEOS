@@ -48,7 +48,7 @@ public:
                            localIndex const q,
                            real64 const & effectiveAperture ) const override
   {
-    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR( q );
 
     compute( effectiveAperture,
              m_permeability[k],

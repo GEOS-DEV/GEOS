@@ -7,7 +7,7 @@
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
       fluidSolverName="TwoPhaseFlowSolver"
-      porousMaterialName="porousRock"
+      porousMaterialNames="{porousRock}"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">

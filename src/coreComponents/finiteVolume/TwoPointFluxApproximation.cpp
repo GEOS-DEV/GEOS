@@ -73,9 +73,9 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
-      elemManager.constructMaterialArrayViewAccessor< real64, 2 >( m_coeffName,
-                                                                   m_targetRegions,
-                                                                   m_coefficientModelNames );
+    elemManager.constructMaterialArrayViewAccessor< real64, 2 >( m_coeffName,
+                                                                 m_targetRegions,
+                                                                 m_coefficientModelNames );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
@@ -219,9 +219,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
-        elemManager.constructMaterialArrayViewAccessor< real64, 2 >( m_coeffName,
-                                                                     m_targetRegions,
-                                                                     m_coefficientModelNames );
+    elemManager.constructMaterialArrayViewAccessor< real64, 2 >( m_coeffName,
+                                                                 m_targetRegions,
+                                                                 m_coefficientModelNames );
 
   arrayView1d< real64 const > faceArea   = faceManager.faceArea();
   arrayView2d< real64 const > faceCenter = faceManager.faceCenter();
@@ -807,9 +807,9 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
-        elemManager.constructMaterialArrayViewAccessor< real64, 2 >( m_coeffName,
-                                                                     m_targetRegions,
-                                                                     m_coefficientModelNames );
+    elemManager.constructMaterialArrayViewAccessor< real64, 2 >( m_coeffName,
+                                                                 m_targetRegions,
+                                                                 m_coefficientModelNames );
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 

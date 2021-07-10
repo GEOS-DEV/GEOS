@@ -56,9 +56,9 @@ void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & par
   {
 //    for( localIndex q=0; q < numConstitutivePointsPerParentIndex; q++ )
 //    {
-      m_permeability[ei][0] =  m_permeabilityComponents[0];
-      m_permeability[ei][1] =  m_permeabilityComponents[1];
-      m_permeability[ei][2] =  m_permeabilityComponents[2];
+    m_permeability[ei][0] =  m_permeabilityComponents[0];
+    m_permeability[ei][1] =  m_permeabilityComponents[1];
+    m_permeability[ei][2] =  m_permeabilityComponents[2];
 //    }
   }
 }

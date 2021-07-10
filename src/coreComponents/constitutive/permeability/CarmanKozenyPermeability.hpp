@@ -52,7 +52,7 @@ public:
                                    localIndex const q,
                                    real64 const & porosity ) const override
   {
-    GEOSX_UNUSED_VAR(q); // to do: perm will have to be define per quadrature point.
+    GEOSX_UNUSED_VAR( q ); // to do: perm will have to be define per quadrature point.
 
     compute( porosity,
              m_permeability[k],
@@ -139,7 +139,7 @@ void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
 
   real64 const permValue = constant * pow( porosity, 3 )/ pow( (1 - porosity), 2 );
 
-  real64 const dPerm_dPorValue = - constant * ( (porosity - 3) *  pow( porosity, 2 ) / pow( (1-porosity), 3)  );
+  real64 const dPerm_dPorValue = -constant * ( (porosity - 3) *  pow( porosity, 2 ) / pow( (1-porosity), 3 )  );
 
   for( localIndex i=0; i < permeability.size(); i++ )
   {

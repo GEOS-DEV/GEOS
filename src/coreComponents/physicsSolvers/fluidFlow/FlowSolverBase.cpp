@@ -63,9 +63,9 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setDescription( "Names of solid constitutive models for each region." );
 
   this->registerWrapper( viewKeyStruct::permeabilityNamesString(), &m_permeabilityModelNames ).
-      setInputFlag( InputFlags::REQUIRED ).
-      setSizedFromParent( 0 ).
-      setDescription( "Names of permeability constitutive models for each region." );
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
+    setDescription( "Names of permeability constitutive models for each region." );
 
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString(), &m_fluxEstimate ).
     setApplyDefaultValue( 1.0 ).

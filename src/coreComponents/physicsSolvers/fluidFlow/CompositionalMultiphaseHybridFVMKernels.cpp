@@ -1623,7 +1623,7 @@ FluxKernel::
   FluxKernel:: \
     launch< NF, NC, NP, IP_TYPE >( localIndex er, localIndex esr, \
                                    CellElementSubRegion const & subRegion, \
-								                   constitutive::PermeabilityBase const & permeabilityModel, \
+                                   constitutive::PermeabilityBase const & permeabilityModel, \
                                    SortedArrayView< localIndex const > const & regionFilter, \
                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition, \
                                    arrayView2d< localIndex const > const & elemRegionList, \
