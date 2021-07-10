@@ -19,6 +19,7 @@
 #include "DofManager.hpp"
 
 #include "common/FieldSpecificationOps.hpp"
+#include "common/TypeDispatch.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -1077,17 +1078,12 @@ void vectorToFieldImpl( LOCAL_VECTOR const localVector,
 
   WrapperBase & wrapper = manager.getWrapperBase( fieldName );
 
-  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper.getTypeId() ) ),
-                                  false,
-                                  [&]( auto arrayInstance,
-                                       auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
+  types::dispatch( types::RealArrays{}, wrapper.getTypeId(), true, [&]( auto array )
   {
-    using ArrayType = decltype( arrayInstance );
-    Wrapper< ArrayType > & view = dynamicCast< Wrapper< ArrayType > & >( wrapper );
-    traits::ViewType< ArrayType > field = view.reference().toView();
-
+    using ArrayType = decltype( array );
+    Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     vectorToFieldKernel< FIELD_OP, POLICY >( localVector,
-                                             field,
+                                             wrapperT.reference().toView(),
                                              dofNumber,
                                              ghostRank,
                                              scalingFactor,
@@ -1138,17 +1134,12 @@ void fieldToVectorImpl( LOCAL_VECTOR localVector,
 
   WrapperBase const & wrapper = manager.getWrapperBase( fieldName );
 
-  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper.getTypeId() ) ),
-                                  false,
-                                  [&]( auto arrayInstance,
-                                       auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
+  types::dispatch( types::RealArrays{}, wrapper.getTypeId(), true, [&]( auto array )
   {
-    using ArrayType = decltype( arrayInstance );
-    Wrapper< ArrayType > const & view = dynamicCast< Wrapper< ArrayType > const & >( wrapper );
-    traits::ViewTypeConst< ArrayType > field = view.reference();
-
+    using ArrayType = decltype( array );
+    Wrapper< ArrayType > const & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     fieldToVectorKernel< FIELD_OP, POLICY >( localVector,
-                                             field,
+                                             wrapperT.reference(),
                                              dofNumber,
                                              ghostRank,
                                              scalingFactor,

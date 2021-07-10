@@ -15,6 +15,7 @@
 // Source includes
 #include "VTKPolyDataWriterInterface.hpp"
 
+#include "common/TypeDispatch.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
 
@@ -308,11 +309,12 @@ void writeField( WrapperBase const & wrapper,
                  localIndex const offset,
                  vtkDataArray & data )
 {
-  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( wrapper.getTypeId() ), true, [&]( auto array, auto scalar )
+  types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
   {
-    using T = decltype( scalar );
+    using ArrayType = decltype( array );
+    using T = typename ArrayType::ValueType;
     vtkAOSDataArrayTemplate< T > & typedData = *vtkAOSDataArrayTemplate< T >::FastDownCast( &data );
-    auto const sourceArray = Wrapper< decltype( array ) >::cast( wrapper ).reference().toViewConst();
+    auto const sourceArray = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
 
     // TODO: check if parallel host policy is faster/slower
     forAll< serialPolicy >( sourceArray.size( 0 ), [sourceArray, offset, &typedData]( localIndex const i )
@@ -469,11 +471,13 @@ void writeElementField( Group const & subRegions,
     WrapperBase const & wrapper = subRegion.getWrapperBase( field );
     if( first )
     {
-      rtTypes::applyArrayTypeLambda2( rtTypes::typeID( wrapper.getTypeId() ), true, [&]( auto array, auto scalar )
+      types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
       {
-        auto typedData = vtkAOSDataArrayTemplate< decltype( scalar ) >::New();
+        using ArrayType = decltype( array );
+        using T = typename ArrayType::ValueType;
+        auto typedData = vtkAOSDataArrayTemplate< T >::New();
         data = typedData;
-        setComponentMetadata( Wrapper< decltype( array ) >::cast( wrapper ), *typedData );
+        setComponentMetadata( Wrapper< ArrayType >::cast( wrapper ), *typedData );
       } );
       first = false;
       numDims = wrapper.numArrayDims();
@@ -511,11 +515,13 @@ void VTKPolyDataWriterInterface::writeNodeFields( NodeManager const & nodeManage
     if( wrapper.getPlotLevel() <= m_plotLevel )
     {
       vtkSmartPointer< vtkDataArray > data;
-      rtTypes::applyArrayTypeLambda2( rtTypes::typeID( wrapper.getTypeId() ), true, [&]( auto array, auto scalar )
+      types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
       {
-        auto typedData = vtkAOSDataArrayTemplate< decltype( scalar ) >::New();
+        using ArrayType = decltype( array );
+        using T = typename ArrayType::ValueType;
+        auto typedData = vtkAOSDataArrayTemplate< T >::New();
         data = typedData;
-        setComponentMetadata( Wrapper< decltype( array ) >::cast( wrapper ), *typedData );
+        setComponentMetadata( Wrapper< ArrayType >::cast( wrapper ), *typedData );
       } );
 
       data->SetNumberOfTuples( nodeManager.size() );
