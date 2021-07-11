@@ -25,6 +25,8 @@
 
 #include <camp/camp.hpp>
 
+#include <unordered_map>
+
 namespace geosx
 {
 
@@ -38,27 +40,27 @@ namespace internal
 {
 
 template< camp::idx_t NDIM >
-struct PermutationList
+struct LayoutList
 {
   static_assert( NDIM < 5, "Dispatching on 5D arrays and higher not implemented" );
   using types = camp::list<>;
 };
 
 template<>
-struct PermutationList< 1 >
+struct LayoutList< 1 >
 {
   using types = camp::list< RAJA::PERM_I >;
 };
 
 template<>
-struct PermutationList< 2 >
+struct LayoutList< 2 >
 {
   using types = camp::list< RAJA::PERM_IJ,
                             RAJA::PERM_JI >;
 };
 
 template<>
-struct PermutationList< 3 >
+struct LayoutList< 3 >
 {
   using types = camp::list< RAJA::PERM_IJK,
                             RAJA::PERM_IKJ,
@@ -69,7 +71,7 @@ struct PermutationList< 3 >
 };
 
 template<>
-struct PermutationList< 4 >
+struct LayoutList< 4 >
 {
   using types = camp::list< RAJA::PERM_IJKL,
                             RAJA::PERM_IJLK,
@@ -98,29 +100,29 @@ struct PermutationList< 4 >
 };
 
 template< int NDIM >
-using Permutations = typename PermutationList< NDIM >::types;
+using Layouts = typename LayoutList< NDIM >::types;
 
 // Expands a list of dimensions with all corresponding permutations
 template< typename T >
-struct AddPermutationsImpl;
+struct AddLayoutsImpl;
 
 template< camp::idx_t ... NDIMS >
-struct AddPermutationsImpl< camp::list< camp::num< NDIMS >... > >
+struct AddLayoutsImpl< camp::list< camp::num< NDIMS >... > >
 {
-  using types = typename camp::join< camp::cartesian_product< camp::list< camp::num< NDIMS > >, Permutations< NDIMS > > ... >::type;
+  using types = typename camp::join< camp::cartesian_product< camp::list< camp::num< NDIMS > >, Layouts< NDIMS > > ... >::type;
 };
 
 template< typename T >
-using AddPermutations = typename AddPermutationsImpl< T >::types;
+using AddLayouts = typename AddLayoutsImpl< T >::types;
 
 // Helper to convert a constructed camp::list of type tuples into an actual Array type
 template< typename T >
 struct ArrayType;
 
-template< typename T, typename NDIM, typename PERM >
-struct ArrayType< camp::list< T, camp::list< NDIM, PERM > > >
+template< typename T, typename NDIM, typename LAYOUT >
+struct ArrayType< camp::list< T, camp::list< NDIM, LAYOUT > > >
 {
-  using type = ::geosx::Array< T, NDIM::value, PERM >;
+  using type = ::geosx::Array< T, NDIM::value, LAYOUT >;
 };
 
 // Helper to apply a template to all types in a list
@@ -168,7 +170,7 @@ using Join = typename camp::join< Ls ... >::type;
  *        value types in type list @p TYPES and all dimensionalities in list of integral constants @p NDIMS.
  */
 template< typename TYPES, typename NDIMS >
-using ArrayTypes = internal::Apply< internal::ArrayType, camp::cartesian_product< TYPES, internal::AddPermutations< NDIMS > > >;
+using ArrayTypes = internal::Apply< internal::ArrayType, camp::cartesian_product< TYPES, internal::AddLayouts< NDIMS > > >;
 
 /**
  * @brief List of major integral types used in GEOSX type system.
@@ -209,7 +211,7 @@ bool dispatchRecursive( TypeList<>,
                         std::type_index const type,
                         LAMBDA && lambda )
 {
-  GEOSX_UNUSED_VAR( type, lambda );
+  GEOSX_UNUSED_VAR( type, lambda )
   return false;
 }
 
@@ -256,6 +258,34 @@ bool dispatchViaTable( TypeList< Ts... > const types,
   return false;
 }
 
+template< typename LAMBDA >
+bool dispatchViaTable( TypeList<>,
+                       std::type_index const type,
+                       LAMBDA && lambda )
+{
+  // Needed to avoid constructing an zero-size array
+  GEOSX_UNUSED_VAR( type, lambda )
+  return false;
+}
+
+template< typename ... Ts, typename LAMBDA >
+std::enable_if_t< ( sizeof...( Ts ) <= 32 ), bool >
+dispatch( TypeList< Ts... > const types,
+          std::type_index const type,
+          LAMBDA && lambda )
+{
+  return dispatchRecursive( types, type, std::forward< LAMBDA >( lambda ) );
+}
+
+template< typename ... Ts, typename LAMBDA >
+std::enable_if_t< ( sizeof...( Ts ) > 32 ), bool >
+dispatch( TypeList< Ts... > const types,
+          std::type_index const type,
+          LAMBDA && lambda )
+{
+  return dispatchViaTable( types, type, std::forward< LAMBDA >( lambda ) );
+}
+
 } // namespace internal
 
 /**
@@ -266,26 +296,30 @@ bool dispatchViaTable( TypeList< Ts... > const types,
  * @param type type index of the runtime type
  * @param errorIfTypeNotFound flag indicating whether dispatch should issue an error when type not matched
  * @param lambda user-provided callable, will be called with a single prvalue of type indicated by @p type
+ * @return @p true iff type has been dispatch
  *
  * For small type lists dispatch is done recursively, this allows for full inlining of the lambda call.
  * For large type lists this can blow up call stack depth and lead to poor debugging experience,
  * therefore it may be better to dispatch via table of function pointers.
  * Exact criteria for choosing one method over the other are TBD.
+ *
+ * @todo Do we want @p errorIfTypeNotFound parameter? Options:
+ *       - make it a template parameter (caller always knows whether or not it wants hard errors)
+ *       - make the caller process return value and raise error if needed (and however they want)
  */
 template< typename ... Ts, typename LAMBDA >
-void dispatch( TypeList< Ts... > const types,
+bool dispatch( TypeList< Ts... > const types,
                std::type_index const type,
                bool const errorIfTypeNotFound,
                LAMBDA && lambda )
 {
-  bool const success = ( sizeof...(Ts) <= 32 ) // TODO: better heuristics?
-                     ? internal::dispatchRecursive( types, type, std::forward< LAMBDA >( lambda ) )
-                     : internal::dispatchViaTable( types, type, std::forward< LAMBDA >( lambda ) );
+  bool const success = internal::dispatch( types, type, std::forward< LAMBDA >( lambda ) );
   if( !success && errorIfTypeNotFound )
   {
     GEOSX_ERROR( "Type " << LvArray::system::demangle( type.name() ) << " was not dispatched.\n" <<
                  "Please check the stack trace and revise the type list if needed." );
   }
+  return success;
 }
 
 } // namespace types
