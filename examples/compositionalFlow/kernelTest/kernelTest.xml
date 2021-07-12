@@ -8,7 +8,7 @@
       discretization="fluidTPFA"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
-      peremeabilityNames="{rockPerm}"
+      permeabilityNames="{rockPerm}"
       relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"

@@ -9,7 +9,7 @@
       discretization="tpfa"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      peremabilityNames="{rockPerm}"
+      permeabilityNames="{rockPerm}"
       targetRegions="{ Region2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
