@@ -59,6 +59,10 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
 
+  registerWrapper( viewKeyStruct::porousMaterialNamesString(), &m_porousMaterialNames ).
+      setInputFlag( InputFlags::REQUIRED ).
+      setDescription( "The name of the material that should be used in the constitutive updates" );
+
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
@@ -199,7 +203,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                     CellElementSubRegion >( mesh,
                                                             targetRegionNames(),
                                                             this->getDiscretizationName(),
-                                                            m_solidSolver->solidMaterialNames(),
+                                                            porousMaterialNames(),
                                                             kernelFactory );
 
 
