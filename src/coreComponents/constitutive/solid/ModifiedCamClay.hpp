@@ -215,8 +215,6 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
   real64 pc    = oldPc;
   real64 bulkModulus  = -p0/Cr;
-  //  int m_useLinear =1;
-  //real64 bulkModulus  = m_bulkModulus[k]; //Linear elasticity version
 
   // elastic predictor (assume strainIncrement is all elastic)
 
@@ -245,7 +243,6 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   }
 
 // else, plasticity (trial stress point lies outside yield surface)
-// std::cout << "plastic " <<  "\n " << std::endl;
 
   //  real64 eps_s_trial = trialQ/3.0/mu;
   if( m_useLinear )
@@ -266,9 +263,12 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
   solution[0] = eps_v_trial; // initial guess for elastic volumetric strain
   solution[1] = eps_s_trial; // initial guess for elastic deviatoric strain
-  solution[2] = 1e-5;   // initial guess for plastic multiplier
+  solution[2] = 1e-15;     // initial guess for plastic multiplier
 
   real64 norm, normZero = 1e30;
+  integer cuts = 0;
+  integer maxCuts = 100;
+  real64 normOld = normZero;
 
   // begin Newton loop
 
@@ -296,49 +296,68 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
     evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
     real64 dpc_dve = -1./(Cc-Cr) * pc;
 
-
+    real64 scale = 1./(mu*mu);
     // assemble residual system
     residual[0] = solution[0] - eps_v_trial + solution[2]*df_dp;   // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
     residual[1] = solution[1] - eps_s_trial + solution[2]*df_dq;         // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
-    residual[2] = yield;      // F = 0
+    residual[2] = yield * scale;      // F = 0
 
 
     // check for convergence
 
     norm = LvArray::tensorOps::l2Norm< 3 >( residual );
-    //  std::cout<<"iter= "<<iter<<"resid = "<<norm<<std::endl;
+
     if( iter==0 )
     {
       normZero = norm;
+      normOld = norm;
     }
 
     if( norm < 1e-12*(normZero+1.0))
     {
       break;
+
     }
-
-    // solve Newton system
-
-    real64 dp_dve = bulkModulus;
-    real64 dq_dse = 3. *mu;
-
-    jacobian[0][0] = 1. + solution[2] * df_dp_dve;
-    jacobian[0][2] = df_dp;
-    jacobian[1][1] = 1. + solution[2]*df_dq_dse;
-    jacobian[1][2] = df_dq;
-    jacobian[2][0] = dp_dve * df_dp - dpc_dve * df_dpc;
-    jacobian[2][1] = dq_dse * df_dq;
-    jacobian[2][2] = 0.0;
-
-
-    LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
-    LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
-
-    for( localIndex i=0; i<3; ++i )
+    else if( iter > 0 && norm>normOld && cuts<maxCuts ) //linesearch
     {
-      solution[i] -= delta[i];
+      cuts++;
+      iter--;
+      delta[0] *= 0.5;
+      delta[1] *= 0.5;
+      delta[2] *= 0.5;
+      solution[0] += delta[0];
+      solution[1] += delta[1];
+      solution[2] += delta[2];
+      normOld = norm;
+
+    }
+    else
+    {
+      // solve Newton system
+      normOld = norm;
+      cuts=0;
+      real64 dp_dve = bulkModulus;
+      real64 dq_dse = 3. *mu;
+
+      jacobian[0][0] = 1. + solution[2] * df_dp_dve;
+      jacobian[0][2] = df_dp;
+      jacobian[1][1] = 1. + solution[2]*df_dq_dse;
+      jacobian[1][2] = df_dq;
+      jacobian[2][0] = (dp_dve * df_dp - dpc_dve * df_dpc)*scale;
+      jacobian[2][1] = (dq_dse * df_dq)*scale;
+      jacobian[2][2] = 0.0;
+
+
+      LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
+      LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
+
+      for( localIndex i=0; i<3; ++i )
+      {
+        solution[i] -= delta[i];
+      }
     }
   }
+
 
   // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
 
@@ -384,10 +403,10 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   {
     bulkModulus = -trialP/Cr;
   }
-
-  BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]);
+  real64 scale = 1./(mu*mu); //add scaling factor to improve convergence
+  BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]*scale);
   BB[0][1] =bulkModulus*jacobianInv[0][1];
-  BB[1][0] =3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]);
+  BB[1][0] =3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]*scale);
   BB[1][1] = 3. * mu*jacobianInv[1][1];
 
   real64 c1;
@@ -432,7 +451,9 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
                          + c3 * identity[i] * deviator[j]
                          + c4 * deviator[i] * identity[j]
                          + c5 * deviator[i] * deviator[j];
+      //   std::cout<<stiffness[i][j]<<" , ";
     }
+    //std::cout<<" ; "<<std::endl;
   }
   // remember history variables before returning
 
