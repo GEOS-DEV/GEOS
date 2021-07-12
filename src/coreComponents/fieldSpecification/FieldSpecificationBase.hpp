@@ -564,8 +564,9 @@ void FieldSpecificationBase::applyFieldValue( SortedArrayView< localIndex const 
   dataRepository::WrapperBase & wrapper = dataGroup.getWrapperBase( fieldName );
 
   // This function is used in setting boundary/initial conditions on simulation fields.
-  // This is meaningful for 1-2D real arrays and sometimes integer (indicator) arrays.
-  using FieldTypes = types::ArrayTypes< types::TypeList< real64, integer >, types::DimsUpTo< 2 > >;
+  // This is meaningful for 1/2/3D real arrays and sometimes 1D integer (indicator) arrays.
+  using FieldTypes = types::Join< types::ArrayTypes< types::RealTypes, types::DimsUpTo< 3 > >,
+                                  types::ArrayTypes< types::TypeList< integer >, types::DimsSingle< 1 > > >;
   types::dispatch( FieldTypes{}, wrapper.getTypeId(), true, [&]( auto array )
   {
     using ArrayType = decltype( array );
