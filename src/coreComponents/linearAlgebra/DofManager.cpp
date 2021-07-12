@@ -1078,7 +1078,10 @@ void vectorToFieldImpl( LOCAL_VECTOR const localVector,
 
   WrapperBase & wrapper = manager.getWrapperBase( fieldName );
 
-  types::dispatch( types::RealArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+  // Restrict primary solution fields to 1-2D real arrays,
+  // because applying component index is not well defined for 3D and higher
+  using FieldTypes = types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > >;
+  types::dispatch( FieldTypes{}, wrapper.getTypeId(), true, [&]( auto array )
   {
     using ArrayType = decltype( array );
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
@@ -1134,7 +1137,10 @@ void fieldToVectorImpl( LOCAL_VECTOR localVector,
 
   WrapperBase const & wrapper = manager.getWrapperBase( fieldName );
 
-  types::dispatch( types::RealArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+  // Restrict primary solution fields to 1-2D real arrays,
+  // because applying component index is not well defined for 3D and higher
+  using FieldTypes = types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > >;
+  types::dispatch( FieldTypes{}, wrapper.getTypeId(), true, [&]( auto array )
   {
     using ArrayType = decltype( array );
     Wrapper< ArrayType > const & wrapperT = Wrapper< ArrayType >::cast( wrapper );

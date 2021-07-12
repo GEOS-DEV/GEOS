@@ -183,10 +183,22 @@ using IntegralTypes = TypeList< integer, localIndex, globalIndex >;
 using RealTypes = TypeList< real64 >;
 
 /**
- * @brief Generate a list of types representing array dimensionalities 1 to @p N.
+ * @brief Generate a list of types representing array dimensionalities from M up to (and including) @p N.
+ */
+template< int M, int N >
+using DimsRange = camp::as_list< internal::Increment< camp::make_idx_seq_t< N - M + 1 >, M > >;
+
+/**
+ * @brief Generate a list of types representing array dimensionality exactly @p N.
  */
 template< int N >
-using DimsUpTo = camp::as_list< internal::Increment< camp::make_idx_seq_t< N >, 1 > >;
+using DimsSingle = DimsRange< N, N >;
+
+/**
+ * @brief Generate a list of types representing array dimensionalities up to (and including) @p N.
+ */
+template< int N >
+using DimsUpTo = DimsRange< 1, N >;
 
 /**
  * @brief List of real-valued array types typically used in GEOSX (dimensions up to 4).
@@ -247,7 +259,7 @@ bool dispatchViaTable( TypeList< Ts... > const types,
   static Handler const handlers[] = { []( LAMBDA && f ){ f( Ts{} ); } ... };
 
   // Initialize a hashmap of std::type_index to contiguous indices, once per unique type list
-  auto const & indexMap = getTypeIndexMap( types, std::make_index_sequence< sizeof...( Ts ) >{} );
+  auto const & indexMap = getTypeIndexMap( types, std::index_sequence_for< Ts... >{} );
   auto const it = indexMap.find( type );
   if( it != indexMap.end() )
   {

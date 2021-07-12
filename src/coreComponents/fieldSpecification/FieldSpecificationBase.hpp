@@ -562,7 +562,11 @@ void FieldSpecificationBase::applyFieldValue( SortedArrayView< localIndex const 
                                               string const & fieldName ) const
 {
   dataRepository::WrapperBase & wrapper = dataGroup.getWrapperBase( fieldName );
-  types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+
+  // This function is used in setting boundary/initial conditions on simulation fields.
+  // This is meaningful for 1-2D real arrays and sometimes integer (indicator) arrays.
+  using FieldTypes = types::ArrayTypes< types::TypeList< real64, integer >, types::DimsUpTo< 2 > >;
+  types::dispatch( FieldTypes{}, wrapper.getTypeId(), true, [&]( auto array )
   {
     using ArrayType = decltype( array );
     auto & wrapperT = dataRepository::Wrapper< ArrayType >::cast( wrapper );
@@ -603,7 +607,9 @@ void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< lo
   dataRepository::WrapperBase const & wrapper = dataGroup.getWrapperBase( fieldName );
   arrayView1d< globalIndex const > const & dofMap = dataGroup.getReference< array1d< globalIndex > >( dofMapName );
 
-  types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+  // We're reading values from a field, which is only well-defined for dims 1 and 2
+  using FieldTypes = types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > >;
+  types::dispatch( FieldTypes{}, wrapper.getTypeId(), true, [&]( auto array )
   {
     using ArrayType = decltype( array );
     auto const & wrapperT = dataRepository::Wrapper< ArrayType >::cast( wrapper );

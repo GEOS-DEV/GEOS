@@ -18,6 +18,44 @@
 
 using namespace geosx;
 
+static_assert( std::is_same< types::DimsRange< 3, 5 >, camp::as_list< camp::idx_seq< 3, 4, 5 > > >::value, "DimsRange failed" );
+static_assert( std::is_same< types::DimsSingle< 4 >, camp::as_list< camp::idx_seq< 4 > > >::value, "DimsSingle failed" );
+static_assert( std::is_same< types::DimsUpTo< 4 >, camp::as_list< camp::idx_seq< 1, 2, 3, 4 > > >::value, "DimsUpTo failed" );
+
+static_assert( std::is_same< types::ArrayTypes< types::TypeList< int >, types::DimsRange< 2, 3 > >,
+                             types::TypeList<
+                               Array< int, 2, RAJA::PERM_IJ >,
+                               Array< int, 2, RAJA::PERM_JI >,
+                               Array< int, 3, RAJA::PERM_IJK >,
+                               Array< int, 3, RAJA::PERM_IKJ >,
+                               Array< int, 3, RAJA::PERM_JIK >,
+                               Array< int, 3, RAJA::PERM_JKI >,
+                               Array< int, 3, RAJA::PERM_KIJ >,
+                               Array< int, 3, RAJA::PERM_KJI >
+                               >
+                             >::value, "ArrayTypes< <int>, <2, 3> > failed" );
+
+static_assert( std::is_same< types::ArrayTypes< types::TypeList< int, double >, types::DimsSingle< 2 > >,
+                             types::TypeList<
+                               Array< int, 2, RAJA::PERM_IJ >,
+                               Array< int, 2, RAJA::PERM_JI >,
+                               Array< double, 2, RAJA::PERM_IJ >,
+                               Array< double, 2, RAJA::PERM_JI >
+                               >
+                             >::value, "ArrayTypes< <int, double>, <2> > failed" );
+
+static_assert( std::is_same< types::ArrayTypes< types::TypeList< int, double >, types::DimsUpTo< 2 > >,
+                             types::TypeList<
+                               Array< int, 1, RAJA::PERM_I >,
+                               Array< int, 2, RAJA::PERM_IJ >,
+                               Array< int, 2, RAJA::PERM_JI >,
+                               Array< double, 1, RAJA::PERM_I >,
+                               Array< double, 2, RAJA::PERM_IJ >,
+                               Array< double, 2, RAJA::PERM_JI >
+                               >
+                             >::value, "ArrayTypes< <int, double>, <1, 2> > failed" );
+
+
 template< typename TYPES >
 class TypeDispatchTest : public ::testing::Test
 {
