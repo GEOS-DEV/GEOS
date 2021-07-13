@@ -127,11 +127,13 @@ public:
     return maxSupportPoints;
   }
 
+  GEOSX_HOST_DEVICE
   localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
   }
 
+  GEOSX_HOST_DEVICE
   localIndex getNumSupportPoints() const override
   {
     return m_basisData.numSupportPoints;
