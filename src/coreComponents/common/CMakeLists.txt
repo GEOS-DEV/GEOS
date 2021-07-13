@@ -18,6 +18,7 @@ set(common_headers
     Stopwatch.hpp
     Tensor.hpp
     TimingMacros.hpp
+    TypeDispatch.hpp
    )
 
 #
