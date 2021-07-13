@@ -704,37 +704,12 @@ public:
   virtual string getDefaultValueString() const override
   {
     // Find the dimensionality of the wrapper value
-    string wrapper_type = rtTypes::typeNames( std::type_index( getTypeId()));
-    integer value_dim = 0;
-    if( wrapper_type.find( "array3d" ) != string::npos )
-    {
-      value_dim = 3;
-    }
-    else if( wrapper_type.find( "array2d" ) != string::npos )
-    {
-      value_dim = 2;
-    }
-    else if( ( wrapper_type.find( "array" ) != string::npos ) ||
-             ( wrapper_type.find( "Tensor" ) != string::npos ) )
-    {
-      value_dim = 1;
-    }
+    string const typeName = LvArray::system::demangleType< T >();
+    int valueDim = numArrayDims() + ( typeName.find( "Tensor" ) != string::npos );
 
     // Compose the default string
-    std::stringstream ss;
-
-    for( integer ii=0; ii<value_dim; ++ii )
-    {
-      ss << "{";
-    }
-
-    ss << m_default;
-
-    for( integer ii=0; ii<value_dim; ++ii )
-    {
-      ss << "}";
-    }
-
+    std::ostringstream ss;
+    ss << std::string( valueDim, '{' ) << m_default << std::string( valueDim, '}' );
     return ss.str();
   }
 
