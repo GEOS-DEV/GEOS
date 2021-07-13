@@ -30,9 +30,10 @@ using namespace virtualElement;
 CommandLineOptions g_commandLineOptions;
 
 template< typename VEM >
+GEOSX_HOST_DEVICE
 static void checkIntegralMeanConsistency( VEM const & virtualElement )
 {
-  real64 basisFunctionsIntegralMean[virtualElement.getMaxSupportPoints()];
+  real64 basisFunctionsIntegralMean[VEM::getMaxSupportPoints()];
   virtualElement.calcN( 0, basisFunctionsIntegralMean );
   real64 sum = 0;
   for( localIndex iBasisFun = 0;
@@ -46,12 +47,13 @@ static void checkIntegralMeanConsistency( VEM const & virtualElement )
 }
 
 template< typename VEM >
+GEOSX_HOST_DEVICE
 static void
 checkIntegralMeanDerivativesConsistency( VEM const & virtualElement )
 {
   for( localIndex q = 0; q < virtualElement.getNumQuadraturePoints(); ++q )
   {
-    real64 basisDerivativesIntegralMean[virtualElement.getMaxSupportPoints()][3];
+    real64 basisDerivativesIntegralMean[VEM::getMaxSupportPoints()][3];
     virtualElement.calcGradN( q, basisDerivativesIntegralMean );
     real64 sumX = 0, sumY = 0, sumZ = 0;
     for( localIndex iBasisFun = 0; iBasisFun < virtualElement.getNumSupportPoints(); ++iBasisFun )
@@ -73,6 +75,7 @@ checkIntegralMeanDerivativesConsistency( VEM const & virtualElement )
 }
 
 template< typename VEM >
+GEOSX_HOST_DEVICE
 static void
 checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                                    nodes::REFERENCE_POSITION_USD > const & nodesCoords,
@@ -144,6 +147,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
 }
 
 template< typename VEM >
+GEOSX_HOST_DEVICE
 static void checkSumOfQuadratureWeights( real64 const & cellVolume,
                                          VEM const & virtualElement )
 {
@@ -188,7 +192,8 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
 
   // Loop over cells.
   localIndex const numCells = cellSubRegion.getElementVolume().size();
-  for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
+  forAll< parallelDevicePolicy< > >( numCells, [=] GEOSX_HOST_DEVICE
+                                       ( localIndex const cellIndex )
   {
     using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
     real64 const cellCenter[3] { cellCenters( cellIndex, 0 ),
@@ -214,7 +219,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
                                                 cellToNodeMap, cellCenters,
                                                 virtualElement );
     checkSumOfQuadratureWeights< VEM >( cellVolumes[cellIndex], virtualElement );
-  }
+  } );
 }
 
 TEST( VirtualElementBase, unitCube )
