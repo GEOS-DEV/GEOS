@@ -29,15 +29,14 @@ using namespace virtualElement;
 
 CommandLineOptions g_commandLineOptions;
 
-template< typename VEM, typename VEMBASISDATATYPE >
-static void checkIntegralMeanConsistency( VEMBASISDATATYPE const & basisData )
+template< typename VEM >
+static void checkIntegralMeanConsistency( VEM const & virtualElement )
 {
-  VEM virtualElement;
   real64 basisFunctionsIntegralMean[virtualElement.getMaxSupportPoints()];
-  virtualElement.calcN( 0, basisData, basisFunctionsIntegralMean );
+  virtualElement.calcN( 0, basisFunctionsIntegralMean );
   real64 sum = 0;
-  for( localIndex iBasisFun = 0; iBasisFun <
-       virtualElement.getNumSupportPoints( basisData ); ++iBasisFun )
+  for( localIndex iBasisFun = 0;
+       iBasisFun < virtualElement.getNumSupportPoints(); ++iBasisFun )
   {
     sum += basisFunctionsIntegralMean[iBasisFun];
   }
@@ -46,16 +45,16 @@ static void checkIntegralMeanConsistency( VEMBASISDATATYPE const & basisData )
     << "The computed integral means are " << basisFunctionsIntegralMean;
 }
 
-template< typename VEM, typename BASISDATATYPE >
+template< typename VEM >
 static void
-checkIntegralMeanDerivativesConsistency( BASISDATATYPE const & basisData )
+checkIntegralMeanDerivativesConsistency( VEM const & virtualElement )
 {
-  for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
+  for( localIndex q = 0; q < virtualElement.getNumQuadraturePoints(); ++q )
   {
-    real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
-    VEM::calcGradN( q, basisData, basisDerivativesIntegralMean );
+    real64 basisDerivativesIntegralMean[virtualElement.getMaxSupportPoints()][3];
+    virtualElement.calcGradN( q, basisDerivativesIntegralMean );
     real64 sumX = 0, sumY = 0, sumZ = 0;
-    for( localIndex iBasisFun = 0; iBasisFun < VEM::getNumSupportPoints( basisData ); ++iBasisFun )
+    for( localIndex iBasisFun = 0; iBasisFun < virtualElement.getNumSupportPoints(); ++iBasisFun )
     {
       sumX += basisDerivativesIntegralMean[iBasisFun][0];
       sumY += basisDerivativesIntegralMean[iBasisFun][1];
@@ -73,14 +72,14 @@ checkIntegralMeanDerivativesConsistency( BASISDATATYPE const & basisData )
   }
 }
 
-template< typename VEM, typename BASISDATATYPE >
+template< typename VEM >
 static void
 checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                                    nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                                       localIndex const & cellIndex,
                                       CellElementSubRegion::NodeMapType const & cellToNodes,
                                       arrayView2d< real64 const > const & cellCenters,
-                                      BASISDATATYPE const & basisData )
+                                      VEM const & virtualElement )
 {
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
@@ -118,7 +117,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
     stabTimeMonomialDofsNorm = 0;
     for( localIndex j = 0; j < numCellPoints; ++j )
     {
-      stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j, basisData );
+      stabTimeMonomialDofs( i ) += virtualElement.calcStabilizationValue( i, j );
     }
     stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
   }
@@ -133,7 +132,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
       stabTimeMonomialDofs( i ) = 0;
       for( localIndex j = 0; j < numCellPoints; ++j )
       {
-        stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j, basisData ) *
+        stabTimeMonomialDofs( i ) += virtualElement.calcStabilizationValue( i, j ) *
                                      monomialVemDofs( monomInd, j );
       }
       stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
@@ -144,15 +143,15 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
   }
 }
 
-template< typename VEM, typename BASISDATATYPE >
+template< typename VEM >
 static void checkSumOfQuadratureWeights( real64 const & cellVolume,
-                                         BASISDATATYPE const & basisData )
+                                         VEM const & virtualElement )
 {
   real64 sum = 0.0;
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
     real64 weight =
-      VEM::transformedQuadratureWeight( q, basisData );
+      virtualElement.transformedQuadratureWeight( q );
     sum += weight;
   }
   EXPECT_TRUE( abs( sum - cellVolume ) < 1e-15 )
@@ -192,7 +191,6 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
   {
     using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
-    typename VEM::BasisData basisData;
     real64 const cellCenter[3] { cellCenters( cellIndex, 0 ),
                                  cellCenters( cellIndex, 1 ),
                                  cellCenters( cellIndex, 2 ) };
@@ -209,29 +207,13 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
                                          faceAreas,
                                          cellCenter,
                                          cellVolumes[cellIndex] );
-    basisData = virtualElement.m_basisData;
-    // VEM::computeProjectors( cellIndex,
-    //                         nodesCoords,
-    //                         cellToNodeMap,
-    //                         elementToFaceMap,
-    //                         faceToNodeMap,
-    //                         faceToEdgeMap,
-    //                         edgeToNodeMap,
-    //                         faceCenters,
-    //                         faceNormals,
-    //                         faceAreas,
-    //                         cellCenter,
-    //                         cellVolumes[cellIndex],
-    //                         basisData
-    //                         );
 
-    checkIntegralMeanConsistency< VEM >( basisData );
-    checkIntegralMeanDerivativesConsistency< VEM >( basisData );
+    checkIntegralMeanConsistency< VEM >( virtualElement );
+    checkIntegralMeanDerivativesConsistency< VEM >( virtualElement );
     checkStabilizationMatrixConsistency< VEM >( nodesCoords, cellIndex,
                                                 cellToNodeMap, cellCenters,
-                                                basisData );
-    checkSumOfQuadratureWeights< VEM >( cellVolumes[cellIndex],
-                                        basisData );
+                                                virtualElement );
+    checkSumOfQuadratureWeights< VEM >( cellVolumes[cellIndex], virtualElement );
   }
 }
 

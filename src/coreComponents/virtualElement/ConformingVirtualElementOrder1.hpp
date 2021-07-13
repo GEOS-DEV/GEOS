@@ -122,12 +122,6 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  static localIndex getMaxSupportPoints( BasisData const & basisData )
-  {
-    return basisData.maxSupportPoints;
-  }
-
-  GEOSX_HOST_DEVICE
   static constexpr localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
@@ -141,6 +135,50 @@ public:
   localIndex getNumSupportPoints() const override
   {
     return m_basisData.numSupportPoints;
+  }
+
+  GEOSX_HOST_DEVICE
+  void calcN( localIndex const q,
+              real64 ( & N )[maxSupportPoints] ) const
+  {
+    GEOSX_UNUSED_VAR( q );
+    for( localIndex i = 0; i < maxSupportPoints; ++i )
+    {
+      N[i] = m_basisData.basisFunctionsIntegralMean[i];
+    }
+  }
+
+  GEOSX_HOST_DEVICE
+  real64 calcGradN( localIndex const q,
+                    real64 ( & gradN )[maxSupportPoints][3] ) const
+  {
+    for( localIndex i = 0; i < maxSupportPoints; ++i )
+    {
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        gradN[i][j] = m_basisData.basisDerivativesIntegralMean[i][j];
+      }
+    }
+    return transformedQuadratureWeight( q );
+  }
+
+  GEOSX_HOST_DEVICE
+  real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ) ) const
+  {
+    return m_basisData.quadratureWeight;
+  }
+
+  GEOSX_HOST_DEVICE
+  real64 calcStabilizationValue( localIndex const iBasisFunction,
+                                 localIndex const jBasisFunction ) const
+  {
+    return m_basisData.stabilizationMatrix[iBasisFunction][jBasisFunction];
+  }
+
+  GEOSX_HOST_DEVICE
+  static localIndex getMaxSupportPoints( BasisData const & basisData )
+  {
+    return basisData.maxSupportPoints;
   }
 
   GEOSX_HOST_DEVICE
