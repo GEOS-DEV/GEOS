@@ -8,7 +8,7 @@
       name="PoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
       fluidSolverName="SinglePhaseFlowSolver"
-      porousMaterialNames="{skeleton}"
+      porousMaterialNames="{porousRock}"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -135,15 +135,15 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ skeleton, fluid }"/>
+      materialList="{ skeleton, fluid, porousRock, skeletonPerm, skeletonPorosity }"/>
   </ElementRegions>
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   <Constitutive>
   
      <PorousElasticIsotropic
-      name="skeleton"
-      solidModelName="skeletonSolid"
+      name="porousRock"
+      solidModelName="skeleton"
       porosityModelName="skeletonPorosity"
       permeabilityModelName="skeletonPerm"/>
   

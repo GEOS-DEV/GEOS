@@ -123,7 +123,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ block1 }"
-      materialList="{ fluid1, skeleton, relperm, rockPerm }"/>
+      materialList="{ fluid1, skeleton, relperm, rockPerm, porousRock, rockPorosity }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -166,6 +166,13 @@
   </Constitutive>
 
   <FieldSpecifications>
+   <FieldSpecification
+      name="referencePorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="referencePorosity"
+      scale="0.05"/>   
     <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
       name="initialPressure"

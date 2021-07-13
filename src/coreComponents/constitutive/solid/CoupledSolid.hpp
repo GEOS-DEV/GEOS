@@ -124,6 +124,9 @@ public:
                                                                     getPermModel() );
   }
 
+  arrayView2d< real64 const > const  dPorosity_dPressure() const
+  { return getPorosityModel().dPorosity_dPressure(); }
+
 protected:
 
   SOLID_TYPE const & getSolidModel() const
