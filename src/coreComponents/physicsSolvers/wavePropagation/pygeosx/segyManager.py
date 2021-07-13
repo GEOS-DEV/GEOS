@@ -9,8 +9,8 @@ def create_segy(shot_list, physicalName, nsamples, tracePath):
         os.mkdir(tracePath)
 
     for ishot in range(len(shot_list)):
-        rcvCoord = shot_list[ishot].getReceiverSet().getSetCoord()
-        srcCoord = shot_list[ishot].getSource().getCoord()
+        rcvCoord = [receiver.coords for receiver in shot_list[ishot].receivers.receiver_list]
+        srcCoord = shot_list[ishot].source.coords
         spec = segyio.spec()
         ilines  = [x[0] for x in rcvCoord]
         xlines  = [x[1] for x in rcvCoord]
@@ -20,7 +20,7 @@ def create_segy(shot_list, physicalName, nsamples, tracePath):
         spec.sorting = 2
         spec.format  = 1
 
-        fileName = fileName = physicalName + "_Shot"+ str(ishot) + ".sgy"
+        fileName = physicalName + "_Shot"+ shot_list[ishot].id + ".sgy"
         with segyio.create(os.path.join(tracePath, fileName), spec) as f:
             for i in range(len(rcvCoord)):
                 f.header[i] = {segyio.su.scalco : -100,
@@ -50,7 +50,6 @@ def export_to_segy(physicalValue, rcvCoord, segyFile):
         File to which we export the values
     """
 
-    print(physicalValue[:,51])
     with segyio.open(segyFile, 'r+', ignore_geometry=True) as f:
         for i in range(len(rcvCoord)):
             if any(physicalValue[1:,i])==True:
@@ -70,8 +69,8 @@ def export_for_acquisition(shot_list, acq_name):
         os.mkdir(os.path.join(segyath, acq_name))
 
     for j in range(len(shot_list)):
-        srcCoord = shot_list[j].getSource().getCoord()
-        rcvCoord = shot_list[j].getReceiverSet().getSetCoord()
+        rcvCoord = [receiver.coords for receiver in shot_list[ishot].receivers.receiver_list]
+        srcCoord = shot_list[ishot].source.coords
 
         spec = segyio.spec()
         ilines  = [x[0] for x in rcvCoord]

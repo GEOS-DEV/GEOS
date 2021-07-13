@@ -22,7 +22,7 @@ def print_with_indent(msg, indent):
 def print_flag(shot_list):
     i = 0
     for shot in shot_list:
-        print("Shot " + str(i) + " status : " + shot.getFlag())
+        print("Shot " + str(i) + " status : " + shot.flag)
         i += 1
     print("\n")
      

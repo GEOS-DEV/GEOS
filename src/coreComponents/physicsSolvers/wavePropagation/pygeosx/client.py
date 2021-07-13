@@ -1,13 +1,10 @@
-import asyncssh
 import asyncio
-from tempfile import mkstemp
-from munch import munchify
 import uuid
 import copy
-import os
 import subprocess
 from time import sleep
-
+import inspect
+from utils import *
 
 class SLURMCluster:
     def __init__(self,
@@ -36,7 +33,7 @@ class SLURMCluster:
         self.python=python
         self.err=None
         self.out=None
-        self.state="Not used"
+        self.state="Free"
 
         header_lines=["#!/usr/bin/bash"]
         if job_name is not None:
@@ -59,6 +56,9 @@ class SLURMCluster:
         if node_name is not None:
             header_lines.append("#SBATCH -C %s" %self.node_name)
 
+        header_lines.append("#SBATCH -o slurm-%s-%%A.out" %self.job_name)
+        header_lines.append("#SBATCH -e slurm-%s-%%A.err" %self.job_name)
+
         if extra is not None:
             header_lines.extend(["SBATCH %s" %arg for arg in extra])
         if env_extra is not None:
@@ -67,17 +67,21 @@ class SLURMCluster:
         self.header=header_lines
 
         if python is not None:
-            self.python = python
+            if python=="$Python3_EXECUTABLE":
+                self.header.append("source /beegfs/jbesset/codes/GEOSX/build-test_module-release/lib/PYGEOSX/bin/activate")
+                self.python="python"
+            else:
+                self.python = python
         else:
             self.python = "python"
 
 
     def job_file(self):
-        handle, filename = mkstemp(suffix=".sh")
+        handle, filename = mkstemp(suffix=".sh", dir=os.getcwd())
         with open(filename, "w") as f:
             for line in self.header:
                 f.write(line + "\n")
-
+        
         os.close(handle)
         return filename
 
@@ -99,20 +103,19 @@ class SLURMCluster:
 
     def _add_args_to_cmd(self, args):
         for i in range(len(args)):
-            self.run += args[i] + " "
+            self.run += str(args[i]) + " "
 
 
     def finalize_script(self):
         self.header.append(self.run)
 
 
-
 class Client:
     def __init__(self,
                  cluster=None):
 
-        self.cluster=cluster
-
+        self.cluster = cluster
+        
 
     def submit(self,
                func,
@@ -123,15 +126,15 @@ class Client:
                y_partition=1,
                z_partition=1):
 
-        module   = inspect.getmodule(func)
-        filename = obj_to_json(parameters, filename = uuid.randomuuid().toString())
-        args     = [module, func.__name__, filename]
+        module   = inspect.getmodule(func).__name__
+        jsonfile = obj_to_json(parameters)
+        args     = [module, func.__name__, jsonfile]
 
         if cores is not None:
             if cores > self.cluster.cores:
                 raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
             else:
-                self.cluster._add_job_to_cmd(cores)
+                self.cluster._add_job_to_script(cores)
                 self.cluster._add_xml_to_cmd(xml)
                 if x_partition*y_partition*z_partition != cores:
                     raise ValueError("Partition x y z must match x*y*z=cores")
@@ -142,103 +145,122 @@ class Client:
 
         self.cluster._add_args_to_cmd(args)
         self.cluster.finalize_script()
+        
+        bashfile = self.cluster.job_file()
+        output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
+        job_id = output.split()[-1].decode()
+        os.remove(bashfile)
 
-        output = subprocess.check_output("usr/bin/sbatch " + self.cluster.job_file() + "sh")
-        job_id = output.split()[-1]
+        key = func.__name__ + "-" + str(uuid.uuid4())
+        return Future(key, cluster=self.cluster, job_id=job_id)
+
+
+    def _submit(self,
+                ind,
+                func,
+                parameters,
+                xml=None,
+                cores=None,
+                x_partition=1,
+                y_partition=1,
+                z_partition=1):
+                                
+        module   = inspect.getmodule(func).__name__
+        jsonfile = obj_to_json(parameters)
+        args     = [module, func.__name__, jsonfile]
+
+        if cores is not None:
+            if cores > self.cluster[ind].cores:
+                raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
+            else:
+                self.cluster[ind]._add_job_to_script(cores)
+                self.cluster[ind]._add_xml_to_cmd(xml)
+                if x_partition*y_partition*z_partition != cores:
+                    raise ValueError("Partition x y z must match x*y*z=cores")
+                else:
+                    self.cluster[ind]._add_partition_to_cmd(x_partition, y_partition, z_partition)
+        else:
+            raise ValueError("You must specify the number of cores you want to use")
+
+        self.cluster[ind]._add_args_to_cmd(args)
+        self.cluster[ind].finalize_script()
+        
+        #print(self.cluster[ind].header)
+        bashfile = self.cluster[ind].job_file()
+        output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
+        job_id = output.split()[-1].decode()
+        os.remove(bashfile)
 
         key=func.__name__ + "-" + str(uuid.uuid4())
-        return Future(key, cluster=self.cluster, jobid=job_id)
+        return Future(key, cluster=self.cluster[ind], job_id=job_id)
 
-
-    async def submit(self,
-                     ind,
-                     func,
-                     parameters,
-                     cores=None,
-                     x_partition=1,
-                     y_partition=1,
-                     z_partition=1):
-        while True:
-            if self.cluster[ind].state == "Not used":
-                module   = inspect.getmodule(func)
-                filename = obj_to_json(parameters, filename = uuid.randomuuid().toString())
-                args     = [module, func.__name__, filename]
-
-                if cores is not None:
-                    if cores > self.cluster[ind].cores:
-                        raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
-                    else:
-                        self.cluster[ind]._add_job_to_cmd(cores)
-                        self.cluster[ind]._add_xml_to_cmd(xml)
-                        if x_partition*y_partition*z_partition != cores:
-                            raise ValueError("Partition x y z must match x*y*z=cores")
-                        else:
-                            self.cluster[ind]._add_partition_to_cmd(x_partition, y_partition, z_partition)
-                else:
-                    raise ValueError("You must specify the number of cores you want to use")
-
-                self.cluster[ind]._add_args_to_cmd(args)
-                self.cluster[ind].finalize_script()
-
-                output = subprocess.check_output("usr/bin/sbatch " + self.cluster[ind].job_file() + "sh")
-                job_id = output.split()[-1]
-
-                key=func.__name__ + "-" + str(uuid.uuid4())
-                return Future(key, cluster=self.cluster[ind], jobid=job_id)
-            else:
-                sleep(1)
 
 
     def scale(self, n=None):
-        cluster_list=[self.cluster]
-        conn_list=[self.conn]
-
+        cluster_list = [self.cluster]
+        
         if n is not None:
             for i in range(n-1):
                 cluster_list.append(copy.deepcopy(self.cluster))
-                conn_list.append(self._connection())
         if len(cluster_list) > 1:
             self.cluster=cluster_list
-            self.conn=conn_list
+
 
 
     def map(self,
             func,
             parameters,
+            xml=None,
             cores=None,
             x_partition=1,
             y_partition=1,
             z_partition=1):
-        futures=[]
-        task=[]
-        nb_param=len(parameters)
-        nb_cluster=len(self.cluster)
-        for i in range(nb_param):
-            ind = i%nb_cluster
-            task.append(asyncio.create(self.submit(ind, func, parameters[i])))
-        for i in range(nb_param):
-            futures.append(asyncio.run(task[i]))
-        return futures
+        
+        futures = []
+        nb_param = len(parameters)
+        nb_cluster = len(self.cluster)
 
+        for i in range(nb_param):
+            ind = i % nb_cluster
+            while True:
+                if self.cluster[ind].state == "Free":
+                    futures.append(self._submit(ind, 
+                                                func, 
+                                                parameters[i], 
+                                                xml,
+                                                cores,
+                                                x_partition,
+                                                y_partition,
+                                                z_partition))
+                    self.cluster[ind].state = "Working"
+                    break
+                else:
+                    sleep(1)
+                    futures[ind].check_state()
+            
+        return futures
 
 
 
 class Future:
     def __init__(self,
                  key,
-                 client=None):
+                 cluster=None,
+                 job_id=None):
 
         self.key=key
         self.cluster=cluster
         self.state="PENDING"
-        self.job_id=None
+        self.job_id = job_id
+        self.cluster.err="slurm-%s-%s.err"%(self.cluster.job_name, self.job_id)
+        self.cluster.out="slurm-%s-%s.out"%(self.cluster.job_name, self.job_id)
 
 
-    def result():
+    def result(self):
         while True:
-            job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).split()
+            job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).decode().split()
             if self.job_id in job_list:
-                status = subprocess.check_output("squeue -j %s -h -o %%t" %self.job_id, shell=True).strip()
+                status = subprocess.check_output("squeue -j %s -h -o %%t" %self.job_id, shell=True).decode().strip()
                 if status == "PD":
                     sleep(1)
                 elif status == "R":
@@ -251,7 +273,7 @@ class Future:
                     self.state = "ERROR"
                     return 1
             else:
-                if os.stat(self.client.err).st_size == 0:
+                if os.stat(self.cluster.err).st_size == 0:
                     self.state="COMPLETED"
                     return 0
                 else:
@@ -259,7 +281,13 @@ class Future:
                     return 1
 
 
+    
+    def check_state(self):
+        job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).decode().split()
+        if self.job_id not in job_list:
+            self.cluster.state = "Free"
 
 
 
-#use isinstance(obj, list) to check whether or not an obj is a list or not
+    def access_result(self):
+        

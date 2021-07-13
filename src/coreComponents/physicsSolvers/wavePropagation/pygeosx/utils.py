@@ -1,6 +1,10 @@
 import json as j
 import argparse
-
+from munch import munchify
+import os
+from tempfile import mkstemp, mkdtemp
+import uuid
+    
 
 def parse_args():
     """Get parameters from python command and put them into args variable
@@ -21,7 +25,7 @@ def parse_args():
 
 
 def obj_to_dict(obj):
-    if not  hasattr(obj,"__dict__"):
+    if not hasattr(obj,"__dict__"):
         return obj
     result = {}
     for key, val in obj.__dict__.items():
@@ -30,9 +34,9 @@ def obj_to_dict(obj):
         element = []
         if isinstance(val, list):
             for item in val:
-                element.append(todict(item))
+                element.append(obj_to_dict(item))
         else:
-            element = todict(val)
+            element = obj_to_dict(val)
         result[key] = element
     return result
 
@@ -73,17 +77,17 @@ def ricker(maxT, dt, f0):
     return fi
 
 
- def obj_to_json(obj,
-                 filename=None):
-     dic = obj_to_dict(obj)
-     json = j.dumps(dic, indent=4)
-     with open(filename + '.json', 'w') as jfile:
-         print(json, end="", file=jfile)
-         jfile.close()
-
-     return filename + '.json'
+def obj_to_json(obj):
+    tempfile = str(uuid.uuid4()) + ".json"
+    dic = obj_to_dict(obj)
+    with open(tempfile, 'a') as jfile:
+        j.dump(dic, jfile)
+    
+    return tempfile
 
 
 def json_to_obj(jfile):
-    obj = j.loads(studentJsonData, object_hook=lambda d: Namespace(**d))
+    dic = j.load(jfile)
+    obj = munchify(dic)
     return obj
+    

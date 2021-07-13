@@ -2,11 +2,26 @@ from mpi4py import MPI
 import sys
 import pygeosx
 from utils import *
+import time
 import importlib
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
-acquisition = json_to_obj(sys.argv[3])
-module = importlib.import_module(sys.argv[1])
-func = eval(sys.argv[2])
+json = open(sys.argv[11])
+acquisition = json_to_obj(json)
+json.close()
+
+if rank==0:
+    time.sleep(1)
+    os.remove(sys.argv[11])
+
+module_str = sys.argv[9]
+func_str = sys.argv[10]
+
+module = importlib.import_module(module_str)
+func = getattr(module, func_str)
+
+problem = pygeosx.initialize(rank, sys.argv[0:9])
+pygeosx.apply_initial_conditions()
+func(rank, problem, acquisition, acquisition.output)

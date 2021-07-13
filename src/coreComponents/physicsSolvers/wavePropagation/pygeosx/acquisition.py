@@ -83,7 +83,7 @@ class Acquisition:
 
 
 
-    def split_acquisition(self, n):
+    def split(self, n):
         acqs = []
         nb_shot_m1 = len(self.shot)
         ind = 0
@@ -293,8 +293,8 @@ class EQUISPACEDAcquisition(Acquisition):
         #print(receivers_temp)
         receivers.append(deepcopy(receivers_temp))
 
-        xs = np.linspace(start_source_pos[0], end_source_pos[0], number_of_sources)
-        ys = np.linspace(start_source_pos[1], end_source_pos[1], number_of_sources)
+        xs = np.linspace(start_source_pos[0], end_source_pos[0], number_of_sources).tolist()
+        ys = np.linspace(start_source_pos[1], end_source_pos[1], number_of_sources).tolist()
 
         # receivers = receivers.getInsideDomain(box)
         shots = []
@@ -311,7 +311,7 @@ class EQUISPACEDAcquisition(Acquisition):
             srcpos = [xs[i], ys[i], source_depth]
             source = Source(srcpos, wavelet)
 
-            shot = Shot(source, receivers)
+            shot = Shot(source, receivers, shot_id)
             shots.append(shot)
 
         self.shot = shots
@@ -425,7 +425,7 @@ class MOVINGAcquisition(Acquisition):
         xposleft  = np.linspace(xmin + 0.3*movex, xmin + 0.3*movex + zone_receiver_x, number_of_receivers_x)
         xposright = np.linspace(xmax - 0.3*movex, xmax - 0.3*movex - zone_receiver_x, number_of_receivers_x)
 
-        ypos = np.linspace(ymin - zone_receiver_y/2, ymin + zone_receiver_y/2, number_of_receivers_y)
+        ypos = np.linspace(ymin - zone_receiver_y/2, ymin + zone_receiver_y/2, number_of_receivers_y).tolist()
 
         receiversbaseleft  = ReceiverSet([Receiver([x, y, receivers_depth]) for x in xposleft for y in ypos])
         receiversbaseright = ReceiverSet([Receiver([x, y, receivers_depth]) for x in xposright for y in ypos])
@@ -554,8 +554,8 @@ class RANDOMAcquisition(Acquisition):
         zmax = boundary[2][1]
 
 
-        xpos = np.linspace(xmin, xmax, number_of_receivers_x)
-        ypos = np.linspace(ymin, ymax, number_of_receivers_y)
+        xpos = np.linspace(xmin, xmax, number_of_receivers_x).tolist()
+        ypos = np.linspace(ymin, ymax, number_of_receivers_y).tolist()
 
         receivers = ReceiverSet([Receiver([x, y, receivers_depth]) for x in xpos for y in ypos])
 
@@ -602,7 +602,7 @@ class Shot:
 
     def __init__(self,
                  source=None,
-                 receivers=None
+                 receivers=None,
                  shot_id=None):
         """ Constructor of Shot
 
@@ -621,6 +621,8 @@ class Shot:
 
         if shot_id is not None:
             self.id = shot_id
+        else:
+            self.id = None
 
     def __repr__(self):
         return 'Source position : \n'+str(self.source) +' \n\n' + 'Receivers positions : \n' + str(self.receivers) + '\n\n'
@@ -640,7 +642,7 @@ class Receiver:
         Coordinates of the source
     """
 
-    def __init__(self, pos):
+    def __init__(self, coords):
         """Constructor for the receiver
 
         Parameters
@@ -649,7 +651,7 @@ class Receiver:
             Coordinates for the receiver
         """
 
-        self.coords = np.array([pos[0], pos[1], pos[2]])
+        self.coords = coords
 
     def __repr__(self):
         return '('+str(self.coords[0])+','+str(self.coords[1])+','+str(self.coords[2])+') \n'
@@ -780,7 +782,7 @@ class Source:
             Source function (Ricker)
         """
 
-        self.coords = np.array([coords[0], coords[1], coords[2]])
+        self.coords = coords
         self.value = source
 
     def __repr__(self):

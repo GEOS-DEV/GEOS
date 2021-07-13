@@ -14,7 +14,7 @@ import os
 from print import *
 
 
-def acoustic_shots(rank, problem, shot_list, tracePath):
+def acoustic_shots(rank, problem, acquisition, tracePath):
     """ Given a GEOSX problem, a list of shots, and a time step,
         solve wave eqn with different configurations
 
@@ -71,59 +71,51 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
     cycle2     = problem.get_wrapper("Events/cycle").value()
     curr_time  = problem.get_wrapper("Events/time").value()
 
-    dt            = shot_list[0].getSource().getTimeStep()
+    dt            = acquisition.dt
     dt_geosx[0]   = dt
     maxCycle      = int(ceil(maxT[0]/dt))
     cycle_freq[0] = maxCycle
     maxT[0]       = (maxCycle+1)*dt
     nsamples[0]   = int(maxT[0]/dt_sismo)
 
-    pressure_at_receivers = np.zeros((nsamples[0], shot_list[0].getReceiverSet().getNumberOfReceivers()))
-    nb_shot = len(shot_list)
+    pressure_at_receivers = np.zeros((nsamples[0], acquisition.shot[0].receivers.n))
+    nb_shot = len(acquisition.shot)
 
     if outputSismoTrace == 1 :
         if rank==0:
-            if os.path.exists(os.path.join(rootPath,"outputSismoTrace/")):
-                pass
-            else:
-                os.mkdir(os.path.join(rootPath,"outputSismoTrace/"))
-            if os.path.exists(tracePath):
-                pass
-            else:
-                os.mkdir(tracePath)
-            create_segy(shot_list, "pressure", nsamples[0], tracePath)
+            create_segy(acquisition.shot, "pressure", nsamples[0], acquisition.output)
 
 
     ishot = 0
     if rank==0:
-        print_shot_config(shot_list, ishot)
+        print_shot_config(acquisition.shot, ishot)
 
     #Set first source and receivers positions in GEOSX
-    src_pos      = shot_list[ishot].getSource().getCoord()
-    rcv_pos_list = shot_list[ishot].getReceiverSet().getSetCoord()
+    src_pos      = acquisition.shot[ishot].source.coords
+    rcv_pos_list = [receiver.coords for receiver in acquisition.shot[ishot].receivers.receiver_list]
 
     src_pos_geosx.to_numpy()[0] = src_pos
     rcv_pos_geosx.resize(len(rcv_pos_list))
     rcv_pos_geosx.to_numpy()[:] = rcv_pos_list[:]
 
     #Update shot flag
-    shot_list[ishot].flagUpdate("In Progress")
+    acquisition.shot[ishot].flag = "In Progress"
     if rank==0:
-        print_flag(shot_list)
+        print_flag(acquisition.shot)
 
-    while (np.array([shot.getFlag() for shot in shot_list]) == "Done").all() != True and pygeosx.run() != pygeosx.COMPLETED:
+    while (np.array([shot.flag for shot in acquisition.shot]) == "Done").all() != True and pygeosx.run() != pygeosx.COMPLETED:
         #Save pressure
         if cycle[0] !=0 :
             pressure_at_receivers[:, :] = pressure_geosx.to_numpy().transpose()
 
             #Segy export and flag update
             if outputSismoTrace == 1 :
-                segyFile = os.path.join(tracePath, "pressure_Shot"+ str(ishot) + ".sgy")
+                segyFile = os.path.join(acquisition.output, "pressure_Shot"+ acquisition.shot[ishot].id + ".sgy")
                 export_to_segy(pressure_at_receivers,
-                               shot_list[ishot].getReceiverSet().getSetCoord(),
+                               acquisition.shot[ishot].receivers.receiver_list,
                                segyFile)
 
-            shot_list[ishot].flagUpdate("Done")
+            acquisition.shot[ishot].flag = "Done"
 
             #Reset time to -dt and pressure to 0
             curr_time[0]               = -dt
@@ -138,18 +130,18 @@ def acoustic_shots(rank, problem, shot_list, tracePath):
             ishot += 1
             if ishot < nb_shot:
                 if rank==0:
-                    print_shot_config(shot_list, ishot)
+                    print_shot_config(acquisition.shot, ishot)
 
                 #Set new receivers and source positions in GEOSX
-                src_pos          = shot_list[ishot].getSource().getCoord()
-                rcv_pos_list     = shot_list[ishot].getReceiverSet().getSetCoord()
+                src_pos          = acquisition.shot[ishot].source.coords
+                rcv_pos_list     = [receiver.coords for receiver in acquisition.shot[ishot].receivers.receiver_list]
 
                 src_pos_geosx.to_numpy()[0] = src_pos
                 rcv_pos_geosx.resize(len(rcv_pos_list))
                 rcv_pos_geosx.to_numpy()[:] = rcv_pos_list[:]
 
                 #Update shot flag
-                shot_list[ishot].flagUpdate("In Progress")
+                acquisition.shot[ishot].flag = "In Progress"
 
             if rank==0:
-                print_flag(shot_list)
+                print_flag(acquisition.shot)
