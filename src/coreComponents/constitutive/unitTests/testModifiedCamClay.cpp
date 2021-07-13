@@ -79,7 +79,6 @@ void testModifiedCamClayDriver()
     "      defaultRefStrainVol=\"0.0\" "
     "      defaultShearModulus=\"200.0\" "
     "      defaultPreConsolidationPressure =\"-1.5\" "
-    "      defaultShapeParameter=\"1.0\" "
     "      defaultCslSlope=\"1.0\" "
     "      defaultVirginCompressionIndex=\"0.003\" "
     "      defaultRecompressionIndex=\"0.002\"/>"
