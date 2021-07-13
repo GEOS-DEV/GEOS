@@ -194,6 +194,8 @@ public:
       localDispFlowJacobian{ {0.0} },
       localFlowDispJacobian{ {0.0} },
       localFlowFlowJacobian{ {0.0} },
+      localVolBalanceResidual{ 0.0 },
+      localVolBalanceJacobian{ {0.0} },
       localFlowDofIndex{ 0 }
     {}
 
@@ -215,6 +217,8 @@ public:
     real64 localDispFlowJacobian[numDispDofPerElem][numMaxComponents + 1];
     real64 localFlowDispJacobian[numMaxComponents][numDispDofPerElem];
     real64 localFlowFlowJacobian[numMaxComponents][numMaxComponents + 1];
+    real64 localVolBalanceResidual[1];
+    real64 localVolBalanceJacobian[1][numMaxComponents + 1];
 
     /// C-array storage for the element local row degrees of freedom.
     globalIndex localFlowDofIndex[numMaxComponents + 1];
@@ -429,6 +433,21 @@ public:
         stack.localFlowDispJacobian[ic][a*3+2] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][2] * detJxW;
       }
     }
+
+    // --- Volume balance equation
+    // sum contributions to component accumulation from each phase
+    stack.localVolBalanceResidual[0] += porosityNew * detJxW;
+    for( localIndex ip = 0; ip < NP; ++ip )
+    {
+      stack.localVolBalanceResidual[0] -= m_fluidPhaseSaturation( k, ip ) * porosityNew * detJxW;
+      stack.localVolBalanceJacobian[0][0] -=
+        ( m_dFluidPhaseSaturation_dPressure( k, ip ) * porosityNew + dPorosity_dPressure * m_fluidPhaseSaturation( k, ip ) ) * detJxW;
+
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        stack.localVolBalanceJacobian[0][jc+1] -= m_dFluidPhaseSaturation_dGlobalCompDensity( k, ip, jc )  * porosityNew * detJxW;
+      }
+    }
   }
 
   /**
@@ -440,6 +459,7 @@ public:
                    StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
+
     real64 maxForce = 0;
 
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
@@ -470,7 +490,7 @@ public:
       }
     }
 
-    localIndex const dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[0] - m_dofRankOffset );
+    localIndex dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[0] - m_dofRankOffset );
     if( 0 <= dof && dof < m_matrix.numRows() )
     {
       for( localIndex i = 0; i < m_numComponents; ++i )
@@ -486,6 +506,18 @@ public:
 
         RAJA::atomicAdd< serialAtomic >( &m_rhs[dof+i], stack.localFlowResidual[i] );
       }
+    }
+
+    dof = dof + m_numComponents;
+    if( 0 <= dof && dof < m_matrix.numRows() )
+    {
+
+      m_matrix.template addToRow< serialAtomic >( dof,
+                                                  stack.localFlowDofIndex,
+                                                  stack.localVolBalanceJacobian[0],
+                                                  m_numComponents + 1 );
+
+      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localVolBalanceResidual[0] );
     }
 
     return maxForce;
