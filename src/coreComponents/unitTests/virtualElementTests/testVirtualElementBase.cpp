@@ -148,7 +148,7 @@ static void checkSumOfQuadratureWeights( real64 const & cellVolume,
                                          VEM const & virtualElement )
 {
   real64 sum = 0.0;
-  for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
+  for( localIndex q = 0; q < virtualElement.getNumQuadraturePoints(); ++q )
   {
     real64 weight =
       virtualElement.transformedQuadratureWeight( q );
