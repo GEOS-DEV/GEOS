@@ -210,14 +210,6 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                    dofManager,
                                    localMatrix,
                                    localRhs );
-
-  // Cell-based contribution
-  // TODO: move in PoroelasticKernels
-  m_flowSolver->assembleVolumeBalanceTerms( domain,
-                                            dofManager,
-                                            localMatrix,
-                                            localRhs );
-
 }
 
 void MultiphasePoromechanicsSolver::applyBoundaryConditions( real64 const time_n,
