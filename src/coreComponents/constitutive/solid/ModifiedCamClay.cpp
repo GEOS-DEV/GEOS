@@ -28,11 +28,9 @@ ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
   ElasticIsotropicPressureDependent( name, parent ),
   m_defaultVirginCompressionIndex(),
   m_defaultCslSlope(),
-  m_defaultShapeParameter(),
   m_defaultPreConsolidationPressure(),
   m_virginCompressionIndex(),
   m_cslSlope(),
-  m_shapeParameter(),
   m_newPreConsolidationPressure(),
   m_oldPreConsolidationPressure()
 {
@@ -48,11 +46,6 @@ ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Slope of the critical state line" );
 
-  registerWrapper( viewKeyStruct::defaultShapeParameterString(), &m_defaultShapeParameter ).
-    setApplyDefaultValue( 1.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Shape parameter for the yield surface" );
-
   registerWrapper( viewKeyStruct::defaultPreConsolidationPressureString(), &m_defaultPreConsolidationPressure ).
     setApplyDefaultValue( -1.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -67,10 +60,6 @@ ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::cslSlopeString(), &m_cslSlope ).
     setApplyDefaultValue( -1 ).
     setDescription( "Slope of the critical state line" );
-
-  registerWrapper( viewKeyStruct::shapeParameterString(), &m_shapeParameter ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Shape parameter for the yield surface" );
 
   registerWrapper( viewKeyStruct::newPreConsolidationPressureString(), &m_newPreConsolidationPressure ).
     setApplyDefaultValue( -1 ).
@@ -102,7 +91,6 @@ void ModifiedCamClay::postProcessInput()
   ElasticIsotropicPressureDependent::postProcessInput();
 
   GEOSX_THROW_IF( m_defaultCslSlope <= 0, "Non-positive slope of critical state line detected", InputError );
-  GEOSX_THROW_IF( m_defaultShapeParameter < 1., "Shape parameter for yield surface must be greater than or equal to one", InputError );
   GEOSX_THROW_IF( m_defaultVirginCompressionIndex <= 0, "Non-positive virgin compression index detected", InputError );
   GEOSX_THROW_IF( m_defaultVirginCompressionIndex <= m_defaultRecompressionIndex, "Recompression index should exceed virgin recompression index", InputError );
 
@@ -124,8 +112,6 @@ void ModifiedCamClay::postProcessInput()
   getWrapper< array1d< real64 > >( viewKeyStruct::cslSlopeString() ).
     setApplyDefaultValue( m_defaultCslSlope );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::shapeParameterString() ).
-    setApplyDefaultValue( m_defaultShapeParameter );
 }
 
 

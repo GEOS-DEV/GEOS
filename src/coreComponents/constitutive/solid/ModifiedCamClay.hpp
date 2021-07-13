@@ -49,20 +49,17 @@ public:
    */
   ModifiedCamClayUpdates( real64 const & refPressure,
                           real64 const & refStrainVol,
-                          int const & useLinear,
                           arrayView1d< real64 const > const & recompressionIndex,
                           arrayView1d< real64 const > const & virginCompressionIndex,
                           arrayView1d< real64 const > const & cslSlope,
-                          arrayView1d< real64 const > const & shapeParameter,
                           arrayView2d< real64 > const & newPreConsolidationPressure,
                           arrayView2d< real64 > const & oldPreConsolidationPressure,
                           arrayView1d< real64 const > const & shearModulus,
                           arrayView3d< real64, solid::STRESS_USD > const & newStress,
                           arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, useLinear, recompressionIndex, shearModulus, newStress, oldStress ),
+    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol,  recompressionIndex, shearModulus, newStress, oldStress ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
-    m_shapeParameter( shapeParameter ),
     m_newPreConsolidationPressure( newPreConsolidationPressure ),
     m_oldPreConsolidationPressure( oldPreConsolidationPressure )
   {}
@@ -93,7 +90,6 @@ public:
                       real64 const q,
                       real64 const pc,
                       real64 const M,
-                      real64 const alpha,
                       real64 const Cc,
                       real64 const Cr,
                       real64 const bulkModulus,
@@ -138,9 +134,6 @@ private:
   /// A reference to the ArrayView holding the slope of the critical state line for each element.
   arrayView1d< real64 const > const m_cslSlope;
 
-  /// A reference to the ArrayView holding the shape parameter for each element.
-  arrayView1d< real64 const > const m_shapeParameter;
-
   /// A reference to the ArrayView holding the new preconsolidation pressure for each integration point
   arrayView2d< real64 > const m_newPreConsolidationPressure;
 
@@ -156,7 +149,6 @@ void ModifiedCamClayUpdates::evaluateYield( real64 const p,
                                             real64 const q,
                                             real64 const pc,
                                             real64 const M,
-                                            real64 const alpha,
                                             real64 const Cc,
                                             real64 const Cr,
                                             real64 const bulkModulus,
@@ -168,26 +160,15 @@ void ModifiedCamClayUpdates::evaluateYield( real64 const p,
                                             real64 & df_dp_dve,
                                             real64 & df_dq_dse ) const
 {
-  real64 const c = alpha/(alpha+1.)*pc;
-  real64 a = alpha;
-  real64 pa = pc;
-  real64 factor = 1.0;
 
-  if( p >= c ) // Use MCC
-  {
-    a = 1.0;
-    factor = 2.*alpha/ (alpha+1.);
-    pa = factor * pc;
-  }
-  real64 alphaTerm = 2. * a*a*a / (a+1.);
-  df_dp = -alphaTerm * pa + 2. * a * a * p;
+  df_dp = -pc + 2. * p;
   df_dq = 2. * q /(M*M);
-  df_dpc = 2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p * factor;
+  df_dpc = -p ;
   real64 dpc_dve = -1./(Cc-Cr) * pc;
-  df_dp_dve = 2. * a * a * bulkModulus + alphaTerm * dpc_dve * factor;
+  df_dp_dve = 2. * bulkModulus - dpc_dve ;
   df_dq_dse = 2. /(M*M) * 3. * mu;
 
-  f = q*q/(M*M)- a*a*p *(2.*a/(a+1.)*pa-p)+a*a*(a-1.)/(a+1.)* pc*pc;
+  f = q*q/(M*M)+p*(p-pc);
 
 }
 
@@ -211,11 +192,9 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 const M      = m_cslSlope[k];
   real64 const Cr     = m_recompressionIndex[k];
   real64 const Cc     = m_virginCompressionIndex[k];
-  real64 const alpha  = m_shapeParameter[k];
-
+    
   real64 pc    = oldPc;
   real64 bulkModulus  = -p0/Cr;
-
   // elastic predictor (assume strainIncrement is all elastic)
 
   ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
@@ -234,7 +213,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   // check yield function F <= 0
 
   real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
-  evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
+  evaluateYield( trialP, trialQ, pc, M, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
 
 
   if( yield < 1e-9 ) // elasticity
@@ -244,18 +223,8 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
 // else, plasticity (trial stress point lies outside yield surface)
 
-  //  real64 eps_s_trial = trialQ/3.0/mu;
-  if( m_useLinear )
-  {
-    eps_v_trial = trialP/bulkModulus;
-
-  }
-  else
-  {
     eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
-  }
-
-  //   eps_v_trial = trialP/bulkModulus; //Linear elasticity version
+  
   eps_s_trial = trialQ/3.0/mu;
 
   real64 solution[3], residual[3], delta[3];
@@ -267,7 +236,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
   real64 norm, normZero = 1e30;
   integer cuts = 0;
-  integer maxCuts = 100;
+  integer maxCuts = 10; //Max backtracking cuts in line search algorithm
   real64 normOld = normZero;
 
   // begin Newton loop
@@ -275,28 +244,18 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   for( localIndex iter=0; iter<20; ++iter )
   {
 
-    if( m_useLinear )
-    {
-      trialP = solution[0] * bulkModulus;
-
-    }
-    else
-    {
       trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
       bulkModulus = -trialP/Cr;
-    }
+    
 
-    //trialP = solution[0] * bulkModulus; //Linear elasticity version
     trialQ = 3. * mu * solution[1];
 
-    // real64 h = 1.0 / (Cc-Cr); //Linear hardening version
     pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
-    // pc = oldPc + h *(eps_v_trial-solution[0]); //Linear hardening version
 
-    evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
+    evaluateYield( trialP, trialQ, pc, M, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
     real64 dpc_dve = -1./(Cc-Cr) * pc;
 
-    real64 scale = 1./(mu*mu);
+    real64 scale = 1./(mu*mu); //scale to avoid numerical errors
     // assemble residual system
     residual[0] = solution[0] - eps_v_trial + solution[2]*df_dp;   // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
     residual[1] = solution[1] - eps_s_trial + solution[2]*df_dq;         // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
@@ -306,7 +265,8 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
     // check for convergence
 
     norm = LvArray::tensorOps::l2Norm< 3 >( residual );
-
+     // std::cout<<"iter= "<<iter<<" , resid = "<<norm<<std::endl;
+     // std::cout<<"solution[0]= "<<solution[0]<<" , solution[1]= "<<solution[1]<<" , solution[2]= "<<solution[2]<<std::endl;
     if( iter==0 )
     {
       normZero = norm;
@@ -329,7 +289,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
       solution[1] += delta[1];
       solution[2] += delta[2];
       normOld = norm;
-
+       // std::cout<<"cutting!"<<std::endl;
     }
     else
     {
@@ -372,37 +332,19 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 BB[2][2] = {{}};
 
   //  real64 dpc_dve = 1./(Cc-Cr);//-1./(Cc-Cr) * pc; //linear hardening version
-  real64 const c = alpha/(alpha+1.)*pc;
   real64 dpc_dve = -1./(Cc-Cr) * pc;
   real64 df_dp_depsv;
-  real64 factor;
-  if( trialP >= c )   // Use MCC
-  {
+    
+    df_dpc = -trialP;
+    df_dp_depsv = dpc_dve;
 
-    factor = 2.*alpha/ (alpha+1.);
-    df_dpc = -factor * trialP;
-    df_dp_depsv = factor * dpc_dve;
-  }
-  else
-  {
-    factor = 2. * alpha*alpha*alpha / (alpha+1.);
-    df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - factor * trialP;
-    df_dp_depsv = factor * dpc_dve;
-  }
 
 
   real64 a1= 1. + solution[2]*df_dp_depsv;
   real64 a2 = -df_dpc * dpc_dve;
 
-  if( m_useLinear )
-  {
-    bulkModulus = -p0/Cr;
-
-  }
-  else
-  {
     bulkModulus = -trialP/Cr;
-  }
+  
   real64 scale = 1./(mu*mu); //add scaling factor to improve convergence
   BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]*scale);
   BB[0][1] =bulkModulus*jacobianInv[0][1];
@@ -537,9 +479,6 @@ public:
     static constexpr char const * defaultCslSlopeString() { return "defaultCslSlope"; }
 
     /// string/key for default cohesion
-    static constexpr char const * defaultShapeParameterString() { return "defaultShapeParameter"; }
-
-    /// string/key for default cohesion
     static constexpr char const * defaultPreConsolidationPressureString() { return "defaultPreConsolidationPressure"; }
 
     /// string/key for cohesion
@@ -548,10 +487,7 @@ public:
     /// string/key for cohesion
     static constexpr char const * cslSlopeString() { return "cslSlope"; }
 
-    /// string/key for cohesion
-    static constexpr char const * shapeParameterString() { return "shapeParameter"; }
-
-    /// string/key for cohesion
+    /// string/key for preconsolidation pressure
     static constexpr char const * newPreConsolidationPressureString() { return "preConsolidationPressure"; }
 
     /// string/key for cohesion
@@ -566,11 +502,9 @@ public:
   {
     return ModifiedCamClayUpdates( m_refPressure,
                                    m_refStrainVol,
-                                   m_useLinear,
                                    m_recompressionIndex,
                                    m_virginCompressionIndex,
                                    m_cslSlope,
-                                   m_shapeParameter,
                                    m_newPreConsolidationPressure,
                                    m_oldPreConsolidationPressure,
                                    m_shearModulus,
@@ -591,11 +525,9 @@ public:
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_refPressure,
                           m_refStrainVol,
-                          m_useLinear,
                           m_recompressionIndex,
                           m_virginCompressionIndex,
                           m_cslSlope,
-                          m_shapeParameter,
                           m_newPreConsolidationPressure,
                           m_oldPreConsolidationPressure,
                           m_shearModulus,
@@ -613,9 +545,6 @@ protected:
   /// Material parameter: The default value of the slope of the critical state line
   real64 m_defaultCslSlope;
 
-  /// Material parameter: The default value of the shape parameter of the yield surface
-  real64 m_defaultShapeParameter;
-
   /// Material parameter: The default value of the preconsolidation pressure
   real64 m_defaultPreConsolidationPressure;
 
@@ -624,9 +553,6 @@ protected:
 
   /// Material parameter: The slope of the critical state line for each element
   array1d< real64 > m_cslSlope;
-
-  /// Material parameter: Thehape parameter of the yield surface for each element
-  array1d< real64 > m_shapeParameter;
 
   /// State variable: The current preconsolidation pressure for each quadrature point
   array2d< real64 > m_newPreConsolidationPressure;
