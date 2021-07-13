@@ -62,7 +62,7 @@ def ricker(maxT, dt, f0):
     """
 
     T0 = 1.0/f0;
-    fi = np.zeros(int(maxT/dt))
+    fi = [0.0] * int(maxT/dt)
 
     for t in range(int(maxT/dt)):
         t0 = dt*t
@@ -70,7 +70,7 @@ def ricker(maxT, dt, f0):
             fi[t] = 0.0;
         else:
             tmp      = f0*t0-1.0
-            f0tm1_2  = 2*(tmp*np.pi)*(tmp*np.pi)
+            f0tm1_2  = 2*(tmp*m.pi)*(tmp*m.pi)
             gaussian = m.exp( -f0tm1_2 )
             fi[t]    = -(t0-1)*gaussian
 

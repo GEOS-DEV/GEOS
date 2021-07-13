@@ -35,6 +35,6 @@ acqs = acq.split(3)
 
 futures = client.map(acoustic_shots, acqs, args.xml, cores=6, x_partition=6)
 
-#result = client.gather(futures)
+result = client.gather(futures)
 
-#print(result)
+print(result)

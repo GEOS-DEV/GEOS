@@ -12,9 +12,15 @@ json = open(sys.argv[11])
 acquisition = json_to_obj(json)
 json.close()
 
+
 if rank==0:
-    time.sleep(2)
+    time.sleep(1)
     os.remove(sys.argv[11])
+    
+    outputDir = sys.argv[12]
+    keyFile = sys.argv[13]+".txt"
+    outputFile = os.path.join(outputDir, keyFile)
+
 
 module_str = sys.argv[9]
 func_str = sys.argv[10]
@@ -24,4 +30,10 @@ func = getattr(module, func_str)
 
 problem = pygeosx.initialize(rank, sys.argv[0:9])
 pygeosx.apply_initial_conditions()
-func(rank, problem, acquisition, acquisition.output)
+result = func(rank, problem, acquisition)
+
+if rank == 0:
+    with open(outputFile, 'w') as f:
+        for line in result:
+            f.write(line + "\n")
+    f.close()

@@ -1,5 +1,6 @@
 import segyio
 import os
+import numpy as np
 
 def create_segy(shot_list, physicalName, nsamples, tracePath):
 
@@ -16,7 +17,7 @@ def create_segy(shot_list, physicalName, nsamples, tracePath):
         xlines  = [x[1] for x in rcvCoord]
         spec.ilines = list(set(ilines))
         spec.xlines = list(set(xlines))
-        spec.samples = list(range(nsamples))
+        spec.samples = np.arange(nsamples)
         spec.sorting = 2
         spec.format  = 1
 
@@ -31,7 +32,7 @@ def create_segy(shot_list, physicalName, nsamples, tracePath):
                                segyio.su.gx : int(rcvCoord[i][0]*100),
                                segyio.su.gy : int(rcvCoord[i][1]*100),
                                segyio.su.gelev : int(rcvCoord[i][2]*100)}
-                f.trace[i] = [0.0] * nsamples
+                f.trace[i] = np.zeros(nsamples, dtype=np.float32)
             f.bin.update(tsort = segyio.TraceSortingFormat.INLINE_SORTING)
 
 

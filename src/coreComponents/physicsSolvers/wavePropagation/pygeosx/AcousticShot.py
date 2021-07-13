@@ -14,7 +14,7 @@ import os
 from print import *
 
 
-def acoustic_shots(rank, problem, acquisition, tracePath):
+def acoustic_shots(rank, problem, acquisition):
     """ Given a GEOSX problem, a list of shots, and a time step,
         solve wave eqn with different configurations
 
@@ -81,13 +81,13 @@ def acoustic_shots(rank, problem, acquisition, tracePath):
     pressure_at_receivers = np.zeros((nsamples[0], acquisition.shot[0].receivers.n))
     nb_shot = len(acquisition.shot)
 
-    if outputSismoTrace == 1 :
-        if rank==0:
+    if rank == 0 :
+        if outputSismoTrace == 1:
             create_segy(acquisition.shot, "pressure", nsamples[0], acquisition.output)
 
 
     ishot = 0
-    if rank==0:
+    if rank == 0:
         print_shot_config(acquisition.shot, ishot)
 
     #Set first source and receivers positions in GEOSX
@@ -102,7 +102,8 @@ def acoustic_shots(rank, problem, acquisition, tracePath):
     acquisition.shot[ishot].flag = "In Progress"
     if rank==0:
         print_flag(acquisition.shot)
-
+        
+    segyList = []
     while (np.array([shot.flag for shot in acquisition.shot]) == "Done").all() != True and pygeosx.run() != pygeosx.COMPLETED:
         #Save pressure
         if cycle[0] !=0 :
@@ -114,6 +115,7 @@ def acoustic_shots(rank, problem, acquisition, tracePath):
                 export_to_segy(pressure_at_receivers,
                                acquisition.shot[ishot].receivers.receiver_list,
                                segyFile)
+                segyList.append(segyFile)
 
             acquisition.shot[ishot].flag = "Done"
 
@@ -145,3 +147,5 @@ def acoustic_shots(rank, problem, acquisition, tracePath):
 
             if rank==0:
                 print_flag(acquisition.shot)
+    
+    return segyList

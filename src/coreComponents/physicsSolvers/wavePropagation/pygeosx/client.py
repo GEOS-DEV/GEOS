@@ -2,6 +2,7 @@ import asyncio
 import uuid
 import copy
 import subprocess
+import numpy as np
 from time import sleep
 import inspect
 from utils import *
@@ -115,7 +116,8 @@ class Client:
                  cluster=None):
 
         self.cluster = cluster
-        
+        self.output = self.create_output()
+
 
     def submit(self,
                func,
@@ -126,9 +128,10 @@ class Client:
                y_partition=1,
                z_partition=1):
 
+        key = func.__name__ + "-" + str(uuid.uuid4())
         module   = inspect.getmodule(func).__name__
         jsonfile = obj_to_json(parameters)
-        args     = [module, func.__name__, jsonfile]
+        args     = [module, func.__name__, jsonfile, self.output, key]
 
         if cores is not None:
             if cores > self.cluster.cores:
@@ -147,13 +150,11 @@ class Client:
         self.cluster.finalize_script()
         
         bashfile = self.cluster.job_file()
-        output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
+        output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True).split()[-1].decode()
         job_id = output.split()[-1].decode()
-
         os.remove(bashfile)
 
-        key = func.__name__ + "-" + str(uuid.uuid4())
-        return Future(key, cluster=self.cluster, job_id=job_id)
+        return Future(key, output=self.output, cluster=self.cluster, job_id=job_id)
 
 
     def _submit(self,
@@ -165,10 +166,11 @@ class Client:
                 x_partition=1,
                 y_partition=1,
                 z_partition=1):
-                                
+
+        key = func.__name__ + "-" + str(uuid.uuid4())
         module   = inspect.getmodule(func).__name__
         jsonfile = obj_to_json(parameters)
-        args     = [module, func.__name__, jsonfile]
+        args     = [module, func.__name__, jsonfile, self.output, key]
 
         if cores is not None:
             if cores > self.cluster[ind].cores:
@@ -191,8 +193,7 @@ class Client:
         job_id = output.split()[-1].decode()
         os.remove(bashfile)
 
-        key=func.__name__ + "-" + str(uuid.uuid4())
-        return Future(key, cluster=self.cluster[ind], job_id=job_id)
+        return Future(key, output=self.output, cluster=self.cluster[ind], job_id=job_id)
 
 
 
@@ -240,20 +241,40 @@ class Client:
             
         return futures
 
+        
+    def create_output(self):
+        output = os.path.join(os.getcwd(),"output")
+        if os.path.exists(output):
+            pass
+        else:
+            os.mkdir(output)
+        
+        return output
+
+    
+    def gather(self, futures):
+        results = []
+        for future in futures:
+            results.append(future.result())
+
+        return results
+
 
 
 class Future:
     def __init__(self,
                  key,
+                 output=None,
                  cluster=None,
                  job_id=None):
 
         self.key=key
+        self.output=os.path.join(output, key+".txt")
         self.cluster=cluster
         self.state="PENDING"
         self.job_id = job_id
-        self.cluster.err="slurm-%s-%s.err"%(self.cluster.job_name, self.job_id)
-        self.cluster.out="slurm-%s-%s.out"%(self.cluster.job_name, self.job_id)
+        self.err="slurm-%s-%s.err"%(self.cluster.job_name, self.job_id)
+        self.out="slurm-%s-%s.out"%(self.cluster.job_name, self.job_id)
 
 
     def result(self):
@@ -268,17 +289,24 @@ class Future:
                     sleep(1)
                 elif status in ["CG","CD"]:
                     self.state = "COMPLETED"
-                    return 0
+                    result = self.getResult()
+                    return result
                 else:
                     self.state = "ERROR"
                     return 1
             else:
-                if os.stat(self.cluster.err).st_size == 0:
-                    self.state="COMPLETED"
-                    return 0
-                else:
-                    self.state="ERROR"
-                    return 1
+                with open(self.err) as err:
+                    if os.stat(self.err).st_size == 0:
+                        self.state="COMPLETED"
+                        result = self.getResult()
+                    elif (np.array([firstChar[0] for firstChar in err.readlines()]) == "[").all() != True:
+                        self.state="COMPLETED"
+                        result = self.getResult()
+                    else:
+                        self.state="ERROR"
+                        result = 1
+                err.close()
+                return result
 
 
     
@@ -288,3 +316,12 @@ class Future:
             self.cluster.state = "Free"
             self.cluster.header = self.cluster.header[:-1]
             self.run =  ""
+
+    
+    def getResult(self):
+        result = []
+        with open(self.output, 'r') as f:
+            result.append(f.readline())
+        
+        return result
+        
