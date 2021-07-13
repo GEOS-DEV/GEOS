@@ -149,6 +149,7 @@ class Client:
         bashfile = self.cluster.job_file()
         output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
         job_id = output.split()[-1].decode()
+
         os.remove(bashfile)
 
         key = func.__name__ + "-" + str(uuid.uuid4())
@@ -185,7 +186,6 @@ class Client:
         self.cluster[ind]._add_args_to_cmd(args)
         self.cluster[ind].finalize_script()
         
-        #print(self.cluster[ind].header)
         bashfile = self.cluster[ind].job_file()
         output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
         job_id = output.split()[-1].decode()
@@ -286,8 +286,5 @@ class Future:
         job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).decode().split()
         if self.job_id not in job_list:
             self.cluster.state = "Free"
-
-
-
-    def access_result(self):
-        
+            self.cluster.header = self.cluster.header[:-1]
+            self.run =  ""

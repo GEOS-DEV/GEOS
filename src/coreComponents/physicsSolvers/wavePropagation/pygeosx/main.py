@@ -17,7 +17,7 @@ acq = EQUISPACEDAcquisition(boundary=[[0,2000],[0,2000],[0,2000]],
                             end_source_pos      = [1501, 1001],
                             start_receivers_pos = [[21, 1001]],
                             end_receivers_pos   = [[1981, 1001]],
-                            number_of_sources   = 2,
+                            number_of_sources   = 3,
                             number_of_receivers = 10,
                             source_depth = 101,
                             receivers_depth = 51)

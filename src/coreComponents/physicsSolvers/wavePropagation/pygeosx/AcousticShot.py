@@ -77,7 +77,7 @@ def acoustic_shots(rank, problem, acquisition, tracePath):
     cycle_freq[0] = maxCycle
     maxT[0]       = (maxCycle+1)*dt
     nsamples[0]   = int(maxT[0]/dt_sismo)
-
+    
     pressure_at_receivers = np.zeros((nsamples[0], acquisition.shot[0].receivers.n))
     nb_shot = len(acquisition.shot)
 

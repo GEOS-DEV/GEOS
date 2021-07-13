@@ -1,9 +1,7 @@
 import ast
 
 import argparse
-from shot import *
-from source import *
-from receiver import *
+from acquisition import *
 
 import os
 

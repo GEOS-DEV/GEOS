@@ -13,7 +13,7 @@ acquisition = json_to_obj(json)
 json.close()
 
 if rank==0:
-    time.sleep(1)
+    time.sleep(2)
     os.remove(sys.argv[11])
 
 module_str = sys.argv[9]
