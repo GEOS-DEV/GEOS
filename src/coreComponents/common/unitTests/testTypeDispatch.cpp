@@ -94,7 +94,7 @@ protected:
 struct X {};
 
 using TypeLists = ::testing::Types<
-  types::TypeList<>,
+  types::TypeList< int >,
   types::TypeList< int, double, X >,
   types::ArrayTypes< types::TypeList< int, double, X >, types::DimsUpTo< 3 > >
   >;

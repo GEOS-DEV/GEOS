@@ -218,28 +218,6 @@ using StandardArrays = Join< RealArrays, IntegralArrays >;
 namespace internal
 {
 
-template< typename LAMBDA >
-bool dispatchRecursive( TypeList<>,
-                        std::type_index const type,
-                        LAMBDA && lambda )
-{
-  GEOSX_UNUSED_VAR( type, lambda )
-  return false;
-}
-
-template< typename T, typename ... REST, typename LAMBDA >
-bool dispatchRecursive( TypeList< T, REST... >,
-                        std::type_index const type,
-                        LAMBDA && lambda )
-{
-  if( type == typeid( T ) )
-  {
-    lambda( T{} );
-    return true;
-  }
-  return dispatchRecursive( TypeList< REST... >{}, type, std::forward< LAMBDA >( lambda ) );
-}
-
 template< typename ... Ts, std::size_t ... Is >
 std::unordered_map< std::type_index, std::size_t > const &
 getTypeIndexMap( TypeList< Ts... >,
@@ -254,48 +232,22 @@ bool dispatchViaTable( TypeList< Ts... > const types,
                        std::type_index const type,
                        LAMBDA && lambda )
 {
+  static_assert( sizeof...(Ts) > 0, "Dispatching on empty type list not supported" );
+
   // Initialize a table of handlers, once per unique combination of type list and lambda
   using Handler = void (*)( LAMBDA && );
   static Handler const handlers[] = { []( LAMBDA && f ){ f( Ts{} ); } ... };
 
   // Initialize a hashmap of std::type_index to contiguous indices, once per unique type list
-  auto const & indexMap = getTypeIndexMap( types, std::index_sequence_for< Ts... >{} );
-  auto const it = indexMap.find( type );
-  if( it != indexMap.end() )
+  auto const & typeIndexMap = getTypeIndexMap( types, std::index_sequence_for< Ts... >{} );
+  auto const it = typeIndexMap.find( type );
+  if( it != typeIndexMap.end() )
   {
     GEOSX_ASSERT_GT( sizeof...( Ts ), it->second ); // sanity check
     handlers[ it->second ]( std::forward< LAMBDA >( lambda ) );
     return true;
   }
   return false;
-}
-
-template< typename LAMBDA >
-bool dispatchViaTable( TypeList<>,
-                       std::type_index const type,
-                       LAMBDA && lambda )
-{
-  // Needed to avoid constructing an zero-size array
-  GEOSX_UNUSED_VAR( type, lambda )
-  return false;
-}
-
-template< typename ... Ts, typename LAMBDA >
-std::enable_if_t< ( sizeof...( Ts ) <= 32 ), bool >
-dispatch( TypeList< Ts... > const types,
-          std::type_index const type,
-          LAMBDA && lambda )
-{
-  return dispatchRecursive( types, type, std::forward< LAMBDA >( lambda ) );
-}
-
-template< typename ... Ts, typename LAMBDA >
-std::enable_if_t< ( sizeof...( Ts ) > 32 ), bool >
-dispatch( TypeList< Ts... > const types,
-          std::type_index const type,
-          LAMBDA && lambda )
-{
-  return dispatchViaTable( types, type, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace internal
@@ -310,11 +262,6 @@ dispatch( TypeList< Ts... > const types,
  * @param lambda user-provided callable, will be called with a single prvalue of type indicated by @p type
  * @return @p true iff type has been dispatch
  *
- * For small type lists dispatch is done recursively, this allows for full inlining of the lambda call.
- * For large type lists this can blow up call stack depth and lead to poor debugging experience,
- * therefore it may be better to dispatch via table of function pointers.
- * Exact criteria for choosing one method over the other are TBD.
- *
  * @todo Do we want @p errorIfTypeNotFound parameter? Options:
  *       - make it a template parameter (caller always knows whether or not it wants hard errors)
  *       - make the caller process return value and raise error if needed (and however they want)
@@ -325,11 +272,12 @@ bool dispatch( TypeList< Ts... > const types,
                bool const errorIfTypeNotFound,
                LAMBDA && lambda )
 {
-  bool const success = internal::dispatch( types, type, std::forward< LAMBDA >( lambda ) );
+  bool const success = internal::dispatchViaTable( types, type, std::forward< LAMBDA >( lambda ) );
   if( !success && errorIfTypeNotFound )
   {
     GEOSX_ERROR( "Type " << LvArray::system::demangle( type.name() ) << " was not dispatched.\n" <<
-                 "Please check the stack trace and revise the type list if needed." );
+                 "Check the stack trace below and revise the type list passed to dispatch().\n" <<
+                 "If you are unsure about this error, please report it to GEOSX issue tracker." );
   }
   return success;
 }
