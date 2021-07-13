@@ -17,6 +17,8 @@ set( gtest_triaxial_xmls
      testTriaxial_delftEggLoadPathWet.xml
      testTriaxial_modifiedCamClayVolumetric.xml
      testTriaxial_delftEggVolumetric.xml
+     testTriaxial_delftEggLoadPathDryUseLinear.xml
+     testTriaxial_delftEggLoadPathWetUseLinear.xml
    )
 
 set( dependencyList gtest geosx_core conduit )
