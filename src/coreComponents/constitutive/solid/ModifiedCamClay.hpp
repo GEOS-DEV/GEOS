@@ -57,7 +57,7 @@ public:
                           arrayView1d< real64 const > const & shearModulus,
                           arrayView3d< real64, solid::STRESS_USD > const & newStress,
                           arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
-    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol,  recompressionIndex, shearModulus, newStress, oldStress ),
+    ElasticIsotropicPressureDependentUpdates( refPressure, refStrainVol, recompressionIndex, shearModulus, newStress, oldStress ),
     m_virginCompressionIndex( virginCompressionIndex ),
     m_cslSlope( cslSlope ),
     m_newPreConsolidationPressure( newPreConsolidationPressure ),
@@ -163,9 +163,9 @@ void ModifiedCamClayUpdates::evaluateYield( real64 const p,
 
   df_dp = -pc + 2. * p;
   df_dq = 2. * q /(M*M);
-  df_dpc = -p ;
+  df_dpc = -p;
   real64 dpc_dve = -1./(Cc-Cr) * pc;
-  df_dp_dve = 2. * bulkModulus - dpc_dve ;
+  df_dp_dve = 2. * bulkModulus - dpc_dve;
   df_dq_dse = 2. /(M*M) * 3. * mu;
 
   f = q*q/(M*M)+p*(p-pc);
@@ -192,7 +192,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 const M      = m_cslSlope[k];
   real64 const Cr     = m_recompressionIndex[k];
   real64 const Cc     = m_virginCompressionIndex[k];
-    
+
   real64 pc    = oldPc;
   real64 bulkModulus  = -p0/Cr;
   // elastic predictor (assume strainIncrement is all elastic)
@@ -223,8 +223,8 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
 // else, plasticity (trial stress point lies outside yield surface)
 
-    eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
-  
+  eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
+
   eps_s_trial = trialQ/3.0/mu;
 
   real64 solution[3], residual[3], delta[3];
@@ -244,9 +244,9 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   for( localIndex iter=0; iter<20; ++iter )
   {
 
-      trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
-      bulkModulus = -trialP/Cr;
-    
+    trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
+    bulkModulus = -trialP/Cr;
+
 
     trialQ = 3. * mu * solution[1];
 
@@ -265,8 +265,8 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
     // check for convergence
 
     norm = LvArray::tensorOps::l2Norm< 3 >( residual );
-     // std::cout<<"iter= "<<iter<<" , resid = "<<norm<<std::endl;
-     // std::cout<<"solution[0]= "<<solution[0]<<" , solution[1]= "<<solution[1]<<" , solution[2]= "<<solution[2]<<std::endl;
+    // std::cout<<"iter= "<<iter<<" , resid = "<<norm<<std::endl;
+    // std::cout<<"solution[0]= "<<solution[0]<<" , solution[1]= "<<solution[1]<<" , solution[2]= "<<solution[2]<<std::endl;
     if( iter==0 )
     {
       normZero = norm;
@@ -289,7 +289,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
       solution[1] += delta[1];
       solution[2] += delta[2];
       normOld = norm;
-       // std::cout<<"cutting!"<<std::endl;
+      // std::cout<<"cutting!"<<std::endl;
     }
     else
     {
@@ -334,17 +334,17 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   //  real64 dpc_dve = 1./(Cc-Cr);//-1./(Cc-Cr) * pc; //linear hardening version
   real64 dpc_dve = -1./(Cc-Cr) * pc;
   real64 df_dp_depsv;
-    
-    df_dpc = -trialP;
-    df_dp_depsv = dpc_dve;
+
+  df_dpc = -trialP;
+  df_dp_depsv = dpc_dve;
 
 
 
   real64 a1= 1. + solution[2]*df_dp_depsv;
   real64 a2 = -df_dpc * dpc_dve;
 
-    bulkModulus = -trialP/Cr;
-  
+  bulkModulus = -trialP/Cr;
+
   real64 scale = 1./(mu*mu); //add scaling factor to improve convergence
   BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]*scale);
   BB[0][1] =bulkModulus*jacobianInv[0][1];

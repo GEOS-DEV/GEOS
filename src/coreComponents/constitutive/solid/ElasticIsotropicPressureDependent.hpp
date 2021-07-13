@@ -134,23 +134,23 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex c
 
   real64 bulkModulus;
 
-    real64 deviator[6];
-    real64 stress[6];
-    real64 P;
-    real64 Q;
+  real64 deviator[6];
+  real64 stress[6];
+  real64 P;
+  real64 Q;
 
-    for( localIndex i=0; i<6; ++i )
-    {
-      stress[i] = m_newStress[k][q][i];
-    }
+  for( localIndex i=0; i<6; ++i )
+  {
+    stress[i] = m_newStress[k][q][i];
+  }
 
-    twoInvariant::stressDecomposition( stress,
-                                       P,
-                                       Q,
-                                       deviator );
+  twoInvariant::stressDecomposition( stress,
+                                     P,
+                                     Q,
+                                     deviator );
 
-    bulkModulus = -P/Cr;
-  
+  bulkModulus = -P/Cr;
+
 
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
@@ -203,8 +203,8 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex cons
                                      Q,
                                      deviator );
 
-    elasticStrainVol = std::log( P/p0 ) * Cr * (-1.0) + eps_v0;
-  
+  elasticStrainVol = std::log( P/p0 ) * Cr * (-1.0) + eps_v0;
+
 
   elasticStrainDev = Q/3./mu;
 
@@ -262,8 +262,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
-    oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
-  
+  oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+
 
 
   oldElasticStrainDev = oldQ/3./mu;
@@ -291,8 +291,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   // Calculate trial mean and deviatoric stress
 
-    P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
-  
+  P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
+
 
   Q = 3. * mu * eps_s_elastic;
 
@@ -351,8 +351,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
-    oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
-  
+  oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+
 
   oldElasticStrainDev = oldQ/3./mu;
 
@@ -379,8 +379,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
 
   // Calculate mean and deviatoric stress
 
-    P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
-  
+  P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
+
 
   Q = 3. * mu * eps_s_elastic;
 
@@ -389,8 +389,8 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
                                      deviator,
                                      stress );
 
-    bulkModulus = -P/Cr;
-  
+  bulkModulus = -P/Cr;
+
 
   saveStress( k, q, stress );
   stiffness.m_bulkModulus = bulkModulus;

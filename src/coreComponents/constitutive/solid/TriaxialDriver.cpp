@@ -287,6 +287,7 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
 
     for( integer n=1; n<=m_numSteps; ++n )
     {
+      //   std::cout<<"time step="<<n<<std::endl;
       strainIncrement[0] = 0;
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
@@ -303,6 +304,8 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
         resid[1] = scale * (stress[1]-table( n, SIG1 ));
 
         norm = sqrt( resid[0]*resid[0] + resid[1]*resid[1] );
+        //  std::cout<<"k= "<<k<<std::endl;
+        // std::cout<<"norm ="<<norm<<std::endl;
 
         if( k == 0 )
         {
@@ -321,6 +324,7 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
           strainIncrement[0] += deltaStrainIncrement[0];
           strainIncrement[1] += deltaStrainIncrement[1];
           strainIncrement[2]  = strainIncrement[1];
+          //  std::cout<<"k="<<k<<" , cuts="<<cuts<<std::endl;
         }
         else // newton update
         {
