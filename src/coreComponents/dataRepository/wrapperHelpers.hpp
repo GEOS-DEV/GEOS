@@ -30,6 +30,7 @@
 #include "ConduitRestart.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
+#include "common/Span.hpp"
 #include "codingUtilities/traits.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
@@ -98,7 +99,47 @@ real64 const * getPointerToComponent( R1Tensor const & var, int const component 
 
 } // namespace internal
 
+template< typename T >
+class ArrayDimLabels
+{
+public:
 
+  void set( integer const, Span< string const > )
+  {
+    GEOSX_ERROR( "Dimension labels are only available in Array wrappers" );
+  }
+
+  Span< string const > get( integer const ) const
+  {
+    GEOSX_ERROR( "Dimension labels are only available in Array wrappers" );
+    return {};
+  }
+};
+
+template< typename T, int NDIM, typename PERM >
+class ArrayDimLabels< Array< T, NDIM, PERM > >
+{
+public:
+
+  void set( integer const dim, Span< string const > labels )
+  {
+    GEOSX_ERROR_IF_LT( dim, 0 );
+    GEOSX_ERROR_IF_GE( dim, NDIM );
+    m_values[dim].resize( labels.size() );
+    std::copy( labels.begin(), labels.end(), m_values[dim].begin() );
+  }
+
+  Span< string const > get( integer const dim ) const
+  {
+    GEOSX_ERROR_IF_LT( dim, 0 );
+    GEOSX_ERROR_IF_GE( dim, NDIM );
+    return { m_values[dim].begin(), m_values[dim].end() };
+  }
+
+private:
+
+  string_array m_values[NDIM]{};
+};
 
 template< typename T >
 inline std::enable_if_t< traits::HasMemberFunction_size< T >, localIndex >
@@ -627,7 +668,29 @@ std::unique_ptr< int > averageOverSecondDim( T const & )
   return std::unique_ptr< int >( nullptr );
 }
 
+template< typename T, int NDIM, int USD >
+int numArrayDims( ArrayView< T const, NDIM, USD > const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return NDIM;
+}
 
+template< typename T >
+int numArrayDims( T const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return 0;
+}
+
+template< typename T, int NDIM, int USD >
+localIndex numArrayComp( ArrayView< T const, NDIM, USD > const & var )
+{
+  return var.size() / var.size( 0 );
+}
+
+template< typename T >
+localIndex numArrayComp( T const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return 0;
+}
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
