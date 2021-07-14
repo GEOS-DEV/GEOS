@@ -242,9 +242,10 @@ void BlockPreconditionerGeneral< LAI >::apply( Vector const & src,
   for( localIndex iBlock = m_numBlocks-2; iBlock > 0; --iBlock )
   {
     // Update the i-th block rhs
-    if( m_shapeOption != BlockShapeOption::Diagonal )
+    if( m_shapeOption == BlockShapeOption::LowerUpperTriangular )
     {
       m_matBlocks( iBlock, iBlock+1 ).residual( m_sol( 2*iBlock+1 ), m_rhs( 2*iBlock ), m_rhs( 2*iBlock ) );
+      m_solvers[iBlock]->apply( m_rhs( 2*iBlock ), m_sol( 2*iBlock ) );
     }
 
     // Combine block solutions into global solution vector

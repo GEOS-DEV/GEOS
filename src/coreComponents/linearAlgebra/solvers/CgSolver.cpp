@@ -137,6 +137,7 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   m_result.numIterations = k;
   m_result.residualReduction = rnorm / absTol * m_params.krylov.relTolerance;
 
+  watch.~Stopwatch();
   logResult();
   m_residualNorms.resize( m_result.numIterations + 1 );
 }
