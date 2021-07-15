@@ -501,7 +501,7 @@ AccumulationKernel::
                   arrayView1d< globalIndex const > const & dofNumber, \
                   arrayView1d< integer const > const & elemGhostRank, \
                   arrayView1d< real64 const > const & volume, \
-				          arrayView1d< real64 >       const & porosityNew, \
+                  arrayView1d< real64 >       const & porosityNew, \
                   arrayView1d< real64 const > const & porosityOld, \
                   arrayView1d< real64 const > const & porosityRef, \
                   arrayView2d< real64 const > const & pvMult, \

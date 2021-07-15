@@ -127,6 +127,13 @@ public:
   arrayView2d< real64 const > const  dPorosity_dPressure() const
   { return getPorosityModel().dPorosity_dPressure(); }
 
+  virtual void saveConvergedState() const override final
+  {
+    // getSolidModel().saveConvergedState();
+
+    getPorosityModel().saveConvergedState();
+  }
+
 protected:
 
   SOLID_TYPE const & getSolidModel() const

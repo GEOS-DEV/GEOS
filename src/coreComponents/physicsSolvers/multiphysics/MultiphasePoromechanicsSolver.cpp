@@ -60,8 +60,8 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
 
   registerWrapper( viewKeyStruct::porousMaterialNamesString(), &m_porousMaterialNames ).
-      setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "The name of the material that should be used in the constitutive updates" );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "The name of the material that should be used in the constitutive updates" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -108,7 +108,6 @@ void MultiphasePoromechanicsSolver::implicitStepSetup( real64 const & time_n,
 {
   m_flowSolver->implicitStepSetup( time_n, dt, domain );
   m_solidSolver->implicitStepSetup( time_n, dt, domain );
-
 }
 
 void MultiphasePoromechanicsSolver::implicitStepComplete( real64 const & time_n,
@@ -117,6 +116,14 @@ void MultiphasePoromechanicsSolver::implicitStepComplete( real64 const & time_n,
 {
   m_solidSolver->implicitStepComplete( time_n, dt, domain );
   m_flowSolver->implicitStepComplete( time_n, dt, domain );
+
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
+  {
+    ConstitutiveBase const & porousMaterial = getConstitutiveModel< ConstitutiveBase >( subRegion, porousMaterialNames()[targetIndex] );
+    porousMaterial.saveConvergedState();
+  } );
 }
 
 void MultiphasePoromechanicsSolver::postProcessInput()

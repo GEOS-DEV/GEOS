@@ -40,7 +40,7 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
     setApplyDefaultValue( 0.2 ); // will be overwritten
 
   registerWrapper( viewKeyStruct::oldPorosityString(), &m_oldPorosity ).
-    setApplyDefaultValue( -1.0 );// will be overwritten
+    setApplyDefaultValue( 0.0 );// will be overwritten
 
   registerWrapper( viewKeyStruct::dPorosity_dPressureString(), &m_dPorosity_dPressure ).
     setApplyDefaultValue( 0.0 );// will be overwritten
@@ -78,6 +78,42 @@ void PorosityBase::postProcessInput()
 {
   this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
     setApplyDefaultValue( m_defaultReferencePorosity );
+}
+
+void PorosityBase::initializePostInitialConditionsPreSubGroups()
+{
+
+  localIndex const numE = numElem();
+  localIndex const numQ = numQuad();
+
+  arrayView2d< real64 const > newPorosity = m_newPorosity;
+  arrayView2d< real64 >       oldPorosity = m_oldPorosity;
+
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < numQ; ++q )
+    {
+      oldPorosity[k][q] = newPorosity[k][0];
+    }
+  } );
+
+}
+
+void PorosityBase::saveConvergedState() const
+{
+  localIndex const numE = numElem();
+  localIndex const numQ = numQuad();
+
+  arrayView2d< real64 const > newPorosity = m_newPorosity;
+  arrayView2d< real64 >       oldPorosity = m_oldPorosity;
+
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < numQ; ++q )
+    {
+      oldPorosity[k][q] = newPorosity[k][q];
+    }
+  } );
 }
 
 }

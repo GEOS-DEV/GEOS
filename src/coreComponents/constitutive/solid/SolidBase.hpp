@@ -604,7 +604,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
-  virtual void saveConvergedState() const;
+  virtual void saveConvergedState() const override;
 
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct

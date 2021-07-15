@@ -129,6 +129,25 @@ public:
   } viewKeys;
 
   /**
+   * @brief Number of elements storing solid data
+   * @return Number of elements
+   */
+  localIndex numElem() const
+  {
+    return m_oldPorosity.size( 0 );
+  }
+
+  /**
+   * @brief Number of quadrature points storing solid data
+   * @return Number of quadrature points
+   */
+  localIndex numQuad() const
+  {
+    return m_oldPorosity.size( 1 );
+  }
+
+
+  /**
    * @brief Const accessor for newPorosity.
    * @return Accessor
    */
@@ -154,6 +173,8 @@ public:
    */
   arrayView2d< real64 const > const  dPorosity_dPressure() const { return m_dPorosity_dPressure; }
 
+  /// Save state data in preparation for next timestep
+  virtual void saveConvergedState() const override;
 
   using KernelWrapper = PorosityBaseUpdates;
 
@@ -172,6 +193,8 @@ public:
 
 protected:
   virtual void postProcessInput() override;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
   array2d< real64 > m_newPorosity;
 

@@ -583,28 +583,28 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
   {
-  ConstitutiveBase const & solid = getConstitutiveModel( subRegion, m_solidModelNames[targetIndex] );
-  arrayView1d< real64 const > const poroRef = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
-  arrayView1d< real64 > const poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString() );
+    ConstitutiveBase const & solid = getConstitutiveModel( subRegion, m_solidModelNames[targetIndex] );
+    arrayView1d< real64 const > const poroRef = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
+    arrayView1d< real64 > const poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString() );
 
-  bool poroInit = false;
-  if( solid.hasWrapper( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() ) )
-  {
-    arrayView2d< real64 const > const
-    pvmult = solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() );
-    if( pvmult.size() == poro.size() )
+    bool poroInit = false;
+    if( solid.hasWrapper( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() ) )
     {
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      arrayView2d< real64 const > const
+      pvmult = solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() );
+      if( pvmult.size() == poro.size() )
       {
-        poro[ei] = poroRef[ei] * pvmult[ei][0];
-      } );
-      poroInit = true;
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+        {
+          poro[ei] = poroRef[ei] * pvmult[ei][0];
+        } );
+        poroInit = true;
+      }
     }
-  }
-  if( !poroInit )
-  {
-    poro.setValues< parallelDevicePolicy<> >( poroRef );
-  }
+    if( !poroInit )
+    {
+      poro.setValues< parallelDevicePolicy<> >( poroRef );
+    }
   } );
 }
 
@@ -766,7 +766,7 @@ void CompositionalMultiphaseBase::assembleAccumulationTerms( DomainPartition & d
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
 
     arrayView1d< real64 > const porosity =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString() );
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString() );
 
     arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );

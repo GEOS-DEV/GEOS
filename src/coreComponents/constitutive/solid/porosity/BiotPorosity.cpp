@@ -57,8 +57,7 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 
 void BiotPorosity::postProcessInput()
 {
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
-    setApplyDefaultValue( m_defaultReferencePorosity );
+  PorosityBase::postProcessInput();
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BiotPorosity, string const &, Group * const )

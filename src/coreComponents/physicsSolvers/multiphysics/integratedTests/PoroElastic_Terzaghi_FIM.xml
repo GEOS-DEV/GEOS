@@ -176,6 +176,14 @@
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
   <FieldSpecifications>
     <FieldSpecification
+      name="Porosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="skeletonPorosity_porosity"
+      scale="0.3"/>  
+  
+    <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
