@@ -224,7 +224,7 @@ public:
    * values of fieldPath,fieldName, against each FieldSpecificationBase object contained in the
    * FieldSpecificationManager and decides on whether or not to call the user defined lambda.
    */
-  template< typename LAMBDA >
+  template< typename BCTYPE = FieldSpecificationBase, typename LAMBDA >
   void apply( real64 const time,
               DomainPartition & domain,
               string const & fieldPath,
@@ -233,11 +233,11 @@ public:
   {
     GEOSX_MARK_FUNCTION;
     // loop over all FieldSpecificationBase objects
-    this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
+    this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
       int const isInitialCondition = fs.initialCondition();
 
-      if( ( isInitialCondition && fieldPath=="" ) ||
+      if( ( isInitialCondition && fieldPath.empty() ) ||
           ( !isInitialCondition && fs.getObjectPath().find( fieldPath ) != string::npos ) )
       {
         string_array const targetPath = stringutilities::tokenize( fs.getObjectPath(), "/" );
@@ -247,7 +247,7 @@ public:
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
         {
-          dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );;
+          dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
           for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
           {
@@ -278,9 +278,10 @@ public:
   }
 
 private:
-  template< typename LAMBDA >
+
+  template< typename BCTYPE, typename LAMBDA >
   void applyOnTargetRecursive( Group & target,
-                               FieldSpecificationBase const & fs,
+                               BCTYPE const & fs,
                                string const & targetName,
                                LAMBDA && lambda
                                ) const

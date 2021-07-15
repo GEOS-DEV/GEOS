@@ -2,13 +2,12 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{0.0, 0.0, 0.0}">
     <!-- SPHINX_POROELASTIC_SOLVER -->
-    <Poroelastic
+    <SinglePhasePoromechanics
       name="PoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
       fluidSolverName="SinglePhaseFlowSolver"
-      couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -16,7 +15,7 @@
 	solverType="direct"
         directParallel="0"
         logLevel="0"/>
-    </Poroelastic>
+    </SinglePhasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
       name="LinearElasticitySolver"
@@ -46,7 +45,7 @@
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
+      nx="{ 25 }"
       ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
@@ -98,14 +97,10 @@
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput" />
 
-    <SoloEvent
-      name="cellCentersCollection" 
-      target="/Tasks/cellCentersCollection" />
-
-    <SoloEvent
-      name="cellCentersOutput" 
-      target="/Outputs/cellCentersOutput" />
-
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="50"
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS -->
@@ -248,13 +243,14 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
 
-    <FieldSpecification
+    <Traction
       name="xposconstraint"
-      component="0"
-      setNames="{ xneg }"
       objectPath="faceManager"
-      fieldName="Traction"
-      scale="1.0"/>
+      direction="{1,0,0}"
+      tractionType="vector"
+      scale="1.0e0"
+      setNames="{ xneg }"
+      functionName="timeFunction"/>
 
     <FieldSpecification
       name="boundaryPressure"
@@ -263,6 +259,14 @@
       fieldName="pressure"
       scale="0.0"/>
   </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 0.1e-09, 1e7 }"
+      values="{ 0.0, 1.0, 1.0 }"/>
+  </Functions>
 
   <Outputs>
     <Silo
@@ -273,10 +277,9 @@
       sources="{/Tasks/pressureCollection}"
       filename="pressure_history" />
 
-    <TimeHistory
-      name="cellCentersOutput"
-      sources="{/Tasks/cellCentersCollection}"
-      filename="cell_centers" />
+    <Restart
+      name="restartOutput"/>
+
   </Outputs>
 
   <Tasks>
@@ -284,11 +287,6 @@
       name="pressureCollection"
       objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"/>
-
-    <PackCollection
-      name="cellCentersCollection"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="elementCenter"/>
   </Tasks>
 
 </Problem>

@@ -126,6 +126,21 @@ public:
     void
     compute( IN_ARRAY const & input, real64 & value, OUT_ARRAY && derivatives ) const;
 
+    /**
+     * @brief Move the KernelWrapper to the given execution space, optionally touching it.
+     * @param space the space to move the KernelWrapper to
+     * @param touch whether the KernelWrapper should be touched in the new space or not
+     * @note This function exists to enable holding KernelWrapper objects in an ArrayView
+     *       and have their contents properly moved between memory spaces.
+     */
+    void move( LvArray::MemorySpace const space, bool const touch )
+    {
+      m_coordinates.move( space, touch );
+      m_values.move( space, touch );
+      m_size.move( space, touch );
+      m_indexIncrement.move( space, touch );
+    }
+
 private:
 
     /// Table interpolation method
@@ -464,7 +479,12 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input, real64 & value, O
   }
 }
 
-ENUM_STRINGS( TableFunction::InterpolationType, "linear", "nearest", "upper", "lower" )
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( TableFunction::InterpolationType,
+              "linear",
+              "nearest",
+              "upper",
+              "lower" );
 
 } /* namespace geosx */
 

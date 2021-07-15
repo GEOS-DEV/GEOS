@@ -24,11 +24,13 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/NullModel.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "common/MpiWrapper.hpp"
@@ -1263,29 +1265,22 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 
     for( auto const & wrapperIter : subRegion.wrappers() )
     {
-      WrapperBase const * const wrapper = wrapperIter.second;
+      WrapperBase const & wrapper = *wrapperIter.second;
 
-      if( wrapper->getPlotLevel() < m_plotLevel )
+      if( wrapper.getPlotLevel() < m_plotLevel )
       {
         // the field name is the key to the map
-        string const & fieldName = wrapper->getName();
+        string const & fieldName = wrapper.getName();
+        viewPointers[esr][fieldName] = &wrapper;
 
-        viewPointers[esr][fieldName] = wrapper;
-
-        std::type_info const & typeID = wrapper->getTypeId();
-
-        rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
-                                        false,
-                                        [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )
+        types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
         {
-          typedef decltype( array ) arrayType;
-          Wrapper< arrayType > const & sourceWrapper = dynamicCast< Wrapper< arrayType > const & >( *wrapper );
-          traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference();
+          using ArrayType = decltype( array );
+          Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( wrapper );
+          Wrapper< ArrayType > & newWrapper = fakeGroup.registerWrapper< ArrayType >( fieldName );
 
-          Wrapper< arrayType > & newWrapper = fakeGroup.registerWrapper< arrayType >( fieldName );
           newWrapper.setPlotLevel( PlotLevel::LEVEL_0 );
-          arrayType & newarray = newWrapper.reference();
-          newarray.resize( arrayType::NDIM, sourceArray.dims() );
+          newWrapper.reference().resize( ArrayType::NDIM, sourceWrapper.reference().dims() );
         } );
       }
     }
@@ -1295,35 +1290,31 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 
   for( auto & wrapperIter : fakeGroup.wrappers() )
   {
-    WrapperBase * const wrapper = wrapperIter.second;
-    string const & fieldName = wrapper->getName();
-    std::type_info const & typeID = wrapper->getTypeId();
+    WrapperBase & wrapper = *wrapperIter.second;
+    string const & fieldName = wrapper.getName();
 
-    rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
-                                    false,
-                                    [&]( auto array, auto GEOSX_UNUSED_PARAM( scalar ) )
+    types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
     {
-      using arrayType =  decltype( array );
-      using WrapperType = Wrapper< arrayType >;
-      WrapperType & wrapperT = dynamicCast< Wrapper< arrayType > & >( *wrapper );
-      arrayType & targetArray = wrapperT.reference();
+      using ArrayType = decltype( array );
+      Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
+      ArrayType & targetArray = wrapperT.reference();
 
       localIndex counter = 0;
-      elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
-        [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
+      elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >( [&]( localIndex const esr,
+                                                                         ElementSubRegionBase const & subRegion )
       {
         // check if the field actually exists / plotted on the current subregion
         if( viewPointers[esr].count( fieldName ) > 0 )
         {
-          WrapperType const & sourceWrapper = dynamic_cast< WrapperType const & >( *(viewPointers[esr].at( fieldName )) );
+          Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( *( viewPointers[esr].at( fieldName ) ) );
           auto const sourceArray = sourceWrapper.reference().toViewConst();
 
-          localIndex const offset = counter * targetArray.strides()[ 0 ];
+          localIndex const offset = counter * targetArray.strides()[0];
           GEOSX_ERROR_IF_GT( sourceArray.size(), targetArray.size() - offset );
 
           for( localIndex i = 0; i < sourceArray.size(); ++i )
           {
-            targetArray.data()[ i + offset ] = sourceArray.data()[ i ];
+            targetArray.data()[i + offset] = sourceArray.data()[i];
           }
 
           counter += sourceArray.size( 0 );
@@ -1413,7 +1404,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
 
 
       string const & elementType = elementSubRegion.getElementTypeString();
-      std::vector< int > const & nodeOrdering = elementSubRegion.getVTKNodeOrdering();
+      std::vector< int > const & nodeOrdering = elementSubRegion.getSiloNodeOrdering();
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
         integer numNodesPerElement = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( k ));
@@ -1489,7 +1480,12 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
 
     localIndex const numContacts = fractureContactMaterialList.size();
 
-    if( numSolids + numFluids + numContacts > 0 )
+    string_array
+      nullModelMaterialList = elementRegion.getConstitutiveNames< constitutive::NullModel >();
+
+    localIndex const numNullModels = nullModelMaterialList.size();
+
+    if( numSolids + numFluids + numContacts + numNullModels > 0 )
     {
       writeMeshObject( meshName,
                        numNodes,
@@ -2076,12 +2072,6 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
       if( typeID==typeid(array3d< real64 >) )
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array3d< real64 > > const & >( *wrapper );
-        this->writeDataField< real64 >( meshname.c_str(), fieldName,
-                                        wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
-      }
-      if( typeID==typeid(r1_array) )
-      {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< r1_array > const & >( *wrapper );
         this->writeDataField< real64 >( meshname.c_str(), fieldName,
                                         wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }

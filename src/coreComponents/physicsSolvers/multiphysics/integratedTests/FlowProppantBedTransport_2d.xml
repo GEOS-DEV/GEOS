@@ -3,7 +3,7 @@
 <!--# # -->
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{0.0, 0.0, -9.81}">
     <ProppantTransport
       name="ProppantTransport"
       logLevel="1"
@@ -56,7 +56,8 @@
       fractureRegion="Fracture"
       targetRegions="{ Fracture }"
       solidMaterialNames="{ granite }"
-      rockToughness="1e6"/>
+      rockToughness="1e6"
+      mpiCommOrder="1"/>
   </Solvers>
 
   <Mesh>
@@ -75,18 +76,18 @@
   <Geometry>
     <Box
       name="left"
-      xMin="-0.001, -0.001, -0.001"
-      xMax="0.001, 0.11, 0.3148"/>
+      xMin="{-0.001, -0.001, -0.001}"
+      xMax="{0.001, 0.11, 0.3148}"/>
 
     <Box
       name="right"
-      xMin="-0.001, 1.1, 0.2"
-      xMax="0.001, 1.2546, 0.3148"/>
+      xMin="{-0.001, 1.1, 0.2}"
+      xMax="{0.001, 1.2546, 0.3148}"/>
 
     <Box
       name="fracture"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01, 1.2546, 0.3148"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 0.01, 1.2546, 0.3148}"/>
   </Geometry>
 
   <Events

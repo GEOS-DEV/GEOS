@@ -17,9 +17,8 @@
  */
 
 #include "common/DataTypes.hpp"
-#include "common/initializeEnvironment.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"
+#include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 
 #include "gtest/gtest.h"
 
@@ -122,7 +121,7 @@ void determinant_test()
     // Construct 1d discrete Laplacian with Dirichlet boundary conditions
     // at both ends
     Laplacian1d.resize( N, N );
-    Laplacian1d.setValues< serialPolicy >( 0.0 );
+    Laplacian1d.zero();
     for( INDEX_TYPE i = 0; i < N; ++i )
     {
       for( INDEX_TYPE j = 0; j < N; ++j )
@@ -194,7 +193,7 @@ void matrix_norm1_test()
 
   // Compute norm1
   array1d< real64 > tmp( N );
-  tmp.setValues< serialPolicy >( 0 );
+  tmp.zero();
   for( INDEX_TYPE i = 0; i < M; ++i )
   {
     for( INDEX_TYPE j = 0; j < N; ++j )
@@ -816,7 +815,7 @@ void matrix_inverse_test()
     // Construct 1d discrete Laplacian with Dirichlet boundary conditions
     // at both ends
     Laplacian1d.resize( N, N );
-    Laplacian1d.setValues< serialPolicy >( 0.0 );
+    Laplacian1d.zero();
     for( INDEX_TYPE i = 0; i < N; ++i )
     {
       for( INDEX_TYPE j = 0; j < N; ++j )
@@ -1008,42 +1007,6 @@ void set_get_random_number_generator_seed_test()
   for( INDEX_TYPE i = 0; i< seedSet.size(); ++i )
   {
     EXPECT_EQ( seedSet( i ), seedGet( i ) );
-  }
-}
-
-template< typename LAI >
-void performance_test()
-{
-  constexpr localIndex MAX_SIZE = 1024 * 8 * 4;
-
-  array2d< double > a( MAX_SIZE, MAX_SIZE );
-  array2d< double > b( MAX_SIZE, MAX_SIZE );
-  array2d< double > c( MAX_SIZE, MAX_SIZE );
-
-  for( localIndex size = 3; size <= MAX_SIZE; size = localIndex( size * 1.5 + 1 ))
-  {
-    a.resize( size, size );
-    b.resize( size, size );
-    c.resize( size, size );
-
-    LAI::matrixRand( a,
-                     LAI::RandomNumberDistribution::UNIFORM_m1p1 );
-    LAI::matrixRand( b,
-                     LAI::RandomNumberDistribution::UNIFORM_m1p1 );
-
-    std::chrono::duration< double > multiplicationTime {};
-    localIndex const nIter = MAX_SIZE / (size + 1) + 1;
-    for( localIndex iter = 0; iter < nIter; ++iter )
-    {
-      auto start = std::chrono::high_resolution_clock::now();
-      LAI::matrixMatrixMultiply( a, b, c, 1.0, 1.0 );
-      auto end = std::chrono::high_resolution_clock::now();
-      multiplicationTime += end - start;
-    }
-
-    GEOSX_LOG( std::setiosflags( std::ios::scientific ) << std::setprecision( 5 ) <<
-               "size = " << size << ",\tniter : " << nIter << ",\ttime : " << multiplicationTime.count() <<
-               ",\tscaled time : " << multiplicationTime.count() / (size * size * size));
   }
 }
 
@@ -1293,12 +1256,6 @@ TEST( DenseLAInterface, setGetRandomNumberGeneratorSeed )
   set_get_random_number_generator_seed_test< BlasLapackLA >();
 }
 
-TEST( DenseLAInterface, performanceTest )
-{
-  // performance_test<BlasLapackLA>();
-  SUCCEED();
-}
-
 TEST( DenseLAInterface, matrixSVD )
 {
   matrix_svd_test< BlasLapackLA >();
@@ -1306,13 +1263,6 @@ TEST( DenseLAInterface, matrixSVD )
 
 int main( int argc, char * * argv )
 {
-  ::testing::InitGoogleTest( &argc, argv );
-
-  geosx::setupEnvironment( argc, argv );
-
-  int const result = RUN_ALL_TESTS();
-
-  geosx::cleanupEnvironment();
-
-  return result;
+  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  return RUN_ALL_TESTS();
 }

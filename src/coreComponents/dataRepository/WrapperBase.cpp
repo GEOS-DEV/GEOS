@@ -34,6 +34,7 @@ WrapperBase::WrapperBase( string const & name,
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_plotLevel( PlotLevel::NOPLOT ),
   m_inputFlag( InputFlags::INVALID ),
+  m_successfulReadFromInput( false ),
   m_description(),
   m_registeringObjects(),
   m_conduitNode( parent.getConduitNode()[ name ] )
@@ -50,8 +51,6 @@ void WrapperBase::resize()
 
 void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
 {
-  GEOSX_ERROR_IF( source.m_name != m_name,
-                  "Tried to clone wrapper attributes from a wrapper with a different name" );
   m_sizedFromParent = source.m_sizedFromParent;
   m_restart_flags = source.m_restart_flags;
   m_plotLevel  = source.m_plotLevel;

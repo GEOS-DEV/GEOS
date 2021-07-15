@@ -20,6 +20,7 @@
 #define GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
 
 #include "common/DataTypes.hpp"
+#include "common/TypeDispatch.hpp"
 #include "codingUtilities/traits.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "dataRepository/Group.hpp"
@@ -93,6 +94,21 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
+
+  /// Deleted copy constructor
+  FieldSpecificationBase( FieldSpecificationBase const & ) = delete;
+
+  /// Defaulted move constructor
+  FieldSpecificationBase( FieldSpecificationBase && ) = default;
+
+  /// deleted copy assignment
+  FieldSpecificationBase & operator=( FieldSpecificationBase const & ) = delete;
+
+  /// deleted move assignement
+  FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
+
+
+
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
    * @param[in] field the field to apply the value to.
@@ -125,121 +141,6 @@ public:
                         real64 const time,
                         dataRepository::Group & dataGroup,
                         string const & fieldname ) const;
-
-  /**
-   * @brief Function to apply a boundary condition to a system of equations
-   * @param[in] targetSet The set of indices which the boundary condition will be applied.
-   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
-   *             application of the boundary condition.
-   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
-   * @param[in] fieldName The name of the field to apply the boundary condition to.
-   * @param[in] dofMapName The name of the map from the local index of the primary field to the
-   *                       global degree of freedom number.
-   * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
-   *                   this will be 1 for a pressure degree of freedom, and 3 for a displacement
-   *                   degree of freedom.
-   * @param[inout] matrix A ParallelMatrix object: the system matrix.
-   * @param[inout] rhs A ParallelVector object: the right-hand side.
-   *
-   * This function applies the boundary condition to a linear system of equations. This function is
-   * typically called from within the lambda to a call to
-   * BoundaryConditionManager::ApplyBoundaryCondition().
-   */
-  template< typename FIELD_OP, typename LAI >
-  void applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
-                                       real64 const time,
-                                       dataRepository::Group const & dataGroup,
-                                       string const & fieldName,
-                                       string const & dofMapName,
-                                       integer const & dofDim,
-                                       typename LAI::ParallelMatrix & matrix,
-                                       typename LAI::ParallelVector & rhs ) const;
-
-
-  /**
-   * @brief Function to apply a boundary condition to a system of equations
-   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
-   *               Either \ref OpEqual or \ref OpAdd.
-   * @tparam LAMBDA The type of lambda function passed into the parameter list.
-   * @param[in] targetSet The set of indices which the boundary condition will be applied.
-   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
-   *             application of the boundary condition.
-   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
-   * @param[in] dofMap The map from the local index of the primary field to the global degree of
-   *                   freedom number.
-   * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
-   *                   this will be 1 for a pressure degree of freedom, and 3 for a displacement
-   *                   degree of freedom.
-   * @param[inout] matrix A ParallelMatrix object: the system matrix.
-   * @param[inout] rhs A ParallelVector object: the right-hand side
-   * @param[in] lambda A lambda function which defines how the value that is passed into the functions
-   *                provided by the FIELD_OP templated type.
-   *
-   * This function applies the boundary condition to a linear system of equations. This function is
-   * typically called from within the lambda to a call to
-   * BoundaryConditionManager::ApplyBoundaryCondition().
-   */
-  template< typename FIELD_OP, typename LAI, typename LAMBDA >
-  void
-  applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
-                                  real64 const time,
-                                  dataRepository::Group const & dataGroup,
-                                  arrayView1d< globalIndex const > const & dofMap,
-                                  integer const & dofDim,
-                                  typename LAI::ParallelMatrix & matrix,
-                                  typename LAI::ParallelVector & rhs,
-                                  LAMBDA && lambda ) const;
-
-  /**
-   * @brief Function to apply a boundary condition to a system of equations
-   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
-   *               Either \ref OpEqual or \ref OpAdd.
-   * @tparam LAMBDA The type of lambda function passed into the parameter list.
-   * @param[in] targetSet The set of indices which the boundary condition will be applied.
-   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
-   *             application of the boundary condition.
-   * @param[in] dt time step size which is applied as a factor to bc values
-   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
-   * @param[in] dofMap The map from the local index of the primary field to the global degree of
-   *                   freedom number.
-   * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
-   *                   this will be 1 for a pressure degree of freedom, and 3 for a displacement
-   *                   degree of freedom.
-   * @param[inout] matrix A ParallelMatrix object: the system matrix.
-   * @param[inout] rhs A ParallelVector object: the right-hand side
-   * @param[in] lambda A lambda function which defines how the value that is passed into the functions
-   *                provided by the FIELD_OP templated type.
-   *
-   * This function applies the boundary condition to a linear system of equations. This function is
-   * typically called from within the lambda to a call to
-   * BoundaryConditionManager::ApplyBoundaryCondition().
-   */
-  template< typename FIELD_OP, typename LAI, typename LAMBDA >
-  void
-  applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
-                                  real64 const time,
-                                  real64 const dt,
-                                  dataRepository::Group const & dataGroup,
-                                  arrayView1d< globalIndex const > const & dofMap,
-                                  integer const & dofDim,
-                                  typename LAI::ParallelMatrix & matrix,
-                                  typename LAI::ParallelVector & rhs,
-                                  LAMBDA && lambda ) const;
-
-  /**
-   * @brief Zero matrix rows to apply boundary conditions.
-   * @tparam LAI The linear algebra interface
-   * @param[in] targetSet The set of indices which the boundary condition will be applied.
-   * @param[in] dofMap The map from the local index of the primary field to the global degree of
-   *                   freedom number.
-   * @param[inout] matrix A ParallelMatrix object: the system matrix.
-   *
-   * This function zeroes the rows of the matrix that correspond to boundary conditions.
-   */
-  template< typename LAI >
-  void zeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,
-                                           arrayView1d< globalIndex const > const & dofMap,
-                                           typename LAI::ParallelMatrix & matrix ) const;
 
   /**
    * @brief Apply a boundary condition to a system of equations.
@@ -446,8 +347,8 @@ public:
   }
 
   /**
-   * Accessor
-   * @return const m_component
+   * Accessing the considered component.
+   * @return The component axis or a special value.
    */
   virtual int getComponent() const
   {
@@ -456,10 +357,9 @@ public:
 
   /**
    * Accessor
-   * @param[in] time Time
    * @return const reference to m_direction
    */
-  virtual const R1Tensor & getDirection( real64 time )
+  virtual R1Tensor const & getDirection() const
   {
     GEOSX_UNUSED_VAR( time );
     return m_direction;
@@ -557,7 +457,7 @@ public:
 
 
 protected:
-  void postProcessInput() override final;
+  virtual void postProcessInput() override;
 
   /// The flag used to decide if the BC value is normalized by the size of the set on which it is applied
   bool m_normalizeBySetSize;
@@ -662,259 +562,17 @@ void FieldSpecificationBase::applyFieldValue( SortedArrayView< localIndex const 
                                               string const & fieldName ) const
 {
   dataRepository::WrapperBase & wrapper = dataGroup.getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapper.getTypeId());
 
-  rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
-                                  true,
-                                  [&]( auto arrayInstance, auto GEOSX_UNUSED_PARAM( dataTypeInstance ) )
+  // This function is used in setting boundary/initial conditions on simulation fields.
+  // This is meaningful for 1/2/3D real arrays and sometimes 1D integer (indicator) arrays.
+  using FieldTypes = types::Join< types::ArrayTypes< types::RealTypes, types::DimsUpTo< 3 > >,
+                                  types::ArrayTypes< types::TypeList< integer >, types::DimsSingle< 1 > > >;
+  types::dispatch( FieldTypes{}, wrapper.getTypeId(), true, [&]( auto array )
   {
-    using ArrayType = decltype(arrayInstance);
-    dataRepository::Wrapper< ArrayType > & view = dynamicCast< dataRepository::Wrapper< ArrayType > & >( wrapper );
-
-    auto const & field = view.reference().toView();
-    applyFieldValueKernel< FIELD_OP, POLICY >( field, targetSet, time, dataGroup );
+    using ArrayType = decltype( array );
+    auto & wrapperT = dataRepository::Wrapper< ArrayType >::cast( wrapper );
+    applyFieldValueKernel< FIELD_OP, POLICY >( wrapperT.reference().toView(), targetSet, time, dataGroup );
   } );
-}
-
-template< typename FIELD_OP, typename LAI >
-void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
-                                                             real64 const time,
-                                                             dataRepository::Group const & dataGroup,
-                                                             string const & fieldName,
-                                                             string const & dofMapName,
-                                                             integer const & dofDim,
-                                                             typename LAI::ParallelMatrix & matrix,
-                                                             typename LAI::ParallelVector & rhs ) const
-{
-  dataRepository::WrapperBase const & wrapperBase = dataGroup.getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapperBase.getTypeId());
-  arrayView1d< globalIndex const > const & dofMap = dataGroup.getReference< array1d< globalIndex > >( dofMapName );
-  integer const component = getComponent();
-
-  rtTypes::applyArrayTypeLambda1( rtTypes::typeID( typeIndex ), [&]( auto type )
-  {
-    using FieldType = decltype( type );
-    dataRepository::Wrapper< FieldType > const & wrapper = dynamicCast< dataRepository::Wrapper< FieldType > const & >( wrapperBase );
-    traits::ViewTypeConst< FieldType > fieldView = wrapper.reference();
-
-    this->applyBoundaryConditionToSystem< FIELD_OP, LAI >( targetSet, time, dataGroup, dofMap, dofDim, matrix, rhs,
-                                                           [&]( localIndex const a )
-    {
-      real64 value = 0.0;
-      FieldSpecificationEqual::readFieldValue( fieldView, a, component, value );
-      return value;
-    } );
-  } );
-}
-
-template< typename FIELD_OP, typename LAI, typename LAMBDA >
-void
-FieldSpecificationBase::
-  applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
-                                  real64 const time,
-                                  dataRepository::Group const & dataGroup,
-                                  arrayView1d< globalIndex const > const & dofMap,
-                                  integer const & dofDim,
-                                  typename LAI::ParallelMatrix & matrix,
-                                  typename LAI::ParallelVector & rhs,
-                                  LAMBDA && lambda ) const
-{
-  GEOSX_UNUSED_VAR( dofDim );
-
-  integer const component = getComponent();
-  FunctionManager & functionManager = FunctionManager::getInstance();
-
-  globalIndex_array dof( targetSet.size() );
-  real64_array rhsContribution( targetSet.size() );
-
-  real64 sizeScalingFactor = 0;
-  if( m_normalizeBySetSize )
-  {
-    // note: this assumes that the ghost elements have been filtered out
-
-    // recompute the set size here to make sure that topology changes are accounted for
-    integer const localSetSize = targetSet.size();
-    integer globalSetSize = 0;
-
-    // synchronize
-    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
-
-    // set the scaling factor
-    sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
-  }
-  else
-  {
-    sizeScalingFactor = 1;
-  }
-
-  if( m_functionName.empty() )
-  {
-
-    integer counter=0;
-    for( auto a : targetSet )
-    {
-      dof( counter ) = dofMap[a]+component;
-      FIELD_OP::template SpecifyFieldValue< LAI >( dof( counter ),
-                                                   matrix,
-                                                   rhsContribution( counter ),
-                                                   m_scale * sizeScalingFactor,
-                                                   lambda( a ) );
-      ++counter;
-    }
-    FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
-  }
-  else
-  {
-    FunctionBase const & function = functionManager.getGroup< FunctionBase >( m_functionName );
-
-    if( function.isFunctionOfTime() == 2 )
-    {
-      real64 value = m_scale * function.evaluate( &time ) * sizeScalingFactor;
-      integer counter=0;
-      for( auto a : targetSet )
-      {
-        dof( counter ) = dofMap[a] + component;
-        FIELD_OP::template SpecifyFieldValue< LAI >( dof( counter ),
-                                                     matrix,
-                                                     rhsContribution( counter ),
-                                                     value,
-                                                     lambda( a ) );
-        ++counter;
-      }
-      FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
-    }
-    else
-    {
-      real64_array result;
-      result.resize( LvArray::integerConversion< localIndex >( targetSet.size()));
-      function.evaluate( dataGroup, time, targetSet, result );
-      integer counter=0;
-      for( auto a : targetSet )
-      {
-        dof( counter ) = dofMap[a] + component;
-        FIELD_OP::template SpecifyFieldValue< LAI >( dof( counter ),
-                                                     matrix,
-                                                     rhsContribution( counter ),
-                                                     m_scale * result[counter] * sizeScalingFactor,
-                                                     lambda( a ) );
-        ++counter;
-      }
-      FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
-    }
-  }
-}
-
-template< typename FIELD_OP, typename LAI, typename LAMBDA >
-void
-FieldSpecificationBase::
-  applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
-                                  real64 const time,
-                                  real64 const dt,
-                                  dataRepository::Group const & dataGroup,
-                                  arrayView1d< globalIndex const > const & dofMap,
-                                  integer const & dofDim,
-                                  typename LAI::ParallelMatrix & matrix,
-                                  typename LAI::ParallelVector & rhs,
-                                  LAMBDA && lambda ) const
-{
-  GEOSX_UNUSED_VAR( dofDim );
-
-  integer const component = getComponent();
-  FunctionManager & functionManager = FunctionManager::getInstance();
-
-  globalIndex_array dof( targetSet.size() );
-  real64_array rhsContribution( targetSet.size() );
-
-  real64 sizeScalingFactor = 0.0;
-  if( m_normalizeBySetSize )
-  {
-    // note: this assumes that the ghost elements have been filtered out
-
-    // recompute the set size here to make sure that topology changes are accounted for
-    integer const localSetSize = targetSet.size();
-    integer globalSetSize = 0;
-
-    // synchronize
-    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
-
-    // set the scaling factor
-    sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
-  }
-  else
-  {
-    sizeScalingFactor = 1;
-  }
-
-
-  if( m_functionName.empty() )
-  {
-
-    integer counter=0;
-    for( auto a : targetSet )
-    {
-      dof( counter ) = dofMap[a]+component;
-      FIELD_OP::template SpecifyFieldValue< LAI >( dof( counter ),
-                                                   matrix,
-                                                   rhsContribution( counter ),
-                                                   m_scale * dt * sizeScalingFactor,
-                                                   lambda( a ) );
-      ++counter;
-    }
-    FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
-  }
-  else
-  {
-    FunctionBase const & function  = functionManager.getGroup< FunctionBase >( m_functionName );
-
-    if( function.isFunctionOfTime() == 2 )
-    {
-      real64 value = m_scale * dt * function.evaluate( &time ) * sizeScalingFactor;
-      integer counter=0;
-      for( auto a : targetSet )
-      {
-        dof( counter ) = dofMap[a] + component;
-        FIELD_OP::template SpecifyFieldValue< LAI >( dof( counter ),
-                                                     matrix,
-                                                     rhsContribution( counter ),
-                                                     value,
-                                                     lambda( a ) );
-        ++counter;
-      }
-      FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
-    }
-    else
-    {
-      real64_array result;
-      result.resize( LvArray::integerConversion< localIndex >( targetSet.size()));
-      function.evaluate( dataGroup, time, targetSet, result );
-      integer counter=0;
-      for( auto a : targetSet )
-      {
-        dof( counter ) = dofMap[a] + component;
-        FIELD_OP::template SpecifyFieldValue< LAI >( dof( counter ),
-                                                     matrix,
-                                                     rhsContribution( counter ),
-                                                     m_scale * dt * result[counter] * sizeScalingFactor,
-                                                     lambda( a ) );
-        ++counter;
-      }
-      FIELD_OP::template PrescribeRhsValues< LAI >( rhs, counter, dof.data(), rhsContribution.data() );
-    }
-  }
-}
-
-template< typename LAI >
-void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,
-                                                                 arrayView1d< globalIndex const > const & dofMap,
-                                                                 typename LAI::ParallelMatrix & matrix ) const
-
-{
-  integer const component = getComponent();
-  for( auto a : targetSet )
-  {
-    globalIndex const dof = dofMap[a]+component;
-    matrix.clearRow( dof );
-  }
 }
 
 template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
@@ -947,15 +605,23 @@ void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< lo
                                                              CRSMatrixView< real64, globalIndex const > const & matrix,
                                                              arrayView1d< real64 > const & rhs ) const
 {
-  dataRepository::WrapperBase const & wrapperBase = dataGroup.getWrapperBase( fieldName );
-  std::type_index typeIndex = std::type_index( wrapperBase.getTypeId());
+  dataRepository::WrapperBase const & wrapper = dataGroup.getWrapperBase( fieldName );
   arrayView1d< globalIndex const > const & dofMap = dataGroup.getReference< array1d< globalIndex > >( dofMapName );
 
-  rtTypes::applyArrayTypeLambda1( rtTypes::typeID( typeIndex ), [&]( auto type )
+  // We're reading values from a field, which is only well-defined for dims 1 and 2
+  using FieldTypes = types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > >;
+  types::dispatch( FieldTypes{}, wrapper.getTypeId(), true, [&]( auto array )
   {
-    using FieldType = decltype( type );
-    dataRepository::Wrapper< FieldType > const & wrapper = dynamicCast< dataRepository::Wrapper< FieldType > const & >( wrapperBase );
-    applyBoundaryConditionToSystemKernel< FIELD_OP, POLICY >( targetSet, time, dataGroup, dofMap, dofRankOffset, matrix, rhs, wrapper.reference() );
+    using ArrayType = decltype( array );
+    auto const & wrapperT = dataRepository::Wrapper< ArrayType >::cast( wrapper );
+    applyBoundaryConditionToSystemKernel< FIELD_OP, POLICY >( targetSet,
+                                                              time,
+                                                              dataGroup,
+                                                              dofMap,
+                                                              dofRankOffset,
+                                                              matrix,
+                                                              rhs,
+                                                              wrapperT.reference() );
   } );
 }
 
@@ -1005,24 +671,13 @@ FieldSpecificationBase::
   array1d< real64 > rhsContributionArray( targetSet.size() );
   arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
 
-  real64 sizeScalingFactor = 0.0;
+  real64 sizeScalingFactor = 1.0;
   if( m_normalizeBySetSize )
   {
     // note: this assumes that the ghost elements have been filtered out
-
     // recompute the set size here to make sure that topology changes are accounted for
-    integer const localSetSize = targetSet.size();
-    integer globalSetSize = 0;
-
-    // synchronize
-    MpiWrapper::allReduce( &localSetSize, &globalSetSize, 1, MPI_SUM, MPI_COMM_GEOSX );
-
-    // set the scaling factor
-    sizeScalingFactor = globalSetSize >= 1 ? 1.0 / globalSetSize : 1;
-  }
-  else
-  {
-    sizeScalingFactor = 1;
+    globalIndex const globalSetSize = MpiWrapper::sum( LvArray::integerConversion< globalIndex >( targetSet.size() ), MPI_COMM_GEOSX );
+    sizeScalingFactor = ( globalSetSize > 0 ) ? ( 1.0 / globalSetSize ) : 1.0;
   }
 
 

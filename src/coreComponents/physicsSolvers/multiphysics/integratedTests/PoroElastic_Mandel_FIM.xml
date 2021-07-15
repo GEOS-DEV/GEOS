@@ -2,12 +2,11 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
-    <Poroelastic
+    gravityVector="{0.0, 0.0, 0.0}">
+    <SinglePhasePoromechanics
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -20,7 +19,7 @@
         solverType="direct"
         directParallel="0"
         logLevel="0"/>
-    </Poroelastic>
+    </SinglePhasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
@@ -57,38 +56,38 @@
   <Geometry>
     <Box
       name="xneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01, 0.11, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 0.01,  0.11,  1.01}"/>
 
     <Box
       name="xpos"
-      xMin=" 0.99, -0.01, -0.01"
-      xMax=" 1.01, 0.11, 1.01"/>
+      xMin="{ 0.99, -0.01, -0.01}"
+      xMax="{ 1.01, 0.11, 1.01}"/>
 
     <Box
       name="yneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 0.01, 10.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 1.01, 0.01, 10.01}"/>
 
     <Box
       name="ypos"
-      xMin="-0.01, 0.09, -0.01"
-      xMax=" 1.01, 0.11, 10.01"/>
+      xMin="{-0.01, 0.09, -0.01}"
+      xMax="{ 1.01, 0.11, 10.01}"/>
 
     <Box
       name="zneg"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 0.11 , 0.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 1.01, 0.11 , 0.01}"/>
 
     <Box
       name="zpos"
-      xMin="-0.01, -0.01, 0.99"
-      xMax=" 1.01, 0.11, 1.01"/>
+      xMin="{-0.01, -0.01, 0.99}"
+      xMax="{ 1.01, 0.11, 1.01}"/>
 
     <Box
       name="rigEle"
-      xMin="0.89, -0.1, -0.1"
-      xMax="1, 1.1, 21"/>
+      xMin="{0.89, -0.1, -0.1}"
+      xMax="{1, 1.1, 21}"/>
   </Geometry>
 
   <Events
@@ -274,28 +273,11 @@
       scale="0.0"
       setNames="{ zneg }"/>
 
-    <!--
-    <FieldSpecification name="zposconstraint" 
-               objectPath="faceManager" 
-               fieldName="Traction"  
-               component="0" 
-               scale="0e0" 
-               setNames="{zpos}"
-               functionName="timeFunction"/>
-
-    <FieldSpecification name="zposconstraint" 
-               objectPath="faceManager" 
-               fieldName="Traction"  
-               component="1" 
-               scale="0e0" 
-               setNames="{zpos}"
-               functionName="timeFunction"/>
-    -->
-    <FieldSpecification
+    <Traction
       name="zposconstraint"
       objectPath="faceManager"
-      fieldName="Traction"
-      component="2"
+      direction="{0,0,1}"
+      tractionType="vector"
       scale="-2.0e0"
       setNames="{ zpos }"
       functionName="timeFunction"/>

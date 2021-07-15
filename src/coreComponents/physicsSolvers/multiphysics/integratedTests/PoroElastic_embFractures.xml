@@ -2,23 +2,23 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
-    <PoroelasticEmbeddedFractures
+    gravityVector="{0.0, 0.0, 0.0}">
+    <SinglePhasePoromechanicsEmbeddedFractures
       name = "poroSolver"
       targetRegions="{Domain, Fracture}"
       initialDt="1e-3"
       fracturesSolverName = "fractureMechSolver"
       fluidSolverName = "flowSolver"
       solidSolverName = "matrixMechSolver"
-      couplingTypeOption="FIM"
       logLevel="1">
       <NonlinearSolverParameters
         newtonMaxIter="5"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"
         logLevel="0"/>
-    </PoroelasticEmbeddedFractures>
+    </SinglePhasePoromechanicsEmbeddedFractures>
     
     <SolidMechanicsEmbeddedFractures
       name = "fractureMechSolver"
@@ -49,7 +49,8 @@
       solidMaterialNames="{ rock }"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
-      logLevel="2"/>
+      logLevel="2"
+      mpiCommOrder="1"/>
   </Solvers>
 
   <Mesh>
@@ -68,10 +69,10 @@
   <Geometry>
     <BoundedPlane
       name="FracturePlane"
-      normal="1, 0, 0"
-      origin="1.5, 1.5, 1.5"
-      lengthVector="0, 1, 0"
-      widthVector="0, 0, 1"
+      normal="{1, 0, 0}"
+      origin="{1.5, 1.5, 1.5}"
+      lengthVector="{0, 1, 0}"
+      widthVector="{0, 0, 1}"
       dimensions="{3,  4 }"/>
   </Geometry>
 

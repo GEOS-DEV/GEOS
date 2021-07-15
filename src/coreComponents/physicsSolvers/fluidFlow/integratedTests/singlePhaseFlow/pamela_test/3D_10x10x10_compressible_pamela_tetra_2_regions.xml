@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{0.0, 0.0, -9.81}">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="1"
@@ -28,8 +28,8 @@
   <Geometry>
     <Box
       name="left"
-      xMin="-1, -1, -1"
-      xMax="0.9, 11, 11"/>
+      xMin="{-1, -1, -1}"
+      xMax="{ 0.9, 11, 11}"/>
   </Geometry>
 
   <Events
@@ -83,7 +83,7 @@
       name="water"
       defaultDensity="1000"
       defaultViscosity="0.001"
-      referencePressure="0.0"
+      referencePressure="1e6"
       referenceDensity="1000"
       compressibility="1e-9"
       referenceViscosity="0.001"
@@ -91,7 +91,7 @@
 
     <PoreVolumeCompressibleSolid
       name="rock"
-      referencePressure="0.0"
+      referencePressure="1e6"
       compressibility="1e-9"/>
   </Constitutive>
 
@@ -180,7 +180,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Bot/Bottom_TETRA"
       fieldName="pressure"
-      scale="1e5"/>
+      scale="1e6"/>
   </FieldSpecifications>
 
   <Functions/>

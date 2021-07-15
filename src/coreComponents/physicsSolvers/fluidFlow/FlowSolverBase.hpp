@@ -24,13 +24,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-class DomainPartition;
-
 /**
  * @class FlowSolverBase
  *
@@ -161,7 +154,7 @@ protected:
   integer m_coupledWellsFlag;
 
   /// the number of Degrees of Freedom per cell
-  localIndex m_numDofPerCell;
+  integer m_numDofPerCell;
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 

@@ -123,6 +123,8 @@ void HypreVector::createWithLocalSize( localIndex const localSize,
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( localSize, 0 );
 
+  reset();
+
   HYPRE_BigInt const jlower = MpiWrapper::prefixSum< HYPRE_BigInt >( LvArray::integerConversion< HYPRE_BigInt >( localSize ), comm );
   HYPRE_BigInt const jupper = jlower + LvArray::integerConversion< HYPRE_BigInt >( localSize ) - 1;
 
@@ -136,6 +138,8 @@ void HypreVector::createWithGlobalSize( globalIndex const globalSize,
 {
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( globalSize, 0 );
+
+  reset();
 
   HYPRE_Int const rank  = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::commRank( comm ) );
   HYPRE_Int const nproc = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::commSize( comm ) );
@@ -156,14 +160,6 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
 {
   GEOSX_LAI_ASSERT( closed() );
 
-#if !defined(GEOSX_USE_HYPRE_CUDA)
-  localValues.move( LvArray::MemorySpace::CPU, false );
-
-  using createPolicy = parallelHostPolicy;
-#else
-  using createPolicy = parallelDevicePolicy<>;
-#endif
-
   HYPRE_BigInt const localSize = LvArray::integerConversion< HYPRE_BigInt >( localValues.size() );
   HYPRE_BigInt const jlower = MpiWrapper::prefixSum< HYPRE_BigInt >( localSize, comm );
   HYPRE_BigInt const jupper = jlower + localSize - 1;
@@ -173,7 +169,7 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
 
   HYPRE_Real * const local_data = extractLocalVector();
 
-  forAll< createPolicy >( localValues.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localValues.size(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
   {
     local_data[i] = localValues[i];
   } );
@@ -295,7 +291,7 @@ void HypreVector::reciprocal()
 {
   GEOSX_LAI_ASSERT( ready() );
   real64 * const values = extractLocalVector();
-  forAll< execPolicy >( localSize(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
   {
     values[i] = 1.0 / values[i];
   } );
@@ -368,7 +364,7 @@ void HypreVector::pointwiseProduct( HypreVector const & x,
   real64 const * const data = extractLocalVector();
   real64 const * const x_data = x.extractLocalVector();
   real64 * const y_data = y.extractLocalVector();
-  forAll< execPolicy >( localSize(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
   {
     y_data[i] = data[i] * x_data[i];
   } );
@@ -379,8 +375,8 @@ real64 HypreVector::norm1() const
   GEOSX_LAI_ASSERT( ready() );
 
   real64 const * const values = extractLocalVector();
-  RAJA::ReduceSum< ReducePolicy< execPolicy >, real64 > localNorm( 0.0 );
-  forAll< execPolicy >( localSize(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  RAJA::ReduceSum< ReducePolicy< hypre::execPolicy >, real64 > localNorm( 0.0 );
+  forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
   {
     localNorm += fabs( values[i] );
   } );
@@ -398,8 +394,8 @@ real64 HypreVector::normInf() const
   GEOSX_LAI_ASSERT( ready() );
 
   real64 const * const values = extractLocalVector();
-  RAJA::ReduceMax< ReducePolicy< execPolicy >, real64 > localNorm( 0.0 );
-  forAll< execPolicy >( localSize(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+  RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, real64 > localNorm( 0.0 );
+  forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
   {
     localNorm.max( fabs( values[i] ) );
   } );
@@ -429,7 +425,7 @@ void HypreVector::print( std::ostream & os ) const
       for( localIndex i = 0; i < localSize(); ++i )
       {
         sprintf( str,
-#if defined(GEOSX_USE_CUDA)
+#if defined(GEOSX_USE_HYPRE_CUDA)
                  "%i%20i%24.10e\n",
 #else
                  "%i%20lli%24.10e\n",
@@ -586,6 +582,16 @@ real64 * HypreVector::extractLocalVector()
 {
   GEOSX_LAI_ASSERT( ready() );
   return hypre_VectorData( hypre_ParVectorLocalVector ( m_par_vector ) );
+}
+
+void HypreVector::extract( arrayView1d< real64 > const & localVector ) const
+{
+  GEOSX_LAI_ASSERT_EQ( localSize(), localVector.size() );
+  real64 const * const data = extractLocalVector();
+  forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
+  {
+    localVector[i] = data[i];
+  } );
 }
 
 globalIndex HypreVector::ilower() const
