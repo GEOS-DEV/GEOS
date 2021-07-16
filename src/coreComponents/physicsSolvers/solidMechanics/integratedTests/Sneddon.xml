@@ -16,9 +16,7 @@
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsEmbeddedFractures>
 
     <SolidMechanicsLagrangianSSLE
@@ -75,13 +73,11 @@
     <PeriodicEvent
       name="outputs"
       cycleFrequency="10"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
       timeFrequency="10"
-      targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
   </Events>
 
@@ -165,13 +161,10 @@
       scale="-1.00e5"/>
   </FieldSpecifications>
 
-  <Functions/>
-
   <Outputs>
     <VTK
       name="vtkOutput"
       plotFileRoot="Sneddon"
-      plotLevel="1"
       writeBinaryData="0"/>
 
     <Restart

@@ -12,9 +12,7 @@
         lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhaseReservoir>
 
     <SinglePhaseHybridFVM
@@ -98,7 +96,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e3"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -148,9 +145,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid

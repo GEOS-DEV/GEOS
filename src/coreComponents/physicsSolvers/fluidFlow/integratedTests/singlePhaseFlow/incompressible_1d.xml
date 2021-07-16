@@ -4,7 +4,6 @@
   <Solvers>
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
       solidNames="{ rock }"
@@ -14,9 +13,7 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhaseFVM>
   </Solvers>
 
@@ -50,7 +47,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -88,9 +84,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="0.0"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid

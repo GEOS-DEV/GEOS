@@ -6,7 +6,6 @@
     <SolidMechanics_LagrangianFEM
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ shale }">
@@ -136,7 +135,6 @@
     <Silo
       name="siloOutput"
       parallelThreads="32"
-      plotFileRoot="plot"
       childDirectory="sub"/>
 
     <Restart

@@ -6,7 +6,6 @@
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       fluidNames="{ water }"
       solidNames="{ rock }"
       permeabilityNames="{rockPerm}"
@@ -53,7 +52,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/siloWellPump"/>
 
     <PeriodicEvent
@@ -93,9 +91,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="1e6"
-      referenceDensity="1000"
       compressibility="1e-9"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid
@@ -136,8 +132,6 @@
   </FieldSpecifications>
 
   <!-- SPHINX_TUT_EXT_TETRA_FIELDS_END -->
-  <Functions/>
-
   <Outputs>
     <Silo
       name="siloWellPump"/>

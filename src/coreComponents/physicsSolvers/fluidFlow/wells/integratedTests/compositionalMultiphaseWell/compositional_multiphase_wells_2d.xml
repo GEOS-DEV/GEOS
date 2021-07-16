@@ -13,9 +13,7 @@
         lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
@@ -27,8 +25,7 @@
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
-      temperature="297.15"
-      useMass="0"/>
+      temperature="297.15"/>
 
     <!-- SPHINX_COMP_WELL_SOLVER -->
     <CompositionalMultiphaseWell
@@ -37,8 +34,7 @@
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
       fluidNames="{ fluid1 }"
       relPermNames="{ relperm }"
-      wellTemperature="297.15"
-      useMass="0">
+      wellTemperature="297.15">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -155,7 +151,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e3"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -283,8 +278,6 @@
       component="3"
       scale="0.001"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo

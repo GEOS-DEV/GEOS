@@ -15,9 +15,7 @@
       <NonlinearSolverParameters
         newtonMaxIter="50"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE
@@ -31,9 +29,7 @@
         newtonMaxIter="50"
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <PhaseFieldDamageFEM
@@ -81,13 +77,11 @@
     <PeriodicEvent
       name="vtkOutput"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/DamageAndLoad_VTKOutput"/>
 
     <PeriodicEvent
       name="siloOutputs"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/DamageAndLoad_SiloOutput"/>
 
     <PeriodicEvent
@@ -138,7 +132,6 @@
       fieldName="TotalDisplacement"
       component="0"
       objectPath="nodeManager"
-      scale="0"
       setNames="{ xneg }"/>
 
     <FieldSpecification
@@ -146,7 +139,6 @@
       fieldName="TotalDisplacement"
       component="1"
       objectPath="nodeManager"
-      scale="0"
       setNames="{ all }"/>
 
     <FieldSpecification
@@ -154,13 +146,11 @@
       fieldName="TotalDisplacement"
       component="2"
       objectPath="nodeManager"
-      scale="0"
       setNames="{ all }"/>
 
     <FieldSpecification
       name="pointSource"
       fieldName="Damage"
-      initialCondition="0"
       objectPath="nodeManager"
       scale="1"
       setNames="{ middle }"/>
@@ -179,13 +169,10 @@
 
   <Outputs>
     <Silo
-      name="DamageAndLoad_SiloOutput"
-      parallelThreads="1"
-      plotFileRoot="plot"/>
+      name="DamageAndLoad_SiloOutput"/>
 
     <VTK
       name="DamageAndLoad_VTKOutput"
-      parallelThreads="1"
       plotFileRoot="plot"/>
 
     <Restart

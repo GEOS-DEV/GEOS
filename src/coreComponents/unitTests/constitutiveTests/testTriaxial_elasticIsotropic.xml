@@ -9,7 +9,6 @@
       strainFunction="strainFunction"
       stressFunction="stressFunction"
       steps="50"
-      output="none"
       baseline="testTriaxial_elasticIsotropic.txt"
       logLevel="1"/>
   </Tasks>

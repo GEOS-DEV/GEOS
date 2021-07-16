@@ -11,17 +11,13 @@
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="300"
-      useMass="0"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-10"
         newtonMaxIter="15"
-        maxTimeStepCuts="2"
         lineSearchMaxCuts="2"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
 
@@ -55,13 +51,11 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e4"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
       forceDt="1e0"
-      beginTime="0"
       endTime="1e1"
       target="/Solvers/compflow"/>
 

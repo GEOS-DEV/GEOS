@@ -32,7 +32,6 @@
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
       target="/Outputs/siloOutput"/>
   </Events>
 
@@ -106,8 +105,6 @@
   <Outputs>
     <Silo
       name="siloOutput"
-      parallelThreads="1"
-      plotFileRoot="plot"
       childDirectory="sub"/>
   </Outputs>
 

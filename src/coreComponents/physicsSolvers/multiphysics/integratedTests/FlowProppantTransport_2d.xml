@@ -17,12 +17,9 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"
-        lineSearchAction="None"
-        newtonMinIter="1"/>
+        lineSearchAction="None"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </ProppantTransport>
 
     <!-- SPHINX_PROPPANT_TRANSPORT_SOLVER_END -->
@@ -32,12 +29,7 @@
       proppantSolverName="ProppantTransport"
       flowSolverName="SinglePhaseFVM"
       targetRegions="{ Fracture }"
-      logLevel="1">
-      <NonlinearSolverParameters
-        newtonMinIter="1"
-        newtonMaxIter="5"/>
-      <LinearSolverParameters/>
-    </FlowProppantTransport>
+      logLevel="1"/>
 
     <!-- SPHINX_PROPPANT_COUPLED_SOLVER_END -->
     <!-- SPHINX_PROPPANT_FLOW_SOLVER_BEGIN -->
@@ -52,8 +44,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"
-        lineSearchAction="None"
-        newtonMinIter="1"/>
+        lineSearchAction="None"/>
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-12"/>
@@ -62,8 +53,6 @@
     <!-- SPHINX_PROPPANT_FLOW_SOLVER_END -->
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Fracture }"
       solidMaterialNames="{ granite }"
       rockToughness="1e6"
@@ -133,8 +122,6 @@
     integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -170,15 +157,12 @@
     <ProppantSlurryFluid
       name="water"
       referencePressure="1e5"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       referenceProppantDensity="1200.0"/>
 
     <ParticleFluid
       name="sand"
       particleSettlingModel="Stokes"
-      hinderedSettlingCoefficient="5.9"
       proppantDensity="1200.0"/>
 
     <PoreVolumeCompressibleSolid
@@ -306,8 +290,6 @@
       component="0"
       setNames="{ bot }"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo

@@ -15,9 +15,7 @@
         newtonTol="1.0e-8"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhaseFVM>
 
     <EmbeddedSurfaceGenerator
@@ -76,14 +74,11 @@
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
       timeFrequency="1e3"
-      targetExactTimestep="1"
       target="/Outputs/sidreRestart"/>
   </Events>
 
@@ -116,9 +111,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid
@@ -166,8 +159,6 @@
       scale="0.0"
       setNames="{ sink }"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <VTK

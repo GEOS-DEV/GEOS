@@ -12,17 +12,13 @@
       permeabilityNames="{rockPerm}"
       relPermNames="{ relperm }"
       temperature="300"
-      computeCFLNumbers="1"
-      useMass="0">
+      computeCFLNumbers="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-9"
         newtonMaxIter="15"
-        maxTimeStepCuts="2"
         lineSearchMaxCuts="2"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
 
@@ -44,7 +40,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e7"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent

@@ -19,7 +19,6 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
         directParallel="0"
         logLevel="1"/>
     </SinglePhasePoromechanics>
@@ -29,7 +28,6 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      logLevel="0"
       targetRegions="{ Omega }"
       solidMaterialNames="{ rock }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
@@ -84,7 +82,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="78.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <!--PeriodicEvent
@@ -141,7 +138,6 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0e6"
-      referenceDensity="1000"
       compressibility="1.78403329184e-10"
       referenceViscosity="0.001"
       viscosibility="0.0"
@@ -212,7 +208,6 @@
     <Silo
       name="siloOutput"
       parallelThreads="32"
-      plotFileRoot="plot"
       childDirectory="sub"/>
 
     <!--Restart

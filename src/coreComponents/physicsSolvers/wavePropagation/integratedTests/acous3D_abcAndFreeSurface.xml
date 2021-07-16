@@ -57,7 +57,6 @@
     <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="0.0025"
-      targetExactTimestep="1"
       target="/Tasks/pressureCollection"/>
 
     <PeriodicEvent
@@ -70,7 +69,6 @@
     <PeriodicEvent
       name="restarts"
       timeFrequency="0.1"
-      targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
   </Events>
 
@@ -126,7 +124,6 @@
       name="zposFreeSurface"
       objectPath="faceManager"
       fieldName="FreeSurface"
-      scale="0"
       setNames="{ zpos }"/>
   </FieldSpecifications>
 

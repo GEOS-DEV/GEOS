@@ -17,7 +17,6 @@
         lineSearchMaxCuts="10"
         newtonTol="1.0e-5"/>
       <LinearSolverParameters
-        logLevel="0"
         solverType="gmres"
         preconditionerType="amg"/>
     </Hydrofracture>
@@ -26,15 +25,12 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       name="lagsolve"
-      logLevel="0"
       contactRelationName="fractureContact"
       solidMaterialNames="{ rock }"
       targetRegions="{ Region2, Fracture }">
       <NonlinearSolverParameters
-        newtonMaxIter="5"
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        logLevel="0"
         krylovTol="1.0e-10"
         solverType="gmres"/>
     </SolidMechanicsLagrangianSSLE>
@@ -52,15 +48,12 @@
         newtonMaxIter="10"
         newtonTol="1.0e-5"/>
       <LinearSolverParameters
-        logLevel="0"
         krylovTol="1.0e-12"
         solverType="gmres"/>
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ rock }"
       rockToughness="$K_upscaled$"
@@ -141,7 +134,6 @@
 
   <Constitutive>
     <CompressibleSinglePhaseFluid
-      referenceDensity="1000"
       name="water"
       viscosibility="0.0"
       defaultViscosity="0.001"
@@ -156,7 +148,6 @@
       defaultShearModulus="1.0e9"
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"
-      BiotCoefficient="1"
       referencePressure="2.125e6"/>
 
     <Contact
@@ -194,8 +185,7 @@
       inputVarNames="{ time }"
       voxelFile="$table_root$/flowRate.csv"
       coordinateFiles="{ $table_root$/flowRate_time.csv }"
-      name="flow_rate"
-      interpolation="linear"/>
+      name="flow_rate"/>
 
     <!-- Geologic Model -->
     <TableFunction

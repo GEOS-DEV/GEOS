@@ -25,12 +25,9 @@
       targetRegions="{ Region1 }"
       solidMaterialNames="{ rock }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
-        newtonMaxIter="5"/>
+        newtonTol="1.0e-8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
@@ -79,7 +76,6 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>

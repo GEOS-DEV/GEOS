@@ -5,7 +5,6 @@
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseHybridFVM
       name="flowSolver"
-      logLevel="0"
       discretization="singlePhaseHybridMimetic"
       targetRegions="{ Region1, Region2 }"
       fluidNames="{ fluid1, fluid2 }"
@@ -15,9 +14,7 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhaseHybridFVM>
   </Solvers>
 
@@ -66,7 +63,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="100.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -108,9 +104,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <CompressibleSinglePhaseFluid
@@ -118,7 +112,6 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
       referenceViscosity="0.0001"
       viscosibility="0.0"/>

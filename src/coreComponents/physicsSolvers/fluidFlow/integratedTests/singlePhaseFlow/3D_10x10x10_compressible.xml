@@ -69,7 +69,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="100.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
   </Events>
 
@@ -102,9 +101,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid
@@ -153,8 +150,6 @@
 
   <!-- SPHINX_TUT_INT_HEX_FIELDS_END -->
   <!-- SPHINX_TUT_INT_HEX_BLANKS -->
-  <Functions/>
-
   <!-- SPHINX_TUT_INT_HEX_BLANKS_END -->
   <!-- SPHINX_TUT_INT_HEX_OUTPUTS -->
   <Outputs>

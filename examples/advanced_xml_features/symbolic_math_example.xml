@@ -44,7 +44,6 @@ XML Symbolic Math:
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
@@ -53,8 +52,7 @@ XML Symbolic Math:
       inputFluxEstimate="1">
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-12"
-        logLevel="0"/>
+        krylovTol="1.0e-12"/>
     </SinglePhaseFVM>
   </Solvers>
 
@@ -88,7 +86,6 @@ XML Symbolic Math:
     <PeriodicEvent
       name="outputs"
       timeFrequency="1000.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -126,9 +123,7 @@ XML Symbolic Math:
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid

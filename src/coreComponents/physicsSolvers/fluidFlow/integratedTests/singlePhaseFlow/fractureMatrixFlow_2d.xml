@@ -16,16 +16,12 @@
         newtonMaxIter="8"
         allowNonConverged="1"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
       solidMaterialNames="{ rock }"
-      fractureRegion="Fracture"
       targetRegions="{ Fracture }"
       rockToughness="1e6"
       mpiCommOrder="1"/>
@@ -95,8 +91,6 @@
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -134,9 +128,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid
@@ -186,13 +178,10 @@
       setNames="{ source }"/>
   </FieldSpecifications>
 
-  <Functions/>
-
   <Outputs>
     <Silo
       name="siloOutput"
-      plotFileRoot="fractureMatrixFlow"
-      plotLevel="1"/>
+      plotFileRoot="fractureMatrixFlow"/>
 
     <Restart
       name="restartOutput"/>

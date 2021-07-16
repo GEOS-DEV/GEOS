@@ -13,9 +13,7 @@
       discretization="FE1"
       targetRegions="{ Domain }">
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
@@ -61,12 +59,10 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="10.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="solverApplication0"
-      beginTime="0"
       endTime="1.e-5"
       forceDt="1.e-5"
       target="/Solvers/PoroelasticitySolver"/>
@@ -88,7 +84,6 @@
     <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="10.0"
-      targetExactTimestep="1"
       target="/Tasks/pressureCollection"/>
 
     <PeriodicEvent
@@ -236,7 +231,6 @@
       name="xposconstraint"
       objectPath="faceManager"
       direction="{ 1, 0, 0 }"
-      tractionType="vector"
       scale="1.0e0"
       setNames="{ xneg }"
       functionName="timeFunction"/>

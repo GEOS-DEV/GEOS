@@ -24,30 +24,25 @@
         lineSearchMaxCuts="10"/>
       <LinearSolverParameters
         solverType="gmres"
-        preconditionerType="amg"
-        logLevel="0"/>
+        preconditionerType="amg"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="5"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-10"
-        logLevel="0"/>
+        krylovTol="1.0e-10"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
@@ -59,14 +54,11 @@
         newtonMaxIter="10"/>
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-12"
-        logLevel="0"/>
+        krylovTol="1.0e-12"/>
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       nodeBasedSIF="1"
       solidMaterialNames="{ rock }"
@@ -91,7 +83,6 @@
       defaultDensity="1000"
       defaultViscosity="0.00001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-13"
       referenceViscosity="1.0e-5"
       viscosibility="0.0"/>
@@ -101,7 +92,6 @@
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"
       defaultShearModulus="12.0e9"
-      BiotCoefficient="1"
       compressibility="1.6155088853e-18"
       referencePressure="2.125e6"/>
 

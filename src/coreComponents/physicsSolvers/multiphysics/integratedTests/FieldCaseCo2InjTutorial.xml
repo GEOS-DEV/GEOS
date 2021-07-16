@@ -12,7 +12,6 @@
       targetRegions="{ Reservoir, wellRegion }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
-        lineSearchAction="Attempt"
         maxTimeStepCuts="10"
         newtonMaxIter="40"/>
       <LinearSolverParameters
@@ -103,25 +102,21 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e7"
-      targetExactTimestep="1"
       target="/Outputs/syntheticReservoirVizFile"/>
 
     <PeriodicEvent
       name="restarts"
       timeFrequency="5e7"
-      targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
 
     <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="5e6"
-      targetExactTimestep="1"
       target="/Tasks/wellPressureCollection"/>
 
     <PeriodicEvent
       name="timeHistoryOutput"
       timeFrequency="2.5e8"
-      targetExactTimestep="1"
       target="/Outputs/timeHistoryOutput"/>
 
     <PeriodicEvent

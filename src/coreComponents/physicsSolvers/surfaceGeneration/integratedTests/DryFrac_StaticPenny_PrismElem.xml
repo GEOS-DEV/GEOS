@@ -14,9 +14,7 @@
         newtonTol="1.0e-3"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SurfaceGenerator
@@ -24,7 +22,6 @@
       solidMaterialNames="{ granite }"
       rockToughness="0.5e100"
       nodeBasedSIF="1"
-      fractureRegion="Fracture"
       logLevel="1"
       targetRegions="{ Region2 }"
       mpiCommOrder="1"/>
@@ -177,7 +174,6 @@
     <Silo
       name="siloOutput"
       plotLevel="3"
-      parallelThreads="1"
       plotFileRoot="simple2D"/>
 
     <Restart

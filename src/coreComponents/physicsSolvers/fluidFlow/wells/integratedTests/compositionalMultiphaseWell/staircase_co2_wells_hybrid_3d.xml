@@ -11,12 +11,9 @@
       targetRegions="{ Channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
-        lineSearchAction="Attempt"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseHybridFVM
@@ -103,7 +100,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e4"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent

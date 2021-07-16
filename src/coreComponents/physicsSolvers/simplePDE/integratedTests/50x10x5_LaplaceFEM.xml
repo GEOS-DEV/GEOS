@@ -7,12 +7,9 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Temperature"
-      logLevel="0"
       targetRegions="{ Region1 }">
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </LaplaceFEM>
   </Solvers>
 
@@ -44,7 +41,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -103,8 +99,7 @@
   <Outputs>
     <Silo
       name="siloOutput"
-      parallelThreads="32"
-      plotFileRoot="plot"/>
+      parallelThreads="32"/>
 
     <Restart
       name="restartOutput"/>

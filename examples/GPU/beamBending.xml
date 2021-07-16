@@ -10,7 +10,6 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      logLevel="0"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ shale }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
@@ -151,7 +150,6 @@
     <Silo
       name="siloOutput"
       parallelThreads="32"
-      plotFileRoot="plot"
       childDirectory="sub"/>
 
     <Restart

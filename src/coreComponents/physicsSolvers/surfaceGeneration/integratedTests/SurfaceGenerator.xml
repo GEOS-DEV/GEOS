@@ -6,7 +6,6 @@
     <SolidMechanicsLagrangianSSLE
       name="lagSolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ granite }">
@@ -14,15 +13,11 @@
         newtonTol="1.0e-3"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ granite }"
       rockToughness="1e6"
@@ -188,9 +183,7 @@
   <Outputs>
     <Silo
       name="siloOutput"
-      plotLevel="3"
-      parallelThreads="1"
-      plotFileRoot="plot"/>
+      plotLevel="3"/>
 
     <Restart
       name="restartOutput"/>

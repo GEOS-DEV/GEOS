@@ -52,7 +52,6 @@
     <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="0.005"
-      targetExactTimestep="1"
       target="/Tasks/pressureCollection"/>
 
     <PeriodicEvent
@@ -65,7 +64,6 @@
     <PeriodicEvent
       name="restarts"
       timeFrequency="0.1"
-      targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
   </Events>
 

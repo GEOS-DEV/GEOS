@@ -12,9 +12,7 @@
         newtonTol="1e-8"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
@@ -26,8 +24,7 @@
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
-      temperature="297.15"
-      useMass="0"/>
+      temperature="297.15"/>
 
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
@@ -37,8 +34,7 @@
       relPermNames="{ relperm }"
       wellTemperature="297.15"
       maxRelativePressureChange="0.1"
-      maxCompFractionChange="0.1"
-      useMass="0">
+      maxCompFractionChange="0.1">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -162,7 +158,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e4"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -276,26 +271,22 @@
     <TableFunction
       name="waterRelPermTable"
       coordinateFiles="{ satw.txt }"
-      voxelFile="krw.txt"
-      interpolation="linear"/>
+      voxelFile="krw.txt"/>
 
     <TableFunction
       name="oilRelPermTableForOW"
       coordinateFiles="{ sato.txt }"
-      voxelFile="krow.txt"
-      interpolation="linear"/>
+      voxelFile="krow.txt"/>
 
     <TableFunction
       name="gasRelPermTable"
       coordinateFiles="{ satg.txt }"
-      voxelFile="krg.txt"
-      interpolation="linear"/>
+      voxelFile="krg.txt"/>
 
     <TableFunction
       name="oilRelPermTableForOG"
       coordinateFiles="{ sato.txt }"
-      voxelFile="krog.txt"
-      interpolation="linear"/>
+      voxelFile="krog.txt"/>
   </Functions>
 
   <Outputs>

@@ -7,8 +7,6 @@
       name="lagrangiancontact"
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
-      logLevel="0"
-      activeSetMaxIter="10"
       targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial">
       <NonlinearSolverParameters
@@ -16,33 +14,25 @@
         logLevel="2"
         newtonMaxIter="10"
         lineSearchAction="Require"
-        lineSearchMaxCuts="2"
-        maxTimeStepCuts="2"/>
+        lineSearchMaxCuts="2"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </LagrangianContact>
 
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Region, Fracture }"
       solidMaterialNames="{ rock }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="5"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        krylovTol="1.0e-10"
-        logLevel="0"/>
+        krylovTol="1.0e-10"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Region }"
       solidMaterialNames="{ rock }"
       rockToughness="1.0e6"
@@ -160,7 +150,6 @@
       defaultDensity="2700"
       defaultBulkModulus="3.33333333333333e3"
       defaultShearModulus="2.0e3"
-      BiotCoefficient="1"
       compressibility="1.6155088853e-18"
       referencePressure="2.125e6"/>
 

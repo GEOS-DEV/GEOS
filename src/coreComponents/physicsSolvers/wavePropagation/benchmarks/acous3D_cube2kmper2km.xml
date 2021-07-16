@@ -14,7 +14,6 @@
       sourceCoordinates="{ { 1005.0, 1005.0, 1005.0 } }"
       timeSourceFrequency="5.0"
       receiverCoordinates="{ { 1105, 1005, 1005 } }"
-      rickerOrder="2"
       outputSismoTrace="1"/>
   </Solvers>
 
@@ -59,7 +58,6 @@
     <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="0.005"
-      targetExactTimestep="1"
       target="/Tasks/pressureCollection"/>
 
     <PeriodicEvent

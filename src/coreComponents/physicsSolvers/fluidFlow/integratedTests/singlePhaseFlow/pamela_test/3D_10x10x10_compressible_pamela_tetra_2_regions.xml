@@ -48,7 +48,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/siloWellPump"/>
 
     <PeriodicEvent
@@ -86,9 +85,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="1e6"
-      referenceDensity="1000"
       compressibility="1e-9"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid
@@ -134,8 +131,6 @@
       fieldName="pressure"
       scale="1e6"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo

@@ -14,8 +14,6 @@
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="100"/>
-      <LinearSolverParameters
-        logLevel="0"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE
@@ -29,10 +27,8 @@
         newtonMaxIter="200"
         newtonTol="1.0e-12"/>
       <LinearSolverParameters
-        solverType="direct"
         preconditionerType="amg"
-        krylovTol="1.0e-14"
-        logLevel="0"/>
+        krylovTol="1.0e-14"/>
     </SolidMechanicsLagrangianSSLE>
 
     <PhaseFieldDamageFEM
@@ -48,10 +44,8 @@
         newtonMaxIter="200"
         newtonTol="1.0e-12"/>
       <LinearSolverParameters
-        solverType="direct"
         preconditionerType="amg"
-        krylovTol="1.0e-14"
-        logLevel="0"/>
+        krylovTol="1.0e-14"/>
     </PhaseFieldDamageFEM>
   </Solvers>
 
@@ -88,13 +82,11 @@
     <PeriodicEvent
       name="vtkOutput"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/Mode2Spectral_VTKOutput"/>
 
     <PeriodicEvent
       name="siloOutputs"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/Mode2Spectral_SiloOutput"/>
 
     <PeriodicEvent
@@ -145,7 +137,6 @@
       fieldName="TotalDisplacement"
       component="1"
       objectPath="nodeManager"
-      scale="0"
       setNames="{ top, bottom, left, right }"/>
 
     <FieldSpecification
@@ -153,7 +144,6 @@
       fieldName="TotalDisplacement"
       component="0"
       objectPath="nodeManager"
-      scale="0"
       setNames="{ bottom }"/>
 
     <FieldSpecification
@@ -161,7 +151,6 @@
       fieldName="TotalDisplacement"
       component="2"
       objectPath="nodeManager"
-      scale="0"
       setNames="{ top, bottom, left, right }"/>
 
     <!-- <FieldSpecification name="initialCrack" -->
@@ -182,13 +171,10 @@
 
   <Outputs>
     <Silo
-      name="Mode2Spectral_SiloOutput"
-      parallelThreads="1"
-      plotFileRoot="plot"/>
+      name="Mode2Spectral_SiloOutput"/>
 
     <VTK
       name="Mode2Spectral_VTKOutput"
-      parallelThreads="1"
       plotFileRoot="plot"/>
 
     <Restart

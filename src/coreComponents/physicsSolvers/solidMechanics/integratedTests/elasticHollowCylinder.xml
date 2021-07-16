@@ -10,7 +10,6 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      logLevel="0"
       targetRegions="{ Region1 }"
       solidMaterialNames="{ steel }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
@@ -18,9 +17,7 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
@@ -70,7 +67,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <!--PeriodicEvent
@@ -166,7 +162,6 @@
     <Silo
       name="siloOutput"
       parallelThreads="32"
-      plotFileRoot="plot"
       childDirectory="sub"/>
 
     <!--Restart

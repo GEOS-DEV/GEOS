@@ -18,12 +18,9 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"
         lineSearchAction="None"
-        newtonMinIter="1"
         maxTimeStepCuts="5"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </ProppantTransport>
 
     <FlowProppantTransport
@@ -54,8 +51,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Fracture }"
       solidMaterialNames="{ granite }"
       rockToughness="1e6"
@@ -110,8 +105,6 @@
     integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -147,15 +140,12 @@
     <ProppantSlurryFluid
       name="water"
       referencePressure="1e5"
-      referenceDensity="1000"
       compressibility="0e-10"
-      referenceViscosity="0.001"
       referenceProppantDensity="2550.0"/>
 
     <ParticleFluid
       name="sand"
       particleSettlingModel="Stokes"
-      hinderedSettlingCoefficient="5.9"
       proppantDensity="2550.0"
       proppantDiameter="4.0e-4"/>
 
@@ -209,7 +199,6 @@
       initialCondition="1"
       objectPath="ElementRegions/Fracture"
       fieldName="isProppantBoundary"
-      scale="0"
       component="0"
       setNames="{ fracture }"/>
 
@@ -254,8 +243,6 @@
       component="0"
       setNames="{ right }"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo

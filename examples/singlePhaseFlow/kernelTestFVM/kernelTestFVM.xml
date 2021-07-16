@@ -5,7 +5,6 @@
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <SinglePhaseFVM
       name="flowSolver"
-      logLevel="0"
       discretization="tpfa"
       fluidNames="{ water }"
       solidNames="{ rock }"
@@ -18,8 +17,7 @@
         solverType="gmres"
         krylovTol="1.0"
         krylovMaxIter="1"
-        preconditionerType="amg"
-        logLevel="0"/>
+        preconditionerType="amg"/>
     </SinglePhaseFVM>
   </Solvers>
 
@@ -90,9 +88,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="0.0"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid
@@ -110,8 +106,7 @@
       name="solution"
       inputVarNames="{ elementCenter }"
       coordinateFiles="{ tables/x.tab, tables/y.tab, tables/z.tab }"
-      voxelFile="tables/v.tab"
-      interpolation="linear"/>
+      voxelFile="tables/v.tab"/>
   </Functions>
 
   <FieldSpecifications>

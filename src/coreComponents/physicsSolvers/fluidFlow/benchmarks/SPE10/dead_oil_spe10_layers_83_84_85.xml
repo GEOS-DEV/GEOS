@@ -12,7 +12,6 @@
       targetRegions="{ reservoir, wellRegion1, wellRegion2, wellRegion3, wellRegion4, wellRegion5 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
-        dtIncIterLimit="0.4"
         maxTimeStepCuts="10"
         lineSearchAction="None"
         newtonMaxIter="20"/>
@@ -212,19 +211,16 @@
     <PeriodicEvent
       name="vtk"
       timeFrequency="2e6"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
       timeFrequency="5529600"
-      targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
 
     <PeriodicEvent
       name="timeHistoryOutput"
       timeFrequency="1.5e7"
-      targetExactTimestep="1"
       target="/Outputs/timeHistoryOutput"/>
 
     <PeriodicEvent
@@ -234,8 +230,7 @@
 
     <PeriodicEvent
       name="timeHistoryCollection"
-      timeFrequency="5e5"
-      targetExactTimestep="1">
+      timeFrequency="5e5">
       <PeriodicEvent
         name="timeHistoryCollection1"
         target="/Tasks/wellRateCollection1"/>

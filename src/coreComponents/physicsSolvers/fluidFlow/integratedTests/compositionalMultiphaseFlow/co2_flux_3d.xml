@@ -20,9 +20,7 @@
         maxTimeStepCuts="5"
         lineSearchAction="None"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
 
@@ -71,7 +69,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e5"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
@@ -224,8 +221,6 @@
       component="1"
       scale="0.995"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <VTK

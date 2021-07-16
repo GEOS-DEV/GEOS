@@ -14,12 +14,9 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="15"
-        maxTimeStepCuts="2"
         lineSearchMaxCuts="2"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </MultiphasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
@@ -39,8 +36,7 @@
       solidNames="{ skeleton }"
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
-      temperature="300"
-      useMass="0"/>
+      temperature="300"/>
   </Solvers>
 
   <Mesh>
@@ -73,19 +69,16 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e5"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e5"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
       forceDt="1e4"
-      beginTime="0"
       endTime="1e5"
       target="/Solvers/MultiphasePoroelasticitySolver"/>
 
@@ -98,7 +91,6 @@
     <PeriodicEvent
       name="restarts"
       timeFrequency="3e5"
-      targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
   </Events>
 

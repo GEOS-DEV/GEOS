@@ -13,7 +13,6 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="25"
-        newtonMinIter="1"
         dtCutIterLimit="0.9"
         dtIncIterLimit="0.6"
         timestepCutFactor="0.1"
@@ -561,31 +560,26 @@
     <PeriodicEvent
       name="vtk"
       timeFrequency="2e6"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="timeHistoryOutput1"
       timeFrequency="1.5e7"
-      targetExactTimestep="1"
       target="/Outputs/timeHistoryOutput1"/>
 
     <PeriodicEvent
       name="timeHistoryOutput2"
       timeFrequency="1.5e7"
-      targetExactTimestep="1"
       target="/Outputs/timeHistoryOutput2"/>
 
     <PeriodicEvent
       name="timeHistoryOutput3"
       timeFrequency="1.5e7"
-      targetExactTimestep="1"
       target="/Outputs/timeHistoryOutput3"/>
 
     <PeriodicEvent
       name="timeHistoryOutput4"
       timeFrequency="1.5e7"
-      targetExactTimestep="1"
       target="/Outputs/timeHistoryOutput4"/>
 
     <PeriodicEvent
@@ -596,25 +590,21 @@
     <PeriodicEvent
       name="timeHistoryCollection1"
       timeFrequency="1e6"
-      targetExactTimestep="1"
       target="/Tasks/wellRateCollection1"/>
 
     <PeriodicEvent
       name="timeHistoryCollection2"
       timeFrequency="1e6"
-      targetExactTimestep="1"
       target="/Tasks/wellRateCollection2"/>
 
     <PeriodicEvent
       name="timeHistoryCollection3"
       timeFrequency="1e6"
-      targetExactTimestep="1"
       target="/Tasks/wellRateCollection3"/>
 
     <PeriodicEvent
       name="timeHistoryCollection4"
       timeFrequency="1e6"
-      targetExactTimestep="1"
       target="/Tasks/wellRateCollection4"/>
   </Events>
 

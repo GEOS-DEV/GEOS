@@ -29,8 +29,7 @@
         newtonMaxIter="50"
         newtonTol="1.0e-12"/>
       <LinearSolverParameters
-        krylovTol="1.0e-10"
-        logLevel="0"/>
+        krylovTol="1.0e-10"/>
     </SolidMechanicsLagrangianSSLE>
 
     <PhaseFieldDamageFEM
@@ -46,8 +45,7 @@
         newtonMaxIter="50"
         newtonTol="1.0e-12"/>
       <LinearSolverParameters
-        krylovTol="1.0e-10"
-        logLevel="0"/>
+        krylovTol="1.0e-10"/>
     </PhaseFieldDamageFEM>
   </Solvers>
 
@@ -81,13 +79,11 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/PhaseFieldFracture_CohesiveModel_VTKOutput"/>
 
     <PeriodicEvent
       name="siloOutputs"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/PhaseFieldFracture_CohesiveModel_SiloOutput"/>
 
     <PeriodicEvent
@@ -159,7 +155,6 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="1"
-      scale="0"
       setNames="{ all }"/>
 
     <FieldSpecification
@@ -167,7 +162,6 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="2"
-      scale="0"
       setNames="{ all }"/>
 
     <!-- <FieldSpecification name="pointSource"
@@ -205,13 +199,10 @@
 
   <Outputs>
     <Silo
-      name="PhaseFieldFracture_CohesiveModel_SiloOutput"
-      parallelThreads="1"
-      plotFileRoot="plot"/>
+      name="PhaseFieldFracture_CohesiveModel_SiloOutput"/>
 
     <VTK
       name="PhaseFieldFracture_CohesiveModel_VTKOutput"
-      parallelThreads="1"
       plotFileRoot="plot"/>
 
     <Restart

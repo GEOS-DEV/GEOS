@@ -12,9 +12,7 @@
         lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhaseReservoir>
 
     <SinglePhaseHybridFVM
@@ -101,7 +99,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e4"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -141,7 +138,6 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-9"
       referenceViscosity="0.005"
       viscosibility="0.0"/>

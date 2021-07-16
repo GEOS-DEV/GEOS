@@ -13,12 +13,9 @@
       porousMaterialNames="{porousRock}"
       logLevel="1">
       <NonlinearSolverParameters
-        newtonMaxIter="5"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures
@@ -26,20 +23,17 @@
       targetRegions="{ Domain, Fracture }"
       solidSolverName="matrixMechSolver"
       fractureRegionName="Fracture"
-      contactRelationName="fractureContact"
-      logLevel="0"/>
+      contactRelationName="fractureContact"/>
 
     <SolidMechanicsLagrangianSSLE
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Domain }"
       solidMaterialNames="{ rock }"/>
 
     <SinglePhaseFVM
       name="flowSolver"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain, Fracture }"
       fluidNames="{ water }"
@@ -92,13 +86,11 @@
     <PeriodicEvent
       name="outputs"
       cycleFrequency="10"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
       timeFrequency="10"
-      targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
   </Events>
 
@@ -149,7 +141,6 @@
       defaultDensity="1000"
       defaultViscosity="1.0e-3"
       referencePressure="1e6"
-      referenceDensity="1000"
       compressibility="0.0e0"
       referenceViscosity="1e-3"
       viscosibility="0.0"/>
@@ -183,12 +174,10 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
-      fieldName="pressure"
-      scale="0"/>
+      fieldName="pressure"/>
 
     <FieldSpecification
       name="initialPressureFracture"
-      initialCondition="0"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="pressure"

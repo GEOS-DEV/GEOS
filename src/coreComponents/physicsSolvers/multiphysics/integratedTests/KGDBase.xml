@@ -71,7 +71,6 @@
       beginTime="0.0"
       endTime="1.0"
       forceDt="0.2"
-      targetExactStartStop="1"
       target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent
@@ -79,7 +78,6 @@
       beginTime="1.0"
       endTime="10.0"
       forceDt="0.5"
-      targetExactStartStop="1"
       target="/Solvers/hydrofracture"/>
 
     <!--PeriodicEvent 
@@ -194,6 +192,4 @@
       scale="-1.0"
       setNames="{ source }"/>
   </FieldSpecifications>
-
-  <Functions/>
 </Problem>

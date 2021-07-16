@@ -61,7 +61,6 @@
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
       solidNames="{ rock }"
@@ -152,7 +151,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="10.0e6"
-      targetExactTimestep="1"
       target="/Outputs/syntheticReservoirVizFile"/>
   </Events>
 
@@ -169,8 +167,7 @@
       name="initialPressureFunc"
       inputVarNames="{ elementCenter }"
       coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
-      voxelFile="tables_FieldCaseTuto/pressure.geos"
-      interpolation="linear"/>
+      voxelFile="tables_FieldCaseTuto/pressure.geos"/>
 
     <TableFunction
       name="permxFunc"

@@ -8,7 +8,6 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="FIM"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact">
@@ -16,15 +15,11 @@
         newtonTol="1.0e-5"
         newtonMaxIter="50"
         lineSearchMaxCuts="10"/>
-      <LinearSolverParameters
-        logLevel="0"
-        solverType="direct"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       solidMaterialNames="{ rock }"
@@ -32,7 +27,6 @@
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
@@ -42,8 +36,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Domain }"
       solidMaterialNames="{ rock }"
       rockToughness="1.0e6"/>
@@ -102,7 +94,6 @@
     integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
       targetExactTimestep="0"
       target="/Outputs/siloOutput"/>
 
@@ -147,7 +138,6 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
@@ -157,7 +147,6 @@
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"
       defaultShearModulus="1.0e9"
-      BiotCoefficient="1"
       compressibility="1.6155088853e-18"
       referencePressure="2.125e6"/>
 
@@ -241,8 +230,6 @@
       scale="-1.0"
       setNames="{ source }"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo
