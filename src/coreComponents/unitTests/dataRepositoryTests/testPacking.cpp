@@ -62,27 +62,56 @@ real64 drand( real64 min = 0.0, real64 max = 1.0 )
   return min + f * (max - min);
 }
 
-TEST( testPacking, testPacking )
+// all the types we instantiate packing functions for, execpting r1tensor which is being removed
+using PackingTemplateTestTypes = ::testing::Types< int, long int, long long int, real32, real64 >;
+using PackingTemplateDims = ::testing::Types< 1, 2, 3 >;
+
+template< typename TYPE, int DIM >
+class PackingTemplateTest : public ::testing::Test
 {
-  std::srand( std::time( nullptr ));
-  constexpr localIndex size = 10000;
-  array2d< double > veloc( size, 3 );
-  array2d< double > unpacked( size, 3 );
+  public:
+    void pack( )
+    {
+      std::srand( std::time( nullptr ));
+      constexpr localIndex size = 10000;
+      array< TYPE, DIM > veloc( size, 3 );
+      array< TYPE, DIM > unpacked( size, 3 );
 
-  for( localIndex ii = 0; ii < size; ++ii )
-    for( localIndex jj = 0; jj < 3; ++jj )
-      veloc[ii][jj] = drand();
+      for( localIndex ii = 0; ii < size; ++ii )
+        for( localIndex jj = 0; jj < 3; ++jj )
+          veloc[ii][jj] = drand();
 
-  buffer_unit_type * null_buf = NULL;
-  localIndex calc_size = bufferOps::Pack< false >( null_buf, veloc );
-  buffer_type buf( calc_size );
-  buffer_unit_type * buffer = &buf[0];
-  bufferOps::Pack< true >( buffer, veloc );
-  buffer_unit_type const * cbuffer = &buf[0];
-  bufferOps::Unpack( cbuffer, unpacked );
-  for( localIndex ii = 0; ii < size; ++ii )
-      for( localIndex jj = 0; jj < 3; ++jj )
-        EXPECT_EQ( veloc[ii][jj], unpacked[ii][jj] );
+      buffer_unit_type * null_buf = NULL;
+      localIndex calc_size = bufferOps::Pack< false >( null_buf, veloc );
+      buffer_type buf( calc_size );
+      buffer_unit_type * buffer = &buf[0];
+      bufferOps::Pack< true >( buffer, veloc );
+      buffer_unit_type const * cbuffer = &buf[0];
+      bufferOps::Unpack( cbuffer, unpacked );
+      for( localIndex ii = 0; ii < size; ++ii )
+
+        for( localIndex jj = 0; jj < 3; ++jj )
+          EXPECT_EQ( veloc[ii][jj], unpacked[ii][jj] );
+    }
+    void packByIndex( )
+    {
+
+    }
+    void packDevice( )
+    {
+
+    }
+    void packByIndexDevice( )
+    {
+
+    }
+}
+
+TYPED_TEST_SUITE( PackingTemplateTest, PackingTemplateTestTypes, );
+
+TYPED_TEST( testPacking, testPacking )
+{
+
 }
 
 TEST( testPacking, testPackByIndex )
@@ -91,9 +120,9 @@ TEST( testPacking, testPackByIndex )
   std::srand( std::time( nullptr ));
   constexpr localIndex size = 10000;
   localIndex pack_count = std::rand() % size;
-  array2d< double > veloc( size, 3 );
+  array< TYPE, DIM > veloc( size, 3 );
   array1d< localIndex > indices( pack_count );
-  array2d< double > unpacked( size, 3 );
+  array< TYPE, DIM > unpacked( size, 3 );
 
   for( localIndex ii = 0; ii < size; ++ii )
     for( localIndex jj = 0; jj < 3; ++jj )
@@ -128,8 +157,8 @@ TEST( testPacking, testPackingDevice )
 {
   std::srand( std::time( nullptr ));
   constexpr localIndex size = 10000;
-  array2d< double > veloc( size, 3 );
-  array2d< double > unpacked( size, 3 );
+  array< TYPE, DIM > veloc( size, 3 );
+  array< TYPE, DIM > unpacked( size, 3 );
 
   for( localIndex ii = 0; ii < size; ++ii )
     for( localIndex jj = 0; jj < 3; ++jj )
@@ -187,9 +216,9 @@ TEST( testPacking, testPackByIndexDevice )
   std::srand( std::time( nullptr ));
   constexpr localIndex size = 10000;
   localIndex pack_count = 5000;
-  array2d< double > veloc( size, 3 );
+  array< TYPE, DIM > veloc( size, 3 );
   array1d< localIndex > indices( pack_count );
-  array2d< double > unpacked( size, 3 );
+  array< TYPE, DIM > unpacked( size, 3 );
 
   for( localIndex ii = 0; ii < size; ++ii )
     for( localIndex jj = 0; jj < 3; ++jj )
