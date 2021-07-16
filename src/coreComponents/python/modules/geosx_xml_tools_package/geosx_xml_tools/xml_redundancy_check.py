@@ -7,7 +7,7 @@ from pathlib import Path
 import argparse
 
 
-def check_redundancy_level(local_schema, node):
+def check_redundancy_level(local_schema, node, whitelist=['component']):
     """Check xml redundancy at the current level
 
       @arg local_schema dict containing schema definitions
@@ -15,7 +15,11 @@ def check_redundancy_level(local_schema, node):
     """
     node_is_required = 0
     for ka in node.attrib.keys():
-        if ('default' not in local_schema['attributes'][ka]):
+        if (ka in whitelist):
+            node_is_required += 1
+        elif (ka not in local_schema['attributes']):
+            node_is_required += 1
+        elif ('default' not in local_schema['attributes'][ka]):
             node_is_required += 1
         elif (node.get(ka) != local_schema['attributes'][ka]['default']):
             node_is_required += 1
