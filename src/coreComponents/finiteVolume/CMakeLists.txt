@@ -8,18 +8,18 @@ set( finiteVolume_headers
      FaceElementStencil.hpp
      FiniteVolumeManager.hpp
      FluxApproximationBase.hpp
-     TwoPointFluxApproximation.hpp
      FluxStencil.hpp
      HybridMimeticDiscretization.hpp
      MimeticInnerProductDispatch.hpp 
      StencilBase.hpp    
-     mimeticInnerProducts/MimeticInnerProductBase.hpp
-     mimeticInnerProducts/QuasiTPFAInnerProduct.hpp
-     mimeticInnerProducts/QuasiRTInnerProduct.hpp
-     mimeticInnerProducts/TPFAInnerProduct.hpp
-     mimeticInnerProducts/SimpleInnerProduct.hpp
+     TwoPointFluxApproximation.hpp
      mimeticInnerProducts/BdVLMInnerProduct.hpp
+     mimeticInnerProducts/MimeticInnerProductBase.hpp
      mimeticInnerProducts/MimeticInnerProductHelpers.hpp
+     mimeticInnerProducts/QuasiRTInnerProduct.hpp
+     mimeticInnerProducts/QuasiTPFAInnerProduct.hpp
+     mimeticInnerProducts/SimpleInnerProduct.hpp
+     mimeticInnerProducts/TPFAInnerProduct.hpp
    )
 #
 # Specify all sources
@@ -31,8 +31,8 @@ set( finiteVolume_sources
      FaceElementStencil.cpp
      FiniteVolumeManager.cpp
      FluxApproximationBase.cpp
-     TwoPointFluxApproximation.cpp
      HybridMimeticDiscretization.cpp
+     TwoPointFluxApproximation.cpp
    )
 
 set( dependencyList mesh codingUtilities fieldSpecification )

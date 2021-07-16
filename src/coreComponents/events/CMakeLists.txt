@@ -2,13 +2,13 @@
 # Specify all headers
 #
 set(events_headers
-    EventManager.hpp
     EventBase.hpp
-    PeriodicEvent.hpp
+    EventManager.hpp
     HaltEvent.hpp
+    PeriodicEvent.hpp
     SoloEvent.hpp
-    tasks/TasksManager.hpp
     tasks/TaskBase.hpp
+    tasks/TasksManager.hpp
    )
 
 
@@ -17,10 +17,10 @@ set(events_headers
 #
 
 set(events_sources
-    EventManager.cpp
     EventBase.cpp
-    PeriodicEvent.cpp
+    EventManager.cpp
     HaltEvent.cpp
+    PeriodicEvent.cpp
     SoloEvent.cpp
     tasks/TaskBase.cpp
     tasks/TasksManager.cpp

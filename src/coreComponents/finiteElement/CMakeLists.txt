@@ -4,22 +4,22 @@
 set( finiteElement_headers
      FiniteElementDiscretization.hpp
      FiniteElementDiscretizationManager.hpp
-     FiniteElementDispatch.hpp
-     Kinematics.h
-     kernelInterface/KernelBase.hpp
-     kernelInterface/SparsityKernelBase.hpp
-     kernelInterface/ImplicitKernelBase.hpp
      FiniteElementDiscretizationManager.hpp
      FiniteElementDispatch.hpp
+     FiniteElementDispatch.hpp
+     Kinematics.h
      elementFormulations/FiniteElementBase.hpp
      elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
-     elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp
+     elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp
      elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp
      elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
      elementFormulations/LagrangeBasis1.hpp
      elementFormulations/LagrangeBasis2.hpp
+     kernelInterface/ImplicitKernelBase.hpp
+     kernelInterface/KernelBase.hpp
+     kernelInterface/SparsityKernelBase.hpp
    )
 #
 # Specify all sources

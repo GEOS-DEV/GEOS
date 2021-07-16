@@ -2,9 +2,9 @@
 # Specify all headers
 #
 set(mainInterface_headers
+    GeosxState.hpp
     ProblemManager.hpp
     initialization.hpp
-    GeosxState.hpp
    )
 
 
@@ -13,9 +13,9 @@ set(mainInterface_headers
 #
 
 set(mainInterface_sources
+    GeosxState.cpp
     ProblemManager.cpp
     initialization.cpp
-    GeosxState.cpp
    )
 
 set( dependencyList physicsSolvers discretizationMethods fieldSpecification linearAlgebra events fileIO optionparser )

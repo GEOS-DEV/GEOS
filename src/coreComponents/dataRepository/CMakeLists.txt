@@ -2,11 +2,14 @@
 # Specify all headers
 #
 set(dataRepository_headers
-    BufferOps_inline.hpp
     BufferOps.hpp
     BufferOpsDevice.hpp
+    BufferOps_inline.hpp
+    ConduitRestart.hpp
+    DefaultValue.hpp
     ExecutableGroup.hpp
     Group.hpp
+    HistoryDataSpec.hpp
     InputFlags.hpp
     KeyIndexT.hpp
     KeyNames.hpp
@@ -14,13 +17,10 @@ set(dataRepository_headers
     ObjectCatalog.hpp
     ReferenceWrapper.hpp
     RestartFlags.hpp
-    ConduitRestart.hpp
-    DefaultValue.hpp
-    wrapperHelpers.hpp
     Wrapper.hpp
     WrapperBase.hpp
+    wrapperHelpers.hpp
     xmlWrapper.hpp
-    HistoryDataSpec.hpp
     )
 
 #
@@ -28,9 +28,9 @@ set(dataRepository_headers
 #
 set(dataRepository_sources
     BufferOpsDevice.cpp
+    ConduitRestart.cpp
     ExecutableGroup.cpp
     Group.cpp
-    ConduitRestart.cpp
     Wrapper.cpp
     WrapperBase.cpp
     xmlWrapper.cpp

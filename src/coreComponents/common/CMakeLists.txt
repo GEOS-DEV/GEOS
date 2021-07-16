@@ -8,17 +8,17 @@ set(common_headers
     DataLayouts.hpp
     DataTypes.hpp
     FieldSpecificationOps.hpp
+    GEOS_RAJA_Interface.hpp
     GeosxMacros.hpp
-    initializeEnvironment.hpp
     Logger.hpp
     MpiWrapper.hpp
     Path.hpp
-    GEOS_RAJA_Interface.hpp
     Span.hpp
     Stopwatch.hpp
     Tensor.hpp
     TimingMacros.hpp
     TypeDispatch.hpp
+    initializeEnvironment.hpp
    )
 
 #
@@ -27,10 +27,10 @@ set(common_headers
 set(common_sources
     BufferAllocator.cpp
     DataTypes.cpp
-    initializeEnvironment.cpp
     Logger.cpp
     MpiWrapper.cpp
     Path.cpp
+    initializeEnvironment.cpp
    )
 
 set( dependencyList lvarray pugixml RAJA chai conduit::conduit )

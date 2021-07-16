@@ -3,13 +3,13 @@
 # Specify all headers
 #
 set( codingUtilities_headers
-     traits.hpp
      EnumStrings.hpp
+     SFINAE_Macros.hpp
      StringUtilities.hpp
      UnitTestUtilities.hpp
      Utilities.hpp
      static_if.hpp
-     SFINAE_Macros.hpp
+     traits.hpp
    )
 
 #

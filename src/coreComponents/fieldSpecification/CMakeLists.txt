@@ -2,9 +2,9 @@
 # Specify all headers
 #
 set(fieldSpecification_headers
+    DirichletBoundaryCondition.hpp
     FieldSpecificationBase.hpp
     FieldSpecificationManager.hpp
-    DirichletBoundaryCondition.hpp
     SourceFluxBoundaryCondition.hpp
     TractionBoundaryCondition.hpp
    )
@@ -15,9 +15,9 @@ set(fieldSpecification_headers
 #
 
 set(fieldSpecification_sources
+    DirichletBoundaryCondition.cpp
     FieldSpecificationBase.cpp
     FieldSpecificationManager.cpp
-    DirichletBoundaryCondition.cpp
     SourceFluxBoundaryCondition.cpp
     TractionBoundaryCondition.cpp
    )

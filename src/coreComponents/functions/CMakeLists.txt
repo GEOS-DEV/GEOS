@@ -3,8 +3,8 @@
 #
 set(functions_headers
     FunctionBase.hpp
-    TableFunction.hpp
     FunctionManager.hpp
+    TableFunction.hpp
    )
 
 
@@ -14,8 +14,8 @@ set(functions_headers
 
 set(functions_sources
     FunctionBase.cpp
-    TableFunction.cpp
     FunctionManager.cpp
+    TableFunction.cpp
    )
 
 if( ENABLE_MATHPRESSO )
