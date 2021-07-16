@@ -37,7 +37,8 @@ set( linearAlgebra_headers
      utilities/LinearSolverParameters.hpp
      utilities/LinearSolverResult.hpp
      utilities/NormalOperator.hpp
-     utilities/TransposeOperator.hpp )
+     utilities/TransposeOperator.hpp
+   ) 
 
 #
 # Specify all sources
@@ -50,7 +51,8 @@ set( linearAlgebra_sources
      solvers/CgSolver.cpp
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
-     solvers/SeparateComponentPreconditioner.cpp )
+     solvers/SeparateComponentPreconditioner.cpp
+   ) 
 
 set( dependencyList mesh blas lapack )
 
@@ -110,7 +112,8 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp	  
-          interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp)
+          interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
+        )
 
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreExport.cpp
@@ -119,7 +122,8 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreMatrix.cpp
           interfaces/hypre/HyprePreconditioner.cpp
           interfaces/hypre/HypreSolver.cpp
-          interfaces/hypre/HypreVector.cpp )
+          interfaces/hypre/HypreVector.cpp
+        )
 
     list( APPEND dependencyList hypre )
 
@@ -134,7 +138,8 @@ if( ENABLE_PETSC )
           interfaces/petsc/PetscPreconditioner.hpp
           interfaces/petsc/PetscSolver.hpp
           interfaces/petsc/PetscUtils.hpp
-          interfaces/petsc/PetscVector.hpp )
+          interfaces/petsc/PetscVector.hpp
+        )
 
     list( APPEND linearAlgebra_sources
           interfaces/petsc/PetscExport.cpp
@@ -142,7 +147,8 @@ if( ENABLE_PETSC )
           interfaces/petsc/PetscMatrix.cpp
           interfaces/petsc/PetscPreconditioner.cpp
           interfaces/petsc/PetscSolver.cpp
-          interfaces/petsc/PetscVector.cpp )
+          interfaces/petsc/PetscVector.cpp
+        )
 
     list( APPEND dependencyList petsc )
 
@@ -152,15 +158,15 @@ if ( ENABLE_CUDA )
     list( APPEND dependencyList cuda )
 endif()
 
-blt_add_library( NAME                  linearAlgebra
-                 SOURCES               ${linearAlgebra_sources}
-                 HEADERS               ${linearAlgebra_headers}
-                 DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
+blt_add_library( NAME       linearAlgebra
+                 SOURCES    ${linearAlgebra_sources}
+                 HEADERS    ${linearAlgebra_headers}
+                 DEPENDS_ON ${dependencyList}
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
-add_subdirectory(unitTests)
+add_subdirectory( unitTests )
 
 geosx_add_code_checks( PREFIX linearAlgebra )

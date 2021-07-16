@@ -63,7 +63,7 @@ set( physicsSolvers_headers
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
-     )
+   )
 
 #
 # Specify solver sources
@@ -112,14 +112,15 @@ set( physicsSolvers_sources
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      surfaceGeneration/SurfaceGenerator.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
-     )
+   )
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 
 
 set( externalComponentDeps "" )
+
 if( ENABLE_GEOSX_PTP )
-  message(STATUS "Adding GEOSX_PTP to physics solver dependencies")
+  message(STATUS "Adding GEOSX_PTP to physics solver dependencies" )
   list( APPEND externalComponentDeps GEOSX_PTP )
 endif()
 
@@ -136,7 +137,7 @@ blt_add_library( NAME                  physicsSolvers
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 if( externalComponentDeps )
-  target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents)
+  target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
 endif()
 
 

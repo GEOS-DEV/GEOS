@@ -1,21 +1,19 @@
 #
 # Specify all headers
 #
-set(functions_headers
-    FunctionBase.hpp
-    FunctionManager.hpp
-    TableFunction.hpp
+set( functions_headers
+     FunctionBase.hpp
+     FunctionManager.hpp
+     TableFunction.hpp
    )
-
 
 #
 # Specify all sources
 #
-
-set(functions_sources
-    FunctionBase.cpp
-    FunctionManager.cpp
-    TableFunction.cpp
+set( functions_sources
+     FunctionBase.cpp
+     FunctionManager.cpp
+     TableFunction.cpp
    )
 
 if( ENABLE_MATHPRESSO )
@@ -38,13 +36,13 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-blt_add_library( NAME                  functions
-                 SOURCES               ${functions_sources}
-                 HEADERS               ${functions_headers}
-                 DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
+blt_add_library( NAME       functions
+                 SOURCES    ${functions_sources}
+                 HEADERS    ${functions_headers}
+                 DEPENDS_ON ${dependencyList}
+                 OBJECT     {GEOSX_BUILD_OBJ_LIBS}
                )
 
-target_include_directories( functions PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories( functions PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks( PREFIX functions )

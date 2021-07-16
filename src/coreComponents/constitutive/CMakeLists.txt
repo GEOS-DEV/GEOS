@@ -109,7 +109,7 @@ set( constitutive_sources
      solid/TriaxialDriver.cpp
    )
 
-set( dependencyList events dataRepository functions)
+set( dependencyList events dataRepository functions )
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers
@@ -118,6 +118,7 @@ if( ENABLE_PVTPackage )
          fluid/CompositionalMultiphaseFluid.hpp
          fluid/MultiFluidPVTPackageWrapper.hpp
        )
+
     set( constitutive_sources
          ${constitutive_sources}
          fluid/BlackOilFluid.cpp
@@ -126,19 +127,19 @@ if( ENABLE_PVTPackage )
        )
        
     add_subdirectory( PVTPackage )
-    set( dependencyList ${dependencyList} PVTPackage )
 
+    set( dependencyList ${dependencyList} PVTPackage )
 endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-blt_add_library( NAME                  constitutive
-                 SOURCES               ${constitutive_sources}
-                 HEADERS               ${constitutive_headers}
-                 DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
+blt_add_library( NAME       constitutive
+                 SOURCES    ${constitutive_sources}
+                 HEADERS    ${constitutive_headers}
+                 DEPENDS_ON ${dependencyList}
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
                
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
