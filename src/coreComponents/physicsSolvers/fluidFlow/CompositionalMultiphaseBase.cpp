@@ -646,8 +646,7 @@ void CompositionalMultiphaseBase::backupFields( MeshLevel & mesh ) const
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
-    arrayView1d< real64 const > const poroRef =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
+
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
     arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMob =
@@ -658,7 +657,6 @@ void CompositionalMultiphaseBase::backupFields( MeshLevel & mesh ) const
     arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDens = fluid.phaseDensity();
     arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const phaseCompFrac = fluid.phaseCompFraction();
 
-    ConstitutiveBase const & solid = getConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
     arrayView1d< real64 const > const & poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString() );
 
     arrayView1d< real64 > const totalDensOld =
