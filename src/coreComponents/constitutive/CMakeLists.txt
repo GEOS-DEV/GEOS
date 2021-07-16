@@ -4,6 +4,7 @@
 set( constitutive_headers
      ConstitutiveManager.hpp
      ConstitutiveBase.hpp
+     ConstitutivePassThru.hpp
      ConstitutivePassThruHandler.hpp
      ExponentialRelation.hpp
      NullModel.hpp
@@ -11,19 +12,12 @@ set( constitutive_headers
      capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
+     capillaryPressure/layouts.hpp
      contact/ContactRelationBase.hpp
      contact/Coulomb.hpp
      fluid/layouts.hpp
      fluid/DeadOilFluid.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
-     fluid/PVTFunctions/BrineCO2Density.hpp
-     fluid/PVTFunctions/BrineViscosity.hpp
-     fluid/PVTFunctions/CO2Solubility.hpp
-     fluid/PVTFunctions/FenghourCO2Viscosity.hpp
-     fluid/PVTFunctions/FlashModelBase.hpp
-     fluid/PVTFunctions/PVTFunctionBase.hpp
-     fluid/PVTFunctions/SpanWagnerCO2Density.hpp
-     fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/SingleFluidBase.hpp
      fluid/singleFluidSelector.hpp
      fluid/MultiFluidBase.hpp
@@ -33,8 +27,17 @@ set( constitutive_headers
      fluid/SlurryFluidBase.hpp
      fluid/slurryFluidSelector.hpp
      fluid/ProppantSlurryFluid.hpp
+     fluid/ParticleFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
+     fluid/PVTFunctions/BrineCO2Density.hpp
+     fluid/PVTFunctions/BrineViscosity.hpp
+     fluid/PVTFunctions/CO2Solubility.hpp
+     fluid/PVTFunctions/FenghourCO2Viscosity.hpp
+     fluid/PVTFunctions/FlashModelBase.hpp
+     fluid/PVTFunctions/PVTFunctionBase.hpp
+     fluid/PVTFunctions/SpanWagnerCO2Density.hpp
+     fluid/PVTFunctions/PVTFunctionHelpers.hpp
      solid/Damage.hpp
      solid/DamageVolDev.hpp
      solid/DamageSpectral.hpp
@@ -43,6 +46,7 @@ set( constitutive_headers
      solid/DruckerPragerExtended.hpp
      solid/ElasticIsotropic.hpp
      solid/ElasticTransverseIsotropic.hpp
+     solid/InvariantDecompositions.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
      solid/PropertyConversions.hpp
@@ -60,10 +64,6 @@ set( constitutive_headers
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      relativePermeability/TableRelativePermeability.hpp
      relativePermeability/RelativePermeabilityInterpolators.hpp
-     capillaryPressure/layouts.hpp
-     capillaryPressure/CapillaryPressureBase.hpp
-     capillaryPressure/BrooksCoreyCapillaryPressure.hpp
-     capillaryPressure/VanGenuchtenCapillaryPressure.hpp
    )
 #
 # Specify all sources

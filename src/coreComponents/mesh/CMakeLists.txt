@@ -17,6 +17,7 @@ set( mesh_headers
      FaceManager.hpp
      InterObjectRelation.hpp
      MeshBody.hpp
+     MeshForLoopInterface.hpp
      MeshLevel.hpp
      MeshManager.hpp
      ObjectManagerBase.hpp
@@ -43,6 +44,7 @@ set( mesh_headers
      simpleGeometricObjects/GeometricObjectManager.hpp
      simpleGeometricObjects/SimpleGeometricObjectBase.hpp
      simpleGeometricObjects/Box.hpp
+     simpleGeometricObjects/Cylinder.hpp
      simpleGeometricObjects/ThickPlane.hpp
      simpleGeometricObjects/BoundedPlane.hpp
      utilities/ComputationalGeometry.hpp

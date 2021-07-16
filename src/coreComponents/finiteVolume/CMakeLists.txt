@@ -11,7 +11,8 @@ set( finiteVolume_headers
      TwoPointFluxApproximation.hpp
      FluxStencil.hpp
      HybridMimeticDiscretization.hpp
-     MimeticInnerProductDispatch.hpp     
+     MimeticInnerProductDispatch.hpp 
+     StencilBase.hpp    
      mimeticInnerProducts/MimeticInnerProductBase.hpp
      mimeticInnerProducts/QuasiTPFAInnerProduct.hpp
      mimeticInnerProducts/QuasiRTInnerProduct.hpp

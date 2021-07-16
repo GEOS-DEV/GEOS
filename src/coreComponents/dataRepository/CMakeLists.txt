@@ -9,11 +9,13 @@ set(dataRepository_headers
     Group.hpp
     InputFlags.hpp
     KeyIndexT.hpp
+    KeyNames.hpp
     MappedVector.hpp
     ObjectCatalog.hpp
     ReferenceWrapper.hpp
     RestartFlags.hpp
     ConduitRestart.hpp
+    DefaultValue.hpp
     wrapperHelpers.hpp
     Wrapper.hpp
     WrapperBase.hpp

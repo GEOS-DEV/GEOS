@@ -50,7 +50,9 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/LaplaceVEM.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
+     simplePDE/PhaseFieldDamageFEMKernels.hpp
      solidMechanics/SolidMechanicsEmbeddedFractures.hpp
+     solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp

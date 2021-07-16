@@ -7,6 +7,7 @@ set( finiteElement_headers
      FiniteElementDispatch.hpp
      Kinematics.h
      kernelInterface/KernelBase.hpp
+     kernelInterface/SparsityKernelBase.hpp
      kernelInterface/ImplicitKernelBase.hpp
      FiniteElementDiscretizationManager.hpp
      FiniteElementDispatch.hpp
