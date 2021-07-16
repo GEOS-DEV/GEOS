@@ -73,14 +73,10 @@ set( constitutive_sources
      ConstitutiveManager.cpp
      NullModel.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
-     capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
-     capillaryPressure/CapillaryPressureBase.cpp
-     capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/ContactRelationBase.cpp
      contact/Coulomb.cpp
-     fluid/CompressibleSinglePhaseFluid.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/DeadOilFluid.cpp
      fluid/MultiFluidBase.cpp

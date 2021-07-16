@@ -32,7 +32,6 @@ set( physicsSolvers_headers
      fluidFlow/wells/SinglePhaseWellKernels.hpp     
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
-     fluidFlow/wells/WellSolverBase.hpp
      multiphysics/CompositionalMultiphaseReservoir.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp

@@ -4,8 +4,6 @@
 set( finiteElement_headers
      FiniteElementDiscretization.hpp
      FiniteElementDiscretizationManager.hpp
-     FiniteElementDiscretizationManager.hpp
-     FiniteElementDispatch.hpp
      FiniteElementDispatch.hpp
      Kinematics.h
      elementFormulations/FiniteElementBase.hpp
