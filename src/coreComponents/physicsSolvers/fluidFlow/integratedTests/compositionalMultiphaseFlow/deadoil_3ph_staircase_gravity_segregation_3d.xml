@@ -24,7 +24,6 @@
         directParallel="0"
         logLevel="0"/>
     </CompositionalMultiphaseFVM>
-
   </Solvers>
 
   <Mesh>
@@ -144,7 +143,6 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.4"/>
-
   </FieldSpecifications>
 
   <Outputs>

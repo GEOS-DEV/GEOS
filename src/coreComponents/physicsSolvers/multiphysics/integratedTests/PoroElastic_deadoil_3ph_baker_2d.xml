@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <MultiphasePoromechanics
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
@@ -17,7 +17,7 @@
         maxTimeStepCuts="2"
         lineSearchMaxCuts="2"/>
       <LinearSolverParameters
-	solverType="direct"
+        solverType="direct"
         directParallel="0"
         logLevel="0"/>
     </MultiphasePoromechanics>
@@ -28,8 +28,7 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ skeleton }">
-    </SolidMechanicsLagrangianSSLE>
+      solidMaterialNames="{ skeleton }"/>
 
     <CompositionalMultiphaseFVM
       name="TwoPhaseFlowSolver"
@@ -41,8 +40,7 @@
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="300"
-      useMass="0">
-    </CompositionalMultiphaseFVM>
+      useMass="0"/>
   </Solvers>
 
   <Mesh>
@@ -61,13 +59,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 1.01, 1.01, 10.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 10.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ 8.99, -0.01, -0.01}"
-      xMax="{10.01, 1.01, 10.01}"/>
+      xMin="{ 8.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 10.01 }"/>
   </Geometry>
 
   <Events
@@ -77,12 +75,13 @@
       timeFrequency="1e5"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
+
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e5"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
-    
+
     <PeriodicEvent
       name="solverApplications1"
       forceDt="1e4"
@@ -313,9 +312,10 @@
   <Outputs>
     <Silo
       name="siloOutput"/>
+
     <VTK
       name="vtkOutput"/>
-    
+
     <Restart
       name="restartOutput"/>
   </Outputs>

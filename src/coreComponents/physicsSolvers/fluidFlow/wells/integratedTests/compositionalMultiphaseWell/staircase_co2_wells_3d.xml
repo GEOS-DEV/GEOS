@@ -52,7 +52,7 @@
         name="wellControls2"
         type="injector"
         control="totalVolRate"
-        referenceElevation="12" 
+        referenceElevation="12"
         targetBHP="1.45e7"
         targetTotalRate="5e-8"
         injectionStream="{ 0.995, 0.005 }"/>
@@ -88,7 +88,7 @@
 
     <InternalWell
       name="well_injector1"
-      logLevel="1"	
+      logLevel="1"
       wellRegionName="wellRegion2"
       wellControlsName="wellControls2"
       meshName="mesh1"

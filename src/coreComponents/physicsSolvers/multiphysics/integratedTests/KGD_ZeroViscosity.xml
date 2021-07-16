@@ -8,7 +8,7 @@
   </Included>
 
   <Solvers
-    gravityVector="{0.0, 0.0, -0.0}">
+    gravityVector="{ 0.0, 0.0, -0.0 }">
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
@@ -37,8 +37,7 @@
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       solidMaterialNames="{ rock }"
-      contactRelationName="fractureContact">
-    </SolidMechanicsLagrangianSSLE>
+      contactRelationName="fractureContact"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
@@ -49,8 +48,7 @@
       solidNames="{ rock }"
       permeabilityNames="{fracPerm}"
       inputFluxEstimate="1"
-      meanPermCoeff="0.8">
-    </SinglePhaseFVM>
+      meanPermCoeff="0.8"/>
 
     <SurfaceGenerator
       name="SurfaceGen"

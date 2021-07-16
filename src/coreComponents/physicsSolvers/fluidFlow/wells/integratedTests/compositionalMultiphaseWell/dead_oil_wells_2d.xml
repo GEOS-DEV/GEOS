@@ -9,7 +9,7 @@
       logLevel="1"
       targetRegions="{ Region1, wellRegion1, wellRegion2, wellRegion3 }">
       <NonlinearSolverParameters
-        newtonTol="1e-8"  
+        newtonTol="1e-8"
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
@@ -68,7 +68,7 @@
         referenceElevation="0.5"
         useSurfaceConditions="1"
         surfacePressure="101325"
-        surfaceTemperature="297.15"     
+        surfaceTemperature="297.15"
         targetBHP="4.5e7"
         targetTotalRate="1e-5"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
@@ -273,7 +273,6 @@
   </FieldSpecifications>
 
   <Functions>
-
     <TableFunction
       name="waterRelPermTable"
       coordinateFiles="{ satw.txt }"
@@ -297,7 +296,6 @@
       coordinateFiles="{ sato.txt }"
       voxelFile="krog.txt"
       interpolation="linear"/>
-  
   </Functions>
 
   <Outputs>
@@ -307,5 +305,4 @@
     <Restart
       name="restartOutput"/>
   </Outputs>
-  
 </Problem>

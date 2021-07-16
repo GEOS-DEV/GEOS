@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <LagrangianContact
       name="lagrangiancontact"
       solidSolverName="lagsolve"
@@ -65,33 +65,33 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 0.01, 20.01, 20.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 20.01, 20.01 }"/>
 
     <Box
       name="core"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 0.01, 20.01, 20.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 20.01, 20.01 }"/>
 
     <Box
       name="front"
-      xMin="{ 3.99, -0.01, -0.01}"
-      xMax="{ 4.01, 20.01, 20.01}"/>
+      xMin="{ 3.99, -0.01, -0.01 }"
+      xMax="{ 4.01, 20.01, 20.01 }"/>
 
     <Box
       name="back"
-      xMin="{-4.01, -0.01, -0.01}"
-      xMax="{-3.99, 20.01, 20.01}"/>
+      xMin="{ -4.01, -0.01, -0.01 }"
+      xMax="{ -3.99, 20.01, 20.01 }"/>
 
     <Box
       name="xpos_top"
-      xMin="{-0.01, -0.01, 19.99}"
-      xMax="{ 4.01, 20.01, 20.01}"/>
+      xMin="{ -0.01, -0.01, 19.99 }"
+      xMax="{ 4.01, 20.01, 20.01 }"/>
 
     <Box
       name="bottom"
-      xMin="{-4.01, -0.01, -0.01}"
-      xMax="{ 4.01, 20.01, 0.01}"/>
+      xMin="{ -4.01, -0.01, -0.01 }"
+      xMax="{ 4.01, 20.01, 0.01 }"/>
   </Geometry>
 
   <Events
@@ -238,7 +238,7 @@
     <Traction
       name="xload"
       objectPath="faceManager"
-      direction="{1,0,0}"
+      direction="{ 1, 0, 0 }"
       functionName="ForceTimeFunction"
       scale="-1.0e0"
       setNames="{ front }"/>
@@ -246,7 +246,7 @@
     <Traction
       name="zload"
       objectPath="faceManager"
-      direction="{0,0,1}"
+      direction="{ 0, 0, 1 }"
       functionName="ForceTimeFunction"
       scale="-3.e0"
       setNames="{ xpos_top }"/>

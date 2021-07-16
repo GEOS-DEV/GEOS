@@ -6,14 +6,14 @@
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 50, 100 }"
-      yCoords="{ -50, 0, 50}"
+      yCoords="{ -50, 0, 50 }"
       zCoords="{ 0, 50, 100 }"
       nx="{ 25, 10 }"
       ny="{ 10, 10 }"
       nz="{ 25, 10 }"
-      xBias="{0.0, -0.6}"
-      yBias="{0.6, -0.6}"
-      zBias="{0.0, -0.6}"
+      xBias="{ 0.0, -0.6 }"
+      yBias="{ 0.6, -0.6 }"
+      zBias="{ 0.0, -0.6 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -26,7 +26,7 @@
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="FIM"
       discretization="FE1"
-      targetRegions="{Region2, Fracture}">
+      targetRegions="{ Region2, Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="50"
         lineSearchMaxCuts="10"
@@ -43,8 +43,8 @@
       name="lagsolve"
       logLevel="0"
       contactRelationName="fractureContact"
-      solidMaterialNames="{rock}"
-      targetRegions="{Region2, Fracture}">
+      solidMaterialNames="{ rock }"
+      targetRegions="{ Region2, Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="5"
         newtonTol="1.0e-6"/>
@@ -60,9 +60,9 @@
       solidNames="{rock}"
       permeabilityNames="{fracPerm}"
       logLevel="0"
-      fluidNames="{water}"
+      fluidNames="{ water }"
       meanPermCoeff="0.8"
-      targetRegions="{Fracture}">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="10"
         newtonTol="1.0e-5"/>
@@ -143,18 +143,21 @@
   </Outputs>
 
   <Geometry>
-    <Box name="source"
-         xMin="{-0.1, -0.1, -0.1}"
-         xMax="{2.1, 0.1, 2.1}"/>
+    <Box
+      name="source"
+      xMin="{ -0.1, -0.1, -0.1 }"
+      xMax="{ 2.1, 0.1, 2.1 }"/>
 
-    <Box name="perf"
-         xMin="{-4.1, -0.1, -4.1}"
-         xMax="{4.1, 0.1, 4.1}"/>
+    <Box
+      name="perf"
+      xMin="{ -4.1, -0.1, -4.1 }"
+      xMax="{ 4.1, 0.1, 4.1 }"/>
 
-    <ThickPlane name="fracturable"
-                normal="{0, 1, 0}"
-                origin="{0, 0, 0}"
-                thickness="0.1"/>
+    <ThickPlane
+      name="fracturable"
+      normal="{ 0, 1, 0 }"
+      origin="{ 0, 0, 0 }"
+      thickness="0.1"/>
   </Geometry>
 
   <Events
@@ -185,7 +188,7 @@
     <PeriodicEvent
       name="python"
       cycleFrequency="5"
-      target="/Outputs/pythonOutput"/>  
+      target="/Outputs/pythonOutput"/>
   </Events>
 
   <NumericalMethods>
@@ -213,19 +216,21 @@
       fieldName="water_density"
       scale="1000"/>
 
-    <FieldSpecification name="frac"
-                        fieldName="ruptureState"
-                        initialCondition="1"
-                        objectPath="faceManager"
-                        scale="1"
-                        setNames="{perf}"/>
+    <FieldSpecification
+      name="frac"
+      fieldName="ruptureState"
+      initialCondition="1"
+      objectPath="faceManager"
+      scale="1"
+      setNames="{ perf }"/>
 
-    <FieldSpecification name="separableFace"
-                        fieldName="isFaceSeparable"
-                        initialCondition="1"
-                        objectPath="faceManager"
-                        scale="1"
-                        setNames="{fracturable}"/>
+    <FieldSpecification
+      name="separableFace"
+      fieldName="isFaceSeparable"
+      initialCondition="1"
+      objectPath="faceManager"
+      scale="1"
+      setNames="{ fracturable }"/>
 
     <FieldSpecification
       name="xconstraint"

@@ -1,7 +1,8 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="{0.0, 0.0, -9.81}">
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
       flowSolverName="compositionalMultiphaseFlow"
@@ -12,7 +13,7 @@
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
-        directParallel="0"  
+        directParallel="0"
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
@@ -67,7 +68,7 @@
         referenceElevation="0.5"
         useSurfaceConditions="1"
         surfacePressure="101325"
-        surfaceTemperature="297.15"     
+        surfaceTemperature="297.15"
         targetBHP="4.5e7"
         targetTotalRate="1e-5"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
@@ -249,7 +250,7 @@
       objectPath="faceManager"
       fieldName="facePressure"
       scale="5e6"/>
-    
+
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
       name="initialComposition_oil"

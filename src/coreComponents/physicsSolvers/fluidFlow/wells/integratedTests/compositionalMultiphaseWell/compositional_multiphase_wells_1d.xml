@@ -50,7 +50,7 @@
         name="wellControls2"
         type="injector"
         control="totalVolRate"
-        referenceElevation="2"  
+        referenceElevation="2"
         targetBHP="1e8"
         targetTotalRate="1e-7"
         injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>

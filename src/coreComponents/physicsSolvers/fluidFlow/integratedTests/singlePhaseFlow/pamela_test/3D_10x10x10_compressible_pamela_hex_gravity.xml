@@ -3,7 +3,7 @@
 <Problem>
   <!-- SPHINX_TUT_EXT_HEX_SOLVER -->
   <Solvers
-    gravityVector="{0.0, 0.0, -9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="0"
@@ -33,8 +33,8 @@
   <Geometry>
     <Box
       name="left"
-      xMin="{-1, -1, -1}"
-      xMax="{ 0.9, 11, 11}"/>
+      xMin="{ -1, -1, -1 }"
+      xMax="{ 0.9, 11, 11 }"/>
   </Geometry>
 
   <!-- SPHINX_TUT_EXT_HEX_EVENTS -->

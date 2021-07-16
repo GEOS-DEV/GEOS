@@ -39,8 +39,7 @@
                     { 0.0, 0.0, 4.0 } }"
       autoSpaceRadialElems="{ 0, 0, 1 }"
       useCartesianOuterBoundary="2"
-      cellBlockNames="{ casing, cement, rock }"
-      />
+      cellBlockNames="{ casing, cement, rock }"/>
   </Mesh>
 
   <!-- SPHINX_WellboreMeshEnd -->
@@ -86,7 +85,7 @@
       name="casing"
       cellBlocks="{ casing }"
       materialList="{ casing }"/>
-      
+
     <CellElementRegion
       name="cement"
       cellBlocks="{ cement }"
@@ -96,7 +95,6 @@
       name="rock"
       cellBlocks="{ rock }"
       materialList="{ rock }"/>
-      
   </ElementRegions>
 
   <Constitutive>
@@ -124,7 +122,6 @@
 
   <!-- SPHINX_BoundaryConditions -->
   <FieldSpecifications>
-
     <FieldSpecification
       name="xConstraint"
       objectPath="nodeManager"
@@ -165,7 +162,7 @@
       name="timeFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0, 10.0 }"
-      values=     "{ 0.0, 0.0, 10.0 }"/>
+      values="{ 0.0, 0.0, 10.0 }"/>
   </Functions>
 
   <!-- SPHINX_TableFunctionEnd -->

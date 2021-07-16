@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, -9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="1"
@@ -29,8 +29,8 @@
   <Geometry>
     <Box
       name="midplane"
-      xMin="{-0.1, -0.1, 4.9}"
-      xMax="{10.1, 10.1, 5.1}"/>
+      xMin="{ -0.1, -0.1, 4.9 }"
+      xMax="{ 10.1, 10.1, 5.1 }"/>
   </Geometry>
 
   <Events

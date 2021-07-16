@@ -137,7 +137,7 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="singlePhaseHybridMimetic"
-        innerProductType="simple"  
+        innerProductType="simple"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>

@@ -2,10 +2,10 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <SinglePhasePoromechanicsEmbeddedFractures
-      name = "poroSolver"
-      targetRegions="{Domain, Fracture}"
+      name="poroSolver"
+      targetRegions="{ Domain, Fracture }"
       initialDt="1e-3"
       fracturesSolverName = "fractureMechSolver"
       fluidSolverName = "flowSolver"
@@ -20,14 +20,14 @@
         directParallel="0"
         logLevel="0"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
-    
+
     <SolidMechanicsEmbeddedFractures
-      name = "fractureMechSolver"
-      targetRegions = "{Domain, Fracture}"
-      solidSolverName = "matrixMechSolver"
-      fractureRegionName= "Fracture"
-      contactRelationName = "fractureContact"
-      logLevel = "0"/>    
+      name="fractureMechSolver"
+      targetRegions="{ Domain, Fracture }"
+      solidSolverName="matrixMechSolver"
+      fractureRegionName="Fracture"
+      contactRelationName="fractureContact"
+      logLevel="0"/>
 
     <SolidMechanicsLagrangianSSLE
       name="matrixMechSolver"
@@ -71,11 +71,11 @@
   <Geometry>
     <BoundedPlane
       name="FracturePlane"
-      normal="{1, 0, 0}"
-      origin="{1.5, 1.5, 1.5}"
-      lengthVector="{0, 1, 0}"
-      widthVector="{0, 0, 1}"
-      dimensions="{3,  4 }"/>
+      normal="{ 1, 0, 0 }"
+      origin="{ 1.5, 1.5, 1.5 }"
+      lengthVector="{ 0, 1, 0 }"
+      widthVector="{ 0, 0, 1 }"
+      dimensions="{ 3, 4 }"/>
   </Geometry>
 
   <Events
@@ -102,7 +102,7 @@
       target="/Outputs/restartOutput"/>
   </Events>
 
-  <NumericalMethods>    
+  <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
@@ -153,8 +153,8 @@
       compressibility="0.0e0"
       referenceViscosity="1e-3"
       viscosibility="0.0"/>
-      
-     <Contact
+
+    <Contact
       name="fractureContact"
       penaltyStiffness="0.0e8">
       <TableFunction
@@ -176,24 +176,24 @@
       name="fracPerm"/>                        
     
   </Constitutive>
-  
-<FieldSpecifications>
-   <FieldSpecification
+
+  <FieldSpecifications>
+    <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
       scale="0"/>
-      
-   <FieldSpecification
+
+    <FieldSpecification
       name="initialPressureFracture"
       initialCondition="0"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="pressure"
       scale="1.0e5"/>
-      
+
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
@@ -225,7 +225,7 @@
       scale="0.0"
       setNames="{ xneg }"/>
 
-     <FieldSpecification
+    <FieldSpecification
       name="rightPressure"
       objectPath="faceManager"
       fieldName="pressure"

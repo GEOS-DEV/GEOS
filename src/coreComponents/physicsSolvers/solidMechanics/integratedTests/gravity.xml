@@ -16,7 +16,7 @@
 
   <!-- With this value of g, the stress matches what we'd expect with the correct value: -12998.1 -->
   <Solvers
-    gravityVector="{0.0, 0.0, -9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
@@ -66,6 +66,7 @@
       name="Region1"
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
+
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb2 }"

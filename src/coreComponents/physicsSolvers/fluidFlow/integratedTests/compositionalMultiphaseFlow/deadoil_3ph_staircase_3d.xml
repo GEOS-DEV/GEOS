@@ -24,7 +24,6 @@
         directParallel="0"
         logLevel="0"/>
     </CompositionalMultiphaseFVM>
-
   </Solvers>
 
   <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->
@@ -47,13 +46,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{ 8.99, -0.01, 7.49}"
-      xMax="{10.01, 1.01, 10.01}"/>
+      xMin="{ 8.99, -0.01, 7.49 }"
+      xMax="{ 10.01, 1.01, 10.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ 8.99, -0.01, -0.01}"
-      xMax="{10.01, 1.01, 2.51}"/>
+      xMin="{ 8.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 2.51 }"/>
   </Geometry>
 
   <!-- END_SPHINX_INCLUDE_GEOM_BLOCK -->
@@ -272,33 +271,34 @@
       component="2"
       scale="0.001"/>
   </FieldSpecifications>
-  <!-- END_SPHINX_INCLUDE_BC_BLOCK -->
 
- <Functions>
+  <!-- END_SPHINX_INCLUDE_BC_BLOCK -->
+  <Functions>
     <TableFunction
       name="B_o_table"
       coordinateFiles="{ pres_pvdo.txt }"
       voxelFile="B_o_pvdo.txt"
       interpolation="linear"/>
+
     <TableFunction
       name="visc_o_table"
       coordinateFiles="{ pres_pvdo.txt }"
       voxelFile="visc_pvdo.txt"
       interpolation="linear"/>
+
     <TableFunction
       name="B_g_table"
       coordinateFiles="{ pres_pvdg.txt }"
       voxelFile="B_g_pvdg.txt"
       interpolation="linear"/>
+
     <TableFunction
       name="visc_g_table"
       coordinateFiles="{ pres_pvdg.txt }"
       voxelFile="visc_pvdg.txt"
       interpolation="linear"/>
-    
- </Functions>
+  </Functions>
 
-  
   <!-- START_SPHINX_INCLUDE_OUTPUT_BLOCK -->
   <Outputs>
     <Silo

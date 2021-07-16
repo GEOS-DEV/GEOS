@@ -1,46 +1,50 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector = "{0.0, 0.0, 0.0}">
-    <PhaseFieldFracture name="PhaseFieldSolve"
-                 solidSolverName="SolidMechSolve"
-                 damageSolverName="DamageSolve"
-                 couplingTypeOption="FixedStress"
-                 logLevel="2"
-                 subcycling = "0"
-                 discretization="FE1"
-                 targetRegions="{Region1}">
-    <NonlinearSolverParameters newtonMaxIter="50"/>
-    <LinearSolverParameters
-      solverType="direct"
-      directParallel="0"
-      logLevel="0"/>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      couplingTypeOption="FixedStress"
+      logLevel="2"
+      subcycling="0"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </PhaseFieldFracture>
 
-    <SolidMechanicsLagrangianSSLE name="SolidMechSolve"
-                                  timeIntegrationOption="QuasiStatic"
-                                  logLevel="1"
-                                  discretization="FE1"
-                                  targetRegions="{Region1}"
-                                  solidMaterialNames="{shale}"
-                                  >
-          <NonlinearSolverParameters newtonMaxIter="50"
-                                     newtonTol="1.0e-6"/>
-          <LinearSolverParameters
-            solverType="direct"
-            directParallel="0"
-            logLevel="0"/>
+    <SolidMechanicsLagrangianSSLE
+      name="SolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }"
+      solidMaterialNames="{ shale }">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
-    <PhaseFieldDamageFEM name="DamageSolve"
-                discretization="FE1"
-                timeIntegrationOption="SteadyState"
-                fieldName="Damage"
-                solidMaterialNames="{shale}"
-                localDissipation = "Linear"
-                logLevel="1"
-                targetRegions="{Region1}">
-    </PhaseFieldDamageFEM>
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      solidMaterialNames="{ shale }"
+      localDissipation="Linear"
+      logLevel="1"
+      targetRegions="{ Region1 }"/>
   </Solvers>
 
   <!-- <Mesh>
@@ -118,8 +122,7 @@
       defaultShearModulus="8.0769e4"
       lengthScale="0.2"
       criticalFractureEnergy="2.7"
-      criticalStrainEnergy="1.5"
-      />
+      criticalStrainEnergy="1.5"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -160,11 +163,11 @@
     <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the
     symbolic math function should expect the variables to be given, and an expression that it will compile.
     A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
-    <TableFunction 
+    <TableFunction
       name="f_b"
-      inputVarNames="{time}"
-      coordinates="{0, 130}"
-      values = "{-0.5, 129.5}"/>
+      inputVarNames="{ time }"
+      coordinates="{ 0, 130 }"
+      values="{ -0.5, 129.5 }"/>
   </Functions>
 
   <Outputs>
@@ -185,7 +188,7 @@
   <Geometry>
     <Box
       name="centerPoint"
-      xMin="{-0.001, -0.001, -0.001}"
-      xMax="{+0.001, +0.001, +0.001}"/>
+      xMin="{ -0.001, -0.001, -0.001 }"
+      xMax="{ +0.001, +0.001, +0.001 }"/>
   </Geometry>
 </Problem>

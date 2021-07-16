@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <SinglePhaseFVM
       name="flowSolver"
       logLevel="0"
@@ -39,13 +39,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.0001, -0.01, -0.01}"
-      xMax="{ 0.0001, 1.01, 1.01}"/>
+      xMin="{ -0.0001, -0.01, -0.01 }"
+      xMax="{ 0.0001, 1.01, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ 9.9999, -0.01, -0.01}"
-      xMax="{10.0001, 1.01, 1.01}"/>
+      xMin="{ 9.9999, -0.01, -0.01 }"
+      xMax="{ 10.0001, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events

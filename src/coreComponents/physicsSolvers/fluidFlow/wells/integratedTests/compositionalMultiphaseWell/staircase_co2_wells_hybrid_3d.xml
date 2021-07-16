@@ -15,7 +15,7 @@
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
-        directParallel="0"  
+        directParallel="0"
         logLevel="0"/>
     </CompositionalMultiphaseReservoir>
 
@@ -41,7 +41,7 @@
       relPermNames="{ relperm }"
       wellTemperature="368.15"
       maxCompFractionChange="0.2"
-      maxRelativePressureChange="0.2"            
+      maxRelativePressureChange="0.2"
       useMass="1">
       <WellControls
         name="wellControls1"
@@ -55,7 +55,7 @@
         name="wellControls2"
         type="injector"
         control="totalVolRate"
-        referenceElevation="12" 
+        referenceElevation="12"
         targetBHP="1.45e7"
         targetTotalRate="7.5e-7"
         injectionStream="{ 0.995, 0.005 }"/>
@@ -63,9 +63,9 @@
   </Solvers>
 
   <Mesh>
-
-    <PAMELAMeshGenerator name="mesh1"
-                         file="staircase3d_tet.msh"/>
+    <PAMELAMeshGenerator
+      name="mesh1"
+      file="staircase3d_tet.msh"/>
 
     <InternalWell
       name="well_producer1"
@@ -119,7 +119,6 @@
   </Events>
 
   <ElementRegions>
-
     <CellElementRegion
       name="Channel"
       cellBlocks="{ DEFAULT_TETRA }"
@@ -193,7 +192,7 @@
       objectPath="faceManager"
       fieldName="facePressure"
       scale="9e6"/>
-    
+
     <FieldSpecification
       name="initialComposition_co2"
       initialCondition="1"

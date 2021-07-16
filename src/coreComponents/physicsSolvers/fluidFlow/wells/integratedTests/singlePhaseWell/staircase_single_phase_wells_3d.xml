@@ -41,7 +41,7 @@
         name="wellControls2"
         type="injector"
         control="totalVolRate"
-        referenceElevation="12" 
+        referenceElevation="12"
         targetBHP="1e7"
         targetTotalRate="1e-6"/>
     </SinglePhaseWell>

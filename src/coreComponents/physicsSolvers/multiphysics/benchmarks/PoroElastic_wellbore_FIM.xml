@@ -5,7 +5,6 @@
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <!-- SPHINX_GravityEnd -->
-    
     <!-- SPHINX_PoroelasticSolver -->
     <SinglePhasePoromechanics
       name="poroSolve"
@@ -65,7 +64,7 @@
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
-  </Mesh> 
+  </Mesh>
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
@@ -102,12 +101,12 @@
         name="FE1"
         order="1"/>
     </FiniteElements>
+
     <FiniteVolume>
-      <TwoPointFluxApproximation 
+      <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"
-      />
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -161,7 +160,7 @@
     <FieldSpecification 
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Omega/cb1"
       fieldName="pressure"
       scale="0e6"/>
@@ -196,19 +195,15 @@
       tractionType="normal"
       scale="-1.0e6"
       setNames="{ rneg }"/-->
-      
-    <FieldSpecification 
+    <FieldSpecification
       name="innerPorePressure"
       objectPath="faceManager"
       fieldName="pressure"
       scale="10e6"
       setNames="{ rneg }"/>
-
- 
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->
-
   <!-- SPHINX_TableFunctionEnd -->
   <Outputs>
     <Silo
