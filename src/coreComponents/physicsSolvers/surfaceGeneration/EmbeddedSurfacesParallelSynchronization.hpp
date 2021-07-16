@@ -17,8 +17,8 @@
  * @file EmebeddedSurfacesParallelSynchronization.hpp
  */
 
-#ifndef SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_
-#define SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_
+#define GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_
 
 #include "physicsSolvers/surfaceGeneration/EmbeddedSurfaceGenerator.hpp"
 
@@ -28,54 +28,20 @@ class MeshLevel;
 class NeighborCommunicator;
 struct ModifiedObjectLists;
 
-class EmebeddedSurfacesParallelSynchronization
+namespace EmebeddedSurfacesParallelSynchronization
 {
-public:
 
-  EmebeddedSurfacesParallelSynchronization() = delete;
+void synchronizeNewSurfaces( MeshLevel & mesh,
+                             std::vector< NeighborCommunicator > & neighbors,
+                             NewObjectLists & newObjects,
+                             int const mpiCommOrder );
 
-  ~EmebeddedSurfacesParallelSynchronization() = delete;
+void synchronizeFracturedElements( MeshLevel & mesh,
+                                   std::vector< NeighborCommunicator > & neighbors,
+                                   string const fractureRegionName );
 
-  EmebeddedSurfacesParallelSynchronization( EmebeddedSurfacesParallelSynchronization const & ) = delete;
-
-  EmebeddedSurfacesParallelSynchronization( EmebeddedSurfacesParallelSynchronization && ) = delete;
-
-  EmebeddedSurfacesParallelSynchronization & operator=( EmebeddedSurfacesParallelSynchronization const & ) = delete;
-
-  EmebeddedSurfacesParallelSynchronization & operator=( EmebeddedSurfacesParallelSynchronization && ) = delete;
-
-  static void synchronizeNewSurfaces( MeshLevel & mesh,
-                                      std::vector< NeighborCommunicator > & neighbors,
-                                      NewObjectLists & newObjects,
-                                      int const mpiCommOrder );
-
-
-  static void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
-                                      int commID,
-                                      MeshLevel & mesh,
-                                      NewObjectLists & newObjects );
-
-  static void unpackNewToGhosts( NeighborCommunicator * const neighbor,
-                                 int commID,
-                                 MeshLevel & mesh );
-
-
-  static void synchronizeFracturedElements( MeshLevel & mesh,
-                                            std::vector< NeighborCommunicator > & neighbors,
-                                            string const fractureRegionName );
-
-  static void packFracturedToGhosts( NeighborCommunicator * const neighbor,
-                                     int commID,
-                                     MeshLevel & mesh,
-                                     string const fractureRegionName );
-
-  static void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
-                                       int commID,
-                                       MeshLevel & mesh,
-                                       string const fractureRegionName );
-
-};
+}
 
 } /* namespace lvarray */
 
-#endif /* SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_ */
