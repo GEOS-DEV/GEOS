@@ -15,9 +15,9 @@ def check_redundancy_level(local_schema, node):
     """
     node_is_required = 0
     for ka in node.attrib.keys():
-        if ('default' not in local_schema[ka]):
+        if ('default' not in local_schema['attributes'][ka]):
             node_is_required += 1
-        elif (node.get(ka) != local_schema[ka]['default']):
+        elif (node.get(ka) != local_schema['attributes'][ka]['default']):
             node_is_required += 1
         else:
             node.attrib.pop(ka)
