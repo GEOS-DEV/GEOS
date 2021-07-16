@@ -165,7 +165,7 @@ void ModifiedCamClayUpdates::evaluateYield( real64 const p,
   df_dq = 2. * q /(M*M);
   df_dpc = -p;
   real64 dpc_dve = -1./(Cc-Cr) * pc;
-  df_dp_dve = 2. * bulkModulus - dpc_dve;
+  df_dp_dve = 2. * bulkModulus + dpc_dve;
   df_dq_dse = 2. /(M*M) * 3. * mu;
 
   f = q*q/(M*M)+p*(p-pc);
@@ -393,9 +393,9 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
                          + c3 * identity[i] * deviator[j]
                          + c4 * deviator[i] * identity[j]
                          + c5 * deviator[i] * deviator[j];
-      //   std::cout<<stiffness[i][j]<<" , ";
+     //    std::cout<<stiffness[i][j]<<" , ";
     }
-    //std::cout<<" ; "<<std::endl;
+   // std::cout<<" ; "<<std::endl;
   }
   // remember history variables before returning
 
