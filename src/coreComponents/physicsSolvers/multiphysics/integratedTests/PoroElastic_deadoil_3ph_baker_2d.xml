@@ -2,12 +2,11 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0, 0, 0}">
-    <MultiphasePoroelastic
+    gravityVector="{0.0, 0.0, 0.0}">
+    <MultiphasePoromechanics
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
       fluidSolverName="TwoPhaseFlowSolver"
-      couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -20,7 +19,7 @@
 	solverType="direct"
         directParallel="0"
         logLevel="0"/>
-    </MultiphasePoroelastic>
+    </MultiphasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
       name="LinearElasticitySolver"
@@ -76,7 +75,12 @@
       timeFrequency="1e5"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
-
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e5"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
+    
     <PeriodicEvent
       name="solverApplications1"
       forceDt="1e4"
@@ -311,7 +315,9 @@
   <Outputs>
     <Silo
       name="siloOutput"/>
-
+    <VTK
+      name="vtkOutput"/>
+    
     <Restart
       name="restartOutput"/>
   </Outputs>

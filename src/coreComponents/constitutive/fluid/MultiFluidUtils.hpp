@@ -29,21 +29,21 @@ namespace constitutive
 namespace internal
 {
 
-template< typename T, int DIM >
+template< typename T, int DIM, int USD >
 struct ArraySliceOrRefHelper
 {
-  using type = ArraySlice< T, DIM >;
+  using type = ArraySlice< T, DIM, USD >;
 };
 
 // an array slice of DIM=0 decays to a reference to scalar
-template< typename T >
-struct ArraySliceOrRefHelper< T, 0 >
+template< typename T, int USD >
+struct ArraySliceOrRefHelper< T, 0, USD >
 {
   using type = T &;
 };
 
-template< typename T, int DIM >
-using ArraySliceOrRef = typename ArraySliceOrRefHelper< T, DIM >::type;
+template< typename T, int DIM, int USD=DIM-1 >
+using ArraySliceOrRef = typename ArraySliceOrRefHelper< T, DIM, USD >::type;
 
 } // namespace internal
 
@@ -51,13 +51,13 @@ using ArraySliceOrRef = typename ArraySliceOrRefHelper< T, DIM >::type;
  * @brief Helper struct used to represent a variable and its compositional derivatives
  * @tparam DIM number of dimensions
  */
-template< int DIM >
+template< int DIM, int USD, int USD_DC >
 struct CompositionalVarContainer
 {
-  internal::ArraySliceOrRef< real64, DIM > const & value; // variable value
-  internal::ArraySliceOrRef< real64, DIM > const & dPres; // derivative w.r.t. pressure
-  internal::ArraySliceOrRef< real64, DIM > const & dTemp; // derivative w.r.t. temperature
-  internal::ArraySliceOrRef< real64, DIM + 1 > const & dComp; // derivative w.r.t. composition
+  internal::ArraySliceOrRef< real64, DIM, USD > const & value; // variable value
+  internal::ArraySliceOrRef< real64, DIM, USD > const & dPres; // derivative w.r.t. pressure
+  internal::ArraySliceOrRef< real64, DIM, USD > const & dTemp; // derivative w.r.t. temperature
+  internal::ArraySliceOrRef< real64, DIM + 1, USD_DC > const & dComp; // derivative w.r.t. composition
 };
 
 } // namespace constitutive
