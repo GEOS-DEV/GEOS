@@ -22,7 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
-#include "mesh/ElementSubRegionBase.hpp"
+#include "mesh/ElementType.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "FiniteElementDispatch.hpp"
 

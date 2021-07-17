@@ -18,11 +18,6 @@
 
 #include "FiniteElementDiscretization.hpp"
 
-#include "mesh/CellElementSubRegion.hpp"
-#include "mesh/NodeManager.hpp"
-#include "codingUtilities/Utilities.hpp"
-#include "common/TimingMacros.hpp"
-
 // TODO make this not dependent on this header...need better key implementation
 
 namespace geosx
@@ -68,7 +63,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     {
       case ElementType::Triangle:      return std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
       case ElementType::Quadrilateral: return std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
-      case ElementType::Tetrahedon:    return std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
+      case ElementType::Tetrahedron:    return std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
       case ElementType::Pyramid:       return std::make_unique< H1_Pyramid_Lagrange1_Gauss5 >();
       case ElementType::Prism:         return std::make_unique< H1_Wedge_Lagrange1_Gauss6 >();
       case ElementType::Hexahedron:    return std::make_unique< H1_Hexahedron_Lagrange1_GaussLegendre2 >();

@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 #define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 
-#include "codingUtilities/EnumStrings.hpp"
+#include "mesh/ElementType.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 
 namespace geosx
@@ -33,34 +33,6 @@ namespace constitutive
 {
 class ConstitutiveBase;
 }
-
-/**
- * @brief Denotes type of cell/element shape
- */
-enum class ElementType : integer
-{
-  Line,          ///< Two-node line segment
-  Triangle,      ///< Three-node triangle
-  Quadrilateral, ///< Four-node quadrilateral
-  Polygon,       ///< Polygonal element (2D surface in 3D space)
-  Tetrahedon,    ///< Four-node tetrahedral element
-  Pyramid,       ///< Five-node pyramid element
-  Prism,         ///< Six-node wedge element
-  Hexahedron,    ///< Eight-node hexahedral element
-  Polyhedron     ///< Polyhedral element
-};
-
-/// Strings for ElementType
-ENUM_STRINGS( ElementType,
-              "BEAM",
-              "C2D3",
-              "C2D4",
-              "Polygon",
-              "C3D4",
-              "C3D5",
-              "C3D6",
-              "C3D8",
-              "Polyhedron" );
 
 /**
  * @class ElementSubRegionBase

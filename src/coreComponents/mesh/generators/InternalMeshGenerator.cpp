@@ -119,7 +119,7 @@ static int getNumElemPerBox( ElementType const elementType )
   {
     case ElementType::Triangle:      return 2;
     case ElementType::Quadrilateral: return 1;
-    case ElementType::Tetrahedon:    return 6;
+    case ElementType::Tetrahedron:    return 6;
     case ElementType::Prism:         return 2;
     case ElementType::Pyramid:       return 6;
     case ElementType::Hexahedron:    return 1;
@@ -139,7 +139,7 @@ static int getElementDim( ElementType const elementType )
     case ElementType::Triangle:
     case ElementType::Quadrilateral:
     case ElementType::Polygon:       return 2;
-    case ElementType::Tetrahedon:
+    case ElementType::Tetrahedron:
     case ElementType::Pyramid:
     case ElementType::Prism:
     case ElementType::Hexahedron:
@@ -244,6 +244,318 @@ Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( c
                                             string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
+}
+
+/**
+ * @brief Get the label mapping of element vertices indexes onto node indexes for a type of element.
+ * @param[in] elementType the element type
+ * @param[in] index ndim-spatialized Element index.
+ * @param[in] iEle the index of Element begin processed
+ * @param[out] nodeIDInBox array to map element vertices index to node indexes
+ * @param[in] size the number of node on the element
+ */
+static void getElemToNodesRelationInBox( ElementType const elementType,
+                                         integer const trianglePattern,
+                                         int const (&index)[3],
+                                         int const & iEle,
+                                         int (& nodeIDInBox)[8],
+                                         int const node_size )
+
+{
+  switch( elementType )
+  {
+    case ElementType::Hexahedron:
+    {
+      nodeIDInBox[0] = 0;
+      nodeIDInBox[1] = 1;
+      nodeIDInBox[2] = 3;
+      nodeIDInBox[3] = 2;
+      nodeIDInBox[4] = 4;
+      nodeIDInBox[5] = 5;
+      nodeIDInBox[6] = 7;
+      nodeIDInBox[7] = 6;
+      break;
+    }
+    case ElementType::Prism:
+    {
+      if( trianglePattern == 0 )
+      {
+        if( ( index[0] + index[1] ) % 2 == 1 )
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 6;
+            nodeIDInBox[1] = 2;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 7;
+            nodeIDInBox[5] = 3;
+            nodeIDInBox[6] = 7;
+            nodeIDInBox[7] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 6;
+            nodeIDInBox[5] = 2;
+            nodeIDInBox[6] = 6;
+            nodeIDInBox[7] = 2;
+          }
+        }
+        else
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 7;
+            nodeIDInBox[5] = 3;
+            nodeIDInBox[6] = 7;
+            nodeIDInBox[7] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 7;
+            nodeIDInBox[3] = 3;
+            nodeIDInBox[4] = 6;
+            nodeIDInBox[5] = 2;
+            nodeIDInBox[6] = 6;
+            nodeIDInBox[7] = 2;
+          }
+        }
+      }
+      else if( trianglePattern == 1 )
+      {
+        if( index[1] % 2 == 0 )
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 6;
+            nodeIDInBox[5] = 2;
+            nodeIDInBox[6] = 6;
+            nodeIDInBox[7] = 2;
+          }
+          else
+          {
+            nodeIDInBox[0] = 6;
+            nodeIDInBox[1] = 2;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 7;
+            nodeIDInBox[5] = 3;
+            nodeIDInBox[6] = 7;
+            nodeIDInBox[7] = 3;
+          }
+        }
+        else
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 7;
+            nodeIDInBox[5] = 3;
+            nodeIDInBox[6] = 7;
+            nodeIDInBox[7] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 7;
+            nodeIDInBox[3] = 3;
+            nodeIDInBox[4] = 6;
+            nodeIDInBox[5] = 2;
+            nodeIDInBox[6] = 6;
+            nodeIDInBox[7] = 2;
+          }
+        }
+      }
+      break;
+    }
+    case ElementType::Quadrilateral:
+    {
+      nodeIDInBox[0] = 0;
+      nodeIDInBox[1] = 1;
+      nodeIDInBox[2] = 3;
+      nodeIDInBox[3] = 2;
+      break;
+    }
+    case ElementType::Triangle:
+    {
+      if( trianglePattern == 0 )
+      {
+        if( ( index[0] + index[1] ) % 2 == 1 )
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 0;
+            nodeIDInBox[1] = 2;
+            nodeIDInBox[2] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 0;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 2;
+          }
+        }
+        else
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 0;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 1;
+            nodeIDInBox[1] = 2;
+            nodeIDInBox[2] = 3;
+          }
+        }
+      }
+      else if( trianglePattern == 1 )
+      {
+        if( index[1] % 2 == 0 )
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 0;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 2;
+          }
+          else
+          {
+            nodeIDInBox[0] = 2;
+            nodeIDInBox[1] = 3;
+            nodeIDInBox[2] = 0;
+          }
+        }
+        else
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 0;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 1;
+            nodeIDInBox[1] = 2;
+            nodeIDInBox[2] = 3;
+          }
+        }
+      }
+      break;
+    }
+    case ElementType::Tetrahedron:
+    {
+      int mapBoxTet[8][6][4] =
+      {
+        {
+          { 0, 3, 7, 6 },
+          { 0, 7, 4, 6 },
+          { 0, 5, 1, 6 },
+          { 0, 4, 5, 6 },
+          { 0, 1, 2, 6 },
+          { 0, 2, 3, 6 }
+        },
+        {
+          { 1, 5, 6, 7 },
+          { 1, 6, 2, 7 },
+          { 0, 4, 1, 7 },
+          { 1, 4, 5, 7 },
+          { 0, 1, 3, 7 },
+          { 1, 2, 3, 7 }
+        },
+        {
+          { 0, 3, 4, 2 },
+          { 3, 7, 4, 2 },
+          { 0, 4, 1, 2 },
+          { 1, 4, 5, 2 },
+          { 4, 7, 6, 2 },
+          { 4, 6, 5, 2 }
+        },
+        {
+          { 1, 5, 2, 3 },
+          { 2, 5, 6, 3 },
+          { 0, 5, 1, 3 },
+          { 0, 4, 5, 3 },
+          { 4, 7, 5, 3 },
+          { 5, 7, 6, 3 }
+        },
+        {
+          { 0, 3, 4, 5 },
+          { 3, 7, 4, 5 },
+          { 3, 6, 7, 5 },
+          { 3, 2, 6, 5 },
+          { 3, 0, 1, 5 },
+          { 1, 2, 3, 5 }
+        },
+        {
+          { 1, 5, 2, 4 },
+          { 2, 5, 6, 4 },
+          { 2, 6, 7, 4 },
+          { 2, 7, 3, 4 },
+          { 0, 2, 3, 4 },
+          { 0, 1, 2, 4 }
+        },
+        {
+          { 0, 7, 4, 1 },
+          { 0, 3, 7, 1 },
+          { 2, 7, 3, 1 },
+          { 2, 6, 7, 1 },
+          { 4, 7, 5, 1 },
+          { 5, 7, 6, 1 }
+        },
+        {
+          { 1, 5, 6, 0 },
+          { 1, 6, 2, 0 },
+          { 2, 6, 3, 0 },
+          { 3, 6, 7, 0 },
+          { 4, 6, 5, 0 },
+          { 4, 7, 6, 0 }
+        }
+      };
+
+      int mapBoxType[2][2][2];
+      mapBoxType[0][0][0] = 0;
+      mapBoxType[1][0][0] = 1;
+      mapBoxType[0][0][1] = 2;
+      mapBoxType[1][0][1] = 3;
+      mapBoxType[0][1][0] = 4;
+      mapBoxType[1][1][0] = 5;
+      mapBoxType[0][1][1] = 6;
+      mapBoxType[1][1][1] = 7;
+
+      int boxType = mapBoxType[index[0] % 2][index[1] % 2][index[2] % 2];
+      for( int i = 0; i < node_size; ++i )
+      {
+        nodeIDInBox[i] = mapBoxTet[boxType][iEle][i];
+      }
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
+    }
+  }
 }
 
 /**
@@ -616,6 +928,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
                   elemLocalToGlobal[localElemIndex] = elemGlobalIndex( globalIJK ) * m_numElePerBox[iR] + iEle;
 
                   getElemToNodesRelationInBox( elementType,
+                                               m_trianglePattern,
                                                globalIJK,
                                                iEle,
                                                nodeIDInBox,
@@ -665,298 +978,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   coordinateTransformation( nodeManager );
 
-}
-
-/**
- * @param elementType
- * @param index
- * @param iEle
- * @param nodeIDInBox
- * @param node_size
- */
-void InternalMeshGenerator::getElemToNodesRelationInBox( ElementType const elementType,
-                                                         int const (&index)[3],
-                                                         int const & iEle,
-                                                         int (& nodeIDInBox)[8],
-                                                         int const node_size )
-
-{
-  if( elementType == ElementType::Hexahedron )
-  {
-    nodeIDInBox[0] = 0;
-    nodeIDInBox[1] = 1;
-    nodeIDInBox[2] = 3;
-    nodeIDInBox[3] = 2;
-    nodeIDInBox[4] = 4;
-    nodeIDInBox[5] = 5;
-    nodeIDInBox[6] = 7;
-    nodeIDInBox[7] = 6;
-  }
-  else if( ( elementType == ElementType::Prism ) && ( m_trianglePattern == 0 ) )
-  {
-    if( ( index[0] + index[1] ) % 2 == 1 )
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 6;
-        nodeIDInBox[1] = 2;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 7;
-        nodeIDInBox[5] = 3;
-        nodeIDInBox[6] = 7;
-        nodeIDInBox[7] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 6;
-        nodeIDInBox[5] = 2;
-        nodeIDInBox[6] = 6;
-        nodeIDInBox[7] = 2;
-      }
-    }
-    else
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 7;
-        nodeIDInBox[5] = 3;
-        nodeIDInBox[6] = 7;
-        nodeIDInBox[7] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 7;
-        nodeIDInBox[3] = 3;
-        nodeIDInBox[4] = 6;
-        nodeIDInBox[5] = 2;
-        nodeIDInBox[6] = 6;
-        nodeIDInBox[7] = 2;
-      }
-    }
-  }
-  else if( ( elementType == ElementType::Prism ) && ( m_trianglePattern == 1 ) )
-  {
-    if( index[1] % 2 == 0 )
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 6;
-        nodeIDInBox[5] = 2;
-        nodeIDInBox[6] = 6;
-        nodeIDInBox[7] = 2;
-      }
-      else
-      {
-        nodeIDInBox[0] = 6;
-        nodeIDInBox[1] = 2;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 7;
-        nodeIDInBox[5] = 3;
-        nodeIDInBox[6] = 7;
-        nodeIDInBox[7] = 3;
-      }
-    }
-    else
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 7;
-        nodeIDInBox[5] = 3;
-        nodeIDInBox[6] = 7;
-        nodeIDInBox[7] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 7;
-        nodeIDInBox[3] = 3;
-        nodeIDInBox[4] = 6;
-        nodeIDInBox[5] = 2;
-        nodeIDInBox[6] = 6;
-        nodeIDInBox[7] = 2;
-      }
-    }
-  }
-  else if( elementType == ElementType::Quadrilateral )
-  {
-    nodeIDInBox[0] = 0;
-    nodeIDInBox[1] = 1;
-    nodeIDInBox[2] = 3;
-    nodeIDInBox[3] = 2;
-  }
-  else if( ( elementType == ElementType::Triangle ) && ( m_trianglePattern == 0 ) )
-  {
-    if( ( index[0] + index[1] ) % 2 == 1 )
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 0;
-        nodeIDInBox[1] = 2;
-        nodeIDInBox[2] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 0;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 2;
-      }
-    }
-    else
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 0;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 1;
-        nodeIDInBox[1] = 2;
-        nodeIDInBox[2] = 3;
-      }
-    }
-  }
-  else if( ( elementType == ElementType::Triangle ) && ( m_trianglePattern == 1 ) )
-  {
-    if( index[1] % 2 == 0 )
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 0;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 2;
-      }
-      else
-      {
-        nodeIDInBox[0] = 2;
-        nodeIDInBox[1] = 3;
-        nodeIDInBox[2] = 0;
-      }
-    }
-    else
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 0;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 1;
-        nodeIDInBox[1] = 2;
-        nodeIDInBox[2] = 3;
-      }
-    }
-  }
-  else if( elementType == ElementType::Tetrahedon )
-  {
-    int mapBoxTet[8][6][4] =
-    {
-      {
-        { 0, 3, 7, 6 },
-        { 0, 7, 4, 6 },
-        { 0, 5, 1, 6 },
-        { 0, 4, 5, 6 },
-        { 0, 1, 2, 6 },
-        { 0, 2, 3, 6 }
-      },
-      {
-        { 1, 5, 6, 7 },
-        { 1, 6, 2, 7 },
-        { 0, 4, 1, 7 },
-        { 1, 4, 5, 7 },
-        { 0, 1, 3, 7 },
-        { 1, 2, 3, 7 }
-      },
-      {
-        { 0, 3, 4, 2 },
-        { 3, 7, 4, 2 },
-        { 0, 4, 1, 2 },
-        { 1, 4, 5, 2 },
-        { 4, 7, 6, 2 },
-        { 4, 6, 5, 2 }
-      },
-      {
-        { 1, 5, 2, 3 },
-        { 2, 5, 6, 3 },
-        { 0, 5, 1, 3 },
-        { 0, 4, 5, 3 },
-        { 4, 7, 5, 3 },
-        { 5, 7, 6, 3 }
-      },
-      {
-        { 0, 3, 4, 5 },
-        { 3, 7, 4, 5 },
-        { 3, 6, 7, 5 },
-        { 3, 2, 6, 5 },
-        { 3, 0, 1, 5 },
-        { 1, 2, 3, 5 }
-      },
-      {
-        { 1, 5, 2, 4 },
-        { 2, 5, 6, 4 },
-        { 2, 6, 7, 4 },
-        { 2, 7, 3, 4 },
-        { 0, 2, 3, 4 },
-        { 0, 1, 2, 4 }
-      },
-      {
-        { 0, 7, 4, 1 },
-        { 0, 3, 7, 1 },
-        { 2, 7, 3, 1 },
-        { 2, 6, 7, 1 },
-        { 4, 7, 5, 1 },
-        { 5, 7, 6, 1 }
-      },
-      {
-        { 1, 5, 6, 0 },
-        { 1, 6, 2, 0 },
-        { 2, 6, 3, 0 },
-        { 3, 6, 7, 0 },
-        { 4, 6, 5, 0 },
-        { 4, 7, 6, 0 }
-      }
-    };
-
-    int mapBoxType[2][2][2];
-    mapBoxType[0][0][0] = 0;
-    mapBoxType[1][0][0] = 1;
-    mapBoxType[0][0][1] = 2;
-    mapBoxType[1][0][1] = 3;
-    mapBoxType[0][1][0] = 4;
-    mapBoxType[1][1][0] = 5;
-    mapBoxType[0][1][1] = 6;
-    mapBoxType[1][1][1] = 7;
-
-    int boxType = mapBoxType[index[0] % 2][index[1] % 2][index[2] % 2];
-    for( int i = 0; i < node_size; ++i )
-    {
-      nodeIDInBox[i] = mapBoxTet[boxType][iEle][i];
-    }
-  }
 }
 
 void

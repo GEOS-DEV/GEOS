@@ -202,7 +202,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock =
           &cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
-        cellBlock->setElementType( ElementType::Tetrahedon );
+        cellBlock->setElementType( ElementType::Tetrahedron );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 4 );

@@ -268,7 +268,7 @@ private:
         m_elementVolume[k] = computationalGeometry::HexVolume( Xlocal );
         break;
       }
-      case ElementType::Tetrahedon:
+      case ElementType::Tetrahedron:
       {
         m_elementVolume[k] = computationalGeometry::TetVolume( Xlocal );
         break;

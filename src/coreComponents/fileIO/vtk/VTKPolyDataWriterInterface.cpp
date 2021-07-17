@@ -63,7 +63,7 @@ static int toVTKCellType( ElementType const elementType )
     case ElementType::Triangle:      return VTK_TRIANGLE;
     case ElementType::Quadrilateral: return VTK_QUAD;
     case ElementType::Polygon:       return VTK_POLYGON;
-    case ElementType::Tetrahedon:    return VTK_TETRA;
+    case ElementType::Tetrahedron:    return VTK_TETRA;
     case ElementType::Pyramid:       return VTK_PYRAMID;
     case ElementType::Prism:         return VTK_WEDGE;
     case ElementType::Hexahedron:    return VTK_HEXAHEDRON;
@@ -80,7 +80,7 @@ static std::vector< int > getVTKNodeOrdering( ElementType const elementType )
     case ElementType::Triangle:      return { 0, 1, 2 };
     case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
     case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
-    case ElementType::Tetrahedon:    return { 1, 0, 2, 3 };
+    case ElementType::Tetrahedron:    return { 1, 0, 2, 3 };
     case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
     case ElementType::Prism:         return { 0, 4, 2, 1, 5, 3, 0, 0 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };

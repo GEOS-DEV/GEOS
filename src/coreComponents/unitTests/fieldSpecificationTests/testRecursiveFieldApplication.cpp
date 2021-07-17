@@ -78,7 +78,7 @@ TEST( FieldSpecification, Recursive )
   cellToVertexreg0Hex.resize( nbHexReg0, 8 );
 
   CellBlock & reg0Tet= cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg0tet" );
-  reg0Tet.setElementType( geosx::ElementType::Tetrahedon );
+  reg0Tet.setElementType( geosx::ElementType::Tetrahedron );
   reg0Tet.resize( nbTetReg0 );
   auto & cellToVertexreg0Tet = reg0Tet.nodeList();
   cellToVertexreg0Tet.resize( nbTetReg0, 4 );
@@ -90,7 +90,7 @@ TEST( FieldSpecification, Recursive )
   cellToVertexreg1Hex.resize( nbHexReg1, 8 );
 
   CellBlock & reg1Tet = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg1tet" );
-  reg1Tet.setElementType( geosx::ElementType::Tetrahedon );
+  reg1Tet.setElementType( geosx::ElementType::Tetrahedron );
   reg1Tet.resize( nbTetReg1 );
   auto & cellToVertexreg1Tet = reg1Tet.nodeList();
   cellToVertexreg1Tet.resize( nbTetReg1, 4 );

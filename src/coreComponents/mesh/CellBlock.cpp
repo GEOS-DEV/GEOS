@@ -67,7 +67,7 @@ localIndex CellBlock::getNumFaceNodes( localIndex const GEOSX_UNUSED_PARAM( elem
         }
       }
     }
-    case ElementType::Tetrahedon:
+    case ElementType::Tetrahedron:
     {
       return 3;
     }
@@ -210,7 +210,7 @@ localIndex CellBlock::getFaceNodes( localIndex const elementIndex,
         }
       }
     }
-    case ElementType::Tetrahedon:
+    case ElementType::Tetrahedron:
     {
       switch( localFaceIndex )
       {
@@ -330,7 +330,7 @@ void CellBlock::setElementType( ElementType const elementType )
       this->setNumFacesPerElement( 6 );
       break;
     }
-    case ElementType::Tetrahedon:
+    case ElementType::Tetrahedron:
     {
       // Tetrahedron
       this->setNumNodesPerElement( 4 );
