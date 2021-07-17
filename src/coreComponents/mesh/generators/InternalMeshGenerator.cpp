@@ -117,21 +117,15 @@ static int getNumElemPerBox( ElementType const elementType )
 {
   switch( elementType )
   {
-    case ElementType::Triangle:
-    { return 2;}
-    case ElementType::Quadrilateral:
-    { return 1;}
-    case ElementType::Tetrahedon:
-    { return 6;}
-    case ElementType::Prism:
-    { return 2;}
-    case ElementType::Pyramid:
-    { return 6;}
-    case ElementType::Hexahedron:
-    { return 1;}
+    case ElementType::Triangle:      return 2;
+    case ElementType::Quadrilateral: return 1;
+    case ElementType::Tetrahedon:    return 6;
+    case ElementType::Prism:         return 2;
+    case ElementType::Pyramid:       return 6;
+    case ElementType::Hexahedron:    return 1;
     default:
     {
-      GEOSX_ERROR( "InternalMeshGenerator: supported element type: " << elementType );
+      GEOSX_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
       return 0;
     }
   }
@@ -141,30 +135,17 @@ static int getElementDim( ElementType const elementType )
 {
   switch( elementType )
   {
-    case ElementType::Line:
-    {
-      return 1;
-    }
+    case ElementType::Line:          return 1;
     case ElementType::Triangle:
     case ElementType::Quadrilateral:
-    case ElementType::Polygon:
-    {
-      return 2;
-    }
+    case ElementType::Polygon:       return 2;
     case ElementType::Tetrahedon:
     case ElementType::Pyramid:
     case ElementType::Prism:
     case ElementType::Hexahedron:
-    case ElementType::Polyhedron:
-    {
-      return 3;
-    }
-    default:
-    {
-      GEOSX_ERROR( "Invalid element type: " << static_cast< integer >( elementType ) );
-      return 0;
-    }
+    case ElementType::Polyhedron:    return 3;
   }
+  return 0;
 }
 
 void InternalMeshGenerator::postProcessInput()

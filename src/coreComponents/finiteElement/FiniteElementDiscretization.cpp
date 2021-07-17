@@ -55,8 +55,8 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 
 void FiniteElementDiscretization::postProcessInput()
 {
-  GEOSX_ERROR_IF( m_order!=1, "Higher order finite element spaces are currently not supported." );
-  GEOSX_ERROR_IF( m_formulation!="default", "Only standard element formulations are currently supported." );
+  GEOSX_ERROR_IF_NE_MSG( m_order, 1, "Higher order finite element spaces are currently not supported." );
+  GEOSX_ERROR_IF_NE_MSG( m_formulation, "default", "Only standard element formulations are currently supported." );
 }
 
 std::unique_ptr< FiniteElementBase >
@@ -66,33 +66,15 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
   {
     switch( parentElementShape )
     {
-      case ElementType::Hexahedron:
-      {
-        return std::make_unique< H1_Hexahedron_Lagrange1_GaussLegendre2 >();
-      }
-      case ElementType::Tetrahedon:
-      {
-        return std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
-      }
-      case ElementType::Prism:
-      {
-        return std::make_unique< H1_Wedge_Lagrange1_Gauss6 >();
-      }
-      case ElementType::Pyramid:
-      {
-        return std::make_unique< H1_Pyramid_Lagrange1_Gauss5 >();
-      }
-      case ElementType::Quadrilateral:
-      {
-        return std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
-      }
-      case ElementType::Triangle:
-      {
-        return std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
-      }
+      case ElementType::Triangle:      return std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
+      case ElementType::Quadrilateral: return std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
+      case ElementType::Tetrahedon:    return std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
+      case ElementType::Pyramid:       return std::make_unique< H1_Pyramid_Lagrange1_Gauss5 >();
+      case ElementType::Prism:         return std::make_unique< H1_Wedge_Lagrange1_Gauss6 >();
+      case ElementType::Hexahedron:    return std::make_unique< H1_Hexahedron_Lagrange1_GaussLegendre2 >();
       default:
       {
-        GEOSX_ERROR( "Key value of " << parentElementShape << " does not have an associated element formulation." );
+        GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
       }
     }
   }

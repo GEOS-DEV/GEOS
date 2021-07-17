@@ -18,8 +18,6 @@
 
 #include "ElementSubRegionBase.hpp"
 
-#include <numeric>
-
 namespace geosx
 {
 using namespace dataRepository;
