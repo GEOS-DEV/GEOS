@@ -60,45 +60,47 @@ void FiniteElementDiscretization::postProcessInput()
 }
 
 std::unique_ptr< FiniteElementBase >
-FiniteElementDiscretization::factory( string const & parentElementShape ) const
+FiniteElementDiscretization::factory( ElementType const parentElementShape ) const
 {
-  std::unique_ptr< FiniteElementBase > rval;
   if( m_order==1 )
   {
-    if( parentElementShape ==  finiteElement::ParentElementTypeStrings::Hexahedron )
+    switch( parentElementShape )
     {
-      rval = std::make_unique< H1_Hexahedron_Lagrange1_GaussLegendre2 >();
-    }
-    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Tetrahedon )
-    {
-      rval = std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
-    }
-    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Prism )
-    {
-      rval = std::make_unique< H1_Wedge_Lagrange1_Gauss6 >();
-    }
-    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Pyramid )
-    {
-      rval = std::make_unique< H1_Pyramid_Lagrange1_Gauss5 >();
-    }
-    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Quadralateral )
-    {
-      rval = std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
-    }
-    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Triangle )
-    {
-      rval = std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
-    }
-    else
-    {
-      GEOSX_ERROR( "Key value of "<<parentElementShape<<" does not have an associated element formulation." );
+      case ElementType::Hexahedron:
+      {
+        return std::make_unique< H1_Hexahedron_Lagrange1_GaussLegendre2 >();
+      }
+      case ElementType::Tetrahedon:
+      {
+        return std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
+      }
+      case ElementType::Prism:
+      {
+        return std::make_unique< H1_Wedge_Lagrange1_Gauss6 >();
+      }
+      case ElementType::Pyramid:
+      {
+        return std::make_unique< H1_Pyramid_Lagrange1_Gauss5 >();
+      }
+      case ElementType::Quadrilateral:
+      {
+        return std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
+      }
+      case ElementType::Triangle:
+      {
+        return std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
+      }
+      default:
+      {
+        GEOSX_ERROR( "Key value of " << parentElementShape << " does not have an associated element formulation." );
+      }
     }
   }
   else
   {
-    GEOSX_ERROR( "Elements with m_order>1 are not currently supported." );
+    GEOSX_ERROR( "Elements with order > 1 are not currently supported." );
   }
-  return rval;
+  return {};
 }
 
 REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, string const &, Group * const )

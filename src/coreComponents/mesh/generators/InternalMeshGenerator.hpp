@@ -21,7 +21,8 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
-#include "MeshGeneratorBase.hpp"
+#include "mesh/generators/MeshGeneratorBase.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geosx
 {
@@ -161,14 +162,14 @@ protected:
 
   /**
    * @brief Get the label mapping of element vertices indexes onto node indexes for a type of element.
-   * @param[in] elementType the string identifier of the element type
-   * @param[in] index ndim-sptialized Element index.
+   * @param[in] elementType the element type
+   * @param[in] index ndim-spatialized Element index.
    * @param[in] iEle the index of Element begin processed
    * @param[out] nodeIDInBox array to map element vertices index to node indexes
    * @param[in] size the number of node on the element
    *
    */
-  void getElemToNodesRelationInBox( const string & elementType,
+  void getElemToNodesRelationInBox( ElementType const elementType,
                                     int const (&index)[3],
                                     int const & iEle,
                                     int (& nodeIDInBox)[8],

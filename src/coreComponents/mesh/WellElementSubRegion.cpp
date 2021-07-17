@@ -47,7 +47,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   this->setNumNodesPerElement( 2 );
   this->setNumFacesPerElement( 0 );
   m_toNodesRelation.resizeDimension< 1 >( this->numNodesPerElement() );
-  m_elementTypeString = "BEAM";
+  m_elementType = ElementType::Line;
 }
 
 

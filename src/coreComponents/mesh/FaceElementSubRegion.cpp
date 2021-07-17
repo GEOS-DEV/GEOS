@@ -38,7 +38,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_newFaceElements(),
   m_toFacesRelation()
 {
-  setElementType( "C3D8" );
+  setElementType( ElementType::Hexahedron );
 
   registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
 

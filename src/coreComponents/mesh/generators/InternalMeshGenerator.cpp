@@ -18,8 +18,6 @@
 
 #include "InternalMeshGenerator.hpp"
 
-
-#include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -28,8 +26,7 @@
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 
-#include <math.h>
-#include <algorithm>
+#include <cmath>
 
 namespace geosx
 {
@@ -116,20 +113,63 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setDescription( "A position tolerance to verify if a node belong to a nodeset" );
 }
 
+static int getNumElemPerBox( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Triangle:
+    { return 2;}
+    case ElementType::Quadrilateral:
+    { return 1;}
+    case ElementType::Tetrahedon:
+    { return 6;}
+    case ElementType::Prism:
+    { return 2;}
+    case ElementType::Pyramid:
+    { return 6;}
+    case ElementType::Hexahedron:
+    { return 1;}
+    default:
+    {
+      GEOSX_ERROR( "InternalMeshGenerator: supported element type: " << elementType );
+      return 0;
+    }
+  }
+}
+
+static int getElementDim( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Line:
+    {
+      return 1;
+    }
+    case ElementType::Triangle:
+    case ElementType::Quadrilateral:
+    case ElementType::Polygon:
+    {
+      return 2;
+    }
+    case ElementType::Tetrahedon:
+    case ElementType::Pyramid:
+    case ElementType::Prism:
+    case ElementType::Hexahedron:
+    case ElementType::Polyhedron:
+    {
+      return 3;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Invalid element type: " << static_cast< integer >( elementType ) );
+      return 0;
+    }
+  }
+}
+
 void InternalMeshGenerator::postProcessInput()
 {
-  if( m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6" )
-  {
-    m_dim = 3;
-  }
-  else if( m_elementType[0] == "CPE4" || m_elementType[0] == "STRI" )
-  {
-    m_dim = 2;
-  }
-  else
-  {
-    GEOSX_ERROR( "InternalMeshGenerator: incorrect element type!" );
-  }
+  m_dim = getElementDim( EnumStrings< ElementType >::fromString( m_elementType[0] ) );
 
   {
     // Check for vertex/element matching
@@ -159,15 +199,12 @@ void InternalMeshGenerator::postProcessInput()
 
   m_numElePerBox.resize( m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if( LvArray::integerConversion< long >( m_elementType.size()) != m_numElePerBox.size())
+  if( m_elementType.size() != m_numElePerBox.size() )
   {
     if( m_elementType.size() == 1 )
     {
-      m_elementType.resize( m_numElePerBox.size());
-      for( localIndex i=1; i< m_elementType.size(); ++i )
-      {
-        m_elementType[i] = m_elementType[0];
-      }
+      string const elementType = m_elementType[0];
+      m_elementType.resizeDefault( m_numElePerBox.size(), elementType );
     }
     else
     {
@@ -177,31 +214,7 @@ void InternalMeshGenerator::postProcessInput()
 
   for( localIndex i = 0; i < LvArray::integerConversion< localIndex >( m_elementType.size() ); ++i )
   {
-    if( m_elementType[i] == "C3D8" )
-    {
-      m_numElePerBox[i] = 1;
-      m_dim = 3;
-    }
-    else if( m_elementType[i] == "C3D4" )
-    {
-      m_numElePerBox[i] = 6;
-      m_dim = 3;
-    }
-    else if( m_elementType[i] == "C3D6" )
-    {
-      m_numElePerBox[i] = 2;
-      m_dim = 3;
-    }
-    else if( m_elementType[i] == "CPE4" )
-    {
-      m_numElePerBox[i] = 1;
-      m_dim = 2;
-    }
-    else if( m_elementType[i] == "STRI" )
-    {
-      m_numElePerBox[i] = 2;
-      m_dim = 2;
-    }
+    m_numElePerBox[i] = getNumElemPerBox( EnumStrings< ElementType >::fromString( m_elementType[i] ) );
   }
 
   {
@@ -214,11 +227,8 @@ void InternalMeshGenerator::postProcessInput()
     {
       if( m_regionNames.size() == 1 )
       {
-        m_regionNames.resize( numBlocks );
-        for( localIndex i=1; i< m_elementType.size(); ++i )
-        {
-          m_regionNames[i] = m_regionNames[0];
-        }
+        string const regionName = m_regionNames[0];
+        m_regionNames.resizeDefault( numBlocks, regionName );
       }
       else
       {
@@ -282,8 +292,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   for( auto & cellBlockName : m_regionNames )
   {
     CellBlock & cellBlock = elementManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
-    string elementType = m_elementType[aa++];
-    cellBlock.setElementType( elementType );
+    cellBlock.setElementType( EnumStrings< ElementType >::fromString( m_elementType[aa++] ) );
   }
 
   SortedArray< localIndex > & xnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "xneg" ) ).reference();
@@ -369,7 +378,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   // total number of nodes
 
   std::map< string, int > numElemsInRegions;
-  std::map< string, string > elemTypeInRegions;
+  std::map< string, ElementType > elemTypeInRegions;
 
   array1d< integer > firstElemIndexForBlockInPartition[3];
   array1d< integer > lastElemIndexForBlockInPartition[3];
@@ -410,7 +419,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset )
       {
         numElemsInRegions[ m_regionNames[ regionOffset ] ] = 0;
-        elemTypeInRegions[ m_regionNames[ regionOffset ] ] = "";
+        elemTypeInRegions[ m_regionNames[ regionOffset ] ] = ElementType::Quadrilateral;
       }
     }
   }
@@ -438,7 +447,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
           numElemsInRegion *= m_numElePerBox[iR];
           numElemsInRegions[ m_regionNames[ regionOffset ] ] += numElemsInRegion;
-          elemTypeInRegions[ m_regionNames[ regionOffset ] ] = m_elementType[iR];
+          elemTypeInRegions[ m_regionNames[ regionOffset ] ] = EnumStrings< ElementType >::fromString( m_elementType[iR] );
         }
       }
     }
@@ -523,21 +532,16 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   {
     array1d< integer > numElements;
     array1d< string > elementRegionNames;
-    array1d< string > elementTypes;
     std::map< string, localIndex > localElemIndexInRegion;
 
-    for( std::map< string, int >::iterator iterNumElemsInRegion = numElemsInRegions.begin();
-         iterNumElemsInRegion != numElemsInRegions.end(); ++iterNumElemsInRegion )
+    for( auto const & numElemsInRegion : numElemsInRegions )
     {
-
-      numElements.emplace_back( iterNumElemsInRegion->second );
-      elementRegionNames.emplace_back( iterNumElemsInRegion->first );
-      elementTypes.emplace_back( elemTypeInRegions[iterNumElemsInRegion->first] );
-
-      localElemIndexInRegion[iterNumElemsInRegion->first] = 0;
+      numElements.emplace_back( numElemsInRegion.second );
+      elementRegionNames.emplace_back( numElemsInRegion.first );
+      localElemIndexInRegion[numElemsInRegion.first] = 0;
     }
 
-    elementManager.resize( numElements, elementRegionNames, elementTypes );
+    elementManager.resize( numElements, elementRegionNames );
 
     // Assign global numbers to elements
     regionOffset = 0;
@@ -550,6 +554,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       {
         for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset, ++iR )
         {
+          ElementType const elementType = EnumStrings< ElementType >::fromString( m_elementType[iR] );
+
           CellBlock & elemRegion =  elementManager.getRegion( m_regionNames[ regionOffset ] );
           int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion.numNodesPerElement());
           integer nodeIDInBox[ 8 ];
@@ -578,7 +584,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
                                                   + ( globalIJK[2] - firstElemIndexInPartition[2] );
                 localIndex nodeOfBox[8];
 
-                if( m_elementType[iR] == "CPE4" || m_elementType[iR] == "STRI" )
+                if( elementType == ElementType::Quadrilateral || elementType == ElementType::Triangle )
                 {
                   nodeOfBox[0] = firstNodeIndex;
                   nodeOfBox[1] = numNodesInDir[1] * numNodesInDir[2] + firstNodeIndex;
@@ -628,7 +634,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
                   localIndex & localElemIndex = localElemIndexInRegion[ m_regionNames[ regionOffset ] ];
                   elemLocalToGlobal[localElemIndex] = elemGlobalIndex( globalIJK ) * m_numElePerBox[iR] + iEle;
 
-                  getElemToNodesRelationInBox( m_elementType[iR],
+                  getElemToNodesRelationInBox( elementType,
                                                globalIJK,
                                                iEle,
                                                nodeIDInBox,
@@ -687,14 +693,14 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
  * @param nodeIDInBox
  * @param node_size
  */
-void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementType,
+void InternalMeshGenerator::getElemToNodesRelationInBox( ElementType const elementType,
                                                          int const (&index)[3],
                                                          int const & iEle,
                                                          int (& nodeIDInBox)[8],
                                                          int const node_size )
 
 {
-  if( elementType == "C3D8" )
+  if( elementType == ElementType::Hexahedron )
   {
     nodeIDInBox[0] = 0;
     nodeIDInBox[1] = 1;
@@ -705,7 +711,7 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
     nodeIDInBox[6] = 7;
     nodeIDInBox[7] = 6;
   }
-  else if( ( elementType == "C3D6" ) && ( m_trianglePattern == 0 ) )
+  else if( ( elementType == ElementType::Prism ) && ( m_trianglePattern == 0 ) )
   {
     if( ( index[0] + index[1] ) % 2 == 1 )
     {
@@ -758,7 +764,7 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
       }
     }
   }
-  else if( ( elementType == "C3D6" ) && ( m_trianglePattern == 1 ) )
+  else if( ( elementType == ElementType::Prism ) && ( m_trianglePattern == 1 ) )
   {
     if( index[1] % 2 == 0 )
     {
@@ -811,14 +817,14 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
       }
     }
   }
-  else if( elementType == "CPE4" )
+  else if( elementType == ElementType::Quadrilateral )
   {
     nodeIDInBox[0] = 0;
     nodeIDInBox[1] = 1;
     nodeIDInBox[2] = 3;
     nodeIDInBox[3] = 2;
   }
-  else if( ( elementType == "STRI" ) && ( m_trianglePattern == 0 ) )
+  else if( ( elementType == ElementType::Triangle ) && ( m_trianglePattern == 0 ) )
   {
     if( ( index[0] + index[1] ) % 2 == 1 )
     {
@@ -851,7 +857,7 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
       }
     }
   }
-  else if( ( elementType == "STRI" ) && ( m_trianglePattern == 1 ) )
+  else if( ( elementType == ElementType::Triangle ) && ( m_trianglePattern == 1 ) )
   {
     if( index[1] % 2 == 0 )
     {
@@ -884,7 +890,7 @@ void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementT
       }
     }
   }
-  else if( elementType == "C3D4" )
+  else if( elementType == ElementType::Tetrahedon )
   {
     int mapBoxTet[8][6][4] =
     {

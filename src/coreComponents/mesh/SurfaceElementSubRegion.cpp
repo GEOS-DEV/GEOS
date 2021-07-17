@@ -36,6 +36,8 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
   m_elementAperture(),
   m_elementArea()
 {
+  setElementType( ElementType::Polygon );
+
   registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation ).
     setDescription( "Map to the nodes attached to each SurfaceElement." );
 

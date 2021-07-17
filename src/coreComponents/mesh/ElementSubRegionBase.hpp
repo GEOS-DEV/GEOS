@@ -19,18 +19,48 @@
 #ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 #define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 
+#include "codingUtilities/EnumStrings.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+
 namespace geosx
 {
 
 class NodeManager;
 class FaceManager;
 class MeshLevel;
-class DomainPartition;
+
 namespace constitutive
 {
 class ConstitutiveBase;
 }
+
+/**
+ * @brief Denotes type of cell/element shape
+ */
+enum class ElementType : integer
+{
+  Line,          ///< Two-node line segment
+  Triangle,      ///< Three-node triangle
+  Quadrilateral, ///< Four-node quadrilateral
+  Polygon,       ///< Polygonal element (2D surface in 3D space)
+  Tetrahedon,    ///< Four-node tetrahedral element
+  Pyramid,       ///< Five-node pyramid element
+  Prism,         ///< Six-node wedge element
+  Hexahedron,    ///< Eight-node hexahedral element
+  Polyhedron     ///< Polyhedral element
+};
+
+/// Strings for ElementType
+ENUM_STRINGS( ElementType,
+              "BEAM",
+              "C2D3",
+              "C2D4",
+              "Polygon",
+              "C3D4",
+              "C3D5",
+              "C3D6",
+              "C3D8",
+              "Polyhedron" );
 
 /**
  * @class ElementSubRegionBase
@@ -222,30 +252,17 @@ public:
 
   /**
    * @brief Get the type of element in this subregion.
-   * @return a string specifying the type of element in this subregion
-   *
-   * See class FiniteElementBase for possible element type.
+   * @return the type of element in this subregion
    */
-  virtual string getElementTypeString() const { return m_elementTypeString; }
+  ElementType getElementType() const
+  { return m_elementType; }
 
   /**
    * @brief Set the type of element in this subregion.
-   * @param[in] elementType a string specifying the element type
+   * @param[in] elementType the element type
    */
-  virtual void setElementType( string const & elementType );
-
-  /**
-   * @brief Get the VTK ordering for this subregion.
-   * @return the VTK node ordering
-   */
-  std::vector< int > getVTKNodeOrdering() const;
-
-  /**
-   * @brief Get the Silo ordering for this subregion.
-   * @return the Silo node ordering
-   */
-  std::vector< int > getSiloNodeOrdering() const;
-
+  virtual void setElementType( ElementType const elementType )
+  { m_elementType = elementType; }
 
   ///@}
 
@@ -307,9 +324,7 @@ protected:
   array1d< real64 > m_elementVolume;
 
   /// Type of element in this subregion.
-  string m_elementTypeString;
-
-  /// Type of element in this subregion.
+  ElementType m_elementType;
 };
 
 
