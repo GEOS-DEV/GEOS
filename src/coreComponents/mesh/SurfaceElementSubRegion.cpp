@@ -42,7 +42,6 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
   registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation ).
     setDescription( "Map to the edges attached to each SurfaceElement." );
 
-
   registerWrapper( viewKeyStruct::surfaceElementsToCellRegionsString(), &m_surfaceElementsToCells.m_toElementRegion ).
     setApplyDefaultValue( -1 ).
     setPlotLevel( PlotLevel::NOPLOT ).
