@@ -19,7 +19,6 @@
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
 #include "LvArray/src/limits.hpp"
 
