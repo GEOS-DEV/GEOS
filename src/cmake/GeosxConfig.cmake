@@ -33,7 +33,6 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           TOTALVIEW_OUTPUT
                           TRILINOS
                           MKL
-                          GEOSX_PTP
                           SEPARATION_COEFFICIENT
                           ${externalComponentsList} )
 

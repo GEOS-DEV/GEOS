@@ -17,6 +17,7 @@
  */
 
 #include "EmbeddedSurfaceGenerator.hpp"
+#include "EmbeddedSurfacesParallelSynchronization.hpp"
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
@@ -33,7 +34,6 @@
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/simpleGeometricObjects/BoundedPlane.hpp"
 
-#include "physicsSolvers/GEOSX_PTP/EmbeddedSurfacesParallelSynchronization.hpp"
 
 
 namespace geosx
