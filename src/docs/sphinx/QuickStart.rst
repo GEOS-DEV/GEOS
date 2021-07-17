@@ -189,16 +189,10 @@ This submodule is not required for building GEOSX. If you see an error message h
 .. code-block:: sh
 
    cd GEOSX
-   git submodule init src/coreComponents/LvArray
-   git submodule init src/coreComponents/fileIO/coupling/hdf5_interface
-   git submodule init src/coreComponents/physicsSolvers/GEOSX_PTP
-   git submodule init src/externalComponents/PAMELA
-   git submodule init src/externalComponents/PVTPackage
-   git submodule update src/coreComponents/LvArray
-   git submodule update src/coreComponents/fileIO/coupling/hdf5_interface
-   git submodule update src/coreComponents/physicsSolvers/GEOSX_PTP
-   git submodule update src/externalComponents/PAMELA
-   git submodule update src/externalComponents/PVTPackage
+   git submodule update --init src/coreComponents/LvArray
+   git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
+   git submodule update --init src/externalComponents/PAMELA
+   git submodule update --init src/externalComponents/PVTPackage
    cd ..
 
 Once we have grabbed GEOSX, we do the same for the thirdPartyLibs repository.  From the ``codes`` directory, type
