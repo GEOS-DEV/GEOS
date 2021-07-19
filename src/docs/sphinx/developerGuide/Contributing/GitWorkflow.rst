@@ -423,7 +423,6 @@ Submodule           Main branch
 blt                 develop
 LvArray             develop
 integratedTests     develop
-GEOSX_PTP           master
 hdf5_interface      master
 PAMELA              master
 PVTPackage          master
