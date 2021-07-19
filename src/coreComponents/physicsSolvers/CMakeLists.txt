@@ -1,5 +1,3 @@
-add_subdirectory (GEOSX_PTP)
-
 #
 # Specify solver headers
 #
@@ -61,6 +59,8 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
+     surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
+     surfaceGeneration/ParallelTopologyChange.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
    )
@@ -110,19 +110,13 @@ set( physicsSolvers_sources
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
+     surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
+     surfaceGeneration/ParallelTopologyChange.cpp
      surfaceGeneration/SurfaceGenerator.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
    )
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
-
-
-set( externalComponentDeps "" )
-
-if( ENABLE_GEOSX_PTP )
-  message(STATUS "Adding GEOSX_PTP to physics solver dependencies" )
-  list( APPEND externalComponentDeps GEOSX_PTP )
-endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
@@ -139,6 +133,5 @@ target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreCompon
 if( externalComponentDeps )
   target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
 endif()
-
 
 geosx_add_code_checks( PREFIX physicsSolvers )

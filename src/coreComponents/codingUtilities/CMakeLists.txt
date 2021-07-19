@@ -7,7 +7,6 @@ set( codingUtilities_headers
      StringUtilities.hpp
      UnitTestUtilities.hpp
      Utilities.hpp
-     static_if.hpp
      traits.hpp
    )
 

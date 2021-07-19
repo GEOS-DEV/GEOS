@@ -13,6 +13,7 @@ set( mesh_headers
      ElementRegionBase.hpp
      ElementRegionManager.hpp
      ElementSubRegionBase.hpp
+     ElementType.hpp
      EmbeddedSurfaceNodeManager.hpp
      EmbeddedSurfaceSubRegion.hpp
      ExtrinsicMeshData.hpp

@@ -33,6 +33,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   m_topRank( -1 ),
   m_searchDepth( 10 )
 {
+  m_elementType = ElementType::Line;
 
   registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName );
   registerWrapper( viewKeyStruct::wellNodeListString(), &m_toNodesRelation );
@@ -47,7 +48,6 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   this->setNumNodesPerElement( 2 );
   this->setNumFacesPerElement( 0 );
   m_toNodesRelation.resizeDimension< 1 >( this->numNodesPerElement() );
-  m_elementTypeString = "BEAM";
 }
 
 
