@@ -388,19 +388,18 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
 
   updateState( domain );
 
-  // assemble Kuu, Kuw, Kww, Kwu
   m_fracturesSolver->assembleSystem( time_n, dt,
                                      domain,
                                      dofManager,
                                      localMatrix,
                                      localRhs );
 
-  // assemble flow matrices
-  m_flowSolver->assembleSystem( time_n, dt,
-                                domain,
-                                dofManager,
-                                localMatrix,
-                                localRhs );
+  // Face-based contributions
+  m_flowSolver->assembleFluxTerms( time_n, dt,
+                                   domain,
+                                   dofManager,
+                                   localMatrix,
+                                   localRhs );
 
   // assemble mechanics-flow coupling blocks
   assembleCouplingTerms( domain,

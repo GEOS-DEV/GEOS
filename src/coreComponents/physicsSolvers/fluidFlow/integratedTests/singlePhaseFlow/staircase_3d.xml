@@ -70,7 +70,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, channelPerm }"/>
 
     <CellElementRegion
       name="Barrier"
