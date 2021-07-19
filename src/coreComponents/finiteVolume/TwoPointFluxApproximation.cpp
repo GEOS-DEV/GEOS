@@ -728,8 +728,11 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
 
   arrayView1d< real64 const > const connectivityIndex = fractureSubRegion.getConnectivityIndex();
 
+
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coeffTensor =
-    elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );
+    elemManager.constructMaterialArrayViewAccessor< real64, 2 >( m_coeffName,
+                                                                 m_targetRegions,
+                                                                 m_coefficientModelNames );
 
   // start from last connectorIndex from cell-To-cell connections
   connectorIndex = cellStencil.size();

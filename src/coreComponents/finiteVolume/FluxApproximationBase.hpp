@@ -218,6 +218,17 @@ public:
    */
   string_array & targetRegions()       { return m_targetRegions; }
 
+  /**
+   * @brief Returns the coeff model name.
+   * @return the coeff model name
+   */
+  string_array const & coefficientModelNames() const { return m_coefficientModelNames; }
+  /**
+   * @copydoc coefficientModelNames() const
+   */
+  string_array & coefficientModelNames()       { return m_coefficientModelNames; }
+
+
 protected:
 
   /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
@@ -267,7 +278,7 @@ protected:
   /// name of the coefficient field
   string m_coeffName;
 
-  /// names of target regions to build the stencil for
+  /// names of coefficient models to build the stencil for
   string_array m_coefficientModelNames;
 
   /// names of target regions to build the stencil for

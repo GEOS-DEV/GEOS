@@ -151,7 +151,7 @@
       initialCondition="1"
       setNames="{ wall1, wall2 }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
+      fieldName="rockPerm_permeability"
       scale="2.0e-22"/>
 
     <FieldSpecification
@@ -160,7 +160,7 @@
       initialCondition="1"
       setNames="{ wall1, wall2 }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
+      fieldName="rockPerm_permeability"
       scale="2.0e-22"/>
 
     <FieldSpecification
@@ -169,7 +169,7 @@
       initialCondition="1"
       setNames="{ wall1, wall2 }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
+      fieldName="rockPerm_permeability"
       scale="2.0e-22"/>
 
     <SourceFlux

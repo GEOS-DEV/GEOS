@@ -79,7 +79,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>

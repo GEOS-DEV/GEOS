@@ -132,6 +132,7 @@ void FlowSolverBase::postProcessInput()
   SolverBase::postProcessInput();
   checkModelNames( m_fluidModelNames, viewKeyStruct::fluidNamesString() );
   checkModelNames( m_solidModelNames, viewKeyStruct::solidNamesString() );
+  checkModelNames( m_permeabilityModelNames, viewKeyStruct::permeabilityNamesString() );
 }
 
 void FlowSolverBase::initializePreSubGroups()
@@ -156,16 +157,25 @@ void FlowSolverBase::initializePreSubGroups()
   {
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
     array1d< string > & stencilTargetRegions = fluxApprox.targetRegions();
+    array1d< string > & stencilCoeffModelNames = fluxApprox.coefficientModelNames();
+
     std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
-    for( auto const & targetRegion : targetRegionNames() )
+    map< string, string > coeffModelNames;
+
+    arrayView1d< const string > const & regionNames = targetRegionNames();
+
+    for( localIndex i=0; i< regionNames.size(); i++ )
     {
-      stencilTargetRegionsSet.insert( targetRegion );
+      stencilTargetRegionsSet.insert( regionNames[i] );
+      coeffModelNames[regionNames[i]] =  m_permeabilityModelNames[i];
     }
 
     stencilTargetRegions.clear();
+    stencilCoeffModelNames.clear();
     for( auto const & targetRegion : stencilTargetRegionsSet )
     {
       stencilTargetRegions.emplace_back( targetRegion );
+      stencilCoeffModelNames.emplace_back( coeffModelNames[targetRegion] );
     }
   }
 }
