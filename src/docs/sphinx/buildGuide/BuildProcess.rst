@@ -63,7 +63,6 @@ Option                        Default   Explanation
 ``ENABLE_CUDA``               ``OFF``   Build with CUDA (also applies to TPLs)
 ``ENABLE_DOCS``               ``ON``    Build documentation (Sphinx and Doxygen)
 ``ENABLE_WARNINGS_AS_ERRORS`` ``ON``    Treat all warnings as errors
-``ENABLE_GEOSX_PTP``          ``ON``    Enable Parallel Topology Change module (needed for parallel hydrofracture runs)
 ``ENABLE_PAMELA``             ``ON``    Enable PAMELA library (required for external mesh import)
 ``ENABLE_PVTPackage``         ``ON``    Enable PVTPackage library (required for compositional flow runs)
 ``ENABLE_TOTALVIEW_OUTPUT``   ``OFF``   Enables TotalView debugger custom view of GEOSX data structures
