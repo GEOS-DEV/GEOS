@@ -43,7 +43,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setDescription( "Name of field that boundary condition is applied to." );
 
   registerWrapper( viewKeyStruct::componentString(), &m_component ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Component of field (if tensor) to apply boundary condition to" );
 
