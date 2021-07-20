@@ -347,6 +347,26 @@ public:
                         MPI_Comm comm );
 
   /**
+   * @brief Strongly typed wrapper around MPI_Allgatherv.
+   * @tparam T_SEND The pointer type for \p sendbuf
+   * @tparam T_RECV The pointer type for \p recvbuf
+   * @param[in] sendbuf The pointer to the sending buffer.
+   * @param[in] sendcount The number of values to send.
+   * @param[out] recvbuf The pointer to the receive buffer.
+   * @param[in] recvcounts The number of values to receive.
+   * @param[in] displacements An array containing the displacement to apply to the message received by each process
+   * @param[in] comm The MPI_Comm over which the gather operates.
+   * @return The return value of the underlying call to MPI_Allgatherv().
+   */
+  template< typename T_SEND, typename T_RECV >
+  static int allgatherv( T_SEND const * sendbuf,
+                        int sendcount,
+                        T_RECV * recvbuf,
+                        int * recvcounts,
+                        int * displacements,
+                        MPI_Comm comm );
+
+  /**
    * @brief Convenience function for MPI_Allgather.
    * @tparam T The type to send/recieve. This must have a valid conversion to MPI_Datatype in getMpiType();
    * @param[in] myValue The value to send.
@@ -611,6 +631,25 @@ int MpiWrapper::allgather( T_SEND const * const sendbuf,
 #else
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::allgather() for serial run requires send and receive buffers are of the same type" );
+  GEOSX_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
+  *recvbuf = *sendbuf;
+  return 0;
+#endif
+}
+
+template< typename T_SEND, typename T_RECV >
+int MpiWrapper::allgatherv( T_SEND const * const sendbuf,
+                           int sendcount,
+                           T_RECV * const recvbuf,
+                           int * recvcounts,
+                           int * displacements,
+                           MPI_Comm MPI_PARAM( comm ) )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Allgatherv( sendbuf, sendcount, getMpiType< T_SEND >(), recvbuf, recvcounts, displacements, getMpiType< T_RECV >(), comm );
+#else
+  static_assert( std::is_same< T_SEND, T_RECV >::value,
+                 "MpiWrapper::allgatherv() for serial run requires send and receive buffers are of the same type" );
   GEOSX_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
   *recvbuf = *sendbuf;
   return 0;

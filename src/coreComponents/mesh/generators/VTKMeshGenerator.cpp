@@ -361,12 +361,19 @@ void VTKMeshGenerator::countCellsAndFaces( localIndex & numHex, localIndex & num
 
 
   // Communicate all the surfaces attributes to the ranks
-  std::vector< int > const surfaceVector(surfaces.cbegin(), surfaces.cend());
+  const std::vector< int > surfaceVector(surfaces.cbegin(), surfaces.cend());
   int numSurfaceId = surfaceVector.size();
   int totalNbSurfaceId = 0;
+  std::vector< int > surfaceSizes( MpiWrapper::commSize());
   MpiWrapper::allReduce( &numSurfaceId, &totalNbSurfaceId, 1, MPI_SUM,MPI_COMM_GEOSX );
+  MpiWrapper::allgather( &numSurfaceId, 1, surfaceSizes.data(), 1,MPI_COMM_GEOSX );
   allSurfaces.resize(totalNbSurfaceId);
-  MpiWrapper::allgather<int, int>(surfaceVector.data(),  surfaceVector.size(), allSurfaces.data(),surfaceVector.size(),MPI_COMM_GEOSX);
+  std::vector< int > displacements( MpiWrapper::commSize(),0);
+  for(unsigned int i = 1; i < displacements.size();i++)
+  {
+    displacements[i] = displacements[i-1] + surfaceSizes[i-1];
+  }
+  MpiWrapper::allgatherv<int, int>(surfaceVector.data(),  surfaceVector.size(), allSurfaces.data(),surfaceSizes.data(), displacements.data(), MPI_COMM_GEOSX);
 
   std::sort(allSurfaces.begin(), allSurfaces.end());
   auto last = std::unique( allSurfaces.begin(), allSurfaces.end());
