@@ -195,7 +195,8 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
       fieldName="shalePorosity_porosity"
-      scale="0.00"/>
+      scale="0.00"
+      component="-1"/>
   
     <FieldSpecification
       name="initialPressure"

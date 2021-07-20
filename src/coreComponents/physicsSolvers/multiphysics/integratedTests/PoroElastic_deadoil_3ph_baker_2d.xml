@@ -180,7 +180,8 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain/block1"
       fieldName="rockPorosity_porosity"
-      scale="0.05"/>   
+      scale="0.05"
+      component="-1"/>   
       
     <!-- Initial pressure: ~5 bar -->
     <FieldSpecification

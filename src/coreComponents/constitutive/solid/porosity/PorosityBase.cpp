@@ -89,6 +89,7 @@ void PorosityBase::initializePostInitialConditionsPreSubGroups()
   arrayView2d< real64 const > newPorosity = m_newPorosity;
   arrayView2d< real64 >       oldPorosity = m_oldPorosity;
 
+  //TODO once default component for fieldspec becomes -1 this should become newPorosity[k][q];
   forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )

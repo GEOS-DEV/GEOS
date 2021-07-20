@@ -360,13 +360,13 @@ public:
    */
   void chopNegativeDensities( DomainPartition & domain );
 
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
 protected:
 
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
    * @brief Checks constitutive models for consistency
