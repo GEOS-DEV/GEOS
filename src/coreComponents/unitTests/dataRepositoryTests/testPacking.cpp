@@ -25,6 +25,128 @@
 #include <ctime>
 #include <cstdlib>
 
+
+namespace geosx
+{
+namespace testing
+{
+
+string create( string const & )
+{ return "hello"; }
+
+void checkEqual( string const & var, string const & unpackedVar )
+{ EXPECT_EQ( var, unpackedVar ); }
+
+template< typename T, int N, typename PERM >
+Array< T, N, PERM > create( Array< T, N, PERM > const & )
+{
+  Array< T, N, PERM > array;
+  localIndex dims[ N ];
+  
+  for( int dim = 0; dim < N; ++dim )
+  {
+    dims[ dim ] = 2 * dim + 3;
+  }
+
+  array.resize( N, dims );
+
+  for( localIndex i = 0; i < array.size(); ++i )
+  {
+    array.data()[ i ] = i;
+  }
+
+  return array;
+}
+
+template< typename T, int N, typename PERM >
+void checkEqual( Array< T, N, PERM > const & var, Array< T, N, PERM > const & unpackedVar )
+{
+  for( int dim = 0; dim < N; ++dim )
+  {
+    EXPECT_EQ( var.size( dim ), unpackedVar.size( dim ) );
+  }
+
+  for( localIndex i = 0; i < var.size(); ++i )
+  {
+    EXPECT_EQ( var.data()[ i ], unpackedVar.data()[ i ] );
+  }
+}
+
+template< typename T >
+SortedArray< T > create( SortedArray< T > const & )
+{
+  SortedArray< T > var;
+  var.insert( 3 );
+  var.insert( 4 );
+  return var;
+}
+
+template< typename T >
+void checkEqual( SortedArray< T > const & var, SortedArray< T > const & unpackedVar )
+{
+  EXPECT_EQ( var.size(), unpackedVar.size() );
+
+  for( localIndex i = 0; i < var.size(); ++i )
+  {
+    EXPECT_EQ( var[ i ], unpackedVar[ i ] );
+  }
+}
+
+
+template< typename T >
+struct BufferOpsTest : public ::testing::Test
+{
+  void packUnpack()
+  {
+    T const var = create( T{} );
+
+    buffer_unit_type * bufferPointer = nullptr;
+    localIndex const packedSize = bufferOps::Pack< false >( bufferPointer, var );
+    
+    std::vector< buffer_unit_type > buffer( packedSize );
+    bufferPointer = buffer.data();
+
+    EXPECT_EQ( packedSize, bufferOps::Pack< true >( bufferPointer, var ) );
+
+    T unpackedVar;
+    buffer_unit_type const * constBufferPointer = buffer.data();
+    EXPECT_EQ( packedSize, bufferOps::Unpack( constBufferPointer, unpackedVar ) );
+
+    checkEqual( var, unpackedVar );
+  }
+
+  void packUnpackByIndex()
+  {
+    
+  }
+};
+
+using BufferOpsTestTypes = ::testing::Types<
+  string,
+  array1d< int >,
+  array2d< float, RAJA::PERM_JI >,
+  array3d< double >,
+  SortedArray< int >
+  >;
+
+TYPED_TEST_SUITE( BufferOpsTest, BufferOpsTestTypes, );
+
+TYPED_TEST( BufferOpsTest, packUnpack )
+{
+  this->packUnpack();
+}
+
+TYPED_TEST( BufferOpsTest, packUnpackByIndex )
+{
+  this->packUnpackByIndex();
+}
+
+} // namespace testing
+} // namespace geosx
+
+
+# if 0
+
 using namespace geosx;
 
 #ifndef GTEST_SKIP
@@ -257,6 +379,8 @@ TEST( testPacking, testPackByIndexDevice )
   }
 }
 
+
+#endif
 
 int main( int ac, char * av[] )
 {
