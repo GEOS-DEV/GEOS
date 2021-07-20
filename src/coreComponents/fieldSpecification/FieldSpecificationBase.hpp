@@ -661,7 +661,7 @@ FieldSpecificationBase::
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const
 {
-  integer const component = getComponent();
+  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
   string const & functionName = getReference< string >( viewKeyStruct::functionNameString() );
   FunctionManager & functionManager = FunctionManager::getInstance();
 
