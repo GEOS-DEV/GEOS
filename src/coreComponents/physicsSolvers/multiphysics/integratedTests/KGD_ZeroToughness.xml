@@ -25,9 +25,20 @@
         lineSearchAction="Attempt"
         lineSearchMaxCuts="3"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        solverType="gmres"
+        preconditionerType="mgr"
+        logLevel="1"/>
+      <!--LinearSolverParameters
+         logLevel="0"
+         solverType="gmres"
+         krylovTol="1.0e-08"
+         preconditionerType="amg"
+         amgSmootherType="l1jacobi"
+         amgNumSweeps="2"
+         amgCoarseningType="PMIS"
+         amgInterpolationType="6"
+         amgNumFunctions="3"
+         amgAggresiveCoarseningLevels="0"/-->
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE

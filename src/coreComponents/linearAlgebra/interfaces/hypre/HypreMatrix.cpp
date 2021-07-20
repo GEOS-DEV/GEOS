@@ -352,19 +352,63 @@ void HypreMatrix::set( globalIndex const rowIndex,
 
 }
 
-void HypreMatrix::insert( globalIndex const rowIndex,
-                          globalIndex const colIndex,
-                          real64 const value )
+void HypreMatrix::insert( globalIndex const rowIndex0,
+                          globalIndex const colIndex0,
+                          real64 const value0 )
 {
   GEOSX_LAI_ASSERT( insertable() );
 
+#if defined(GEOSX_USE_HYPRE_CUDA)
+  array1d< HYPRE_BigInt > rowIndexDevice( 1 );
+  array1d< HYPRE_BigInt > colIndexDevice( 1 );
+  array1d< HYPRE_Int > ncolsDevice( 1 );
+  array1d< real64 > valueDevice(1);
+
+  rowIndexDevice[0] = rowIndex0;
+  colIndexDevice[0] = colIndex0;
+  ncolsDevice[0] = 1;
+  valueDevice[0] = value0;
+
+  rowIndexDevice.move( LvArray::MemorySpace::cuda, false );
+  colIndexDevice.move( LvArray::MemorySpace::cuda, false );
+  ncolsDevice.move( LvArray::MemorySpace::cuda, false );
+  valueDevice.move( LvArray::MemorySpace::cuda, false );
+
+  HYPRE_Int * const ncols = ncolsDevice.data();
+  HYPRE_BigInt const * const rowIndex = rowIndexDevice.data();
+  HYPRE_BigInt const * const colIndex = rowIndexDevice.data();
+  real64 * const value = valueDevice.data();
+#else
+
+#if 0
+  HYPRE_Int one = 1;
+  HYPRE_Int * const ncols = &one;
+  HYPRE_BigInt const rowIndexData = rowIndex0;
+  HYPRE_BigInt const colIndexData = colIndex0;
+  HYPRE_BigInt const * const rowIndex = &rowIndexData;
+  HYPRE_BigInt const * const colIndex = &colIndexData;
+  real64 const * const value = &value0;
+
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
+                                                    1,
+                                                    ncols,
+                                                    rowIndex,
+                                                    colIndex,
+                                                    value ) );
+
+#else
   HYPRE_Int ncols = 1;
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
                                                     1,
                                                     &ncols,
-                                                    hypre::toHypreBigInt( &rowIndex ),
-                                                    hypre::toHypreBigInt( &colIndex ),
-                                                    &value ) );
+                                                    hypre::toHypreBigInt( &rowIndex0 ),
+                                                    hypre::toHypreBigInt( &colIndex0 ),
+                                                    &value0 ) );
+#endif
+#endif
+
+
+
 }
 
 void HypreMatrix::add( globalIndex const rowIndex,
