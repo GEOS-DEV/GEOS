@@ -189,11 +189,11 @@ public:
    * @brief Compute the well transmissibility for each local perforation on this well.
    * @param[in] mesh target mesh level
    * @param[in] wellElemSubRegion  subRegion corresponding to this well
-   * @param[in] permeability the permeability in the reservoir
+   * @param[in] perm the permeability in the reservoir
    */
   void computeWellTransmissibility( MeshLevel const & mesh,
                                     WellElementSubRegion const & wellElemSubRegion,
-                                    array1d< array1d < arrayView2d< real64 const > > > const & perm );
+                                    array1d< array1d< arrayView2d< real64 const > > > const & perm );
 
   ///@}
 

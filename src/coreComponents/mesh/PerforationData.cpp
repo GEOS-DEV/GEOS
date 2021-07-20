@@ -110,7 +110,7 @@ void decideWellDirection( VEC_TYPE const & topToBottomVec,
 
 void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
                                                    WellElementSubRegion const & wellElemSubRegion,
-                                                   array1d< array1d < arrayView2d< real64 const > > > const & perm )
+                                                   array1d< array1d< arrayView2d< real64 const > > > const & perm )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();

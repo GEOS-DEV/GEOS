@@ -191,10 +191,10 @@ public:
   }
 
 
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
+
 protected:
   virtual void postProcessInput() override;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
   array2d< real64 > m_newPorosity;
 
