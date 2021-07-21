@@ -39,6 +39,7 @@ namespace meshMapUtilities
  * @param map reference to the map
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline localIndex size0( arrayView1d< arrayView1d< T const > const > const & map )
 {
   return map.size();
@@ -49,6 +50,7 @@ inline localIndex size0( arrayView1d< arrayView1d< T const > const > const & map
  * @tparam USD unit-stride dimension of the map
  */
 template< typename T, int USD >
+GEOSX_HOST_DEVICE
 inline localIndex size0( arrayView2d< T, USD > const & map )
 {
   return map.size( 0 );
@@ -58,6 +60,7 @@ inline localIndex size0( arrayView2d< T, USD > const & map )
  * @copydoc size0(arrayView1d< arrayView1d< T const > const > const &)
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline localIndex size0( ArrayOfArraysView< T const > const & map )
 {
   return map.size();
@@ -67,6 +70,7 @@ inline localIndex size0( ArrayOfArraysView< T const > const & map )
  * @copydoc size0(arrayView1d< arrayView1d< T const > const > const &)
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline localIndex size0( ArrayOfSetsView< T const > const & map )
 {
   return map.size();
@@ -81,6 +85,7 @@ inline localIndex size0( ArrayOfSetsView< T const > const & map )
  * @param i0 first-dimension index into the map
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline localIndex size1( arrayView1d< arrayView1d< T const > const > const & map, localIndex const i0 )
 {
   return map[i0].size();
@@ -91,6 +96,7 @@ inline localIndex size1( arrayView1d< arrayView1d< T const > const > const & map
  * @tparam USD unit-stride dimension of the map
  */
 template< typename T, int USD >
+GEOSX_HOST_DEVICE
 inline localIndex size1( arrayView2d< T, USD > const & map, localIndex const i0 )
 {
   GEOSX_UNUSED_VAR( i0 )
@@ -101,6 +107,7 @@ inline localIndex size1( arrayView2d< T, USD > const & map, localIndex const i0 
  * @copydoc size1(arrayView1d< arrayView1d< T const > const > const &, localIndex const)
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline localIndex size1( ArrayOfArraysView< T const > const & map, localIndex const i0 )
 {
   return map.sizeOfArray( i0 );
@@ -110,6 +117,7 @@ inline localIndex size1( ArrayOfArraysView< T const > const & map, localIndex co
  * @copydoc size1(arrayView1d< arrayView1d< T const > const > const &, localIndex const)
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline localIndex size1( ArrayOfSetsView< T const > const & map, localIndex const i0 )
 {
   return map.sizeOfSet( i0 );
@@ -125,6 +133,7 @@ inline localIndex size1( ArrayOfSetsView< T const > const & map, localIndex cons
  * @param i1 second-dimension index into the map
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline T const & value( arrayView1d< arrayView1d< T const > const > const & map, localIndex const i0, localIndex const i1 )
 {
   return map[i0][i1];
@@ -135,6 +144,7 @@ inline T const & value( arrayView1d< arrayView1d< T const > const > const & map,
  * @tparam USD unit-stride dimension of the map
  */
 template< typename T, int USD >
+GEOSX_HOST_DEVICE
 inline T const & value( arrayView2d< T, USD > const & map, localIndex const i0, localIndex const i1 )
 {
   return map( i0, i1 );
@@ -144,6 +154,7 @@ inline T const & value( arrayView2d< T, USD > const & map, localIndex const i0, 
  * @copydoc value(arrayView1d< arrayView1d< T const > const > const &, localIndex const, localIndex const)
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline T const & value( ArrayOfArraysView< T const > const & map, localIndex const i0, localIndex const i1 )
 {
   return map( i0, i1 );
@@ -153,6 +164,7 @@ inline T const & value( ArrayOfArraysView< T const > const & map, localIndex con
  * @copydoc value(arrayView1d< arrayView1d< T const > const > const &, localIndex const, localIndex const)
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline T const & value( ArrayOfSetsView< T const > const & map, localIndex const i0, localIndex const i1 )
 {
   return map( i0, i1 );
@@ -166,6 +178,7 @@ inline T const & value( ArrayOfSetsView< T const > const & map, localIndex const
  * @param map reference to the map
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline localIndex numElements( arrayView1d< arrayView1d< T const > const > const & map )
 {
   return map.size();
@@ -176,6 +189,7 @@ inline localIndex numElements( arrayView1d< arrayView1d< T const > const > const
  * @tparam USD unit-stride dimension of the map
  */
 template< typename T, int USD >
+GEOSX_HOST_DEVICE
 inline localIndex numElements( arrayView2d< T, USD > const & map )
 {
   return map.size();
@@ -185,6 +199,7 @@ inline localIndex numElements( arrayView2d< T, USD > const & map )
  * @copydoc numElements(arrayView1d< arrayView1d< T const > const > const &)
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline localIndex numElements( ArrayOfArraysView< T const > const & map )
 {
   localIndex size = 0;
@@ -199,6 +214,7 @@ inline localIndex numElements( ArrayOfArraysView< T const > const & map )
  * @copydoc numElements(arrayView1d< arrayView1d< T const > const > const &)
  */
 template< typename T >
+GEOSX_HOST_DEVICE
 inline localIndex numElements( ArrayOfSetsView< T const > const & map )
 {
   localIndex size = 0;

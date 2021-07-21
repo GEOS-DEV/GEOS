@@ -3,7 +3,8 @@
 #
 
 set(gtest_geosx_tests
-   testDataTypes.cpp
+    testDataTypes.cpp
+    testTypeDispatch.cpp
    )
 
 set( dependencyList common hdf5 gtest )

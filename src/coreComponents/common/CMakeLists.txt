@@ -14,9 +14,11 @@ set(common_headers
     MpiWrapper.hpp
     Path.hpp
     GEOS_RAJA_Interface.hpp
+    Span.hpp
     Stopwatch.hpp
     Tensor.hpp
     TimingMacros.hpp
+    TypeDispatch.hpp
    )
 
 #

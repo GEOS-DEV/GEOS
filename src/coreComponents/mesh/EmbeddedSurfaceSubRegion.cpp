@@ -46,6 +46,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_numOfJumpEnrichments( 3 ),
   m_connectivityIndex()
 {
+  m_elementType = ElementType::Polygon;
+
   registerWrapper( viewKeyStruct::normalVectorString(), &m_normalVector ).
     setDescription( "Unit normal vector to the embedded surface." );
 
