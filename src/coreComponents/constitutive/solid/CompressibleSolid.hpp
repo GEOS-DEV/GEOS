@@ -32,7 +32,8 @@ namespace constitutive
  * @brief Provides kernel-callable constitutive update routines
  *
  *
- * @tparam SOLID_TYPE
+ * @tparam PORO_TYPE type of the porosity model
+ * @tparam PERM_TYPE type of the permeability model
  */
 template< typename PORO_TYPE,
           typename PERM_TYPE >
@@ -66,6 +67,15 @@ private:
   using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_permUpdate;
 
 };
+
+/**
+ * @brief Class to represent a porous material for flow simulations.
+ * It is used as an interface to access all constitutive models relative to the properties of a porous material
+ * for flow only simulations.
+ *
+ * @tparam PORO_TYPE type of porosity model
+ * @tparam PERM_TYPE type of the permeability model
+ */
 
 template< typename PORO_TYPE,
           typename PERM_TYPE >

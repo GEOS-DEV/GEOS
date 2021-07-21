@@ -172,9 +172,8 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
-      fieldName="skeletonPorosity_porosity"
-      scale="0.3"
-      component="-1"/>  
+      fieldName="skeletonPorosity_newPorosity"
+      scale="0.3"/>  
   
     <FieldSpecification
       name="initialPressure"

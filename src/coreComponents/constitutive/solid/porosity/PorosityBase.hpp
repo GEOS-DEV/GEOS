@@ -121,10 +121,10 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr char const * newPorosityString() { return "porosity"; }
+    static constexpr char const * newPorosityString() { return "newPorosity"; }
     static constexpr char const * oldPorosityString() { return "oldPorosity"; }
     static constexpr char const * dPorosity_dPressureString() { return "dPorosity_dPressure"; }
-    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
+    static constexpr char const * referencePorosityString() { return "refPorosity"; }
     static constexpr char const * defaultRefererencePorosityString() { return "defaultReferencePorosity"; }
   } viewKeys;
 

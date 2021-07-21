@@ -34,7 +34,7 @@ namespace constitutive
  * @brief Provides kernel-callable constitutive update routines
  *
  *
- * @tparam SOLID_TYPE
+ * @tparam SOLID_TYPE type of the porosity model
  */
 template< typename SOLID_TYPE >
 class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >
@@ -106,7 +106,10 @@ class PorousSolidBase : public SolidBase
 {};
 
 /**
- * @brief Class to represent a coupled solid model
+ * @brief Class to represent a porous material for poromechanics simulations.
+ * It is used as an interface to access all constitutive models relative to the properties of a porous material.
+ *
+ * @tparam SOLID_TYPE type of solid model
  */
 template< typename SOLID_TYPE >
 class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >

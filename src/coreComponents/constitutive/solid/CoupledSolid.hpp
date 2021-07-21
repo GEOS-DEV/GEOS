@@ -28,6 +28,14 @@ namespace geosx
 namespace constitutive
 {
 
+/**
+ * @brief Provides kernel-callable constitutive update routines
+ *
+ *
+ * @tparam SOLID_TYPE type of solid model
+ * @tparam PORO_TYPE type of porosity model
+ * @tparam PERM_TYPE type of permeability model
+ */
 template< typename SOLID_TYPE,
           typename PORO_TYPE,
           typename PERM_TYPE >
@@ -70,7 +78,12 @@ protected:
 
 
 /**
- * @brief Class to represent a coupled solid model
+ * @brief Class to represent a material which is formed by coupling several constitutive models.
+ * It is used as an interface to access all constitutive models relative to the material properties.
+ *
+ * @tparam SOLID_TYPE type of solid model
+ * @tparam PORO_TYPE type of porosity model
+ * @tparam PERM_TYPE type of permeability model
  */
 template< typename SOLID_TYPE,
           typename PORO_TYPE,
