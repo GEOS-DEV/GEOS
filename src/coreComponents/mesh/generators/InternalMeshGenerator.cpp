@@ -27,7 +27,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 
-#include <math.h>
+#include <cmath>
 
 namespace geosx
 {
@@ -114,20 +114,44 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setDescription( "A position tolerance to verify if a node belong to a nodeset" );
 }
 
+static int getNumElemPerBox( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Triangle:      return 2;
+    case ElementType::Quadrilateral: return 1;
+    case ElementType::Tetrahedron:    return 6;
+    case ElementType::Prism:         return 2;
+    case ElementType::Pyramid:       return 6;
+    case ElementType::Hexahedron:    return 1;
+    default:
+    {
+      GEOSX_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
+      return 0;
+    }
+  }
+}
+
+static int getElementDim( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Line:          return 1;
+    case ElementType::Triangle:
+    case ElementType::Quadrilateral:
+    case ElementType::Polygon:       return 2;
+    case ElementType::Tetrahedron:
+    case ElementType::Pyramid:
+    case ElementType::Prism:
+    case ElementType::Hexahedron:
+    case ElementType::Polyhedron:    return 3;
+  }
+  return 0;
+}
+
 void InternalMeshGenerator::postProcessInput()
 {
-  if( m_elementType[0] == "C3D8" || m_elementType[0] == "C3D4" || m_elementType[0] == "C3D6" )
-  {
-    m_dim = 3;
-  }
-  else if( m_elementType[0] == "CPE4" || m_elementType[0] == "STRI" )
-  {
-    m_dim = 2;
-  }
-  else
-  {
-    GEOSX_ERROR( "InternalMeshGenerator: incorrect element type!" );
-  }
+  m_dim = getElementDim( EnumStrings< ElementType >::fromString( m_elementType[0] ) );
 
   {
     // Check for vertex/element matching
@@ -157,15 +181,12 @@ void InternalMeshGenerator::postProcessInput()
 
   m_numElePerBox.resize( m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if( LvArray::integerConversion< long >( m_elementType.size()) != m_numElePerBox.size())
+  if( m_elementType.size() != m_numElePerBox.size() )
   {
     if( m_elementType.size() == 1 )
     {
-      m_elementType.resize( m_numElePerBox.size());
-      for( localIndex i=1; i< m_elementType.size(); ++i )
-      {
-        m_elementType[i] = m_elementType[0];
-      }
+      string const elementType = m_elementType[0];
+      m_elementType.resizeDefault( m_numElePerBox.size(), elementType );
     }
     else
     {
@@ -175,31 +196,7 @@ void InternalMeshGenerator::postProcessInput()
 
   for( localIndex i = 0; i < LvArray::integerConversion< localIndex >( m_elementType.size() ); ++i )
   {
-    if( m_elementType[i] == "C3D8" )
-    {
-      m_numElePerBox[i] = 1;
-      m_dim = 3;
-    }
-    else if( m_elementType[i] == "C3D4" )
-    {
-      m_numElePerBox[i] = 6;
-      m_dim = 3;
-    }
-    else if( m_elementType[i] == "C3D6" )
-    {
-      m_numElePerBox[i] = 2;
-      m_dim = 3;
-    }
-    else if( m_elementType[i] == "CPE4" )
-    {
-      m_numElePerBox[i] = 1;
-      m_dim = 2;
-    }
-    else if( m_elementType[i] == "STRI" )
-    {
-      m_numElePerBox[i] = 2;
-      m_dim = 2;
-    }
+    m_numElePerBox[i] = getNumElemPerBox( EnumStrings< ElementType >::fromString( m_elementType[i] ) );
   }
 
   {
@@ -212,11 +209,8 @@ void InternalMeshGenerator::postProcessInput()
     {
       if( m_regionNames.size() == 1 )
       {
-        m_regionNames.resize( numBlocks );
-        for( localIndex i=1; i< m_elementType.size(); ++i )
-        {
-          m_regionNames[i] = m_regionNames[0];
-        }
+        string const regionName = m_regionNames[0];
+        m_regionNames.resizeDefault( numBlocks, regionName );
       }
       else
       {
@@ -254,6 +248,318 @@ Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( c
 }
 
 /**
+ * @brief Get the label mapping of element vertices indexes onto node indexes for a type of element.
+ * @param[in] elementType the element type
+ * @param[in] index ndim-spatialized Element index.
+ * @param[in] iEle the index of Element begin processed
+ * @param[out] nodeIDInBox array to map element vertices index to node indexes
+ * @param[in] size the number of node on the element
+ */
+static void getElemToNodesRelationInBox( ElementType const elementType,
+                                         integer const trianglePattern,
+                                         int const (&index)[3],
+                                         int const & iEle,
+                                         int (& nodeIDInBox)[8],
+                                         int const node_size )
+
+{
+  switch( elementType )
+  {
+    case ElementType::Hexahedron:
+    {
+      nodeIDInBox[0] = 0;
+      nodeIDInBox[1] = 1;
+      nodeIDInBox[2] = 3;
+      nodeIDInBox[3] = 2;
+      nodeIDInBox[4] = 4;
+      nodeIDInBox[5] = 5;
+      nodeIDInBox[6] = 7;
+      nodeIDInBox[7] = 6;
+      break;
+    }
+    case ElementType::Prism:
+    {
+      if( trianglePattern == 0 )
+      {
+        if( ( index[0] + index[1] ) % 2 == 1 )
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 6;
+            nodeIDInBox[1] = 2;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 7;
+            nodeIDInBox[5] = 3;
+            nodeIDInBox[6] = 7;
+            nodeIDInBox[7] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 6;
+            nodeIDInBox[5] = 2;
+            nodeIDInBox[6] = 6;
+            nodeIDInBox[7] = 2;
+          }
+        }
+        else
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 7;
+            nodeIDInBox[5] = 3;
+            nodeIDInBox[6] = 7;
+            nodeIDInBox[7] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 7;
+            nodeIDInBox[3] = 3;
+            nodeIDInBox[4] = 6;
+            nodeIDInBox[5] = 2;
+            nodeIDInBox[6] = 6;
+            nodeIDInBox[7] = 2;
+          }
+        }
+      }
+      else if( trianglePattern == 1 )
+      {
+        if( index[1] % 2 == 0 )
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 6;
+            nodeIDInBox[5] = 2;
+            nodeIDInBox[6] = 6;
+            nodeIDInBox[7] = 2;
+          }
+          else
+          {
+            nodeIDInBox[0] = 6;
+            nodeIDInBox[1] = 2;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 7;
+            nodeIDInBox[5] = 3;
+            nodeIDInBox[6] = 7;
+            nodeIDInBox[7] = 3;
+          }
+        }
+        else
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 4;
+            nodeIDInBox[3] = 0;
+            nodeIDInBox[4] = 7;
+            nodeIDInBox[5] = 3;
+            nodeIDInBox[6] = 7;
+            nodeIDInBox[7] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 5;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 7;
+            nodeIDInBox[3] = 3;
+            nodeIDInBox[4] = 6;
+            nodeIDInBox[5] = 2;
+            nodeIDInBox[6] = 6;
+            nodeIDInBox[7] = 2;
+          }
+        }
+      }
+      break;
+    }
+    case ElementType::Quadrilateral:
+    {
+      nodeIDInBox[0] = 0;
+      nodeIDInBox[1] = 1;
+      nodeIDInBox[2] = 3;
+      nodeIDInBox[3] = 2;
+      break;
+    }
+    case ElementType::Triangle:
+    {
+      if( trianglePattern == 0 )
+      {
+        if( ( index[0] + index[1] ) % 2 == 1 )
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 0;
+            nodeIDInBox[1] = 2;
+            nodeIDInBox[2] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 0;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 2;
+          }
+        }
+        else
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 0;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 1;
+            nodeIDInBox[1] = 2;
+            nodeIDInBox[2] = 3;
+          }
+        }
+      }
+      else if( trianglePattern == 1 )
+      {
+        if( index[1] % 2 == 0 )
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 0;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 2;
+          }
+          else
+          {
+            nodeIDInBox[0] = 2;
+            nodeIDInBox[1] = 3;
+            nodeIDInBox[2] = 0;
+          }
+        }
+        else
+        {
+          if( iEle % 2 == 0 )
+          {
+            nodeIDInBox[0] = 0;
+            nodeIDInBox[1] = 1;
+            nodeIDInBox[2] = 3;
+          }
+          else
+          {
+            nodeIDInBox[0] = 1;
+            nodeIDInBox[1] = 2;
+            nodeIDInBox[2] = 3;
+          }
+        }
+      }
+      break;
+    }
+    case ElementType::Tetrahedron:
+    {
+      int mapBoxTet[8][6][4] =
+      {
+        {
+          { 0, 3, 7, 6 },
+          { 0, 7, 4, 6 },
+          { 0, 5, 1, 6 },
+          { 0, 4, 5, 6 },
+          { 0, 1, 2, 6 },
+          { 0, 2, 3, 6 }
+        },
+        {
+          { 1, 5, 6, 7 },
+          { 1, 6, 2, 7 },
+          { 0, 4, 1, 7 },
+          { 1, 4, 5, 7 },
+          { 0, 1, 3, 7 },
+          { 1, 2, 3, 7 }
+        },
+        {
+          { 0, 3, 4, 2 },
+          { 3, 7, 4, 2 },
+          { 0, 4, 1, 2 },
+          { 1, 4, 5, 2 },
+          { 4, 7, 6, 2 },
+          { 4, 6, 5, 2 }
+        },
+        {
+          { 1, 5, 2, 3 },
+          { 2, 5, 6, 3 },
+          { 0, 5, 1, 3 },
+          { 0, 4, 5, 3 },
+          { 4, 7, 5, 3 },
+          { 5, 7, 6, 3 }
+        },
+        {
+          { 0, 3, 4, 5 },
+          { 3, 7, 4, 5 },
+          { 3, 6, 7, 5 },
+          { 3, 2, 6, 5 },
+          { 3, 0, 1, 5 },
+          { 1, 2, 3, 5 }
+        },
+        {
+          { 1, 5, 2, 4 },
+          { 2, 5, 6, 4 },
+          { 2, 6, 7, 4 },
+          { 2, 7, 3, 4 },
+          { 0, 2, 3, 4 },
+          { 0, 1, 2, 4 }
+        },
+        {
+          { 0, 7, 4, 1 },
+          { 0, 3, 7, 1 },
+          { 2, 7, 3, 1 },
+          { 2, 6, 7, 1 },
+          { 4, 7, 5, 1 },
+          { 5, 7, 6, 1 }
+        },
+        {
+          { 1, 5, 6, 0 },
+          { 1, 6, 2, 0 },
+          { 2, 6, 3, 0 },
+          { 3, 6, 7, 0 },
+          { 4, 6, 5, 0 },
+          { 4, 7, 6, 0 }
+        }
+      };
+
+      int mapBoxType[2][2][2];
+      mapBoxType[0][0][0] = 0;
+      mapBoxType[1][0][0] = 1;
+      mapBoxType[0][0][1] = 2;
+      mapBoxType[1][0][1] = 3;
+      mapBoxType[0][1][0] = 4;
+      mapBoxType[1][1][0] = 5;
+      mapBoxType[0][1][1] = 6;
+      mapBoxType[1][1][1] = 7;
+
+      int boxType = mapBoxType[index[0] % 2][index[1] % 2][index[2] % 2];
+      for( int i = 0; i < node_size; ++i )
+      {
+        nodeIDInBox[i] = mapBoxTet[boxType][iEle][i];
+      }
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
+    }
+  }
+}
+
+/**
  * @param partition
  * @param domain
  */
@@ -277,8 +583,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   for( auto & cellBlockName : m_regionNames )
   {
     CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
-    string elementType = m_elementType[aa++];
-    cellBlock.setElementType( elementType );
+    cellBlock.setElementType( EnumStrings< ElementType >::fromString( m_elementType[aa++] ) );
   }
 
   SortedArray< localIndex > & xnegNodes = nodeSets["xneg"];
@@ -364,7 +669,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   // total number of nodes
 
   std::map< string, int > numElemsInRegions;
-  std::map< string, string > elemTypeInRegions;
+  std::map< string, ElementType > elemTypeInRegions;
 
   array1d< integer > firstElemIndexForBlockInPartition[3];
   array1d< integer > lastElemIndexForBlockInPartition[3];
@@ -405,7 +710,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset )
       {
         numElemsInRegions[ m_regionNames[ regionOffset ] ] = 0;
-        elemTypeInRegions[ m_regionNames[ regionOffset ] ] = "";
+        elemTypeInRegions[ m_regionNames[ regionOffset ] ] = ElementType::Quadrilateral;
       }
     }
   }
@@ -433,7 +738,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
           numElemsInRegion *= m_numElePerBox[iR];
           numElemsInRegions[ m_regionNames[ regionOffset ] ] += numElemsInRegion;
-          elemTypeInRegions[ m_regionNames[ regionOffset ] ] = m_elementType[iR];
+          elemTypeInRegions[ m_regionNames[ regionOffset ] ] = EnumStrings< ElementType >::fromString( m_elementType[iR] );
         }
       }
     }
@@ -519,21 +824,16 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   {
     array1d< integer > numElements;
     array1d< string > elementRegionNames;
-    array1d< string > elementTypes;
     std::map< string, localIndex > localElemIndexInRegion;
 
-    for( std::map< string, int >::iterator iterNumElemsInRegion = numElemsInRegions.begin();
-         iterNumElemsInRegion != numElemsInRegions.end(); ++iterNumElemsInRegion )
+    for( auto const & numElemsInRegion : numElemsInRegions )
     {
-
-      numElements.emplace_back( iterNumElemsInRegion->second );
-      elementRegionNames.emplace_back( iterNumElemsInRegion->first );
-      elementTypes.emplace_back( elemTypeInRegions[iterNumElemsInRegion->first] );
-
-      localElemIndexInRegion[iterNumElemsInRegion->first] = 0;
+      numElements.emplace_back( numElemsInRegion.second );
+      elementRegionNames.emplace_back( numElemsInRegion.first );
+      localElemIndexInRegion[numElemsInRegion.first] = 0;
     }
 
-    cellBlockManager.resize( numElements, elementRegionNames, elementTypes );
+    cellBlockManager.resize( numElements, elementRegionNames );
 
     // Assign global numbers to elements
     regionOffset = 0;
@@ -546,6 +846,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       {
         for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset, ++iR )
         {
+          ElementType const elementType = EnumStrings< ElementType >::fromString( m_elementType[iR] );
+
           CellBlock & cellBlock = cellBlockManager.getCellBlock( m_regionNames[regionOffset] );
           int const numNodesPerElem = LvArray::integerConversion< int >( cellBlock.numNodesPerElement());
           integer nodeIDInBox[ 8 ];
@@ -574,7 +876,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
                                                   + ( globalIJK[2] - firstElemIndexInPartition[2] );
                 localIndex nodeOfBox[8];
 
-                if( m_elementType[iR] == "CPE4" || m_elementType[iR] == "STRI" )
+                if( elementType == ElementType::Quadrilateral || elementType == ElementType::Triangle )
                 {
                   nodeOfBox[0] = firstNodeIndex;
                   nodeOfBox[1] = numNodesInDir[1] * numNodesInDir[2] + firstNodeIndex;
@@ -624,7 +926,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
                   localIndex & localElemIndex = localElemIndexInRegion[ m_regionNames[ regionOffset ] ];
                   elemLocalToGlobal[localElemIndex] = elemGlobalIndex( globalIJK ) * m_numElePerBox[iR] + iEle;
 
-                  getElemToNodesRelationInBox( m_elementType[iR],
+                  getElemToNodesRelationInBox( elementType,
+                                               m_trianglePattern,
                                                globalIJK,
                                                iEle,
                                                nodeIDInBox,
@@ -675,298 +978,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   coordinateTransformation( X, nodeSets );
 
   cellBlockManager.buildMaps();
-}
-
-/**
- * @param elementType
- * @param index
- * @param iEle
- * @param nodeIDInBox
- * @param node_size
- */
-void InternalMeshGenerator::getElemToNodesRelationInBox( const string & elementType,
-                                                         int const (&index)[3],
-                                                         int const & iEle,
-                                                         int (& nodeIDInBox)[8],
-                                                         int const node_size )
-
-{
-  if( elementType == "C3D8" )
-  {
-    nodeIDInBox[0] = 0;
-    nodeIDInBox[1] = 1;
-    nodeIDInBox[2] = 3;
-    nodeIDInBox[3] = 2;
-    nodeIDInBox[4] = 4;
-    nodeIDInBox[5] = 5;
-    nodeIDInBox[6] = 7;
-    nodeIDInBox[7] = 6;
-  }
-  else if( ( elementType == "C3D6" ) && ( m_trianglePattern == 0 ) )
-  {
-    if( ( index[0] + index[1] ) % 2 == 1 )
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 6;
-        nodeIDInBox[1] = 2;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 7;
-        nodeIDInBox[5] = 3;
-        nodeIDInBox[6] = 7;
-        nodeIDInBox[7] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 6;
-        nodeIDInBox[5] = 2;
-        nodeIDInBox[6] = 6;
-        nodeIDInBox[7] = 2;
-      }
-    }
-    else
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 7;
-        nodeIDInBox[5] = 3;
-        nodeIDInBox[6] = 7;
-        nodeIDInBox[7] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 7;
-        nodeIDInBox[3] = 3;
-        nodeIDInBox[4] = 6;
-        nodeIDInBox[5] = 2;
-        nodeIDInBox[6] = 6;
-        nodeIDInBox[7] = 2;
-      }
-    }
-  }
-  else if( ( elementType == "C3D6" ) && ( m_trianglePattern == 1 ) )
-  {
-    if( index[1] % 2 == 0 )
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 6;
-        nodeIDInBox[5] = 2;
-        nodeIDInBox[6] = 6;
-        nodeIDInBox[7] = 2;
-      }
-      else
-      {
-        nodeIDInBox[0] = 6;
-        nodeIDInBox[1] = 2;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 7;
-        nodeIDInBox[5] = 3;
-        nodeIDInBox[6] = 7;
-        nodeIDInBox[7] = 3;
-      }
-    }
-    else
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 4;
-        nodeIDInBox[3] = 0;
-        nodeIDInBox[4] = 7;
-        nodeIDInBox[5] = 3;
-        nodeIDInBox[6] = 7;
-        nodeIDInBox[7] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 5;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 7;
-        nodeIDInBox[3] = 3;
-        nodeIDInBox[4] = 6;
-        nodeIDInBox[5] = 2;
-        nodeIDInBox[6] = 6;
-        nodeIDInBox[7] = 2;
-      }
-    }
-  }
-  else if( elementType == "CPE4" )
-  {
-    nodeIDInBox[0] = 0;
-    nodeIDInBox[1] = 1;
-    nodeIDInBox[2] = 3;
-    nodeIDInBox[3] = 2;
-  }
-  else if( ( elementType == "STRI" ) && ( m_trianglePattern == 0 ) )
-  {
-    if( ( index[0] + index[1] ) % 2 == 1 )
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 0;
-        nodeIDInBox[1] = 2;
-        nodeIDInBox[2] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 0;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 2;
-      }
-    }
-    else
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 0;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 1;
-        nodeIDInBox[1] = 2;
-        nodeIDInBox[2] = 3;
-      }
-    }
-  }
-  else if( ( elementType == "STRI" ) && ( m_trianglePattern == 1 ) )
-  {
-    if( index[1] % 2 == 0 )
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 0;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 2;
-      }
-      else
-      {
-        nodeIDInBox[0] = 2;
-        nodeIDInBox[1] = 3;
-        nodeIDInBox[2] = 0;
-      }
-    }
-    else
-    {
-      if( iEle % 2 == 0 )
-      {
-        nodeIDInBox[0] = 0;
-        nodeIDInBox[1] = 1;
-        nodeIDInBox[2] = 3;
-      }
-      else
-      {
-        nodeIDInBox[0] = 1;
-        nodeIDInBox[1] = 2;
-        nodeIDInBox[2] = 3;
-      }
-    }
-  }
-  else if( elementType == "C3D4" )
-  {
-    int mapBoxTet[8][6][4] =
-    {
-      {
-        { 0, 3, 7, 6 },
-        { 0, 7, 4, 6 },
-        { 0, 5, 1, 6 },
-        { 0, 4, 5, 6 },
-        { 0, 1, 2, 6 },
-        { 0, 2, 3, 6 }
-      },
-      {
-        { 1, 5, 6, 7 },
-        { 1, 6, 2, 7 },
-        { 0, 4, 1, 7 },
-        { 1, 4, 5, 7 },
-        { 0, 1, 3, 7 },
-        { 1, 2, 3, 7 }
-      },
-      {
-        { 0, 3, 4, 2 },
-        { 3, 7, 4, 2 },
-        { 0, 4, 1, 2 },
-        { 1, 4, 5, 2 },
-        { 4, 7, 6, 2 },
-        { 4, 6, 5, 2 }
-      },
-      {
-        { 1, 5, 2, 3 },
-        { 2, 5, 6, 3 },
-        { 0, 5, 1, 3 },
-        { 0, 4, 5, 3 },
-        { 4, 7, 5, 3 },
-        { 5, 7, 6, 3 }
-      },
-      {
-        { 0, 3, 4, 5 },
-        { 3, 7, 4, 5 },
-        { 3, 6, 7, 5 },
-        { 3, 2, 6, 5 },
-        { 3, 0, 1, 5 },
-        { 1, 2, 3, 5 }
-      },
-      {
-        { 1, 5, 2, 4 },
-        { 2, 5, 6, 4 },
-        { 2, 6, 7, 4 },
-        { 2, 7, 3, 4 },
-        { 0, 2, 3, 4 },
-        { 0, 1, 2, 4 }
-      },
-      {
-        { 0, 7, 4, 1 },
-        { 0, 3, 7, 1 },
-        { 2, 7, 3, 1 },
-        { 2, 6, 7, 1 },
-        { 4, 7, 5, 1 },
-        { 5, 7, 6, 1 }
-      },
-      {
-        { 1, 5, 6, 0 },
-        { 1, 6, 2, 0 },
-        { 2, 6, 3, 0 },
-        { 3, 6, 7, 0 },
-        { 4, 6, 5, 0 },
-        { 4, 7, 6, 0 }
-      }
-    };
-
-    int mapBoxType[2][2][2];
-    mapBoxType[0][0][0] = 0;
-    mapBoxType[1][0][0] = 1;
-    mapBoxType[0][0][1] = 2;
-    mapBoxType[1][0][1] = 3;
-    mapBoxType[0][1][0] = 4;
-    mapBoxType[1][1][0] = 5;
-    mapBoxType[0][1][1] = 6;
-    mapBoxType[1][1][1] = 7;
-
-    int boxType = mapBoxType[index[0] % 2][index[1] % 2][index[2] % 2];
-    for( int i = 0; i < node_size; ++i )
-    {
-      nodeIDInBox[i] = mapBoxTet[boxType][iEle][i];
-    }
-  }
 }
 
 void

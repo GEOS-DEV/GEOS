@@ -8,7 +8,6 @@ set( codingUtilities_headers
      StringUtilities.hpp
      UnitTestUtilities.hpp
      Utilities.hpp
-     static_if.hpp
      SFINAE_Macros.hpp
    )
 

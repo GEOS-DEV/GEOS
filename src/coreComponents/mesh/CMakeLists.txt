@@ -5,9 +5,10 @@ set( mesh_headers
      CellElementSubRegion.hpp
      DomainPartition.hpp
      EdgeManager.hpp
-     ElementSubRegionBase.hpp
      ElementRegionBase.hpp
      ElementRegionManager.hpp
+     ElementSubRegionBase.hpp
+     ElementType.hpp
      EmbeddedSurfaceSubRegion.hpp
      ExtrinsicMeshData.hpp
      FaceElementSubRegion.hpp
@@ -103,11 +104,6 @@ set(mesh_sources
    )
 
 set(dependencyList schema dataRepository constitutive metis)
-
-
-if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
-endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

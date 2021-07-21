@@ -158,7 +158,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock = &cellBlockManager.registerCellBlock( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
-        cellBlock->setElementType( "C3D8" );
+        cellBlock->setElementType( ElementType::Hexahedron );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 8 );
@@ -198,7 +198,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock = &cellBlockManager.registerCellBlock( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
-        cellBlock->setElementType( "C3D4" );
+        cellBlock->setElementType( ElementType::Tetrahedron );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 4 );
@@ -230,7 +230,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock = &cellBlockManager.registerCellBlock( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
-        cellBlock->setElementType( "C3D6" );
+        cellBlock->setElementType( ElementType::Prism );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 6 );
@@ -266,7 +266,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       {
         localIndex const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         cellBlock = &cellBlockManager.registerCellBlock( DecodePAMELALabels::makeRegionLabel( regionName, cellBlockName ) );
-        cellBlock->setElementType( "C3D5" );
+        cellBlock->setElementType( ElementType::Pyramid );
         auto & cellToVertex = cellBlock->getElemToNode();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 5 );

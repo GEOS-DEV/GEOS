@@ -22,6 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
+#include "mesh/ElementType.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "FiniteElementDispatch.hpp"
 
@@ -77,7 +78,7 @@ public:
    *   instantiation.
    */
   std::unique_ptr< finiteElement::FiniteElementBase >
-  factory( string const & parentElementShape ) const;
+  factory( ElementType const parentElementShape ) const;
 
 private:
 

@@ -286,48 +286,53 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
 
 void CompositionalMultiphaseBase::resizeFields( MeshLevel & meshLevel ) const
 {
-  localIndex const NC = m_numComponents;
-  localIndex const NP = m_numPhases;
-
-  forTargetSubRegions( meshLevel, [&]( localIndex const, ElementSubRegionBase & subRegion )
+  forTargetSubRegions( meshLevel, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() ).
-      resizeDimension< 1 >( NC );
+    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+
+    subRegion.getWrapper< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() ).
+      setDimLabels( 1, fluid.componentNames() ).
+      reference().resizeDimension< 1 >( m_numComponents );
     subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() ).
-      resizeDimension< 1 >( NC );
+      resizeDimension< 1 >( m_numComponents );
 
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() ).
-      resizeDimension< 1 >( NC );
+    subRegion.getWrapper< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() ).
+      setDimLabels( 1, fluid.componentNames() ).
+      reference().resizeDimension< 1 >( m_numComponents );
     subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() ).
-      resizeDimension< 1, 2 >( NC, NC );
+      resizeDimension< 1, 2 >( m_numComponents, m_numComponents );
 
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() ).
-      resizeDimension< 1 >( NP );
+    subRegion.getWrapper< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() ).
+      setDimLabels( 1, fluid.phaseNames() ).
+      reference().resizeDimension< 1 >( m_numPhases );
     subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() ).
-      resizeDimension< 1 >( NP );
+      resizeDimension< 1 >( m_numPhases );
     subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() ).
-      resizeDimension< 1, 2 >( NP, NC );
+      resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
 
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseMobilityString() ).
-      resizeDimension< 1 >( NP );
+    subRegion.getWrapper< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseMobilityString() ).
+      setDimLabels( 1, fluid.phaseNames() ).
+      reference().resizeDimension< 1 >( m_numPhases );
     subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseMobility_dPressureString() ).
-      resizeDimension< 1 >( NP );
+      resizeDimension< 1 >( m_numPhases );
     subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString() ).
-      resizeDimension< 1, 2 >( NP, NC );
+      resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
 
     subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionOldString() ).
-      resizeDimension< 1 >( NP );
+      resizeDimension< 1 >( m_numPhases );
     subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseMobilityOldString() ).
-      resizeDimension< 1 >( NP );
+      resizeDimension< 1 >( m_numPhases );
     subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseDensityOldString() ).
-      resizeDimension< 1 >( NP );
+      resizeDimension< 1 >( m_numPhases );
     subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_COMP > >( viewKeyStruct::phaseComponentFractionOldString() ).
-      resizeDimension< 1, 2 >( NP, NC );
+      resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
 
     if( m_computeCFLNumbers )
     {
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseOutfluxString() ).resizeDimension< 1 >( NP );
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::componentOutfluxString() ).resizeDimension< 1 >( NC );
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseOutfluxString() ).
+        resizeDimension< 1 >( m_numPhases );
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::componentOutfluxString() ).
+        resizeDimension< 1 >( m_numComponents );
     }
   } );
 }
@@ -511,7 +516,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  localIndex const NC = m_numComponents;
+  integer const numComp = m_numComponents;
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
@@ -531,7 +536,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh ) const
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      for( localIndex ic = 0; ic < NC; ++ic )
+      for( localIndex ic = 0; ic < numComp; ++ic )
       {
         compDens[ei][ic] = totalDens[ei][0] * compFrac[ei][ic];
       }
@@ -604,6 +609,9 @@ void CompositionalMultiphaseBase::backupFields( MeshLevel & mesh ) const
 {
   GEOSX_MARK_FUNCTION;
 
+  integer const numComp = m_numComponents;
+  integer const numPhase = m_numPhases;
+
   // backup some fields used in time derivative approximation
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
@@ -637,21 +645,18 @@ void CompositionalMultiphaseBase::backupFields( MeshLevel & mesh ) const
     arrayView1d< real64 > const poroOld =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString() );
 
-    localIndex const NC = m_numComponents;
-    localIndex const NP = m_numPhases;
-
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] >= 0 )
         return;
 
-      for( localIndex ip = 0; ip < NP; ++ip )
+      for( localIndex ip = 0; ip < numPhase; ++ip )
       {
         phaseDensOld[ei][ip] = phaseDens[ei][0][ip];
         phaseVolFracOld[ei][ip] = phaseVolFrac[ei][ip];
         phaseMobOld[ei][ip] = phaseMob[ei][ip];
 
-        for( localIndex ic = 0; ic < NC; ++ic )
+        for( localIndex ic = 0; ic < numComp; ++ic )
         {
           phaseCompFracOld[ei][ip][ic] = phaseCompFrac[ei][0][ip][ic];
         }
@@ -922,7 +927,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
 
-  localIndex const NC = m_numComponents;
+  integer const numComp = m_numComponents;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -967,7 +972,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
   {
     // 2.0. Check pressure and record composition bc application
     string const & subRegionName = subRegion.getName();
-    localIndex const comp = fs.getComponent();
+    integer const comp = fs.getComponent();
     GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0,
                     "Pressure boundary condition not prescribed on set '" << setName << "'" );
     GEOSX_ERROR_IF( bcStatusMap[subRegionName][setName][comp],
@@ -1070,7 +1075,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
       localRhs[localRow] = rhsValue;
 
       // 3.2. For each component, apply target global density value
-      for( localIndex ic = 0; ic < NC; ++ic )
+      for( localIndex ic = 0; ic < numComp; ++ic )
       {
         FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
                                                     rankOffset,
@@ -1104,7 +1109,7 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  localIndex const NC = m_numComponents;
+  integer const numComp = m_numComponents;
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
   {
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
@@ -1118,7 +1123,7 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
     {
       if( ghostRank[ei] < 0 )
       {
-        for( localIndex ic = 0; ic < NC; ++ic )
+        for( localIndex ic = 0; ic < numComp; ++ic )
         {
           real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic];
           if( newDens < 0 )
@@ -1155,7 +1160,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & GEOSX_UNU
                                                         real64 const & GEOSX_UNUSED_PARAM( dt ),
                                                         DomainPartition & domain )
 {
-  localIndex const NC = m_numComponents;
+  integer const numComp = m_numComponents;
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
@@ -1174,7 +1179,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & GEOSX_UNU
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       pres[ei] += dPres[ei];
-      for( localIndex ic = 0; ic < NC; ++ic )
+      for( localIndex ic = 0; ic < numComp; ++ic )
       {
         compDens[ei][ic] += dCompDens[ei][ic];
       }
