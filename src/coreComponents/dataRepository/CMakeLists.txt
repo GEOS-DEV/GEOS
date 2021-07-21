@@ -1,27 +1,27 @@
 #
 # Specify all headers
 #
-set(dataRepository_headers
-    BufferOps.hpp
-    BufferOpsDevice.hpp
-    BufferOps_inline.hpp
-    ConduitRestart.hpp
-    DefaultValue.hpp
-    ExecutableGroup.hpp
-    Group.hpp
-    HistoryDataSpec.hpp
-    InputFlags.hpp
-    KeyIndexT.hpp
-    KeyNames.hpp
-    MappedVector.hpp
-    ObjectCatalog.hpp
-    ReferenceWrapper.hpp
-    RestartFlags.hpp
-    Wrapper.hpp
-    WrapperBase.hpp
-    wrapperHelpers.hpp
-    xmlWrapper.hpp
-    )
+set( dataRepository_headers
+     BufferOps.hpp
+     BufferOpsDevice.hpp
+     BufferOps_inline.hpp
+     ConduitRestart.hpp
+     DefaultValue.hpp
+     ExecutableGroup.hpp
+     Group.hpp
+     HistoryDataSpec.hpp
+     InputFlags.hpp
+     KeyIndexT.hpp
+     KeyNames.hpp
+     MappedVector.hpp
+     ObjectCatalog.hpp
+     ReferenceWrapper.hpp
+     RestartFlags.hpp
+     Wrapper.hpp
+     WrapperBase.hpp
+     wrapperHelpers.hpp
+     xmlWrapper.hpp
+   )
 
 #
 # Specify all sources
@@ -36,7 +36,7 @@ set( dataRepository_sources
      xmlWrapper.cpp
    )
 
-set(dependencyList codingUtilities )
+set( dependencyList codingUtilities )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
@@ -50,7 +50,7 @@ blt_add_library( NAME       dataRepository
                  SOURCES    ${dataRepository_sources}
                  HEADERS    ${dataRepository_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     {GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

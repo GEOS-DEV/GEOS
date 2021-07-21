@@ -7,7 +7,6 @@ set( mainInterface_headers
      initialization.hpp
    )
 
-
 #
 # Specify all sources
 #

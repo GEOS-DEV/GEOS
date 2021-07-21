@@ -107,7 +107,7 @@ set( mesh_sources
      utilities/MeshUtilities.cpp
    )
 
-set(dependencyList schema dataRepository constitutive metis )
+set( dependencyList schema dataRepository constitutive metis )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

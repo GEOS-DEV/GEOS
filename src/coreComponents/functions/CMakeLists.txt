@@ -40,7 +40,7 @@ blt_add_library( NAME       functions
                  SOURCES    ${functions_sources}
                  HEADERS    ${functions_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     {GEOSX_BUILD_OBJ_LIBS}
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
 
 target_include_directories( functions PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
