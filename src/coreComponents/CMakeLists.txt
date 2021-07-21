@@ -1,23 +1,23 @@
 set( subdirs
-     codingUtilities
+     math
      common
-     constitutive
+     codingUtilities
      dataRepository
-     discretizationMethods
-     events
+     schema
+     functions
+     constitutive
+     mesh
+     linearAlgebra
      fieldSpecification
-     fileIO
      finiteElement
      finiteVolume
-     functions
-     linearAlgebra
-     mainInterface
-     math
-     mesh
-     physicsSolvers
-     python
-     schema
      virtualElement
+     discretizationMethods
+     fileIO
+     physicsSolvers
+     events
+     mainInterface
+     python
    )
 
 set( coreLibLinkLine "" PARENT_SCOPE )
