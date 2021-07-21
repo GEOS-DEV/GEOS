@@ -1,5 +1,3 @@
-add_subdirectory (GEOSX_PTP)
-
 #
 # Specify solver headers
 #
@@ -59,8 +57,10 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
-     surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
+     surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
+     surfaceGeneration/ParallelTopologyChange.hpp
+     surfaceGeneration/SurfaceGenerator.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
      )
 
@@ -108,23 +108,15 @@ set( physicsSolvers_sources
      solidMechanics/SolidMechanicsEmbeddedFractures.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
-     surfaceGeneration/SurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
+     surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
+     surfaceGeneration/ParallelTopologyChange.cpp
+     surfaceGeneration/SurfaceGenerator.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
      )
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 
-
-set( externalComponentDeps "" )
-if( ENABLE_GEOSX_PTP )
-  message(STATUS "Adding GEOSX_PTP to physics solver dependencies")
-  list( APPEND externalComponentDeps GEOSX_PTP )
-endif()
-
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
