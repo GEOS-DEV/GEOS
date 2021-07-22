@@ -1499,45 +1499,56 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
     localIndex const numLocalNodes = fieldNew.numLocalDof / fieldNew.numComponents;
 
 
-//    array1d<globalIndex> rows;
-//    array1d<globalIndex> cols;
-//    array1d<real64> values;
-//    rows.resize( numLocalNodes*mask.size() );
-//    cols.resize( numLocalNodes*mask.size() );
-//    values.resize( numLocalNodes*mask.size() );
+    array1d<globalIndex> rows;
+    array1d<globalIndex> cols;
+    array1d<real64> values;
+    rows.resize( numLocalNodes*mask.size() );
+    cols.resize( numLocalNodes*mask.size() );
+    values.resize( 1 );
+    values[0] = 1.0;
 
     for( localIndex i = 0; i < numLocalNodes; ++i )
     {
       integer newComp = 0;
       for( integer const oldComp : mask )
       {
-//        globalIndex const row = fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp );
-//        globalIndex const col = fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp );
-//
-//        rows( i*mask.size() + newComp ) = row;
-//        cols( i*mask.size() + newComp ) = col;
-//        values( i*mask.size() + newComp ) = 1.0;
 
+#define COLLECT
+
+#if defined(COLLECT)
+        globalIndex const row = fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp );
+        globalIndex const col = fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp );
+
+        rows( i*mask.size() + newComp ) = row;
+        cols( i*mask.size() + newComp ) = col;
+#else
         restrictor.insert( fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp ),
                            fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp ),
                            1.0 );
-
+#endif
         ++newComp;
       }
     }
 
-//    rows.move( LvArray::MemorySpace::cuda, false );
-//    cols.move( LvArray::MemorySpace::cuda, false );
-//    values.move( LvArray::MemorySpace::cuda, false );
+#if defined(COLLECT)
 
-//    restrictor.insert( rows.data(),
-//                       cols.data(),
-//                       values.data(),
-//                       numLocalNodes*mask.size(),
-//                       numLocalNodes*mask.size() );
+#if defined(GEOSX_USE_HYPRE_CUDA)
+//    rows.move( LvArray::MemorySpace::cuda, false );
+    cols.move( LvArray::MemorySpace::cuda, false );
+    values.move( LvArray::MemorySpace::cuda, false );
+#endif
+    for( localIndex row=0; row<rows.size(); ++row )
+    {
+//      printf( "rows[%i] = %i \n", row, rows[row]);
+//      printf( "cols[%i] = %i \n", row, cols[row]);
+      restrictor.insert( rows[row],
+                         cols.data()+row,
+                         values.data(),
+                         1 );
+    }
+#endif
 
   }
-
 
   restrictor.close();
 }

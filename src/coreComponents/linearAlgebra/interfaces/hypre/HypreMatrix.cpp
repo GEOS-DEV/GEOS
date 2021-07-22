@@ -380,7 +380,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
   real64 * const value = valueDevice.data();
 #else
 
-#if 0
+#if 1
   HYPRE_Int one = 1;
   HYPRE_Int * const ncols = &one;
   HYPRE_BigInt const rowIndexData = rowIndex0;
