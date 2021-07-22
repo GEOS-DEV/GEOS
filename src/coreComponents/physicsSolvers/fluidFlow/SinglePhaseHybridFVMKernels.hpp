@@ -534,6 +534,7 @@ struct FluxKernel
           arrayView1d< integer const > const & faceGhostRank,
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & dFacePres,
+          arrayView2d< real64 const > const & elemPerm,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & transMultiplier,
           ElementViewConst< arrayView1d< real64 const > > const & mob,
@@ -563,7 +564,7 @@ struct FluxKernel
     arrayView1d< real64 const > const elemVolume =
       subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
 
-    arrayView3d< real64 const > const elemPerm = permeabilityModel.permeability();
+    arrayView2d< real64 const > const elemPerm = permeabilityModel.permeability();
     // TODO add this dependency to the compute function
     //arrayView3d< real64 const > const elemdPermdPres = permeabilityModel.dPerm_dPressure();
 
@@ -584,7 +585,7 @@ struct FluxKernel
       // transmissibility matrix
       stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
-      real64 const perm[ 3 ] = { elemPerm[ei][0][0], elemPerm[ei][0][1], elemPerm[ei][0][2] };
+      real64 const perm[ 3 ] = { elemPerm[ei][0], elemPerm[ei][1], elemPerm[ei][2] };
 
       // recompute the local transmissibility matrix at each iteration
       // we can decide later to precompute transMatrix if needed

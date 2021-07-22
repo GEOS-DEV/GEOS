@@ -8,7 +8,7 @@
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      permeabilityNames="{ rockPermeability }"
+      permeabilityNames="{ rockPerm }"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -95,7 +95,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -103,7 +104,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ water, rock, rockPermeability }"/>
+      materialList="{ water, rock, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -117,18 +118,25 @@
       referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <CompressibleRock
+    <PoreVolumeCompressibleSolid
       name="rock"
       referencePressure="0.0"
-      defaultReferencePorosity ="0.05"
       compressibility="1e-9"/>
       
     <ConstantPermeability
-      name="rockPermeability"
-      permeabilityComponents="2e-16, 2e-16, 2e-16"/>
+      name="rockPerm"
+      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>   
   </Constitutive>
 
   <FieldSpecifications>
+    <FieldSpecification
+      name="referencePorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="referencePorosity"
+      scale="0.05"/>
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -143,7 +151,7 @@
       initialCondition="1"
       setNames="{ wall1, wall2 }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="rockPermeability_permeability"
+      fieldName="rockPerm_permeability"
       scale="2.0e-22"/>
 
     <FieldSpecification
@@ -152,7 +160,7 @@
       initialCondition="1"
       setNames="{ wall1, wall2 }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="rockPermeability_permeability"
+      fieldName="rockPerm_permeability"
       scale="2.0e-22"/>
 
     <FieldSpecification
@@ -161,7 +169,7 @@
       initialCondition="1"
       setNames="{ wall1, wall2 }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="rockPermeability_permeability"
+      fieldName="rockPerm_permeability"
       scale="2.0e-22"/>
 
     <SourceFlux

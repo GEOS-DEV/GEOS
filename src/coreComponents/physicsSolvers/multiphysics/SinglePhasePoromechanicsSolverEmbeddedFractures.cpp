@@ -419,11 +419,11 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
   m_solidSolver->getMaxForce() =
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::SolidBase,
+                                    constitutive::PorousSolidBase,
                                     CellElementSubRegion >( mesh,
                                                             targetRegionNames(),
                                                             m_solidSolver->getDiscretizationName(),
-                                                            m_solidSolver->solidMaterialNames(),
+                                                            m_porousMaterialNames,
                                                             kernelFactory );
 
   // 2.  Add EFEM poroelastic contribution
@@ -440,11 +440,11 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
   real64 maxTraction =
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::SolidBase,
+                                    constitutive::PorousSolidBase,
                                     CellElementSubRegion >( mesh,
                                                             targetRegionNames(),
                                                             m_solidSolver->getDiscretizationName(),
-                                                            m_solidSolver->solidMaterialNames(),
+                                                            m_porousMaterialNames,
                                                             EFEMkernelFactory );
 
   GEOSX_UNUSED_VAR( maxTraction );

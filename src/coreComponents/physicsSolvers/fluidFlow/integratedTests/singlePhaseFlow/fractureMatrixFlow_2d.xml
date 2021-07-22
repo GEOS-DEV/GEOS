@@ -9,8 +9,8 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Region2, Fracture }"
       fluidNames="{ water }"
-      permeabilityNames="{ rock_permeability, fracture_permeability }"
-      solidNames ="{ rock, fractureFilling }">
+      solidNames="{ rock }"
+      permeabilityNames="{ rockPerm, fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
         newtonMaxIter="8"
@@ -111,20 +111,21 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{fracPerm, rockPerm}"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
-     <CellElementRegion
+    <CellElementRegion
       name="Region2"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock_permeability, rock }"/>
+      materialList="{ water, rock, rockPerm }"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture = "1e-4"
-      materialList="{ water, fracture_permeability, fractureFilling }"/>
+      defaultAperture="1.0e-5"
+      materialList="{ water, rock, fracPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -138,28 +139,29 @@
       referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <CompressibleRock
+    <PoreVolumeCompressibleSolid
       name="rock"
       referencePressure="0.0"
-      defaultReferencePorosity ="0.01"
       compressibility="1e-9"/>
       
     <ConstantPermeability
-      name="rock_permeability"
-      permeabilityComponents="5e-19, 5e-19, 5e-19"/>
+      name="rockPerm"
+      permeabilityComponents="{5.0e-19, 5.0e-19, 5.0e-19}"/> 
       
-    <CompressibleRock
-      name="fractureFilling"
-      referencePressure="0.0"
-      defaultReferencePorosity ="1.00"
-      compressibility="0.0"/>
-      
-    <ParallelPlatesPermeability
-      name="fracture_permeability"/>  
-   
+    <ConstantPermeability
+      name="fracPerm"
+      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>         
   </Constitutive>
 
   <FieldSpecifications>
+    <FieldSpecification
+      name="referencePorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region2/cb1"
+      fieldName="referencePorosity"
+      scale="0.01"/>
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -187,7 +189,7 @@
   <Functions/>
 
   <Outputs>
-    <VTK
+    <Silo
       name="siloOutput"
       plotFileRoot="fractureMatrixFlow"
       plotLevel="1"/>

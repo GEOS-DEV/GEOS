@@ -5,11 +5,11 @@
     gravityVector="{0.0, 0.0, -9.81}">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="1"
+      logLevel="0"
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
-      solidNames="{rock}"
-      permeabilityNames="{ permeabilityModel }"
+      solidNames="{ rock }"
+      permeabilityNames="{rockPerm}"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -53,12 +53,6 @@
       timeFrequency="100.0"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
-      
-    <PeriodicEvent
-      name="outputs2"
-      timeFrequency="100.0"
-      targetExactTimestep="1"
-      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
@@ -77,7 +71,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -85,7 +80,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ water, rock, permeabilityModel }"/>
+      materialList="{ water, rock, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -95,22 +90,29 @@
       defaultViscosity="0.001"
       referencePressure="0.0"
       referenceDensity="1000"
-      compressibility="5.0e-10"
+      compressibility="5e-10"
       referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <CompressibleRock
+    <PoreVolumeCompressibleSolid
       name="rock"
       referencePressure="0.0"
-      defaultReferencePorosity ="0.05"
-      compressibility="1.0e-9"/>
-      
+      compressibility="1e-9"/>
+    
     <ConstantPermeability
-      name="permeabilityModel"
-      permeabilityComponents="2e-16, 2e-16, 2e-16"/>
+      name="rockPerm"
+      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>       
   </Constitutive>
 
   <FieldSpecifications>
+    <FieldSpecification
+      name="referencePorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="referencePorosity"
+      scale="0.05"/>
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -137,9 +139,6 @@
   <Outputs>
     <Silo
       name="siloOutput"/>
-      
-    <VTK
-      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>

@@ -10,7 +10,7 @@
       targetRegions="{ Region1, Region2 }"
       fluidNames="{ fluid }"
       solidNames="{ rock1, rock2 }"
-      permeabilityNames="{ rock1_permeability, rock2_permeability }">
+      permeabilityNames="{ rock1Perm, rock2Perm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
@@ -71,7 +71,8 @@
       <TwoPointFluxApproximation
         name="tpfaFlow"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{rock1Perm, rock2Perm}"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -79,12 +80,12 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ fluid, rock1, rock1_permeability }"/>
+      materialList="{ fluid, rock1, rock1Perm }"/>
 
     <CellElementRegion
       name="Region2"
       cellBlocks="{ block2 }"
-      materialList="{ fluid, rock2, rock2_permeability }"/>
+      materialList="{ fluid, rock2, rock2Perm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -98,28 +99,35 @@
       referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-   <CompressibleRock
+    <PoreVolumeCompressibleSolid
       name="rock1"
       referencePressure="0.0"
-      defaultReferencePorosity ="0.05"
       compressibility="1e-8"/>
-      
-    <ConstantPermeability
-      name="rock1_permeability"
-      permeabilityComponents="2e-16, 2e-16, 2e-16"/>
-      
-    <CompressibleRock
+
+    <PoreVolumeCompressibleSolid
       name="rock2"
       referencePressure="0.0"
-      defaultReferencePorosity ="0.05"
       compressibility="1e-10"/>
       
     <ConstantPermeability
-      name="rock2_permeability"
-      permeabilityComponents="2e-16, 2e-16, 2e-16"/>  
+      name="rock1Perm"
+      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>   
+      
+    <ConstantPermeability
+      name="rock2Perm"
+      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>       
+      
   </Constitutive>
 
   <FieldSpecifications>
+    <FieldSpecification
+      name="referencePorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="referencePorosity"
+      scale="0.05"/>
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"

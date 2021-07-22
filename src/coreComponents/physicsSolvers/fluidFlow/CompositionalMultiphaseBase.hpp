@@ -179,7 +179,7 @@ public:
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    */
-  void assembleAccumulationTerms( DomainPartition const & domain,
+  void assembleAccumulationTerms( DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs ) const;
@@ -286,6 +286,8 @@ public:
 
     static constexpr char const * phaseMobilityOldString() { return "phaseMobilityOld"; }
 
+    static constexpr char const * porosityString() { return "porosity"; }
+
     static constexpr char const * porosityOldString() { return "porosityOld"; }
 
     // these are allocated on faces for BC application until we can get constitutive models on faces
@@ -351,13 +353,13 @@ public:
    */
   void chopNegativeDensities( DomainPartition & domain );
 
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
 protected:
 
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
    * @brief Checks constitutive models for consistency

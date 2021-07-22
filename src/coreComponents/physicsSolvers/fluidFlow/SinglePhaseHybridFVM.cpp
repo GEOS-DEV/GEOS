@@ -20,7 +20,6 @@
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
-#include "constitutive/solid/RockBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -294,6 +293,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                                    faceGhostRank,
                                                    facePres,
                                                    dFacePres,
+                                                   permeability,
                                                    faceGravCoef,
                                                    transMultiplier,
                                                    m_mobility.toNestedViewConst(),

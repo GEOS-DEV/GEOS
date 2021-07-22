@@ -8,7 +8,7 @@
       discretization="fluidTPFA"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
-      permeabilityNames="{ permeabilityModel }"
+      permeabilityNames="{rockPerm}"
       relPermNames="{ relperm }"
       temperature="300"
       useMass="0"
@@ -84,7 +84,8 @@
       <TwoPointFluxApproximation
         name="fluidTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{rockPerm}"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -92,7 +93,7 @@
     <CellElementRegion
       name="region"
       cellBlocks="{ block1 }"
-      materialList="{ fluid, rock, permeabilityModel, relperm }"/>
+      materialList="{ fluid, rock, relperm, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -103,17 +104,10 @@
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
-   <CompressibleRock
+    <PoreVolumeCompressibleSolid
       name="rock"
       referencePressure="0.0"
-      defaultReferencePorosity ="0.2"
-      compressibility="1e-9"
-      defaultGrainDensity="1"
-      grainBulkModulus="1.0e9"/>
-      
-    <ConstantPermeability
-      name="permeabilityModel"
-      permeabilityComponents="1.0e-16, 1.0e-16, 1.0e-16"/>
+      compressibility="1e-9"/>
 
     <BrooksCoreyRelativePermeability
       name="relperm"
@@ -121,9 +115,21 @@
       phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
       phaseRelPermExponent="{ 1.5, 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9, 0.9 }"/>
+      
+     <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{1.0e-16, 1.0e-16, 1.0e-16}"/>   
   </Constitutive>
 
   <FieldSpecifications>
+    <FieldSpecification
+      name="referencePorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/region/block1"
+      fieldName="referencePorosity"
+      scale="0.2"/>
+
     <!-- Initial pressure: ~75 bar -->
     <FieldSpecification
       name="initialPressure"

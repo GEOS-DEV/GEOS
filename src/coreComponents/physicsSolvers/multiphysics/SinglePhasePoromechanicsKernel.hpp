@@ -116,8 +116,7 @@ public:
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
-    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
-    m_oldPorosity( inputConstitutiveType.getOldPorosity() )
+    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) )
   {}
 
   //*****************************************************************************
@@ -226,23 +225,30 @@ public:
     // Evaluate total stress tensor
     real64 strainIncrement[6] = {0};
     real64 totalStress[6];
-    real64 porosityNew, dPorosity_dPressure, dPorosity_dVolStrainIncrement, dTotalStress_dPressure;
+    real64 dPorosity_dPressure;
+    real64 dPorosity_dVolStrainIncrement;
+    real64 dTotalStress_dPressure;
 
     // --- Update total stress tensor
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
 
-    m_constitutiveUpdate.smallStrainUpdate_porosity( k, q,
-                                                     m_fluidPressure[k],
-                                                     m_deltaFluidPressure[k],
-                                                     strainIncrement,
-                                                     porosityNew,
-                                                     dPorosity_dPressure,
-                                                     dPorosity_dVolStrainIncrement,
-                                                     totalStress,
-                                                     dTotalStress_dPressure,
-                                                     stiffness );
+    m_constitutiveUpdate.smallStrainUpdate( k,
+                                            q,
+                                            m_deltaFluidPressure[k],
+                                            strainIncrement,
+                                            totalStress,
+                                            dPorosity_dPressure,
+                                            dPorosity_dVolStrainIncrement,
+                                            dTotalStress_dPressure,
+                                            stiffness );
 
+    real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
+    real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
+
+    real64 const pressureStressTerm = -dTotalStress_dPressure * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
+
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, pressureStressTerm );
 
     // Evaluate body force vector
     real64 bodyForce[3] = { m_gravityVector[0],
@@ -319,6 +325,7 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
+//    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
@@ -393,11 +400,6 @@ protected:
 
   /// The rank-global delta-fluid pressure array.
   arrayView1d< real64 const > const m_deltaFluidPressure;
-
-  /// Biot's coefficient
-  arrayView2d< real64 const > const m_oldPorosity;
-
-
 };
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,

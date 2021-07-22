@@ -40,8 +40,8 @@ char const * xmlInput =
   "                                 targetRegions=\"{Region2}\"\n"
   "                                 fluidNames=\"{fluid1}\"\n"
   "                                 solidNames=\"{rock}\"\n"
+  "                                 permeabilityNames=\"{rockPerm}\"\n"
   "                                 relPermNames=\"{relperm}\"\n"
-  "                                 permeabilityNames=\"{permeabilityModel}\"\n"
   "                                 capPressureNames=\"{cappressure}\"\n"
   "                                 temperature=\"297.15\"\n"
   "                                 useMass=\"1\">\n"
@@ -71,11 +71,12 @@ char const * xmlInput =
   "    <FiniteVolume>\n"
   "      <TwoPointFluxApproximation name=\"fluidTPFA\"\n"
   "                                 fieldName=\"pressure\"\n"
-  "                                 coefficientName=\"permeability\"/>\n"
+  "                                 coefficientName=\"permeability\"\n"
+  "                                 coefficientModelNames=\"{rockPerm}\"/>\n"
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
-  "    <CellElementRegion name=\"Region2\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, cappressure, permeabilityModel}\" />\n"
+  "    <CellElementRegion name=\"Region2\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, cappressure, rockPerm}\" />\n"
   "  </ElementRegions>\n"
   "  <Constitutive>\n"
   "    <CompositionalMultiphaseFluid name=\"fluid1\"\n"
@@ -91,12 +92,9 @@ char const * xmlInput =
   "                                                          {0, 0, 0, 0},\n"
   "                                                          {0, 0, 0, 0},\n"
   "                                                          {0, 0, 0, 0} }\"/>\n"
-  "    <CompressibleRock name=\"rock\"\n"
-  "                      referencePressure=\"0.0\"\n"
-  "                      defaultReferencePorosity=\"0.05\"\n"
-  "                      compressibility=\"1e-9\"/>\n"
-  "    <ConstantPermeability name=\"permeabilityModel\"\n"
-  "                          permeabilityComponents=\"{ 2e-16, 2e-16, 2e-16}\"/>\n"
+  "    <PoreVolumeCompressibleSolid name=\"rock\"\n"
+  "                                 referencePressure=\"0.0\"\n"
+  "                                 compressibility=\"1e-9\"/>\n"
   "    <BrooksCoreyRelativePermeability name=\"relperm\"\n"
   "                                     phaseNames=\"{oil, gas}\"\n"
   "                                     phaseMinVolumeFraction=\"{0.1, 0.15}\"\n"
@@ -108,6 +106,8 @@ char const * xmlInput =
   "                                  phaseCapPressureExponentInv=\"{4.25, 3.5}\"\n"
   "                                  phaseEntryPressure=\"{0., 1e8}\"\n"
   "                                  capPressureEpsilon=\"0.0\"/> \n"
+  "  <ConstantPermeability name=\"rockPerm\"\n"
+  "                        permeabilityComponents=\"{2.0e-16, 2.0e-16, 2.0e-16}\"/> \n"
   "  </Constitutive>\n"
   "  <FieldSpecifications>\n"
   "    <FieldSpecification name=\"initialPressure\"\n"
@@ -289,7 +289,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       } );
 
       // recompute component fractions
-      solver.updateFluidState( subRegion, targetIndex );
+      solver.updateState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -321,7 +321,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       } );
 
       // recompute component fractions
-      solver.updateFluidState( subRegion, targetIndex );
+      solver.updateState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -402,7 +402,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       } );
 
       // recompute component fractions
-      solver.updateFluidState( subRegion, targetIndex );
+      solver.updateState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -434,7 +434,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       } );
 
       // recompute component fractions
-      solver.updateFluidState( subRegion, targetIndex );
+      solver.updateState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -536,7 +536,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateFluidState( subRegion2, targetIndex2 );
+          solver.updateState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();
@@ -561,7 +561,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateFluidState( subRegion2, targetIndex2 );
+          solver.updateState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();

@@ -8,8 +8,8 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      permeabilityNames="{ fracture_permeability }"
-      solidNaems="{ fractureFilling }">
+      solidNames="{ rock }"
+      permeabilityNames="{ fracturePerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
         newtonMaxIter="8"/>
@@ -111,7 +111,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ fracturePerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -119,12 +120,12 @@
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb1 }"
-      materialList="{ water }"/>
+      materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-5"
-      materialList="{ water, fractureFilling, fracture_permeability }"/>
+      materialList="{ water, rock, fracturePerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -138,14 +139,14 @@
       referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <CompressibleRock
-      name="fractureFilling"
+    <PoreVolumeCompressibleSolid
+      name="rock"
       referencePressure="0.0"
-      defaultReferencePorosity ="1.00"
-      compressibility="0.0"/>
+      compressibility="1e-9"/>
       
-    <ParallelPlatesPermeability
-      name="fracture_permeability"/>  
+    <ConstantPermeability
+      name="fracturePerm"
+      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>    
   </Constitutive>
 
   <FieldSpecifications>

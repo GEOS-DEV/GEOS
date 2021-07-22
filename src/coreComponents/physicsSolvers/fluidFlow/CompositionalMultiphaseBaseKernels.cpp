@@ -431,6 +431,7 @@ AccumulationKernel::
     real64 const poreVolumeOld = volume[ei] * porosityOld[ei][0];
     real64 const dPoreVolume_dPres = volume[ei] * dPoro_dPres[ei][0];
 
+
     compute< NC >( numPhases,
                    poreVolumeOld,
                    poreVolumeNew,

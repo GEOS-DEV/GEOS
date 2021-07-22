@@ -132,8 +132,7 @@ public:
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() ) ),
     m_numComponents( numComponents ),
-    m_numPhases( numPhases ),
-    m_oldPorosity( inputConstitutiveType.getOldPorosity() )
+    m_numPhases( numPhases )
   {
     GEOSX_ERROR_IF_GT_MSG( m_numComponents, numMaxComponents,
                            "MultiphasePoroelastic solver allows at most " << numMaxComponents << " components at the moment" );
@@ -301,22 +300,31 @@ public:
     // Evaluate total stress tensor
     real64 strainIncrement[6] = {0};
     real64 totalStress[6];
-    real64 porosityNew, dPorosity_dPressure, dPorosity_dVolStrainIncrement, dTotalStress_dPressure;
+    real64 dPorosity_dPressure;
+    real64 dPorosity_dVolStrainIncrement;
+    real64 dTotalStress_dPressure;
+
 
     // --- Update effective stress tensor (stored in totalStress)
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
-    m_constitutiveUpdate.smallStrainUpdate_porosity( k, q,
-                                                     m_fluidPressure[k],
-                                                     m_deltaFluidPressure[k],
-                                                     strainIncrement,
-                                                     porosityNew,
-                                                     dPorosity_dPressure,
-                                                     dPorosity_dVolStrainIncrement,
-                                                     totalStress,
-                                                     dTotalStress_dPressure,
-                                                     stiffness );
 
+    m_constitutiveUpdate.smallStrainUpdate( k,
+                                            q,
+                                            m_deltaFluidPressure[k],
+                                            strainIncrement,
+                                            totalStress,
+                                            dPorosity_dPressure,
+                                            dPorosity_dVolStrainIncrement,
+                                            dTotalStress_dPressure,
+                                            stiffness );
+
+    real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
+    real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
+
+    real64 const pressureStressTerm = -dTotalStress_dPressure * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
+
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, pressureStressTerm );
 
     // Evaluate body force vector
     real64 bodyForce[3] = { m_gravityVector[0],
@@ -584,9 +592,6 @@ protected:
 
   /// Number of phases
   localIndex const m_numPhases;
-
-  /// The rank-global old porosity
-  arrayView2d< real64 const > const m_oldPorosity;
 
 };
 

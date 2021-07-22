@@ -150,6 +150,21 @@ public:
   ///@{
 
   /**
+   * @brief Get bulkModulus
+   * @param[in] k Element index.
+   * @return the bulkModulus of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
+
+    return 0;
+  }
+
+
+  /**
    * @brief Small strain update.
    *
    * @param[in] k Element index.
@@ -620,7 +635,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
-  virtual void saveConvergedState() const;
+  virtual void saveConvergedState() const override;
 
   /// Keys for data in this class
   struct viewKeyStruct : public RockBase::viewKeyStruct

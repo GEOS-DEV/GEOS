@@ -35,6 +35,8 @@ set( constitutive_headers
      fluid/ProppantSlurryFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
+     solid/CompressibleSolid.hpp
+     solid/CoupledSolid.hpp
      solid/Damage.hpp
      solid/DamageVolDev.hpp
      solid/DamageSpectral.hpp
@@ -43,7 +45,8 @@ set( constitutive_headers
      solid/DruckerPragerExtended.hpp
      solid/ElasticIsotropic.hpp
      solid/ElasticTransverseIsotropic.hpp
-     solid/CompressibleRock.hpp
+     solid/PoreVolumeCompressibleSolid.hpp
+     solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/RockBase.hpp
      solid/SolidBase.hpp
@@ -52,6 +55,14 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/TriaxialDriver.hpp
+     solid/porosity/BiotPorosity.hpp
+     solid/porosity/PorosityBase.hpp
+     solid/porosity/PressurePorosity.hpp
+     permeability/CarmanKozenyPermeability.hpp
+     permeability/ConstantPermeability.hpp
+     permeability/ParallelPlatesPermeability.hpp
+     permeability/PermeabilityBase.hpp
+     permeability/StrainDependentPermeability.hpp
      relativePermeability/layouts.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
@@ -91,7 +102,8 @@ set( constitutive_sources
      fluid/SlurryFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp
      fluid/ParticleFluidBase.cpp
-     fluid/ParticleFluid.cpp               
+     fluid/ParticleFluid.cpp
+     solid/CompressibleSolid.cpp      
      solid/Damage.cpp
      solid/DamageVolDev.cpp
      solid/DamageSpectral.cpp
@@ -99,10 +111,18 @@ set( constitutive_sources
      solid/DruckerPragerExtended.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticTransverseIsotropic.cpp
-     solid/CompressibleRock.cpp
-     solid/RockBase.cpp
+     solid/PoreVolumeCompressibleSolid.cpp
+     solid/PorousSolid.cpp
      solid/SolidBase.cpp
      solid/TriaxialDriver.cpp
+     solid/porosity/BiotPorosity.cpp
+     solid/porosity/PorosityBase.cpp
+     solid/porosity/PressurePorosity.cpp
+     permeability/CarmanKozenyPermeability.cpp
+     permeability/ConstantPermeability.cpp
+     permeability/ParallelPlatesPermeability.cpp
+     permeability/PermeabilityBase.cpp
+     permeability/StrainDependentPermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp

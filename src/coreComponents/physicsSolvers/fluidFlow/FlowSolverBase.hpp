@@ -72,6 +72,8 @@ public:
 
   arrayView1d< string const > permeabilityModelNames() const { return m_permeabilityModelNames; }
 
+  arrayView1d< string const > permeabilityModelNames() const { return m_permeabilityModelNames; }
+
   virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
 
 
@@ -89,9 +91,7 @@ public:
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
-
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
-
     static constexpr char const * pressureString() { return "pressure"; }
     static constexpr char const * deltaPressureString() { return "deltaPressure"; }
     static constexpr char const * deltaVolumeString() { return "deltaVolume"; }

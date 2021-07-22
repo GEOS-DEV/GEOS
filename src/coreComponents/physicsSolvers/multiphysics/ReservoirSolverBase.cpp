@@ -76,16 +76,16 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
   // loop over the wells
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
-    // get the string to access the permeability
-    string const permeabilityKey = PermeabilityBase::viewKeyStruct::permeabilityString();
+    array1d< array1d< arrayView2d< real64 const > > > const permeability =
+      elemManager.constructMaterialArrayViewAccessor< real64, 2 >( PermeabilityBase::viewKeyStruct::permeabilityString(),
+                                                                   m_flowSolver->targetRegionNames(),
+                                                                   m_flowSolver->permeabilityModelNames() );
+
 
     PerforationData * const perforationData = subRegion.getPerforationData();
 
     // compute the Peaceman index (if not read from XML)
-    perforationData->computeWellTransmissibility( meshLevel, subRegion,
-                                                  permeabilityKey,
-                                                  m_flowSolver->targetRegionNames(),
-                                                  m_flowSolver->permeabilityModelNames() );
+    perforationData->computeWellTransmissibility( meshLevel, subRegion, permeability );
   } );
 
   // bind the stored reservoir views to the current domain
