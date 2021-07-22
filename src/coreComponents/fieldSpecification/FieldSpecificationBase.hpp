@@ -736,7 +736,7 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
                                                                  CRSMatrixView< real64, globalIndex const > const & matrix ) const
 
 {
-  integer const component = getComponent();
+  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
   forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, component] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     localIndex const a = targetSet[ i ];
