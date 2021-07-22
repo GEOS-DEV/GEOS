@@ -117,7 +117,7 @@ A homogeneous domain with one solid material is assumed, whose mechanical proper
     :end-before: <!-- SPHINX_DP_WELLBORE_MATERIAL_END -->
 
 
-Recall that in the ``SolidMechanicsLagrangianSSLE`` section, 
+Recall that in the ``SolidMechanics_LagrangianFEM`` section, 
 ``rock`` is designated as the material in the computational domain. 
 Here, Extended Drucker Prager model ``ExtendedDruckerPrager`` is used to simulate the elastoplastic behavior of ``rock``.
 As for the material parameters, ``defaultInitialFrictionAngle``, ``defaultResidualFrictionAngle`` and ``defaultCohesion`` denote the initial friction angle, the residual friction angle, and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope in the :math:`\Sigma` - :math:`\Tau` plane.
@@ -135,7 +135,7 @@ The next step is to specify fields, including:
   - The initial value (the in-situ stresses and traction at the wellbore wall have to be initialized)
   - The boundary conditions (the reduction of wellbore pressure and constraints of the outer boundaries have to be set)
 
-In this tutorial, we need to specify isotropic horizontal stress (:math:`\Sigma_h` = 11.25 MPa) and vertical stress (:math:`\Sigma_v` = 15.0 MPa). 
+In this tutorial, we need to specify isotropic horizontal stress (:math:`\Sigma_h` = -11.25 MPa) and vertical stress (:math:`\Sigma_v` = -15.0 MPa). 
 To reach equilibrium, a compressive traction :math:`P_w` = -11.25 MPa is instantaneously applied at the wellbore wall ``rneg`` at time :math:`t` = 0 s, which will then be gradually reduced to a lower value (-2.0 MPa) to let wellbore contract.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
@@ -159,13 +159,14 @@ pair for the loading time history. In this case, the loading magnitude decreases
 
 You may note :
 
- - All initial value fields must have ``initialCondition`` field set to ``1``,
- - The ``setName`` field points to the previously defined box to apply the fields,
- - ``nodeManager`` and ``faceManager`` in the ``objectPath`` indicate that the boundary conditions are applied to the element nodes and faces, respectively,
- - ``fieldName`` is the name of the field registered in GEOSX,
- - Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively.
- - And the non-zero values given by ``Scale`` indicate the magnitude of the loading. 
- - Some shorthand, such as ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain. For instance, ``xneg`` means the portion of the computational domain located at the left-most in the x-axis, while ``xpos`` refers to the portion located at the right-most area in the x-axis. Similar shorthand include ``ypos``, ``yneg``, ``zpos``, and ``zneg``. 
+ - All initial value fields must have ``initialCondition`` field set to ``1``;
+ - The ``setName`` field points to the previously defined box to apply the fields;
+ - ``nodeManager`` and ``faceManager`` in the ``objectPath`` indicate that the boundary conditions are applied to the element nodes and faces, respectively;
+ - ``fieldName`` is the name of the field registered in GEOSX;
+ - Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively;
+ - And the non-zero values given by ``Scale`` indicate the magnitude of the loading; 
+ - Some shorthand, such as ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain. For instance, ``xneg`` means the portion of the computational domain located at the left-most in the x-axis, while ``xpos`` refers to the portion located at the right-most area in the x-axis. Similar shorthand include ``ypos``, ``yneg``, ``zpos``, and ``zneg``;
+ - The traction loading has a negative value due to the surface sign convention in GEOSX, where tensile stress is considered positive.
 
  
 The parameters used in the simulation are summarized in the following table.
@@ -185,9 +186,9 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+-------------------------+------------------+---------------+
 | :math:`c_h`      | Hardening Rate          | [-]              | 0.01          |
 +------------------+-------------------------+------------------+---------------+
-| :math:`\Sigma_h` | Horizontal Stress       | [MPa]            | 11.25         |
+| :math:`\Sigma_h` | Horizontal Stress       | [MPa]            | -11.25        |
 +------------------+-------------------------+------------------+---------------+
-| :math:`\Sigma_v` | Vertical Stress         | [MPa]            | 15.0          |
+| :math:`\Sigma_v` | Vertical Stress         | [MPa]            | -15.0         |
 +------------------+-------------------------+------------------+---------------+
 | :math:`a_0`      | Initial Well Radius     | [m]              | 0.1           |
 +------------------+-------------------------+------------------+---------------+
