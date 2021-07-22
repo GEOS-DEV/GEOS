@@ -4,7 +4,7 @@ from munch import munchify
 import os
 from tempfile import mkstemp, mkdtemp
 import uuid
-    
+
 
 def parse_args():
     """Get parameters from python command and put them into args variable
@@ -82,12 +82,10 @@ def obj_to_json(obj):
     dic = obj_to_dict(obj)
     with open(tempfile, 'a') as jfile:
         j.dump(dic, jfile)
-    
+
     return tempfile
 
 
 def json_to_obj(jfile):
     dic = j.load(jfile)
-    obj = munchify(dic)
-    return obj
-    
+    return dic

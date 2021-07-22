@@ -4,19 +4,22 @@ import pygeosx
 from utils import *
 import time
 import importlib
+from acquisition import Acquisition
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 json = open(sys.argv[11])
-acquisition = json_to_obj(json)
+dic = json_to_dict(json)
 json.close()
+acquisition = Acquisition().construct_from_dict(**dic)
 
+print(acquisition.shot)
 
 if rank==0:
     time.sleep(1)
     os.remove(sys.argv[11])
-    
+
     outputDir = sys.argv[12]
     keyFile = sys.argv[13]+".txt"
     outputFile = os.path.join(outputDir, keyFile)

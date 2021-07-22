@@ -24,12 +24,15 @@ class Acquisition:
         self.boundary=boundary
 
         if source_positions is not None and receivers_positions is not None:
-            self.shot=self.acquisition(source,
-                                       source_positions,
-                                       receivers_positions,
-                                       source_depth,
-                                       receivers_depth)
+            self.acquisition(source,
+                             source_positions,
+                             receivers_positions,
+                             source_depth,
+                             receivers_depth)
 
+
+        dist_from_source = 500
+        depth_from_source = 500
         if limited_aperture is False:
             self.velocity_model=velocity_model
             self.aperture_boundary=boundary
@@ -38,6 +41,13 @@ class Acquisition:
             else:
                 self.dt=calculDt(velocity_model,
                                  boundary)
+        else:
+            self.velocity_model=[]
+
+            self.set_limited_aperture_boundaries(dist_from_source, depth_from_source)
+            for i in range(len(self.shots)):
+                self.shots[i].receivers.keep_inside_domain(self.limited_aperture[i])
+
 
         if output is not None:
             self.output=output
@@ -79,7 +89,7 @@ class Acquisition:
             shot = Shot(source, receivers, shot_id)
             shots.append(shot)
 
-        return shots
+        self.shots = shots
 
 
 
@@ -102,6 +112,51 @@ class Acquisition:
 
     def setDt(self, dt):
         self.dt=dt
+
+
+
+    def set_limited_aperture_boundaries(self, distance, depth):
+        self.aperture_boundary=[]
+
+        for shot in self.shots:
+            if shot.source.x() - distance < self.boundary[0][0]:
+                xmin = boundary[0][0]
+            else:
+                xmin = shot.source.x() - distance
+            if shot.source.x() + distance > self.boundary[0][1]:
+                xmax = boundary[0][1]
+            else:
+                xmax = shot.source.x() + distance
+
+            if shot.source.y() - distance < self.boundary[1][0]:
+                ymin = boundary[1][0]
+            else:
+                ymin = shot.source.y() - distance
+            if shot.source.y() + distance > self.boundary[1][1]:
+                ymax = boundary[1][1]
+            else:
+                ymax = shot.source.y() + distance
+
+            zmin = boundary[2][0]
+
+            if shot.source.z() + depth > self.boundary[2][1]:
+                zmax = boundary[2][1]
+            else:
+                zmax = shot.source.z() + depth
+
+            limited_aperture = [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
+            self.aperture_boundary.append(copy.deepcopy(limited_aperture))
+
+
+
+    def construct_from_dict(self, **kwargs):
+        for key, value in kwargs.items():
+            if key == "shot":
+                setattr(self, key, Shot().construct_from_dict(**value))
+            else:
+                setattr(self, key, value)
+
+        return self
 
 
 
@@ -187,7 +242,7 @@ class SEGYAcquisition(Acquisition):
                 j+=1
             i+=1
 
-        self.shot=shot_list
+        self.shots = shot_list
 
 
 
@@ -314,7 +369,7 @@ class EQUISPACEDAcquisition(Acquisition):
             shot = Shot(source, receivers, shot_id)
             shots.append(shot)
 
-        self.shot = shots
+        self.shots = shots
 
 
 class MOVINGAcquisition(Acquisition):
@@ -470,7 +525,7 @@ class MOVINGAcquisition(Acquisition):
                 shots.append(shot)
 
 
-        self.shot = shots
+        self.shots = shots
 
 
 class RANDOMAcquisition(Acquisition):
@@ -578,7 +633,7 @@ class RANDOMAcquisition(Acquisition):
             shot = Shot(source, receivers, shot_id)
             shots.append(shot)
 
-        self.shot = shots
+        self.shots = shots
 
 
 
@@ -632,6 +687,18 @@ class Shot:
         self.flag = string
 
 
+     def construct_from_dict(self, **kwargs):
+        for key, value in kwargs.items():
+            if key == "source":
+                setattr(self, key, Source().construct_from_dict(**value))
+            elif key == "receivers":
+                setattr(self, key, ReceiverSet().construct_from_dict(value))
+            else:
+                setattr(self, key, value)
+
+        return self
+
+
 
 class Receiver:
     """A class representing a receiver
@@ -642,7 +709,7 @@ class Receiver:
         Coordinates of the source
     """
 
-    def __init__(self, coords):
+    def __init__(self, coords=None):
         """Constructor for the receiver
 
         Parameters
@@ -684,6 +751,12 @@ class Receiver:
         return self.coords[2]
 
 
+    def construct_from_dict(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+        return self
+
 
 class ReceiverSet:
     """A class representing a set receiver
@@ -719,17 +792,18 @@ class ReceiverSet:
             return str(self.receiver_list)
 
 
-    def getInsideDomain(self, meshBoundaries):
-        list=[]
+    def keep_inside_domain(self, meshBoundaries):
+        new_list=[]
 
-        for r in self.receiver_list:
-            if meshBoundaries[0][0] <= r.coords[0] and r.coords[0] <= meshBoundaries[0][1] \
-            and meshBoundaries[1][0] <= r.coords[1] and r.coords[1] <= meshBoundaries[1][1] \
-            and meshBoundaries[2][0] <= r.coords[2] and r.coords[2] <= meshBoundaries[2][1]:
-                list.append(r)
+        for receiver in self.receiver_list:
+            if meshBoundaries[0][0] <= receiver.coords[0] and receiver.coords[0] <= meshBoundaries[0][1] \
+            and meshBoundaries[1][0] <= receiver.coords[1] and receiver.coords[1] <= meshBoundaries[1][1] \
+            and meshBoundaries[2][0] <= receiver.coords[2] and receiver.coords[2] <= meshBoundaries[2][1]:
+                new_list.append(receiver)
 
-        final_receiver_set = ReceiverSet(list)
-        return final_receiver_set
+        self.receiver_list = new_list
+        self.n = len(new_list)
+
 
     def getSetCoord(self):
         listRcv = []
@@ -749,7 +823,14 @@ class ReceiverSet:
             self.receiver_list[i].linearMove(coord, value)
 
 
+     def construct_from_dict(self, list_of_dict):
+        for value in list_of_dict:
+            if key == "receiver":
+                setattr(self, key, Receiver().construct_from_dict(**value))
+            else:
+                setattr(self, key, value)
 
+        return self
 
 
 
@@ -797,6 +878,13 @@ class Source:
 
     def z(self):
         return self.coords[2]
+
+
+     def construct_from_dict(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+        return self
 
 
 class SourceSet:
