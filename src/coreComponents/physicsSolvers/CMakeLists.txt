@@ -1,5 +1,3 @@
-add_subdirectory (GEOSX_PTP)
-
 #
 # Specify solver headers
 #
@@ -27,17 +25,32 @@ set( physicsSolvers_headers
      fluidFlow/wells/SinglePhaseWell.hpp
      fluidFlow/wells/SinglePhaseWellKernels.hpp     
      fluidFlow/wells/WellControls.hpp
+     fluidFlow/CompositionalMultiphaseBase.hpp
+     fluidFlow/CompositionalMultiphaseFVM.hpp
+     fluidFlow/CompositionalMultiphaseHybridFVM.hpp
+     fluidFlow/CompositionalMultiphaseBaseKernels.hpp
+     fluidFlow/CompositionalMultiphaseFVMKernels.hpp
+     fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
+     fluidFlow/wells/CompositionalMultiphaseWell.hpp
+     fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
+     multiphysics/CompositionalMultiphaseReservoir.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/LagrangianContactSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
-     multiphysics/PoroelasticSolver.hpp
-     multiphysics/PoroelasticSolverEmbeddedFractures.hpp
+     multiphysics/SinglePhasePoromechanicsSolver.hpp
+     multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
+     multiphysics/MultiphasePoromechanicsSolver.hpp
+     multiphysics/MultiphasePoromechanicsKernel.hpp
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhaseReservoir.hpp
+<<<<<<< HEAD
      multiphysics/SinglePhasePoroelasticKernel.hpp
      multiphysics/SinglePhasePoroelasticEFEMKernel.hpp
      multiphysics/SinglePhasePoroelasticFluxKernels.hpp
+=======
+     multiphysics/SinglePhasePoromechanicsKernel.hpp
+>>>>>>> upstream/develop
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
@@ -49,12 +62,13 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsEFEMKernels.hpp
      solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp
-     solidMechanics/SolidMechanicsPoroElasticKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
-     surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
+     surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
+     surfaceGeneration/ParallelTopologyChange.hpp
+     surfaceGeneration/SurfaceGenerator.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
      )
 
@@ -77,13 +91,22 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseProppantBase.cpp     
      fluidFlow/wells/WellSolverBase.cpp
      fluidFlow/wells/SinglePhaseWell.cpp          
-     fluidFlow/wells/WellControls.cpp     
+     fluidFlow/wells/WellControls.cpp
+     fluidFlow/CompositionalMultiphaseBase.cpp
+     fluidFlow/CompositionalMultiphaseFVM.cpp
+     fluidFlow/CompositionalMultiphaseHybridFVM.cpp
+     fluidFlow/CompositionalMultiphaseBaseKernels.cpp
+     fluidFlow/CompositionalMultiphaseFVMKernels.cpp
+     fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
+     fluidFlow/wells/CompositionalMultiphaseWell.cpp
+     multiphysics/CompositionalMultiphaseReservoir.cpp
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/LagrangianContactSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
-     multiphysics/PoroelasticSolver.cpp
-     multiphysics/PoroelasticSolverEmbeddedFractures.cpp
+     multiphysics/SinglePhasePoromechanicsSolver.cpp
+     multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
+     multiphysics/MultiphasePoromechanicsSolver.cpp
      multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhaseReservoir.cpp
      multiphysics/SinglePhasePoroelasticFluxKernels.cpp
@@ -94,54 +117,18 @@ set( physicsSolvers_sources
      solidMechanics/SolidMechanicsEmbeddedFractures.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
-     surfaceGeneration/SurfaceGenerator.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
+     surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
+     surfaceGeneration/ParallelTopologyChange.cpp
+     surfaceGeneration/SurfaceGenerator.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
      )
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 
 
-set( externalComponentDeps "" )
-if( ENABLE_GEOSX_PTP )
-  message(STATUS "Adding GEOSX_PTP to physics solver dependencies")
-  list( APPEND externalComponentDeps GEOSX_PTP )
-endif()
-
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif()
-
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_PVTPackage )
-    list( APPEND physicsSolvers_headers
-         fluidFlow/CompositionalMultiphaseBase.hpp
-         fluidFlow/CompositionalMultiphaseFVM.hpp
-         fluidFlow/CompositionalMultiphaseHybridFVM.hpp
-         fluidFlow/CompositionalMultiphaseBaseKernels.hpp
-         fluidFlow/CompositionalMultiphaseFVMKernels.hpp
-         fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
-         fluidFlow/wells/CompositionalMultiphaseWell.hpp
-         fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
-         multiphysics/MultiphasePoroelasticSolver.hpp
-         multiphysics/CompositionalMultiphaseReservoir.hpp
-         multiphysics/MultiphasePoroelasticKernel.hpp
-         )
-
-    list( APPEND physicsSolvers_sources
-         fluidFlow/CompositionalMultiphaseBase.cpp
-         fluidFlow/CompositionalMultiphaseFVM.cpp
-         fluidFlow/CompositionalMultiphaseHybridFVM.cpp
-         fluidFlow/CompositionalMultiphaseBaseKernels.cpp
-         fluidFlow/CompositionalMultiphaseFVMKernels.cpp
-         fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
-         multiphysics/CompositionalMultiphaseReservoir.cpp
-         multiphysics/MultiphasePoroelasticSolver.cpp
-         fluidFlow/wells/CompositionalMultiphaseWell.cpp
-         )
 endif()
 
 blt_add_library( NAME                  physicsSolvers

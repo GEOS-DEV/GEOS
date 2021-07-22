@@ -17,6 +17,8 @@
  */
 
 #include "SurfaceGenerator.hpp"
+#include "ParallelTopologyChange.hpp"
+
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
@@ -30,10 +32,6 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-
-#ifdef USE_GEOSX_PTP
-#include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
-#endif
 
 namespace geosx
 {
@@ -610,7 +608,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       }
     }
 
-#ifdef USE_GEOSX_PTP
+#ifdef GEOSX_USE_MPI
 
     modifiedObjects.clearNewFromModified();
 

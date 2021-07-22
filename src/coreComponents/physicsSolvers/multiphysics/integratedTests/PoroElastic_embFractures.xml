@@ -3,22 +3,27 @@
 <Problem>
   <Solvers
     gravityVector="{0.0, 0.0, 0.0}">
-    <PoroelasticEmbeddedFractures
+    <SinglePhasePoromechanicsEmbeddedFractures
       name = "poroSolver"
       targetRegions="{Domain, Fracture}"
       initialDt="1e-3"
       fracturesSolverName = "fractureMechSolver"
       fluidSolverName = "flowSolver"
       solidSolverName = "matrixMechSolver"
+<<<<<<< HEAD
       couplingTypeOption="FIM"
       logLevel="4">
+=======
+      logLevel="1">
+>>>>>>> upstream/develop
       <NonlinearSolverParameters
         newtonMaxIter="5"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"
         logLevel="0"/>
-    </PoroelasticEmbeddedFractures>
+    </SinglePhasePoromechanicsEmbeddedFractures>
     
     <SolidMechanicsEmbeddedFractures
       name = "fractureMechSolver"

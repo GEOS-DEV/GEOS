@@ -3,12 +3,16 @@
 <Problem>
   <Solvers
     gravityVector="{0.0, 0.0, 0.0}">
-    <Poroelastic
+    <SinglePhasePoromechanics
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
+<<<<<<< HEAD
       couplingTypeOption="FIM"
       logLevel="4"
+=======
+      logLevel="1"
+>>>>>>> upstream/develop
       discretization="FE1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
@@ -20,7 +24,7 @@
         solverType="direct"
         directParallel="0"
         logLevel="0"/>
-    </Poroelastic>
+    </SinglePhasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"

@@ -33,10 +33,22 @@ using namespace constitutive;
 SinglePhaseReservoir::SinglePhaseReservoir( const string & name,
                                             Group * const parent ):
   ReservoirSolverBase( name, parent )
-{}
+{
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
+}
 
 SinglePhaseReservoir::~SinglePhaseReservoir()
 {}
+
+void SinglePhaseReservoir::initializePostInitialConditionsPreSubGroups()
+{
+  ReservoirSolverBase::initializePostInitialConditionsPreSubGroups();
+
+  if( m_flowSolver->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM;
+  }
+}
 
 void SinglePhaseReservoir::setupSystem( DomainPartition & domain,
                                         DofManager & dofManager,

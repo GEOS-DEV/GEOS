@@ -29,6 +29,7 @@
 using namespace geosx;
 using namespace geosx::testing;
 using namespace geosx::constitutive;
+using namespace geosx::constitutive::multifluid;
 using namespace geosx::dataRepository;
 using namespace geosx::constitutive::PVTProps;
 
@@ -112,19 +113,19 @@ static const char * pvdwTableContent = "# Pref[bar] Bw[m3/sm3] Cp[1/bar]     Vis
 
 // CO2-brine model
 
-static const char * pvtLiquidTableContent = "DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0.2\n"
+static const char * pvtLiquidTableContent = "DensityFun BrineCO2Density 1e6 1.5e7 5e4 367.15 369.15 1 0.2\n"
                                             "ViscosityFun BrineViscosity 0.1";
 
-static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 94 96 1\n"
-                                         "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 94 96 1";
+static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 367.15 369.15 1\n"
+                                         "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 367.15 369.15 1";
 
-static const char * co2FlashTableContent = "FlashModel CO2Solubility 1e6 1.5e7 5e4 94 96 1 0.15";
+static const char * co2FlashTableContent = "FlashModel CO2Solubility 1e6 1.5e7 5e4 367.15 369.15 1 0.15";
 
 void testNumericalDerivatives( MultiFluidBase & fluid,
                                Group & parent,
                                real64 const P,
                                real64 const T,
-                               arraySlice1d< real64 > const & composition,
+                               arraySlice1d< real64 > const & compositionInput,
                                real64 const perturbParameter,
                                bool usePVTPackage,
                                real64 const relTol,
@@ -132,6 +133,14 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 {
   localIndex const NC = fluid.numFluidComponents();
   localIndex const NP = fluid.numFluidPhases();
+
+  // Copy input values into an array with expected layout
+  array2d< real64, compflow::LAYOUT_COMP > compositionValues( 1, NC );
+  for( localIndex i = 0; i < NC; ++i )
+  {
+    compositionValues[0][i] = compositionInput[i];
+  }
+  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition = compositionValues[0];
 
   auto const & components = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   auto const & phases     = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
@@ -144,49 +153,49 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   fluidCopy.allocateConstitutiveData( fluid.getParent(), 1 );
 
   // extract data views from both fluids
-  #define GET_FLUID_DATA( FLUID, DIM, KEY ) \
-    FLUID.getReference< Array< real64, DIM > >( MultiFluidBase::viewKeyStruct::KEY() )[0][0]
+  #define GET_FLUID_DATA( FLUID, DIM, PERM, KEY ) \
+    FLUID.getReference< Array< real64, DIM, PERM > >( MultiFluidBase::viewKeyStruct::KEY() )[0][0]
 
-  CompositionalVarContainer< 1 > phaseFrac {
-    GET_FLUID_DATA( fluid, 3, phaseFractionString ),
-    GET_FLUID_DATA( fluid, 3, dPhaseFraction_dPressureString ),
-    GET_FLUID_DATA( fluid, 3, dPhaseFraction_dTemperatureString ),
-    GET_FLUID_DATA( fluid, 4, dPhaseFraction_dGlobalCompFractionString )
+  CompositionalVarContainer< 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseFrac {
+    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseFractionString ),
+    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseFraction_dPressureString ),
+    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseFraction_dTemperatureString ),
+    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseFraction_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 1 > phaseDens {
-    GET_FLUID_DATA( fluid, 3, phaseDensityString ),
-    GET_FLUID_DATA( fluid, 3, dPhaseDensity_dPressureString ),
-    GET_FLUID_DATA( fluid, 3, dPhaseDensity_dTemperatureString ),
-    GET_FLUID_DATA( fluid, 4, dPhaseDensity_dGlobalCompFractionString )
+  CompositionalVarContainer< 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseDens {
+    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseDensityString ),
+    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseDensity_dPressureString ),
+    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseDensity_dTemperatureString ),
+    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseDensity_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 1 > phaseVisc {
-    GET_FLUID_DATA( fluid, 3, phaseViscosityString ),
-    GET_FLUID_DATA( fluid, 3, dPhaseViscosity_dPressureString ),
-    GET_FLUID_DATA( fluid, 3, dPhaseViscosity_dTemperatureString ),
-    GET_FLUID_DATA( fluid, 4, dPhaseViscosity_dGlobalCompFractionString )
+  CompositionalVarContainer< 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseVisc {
+    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseViscosityString ),
+    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseViscosity_dPressureString ),
+    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseViscosity_dTemperatureString ),
+    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseViscosity_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 2 > phaseCompFrac {
-    GET_FLUID_DATA( fluid, 4, phaseCompFractionString ),
-    GET_FLUID_DATA( fluid, 4, dPhaseCompFraction_dPressureString ),
-    GET_FLUID_DATA( fluid, 4, dPhaseCompFraction_dTemperatureString ),
-    GET_FLUID_DATA( fluid, 5, dPhaseCompFraction_dGlobalCompFractionString )
+  CompositionalVarContainer< 2, USD_PHASE_COMP-2, USD_PHASE_COMP_DC-2 > phaseCompFrac {
+    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, phaseCompFractionString ),
+    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, dPhaseCompFraction_dPressureString ),
+    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, dPhaseCompFraction_dTemperatureString ),
+    GET_FLUID_DATA( fluid, 5, LAYOUT_PHASE_COMP_DC, dPhaseCompFraction_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 0 > totalDens {
-    GET_FLUID_DATA( fluid, 2, totalDensityString ),
-    GET_FLUID_DATA( fluid, 2, dTotalDensity_dPressureString ),
-    GET_FLUID_DATA( fluid, 2, dTotalDensity_dTemperatureString ),
-    GET_FLUID_DATA( fluid, 3, dTotalDensity_dGlobalCompFractionString )
+  CompositionalVarContainer< 0, USD_FLUID - 2, USD_FLUID_DC - 2 > totalDens {
+    GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, totalDensityString ),
+    GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, dTotalDensity_dPressureString ),
+    GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, dTotalDensity_dTemperatureString ),
+    GET_FLUID_DATA( fluid, 3, LAYOUT_FLUID_DC, dTotalDensity_dGlobalCompFractionString )
   };
 
-  auto const & phaseFracCopy     = GET_FLUID_DATA( fluidCopy, 3, phaseFractionString );
-  auto const & phaseDensCopy     = GET_FLUID_DATA( fluidCopy, 3, phaseDensityString );
-  auto const & phaseViscCopy     = GET_FLUID_DATA( fluidCopy, 3, phaseViscosityString );
-  auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, 4, phaseCompFractionString );
-  auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, 2, totalDensityString );
+  auto const & phaseFracCopy     = GET_FLUID_DATA( fluidCopy, 3, LAYOUT_PHASE, phaseFractionString );
+  auto const & phaseDensCopy     = GET_FLUID_DATA( fluidCopy, 3, LAYOUT_PHASE, phaseDensityString );
+  auto const & phaseViscCopy     = GET_FLUID_DATA( fluidCopy, 3, LAYOUT_PHASE, phaseViscosityString );
+  auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, 4, LAYOUT_PHASE_COMP, phaseCompFractionString );
+  auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, 2, LAYOUT_FLUID, totalDensityString );
 
 #undef GET_FLUID_DATA
 
@@ -207,20 +216,16 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
       real64 const dP = perturbParameter * (P + perturbParameter);
       fluidWrapper.update( 0, 0, P + dP, T, composition );
 
-      checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dPres, dP, relTol, absTol, "phaseFrac", "Pres", phases );
-      checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, absTol, "phaseDens", "Pres", phases );
-      checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dPres, dP, relTol, absTol, "phaseVisc", "Pres", phases );
-      checkDerivative( totalDensCopy, totalDens.value, totalDens.dPres, dP, relTol, absTol, "totalDens", "Pres" );
-      checkDerivative( phaseCompFracCopy.toSliceConst(),
-                       phaseCompFrac.value.toSliceConst(),
-                       phaseCompFrac.dPres.toSliceConst(),
-                       dP,
-                       relTol,
-                       absTol,
-                       "phaseCompFrac",
-                       "Pres",
-                       phases,
-                       components );
+      checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), phaseFrac.dPres.toSliceConst(),
+                       dP, relTol, absTol, "phaseFrac", "Pres", phases );
+      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), phaseDens.dPres.toSliceConst(),
+                       dP, relTol, absTol, "phaseDens", "Pres", phases );
+      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), phaseVisc.dPres.toSliceConst(),
+                       dP, relTol, absTol, "phaseVisc", "Pres", phases );
+      checkDerivative( totalDensCopy, totalDens.value, totalDens.dPres,
+                       dP, relTol, absTol, "totalDens", "Pres" );
+      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), phaseCompFrac.dPres.toSliceConst(),
+                       dP, relTol, absTol, "phaseCompFrac", "Pres", phases, components );
     }
 
     // update temperature and check derivatives
@@ -228,38 +233,34 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
       real64 const dT = perturbParameter * (T + perturbParameter);
       fluidWrapper.update( 0, 0, P, T + dT, composition );
 
-      checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dTemp, dT, relTol, absTol, "phaseFrac", "Temp", phases );
-      checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, absTol, "phaseDens", "Temp", phases );
-      checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dTemp, dT, relTol, absTol, "phaseVisc", "Temp", phases );
-      checkDerivative( totalDensCopy, totalDens.value, totalDens.dTemp, dT, relTol, absTol, "totalDens", "Temp" );
-      checkDerivative( phaseCompFracCopy.toSliceConst(),
-                       phaseCompFrac.value.toSliceConst(),
-                       phaseCompFrac.dTemp.toSliceConst(),
-                       dT,
-                       relTol,
-                       absTol,
-                       "phaseCompFrac",
-                       "Temp",
-                       phases,
-                       components );
+      checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), phaseFrac.dTemp.toSliceConst(),
+                       dT, relTol, absTol, "phaseFrac", "Temp", phases );
+      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), phaseDens.dTemp.toSliceConst(),
+                       dT, relTol, absTol, "phaseDens", "Temp", phases );
+      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), phaseVisc.dTemp.toSliceConst(),
+                       dT, relTol, absTol, "phaseVisc", "Temp", phases );
+      checkDerivative( totalDensCopy, totalDens.value, totalDens.dTemp,
+                       dT, relTol, absTol, "totalDens", "Temp" );
+      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), phaseCompFrac.dTemp.toSliceConst(),
+                       dT, relTol, absTol, "phaseCompFrac", "Temp", phases, components );
     }
 
     // update composition and check derivatives
-    auto dPhaseFrac_dC     = invertLayout( phaseFrac.dComp, NP, NC );
-    auto dPhaseDens_dC     = invertLayout( phaseDens.dComp, NP, NC );
-    auto dPhaseVisc_dC     = invertLayout( phaseVisc.dComp, NP, NC );
-    auto dTotalDens_dC     = invertLayout( totalDens.dComp, NC );
-    auto dPhaseCompFrac_dC = invertLayout( phaseCompFrac.dComp, NP, NC, NC );
+    auto dPhaseFrac_dC     = invertLayout( phaseFrac.dComp.toSliceConst(), NP, NC );
+    auto dPhaseDens_dC     = invertLayout( phaseDens.dComp.toSliceConst(), NP, NC );
+    auto dPhaseVisc_dC     = invertLayout( phaseVisc.dComp.toSliceConst(), NP, NC );
+    auto dTotalDens_dC     = invertLayout( totalDens.dComp.toSliceConst(), NC );
+    auto dPhaseCompFrac_dC = invertLayout( phaseCompFrac.dComp.toSliceConst(), NP, NC, NC );
 
-    array1d< real64 > compNew( NC );
+    array2d< real64, compflow::LAYOUT_COMP > compNew( 1, NC );
     for( localIndex jc = 0; jc < NC; ++jc )
     {
       real64 const dC = perturbParameter * ( composition[jc] + perturbParameter );
       for( localIndex ic = 0; ic < NC; ++ic )
       {
-        compNew[ic] = composition[ic];
+        compNew[0][ic] = composition[ic];
       }
-      compNew[jc] += dC;
+      compNew[0][jc] += dC;
 
       // Note: in PVTPackage, derivatives are obtained with finite-difference approx **with normalization of the comp fraction**
       //       The component fraction is perturbed (just as above), and then all the component fractions are normalized (as below)
@@ -276,20 +277,28 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
         // renormalize
         real64 sum = 0.0;
         for( localIndex ic = 0; ic < NC; ++ic )
-          sum += compNew[ic];
+        {
+          sum += compNew[0][ic];
+        }
         for( localIndex ic = 0; ic < NC; ++ic )
-          compNew[ic] /= sum;
+        {
+          compNew[0][ic] /= sum;
+        }
       }
 
-      fluidWrapper.update( 0, 0, P, T, compNew );
+      fluidWrapper.update( 0, 0, P, T, compNew[0] );
 
       string const var = "compFrac[" + components[jc] + "]";
-      checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC[jc], dC, relTol, absTol, "phaseFrac", var, phases );
-      checkDerivative( phaseDensCopy, phaseDens.value, dPhaseDens_dC[jc], dC, relTol, absTol, "phaseDens", var, phases );
-      checkDerivative( phaseViscCopy, phaseVisc.value, dPhaseVisc_dC[jc], dC, relTol, absTol, "phaseVisc", var, phases );
-      checkDerivative( totalDensCopy, totalDens.value, dTotalDens_dC[jc], dC, relTol, absTol, "totalDens", var );
-      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac_dC[jc].toSliceConst(), dC, relTol, absTol,
-                       "phaseCompFrac", var, phases, components );
+      checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac_dC[jc].toSliceConst(),
+                       dC, relTol, absTol, "phaseFrac", var, phases );
+      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), dPhaseDens_dC[jc].toSliceConst(),
+                       dC, relTol, absTol, "phaseDens", var, phases );
+      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc_dC[jc].toSliceConst(),
+                       dC, relTol, absTol, "phaseVisc", var, phases );
+      checkDerivative( totalDensCopy, totalDens.value, dTotalDens_dC[jc],
+                       dC, relTol, absTol, "totalDens", var );
+      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac_dC[jc].toSliceConst(),
+                       dC, relTol, absTol, "phaseCompFrac", var, phases, components );
     }
   } );
 }
@@ -297,7 +306,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 void testValuesAgainstPreviousImplementation( CO2BrineFluid::KernelWrapper const & wrapper,
                                               real64 const P,
                                               real64 const T,
-                                              arraySlice1d< real64 > const & composition,
+                                              arraySlice1d< real64 const > const & compositionInput,
                                               real64 const & savedTotalDensity,
                                               real64 const & savedGasPhaseFrac,
                                               real64 const & savedWaterDens,
@@ -310,68 +319,76 @@ void testValuesAgainstPreviousImplementation( CO2BrineFluid::KernelWrapper const
                                               real64 const & savedWaterPhaseWaterComp,
                                               real64 const relTol )
 {
-  stackArray1d< real64, 2 > phaseFraction( 2 );
-  stackArray1d< real64, 2 > dPhaseFraction_dPressure( 2 );
-  stackArray1d< real64, 2 > dPhaseFraction_dTemperature( 2 );
-  stackArray2d< real64, 4 > dPhaseFraction_dGlobalCompFraction( 2, 2 );
-  stackArray1d< real64, 2 > phaseDensity( 2 );
-  stackArray1d< real64, 2 > dPhaseDensity_dPressure( 2 );
-  stackArray1d< real64, 2 > dPhaseDensity_dTemperature( 2 );
-  stackArray2d< real64, 4 > dPhaseDensity_dGlobalCompFraction( 2, 2 );
-  stackArray1d< real64, 2 > phaseMassDensity( 2 );
-  stackArray1d< real64, 2 > dPhaseMassDensity_dPressure( 2 );
-  stackArray1d< real64, 2 > dPhaseMassDensity_dTemperature( 2 );
-  stackArray2d< real64, 4 > dPhaseMassDensity_dGlobalCompFraction( 2, 2 );
-  stackArray1d< real64, 2 > phaseViscosity( 2 );
-  stackArray1d< real64, 2 > dPhaseViscosity_dPressure( 2 );
-  stackArray1d< real64, 2 > dPhaseViscosity_dTemperature( 2 );
-  stackArray2d< real64, 4 > dPhaseViscosity_dGlobalCompFraction( 2, 2 );
-  stackArray2d< real64, 4 > phaseCompFraction( 2, 2 );
-  stackArray2d< real64, 4 > dPhaseCompFraction_dPressure( 2, 2 );
-  stackArray2d< real64, 4 > dPhaseCompFraction_dTemperature( 2, 2 );
-  stackArray3d< real64, 8 > dPhaseCompFraction_dGlobalCompFraction( 2, 2, 2 );
-  real64 totalDensity = 0.0;
-  real64 dTotalDensity_dPressure = 0.0;
-  real64 dTotalDensity_dTemperature = 0.0;
-  stackArray1d< real64, 2 >  dTotalDensity_dGlobalCompFraction( 2 );
+  // Copy input values into an array with expected layout
+  array2d< real64, compflow::LAYOUT_COMP > compositionValues( 1, 2 );
+  for( localIndex i = 0; i < 2; ++i )
+  {
+    compositionValues[0][i] = compositionInput[i];
+  }
+  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition = compositionValues[0];
+
+  StackArray< real64, 3, 2, LAYOUT_PHASE > phaseFraction( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseFraction_dPressure( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseFraction_dTemperature( 1, 1, 2 );
+  StackArray< real64, 4, 4, LAYOUT_PHASE_DC > dPhaseFraction_dGlobalCompFraction( 1, 1, 2, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > phaseDensity( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseDensity_dPressure( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseDensity_dTemperature( 1, 1, 2 );
+  StackArray< real64, 4, 4, LAYOUT_PHASE_DC > dPhaseDensity_dGlobalCompFraction( 1, 1, 2, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > phaseMassDensity( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseMassDensity_dPressure( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseMassDensity_dTemperature( 1, 1, 2 );
+  StackArray< real64, 4, 4, LAYOUT_PHASE_DC > dPhaseMassDensity_dGlobalCompFraction( 1, 1, 2, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > phaseViscosity( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseViscosity_dPressure( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseViscosity_dTemperature( 1, 1, 2 );
+  StackArray< real64, 4, 4, LAYOUT_PHASE_DC > dPhaseViscosity_dGlobalCompFraction( 1, 1, 2, 2 );
+  StackArray< real64, 4, 4, LAYOUT_PHASE_COMP > phaseCompFraction( 1, 1, 2, 2 );
+  StackArray< real64, 4, 4, LAYOUT_PHASE_COMP > dPhaseCompFraction_dPressure( 1, 1, 2, 2 );
+  StackArray< real64, 4, 4, LAYOUT_PHASE_COMP > dPhaseCompFraction_dTemperature( 1, 1, 2, 2 );
+  StackArray< real64, 5, 8, LAYOUT_PHASE_COMP_DC > dPhaseCompFraction_dGlobalCompFraction( 1, 1, 2, 2, 2 );
+  StackArray< real64, 2, 1, LAYOUT_FLUID > totalDensity( 1, 1 );
+  StackArray< real64, 2, 1, LAYOUT_FLUID > dTotalDensity_dPressure( 1, 1 );
+  StackArray< real64, 2, 1, LAYOUT_FLUID > dTotalDensity_dTemperature( 1, 1 );
+  StackArray< real64, 3, 2, LAYOUT_FLUID_DC >  dTotalDensity_dGlobalCompFraction( 1, 1, 2 );
 
   wrapper.compute( P, T, composition,
-                   phaseFraction,
-                   dPhaseFraction_dPressure,
-                   dPhaseFraction_dTemperature,
-                   dPhaseFraction_dGlobalCompFraction,
-                   phaseDensity,
-                   dPhaseDensity_dPressure,
-                   dPhaseDensity_dTemperature,
-                   dPhaseDensity_dGlobalCompFraction,
-                   phaseMassDensity,
-                   dPhaseMassDensity_dPressure,
-                   dPhaseMassDensity_dTemperature,
-                   dPhaseMassDensity_dGlobalCompFraction,
-                   phaseViscosity,
-                   dPhaseViscosity_dPressure,
-                   dPhaseViscosity_dTemperature,
-                   dPhaseViscosity_dGlobalCompFraction,
-                   phaseCompFraction,
-                   dPhaseCompFraction_dPressure,
-                   dPhaseCompFraction_dTemperature,
-                   dPhaseCompFraction_dGlobalCompFraction,
-                   totalDensity,
-                   dTotalDensity_dPressure,
-                   dTotalDensity_dTemperature,
-                   dTotalDensity_dGlobalCompFraction );
+                   phaseFraction[0][0],
+                   dPhaseFraction_dPressure[0][0],
+                   dPhaseFraction_dTemperature[0][0],
+                   dPhaseFraction_dGlobalCompFraction[0][0],
+                   phaseDensity[0][0],
+                   dPhaseDensity_dPressure[0][0],
+                   dPhaseDensity_dTemperature[0][0],
+                   dPhaseDensity_dGlobalCompFraction[0][0],
+                   phaseMassDensity[0][0],
+                   dPhaseMassDensity_dPressure[0][0],
+                   dPhaseMassDensity_dTemperature[0][0],
+                   dPhaseMassDensity_dGlobalCompFraction[0][0],
+                   phaseViscosity[0][0],
+                   dPhaseViscosity_dPressure[0][0],
+                   dPhaseViscosity_dTemperature[0][0],
+                   dPhaseViscosity_dGlobalCompFraction[0][0],
+                   phaseCompFraction[0][0],
+                   dPhaseCompFraction_dPressure[0][0],
+                   dPhaseCompFraction_dTemperature[0][0],
+                   dPhaseCompFraction_dGlobalCompFraction[0][0],
+                   totalDensity[0][0],
+                   dTotalDensity_dPressure[0][0],
+                   dTotalDensity_dTemperature[0][0],
+                   dTotalDensity_dGlobalCompFraction[0][0] );
 
-  checkRelativeError( totalDensity, savedTotalDensity, relTol );
+  checkRelativeError( totalDensity[0][0], savedTotalDensity, relTol );
   for( localIndex ip = 0; ip < 2; ++ip )
   {
     real64 const savedPhaseFrac = ( ip == 0 ) ? savedGasPhaseFrac : 1 - savedGasPhaseFrac;
-    checkRelativeError( phaseFraction[ip], savedPhaseFrac, relTol );
+    checkRelativeError( phaseFraction[0][0][ip], savedPhaseFrac, relTol );
     real64 const savedPhaseDens = ( ip == 0 ) ? savedGasDens : savedWaterDens;
-    checkRelativeError( phaseDensity[ip], savedPhaseDens, relTol );
+    checkRelativeError( phaseDensity[0][0][ip], savedPhaseDens, relTol );
     real64 const savedPhaseMassDens = ( ip == 0 ) ? savedGasMassDens : savedWaterMassDens;
-    checkRelativeError( phaseMassDensity[ip], savedPhaseMassDens, relTol );
+    checkRelativeError( phaseMassDensity[0][0][ip], savedPhaseMassDens, relTol );
     real64 const savedPhaseVisc = ( ip == 0 ) ? savedGasVisc : savedWaterVisc;
-    checkRelativeError( phaseViscosity[ip], savedPhaseVisc, relTol );
+    checkRelativeError( phaseViscosity[0][0][ip], savedPhaseVisc, relTol );
     for( localIndex ic = 0; ic < 2; ++ic )
     {
       real64 savedCompFrac = 0.0;
@@ -383,7 +400,7 @@ void testValuesAgainstPreviousImplementation( CO2BrineFluid::KernelWrapper const
       {
         savedCompFrac = ( ic == 0 ) ? savedWaterPhaseGasComp : savedWaterPhaseWaterComp;
       }
-      checkRelativeError( phaseCompFraction[ip][ic], savedCompFrac, relTol );
+      checkRelativeError( phaseCompFraction[0][0][ip][ic], savedCompFrac, relTol );
     }
   }
 }

@@ -19,7 +19,9 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 
+#include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
+#include "constitutive/fluid/layouts.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -28,6 +30,8 @@ namespace geosx
 
 namespace CompositionalMultiphaseBaseKernels
 {
+
+using namespace constitutive;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
@@ -40,28 +44,27 @@ struct ComponentFractionKernel
 {
   template< localIndex NC >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
-  compute( arraySlice1d< real64 const > compDens,
-           arraySlice1d< real64 const > dCompDens,
-           arraySlice1d< real64 > compFrac,
-           arraySlice2d< real64 > dCompFrac_dCompDens );
+  compute( arraySlice1d< real64 const, compflow::USD_COMP - 1 > compDens,
+           arraySlice1d< real64 const, compflow::USD_COMP - 1 > dCompDens,
+           arraySlice1d< real64, compflow::USD_COMP - 1 > compFrac,
+           arraySlice2d< real64, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens );
 
   template< localIndex NC >
   static void
   launch( localIndex const size,
-          arrayView2d< real64 const > const & compDens,
-          arrayView2d< real64 const > const & dCompDens,
-          arrayView2d< real64 > const & compFrac,
-          arrayView3d< real64 > const & dCompFrac_dCompDens );
+          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
+          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
+          arrayView2d< real64, compflow::USD_COMP > const & compFrac,
+          arrayView3d< real64, compflow::USD_COMP_DC > const & dCompFrac_dCompDens );
 
   template< localIndex NC >
   static void
   launch( SortedArrayView< localIndex const > const & targetSet,
-          arrayView2d< real64 const > const & compDens,
-          arrayView2d< real64 const > const & dCompDens,
-          arrayView2d< real64 > const & compFrac,
-          arrayView3d< real64 > const & dCompFrac_dCompDens );
+          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
+          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
+          arrayView2d< real64, compflow::USD_COMP > const & compFrac,
+          arrayView3d< real64, compflow::USD_COMP_DC > const & dCompFrac_dCompDens );
 };
 
 /******************************** PhaseVolumeFractionKernel ********************************/
@@ -73,52 +76,51 @@ struct PhaseVolumeFractionKernel
 {
   template< localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
-  compute( arraySlice1d< real64 const > const & compDens,
-           arraySlice1d< real64 const > const & dCompDens,
-           arraySlice2d< real64 const > const & dCompFrac_dCompDens,
-           arraySlice1d< real64 const > const & phaseDens,
-           arraySlice1d< real64 const > const & dPhaseDens_dPres,
-           arraySlice2d< real64 const > const & dPhaseDens_dComp,
-           arraySlice1d< real64 const > const & phaseFrac,
-           arraySlice1d< real64 const > const & dPhaseFrac_dPres,
-           arraySlice2d< real64 const > const & dPhaseFrac_dComp,
-           arraySlice1d< real64 > const & phaseVolFrac,
-           arraySlice1d< real64 > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64 > const & dPhaseVolFrac_dComp );
+  compute( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & compDens,
+           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & dCompDens,
+           arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
+           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseDens,
+           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseDens_dPres,
+           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseDens_dComp,
+           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseFrac,
+           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseFrac_dPres,
+           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseFrac_dComp,
+           arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFrac,
+           arraySlice1d< real64, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
+           arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dComp );
 
   template< localIndex NC, localIndex NP >
   static void
   launch( localIndex const size,
-          arrayView2d< real64 const > const & compDens,
-          arrayView2d< real64 const > const & dCompDens,
-          arrayView3d< real64 const > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const > const & phaseDens,
-          arrayView3d< real64 const > const & dPhaseDens_dPres,
-          arrayView4d< real64 const > const & dPhaseDens_dComp,
-          arrayView3d< real64 const > const & phaseFrac,
-          arrayView3d< real64 const > const & dPhaseFrac_dPres,
-          arrayView4d< real64 const > const & dPhaseFrac_dComp,
-          arrayView2d< real64 > const & phaseVolFrac,
-          arrayView2d< real64 > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 > const & dPhaseVolFrac_dComp );
+          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
+          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
+          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres,
+          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseFrac,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseFrac_dPres,
+          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp,
+          arrayView2d< real64, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp );
 
   template< localIndex NC, localIndex NP >
   static void
   launch( SortedArrayView< localIndex const > const & targetSet,
-          arrayView2d< real64 const > const & compDens,
-          arrayView2d< real64 const > const & dCompDens,
-          arrayView3d< real64 const > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const > const & phaseDens,
-          arrayView3d< real64 const > const & dPhaseDens_dPres,
-          arrayView4d< real64 const > const & dPhaseDens_dComp,
-          arrayView3d< real64 const > const & phaseFrac,
-          arrayView3d< real64 const > const & dPhaseFrac_dPres,
-          arrayView4d< real64 const > const & dPhaseFrac_dComp,
-          arrayView2d< real64 > const & phaseVolFrac,
-          arrayView2d< real64 > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 > const & dPhaseVolFrac_dComp );
+          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
+          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
+          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres,
+          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseFrac,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseFrac_dPres,
+          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp,
+          arrayView2d< real64, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp );
 };
 
 
@@ -132,7 +134,7 @@ struct FluidUpdateKernel
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           real64 const temp,
-          arrayView2d< real64 const > const & compFrac )
+          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -150,7 +152,7 @@ struct FluidUpdateKernel
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & dPres,
           real64 const temp,
-          arrayView2d< real64 const > const & compFrac )
+          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -168,7 +170,7 @@ struct FluidUpdateKernel
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & dPres,
           real64 const temp,
-          arrayView2d< real64 const > const & compFrac )
+          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -186,7 +188,7 @@ struct FluidUpdateKernel
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           real64 const temp,
-          arrayView2d< real64 const > const & compFrac )
+          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -207,7 +209,7 @@ struct RelativePermeabilityUpdateKernel
   static void
   launch( localIndex const size,
           RELPERM_WRAPPER const & relPermWrapper,
-          arrayView2d< real64 const > const & phaseVolFrac )
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -222,7 +224,7 @@ struct RelativePermeabilityUpdateKernel
   static void
   launch( SortedArrayView< localIndex const > const & targetSet,
           RELPERM_WRAPPER const & relPermWrapper,
-          arrayView2d< real64 const > const & phaseVolFrac )
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -243,7 +245,7 @@ struct CapillaryPressureUpdateKernel
   static void
   launch( localIndex const size,
           CAPPRES_WRAPPER const & capPresWrapper,
-          arrayView2d< real64 const > const & phaseVolFrac )
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
@@ -258,7 +260,7 @@ struct CapillaryPressureUpdateKernel
   static void
   launch( SortedArrayView< localIndex const > const & targetSet,
           CAPPRES_WRAPPER const & capPresWrapper,
-          arrayView2d< real64 const > const & phaseVolFrac )
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -280,25 +282,24 @@ struct AccumulationKernel
 {
   template< localIndex NC >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
     compute( localIndex const numPhases,
              real64 const & poreVolOld,
              real64 const & poreVolNew,
              real64 const & dPoreVol_dP,
-             arraySlice2d< real64 const > const & dCompFrac_dCompDens,
-             arraySlice1d< real64 const > const & phaseVolFracOld,
-             arraySlice1d< real64 const > const & phaseVolFrac,
-             arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
-             arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
-             arraySlice1d< real64 const > const & phaseDensOld,
-             arraySlice1d< real64 const > const & phaseDens,
-             arraySlice1d< real64 const > const & dPhaseDens_dPres,
-             arraySlice2d< real64 const > const & dPhaseDens_dComp,
-             arraySlice2d< real64 const > const & phaseCompFracOld,
-             arraySlice2d< real64 const > const & phaseCompFrac,
-             arraySlice2d< real64 const > const & dPhaseCompFrac_dPres,
-             arraySlice3d< real64 const > const & dPhaseCompFrac_dComp,
+             arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFracOld,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
+             arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dCompDens,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseDensOld,
+             arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseDens,
+             arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseDens_dPres,
+             arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseDens_dComp,
+             arraySlice2d< real64 const, compflow::USD_PHASE_COMP-1 > const & phaseCompFracOld,
+             arraySlice2d< real64 const, multifluid::USD_PHASE_COMP-2 > const & phaseCompFrac,
+             arraySlice2d< real64 const, multifluid::USD_PHASE_COMP-2 > const & dPhaseCompFrac_dPres,
+             arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC-2 > const & dPhaseCompFrac_dComp,
              real64 ( &localAccum )[NC],
              real64 ( &localAccumJacobian )[NC][NC+1] );
 
@@ -313,19 +314,19 @@ struct AccumulationKernel
           arrayView2d< real64 const > const & porosityOld,
           arrayView2d< real64 const > const & porosityNew,
           arrayView2d< real64 const > const & dPoro_dPres,
-          arrayView3d< real64 const > const & dCompFrac_dCompDens,
-          arrayView2d< real64 const > const & phaseVolFracOld,
-          arrayView2d< real64 const > const & phaseVolFrac,
-          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens,
-          arrayView2d< real64 const > const & phaseDensOld,
-          arrayView3d< real64 const > const & phaseDens,
-          arrayView3d< real64 const > const & dPhaseDens_dPres,
-          arrayView4d< real64 const > const & dPhaseDens_dComp,
-          arrayView3d< real64 const > const & phaseCompFracOld,
-          arrayView4d< real64 const > const & phaseCompFrac,
-          arrayView4d< real64 const > const & dPhaseCompFrac_dPres,
-          arrayView5d< real64 const > const & dPhaseCompFrac_dComp,
+          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFracOld,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseDensOld,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres,
+          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp,
+          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & phaseCompFracOld,
+          arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFrac,
+          arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres,
+          arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 };
@@ -339,14 +340,13 @@ struct VolumeBalanceKernel
 {
   template< localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   compute( real64 const & volume,
            real64 const & porosityNew,
            real64 const & dPoro_dPres,
-           arraySlice1d< real64 const > const & phaseVolFrac,
-           arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
+           arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dCompDens,
            real64 & localVolBalance,
            real64 * const localVolBalanceJacobian );
 
@@ -359,9 +359,9 @@ struct VolumeBalanceKernel
           arrayView1d< real64 const > const & volume,
           arrayView2d< real64 const > const & porosityNew,
           arrayView2d< real64 const > const & dPoro_dPres,
-          arrayView2d< real64 const > const & phaseVolFrac,
-          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 };
@@ -370,7 +370,7 @@ struct VolumeBalanceKernel
 
 struct ResidualNormKernel
 {
-  // TODO: template on NC??
+
   template< typename POLICY, typename REDUCE_POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
@@ -381,8 +381,6 @@ struct ResidualNormKernel
                       arrayView1d< real64 const > const & totalDensOld,
                       real64 & localResidualNorm )
   {
-    localResidualNorm = 0.0;
-
     RAJA::ReduceSum< REDUCE_POLICY, real64 > localSum( 0.0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
@@ -418,8 +416,8 @@ struct SolutionCheckKernel
           arrayView1d< integer const > const & ghostRank,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & dPres,
-          arrayView2d< real64 const > const & compDens,
-          arrayView2d< real64 const > const & dCompDens,
+          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
+          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
           integer const allowCompDensChopping,
           real64 const scalingFactor )
   {

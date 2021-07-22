@@ -31,10 +31,13 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   m_newStress( 0, 0, 6 ),
   m_oldStress( 0, 0, 6 )
 {
+  string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
+
   registerWrapper( viewKeyStruct::stressString(), &m_newStress ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setApplyDefaultValue( 0 ). // default to zero initial stress
-    setDescription( "Current Material Stress" );
+    setDescription( "Current Material Stress" ).
+    setDimLabels( 1, voightLabels );
 
   registerWrapper( viewKeyStruct::oldStressString(), &m_oldStress ).
     setApplyDefaultValue( 0 ). // default to zero initial stress

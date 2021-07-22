@@ -13,6 +13,7 @@ set( constitutive_headers
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      contact/ContactRelationBase.hpp
      contact/Coulomb.hpp
+     fluid/layouts.hpp
      fluid/DeadOilFluid.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
      fluid/PVTFunctions/BrineCO2Density.hpp
@@ -51,6 +52,7 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/TriaxialDriver.hpp
+     relativePermeability/layouts.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
@@ -65,6 +67,7 @@ set( constitutive_headers
      permeability/permeabilitySelector.hpp
      permeability/StrainDependentPermeability.hpp
      permeability/PoroMechanicsPermeabilityKernel.hpp
+     capillaryPressure/layouts.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
@@ -141,10 +144,6 @@ if( ENABLE_PVTPackage )
     add_subdirectory( PVTPackage )
     set( dependencyList ${dependencyList} PVTPackage )
 
-endif()
-
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
 endif()
 
 if ( ENABLE_CUDA )

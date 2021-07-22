@@ -234,8 +234,6 @@ public:
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
-  virtual string getElementTypeString() const override final { return "Embedded"; }
-
   /**
    * @name Properties Getters
    * @brief Getters to embedded surface elements properties.

@@ -421,11 +421,11 @@ Element: Mesh
 .. include:: ../../coreComponents/schema/docs/Mesh.rst
 
 
-.. _XML_MultiphasePoroelastic:
+.. _XML_MultiphasePoromechanics:
 
-Element: MultiphasePoroelastic
-==============================
-.. include:: ../../coreComponents/schema/docs/MultiphasePoroelastic.rst
+Element: MultiphasePoromechanics
+================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
 .. _XML_NonlinearSolverParameters:
@@ -533,6 +533,7 @@ Element: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
 
 
+<<<<<<< HEAD
 .. _XML_Poroelastic:
 
 Element: Poroelastic
@@ -545,6 +546,41 @@ Element: Poroelastic
 Element: PoroelasticEmbeddedFractures
 =====================================
 .. include:: ../../coreComponents/schema/docs/PoroelasticEmbeddedFractures.rst
+=======
+.. _XML_PoreVolumeCompressibleSolid:
+
+Element: PoreVolumeCompressibleSolid
+====================================
+.. include:: ../../coreComponents/schema/docs/PoreVolumeCompressibleSolid.rst
+
+
+.. _XML_PoroDruckerPrager:
+
+Element: PoroDruckerPrager
+==========================
+.. include:: ../../coreComponents/schema/docs/PoroDruckerPrager.rst
+
+
+.. _XML_PoroElasticIsotropic:
+
+Element: PoroElasticIsotropic
+=============================
+.. include:: ../../coreComponents/schema/docs/PoroElasticIsotropic.rst
+
+
+.. _XML_PoroElasticTransverseIsotropic:
+
+Element: PoroElasticTransverseIsotropic
+=======================================
+.. include:: ../../coreComponents/schema/docs/PoroElasticTransverseIsotropic.rst
+
+
+.. _XML_PoroExtendedDruckerPrager:
+
+Element: PoroExtendedDruckerPrager
+==================================
+.. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager.rst
+>>>>>>> upstream/develop
 
 
 .. _XML_Problem:
@@ -615,6 +651,20 @@ Element: SinglePhaseFVM
 Element: SinglePhaseHybridFVM
 =============================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseHybridFVM.rst
+
+
+.. _XML_SinglePhasePoromechanics:
+
+Element: SinglePhasePoromechanics
+=================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics.rst
+
+
+.. _XML_SinglePhasePoromechanicsEmbeddedFractures:
+
+Element: SinglePhasePoromechanicsEmbeddedFractures
+==================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
 
 
 .. _XML_SinglePhaseProppantFVM:
@@ -1258,11 +1308,11 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/schema/docs/MeshBodies_other.rst
 
 
-.. _DATASTRUCTURE_MultiphasePoroelastic:
+.. _DATASTRUCTURE_MultiphasePoromechanics:
 
-Datastructure: MultiphasePoroelastic
-====================================
-.. include:: ../../coreComponents/schema/docs/MultiphasePoroelastic_other.rst
+Datastructure: MultiphasePoromechanics
+======================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
 .. _DATASTRUCTURE_NonlinearSolverParameters:
@@ -1370,6 +1420,7 @@ Datastructure: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
 
 
+<<<<<<< HEAD
 .. _DATASTRUCTURE_Poroelastic:
 
 Datastructure: Poroelastic
@@ -1382,6 +1433,41 @@ Datastructure: Poroelastic
 Datastructure: PoroelasticEmbeddedFractures
 ===========================================
 .. include:: ../../coreComponents/schema/docs/PoroelasticEmbeddedFractures_other.rst
+=======
+.. _DATASTRUCTURE_PoreVolumeCompressibleSolid:
+
+Datastructure: PoreVolumeCompressibleSolid
+==========================================
+.. include:: ../../coreComponents/schema/docs/PoreVolumeCompressibleSolid_other.rst
+
+
+.. _DATASTRUCTURE_PoroDruckerPrager:
+
+Datastructure: PoroDruckerPrager
+================================
+.. include:: ../../coreComponents/schema/docs/PoroDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_PoroElasticIsotropic:
+
+Datastructure: PoroElasticIsotropic
+===================================
+.. include:: ../../coreComponents/schema/docs/PoroElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroElasticTransverseIsotropic:
+
+Datastructure: PoroElasticTransverseIsotropic
+=============================================
+.. include:: ../../coreComponents/schema/docs/PoroElasticTransverseIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PoroExtendedDruckerPrager:
+
+Datastructure: PoroExtendedDruckerPrager
+========================================
+.. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager_other.rst
+>>>>>>> upstream/develop
 
 
 .. _DATASTRUCTURE_Problem:
@@ -1452,6 +1538,20 @@ Datastructure: SinglePhaseFVM
 Datastructure: SinglePhaseHybridFVM
 ===================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseHybridFVM_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanics:
+
+Datastructure: SinglePhasePoromechanics
+=======================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:
+
+Datastructure: SinglePhasePoromechanicsEmbeddedFractures
+========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseProppantFVM:
