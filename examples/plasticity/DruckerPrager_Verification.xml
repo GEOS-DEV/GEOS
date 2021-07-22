@@ -102,7 +102,7 @@ Reference: Chen, S. L., & Abousleiman, Y. N. (2017). Wellbore stability analysis
     setNames="{rneg}"
     objectPath="faceManager"
     scale="-11.25e6"
-    tractionType="1"
+    tractionType="normal"
     functionName="timeFunction"     
   />
 
