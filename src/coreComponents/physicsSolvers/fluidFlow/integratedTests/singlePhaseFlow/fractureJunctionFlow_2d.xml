@@ -8,7 +8,8 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }">
+      solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"/>
@@ -120,7 +121,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-5"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, fracPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -138,6 +139,11 @@
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
+      
+    <ConstantPermeability
+      name="fracPerm"
+      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>     
+      
   </Constitutive>
 
   <FieldSpecifications>
