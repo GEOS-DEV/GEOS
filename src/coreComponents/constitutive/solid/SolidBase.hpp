@@ -20,7 +20,8 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_SOLIDBASE_HPP_
 
-#include "constitutive/solid/RockBase.hpp"
+
+#include "constitutive/ConstitutiveBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
@@ -45,7 +46,7 @@ namespace constitutive
  * If an allocation occurs on the underlying Array after a KernelWrapper is created,
  * then the ArrayView members of that KernelWrapper are silently invalid.
  */
-class SolidBaseUpdates : public RockBaseUpdates
+class SolidBaseUpdates
 {
 protected:
   /**
@@ -594,7 +595,7 @@ public:
  * @class SolidBase
  * This class serves as the base class for solid constitutive models.
  */
-class SolidBase : public constitutive::RockBase
+class SolidBase : public constitutive::ConstitutiveBase
 {
 public:
   /**

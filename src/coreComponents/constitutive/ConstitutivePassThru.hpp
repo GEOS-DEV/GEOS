@@ -27,7 +27,7 @@
 #include "solid/DruckerPragerExtended.hpp"
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
-#include "solid/CompressibleRock.hpp"
+
 
 namespace geosx
 {
