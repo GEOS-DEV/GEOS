@@ -7,12 +7,7 @@
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-<<<<<<< HEAD
-      couplingTypeOption="FIM"
-      logLevel="4"
-=======
       logLevel="1"
->>>>>>> upstream/develop
       discretization="FE1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters

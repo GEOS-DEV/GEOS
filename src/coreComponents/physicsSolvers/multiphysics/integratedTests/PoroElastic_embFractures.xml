@@ -10,12 +10,7 @@
       fracturesSolverName = "fractureMechSolver"
       fluidSolverName = "flowSolver"
       solidSolverName = "matrixMechSolver"
-<<<<<<< HEAD
-      couplingTypeOption="FIM"
-      logLevel="4">
-=======
       logLevel="1">
->>>>>>> upstream/develop
       <NonlinearSolverParameters
         newtonMaxIter="5"
         maxTimeStepCuts="1"/>
