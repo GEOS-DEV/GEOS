@@ -8,15 +8,15 @@ Tutorial 11: Plasticity Model for Wellbore Problems
 
 **Context**
 
-The main goal of this tutorial is to learn how to use internal mesh generator and plasticity models to handle wellbore problems in GEOSX. In this tutorial, the Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical result obtained with this plasticity model in GEOSX. This makes GEOSX a reliable engine to guide real field applications (e.g., wellbore drilling, fluid injection and storage) and provide adequate assessments of inelastic deformation. 
+The main goal of this tutorial is to learn how to use the internal mesh generator and plasticity models to handle wellbore problems in GEOSX. The Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical results. The resulting model can be used as a base for more complex analysis (e.g., wellbore drilling, fluid injection and storage scenarios). 
 
 
 **Objectives**
 
 At the end of this tutorial you will know:
 
-  - how to construct meshes for wellbore problems with internal mesh generator,
-  - how to specify initial and boundary conditions, such as in-situ stresses and variation of traction at wellbore wall,
+  - how to construct meshes for wellbore problems with the internal mesh generator,
+  - how to specify initial and boundary conditions, such as in-situ stresses and variation of traction at the wellbore wall,
   - how to use a plastic model for mechanical problems in the near wellbore region.
 
 
@@ -35,7 +35,7 @@ The xml input file for this test case is located at:
 Description of the case
 ------------------------------------------------------------------
 
-We simulate the drained wellbore problem subjected to isotropic horizontal stress (:math:`\Sigma_h`) and vertical stress (:math:`\Sigma_v`). By lowering the wellbore supporting pressure (:math:`P_w`), wellbore will contract, and reservoir rock will experience elastoplastic deformation and a plastic zone will be developed in the near wellbore region, as shown in Fig.1.
+We simulate a drained wellbore problem subjected to isotropic horizontal stress (:math:`\Sigma_h`) and vertical stress (:math:`\Sigma_v`). By lowering the wellbore supporting pressure (:math:`P_w`), the wellbore contracts, and the reservoir rock experiences elastoplastic deformation. A plastic zone develops in the near wellbore region, as shown in Fig.1.
 
 
 .. _problemSketchFig:
@@ -76,7 +76,7 @@ Let us take a closer look at the geometry of this wellbore problem.
 We use the internal mesh generator ``InternalWellbore`` to create a rock domain
 (:math:`10\, m \, \times 5 \,  m \, \times 2 \, m`), with a wellbore of
 initial radius equal to :math:`0.1` m.
-Coordinates of ``trajectory`` defines the wellbore trajectory, which represents a perfect vertical well in this tutorial. 
+Coordinates of ``trajectory`` defines the wellbore trajectory, which represents a vertical well in this tutorial. 
 By turning on ``autoSpaceRadialElems="{ 1 }"``, the internal mesh generator automatically sets number and spacing of elements in the radial direction, which overrides the values of ``nr``. 
 With ``useCartesianOuterBoundary="0"``, a Cartesian aligned outer boundary on the outer block is enforced.
 In this way, a structured three-dimensional mesh is created with 100 x 80 x 2 elements in the radial, tangential and z directions, respectively. All the elements are eight-node hexahedral elements (``C3D8``) and refinement is performed
@@ -95,7 +95,7 @@ Solver: setting up the solid mechanics solver
 
 For the drained wellbore problem, the pore pressure variation is omitted and can be subtracted from the analysis. Therefore, we just need to define a solid mechanics solver, which is called ``mechanicsSolver``. 
 This solid mechanics solver (see :ref:`SolidMechanicsLagrangianFEM`) is based on the small strain Lagrangian finite element formulation. 
-The problem is run as ``QuasiStatic`` without considering the inertial. 
+The problem is run as ``QuasiStatic`` without considering inertial effects. 
 The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. 
 The material is named as ``rock``, whose mechanical properties are specified in the ``Constitutive`` section.
 
@@ -121,9 +121,9 @@ Recall that in the ``SolidMechanicsLagrangianSSLE`` section,
 ``rock`` is designated as the material in the computational domain. 
 Here, Extended Drucker Prager model ``ExtendedDruckerPrager`` is used to simulate the elastoplastic behavior of ``rock``.
 As for the material parameters, ``defaultInitialFrictionAngle``, ``defaultResidualFrictionAngle`` and ``defaultCohesion`` denote the initial friction angle, the residual friction angle, and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope in the :math:`\Sigma` - :math:`\Tau` plane.
-As the residual friction angle ``defaultResidualFrictionAngle`` is larger than the initial one ``defaultInitialFrictionAngle``, the strain hardening model is automatically chosen, whose hardening rate is given as ``defaultHardening="0.01"``. 
+As the residual friction angle ``defaultResidualFrictionAngle`` is larger than the initial one ``defaultInitialFrictionAngle``, a  strain hardening model is adopted, whose hardening rate is given as ``defaultHardening="0.01"``. 
 If the residual friction angle is set to be less than the initial one, strain weakening will take place. 
-And ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
+Setting ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
 The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units.
 
 
@@ -230,5 +230,4 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
   - More on plasticity models, please see :ref:`TwoInvariantPlasticity`.
   - More on wellbore meshes, please see :ref:`InternalWellbore`.
   - More on functions, please see :ref:`FunctionManager`.
-
 
