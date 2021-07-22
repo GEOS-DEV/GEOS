@@ -38,6 +38,11 @@ set( constitutive_headers
      fluid/particleFluidSelector.hpp
      fluid/singleFluidSelector.hpp
      fluid/slurryFluidSelector.hpp
+     permeability/CarmanKozenyPermeability.hpp
+     permeability/ConstantPermeability.hpp
+     permeability/ParallelPlatesPermeability.hpp
+     permeability/PermeabilityBase.hpp
+     permeability/StrainDependentPermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp
@@ -46,6 +51,8 @@ set( constitutive_headers
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      relativePermeability/layouts.hpp
      relativePermeability/relativePermeabilitySelector.hpp
+     solid/CompressibleSolid.hpp
+     solid/CoupledSolid.hpp
      solid/Damage.hpp
      solid/DamageSpectral.hpp
      solid/DamageSpectralUtilities.hpp
@@ -57,6 +64,7 @@ set( constitutive_headers
      solid/InvariantDecompositions.hpp
      solid/PoreVolumeCompressibleSolid.hpp
      solid/PoroElastic.hpp
+     solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
      solid/SolidModelDiscretizationOps.hpp
@@ -64,6 +72,9 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/TriaxialDriver.hpp
+     solid/porosity/BiotPorosity.hpp
+     solid/porosity/PorosityBase.hpp
+     solid/porosity/PressurePorosity.hpp
    )
 #
 # Specify all sources
@@ -86,16 +97,22 @@ set( constitutive_sources
      fluid/PVTFunctions/CO2Solubility.cpp
      fluid/PVTFunctions/FenghourCO2Viscosity.cpp
      fluid/PVTFunctions/SpanWagnerCO2Density.cpp
-     fluid/ParticleFluid.cpp               
+     fluid/ParticleFluid.cpp              
      fluid/ParticleFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp
      fluid/SingleFluidBase.cpp
      fluid/SlurryFluidBase.cpp
+     permeability/CarmanKozenyPermeability.cpp
+     permeability/ConstantPermeability.cpp
+     permeability/ParallelPlatesPermeability.cpp
+     permeability/PermeabilityBase.cpp
+     permeability/StrainDependentPermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
-     relativePermeability/TableRelativePermeability.cpp     
+     relativePermeability/TableRelativePermeability.cpp        
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
+     solid/CompressibleSolid.cpp 
      solid/Damage.cpp
      solid/DamageSpectral.cpp
      solid/DamageVolDev.cpp
@@ -105,8 +122,12 @@ set( constitutive_sources
      solid/ElasticTransverseIsotropic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
      solid/PoroElastic.cpp
+     solid/PorousSolid.cpp
      solid/SolidBase.cpp
      solid/TriaxialDriver.cpp
+     solid/porosity/BiotPorosity.cpp
+     solid/porosity/PorosityBase.cpp
+     solid/porosity/PressurePorosity.cpp
    )
 
 set( dependencyList events dataRepository functions )
