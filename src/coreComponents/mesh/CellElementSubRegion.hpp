@@ -371,25 +371,32 @@ private:
     }
     LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
 
-    if( m_numNodesPerElement == 8 )
+    switch( m_elementType )
     {
-      m_elementVolume[k] = computationalGeometry::HexVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 4 )
-    {
-      m_elementVolume[k] = computationalGeometry::TetVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 6 )
-    {
-      m_elementVolume[k] = computationalGeometry::WedgeVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 5 )
-    {
-      m_elementVolume[k] = computationalGeometry::PyramidVolume( Xlocal );
-    }
-    else
-    {
-      GEOSX_ERROR( "GEOX does not support cells with " << m_numNodesPerElement << " nodes" );
+      case ElementType::Hexahedron:
+      {
+        m_elementVolume[k] = computationalGeometry::HexVolume( Xlocal );
+        break;
+      }
+      case ElementType::Tetrahedron:
+      {
+        m_elementVolume[k] = computationalGeometry::TetVolume( Xlocal );
+        break;
+      }
+      case ElementType::Prism:
+      {
+        m_elementVolume[k] = computationalGeometry::WedgeVolume( Xlocal );
+        break;
+      }
+      case ElementType::Pyramid:
+      {
+        m_elementVolume[k] = computationalGeometry::PyramidVolume( Xlocal );
+        break;
+      }
+      default:
+      {
+        GEOSX_ERROR( "Volume calculation not supported for element type: " << m_elementType );
+      }
     }
   }
 
@@ -416,9 +423,9 @@ private:
 
   /**
    * @brief Defines the (unique) element type of this cell element region.
-   * @param elementType The string defining the element type (like C3D8...)
+   * @param[in] elementType the element type
    */
-  void setElementType( string const & elementType ) final;
+  void setElementType( ElementType elementType ) override final;
 
   /**
    * @brief Pack element-to-node and element-to-face maps

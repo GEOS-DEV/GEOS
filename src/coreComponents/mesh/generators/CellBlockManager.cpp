@@ -30,8 +30,7 @@ CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
 }
 
 void CellBlockManager::resize( integer_array const & numElements,
-                               string_array const & regionNames,
-                               string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
+                               string_array const & regionNames )
 {
   localIndex const numRegions = LvArray::integerConversion< localIndex >( regionNames.size());
   for( localIndex reg=0; reg<numRegions; ++reg )

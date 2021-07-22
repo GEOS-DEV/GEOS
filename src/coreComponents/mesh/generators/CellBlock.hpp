@@ -19,6 +19,7 @@
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
+#include "mesh/ElementType.hpp"
 
 namespace geosx
 {
@@ -71,14 +72,14 @@ public:
 
   /**
    * @brief Defines the underlying element type (hex, tet...)
-   * @param elementType The element type (C3D8...)
+   * @param[in] elementType the element type
    *
    * @note Allocates the values of the element to nodes, edges, faces accordingly.
    */
-  void setElementType( string const & elementType );
+  void setElementType( ElementType elementType );
 
-  string getElementTypeString() const override
-  { return m_elementTypeString; }
+  ElementType getElementType() const override
+  { return m_elementType; }
 
   localIndex numNodesPerElement() const override
   { return m_numNodesPerElement; }
@@ -181,7 +182,7 @@ public:
    * @brief Resize the cell block to hold @p numElements
    * @param numElements The new number of elements.
    */
-  void resize( dataRepository::indexType const numElements ) final;
+  void resize( dataRepository::indexType const numElements ) override final;
 
   ///@}
 
@@ -232,7 +233,7 @@ private:
   string_array m_externalPropertyNames;
 
   /// Type of element in this subregion.
-  string m_elementTypeString;
+  ElementType m_elementType;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {

@@ -130,11 +130,9 @@ public:
    * @brief Set the number of elements for a set of element regions.
    * @param numElements list of the new element numbers
    * @param regionNames list of the element region names
-   * @param elementTypes list of the element types
    */
   void resize( integer_array const & numElements,
-               string_array const & regionNames,
-               string_array const & elementTypes );
+               string_array const & regionNames );
 
   /**
    * @brief Trigger the computation of all the mappings.

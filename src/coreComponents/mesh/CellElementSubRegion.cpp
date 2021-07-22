@@ -50,42 +50,47 @@ CellElementSubRegion::~CellElementSubRegion()
   // Left blank
 }
 
-void CellElementSubRegion::setElementType( string const & elementType )
+void CellElementSubRegion::setElementType( ElementType elementType )
 {
-  m_elementTypeString = elementType;
+  m_elementType = elementType;
 
-  if( m_elementTypeString == "C3D8" )
+  switch( m_elementType )
   {
-    // Hexahedron
-    m_numNodesPerElement = 8;
-    m_numEdgesPerElement = 12;
-    m_numFacesPerElement = 6;
-  }
-  else if( m_elementTypeString =="C3D4" )
-  {
-    // Tetrahedron
-    m_numNodesPerElement = 4;
-    m_numEdgesPerElement = 6;
-    m_numFacesPerElement = 4;
-
-  }
-  else if( m_elementTypeString =="C3D6" )
-  {
-    // Triangular prism
-    m_numNodesPerElement = 6;
-    m_numEdgesPerElement = 9;
-    m_numFacesPerElement = 5;
-  }
-  else if( m_elementTypeString =="C3D5" )
-  {
-    // Pyramid
-    m_numNodesPerElement = 5;
-    m_numEdgesPerElement = 8;
-    m_numFacesPerElement = 5;
-  }
-  else
-  {
-    GEOSX_ERROR( "Error.  Don't know what kind of element this is." );
+    case ElementType::Hexahedron:
+    {
+      m_numNodesPerElement = 8;
+      m_numEdgesPerElement = 12;
+      m_numFacesPerElement = 6;
+      break;
+    }
+    case ElementType::Tetrahedron:
+    {
+      // Tetrahedron
+      m_numNodesPerElement = 4;
+      m_numEdgesPerElement = 6;
+      m_numFacesPerElement = 4;
+      break;
+    }
+    case ElementType::Prism:
+    {
+      // Triangular prism
+      m_numNodesPerElement = 6;
+      m_numEdgesPerElement = 9;
+      m_numFacesPerElement = 5;
+      break;
+    }
+    case ElementType::Pyramid:
+    {
+      // Pyramid
+      m_numNodesPerElement = 5;
+      m_numEdgesPerElement = 8;
+      m_numFacesPerElement = 5;
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( "Error.  Don't know what kind of element this is." );
+    }
   }
 
   // If `setElementType` is called after the resize, the first dimension would be removed.
@@ -322,7 +327,7 @@ void CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
                                          localIndex const localFaceIndex,
                                          array1d< localIndex > & nodeIndices ) const
 {
-  geosx::getFaceNodes( m_elementTypeString, elementIndex, localFaceIndex, m_toNodesRelation, nodeIndices );
+  geosx::getFaceNodes( m_elementType, elementIndex, localFaceIndex, m_toNodesRelation, nodeIndices );
 }
 
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,

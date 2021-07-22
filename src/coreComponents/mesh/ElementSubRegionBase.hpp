@@ -182,7 +182,7 @@ public:
    * @brief Set the type of element in this subregion.
    * @param[in] elementType the element type
    */
-  virtual void setElementType( ElementType const elementType )
+  virtual void setElementType( ElementType elementType )
   { m_elementType = elementType; }
 
   ///@}

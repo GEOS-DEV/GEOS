@@ -16,6 +16,7 @@
 #define GEOSX_CELLBLOCKABC_HPP
 
 #include "dataRepository/Group.hpp"
+#include "mesh/ElementType.hpp"
 #include "common/DataTypes.hpp"
 
 #include <vector>
@@ -55,7 +56,7 @@ public:
    *
    * See class FiniteElementBase for possible element type.
    */
-  virtual string getElementTypeString() const = 0;
+  virtual ElementType getElementType() const = 0;
 
   /**
    * @brief Get the number of nodes per element.
