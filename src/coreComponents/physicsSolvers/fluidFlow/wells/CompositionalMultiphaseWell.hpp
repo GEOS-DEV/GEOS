@@ -355,12 +355,6 @@ private:
    */
   void initializeWells( DomainPartition & domain ) override;
 
-  /**
-   * @brief Resize the allocated multidimensional fields
-   * @param meshLevel the mesh level object (to loop over wells)
-   */
-  void resizeFields( MeshLevel & meshLevel );
-
   /// the max number of fluid phases
   integer m_numPhases;
 

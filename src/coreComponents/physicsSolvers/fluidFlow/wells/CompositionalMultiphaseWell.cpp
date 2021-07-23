@@ -112,21 +112,36 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
 {
   WellSolverBase::registerDataOnMesh( meshBodies );
 
+  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel & meshLevel = meshBodies.getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+
+  // 1. Set key dimensions of the problem
+  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+  m_numPhases     = fluid0.numFluidPhases();
+  m_numComponents = fluid0.numFluidComponents();
+  m_numDofPerWellElement = m_numComponents + 2; // 1 pressure + NC compositions + 1 connectionRate
 
   // loop over the wells
-  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
+  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
                                                                WellElementSubRegion & subRegion )
   {
+    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString() ).
       setPlotLevel( PlotLevel::LEVEL_0 );
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString() ).
       setRestartFlags( RestartFlags::NO_WRITE );
 
+    // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
+    // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
+
     subRegion.registerWrapper< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() ).
-      setPlotLevel( PlotLevel::LEVEL_0 );
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      reference().resizeDimension< 1 >( m_numComponents );
     subRegion.registerWrapper< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() ).
-      setRestartFlags( RestartFlags::NO_WRITE );
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      reference().resizeDimension< 1 >( m_numComponents );
 
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::mixtureConnRateString() ).
       setPlotLevel( PlotLevel::LEVEL_0 );
@@ -134,30 +149,41 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       setRestartFlags( RestartFlags::NO_WRITE );
 
     subRegion.registerWrapper< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() ).
-      setPlotLevel( PlotLevel::LEVEL_0 );
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setDimLabels( 1, fluid.componentNames() ).
+      reference().resizeDimension< 1 >( m_numComponents );
     subRegion.registerWrapper< array3d< real64, compflow::LAYOUT_COMP_DC > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() ).
-      setRestartFlags( RestartFlags::NO_WRITE );
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      reference().resizeDimension< 1, 2 >( m_numComponents, m_numComponents );
 
     subRegion.registerWrapper< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() ).
-      setPlotLevel( PlotLevel::LEVEL_0 );
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setDimLabels( 1, fluid.phaseNames() ).
+      reference().resizeDimension< 1 >( m_numPhases );
     subRegion.registerWrapper< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() ).
-      setRestartFlags( RestartFlags::NO_WRITE );
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      reference().resizeDimension< 1 >( m_numPhases );
     subRegion.registerWrapper< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() ).
-      setRestartFlags( RestartFlags::NO_WRITE );
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
 
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::totalMassDensityString() ).
       setPlotLevel( PlotLevel::LEVEL_0 );
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dTotalMassDensity_dPressureString() ).
       setRestartFlags( RestartFlags::NO_WRITE );
     subRegion.registerWrapper< array2d< real64, compflow::LAYOUT_FLUID_DC > >( viewKeyStruct::dTotalMassDensity_dGlobalCompDensityString() ).
-      setRestartFlags( RestartFlags::NO_WRITE );
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      reference().resizeDimension< 1 >( m_numComponents );
 
     PerforationData & perforationData = *subRegion.getPerforationData();
-    perforationData.registerWrapper< array2d< real64 > >( viewKeyStruct::compPerforationRateString() );
+    perforationData.registerWrapper< array2d< real64 > >( viewKeyStruct::compPerforationRateString() ).
+      reference().resizeDimension< 1 >( m_numComponents );
     perforationData.registerWrapper< array3d< real64 > >( viewKeyStruct::dCompPerforationRate_dPresString() ).
-      setRestartFlags( RestartFlags::NO_WRITE );
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      reference().resizeDimension< 1, 2 >( 2, m_numComponents );
     perforationData.registerWrapper< array4d< real64 > >( viewKeyStruct::dCompPerforationRate_dCompString() ).
-      setRestartFlags( RestartFlags::NO_WRITE );
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      reference().resizeDimension< 1, 2, 3 >( 2, m_numComponents, m_numComponents );
 
     WellControls & wellControls = getWellControls( subRegion );
     wellControls.registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
@@ -165,34 +191,35 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       setRestartFlags( RestartFlags::NO_WRITE );
     wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentBHP_dCompDensString() ).
       setRestartFlags( RestartFlags::NO_WRITE ).
-      setSizedFromParent( 0 );
+      setSizedFromParent( 0 ).
+      reference().resizeDimension< 0 >( m_numComponents );
 
     wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::currentPhaseVolRateString() ).
-      setSizedFromParent( 0 );
+      setSizedFromParent( 0 ).
+      reference().resizeDimension< 0 >( m_numPhases );
     wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentPhaseVolRate_dPresString() ).
       setRestartFlags( RestartFlags::NO_WRITE ).
-      setSizedFromParent( 0 );
+      setSizedFromParent( 0 ).
+      reference().resizeDimension< 0 >( m_numPhases );
     wellControls.registerWrapper< array2d< real64 > >( viewKeyStruct::dCurrentPhaseVolRate_dCompDensString() ).
       setRestartFlags( RestartFlags::NO_WRITE ).
-      setSizedFromParent( 0 );
+      setSizedFromParent( 0 ).
+      reference().resizeDimension< 0, 1 >( m_numPhases, m_numComponents );
     wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentPhaseVolRate_dRateString() ).
       setRestartFlags( RestartFlags::NO_WRITE ).
-      setSizedFromParent( 0 );
+      setSizedFromParent( 0 ).
+      reference().resizeDimension< 0 >( m_numPhases );
 
     wellControls.registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
     wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentTotalVolRate_dPresString() ).
       setRestartFlags( RestartFlags::NO_WRITE );
     wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentTotalVolRate_dCompDensString() ).
       setRestartFlags( RestartFlags::NO_WRITE ).
-      setSizedFromParent( 0 );
+      setSizedFromParent( 0 ).
+      reference().resizeDimension< 0 >( m_numComponents );
     wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentTotalVolRate_dRateString() ).
       setRestartFlags( RestartFlags::NO_WRITE );
   } );
-
-  // Now that the data has been registered on the mesh, we are ready to resize the fields as necessary.
-  // This needs to happen here, before the call to initializePreSubGroups,
-  // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
-  resizeFields( meshLevel );
 
 }
 
@@ -357,74 +384,6 @@ void CompositionalMultiphaseWell::initializePreSubGroups()
   validateModelMapping< RelativePermeabilityBase >( meshLevel.getElemManager(), m_relPermModelNames );
   validateInjectionStreams( meshLevel );
   validateWellConstraints( meshLevel, fluid0 );
-}
-
-void CompositionalMultiphaseWell::resizeFields( MeshLevel & meshLevel )
-{
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  ConstitutiveManager const & cm = domain.getConstitutiveManager();
-
-  // 1. Set key dimensions of the problem
-  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
-  m_numPhases     = fluid0.numFluidPhases();
-  m_numComponents = fluid0.numFluidComponents();
-  m_numDofPerWellElement = m_numComponents + 2; // 1 pressure + NC compositions + 1 connectionRate
-
-  // 2. Resize all fields as necessary
-  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
-                                                               WellElementSubRegion & subRegion )
-  {
-    PerforationData & perforationData = *subRegion.getPerforationData();
-    WellControls & wellControls = getWellControls( subRegion );
-
-    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
-
-    subRegion.getWrapper< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() ).
-      setDimLabels( 1, fluid.componentNames() ).
-      reference().resizeDimension< 1 >( m_numComponents );
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() ).
-      resizeDimension< 1 >( m_numComponents );
-
-    subRegion.getWrapper< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() ).
-      setDimLabels( 1, fluid.componentNames() ).
-      reference().resizeDimension< 1 >( m_numComponents );
-    subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() ).
-      resizeDimension< 1, 2 >( m_numComponents, m_numComponents );
-
-    subRegion.getWrapper< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() ).
-      setDimLabels( 1, fluid.phaseNames() ).
-      reference().resizeDimension< 1 >( m_numPhases );
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() ).
-      resizeDimension< 1 >( m_numPhases );
-    subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() ).
-      resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
-
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_FLUID_DC > >( viewKeyStruct::dTotalMassDensity_dGlobalCompDensityString() ).
-      resizeDimension< 1 >( m_numComponents );
-
-    perforationData.getReference< array2d< real64 > >( viewKeyStruct::compPerforationRateString() ).
-      resizeDimension< 1 >( m_numComponents );
-    perforationData.getReference< array3d< real64 > >( viewKeyStruct::dCompPerforationRate_dPresString() ).
-      resizeDimension< 1, 2 >( 2, m_numComponents );
-    perforationData.getReference< array4d< real64 > >( viewKeyStruct::dCompPerforationRate_dCompString() ).
-      resizeDimension< 1, 2, 3 >( 2, m_numComponents, m_numComponents );
-
-    wellControls.getReference< array1d< real64 > >( viewKeyStruct::dCurrentBHP_dCompDensString() ).
-      resizeDimension< 0 >( m_numComponents );
-
-    wellControls.getReference< array1d< real64 > >( viewKeyStruct::currentPhaseVolRateString() ).
-      resizeDimension< 0 >( m_numPhases );
-    wellControls.getReference< array1d< real64 > >( viewKeyStruct::dCurrentPhaseVolRate_dPresString() ).
-      resizeDimension< 0 >( m_numPhases );
-    wellControls.getReference< array2d< real64 > >( viewKeyStruct::dCurrentPhaseVolRate_dCompDensString() ).
-      resizeDimension< 0, 1 >( m_numPhases, m_numComponents );
-    wellControls.getReference< array1d< real64 > >( viewKeyStruct::dCurrentPhaseVolRate_dRateString() ).
-      resizeDimension< 0 >( m_numPhases );
-
-    wellControls.getReference< array1d< real64 > >( viewKeyStruct::dCurrentTotalVolRate_dCompDensString() ).
-      resizeDimension< 0 >( m_numComponents );
-
-  } );
 }
 
 void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
