@@ -214,6 +214,13 @@ private:
   void writeSurfaces( NodeManager & nodeManager, std::vector<int> const & allSurfaces );
 
   /**
+   * @brief Get the GEOSX element type
+   * @param[in] cellType the vtk cell type
+   * @return the GEOSX element type
+   */
+  ElementType getElementType(int cellType );
+
+  /**
    * @brief Get the number of points of a cell knowing its vtk cell type
    * @param[in] cellType the vtk cell type
    * @return the number of points contained in the cell

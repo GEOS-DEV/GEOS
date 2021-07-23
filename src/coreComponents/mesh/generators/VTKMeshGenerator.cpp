@@ -496,6 +496,30 @@ localIndex VTKMeshGenerator::getNumberOfPoints( int cellType )
     GEOSX_ERROR( cellType << " is not a recognized cell type to be used with the VTKMeshGenerator");
     return -1;
   }
+}
+ElementType VTKMeshGenerator::getElementType( int cellType )
+{
+  if( cellType == VTK_HEXAHEDRON )
+  {
+    return ElementType::Hexahedron;
+  }
+  else if( cellType == VTK_TETRA )
+  {
+    return ElementType::Tetrahedron;
+  }
+  else if( cellType == VTK_WEDGE )
+  {
+    return ElementType::Prism;
+  }
+  else if( cellType == VTK_PYRAMID )
+  {
+    return ElementType::Pyramid;
+  }
+  else
+  {
+    GEOSX_ERROR( cellType << " is not a recognized cell type to be used with the VTKMeshGenerator");
+    return ElementType::Pyramid;
+  }
 
 }
 
@@ -558,8 +582,8 @@ void VTKMeshGenerator::writeCellBlock( string const & name, localIndex numCells,
 
     GEOSX_LOG_RANK_0( "Writing " << numCells << " cells to CellBlock " << cellBlockName);
     CellBlock & cellBlock = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
-    localIndex numPointsPerCell = getNumberOfPoints( cellType );
-    cellBlock.setElementType( "C3D" + std::to_string(numPointsPerCell));
+    int numPointsPerCell = getNumberOfPoints( cellType);
+    cellBlock.setElementType( getElementType(cellType) );
     CellBlock::NodeMapType & cellToVertex = cellBlock.nodeList();
     cellBlock.resize( numCells );
     arrayView1d< globalIndex > const & localToGlobal = cellBlock.localToGlobalMap();
