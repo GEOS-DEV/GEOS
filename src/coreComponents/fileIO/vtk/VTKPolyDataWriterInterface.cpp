@@ -49,31 +49,44 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string name ):
   m_outputMode( VTKOutputMode::BINARY )
 {}
 
-string paddedRank( MPI_Comm const & comm, int const rank = -1 )
+static string paddedRank( MPI_Comm const & comm, int const rank = -1 )
 {
   int const width = LvArray::integerConversion< int >( std::to_string( MpiWrapper::commSize( comm ) ).size() );
   return stringutilities::padValue( rank >= 0 ? rank : MpiWrapper::commRank( comm ), width );
 }
 
-/**
- * @brief Gets the VTK cell identifier
- * @param[in] elementType the type of the element (using the abaqus nomenclature)
- * @return the VTK cell identifier
- */
-int toVTKCellType( const string & elementType )
+static int toVTKCellType( ElementType const elementType )
 {
-  static const std::map< string, int > geosx2VTKCellTypes =
+  switch( elementType )
   {
-    { "C3D4", VTK_TETRA },
-    { "C3D8", VTK_HEXAHEDRON },
-    { "C3D6", VTK_WEDGE },
-    { "C3D5", VTK_PYRAMID }
-  };
+    case ElementType::Line:          return VTK_LINE;
+    case ElementType::Triangle:      return VTK_TRIANGLE;
+    case ElementType::Quadrilateral: return VTK_QUAD;
+    case ElementType::Polygon:       return VTK_POLYGON;
+    case ElementType::Tetrahedron:    return VTK_TETRA;
+    case ElementType::Pyramid:       return VTK_PYRAMID;
+    case ElementType::Prism:         return VTK_WEDGE;
+    case ElementType::Hexahedron:    return VTK_HEXAHEDRON;
+    case ElementType::Polyhedron:    return VTK_POLYHEDRON;
+  }
+  return VTK_EMPTY_CELL;
+}
 
-  GEOSX_THROW_IF( geosx2VTKCellTypes.count( elementType ) == 0,
-                  "Element type not recognized for VTK output: " << elementType,
-                  std::runtime_error );
-  return geosx2VTKCellTypes.at( elementType );
+static std::vector< int > getVTKNodeOrdering( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Line:          return { 0, 1 };
+    case ElementType::Triangle:      return { 0, 1, 2 };
+    case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
+    case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
+    case ElementType::Tetrahedron:    return { 1, 0, 2, 3 };
+    case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
+    case ElementType::Prism:         return { 0, 4, 2, 1, 5, 3, 0, 0 };
+    case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
+  }
+  return {};
 }
 
 /**
@@ -179,7 +192,7 @@ getSurface( FaceElementSubRegion const & subRegion,
   geosx2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
   std::vector< vtkIdType > connectivity( subRegion.numNodesPerElement() );
-  std::vector< int > vtkOrdering = subRegion.getVTKNodeOrdering();
+  std::vector< int > vtkOrdering = getVTKNodeOrdering( subRegion.getElementType() );
 
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
@@ -267,8 +280,8 @@ getVtkCells( CellElementRegion const & region )
   region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
     std::vector< vtkIdType > connectivity( subRegion.numNodesPerElement() );
-    std::vector< int > vtkOrdering = subRegion.getVTKNodeOrdering();
-    int vtkCellType = toVTKCellType( subRegion.getElementTypeString() );
+    std::vector< int > vtkOrdering = getVTKNodeOrdering( subRegion.getElementType() );
+    int vtkCellType = toVTKCellType( subRegion.getElementType() );
     for( localIndex c = 0; c < subRegion.size(); c++ )
     {
       for( std::size_t i = 0; i < connectivity.size(); i++ )
