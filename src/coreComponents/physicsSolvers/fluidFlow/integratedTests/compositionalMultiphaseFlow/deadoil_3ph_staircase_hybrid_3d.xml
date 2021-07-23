@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="0.0, 0.0, 0.0">
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
     <CompositionalMultiphaseHybridFVM
       name="compflow"
       logLevel="1"
@@ -9,6 +9,7 @@
       targetRegions="{ Channel }"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
+      permeabilityNames="{rockPerm}"
       relPermNames="{ relperm }"
       temperature="300"
       maxCompFractionChange="0.5"
@@ -44,13 +45,13 @@
 
     <Box
       name="source"
-      xMin=" 8.99, -0.01, 7.49"
-      xMax="10.01, 1.01, 10.01"/>
+      xMin="{ 8.99, -0.01, 7.49}"
+      xMax="{10.01, 1.01, 10.01}"/>
 
     <Box
       name="sink"
-      xMin=" 8.99, -0.01, -0.01"
-      xMax="10.01, 1.01, 2.51"/>
+      xMin="{ 8.99, -0.01, -0.01}"
+      xMax="{10.01, 1.01, 2.51}"/>
   </Geometry>
 
   <Events
@@ -93,7 +94,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
-      materialList="{ fluid, rock, relperm }"/>
+      materialList="{ fluid, rock, relperm, rockPerm }"/>
 
     <CellElementRegion
       name="Barrier"
@@ -129,36 +130,13 @@
       phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
       phaseRelPermExponent="{ 2.0, 2.0, 1.5 }"
       phaseRelPermMaxValue="{ 0.8, 0.9, 0.9 }"/>
+      
+     <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{1.0e-16, 1.0e-16, 1.0e-16}"/>   
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx_channel"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
-    <FieldSpecification
-      name="permy_channel"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
-    <FieldSpecification
-      name="permz_channel"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
     <FieldSpecification
       name="porosity_channel"
       initialCondition="1"

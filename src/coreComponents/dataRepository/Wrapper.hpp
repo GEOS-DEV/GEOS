@@ -179,22 +179,16 @@ public:
   virtual std::unique_ptr< WrapperBase > clone( string const & name,
                                                 Group & parent ) override
   {
-    std::unique_ptr< WrapperBase >
-    clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, m_data );
+    std::unique_ptr< Wrapper< T > > clonedWrapper = std::make_unique< Wrapper< T > >( name, parent, m_data );
     clonedWrapper->copyWrapperAttributes( *this );
-
     return clonedWrapper;
   }
 
   virtual void copyWrapper( WrapperBase const & source ) override
   {
     GEOSX_ERROR_IF( source.getName() != m_name, "Tried to clone wrapper of with different name" );
-    WrapperBase::copyWrapperAttributes( source );
-    Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
-    m_ownsData = castedSource.m_ownsData;
-    m_default = castedSource.m_default;
+    copyWrapperAttributes( source );
     copyData( source );
-
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,12 +198,62 @@ public:
     Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
+    m_dimLabels = castedSource.m_dimLabels;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual const std::type_info & getTypeId() const noexcept override
   {
     return typeid(T);
+  }
+
+  /**
+   * @brief Downcast base to a typed wrapper.
+   * @param wrapper the base wrapper reference
+   * @pre @p wrapper must be an instance of Wrapper<T>
+   * @return reference to @p wrapper cast to a typed wrapper.
+   */
+  static Wrapper & cast( WrapperBase & wrapper )
+  {
+    GEOSX_ERROR_IF( wrapper.getTypeId() != typeid( T ),
+                    "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
+    return static_cast< Wrapper< T > & >( wrapper );
+  }
+
+  /**
+   * @brief Downcast base to a const typed wrapper.
+   * @param wrapper the base wrapper reference
+   * @pre @p wrapper must be an instance of Wrapper<T>
+   * @return const reference to @p wrapper cast to a typed wrapper.
+   */
+  static Wrapper< T > const & cast( WrapperBase const & wrapper )
+  {
+    GEOSX_ERROR_IF( wrapper.getTypeId() != typeid( T ),
+                    "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
+    return static_cast< Wrapper< T > const & >( wrapper );
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+  virtual int numArrayDims() const override
+  {
+    return wrapperHelpers::numArrayDims( reference() );
+  }
+
+  virtual localIndex numArrayComp() const override
+  {
+    return wrapperHelpers::numArrayComp( reference() );
+  }
+
+  virtual Wrapper & setDimLabels( integer const dim, Span< string const > const labels ) override
+  {
+    m_dimLabels.set( dim, labels );
+    return *this;
+  }
+
+  virtual Span< string const > getDimLabels( integer const dim ) const override
+  {
+    return m_dimLabels.get( dim );
   }
 
   ///@}
@@ -438,14 +482,14 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( int ndims, localIndex const * const dims ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
     wrapperHelpers::resizeDimensions( *m_data, ndims, dims );
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void reserve( localIndex const newCapacity ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
     wrapperHelpers::reserve( reference(), newCapacity );
   }
 
@@ -459,7 +503,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( localIndex const newSize ) override
   {
-    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::host, true );
     wrapperHelpers::resizeDefault( reference(), newSize, m_default );
   }
 
@@ -660,36 +704,12 @@ public:
   virtual string getDefaultValueString() const override
   {
     // Find the dimensionality of the wrapper value
-    string wrapper_type = rtTypes::typeNames( std::type_index( getTypeId()));
-    integer value_dim = 0;
-    if( wrapper_type.find( "array3d" ) != string::npos )
-    {
-      value_dim = 3;
-    }
-    else if( wrapper_type.find( "array2d" ) != string::npos )
-    {
-      value_dim = 2;
-    }
-    else if( wrapper_type.find( "array" ) != string::npos )
-    {
-      value_dim = 1;
-    }
+    string const typeName = LvArray::system::demangleType< T >();
+    int valueDim = numArrayDims() + ( typeName.find( "Tensor" ) != string::npos );
 
     // Compose the default string
-    std::stringstream ss;
-
-    for( integer ii=0; ii<value_dim; ++ii )
-    {
-      ss << "{";
-    }
-
-    ss << m_default;
-
-    for( integer ii=0; ii<value_dim; ++ii )
-    {
-      ss << "}";
-    }
-
+    std::ostringstream ss;
+    ss << std::string( valueDim, '{' ) << m_default << std::string( valueDim, '}' );
     return ss.str();
   }
 
@@ -700,11 +720,11 @@ public:
     {
       if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
       {
-        bool const readSuccess = xmlWrapper::readAttributeAsType( reference(),
-                                                                  getName(),
-                                                                  targetNode,
-                                                                  inputFlag == InputFlags::REQUIRED );
-        GEOSX_THROW_IF( !readSuccess,
+        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                     getName(),
+                                                                     targetNode,
+                                                                     inputFlag == InputFlags::REQUIRED );
+        GEOSX_THROW_IF( !m_successfulReadFromInput,
                         "Input variable " << getName() << " is required in " << targetNode.path() <<
                         ". Available options are: \n" << dumpInputOptions( true ) <<
                         "\nFor more details, please refer to documentation at: \n" <<
@@ -713,7 +733,10 @@ public:
       }
       else
       {
-        xmlWrapper::readAttributeAsType( reference(), getName(), targetNode, getDefaultValueStruct() );
+        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                     getName(),
+                                                                     targetNode,
+                                                                     getDefaultValueStruct() );
       }
 
       return true;
@@ -752,7 +775,13 @@ public:
 
     GEOSX_ERROR_IF( ptr == nullptr, "Failed to average over the second dimension of." );
 
-    return std::make_unique< Wrapper< U > >( name, group, std::move( ptr ) );
+    auto ret = std::make_unique< Wrapper< U > >( name, group, std::move( ptr ) );
+    for( integer dim = 2; dim < numArrayDims(); ++dim )
+    {
+      ret->setDimLabels( dim - 1, getDimLabels( dim ) );
+    }
+
+    return ret;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -765,7 +794,7 @@ public:
       return;
     }
 
-    move( LvArray::MemorySpace::CPU, false );
+    move( LvArray::MemorySpace::host, false );
 
     m_conduitNode[ "__sizedFromParent__" ].set( sizedFromParent() );
 
@@ -898,7 +927,8 @@ private:
   /// the default value of the object being wrapped
   DefaultValue< T > m_default;
 
-  Wrapper() = delete;
+  /// stores dimension labels (used mainly for plotting) for multidimensional arrays, empty member otherwise
+  wrapperHelpers::ArrayDimLabels< T > m_dimLabels;
 };
 
 }

@@ -3,7 +3,7 @@
 <!--# # -->
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, -0.0">
+    gravityVector="{0.0, 0.0, -0.0}">
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
@@ -41,6 +41,7 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{fracPerm}"
       inputFluxEstimate="1.0">
       <LinearSolverParameters
         solverType="gmres"
@@ -74,18 +75,18 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 0.01, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{1.01, 0.01, 1.01}"/>
 
     <Box
       name="source"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 0.01, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{1.01, 0.01, 1.01}"/>
 
     <Box
       name="core"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 100.01, 0.01, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{100.01, 0.01, 1.01}"/>
   </Geometry>
 
   <Events
@@ -142,7 +143,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{fracPerm}"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -155,7 +157,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.1e-3"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, fracPerm}"/>
   </ElementRegions>
 
   <Constitutive>
@@ -186,6 +188,9 @@
         coordinates="{ -1.0e-3, 0.0 }"
         values="{ 0.01e-3, 0.1e-3 }"/>
     </Contact>
+    
+    <ParallelPlatesPermeability
+      name="fracPerm"/> 
   </Constitutive>
 
   <FieldSpecifications>

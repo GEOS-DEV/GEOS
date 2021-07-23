@@ -41,7 +41,7 @@ XML Symbolic Math:
   </Parameters>
 
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{0.0, 0.0, -9.81}">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="0"
@@ -49,6 +49,7 @@ XML Symbolic Math:
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       inputFluxEstimate="1">
       <LinearSolverParameters
         solverType="gmres"
@@ -73,13 +74,13 @@ XML Symbolic Math:
   <Geometry>
     <Box
       name="source"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 1.01, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 1.01, 1.01, 1.01}"/>
 
     <Box
       name="sink"
-      xMin=" 8.99, -0.01, -0.01"
-      xMax="10.01, 1.01, 1.01"/>
+      xMin="{ 8.99, -0.01, -0.01}"
+      xMax="{10.01, 1.01, 1.01}"/>
   </Geometry>
 
   <Events
@@ -107,7 +108,8 @@ XML Symbolic Math:
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability" 
+        coefficientModelNames="{rockPerm}"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -115,7 +117,7 @@ XML Symbolic Math:
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -133,6 +135,10 @@ XML Symbolic Math:
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
+      
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{2*$permeability$, 0.5*$permeability$, 1*$permeability$}"/>    
   </Constitutive>
 
   <Outputs>
@@ -144,33 +150,6 @@ XML Symbolic Math:
   </Outputs>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
-      scale="`2*$permeability$`"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
-      scale="`0.5*$permeability$`"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
-      scale="`1*$permeability$`"/>
-
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"

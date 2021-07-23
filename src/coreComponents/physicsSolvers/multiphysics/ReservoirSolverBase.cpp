@@ -23,6 +23,8 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
+
 
 namespace geosx
 {
@@ -75,13 +77,16 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
   // loop over the wells
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
-    // get the string to access the permeability
-    string const permeabilityKey = FlowSolverBase::viewKeyStruct::permeabilityString();
+    array1d< array1d< arrayView2d< real64 const > > > const permeability =
+      elemManager.constructMaterialArrayViewAccessor< real64, 2 >( PermeabilityBase::viewKeyStruct::permeabilityString(),
+                                                                   m_flowSolver->targetRegionNames(),
+                                                                   m_flowSolver->permeabilityModelNames() );
+
 
     PerforationData * const perforationData = subRegion.getPerforationData();
 
     // compute the Peaceman index (if not read from XML)
-    perforationData->computeWellTransmissibility( meshLevel, subRegion, permeabilityKey );
+    perforationData->computeWellTransmissibility( meshLevel, subRegion, permeability );
   } );
 
   // bind the stored reservoir views to the current domain
@@ -205,7 +210,7 @@ void ReservoirSolverBase::setupSystem( DomainPartition & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
 
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();

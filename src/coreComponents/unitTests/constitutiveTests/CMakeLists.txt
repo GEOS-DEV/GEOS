@@ -3,14 +3,22 @@
 #
 
 set( gtest_geosx_tests
+     testDamage.cpp
      testRelPerm.cpp
      testCapillaryPressure.cpp
    )
 
-set( dependencyList gtest geosx_core conduit )
+set( gtest_triaxial_xmls
+     testTriaxial_elasticIsotropic.xml
+     testTriaxial_druckerPragerExtended.xml
+   )
 
-if( ENABLE_MPI )
-    set( dependencyList ${dependencyList} mpi )
+set( dependencyList gtest )
+
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core )
+else()
+  set (dependencyList ${dependencyList} ${geosx_core_libs} )
 endif()
 
 if( ENABLE_PVTPackage )
@@ -19,10 +27,6 @@ if( ENABLE_PVTPackage )
           testCO2BrinePVTModels.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
-endif()
-
-if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
 endif()
 
 if( ENABLE_CUDA )
@@ -45,4 +49,22 @@ foreach(test ${gtest_geosx_tests})
                   COMMAND ${test_name}
                 )
 
+endforeach()
+
+
+#
+# Add triaxial xml based tests
+#
+
+blt_add_executable( NAME testTriaxial
+                    SOURCES testTriaxial.cpp
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${dependencyList} "-lz"
+                  )
+
+foreach(test ${gtest_triaxial_xmls})
+    get_filename_component( test_name ${test} NAME_WE )
+    blt_add_test( NAME ${test_name} 
+                  COMMAND testTriaxial -i ${CMAKE_CURRENT_LIST_DIR}/${test}
+                  )
 endforeach()

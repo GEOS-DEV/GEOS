@@ -8,7 +8,8 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }">
+      solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"/>
@@ -44,38 +45,38 @@
   <Geometry>
     <Box
       name="left"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 1.01, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 1.01, 1.01, 1.01}"/>
 
     <Box
       name="right"
-      xMin=" 8.99, -0.01, -0.01"
-      xMax="10.01, 1.01, 1.01"/>
+      xMin="{ 8.99, -0.01, -0.01}"
+      xMax="{10.01, 1.01, 1.01}"/>
 
     <Box
       name="bottom"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="10.01, 1.11, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{10.01, 1.11, 1.01}"/>
 
     <Box
       name="top"
-      xMin="-0.01, 8.99, -0.01"
-      xMax="10.01, 10.01, 1.01"/>
+      xMin="{-0.01, 8.99, -0.01}"
+      xMax="{10.01, 10.01, 1.01}"/>
 
     <Box
       name="fracture1"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01, 10.01, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 0.01, 10.01, 1.01}"/>
 
     <Box
       name="fracture2"
-      xMin="-2.01, 0.99, -0.01"
-      xMax=" 2.01, 1.01, 1.01"/>
+      xMin="{-2.01, 0.99, -0.01}"
+      xMax="{ 2.01, 1.01, 1.01}"/>
 
     <Box
       name="source"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01, 1.01, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 0.01, 1.01, 1.01}"/>
   </Geometry>
 
   <Events
@@ -120,7 +121,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-5"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, fracPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -138,6 +139,11 @@
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
+      
+    <ConstantPermeability
+      name="fracPerm"
+      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>     
+      
   </Constitutive>
 
   <FieldSpecifications>

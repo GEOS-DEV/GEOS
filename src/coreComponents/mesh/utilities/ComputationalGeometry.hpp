@@ -71,23 +71,23 @@ void LinePlaneIntersection( LINEDIR_TYPE const & lineDir,
   LvArray::tensorOps::scaledAdd< 3 >( intersectionPoint, lineDir, d );
 }
 
-
 /**
  * @brief Reorder a set of points counter-clockwise.
  * @tparam NORMAL_TYPE the type of @p normal
  * @param[in] points coordinates of the points
  * @param[in] normal vector normal to the plane
+ * @return an std::vector containing the original indices of the reordered points.
  */
 template< typename NORMAL_TYPE >
-void orderPointsCCW( arrayView2d< real64 > const & points,
-                     NORMAL_TYPE const & normal )
+array1d< int >  orderPointsCCW( arrayView2d< real64 > const & points,
+                                NORMAL_TYPE const & normal )
 {
   localIndex const numPoints = points.size( 0 );
 
   array2d< real64 > orderedPoints( numPoints, 3 );
 
-  std::vector< int > indices( numPoints );
-  std::vector< real64 > angle( numPoints );
+  array1d< int > indices( numPoints );
+  array1d< real64 > angle( numPoints );
 
   // compute centroid of the set of points
   real64 centroid[3];
@@ -133,6 +133,8 @@ void orderPointsCCW( arrayView2d< real64 > const & points,
   {
     LvArray::tensorOps::copy< 3 >( points[a], orderedPoints[a] );
   }
+
+  return indices;
 }
 
 /**
@@ -315,15 +317,15 @@ void RotationMatrix_3D( NORMAL_TYPE const & normal,
   }
 
   // Save everything in the standard form (3x3 rotation matrix)
-  rotationMatrix( 0, 0 ) = normal[ 0 ];
-  rotationMatrix( 1, 0 ) = normal[ 1 ];
-  rotationMatrix( 2, 0 ) = normal[ 2 ];
-  rotationMatrix( 0, 1 ) = m1[ 0 ];
-  rotationMatrix( 1, 1 ) = m1[ 1 ];
-  rotationMatrix( 2, 1 ) = m1[ 2 ];
-  rotationMatrix( 0, 2 ) = m2[ 0 ];
-  rotationMatrix( 1, 2 ) = m2[ 1 ];
-  rotationMatrix( 2, 2 ) = m2[ 2 ];
+  rotationMatrix[ 0 ][ 0 ] = normal[ 0 ];
+  rotationMatrix[ 1 ][ 0 ] = normal[ 1 ];
+  rotationMatrix[ 2 ][ 0 ] = normal[ 2 ];
+  rotationMatrix[ 0 ][ 1 ] = m1[ 0 ];
+  rotationMatrix[ 1 ][ 1 ] = m1[ 1 ];
+  rotationMatrix[ 2 ][ 1 ] = m1[ 2 ];
+  rotationMatrix[ 0 ][ 2 ] = m2[ 0 ];
+  rotationMatrix[ 1 ][ 2 ] = m2[ 1 ];
+  rotationMatrix[ 2 ][ 2 ] = m2[ 2 ];
 
   GEOSX_ERROR_IF( fabs( LvArray::tensorOps::determinant< 3 >( rotationMatrix ) - 1.0 ) > 1.e+1 * machinePrecision,
                   "Rotation matrix with determinant different from +1.0" );
@@ -397,7 +399,7 @@ bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
  */
 template< typename VEC_TYPE >
 GEOSX_HOST_DEVICE
-void GetBoundingBox( localIndex const elemIndex,
+void getBoundingBox( localIndex const elemIndex,
                      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & pointIndices,
                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates,
                      VEC_TYPE && boxDims )
@@ -547,7 +549,7 @@ real64 PyramidVolume( real64 const X[][3] )
   return TetVolume( tet1 ) + TetVolume( tet2 );
 }
 
-} // namespace computationalGeometry
-} // namespace geosx
+} /* namespace computationalGeometry */
+} /* namespace geosx */
 
 #endif /* GEOSX_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_ */

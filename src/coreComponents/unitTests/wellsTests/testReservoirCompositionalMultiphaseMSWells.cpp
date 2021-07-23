@@ -53,6 +53,7 @@ char const * xmlInput =
   "                                targetRegions=\"{Region1}\"\n"
   "                                fluidNames=\"{fluid1}\"\n"
   "                                solidNames=\"{rock}\"\n"
+  "                                permeabilityNames=\"{rockPerm}\"\n"
   "                                relPermNames=\"{relperm}\"\n"
   "                                temperature=\"297.15\"\n"
   "                                useMass=\"0\">\n"
@@ -119,13 +120,14 @@ char const * xmlInput =
   "    <FiniteVolume>\n"
   "      <TwoPointFluxApproximation name=\"fluidTPFA\"\n"
   "                                 fieldName=\"pressure\"\n"
-  "                                 coefficientName=\"permeability\"/>\n"
+  "                                 coefficientName=\"permeability\"\n"
+  "                                 coefficientModelNames=\"{rockPerm}\"/>\n"
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
   "    <CellElementRegion name=\"Region1\"\n"
   "                       cellBlocks=\"{cb1}\"\n"
-  "                       materialList=\"{fluid1, rock, relperm}\"/>\n"
+  "                       materialList=\"{fluid1, rock, relperm, rockPerm}\"/>\n"
   "    <WellElementRegion name=\"wellRegion1\"\n"
   "                       materialList=\"{fluid1, relperm}\"/> \n"
   "    <WellElementRegion name=\"wellRegion2\"\n"
@@ -153,29 +155,10 @@ char const * xmlInput =
   "                                     phaseMinVolumeFraction=\"{0.1, 0.15}\"\n"
   "                                     phaseRelPermExponent=\"{2.0, 2.0}\"\n"
   "                                     phaseRelPermMaxValue=\"{0.8, 0.9}\"/>\n"
+  "  <ConstantPermeability name=\"rockPerm\"\n"
+  "                        permeabilityComponents=\"{2.0e-16, 2.0e-16, 2.0e-16}\"/> \n"
   "  </Constitutive>\n"
   "  <FieldSpecifications>\n"
-  "    <FieldSpecification name=\"permx\"\n"
-  "               component=\"0\"\n"
-  "               initialCondition=\"1\"  \n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region1/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"permy\"\n"
-  "               component=\"1\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region1/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"permz\"\n"
-  "               component=\"2\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region1/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
   "    <FieldSpecification name=\"referencePorosity\"\n"
   "               initialCondition=\"1\"\n"
   "               setNames=\"{all}\"\n"
@@ -242,18 +225,19 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
   // assemble the analytical residual
   solver.resetStateToBeginningOfStep( domain );
 
-  residual.setValues< parallelDevicePolicy<> >( 0.0 );
-  jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
+  residual.zero();
+  jacobian.zero();
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  residual.move( LvArray::MemorySpace::CPU, false );
+  residual.move( LvArray::MemorySpace::host, false );
 
   // copy the analytical residual
   array1d< real64 > residualOrig( residual );
 
   // create the numerical jacobian
+  jacobian.move( LvArray::MemorySpace::host );
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
-  jacobianFD.setValues< parallelDevicePolicy<> >( 0.0 );
+  jacobianFD.zero();
 
   string const resDofKey  = dofManager.getKey( wellSolver.resElementDofName() );
   string const wellDofKey = dofManager.getKey( wellSolver.wellElementDofName() );
@@ -278,14 +262,14 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
         subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::pressureString() );
       arrayView1d< real64 > const & dPres =
         subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString() );
-      pres.move( LvArray::MemorySpace::CPU, false );
+      pres.move( LvArray::MemorySpace::host, false );
 
-      arrayView2d< real64 const > const & compDens =
-        subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::globalCompDensityString() );
-      arrayView2d< real64 > const & dCompDens =
-        subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::deltaGlobalCompDensityString() );
+      arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseBase::viewKeyStruct::globalCompDensityString() );
+      arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseBase::viewKeyStruct::deltaGlobalCompDensityString() );
 
-      compDens.move( LvArray::MemorySpace::CPU, false );
+      compDens.move( LvArray::MemorySpace::host, false );
 
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
@@ -301,7 +285,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
 
           // here is the perturbation in the pressure of the element
           real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
-          dPres.move( LvArray::MemorySpace::CPU, true );
+          dPres.move( LvArray::MemorySpace::host, true );
           dPres[ei] = dP;
 
           // after perturbing, update the pressure-dependent quantities in the reservoir
@@ -317,8 +301,8 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
           } );
 
 
-          residual.setValues< parallelDevicePolicy<> >( 0.0 );
-          jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
+          residual.zero();
+          jacobian.zero();
           assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
           fillNumericalJacobian( residual.toViewConst(),
@@ -333,7 +317,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
           solver.resetStateToBeginningOfStep( domain );
 
           real64 const dRho = perturbParameter * totalDensity;
-          dCompDens.move( LvArray::MemorySpace::CPU, true );
+          dCompDens.move( LvArray::MemorySpace::host, true );
           dCompDens[ei][jc] = dRho;
 
           flowSolver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
@@ -342,8 +326,8 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
             flowSolver.updateState( subRegion2, targetIndex2 );
           } );
 
-          residual.setValues< parallelDevicePolicy<> >( 0.0 );
-          jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
+          residual.zero();
+          jacobian.zero();
           assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
           fillNumericalJacobian( residual.toViewConst(),
@@ -373,19 +357,19 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::pressureString() );
     arrayView1d< real64 > const & dWellElemPressure =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString() );
-    wellElemPressure.move( LvArray::MemorySpace::CPU, false );
+    wellElemPressure.move( LvArray::MemorySpace::host, false );
 
-    arrayView2d< real64 const > const & wellElemCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString() );
-    arrayView2d< real64 > const & dWellElemCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString() );
-    wellElemCompDens.move( LvArray::MemorySpace::CPU, false );
+    arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString() );
+    arrayView2d< real64, compflow::USD_COMP > const & dWellElemCompDens =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString() );
+    wellElemCompDens.move( LvArray::MemorySpace::host, false );
 
     arrayView1d< real64 const > const & connRate =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::mixtureConnRateString() );
     arrayView1d< real64 > const & dConnRate =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaMixtureConnRateString() );
-    connRate.move( LvArray::MemorySpace::CPU, false );
+    connRate.move( LvArray::MemorySpace::host, false );
 
     // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
     for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
@@ -401,14 +385,14 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
 
         // here is the perturbation in the pressure of the well element
         real64 const dP = perturbParameter * ( wellElemPressure[iwelem] + perturbParameter );
-        dWellElemPressure.move( LvArray::MemorySpace::CPU, true );
+        dWellElemPressure.move( LvArray::MemorySpace::host, true );
         dWellElemPressure[iwelem] = dP;
 
         // after perturbing, update the pressure-dependent quantities in the well
         wellSolver.updateState( subRegion, targetIndex );
 
-        residual.setValues< parallelDevicePolicy<> >( 0.0 );
-        jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
+        residual.zero();
+        jacobian.zero();
         assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
         fillNumericalJacobian( residual.toViewConst(),
@@ -423,13 +407,13 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
         solver.resetStateToBeginningOfStep( domain );
 
         real64 const dRho = perturbParameter * wellElemTotalDensity;
-        dWellElemCompDens.move( LvArray::MemorySpace::CPU, true );
+        dWellElemCompDens.move( LvArray::MemorySpace::host, true );
         dWellElemCompDens[iwelem][jc] = dRho;
 
         wellSolver.updateState( subRegion, targetIndex );
 
-        residual.setValues< parallelDevicePolicy<> >( 0.0 );
-        jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
+        residual.zero();
+        jacobian.zero();
         assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
         fillNumericalJacobian( residual.toViewConst(),
@@ -448,13 +432,13 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
 
         // here is the perturbation in the pressure of the well element
         real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
-        dConnRate.move( LvArray::MemorySpace::CPU, true );
+        dConnRate.move( LvArray::MemorySpace::host, true );
         dConnRate[iwelem] = dRate;
 
         wellSolver.updateState( subRegion, targetIndex );
 
-        residual.setValues< parallelDevicePolicy<> >( 0.0 );
-        jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
+        residual.zero();
+        jacobian.zero();
         assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
         fillNumericalJacobian( residual.toViewConst(),
@@ -469,8 +453,8 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
   // assemble the analytical jacobian
   solver.resetStateToBeginningOfStep( domain );
 
-  residual.setValues< parallelDevicePolicy<> >( 0.0 );
-  jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
+  residual.zero();
+  jacobian.zero();
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );

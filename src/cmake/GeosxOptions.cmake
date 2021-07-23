@@ -20,7 +20,6 @@ option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
-option( ENABLE_GEOSX_PTP "" ON)
 option( ENABLE_PAMELA "" ON )
 option( ENABLE_PVTPackage "" ON )
 
@@ -101,8 +100,8 @@ blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
-                                 GNU ""
-                                 CLANG "-fstandalone-debug"
+                                 GNU "-Wno-unused-parameter -Wno-unused-variable"
+                                 CLANG "-Wno-unused-parameter -Wno-unused-variable -fstandalone-debug"
                                 )
 
 blt_append_custom_compiler_flag(FLAGS_VAR GEOSX_NINJA_FLAGS
@@ -128,7 +127,7 @@ endif()
 
 
 
-if( ENABLE_HYPRE_CUDA AND ( GEOSX_LA_INTERFACE STREQUAL "Hypre" ) )
+if( ENABLE_HYPRE AND ENABLE_HYPRE_CUDA )
     set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
     set( GEOSX_GLOBALINDEX_TYPE "int" CACHE STRING "" )
 else()

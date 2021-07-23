@@ -13,6 +13,7 @@ set( constitutive_headers
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      contact/ContactRelationBase.hpp
      contact/Coulomb.hpp
+     fluid/layouts.hpp
      fluid/DeadOilFluid.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
      fluid/PVTFunctions/BrineCO2Density.hpp
@@ -34,6 +35,8 @@ set( constitutive_headers
      fluid/ProppantSlurryFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
+     solid/CompressibleSolid.hpp
+     solid/CoupledSolid.hpp
      solid/Damage.hpp
      solid/DamageVolDev.hpp
      solid/DamageSpectral.hpp
@@ -44,12 +47,23 @@ set( constitutive_headers
      solid/ElasticTransverseIsotropic.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
+     solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
      solid/SolidModelDiscretizationOps.hpp
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
+     solid/TriaxialDriver.hpp
+     solid/porosity/BiotPorosity.hpp
+     solid/porosity/PorosityBase.hpp
+     solid/porosity/PressurePorosity.hpp
+     permeability/CarmanKozenyPermeability.hpp
+     permeability/ConstantPermeability.hpp
+     permeability/ParallelPlatesPermeability.hpp
+     permeability/PermeabilityBase.hpp
+     permeability/StrainDependentPermeability.hpp
+     relativePermeability/layouts.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
@@ -57,6 +71,7 @@ set( constitutive_headers
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      relativePermeability/TableRelativePermeability.hpp
      relativePermeability/RelativePermeabilityInterpolators.hpp
+     capillaryPressure/layouts.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
@@ -87,7 +102,8 @@ set( constitutive_sources
      fluid/SlurryFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp
      fluid/ParticleFluidBase.cpp
-     fluid/ParticleFluid.cpp               
+     fluid/ParticleFluid.cpp
+     solid/CompressibleSolid.cpp      
      solid/Damage.cpp
      solid/DamageVolDev.cpp
      solid/DamageSpectral.cpp
@@ -97,7 +113,17 @@ set( constitutive_sources
      solid/ElasticTransverseIsotropic.cpp
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
+     solid/PorousSolid.cpp
      solid/SolidBase.cpp
+     solid/TriaxialDriver.cpp
+     solid/porosity/BiotPorosity.cpp
+     solid/porosity/PorosityBase.cpp
+     solid/porosity/PressurePorosity.cpp
+     permeability/CarmanKozenyPermeability.cpp
+     permeability/ConstantPermeability.cpp
+     permeability/ParallelPlatesPermeability.cpp
+     permeability/PermeabilityBase.cpp
+     permeability/StrainDependentPermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
@@ -108,7 +134,7 @@ set( constitutive_sources
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
    )
 
-set( dependencyList dataRepository functions)
+set( dependencyList events dataRepository functions)
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers
@@ -127,10 +153,6 @@ if( ENABLE_PVTPackage )
     add_subdirectory( PVTPackage )
     set( dependencyList ${dependencyList} PVTPackage )
 
-endif()
-
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
 endif()
 
 if ( ENABLE_CUDA )

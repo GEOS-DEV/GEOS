@@ -23,7 +23,6 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
@@ -104,6 +103,11 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 {
   GEOSX_MARK_FUNCTION;
 
+  if( m_computeCFLNumbers )
+  {
+    GEOSX_LOG_RANK_0( "The computation of CFL numbers in not supported by CompositionalMultiphaseHybridFVM yet" );
+  }
+
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -178,7 +182,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh )
   real64 const lengthTolerance = m_lengthTolerance;
 
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh,
-                                                       [&]( localIndex const,
+                                                       [&]( localIndex const targetIndex,
                                                             localIndex const,
                                                             localIndex const,
                                                             ElementRegionBase const &,
@@ -187,7 +191,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh )
     arrayView2d< real64 const > const & elemCenter =
       subRegion.template getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString() );
     arrayView2d< real64 const > const & elemPerm =
-      subRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::permeabilityString() );
+      getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] ).permeability();
     arrayView1d< real64 const > const elemGravCoef =
       subRegion.template getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
     arrayView1d< real64 const > const & elemVolume = subRegion.getElementVolume();
@@ -236,7 +240,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 
@@ -296,8 +300,7 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_
   // setup coupling between pressure and face pressure
   dofManager.addCoupling( viewKeyStruct::faceDofFieldString(),
                           viewKeyStruct::elemDofFieldString(),
-                          DofManager::Connector::Elem,
-                          true );
+                          DofManager::Connector::Elem );
 
 }
 
@@ -332,17 +335,17 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
   {
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
-    arrayView4d< real64 const > const & phaseCompFrac = fluid.phaseCompFraction();
-    arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
-    arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
+    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFrac = fluid.phaseCompFraction();
+    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
+    arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
 
-    arrayView3d< real64 const > const & phaseMassDens = fluid.phaseMassDensity();
-    arrayView3d< real64 const > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
-    arrayView4d< real64 const > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
+    arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseMassDens = fluid.phaseMassDensity();
+    arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
+    arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
 
-    arrayView3d< real64 const > const & phaseDens = fluid.phaseDensity();
-    arrayView3d< real64 const > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
-    arrayView4d< real64 const > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
+    arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens = fluid.phaseDensity();
+    arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
+    arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(),
                                       [phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
@@ -417,12 +420,16 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
   real64 const lengthTolerance = m_lengthTolerance;
 
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh,
-                                                       [&]( localIndex const,
+                                                       [&]( localIndex const targetIndex,
                                                             localIndex const er,
                                                             localIndex const esr,
                                                             ElementRegionBase const &,
                                                             auto const & subRegion )
   {
+
+    PermeabilityBase const & permeabilityModel =
+      getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
+
     mimeticInnerProductReducedDispatch( mimeticInnerProductBase,
                                         [&] ( auto const mimeticInnerProduct )
     {
@@ -431,6 +438,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                             IP_TYPE >( subRegion.numFacesPerElement(),
                                        m_numComponents, m_numPhases,
                                        er, esr, subRegion,
+                                       permeabilityModel,
                                        m_regionFilter.toViewConst(),
                                        nodePosition,
                                        elemRegionList,
@@ -514,10 +522,10 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
     arrayView1d< real64 const > const & dPressure =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-    arrayView2d< real64 const > const & compDens =
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString() );
-    arrayView2d< real64 const > const & dCompDens =
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString() );
+    arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
+    arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minElemVal( 1.0 );
 
@@ -625,10 +633,10 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
     arrayView1d< real64 const > const & dElemPres =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-    arrayView2d< real64 const > const & compDens =
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString() );
-    arrayView2d< real64 const > const & dCompDens =
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString() );
+    arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
+    arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
 
     localIndex const subRegionSolutionCheck =
       CompositionalMultiphaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
@@ -723,6 +731,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
     arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
     arrayView1d< real64 const > const & totalDensOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
 
+    real64 subRegionResidualNorm = 0.0;
     CompositionalMultiphaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                                     parallelDeviceReduce >( localRhs,
                                                                                             rankOffset,
@@ -732,7 +741,8 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                                                             refPoro,
                                                                                             volume,
                                                                                             totalDensOld,
-                                                                                            localResidualNorm );
+                                                                                            subRegionResidualNorm );
+    localResidualNorm += subRegionResidualNorm;
   } );
 
   arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
@@ -744,6 +754,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
   arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
 
   // 2. Compute the residual for the face-based constraints
+  real64 faceResidualNorm = 0.0;
   CompositionalMultiphaseHybridFVMKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                                        parallelDeviceReduce >( localRhs,
                                                                                                rankOffset,
@@ -756,7 +767,8 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                                                                elemList.toNestedViewConst(),
                                                                                                m_volume.toNestedViewConst(),
                                                                                                m_phaseMobOld.toNestedViewConst(),
-                                                                                               localResidualNorm );
+                                                                                               faceResidualNorm );
+  localResidualNorm += faceResidualNorm;
 
   // 3. Combine the two norms
 
@@ -783,18 +795,19 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // 1. apply the elem-based update
+  DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
                                viewKeyStruct::deltaPressureString(),
                                scalingFactor,
-                               0, 1 );
+                               pressureMask );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
                                viewKeyStruct::deltaGlobalCompDensityString(),
                                scalingFactor,
-                               1, m_numDofPerCell );
+                               ~pressureMask );
 
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function
@@ -847,7 +860,7 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 
@@ -859,36 +872,36 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( Group & dataGroup, l
 
   // outputs
 
-  arrayView2d< real64 > const phaseMob =
-    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::phaseMobilityString() );
+  arrayView2d< real64, compflow::USD_PHASE > const phaseMob =
+    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseMobilityString() );
 
-  arrayView2d< real64 > const dPhaseMob_dPres =
-    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dPressureString() );
+  arrayView2d< real64, compflow::USD_PHASE > const dPhaseMob_dPres =
+    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseMobility_dPressureString() );
 
-  arrayView3d< real64 > const dPhaseMob_dComp =
-    dataGroup.getReference< array3d< real64 > >( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString() );
+  arrayView3d< real64, compflow::USD_PHASE_DC > const dPhaseMob_dComp =
+    dataGroup.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString() );
 
   // inputs
 
-  arrayView2d< real64 const > const dPhaseVolFrac_dPres =
-    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
+  arrayView2d< real64 const, compflow::USD_PHASE > const dPhaseVolFrac_dPres =
+    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
 
-  arrayView3d< real64 const > const dPhaseVolFrac_dComp =
-    dataGroup.getReference< array3d< real64 > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > const dPhaseVolFrac_dComp =
+    dataGroup.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
 
-  arrayView3d< real64 const > const dCompFrac_dCompDens =
-    dataGroup.getReference< array3d< real64 > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
+  arrayView3d< real64 const, compflow::USD_COMP_DC > const dCompFrac_dCompDens =
+    dataGroup.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
 
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
-  arrayView3d< real64 const > const & phaseVisc = fluid.phaseViscosity();
-  arrayView3d< real64 const > const & dPhaseVisc_dPres = fluid.dPhaseViscosity_dPressure();
-  arrayView4d< real64 const > const & dPhaseVisc_dComp = fluid.dPhaseViscosity_dGlobalCompFraction();
+  arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
+  arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseVisc_dPres = fluid.dPhaseViscosity_dPressure();
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp = fluid.dPhaseViscosity_dGlobalCompFraction();
 
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
 
-  arrayView3d< real64 const > const & phaseRelPerm = relperm.phaseRelPerm();
-  arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
+  arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
+  arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
 
   KernelLaunchSelector2< PhaseMobilityKernel >( m_numComponents, m_numPhases,
                                                 dataGroup.size(),

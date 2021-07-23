@@ -33,6 +33,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   m_topRank( -1 ),
   m_searchDepth( 10 )
 {
+  m_elementType = ElementType::Line;
 
   registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName );
   registerWrapper( viewKeyStruct::wellNodeListString(), &m_toNodesRelation );
@@ -47,7 +48,6 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   this->setNumNodesPerElement( 2 );
   this->setNumFacesPerElement( 0 );
   m_toNodesRelation.resizeDimension< 1 >( this->numNodesPerElement() );
-  m_elementTypeString = "BEAM";
 }
 
 
@@ -383,8 +383,9 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   // this is enforced in the InternalWellGenerator that currently merges two perforations
   // if they belong to the same well element. This is a temporary solution.
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
-  GEOSX_ERROR_IF( sharedElems.size() > 0,
-                  "Well " << getName() << " contains shared well elements" );
+  GEOSX_THROW_IF( sharedElems.size() > 0,
+                  "Well " << wellGeometry.getName() << " contains shared well elements",
+                  InputError );
 
 
   // In Steps 1 and 2 we determine the local objects on this rank (elems and nodes)
@@ -532,11 +533,12 @@ void WellElementSubRegion::checkPartitioningValidity( InternalWellGenerator cons
       globalIndex const numBranches = prevElemIdsGlobal[iwelemGlobal].size();
       globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches-1];
 
-      GEOSX_ERROR_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
-                      "The structure of well " << getName() << " is invalid. " <<
+      GEOSX_THROW_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
+                      "The structure of well " << wellGeometry.getName() << " is invalid. " <<
                       " The main reason for this error is that there may be no perforation" <<
                       " in the bottom well element of the well, which is required to have" <<
-                      " a well-posed problem." );
+                      " a well-posed problem.",
+                      InputError );
 
       if( elemStatusGlobal[prevGlobal] == WellElemStatus::LOCAL )
       {

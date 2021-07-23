@@ -8,7 +8,6 @@ set( codingUtilities_headers
      StringUtilities.hpp
      UnitTestUtilities.hpp
      Utilities.hpp
-     static_if.hpp
      SFINAE_Macros.hpp
    )
 
@@ -20,6 +19,10 @@ set( codingUtilities_sources
    )
 
 set( dependencyList common )
+
+if( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 blt_add_library( NAME                  codingUtilities
                  SOURCES               ${codingUtilities_sources}

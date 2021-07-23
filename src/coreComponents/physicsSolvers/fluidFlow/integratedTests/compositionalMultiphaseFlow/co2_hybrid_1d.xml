@@ -1,13 +1,14 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="0.0, 0.0, -9.81">
+  <Solvers gravityVector="{0.0, 0.0, -9.81}">
     <CompositionalMultiphaseHybridFVM
       name="compflow"
       logLevel="1"
       discretization="fluidHM"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
+      permeabilityNames="{rockPerm}"
       relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
@@ -42,13 +43,13 @@
   <Geometry>
     <Box
       name="sink"
-      xMin="11.99, -0.01, -0.01"
-      xMax="15.01,  1.01,  1.01"/>
+      xMin="{11.99, -0.01, -0.01}"
+      xMax="{15.01,  1.01,  1.01}"/>
 
     <Box
       name="source"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 3.01,  1.01,  1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 3.01,  1.01,  1.01}"/>
   </Geometry>
 
   <Events
@@ -85,7 +86,7 @@
     <CellElementRegion
       name="region"
       cellBlocks="{ cb }"
-      materialList="{ fluid, rock, relperm }"/>
+      materialList="{ fluid, rock, relperm, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -108,36 +109,13 @@
       phaseMinVolumeFraction="{ 0.05, 0.05 }"
       phaseRelPermExponent="{ 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
+      
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{1.0e-13, 1.0e-13, 1.0e-13}"/>         
   </Constitutive>
 
-  <FieldSpecifications>
-    <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/region/cb"
-      fieldName="permeability"
-      scale="1.0e-13"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/region/cb"
-      fieldName="permeability"
-      scale="1.0e-13"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/region/cb"
-      fieldName="permeability"
-      scale="1.0e-13"/>
-
+  <FieldSpecifications>  
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"

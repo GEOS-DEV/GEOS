@@ -6,6 +6,7 @@ set(fieldSpecification_headers
     FieldSpecificationManager.hpp
     DirichletBoundaryCondition.hpp
     SourceFluxBoundaryCondition.hpp
+    TractionBoundaryCondition.hpp
    )
 
 
@@ -18,26 +19,13 @@ set(fieldSpecification_sources
     FieldSpecificationManager.cpp
     DirichletBoundaryCondition.cpp
     SourceFluxBoundaryCondition.cpp
+    TractionBoundaryCondition.cpp
    )
 
-
-
-set( dependencyList functions RAJA linearAlgebra conduit )
-
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif()
+set( dependencyList functions linearAlgebra )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
-endif()
-
-if ( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper adiak )
-endif()
-
-if ( ENABLE_MKL )
-  set( dependencyList ${dependencyList} mkl )
 endif()
 
 blt_add_library( NAME                  fieldSpecification

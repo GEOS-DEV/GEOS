@@ -28,6 +28,7 @@ set( linearAlgebra_headers
      utilities/BlockVectorView.hpp
      utilities/BlockVectorWrapper.hpp
      utilities/BlockVector.hpp
+     utilities/ComponentMask.hpp
      utilities/LAIHelperFunctions.hpp
      utilities/LinearSolverParameters.hpp
      utilities/LinearSolverResult.hpp
@@ -51,7 +52,7 @@ set( linearAlgebra_sources
      solvers/SeparateComponentPreconditioner.cpp
      DofManager.cpp )
 
-set( dependencyList mesh blas lapack RAJA)
+set( dependencyList mesh blas lapack )
 
 
 list( APPEND linearAlgebra_headers
@@ -91,16 +92,29 @@ if( ENABLE_HYPRE )
 
     list( APPEND linearAlgebra_headers
           interfaces/hypre/HypreExport.hpp
-          interfaces/hypre/HypreMGRStrategies.hpp
+          interfaces/hypre/HypreMGR.hpp
           interfaces/hypre/HypreMatrix.hpp
           interfaces/hypre/HypreVector.hpp
           interfaces/hypre/HyprePreconditioner.hpp
           interfaces/hypre/HypreSolver.hpp
           interfaces/hypre/HypreInterface.hpp
-          interfaces/hypre/HypreUtils.hpp )
+          interfaces/hypre/HypreUtils.hpp 
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp	  
+          interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp
+          interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
+          interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp
+          interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirFVM.hpp
+          interfaces/hypre/mgrStrategies/CompositionalMultiphaseHybridFVM.hpp
+          interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp
+          interfaces/hypre/mgrStrategies/Hydrofracture.hpp
+          interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp)
 
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreExport.cpp
+          interfaces/hypre/HypreMGR.cpp
           interfaces/hypre/HypreMatrix.cpp
           interfaces/hypre/HypreVector.cpp
           interfaces/hypre/HyprePreconditioner.cpp
@@ -134,23 +148,9 @@ if( ENABLE_PETSC )
 
 endif()
 
-if( ENABLE_OPENMP )
-    list( APPEND dependencyList openmp )
-endif()
-
 if ( ENABLE_CUDA )
     list( APPEND dependencyList cuda )
 endif()
-
-if ( ENABLE_MKL )
-    list( APPEND dependencyList mkl )
-endif()
-
-if( ENABLE_MPI )
-    list( APPEND dependencyList mpi )
-endif()
-
-
 
 blt_add_library( NAME                  linearAlgebra
                  SOURCES               ${linearAlgebra_sources}

@@ -3,7 +3,7 @@
 <!--# # -->
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, -0.0">
+    gravityVector="{0.0, 0.0, -0.0}">
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
@@ -41,6 +41,7 @@
       targetRegions="{ Fracture, Region2 }"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{fracPerm, rockPerm}"
       inputFluxEstimate="1.0">
       <LinearSolverParameters
         solverType="gmres"
@@ -74,18 +75,18 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01, 2.01, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 0.01, 2.01, 1.01}"/>
 
     <Box
       name="source"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01, 1.01, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 0.01, 1.01, 1.01}"/>
 
     <Box
       name="core"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01, 100.01, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{ 0.01, 100.01, 1.01}"/>
   </Geometry>
 
   <Events
@@ -170,7 +171,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{fracPerm, rockPerm}"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -178,12 +180,12 @@
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, rockPerm }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.1e-3"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, fracPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -214,36 +216,16 @@
         coordinates="{ -1.0e-3, 0.0 }"
         values="{ 0.01e-3, 0.1e-3 }"/>
     </Contact>
+    
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{1.0e-15, 1.0e-15, 1.0e-15}"/>  
+    
+    <ParallelPlatesPermeability
+      name="fracPerm"/> 
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="permeability"
-      scale="1.0e-15"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="permeability"
-      scale="1.0e-15"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="permeability"
-      scale="1.0e-15"/>
-
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"

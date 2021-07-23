@@ -67,18 +67,18 @@
               radius="6.6"/-->
     <Box
       name="fracture"
-      xMin="-4.1, -4.1, -0.1"
-      xMax=" 2.1, 6.1, 0.1"/>
+      xMin="{-4.1, -4.1, -0.1}"
+      xMax="{ 2.1, 6.1, 0.1}"/>
 
     <Box
       name="source"
-      xMin="-2.1, -2.1, -0.1"
-      xMax=" 2.1, 6.1, 0.1"/>
+      xMin="{-2.1, -2.1, -0.1}"
+      xMax="{ 2.1, 6.1, 0.1}"/>
 
     <Box
       name="core"
-      xMin="-500.1, -500.1, -0.1"
-      xMax="500.1, 10.1, 0.1"/>
+      xMin="{-500.1, -500.1, -0.1}"
+      xMax="{500.1, 10.1, 0.1}"/>
   </Geometry>
 
   <Events
@@ -179,7 +179,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{fracPerm}"/>
     </FiniteVolume>
   </NumericalMethods>
 

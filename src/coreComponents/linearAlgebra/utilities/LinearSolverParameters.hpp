@@ -207,14 +207,19 @@ struct LinearSolverParameters
      */
     enum class StrategyType : integer
     {
-      invalid,                          ///< default value, to ensure solver sets something
-      compositionalMultiphaseFVM,       ///< finite volume compositional muliphase flow
-      compositionalMultiphaseHybridFVM, ///< hybrid finite volume compositional muliphase flow
-      compositionalMultiphaseReservoir, ///< reservoir with finite volume compositional multiphase flow
-      hydrofracture,                    ///< hydrofracture
-      lagrangianContactMechanics,       ///< Lagrangian contact mechanics
-      singlePhasePoroelastic,           ///< single phase poroelastic with finite volume single phase flow
-      hybridSinglePhasePoroelastic      ///< single phase poroelastic with hybrid finite volume single phase flow
+      invalid,                                   ///< default value, to ensure solver sets something
+      singlePhaseReservoirFVM,                   ///< fininte volume single-phase flow with wells
+      singlePhaseHybridFVM,                      ///< hybrid finite volume single-phase flow
+      singlePhaseReservoirHybridFVM,             ///< hybrid finite volume single-phase flow with wells
+      singlePhasePoromechanics,                  ///< single phase poromechanics with finite volume single phase flow
+      hybridSinglePhasePoromechanics,            ///< single phase poromechanics with hybrid finite volume single phase flow
+      compositionalMultiphaseFVM,                ///< finite volume compositional muliphase flow
+      compositionalMultiphaseHybridFVM,          ///< hybrid finite volume compositional muliphase flow
+      compositionalMultiphaseReservoirFVM,       ///< finite volume compositional multiphase flow with wells
+      compositionalMultiphaseReservoirHybridFVM, ///< hybrid finite volume compositional multiphase flow with wells
+      multiphasePoromechanics,                   ///< multiphase poromechanics with finite volume compositional multiphase flow
+      hydrofracture,                             ///< hydrofracture
+      lagrangianContactMechanics,                ///< Lagrangian contact mechanics
     };
 
     StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
@@ -239,14 +244,16 @@ struct LinearSolverParameters
   dd;                      ///< Domain decomposition parameter struct
 };
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::SolverType,
               "direct",
               "cg",
               "gmres",
               "fgmres",
               "bicgstab",
-              "preconditioner" )
+              "preconditioner" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "none",
               "jacobi",
@@ -262,38 +269,50 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "amg",
               "mgr",
               "block",
-              "direct" )
+              "direct" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
               "none",
               "MMD_AtplusA",
               "MMD_AtA",
               "colAMD",
               "metis",
-              "parmetis" )
+              "parmetis" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::Direct::RowPerm,
               "none",
-              "mc64" )
+              "mc64" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
+              "invalid",
+              "singlePhaseReservoirFVM",
+              "singlePhaseHybridFVM",
+              "singlePhaseReservoirHybridFVM",
+              "singlePhasePoromechanics",
+              "hybridSinglePhasePoromechanics",
               "compositionalMultiphaseFVM",
               "compositionalMultiphaseHybridFVM",
-              "compositionalMultiphaseReservoir",
+              "compositionalMultiphaseReservoirFVM",
+              "compositionalMultiphaseReservoirHybridFVM",
+              "multiphasePoromechanics",
               "hydrofracture",
-              "lagrangianContactMechanics",
-              "singlePhasePoroelastic",
-              "hybridSinglePhasePoroelastic" )
+              "lagrangianContactMechanics" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::CycleType,
               "V",
-              "W" )
+              "W" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::PreOrPost,
               "pre",
               "post",
-              "both" )
+              "both" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::SmootherType,
               "default",
               "jacobi",
@@ -305,8 +324,9 @@ ENUM_STRINGS( LinearSolverParameters::AMG::SmootherType,
               "ilu0",
               "ilut",
               "ic0",
-              "ict" )
+              "ict" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::CoarseType,
               "default",
               "jacobi",
@@ -315,11 +335,12 @@ ENUM_STRINGS( LinearSolverParameters::AMG::CoarseType,
               "sgs",
               "l1sgs",
               "chebyshev",
-              "direct" )
+              "direct" );
 
+/// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::NullSpaceType,
               "constantModes",
-              "rigidBodyModes" )
+              "rigidBodyModes" );
 
 } /* namespace geosx */
 

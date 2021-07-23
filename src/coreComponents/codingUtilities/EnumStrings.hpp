@@ -21,16 +21,14 @@
  * of these strings, like stream insertion/extraction operators.
  */
 
-#ifndef GEOSX_CODINGUTILITIES_ENUM_HPP_
-#define GEOSX_CODINGUTILITIES_ENUM_HPP_
+#ifndef GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
+#define GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
 
 #include "StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 
 #include <iostream>
-#include <sstream>
-#include <array>
 #include <type_traits>
 #include <algorithm>
 
@@ -67,12 +65,9 @@ constexpr int countArgs( ARGS ... )
  * (or the class definition, if enum is defined inside a class).
  */
 #define ENUM_STRINGS( ENUM, ... )                                     \
-  static_assert( std::is_enum< ENUM >::value, "Not an enumeration" ); \
-                                                                      \
   inline auto const & getEnumStrings( ENUM const )                    \
   {                                                                   \
-    constexpr int N = internal::countArgs( __VA_ARGS__ );             \
-    static constexpr std::array< char const *, N > ss{ __VA_ARGS__ }; \
+    static constexpr char const * ss[] { __VA_ARGS__ };               \
     return ss;                                                        \
   }                                                                   \
                                                                       \
@@ -87,7 +82,14 @@ constexpr int countArgs( ARGS ... )
     string s; is >> s;                                                \
     e = EnumStrings< ENUM >::fromString( s );                         \
     return is;                                                        \
-  }
+  }                                                                   \
+                                                                      \
+  inline string toString( ENUM const e )                              \
+  {                                                                   \
+    return EnumStrings< ENUM >::toString( e );                        \
+  }                                                                   \
+                                                                      \
+  static_assert( std::is_enum< ENUM >::value, "Not an enumeration" )
 
 /**
  * @brief Provides enum <-> string conversion facilities.
@@ -118,7 +120,7 @@ struct EnumStrings
   static string concat( string const & delim = " " )
   {
     auto const & strings = get();
-    return stringutilities::join( begin( strings ), end( strings ), delim );
+    return stringutilities::join( std::begin( strings ), std::end( strings ), delim );
   }
 
   /**
@@ -131,10 +133,11 @@ struct EnumStrings
   static string toString( enum_type const & e )
   {
     auto const & strings = get();
+    std::size_t size = std::distance( std::begin( strings ), std::end( strings ) );
     base_type const index = static_cast< base_type >( e );
-    GEOSX_ERROR_IF_GE_MSG( index, LvArray::integerConversion< base_type >( strings.size() ),
-                           "Unrecognized value of " << TypeName< ENUM >::brief() << ": " << index << ".\n" <<
-                           "Valid range is 0.." << strings.size() - 1 );
+    GEOSX_THROW_IF( index >= LvArray::integerConversion< base_type >( size ),
+                    "Invalid value " << index << " of type " << TypeName< ENUM >::brief() << ". Valid range is 0.." << size - 1,
+                    InputError );
     return strings[ index ];
   }
 
@@ -146,11 +149,11 @@ struct EnumStrings
   static enum_type fromString( string const & s )
   {
     auto const & strings = get();
-    auto const it = std::find( begin( strings ), end( strings ), s );
-    GEOSX_ERROR_IF( it == strings.end(),
-                    "'" << s << "' is not a recognized value of " << TypeName< enum_type >::brief() << ".\n" <<
-                    "Valid options are: \n  " << concat( "\n  " ) );
-    enum_type const e = static_cast< enum_type >( LvArray::integerConversion< base_type >( std::distance( begin( strings ), it ) ) );
+    auto const it = std::find( std::begin( strings ), std::end( strings ), s );
+    GEOSX_THROW_IF( it == std::end( strings ),
+                    "Invalid value '" << s << "' of type " << TypeName< enum_type >::brief() << ". Valid options are: " << concat( ", " ),
+                    InputError );
+    enum_type const e = static_cast< enum_type >( LvArray::integerConversion< base_type >( std::distance( std::begin( strings ), it ) ) );
     return e;
   }
 };
@@ -178,4 +181,4 @@ struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
 
 } // namespace geosx
 
-#endif //GEOSX_CODINGUTILITIES_ENUM_HPP_
+#endif //GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP

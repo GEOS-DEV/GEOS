@@ -19,7 +19,9 @@
 #ifndef GEOSX_COMMON_FIELDSPECIFICATIONOPS_HPP
 #define GEOSX_COMMON_FIELDSPECIFICATIONOPS_HPP
 
-#include "DataTypes.hpp"
+#include "codingUtilities/traits.hpp"
+#include "common/DataTypes.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -288,9 +290,9 @@ struct FieldSpecificationOp
 
   /**
    * @brief Pointwise application of a value to a field variable.
-   * @tparam T The type of the array2d field variable specified in @p field.
+   * @tparam T The type of the array3d field variable specified in @p field.
    * @tparam USD the unit stride dimension of the array @p field.
-   * @param[in] field The array2d field variable to apply @p value to.
+   * @param[in] field The array3d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The index along third dimension of 3d array.
    * @param[in] value The value to apply to @p field.
@@ -327,9 +329,9 @@ struct FieldSpecificationOp
 
   /**
    * @brief Pointwise application of a value to a field variable.
-   * @tparam T The type of the array2d field variable specified in @p field.
+   * @tparam T The type of the array3d field variable specified in @p field.
    * @tparam USD the unit stride dimension of the array @p field.
-   * @param[in] field The array2d field variable to apply @p value to.
+   * @param[in] field The array3d field variable to apply @p value to.
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
@@ -373,9 +375,9 @@ struct FieldSpecificationOp
 
   /**
    * @brief This function is not meaningful. It exists for generic purposes, but will result in an error if called.
-   * @tparam T The type of the array2d field variable specified in @p field.
+   * @tparam T The type of the array3d field variable specified in @p field.
    * @tparam USD the unit stride dimension of the array @p field.
-   * @param[in] field The array2d field variable to read @p value from.
+   * @param[in] field The array3d field variable to read @p value from.
    * @param[in] index The index in field to read @p value from.
    * @param[in] component The index along second dimension of 2d array.
    * @param[out] value The value that is read from @p field.
@@ -384,6 +386,127 @@ struct FieldSpecificationOp
   GEOSX_HOST_DEVICE
   static inline void
   readFieldValue( arrayView3d< T const, USD > const & field,
+                  localIndex const index,
+                  integer const component,
+                  real64 & value )
+  {
+    GEOSX_UNUSED_VAR( field );
+    GEOSX_UNUSED_VAR( index );
+    GEOSX_UNUSED_VAR( component );
+    GEOSX_UNUSED_VAR( value );
+    GEOSX_ERROR( "readFieldValue: unsupported operation" );
+  }
+
+  /**
+   * @brief Pointwise application of a value to a field variable.
+   * @tparam T The type of the array4d field variable specified in @p field.
+   * @tparam USD the unit stride dimension of the array @p field.
+   * @param[in] field The array4d field variable to apply @p value to.
+   * @param[in] index The index in field to apply @p value to.
+   * @param[in] component The index along third dimension of 3d array.
+   * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
+   *
+   * This function performs field[index] (+)= value for all values of field[index].
+   */
+  template< typename T, int USD >
+  GEOSX_HOST_DEVICE
+  static inline typename std::enable_if< !traits::is_tensorT< T >, void >::type
+  SpecifyFieldValue( arrayView4d< T, USD > const & field,
+                     localIndex const index,
+                     integer const component,
+                     real64 const value )
+  {
+    if( component >= 0 )
+    {
+      for( localIndex a = 0; a < field.size( 1 ); ++a )
+      {
+        for( localIndex b = 0; b < field.size( 2 ); ++b )
+        {
+          OP::template apply( field( index, a, b, component ), value );
+        }
+      }
+    }
+    else
+    {
+      for( localIndex a = 0; a < field.size( 1 ); ++a )
+      {
+        for( localIndex b = 0; b < field.size( 2 ); ++b )
+        {
+          for( localIndex c = 0; c < field.size( 3 ); ++c )
+          {
+            OP::template apply( field( index, a, b, c ), value );
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief Pointwise application of a value to a field variable.
+   * @tparam T The type of the array4d field variable specified in @p field.
+   * @tparam USD the unit stride dimension of the array @p field.
+   * @param[in] field The array4d field variable to apply @p value to.
+   * @param[in] index The index in field to apply @p value to.
+   * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
+   *                      this will not be used.
+   * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
+   *
+   * This function performs field[index][component] (+)= value for all values of field[index].
+   */
+  template< typename T, int USD >
+  GEOSX_HOST_DEVICE
+  static inline typename std::enable_if< traits::is_tensorT< T >, void >::type
+  SpecifyFieldValue( arrayView4d< T, USD > const & field,
+                     localIndex const index,
+                     integer const component,
+                     real64 const value )
+  {
+    if( component >= 0 )
+    {
+      for( localIndex a = 0; a < field.size( 1 ); ++a )
+      {
+        for( localIndex b = 0; b < field.size( 2 ); ++b )
+        {
+          for( localIndex c = 0; c < field.size( 3 ); ++c )
+          {
+            OP::template apply( field( index, a, b, c )[component], value );
+          }
+        }
+      }
+    }
+    else
+    {
+      for( localIndex a = 0; a < field.size( 1 ); ++a )
+      {
+        for( localIndex b = 0; b < field.size( 2 ); ++b )
+        {
+          for( localIndex c = 0; c < field.size( 3 ); ++c )
+          {
+            for( localIndex d = 0; d < T::size(); ++d )
+            {
+              OP::template apply( field( index, a, b, c )[d], value );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief This function is not meaningful. It exists for generic purposes, but will result in an error if called.
+   * @tparam T The type of the array4d field variable specified in @p field.
+   * @tparam USD the unit stride dimension of the array @p field.
+   * @param[in] field The array4d field variable to read @p value from.
+   * @param[in] index The index in field to read @p value from.
+   * @param[in] component The index along second dimension of 2d array.
+   * @param[out] value The value that is read from @p field.
+   */
+  template< typename T, int USD >
+  GEOSX_HOST_DEVICE
+  static inline void
+  readFieldValue( arrayView4d< T const, USD > const & field,
                   localIndex const index,
                   integer const component,
                   real64 & value )
