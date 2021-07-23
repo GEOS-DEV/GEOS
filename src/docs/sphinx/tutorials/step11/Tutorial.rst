@@ -8,7 +8,7 @@ Tutorial 11: Plasticity Model for Wellbore Problems
 
 **Context**
 
-The main goal of this tutorial is to learn how to use the internal mesh generator and plasticity models to handle wellbore problems in GEOSX. The Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical results. The resulting model can be used as a base for more complex analysis (e.g., wellbore drilling, fluid injection and storage scenarios). 
+The main goal of this tutorial is to learn how to use the internal wellbore mesh generator and plasticity models to handle wellbore problems in GEOSX. The Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical results. The resulting model can be used as a base for more complex analysis (e.g., wellbore drilling, fluid injection and storage scenarios). 
 
 
 **Objectives**
@@ -23,8 +23,7 @@ At the end of this tutorial you will know:
 **Input file**
 
 This tutorial uses no external input files and everything required is
-contained within a single GEOSX input file. 
-The xml input file for this test case is located at:
+contained within a single xml file that is located at:
 
 .. code-block:: console
 
@@ -166,13 +165,13 @@ You may note :
  - Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively;
  - And the non-zero values given by ``Scale`` indicate the magnitude of the loading; 
  - Some shorthand, such as ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain. For instance, ``xneg`` means the portion of the computational domain located at the left-most in the x-axis, while ``xpos`` refers to the portion located at the right-most area in the x-axis. Similar shorthand include ``ypos``, ``yneg``, ``zpos``, and ``zneg``;
- - The traction loading has a negative value due to the surface sign convention in GEOSX, where tensile stress is considered positive.
+ - The mud pressure loading has a negative value due to the negative sign convention for compressive stress in GEOSX.
 
  
 The parameters used in the simulation are summarized in the following table.
 
 +------------------+-------------------------+------------------+---------------+
-| Symbol           | Parameter               | Units            | Value         |
+| Symbol           | Parameter               | Unit            | Value         |
 +==================+=========================+==================+===============+
 | :math:`K`        | Bulk modulus            | [MPa]            | 500           |
 +------------------+-------------------------+------------------+---------------+
@@ -192,7 +191,7 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+-------------------------+------------------+---------------+
 | :math:`a_0`      | Initial Well Radius     | [m]              | 0.1           |
 +------------------+-------------------------+------------------+---------------+
-| :math:`P_w`      | Well Pressure           | [MPa]            | 2.0           |
+| :math:`P_w`      | Mud Pressure           | [MPa]            | 2.0           |
 +------------------+-------------------------+------------------+---------------+
 
 
@@ -231,4 +230,3 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
   - More on plasticity models, please see :ref:`TwoInvariantPlasticity`.
   - More on wellbore meshes, please see :ref:`InternalWellbore`.
   - More on functions, please see :ref:`FunctionManager`.
-
