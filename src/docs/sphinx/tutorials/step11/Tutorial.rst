@@ -2,7 +2,7 @@
 
 
 ####################################################
-Tutorial 11: Plasticity Model for Wellbore Problems
+Tutorial 11: Elasto-Plastic Model for Wellbore Problems without fluid flow
 ####################################################
 
 
@@ -46,7 +46,7 @@ We simulate a drained wellbore problem subjected to isotropic horizontal stress 
    Fig.1 Sketch of the wellbore problem `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__
 
 
-To simulate this phenomenon, the strain hardening Extended Drucker Prager model with an associated flow rule in GEOSX is used in this tutorial. Displacement and stress fields around the wellbore are numerically calculated. These numerical predictions are then compared with the corresponding analytical solutions `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__ from the literature. 
+To simulate this phenomenon, the strain hardening Extended Drucker-Prager model with an associated plastic flow rule in GEOSX is used in this tutorial. Displacement and stress fields around the wellbore are numerically calculated. These numerical predictions are then compared with the corresponding analytical solutions `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__ from the literature. 
 
 
 ------------------------------------------------------------------
@@ -198,7 +198,7 @@ The parameters used in the simulation are summarized in the following table.
 Inspecting results
 ---------------------------------
 
-In the above example, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Fig.3 shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of normal stress components, stress path, the supporting wellbore pressure and wellbore size. It is clear that the GEOSX predictions are in excellent agreement with the analytical results for this specific case. 
+In the above example, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Fig.3 shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of normal stress components, stress path, the supporting wellbore pressure and wellbore size. It is clear that the GEOSX predictions are in excellent agreement with the analytical results. 
 
 
 .. _problemVerificationFig:
