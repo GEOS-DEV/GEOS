@@ -1,7 +1,7 @@
 <!--
 Problem: wellbore problem subjected to mixed mode loading and anisotropic far-field stresses
 Created by: Jian Huang
-Last update: June 18 2021
+Last update: July 23 2021
 Objective: to verify the poroelastic solver in GEOSX against analytical solution
 Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Springer International Publishing.
 -->
@@ -40,12 +40,17 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
 
 <!-- SPHINX_WELLBORE_MATERIAL -->
 <Constitutive>
-  <PoroElasticIsotropic
+  <PorousElasticIsotropic
+    name="porousRock"
+    solidModelName="rock"
+    porosityModelName="rockPorosity"
+    permeabilityModelName="rockPerm"
+  />
+  <ElasticIsotropic
     name="rock"
     defaultDensity="2700"
     defaultBulkModulus="11111111111.1"
     defaultShearModulus="8333333333.33"
-    BiotCoefficient="1.0"
   />
   <CompressibleSinglePhaseFluid 
     name="water"
@@ -57,6 +62,15 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
     referenceViscosity="0.001"
     viscosibility="0.0"
   />
+  <BiotPorosity
+    name="rockPorosity"
+    grainBulkModulus="1.0e27"
+    defaultReferencePorosity="0.3"
+  />    
+  <ConstantPermeability
+    name="rockPerm"
+    permeabilityComponents="{1.0e-20, 1.0e-20, 1.0e-20}"
+  /> 
 </Constitutive>
 <!-- SPHINX_WELLBORE_MATERIAL_END -->
 
@@ -65,7 +79,7 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
   <CellElementRegion 
     name="Omega" 
     cellBlocks="{cb1}" 
-    materialList="{rock, water}"
+    materialList="{ rock, water, porousRock, rockPerm, rockPorosity}"
   />
 </ElementRegions>
 <!-- SPHINX_WELLBORE_ELEMENTREGIONS_END -->
@@ -100,45 +114,6 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
     fieldName="rock_stress"
     component="2"
     scale="-12.0e6"
-  />
-
-  <FieldSpecification 
-    name="permx"
-    component="0"
-    initialCondition="1"  
-    setNames="{all}"
-    objectPath="ElementRegions/Omega/cb1"
-    fieldName="permeability"
-    scale="1e-20"
-  />
-
-  <FieldSpecification 
-    name="permy"
-    component="1"
-    initialCondition="1"  
-    setNames="{all}"
-    objectPath="ElementRegions/Omega/cb1"
-    fieldName="permeability"
-    scale="1e-20"
-  />
-
-  <FieldSpecification 
-    name="permz"
-    component="2"
-    initialCondition="1"  
-    setNames="{all}"
-    objectPath="ElementRegions/Omega/cb1"
-    fieldName="permeability"
-    scale="1e-20"
-  />
-
-  <FieldSpecification 
-    name="referencePorosity"
-    initialCondition="1"
-    setNames="{all}"
-    objectPath="ElementRegions/Omega/cb1"
-    fieldName="referencePorosity"
-    scale="0.3"
   />
 
   <FieldSpecification 
@@ -182,7 +157,7 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
     setNames="{ rneg }"
     objectPath="faceManager"
     scale="-10.0e6"
-    tractionType="1"
+    tractionType="normal"
     functionName="timeFunction"     
   />
 
@@ -208,12 +183,12 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
 <!-- SPHINX_WELLBORE_OUTPUT_END -->
 
 <!-- SPHINX_WELLBORE_POROELASTICSOLVER -->
-<Solvers gravityVector="0.0, 0.0, 0.0">
-<Poroelastic 
+<Solvers gravityVector="{0.0, 0.0, 0.0}">
+<SinglePhasePoromechanics 
   name="PoroelasticitySolver" 
   solidSolverName="mechanicsSolver"
   fluidSolverName="SinglePhaseFlowSolver"
-  couplingTypeOption="FIM"
+  porousMaterialNames="{porousRock}"
   logLevel="1"
   discretization="FE1"
   targetRegions="{Omega}">
@@ -225,7 +200,7 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
   <NonlinearSolverParameters
     newtonMaxIter = "40"
   />
-</Poroelastic>
+</SinglePhasePoromechanics>
 <!-- SPHINX_WELLBORE_POROELASTICSOLVER_END -->
 
 <!-- SPHINX_WELLBORE_MECHANICALSOLVER -->
@@ -253,7 +228,8 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
   discretization="singlePhaseTPFA"
   targetRegions="{Omega}"
   fluidNames="{ water }"
-  solidNames="{ rock }">
+  solidNames="{ porousRock }"
+  permeabilityNames="{rockPerm}">
   <LinearSolverParameters 
     solverType="direct"
   />
@@ -297,6 +273,7 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
       name="singlePhaseTPFA"
       fieldName="pressure"
       coefficientName="permeability"
+      coefficientModelNames="{rockPerm}"
     />
   </FiniteVolume>
 </NumericalMethods>

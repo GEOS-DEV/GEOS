@@ -8,14 +8,14 @@ Tutorial 12: PoroMechanical Models for Wellbore Problems
 
 **Context**
 
-The main objective of this tutorial is to demonstrate how to use internal mesh generator and poromechanical solvers in GEOSX to tackle wellbore problems in porous media. In this tutorial, a poroplastic model is applied to find the solution of rock deformation within the vicinity of a vertical wellbore, considering elastoplastic deformation, fluid diffusion and poromechanical coupling effect. To do so, a single phase flow solver is fully coupled with a small-strain Lagrangian mechanics solver in GEOSX and the Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is chosen as the material model for the solid domain. We first solve this problem with the existing poroelastic solver and verify the modeling results with the corresponding analytical solutions. Then, the verified case is employed to test the newly implemented poroplasticity solver in GEOSX, whose results are compared with the ones obtained from the poroelastic case to highlight the impact of plasticity in this specific problem.
+The main objective of this tutorial is to demonstrate how to use the internal wellbore mesh generator and poromechanical solvers in GEOSX to tackle wellbore problems in porous media. In this tutorial, a poroplastic model is applied to find the solution of rock deformation within the vicinity of a vertical wellbore, considering elastoplastic deformation, fluid diffusion and poromechanical coupling effect. To do so, a single phase flow solver is fully coupled with a Lagrangian mechanics solver in GEOSX and the Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is chosen as the material model for the solid domain. We first solve this problem with the existing poroelastic solver and verify the modeling results with the corresponding analytical solutions. Then, the verified case is employed to test the newly implemented poroplasticity solver in GEOSX, whose results are compared with the ones obtained from the poroelastic case to highlight the impact of plasticity in this specific problem.
  
 
 **Objectives**
 
 At the end of this tutorial you will know:
 
-  - how to construct meshes for wellbore problems with internal mesh generator,
+  - how to construct meshes for wellbore problems with the internal wellbore mesh generator,
   - how to specify initial and boundary conditions, such as reservoir properties, in-situ stresses, mixed loading (mechanical and fluid) at wellbore wall and far-field constraints,
   - how to use multiple solvers in GEOSX for predicting poroplastic deformations in the near wellbore region.
 
@@ -141,7 +141,7 @@ in their corresponding documents.
 In this tutorial, let us focus on the coupling solver.
 This solver (``PoroelasticitySolver``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``SinglePhaseFlowSolver``) and solid solver (here: ``mechanicsSolver``).
-We specify the coupling type (``FIM``, fully implicit method; a choice among several possible options), the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Omega``).
+These solvers are forced to interact through the ``porousMaterialNames="{porousRock}"`` with all the constitutive models. We specify the the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Omega``).
 And more parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics solvers will be simultaneously called and executed for solving the wellbore problem here.
 
 
@@ -194,7 +194,7 @@ If the residual friction angle is set to be less than the initial one, strain we
 And ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
 For this coupled problem, the Biot’s coefficient ``BiotCoefficient`` is assumed to be 1.
 If using an incompressible fluid, user can lower the fluid compressibility ``compressibility`` to 0.
-The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units.
+The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units. And stress-dependent porosity model ``rockPorosity`` and constant permeability ``rockPerm`` model are defined in this section.
 
 
 
@@ -203,11 +203,11 @@ Initial and Boundary Conditions: defining properties with the FieldSpecification
 
 The next step is to specify fields, including:
 
-  - The initial value (the in-situ stresses, permeability, porosity and pore pressure have to be initialized)
+  - The initial value (the in-situ stresses and pore pressure have to be initialized)
   - The boundary conditions (traction and fluid loading at the wellbore wall and constraints of the outer boundaries have to be set)
 
-In this tutorial, we need to specify anisotropic horizontal stress (:math:`\Sigma_h` = 9.0 MPa and :math:`\Sigma_H` = 11.0 MPa) and vertical stress (:math:`\Sigma_v` = 12.0 MPa). 
-A compressive traction (``InnerMechanicalLoad``) :math:`P_w` = -10 MPa and fluid loading (``InnerFluidLoad``) :math:`P_wf` = -10 MPa are applied at the wellbore wall ``rneg``.
+In this tutorial, we need to specify anisotropic horizontal stress (:math:`\Sigma_h` = -9.0 MPa and :math:`\Sigma_H` = -11.0 MPa) and vertical stress (:math:`\Sigma_v` = -12.0 MPa). 
+A compressive traction (``InnerMechanicalLoad``) :math:`P_w` = -10 MPa and fluid loading (``InnerFluidLoad``) :math:`P_wf` = 10 MPa are applied at the wellbore wall ``rneg``.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
@@ -218,7 +218,7 @@ These boundary conditions are set up through the ``FieldSpecifications`` section
     :end-before: <!-- SPHINX_WELLBORE_BC_END -->
 
 
-With ``tractionType="1"``, traction is applied to the wellbore wall ``rneg`` as a pressure specified from the product of scale ``scale="-10.0e6"`` and the outward face normal. 
+With ``tractionType="normal"``, traction is applied to the wellbore wall ``rneg`` as a pressure specified from the product of scale ``scale="-10.0e6"`` and the outward face normal. 
 A table function ``timeFunction`` is used to define the time-dependent loading. 
 The ``coordinates`` and ``values`` form a time-magnitude
 pair for the loading time history. In this case, the loading magnitude decreases linearly as the time evolves. 
@@ -230,20 +230,21 @@ pair for the loading time history. In this case, the loading magnitude decreases
 
 You may note :
 
- - All initial value fields must have ``initialCondition`` field set to ``1``,
- - The ``setName`` field points to the previously defined box to apply the fields,
- - ``nodeManager`` and ``faceManager`` in the ``objectPath`` indicate that the boundary conditions are applied to the element nodes and faces, respectively,
- - ``fieldName`` is the name of the field registered in GEOSX,
- - Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively,
- - And the non-zero values given by ``Scale`` indicate the magnitude of the loading,
- - Some shorthands, such as ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain. For instance, ``xneg`` means the portion of the computational domain located at the left-most in the x-axis, while ``xpos`` refers to the portion located at the right-most area in the x-axis. Similar shorthands include ``ypos``, ``yneg``, ``zpos``, and ``zneg``. 
+ - All initial value fields must have ``initialCondition`` field set to ``1``;
+ - The ``setName`` field points to the previously defined box to apply the fields;
+ - ``nodeManager`` and ``faceManager`` in the ``objectPath`` indicate that the boundary conditions are applied to the element nodes and faces, respectively;
+ - ``fieldName`` is the name of the field registered in GEOSX;
+ - Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively;
+ - And the non-zero values given by ``Scale`` indicate the magnitude of the loading;
+ - Some shorthands, such as ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain. For instance, ``xneg`` means the portion of the computational domain located at the left-most in the x-axis, while ``xpos`` refers to the portion located at the right-most area in the x-axis. Similar shorthands include ``ypos``, ``yneg``, ``zpos``, and ``zneg``;
+ - The mud pressure loading has a negative value due to the negative sign convention for compressive stress in GEOSX. 
 
  
 The parameters used in the simulation are summarized in the following table, which are specified in the
 ``Constitutive`` and ``FieldSpecifications`` sections.
 
 +------------------+-------------------------+------------------+--------------------+
-| Symbol           | Parameter               | Units            | Value              |
+| Symbol           | Parameter               | Unit             | Value              |
 +==================+=========================+==================+====================+
 | :math:`K`        | Bulk Modulus            | [GPa]            | 11.11              |
 +------------------+-------------------------+------------------+--------------------+
@@ -257,19 +258,17 @@ The parameters used in the simulation are summarized in the following table, whi
 +------------------+-------------------------+------------------+--------------------+
 | :math:`c_h`      | Hardening Rate          | [-]              | 0.01               |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`\Sigma_h` | Min Horizontal Stress   | [MPa]            | 9.0                |
+| :math:`\Sigma_h` | Min Horizontal Stress   | [MPa]            | -9.0               |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`\Sigma_H` | Max Horizontal Stress   | [MPa]            | 11.0               |
+| :math:`\Sigma_H` | Max Horizontal Stress   | [MPa]            | -11.0              |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`\Sigma_v` | Vertical Stress         | [MPa]            | 12.0               |
+| :math:`\Sigma_v` | Vertical Stress         | [MPa]            | -12.0              |
 +------------------+-------------------------+------------------+--------------------+
 | :math:`a_0`      | Initial Well Radius     | [m]              | 0.1                |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`P_w`      | Traction at Well        | [MPa]            | 10.0               |
+| :math:`P_w`      | Traction at Well        | [MPa]            | -10.0              |
 +------------------+-------------------------+------------------+--------------------+
 | :math:`P_wf`     | Fluid Pressure at Well  | [MPa]            | 10.0               |
-+------------------+-------------------------+------------------+--------------------+
-| :math:`b`        | Biot's Coefficient      | [-]              | 1.0                |
 +------------------+-------------------------+------------------+--------------------+
 | :math:`\rho_f`   | Fluid Density           | [kg/m\ :sup:`3`] | 1000.0             |
 +------------------+-------------------------+------------------+--------------------+
