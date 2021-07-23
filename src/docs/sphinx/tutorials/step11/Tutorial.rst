@@ -2,13 +2,13 @@
 
 
 ####################################################
-Tutorial 11: Elasto-Plastic Model for Wellbore Problems without fluid flow
+Tutorial 11: Elasto-Plastic Model for Wellbore Problems without Fluid Flow
 ####################################################
 
 
 **Context**
 
-The main goal of this tutorial is to learn how to use the internal wellbore mesh generator and plasticity models to handle wellbore problems in GEOSX. The Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical results. The resulting model can be used as a base for more complex analysis (e.g., wellbore drilling, fluid injection and storage scenarios). 
+The main goal of this tutorial is to learn how to use the internal wellbore mesh generator and an elasto-plastic model to handle wellbore problems in GEOSX. The Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical results. The resulting model can be used as a base for more complex analysis (e.g., wellbore drilling, fluid injection and storage scenarios). 
 
 
 **Objectives**
