@@ -172,6 +172,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       elementSubRegion.registerWrapper< array3d< real64, compflow::LAYOUT_PHASE_COMP > >( viewKeyStruct::phaseComponentFractionOldString() );
       elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityString() );
       elementSubRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityOldString() );
+
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -181,6 +182,11 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the pressures at the faces." );
     }
+
+    // Now that the data has been registered on the mesh, we are ready to resize the fields as necessary.
+    // This needs to happen here, before the call to initializePreSubGroups,
+    // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
+    resizeFields( mesh );
 
   } );
 }
@@ -261,20 +267,13 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
-  // 1. Set key dimensions of the problem
-  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
-  m_numPhases     = fluid0.numFluidPhases();
-  m_numComponents = fluid0.numFluidComponents();
-  m_numDofPerCell = m_numComponents + 1;
-
-  // 2. Validate various models against each other (must have same phases and components)
+  // 1. Validate various models against each other (must have same phases and components)
   validateConstitutiveModels( cm );
 
-  // 3. Resize all fields as necessary, validate constitutive models in regions
+  // 2. Validate constitutive models in regions
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
     MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    resizeFields( meshLevel );
 
     validateModelMapping< MultiFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
     validateModelMapping< RelativePermeabilityBase >( meshLevel.getElemManager(), m_relPermModelNames );
@@ -285,8 +284,18 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
   }
 }
 
-void CompositionalMultiphaseBase::resizeFields( MeshLevel & meshLevel ) const
+void CompositionalMultiphaseBase::resizeFields( MeshLevel & meshLevel )
 {
+  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+
+  // 1. Set key dimensions of the problem
+  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+  m_numPhases     = fluid0.numFluidPhases();
+  m_numComponents = fluid0.numFluidComponents();
+  m_numDofPerCell = m_numComponents + 1;
+
+  // 2. Resize all fields as necessary
   forTargetSubRegions( meshLevel, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );

@@ -381,7 +381,7 @@ protected:
    * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
    * once the number of phases/components is known (e.g. component fractions)
    */
-  void resizeFields( MeshLevel & meshLevel ) const;
+  void resizeFields( MeshLevel & meshLevel );
 
   /**
    * @brief Setup stored views into domain data for the current step
