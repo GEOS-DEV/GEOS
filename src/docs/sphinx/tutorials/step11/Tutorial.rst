@@ -171,7 +171,7 @@ You may note :
 The parameters used in the simulation are summarized in the following table.
 
 +------------------+-------------------------+------------------+---------------+
-| Symbol           | Parameter               | Unit            | Value         |
+| Symbol           | Parameter               | Unit             | Value         |
 +==================+=========================+==================+===============+
 | :math:`K`        | Bulk modulus            | [MPa]            | 500           |
 +------------------+-------------------------+------------------+---------------+
@@ -191,7 +191,7 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+-------------------------+------------------+---------------+
 | :math:`a_0`      | Initial Well Radius     | [m]              | 0.1           |
 +------------------+-------------------------+------------------+---------------+
-| :math:`P_w`      | Mud Pressure           | [MPa]            | 2.0           |
+| :math:`P_w`      | Mud Pressure            | [MPa]            | 2.0           |
 +------------------+-------------------------+------------------+---------------+
 
 
