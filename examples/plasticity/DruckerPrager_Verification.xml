@@ -137,7 +137,7 @@
 </Outputs>
 
 <!-- SPHINX_DP_WELLBORE_SOLVER -->
-<Solvers gravityVector="0.0, 0.0, 0.0">
+<Solvers gravityVector="{0.0, 0.0, 0.0}">
 <SolidMechanics_LagrangianFEM 
   name="mechanicsSolver" 
   timeIntegrationOption="QuasiStatic"
