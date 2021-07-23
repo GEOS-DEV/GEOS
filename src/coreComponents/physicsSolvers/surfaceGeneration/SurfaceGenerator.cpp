@@ -3042,7 +3042,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
           tipNodeSIF = pow( (fabs( tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea ) + fabs( tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea )
                              + fabs( tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea )), 0.5 );
 
-          if( LvArray::tensorOps::AiBi< 3 >( trailingNodeDisp, faceNormalVector ) < 0.0 )  //In case the aperture is negative with the presence of confining stress.
+          if( LvArray::tensorOps::AiBi< 3 >( trailingNodeDisp, faceNormalVector ) < 0.0 )  //In case the aperture is negative with the
+                                                                                           // presence of confining stress.
           {
             tipNodeSIF *= -1;
           }
