@@ -252,7 +252,7 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
 <PeriodicEvent 
   name="outputs"
   timeFrequency="4976.39940531"
-  targetExactTimestep="497639.940531"
+  targetExactTimestep="1"
   target="/Outputs/siloOutput"
 />
 
