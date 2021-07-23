@@ -24,6 +24,7 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
@@ -1264,29 +1265,22 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 
     for( auto const & wrapperIter : subRegion.wrappers() )
     {
-      WrapperBase const * const wrapper = wrapperIter.second;
+      WrapperBase const & wrapper = *wrapperIter.second;
 
-      if( wrapper->getPlotLevel() < m_plotLevel )
+      if( wrapper.getPlotLevel() < m_plotLevel )
       {
         // the field name is the key to the map
-        string const & fieldName = wrapper->getName();
+        string const & fieldName = wrapper.getName();
+        viewPointers[esr][fieldName] = &wrapper;
 
-        viewPointers[esr][fieldName] = wrapper;
-
-        std::type_info const & typeID = wrapper->getTypeId();
-
-        rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
-                                        false,
-                                        [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )
+        types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
         {
-          typedef decltype( array ) arrayType;
-          Wrapper< arrayType > const & sourceWrapper = dynamicCast< Wrapper< arrayType > const & >( *wrapper );
-          traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference();
+          using ArrayType = decltype( array );
+          Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( wrapper );
+          Wrapper< ArrayType > & newWrapper = fakeGroup.registerWrapper< ArrayType >( fieldName );
 
-          Wrapper< arrayType > & newWrapper = fakeGroup.registerWrapper< arrayType >( fieldName );
           newWrapper.setPlotLevel( PlotLevel::LEVEL_0 );
-          arrayType & newarray = newWrapper.reference();
-          newarray.resize( arrayType::NDIM, sourceArray.dims() );
+          newWrapper.reference().resize( ArrayType::NDIM, sourceWrapper.reference().dims() );
         } );
       }
     }
@@ -1296,35 +1290,31 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 
   for( auto & wrapperIter : fakeGroup.wrappers() )
   {
-    WrapperBase * const wrapper = wrapperIter.second;
-    string const & fieldName = wrapper->getName();
-    std::type_info const & typeID = wrapper->getTypeId();
+    WrapperBase & wrapper = *wrapperIter.second;
+    string const & fieldName = wrapper.getName();
 
-    rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
-                                    false,
-                                    [&]( auto array, auto GEOSX_UNUSED_PARAM( scalar ) )
+    types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
     {
-      using arrayType =  decltype( array );
-      using WrapperType = Wrapper< arrayType >;
-      WrapperType & wrapperT = dynamicCast< Wrapper< arrayType > & >( *wrapper );
-      arrayType & targetArray = wrapperT.reference();
+      using ArrayType = decltype( array );
+      Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
+      ArrayType & targetArray = wrapperT.reference();
 
       localIndex counter = 0;
-      elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
-        [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
+      elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >( [&]( localIndex const esr,
+                                                                         ElementSubRegionBase const & subRegion )
       {
         // check if the field actually exists / plotted on the current subregion
         if( viewPointers[esr].count( fieldName ) > 0 )
         {
-          WrapperType const & sourceWrapper = dynamic_cast< WrapperType const & >( *(viewPointers[esr].at( fieldName )) );
+          Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( *( viewPointers[esr].at( fieldName ) ) );
           auto const sourceArray = sourceWrapper.reference().toViewConst();
 
-          localIndex const offset = counter * targetArray.strides()[ 0 ];
+          localIndex const offset = counter * targetArray.strides()[0];
           GEOSX_ERROR_IF_GT( sourceArray.size(), targetArray.size() - offset );
 
           for( localIndex i = 0; i < sourceArray.size(); ++i )
           {
-            targetArray.data()[ i + offset ] = sourceArray.data()[ i ];
+            targetArray.data()[i + offset] = sourceArray.data()[i];
           }
 
           counter += sourceArray.size( 0 );
@@ -1366,6 +1356,39 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
 
 }
 
+static std::vector< int > getSiloNodeOrdering( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Line:          return { 0, 1 };
+    case ElementType::Triangle:      return { 0, 1, 2 };
+    case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
+    case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
+    case ElementType::Tetrahedron:    return { 1, 0, 2, 3 };
+    case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
+    case ElementType::Prism:         return { 1, 0, 2, 3, 5, 4, 0, 0 };
+    case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
+  }
+  return {};
+}
+
+static int toSiloShapeType( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Line:          return DB_ZONETYPE_BEAM;
+    case ElementType::Triangle:      return DB_ZONETYPE_TRIANGLE;
+    case ElementType::Quadrilateral: return DB_ZONETYPE_QUAD;
+    case ElementType::Polygon:       return DB_ZONETYPE_POLYGON;
+    case ElementType::Tetrahedron:    return DB_ZONETYPE_TET;
+    case ElementType::Pyramid:       return DB_ZONETYPE_PYRAMID;
+    case ElementType::Prism:         return DB_ZONETYPE_PRISM;
+    case ElementType::Hexahedron:    return DB_ZONETYPE_HEX;
+    case ElementType::Polyhedron:    return DB_ZONETYPE_POLYHEDRON;
+  }
+  return -1;
+}
 
 void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
                                  NodeManager const & nodeManager,
@@ -1391,9 +1414,9 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
   {
     array1d< localIndex * > meshConnectivity( numElementShapes );
     array1d< globalIndex * > globalElementNumbers( numElementShapes );
-    array1d< integer > shapecnt( numElementShapes );
-    array1d< integer > shapetype( numElementShapes );
-    array1d< integer > shapesize( numElementShapes );
+    array1d< int > shapecnt( numElementShapes );
+    array1d< int > shapetype( numElementShapes );
+    array1d< int > shapesize( numElementShapes );
     array1d< char > ghostZoneFlag;
 
 
@@ -1411,13 +1434,10 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
       elementToNodeMap[count].resize( elementSubRegion.size(), elementSubRegion.numNodesPerElement( 0 ) );
 
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-
-
-      string const & elementType = elementSubRegion.getElementTypeString();
-      std::vector< int > const & nodeOrdering = elementSubRegion.getSiloNodeOrdering();
+      std::vector< int > const nodeOrdering = getSiloNodeOrdering( elementSubRegion.getElementType() );
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
-        integer numNodesPerElement = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( k ));
+        integer const numNodesPerElement = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( k ) );
         for( localIndex a = 0; a < numNodesPerElement; ++a )
         {
           elementToNodeMap[count]( k, a ) = elemsToNodes[k][nodeOrdering[a]];
@@ -1435,33 +1455,11 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
 
       meshConnectivity[count] = elementToNodeMap[count].data();
 
-      //        globalElementNumbers[count] = elementRegion.localToGlobalMap().data();
-      shapecnt[count] = static_cast< int >(elementSubRegion.size());
-
-
-      if( !elementType.compare( 0, 4, "C3D8" ) )
-      {
-        shapetype[count] = DB_ZONETYPE_HEX;
-      }
-      else if( !elementType.compare( 0, 4, "C3D4" ) )
-      {
-        shapetype[count] = DB_ZONETYPE_TET;
-      }
-      else if( !elementType.compare( 0, 4, "C3D6" ) )
-      {
-        shapetype[count] = DB_ZONETYPE_PRISM;
-        writeArbitraryPolygon = true;
-      }
-      else if( !elementType.compare( 0, 4, "C3D5" ) )
-      {
-        shapetype[count] = DB_ZONETYPE_PYRAMID;
-        writeArbitraryPolygon = true;
-      }
-      else if( !elementType.compare( 0, 4, "BEAM" ) )
-      {
-        shapetype[count] = DB_ZONETYPE_BEAM;
-      }
+      // globalElementNumbers[count] = elementRegion.localToGlobalMap().data();
+      shapecnt[count] = static_cast< int >( elementSubRegion.size() );
+      shapetype[count] = toSiloShapeType( elementSubRegion.getElementType() );
       shapesize[count] = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( 0 ) );
+      writeArbitraryPolygon = writeArbitraryPolygon || shapetype[count] == DB_ZONETYPE_PRISM || shapetype[count] == DB_ZONETYPE_PYRAMID;
       ++count;
     } );
 

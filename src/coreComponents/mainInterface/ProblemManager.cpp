@@ -183,7 +183,7 @@ void ProblemManager::parseCommandLineInput()
   commandLine.getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
 
   string & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
-  inputFileName = opts.inputFileName;
+  xmlWrapper::buildMultipleInputXML( opts.inputFileNames, inputFileName );
 
   string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
   schemaName = opts.schemaName;
@@ -611,9 +611,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
             {
               elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
               {
-                string const elementTypeString = subRegion.getElementTypeString();
-
-                std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( elementTypeString );
+                std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 
                 finiteElement::FiniteElementBase &
                 fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
