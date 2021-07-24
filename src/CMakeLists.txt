@@ -114,19 +114,33 @@ set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA )
-    add_custom_target( geosx_update_rst_tables
+
+    set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/coreComponents/schema)
+    set(SCRIPT_DIR ${CMAKE_SOURCE_DIR}/../scripts)
+
+    add_custom_target( geosx_generate_schema
                        ALL
-                       COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR} > updateRstTables.log
+                       COMMAND geosx -s ${SCHEMA_DIR}/schema.xsd >generate_schema.log 2>&1 || (cat generate_schema.log && exit 1)
                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                        DEPENDS geosx
-                       )
+                       COMMENT "Generating XML schema"
+                     )
+
+    add_custom_target( geosx_update_rst_tables
+                       ALL
+                       COMMAND python ${SCRIPT_DIR}/SchemaToRSTDocumentation.py ${SCHEMA_DIR} >update_rst_tables.log 2>&1 || (cat update_rst_tables.log && exit 1)
+                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                       DEPENDS geosx_generate_schema
+                       COMMENT "Generating schema-dependent RST files"
+                     )
 
     add_custom_target( geosx_validate_all_xml_files
                        ALL
-                       COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/validateXMLFiles.bash -g ${CMAKE_SOURCE_DIR}/coreComponents/schema/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+                       COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                        DEPENDS geosx_update_rst_tables
-                       )
+                       COMMENT "Validating all XML files in the repository against the schema"
+                     )
 endif()
 
 if( SPHINX_FOUND )
@@ -135,12 +149,12 @@ endif()
 
 
 install( DIRECTORY ../examples/ 
-     DESTINATION examples
-     )
+         DESTINATION examples
+       )
 
 install( DIRECTORY ../scripts/ 
-     DESTINATION scripts
-     )
+         DESTINATION scripts
+       )
 
 if( ENABLE_PYGEOSX )
   add_subdirectory( pygeosx )
