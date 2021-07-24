@@ -201,18 +201,20 @@ template< typename SOLID_TYPE,
           typename PERM_TYPE >
 void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::initializePreSubGroups()
 {
-  if ( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
+  if( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
   {
-    GEOSX_ERROR(" The type of solid model does not match the type expected by the coupled solid, " << this->getName() );
+    GEOSX_ERROR( " The coupled solid " << this->getName() << " expects a solid model of type " << SOLID_TYPE::catalogName()
+                 << " but the solid model is " << getSolidModel().getCatalogName() );
   }
-  if ( PORO_TYPE::catalogName() != getPorosityModel().getCatalogName() )
+  if( PORO_TYPE::catalogName() != getPorosityModel().getCatalogName() )
   {
-    GEOSX_ERROR(" The type of porosity model does not match the type expected by the coupled solid, " << this->getName() );
-
+    GEOSX_ERROR( " The coupled solid " << this->getName() << " expects a porosity model of type " << PORO_TYPE::catalogName()
+                    << " but the solid model is " << getPorosityModel().getCatalogName() );
   }
-  if ( PERM_TYPE::catalogName() != getPermModel().getCatalogName() )
+  if( PERM_TYPE::catalogName() != getPermModel().getCatalogName() )
   {
-    GEOSX_ERROR(" The type of permeability model does not match the type expected by the coupled solid, " << this->getName() );
+    GEOSX_ERROR( " The coupled solid " << this->getName() << " expects a permeability model of type " << PERM_TYPE::catalogName()
+                    << " but the solid model is " << getPermModel().getCatalogName() );
   }
 }
 
