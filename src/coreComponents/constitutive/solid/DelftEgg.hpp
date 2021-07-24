@@ -288,8 +288,6 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
     // check for convergence
 
     norm = LvArray::tensorOps::l2Norm< 3 >( residual );
-     // std::cout<<"iter= "<<iter<<" , resid = "<<norm<<std::endl;
-     // std::cout<<"solution[0]= "<<solution[0]<<" , solution[1]= "<<solution[1]<<" , solution[2]= "<<solution[2]<<std::endl;
     if( iter==0 )
     {
       normZero = norm;
@@ -506,7 +504,7 @@ public:
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
       /// string/key for default recompression index
-      static constexpr char const * defaultRecompressionIndexString() { return "defaultreCompressionIndex"; }
+      static constexpr char const * defaultRecompressionIndexString() { return "defaultRecompressionIndex"; }
       
     /// string/key for virgin compression index
     static constexpr char const * defaultVirginCompressionIndexString() { return "defaultVirginCompressionIndex"; }

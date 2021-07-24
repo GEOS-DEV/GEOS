@@ -26,6 +26,7 @@
 #include "solid/DruckerPrager.hpp"
 #include "solid/DruckerPragerExtended.hpp"
 #include "solid/ModifiedCamClay.hpp"
+#include "solid/DelftEgg.hpp"
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
@@ -85,21 +86,25 @@ struct ConstitutivePassThru< SolidBase >
     {
       lambda( *ptr5 );
     }
-    else if( auto * const ptr6 = dynamic_cast< DruckerPrager * >( &constitutiveRelation ) )
+    else if( auto * const ptr6 = dynamic_cast< DelftEgg * >( &constitutiveRelation ) )
     {
       lambda( *ptr6 );
     }
-    else if( auto * const ptr7 = dynamic_cast< ElasticIsotropic * >( &constitutiveRelation ) )
+    else if( auto * const ptr7 = dynamic_cast< DruckerPrager * >( &constitutiveRelation ) )
     {
       lambda( *ptr7 );
     }
-    else if( auto * const ptr8 = dynamic_cast< ElasticTransverseIsotropic * >( &constitutiveRelation ) )
+    else if( auto * const ptr8 = dynamic_cast< ElasticIsotropic * >( &constitutiveRelation ) )
     {
       lambda( *ptr8 );
     }
-    else if( auto * const ptr9 = dynamic_cast< ElasticIsotropicPressureDependent * >( &constitutiveRelation ) )
+    else if( auto * const ptr9 = dynamic_cast< ElasticTransverseIsotropic * >( &constitutiveRelation ) )
     {
       lambda( *ptr9 );
+    }
+    else if( auto * const ptr10 = dynamic_cast< ElasticIsotropicPressureDependent * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr10 );
     }
     else
     {
@@ -152,21 +157,25 @@ struct ConstitutivePassThru< PoroElasticBase >
     {
       lambda( *ptr2 );
     }
-    else if( auto * const ptr3 = dynamic_cast< PoroElastic< DruckerPrager > * >( &constitutiveRelation ) )
+    else if( auto * const ptr3 = dynamic_cast< PoroElastic< DelftEgg > * >( &constitutiveRelation ) )
     {
       lambda( *ptr3 );
     }
-    else if( auto * const ptr4 = dynamic_cast< PoroElastic< ElasticIsotropic > * >( &constitutiveRelation ) )
+    else if( auto * const ptr4 = dynamic_cast< PoroElastic< DruckerPrager > * >( &constitutiveRelation ) )
     {
       lambda( *ptr4 );
     }
-    else if( auto * const ptr5 = dynamic_cast< PoroElastic< ElasticTransverseIsotropic > * >( &constitutiveRelation ) )
+    else if( auto * const ptr5 = dynamic_cast< PoroElastic< ElasticIsotropic > * >( &constitutiveRelation ) )
     {
       lambda( *ptr5 );
     }
-    else if( auto * const ptr6 = dynamic_cast< PoroElastic< ElasticIsotropicPressureDependent > * >( &constitutiveRelation ) )
+    else if( auto * const ptr6 = dynamic_cast< PoroElastic< ElasticTransverseIsotropic > * >( &constitutiveRelation ) )
     {
       lambda( *ptr6 );
+    }
+    else if( auto * const ptr7 = dynamic_cast< PoroElastic< ElasticIsotropicPressureDependent > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr7 );
     }
     else
     {

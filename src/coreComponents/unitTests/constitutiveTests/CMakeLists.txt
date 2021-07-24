@@ -13,10 +13,7 @@ set( gtest_triaxial_xmls
      testTriaxial_elasticIsotropicPressureDependent.xml
      testTriaxial_modifiedCamClay.xml
      testTriaxial_delftEggUseLinear.xml
-     testTriaxial_delftEggLoadPathDry.xml
-     testTriaxial_delftEggLoadPathWet.xml
      testTriaxial_modifiedCamClayVolumetric.xml
-     testTriaxial_delftEggVolumetric.xml
      testTriaxial_delftEggLoadPathDryUseLinear.xml
      testTriaxial_delftEggLoadPathWetUseLinear.xml
    )
