@@ -204,17 +204,17 @@ void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::initializePreSubGroups()
   if( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
   {
     GEOSX_ERROR( " The coupled solid " << this->getName() << " expects a solid model of type " << SOLID_TYPE::catalogName()
-                 << " but the solid model is " << getSolidModel().getCatalogName() );
+                 << " but the specified solid model \""<<m_solidModelName<<"\" is of type" << getSolidModel().getCatalogName() );
   }
   if( PORO_TYPE::catalogName() != getPorosityModel().getCatalogName() )
   {
     GEOSX_ERROR( " The coupled solid " << this->getName() << " expects a porosity model of type " << PORO_TYPE::catalogName()
-                    << " but the solid model is " << getPorosityModel().getCatalogName() );
+                    << " but the specified porosity model \"<<m_porosityModelName<<"\" is of type " << getPorosityModel().getCatalogName() );
   }
   if( PERM_TYPE::catalogName() != getPermModel().getCatalogName() )
   {
     GEOSX_ERROR( " The coupled solid " << this->getName() << " expects a permeability model of type " << PERM_TYPE::catalogName()
-                    << " but the solid model is " << getPermModel().getCatalogName() );
+                    << " but the specified permeability model \""<<m_permeabilityModelName<<"\" is of type " << getPermModel().getCatalogName() );
   }
 }
 
