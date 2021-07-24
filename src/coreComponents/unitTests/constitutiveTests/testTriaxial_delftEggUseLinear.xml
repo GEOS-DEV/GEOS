@@ -4,7 +4,7 @@
   <Tasks>
     <TriaxialDriver
       name="triaxialDriver"
-      material="MCC"
+      material="DE"
       mode="mixedControl" 
       axialControl="strainFunction"
       radialControl="stressFunction"
@@ -24,12 +24,10 @@
 
   <Constitutive>
 
-    <ModifiedCamClay
-      name="MCC"
-      useLinear="1"
+    <DelftEgg
+      name="DE"
       defaultDensity="2700"
-      defaultRefPressure="-1.0"
-      defaultRefStrainVol="0"
+      defaultBulkModulus="500.0"
       defaultShearModulus="200.0"
       defaultPreConsolidationPressure="-2.1"
       defaultShapeParameter="1.8"
