@@ -40,11 +40,11 @@ DelftEgg::DelftEgg( string const & name, Group * const parent ):
 {
   // register default values
 
-    registerWrapper( viewKeyStruct::defaultRecompressionIndexString(), &m_defaultRecompressionIndex ).
-      setApplyDefaultValue( 2e-3 ).
-      setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "Recompresion Index" );
-    
+  registerWrapper( viewKeyStruct::defaultRecompressionIndexString(), &m_defaultRecompressionIndex ).
+    setApplyDefaultValue( 2e-3 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Recompresion Index" );
+
   registerWrapper( viewKeyStruct::defaultVirginCompressionIndexString(), &m_defaultVirginCompressionIndex ).
     setApplyDefaultValue( 5e-3 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -67,10 +67,10 @@ DelftEgg::DelftEgg( string const & name, Group * const parent ):
 
   // register fields
 
-    registerWrapper( viewKeyStruct::recompressionIndexString(), &m_recompressionIndex ).
-      setApplyDefaultValue( -1 ).
-      setDescription( " Recompression index" );
-    
+  registerWrapper( viewKeyStruct::recompressionIndexString(), &m_recompressionIndex ).
+    setApplyDefaultValue( -1 ).
+    setDescription( " Recompression index" );
+
   registerWrapper( viewKeyStruct::virginCompressionIndexString(), &m_virginCompressionIndex ).
     setApplyDefaultValue( -1 ).
     setDescription( "Virgin compression index" );
@@ -99,7 +99,7 @@ DelftEgg::~DelftEgg()
 
 
 void DelftEgg::allocateConstitutiveData( dataRepository::Group & parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+                                         localIndex const numConstitutivePointsPerParentIndex )
 {
   m_newPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
   m_oldPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
@@ -125,9 +125,9 @@ void DelftEgg::postProcessInput()
   getWrapper< array2d< real64 > >( viewKeyStruct::newPreConsolidationPressureString() ).
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
-    getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).
-      setApplyDefaultValue( m_defaultRecompressionIndex );
-    
+  getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).
+    setApplyDefaultValue( m_defaultRecompressionIndex );
+
   getWrapper< array1d< real64 > >( viewKeyStruct::virginCompressionIndexString() ).
     setApplyDefaultValue( m_defaultVirginCompressionIndex );
 

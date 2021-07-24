@@ -47,16 +47,16 @@ public:
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
-    DelftEggUpdates( arrayView1d< real64 const > const & recompressionIndex,
-                          arrayView1d< real64 const > const & virginCompressionIndex,
-                          arrayView1d< real64 const > const & cslSlope,
-                          arrayView1d< real64 const > const & shapeParameter,
-                          arrayView2d< real64 > const & newPreConsolidationPressure,
-                          arrayView2d< real64 > const & oldPreConsolidationPressure,
-                          arrayView1d< real64 const > const & bulkModulus,
-                          arrayView1d< real64 const > const & shearModulus,
-                          arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                          arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
+  DelftEggUpdates( arrayView1d< real64 const > const & recompressionIndex,
+                   arrayView1d< real64 const > const & virginCompressionIndex,
+                   arrayView1d< real64 const > const & cslSlope,
+                   arrayView1d< real64 const > const & shapeParameter,
+                   arrayView2d< real64 > const & newPreConsolidationPressure,
+                   arrayView2d< real64 > const & oldPreConsolidationPressure,
+                   arrayView1d< real64 const > const & bulkModulus,
+                   arrayView1d< real64 const > const & shearModulus,
+                   arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                   arrayView3d< real64, solid::STRESS_USD > const & oldStress ):
     ElasticIsotropicUpdates( bulkModulus, shearModulus, newStress, oldStress ),
     m_recompressionIndex( recompressionIndex ),
     m_virginCompressionIndex( virginCompressionIndex ),
@@ -70,16 +70,16 @@ public:
   DelftEggUpdates( DelftEggUpdates const & ) = default;
 
   /// Default move constructor
-    DelftEggUpdates( DelftEggUpdates && ) = default;
+  DelftEggUpdates( DelftEggUpdates && ) = default;
 
   /// Deleted default constructor
-    DelftEggUpdates() = delete;
+  DelftEggUpdates() = delete;
 
   /// Deleted copy assignment operator
-    DelftEggUpdates & operator=( DelftEggUpdates const & ) = delete;
+  DelftEggUpdates & operator=( DelftEggUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-    DelftEggUpdates & operator=( DelftEggUpdates && ) =  delete;
+  DelftEggUpdates & operator=( DelftEggUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
@@ -131,10 +131,10 @@ public:
 
 private:
 
-    /// A reference to the ArrayView holding the  recompression index for each element.
-    arrayView1d< real64 const > const m_recompressionIndex;
-    
-    /// A reference to the ArrayView holding the virgin compression index for each element.
+  /// A reference to the ArrayView holding the  recompression index for each element.
+  arrayView1d< real64 const > const m_recompressionIndex;
+
+  /// A reference to the ArrayView holding the virgin compression index for each element.
   arrayView1d< real64 const > const m_virginCompressionIndex;
 
   /// A reference to the ArrayView holding the slope of the critical state line for each element.
@@ -155,20 +155,20 @@ private:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DelftEggUpdates::evaluateYield( real64 const p,
-                                            real64 const q,
-                                            real64 const pc,
-                                            real64 const M,
-                                            real64 const alpha,
-                                            real64 const Cc,
-                                            real64 const Cr,
-                                            real64 const bulkModulus,
-                                            real64 const mu,
-                                            real64 & f,
-                                            real64 & df_dp,
-                                            real64 & df_dq,
-                                            real64 & df_dpc,
-                                            real64 & df_dp_dve,
-                                            real64 & df_dq_dse ) const
+                                     real64 const q,
+                                     real64 const pc,
+                                     real64 const M,
+                                     real64 const alpha,
+                                     real64 const Cc,
+                                     real64 const Cr,
+                                     real64 const bulkModulus,
+                                     real64 const mu,
+                                     real64 & f,
+                                     real64 & df_dp,
+                                     real64 & df_dq,
+                                     real64 & df_dpc,
+                                     real64 & df_dp_dve,
+                                     real64 & df_dq_dse ) const
 {
   real64 const c = alpha/(alpha+1.)*pc;
   real64 a = alpha;
@@ -197,10 +197,10 @@ void DelftEggUpdates::evaluateYield( real64 const p,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DelftEggUpdates::smallStrainUpdate( localIndex const k,
-                                                localIndex const q,
-                                                real64 const ( &strainIncrement )[6],
-                                                real64 ( & stress )[6],
-                                                real64 ( & stiffness )[6][6] ) const
+                                         localIndex const q,
+                                         real64 const ( &strainIncrement )[6],
+                                         real64 ( & stress )[6],
+                                         real64 ( & stiffness )[6][6] ) const
 {
 
   // Rename variables for easier implementation
@@ -244,8 +244,6 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
 // else, plasticity (trial stress point lies outside yield surface)
 
-  //  real64 eps_s_trial = trialQ/3.0/mu;
-
   eps_v_trial = trialP/bulkModulus;
 
   eps_s_trial = trialQ/3.0/mu;
@@ -267,7 +265,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
   for( localIndex iter=0; iter<20; ++iter )
   {
 
-      trialP = solution[0] * bulkModulus;
+    trialP = solution[0] * bulkModulus;
 
     trialQ = 3. * mu * solution[1];
 
@@ -310,7 +308,6 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
       solution[1] += delta[1];
       solution[2] += delta[2];
       normOld = norm;
-       // std::cout<<"cutting!"<<std::endl;
     }
     else
     {
@@ -424,9 +421,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
                          + c3 * identity[i] * deviator[j]
                          + c4 * deviator[i] * identity[j]
                          + c5 * deviator[i] * deviator[j];
-      //   std::cout<<stiffness[i][j]<<" , ";
     }
-    //std::cout<<" ; "<<std::endl;
   }
   // remember history variables before returning
 
@@ -441,10 +436,10 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DelftEggUpdates::smallStrainUpdate( localIndex const k,
-                                                localIndex const q,
-                                                real64 const ( &strainIncrement )[6],
-                                                real64 ( & stress )[6],
-                                                DiscretizationOps & stiffness ) const
+                                         localIndex const q,
+                                         real64 const ( &strainIncrement )[6],
+                                         real64 ( & stress )[6],
+                                         DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
 }
@@ -468,7 +463,7 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-    DelftEgg( string const & name, Group * const parent );
+  DelftEgg( string const & name, Group * const parent );
 
   /**
    * Default Destructor
@@ -503,9 +498,9 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-      /// string/key for default recompression index
-      static constexpr char const * defaultRecompressionIndexString() { return "defaultRecompressionIndex"; }
-      
+    /// string/key for default recompression index
+    static constexpr char const * defaultRecompressionIndexString() { return "defaultRecompressionIndex"; }
+
     /// string/key for virgin compression index
     static constexpr char const * defaultVirginCompressionIndexString() { return "defaultVirginCompressionIndex"; }
 
@@ -518,9 +513,9 @@ public:
     /// string/key for default pre-consolidation pressure
     static constexpr char const * defaultPreConsolidationPressureString() { return "defaultPreConsolidationPressure"; }
 
-      /// string/key for recompression index
-      static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
-      
+    /// string/key for recompression index
+    static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
+
     /// string/key for virgin compression index
     static constexpr char const * virginCompressionIndexString() { return "virginCompressionIndex"; }
 
@@ -541,18 +536,18 @@ public:
    * @brief Create a instantiation of the DelftEggUpdate class that refers to the data in this.
    * @return An instantiation of DelftEggUpdate.
    */
-    DelftEggUpdates createKernelUpdates() const
+  DelftEggUpdates createKernelUpdates() const
   {
     return DelftEggUpdates( m_recompressionIndex,
-                                   m_virginCompressionIndex,
-                                   m_cslSlope,
-                                   m_shapeParameter,
-                                   m_newPreConsolidationPressure,
-                                   m_oldPreConsolidationPressure,
-                                   m_bulkModulus,
-                                   m_shearModulus,
-                                   m_newStress,
-                                   m_oldStress );
+                            m_virginCompressionIndex,
+                            m_cslSlope,
+                            m_shapeParameter,
+                            m_newPreConsolidationPressure,
+                            m_oldPreConsolidationPressure,
+                            m_bulkModulus,
+                            m_shearModulus,
+                            m_newStress,
+                            m_oldStress );
   }
 
   /**
@@ -581,10 +576,10 @@ public:
 
 protected:
   virtual void postProcessInput() override;
-    
-    /// Material parameter: The default value of the recompression index
-    real64 m_defaultRecompressionIndex;
-    
+
+  /// Material parameter: The default value of the recompression index
+  real64 m_defaultRecompressionIndex;
+
   /// Material parameter: The default value of the virgin compression index
   real64 m_defaultVirginCompressionIndex;
 
@@ -597,9 +592,9 @@ protected:
   /// Material parameter: The default value of the preconsolidation pressure
   real64 m_defaultPreConsolidationPressure;
 
-    /// Material parameter: The recompression index for each element
-    array1d< real64 > m_recompressionIndex;
-    
+  /// Material parameter: The recompression index for each element
+  array1d< real64 > m_recompressionIndex;
+
   /// Material parameter: The virgin compression index for each element
   array1d< real64 > m_virginCompressionIndex;
 

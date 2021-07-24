@@ -265,8 +265,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
     // check for convergence
 
     norm = LvArray::tensorOps::l2Norm< 3 >( residual );
-    // std::cout<<"iter= "<<iter<<" , resid = "<<norm<<std::endl;
-    // std::cout<<"solution[0]= "<<solution[0]<<" , solution[1]= "<<solution[1]<<" , solution[2]= "<<solution[2]<<std::endl;
+
     if( iter==0 )
     {
       normZero = norm;
@@ -289,7 +288,6 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
       solution[1] += delta[1];
       solution[2] += delta[2];
       normOld = norm;
-      // std::cout<<"cutting!"<<std::endl;
     }
     else
     {
@@ -306,7 +304,6 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
       jacobian[2][0] = (dp_dve * df_dp - dpc_dve * df_dpc)*scale;
       jacobian[2][1] = (dq_dse * df_dq)*scale;
       jacobian[2][2] = 0.0;
-
 
       LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
       LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
@@ -393,9 +390,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
                          + c3 * identity[i] * deviator[j]
                          + c4 * deviator[i] * identity[j]
                          + c5 * deviator[i] * deviator[j];
-     //    std::cout<<stiffness[i][j]<<" , ";
     }
-   // std::cout<<" ; "<<std::endl;
   }
   // remember history variables before returning
 
@@ -472,25 +467,25 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    /// string/key for default cohesion
+    /// string/key for default virgin compression index
     static constexpr char const * defaultVirginCompressionIndexString() { return "defaultVirginCompressionIndex"; }
 
-    /// string/key for default cohesion
+    /// string/key for default slope of the critical state line
     static constexpr char const * defaultCslSlopeString() { return "defaultCslSlope"; }
 
-    /// string/key for default cohesion
+    /// string/key for default preconsolidation pressure
     static constexpr char const * defaultPreConsolidationPressureString() { return "defaultPreConsolidationPressure"; }
 
-    /// string/key for cohesion
+    /// string/key for virgin compression index
     static constexpr char const * virginCompressionIndexString() { return "virginCompressionIndex"; }
 
-    /// string/key for cohesion
+    /// string/key for slope of the criticalstate line
     static constexpr char const * cslSlopeString() { return "cslSlope"; }
 
-    /// string/key for preconsolidation pressure
+    /// string/key for new preconsolidation pressure
     static constexpr char const * newPreConsolidationPressureString() { return "preConsolidationPressure"; }
 
-    /// string/key for cohesion
+    /// string/key for old preconsolidation pressure
     static constexpr char const * oldPreConsolidationPressureString() { return "oldPreConsolidationPressure"; }
   };
 
