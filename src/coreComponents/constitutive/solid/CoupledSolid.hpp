@@ -114,8 +114,7 @@ public:
    */
   virtual string getCatalogName() const override { return catalogName(); }
 
-//  /// Post-process XML input
-//  virtual void postProcessInput() override;
+  virtual void initializePreSubGroups() override final;
 
   struct viewKeyStruct
   {
@@ -196,6 +195,26 @@ template< typename SOLID_TYPE,
 CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::~CoupledSolid()
 {}
 
+
+template< typename SOLID_TYPE,
+          typename PORO_TYPE,
+          typename PERM_TYPE >
+void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::initializePreSubGroups()
+{
+  if ( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
+  {
+    GEOSX_ERROR(" The type of solid model does not match the type expected by the coupled solid, " << this->getName() );
+  }
+  if ( PORO_TYPE::catalogName() != getPorosityModel().getCatalogName() )
+  {
+    GEOSX_ERROR(" The type of porosity model does not match the type expected by the coupled solid, " << this->getName() );
+
+  }
+  if ( PERM_TYPE::catalogName() != getPermModel().getCatalogName() )
+  {
+    GEOSX_ERROR(" The type of permeability model does not match the type expected by the coupled solid, " << this->getName() );
+  }
+}
 
 }
 } /* namespace geosx */
