@@ -13,10 +13,10 @@
  */
 
 /**
- *  @file ModifiedCamClay.cpp
+ *  @file DelftEgg.cpp
  */
 
-#include "ModifiedCamClay.hpp"
+#include "DelftEgg.hpp"
 
 namespace geosx
 {
@@ -24,12 +24,14 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
-  ElasticIsotropicPressureDependent( name, parent ),
+DelftEgg::DelftEgg( string const & name, Group * const parent ):
+  ElasticIsotropic( name, parent ),
+  m_defaultRecompressionIndex(),
   m_defaultVirginCompressionIndex(),
   m_defaultCslSlope(),
   m_defaultShapeParameter(),
   m_defaultPreConsolidationPressure(),
+  m_recompressionIndex(),
   m_virginCompressionIndex(),
   m_cslSlope(),
   m_shapeParameter(),
@@ -38,6 +40,11 @@ ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
 {
   // register default values
 
+    registerWrapper( viewKeyStruct::defaultRecompressionIndexString(), &m_defaultRecompressionIndex ).
+      setApplyDefaultValue( 2e-3 ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setDescription( "Recompresion Index" );
+    
   registerWrapper( viewKeyStruct::defaultVirginCompressionIndexString(), &m_defaultVirginCompressionIndex ).
     setApplyDefaultValue( 5e-3 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -60,6 +67,10 @@ ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
 
   // register fields
 
+    registerWrapper( viewKeyStruct::recompressionIndexString(), &m_recompressionIndex ).
+      setApplyDefaultValue( -1 ).
+      setDescription( " Recompression index" );
+    
   registerWrapper( viewKeyStruct::virginCompressionIndexString(), &m_virginCompressionIndex ).
     setApplyDefaultValue( -1 ).
     setDescription( "Virgin compression index" );
@@ -83,32 +94,28 @@ ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
 }
 
 
-ModifiedCamClay::~ModifiedCamClay()
+DelftEgg::~DelftEgg()
 {}
 
 
-void ModifiedCamClay::allocateConstitutiveData( dataRepository::Group & parent,
+void DelftEgg::allocateConstitutiveData( dataRepository::Group & parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
   m_newPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
   m_oldPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
 
-  ElasticIsotropicPressureDependent::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 
-void ModifiedCamClay::postProcessInput()
+void DelftEgg::postProcessInput()
 {
-  ElasticIsotropicPressureDependent::postProcessInput();
+  ElasticIsotropic::postProcessInput();
 
   GEOSX_THROW_IF( m_defaultCslSlope <= 0, "Non-positive slope of critical state line detected", InputError );
   GEOSX_THROW_IF( m_defaultShapeParameter < 1., "Shape parameter for yield surface must be greater than or equal to one", InputError );
   GEOSX_THROW_IF( m_defaultVirginCompressionIndex <= 0, "Non-positive virgin compression index detected", InputError );
   GEOSX_THROW_IF( m_defaultVirginCompressionIndex <= m_defaultRecompressionIndex, "Recompression index should exceed virgin recompression index", InputError );
-
-//  real64 poisson = conversions::BulkModAndShearMod::toPoissonRatio( -1*m_defaultRefPressure/m_defaultRecompressionIndex,
-// m_defaultShearModulus );
-//  GEOSX_THROW_IF( poisson < 0, "Elastic parameters lead to negative Poisson ratio at reference pressure", InputError );
 
   // set results as array default values
 
@@ -118,6 +125,9 @@ void ModifiedCamClay::postProcessInput()
   getWrapper< array2d< real64 > >( viewKeyStruct::newPreConsolidationPressureString() ).
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
+    getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).
+      setApplyDefaultValue( m_defaultRecompressionIndex );
+    
   getWrapper< array1d< real64 > >( viewKeyStruct::virginCompressionIndexString() ).
     setApplyDefaultValue( m_defaultVirginCompressionIndex );
 
@@ -129,7 +139,7 @@ void ModifiedCamClay::postProcessInput()
 }
 
 
-void ModifiedCamClay::saveConvergedState() const
+void DelftEgg::saveConvergedState() const
 {
   SolidBase::saveConvergedState(); // TODO: not ideal, as we have separate loops for base and derived data
 
@@ -148,6 +158,6 @@ void ModifiedCamClay::saveConvergedState() const
   } );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ModifiedCamClay, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DelftEgg, std::string const &, Group * const )
 }
 } /* namespace geosx */
