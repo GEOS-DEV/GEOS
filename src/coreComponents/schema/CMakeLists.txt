@@ -4,15 +4,13 @@
 # Specify all headers
 #
 set( schema_headers
-     schemaUtilities.hpp 
-   )
+     schemaUtilities.hpp )
 
 #
 # Specify all sources
 #
 set( schema_sources
-     schemaUtilities.cpp
-   )
+     schemaUtilities.cpp )
 
 set( dependencyList dataRepository )
 
@@ -20,11 +18,11 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-blt_add_library( NAME                  schema
-                 SOURCES               ${schema_sources}
-                 HEADERS               ${schema_headers}
-                 DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
+blt_add_library( NAME       schema
+                 SOURCES    ${schema_sources}
+                 HEADERS    ${schema_headers}
+                 DEPENDS_ON ${dependencyList}
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
 
 

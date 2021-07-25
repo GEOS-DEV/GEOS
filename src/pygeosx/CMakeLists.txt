@@ -14,19 +14,19 @@ blt_add_library( NAME pygeosx
                  DEPENDS_ON ${dependencyList}
                  SHARED TRUE
                  CLEAR_PREFIX TRUE
-                 )
+               )
 
-add_custom_command(TARGET pygeosx
-                   PRE_BUILD
-                   COMMAND ${Python3_EXECUTABLE} -m venv ${CMAKE_BINARY_DIR}/lib/PYGEOSX --system-site-packages)
+add_custom_command( TARGET pygeosx
+                    PRE_BUILD
+                    COMMAND ${Python3_EXECUTABLE} -m venv ${CMAKE_BINARY_DIR}/lib/PYGEOSX --system-site-packages )
 
-add_custom_command(TARGET pygeosx
-                   POST_BUILD
-                   COMMAND ln -sf ${CMAKE_BINARY_DIR}/lib/pygeosx.so ${CMAKE_BINARY_DIR}/lib/PYGEOSX/lib/python3.8/site-packages/)
+add_custom_command( TARGET pygeosx
+                    POST_BUILD
+                    COMMAND ln -sf ${CMAKE_BINARY_DIR}/lib/pygeosx.so ${CMAKE_BINARY_DIR}/lib/PYGEOSX/lib/python3.8/site-packages/ )
 
-add_custom_command(TARGET pygeosx
-                   POST_BUILD
-                   COMMAND ln -sf ${CMAKE_BINARY_DIR}/lib/pylvarray.so ${CMAKE_BINARY_DIR}/lib/PYGEOSX/lib/python3.8/site-packages/)
+add_custom_command( TARGET pygeosx
+                    POST_BUILD
+                    COMMAND ln -sf ${CMAKE_BINARY_DIR}/lib/pylvarray.so ${CMAKE_BINARY_DIR}/lib/PYGEOSX/lib/python3.8/site-packages/ )
 
 target_include_directories( pygeosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
