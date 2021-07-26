@@ -791,12 +791,12 @@
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
 		<!--dPorosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--newPorosity => (no description available)-->
+		<xsd:attribute name="newPorosity" type="real64_array2d" />
 		<!--oldPorosity => (no description available)-->
 		<xsd:attribute name="oldPorosity" type="real64_array2d" />
-		<!--porosity => (no description available)-->
-		<xsd:attribute name="porosity" type="real64_array2d" />
-		<!--referencePorosity => (no description available)-->
-		<xsd:attribute name="referencePorosity" type="real64_array" />
+		<!--refPorosity => (no description available)-->
+		<xsd:attribute name="refPorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
@@ -1342,12 +1342,12 @@
 	<xsd:complexType name="PressurePorosityType">
 		<!--dPorosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--newPorosity => (no description available)-->
+		<xsd:attribute name="newPorosity" type="real64_array2d" />
 		<!--oldPorosity => (no description available)-->
 		<xsd:attribute name="oldPorosity" type="real64_array2d" />
-		<!--porosity => (no description available)-->
-		<xsd:attribute name="porosity" type="real64_array2d" />
-		<!--referencePorosity => (no description available)-->
-		<xsd:attribute name="referencePorosity" type="real64_array" />
+		<!--refPorosity => (no description available)-->
+		<xsd:attribute name="refPorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSlurryFluidType">
 		<!--FluidDensity => (no description available)-->
