@@ -214,10 +214,10 @@
       phaseNames="{ oil, gas, water }"
       waterOilRelPermTableNames="{ waterRelPermTable, oilRelPermTableForOW }"
       gasOilRelPermTableNames="{ gasRelPermTable, oilRelPermTableForOG }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>      
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>

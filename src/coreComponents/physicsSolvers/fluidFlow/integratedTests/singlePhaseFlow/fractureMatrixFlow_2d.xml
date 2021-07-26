@@ -106,7 +106,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{fracPerm, rockPerm}"/>
+        coefficientModelNames="{ fracPerm, rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -135,14 +135,14 @@
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{5.0e-19, 5.0e-19, 5.0e-19}"/> 
-      
+      permeabilityComponents="{ 5.0e-19, 5.0e-19, 5.0e-19 }"/>
+
     <ConstantPermeability
       name="fracPerm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>         
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>

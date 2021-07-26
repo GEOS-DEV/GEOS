@@ -169,10 +169,10 @@
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
-      
-     <ConstantPermeability
+
+    <ConstantPermeability
       name="fracPerm"
-      permeabilityComponents="{1.0e-14, 1.0e-14, 1.0e-14}"/>      
+      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
   </Constitutive>
 
   <FieldSpecifications>

@@ -49,8 +49,7 @@
       meanPermCoeff="0.8"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      permeabilityNames="{ fracPerm }"
-      inputFluxEstimate="1">
+      permeabilityNames="{ fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>
@@ -103,9 +102,9 @@
         coordinates="{ -0.01, -1.0e-3, 0.0 }"
         values="{ 0.005, 0.01e-3, 0.02e-3 }"/>
     </Contact>
-    
+
     <ParallelPlatesPermeability
-      name="fracPerm"/> 
+      name="fracPerm"/>
   </Constitutive>
 
   <Outputs>

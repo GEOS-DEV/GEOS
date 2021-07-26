@@ -85,7 +85,7 @@
         name="fluidTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -115,10 +115,10 @@
       phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
       phaseRelPermExponent="{ 1.5, 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9, 0.9 }"/>
-      
-     <ConstantPermeability
+
+    <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-16, 1.0e-16, 1.0e-16}"/>  
+      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>

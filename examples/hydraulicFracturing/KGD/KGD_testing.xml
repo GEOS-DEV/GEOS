@@ -37,7 +37,7 @@
       targetRegions="{ Fracture, Region2 }"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      permeabilityNames="{fracPerm, rockPerm}"
+      permeabilityNames="{ fracPerm, rockPerm }"
       inputFluxEstimate="1.0">
       <LinearSolverParameters
         solverType="gmres"
@@ -165,7 +165,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{fracPerm, rockPerm}"/>
+        coefficientModelNames="{ fracPerm, rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -207,13 +207,13 @@
         coordinates="{ -1.0e-3, 0.0 }"
         values="{ 0.01e-3, 0.1e-3 }"/>
     </Contact>
-    
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-15, 1.0e-15, 1.0e-15}"/>  
-    
+      permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
+
     <ParallelPlatesPermeability
-      name="fracPerm"/> 
+      name="fracPerm"/>
   </Constitutive>
 
   <FieldSpecifications>

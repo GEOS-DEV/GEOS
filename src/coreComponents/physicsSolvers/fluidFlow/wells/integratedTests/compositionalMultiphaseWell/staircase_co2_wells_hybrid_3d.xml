@@ -23,7 +23,7 @@
       targetRegions="{ Channel }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
-      permeabilityNames="{rockPerm}"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="368.15"
       maxCompFractionChange="0.2"
@@ -119,7 +119,7 @@
       name="Channel"
       cellBlocks="{ DEFAULT_TETRA }"
       materialList="{ fluid1, rock, relperm, rockPerm }"/>
-    
+
     <WellElementRegion
       name="wellRegion1"
       materialList="{ fluid1, relperm }"/>
@@ -158,10 +158,10 @@
       phaseMinVolumeFraction="{ 0.05, 0.05 }"
       phaseRelPermExponent="{ 2, 1.5 }"
       phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>    
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>

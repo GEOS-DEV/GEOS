@@ -160,10 +160,10 @@
       phaseMinVolumeFraction="{ 0.05, 0.30 }"
       phaseRelPermExponent="{ 2.0, 2.0 }"
       phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-14, 1.0e-14, 1.0e-17}"/>       
+      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-17 }"/>
   </Constitutive>
 
   <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->

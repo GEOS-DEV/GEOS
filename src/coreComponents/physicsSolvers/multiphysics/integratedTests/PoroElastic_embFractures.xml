@@ -7,10 +7,10 @@
       name="poroSolver"
       targetRegions="{ Domain, Fracture }"
       initialDt="1e-3"
-      fracturesSolverName = "fractureMechSolver"
-      fluidSolverName = "flowSolver"
-      solidSolverName = "matrixMechSolver"
-      porousMaterialNames="{porousRock}"
+      fracturesSolverName="fractureMechSolver"
+      fluidSolverName="flowSolver"
+      solidSolverName="matrixMechSolver"
+      porousMaterialNames="{ porousRock }"
       logLevel="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"/>
@@ -38,7 +38,7 @@
       targetRegions="{ Domain, Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      permeabilityNames="{rockPerm, fracPerm}"/>
+      permeabilityNames="{ rockPerm, fracPerm }"/>
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
@@ -106,7 +106,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rockPerm, fracPerm}"/>
+        coefficientModelNames="{ rockPerm, fracPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -123,13 +123,13 @@
       defaultAperture="1e-3"/>
   </ElementRegions>
 
-<Constitutive>
-     <PorousElasticIsotropic
+  <Constitutive>
+    <PorousElasticIsotropic
       name="porousRock"
       solidModelName="rock"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
-   
+
     <ElasticIsotropic
       name="rock"
       defaultDensity="1"
@@ -153,19 +153,18 @@
         coordinates="{ -1.0e-3, 0.0 }"
         values="{ 1.0e-6, 1.0e-3 }"/>
     </Contact>
-    
+
     <BiotPorosity
       name="rockPorosity"
       grainBulkModulus="1.0e27"
-      defaultReferencePorosity="0.2"/> 
-      
-   <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{1.0e-12, 1.0e-12, 1.0e-12}"/> 
+      defaultReferencePorosity="0.2"/>
 
-   <ParallelPlatesPermeability
-      name="fracPerm"/>                        
-    
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+
+    <ParallelPlatesPermeability
+      name="fracPerm"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -206,8 +205,8 @@
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
-      
-     <FieldSpecification
+
+    <FieldSpecification
       name="leftPressure"
       objectPath="faceManager"
       fieldName="pressure"

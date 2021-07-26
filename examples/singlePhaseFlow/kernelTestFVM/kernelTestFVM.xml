@@ -8,7 +8,7 @@
       discretization="tpfa"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      permeabilityNames="{rockPerm}"
+      permeabilityNames="{ rockPerm }"
       targetRegions="{ Region2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -71,7 +71,7 @@
         name="tpfa"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -95,10 +95,10 @@
       name="rock"
       referencePressure="0.0"
       compressibility="0.0"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-12, 1.0e-12, 1.0e-15}"/>  
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-15 }"/>
   </Constitutive>
 
   <Functions>

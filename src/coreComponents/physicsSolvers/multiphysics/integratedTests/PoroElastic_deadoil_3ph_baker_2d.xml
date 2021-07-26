@@ -7,7 +7,7 @@
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
       fluidSolverName="TwoPhaseFlowSolver"
-      porousMaterialNames="{porousRock}"
+      porousMaterialNames="{ porousRock }"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -125,12 +125,12 @@
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvt_tables/pvdo.txt, pvt_tables/pvdg.txt, pvt_tables/pvtw.txt }"/>
 
-     <PorousElasticIsotropic
+    <PorousElasticIsotropic
       name="porousRock"
       solidModelName="skeleton"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
-      
+
     <ElasticIsotropic
       name="skeleton"
       defaultDensity="1.0"
@@ -145,34 +145,34 @@
       waterOilRelPermMaxValue="{ 0.8, 0.9 }"
       gasOilRelPermExponent="{ 3, 3 }"
       gasOilRelPermMaxValue="{ 0.4, 0.9 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-16, 1.0e-16, 1.0e-16}"/> 
-      
+      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
+
     <BiotPorosity
       name="rockPorosity"
       grainBulkModulus="1.0e27"
-      defaultReferencePorosity="0.05"/>               
+      defaultReferencePorosity="0.05"/>
   </Constitutive>
 
   <FieldSpecifications>
-   <FieldSpecification
+    <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
       fieldName="referencePorosity"
-      scale="0.05"/>   
-      
-   <FieldSpecification
+      scale="0.05"/>
+
+    <FieldSpecification
       name="Porosity"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/block1"
       fieldName="rockPorosity_newPorosity"
-      scale="0.05"/>   
-      
+      scale="0.05"/>
+
     <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
       name="initialPressure"

@@ -10,7 +10,7 @@
       targetRegions="{ Region1 }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
-      permeabilityNames="{rockPerm}"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="300"
       initialDt="1e7">
@@ -74,7 +74,7 @@
         name="fluidTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -106,10 +106,10 @@
       waterOilRelPermMaxValue="{ 0.8, 0.9 }"
       gasOilRelPermExponent="{ 3, 3 }"
       gasOilRelPermMaxValue="{ 0.4, 0.9 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-14, 1.0e-14, 1.0e-14}"/> 
+      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
   </Constitutive>
 
   <FieldSpecifications>

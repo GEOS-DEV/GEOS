@@ -10,7 +10,7 @@
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      porousMaterialNames="{porousRock}"
+      porousMaterialNames="{ porousRock }"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Omega }">
@@ -109,51 +109,50 @@
 
   <!-- SPHINX_FEDiscretizationEnd -->
   <ElementRegions>
-    <CellElementRegion 
-    name="Omega" 
-    cellBlocks="{cb1}" 
-    materialList="{rock, water, porousRock, rockPerm}"/>
+    <CellElementRegion
+      name="Omega"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock, water, porousRock, rockPerm }"/>
   </ElementRegions>
 
-  <Constitutive>  
+  <Constitutive>
     <!-- SPHINX_Material -->
     <PorousElasticIsotropic
       name="porousRock"
       solidModelName="rock"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
-    
-    <ElasticIsotropic 
+
+    <ElasticIsotropic
       name="rock"
       defaultDensity="0"
       defaultBulkModulus="11039657020.4"
       defaultShearModulus="8662741799.83"/>
-      <!--  BiotCoefficient="0.771"-->
-    
-    <CompressibleSinglePhaseFluid 
+
+    <!--  BiotCoefficient="0.771"-->
+    <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0e6"
       compressibility="1.78403329184e-10"
-      referenceViscosity="0.001"
-      viscosibility="0.0"
-    />
-    
-     <BiotPorosity
+      viscosibility="0.0"/>
+
+    <BiotPorosity
       name="rockPorosity"
       grainBulkModulus="1.0e27"
-      defaultReferencePorosity="0.3"/> 
-      
+      defaultReferencePorosity="0.3"/>
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-17, 1.0e-17, 1.0e-17}"/>       
+      permeabilityComponents="{ 1.0e-17, 1.0e-17, 1.0e-17 }"/>
+
     <!-- SPHINX_MaterialEnd -->
   </Constitutive>
 
   <!-- SPHINX_BoundaryConditions -->
   <FieldSpecifications>
-    <FieldSpecification 
+    <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"

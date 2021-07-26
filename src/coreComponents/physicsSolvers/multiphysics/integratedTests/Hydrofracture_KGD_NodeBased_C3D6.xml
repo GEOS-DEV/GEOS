@@ -34,9 +34,8 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      permeabilityNames="{fracPerm}"
-      meanPermCoeff="0.8">
-    </SinglePhaseFVM>
+      permeabilityNames="{ fracPerm }"
+      meanPermCoeff="0.8"/>
 
     <SurfaceGenerator
       name="SurfaceGen"
@@ -170,9 +169,9 @@
         coordinates="{ -1.0e-3, 0.0 }"
         values="{ 1.0e-6, 1.0e-4 }"/>
     </Contact>
-    
-   <ParallelPlatesPermeability
-      name="fracPerm"/>          
+
+    <ParallelPlatesPermeability
+      name="fracPerm"/>
   </Constitutive>
 
   <FieldSpecifications>

@@ -50,7 +50,7 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      permeabilityNames="{fracPerm}"
+      permeabilityNames="{ fracPerm }"
       inputFluxEstimate="1.0">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
@@ -77,7 +77,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.03e-3"
-      materialList="{ water, rock, fracPerm}"/>
+      materialList="{ water, rock, fracPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -106,9 +106,9 @@
         coordinates="{ -1.0e-3, 0.0 }"
         values="{ 0.002e-3, 0.03e-3 }"/>
     </Contact>
-    
+
     <ParallelPlatesPermeability
-      name="fracPerm"/> 
+      name="fracPerm"/>
   </Constitutive>
 
   <Outputs>

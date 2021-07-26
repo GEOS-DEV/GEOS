@@ -26,7 +26,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rocPerm}"/>
+        coefficientModelNames="{ rocPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -50,11 +50,10 @@
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
-    
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>  
-      
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <Outputs>

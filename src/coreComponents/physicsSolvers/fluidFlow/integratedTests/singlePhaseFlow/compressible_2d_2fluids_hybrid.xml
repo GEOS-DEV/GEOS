@@ -9,7 +9,7 @@
       targetRegions="{ Region1, Region2 }"
       fluidNames="{ fluid1, fluid2 }"
       solidNames="{ rock }"
-      permeabilityNames="{rockPerm}">
+      permeabilityNames="{ rockPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
@@ -120,10 +120,10 @@
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>      
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>

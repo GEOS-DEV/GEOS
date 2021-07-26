@@ -10,7 +10,7 @@
       targetRegions="{ Region2, Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      permeabilityNames= "{ rockPerm, fracPerm }">
+      permeabilityNames="{ rockPerm, fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"/>
@@ -100,7 +100,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture = "1e-3"
+      defaultAperture="1e-3"
       materialList="{ water, rock, fracPerm }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
@@ -118,14 +118,14 @@
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-12, 1.0e-12, 1.0e-12}"/>
-      
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+
     <ConstantPermeability
       name="fracPerm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>  
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>

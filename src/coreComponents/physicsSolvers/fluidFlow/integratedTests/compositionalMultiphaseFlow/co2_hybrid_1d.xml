@@ -9,7 +9,7 @@
       discretization="fluidHM"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
-      permeabilityNames="{rockPerm}"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
@@ -104,13 +104,13 @@
       phaseMinVolumeFraction="{ 0.05, 0.05 }"
       phaseRelPermExponent="{ 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-13, 1.0e-13, 1.0e-13}"/>         
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
   </Constitutive>
 
-  <FieldSpecifications>  
+  <FieldSpecifications>
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"

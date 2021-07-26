@@ -68,7 +68,7 @@
         name="tpfaFlow"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rock1Perm, rock2Perm}"/>
+        coefficientModelNames="{ rock1Perm, rock2Perm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -102,15 +102,14 @@
       name="rock2"
       referencePressure="0.0"
       compressibility="1e-10"/>
-      
+
     <ConstantPermeability
       name="rock1Perm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>   
-      
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+
     <ConstantPermeability
       name="rock2Perm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>       
-      
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>

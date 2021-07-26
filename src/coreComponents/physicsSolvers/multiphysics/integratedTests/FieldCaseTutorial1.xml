@@ -14,7 +14,7 @@
     <CellElementRegion
       name="Reservoir"
       cellBlocks="{ Reservoir_TETRA }"
-      materialList="{ water, rock, rockPerm}"/>
+      materialList="{ water, rock, rockPerm }"/>
 
     <CellElementRegion
       name="Burden"
@@ -37,10 +37,10 @@
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-14, 1.0e-14, 1.0e-18}"/>      
+      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-18 }"/>
   </Constitutive>
 
   <!-- SPHINX_FIELD_CASE_CONSTITUTIVE_END -->

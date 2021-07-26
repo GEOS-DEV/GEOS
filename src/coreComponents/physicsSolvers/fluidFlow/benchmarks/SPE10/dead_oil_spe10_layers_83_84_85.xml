@@ -308,11 +308,10 @@
       name="rock"
       referencePressure="1e7"
       compressibility="1e-10"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-4, 0.0, 1.0e-4}"/>              
-      
+      permeabilityComponents="{ 1.0e-4, 0.0, 1.0e-4 }"/>
   </Constitutive>
 
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE_END -->

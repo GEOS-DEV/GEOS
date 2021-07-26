@@ -10,7 +10,7 @@
       targetRegions="{ Channel }"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
-      permeabilityNames="{rockPerm}"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="300">
       <NonlinearSolverParameters
@@ -109,7 +109,7 @@
         fieldName="pressure"
         targetRegions="{ Channel }"
         coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -141,10 +141,10 @@
       waterOilRelPermMaxValue="{ 0.8, 0.9 }"
       gasOilRelPermExponent="{ 3, 3 }"
       gasOilRelPermMaxValue="{ 0.4, 0.9 }"/>
-    
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-16, 1.0e-16, 1.0e-16}"/>   
+      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
   </Constitutive>
 
   <!-- END_SPHINX_INCLUDE_CONST_BLOCK -->

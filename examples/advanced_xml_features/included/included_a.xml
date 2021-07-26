@@ -9,8 +9,7 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      inputFluxEstimate="1">
+      permeabilityNames="{ rockPerm }">
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-12"/>
