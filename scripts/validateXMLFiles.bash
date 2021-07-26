@@ -70,7 +70,7 @@ echo -n > $LOGFILE
 
 # validate each path separately and write results in the log
 for path in "$@"; do
-    list_xml_files_$METHOD $path | $XARGS xmllint --schema $SCHEMA --noout &>> $LOGFILE
+    list_xml_files_$METHOD $path | $XARGS xmllint --schema $SCHEMA --noout >> $LOGFILE 2>&1
 done
 
 # print any failed validations on the stderr
