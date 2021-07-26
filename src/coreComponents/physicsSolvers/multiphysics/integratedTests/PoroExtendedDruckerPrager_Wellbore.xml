@@ -1,11 +1,4 @@
-<!--
-Problem: wellbore problem subjected to mixed mode loading and anisotropic far-field stresses
-Created by: Jian Huang
-Last update: July 23 2021
-Objective: to verify the poroelastic solver in GEOSX against analytical solution
-Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Springer International Publishing.
--->
-
+<?xml version="1.0" ?>
 
 <Problem>
 <!-- SPHINX_WELLBORE_TABLE -->

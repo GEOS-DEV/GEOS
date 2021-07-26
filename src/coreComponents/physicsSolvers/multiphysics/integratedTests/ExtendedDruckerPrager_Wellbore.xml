@@ -1,11 +1,4 @@
-<!--
-Problem: borehole under far-field stress, drained condition
-Created by: Jian Huang
-Last update: 15 Jun 2021
-Objective: to verify the plasticity solver in GEOSX against analytical solution
-Reference: Chen, S. L., & Abousleiman, Y. N. (2017). Wellbore stability analysis using strain hardening and/or softening plasticity models. International Journal of Rock Mechanics and Mining Sciences, 93, 260-268.
--->
-
+<?xml version="1.0" ?>
 
 <Problem>
 <!-- SPHINX_DP_WELLBORE_TABLE -->
@@ -145,7 +138,7 @@ Reference: Chen, S. L., & Abousleiman, Y. N. (2017). Wellbore stability analysis
 </Outputs>
 
 <!-- SPHINX_DP_WELLBORE_SOLVER -->
-<Solvers gravityVector="0.0, 0.0, 0.0">
+<Solvers gravityVector="{0.0, 0.0, 0.0}">
 <SolidMechanics_LagrangianFEM 
   name="mechanicsSolver" 
   timeIntegrationOption="QuasiStatic"
