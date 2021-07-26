@@ -41,6 +41,9 @@
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #define GEOSX_USE_CUDA
 
+/// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
+#define GEOSX_USE_PVTPackage
+
 /// Enables use of Python (CMake option ENABLE_PYTHON)
 #define GEOSX_USE_PYGEOSX
 
