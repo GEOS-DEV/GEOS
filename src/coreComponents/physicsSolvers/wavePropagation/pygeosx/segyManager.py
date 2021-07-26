@@ -10,7 +10,7 @@ def create_segy(shot_list, physicalName, nsamples, tracePath):
         os.mkdir(tracePath)
 
     for ishot in range(len(shot_list)):
-        rcvCoord = [receiver.coords for receiver in shot_list[ishot].receivers.receiver_list]
+        rcvCoord = [receiver.coords for receiver in shot_list[ishot].receivers.receivers_list]
         srcCoord = shot_list[ishot].source.coords
         spec = segyio.spec()
         ilines  = [x[0] for x in rcvCoord]
@@ -70,7 +70,7 @@ def export_for_acquisition(shot_list, acq_name):
         os.mkdir(os.path.join(segyath, acq_name))
 
     for j in range(len(shot_list)):
-        rcvCoord = [receiver.coords for receiver in shot_list[ishot].receivers.receiver_list]
+        rcvCoord = [receiver.coords for receiver in shot_list[ishot].receivers.receivers_list]
         srcCoord = shot_list[ishot].source.coords
 
         spec = segyio.spec()

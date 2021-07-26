@@ -150,8 +150,10 @@ class Client:
         self.cluster.finalize_script()
         
         bashfile = self.cluster.job_file()
-        output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True).split()[-1].decode()
+        output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
         job_id = output.split()[-1].decode()
+
+        print("Job : " + job_id+ " has been submited")
         os.remove(bashfile)
 
         return Future(key, output=self.output, cluster=self.cluster, job_id=job_id)
@@ -191,8 +193,10 @@ class Client:
         bashfile = self.cluster[ind].job_file()
         output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
         job_id = output.split()[-1].decode()
+        
+        print("Job : " + job_id + " has been submited")
         os.remove(bashfile)
-
+        
         return Future(key, output=self.output, cluster=self.cluster[ind], job_id=job_id)
 
 
@@ -319,9 +323,8 @@ class Future:
 
     
     def getResult(self):
-        result = []
         with open(self.output, 'r') as f:
-            result.append(f.readline())
+            result = f.readlines()
         
         return result
         

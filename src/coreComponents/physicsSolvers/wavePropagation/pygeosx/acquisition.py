@@ -3,7 +3,7 @@ import numpy as np
 import segyio
 import random
 import os
-
+import xml.etree.ElementTree as ET
 
 class Acquisition:
     def __init__(self,
@@ -18,7 +18,8 @@ class Acquisition:
                  receivers_positions=None,
                  source_depth=None,
                  receivers_depth=None,
-                 output=None):
+                 output=None,
+                 **kwargs):
 
         self.limited_aperture=limited_aperture
         self.boundary=boundary
@@ -31,22 +32,25 @@ class Acquisition:
                              receivers_depth)
 
 
-        dist_from_source = 500
-        depth_from_source = 500
+        aperture_dist = 500
+        aperture_depth = 500
         if limited_aperture is False:
             self.velocity_model=velocity_model
             self.aperture_boundary=boundary
             if dt is not None:
                 self.dt=dt
             else:
-                self.dt=calculDt(velocity_model,
-                                 boundary)
+                self.dt=dt
+                #self.dt=calculDt(velocity_model,
+                #boundary)
         else:
             self.velocity_model=[]
 
-            self.set_limited_aperture_boundaries(dist_from_source, depth_from_source)
+            self.set_limited_aperture_boundaries(aperture_dist, aperture_depth)
             for i in range(len(self.shots)):
                 self.shots[i].receivers.keep_inside_domain(self.limited_aperture[i])
+
+            modify_and_create_XML(self.xml, self.aperture_boundary, self.velocity_model)
 
 
         if output is not None:
@@ -95,14 +99,14 @@ class Acquisition:
 
     def split(self, n):
         acqs = []
-        nb_shot_m1 = len(self.shot)
+        nb_shot_m1 = len(self.shots)
         ind = 0
 
         for i in range(n):
-            nb_shot=int(nb_shot_m1/(n-i))
+            nb_shot = int(nb_shot_m1/(n-i))
 
             acqs.append(deepcopy(self))
-            acqs[i].shot = acqs[i].shot[ind:ind + nb_shot]
+            acqs[i].shots = acqs[i].shots[ind:ind + nb_shot]
 
             ind = ind + nb_shot
             nb_shot_m1 = nb_shot_m1 - nb_shot
@@ -148,11 +152,33 @@ class Acquisition:
             self.aperture_boundary.append(copy.deepcopy(limited_aperture))
 
 
+            
+    def add_XML(xmlfile):
+        self.xml = xmlfile
+
+
+    def limited_aperture_xml_creation(self):
+        tree = ET.parse(self.xml)
+        root = tree.getroot()
+        
+        internal_mesh = [elem.attrib for elem in root.iter('InternalMesh')][0]
+        box = [elem.attrib for elem in root.iter('Box')][0]
+
+        for boundary in self.aperture_boundary:
+            internal_mesh['xCoords'] = "{"+boundary[0][0]+","+boundary[0][1]+"}"
+            internal_mesh['yCoords'] = "{"+boundary[1][0]+","+boundary[1][1]+"}"
+            internal_mesh['zCoords'] = "{"+boundary[2][0]+","+boundary[2][1]+"}"
+            
+        
+        
 
     def construct_from_dict(self, **kwargs):
+        self.shots=[]
         for key, value in kwargs.items():
-            if key == "shot":
-                setattr(self, key, Shot().construct_from_dict(**value))
+            if key == "shots":
+                for i in range(len(value)):
+                    dict = value[i]
+                    self.shots.append(Shot().construct_from_dict(**dict))
             else:
                 setattr(self, key, value)
 
@@ -687,12 +713,12 @@ class Shot:
         self.flag = string
 
 
-     def construct_from_dict(self, **kwargs):
+    def construct_from_dict(self, **kwargs):
         for key, value in kwargs.items():
             if key == "source":
                 setattr(self, key, Source().construct_from_dict(**value))
             elif key == "receivers":
-                setattr(self, key, ReceiverSet().construct_from_dict(value))
+                setattr(self, key, ReceiverSet().construct_from_dict(**value))
             else:
                 setattr(self, key, value)
 
@@ -770,7 +796,7 @@ class ReceiverSet:
         Number of Receiver
     """
 
-    def __init__(self, receiver_list = None):
+    def __init__(self, receivers_list = None):
         """Constructor for the point source
 
         Parameters
@@ -778,55 +804,58 @@ class ReceiverSet:
         receiver_list :
             List of Receiver
         """
-        if receiver_list is None:
-            self.receiver_list = []
+        if receivers_list is None:
+            self.receivers_list = []
             self.n = 0
         else:
-            self.receiver_list = receiver_list
-            self.n = len(receiver_list)
+            self.receivers_list = receivers_list
+            self.n = len(receivers_list)
 
     def __repr__(self):
         if self.n >=10:
-            return str(self.receiver_list[0:4])[:-1] + '...' + '\n' + str(self.receiver_list[-4:])[1:]
+            return str(self.receivers_list[0:4])[:-1] + '...' + '\n' + str(self.receivers_list[-4:])[1:]
         else:
-            return str(self.receiver_list)
+            return str(self.receivers_list)
 
 
     def keep_inside_domain(self, meshBoundaries):
         new_list=[]
 
-        for receiver in self.receiver_list:
+        for receiver in self.receivers_list:
             if meshBoundaries[0][0] <= receiver.coords[0] and receiver.coords[0] <= meshBoundaries[0][1] \
             and meshBoundaries[1][0] <= receiver.coords[1] and receiver.coords[1] <= meshBoundaries[1][1] \
             and meshBoundaries[2][0] <= receiver.coords[2] and receiver.coords[2] <= meshBoundaries[2][1]:
                 new_list.append(receiver)
 
-        self.receiver_list = new_list
+        self.receivers_list = new_list
         self.n = len(new_list)
 
 
     def getSetCoord(self):
-        listRcv = []
+        rcvs_coords_list = []
         for i in range(self.n):
-            listRcv.append(np.array([self.receiver_list[i].coords[0], self.receiver_list[i].coords[1], self.receiver_list[i].coords[2]]))
-        return listRcv
+            rcvs_coords_list.append(np.array([self.receivers_list[i].coords[0], self.receivers_list[i].coords[1], self.receivers_list[i].coords[2]]))
+        return rcvs_coords_list
 
     def append(self, ReceiverSet):
         for i in range(ReceiverSet.n):
-            self.receiver_list.append(ReceiverSet.receiver_list[i])
+            self.receivers_list.append(ReceiverSet.receivers_list[i])
         self.n += ReceiverSet.n
 
 
     #Transpose all receivers position
     def linearSetMove(self, coord, value):
         for i in range(self.n):
-            self.receiver_list[i].linearMove(coord, value)
+            self.receivers_list[i].linearMove(coord, value)
 
 
-     def construct_from_dict(self, list_of_dict):
-        for value in list_of_dict:
-            if key == "receiver":
-                setattr(self, key, Receiver().construct_from_dict(**value))
+    def construct_from_dict(self, **kwargs):
+        self.receivers_list = []
+        for key, value in kwargs.items(): 
+            if key == "receivers_list":
+                for i in range(len(value)):
+                    dict = value[i]
+                    self.receivers_list.append(Receiver().construct_from_dict(**dict))
             else:
                 setattr(self, key, value)
 
@@ -880,7 +909,7 @@ class Source:
         return self.coords[2]
 
 
-     def construct_from_dict(self, **kwargs):
+    def construct_from_dict(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
 

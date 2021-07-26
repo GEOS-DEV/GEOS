@@ -17,7 +17,6 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--xml", help = "input xml file", required = True)
-    parser.add_argument("--geosx", help = "GEOSX folder location", required = True)
     args = parser.parse_args()
 
     return args
@@ -86,6 +85,6 @@ def obj_to_json(obj):
     return tempfile
 
 
-def json_to_obj(jfile):
+def json_to_dict(jfile):
     dic = j.load(jfile)
     return dic

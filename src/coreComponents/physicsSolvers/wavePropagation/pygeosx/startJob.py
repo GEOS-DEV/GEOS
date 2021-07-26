@@ -10,11 +10,10 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 json = open(sys.argv[11])
-dic = json_to_dict(json)
+dict = json_to_dict(json)
 json.close()
-acquisition = Acquisition().construct_from_dict(**dic)
 
-print(acquisition.shot)
+acquisition = Acquisition().construct_from_dict(**dict)
 
 if rank==0:
     time.sleep(1)
