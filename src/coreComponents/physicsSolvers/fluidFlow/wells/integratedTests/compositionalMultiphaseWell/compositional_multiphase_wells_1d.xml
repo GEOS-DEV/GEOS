@@ -13,9 +13,7 @@
         lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
@@ -27,8 +25,7 @@
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
-      temperature="297.15"
-      useMass="0"/>
+      temperature="297.15"/>
 
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
@@ -36,8 +33,7 @@
       targetRegions="{ wellRegion1, wellRegion2 }"
       fluidNames="{ fluid1 }"
       relPermNames="{ relperm }"
-      wellTemperature="297.15"
-      useMass="0">
+      wellTemperature="297.15">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -50,7 +46,7 @@
         name="wellControls2"
         type="injector"
         control="totalVolRate"
-        referenceElevation="2"  
+        referenceElevation="2"
         targetBHP="1e8"
         targetTotalRate="1e-7"
         injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
@@ -110,7 +106,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="2.5e3"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -126,7 +121,7 @@
         name="fluidTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -172,10 +167,10 @@
       phaseMinVolumeFraction="{ 0.1, 0.15 }"
       phaseRelPermExponent="{ 2.0, 2.0 }"
       phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>   
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -233,8 +228,6 @@
       component="3"
       scale="0.001"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo
