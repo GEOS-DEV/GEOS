@@ -30,7 +30,9 @@ set(CMAKE_CUDA_FLAGS_DEBUG "-g -G -O0 -Xcompiler -O0" CACHE STRING "")
 set(ENABLE_PETSC OFF CACHE BOOL "" FORCE )
 set(ENABLE_TRILINOS OFF CACHE BOOL "" FORCE )
 set(ENABLE_HYPRE ON CACHE BOOL "" FORCE )
-set(ENABLE_HYPRE_CUDA ON CACHE BOOL "" FORCE)
+# Current version of hypre does not build with GPU support.
+# Most recent version does build. Let's wait for an upgrade on our side.
+set(ENABLE_HYPRE_CUDA OFF CACHE BOOL "" FORCE)
 
 set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE)
 set(ENABLE_CALIPER ON CACHE BOOL "")
