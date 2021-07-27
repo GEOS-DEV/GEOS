@@ -111,9 +111,13 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // 1. Set key dimensions of the problem
-  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
-  m_numPhases     = fluid0.numFluidPhases();
-  m_numComponents = fluid0.numFluidComponents();
+  // Empty check needed to avoid accessing m_fluidModelNames when running in schema generation mode.
+  if( !m_fluidModelNames.empty() )
+  {
+    MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+    m_numPhases = fluid0.numFluidPhases();
+    m_numComponents = fluid0.numFluidComponents();
+  }
   m_numDofPerCell = m_numComponents + 1;
 
   // 2. Register and resize all fields as necessary
