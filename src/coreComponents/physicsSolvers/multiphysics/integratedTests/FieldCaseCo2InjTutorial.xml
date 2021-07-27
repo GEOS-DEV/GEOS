@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
   <Solvers>
     <CompositionalMultiphaseReservoir
@@ -13,7 +12,6 @@
       targetRegions="{ Reservoir, wellRegion }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
-        lineSearchAction="Attempt"
         maxTimeStepCuts="10"
         newtonMaxIter="40"/>
       <LinearSolverParameters
@@ -55,8 +53,8 @@
         injectionStream="{ 0.995, 0.005 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
+
   <!-- SPHINX_FIELD_CASE_Co2_SOLVER_END -->
-  
   <!-- SPHINX_FIELD_CASE_Co2_MESH -->
   <Mesh>
     <PAMELAMeshGenerator
@@ -78,8 +76,8 @@
         distanceFromHead="45"/>
     </InternalWell>
   </Mesh>
+
   <!-- SPHINX_FIELD_CASE_Co2_MESH_END -->
-  
   <!-- SPHINX_FIELD_CASE_Co2_REGION -->
   <ElementRegions>
     <CellElementRegion
@@ -96,44 +94,38 @@
       name="wellRegion"
       materialList="{ fluid, relperm }"/>
   </ElementRegions>
+
   <!-- SPHINX_FIELD_CASE_Co2_REGION_END -->
- 
   <!-- SPHINX_FIELD_CASE_Co2_EVENTS -->
   <Events
     maxTime="5e7">
-
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e7"
-      targetExactTimestep="1"
       target="/Outputs/syntheticReservoirVizFile"/>
 
     <PeriodicEvent
       name="restarts"
       timeFrequency="5e7"
-      targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
 
     <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="5e6"
-      targetExactTimestep="1"
-      target="/Tasks/wellPressureCollection" />
-    
+      target="/Tasks/wellPressureCollection"/>
+
     <PeriodicEvent
       name="timeHistoryOutput"
       timeFrequency="2.5e8"
-      targetExactTimestep="1"
-      target="/Outputs/timeHistoryOutput" />
+      target="/Outputs/timeHistoryOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="5e5"        
+      maxEventDt="5e5"
       target="/Solvers/coupledFlowAndWells"/>
-
   </Events>
+
   <!-- SPHINX_FIELD_CASE_Co2_EVENTS_END -->
-  
   <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL -->
   <NumericalMethods>
     <FiniteVolume>
@@ -145,8 +137,8 @@
         coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
-  <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL_END -->
 
+  <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL_END -->
   <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   <Constitutive>
     <CO2BrineFluid
@@ -168,13 +160,13 @@
       phaseMinVolumeFraction="{ 0.05, 0.30 }"
       phaseRelPermExponent="{ 2.0, 2.0 }"
       phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-14, 1.0e-14, 1.0e-17}"/>       
+      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-17 }"/>
   </Constitutive>
-  <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
 
+  <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
   <!-- SPHINX_FIELD_CASE_Co2_FIELD -->
   <FieldSpecifications>
     <FieldSpecification
@@ -211,8 +203,8 @@
       component="1"
       scale="1.0"/>
   </FieldSpecifications>
-  <!-- SPHINX_FIELD_CASE_Co2_FIELD_END -->
 
+  <!-- SPHINX_FIELD_CASE_Co2_FIELD_END -->
   <!-- SPHINX_FIELD_CASE_Co2_OUTPUT -->
   <Outputs>
     <VTK
@@ -223,43 +215,40 @@
 
     <TimeHistory
       name="timeHistoryOutput"
-      sources="{/Tasks/wellPressureCollection}"
-      filename="wellPressureHistory" />
-
+      sources="{ /Tasks/wellPressureCollection }"
+      filename="wellPressureHistory"/>
   </Outputs>
-  <!-- SPHINX_FIELD_CASE_Co2_OUTPUT_END -->
 
-  <!-- SPHINX_FIELD_CASE_Co2_TASKS -->  
+  <!-- SPHINX_FIELD_CASE_Co2_OUTPUT_END -->
+  <!-- SPHINX_FIELD_CASE_Co2_TASKS -->
   <Tasks>
     <PackCollection
       name="wellPressureCollection"
       objectPath="ElementRegions/wellRegion/wellRegionuniqueSubRegion"
-      fieldName="pressure" />
-    
+      fieldName="pressure"/>
   </Tasks>
-  <!-- SPHINX_FIELD_CASE_Co2_TASKS_END -->  
 
+  <!-- SPHINX_FIELD_CASE_Co2_TASKS_END -->
   <Functions>
-    <TableFunction 
-        name="permxFunc"
-        inputVarNames="{elementCenter}"
-        coordinateFiles="{tables_FieldCaseTuto/xlin.geos,tables_FieldCaseTuto/ylin.geos,tables_FieldCaseTuto/zlin.geos}"
-        voxelFile="tables_FieldCaseTuto/permx.geos"
-        interpolation="nearest" />
+    <TableFunction
+      name="permxFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
+      voxelFile="tables_FieldCaseTuto/permx.geos"
+      interpolation="nearest"/>
 
-    <TableFunction 
-        name="permyFunc"
-        inputVarNames="{elementCenter}"
-        coordinateFiles="{tables_FieldCaseTuto/xlin.geos,tables_FieldCaseTuto/ylin.geos,tables_FieldCaseTuto/zlin.geos}"
-        voxelFile="tables_FieldCaseTuto/permy.geos"
-        interpolation="nearest" />
+    <TableFunction
+      name="permyFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
+      voxelFile="tables_FieldCaseTuto/permy.geos"
+      interpolation="nearest"/>
 
-    <TableFunction 
-        name="permzFunc"
-        inputVarNames="{elementCenter}"
-        coordinateFiles="{tables_FieldCaseTuto/xlin.geos,tables_FieldCaseTuto/ylin.geos,tables_FieldCaseTuto/zlin.geos}"
-        voxelFile="tables_FieldCaseTuto/permz.geos"
-        interpolation="nearest" />
+    <TableFunction
+      name="permzFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
+      voxelFile="tables_FieldCaseTuto/permz.geos"
+      interpolation="nearest"/>
   </Functions>
-  
 </Problem>

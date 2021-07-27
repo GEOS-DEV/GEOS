@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
@@ -15,8 +15,7 @@
       <LinearSolverParameters
         solverType="bicgstab"
         preconditionerType="amg"
-        krylovTol="1.0e-12"
-        logLevel="0"/>
+        krylovTol="1.0e-12"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 

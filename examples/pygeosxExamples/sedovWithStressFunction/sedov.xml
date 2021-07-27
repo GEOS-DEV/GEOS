@@ -109,7 +109,6 @@
       fieldName="shale_stress"
       component="2"
       scale="-1.0e6"/> -->
-
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
@@ -147,7 +146,7 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-1, -1, -1}"
-      xMax="{1.1, 1.1, 1.1}"/>
+      xMin="{ -1, -1, -1 }"
+      xMax="{ 1.1, 1.1, 1.1 }"/>
   </Geometry>
 </Problem>

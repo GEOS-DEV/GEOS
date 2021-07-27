@@ -20,11 +20,8 @@
         maxTimeStepCuts="5"
         lineSearchAction="None"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseFVM>
-
   </Solvers>
 
   <Mesh>
@@ -43,37 +40,35 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, 26.99, -0.01}"
-      xMax="{ 3.01, 30.01, 10.01}"/>
+      xMin="{ -0.01, 26.99, -0.01 }"
+      xMax="{ 3.01, 30.01, 10.01 }"/>
 
     <Box
       name="sink1"
-      xMin="{26.99, -0.01, -0.01}"
-      xMax="{ 30.01, 30.01, 30.01}"/>
+      xMin="{ 26.99, -0.01, -0.01 }"
+      xMax="{ 30.01, 30.01, 30.01 }"/>
 
     <Box
       name="sink2"
-      xMin="{-0.01, -0.01, 26.99}"
-      xMax="{ 30.01, 30.01, 30.01}"/>
+      xMin="{ -0.01, -0.01, 26.99 }"
+      xMax="{ 30.01, 30.01, 30.01 }"/>
 
     <Box
       name="barrier"
-      xMin="{-0.01, 20.99, 20.99}"
-      xMax="{12.01, 30.01, 21.01}"/>
-    
+      xMin="{ -0.01, 20.99, 20.99 }"
+      xMax="{ 12.01, 30.01, 21.01 }"/>
   </Geometry>
 
   <Events
     maxTime="1e6">
     <PeriodicEvent
       name="solverApplications"
-      forceDt="5e4"     
+      forceDt="5e4"
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e5"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
@@ -89,7 +84,7 @@
         name="fluidTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -120,10 +115,10 @@
       phaseMinVolumeFraction="{ 0.05, 0.05 }"
       phaseRelPermExponent="{ 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-13, 1.0e-13, 1.0e-13}"/>
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -138,11 +133,11 @@
     <FieldSpecification
       name="barrierTransMult"
       initialCondition="1"
-      setNames="{ barrier }"      
+      setNames="{ barrier }"
       objectPath="faceManager"
       fieldName="permeabilityTransMultiplier"
       scale="0.0"/>
-    
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -174,7 +169,7 @@
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Region1/cb1"
-      component="0"      
+      component="0"
       scale="-0.03"
       setNames="{ source }"/>
 
@@ -226,8 +221,6 @@
       component="1"
       scale="0.995"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <VTK

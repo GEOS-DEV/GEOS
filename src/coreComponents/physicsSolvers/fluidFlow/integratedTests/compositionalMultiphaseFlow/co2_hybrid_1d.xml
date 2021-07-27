@@ -1,14 +1,15 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="{0.0, 0.0, -9.81}">
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <CompositionalMultiphaseHybridFVM
       name="compflow"
       logLevel="1"
       discretization="fluidHM"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
-      permeabilityNames="{rockPerm}"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
@@ -18,12 +19,9 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="100"
-        maxTimeStepCuts="5"
-        lineSearchAction="Attempt"/>
+        maxTimeStepCuts="5"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-	logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseHybridFVM>
   </Solvers>
 
@@ -43,24 +41,22 @@
   <Geometry>
     <Box
       name="sink"
-      xMin="{11.99, -0.01, -0.01}"
-      xMax="{15.01,  1.01,  1.01}"/>
+      xMin="{ 11.99, -0.01, -0.01 }"
+      xMax="{ 15.01, 1.01, 1.01 }"/>
 
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 3.01,  1.01,  1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 3.01, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
     maxTime="1e5">
-
-   <PeriodicEvent
+    <PeriodicEvent
       name="outputs"
       timeFrequency="1e4"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
-    
+
     <PeriodicEvent
       name="solverApplications"
       forceDt="1e4"
@@ -69,7 +65,6 @@
     <PeriodicEvent
       name="restarts"
       timeFrequency="5e4"
-      targetExactTimestep="1"
       target="/Outputs/sidreRestart"/>
   </Events>
 
@@ -109,13 +104,13 @@
       phaseMinVolumeFraction="{ 0.05, 0.05 }"
       phaseRelPermExponent="{ 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-13, 1.0e-13, 1.0e-13}"/>         
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
   </Constitutive>
 
-  <FieldSpecifications>  
+  <FieldSpecifications>
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
@@ -139,7 +134,7 @@
       objectPath="faceManager"
       fieldName="facePressure"
       scale="9e6"/>
-    
+
     <FieldSpecification
       name="initialComposition_co2"
       initialCondition="1"
@@ -187,7 +182,7 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.995"/>
-    
+
     <FieldSpecification
       name="sourceTermComposition_co2"
       setNames="{ source }"
@@ -203,12 +198,12 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.005"/>
-  
   </FieldSpecifications>
 
   <Outputs>
     <VTK
       name="vtkOutput"/>
+
     <Restart
       name="sidreRestart"/>
   </Outputs>

@@ -13,9 +13,7 @@
         lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
@@ -52,7 +50,7 @@
         name="wellControls2"
         type="injector"
         control="totalVolRate"
-        referenceElevation="12" 
+        referenceElevation="12"
         targetBHP="1.45e7"
         targetTotalRate="5e-8"
         injectionStream="{ 0.995, 0.005 }"/>
@@ -88,7 +86,7 @@
 
     <InternalWell
       name="well_injector1"
-      logLevel="1"	
+      logLevel="1"
       wellRegionName="wellRegion2"
       wellControlsName="wellControls2"
       meshName="mesh1"
@@ -108,7 +106,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e4"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -173,10 +170,10 @@
       phaseMinVolumeFraction="{ 0.05, 0.05 }"
       phaseRelPermExponent="{ 2, 1.5 }"
       phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>   
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>
