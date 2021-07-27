@@ -20,13 +20,14 @@
 #define GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
 
 #include "VirtualElementBase.hpp"
+#include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 
 namespace geosx
 {
 namespace virtualElement
 {
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
-class ConformingVirtualElementOrder1 final : public VirtualElementBase
+class ConformingVirtualElementOrder1 final : public finiteElement::FiniteElementBase
 {
 public:
   using InputNodeCoords = arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >;

@@ -222,7 +222,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   } );
 }
 
-TEST( VirtualElementBase, unitCube )
+TEST( VirtualElementBase, hexagons )
 {
   string const inputStream=
     "<Problem>"

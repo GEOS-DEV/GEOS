@@ -28,7 +28,9 @@ using namespace finiteElement;
 
 class TestFiniteElementBase final : public FiniteElementBase
 {
+  GEOSX_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override {return 8;};
+  GEOSX_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const override {return 8;};
 };
 
