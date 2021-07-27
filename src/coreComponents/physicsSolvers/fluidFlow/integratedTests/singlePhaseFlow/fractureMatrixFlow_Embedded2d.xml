@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, -9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="1"
@@ -10,14 +10,12 @@
       targetRegions="{ Region2, Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      permeabilityNames= "{ rockPerm, fracPerm }">
+      permeabilityNames="{ rockPerm, fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhaseFVM>
 
     <EmbeddedSurfaceGenerator
@@ -45,20 +43,20 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 1.1, 0.1, 1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.1, 0.1, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ -0.01, 0.9, -0.01}"
-      xMax="{ 1.01, 1.01, 1.01}"/>
+      xMin="{ -0.01, 0.9, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
 
     <BoundedPlane
       name="FracturePlane"
-      normal="{1, 0, 0}"
-      origin="{0.5, 0.5, 0.5}"
-      lengthVector="{0, 1, 0}"
-      widthVector="{0, 0, 1}"
+      normal="{ 1, 0, 0 }"
+      origin="{ 0.5, 0.5, 0.5 }"
+      lengthVector="{ 0, 1, 0 }"
+      widthVector="{ 0, 0, 1 }"
       dimensions="{ 0.5, 1 }"/>
   </Geometry>
 
@@ -76,14 +74,11 @@
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
       timeFrequency="1e3"
-      targetExactTimestep="1"
       target="/Outputs/sidreRestart"/>
   </Events>
 
@@ -105,7 +100,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture = "1e-3"
+      defaultAperture="1e-3"
       materialList="{ water, rock, fracPerm }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
@@ -116,23 +111,21 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-12, 1.0e-12, 1.0e-12}"/>
-      
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+
     <ConstantPermeability
       name="fracPerm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>  
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -166,8 +159,6 @@
       scale="0.0"
       setNames="{ sink }"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <VTK
