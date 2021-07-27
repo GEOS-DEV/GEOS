@@ -3,7 +3,7 @@
 <Problem>
   <!-- SPHINX_Gravity -->
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <!-- SPHINX_GravityEnd -->
     <!-- SPHINX_SolidMechanicsSolver -->
     <SolidMechanicsLagrangianSSLE
@@ -56,7 +56,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <!--PeriodicEvent
@@ -151,7 +150,6 @@
     <Silo
       name="siloOutput"
       parallelThreads="32"
-      plotFileRoot="plot"
       childDirectory="sub"/>
 
     <Restart

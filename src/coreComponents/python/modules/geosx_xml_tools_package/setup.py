@@ -9,6 +9,7 @@ setup(name='geosx_xml_tools',
       entry_points={'console_scripts': ['preprocess_xml = geosx_xml_tools.__main__:main',
                                         'format_xml = geosx_xml_tools.xml_formatter:main',
                                         'test_geosx_xml_tools = geosx_xml_tools.tests.test_manager:run_unit_tests',
-                                        'test_attribute_coverage = geosx_xml_tools.attribute_coverage:main']},
+                                        'test_attribute_coverage = geosx_xml_tools.attribute_coverage:main',
+                                        'test_xml_redundancy = geosx_xml_tools.xml_redundancy_check:main']},
       install_requires=['lxml>=4.5.0'])
 

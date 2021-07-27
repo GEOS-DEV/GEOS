@@ -2,11 +2,10 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <SolidMechanicsLagrangianSSLE
       name="lagSolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ granite }">
@@ -14,9 +13,7 @@
         newtonTol="1.0e-3"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SurfaceGenerator
@@ -25,7 +22,6 @@
       rockToughness="1e6"
       nodeBasedSIF="1"
       logLevel="1"
-      fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       mpiCommOrder="1"/>
   </Solvers>
@@ -46,13 +42,13 @@
   <Geometry>
     <Box
       name="fracPlane"
-      xMin="{-0.1, 0.9, -0.1}"
-      xMax="{2.1, 3.1, 0.1}"/>
+      xMin="{ -0.1, 0.9, -0.1 }"
+      xMax="{ 2.1, 3.1, 0.1 }"/>
 
     <Box
       name="core"
-      xMin="{-0.1, -0.1, -0.1}"
-      xMax="{40.1, 5.1, 0.1}"/>
+      xMin="{ -0.1, -0.1, -0.1 }"
+      xMax="{ 40.1, 5.1, 0.1 }"/>
   </Geometry>
 
   <Events
@@ -155,7 +151,6 @@
       component="2"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
-      scale="0"
       setNames="{ zneg }"/>
   </FieldSpecifications>
 
@@ -171,7 +166,6 @@
     <Silo
       name="siloOutput"
       plotLevel="3"
-      parallelThreads="1"
       plotFileRoot="simple2D"/>
 
     <Restart

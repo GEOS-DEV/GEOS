@@ -107,8 +107,7 @@
       name="bulkModulus"
       inputVarNames="{ elementCenter }"
       coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
-      voxelFile="./tables/bulkModulus.csv"
-      interpolation="linear"/>
+      voxelFile="./tables/bulkModulus.csv"/>
 
     <TableFunction
       name="shearModulus"

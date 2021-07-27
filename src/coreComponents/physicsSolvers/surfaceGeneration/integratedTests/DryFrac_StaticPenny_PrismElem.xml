@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <SolidMechanicsLagrangianSSLE
       name="lagSolve"
       timeIntegrationOption="QuasiStatic"
@@ -14,9 +14,7 @@
         newtonTol="1.0e-3"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SurfaceGenerator
@@ -24,7 +22,6 @@
       solidMaterialNames="{ granite }"
       rockToughness="0.5e100"
       nodeBasedSIF="1"
-      fractureRegion="Fracture"
       logLevel="1"
       targetRegions="{ Region2 }"
       mpiCommOrder="1"/>
@@ -46,14 +43,14 @@
   <Geometry>
     <Cylinder
       name="fracPlane"
-      point1="{0.0, 0.0, -0.1}"
-      point2="{0.0, 0.0, 0.1}"
+      point1="{ 0.0, 0.0, -0.1 }"
+      point2="{ 0.0, 0.0, 0.1 }"
       radius="11"/>
 
     <Box
       name="core"
-      xMin="{-0.1, -0.1, -0.1}"
-      xMax="{100.1, 100.1, 0.1}"/>
+      xMin="{ -0.1, -0.1, -0.1 }"
+      xMax="{ 100.1, 100.1, 0.1 }"/>
   </Geometry>
 
   <Events
@@ -145,7 +142,7 @@
 
     <Traction
       name="zposConstraint"
-      direction="{0,0,1}"
+      direction="{ 0, 0, 1 }"
       objectPath="faceManager"
       scale="1e6"
       setNames="{ zpos }"/>
@@ -156,7 +153,6 @@
       objectPath="faceManager"
       scale="-1e6"
       setNames="{ zneg }"/-->
-
     <FieldSpecification
       name="znegconstraint"
       component="2"
@@ -178,7 +174,6 @@
     <Silo
       name="siloOutput"
       plotLevel="3"
-      parallelThreads="1"
       plotFileRoot="simple2D"/>
 
     <Restart
