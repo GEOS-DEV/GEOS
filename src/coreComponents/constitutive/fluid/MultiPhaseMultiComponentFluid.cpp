@@ -94,34 +94,24 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::pos
 {
   MultiFluidBase::postProcessInput();
 
-  localIndex const numPhases = numFluidPhases();
-  localIndex const numComps = numFluidComponents();
-  GEOSX_THROW_IF( numPhases != 2,
-                  "The number of phases in this model should be equal to 2",
-                  InputError );
-  GEOSX_THROW_IF( numComps != 2,
-                  "The number of components in this model should be equal to 2",
-                  InputError );
-  GEOSX_THROW_IF( m_phasePVTParaFiles.size() != 2,
-                  "The number of phasePVTParaFiles is not the same as the number of phases!",
-                  InputError );
+  GEOSX_THROW_IF_NE_MSG( numFluidPhases(), 2,
+                         "The number of phases in this model should be equal to 2",
+                         InputError );
+  GEOSX_THROW_IF_NE_MSG( numFluidComponents(), 2,
+                         "The number of components in this model should be equal to 2",
+                         InputError );
+  GEOSX_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 2,
+                         "The number of phasePVTParaFiles is not the same as the number of phases!",
+                         InputError );
 
   // NOTE: for now, the names of the phases are still hardcoded here
   // Later, we could read them from the XML file and we would then have a general class here
 
-  char const * expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
-  m_p1Index = PVTFunctionHelpers::findName( m_phaseNames,
-                                            expectedWaterPhaseNames );
-  GEOSX_THROW_IF( m_p1Index < 0 || m_p1Index >= m_phaseNames.size(),
-                  "Phase water/liquid is not found!",
-                  InputError );
+  string const expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
+  m_p1Index = PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 
-  char const * expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
-  m_p2Index = PVTFunctionHelpers::findName( m_phaseNames,
-                                            expectedGasPhaseNames );
-  GEOSX_THROW_IF( m_p2Index < 0 || m_p2Index >= m_phaseNames.size(),
-                  "Phase co2/gas is not found!",
-                  InputError );
+  string const expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
+  m_p2Index = PVTFunctionHelpers::findName( m_phaseNames, expectedGasPhaseNames, viewKeyStruct::phaseNamesString() );
 
   createPVTModels();
 }
@@ -175,18 +165,10 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
     is.close();
   }
 
-  GEOSX_THROW_IF( m_p1Density == nullptr,
-                  P1DENS::catalogName() << " model not found",
-                  InputError );
-  GEOSX_THROW_IF( m_p2Density == nullptr,
-                  P2DENS::catalogName() << " model not found",
-                  InputError );
-  GEOSX_THROW_IF( m_p1Viscosity == nullptr,
-                  P1VISC::catalogName() << " model not found",
-                  InputError );
-  GEOSX_THROW_IF( m_p2Viscosity == nullptr,
-                  P2VISC::catalogName() << " model not found",
-                  InputError );
+  GEOSX_THROW_IF( m_p1Density == nullptr, P1DENS::catalogName() << " model not found", InputError );
+  GEOSX_THROW_IF( m_p2Density == nullptr, P2DENS::catalogName() << " model not found", InputError );
+  GEOSX_THROW_IF( m_p1Viscosity == nullptr, P1VISC::catalogName() << " model not found", InputError );
+  GEOSX_THROW_IF( m_p2Viscosity == nullptr, P2VISC::catalogName() << " model not found", InputError );
 
   // 2) Create the flash model
   {

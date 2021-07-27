@@ -177,8 +177,8 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-1, -1, -1}"
-      xMax="{1.1, 1.1, 1.1}"/>
+      xMin="{ -1, -1, -1 }"
+      xMax="{ 1.1, 1.1, 1.1 }"/>
   </Geometry>
 
   <Outputs>

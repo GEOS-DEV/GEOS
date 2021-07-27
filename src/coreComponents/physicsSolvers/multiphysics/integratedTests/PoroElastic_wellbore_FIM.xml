@@ -5,12 +5,12 @@
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <!-- SPHINX_GravityEnd -->
-    
     <!-- SPHINX_PoroelasticSolver -->
     <SinglePhasePoromechanics
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
+      porousMaterialNames="{ porousRock }"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Omega }">
@@ -19,7 +19,6 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
         directParallel="0"
         logLevel="1"/>
     </SinglePhasePoromechanics>
@@ -29,7 +28,6 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      logLevel="0"
       targetRegions="{ Omega }"
       solidMaterialNames="{ rock }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
@@ -42,7 +40,8 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Omega }"
       fluidNames="{ water }"
-      solidNames="{ rock }">
+      solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }">
       <!-- SPHINX_SinglePhaseFVMEnd -->
     </SinglePhaseFVM>
   </Solvers>
@@ -63,7 +62,7 @@
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
-  </Mesh> 
+  </Mesh>
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
@@ -83,7 +82,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="78.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <!--PeriodicEvent
@@ -100,86 +98,65 @@
         name="FE1"
         order="1"/>
     </FiniteElements>
+
     <FiniteVolume>
-      <TwoPointFluxApproximation 
+      <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-      />
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <!-- SPHINX_FEDiscretizationEnd -->
   <ElementRegions>
-    <CellElementRegion 
-    name="Omega" 
-    cellBlocks="{cb1}" 
-    materialList="{rock, water}"/>
+    <CellElementRegion
+      name="Omega"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock, water, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>
     <!-- SPHINX_Material -->
-    <PoroElasticIsotropic 
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <PoroElasticIsotropic
       name="rock"
       defaultDensity="0"
       defaultBulkModulus="11039657020.4"
-      defaultShearModulus="8662741799.83"
-      BiotCoefficient="0.771"
-    />
-    <CompressibleSinglePhaseFluid 
+      defaultShearModulus="8662741799.83"/>
+
+    <!-- BiotCoefficient="0.771" -->
+    <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0e6"
-      referenceDensity="1000"
       compressibility="1.78403329184e-10"
-      referenceViscosity="0.001"
-      viscosibility="0.0"
-    />
+      viscosibility="0.0"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="1.0e27"
+      defaultReferencePorosity="0.3"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-17, 1.0e-17, 1.0e-17 }"/>
+
     <!-- SPHINX_MaterialEnd -->
   </Constitutive>
 
   <!-- SPHINX_BoundaryConditions -->
   <FieldSpecifications>
-    <FieldSpecification 
-      name="permx"
-      component="0"
-      initialCondition="1"  
-      setNames="{all}"
-      objectPath="ElementRegions/Omega/cb1"
-      fieldName="permeability"
-      scale="1e-17"/>
-
-    <FieldSpecification 
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{all}"
-      objectPath="ElementRegions/Omega/cb1"
-      fieldName="permeability"
-      scale="1e-17"/>
-
-    <FieldSpecification 
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{all}"
-      objectPath="ElementRegions/Omega/cb1"
-      fieldName="permeability"
-      scale="1e-17"/>
-
-    <FieldSpecification 
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{all}"
-      objectPath="ElementRegions/Omega/cb1"
-      fieldName="referencePorosity"
-      scale="0.3"/>
-
-    <FieldSpecification 
+    <FieldSpecification
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Omega/cb1"
       fieldName="pressure"
       scale="0e6"/>
@@ -214,24 +191,20 @@
       tractionType="normal"
       scale="-1.0e6"
       setNames="{ rneg }"/-->
-      
-    <FieldSpecification 
+    <FieldSpecification
       name="innerPorePressure"
       objectPath="faceManager"
       fieldName="pressure"
       scale="10e6"
       setNames="{ rneg }"/>
- 
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->
-
   <!-- SPHINX_TableFunctionEnd -->
   <Outputs>
     <Silo
       name="siloOutput"
       parallelThreads="32"
-      plotFileRoot="plot"
       childDirectory="sub"/>
 
     <!--Restart

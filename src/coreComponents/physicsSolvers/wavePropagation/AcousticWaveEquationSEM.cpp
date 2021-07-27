@@ -191,7 +191,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                                                                        CellElementSubRegion & elementSubRegion )
     {
 
-      GEOSX_THROW_IF( elementSubRegion.getElementTypeString() != "C3D8",
+      GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                       "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
                       InputError );
 
