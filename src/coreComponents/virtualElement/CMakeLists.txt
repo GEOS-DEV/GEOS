@@ -4,7 +4,6 @@
 set( virtualElement_headers
   ConformingVirtualElementOrder1.hpp
   ConformingVirtualElementOrder1_impl.hpp
-  VirtualElementBase.hpp
   )
 #
 # Specify all sources

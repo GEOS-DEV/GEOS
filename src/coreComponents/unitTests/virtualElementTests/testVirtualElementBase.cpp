@@ -15,7 +15,6 @@
 // Source includes
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "virtualElement/VirtualElementBase.hpp"
 #include "virtualElement/ConformingVirtualElementOrder1.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"

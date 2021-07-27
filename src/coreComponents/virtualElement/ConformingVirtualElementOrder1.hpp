@@ -19,7 +19,6 @@
 #ifndef GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
 #define GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
 
-#include "VirtualElementBase.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 
 namespace geosx
@@ -40,57 +39,9 @@ public:
   static constexpr localIndex maxSupportPoints = MAXCELLNODES;
   static constexpr localIndex numQuadraturePoints = 1;
 
-  struct BasisData
-  {
-    static constexpr localIndex maxSupportPoints = MAXCELLNODES;
-    static constexpr localIndex numQuadraturePoints = 1;
-    localIndex numSupportPoints;
-    real64 quadratureWeight;
-    real64 basisFunctionsIntegralMean[MAXCELLNODES];
-    real64 stabilizationMatrix[MAXCELLNODES][MAXCELLNODES];
-    real64 basisDerivativesIntegralMean[MAXCELLNODES][3];
-  };
-
-private:
-  GEOSX_HOST_DEVICE
-  static void
-    computeFaceIntegrals( InputNodeCoords const & nodesCoords,
-                          localIndex const (&faceToNodes)[MAXFACENODES],
-                          localIndex const (&faceToEdges)[MAXFACENODES],
-                          localIndex const & numFaceVertices,
-                          real64 const & faceArea,
-                          real64 const (&faceCenter)[3],
-                          real64 const (&faceNormal)[3],
-                          InputEdgeToNodeMap const & edgeToNodes,
-                          real64 const & invCellDiameter,
-                          real64 const (&cellCenter)[3],
-                          real64 ( &basisIntegrals )[MAXFACENODES],
-                          real64 ( &threeDMonomialIntegrals )[3] );
-
-public:
-
-  BasisData m_basisData;
-
   ConformingVirtualElementOrder1() = default;
 
   virtual ~ConformingVirtualElementOrder1() = default;
-
-  GEOSX_HOST_DEVICE
-  static void
-  computeProjectors( localIndex const & cellIndex,
-                     InputNodeCoords const & nodesCoords,
-                     InputCellToNodeMap const & cellToNodeMap,
-                     InputCellToFaceMap const & elementToFaceMap,
-                     InputFaceToNodeMap const & faceToNodeMap,
-                     InputFaceToEdgeMap const & faceToEdgeMap,
-                     InputEdgeToNodeMap const & edgeToNodeMap,
-                     arrayView2d< real64 const > const faceCenters,
-                     arrayView2d< real64 const > const faceNormals,
-                     arrayView1d< real64 const > const faceAreas,
-                     real64 const (&cellCenter)[3],
-                     real64 const & cellVolume,
-                     BasisData & basisData
-                     );
 
   GEOSX_HOST_DEVICE
   void processLocalGeometry( localIndex const & cellIndex,
@@ -105,22 +56,7 @@ public:
                              arrayView1d< real64 const > const faceAreas,
                              real64 const (&cellCenter)[3],
                              real64 const & cellVolume
-                             )
-  {
-    computeProjectors( cellIndex,
-                       nodesCoords,
-                       cellToNodeMap,
-                       elementToFaceMap,
-                       faceToNodeMap,
-                       faceToEdgeMap,
-                       edgeToNodeMap,
-                       faceCenters,
-                       faceNormals,
-                       faceAreas,
-                       cellCenter,
-                       cellVolume,
-                       m_basisData );
-  }
+                             );
 
   GEOSX_HOST_DEVICE
   static constexpr localIndex getMaxSupportPoints()
@@ -137,7 +73,7 @@ public:
   GEOSX_HOST_DEVICE
   localIndex getNumSupportPoints() const override
   {
-    return m_basisData.numSupportPoints;
+    return m_numSupportPoints;
   }
 
   GEOSX_HOST_DEVICE
@@ -147,7 +83,7 @@ public:
     GEOSX_UNUSED_VAR( q );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
-      N[i] = m_basisData.basisFunctionsIntegralMean[i];
+      N[i] = m_basisFunctionsIntegralMean[i];
     }
   }
 
@@ -159,7 +95,7 @@ public:
     {
       for( localIndex j = 0; j < 3; ++j )
       {
-        gradN[i][j] = m_basisData.basisDerivativesIntegralMean[i][j];
+        gradN[i][j] = m_basisDerivativesIntegralMean[i][j];
       }
     }
     return transformedQuadratureWeight( q );
@@ -168,76 +104,15 @@ public:
   GEOSX_HOST_DEVICE
   real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ) ) const
   {
-    return m_basisData.quadratureWeight;
+    return m_quadratureWeight;
   }
 
   GEOSX_HOST_DEVICE
   real64 calcStabilizationValue( localIndex const iBasisFunction,
                                  localIndex const jBasisFunction ) const
   {
-    return m_basisData.stabilizationMatrix[iBasisFunction][jBasisFunction];
+    return m_stabilizationMatrix[iBasisFunction][jBasisFunction];
   }
-
-  GEOSX_HOST_DEVICE
-  static localIndex getMaxSupportPoints( BasisData const & basisData )
-  {
-    return basisData.maxSupportPoints;
-  }
-
-  GEOSX_HOST_DEVICE
-  static localIndex getNumQuadraturePoints( BasisData const & basisData )
-  {
-    return basisData.numQuadraturePoints;
-  }
-
-  GEOSX_HOST_DEVICE
-  static localIndex getNumSupportPoints( BasisData const & basisData )
-  {
-    return basisData.numSupportPoints;
-  }
-
-  GEOSX_HOST_DEVICE
-  static real64 calcStabilizationValue( localIndex const iBasisFunction,
-                                        localIndex const jBasisFunction,
-                                        BasisData const & basisData )
-  { return basisData.stabilizationMatrix[iBasisFunction][jBasisFunction]; }
-
-  GEOSX_HOST_DEVICE
-  static real64 calcGradN( localIndex const q,
-                           BasisData const & basisData,
-                           real64 ( & gradN )[maxSupportPoints][3] )
-  {
-    for( localIndex i = 0; i < maxSupportPoints; ++i )
-    {
-      for( localIndex j = 0; j < 3; ++j )
-      {
-        gradN[i][j] = basisData.basisDerivativesIntegralMean[i][j];
-      }
-    }
-    return transformedQuadratureWeight( q, basisData );
-  }
-
-  GEOSX_HOST_DEVICE
-  static void calcN( localIndex const q,
-                     BasisData const & basisData,
-                     real64 ( & N )[maxSupportPoints] )
-  {
-    GEOSX_UNUSED_VAR( q );
-    for( localIndex i = 0; i < maxSupportPoints; ++i )
-    {
-      N[i] = basisData.basisFunctionsIntegralMean[i];
-    }
-  }
-
-  GEOSX_HOST_DEVICE
-  static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
-                                             BasisData const & basisData )
-  {
-    return basisData.quadratureWeight;
-  }
-
-
-public:
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
   GEOSX_HOST_DEVICE
@@ -260,8 +135,8 @@ public:
           diameter = candidateDiameter;
         }
       }
-      diameter = LvArray::math::sqrt< real64 >( diameter );
     }
+    diameter = LvArray::math::sqrt< real64 >( diameter );
     return diameter;
   }
 
@@ -288,10 +163,33 @@ public:
           diameter = candidateDiameter;
         }
       }
-      diameter = LvArray::math::sqrt< real64 >( diameter );
     }
+    diameter = LvArray::math::sqrt< real64 >( diameter );
     return diameter;
   }
+
+private:
+
+  localIndex m_numSupportPoints;
+  real64 m_quadratureWeight;
+  real64 m_basisFunctionsIntegralMean[MAXCELLNODES];
+  real64 m_stabilizationMatrix[MAXCELLNODES][MAXCELLNODES];
+  real64 m_basisDerivativesIntegralMean[MAXCELLNODES][3];
+
+  GEOSX_HOST_DEVICE
+  static void
+    computeFaceIntegrals( InputNodeCoords const & nodesCoords,
+                          localIndex const (&faceToNodes)[MAXFACENODES],
+                          localIndex const (&faceToEdges)[MAXFACENODES],
+                          localIndex const & numFaceVertices,
+                          real64 const & faceArea,
+                          real64 const (&faceCenter)[3],
+                          real64 const (&faceNormal)[3],
+                          InputEdgeToNodeMap const & edgeToNodes,
+                          real64 const & invCellDiameter,
+                          real64 const (&cellCenter)[3],
+                          real64 ( &basisIntegrals )[MAXFACENODES],
+                          real64 ( &threeDMonomialIntegrals )[3] );
 
 };
 }
