@@ -77,10 +77,9 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  void calcN( localIndex const q,
+  void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
               real64 ( & N )[maxSupportPoints] ) const
   {
-    GEOSX_UNUSED_VAR( q );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
       N[i] = m_basisFunctionsIntegralMean[i];
@@ -89,6 +88,7 @@ public:
 
   GEOSX_HOST_DEVICE
   real64 calcGradN( localIndex const q,
+                    real64 const ( & X )[maxSupportPoints][3],
                     real64 ( & gradN )[maxSupportPoints][3] ) const
   {
     for( localIndex i = 0; i < maxSupportPoints; ++i )
@@ -98,11 +98,12 @@ public:
         gradN[i][j] = m_basisDerivativesIntegralMean[i][j];
       }
     }
-    return transformedQuadratureWeight( q );
+    return transformedQuadratureWeight( q, X );
   }
 
   GEOSX_HOST_DEVICE
-  real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ) ) const
+  real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
+                                      real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3]) const
   {
     return m_quadratureWeight;
   }

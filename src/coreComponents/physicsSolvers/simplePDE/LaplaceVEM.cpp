@@ -194,14 +194,15 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
             }
             localRhs[a] = 0.0;
           }
+          real64 const dummy[VEM::maxSupportPoints][3] { { 0.0 } };
           for( localIndex q = 0; q < virtualElement.getNumQuadraturePoints(); ++q )
           {
-            virtualElement.calcGradN( q, derivativesIntMean );
+            virtualElement.calcGradN( q, dummy, derivativesIntMean );
             for( localIndex a = 0; a < numSupportPoints; ++a )
             {
               for( localIndex b = 0; b < numSupportPoints; ++b )
               {
-                element_matrix[a][b] += diffusion*virtualElement.transformedQuadratureWeight( q ) *
+                element_matrix[a][b] += diffusion*virtualElement.transformedQuadratureWeight( q, dummy ) *
                                         (derivativesIntMean[a][0] * derivativesIntMean[b][0] +
                                          derivativesIntMean[a][1] * derivativesIntMean[b][1] +
                                          derivativesIntMean[a][2] * derivativesIntMean[b][2] );

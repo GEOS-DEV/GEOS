@@ -50,10 +50,11 @@ GEOSX_HOST_DEVICE
 static void
 checkIntegralMeanDerivativesConsistency( VEM const & virtualElement )
 {
+  real64 const dummy[VEM::maxSupportPoints][3] { { 0.0 } };
   for( localIndex q = 0; q < virtualElement.getNumQuadraturePoints(); ++q )
   {
     real64 basisDerivativesIntegralMean[VEM::getMaxSupportPoints()][3];
-    virtualElement.calcGradN( q, basisDerivativesIntegralMean );
+    virtualElement.calcGradN( q, dummy, basisDerivativesIntegralMean );
     real64 sumX = 0, sumY = 0, sumZ = 0;
     for( localIndex iBasisFun = 0; iBasisFun < virtualElement.getNumSupportPoints(); ++iBasisFun )
     {
@@ -151,10 +152,11 @@ static void checkSumOfQuadratureWeights( real64 const & cellVolume,
                                          VEM const & virtualElement )
 {
   real64 sum = 0.0;
+  real64 const dummy[VEM::maxSupportPoints][3] { { 0.0 } };
   for( localIndex q = 0; q < virtualElement.getNumQuadraturePoints(); ++q )
   {
     real64 weight =
-      virtualElement.transformedQuadratureWeight( q );
+      virtualElement.transformedQuadratureWeight( q, dummy );
     sum += weight;
   }
   EXPECT_TRUE( abs( sum - cellVolume ) < 1e-15 )
