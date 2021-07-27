@@ -287,7 +287,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, a
 
   real64 const fi = evaluateRicker( time_n, this->m_timeSourceFrequency, this->m_rickerOrder );
 
-  forAll< serialPolicy >( sourceConstants.size( 0 ), [=] ( localIndex const isrc )
+  forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsLocal[isrc] == 1 )
     {
@@ -558,6 +558,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                               integer const cycleNumber,
                                               DomainPartition & domain )
 {
+  GEOSX_MARK_FUNCTION;
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
@@ -586,7 +587,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   auto kernelFactory = AcousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
   finiteElement::
-    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+    regionBasedKernelApplication< EXEC_POLICY,
                                   constitutive::NullModel,
                                   CellElementSubRegion >( mesh,
                                                           targetRegionNames(),
@@ -598,7 +599,9 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   /// Calculate your time integrators
   real64 const dt2 = dt*dt;
-  forAll< serialPolicy >( nodeManager.size(), [=] ( localIndex const a )
+
+  GEOSX_MARK_SCOPE ( updateP );
+  forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
   {
     if( freeSurfaceNodeIndicator[a]!=1 )
     {
@@ -618,16 +621,16 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   syncFields.synchronizeFields( fieldNames,
                                 domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                 domain.getNeighbors(),
-                                false );
+                                true );
 
-  for( localIndex a=0; a<nodeManager.size(); ++a )
+  forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
   {
     p_nm1[a]=p_n[a];
     p_n[a] = p_np1[a];
 
     stiffnessVector[a] = 0.0;
     rhs[a] = 0.0;
-  }
+  } );
 
   computeSeismoTrace( cycleNumber, p_np1 );
 

@@ -41,9 +41,6 @@ namespace AcousticWaveEquationSEMKernels
  * "finite element kernel application" functions such as
  * geosx::finiteElement::RegionBasedKernelApplication.
  *
- * In this implementation, the interface for KernelBase is used, but
- * ExplicitSmallStrain only conforms to the interface set by KernelBase, and
- * does not inherit from KernelBase.
  * The number of degrees of freedom per support point for both
  * the test and trial spaces are specified as `1`.
  */
@@ -116,7 +113,7 @@ public:
   /**
    * @copydoc geosx::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitSmallStrain Description
+   * ### ExplicitAcousticSEM Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
    */
   struct StackVariables : Base::StackVariables
