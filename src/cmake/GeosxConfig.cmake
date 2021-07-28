@@ -1,13 +1,14 @@
 #
 # Get GEOSX Version
-file (STRINGS "VERSION" GEOSX_VERSION_FULL)
-string(REGEX REPLACE "VERSION_ID = v" "" GEOSX_VERSION_FULL "${GEOSX_VERSION_FULL}")
-string(REPLACE "." ";" GEOSX_VERSION_LIST ${GEOSX_VERSION_FULL})
+#
+file ( STRINGS "VERSION" GEOSX_VERSION_FULL )
+string( REGEX REPLACE "VERSION_ID = v" "" GEOSX_VERSION_FULL "${GEOSX_VERSION_FULL}" )
+string( REPLACE "." ";" GEOSX_VERSION_LIST ${GEOSX_VERSION_FULL} )
 
 list( GET GEOSX_VERSION_LIST  0 GEOSX_VERSION_MAJOR )
 list( GET GEOSX_VERSION_LIST  1 GEOSX_VERSION_MINOR )
 list( GET GEOSX_VERSION_LIST  2 GEOSX_VERSION_PATCH )
-message(STATUS "Configuring GEOSX version ${GEOSX_VERSION_FULL}")
+message( STATUS "Configuring GEOSX version ${GEOSX_VERSION_FULL}" )
 
 
 set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
@@ -25,6 +26,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CUDA
                           PARMETIS
                           PETSC
+                          PVTPackage
                           PYGEOSX
                           RAJA 
                           SUPERLU_DIST
@@ -33,14 +35,13 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           TOTALVIEW_OUTPUT
                           TRILINOS
                           MKL
-                          GEOSX_PTP
                           SEPARATION_COEFFICIENT
                           ${externalComponentsList} )
 
-foreach( DEP in ${PREPROCESSOR_DEFINES})
+foreach( DEP in ${PREPROCESSOR_DEFINES} )
     if( ${DEP}_FOUND OR ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} )
-        set(USE_${DEP} TRUE  )
-        set(GEOSX_USE_${DEP} TRUE  )
+        set( USE_${DEP} TRUE )
+        set( GEOSX_USE_${DEP} TRUE )
     endif()
 endforeach()
 
@@ -55,7 +56,7 @@ install( FILES ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
 
 function( make_full_config_file 
           PREPROCESSOR_VARS )
-    foreach( DEP in ${PREPROCESSOR_VARS})
+    foreach( DEP in ${PREPROCESSOR_VARS} )
         set( USE_${DEP} TRUE )
         set( GEOSX_USE_${DEP} TRUE )
         set( ${DEP} TRUE )

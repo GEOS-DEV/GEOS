@@ -187,7 +187,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void assembleAccumulationTerms( DomainPartition const & domain,
+  void assembleAccumulationTerms( DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs ) const;
@@ -294,6 +294,8 @@ public:
 
     static constexpr char const * phaseMobilityOldString() { return "phaseMobilityOld"; }
 
+    static constexpr char const * porosityString() { return "porosity"; }
+
     static constexpr char const * porosityOldString() { return "porosityOld"; }
 
     // these are allocated on faces for BC application until we can get constitutive models on faces
@@ -358,13 +360,13 @@ public:
    */
   void chopNegativeDensities( DomainPartition & domain );
 
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
 protected:
 
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
    * @brief Checks constitutive models for consistency
@@ -373,24 +375,15 @@ protected:
   void validateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
-   * @brief Resize the allocated multidimensional fields
-   * @param domain the domain containing the mesh and fields
-   *
-   * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
-   * once the number of phases/components is known (e.g. component fractions)
-   */
-  void resizeFields( MeshLevel & meshLevel ) const;
-
-  /**
    * @brief Setup stored views into domain data for the current step
    */
   void resetViews( MeshLevel & mesh ) override;
 
   /// the max number of fluid phases
-  localIndex m_numPhases;
+  integer m_numPhases;
 
   /// the number of fluid components
-  localIndex m_numComponents;
+  integer m_numComponents;
 
   /// the (uniform) temperature
   real64 m_temperature;

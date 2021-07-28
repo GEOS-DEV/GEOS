@@ -35,18 +35,6 @@ namespace geosx
 namespace finiteElement
 {
 
-struct ParentElementTypeStrings
-{
-  static constexpr auto Tetrahedon    = "C3D4";
-  static constexpr auto Pyramid       = "C3D5";
-  static constexpr auto Prism         = "C3D6";
-  static constexpr auto Hexahedron    = "C3D8";
-  static constexpr auto Quadralateral = "C2D4";
-  static constexpr auto Triangle      = "C2D3";
-  static constexpr auto Polyhedral    = "POLYHEDRAL";
-  static constexpr auto Polytope      = "POLYTOPE";
-};
-
 template< typename LAMBDA >
 void
 dispatch3D( FiniteElementBase const & input,

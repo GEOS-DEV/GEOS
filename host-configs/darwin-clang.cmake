@@ -15,7 +15,6 @@ set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE)
 
 set(ENABLE_PAMELA ON CACHE BOOL "" FORCE)
 set(ENABLE_PVTPackage ON CACHE BOOL "" FORCE)
-set(ENABLE_GEOSX_PTP ON CACHE BOOL "" FORCE)
 
 set(CUDA_ENABLED "OFF" CACHE PATH "" FORCE)
 set(ENABLE_OPENMP "OFF" CACHE PATH "" FORCE)
@@ -30,11 +29,9 @@ set(ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE)
 #set( DOXYGEN_EXECUTABLE /usr/local/bin/doxygen CACHE PATH "" FORCE )
 #set( SPHINX_EXECUTABLE /usr/local/bin/sphinx-build CACHE PATH "" FORCE )
 
-set(ENABLE_GEOSX_PTP ON CACHE BOOL "" FORCE)
-
 set(GEOSX_TPL_DIR "/usr/local/GEOSX/GEOSX_TPL" CACHE PATH "" FORCE )
 if(NOT ( EXISTS "${GEOSX_TPL_DIR}" AND IS_DIRECTORY "${GEOSX_TPL_DIR}" ) )
-    set(GEOSX_TPL_DIR "../../thirdPartyLibs/install-darwin-clang-release" CACHE PATH "" FORCE )
+    set(GEOSX_TPL_DIR "../../../thirdPartyLibs/install-darwin-clang-release" CACHE PATH "" FORCE )
 endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/tpls.cmake)

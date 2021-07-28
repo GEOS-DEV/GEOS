@@ -19,8 +19,6 @@
 #ifndef GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
 #define GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
 
-#include "FieldSpecificationManager.hpp"
-
 #include "FieldSpecificationBase.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
@@ -247,7 +245,7 @@ public:
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
         {
-          dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );;
+          dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
           for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
           {
