@@ -121,7 +121,7 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
 {
-  using VEM = virtualElement::ConformingVirtualElementOrder1< m_maxCellNodes, m_maxFaceNodes >;
+  using VEM = finiteElement::ConformingVirtualElementOrder1< m_maxCellNodes, m_maxFaceNodes >;
 
   MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
   NodeManager & nodeManager = mesh.getNodeManager();

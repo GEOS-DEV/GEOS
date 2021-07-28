@@ -23,10 +23,10 @@
 
 namespace geosx
 {
-namespace virtualElement
+namespace finiteElement
 {
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
-class ConformingVirtualElementOrder1 final : public finiteElement::FiniteElementBase
+class ConformingVirtualElementOrder1 final : public FiniteElementBase
 {
 public:
   using InputNodeCoords = arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >;

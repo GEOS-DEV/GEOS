@@ -24,7 +24,7 @@
 #include "gtest/gtest.h"
 
 using namespace geosx;
-using namespace virtualElement;
+using namespace finiteElement;
 
 CommandLineOptions g_commandLineOptions;
 

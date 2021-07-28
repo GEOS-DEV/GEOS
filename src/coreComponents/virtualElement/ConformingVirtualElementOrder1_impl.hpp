@@ -19,7 +19,7 @@
 
 namespace geosx
 {
-namespace virtualElement
+namespace finiteElement
 {
 template< localIndex MCN, localIndex MFN >
 GEOSX_HOST_DEVICE
