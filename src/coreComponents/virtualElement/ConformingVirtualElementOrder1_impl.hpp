@@ -475,5 +475,19 @@ computeFaceIntegrals( InputNodeCoords const & nodesCoords,
                                    piNablaDofs[ 2 ]*monomInternalIntegrals[ 1 ]);
   }
 }
+
+template< localIndex MCN, localIndex MFN >
+void ConformingVirtualElementOrder1< MCN, MFN >::
+initialize( NodeManager const & nodeManager,
+            EdgeManager const & edgeManager,
+            FaceManager const & faceManager,
+            CellElementSubRegion const & cellSubRegion )
+{
+  m_nodesCoords = nodeManager.referencePosition();
+  m_cellToNodeMap = cellSubRegion.nodeList();
+  m_cellToFaceMap = cellSubRegion.faceList().toViewConst();
+  m_faceToNodeMap = faceManager.edgeList().toViewConst();
+  
+}
 }
 }

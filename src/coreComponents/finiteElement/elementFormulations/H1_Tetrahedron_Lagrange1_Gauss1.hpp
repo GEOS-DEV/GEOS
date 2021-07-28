@@ -72,7 +72,10 @@ public:
    * @brief Empty initialization method.
    * @param subRegion The cell sub-region for which the element has to be initialized.
    */
-  virtual void initialize( CellElementSubRegion const & GEOSX_UNUSED_PARAM( subRegion )) override
+  virtual void initialize( NodeManager const & GEOSX_UNUSED_PARAM(nodeManager),
+                           EdgeManager const & GEOSX_UNUSED_PARAM(edgeManager),
+                           FaceManager const & GEOSX_UNUSED_PARAM(faceManager),
+                           CellElementSubRegion const & GEOSX_UNUSED_PARAM(cellSubRegion) ) override
   {}
 
   /**

@@ -29,7 +29,7 @@
 #include "common/GeosxMacros.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "mesh/CellElementSubRegion.hpp"
-
+#include "mesh/EdgeManager.hpp"
 
 namespace geosx
 {
@@ -84,7 +84,10 @@ public:
    * @brief Abstract initialization method.
    * @param subRegion The cell sub-region for which the element has to be initialized.
    */
-  virtual void initialize( CellElementSubRegion const & subRegion ) = 0;
+    virtual void initialize( NodeManager const & nodeManager,
+                             EdgeManager const & edgeManager,
+                             FaceManager const & faceManager,
+                             CellElementSubRegion const & cellSubRegion ) = 0;
 
   /**
    * @brief Abstract setup method, possibly computing cell-dependent properties.

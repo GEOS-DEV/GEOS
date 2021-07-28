@@ -80,8 +80,10 @@ public:
    * @brief Empty initialization method.
    * @param subRegion The cell sub-region for which the element has to be initialized.
    */
-  void initialize( CellElementSubRegion const & GEOSX_UNUSED_PARAM( subRegion )) override
-  {}
+  void initialize( NodeManager const & nodeManager,
+                   EdgeManager const & edgeManager,
+                   FaceManager const & faceManager,
+                   CellElementSubRegion const & cellSubRegion ) override;
 
   /**
    * @brief Empty setup method.
@@ -191,6 +193,17 @@ private:
   real64 m_basisFunctionsIntegralMean[MAXCELLNODES];
   real64 m_stabilizationMatrix[MAXCELLNODES][MAXCELLNODES];
   real64 m_basisDerivativesIntegralMean[MAXCELLNODES][3];
+  InputNodeCoords m_nodesCoords;
+  InputCellToNodeMap m_cellToNodeMap;
+  InputCellToFaceMap m_cellToFaceMap;
+  InputFaceToNodeMap m_faceToNodeMap;
+  InputFaceToEdgeMap m_faceToEdgeMap;
+  InputEdgeToNodeMap m_edgeToNodeMap;
+  arrayView2d< real64 const > const m_faceCenters;
+  arrayView2d< real64 const > const m_faceNormals;
+  arrayView1d< real64 const > const m_faceAreas;
+  arrayView2d< real64 const > m_cellCenters;
+  arrayView1d< real64 const > m_cellVolumes;
 
   GEOSX_HOST_DEVICE
   static void
