@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0,0.0,-9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
@@ -11,13 +11,12 @@
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="FIM"
       discretization="FE1"
-      targetRegions="{Region2, Fracture}">
+      targetRegions="{ Region2, Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="50"
         lineSearchMaxCuts="10"
         newtonTol="1.0e-5"/>
       <LinearSolverParameters
-        logLevel="0"
         solverType="gmres"
         preconditionerType="amg"/>
     </Hydrofracture>
@@ -26,15 +25,12 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       name="lagsolve"
-      logLevel="0"
       contactRelationName="fractureContact"
-      solidMaterialNames="{rock}"
-      targetRegions="{Region2, Fracture}">
+      solidMaterialNames="{ rock }"
+      targetRegions="{ Region2, Fracture }">
       <NonlinearSolverParameters
-        newtonMaxIter="5"
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        logLevel="0"
         krylovTol="1.0e-10"
         solverType="gmres"/>
     </SolidMechanicsLagrangianSSLE>
@@ -42,25 +38,21 @@
     <SinglePhaseFVM
       discretization="singlePhaseTPFA"
       name="SinglePhaseFlow"
-      solidNames="{rock}"
-      permeabilityNames="{fracPerm}"
-      logLevel="0"
-      fluidNames="{water}"
+      solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }"
+      fluidNames="{ water }"
       meanPermCoeff="0.8"
-      targetRegions="{Fracture}">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="10"
         newtonTol="1.0e-5"/>
       <LinearSolverParameters
-        logLevel="0"
         krylovTol="1.0e-12"
         solverType="gmres"/>
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ rock }"
       rockToughness="$K_upscaled$"
@@ -129,8 +121,8 @@
 
   <ElementRegions>
     <CellElementRegion
-      materialList="{water, rock}"
-      cellBlocks="{cb1}"
+      materialList="{ water, rock }"
+      cellBlocks="{ cb1 }"
       name="Region2"/>
 
     <SurfaceElementRegion
@@ -141,7 +133,6 @@
 
   <Constitutive>
     <CompressibleSinglePhaseFluid
-      referenceDensity="1000"
       name="water"
       viscosibility="0.0"
       defaultViscosity="0.001"
@@ -156,22 +147,20 @@
       defaultShearModulus="1.0e9"
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"
-      BiotCoefficient="1"
       referencePressure="2.125e6"/>
 
     <Contact
       penaltyStiffness="0.0e8"
       name="fractureContact">
       <TableFunction
-        values="{  1.0e-6, 1.0e-4}"
+        values="{ 1.0e-6, 1.0e-4 }"
         name="aperTable"
-        coordinates="{ -1.0e-3, 0.0}"/>
+        coordinates="{ -1.0e-3, 0.0 }"/>
     </Contact>
-    
-    <ParallelPlatesPermeability
-      name="fracPerm"/> 
-  </Constitutive>
 
+    <ParallelPlatesPermeability
+      name="fracPerm"/>
+  </Constitutive>
 
   <NumericalMethods>
     <FiniteElements>
@@ -185,59 +174,58 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{fracPerm}"/>
+        coefficientModelNames="{ fracPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <Functions>
     <!-- Pumping Schedule -->
     <TableFunction
-      inputVarNames="{time}"
+      inputVarNames="{ time }"
       voxelFile="$table_root$/flowRate.csv"
-      coordinateFiles="{$table_root$/flowRate_time.csv}"
-      name="flow_rate"
-      interpolation="linear"/>
+      coordinateFiles="{ $table_root$/flowRate_time.csv }"
+      name="flow_rate"/>
 
     <!-- Geologic Model -->
     <TableFunction
-      inputVarNames="{elementCenter}"
+      inputVarNames="{ elementCenter }"
       voxelFile="$table_root$/sigma_xx.csv"
-      coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
+      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
       name="sigma_xx"
       interpolation="nearest"/>
 
     <TableFunction
-      inputVarNames="{elementCenter}"
+      inputVarNames="{ elementCenter }"
       voxelFile="$table_root$/sigma_yy.csv"
-      coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
+      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
       name="sigma_yy"
       interpolation="nearest"/>
 
     <TableFunction
-      inputVarNames="{elementCenter}"
+      inputVarNames="{ elementCenter }"
       voxelFile="$table_root$/sigma_zz.csv"
-      coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
+      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
       name="sigma_zz"
       interpolation="nearest"/>
 
     <TableFunction
-      inputVarNames="{elementCenter}"
+      inputVarNames="{ elementCenter }"
       voxelFile="$table_root$/porePressure.csv"
-      coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
+      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
       name="init_pressure"
       interpolation="nearest"/>
 
     <TableFunction
-      inputVarNames="{elementCenter}"
+      inputVarNames="{ elementCenter }"
       voxelFile="$table_root$/bulkModulus.csv"
-      coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
+      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
       name="bulk_modulus"
       interpolation="nearest"/>
 
     <TableFunction
-      inputVarNames="{elementCenter}"
+      inputVarNames="{ elementCenter }"
       voxelFile="$table_root$/shearModulus.csv"
-      coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
+      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
       name="shear_modulus"
       interpolation="nearest"/>
   </Functions>
@@ -247,7 +235,7 @@
       scale="1.0"
       fieldName="rock_bulkModulus"
       name="bulk_modulus"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions"
       initialCondition="1"
       functionName="bulk_modulus"/>
@@ -256,7 +244,7 @@
       scale="1.0"
       fieldName="rock_shearModulus"
       name="shear_modulus"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions"
       initialCondition="1"
       functionName="shear_modulus"/>
@@ -268,7 +256,7 @@
       initialCondition="1"
       component="0"
       fieldName="rock_stress"
-      setNames="{all}"
+      setNames="{ all }"
       functionName="sigma_xx"/>
 
     <FieldSpecification
@@ -278,7 +266,7 @@
       initialCondition="1"
       component="1"
       fieldName="rock_stress"
-      setNames="{all}"
+      setNames="{ all }"
       functionName="sigma_yy"/>
 
     <FieldSpecification
@@ -288,7 +276,7 @@
       initialCondition="1"
       component="2"
       fieldName="rock_stress"
-      setNames="{all}"
+      setNames="{ all }"
       functionName="sigma_zz"/>
 
     <!-- Mechanical BC's -->
@@ -296,7 +284,7 @@
       scale="0.0"
       fieldName="TotalDisplacement"
       name="x_constraint"
-      setNames="{xneg, xpos}"
+      setNames="{ xneg, xpos }"
       objectPath="nodeManager"
       component="0"/>
 
@@ -304,7 +292,7 @@
       scale="0.0"
       fieldName="TotalDisplacement"
       name="y_constraint"
-      setNames="{yneg, ypos}"
+      setNames="{ yneg, ypos }"
       objectPath="nodeManager"
       component="1"/>
 
@@ -312,7 +300,7 @@
       scale="0.0"
       fieldName="TotalDisplacement"
       name="z_constraint"
-      setNames="{zneg, zpos}"
+      setNames="{ zneg, zpos }"
       objectPath="nodeManager"
       component="2"/>
   </FieldSpecifications>

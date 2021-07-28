@@ -11,15 +11,12 @@
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
-      temperature="297.15"
-      useMass="0">
+      temperature="297.15">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="15"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
 
@@ -39,13 +36,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 1.01, 1.01, 1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ 8.99, -0.01, -0.01}"
-      xMax="{10.01, 1.01, 1.01}"/>
+      xMin="{ 8.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
@@ -53,13 +50,11 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e6"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
       forceDt="1e3"
-      beginTime="0"
       endTime="1e4"
       target="/Solvers/compflow"/>
 
@@ -89,7 +84,7 @@
         name="fluidTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -127,10 +122,10 @@
       phaseMinVolumeFraction="{ 0.1, 0.15 }"
       phaseRelPermExponent="{ 2.0, 2.0 }"
       phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
-    
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-16, 1.0e-16, 1.0e-16}"/>         
+      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>
