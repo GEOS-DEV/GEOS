@@ -76,6 +76,21 @@ public:
     return m_numSupportPoints;
   }
 
+  /**
+   * @brief Empty initialization method.
+   * @param subRegion The cell sub-region for which the element has to be initialized.
+   */
+  void initialize( CellElementSubRegion const & GEOSX_UNUSED_PARAM( subRegion )) override
+  {}
+
+  /**
+   * @brief Empty setup method.
+   * @param cellIndex The index of the cell with respect to the cell sub region to which the element
+   * has been initialized previously (see @ref initialize).
+   */
+  virtual void setup( localIndex const & GEOSX_UNUSED_PARAM( cellIndex )) override
+  {}
+
   GEOSX_HOST_DEVICE
   void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
               real64 ( & N )[maxSupportPoints] ) const
@@ -88,7 +103,7 @@ public:
 
   GEOSX_HOST_DEVICE
   real64 calcGradN( localIndex const q,
-                    real64 const ( & X )[maxSupportPoints][3],
+                    real64 const ( &X )[maxSupportPoints][3],
                     real64 ( & gradN )[maxSupportPoints][3] ) const
   {
     for( localIndex i = 0; i < maxSupportPoints; ++i )
@@ -103,7 +118,7 @@ public:
 
   GEOSX_HOST_DEVICE
   real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
-                                      real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3]) const
+                                      real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3] ) const
   {
     return m_quadratureWeight;
   }

@@ -28,6 +28,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 
 
 namespace geosx
@@ -78,6 +79,19 @@ public:
    * @brief Destructor
    */
   virtual ~FiniteElementBase() = default;
+
+  /**
+   * @brief Abstract initialization method.
+   * @param subRegion The cell sub-region for which the element has to be initialized.
+   */
+  virtual void initialize( CellElementSubRegion const & subRegion ) = 0;
+
+  /**
+   * @brief Abstract setup method, possibly computing cell-dependent properties.
+   * @param cellIndex The index of the cell with respect to the cell sub region to which the element has been initialized previously (see
+   *@ref initialize).
+   */
+  virtual void setup( localIndex const & cellIndex ) = 0;
 
   /**
    * @brief Virtual getter for the number of quadrature points per element.

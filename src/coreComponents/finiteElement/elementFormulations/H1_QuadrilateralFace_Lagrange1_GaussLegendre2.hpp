@@ -71,6 +71,21 @@ public:
   }
 
   /**
+   * @brief Empty initialization method.
+   * @param subRegion The cell sub-region for which the element has to be initialized.
+   */
+  virtual void initialize( CellElementSubRegion const & GEOSX_UNUSED_PARAM( subRegion )) override
+  {}
+
+  /**
+   * @brief Empty setup method.
+   * @param cellIndex The index of the cell with respect to the cell sub region to which the element has been initialized previously (see
+   *@ref initialize).
+   */
+  virtual void setup( localIndex const & GEOSX_UNUSED_PARAM( cellIndex )) override
+  {}
+
+  /**
    * @brief Calculate shape functions values for each support point at a
    *   quadrature point.
    * @param q Index of the quadrature point.
