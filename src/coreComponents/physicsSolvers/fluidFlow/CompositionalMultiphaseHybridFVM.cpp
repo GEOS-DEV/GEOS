@@ -426,10 +426,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                                             ElementRegionBase const &,
                                                             auto const & subRegion )
   {
-<<<<<<< HEAD
-=======
 
->>>>>>> upstream/develop
     PermeabilityBase const & permeabilityModel =
       getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
 

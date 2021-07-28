@@ -173,7 +173,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     // check if this is a vertical well or a horizontal well
     // assign d1, d2, h, k1, and k2 accordingly
     decideWellDirection( topToBottomVec,
-                         dx, dy, dz, perm[er][esr][ei][0],
+                         dx, dy, dz, perm[er][esr][ei],
                          d1, d2, h, k1, k2 );
 
     real64 const k21 = k1 > 0

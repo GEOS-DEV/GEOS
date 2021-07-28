@@ -31,6 +31,11 @@
 #include "solid/ElasticTransverseIsotropic.hpp"
 
 #include "solid/PorousSolid.hpp"
+#include "solid/CompressibleSolid.hpp"
+#include "solid/porosity/PressurePorosity.hpp"
+#include "permeability/ConstantPermeability.hpp"
+#include "permeability/CarmanKozenyPermeability.hpp"
+#include "permeability/ParallelPlatesPermeability.hpp"
 
 
 namespace geosx
@@ -138,6 +143,32 @@ struct ConstitutivePassThru< PorousSolidBase >
                                                                                        std::forward< LAMBDA >( lambda ) );
   }
 };
+
+/**
+ * Specialization for the CompressibleSolid models.
+ */
+template<>
+struct ConstitutivePassThru< CompressibleSolidBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+                                 CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
+                                                                                                               std::forward< LAMBDA >( lambda ) );
+  }
+
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+    CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+    CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
+                                                                                  std::forward< LAMBDA >( lambda ) );
+  }
+};
+
 
 
 }

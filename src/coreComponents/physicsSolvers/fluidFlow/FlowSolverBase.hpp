@@ -72,8 +72,6 @@ public:
 
   arrayView1d< string const > permeabilityModelNames() const { return m_permeabilityModelNames; }
 
-  arrayView1d< string const > permeabilityModelNames() const { return m_permeabilityModelNames; }
-
   virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
 
 

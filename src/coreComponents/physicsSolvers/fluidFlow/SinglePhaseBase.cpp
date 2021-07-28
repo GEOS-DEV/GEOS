@@ -23,7 +23,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
-#include "constitutive/solid/RockBase.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -410,7 +410,7 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 
 template< typename POLICY >
 void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
-                                          CellElementSubRegion & subRegion,
+                                          CellElementSubRegion const & subRegion,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
@@ -430,26 +430,30 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const density = fluidProps.dens;
   arrayView2d< real64 const > const dDens_dPres = fluidProps.dDens_dPres;
 
-  RockBase const & solidModel = getConstitutiveModel< RockBase >( subRegion,
-                                                                  m_solidModelNames[targetIndex] );
+  ConstitutiveBase const & solidModel = getConstitutiveModel< ConstitutiveBase >( subRegion, m_solidModelNames[targetIndex] );
 
-  arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
-  arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
-  arrayView2d< real64 const > const & dPoro_dPres = solidModel.dPorosity_dPressure();
+  constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &subRegion] ( auto & castedSolidModel )
+  {
 
-  AccumulationKernel::template launch< POLICY >( subRegion.size(),
-                                                 rankOffset,
-                                                 dofNumber,
-                                                 ghostRank,
-                                                 volume,
-                                                 porosityOld,
-                                                 porosity,
-                                                 dPoro_dPres,
-                                                 densityOld,
-                                                 density,
-                                                 dDens_dPres,
-                                                 localMatrix,
-                                                 localRhs );
+    arrayView2d< real64 const > const & porosity    = castedSolidModel.getPorosity();
+    arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
+    arrayView2d< real64 const > const & dPoro_dPres = castedSolidModel.getDporosity_dPressure();
+
+    AccumulationKernel::template launch< POLICY >( subRegion.size(),
+                                                   rankOffset,
+                                                   dofNumber,
+                                                   ghostRank,
+                                                   volume,
+                                                   porosityOld,
+                                                   porosity,
+                                                   dPoro_dPres,
+                                                   densityOld,
+                                                   density,
+                                                   dDens_dPres,
+                                                   localMatrix,
+                                                   localRhs );
+
+  } );
 }
 
 template< typename POLICY >
@@ -472,13 +476,6 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const & density = fluidProps.dens;
   arrayView2d< real64 const > const & dDens_dPres = fluidProps.dDens_dPres;
 
-  RockBase const & solidModel = getConstitutiveModel< RockBase >( subRegion,
-                                                                  m_solidModelNames[targetIndex] );
-
-  arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
-  arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
-  arrayView2d< real64 const > const & dPoro_dPres = solidModel.dPorosity_dPressure();
-
 
 #if !defined(ALLOW_CREATION_MASS)
   static_assert( true, "must have ALLOW_CREATION_MASS defined" );
@@ -489,22 +486,32 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   creationMass = subRegion.getReference< real64_array >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() );
 #endif
 
-  AccumulationKernel::template launch< POLICY >( subRegion.size(),
-                                                 rankOffset,
-                                                 dofNumber,
-                                                 ghostRank,
-                                                 volume,
-                                                 porosityOld,
-                                                 porosity,
-                                                 dPoro_dPres,
-                                                 densityOld,
-                                                 density,
-                                                 dDens_dPres,
+  ConstitutiveBase const & solidModel = getConstitutiveModel< ConstitutiveBase >( subRegion, m_solidModelNames[targetIndex] );
+
+  constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &subRegion] ( auto & castedSolidModel )
+  {
+    arrayView2d< real64 const > const & porosity    = castedSolidModel.getPorosity();
+    arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
+    arrayView2d< real64 const > const & dPoro_dPres = castedSolidModel.getDporosity_dPressure();
+
+    AccumulationKernel::template launch< POLICY >( subRegion.size(),
+                                                   rankOffset,
+                                                   dofNumber,
+                                                   ghostRank,
+                                                   volume,
+                                                   porosityOld,
+                                                   porosity,
+                                                   dPoro_dPres,
+                                                   densityOld,
+                                                   density,
+                                                   dDens_dPres,
 #if ALLOW_CREATION_MASS
-                                                 creationMass,
+                                                   creationMass,
 #endif
-                                                 localMatrix,
-                                                 localRhs );
+                                                   localMatrix,
+                                                   localRhs );
+
+  } );
 }
 
 template< typename POLICY >
@@ -519,7 +526,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
 
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh,
                                                                         [&]( localIndex const targetIndex,
-                                                                             auto & subRegion )
+                                                                             auto const & subRegion )
   {
     accumulationLaunch< POLICY >( targetIndex, subRegion, dofManager, localMatrix, localRhs );
   } );
@@ -695,16 +702,16 @@ void SinglePhaseBase::backupFields( MeshLevel & mesh ) const
     ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
     arrayView2d< real64 const > const & dens = getFluidProperties( fluid ).dens;
 
-    RockBase & solidModel = getConstitutiveModel< RockBase >( subRegion, m_solidModelNames[targetIndex] );
-    arrayView2d< real64 const > const & poro = solidModel.getPorosity();
-    arrayView2d< real64 > const & poroOld = solidModel.getOldPorosity();
+//    RockBase & solidModel = getConstitutiveModel< RockBase >( subRegion, m_solidModelNames[targetIndex] );
+//    arrayView2d< real64 const > const & poro = solidModel.getPorosity();
+//    arrayView2d< real64 > const & poroOld = solidModel.getOldPorosity();
 
     arrayView1d< real64 > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       densOld[ei] = dens[ei][0];
-      poroOld[ei][0] = poro[ei][0];
+//      poroOld[ei][0] = poro[ei][0];
     } );
   } );
 }

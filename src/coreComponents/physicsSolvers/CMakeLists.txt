@@ -8,7 +8,6 @@ set( physicsSolvers_headers
      SolverBase.hpp
      fluidFlow/HybridFVMHelperKernels.hpp          
      fluidFlow/FlowSolverBase.hpp
-     fluidFlow/FlowSolverBaseKernels.hpp
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
      fluidFlow/SinglePhaseBase.hpp
@@ -44,13 +43,9 @@ set( physicsSolvers_headers
      multiphysics/MultiphasePoromechanicsKernel.hpp
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhaseReservoir.hpp
-<<<<<<< HEAD
-     multiphysics/SinglePhasePoroelasticKernel.hpp
      multiphysics/SinglePhasePoroelasticEFEMKernel.hpp
      multiphysics/SinglePhasePoroelasticFluxKernels.hpp
-=======
      multiphysics/SinglePhasePoromechanicsKernel.hpp
->>>>>>> upstream/develop
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp

@@ -200,9 +200,6 @@ public:
     /// @return The key for coefficientName
     static constexpr char const * coeffNameString() { return "coefficientName"; }
 
-    /// @return The key for coefficientName
-    static constexpr char const * coefficientModelNamesString() { return "coefficientModelNames"; }
-
     /// @return The key for targetRegions
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
@@ -309,9 +306,6 @@ protected:
 
   /// names of target regions to build the stencil for
   string_array m_targetRegions;
-
-  /// names of target regions to build the stencil for
-  string_array m_coefficientModelNames;
 
   /// relative tolerance
   real64 m_areaRelTol;

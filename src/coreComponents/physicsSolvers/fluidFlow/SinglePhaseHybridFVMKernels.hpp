@@ -534,7 +534,6 @@ struct FluxKernel
           arrayView1d< integer const > const & faceGhostRank,
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & dFacePres,
-          arrayView2d< real64 const > const & elemPerm,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & transMultiplier,
           ElementViewConst< arrayView1d< real64 const > > const & mob,

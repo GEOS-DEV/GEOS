@@ -27,9 +27,10 @@ namespace constitutive
 {
 
 SolidBase::SolidBase( string const & name, Group * const parent ):
-  RockBase( name, parent ),
+  ConstitutiveBase( name, parent ),
   m_newStress( 0, 0, 6 ),
-  m_oldStress( 0, 0, 6 )
+  m_oldStress( 0, 0, 6 ),
+  m_density()
 {
   string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
 
@@ -42,6 +43,14 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::oldStressString(), &m_oldStress ).
     setApplyDefaultValue( 0 ). // default to zero initial stress
     setDescription( "Previous Material Stress" );
+
+  registerWrapper( viewKeyStruct::densityString(), &m_density ).
+    setApplyDefaultValue( -1 ). // will be overwritten
+    setDescription( "Material Density" );
+
+  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default Material Density" );
 }
 
 
@@ -50,16 +59,20 @@ SolidBase::~SolidBase()
 
 
 void SolidBase::postProcessInput()
-{}
+{
+  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).
+    setApplyDefaultValue( m_defaultDensity );
+}
 
 
 void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
+  m_density.resize( 0, numConstitutivePointsPerParentIndex );
   m_newStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_oldStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
 
-  RockBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 
@@ -71,15 +84,11 @@ void SolidBase::saveConvergedState() const
   arrayView3d< real64 const, solid::STRESS_USD > newStress = m_newStress;
   arrayView3d< real64, solid::STRESS_USD > oldStress = m_oldStress;
 
-  arrayView2d< real64 const > newPorosity = m_newPorosity;
-  arrayView2d< real64 > oldPorosity = m_oldPorosity;
-
   forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {
       LvArray::tensorOps::copy< 6 >( oldStress[k][q], newStress[k][q] );
-      oldPorosity[k][q] = newPorosity[k][q];
     }
   } );
 }

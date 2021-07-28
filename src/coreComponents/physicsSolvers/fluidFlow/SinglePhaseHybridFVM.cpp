@@ -24,6 +24,7 @@
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -293,7 +294,6 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                                    faceGhostRank,
                                                    facePres,
                                                    dFacePres,
-                                                   permeability,
                                                    faceGravCoef,
                                                    transMultiplier,
                                                    m_mobility.toNestedViewConst(),
@@ -376,20 +376,22 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const & densOld = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
 
-    RockBase const & solidModel = this->template getConstitutiveModel< RockBase >( subRegion,
-                                                                                   m_solidModelNames[targetIndex] );
+    ConstitutiveBase const & solidModel = subRegion.template getConstitutiveModel< ConstitutiveBase >( m_solidModelNames[targetIndex] );
 
-    arrayView2d< real64 const > const & poroOld = solidModel.getOldPorosity();
+    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &localResidualNorm] ( auto & castedSolidModel )
+    {
+      arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
 
-    SinglePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                                        parallelDeviceReduce >( localRhs,
-                                                                                rankOffset,
-                                                                                elemDofNumber,
-                                                                                elemGhostRank,
-                                                                                volume,
-                                                                                densOld,
-                                                                                poroOld,
-                                                                                localResidualNorm );
+      SinglePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
+                                                          parallelDeviceReduce >( localRhs,
+                                                                                  rankOffset,
+                                                                                  elemDofNumber,
+                                                                                  elemGhostRank,
+                                                                                  volume,
+                                                                                  densOld,
+                                                                                  porosityOld,
+                                                                                  localResidualNorm );
+    } );
 
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     defaultViscosity += fluid.defaultViscosity();

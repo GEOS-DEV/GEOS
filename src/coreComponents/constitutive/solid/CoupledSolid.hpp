@@ -53,6 +53,13 @@ public:
     m_permUpdate( permModel.createKernelWrapper() )
   {}
 
+  /**
+   * @brief Get number of gauss points per element.
+   * @return number of gauss points per element
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numGauss() const { return m_porosityUpdate.numGauss(); }
+
   GEOSX_HOST_DEVICE
   real64 getOldPorosity( localIndex const k,
                          localIndex const q ) const
@@ -137,7 +144,17 @@ public:
                                                                     getPermModel() );
   }
 
-  arrayView2d< real64 const > const  dPorosity_dPressure() const
+  arrayView2d< real64 const > const getOldPorosity() const
+  {
+    return getPorosityModel().getOldPorosity();
+  }
+
+  arrayView2d< real64 const > const getPorosity() const
+  {
+    return getPorosityModel().getPorosity();
+  }
+
+  arrayView2d< real64 const > const  getDporosity_dPressure() const
   { return getPorosityModel().dPorosity_dPressure(); }
 
   virtual void saveConvergedState() const override final

@@ -860,7 +860,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
 
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
-      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei][0], faceNormal );
+      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal );
       real64 faceWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
 
       // correct negative weight issue arising from non-K-orthogonal grids

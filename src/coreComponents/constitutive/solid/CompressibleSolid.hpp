@@ -51,14 +51,26 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  void pressureUpdate( localIndex const k,
-                       localIndex const q,
-                       real64 const & pressure,
-                       real64 const & deltaPressure ) const
+  void updateFromPressure( localIndex const k,
+                           localIndex const q,
+                           real64 const & pressure,
+                           real64 const & deltaPressure ) const
   {
-    m_porosityUpdate.updatePorosity( k, q, pressure, deltaPressure );
+    m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPorosity( k, q, porosity );
+  }
+
+  GEOSX_HOST_DEVICE
+  void updateFromPressureAndAperture( localIndex const k,
+                                      localIndex const q,
+                                      real64 const & pressure,
+                                      real64 const & deltaPressure,
+                                      real64 const & hydraulicAperture ) const
+  {
+    m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+    m_permUpdate.updateFromAperture( k, q, hydraulicAperture );
   }
 
 private:
@@ -67,6 +79,14 @@ private:
   using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_permUpdate;
 
 };
+
+
+/**
+ * @brief CompressibleSolidBase class used for dispatch of all Compressible solids.
+ */
+class CompressibleSolidBase : public SolidBase
+{};
+
 
 /**
  * @brief Class to represent a porous material for flow simulations.
@@ -82,6 +102,10 @@ template< typename PORO_TYPE,
 class CompressibleSolid : public CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >
 {
 public:
+
+
+  /// Alias for ElasticIsotropicUpdates
+  using KernelWrapper = CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE >;
 
   /**
    * @brief Constructor
@@ -111,7 +135,7 @@ public:
    *        that refers to the data in this.
    * @return An instantiation of CompressibleSolidUpdates.
    */
-  CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE > createKernelUpdates() const
+  KernelWrapper createKernelUpdates() const
   {
 
     return CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE >( getSolidModel(),

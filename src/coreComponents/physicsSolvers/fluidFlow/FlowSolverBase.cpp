@@ -20,8 +20,6 @@
 
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseKernels.hpp"
-#include "constitutive/solid/CompressibleRock.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
@@ -33,7 +31,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace FlowSolverBaseKernels;
 
 FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
@@ -224,34 +221,19 @@ void FlowSolverBase::updateSolidFlowProperties( CellElementSubRegion & subRegion
   arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
   arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-  // update porosity
-  RockBase & solidModel =
-    getConstitutiveModel< RockBase >( subRegion, m_solidModelNames[targetIndex] );
+  ConstitutiveBase & porousSolid = subRegion.template getConstitutiveModel( m_solidModelNames[targetIndex] );
 
-  constitutive::ConstitutivePassThru< RockBase >::execute( solidModel, [&] ( auto & castedSolid )
+  constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
-    typename TYPEOFREF( castedSolid ) ::KernelWrapper solidWrapper = castedSolid.createKernelUpdates();
+    typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    PorosityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                      solidWrapper,
-                                                      pressure,
-                                                      deltaPressure );
-  } );
-
-
-
-  arrayView2d< real64 const > const & porosity = solidModel.getPorosity();
-
-  PermeabilityBase & perm =
-    getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
-
-  constitutive::constitutiveUpdatePassThru( perm, [&] ( auto & castedPerm )
-  {
-    typename TYPEOFREF( castedPerm ) ::KernelWrapper permWrapper = castedPerm.createKernelWrapper();
-
-    PermeabilityKernel< CellElementSubRegion >::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                                                  permWrapper,
-                                                                                  porosity );
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+      {
+        porousWrapper.updateFromPressure( k, q, pressure[k], deltaPressure[k] );
+      }
+    } );
   } );
 }
 
@@ -263,30 +245,21 @@ void FlowSolverBase::updateSolidFlowProperties( SurfaceElementSubRegion & subReg
   arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
   arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-  // update porosity
-  CompressibleRock & solidModel =
-    getConstitutiveModel< CompressibleRock >( subRegion, m_solidModelNames[targetIndex] );
+  arrayView1d< real64 const > const effectiveAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
 
-  CompressibleRock::KernelWrapper porosityWrapper = solidModel.createKernelUpdates();
+  ConstitutiveBase & porousSolid = subRegion.template getConstitutiveModel( m_solidModelNames[targetIndex] );
 
-  PorosityKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                    porosityWrapper,
-                                                    pressure,
-                                                    deltaPressure );
-
-  arrayView1d< real64 const > const effectiveAperture  =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
-
-  PermeabilityBase & perm =
-    getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
-
-  constitutive::constitutiveUpdatePassThru( perm, [&] ( auto & castedPerm )
+  constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
-    typename TYPEOFREF( castedPerm ) ::KernelWrapper permWrapper = castedPerm.createKernelWrapper();
+    typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    PermeabilityKernel< SurfaceElementSubRegion >::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                                                     permWrapper,
-                                                                                     effectiveAperture );
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+      {
+        porousWrapper.updateFromPressureAndAperture( k, q, pressure[k], deltaPressure[k], effectiveAperture[k] );
+      }
+    } );
   } );
 }
 

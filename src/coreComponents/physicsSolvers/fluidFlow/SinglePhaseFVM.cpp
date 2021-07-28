@@ -21,8 +21,8 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
-#include "constitutive/solid/RockBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
@@ -123,18 +123,21 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
     arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
     arrayView1d< real64 const > const & densOld        = subRegion.template getReference< array1d< real64 > >( BASE::viewKeyStruct::densityOldString() );
 
-    RockBase const & solidModel = this->template getConstitutiveModel< RockBase >( subRegion,
-                                                                                   m_solidModelNames[targetIndex] );
-    arrayView2d< real64 const > const & poroOld = solidModel.getOldPorosity();
+    ConstitutiveBase const & solidModel = subRegion.template getConstitutiveModel< ConstitutiveBase >( m_solidModelNames[targetIndex] );
 
-    ResidualNormKernel::launch< parallelDevicePolicy<>, parallelDeviceReduce >( localRhs,
-                                                                                rankOffset,
-                                                                                dofNumber,
-                                                                                elemGhostRank,
-                                                                                volume,
-                                                                                densOld,
-                                                                                poroOld,
-                                                                                localResidualNorm );
+    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &localResidualNorm] ( auto & castedSolidModel )
+    {
+      arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
+
+      ResidualNormKernel::launch< parallelDevicePolicy<>, parallelDeviceReduce >( localRhs,
+                                                                                  rankOffset,
+                                                                                  dofNumber,
+                                                                                  elemGhostRank,
+                                                                                  volume,
+                                                                                  densOld,
+                                                                                  porosityOld,
+                                                                                  localResidualNorm );
+    } );
   } );
 
   // compute global residual norm

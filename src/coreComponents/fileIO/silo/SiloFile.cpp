@@ -1463,7 +1463,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     } );
 
     string_array
-      regionSolidMaterialList = elementRegion.getConstitutiveNames< constitutive::RockBase >();
+      regionSolidMaterialList = elementRegion.getConstitutiveNames< constitutive::SolidBase >();
 //    string_array const
 //    regionSolidMaterialList2 = elementRegion.getConstitutiveNames< constitutive::PoreVolumeCompressibleSolid >();
 //

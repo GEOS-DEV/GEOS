@@ -39,18 +39,18 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  void compute( real64 const & effectiveAperture,
+  void compute( real64 const & hydraulicAperture,
                 arraySlice1d< real64 > const & permeability,
                 arraySlice1d< real64 > const & dPerm_dAperture ) const;
 
   GEOSX_HOST_DEVICE
-  void updateFromAperture( localIndex const k,
-                           localIndex const q,
-                           real64 const & effectiveAperture ) const override
+  virtual void updateFromAperture( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & hydraulicAperture ) const override final
   {
     GEOSX_UNUSED_VAR( q );
 
-    compute( effectiveAperture,
+    compute( hydraulicAperture,
              m_permeability[k],
              m_dPerm_dAperture[k] );
   }
@@ -102,13 +102,13 @@ private:
 
 
 GEOSX_HOST_DEVICE
-void ParallelPlatesPermeabilityUpdate::compute( real64 const & effectiveAperture,
+void ParallelPlatesPermeabilityUpdate::compute( real64 const & hydraulicAperture,
                                                 arraySlice1d< real64 > const & permeability,
                                                 arraySlice1d< real64 > const & dPerm_dAperture ) const
 {
   // Technically this is not a permeability but it's convenient to definite like this.
-  real64 const perm  = effectiveAperture*effectiveAperture*effectiveAperture / 12.0;
-  real64 const dPerm = 3*effectiveAperture*effectiveAperture / 12.0;
+  real64 const perm  = hydraulicAperture*hydraulicAperture*hydraulicAperture / 12.0;
+  real64 const dPerm = hydraulicAperture*hydraulicAperture / 4.0;
 
   for( int dim=0; dim < 3; dim++ )
   {

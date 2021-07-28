@@ -91,6 +91,14 @@ public:
     return m_oldPorosity[k][q];
   }
 
+  GEOSX_HOST_DEVICE
+  virtual void updateFromPressure( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & pressure ) const
+  {
+    GEOSX_ERROR( "updateFromPressure is not implemented for porosityBase." );
+  }
+
 protected:
   arrayView2d< real64 > m_newPorosity;
 
