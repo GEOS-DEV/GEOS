@@ -132,6 +132,131 @@ public:
     return 0;
   }
 
+  /**
+   * @brief Get c11
+   * @param[in] k Element index.
+   * @return the stiffness component c11 of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getC11( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getC11() not implemented for this model" );
+
+    return 0;
+  }
+
+  /**
+   * @brief Get c12
+   * @param[in] k Element index.
+   * @return the stiffness component c12 of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getC12( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getC12() not implemented for this model" );
+
+    return 0;
+  }
+
+  /**
+   * @brief Get c13
+   * @param[in] k Element index.
+   * @return the stiffness component c13 of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getC13( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getC13() not implemented for this model" );
+
+    return 0;
+  }
+
+  /**
+   * @brief Get c22
+   * @param[in] k Element index.
+   * @return the stiffness component c22 of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getC22( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getC22() not implemented for this model" );
+
+    return 0;
+  }
+
+  /**
+   * @brief Get c23
+   * @param[in] k Element index.
+   * @return the stiffness component c23 of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getC23( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getC23() not implemented for this model" );
+
+    return 0;
+  }
+
+  /**
+   * @brief Get c33
+   * @param[in] k Element index.
+   * @return the stiffness component c33 of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getC33( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getC33() not implemented for this model" );
+
+    return 0;
+  }
+
+  /**
+   * @brief Get c44
+   * @param[in] k Element index.
+   * @return the stiffness component c44 of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getC44( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getC44() not implemented for this model" );
+
+    return 0;
+  }
+
+  /**
+   * @brief Get c55
+   * @param[in] k Element index.
+   * @return the stiffness component c55 of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getC55( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getC55() not implemented for this model" );
+
+    return 0;
+  }
+
+  /**
+   * @brief Get c66
+   * @param[in] k Element index.
+   * @return the stiffness component c66 of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getC66( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getC66() not implemented for this model" );
+
+    return 0;
+  }
 
   /**
    * @brief Small strain update.

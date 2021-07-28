@@ -34,6 +34,10 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Grain bulk modulus" );
 
+  registerWrapper( viewKeyStruct::grainShearModulusString(), &m_grainShearModulus ).
+    setInputFlag( InputFlags::OPTIONAL ). //TODO change to REQUIRED after modifying the xml
+    setDescription( "Grain shear modulus" );
+
   registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
     setDescription( "Biot coefficient." );
 }

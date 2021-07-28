@@ -146,6 +146,35 @@ public:
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, real64 ( &stiffness )[6][6] ) const override final;
 
+  GEOSX_HOST_DEVICE
+  virtual real64 getC11( localIndex const k ) const override final
+  {
+    return m_c11[k];
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual real64 getC13( localIndex const k ) const override final
+  {
+    return m_c13[k];
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual real64 getC33( localIndex const k ) const override final
+  {
+    return m_c33[k];
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual real64 getC44( localIndex const k ) const override final
+  {
+    return m_c44[k];
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual real64 getC66( localIndex const k ) const override final
+  {
+    return m_c66[k];
+  }
 
 private:
 
@@ -482,7 +511,6 @@ public:
    * @return reference to mutable 11 component of Voigt stiffness tensor.
    */
   arrayView1d< real64 > getC11() { return m_c11; }
-
 
   /**
    * @brief Const-Getter for 13 component of Voigt stiffness tensor.
