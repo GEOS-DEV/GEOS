@@ -17,6 +17,8 @@
  */
 
 #include "SurfaceGenerator.hpp"
+#include "ParallelTopologyChange.hpp"
+
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
@@ -30,10 +32,6 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-
-#ifdef USE_GEOSX_PTP
-#include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
-#endif
 
 namespace geosx
 {
@@ -593,7 +591,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       }
     }
 
-#ifdef USE_GEOSX_PTP
+#ifdef GEOSX_USE_MPI
 
     modifiedObjects.clearNewFromModified();
 
@@ -3043,6 +3041,12 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
           tipNodeSIF = pow( (fabs( tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea ) + fabs( tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea )
                              + fabs( tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea )), 0.5 );
+
+          if( LvArray::tensorOps::AiBi< 3 >( trailingNodeDisp, faceNormalVector ) < 0.0 )  //In case the aperture is negative with the
+                                                                                           // presence of confining stress.
+          {
+            tipNodeSIF *= -1;
+          }
 
           SIFNode_All[nodeIndex].emplace_back( tipNodeSIF );
 

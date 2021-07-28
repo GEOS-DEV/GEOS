@@ -15,6 +15,7 @@
 
 #include "CellElementSubRegion.hpp"
 
+#include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
 namespace geosx
@@ -46,7 +47,7 @@ CellElementSubRegion::~CellElementSubRegion()
 
 void CellElementSubRegion::copyFromCellBlock( CellBlock & source )
 {
-  this->setElementType( source.getElementTypeString());
+  this->setElementType( source.getElementType());
   this->setNumNodesPerElement( source.numNodesPerElement() );
   this->setNumFacesPerElement( source.numFacesPerElement() );
   this->resize( source.size());
@@ -60,17 +61,13 @@ void CellElementSubRegion::copyFromCellBlock( CellBlock & source )
   }
 
   this->constructGlobalToLocalMap();
-  source.forExternalProperties( [&]( dataRepository::WrapperBase & wrapper )
+  source.forExternalProperties( [&]( WrapperBase & wrapper )
   {
-    std::type_index typeIndex = std::type_index( wrapper.getTypeId());
-    rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeIndex ),
-                                    true,
-                                    [&]( auto type, auto GEOSX_UNUSED_PARAM( baseType ) )
+    types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
     {
-      using fieldType = decltype(type);
-      dataRepository::Wrapper< fieldType > & field = dynamicCast< dataRepository::Wrapper< fieldType > & >( wrapper );
-      const fieldType & fieldref = field.reference();
-      this->registerWrapper( wrapper.getName(), &const_cast< fieldType & >( fieldref ) ); //TODO remove const_cast
+      using ArrayType = decltype( array );
+      Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
+      this->registerWrapper( wrapper.getName(), &wrapperT.reference() );
     } );
   } );
 }

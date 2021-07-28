@@ -338,12 +338,14 @@ private:
 
   /**
    * @brief Compute all the perforation rates for this well
-   * @param well the well with its perforations
+   * @param subRegion the well element region for which the fields are resized
+   * @param targetIndex index of the target region
    */
   void computePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step
+   * @param domain the domain containing the well manager to access individual wells
    */
   void resetViews( DomainPartition & domain ) override;
 
@@ -353,17 +355,11 @@ private:
    */
   void initializeWells( DomainPartition & domain ) override;
 
-  /**
-   * @brief Resize the allocated multidimensional fields
-   * @param well the well for which the fields are resized
-   */
-  void resizeFields( WellElementSubRegion & subRegion );
-
   /// the max number of fluid phases
-  localIndex m_numPhases;
+  integer m_numPhases;
 
   /// the number of fluid components
-  localIndex m_numComponents;
+  integer m_numComponents;
 
   /// the (uniform) temperature
   real64 m_temperature;

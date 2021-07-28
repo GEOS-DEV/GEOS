@@ -1,6 +1,7 @@
 
 import os
 import re
+import sys
 #import numpy as np
 from xml.etree import ElementTree as etree
 
@@ -213,10 +214,14 @@ def buildTableValues(type_map,
 
 
 # Config
-schema_name = 'schema.xsd'
-additional_documentation_name = 'schema.xsd.other'
-complete_output = '../../docs/sphinx/CompleteXMLSchema'
-output_folder = 'docs'
+if len(sys.argv) < 2:
+  print("Usage: %s <schema_dir>" % sys.argv[0])
+  sys.exit(1)
+schema_dir = sys.argv[1]
+schema_name = os.path.join(schema_dir, 'schema.xsd')
+additional_documentation_name = os.path.join(schema_dir, 'schema.xsd.other')
+complete_output = os.path.join(schema_dir, '../../docs/sphinx/CompleteXMLSchema')
+output_folder = os.path.join(schema_dir, 'docs')
 sphinx_path = '../../coreComponents/schema/docs'
 xsd = '{http://www.w3.org/2001/XMLSchema}'
 

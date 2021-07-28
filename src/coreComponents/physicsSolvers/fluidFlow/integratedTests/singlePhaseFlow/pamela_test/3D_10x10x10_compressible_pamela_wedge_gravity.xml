@@ -2,12 +2,13 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, -9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="1"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
@@ -28,8 +29,8 @@
   <Geometry>
     <Box
       name="left"
-      xMin="{-1, -1, -1}"
-      xMax="{ 0.9, 11, 11}"/>
+      xMin="{ -1, -1, -1 }"
+      xMax="{ 0.9, 11, 11 }"/>
   </Geometry>
 
   <Events
@@ -47,7 +48,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/siloWellPump"/>
 
     <PeriodicEvent
@@ -63,7 +63,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -71,7 +72,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ DEFAULT_WEDGE }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -80,45 +81,20 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="1e6"
-      referenceDensity="1000"
       compressibility="1e-9"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
       referencePressure="1e6"
       compressibility="1e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-14, 2.0e-14, 2.0e-14 }"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/DEFAULT_WEDGE"
-      fieldName="permeability"
-      scale="2.0e-14"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/DEFAULT_WEDGE"
-      fieldName="permeability"
-      scale="2.0e-14"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/DEFAULT_WEDGE"
-      fieldName="permeability"
-      scale="2.0e-14"/>
-
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
@@ -142,8 +118,6 @@
       scale="1.1e6"
       setNames="{ left }"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo
