@@ -5,13 +5,12 @@
     <TriaxialDriver
       name="triaxialDriver"
       material="elastic"
-      mode="triaxial" 
+      mode="triaxial"
       strainFunction="strainFunction"
       stressFunction="stressFunction"
-      steps="50" 
-      output="none"
+      steps="50"
       baseline="testTriaxial_elasticIsotropic.txt"
-      logLevel="1" />
+      logLevel="1"/>
   </Tasks>
 
   <Events
@@ -22,14 +21,11 @@
   </Events>
 
   <Constitutive>
-
-    <ElasticIsotropic 
+    <ElasticIsotropic
       name="elastic"
       defaultDensity="2700"
       defaultBulkModulus="500"
-      defaultShearModulus="300"
-    />
-
+      defaultShearModulus="300"/>
   </Constitutive>
 
   <Functions>
@@ -38,10 +34,11 @@
       inputVarNames="{ time }"
       coordinates="{ 0.0, 3.0, 4.0, 7.0, 8.0 }"
       values="{ 0, -0.003, -0.002, -0.005, -0.004 }"/>
+
     <TableFunction
       name="stressFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 8.0  }"
+      coordinates="{ 0.0, 8.0 }"
       values="{ -1.0, -1.0 }"/>
   </Functions>
 

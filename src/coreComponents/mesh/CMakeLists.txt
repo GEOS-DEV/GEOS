@@ -9,24 +9,25 @@ set( mesh_headers
      ElementRegionManager.hpp
      ElementSubRegionBase.hpp
      ElementType.hpp
+     EmbeddedSurfaceNodeManager.hpp
      EmbeddedSurfaceSubRegion.hpp
      ExtrinsicMeshData.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
      InterObjectRelation.hpp
      MeshBody.hpp
+     MeshForLoopInterface.hpp
      MeshLevel.hpp
      MeshManager.hpp
+     NodeManager.hpp
      ObjectManagerBase.hpp
      Perforation.hpp
      PerforationData.hpp
-     NodeManager.hpp
-     EmbeddedSurfaceNodeManager.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
-     WellElementSubRegion.hpp
      WellElementRegion.hpp
+     WellElementSubRegion.hpp
      generators/CellBlock.hpp
      generators/CellBlockABC.hpp
      generators/CellBlockManager.hpp
@@ -40,19 +41,20 @@ set( mesh_headers
      mpiCommunications/CommunicationTools.hpp
      mpiCommunications/MPI_iCommData.hpp
      mpiCommunications/NeighborCommunicator.hpp
+     mpiCommunications/NeighborData.hpp
      mpiCommunications/PartitionBase.hpp
      mpiCommunications/SpatialPartition.hpp
-     mpiCommunications/NeighborData.hpp
+     simpleGeometricObjects/BoundedPlane.hpp
+     simpleGeometricObjects/Box.hpp
+     simpleGeometricObjects/Cylinder.hpp
      simpleGeometricObjects/GeometricObjectManager.hpp
      simpleGeometricObjects/SimpleGeometricObjectBase.hpp
-     simpleGeometricObjects/Box.hpp
      simpleGeometricObjects/ThickPlane.hpp
-     simpleGeometricObjects/BoundedPlane.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
      utilities/MeshUtilities.hpp
      utilities/StructuredGridUtilities.hpp
-  )
+   )
 
 # Specify all sources
 set(mesh_sources
@@ -103,28 +105,28 @@ set(mesh_sources
     utilities/MeshUtilities.cpp
    )
 
-set(dependencyList schema dataRepository constitutive metis)
+set( dependencyList schema dataRepository constitutive metis )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
 if( ENABLE_PAMELA )
-    message(STATUS "Adding PAMELAMeshGenerator sources and headers")
+    message( STATUS "Adding PAMELAMeshGenerator sources and headers" )
     list( APPEND mesh_headers generators/PAMELAMeshGenerator.hpp )
-    list( APPEND mesh_sources generators/PAMELAMeshGenerator.cpp)
-    add_subdirectory(PAMELA)
+    list( APPEND mesh_sources generators/PAMELAMeshGenerator.cpp )
+    add_subdirectory( PAMELA )
     list( APPEND dependencyList PAMELA )
 endif()
 
-blt_add_library( NAME                  mesh
-                 SOURCES               ${mesh_sources}
-                 HEADERS               ${mesh_headers}
-                 DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
+blt_add_library( NAME       mesh
+                 SOURCES    ${mesh_sources}
+                 HEADERS    ${mesh_headers}
+                 DEPENDS_ON ${dependencyList}
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
                
-target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks( PREFIX mesh
                        EXCLUDES PAMELA )

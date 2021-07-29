@@ -2,10 +2,9 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, -9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="flowSolver"
-      logLevel="0"
       discretization="tpfaFlow"
       targetRegions="{ Region1, Region2 }"
       fluidNames="{ fluid }"
@@ -15,9 +14,7 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhaseFVM>
   </Solvers>
 
@@ -37,13 +34,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 1.01, 1.01, 1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ 8.99, -0.01, -0.01}"
-      xMax="{10.01, 1.01, 1.01}"/>
+      xMin="{ 8.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
@@ -51,7 +48,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="100.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -72,7 +68,7 @@
         name="tpfaFlow"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rock1Perm, rock2Perm}"/>
+        coefficientModelNames="{ rock1Perm, rock2Perm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -94,9 +90,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="0.0"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid
@@ -108,15 +102,14 @@
       name="rock2"
       referencePressure="0.0"
       compressibility="1e-10"/>
-      
+
     <ConstantPermeability
       name="rock1Perm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>   
-      
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+
     <ConstantPermeability
       name="rock2Perm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>       
-      
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>

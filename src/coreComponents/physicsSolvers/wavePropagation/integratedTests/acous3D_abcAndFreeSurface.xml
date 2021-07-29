@@ -36,31 +36,29 @@
       name="zpos"
       xMin="{ -0.01, -0.01, 19.99 }"
       xMax="{ 20.01, 0.11, 20.01 }"/>
-
   </Geometry>
-   
+
   <Events
-      maxTime="0.2">
-    
+    maxTime="0.2">
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solverApplications"
       forceDt="0.0025"
       target="/Solvers/acousticSolver"/>
-    
+
     <!-- generate an output that can be read from VTK -->
     <PeriodicEvent
       name="vtk"
       timeFrequency="0.025"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
-    
-    <!-- two events to output pressure in an hdf5 file -->    
+
+    <!-- two events to output pressure in an hdf5 file -->
     <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="0.0025"
-      targetExactTimestep="1"
       target="/Tasks/pressureCollection"/>
+
     <PeriodicEvent
       name="timeHistoryOutput"
       timeFrequency="0.025"
@@ -71,9 +69,7 @@
     <PeriodicEvent
       name="restarts"
       timeFrequency="0.1"
-      targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
-    
   </Events>
 
   <NumericalMethods>
@@ -83,7 +79,7 @@
         order="1"/>
     </FiniteElements>
   </NumericalMethods>
-  
+
   <ElementRegions>
     <CellElementRegion
       name="Region"
@@ -97,7 +93,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-   
     <!-- 1) The initial pressure field -->
     <FieldSpecification
       name="initialPressure"
@@ -106,7 +101,7 @@
       objectPath="nodeManager"
       fieldName="pressure_n"
       scale="0.0"/>
-    
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -114,7 +109,7 @@
       objectPath="nodeManager"
       fieldName="pressure_nm1"
       scale="0.0"/>
-    
+
     <!-- 2) The velocity in the domain -->
     <FieldSpecification
       name="cellVelocity"
@@ -129,9 +124,7 @@
       name="zposFreeSurface"
       objectPath="faceManager"
       fieldName="FreeSurface"
-      scale="0"
       setNames="{ zpos }"/>
-
   </FieldSpecifications>
 
   <!-- collect the pressure values at the nodes -->
@@ -143,7 +136,6 @@
   </Tasks>
 
   <Outputs>
-
     <!-- output all the mesh values registered with a plot level LEVEL_0, LEVEL_1, LEVEL_2, LEVEL_3   -->
     <VTK
       name="vtkOutput"
@@ -157,7 +149,5 @@
 
     <Restart
       name="restartOutput"/>
-    
   </Outputs>
-  
 </Problem>
