@@ -90,7 +90,14 @@ public:
    * hold the computed projections of basis functions
    */
   struct StackVariables
-  {};
+  {
+      /**
+       * Default constructor
+       */
+      GEOSX_HOST_DEVICE
+      StackVariables()
+      {}
+  };
 
   /**
    * @brief Abstract initialization method.

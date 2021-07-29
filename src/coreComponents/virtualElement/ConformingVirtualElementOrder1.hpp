@@ -44,7 +44,14 @@ public:
   virtual ~ConformingVirtualElementOrder1() = default;
 
   struct StackVariables : public FiniteElementBase::StackVariables
-  {};
+  {
+      /**
+       * Default constructor
+       */
+      GEOSX_HOST_DEVICE
+      StackVariables()
+      {}
+  };
 
   GEOSX_HOST_DEVICE
   void processLocalGeometry( localIndex const & cellIndex,

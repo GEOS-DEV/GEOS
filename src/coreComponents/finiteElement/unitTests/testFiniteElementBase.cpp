@@ -32,6 +32,11 @@ class TestFiniteElementBase final : public FiniteElementBase
   virtual localIndex getNumQuadraturePoints() const override {return 8;};
   GEOSX_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const override {return 8;};
+  virtual void initialize( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                           EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
+                           FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
+                           CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ) ) override
+  {}
 };
 
 TEST( FiniteElementBase, test_setGradNView )
