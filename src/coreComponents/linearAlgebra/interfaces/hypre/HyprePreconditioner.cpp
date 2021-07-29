@@ -433,14 +433,14 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
       Stopwatch timer(m_computeAuuTime);
       mat.multiplyPtAP( Pu, Auu );
     }
-    std::cout << "Auu Matrix" << std::endl;
-    Auu.print(std::cout);
+    //std::cout << "Auu Matrix" << std::endl;
+    //Auu.print(std::cout);
     {
       Stopwatch timer( m_componentFilterTime );
       LAIHelperFunctions::separateComponentFilter( Auu, m_precondMatrix, m_params.dofsPerNode );
     }
-    std::cout << "SDC Matrix" << std::endl;
-    m_precondMatrix.print(std::cout);
+    //std::cout << "SDC Matrix" << std::endl;
+    //m_precondMatrix.print(std::cout);
   }
   else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg && m_params.amg.separateComponents )
   {
