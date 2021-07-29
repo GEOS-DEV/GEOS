@@ -24,6 +24,7 @@
 #include "constitutive/solid/ElasticTransverseIsotropic.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
+#include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 
 namespace geosx
@@ -34,45 +35,18 @@ namespace constitutive
 /**
  * @brief Provides kernel-callable constitutive update routines
  */
-using SOLID_TYPE = ElasticTransverseIsotropic;
-class PorousElasticTransverseIsotropicUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >
+class PorousElasticTransverseIsotropicUpdates : public PorousSolidUpdates< ElasticTransverseIsotropic >
 {
 public:
-
-  using DiscretizationOps = typename SOLID_TYPE::KernelWrapper::DiscretizationOps;
 
   /**
    * @brief Constructor
    */
-  PorousElasticTransverseIsotropicUpdates( SOLID_TYPE const & solidModel,
+  PorousElasticTransverseIsotropicUpdates( ElasticTransverseIsotropic const & solidModel,
                                            BiotPorosity const & porosityModel,
                                            ConstantPermeability const & permModel ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >( solidModel, porosityModel, permModel )
+    PorousSolidUpdates< ElasticTransverseIsotropic >( solidModel, porosityModel, permModel )
   {}
-
-  GEOSX_HOST_DEVICE
-  void smallStrainUpdate( localIndex const k,
-                          localIndex const q,
-                          real64 const & deltaPressure,
-                          real64 const ( &strainIncrement )[6],
-                          real64 ( & stress )[6],
-                          real64 & dPorosity_dPressure,
-                          real64 & dPorosity_dVolStrain,
-                          real64 & dTotalStress_dPressure,
-                          DiscretizationOps & stiffness ) const
-  {
-    m_solidUpdate.smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
-
-    updateBiotCoefficient( k );
-
-    m_porosityUpdate.updatePorosity( k,
-                                     q,
-                                     deltaPressure,
-                                     strainIncrement,
-                                     dPorosity_dPressure,
-                                     dPorosity_dVolStrain,
-                                     dTotalStress_dPressure );
-  }
 
   GEOSX_HOST_DEVICE
   void updateBiotCoefficient( localIndex const k ) const
@@ -86,13 +60,6 @@ public:
 
     m_porosityUpdate.updateBiotCoefficient( k, c11, c12, c13, c33 );
   }
-
-private:
-
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_solidUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_porosityUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_permUpdate;
-
 };
 
 /**
@@ -105,9 +72,9 @@ class PorousElasticTransverseIsotropicBase : public SolidBase
  * @brief Class to represent a porous material for poromechanics simulations.
  * It is used as an interface to access all constitutive models relative to the properties of a porous material.
  *
- * @tparam SOLID_TYPE type of solid model
+ * @tparam ElasticTransverseIsotropic type of solid model
  */
-class PorousElasticTransverseIsotropic : public CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >
+class PorousElasticTransverseIsotropic : public CoupledSolid< ElasticTransverseIsotropic, BiotPorosity, ConstantPermeability >
 {
 public:
 
@@ -128,7 +95,7 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::m_catalogNameString; }
+  static string catalogName() { return string( "Porous" ) + ElasticTransverseIsotropic::m_catalogNameString; }
 
   /**
    * @brief Get catalog name
@@ -158,9 +125,10 @@ public:
   }
 
 private:
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getSolidModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPorosityModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::getPermModel;
+
+  using CoupledSolid< ElasticTransverseIsotropic, BiotPorosity, ConstantPermeability >::getSolidModel;
+  using CoupledSolid< ElasticTransverseIsotropic, BiotPorosity, ConstantPermeability >::getPorosityModel;
+  using CoupledSolid< ElasticTransverseIsotropic, BiotPorosity, ConstantPermeability >::getPermModel;
 };
 
 }

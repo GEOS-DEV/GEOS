@@ -91,7 +91,7 @@ public:
     m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
   }
 
-private:
+protected:
 
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_solidUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_porosityUpdate;

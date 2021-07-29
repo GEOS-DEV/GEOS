@@ -29,7 +29,7 @@ namespace constitutive
 {
 PorousElasticTransverseIsotropic::PorousElasticTransverseIsotropic( string const & name,
                                                                     Group * const parent ):
-  CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >( name, parent )
+  CoupledSolid< ElasticTransverseIsotropic, BiotPorosity, ConstantPermeability >( name, parent )
 {}
 
 PorousElasticTransverseIsotropic::~PorousElasticTransverseIsotropic() = default;
