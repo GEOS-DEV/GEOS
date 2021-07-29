@@ -9,7 +9,6 @@ import pygeosx
 from math import ceil
 
 from segyManager import *
-from fileManager import rootPath
 import os
 from print import *
 

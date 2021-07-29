@@ -122,7 +122,7 @@ class Client:
     def submit(self,
                func,
                parameters,
-               xml=None,
+              # xml=None,
                cores=None,
                x_partition=1,
                y_partition=1,
@@ -138,7 +138,7 @@ class Client:
                 raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
             else:
                 self.cluster._add_job_to_script(cores)
-                self.cluster._add_xml_to_cmd(xml)
+               # self.cluster._add_xml_to_cmd(xml)
                 if x_partition*y_partition*z_partition != cores:
                     raise ValueError("Partition x y z must match x*y*z=cores")
                 else:
@@ -163,7 +163,7 @@ class Client:
                 ind,
                 func,
                 parameters,
-                xml=None,
+                #xml=None,
                 cores=None,
                 x_partition=1,
                 y_partition=1,
@@ -179,7 +179,7 @@ class Client:
                 raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
             else:
                 self.cluster[ind]._add_job_to_script(cores)
-                self.cluster[ind]._add_xml_to_cmd(xml)
+                #self.cluster[ind]._add_xml_to_cmd(xml)
                 if x_partition*y_partition*z_partition != cores:
                     raise ValueError("Partition x y z must match x*y*z=cores")
                 else:
@@ -215,7 +215,7 @@ class Client:
     def map(self,
             func,
             parameters,
-            xml=None,
+            #xml=None,
             cores=None,
             x_partition=1,
             y_partition=1,
@@ -232,7 +232,7 @@ class Client:
                     futures.append(self._submit(ind, 
                                                 func, 
                                                 parameters[i], 
-                                                xml,
+                                                #xml,
                                                 cores,
                                                 x_partition,
                                                 y_partition,

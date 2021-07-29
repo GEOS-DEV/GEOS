@@ -7,8 +7,6 @@ import xml.etree.ElementTree as ET
 
 class Acquisition:
     def __init__(self,
-                 limited_aperture=False,
-                 aperture_boundary=None,
                  dt=None,
                  velocity_model=None,
                  acquisition_type=None,
@@ -21,7 +19,7 @@ class Acquisition:
                  output=None,
                  **kwargs):
 
-        self.limited_aperture=limited_aperture
+        self.limited_aperture=False
         self.boundary=boundary
 
         if source_positions is not None and receivers_positions is not None:
@@ -32,26 +30,15 @@ class Acquisition:
                              receivers_depth)
 
 
-        aperture_dist = 500
-        aperture_depth = 500
-        if limited_aperture is False:
-            self.velocity_model=velocity_model
-            self.aperture_boundary=boundary
-            if dt is not None:
-                self.dt=dt
-            else:
-                self.dt=dt
-                #self.dt=calculDt(velocity_model,
-                #boundary)
+        
+        self.velocity_model=velocity_model
+        self.aperture_boundary=boundary
+        if dt is not None:
+            self.dt=dt
         else:
-            self.velocity_model=[]
-
-            self.set_limited_aperture_boundaries(aperture_dist, aperture_depth)
-            for i in range(len(self.shots)):
-                self.shots[i].receivers.keep_inside_domain(self.limited_aperture[i])
-
-            modify_and_create_XML(self.xml, self.aperture_boundary, self.velocity_model)
-
+            self.dt=dt
+            #self.dt=calculDt(velocity_model,
+                #boundary)
 
         if output is not None:
             self.output=output
@@ -107,6 +94,15 @@ class Acquisition:
 
             acqs.append(deepcopy(self))
             acqs[i].shots = acqs[i].shots[ind:ind + nb_shot]
+            
+            if isinstance(acqs[i].xml, list):
+                acqs[i].xml = acqs[i].xml[ind:ind + nb_shot]
+
+            if isinstance(acqs[i].velocity_model, list):
+                acqs[i].velocity_model = acqs[i].velocity_model[ind:ind + nb_shot]
+
+            if isinstance(acqs[i].dt, list):
+                acqs[i].dt = acqs[i].dt[ind:ind + nb_shot]
 
             ind = ind + nb_shot
             nb_shot_m1 = nb_shot_m1 - nb_shot
@@ -114,63 +110,123 @@ class Acquisition:
         return acqs
 
 
+
     def setDt(self, dt):
         self.dt=dt
 
 
 
-    def set_limited_aperture_boundaries(self, distance, depth):
-        self.aperture_boundary=[]
+    def limitedAperture(self, aperture_dist, aperture_depth):
+        self.limited_aperture=True
+        self.velocity_model=[]
 
-        for shot in self.shots:
-            if shot.source.x() - distance < self.boundary[0][0]:
-                xmin = boundary[0][0]
-            else:
-                xmin = shot.source.x() - distance
-            if shot.source.x() + distance > self.boundary[0][1]:
-                xmax = boundary[0][1]
-            else:
-                xmax = shot.source.x() + distance
-
-            if shot.source.y() - distance < self.boundary[1][0]:
-                ymin = boundary[1][0]
-            else:
-                ymin = shot.source.y() - distance
-            if shot.source.y() + distance > self.boundary[1][1]:
-                ymax = boundary[1][1]
-            else:
-                ymax = shot.source.y() + distance
-
-            zmin = boundary[2][0]
-
-            if shot.source.z() + depth > self.boundary[2][1]:
-                zmax = boundary[2][1]
-            else:
-                zmax = shot.source.z() + depth
-
-            limited_aperture = [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
-            self.aperture_boundary.append(copy.deepcopy(limited_aperture))
-
-
-            
-    def add_XML(xmlfile):
-        self.xml = xmlfile
-
-
-    def limited_aperture_xml_creation(self):
         tree = ET.parse(self.xml)
         root = tree.getroot()
-        
+
         internal_mesh = [elem.attrib for elem in root.iter('InternalMesh')][0]
         box = [elem.attrib for elem in root.iter('Box')][0]
 
+        xCoords_str_list = internal_mesh['xCoords'].strip('').replace(',', ' ').split()
+        yCoords_str_list = internal_mesh['yCoords'].strip('').replace(',', ' ').split()
+        zCoords_str_list = internal_mesh['zCoords'].strip('').replace(',', ' ').split()
+        
+        xCoords = [float(xCoords_str_list[1]), float(xCoords_str_list[2])]
+        yCoords = [float(yCoords_str_list[1]), float(yCoords_str_list[2])]
+        zCoords = [float(zCoords_str_list[1]), float(zCoords_str_list[2])]
+
+        x_nb_cells = int(internal_mesh['nx'].split()[1])
+        y_nb_cells = int(internal_mesh['ny'].split()[1])
+        z_nb_cells = int(internal_mesh['nz'].split()[1])
+        
+        x_cells_boundary = np.append(np.arange(xCoords[0], xCoords[1], (xCoords[1]-xCoords[0])/x_nb_cells), xCoords[1])
+        y_cells_boundary = np.append(np.arange(yCoords[0], yCoords[1], (yCoords[1]-yCoords[0])/y_nb_cells), yCoords[1])
+        z_cells_boundary = np.append(np.arange(zCoords[0], zCoords[1], (zCoords[1]-zCoords[0])/z_nb_cells), zCoords[1])
+        
+        self.set_limited_aperture_boundaries(aperture_dist, 
+                                             aperture_depth, 
+                                             x_cells_boundary, 
+                                             y_cells_boundary, 
+                                             z_cells_boundary)
+        
+        for i in range(len(self.shots)):
+            self.shots[i].receivers.keep_inside_domain(self.aperture_boundary[i])
+        
+        if os.path.exists("limitedAperture") == False:
+            os.mkdir("limitedAperture")
+        
+        xml = []
+        i = 0
         for boundary in self.aperture_boundary:
-            internal_mesh['xCoords'] = "{"+boundary[0][0]+","+boundary[0][1]+"}"
-            internal_mesh['yCoords'] = "{"+boundary[1][0]+","+boundary[1][1]+"}"
-            internal_mesh['zCoords'] = "{"+boundary[2][0]+","+boundary[2][1]+"}"
+            nx = int(x_nb_cells*(boundary[0][1]-boundary[0][0])/(xCoords[1]-xCoords[0]))
+            ny = int(y_nb_cells*(boundary[1][1]-boundary[1][0])/(yCoords[1]-yCoords[0]))
+            nz = int(z_nb_cells*(boundary[2][1]-boundary[2][0])/(zCoords[1]-zCoords[0]))
             
+            internal_mesh['xCoords'] = "{"+str(boundary[0][0])+","+str(boundary[0][1])+"}"
+            internal_mesh['yCoords'] = "{"+str(boundary[1][0])+","+str(boundary[1][1])+"}"
+            internal_mesh['zCoords'] = "{"+str(zCoords[1]-boundary[2][1])+","+str(zCoords[1])+"}"
+
+            internal_mesh['nx'] = "{"+str(nx)+"}"
+            internal_mesh['ny'] = "{"+str(ny)+"}"
+            internal_mesh['nz'] = "{"+str(nz)+"}"
+            
+            box['xMin'] = str(boundary[0][0]-0.01)+","+str(boundary[1][0]-0.01)+","+str(boundary[2][1]-0.01)
+            box['xMax'] = str(boundary[0][1]+0.01)+","+str(boundary[1][1]+0.01)+","+str(boundary[2][1]+0.01)
+
+            xmlfile = os.path.join("limitedAperture/", "limited_aperture_Shot"+str(self.shots[i].id)+".xml")
+            tree.write(xmlfile)
+            
+            xml.append(xmlfile)
+            i+=1
         
-        
+        self.xml = xml
+            
+            
+    def set_limited_aperture_boundaries(self, 
+                                        distance, 
+                                        depth, 
+                                        x_cells_boundary, 
+                                        y_cells_boundary, 
+                                        z_cells_boundary):
+        self.aperture_boundary=[]
+
+        for shot in self.shots:
+            nx = x_cells_boundary.size
+            xmin = x_cells_boundary[0]
+            xmax = x_cells_boundary[nx-1]
+
+            for i in range(nx):
+                if shot.source.x() - distance >= x_cells_boundary[i]:
+                    xmin = x_cells_boundary[i]
+                if shot.source.x() + distance <= x_cells_boundary[nx-1-i]:
+                    xmax = x_cells_boundary[nx-1-i]
+            
+            ny = y_cells_boundary.size
+            ymin = y_cells_boundary[0]
+            ymax = y_cells_boundary[ny-1]
+
+            for i in range(ny):
+                if shot.source.y() - distance >= y_cells_boundary[i]:
+                    ymin = y_cells_boundary[i]
+                if shot.source.y() + distance <= y_cells_boundary[ny-1-i]:
+                    ymax = y_cells_boundary[ny-1-i]
+                    
+            nz = z_cells_boundary.size
+            zmin = z_cells_boundary[0]
+            zmax = z_cells_boundary[nz-1]
+
+            for i in range(nz):
+                if shot.source.z() + depth <= z_cells_boundary[nz-1-i]:
+                    zmax = z_cells_boundary[nz-1-i]
+
+            limited_aperture = [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
+            self.aperture_boundary.append(deepcopy(limited_aperture))
+
+
+            
+    def add_xml(self, xmlfile):
+        self.xml = xmlfile
+
+                
 
     def construct_from_dict(self, **kwargs):
         self.shots=[]
@@ -264,11 +320,11 @@ class SEGYAcquisition(Acquisition):
 
                 receivers = ReceiverSet(receiver_list)
 
-                shot_list.append(Shot(source, receivers, shot_id))
+                shots.append(Shot(source, receivers, shot_id))
                 j+=1
             i+=1
 
-        self.shots = shot_list
+        self.shots = shots
 
 
 
@@ -393,7 +449,7 @@ class EQUISPACEDAcquisition(Acquisition):
             source = Source(srcpos, wavelet)
 
             shot = Shot(source, receivers, shot_id)
-            shots.append(shot)
+            shots.append(deepcopy(shot))
 
         self.shots = shots
 
@@ -548,7 +604,7 @@ class MOVINGAcquisition(Acquisition):
                 source = Source(srcpos, wavelet)
 
                 shot = Shot(source, copy.deepcopy(rcvset), shot_id)
-                shots.append(shot)
+                shots.append(deepcopy(shot))
 
 
         self.shots = shots
@@ -657,7 +713,7 @@ class RANDOMAcquisition(Acquisition):
             source = Source(srcpos, wavelet)
 
             shot = Shot(source, receivers, shot_id)
-            shots.append(shot)
+            shots.append(deepcopy(shot))
 
         self.shots = shots
 
@@ -818,13 +874,13 @@ class ReceiverSet:
             return str(self.receivers_list)
 
 
-    def keep_inside_domain(self, meshBoundaries):
+    def keep_inside_domain(self, boundaries):
         new_list=[]
 
         for receiver in self.receivers_list:
-            if meshBoundaries[0][0] <= receiver.coords[0] and receiver.coords[0] <= meshBoundaries[0][1] \
-            and meshBoundaries[1][0] <= receiver.coords[1] and receiver.coords[1] <= meshBoundaries[1][1] \
-            and meshBoundaries[2][0] <= receiver.coords[2] and receiver.coords[2] <= meshBoundaries[2][1]:
+            if boundaries[0][0] <= receiver.x() and receiver.x() <= boundaries[0][1] \
+            and boundaries[1][0] <= receiver.y() and receiver.y() <= boundaries[1][1] \
+            and boundaries[2][0] <= receiver.z() and receiver.z() <= boundaries[2][1]:
                 new_list.append(receiver)
 
         self.receivers_list = new_list
