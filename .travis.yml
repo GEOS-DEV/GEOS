@@ -15,9 +15,7 @@ geosx_before_script: &geosx_before_script
   - git submodule update --init --recursive src/coreComponents/LvArray
   - git submodule update --init --recursive src/coreComponents/constitutive/PVTPackage
   - git submodule update --init src/coreComponents/mesh/PAMELA
-  - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
-  - git submodule update --init --recursive src/coreComponents/physicsSolvers/GEOSX_PTP
-  
+  - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface  
 
 geosx_linux_build: &geosx_linux_build
   services: docker
@@ -105,7 +103,7 @@ geosx_pangea_build: &geosx_pangea_build
   - openssl aes-256-cbc -K $encrypted_5ac030ea614b_key -iv $encrypted_5ac030ea614b_iv
     -in ${TRAVIS_BUILD_DIR}/geosx-key.json.enc -out ${GEOSX_GCLOUD_KEY} -d
   - gcloud auth activate-service-account --key-file=${GEOSX_GCLOUD_KEY}
-  - gsutil cp -a public-read ${GEOSX_BUNDLE} gs://geosx/Pangea2/
+  - CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://geosx/Pangea2/
 
 draft_script: &draft_script
   script:

@@ -47,7 +47,7 @@ CellElementSubRegion::~CellElementSubRegion()
 
 void CellElementSubRegion::copyFromCellBlock( CellBlock & source )
 {
-  this->setElementType( source.getElementTypeString());
+  this->setElementType( source.getElementType());
   this->setNumNodesPerElement( source.numNodesPerElement() );
   this->setNumFacesPerElement( source.numFacesPerElement() );
   this->resize( source.size());
