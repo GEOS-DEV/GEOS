@@ -85,26 +85,10 @@ public:
   GEOSX_HOST_DEVICE
   void updateBiotCoefficient( localIndex const k ) const
   {
+    // This call is not general like this.
+    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
-    string solidType = SOLID_TYPE::m_catalogNameString;
-
-    if( solidType == "ElasticIsotropic" )
-    {
-      real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
-
-      m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
-    }
-    else if( solidType == "ElasticTransverseIsotropic" )
-    {
-      real64 const c11 = m_solidUpdate.getC11( k );
-      real64 const c13 = m_solidUpdate.getC13( k );
-      real64 const c33 = m_solidUpdate.getC33( k );
-      real64 const c66 = m_solidUpdate.getC66( k );
-
-      real64 const c12 = c11 - 2.0 * c66;
-
-      m_porosityUpdate.updateBiotCoefficient( k, c11, c12, c13, c33 );
-    }
+    m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
   }
 
 private:

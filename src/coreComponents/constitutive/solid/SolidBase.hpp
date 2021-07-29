@@ -127,7 +127,7 @@ public:
   virtual real64 getBulkModulus( localIndex const k ) const
   {
     GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
+    GEOSX_ERROR( "getBulkModulus() is not implemented for this model" );
 
     return 0;
   }
@@ -141,7 +141,7 @@ public:
   virtual real64 getC11( localIndex const k ) const
   {
     GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getC11() not implemented for this model" );
+    GEOSX_ERROR( "getC11() is not implemented for this model" );
 
     return 0;
   }
@@ -155,7 +155,7 @@ public:
   virtual real64 getC12( localIndex const k ) const
   {
     GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getC12() not implemented for this model" );
+    GEOSX_ERROR( "getC12() is not implemented for this model" );
 
     return 0;
   }
@@ -169,7 +169,7 @@ public:
   virtual real64 getC13( localIndex const k ) const
   {
     GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getC13() not implemented for this model" );
+    GEOSX_ERROR( "getC13() is not implemented for this model" );
 
     return 0;
   }
@@ -183,7 +183,7 @@ public:
   virtual real64 getC22( localIndex const k ) const
   {
     GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getC22() not implemented for this model" );
+    GEOSX_ERROR( "getC22() is not implemented for this model" );
 
     return 0;
   }
@@ -197,7 +197,7 @@ public:
   virtual real64 getC23( localIndex const k ) const
   {
     GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getC23() not implemented for this model" );
+    GEOSX_ERROR( "getC23() is not implemented for this model" );
 
     return 0;
   }
@@ -211,7 +211,7 @@ public:
   virtual real64 getC33( localIndex const k ) const
   {
     GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getC33() not implemented for this model" );
+    GEOSX_ERROR( "getC33() is not implemented for this model" );
 
     return 0;
   }
@@ -225,7 +225,7 @@ public:
   virtual real64 getC44( localIndex const k ) const
   {
     GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getC44() not implemented for this model" );
+    GEOSX_ERROR( "getC44() is not implemented for this model" );
 
     return 0;
   }
@@ -239,7 +239,7 @@ public:
   virtual real64 getC55( localIndex const k ) const
   {
     GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getC55() not implemented for this model" );
+    GEOSX_ERROR( "getC55() is not implemented for this model" );
 
     return 0;
   }
@@ -253,7 +253,7 @@ public:
   virtual real64 getC66( localIndex const k ) const
   {
     GEOSX_UNUSED_VAR( k );
-    GEOSX_ERROR( "getC66() not implemented for this model" );
+    GEOSX_ERROR( "getC66() is not implemented for this model" );
 
     return 0;
   }

@@ -103,50 +103,38 @@ public:
    * @param c33 (3,3) component of the stiffness matrix
    */
   GEOSX_HOST_DEVICE
-  void updateBiotTensor( localIndex const k,
-                         real64 const c11,
-                         real64 const c12,
-                         real64 const c13,
-                         real64 const c33 ) const
-  {
-    // Grain compliance tensor (isotropic grain is assumed)
-    real64 grainPoissonRatio = conversions::BulkModAndShearMod::
-                                 toPoissonRatio( m_grainBulkModulus, m_grainShearModulus );
-
-    real64 grainYoungModulus = conversions::BulkModAndShearMod::
-                                 toYoungsMod( m_grainBulkModulus, m_grainShearModulus );
-
-    real64 s11Grain = 1.0 / grainYoungModulus;
-    real64 s12Grain = -grainPoissonRatio / grainYoungModulus;
-    real64 s13Grain = s12Grain;
-    real64 s33Grain = s11Grain;
-
-    // Components of Biot's matrix
-    m_b11[k] = 1.0 - ( s11Grain + s12Grain ) * ( c11 + c12 )
-               - s13Grain * ( c11 + c12 + 2.0 * c13 )
-               - s33Grain * c13;
-
-    m_b33[k] = 1.0 - 2.0 * s11Grain * c13
-               - 2.0 * s12Grain * c13
-               - 2.0 * s13Grain * ( c13 + c33 )
-               - s33Grain * c33;
-
-    m_b22[k] = m_b11[k];
-  }
-
-  /**
-   * @brief Biot's coefficient is approximated by the average of the Biot's tensor diagonal.
-   */
-  GEOSX_HOST_DEVICE
   void updateBiotCoefficient( localIndex const k,
                               real64 const c11,
                               real64 const c12,
                               real64 const c13,
                               real64 const c33 ) const
   {
-    updateBiotTensor( k, c11, c12, c13, c33 );
+    // Components of grain compliance matrix (isotropic grain is assumed)
+    real64 const grainPoissonRatio = conversions::BulkModAndShearMod::
+                                       toPoissonRatio( m_grainBulkModulus, m_grainShearModulus );
 
-    m_biotCoefficient[k] = ( m_b11[k] + m_b22[k] + m_b33[k] ) / 3.0;
+    real64 const grainYoungModulus = conversions::BulkModAndShearMod::
+                                       toYoungsMod( m_grainBulkModulus, m_grainShearModulus );
+
+    real64 const s11Grain = 1.0 / grainYoungModulus;
+    real64 const s12Grain = - grainPoissonRatio / grainYoungModulus;
+    real64 const s13Grain = s12Grain;
+    real64 const s33Grain = s11Grain;
+
+    // Components of Biot's matrix
+    real64 const b11 = 1.0 - ( s11Grain + s12Grain ) * ( c11 + c12 )
+                       - s13Grain * ( c11 + c12 + 2.0 * c13 )
+                       - s33Grain * c13;
+
+    real64 const b33 = 1.0 - 2.0 * s11Grain * c13
+                       - 2.0 * s12Grain * c13
+                       - 2.0 * s13Grain * ( c13 + c33 )
+                       - s33Grain * c33;
+
+    real64 const b22 = b11;
+
+    // Biot's coefficient is approximated by the average of the Biot's tensor diagonal.
+    m_biotCoefficient[k] = ( b11 + b22 + b33 ) / 3.0;
   }
 
 protected:
@@ -156,10 +144,6 @@ protected:
   real64 m_grainBulkModulus;
 
   real64 m_grainShearModulus;
-
-  arrayView1d< real64 > m_b11; ///< (1,1) element of TI Biot's matrix
-  arrayView1d< real64 > m_b22; ///< (2,2) element of TI Biot's matrix
-  arrayView1d< real64 > m_b33; ///< (3,3) element of TI Biot's matrix
 };
 
 
