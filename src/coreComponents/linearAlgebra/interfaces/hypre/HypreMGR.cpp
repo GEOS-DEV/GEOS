@@ -146,13 +146,20 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   //              i.e. they are F-points for the first MGR level
   if( params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && params.mgr.separateComponents )
   {
-    HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr );
-    HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 );
-    HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 );
-    HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 );
-    HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 );
-    HYPRE_BoomerAMGSetAggNumLevels( mgrData.mechSolver.ptr, 1 );
-    HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.coarseSolver.ptr, 1.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 1 ) );
+#ifdef GEOSX_USE_HYPRE_CUDA
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.coarseSolver.ptr, 8 ) ); // PMIS
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, 18 ) ); // l1-Jacobi
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.coarseSolver.ptr, 2 ) );
+#else
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
+#endif
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( mgrData.mechSolver.ptr, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 ) );
 
     mgrData.mechSolver.setup = HYPRE_BoomerAMGSetup;
     mgrData.mechSolver.solve = HYPRE_BoomerAMGSolve;

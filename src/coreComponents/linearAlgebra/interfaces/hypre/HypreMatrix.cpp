@@ -892,7 +892,7 @@ void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale, bool 
   GEOSX_UNUSED_VAR( samePattern );
 
   HYPRE_ParCSRMatrix parCSRMatrix;
-  GEOSX_LAI_CHECK_ERROR( hypre_ParcsrAdd( 1.0,
+  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixAdd( 1.0,
                                           unwrapped(),
                                           scale,
                                           src.unwrapped(),
@@ -924,7 +924,9 @@ localIndex HypreMatrix::maxRowLength() const
   HYPRE_Int const nrows = LvArray::integerConversion< HYPRE_Int >( numLocalRows() );
 
   array1d< HYPRE_BigInt > rows( nrows );
+  //rows.move( LvArray::MemorySpace::cuda, false );
   array1d< HYPRE_Int > ncols( nrows );
+  //ncols.move( LvArray::MemorySpace::cuda, false );
 
   std::iota( rows.begin(), rows.end(), ilower() );
 

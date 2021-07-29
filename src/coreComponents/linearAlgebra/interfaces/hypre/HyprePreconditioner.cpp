@@ -418,18 +418,33 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
 
 HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix const & mat )
 {
-  Stopwatch timer( m_componentFilterTime );
   if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_params.mgr.separateComponents )
   {
     GEOSX_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "MGR preconditioner requires a DofManager instance" );
     HypreMatrix Pu;
     HypreMatrix Auu;
-    mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
-    mat.multiplyPtAP( Pu, Auu );
-    LAIHelperFunctions::separateComponentFilter( Auu, m_precondMatrix, m_params.dofsPerNode );
+    {
+      Stopwatch timer(m_makeRestrictorTime);
+      mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
+    }
+    //std::cout << "Pu Matrix" << std::endl;
+    //Pu.print(std::cout);
+    {
+      Stopwatch timer(m_computeAuuTime);
+      mat.multiplyPtAP( Pu, Auu );
+    }
+    std::cout << "Auu Matrix" << std::endl;
+    Auu.print(std::cout);
+    {
+      Stopwatch timer( m_componentFilterTime );
+      LAIHelperFunctions::separateComponentFilter( Auu, m_precondMatrix, m_params.dofsPerNode );
+    }
+    std::cout << "SDC Matrix" << std::endl;
+    m_precondMatrix.print(std::cout);
   }
   else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg && m_params.amg.separateComponents )
   {
+    Stopwatch timer( m_componentFilterTime );
     LAIHelperFunctions::separateComponentFilter( mat, m_precondMatrix, m_params.dofsPerNode );
     return m_precondMatrix;
   }
