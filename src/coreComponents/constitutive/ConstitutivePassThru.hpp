@@ -29,6 +29,7 @@
 #include "solid/DruckerPragerExtended.hpp"
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
+#include "solid/PorousElasticTransverseIsotropic.hpp"
 #include "solid/PorousSolid.hpp"
 #include "solid/PoroElastic.hpp"
 
@@ -152,7 +153,7 @@ struct ConstitutivePassThru< PorousSolidBase >
     ConstitutivePassThruHandler< PorousSolid< DruckerPragerExtended >,
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
-                                 PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousElasticTransverseIsotropic,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,

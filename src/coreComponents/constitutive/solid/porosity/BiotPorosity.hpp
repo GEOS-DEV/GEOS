@@ -117,7 +117,7 @@ public:
                                        toYoungsMod( m_grainBulkModulus, m_grainShearModulus );
 
     real64 const s11Grain = 1.0 / grainYoungModulus;
-    real64 const s12Grain = - grainPoissonRatio / grainYoungModulus;
+    real64 const s12Grain = -grainPoissonRatio / grainYoungModulus;
     real64 const s13Grain = s12Grain;
     real64 const s33Grain = s11Grain;
 
