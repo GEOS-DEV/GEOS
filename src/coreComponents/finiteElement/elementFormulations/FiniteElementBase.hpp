@@ -28,8 +28,10 @@
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "mesh/CellElementSubRegion.hpp"
+#include "mesh/NodeManager.hpp"
 #include "mesh/EdgeManager.hpp"
+#include "mesh/FaceManager.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 
 namespace geosx
 {
@@ -81,20 +83,36 @@ public:
   virtual ~FiniteElementBase() = default;
 
   /**
+   * @struct StackVariables
+   * @brief Kernel variables allocated on the stack.
+   *
+   * Contains variables that will be allocated on the stack. Used only by Virtual Element classes to
+   * hold the computed projections of basis functions
+   */
+  struct StackVariables
+  {};
+
+  /**
    * @brief Abstract initialization method.
    * @param subRegion The cell sub-region for which the element has to be initialized.
    */
-    virtual void initialize( NodeManager const & nodeManager,
-                             EdgeManager const & edgeManager,
-                             FaceManager const & faceManager,
-                             CellElementSubRegion const & cellSubRegion ) = 0;
+  virtual void initialize( NodeManager const & nodeManager,
+                           EdgeManager const & edgeManager,
+                           FaceManager const & faceManager,
+                           CellElementSubRegion const & cellSubRegion ) = 0;
 
   /**
    * @brief Abstract setup method, possibly computing cell-dependent properties.
    * @param cellIndex The index of the cell with respect to the cell sub region to which the element has been initialized previously (see
    *@ref initialize).
+   * @param stack Object that holds stack variables.
    */
-  virtual void setup( localIndex const & cellIndex ) = 0;
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  void setup( localIndex const & cellIndex, typename LEAF::StackVariables & stack ) const
+  {
+    LEAF::setupStack( cellIndex, stack );
+  }
 
   /**
    * @brief Virtual getter for the number of quadrature points per element.

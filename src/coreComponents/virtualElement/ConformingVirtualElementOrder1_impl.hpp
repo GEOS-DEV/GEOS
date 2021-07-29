@@ -486,8 +486,14 @@ initialize( NodeManager const & nodeManager,
   m_nodesCoords = nodeManager.referencePosition();
   m_cellToNodeMap = cellSubRegion.nodeList();
   m_cellToFaceMap = cellSubRegion.faceList().toViewConst();
-  m_faceToNodeMap = faceManager.edgeList().toViewConst();
-  
+  m_faceToNodeMap = faceManager.nodeList().toViewConst();
+  m_faceToEdgeMap = faceManager.edgeList().toViewConst();
+  m_edgeToNodeMap = edgeManager.nodeList().toViewConst();
+  m_faceCenters = faceManager.faceCenter();
+  m_faceNormals = faceManager.faceNormal();
+  m_faceAreas = faceManager.faceArea();
+  m_cellCenters = cellSubRegion.getElementCenter();
+  m_cellVolumes = cellSubRegion.getElementVolume();
 }
 }
 }

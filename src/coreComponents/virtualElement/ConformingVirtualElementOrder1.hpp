@@ -43,6 +43,9 @@ public:
 
   virtual ~ConformingVirtualElementOrder1() = default;
 
+  struct StackVariables : public FiniteElementBase::StackVariables
+  {};
+
   GEOSX_HOST_DEVICE
   void processLocalGeometry( localIndex const & cellIndex,
                              InputNodeCoords const & nodesCoords,
@@ -89,8 +92,11 @@ public:
    * @brief Empty setup method.
    * @param cellIndex The index of the cell with respect to the cell sub region to which the element
    * has been initialized previously (see @ref initialize).
+   * @param stack Object that holds stack variables.
    */
-  virtual void setup( localIndex const & GEOSX_UNUSED_PARAM( cellIndex )) override
+  GEOSX_HOST_DEVICE
+  static void setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
+                          StackVariables & GEOSX_UNUSED_PARAM( stack ) )
   {}
 
   GEOSX_HOST_DEVICE
@@ -199,9 +205,9 @@ private:
   InputFaceToNodeMap m_faceToNodeMap;
   InputFaceToEdgeMap m_faceToEdgeMap;
   InputEdgeToNodeMap m_edgeToNodeMap;
-  arrayView2d< real64 const > const m_faceCenters;
-  arrayView2d< real64 const > const m_faceNormals;
-  arrayView1d< real64 const > const m_faceAreas;
+  arrayView2d< real64 const > m_faceCenters;
+  arrayView2d< real64 const > m_faceNormals;
+  arrayView1d< real64 const > m_faceAreas;
   arrayView2d< real64 const > m_cellCenters;
   arrayView1d< real64 const > m_cellVolumes;
 

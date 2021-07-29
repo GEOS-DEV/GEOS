@@ -190,17 +190,19 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
-
+  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
+  VEM virtualElement;
+  virtualElement.initialize( nodeManager, edgeManager, faceManager, cellSubRegion );
   // Loop over cells.
   localIndex const numCells = cellSubRegion.getElementVolume().size();
   forAll< parallelDevicePolicy< > >( numCells, [=] GEOSX_HOST_DEVICE
-                                       ( localIndex const cellIndex )
+                                       ( localIndex const cellIndex ) mutable
   {
-    using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
     real64 const cellCenter[3] { cellCenters( cellIndex, 0 ),
                                  cellCenters( cellIndex, 1 ),
                                  cellCenters( cellIndex, 2 ) };
-    VEM virtualElement;
+    typename VEM::StackVariables stack;
+    virtualElement.template setup< VEM >( cellIndex, stack );
     virtualElement.processLocalGeometry( cellIndex,
                                          nodesCoords,
                                          cellToNodeMap,

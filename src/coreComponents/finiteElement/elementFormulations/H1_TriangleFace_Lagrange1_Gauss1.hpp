@@ -73,18 +73,21 @@ public:
    * @brief Empty initialization method.
    * @param subRegion The cell sub-region for which the element has to be initialized.
    */
-  virtual void initialize( NodeManager const & GEOSX_UNUSED_PARAM(nodeManager),
-                           EdgeManager const & GEOSX_UNUSED_PARAM(edgeManager),
-                           FaceManager const & GEOSX_UNUSED_PARAM(faceManager),
-                           CellElementSubRegion const & GEOSX_UNUSED_PARAM(cellSubRegion) ) override
+  virtual void initialize( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                           EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
+                           FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
+                           CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ) ) override
   {}
 
   /**
    * @brief Empty setup method.
    * @param cellIndex The index of the cell with respect to the cell sub region to which the element
    * has been initialized previously (see @ref initialize).
+   * @param stack Object that holds stack variables.
    */
-  virtual void setup( localIndex const & GEOSX_UNUSED_PARAM( cellIndex )) override
+  GEOSX_HOST_DEVICE
+  static void setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
+                          StackVariables & GEOSX_UNUSED_PARAM( stack ) )
   {}
 
   /**
