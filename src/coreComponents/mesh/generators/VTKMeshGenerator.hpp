@@ -28,12 +28,6 @@
 
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
-#ifdef GEOSX_USE_MPI
-#include <vtkMPIController.h>
-#include <vtkMPI.h>
-#else
-#include <vtkDummyController.h>
-#endif
 
 namespace geosx
 {

@@ -22,7 +22,6 @@
 #include "mainInterface/GeosxState.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include <unistd.h>
 
 // System includes
 #include <chrono>

@@ -32,6 +32,12 @@
 #include <vtkPointData.h>
 #include <vtkRedistributeDataSetFilter.h>
 #include <vtkGenerateGlobalIds.h>
+#ifdef GEOSX_USE_MPI
+#include <vtkMPIController.h>
+#include <vtkMPI.h>
+#else
+#include <vtkDummyController.h>
+#endif
 
 #include <numeric>
 namespace geosx
@@ -262,7 +268,7 @@ std::set< int > computePotentialNeighborLists( double const rankBounds[], double
  */
 void countCellsAndFaces( std::map<int, std::vector< vtkIdType > > & regionsHex, std::map<int,std::vector<vtkIdType >> & regionsTetra,
                          std::map<int,std::vector<vtkIdType >> & regionsWedges, std::map<int,std::vector<vtkIdType >> & regionsPyramids,
-                         std::set< int > & regions, std::set< int > & surfaces, std::vector< int > & allSurfaces,
+                         std::set< int > & regions, std::map<int,std::vector<vtkIdType >> & surfaces, std::vector< int > & allSurfaces,
                          vtkUnstructuredGrid & mesh)
 {
   vtkIntArray const * const attributeDataArray = getDataArrayOptional< vtkIntArray >( *mesh.GetCellData(), "attribute" );
@@ -303,7 +309,7 @@ void countCellsAndFaces( std::map<int, std::vector< vtkIdType > > & regionsHex, 
     {
       if (attributeDataArray != nullptr)
       {
-        surfaces.insert(attributeDataArray->GetValue(c));
+        surfaces[attributeDataArray->GetValue(c)].push_back(c);
       }
     }
   }
@@ -322,7 +328,12 @@ void countCellsAndFaces( std::map<int, std::vector< vtkIdType > > & regionsHex, 
 
 
   // Communicate all the surfaces attributes to the ranks
-  const std::vector< int > surfaceVector(surfaces.cbegin(), surfaces.cend());
+  std::vector< int > surfaceVector;
+  surfaceVector.reserve(surfaces.size());
+  for( auto & surface : surfaces)
+  {
+    surfaceVector.push_back( surface.first );
+  }
   array1d< int > surfaceSizes( MpiWrapper::commSize());
   MpiWrapper::allGather( LvArray::integerConversion<int>(surfaceVector.size()), surfaceSizes, MPI_COMM_GEOSX );
   int const totalNbSurfaceId = std::accumulate( surfaceSizes.begin(), surfaceSizes.end(), 0 );
@@ -626,27 +637,27 @@ void writeCellBlocks( DomainPartition& domain,
 /**
  * @param[in] nodeManager the NodeManager of the domain in which the poiints will be copied.
  * @param[in] allSurfaces the surfaces id to be imported
+ * @param[in] surfaces map from the surfaces index to the list of cells in this surface in this rank
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  */
-void writeSurfaces( NodeManager & nodeManager, std::vector<int> const & allSurfaces, vtkUnstructuredGrid & mesh )
+void writeSurfaces( NodeManager & nodeManager, std::vector<int> const & allSurfaces, 
+                    std::map< int, std::vector< vtkIdType > > surfaces, vtkUnstructuredGrid & mesh )
 {
   Group & nodeSets = nodeManager.sets();
-  vtkIntArray const * const attributeDataArray = getDataArrayOptional< vtkIntArray >( *mesh.GetCellData(), "attribute" );
+  /// Register all surfaces (even those which are empty in this rank)
   for( int surface : allSurfaces)
   {
-    SortedArray< localIndex > & curNodeSet  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::to_string( surface) ).reference();
-    for( vtkIdType c = 0; c < mesh.GetNumberOfCells(); c++)
+    nodeSets.registerWrapper< SortedArray< localIndex > >( std::to_string( surface) ).reference();
+  }
+  for( auto surface : surfaces)
+  {
+    SortedArray< localIndex > & curNodeSet  = nodeSets.getWrapper< SortedArray< localIndex > >( std::to_string( surface.first) ).reference();
+    for( vtkIdType c : surface.second )
     {
       vtkCell * currentCell = mesh.GetCell(c);
-      if( mesh.GetCellType(c) == VTK_TRIANGLE ||  mesh.GetCellType(c) == VTK_QUAD)
+      for( localIndex v = 0; v < currentCell->GetNumberOfPoints(); v++)
       {
-        if( attributeDataArray->GetValue(c) == surface )
-        {
-          for( localIndex v = 0; v < currentCell->GetNumberOfPoints(); v++)
-          {
-            curNodeSet.insert(currentCell->GetPointId(v) );
-          }
-        } 
+        curNodeSet.insert(currentCell->GetPointId(v) );
       }
     }
   }
@@ -683,7 +694,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   // surface and greionids
   std::set<int> regions;
-  std::set<int> surfaces; //local to this rank
+  std::map<int, std::vector<vtkIdType >> surfaces; //local to this rank
   std::vector<int> allSurfaces; // global to the whole mesh
 
   countCellsAndFaces( regionsHex, regionsTetra, regionsWedges, regionsPyramids, regions, surfaces, allSurfaces, *m_vtkMesh);
@@ -692,7 +703,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   writeCellBlocks( domain,regionsHex, regionsTetra, regionsWedges, regionsPyramids, regions, arraysToBeImported, *m_vtkMesh );
 
-  writeSurfaces( nodeManager, allSurfaces, *m_vtkMesh);
+  writeSurfaces( nodeManager, allSurfaces, surfaces, *m_vtkMesh);
 
   GEOSX_LOG_RANK_0("Mesh was loaded successfully");
 }
