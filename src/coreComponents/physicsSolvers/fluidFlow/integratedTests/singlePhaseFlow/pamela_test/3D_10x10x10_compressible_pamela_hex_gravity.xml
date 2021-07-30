@@ -3,10 +3,9 @@
 <Problem>
   <!-- SPHINX_TUT_EXT_HEX_SOLVER -->
   <Solvers
-    gravityVector="{0.0, 0.0, -9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       fluidNames="{ water }"
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
@@ -33,8 +32,8 @@
   <Geometry>
     <Box
       name="left"
-      xMin="{-1, -1, -1}"
-      xMax="{ 0.9, 11, 11}"/>
+      xMin="{ -1, -1, -1 }"
+      xMax="{ 0.9, 11, 11 }"/>
   </Geometry>
 
   <!-- SPHINX_TUT_EXT_HEX_EVENTS -->
@@ -53,7 +52,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="2"
-      targetExactTimestep="1"
       target="/Outputs/siloWellPump"/>
 
     <PeriodicEvent
@@ -93,19 +91,17 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="1e6"
-      referenceDensity="1000"
       compressibility="1e-9"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
       referencePressure="1e6"
       compressibility="1e-9"/>
-     
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{2.0e-14, 2.0e-14, 2.0e-14}"/>     
+      permeabilityComponents="{ 2.0e-14, 2.0e-14, 2.0e-14 }"/>
   </Constitutive>
 
   <!-- SPHINX_TUT_EXT_HEX_CONSTITUTIVE_END -->
@@ -136,8 +132,6 @@
   </FieldSpecifications>
 
   <!-- SPHINX_TUT_EXT_HEX_FIELDS_END -->
-  <Functions/>
-
   <Outputs>
     <Silo
       name="siloWellPump"/>

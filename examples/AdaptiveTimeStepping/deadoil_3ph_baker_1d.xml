@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, -9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <CompositionalMultiphaseFVM
       name="compflow"
       logLevel="1"
@@ -10,10 +10,9 @@
       targetRegions="{ Region1 }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
-      permeabilityNames="{rockPerm}"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="300"
-      useMass="0"
       initialDt="1e7">
       <NonlinearSolverParameters
         newtonTol="1.0e-10"
@@ -21,10 +20,7 @@
         maxTimeStepCuts="10"
         lineSearchMaxCuts="2"
         maxSubSteps="100"
-        dtCutIterLimit="0.7"
         dtIncIterLimit="0.3"/>
-      <LinearSolverParameters
-        solverType="direct"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
 
@@ -44,13 +40,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 1.01, 1.01, 1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ 8.99, -0.01, -0.01}"
-      xMax="{10.01, 1.01, 1.01}"/>
+      xMin="{ 8.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
@@ -62,7 +58,6 @@
                    target="/Outputs/siloOutput" /-->
     <PeriodicEvent
       name="solverApplications1"
-      beginTime="0"
       endTime="2e8"
       maxEventDt="1e8"
       target="/Solvers/compflow"/>
@@ -79,7 +74,7 @@
         name="fluidTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -111,10 +106,10 @@
       waterOilRelPermMaxValue="{ 0.8, 0.9 }"
       gasOilRelPermExponent="{ 3, 3 }"
       gasOilRelPermMaxValue="{ 0.4, 0.9 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-14, 1.0e-14, 1.0e-14}"/> 
+      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
   </Constitutive>
 
   <FieldSpecifications>

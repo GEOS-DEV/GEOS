@@ -4,11 +4,10 @@
   <Solvers>
     <CompositionalMultiphaseFVM
       name="compflow"
-      logLevel="0"
       discretization="fluidTPFA"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
-      permeabilityNames="{rockPerm}"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
@@ -20,11 +19,8 @@
         maxTimeStepCuts="1"
         lineSearchAction="None"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseFVM>
-
   </Solvers>
 
   <Mesh>
@@ -43,24 +39,23 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01,  98.99, -0.01}"
-      xMax="{ 1.01, 100.01, 10.01}"/>
+      xMin="{ -0.01, 98.99, -0.01 }"
+      xMax="{ 1.01, 100.01, 10.01 }"/>
 
     <Box
       name="sink1"
-      xMin="{ 98.99,  -0.01,  -0.01}"
-      xMax="{100.01, 100.01, 100.01}"/>
+      xMin="{ 98.99, -0.01, -0.01 }"
+      xMax="{ 100.01, 100.01, 100.01 }"/>
 
     <Box
       name="sink2"
-      xMin="{ -0.01,  -0.01,  98.99}"
-      xMax="{100.01, 100.01, 100.01}"/>
+      xMin="{ -0.01, -0.01, 98.99 }"
+      xMax="{ 100.01, 100.01, 100.01 }"/>
 
     <Box
       name="barrier"
-      xMin="{-0.01,  69.99, 49.99}"
-      xMax="{40.01, 100.01, 50.01}"/>
-    
+      xMin="{ -0.01, 69.99, 49.99 }"
+      xMax="{ 40.01, 100.01, 50.01 }"/>
   </Geometry>
 
   <Events
@@ -69,7 +64,8 @@
       name="solverApplications"
       forceDt="1e5"
       target="/Solvers/compflow"/>
-<!--
+
+    <!--
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e5"
@@ -84,7 +80,7 @@
         name="fluidTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -115,11 +111,10 @@
       phaseMinVolumeFraction="{ 0.05, 0.05 }"
       phaseRelPermExponent="{ 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-13, 1.0e-13, 1.0e-13}"/>  
-      
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -134,11 +129,11 @@
     <FieldSpecification
       name="barrierTransMult"
       initialCondition="1"
-      setNames="{ barrier }"      
+      setNames="{ barrier }"
       objectPath="faceManager"
       fieldName="permeabilityTransMultiplier"
       scale="0.0"/>
-    
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -175,7 +170,6 @@
       scale="-0.03"
       setNames="{ source }"/>
     -->
-
     <!-- Injection stream: (almost) pure co2 -->
     <FieldSpecification
       name="sourceTermPresure"
@@ -223,14 +217,10 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.995"/>
-
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <VTK
       name="vtkOutput"/>
-
   </Outputs>
 </Problem>
