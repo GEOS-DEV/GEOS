@@ -47,7 +47,7 @@ using namespace constitutive;
 
 HydrofractureSolver::HydrofractureSolver( const string & name,
                                           Group * const parent ):
-  PoroelasticSolver( name, parent ),
+  SinglePhasePoromechanicsSolver( name, parent ),
   m_contactRelationName(),
   m_surfaceGeneratorName(),
   m_surfaceGenerator( nullptr ),
@@ -136,7 +136,7 @@ void HydrofractureSolver::implicitStepSetup( real64 const & time_n,
 
 void HydrofractureSolver::postProcessInput()
 {
-  PoroelasticSolver::postProcessInput();
+  SinglePhasePoromechanicsSolver::postProcessInput();
   m_surfaceGenerator = &this->getParent().getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
 }
 
@@ -447,7 +447,7 @@ void HydrofractureSolver::setupDofs( DomainPartition const & domain,
   GEOSX_MARK_FUNCTION;
 
   // TODO: do we still need to avoid poroelasticity in the rock matrix? If not this can be done by
-  // calling PoroelasticSolver::setupDofs( domain, dofManager );
+  // calling SinglePhasePoromechanicsSolver::setupDofs( domain, dofManager );
 
   m_solidSolver->setupDofs( domain, dofManager );
   m_flowSolver->setupDofs( domain, dofManager );
@@ -955,7 +955,7 @@ HydrofractureSolver::
                        DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  PoroelasticSolver::applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+  SinglePhasePoromechanicsSolver::applySystemSolution( dofManager, localSolution, scalingFactor, domain );
 
   updateDeformationForCoupling( domain );
 }

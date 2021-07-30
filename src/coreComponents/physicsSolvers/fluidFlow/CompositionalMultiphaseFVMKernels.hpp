@@ -157,8 +157,8 @@ struct FluxKernel
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & dPres,
-          ElementViewConst< arrayView3d< real64 const > > const & permeability,
-          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
+          ElementViewConst< arrayView2d< real64 const > > const & permeability,
+          ElementViewConst< arrayView2d< real64 const > > const & dPerm_dPres,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
@@ -200,7 +200,7 @@ struct CFLFluxKernel
   template< typename VIEWTYPE >
   using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
 
-  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
+  template< localIndex NC, localIndex NUM_ELEMS >
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const numPhases,
@@ -209,7 +209,7 @@ struct CFLFluxKernel
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
-           arraySlice1d< real64 const > const stencilWeights,
+           real64 const (&transmissibility)[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
            ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
@@ -220,13 +220,15 @@ struct CFLFluxKernel
            ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux,
            ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux );
 
-  template< localIndex NC, typename STENCIL_TYPE >
+  template< localIndex NC, typename STENCILWRAPPER_TYPE >
   static void
   launch( localIndex const numPhases,
           real64 const & dt,
-          STENCIL_TYPE const & stencil,
+          STENCILWRAPPER_TYPE const & stencil,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView2d< real64 const > > const & permeability,
+          ElementViewConst< arrayView2d< real64 const > > const & dPerm_dPres,
           ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
@@ -272,8 +274,7 @@ struct CFLKernel
   static void
   launch( localIndex const size,
           arrayView1d< real64 const > const & volume,
-          arrayView1d< real64 const > const & porosityRef,
-          arrayView2d< real64 const > const & pvMult,
+          arrayView2d< real64 const > const & porosity,
           arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,

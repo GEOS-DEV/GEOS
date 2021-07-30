@@ -243,13 +243,13 @@ void FaceElementToCellStencilWrapper::computeTransmissibility( localIndex iconn,
 
   real64 faceConormal[3];
 
-  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er0][esr0][ei0][0], m_faceNormal[iconn] );
+  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er0][esr0][ei0], m_faceNormal[iconn] );
   halfTrans *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal ) * m_transMultiplier[iconn];
 
   transmissibility[0] = halfTrans;
   transmissibility[1] = -halfTrans;
 
-  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0][0];
+  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0];
   dTrans_dPressure[1] = 0.0;
 }
 
@@ -272,16 +272,16 @@ void FaceElementToCellStencilWrapper::computeTransmissibility( localIndex iconn,
 
   real64 faceConormal[3];
 
-  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er0][esr0][ei0][0], m_faceNormal[iconn] );
+  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er0][esr0][ei0], m_faceNormal[iconn] );
   halfTrans *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal ) * m_transMultiplier[iconn];
 
   transmissibility[0] = halfTrans;
   transmissibility[1] = -halfTrans;
 
-  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0][0];
+  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0];
   dTrans_dPressure[1] = 0.0;
 
-  dTrans_dAperture[0] = 0.0 * dPerm_dAperture[er0][esr0][ei0][0][0];
+  dTrans_dAperture[0] = 0.0 * dPerm_dAperture[er0][esr0][ei0][0];
   dTrans_dAperture[1] = 0.0;
 }
 

@@ -163,9 +163,9 @@ struct ConstitutivePassThru< CompressibleSolidBase >
   static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
-    CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
-    CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
-                                                                                  std::forward< LAMBDA >( lambda ) );
+                                 CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
+                                                                                                               std::forward< LAMBDA >( lambda ) );
   }
 };
 

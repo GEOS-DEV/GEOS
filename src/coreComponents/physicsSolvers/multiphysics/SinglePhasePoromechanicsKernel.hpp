@@ -309,7 +309,7 @@ public:
       stack.localFlowDispJacobian[0][a*3+2] += dPorosity_dVolStrainIncrement * m_fluidDensity( k, q ) * dNdX[a][2] * detJxW;
     }
 
-    stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - m_oldPorosity( k, q ) * m_fluidDensityOld( k ) ) * detJxW;
+    stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - porosityOld * m_fluidDensityOld( k ) ) * detJxW;
     stack.localFlowFlowJacobian[0][0] += ( dPorosity_dPressure * m_fluidDensity( k, q ) + porosityNew * m_dFluidDensity_dPressure( k, q ) ) * detJxW;
 
   }

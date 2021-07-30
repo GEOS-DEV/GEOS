@@ -282,13 +282,13 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
   using keys = PermeabilityBase::viewKeyStruct;
 
   m_permeability.clear();
-  m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::permeabilityString(),
+  m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( keys::permeabilityString(),
                                                                                 targetRegionNames(),
                                                                                 m_permeabilityModelNames );
   m_permeability.setName( getName() + "/accessors/" + keys::permeabilityString() );
 
   m_dPerm_dPressure.clear();
-  m_dPerm_dPressure = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::dPerm_dPressureString(),
+  m_dPerm_dPressure = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( keys::dPerm_dPressureString(),
                                                                                    targetRegionNames(),
                                                                                    m_permeabilityModelNames );
   m_dPerm_dPressure.setName( getName() + "/accessors/" + keys::dPerm_dPressureString() );

@@ -20,7 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
-#include "physicsSolvers/multiphysics/PoroelasticSolver.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
 
 namespace geosx
 {
@@ -28,7 +28,7 @@ namespace geosx
 class SurfaceGenerator;
 
 
-class HydrofractureSolver : public PoroelasticSolver
+class HydrofractureSolver : public SinglePhasePoromechanicsSolver
 {
 public:
   HydrofractureSolver( const string & name,
@@ -142,8 +142,19 @@ public:
   }
 
 
+  enum class CouplingTypeOption : integer
+  {
+    FIM,
+    SIM_FixedStress
+  };
+
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    constexpr static char const * couplingTypeOptionString() { return "couplingTypeOptionEnum"; }
+
+    constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
+
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
     constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
@@ -189,8 +200,9 @@ protected:
                                    CRSMatrix< real64, globalIndex > & localMatrix );
 
 
-
 private:
+
+  CouplingTypeOption m_couplingTypeOption;
 
   // name of the contact relation
   string m_contactRelationName;
@@ -208,7 +220,13 @@ private:
 
   integer m_maxNumResolves;
   integer m_numResolves[2];
+
 };
+
+ENUM_STRINGS( HydrofractureSolver::CouplingTypeOption,
+              "FIM",
+              "SIM_FixedStress" );
+
 
 } /* namespace geosx */
 

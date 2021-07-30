@@ -494,7 +494,7 @@ void KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 } // namespace helpers
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
+void KernelLaunchSelector1( localIndex const numComp, ARGS && ... args )
 {
   internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {
@@ -503,7 +503,7 @@ void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
 }
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ... args )
+void KernelLaunchSelector2( localIndex const numComp, localIndex const numPhase, ARGS && ... args )
 {
   internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {

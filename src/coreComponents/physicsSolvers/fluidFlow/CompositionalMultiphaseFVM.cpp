@@ -23,6 +23,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "dataRepository/Group.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -206,9 +207,9 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   } );
 
   // Step 2: compute the total volumetric outflux for each reservoir cell by looping over faces
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  NumericalMethodsManager  & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager  & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutfluxAccessor =
     mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >, arrayView2d< real64, compflow::USD_PHASE > >( viewKeyStruct::phaseOutfluxString() );
@@ -216,14 +217,19 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > const & compOutfluxAccessor =
     mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >, arrayView2d< real64, compflow::USD_COMP > >( viewKeyStruct::componentOutfluxString() );
 
-  fluxApprox.forAllStencils( mesh, [&] ( auto const & stencil )
+  fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
   {
+
+    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+
     KernelLaunchSelector1< CFLFluxKernel >( m_numComponents,
                                             m_numPhases,
                                             dt,
-                                            stencil,
+                                            stencilWrapper,
                                             m_pressure.toNestedViewConst(),
                                             m_gravCoef.toNestedViewConst(),
+                                            m_permeability.toNestedViewConst(),
+                                            m_dPerm_dPressure.toNestedViewConst(),
                                             m_phaseRelPerm.toNestedViewConst(),
                                             m_phaseVisc.toNestedViewConst(),
                                             m_phaseDens.toNestedViewConst(),
@@ -256,10 +262,6 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() );
 
-    ConstitutiveBase const & solid = getConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
-    arrayView2d< real64 const > const & pvMult =
-      solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() );
-
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
 
@@ -267,24 +269,31 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
     arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
 
+    ConstitutiveBase const & solidModel = getConstitutiveModel( subRegion, m_solidModelNames[targetIndex] );
+
     real64 subRegionMaxPhaseCFLNumber = 0.0;
     real64 subRegionMaxCompCFLNumber = 0.0;
-    KernelLaunchSelector2< CFLKernel >( m_numComponents, m_numPhases,
-                                        subRegion.size(),
-                                        volume,
-                                        porosityRef,
-                                        pvMult,
-                                        compDens,
-                                        compFrac,
-                                        phaseRelPerm,
-                                        dPhaseRelPerm_dPhaseVolFrac,
-                                        phaseVisc,
-                                        phaseOutflux,
-                                        compOutflux,
-                                        phaseCFLNumber,
-                                        compCFLNumber,
-                                        subRegionMaxPhaseCFLNumber,
-                                        subRegionMaxCompCFLNumber );
+
+    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [&] ( auto & castedSolidModel )
+    {
+      arrayView2d< real64 const > const & porosity    = castedSolidModel.getPorosity();
+
+      KernelLaunchSelector2< CFLKernel >( m_numComponents, m_numPhases,
+                                          subRegion.size(),
+                                          volume,
+                                          porosity,
+                                          compDens,
+                                          compFrac,
+                                          phaseRelPerm,
+                                          dPhaseRelPerm_dPhaseVolFrac,
+                                          phaseVisc,
+                                          phaseOutflux,
+                                          compOutflux,
+                                          phaseCFLNumber,
+                                          compCFLNumber,
+                                          subRegionMaxPhaseCFLNumber,
+                                          subRegionMaxCompCFLNumber );
+    } );
 
     localMaxPhaseCFLNumber = LvArray::math::max( localMaxPhaseCFLNumber, subRegionMaxPhaseCFLNumber );
     localMaxCompCFLNumber = LvArray::math::max( localMaxCompCFLNumber, subRegionMaxCompCFLNumber );

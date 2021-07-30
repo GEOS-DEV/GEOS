@@ -235,7 +235,7 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
 //  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
 //  localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( permeability[er0][esr0][ei0][0] );
+  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( permeability[er0][esr0][ei0] );
 //  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
 
   real64 const harmonicWeight   = t0; // *t1 / (t0+t1);
@@ -245,7 +245,7 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
   transmissibility[0] = value;
   transmissibility[1] = -value;
 
-  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0][0];
+  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0];
   dTrans_dPressure[1] = 0.0;
 }
 
@@ -268,7 +268,7 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
   //  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
   //  localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( permeability[er0][esr0][ei0][0] );
+  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( permeability[er0][esr0][ei0] );
   //  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
 
   real64 const harmonicWeight   = t0; // *t1 / (t0+t1);
@@ -278,10 +278,10 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
   transmissibility[0] = value;
   transmissibility[1] = -value;
 
-  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0][0];
+  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0];
   dTrans_dPressure[1] = 0.0;
 
-  dTrans_dAperture[0] = 0.0 * dPerm_dAperture[er0][esr0][ei0][0][0];
+  dTrans_dAperture[0] = 0.0 * dPerm_dAperture[er0][esr0][ei0][0];
   dTrans_dAperture[1] = 0.0;
 }
 } /* namespace geosx */

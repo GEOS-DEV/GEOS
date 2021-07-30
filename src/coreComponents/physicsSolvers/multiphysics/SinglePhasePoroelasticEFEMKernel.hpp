@@ -19,7 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROELASTICEFEMKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROELASTICEFEMKERNEL_HPP_
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "SinglePhasePoroelasticKernel.hpp"
+#include "SinglePhasePoromechanicsKernel.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 

@@ -43,7 +43,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace PermeabilityKernels;
 
 SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
                                                                 Group * const parent ):
@@ -320,72 +319,8 @@ void SinglePhasePoromechanicsSolver::updateState( DomainPartition & domain )
   this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
                                                                           auto & subRegion )
   {
-    updatePermeability( nodeManager, subRegion, targetIndex );
     m_flowSolver->updateFluidState( subRegion, targetIndex );
   } );
-}
-
-void SinglePhasePoromechanicsSolver::updatePermeability( NodeManager const & nodeManager,
-                                                         CellElementSubRegion & subRegion,
-                                                         localIndex const targetIndex ) const
-{
-  PermeabilityBase & perm =
-    getConstitutiveModel< PermeabilityBase >( subRegion, m_flowSolver->permeabilityModelNames()[targetIndex] );
-
-  string const & solidName = m_solidSolver->solidMaterialNames()[targetIndex];
-
-  constitutive::constitutiveUpdatePassThru( perm, [&] ( auto & castedPerm )
-  {
-    finiteElement::FiniteElementBase &
-    subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
-
-    finiteElement::dispatch3D( subRegionFE,
-                               [&solidName,
-                                &subRegion,
-                                &castedPerm,
-                                &nodeManager] ( auto const finiteElement )
-    {
-
-      using FE_TYPE = TYPEOFREF( finiteElement );
-
-
-      using KERNEL_TYPE = PoroMechanicsPermeabilityKernel< CellElementSubRegion,
-                                                           FE_TYPE >;
-
-      KERNEL_TYPE permKernel( subRegion,
-                              finiteElement,
-                              nodeManager );
-
-      typename TYPEOFREF( castedPerm ) ::KernelWrapper permWrapper = castedPerm.createKernelWrapper();
-
-      arrayView3d< real64 > const & dPerm_dDisplacement =
-        subRegion.template getReference< array3d< real64 > >( viewKeyStruct::dPerm_dDisplacementString() );
-
-      arrayView1d< real64 const > const & pressure =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() );
-
-      arrayView1d< real64 const > const & deltaPressure =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
-
-      SolidBase & solidModel =
-        getConstitutiveModel< SolidBase >( subRegion,
-                                           solidName );
-
-      arrayView2d< real64 const > const & porosity = solidModel.getPorosity();
-      array2d< real64 > dPorosity_dVolStrain;
-      dPorosity_dVolStrain.setValues< serialPolicy >( 0.0 );
-
-      KERNEL_TYPE::template launch< parallelDevicePolicy<>, KERNEL_TYPE >( subRegion.size(),
-                                                                           permKernel,
-                                                                           permWrapper,
-                                                                           pressure,
-                                                                           deltaPressure,
-                                                                           porosity,
-                                                                           dPorosity_dVolStrain.toViewConst(),
-                                                                           dPerm_dDisplacement );
-    } );
-  } );
-
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsSolver, string const &, Group * const )

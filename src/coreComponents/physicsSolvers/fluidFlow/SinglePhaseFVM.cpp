@@ -247,8 +247,8 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   jumpDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( jumpDofKey );
   jumpDofNumber.setName( this->getName() + "/accessors/" + jumpDofKey );
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > dPerm_dAper =
+    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 2 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
                                                                            targetRegionNames(),
                                                                            m_permeabilityModelNames,
                                                                            true );

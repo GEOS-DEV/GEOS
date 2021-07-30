@@ -153,8 +153,8 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_volume;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_gravCoef;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_permeability;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_dPerm_dPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >  m_permeability;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >  m_dPerm_dPressure;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementSeparationCoefficient;
