@@ -113,7 +113,7 @@
     <CellElementRegion
       name="Omega"
       cellBlocks="{ cb1 }"
-      materialList="{ rock, water, rockPerm }"/>
+      materialList="{ porousRock, rock, water, rockPorosity, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -124,7 +124,7 @@
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
 
-    <PoroElasticIsotropic
+    <ElasticIsotropic
       name="rock"
       defaultDensity="0"
       defaultBulkModulus="11039657020.4"
