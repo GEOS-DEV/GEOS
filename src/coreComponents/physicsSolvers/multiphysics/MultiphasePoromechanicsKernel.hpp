@@ -161,7 +161,6 @@ public:
 
       m_fluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::pressureString() );
       m_deltaFluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::deltaPressureString() );
-      m_poroRef = elementSubRegion.template getReference< array1d< real64 > >( keys::referencePorosityString() );
     }
 
     // extract views into multiphase solver data
@@ -387,7 +386,7 @@ public:
     for( localIndex ip = 0; ip < NP; ++ip )
     {
       real64 const phaseAmountNew = porosityNew * m_fluidPhaseSaturation( k, ip ) * m_fluidPhaseDensity( k, q, ip );
-      real64 const phaseAmountOld = m_oldPorosity[k][q] * m_fluidPhaseSaturationOld( k, ip ) * m_fluidPhaseDensityOld( k, ip );
+      real64 const phaseAmountOld = porosityOld * m_fluidPhaseSaturationOld( k, ip ) * m_fluidPhaseDensityOld( k, ip );
 
       real64 const dPhaseAmount_dP = dPorosity_dPressure * m_fluidPhaseSaturation( k, ip ) * m_fluidPhaseDensity( k, q, ip )
                                      + porosityNew * (m_dFluidPhaseSaturation_dPressure( k, ip ) * m_fluidPhaseDensity( k, q, ip )

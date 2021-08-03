@@ -41,7 +41,18 @@ public:
   GEOSX_HOST_DEVICE
   void compute( real64 const & hydraulicAperture,
                 arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dAperture ) const;
+                arraySlice1d< real64 > const & dPerm_dAperture ) const
+  {
+    // Technically this is not a permeability but it's convenient to definite like this.
+    real64 const perm  = hydraulicAperture*hydraulicAperture*hydraulicAperture / 12.0;
+    real64 const dPerm = hydraulicAperture*hydraulicAperture / 4.0;
+
+    for( int dim=0; dim < 3; dim++ )
+    {
+      permeability[dim]     = perm;
+      dPerm_dAperture[dim]  = dPerm;
+    }
+  }
 
   GEOSX_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
@@ -99,25 +110,6 @@ private:
   array2d< real64 > m_dPerm_dAperture;
 
 };
-
-
-GEOSX_HOST_DEVICE
-void ParallelPlatesPermeabilityUpdate::compute( real64 const & hydraulicAperture,
-                                                arraySlice1d< real64 > const & permeability,
-                                                arraySlice1d< real64 > const & dPerm_dAperture ) const
-{
-  // Technically this is not a permeability but it's convenient to definite like this.
-  real64 const perm  = hydraulicAperture*hydraulicAperture*hydraulicAperture / 12.0;
-  real64 const dPerm = hydraulicAperture*hydraulicAperture / 4.0;
-
-  for( int dim=0; dim < 3; dim++ )
-  {
-    permeability[dim]     = perm;
-    dPerm_dAperture[dim]  = dPerm;
-  }
-}
-
-
 
 }/* namespace constitutive */
 

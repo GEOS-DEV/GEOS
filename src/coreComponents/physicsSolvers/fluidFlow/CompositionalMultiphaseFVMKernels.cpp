@@ -842,20 +842,20 @@ CFLFluxKernel::
 #define INST_CFLFluxKernel( NC, STENCILWRAPPER_TYPE ) \
   template \
   void CFLFluxKernel:: \
-  launch< NC, STENCILWRAPPER_TYPE >( localIndex const numPhases, \
-		                                 real64 const & dt, \
-										                 STENCILWRAPPER_TYPE const & stencil, \
-														 ElementViewConst< arrayView1d< real64 const > > const & pres, \
-														 ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
-														 ElementViewConst< arrayView2d< real64 const > > const & permeability, \
-														 ElementViewConst< arrayView2d< real64 const > > const & dPerm_dPres, \
-														 ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm, \
-														 ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc, \
-														 ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
-														 ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens, \
-														 ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
-														 ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux, \
-														 ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux )
+    launch< NC, STENCILWRAPPER_TYPE >( localIndex const numPhases, \
+                                       real64 const & dt, \
+                                       STENCILWRAPPER_TYPE const & stencil, \
+                                       ElementViewConst< arrayView1d< real64 const > > const & pres, \
+                                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
+                                       ElementViewConst< arrayView2d< real64 const > > const & permeability, \
+                                       ElementViewConst< arrayView2d< real64 const > > const & dPerm_dPres, \
+                                       ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm, \
+                                       ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc, \
+                                       ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
+                                       ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens, \
+                                       ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
+                                       ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux, \
+                                       ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux )
 
 INST_CFLFluxKernel( 1, CellElementStencilTPFAWrapper );
 INST_CFLFluxKernel( 2, CellElementStencilTPFAWrapper );

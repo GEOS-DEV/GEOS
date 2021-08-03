@@ -207,8 +207,8 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   } );
 
   // Step 2: compute the total volumetric outflux for each reservoir cell by looping over faces
-  NumericalMethodsManager  & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager  & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutfluxAccessor =
