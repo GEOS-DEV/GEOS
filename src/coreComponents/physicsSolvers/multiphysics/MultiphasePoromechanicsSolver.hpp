@@ -108,10 +108,6 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
-  void updatePermeability ( CellElementSubRegion & subRegion,
-                            localIndex const targetIndex ) const;
-
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }

@@ -13,17 +13,17 @@
  */
 
 /**
- * @file SinglePhasePoroelasticFluxKernels.cpp
+ * @file SinglePhasePoromechanicsFluxKernels.cpp
  */
 
-#include "SinglePhasePoroelasticFluxKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
+#include "SinglePhasePoromechanicsFluxKernels.hpp"
 
 namespace geosx
 {
 
-namespace SinglePhasePoroelasticFluxKernels
+namespace SinglePhasePoromechanicsFluxKernels
 {
 
 using namespace FluxKernelsHelper;

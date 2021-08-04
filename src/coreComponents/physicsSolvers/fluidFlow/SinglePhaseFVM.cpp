@@ -18,6 +18,7 @@
 
 #include "SinglePhaseFVM.hpp"
 
+#include "../multiphysics/SinglePhasePoromechanicsFluxKernels.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
@@ -31,7 +32,6 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoroelasticFluxKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
 
 /**
@@ -44,7 +44,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace SinglePhaseBaseKernels;
 using namespace SinglePhaseFVMKernels;
-using namespace SinglePhasePoroelasticFluxKernels;
+using namespace SinglePhasePoromechanicsFluxKernels;
 
 template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,

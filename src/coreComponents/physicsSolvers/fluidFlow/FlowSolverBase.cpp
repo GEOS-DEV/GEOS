@@ -221,7 +221,7 @@ void FlowSolverBase::updateSolidFlowProperties( CellElementSubRegion & subRegion
   arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
   arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-  ConstitutiveBase & porousSolid = subRegion.template getConstitutiveModel( m_solidModelNames[targetIndex] );
+  CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
 
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
@@ -247,7 +247,7 @@ void FlowSolverBase::updateSolidFlowProperties( SurfaceElementSubRegion & subReg
 
   arrayView1d< real64 const > const effectiveAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
 
-  ConstitutiveBase & porousSolid = subRegion.template getConstitutiveModel( m_solidModelNames[targetIndex] );
+  CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
 
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {

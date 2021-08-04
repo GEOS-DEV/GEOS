@@ -1124,7 +1124,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & GEOSX_UNU
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 const > const dPres =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
@@ -1144,6 +1144,9 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & GEOSX_UNU
         compDens[ei][ic] += dCompDens[ei][ic];
       }
     } );
+
+    CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+    porousMaterial.saveConvergedState();
   } );
 }
 

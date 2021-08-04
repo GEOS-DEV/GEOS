@@ -291,19 +291,9 @@ void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
   this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
                                                                           auto & subRegion )
   {
-    updatePermeability( subRegion, targetIndex );
     m_flowSolver->updateFluidState( subRegion, targetIndex );
   } );
 }
-
-void MultiphasePoromechanicsSolver::updatePermeability( CellElementSubRegion & subRegion,
-                                                        localIndex const targetIndex ) const
-{
-  //TODO stress-dependent permeability update.
-  GEOSX_UNUSED_VAR( subRegion );
-  GEOSX_UNUSED_VAR( targetIndex );
-}
-
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanicsSolver, string const &, Group * const )
 

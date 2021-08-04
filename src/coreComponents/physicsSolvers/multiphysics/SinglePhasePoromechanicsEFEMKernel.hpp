@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SinglePhasePoroelasticKernel.hpp
+ * @file SinglePhasePoromechanicsKernel.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROELASTICEFEMKERNEL_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROELASTICEFEMKERNEL_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEFEMKERNEL_HPP_
+#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEFEMKERNEL_HPP_
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "SinglePhasePoromechanicsKernel.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -26,7 +26,7 @@
 namespace geosx
 {
 
-namespace PoroelasticEFEMKernels
+namespace PoromechanicsEFEMKernels
 {
 
 /**
@@ -37,7 +37,7 @@ namespace PoroelasticEFEMKernels
  * @tparam UNUSED An unused parameter since we are assuming that the test and
  *                trial space have the same number of support points.
  *
- * ### SinglePhasePoroelastic Description
+ * ### SinglePhasePoromechanics Description
  * Implements the KernelBase interface functions required for solving the
  * quasi-static single-phase poromechanics problem using one of the
  * "finite element kernel application" functions such as
@@ -583,10 +583,10 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                arrayView1d< string const > const >;
 
 
-} // namespace PoroelasticEFEMKernels
+} // namespace PoromechanicsEFEMKernels
 
 } // namespace geosx
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROELASTICKERNEL_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_

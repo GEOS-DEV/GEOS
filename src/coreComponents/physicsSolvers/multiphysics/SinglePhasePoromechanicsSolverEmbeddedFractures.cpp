@@ -38,8 +38,8 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "SinglePhasePoromechanicsKernel.hpp"
-#include "SinglePhasePoroelasticEFEMKernel.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "SinglePhasePoromechanicsEFEMKernel.hpp"
 
 namespace geosx
 {
@@ -427,15 +427,15 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
                                                             kernelFactory );
 
   // 2.  Add EFEM poroelastic contribution
-  PoroelasticEFEMKernels::SinglePhaseKernelFactory EFEMkernelFactory( subRegion,
-                                                                      dispDofNumber,
-                                                                      jumpDofNumber,
-                                                                      pDofKey,
-                                                                      dofManager.rankOffset(),
-                                                                      localMatrix,
-                                                                      localRhs,
-                                                                      gravityVectorData,
-                                                                      m_flowSolver->fluidModelNames() );
+  PoromechanicsEFEMKernels::SinglePhaseKernelFactory EFEMkernelFactory( subRegion,
+                                                                        dispDofNumber,
+                                                                        jumpDofNumber,
+                                                                        pDofKey,
+                                                                        dofManager.rankOffset(),
+                                                                        localMatrix,
+                                                                        localRhs,
+                                                                        gravityVectorData,
+                                                                        m_flowSolver->fluidModelNames() );
 
   real64 maxTraction =
     finiteElement::

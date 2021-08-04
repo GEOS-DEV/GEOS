@@ -211,30 +211,6 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
     updateSolidFlowProperties( subRegion, targetIndex );
     updateFluidState( subRegion, targetIndex );
-
-//    ConstitutiveBase const & solid = getConstitutiveModel( subRegion, m_solidModelNames[targetIndex] );
-//    arrayView1d< real64 const > const poroRef = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
-//
-//    arrayView1d< real64 > const poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString() );
-//
-//    bool poroInit = false;
-//    if( solid.hasWrapper( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() ) )
-//    {
-//      arrayView2d< real64 const > const
-//      pvmult = solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() );
-//      if( pvmult.size() == poro.size() )
-//      {
-//        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-//        {
-//          poro[ei] = poroRef[ei] * pvmult[ei][0];
-//        } );
-//        poroInit = true;
-//      }
-//    }
-//    if( !poroInit )
-//    {
-//      poro.setValues< parallelDevicePolicy<> >( poroRef );
-//    }
   } );
 
   mesh.getElemManager().forElementRegions< SurfaceElementRegion >( targetRegionNames(),
@@ -343,7 +319,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  forTargetSubRegions( mesh, [&]( localIndex const,
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 const > const dPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
@@ -357,7 +333,13 @@ void SinglePhaseBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
       pres[ei] += dPres[ei];
       vol[ei] += dVol[ei];
     } );
+
+    CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+
+    porousSolid.saveConvergedState();
   } );
+
+
 
   forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const,
                                                           FaceElementSubRegion & subRegion )
@@ -696,16 +678,11 @@ void SinglePhaseBase::backupFields( MeshLevel & mesh ) const
     ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
     arrayView2d< real64 const > const & dens = getFluidProperties( fluid ).dens;
 
-//    RockBase & solidModel = getConstitutiveModel< RockBase >( subRegion, m_solidModelNames[targetIndex] );
-//    arrayView2d< real64 const > const & poro = solidModel.getPorosity();
-//    arrayView2d< real64 > const & poroOld = solidModel.getOldPorosity();
-
     arrayView1d< real64 > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       densOld[ei] = dens[ei][0];
-//      poroOld[ei][0] = poro[ei][0];
     } );
   } );
 }
