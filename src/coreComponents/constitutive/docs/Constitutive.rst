@@ -29,14 +29,6 @@ A typical ``<Constitutive>`` and ``<ElementRegions>`` block will look like:
 
     <Constitutive>
 
-      <!-- Define a poroelastic material called "shale"-->
-      <PoroElasticIsotropic 
-        name="shale"
-        defaultDensity="2700"
-        defaultBulkModulus="61.9e6"
-        defaultShearModulus="28.57e6"
-        BiotCoefficient="1.0"/>
-
       <!-- Define a compressible, single-phase fluid called "water"-->
       <CompressibleSinglePhaseFluid 
         name="water"
@@ -50,11 +42,11 @@ A typical ``<Constitutive>`` and ``<ElementRegions>`` block will look like:
 
     <ElementRegions>
 
-      <!--Add water and shale to the material list for region 1-->
+      <!--Add water to the material list for region 1-->
       <ElementRegion 
          name="region1"
          cellBlocks="cellBlock1"
-         materialList="water shale"/>
+         materialList="water"/>
 
     </ElementRegions>
 

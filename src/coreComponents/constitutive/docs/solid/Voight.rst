@@ -56,6 +56,6 @@ where
    The factor of two in the shear components of strain (and strain-like) quantities is a frequent
    source of confusion, even for expert modelers.  It can be particularly challenging to use in nuanced 
    situations like stiffness tensor calculations or invariant decompositions.  If you plan to implement new models within 
-   GEOSX, please pay extra attention to this detail. We also try to provide common operations in 
+   GEOSX, please pay extra attention to this detail. We also provide many common operations in 
    centralized helper functions to avoid re-inventing the wheel.
 

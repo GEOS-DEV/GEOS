@@ -26,7 +26,7 @@ Appropriate measures of deformation and stress depend on assumptions of
 strain, as well as other factors like rate-dependence and material anisotropy.
 
 This section briefly reviews three main classes of solid models in GEOSX, grouped by their kinematic assumptions. 
-The presentation is deliberately brief, as much more extensive (and precise) presentations can be 
+The presentation is deliberately brief, as much more extensive presentations can be 
 found in almost any textbook on linear and nonlinear solid mechanics.
 
 
@@ -42,7 +42,7 @@ In this case, it is sufficient to use the linearized strain tensor
   \bm{\epsilon} = \frac{1}{2} \left( \nabla \bm{u} + \bm{u} \nabla \right )
 
 as the deformation measure. Higher-order terms present in finite strain theories are neglected.
-This strain is additively decomposed into elastic and inelastic components as
+For inelastic problems, this strain is additively decomposed into elastic and inelastic components as
 
 .. math::
 
@@ -76,7 +76,7 @@ a simpler constitutive update may be formulated in terms of the total strain:
 .. math::
    \bm{\sigma^{n+1}} = \bm{\sigma}(\bm{\epsilon^{n+1}}).
 
-GEOSX will use this latter form in certain (highly-optimized) solvers when we know in advance that a
+GEOSX will use this latter form in specific, highly-optimized solvers when we know in advance that a
 linear elastic model is being applied.  The more general interface is the
 the default, however, as it can accommodate a much wider range of constitutive behavior within a common
 interface.

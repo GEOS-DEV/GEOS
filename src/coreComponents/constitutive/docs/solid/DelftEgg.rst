@@ -3,7 +3,7 @@
 =========================
 Model: Delft Egg
 =========================
-The `Delft-Egg  <https://link.springer.com/chapter/10.1007%2F978-94-011-1046-4_10>`__  plasticity model is a generalization of the Modified Cam-Clay model, with the yield function defined as 
+The `Delft-Egg  <https://link.springer.com/chapter/10.1007%2F978-94-011-1046-4_10>`__  plasticity model uses a generalization of the Modified Cam-Clay yield surface, defined as 
 
 .. math::
   f = q^2 - M^2 \left[ \alpha^2 \, p \left(\frac{2 \alpha}{\alpha+1} p_c -p \right) - \frac{\alpha^2 (\alpha-1)}{\alpha+1} p_c^2 \right] = 0 \quad ( \text{for }p_c > \frac{\alpha}{\alpha+1} )
@@ -11,33 +11,15 @@ The `Delft-Egg  <https://link.springer.com/chapter/10.1007%2F978-94-011-1046-4_1
 .. math::
   f = q^2 - M^2 \, p \left(\frac{2 \alpha}{\alpha+1} p_c -p \right) = 0 \quad (\text{for } p_c \leq \frac{\alpha}{\alpha+1} )
 
-where :math:`\alpha \geq 1` is the shape parameter. For :math:`\alpha = 1`, this model leads to a Modified Cam-Clay (MCC) model with an ellipsoidal yield surface. For :math:`\alpha > 1`, the Delft-Egg model with an egg-shaped yield surface is obtained. 
-The rest of the implementation follows the same procedure as the Modified Cam-Clay model. 
+where :math:`\alpha \geq 1` is the shape parameter. For :math:`\alpha = 1`, this model leads to a Modified Cam-Clay (MCC) type model with an ellipsoidal yield surface. For :math:`\alpha > 1`, an egg-shaped yield surface is obtained.  The additional parameter makes it easier to fit the cap behavior of a broader range of soils and rocks. 
 
-In GEOSX, we use a single implementation which is called Modified Cam-Clay and can accommodate both MCC and Delft-Egg models. To obtain the MCC, simply set :math:`\alpha = 1`, which is called the shape parameter. 
+Because Delft-Egg is frequently used for hard rocks, GEOSX uses a linear model in for the elastic response, rather than the hyper-elastic model used for MCC.  This is a slight deviation from the original formulation proposed in the reference above.  For reservoir applications, the ability to use a simpler linear model was a frequent user request.
 
 Parameters
 ~~~~~~~~~~~~~~~~~~~~
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/ModifiedCamClay.rst
+.. include:: /coreComponents/fileIO/schema/docs/DelftEgg.rst
 
-Example
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: xml
-
-  <Constitutive>
-    <ModifiedCamClay name="delft"
-                     defaultDensity="2700"
-                     defaultRefPressure="-1.0"
-                     defaultRefStrainVol="0"
-                     defaultShearModulus="200.0"
-                     defaultPreConsolidationPressure="-1.5"
-                     defaultCslSlope="1.2"
-                     defaultShapeParameter="1.1"
-                     defaultRecompressionIndex="0.002"
-                     defaultVirginCompressionIndex="0.003" />
-  </Constitutive>
 

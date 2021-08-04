@@ -20,73 +20,7 @@ A typical XML file to run the triaxial driver will have the following key elemen
 
 .. code-block:: xml
 
-    <Problem>
-
-      <!-- Triaxial driver is added as an executable Task-->
-      <Tasks>
-        <TriaxialDriver
-          name="triaxialDriver"
-          material="sand"
-          mode="triaxial"
-          strainFunction="strainFunction"
-          stressFunction="stressFunction"
-          steps="40"
-          output="results.txt"
-          logLevel="1" />
-      </Tasks>
-
-      <!-- This Task is added to the Event queue as a SoloEvent-->
-      <Events
-        maxTime="1">
-        <SoloEvent
-          name="triaxialDriver"
-          target="/Tasks/triaxialDriver"/>
-      </Events>
-
-      <!-- The driver calls the material "sand" which is defined here-->
-      <Constitutive>
-        <ExtendedDruckerPrager
-          name="sand"
-          defaultDensity="2700"
-          defaultBulkModulus="500"
-          defaultShearModulus="300"
-          defaultCohesion="0.0"
-          defaultInitialFrictionAngle="15"
-          defaultResidualFrictionAngle="23"
-          defaultDilationRatio="1.0"
-          defaultHardening="0.001"
-        />
-      </Constitutive>
-
-      <!-- The axial/radial loading conditions are defined by time-dependent functions-->
-      <Functions>
-        <TableFunction
-          name="strainFunction"
-          inputVarNames="{ time }"
-          coordinates="{ 0.0, 3.0, 4.0, 7.0, 8.0 }"
-          values="{ 0, -0.003, -0.002, -0.005, -0.004 }"/>
-        <TableFunction
-          name="stressFunction"
-          inputVarNames="{ time }"
-          coordinates="{ 0.0, 8.0  }"
-          values="{ -1.0, -1.0 }"/>
-      </Functions>
-
-      <!-- A mesh is not actually used, but GEOSX throws an error without one.  Will fix this soon-->
-      <Mesh>
-        <InternalMesh
-          name="mesh1"
-          elementTypes="{ C3D8 }"
-          xCoords="{ 0, 1 }"
-          yCoords="{ 0, 1 }"
-          zCoords="{ 0, 1 }"
-          nx="{ 1 }"
-          ny="{ 1 }"
-          nz="{ 1 }"
-          cellBlockNames="{ cellBlock01 }"/>
-      </Mesh>
-
-    </Problem>
+   src/coreComponents/unitTests/constitutiveTests/testTriaxial_sphinxExample.xml
 
 The first thing to note is that the XML structure is identical to a standard GEOSX input deck.  In fact, once the constitutive block is calibrated, one could start adding solver and discretization blocks to the same file to create a proper field simulation.  This makes it easy to go back and forth between calibration and simulation.
 
@@ -150,7 +84,7 @@ This file can be readily plotted using any number of plotting tools.  Each row c
 
 We note that the file contains two columns for radial strain and two columns for radial stress.  For an isotropic material, the stresses and strains along the two radial axes will usually be identical.  We choose to output this way, however, to accommodate both anisotropic materials and true-triaxial loading conditions.  In these cases, the stresses and strains in the radial directions could potentially differ.
 
-These columns can be added and subtracted to produce other quantities of interest, like mean stress or deviatoric stress.  For example, we can plot the output of our "sand" XML to produce the following stress / strain curves:
+These columns can be added and subtracted to produce other quantities of interest, like mean stress or deviatoric stress.  For example, we can plot the output produce stress / strain curves (in this case for a plastic rather than simple elastic material):
 
 .. figure:: TriaxialDriver.svg
    :width: 600px
@@ -158,9 +92,9 @@ These columns can be added and subtracted to produce other quantities of interes
    :alt: stress/strain figure
    :figclass: align-center
 
-   Stress/strain behavior resulting from the sand model XML above.
+   Stress/strain behavior for a plastic material.
 
-In this plot, we have reversed the sign convention to be consistent with typical experimental plots.  Note also that the ``strainFunction`` above includes two unloading cycles, allowing us to observe both plastic loading and elastic unloading.
+In this plot, we have reversed the sign convention to be consistent with typical experimental plots.  Note also that the ``strainFunction`` includes two unloading cycles, allowing us to observe both plastic loading and elastic unloading.
 
 Model Convergence
 -----------------

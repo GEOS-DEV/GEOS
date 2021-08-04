@@ -38,7 +38,7 @@ Two-Invariant Models
 
 Two-invariant plasticity models use the first invariant of the Cauchy stress tensor and the second invariant of the deviatoric stress tensor to describe the yield surface. 
 
-Here we use the following stress invariants to define the yield surface:  von Mises stress, :math:`q = \sqrt{3J_2} = \sqrt{3/2} \|\boldsymbol{s}\|` and mean normal stress :math:`p = I_1/3`. :math:`I_1` and :math:`J_2` are the first invariant of the stress tensor and second invariant of the deviatoric stress, defined as
+Here we use the following stress invariants to define the yield surface:  the von Mises stress :math:`q = \sqrt{3J_2} = \sqrt{3/2} \|\boldsymbol{s}\|` and mean normal stress :math:`p = I_1/3`. Here, :math:`I_1` and :math:`J_2` are the first invariant of the stress tensor and second invariant of the deviatoric stress, defined as
 
 .. math::
    I_1 = tr(\boldsymbol{\sigma})/3 \, , \quad J_2 = \frac{1}{2} \|\boldsymbol{s}\|^2 \, , \quad \boldsymbol{s}=\boldsymbol{\sigma}-p \boldsymbol{1} \, ,
@@ -73,5 +73,5 @@ The following two-invariant models are currently implemented in GEOSX:
 Three-Invariant Models
 ----------------------------------
 
-Several three-invariant models are under active development.
+Several three-invariant models are under active development, but are not yet available in develop.  If you are interested in helping to add additional material models, please submit a feature request.
 
