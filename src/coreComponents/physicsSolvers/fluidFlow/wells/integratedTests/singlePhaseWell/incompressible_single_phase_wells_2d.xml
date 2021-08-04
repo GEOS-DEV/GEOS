@@ -11,9 +11,7 @@
       <NonlinearSolverParameters
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhaseReservoir>
 
     <SinglePhaseFVM
@@ -34,21 +32,21 @@
         name="wellControls1"
         type="producer"
         control="BHP"
-        referenceElevation="0.5"        
+        referenceElevation="0.5"
         targetBHP="5e5"
         targetTotalRate="1e-4"/>
       <WellControls
         name="wellControls2"
         type="producer"
         control="BHP"
-        referenceElevation="0.5"        
+        referenceElevation="0.5"
         targetBHP="5e5"
         targetTotalRate="1e-4"/>
       <WellControls
         name="wellControls3"
         type="injector"
         control="totalVolRate"
-        referenceElevation="0.5"        
+        referenceElevation="0.5"
         targetBHP="1e7"
         targetTotalRate="1e-6"/>
     </SinglePhaseWell>
@@ -146,7 +144,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e4"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -162,7 +159,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{rockPerm}"/>
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -191,8 +188,6 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
-      compressibility="0"
       referenceViscosity="0.005"
       viscosibility="0.0"/>
 
@@ -200,10 +195,10 @@
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
-      
+
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/> 
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>

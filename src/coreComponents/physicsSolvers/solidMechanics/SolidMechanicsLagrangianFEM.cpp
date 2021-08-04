@@ -531,6 +531,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                   SortedArrayView< localIndex const > const & targetSet )
   {
     integer const component = bc.getComponent();
+    GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+
     forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                             [=] GEOSX_DEVICE ( localIndex const i )
     {
@@ -542,6 +544,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                   SortedArrayView< localIndex const > const & targetSet )
   {
     integer const component = bc.getComponent();
+    GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+
     forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                             [=] GEOSX_DEVICE ( localIndex const i )
     {

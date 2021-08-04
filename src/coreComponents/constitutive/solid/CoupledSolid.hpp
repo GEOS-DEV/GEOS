@@ -120,8 +120,7 @@ public:
    */
   virtual string getCatalogName() const override { return catalogName(); }
 
-//  /// Post-process XML input
-//  virtual void postProcessInput() override;
+  virtual void initializePreSubGroups() override final;
 
   /**
    * @brief Create a instantiation of the PorousSolidUpdates class
@@ -170,6 +169,34 @@ template< typename SOLID_TYPE,
           typename PERM_TYPE >
 CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::~CoupledSolid() = default;
 
+
+template< typename SOLID_TYPE,
+          typename PORO_TYPE,
+          typename PERM_TYPE >
+void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::initializePreSubGroups()
+{
+  if( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
+  {
+    GEOSX_ERROR( " The coupled solid "<<this->getName()<<
+                 " expects a solid model of type "<<SOLID_TYPE::catalogName()<<
+                 " but the specified solid model \""<<m_solidModelName<<
+                 "\" is of type" << getSolidModel().getCatalogName() );
+  }
+  if( PORO_TYPE::catalogName() != getPorosityModel().getCatalogName() )
+  {
+    GEOSX_ERROR( " The coupled solid "<< this->getName()<<
+                 " expects a porosity model of type "<<PORO_TYPE::catalogName()<<
+                 " but the specified porosity model \""<<m_porosityModelName<<
+                 "\" is of type " << getPorosityModel().getCatalogName() );
+  }
+  if( PERM_TYPE::catalogName() != getPermModel().getCatalogName() )
+  {
+    GEOSX_ERROR( " The coupled solid "<<this->getName()<<
+                 " expects a permeability model of type "<<PERM_TYPE::catalogName()<<
+                 " but the specified permeability model \""<<m_permeabilityModelName<<
+                 "\" is of type " << getPermModel().getCatalogName() );
+  }
+}
 
 }
 } /* namespace geosx */
