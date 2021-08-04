@@ -23,7 +23,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
-#include "constitutive/ConstitutivePassThru.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "dataRepository/Group.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -269,31 +269,28 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
     arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
 
-    ConstitutiveBase const & solidModel = getConstitutiveModel( subRegion, m_solidModelNames[targetIndex] );
+    CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
     real64 subRegionMaxPhaseCFLNumber = 0.0;
     real64 subRegionMaxCompCFLNumber = 0.0;
 
-    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [&] ( auto & castedSolidModel )
-    {
-      arrayView2d< real64 const > const & porosity    = castedSolidModel.getPorosity();
+    arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
 
-      KernelLaunchSelector2< CFLKernel >( m_numComponents, m_numPhases,
-                                          subRegion.size(),
-                                          volume,
-                                          porosity,
-                                          compDens,
-                                          compFrac,
-                                          phaseRelPerm,
-                                          dPhaseRelPerm_dPhaseVolFrac,
-                                          phaseVisc,
-                                          phaseOutflux,
-                                          compOutflux,
-                                          phaseCFLNumber,
-                                          compCFLNumber,
-                                          subRegionMaxPhaseCFLNumber,
-                                          subRegionMaxCompCFLNumber );
-    } );
+    KernelLaunchSelector2< CFLKernel >( m_numComponents, m_numPhases,
+                                        subRegion.size(),
+                                        volume,
+                                        porosity,
+                                        compDens,
+                                        compFrac,
+                                        phaseRelPerm,
+                                        dPhaseRelPerm_dPhaseVolFrac,
+                                        phaseVisc,
+                                        phaseOutflux,
+                                        compOutflux,
+                                        phaseCFLNumber,
+                                        compCFLNumber,
+                                        subRegionMaxPhaseCFLNumber,
+                                        subRegionMaxCompCFLNumber );
 
     localMaxPhaseCFLNumber = LvArray::math::max( localMaxPhaseCFLNumber, subRegionMaxPhaseCFLNumber );
     localMaxCompCFLNumber = LvArray::math::max( localMaxCompCFLNumber, subRegionMaxCompCFLNumber );
