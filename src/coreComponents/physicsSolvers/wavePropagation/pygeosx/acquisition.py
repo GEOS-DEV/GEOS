@@ -118,7 +118,6 @@ class Acquisition:
 
     def limitedAperture(self, aperture_dist, aperture_depth):
         self.limited_aperture=True
-        self.velocity_model=[]
 
         tree = ET.parse(self.xml)
         root = tree.getroot()
@@ -154,8 +153,36 @@ class Acquisition:
         if os.path.exists("limitedAperture") == False:
             os.mkdir("limitedAperture")
         
+
+        if isinstance(self.velocity_model, str):
+            tablefunction =[elem.attrib for elem in root.iter('TableFunction')][0]
+            vf = open(self.velocity_model)
+
+            with open(self.velocity_model.split("_velModel")[0]+"_xlin.geos", 'r') as xf:
+                xlin = xf.readlines()
+            xf.close()
+            lx = len(xlin)
+            with open(self.velocity_model.split("_velModel")[0]+"_ylin.geos", 'r') as yf:
+                ylin = yf.readlines()
+            yf.close()
+            ly = len(ylin)
+            with open(self.velocity_model.split("_velModel")[0]+"_zlin.geos", 'r') as zf:
+                zlin = zf.readlines()
+            zf.close()
+            lz = len(zlin)
+
+            velocity_model_value = []
+            velocity_model_index = []
+            with open(self.velocity_model,'r') as vf:
+                for ind, line in enumerate(vf):
+                    velocity_model_value.append(line)
+                    velocity_model_index.append(ind)
+            vf.close()
+
+            velocity_model = []
+
         xml = []
-        i = 0
+        shot_ind = 0
         for boundary in self.aperture_boundary:
             nx = int(x_nb_cells*(boundary[0][1]-boundary[0][0])/(xCoords[1]-xCoords[0]))
             ny = int(y_nb_cells*(boundary[1][1]-boundary[1][0])/(yCoords[1]-yCoords[0]))
@@ -163,23 +190,103 @@ class Acquisition:
             
             internal_mesh['xCoords'] = "{"+str(boundary[0][0])+","+str(boundary[0][1])+"}"
             internal_mesh['yCoords'] = "{"+str(boundary[1][0])+","+str(boundary[1][1])+"}"
-            internal_mesh['zCoords'] = "{"+str(zCoords[1]-boundary[2][1])+","+str(zCoords[1])+"}"
+            internal_mesh['zCoords'] = "{"+str(boundary[2][0])+","+str(boundary[2][1])+"}"
 
             internal_mesh['nx'] = "{"+str(nx)+"}"
             internal_mesh['ny'] = "{"+str(ny)+"}"
             internal_mesh['nz'] = "{"+str(nz)+"}"
+
             
             box['xMin'] = str(boundary[0][0]-0.01)+","+str(boundary[1][0]-0.01)+","+str(boundary[2][1]-0.01)
             box['xMax'] = str(boundary[0][1]+0.01)+","+str(boundary[1][1]+0.01)+","+str(boundary[2][1]+0.01)
 
-            xmlfile = os.path.join("limitedAperture/", "limited_aperture_Shot"+str(self.shots[i].id)+".xml")
+            if isinstance(self.velocity_model, str):
+                remove_line=[]
+                xlocal=[]
+                ylocal=[]
+                zlocal=[]
+                """
+                for i in range(lx):
+                    if float(xlin[i])<boundary[0][0] or float(xlin[i])>boundary[0][1]:
+                        remove_line.append(velocity_model_index[i*ly*lz:(i+1)*ly*lz])
+                    else:
+                        xlocal.append(xlin[i])
+                        for j in range(ly):
+                            if float(ylin[j])<boundary[1][0] or float(ylin[j])>boundary[1][1]:
+                                remove_line.append(velocity_model_index[i*ly*lz+j*lz : i*ly*lz+(j+1)*lz])
+                            else:
+                                if ylin[j] not in ylocal:
+                                    ylocal.append(ylin[j])
+                                for k in range(lz):
+                                    if float(zlin[k])<boundary[2][0] or float(zlin[k])>boundary[2][1]:
+                                        remove_line.append([velocity_model_index[i*ly*lz + j*lz + k]])
+                                    else:
+                                        if zlin[k] not in zlocal:
+                                            zlocal.append(zlin[k])
+                
+                remove_line = [elem for list in remove_line for elem in list]
+                """
+                keep_line=[]
+                localToGlobal=[]
+                for i in range(lx):
+                    if float(xlin[i])>boundary[0][0] or float(xlin[i])<boundary[0][1]:
+                        xlocal.append(xlin[i])
+                        for j in range(ly):
+                            if float(ylin[j])>boundary[1][0] or float(ylin[j])<boundary[1][1]:
+                                if ylin[j] not in ylocal:
+                                    ylocal.append(ylin[j])
+                                for k in range(lz):
+                                    if float(zlin[k])>boundary[2][0] or float(zlin[k])<boundary[2][1]:
+                                        if zlin[k] not in zlocal:
+                                            zlocal.append(zlin[k])
+                                        keep_line.append(velocity_model_value[i*ly*lz+j*lz+k])
+                                        localToGlobal.append(i*ly*lz+j*lz+k)
+                
+                xlin_file = self.velocity_model.split("_velModel")[0]+"_xlin"+self.shots[shot_ind].id+".geos"
+                ylin_file = self.velocity_model.split("_velModel")[0]+"_ylin"+self.shots[shot_ind].id+".geos"
+                zlin_file = self.velocity_model.split("_velModel")[0]+"_zlin"+self.shots[shot_ind].id+".geos"
+
+                with open(xlin_file,'w') as xfla:
+                    for x in xlocal:
+                        xfla.write(x)
+                xfla.close()
+                with open(ylin_file,'w') as yfla:
+                    for y in ylocal:
+                        yfla.write(y)
+                yfla.close()
+                with open(zlin_file,'w') as zfla:
+                    for z in zlocal:
+                        zfla.write(z)
+                zfla.close()
+
+                velocity_file = self.velocity_model.split('.')[0] + self.shots[shot_ind].id+ ".geos"
+
+                with open(velocity_file, 'w') as vfla:
+                    for line in keep_line:
+                        vfla.write(line)
+                    """
+                    for ind in range(len(velocity_model_value)):
+                        if ind not in remove_line:
+                            vfla.write(velocity_model_value[ind])
+                            localToGlobal.append(ind)
+                    """
+                vfla.close()
+
+                tablefunction['coordinateFiles']="{"+xlin_file+","+ylin_file+","+zlin_file+"}"
+                tablefunction['voxelFile'] = velocity_file
+                velocity_model.append(velocity_file)
+                    
+
+            xmlfile = os.path.join("limitedAperture/", "limited_aperture_Shot"+str(self.shots[shot_ind].id)+".xml")
             tree.write(xmlfile)
             
             xml.append(xmlfile)
-            i+=1
+            shot_ind+=1
         
         self.xml = xml
-            
+        self.velocity_model = velocity_model
+
+
             
     def set_limited_aperture_boundaries(self, 
                                         distance, 
@@ -213,11 +320,11 @@ class Acquisition:
             nz = z_cells_boundary.size
             zmin = z_cells_boundary[0]
             zmax = z_cells_boundary[nz-1]
-
+            
             for i in range(nz):
-                if shot.source.z() + depth <= z_cells_boundary[nz-1-i]:
-                    zmax = z_cells_boundary[nz-1-i]
-
+                if shot.source.z() - depth >= z_cells_boundary[i]:
+                    zmin = z_cells_boundary[nz-1-i]
+            
             limited_aperture = [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
             self.aperture_boundary.append(deepcopy(limited_aperture))
 

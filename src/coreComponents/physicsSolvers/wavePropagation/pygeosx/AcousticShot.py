@@ -107,7 +107,7 @@ def acoustic_shots(rank, problem, acquisition):
         #Save pressure
         if cycle[0] !=0 :
             pressure_at_receivers[:, :] = pressure_geosx.to_numpy().transpose()
-
+            print(pressure_at_receivers)
             #Segy export and flag update
             if outputSismoTrace == 1 :
                 segyFile = os.path.join(acquisition.output, "pressure_Shot"+ acquisition.shots[ishot].id + ".sgy")
