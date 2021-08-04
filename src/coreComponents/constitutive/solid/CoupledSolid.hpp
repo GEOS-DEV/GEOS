@@ -20,8 +20,7 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
 
-#include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/solid/SolidBase.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 
 namespace geosx
 {
@@ -95,7 +94,7 @@ protected:
 template< typename SOLID_TYPE,
           typename PORO_TYPE,
           typename PERM_TYPE >
-class CoupledSolid : public ConstitutiveBase
+class CoupledSolid : public CoupledSolidBase
 {
 public:
 
@@ -124,13 +123,6 @@ public:
 //  /// Post-process XML input
 //  virtual void postProcessInput() override;
 
-  struct viewKeyStruct
-  {
-    static constexpr char const * solidModelNameString() { return "solidModelName"; }
-    static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
-    static constexpr char const * permeabilityModelNameString() { return "permeabilityModelName"; }
-  };
-
   /**
    * @brief Create a instantiation of the PorousSolidUpdates class
    *        that refers to the data in this.
@@ -143,19 +135,6 @@ public:
                                                                     getPorosityModel(),
                                                                     getPermModel() );
   }
-
-  arrayView2d< real64 const > const getOldPorosity() const
-  {
-    return getPorosityModel().getOldPorosity();
-  }
-
-  arrayView2d< real64 const > const getPorosity() const
-  {
-    return getPorosityModel().getPorosity();
-  }
-
-  arrayView2d< real64 const > const  getDporosity_dPressure() const
-  { return getPorosityModel().dPorosity_dPressure(); }
 
   virtual void saveConvergedState() const override final
   {
@@ -175,14 +154,7 @@ protected:
   PERM_TYPE const & getPermModel() const
   { return this->getParent().template getGroup< PERM_TYPE >( m_permeabilityModelName ); }
 
-  // the name of the solid model
-  string m_solidModelName;
 
-  // the name of the porosity model
-  string m_porosityModelName;
-
-  // the name of the porosity model
-  string m_permeabilityModelName;
 };
 
 
@@ -190,28 +162,13 @@ template< typename SOLID_TYPE,
           typename PORO_TYPE,
           typename PERM_TYPE >
 CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::CoupledSolid( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_solidModelName(),
-  m_porosityModelName()
-{
-  registerWrapper( viewKeyStruct::solidModelNameString(), &m_solidModelName ).
-    setInputFlag( dataRepository::InputFlags::REQUIRED ).
-    setDescription( "Name of the solid model." );
-
-  registerWrapper( viewKeyStruct::porosityModelNameString(), &m_porosityModelName ).
-    setInputFlag( dataRepository::InputFlags::REQUIRED ).
-    setDescription( "Name of the porosity model." );
-
-  registerWrapper( viewKeyStruct::permeabilityModelNameString(), &m_permeabilityModelName ).
-    setInputFlag( dataRepository::InputFlags::REQUIRED ).
-    setDescription( "Name of the permeability model." );
-}
+  CoupledSolidBase( name, parent )
+{}
 
 template< typename SOLID_TYPE,
           typename PORO_TYPE,
           typename PERM_TYPE >
-CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::~CoupledSolid()
-{}
+CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::~CoupledSolid() = default;
 
 
 }

@@ -36,6 +36,7 @@ set( constitutive_headers
      fluid/ParticleFluidBase.hpp
      fluid/particleFluidSelector.hpp
      solid/CompressibleSolid.hpp
+     solid/CoupledSolidBase.hpp
      solid/CoupledSolid.hpp
      solid/Damage.hpp
      solid/DamageVolDev.hpp
@@ -101,6 +102,7 @@ set( constitutive_sources
      fluid/ProppantSlurryFluid.cpp
      fluid/ParticleFluidBase.cpp
      fluid/ParticleFluid.cpp
+     solid/CoupledSolidBase.cpp     
      solid/CompressibleSolid.cpp      
      solid/Damage.cpp
      solid/DamageVolDev.cpp

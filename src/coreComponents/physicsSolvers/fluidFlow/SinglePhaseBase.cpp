@@ -23,6 +23,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
+// #include "constitutive/solid/"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -430,30 +431,26 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const density = fluidProps.dens;
   arrayView2d< real64 const > const dDens_dPres = fluidProps.dDens_dPres;
 
-  ConstitutiveBase const & solidModel = getConstitutiveModel< ConstitutiveBase >( subRegion, m_solidModelNames[targetIndex] );
+  CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
-  constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &subRegion] ( auto & castedSolidModel )
-  {
+  arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
+  arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
+  arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
 
-    arrayView2d< real64 const > const & porosity    = castedSolidModel.getPorosity();
-    arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
-    arrayView2d< real64 const > const & dPoro_dPres = castedSolidModel.getDporosity_dPressure();
+  AccumulationKernel::template launch< POLICY >( subRegion.size(),
+                                                 rankOffset,
+                                                 dofNumber,
+                                                 ghostRank,
+                                                 volume,
+                                                 porosityOld,
+                                                 porosity,
+                                                 dPoro_dPres,
+                                                 densityOld,
+                                                 density,
+                                                 dDens_dPres,
+                                                 localMatrix,
+                                                 localRhs );
 
-    AccumulationKernel::template launch< POLICY >( subRegion.size(),
-                                                   rankOffset,
-                                                   dofNumber,
-                                                   ghostRank,
-                                                   volume,
-                                                   porosityOld,
-                                                   porosity,
-                                                   dPoro_dPres,
-                                                   densityOld,
-                                                   density,
-                                                   dDens_dPres,
-                                                   localMatrix,
-                                                   localRhs );
-
-  } );
 }
 
 template< typename POLICY >
@@ -486,32 +483,30 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   creationMass = subRegion.getReference< real64_array >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() );
 #endif
 
-  ConstitutiveBase const & solidModel = getConstitutiveModel< ConstitutiveBase >( subRegion, m_solidModelNames[targetIndex] );
+  CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
-  constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &subRegion] ( auto & castedSolidModel )
-  {
-    arrayView2d< real64 const > const & porosity    = castedSolidModel.getPorosity();
-    arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
-    arrayView2d< real64 const > const & dPoro_dPres = castedSolidModel.getDporosity_dPressure();
 
-    AccumulationKernel::template launch< POLICY >( subRegion.size(),
-                                                   rankOffset,
-                                                   dofNumber,
-                                                   ghostRank,
-                                                   volume,
-                                                   porosityOld,
-                                                   porosity,
-                                                   dPoro_dPres,
-                                                   densityOld,
-                                                   density,
-                                                   dDens_dPres,
+  arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
+  arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
+  arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
+
+  AccumulationKernel::template launch< POLICY >( subRegion.size(),
+                                                 rankOffset,
+                                                 dofNumber,
+                                                 ghostRank,
+                                                 volume,
+                                                 porosityOld,
+                                                 porosity,
+                                                 dPoro_dPres,
+                                                 densityOld,
+                                                 density,
+                                                 dDens_dPres,
 #if ALLOW_CREATION_MASS
-                                                   creationMass,
+                                                 creationMass,
 #endif
-                                                   localMatrix,
-                                                   localRhs );
+                                                 localMatrix,
+                                                 localRhs );
 
-  } );
 }
 
 template< typename POLICY >

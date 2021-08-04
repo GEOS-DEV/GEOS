@@ -119,7 +119,7 @@ private:
 /**
  * @brief PorousSolidBase class used for dispatch of all Porous solids.
  */
-class PorousSolidBase : public SolidBase
+class PorousSolidBase
 {};
 
 /**

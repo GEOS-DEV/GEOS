@@ -84,7 +84,7 @@ private:
 /**
  * @brief CompressibleSolidBase class used for dispatch of all Compressible solids.
  */
-class CompressibleSolidBase : public SolidBase
+class CompressibleSolidBase
 {};
 
 
