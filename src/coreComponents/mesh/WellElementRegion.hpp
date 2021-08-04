@@ -21,7 +21,7 @@
 #define GEOSX_MESH_WELLELEMENTREGION_HPP_
 
 #include "mesh/ElementRegionBase.hpp"
-#include "meshUtilities/InternalWellGenerator.hpp"
+#include "mesh/generators/InternalWellGenerator.hpp"
 
 namespace geosx
 {
@@ -143,9 +143,9 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    /// String key for the well control name
+    /// @return String key for the well control name
     static constexpr char const * wellControlsString() { return "wellControlsName"; }
-    /// String key for the well generator name
+    /// @return String key for the well generator name
     static constexpr char const * wellGeneratorString() { return "wellGeneratorName"; }
 
     /// ViewKey for the well control name

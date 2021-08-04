@@ -15,14 +15,14 @@
 
 #include "VTKVTMWriter.hpp"
 
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geosx
 {
 namespace vtk
 {
-VTKVTMWriter::VTKVTMWriter( string const & filePath ):
-  m_filePath( filePath )
+VTKVTMWriter::VTKVTMWriter( string filePath ):
+  m_filePath( std::move( filePath ) )
 {
   // Declaration of XML version
   auto declarationNode = m_vtmFile.append_child( pugi::node_declaration );

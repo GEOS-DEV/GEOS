@@ -23,7 +23,7 @@
 #include "FaceManager.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -397,7 +397,7 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
   } );
 }
 
-void EdgeManager::buildEdges( FaceManager & faceManager, NodeManager & nodeManager )
+void EdgeManager::buildEdges( NodeManager & nodeManager, FaceManager & faceManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -484,7 +484,7 @@ void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 
   // get the "isDomainBoundary" field from for *this, and set it to zero
   arrayView1d< integer > const & isEdgeOnDomainBoundary = this->getDomainBoundaryIndicator();
-  isEdgeOnDomainBoundary.setValues< serialPolicy >( 0 );
+  isEdgeOnDomainBoundary.zero();
 
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
 
@@ -536,7 +536,7 @@ void EdgeManager::setIsExternal( FaceManager const & faceManager )
   ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager.edgeList().toViewConst();
 
   // get the "isExternal" field from for *this, and set it to zero
-  m_isExternal.setValues< serialPolicy >( 0 );
+  m_isExternal.zero();
 
   // loop through all faces
   for( localIndex kf=0; kf<faceManager.size(); ++kf )

@@ -17,7 +17,7 @@
 
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/InterObjectRelation.hpp"
-#include "meshUtilities/PerforationData.hpp"
+#include "mesh/PerforationData.hpp"
 
 namespace geosx
 {
@@ -281,29 +281,25 @@ public:
 
   ///@}
 
-  /// @cond DO_NOT_DOCUMENT
-  void debugWellElementSubRegionsAfterSetupCommunications() const;
-  /// @endcond
-
   /**
    * @brief Struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
    */
   struct viewKeyStruct : public ElementSubRegionBase::viewKeyStruct
   {
-    /// String key for the well control name
+    /// @return String key for the well control name
     static constexpr char const * wellControlsString() { return "wellControlsName"; }
-    /// String key for the well element-to-node list
+    /// @return String key for the well element-to-node list
     static constexpr char const * wellNodeListString() { return "nodeList"; }
-    /// String key for the local indices of the next well element (used in solvers)
+    /// @return String key for the local indices of the next well element (used in solvers)
     static constexpr char const * nextWellElementIndexString() { return "nextWellElementIndex"; }
-    /// String key for the global indices of the next well element (to reconstruct maps)
+    /// @return String key for the global indices of the next well element (to reconstruct maps)
     static constexpr char const * nextWellElementIndexGlobalString() { return "nextWellElementIndexGlobal"; }
-    /// String key for the top well element index
+    /// @return String key for the top well element index
     static constexpr char const * topWellElementIndexString() { return "topWellElementIndex"; }
-    /// String key for the rank owning the top element
+    /// @return String key for the rank owning the top element
     static constexpr char const * topRankString() { return "topRank"; }
-    /// String key for the well radius
+    /// @return String key for the well radius
     static constexpr char const * radiusString() { return "radius"; }
 
     /// ViewKey for the well control name
@@ -330,7 +326,7 @@ public:
    */
   struct groupKeyStruct : public ElementSubRegionBase::groupKeyStruct
   {
-    /// String key for the PerforationData object
+    /// @return String key for the PerforationData object
     static constexpr char const * perforationDataString() { return "wellElementSubRegion"; }
 
     /// GroupKey for the PerforationData object
@@ -416,14 +412,6 @@ private:
    * The function WellElementSubRegion::ConstructSubRegionLocalElementMaps must have been called before this function
    */
   void updateNodeManagerNodeToElementMap( MeshLevel & mesh );
-
-  /// @cond DO_NOT_DOCUMENT
-  void debugNodeManager( MeshLevel const & mesh ) const;
-  /// @endcond
-
-  /// @cond DO_NOT_DOCUMENT
-  void debugWellElementSubRegions( arrayView1d< integer const > const & wellElemStatus, globalIndex elemOffsetGlobal ) const;
-  /// @endcond
 
   /**
    * @brief Pack element-to-node and element-to-face maps

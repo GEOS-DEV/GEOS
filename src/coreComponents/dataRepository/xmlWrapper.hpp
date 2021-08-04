@@ -21,8 +21,8 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "dataRepository/DefaultValue.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "DefaultValue.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/input.hpp"
 
@@ -102,6 +102,16 @@ public:
   static void addIncludedXML( xmlNode & targetNode );
 
   /**
+   * @brief Function to handle multiple input xml files.
+   * @param inputFileList the list of input xml files
+   * @param inputFileName the input xml file name
+   *
+   * This function checks for multiple xml files, and will build
+   * a new input xml file with an included block if neccesary
+   */
+  static void buildMultipleInputXML( string_array const & inputFileList, string & inputFileName );
+
+  /**
    * @name String to variable parsing.
    *
    * These functions take in @p value and parse that string based on the type of
@@ -130,7 +140,8 @@ public:
    * @param[out] target the object to read values into
    * @param[in]  value  the string that contains the data to be parsed into target
    */
-  static void stringToInputVariable( R1Tensor & target, string const & value );
+  template< typename T, int SIZE >
+  static void stringToInputVariable( Tensor< T, SIZE > & target, string const & value );
 
   /**
    * @brief Parse a string and fill an Array with the value(s) in the string.
@@ -179,13 +190,14 @@ public:
     {
       // parse the string/attribute into a value
       stringToInputVariable( rval, xmlatt.value() );
+      return true;
     }
     else
     {
       // set the value to the default value
       equate( rval, defVal );
+      return false;
     }
-    return true;
   }
 
   /**

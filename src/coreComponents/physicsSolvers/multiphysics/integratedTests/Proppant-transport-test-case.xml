@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <ProppantTransport
       name="ProppantTransport"
       logLevel="1"
@@ -15,13 +15,13 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       proppantNames="{ sand }"
-      solidNames="{ rock }">
+      solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
         lineSearchAction="None"
-        maxTimeStepCuts="5"
-        newtonMinIter="1"/>
+        maxTimeStepCuts="5"/>
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-7"/>
@@ -40,7 +40,8 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }">
+      solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
@@ -53,8 +54,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Fracture }"
       solidMaterialNames="{ granite }"
       rockToughness="1e6"/>
@@ -77,36 +76,36 @@
     <!-- An additional column of grid cells is added to the left of the domain to mimic proppant injection boundary conditions -->
     <Box
       name="left0"
-      xMin="-0.001, -0.001, -0.001"
-      xMax="0.001, 0.013, 0.3148"/>
+      xMin="{ -0.001, -0.001, -0.001 }"
+      xMax="{ 0.001, 0.013, 0.3148 }"/>
 
     <!-- three injection points at the inlet (left) -->
     <Box
       name="left1"
-      xMin="-0.001, -0.001, 0.07"
-      xMax="0.001, 0.013, 0.09"/>
+      xMin="{ -0.001, -0.001, 0.07 }"
+      xMax="{ 0.001, 0.013, 0.09 }"/>
 
     <Box
       name="left2"
-      xMin="-0.001, -0.001, 0.15"
-      xMax="0.001, 0.013, 0.17"/>
+      xMin="{ -0.001, -0.001, 0.15 }"
+      xMax="{ 0.001, 0.013, 0.17 }"/>
 
     <Box
       name="left3"
-      xMin="-0.001, -0.001, 0.22"
-      xMax="0.001, 0.013, 0.25"/>
+      xMin="{ -0.001, -0.001, 0.22 }"
+      xMax="{ 0.001, 0.013, 0.25 }"/>
 
     <!-- the outflow boundary at the outlet (right) -->
     <Box
       name="right"
-      xMin="-0.001, 1.21, 0.22"
-      xMax="0.001, 1.2419, 0.25"/>
+      xMin="{ -0.001, 1.21, 0.22 }"
+      xMax="{ 0.001, 1.2419, 0.25 }"/>
 
     <!-- fracture plane -->
     <Box
       name="fracture"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01, 1.2419, 0.3148"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 1.2419, 0.3148 }"/>
   </Geometry>
 
   <Events
@@ -124,8 +123,6 @@
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <!--    
@@ -141,7 +138,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ fracPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -154,24 +152,21 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="7.62e-3"
-      materialList="{ water, rock, sand }"/>
+      materialList="{ water, rock, sand, fracPerm }"/>
   </ElementRegions>
 
   <Constitutive>
     <ProppantSlurryFluid
       name="water"
       referencePressure="1e5"
-      referenceDensity="1000"
       compressibility="0.0"
       maxProppantConcentration="0.62"
-      referenceViscosity="0.001"
       referenceProppantDensity="2550.0"/>
 
     <ParticleFluid
       name="sand"
       particleSettlingModel="Stokes"
       hinderedSettlingCoefficient="4.5"
-      isCollisionalSlip="0"
       proppantDensity="2550.0"
       proppantDiameter="4.5e-4"
       maxProppantConcentration="0.62"/>
@@ -182,9 +177,11 @@
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"
       defaultShearModulus="1.0e9"
-      BiotCoefficient="1"
       compressibility="1.6155088853e-18"
       referencePressure="2.125e6"/>
+
+    <ParallelPlatesPermeability
+      name="fracPerm"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -227,7 +224,6 @@
       initialCondition="1"
       objectPath="ElementRegions/Fracture"
       fieldName="isProppantBoundary"
-      scale="0"
       component="0"
       setNames="{ fracture }"/>
 
@@ -305,8 +301,6 @@
       component="0"
       setNames="{ right }"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo

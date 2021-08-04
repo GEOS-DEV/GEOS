@@ -5,7 +5,7 @@ Git Workflow
 **************************************
 
 The GEOSX project is hosted on github `here <https://github.com/GEOSX>`__.
-For instructions on how to clone and build GEOSX, please refer to the :ref:`GettingStartedWithGEOSX`.
+For instructions on how to clone and build GEOSX, please refer to the :ref:`QuickStart`.
 Consider consulting `https://try.github.io/ <https://try.github.io/>`_ for practical references on how to use git.
 
 Git Credentials
@@ -23,7 +23,7 @@ Downloading the Code
 Once you have created an ``ssh-key`` and you have added it to your `Github` account you can download
 the code through SSH.  The following steps clone the repository into ``your_geosx_dir``:
 
-.. code-block:: sh
+.. code-block:: console
 
    git clone git@github.com:GEOSX/GEOSX.git your_geosx_dir
    cd your_geosx_dir
@@ -76,7 +76,7 @@ expecting that they would be the only contributor, they would create a branch
 using the following commands to create the local branch and push it to the remote
 repository:
 
-.. code-block:: sh
+.. code-block:: console
 
   git checkout -b feature/neo/freeYourMind
   git push -u origin feature/neo/freeYourMind
@@ -84,7 +84,7 @@ repository:
 However if the branch is a collaborative branch amongst many developers, the
 appropriate commands would be:
 
-.. code-block:: sh
+.. code-block:: console
 
   git checkout -b feature/freeYourMind
   git push -u origin feature/freeYourMind
@@ -94,7 +94,7 @@ should be created to perform the review and merging process.
 
 An example lifecycle diagram for a feature branch:
 
-.. code-block:: sh
+.. code-block:: console
 
    create new feature branch:
    git checkout -b feature/neo/freeYourMind
@@ -144,7 +144,7 @@ Note that the absence of ``hotfix`` branches, the history for ``release`` and
 
 An example lifecycle diagram for a release candidate branch:
 
-.. code-block:: sh
+.. code-block:: console
 
                                      v1.2.0          (tag)
                                      G               (release)
@@ -173,7 +173,7 @@ into ``develop``.
 
 An example lifecycle diagram for hotfix branchs:
 
-.. code-block:: sh
+.. code-block:: console
 
 
         v1.2.0       v1.2.1       v1.2.2         v1.3.0 (tag)
@@ -224,7 +224,7 @@ For instance, if there is a large collaborative development effort on the branch
 ``feature/theMatrix``, and a developer would like to add a self-contained and easily
 reviewable contribution to that effort, he/she should create a branch as follows:
 
-.. code-block:: sh
+.. code-block:: console
 
   git checkout feature/theMatrix
   git checkout -b feature/smith/dodgeBullets
@@ -246,7 +246,7 @@ To further complicate the situation, perhaps a complex PR was merged after ``G``
 in ``E`` on develop.
 The situation is illustrated by:
 
-.. code-block:: sh
+.. code-block:: console
 
    A----B----C----D----E----F----G----E (develop)
               \                 /
@@ -265,7 +265,7 @@ Specifically, we would like to rebase ``CCA, CCB, CCC`` onto `G`, and proceed wi
 development of ``feature/smith/dodgeBullets``.
 This would look like:
 
-.. code-block:: sh
+.. code-block:: console
 
    git checkout develop
    git pull
@@ -277,7 +277,7 @@ at which we replay the commits in ``feature/smith/dodgeBullets`` as all commits
 AFTER ``CC``.
 The result is:
 
-.. code-block:: sh
+.. code-block:: console
 
    A----B----C----D----E----F----G----E (develop)
                                   \
@@ -347,7 +347,7 @@ Whenever you switch between branches locally, pull changes from ``origin`` and/o
 ``merge`` from the relevant branches, it is important to update the submodules to
 move the ``head`` to the proper ``commit``.
 
-.. code-block:: sh
+.. code-block:: console
 
   git submodule update --recursive
 
@@ -356,7 +356,7 @@ recursively for you in one command, though you forfeit some control granularity
 to do so. The method for accomplishing this varies between git versions, but
 as of git 2.15 you should be able to globally configure git to accomplish this via:
 
-.. code-block:: sh
+.. code-block:: console
 
    git config --global submodule.recurse true
 
@@ -373,7 +373,7 @@ can be followed in order to do so.
 
 Move to the folder of the ``submodule`` that you intend to modify.
 
-.. code-block:: sh
+.. code-block:: console
 
   cd submodule-folder
 
@@ -381,7 +381,7 @@ Currently the ``submodule`` is in detached head mode, so you first need to move
 to the main branch (either ``develop`` or ``master``) on the
 submodule repository, pull the latest changes, and then create a new branch.
 
-.. code-block:: sh
+.. code-block:: console
 
   git checkout <main-branch>
   git pull
@@ -389,9 +389,9 @@ submodule repository, pull the latest changes, and then create a new branch.
 
 You can perform some work on this branch, `add` and `commit` the changes and then push
 the newly created branch to the ``submodule repository`` on which you can eventually
-create a pull request using the same process discussed above in :ref:`Submitting a Pull Request`.
+create a pull request using the same process discussed above in :ref:`Submitting_a_Pull_Request`.
 
-.. code-block:: sh
+.. code-block:: console
 
   git push --set-upstream origin <branch-name>
 
@@ -422,7 +422,6 @@ Submodule           Main branch
 blt                 develop
 LvArray             develop
 integratedTests     develop
-GEOSX_PTP           master
 hdf5_interface      master
 PAMELA              master
 PVTPackage          master

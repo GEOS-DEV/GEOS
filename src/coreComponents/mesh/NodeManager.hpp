@@ -19,8 +19,7 @@
 #ifndef GEOSX_MESH_NODEMANAGER_HPP_
 #define GEOSX_MESH_NODEMANAGER_HPP_
 
-#include "managers/ObjectManagerBase.hpp"
-#include <string.h>
+#include "mesh/ObjectManagerBase.hpp"
 #include "CellBlockManager.hpp"
 #include "ToElementRelation.hpp"
 
@@ -247,31 +246,31 @@ public:
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    /// String to access the reference position
+    /// @return String to access the reference position
     static constexpr char const * referencePositionString() { return "ReferencePosition"; }
 
-    /// String to access the location of the nodes
+    /// @return String to access the location of the nodes
     static constexpr char const * EmbSurfNodesPositionString() { return "EmbSurfNodesPosition"; }
 
-    /// String to access the displacement
+    /// @return String to access the displacement
     static constexpr char const * totalDisplacementString() { return "TotalDisplacement"; }
 
-    /// String to access the incremental displacement
+    /// @return String to access the incremental displacement
     static constexpr char const * incrementalDisplacementString() { return "IncrementalDisplacement"; }
 
-    /// String to access the edge map
+    /// @return String to access the edge map
     static constexpr char const * edgeListString() { return "edgeList"; }
 
-    /// String to access the face map
+    /// @return String to access the face map
     static constexpr char const * faceListString() { return "faceList"; }
 
-    /// String to access the element region map
+    /// @return String to access the element region map
     static constexpr char const * elementRegionListString() { return "elemRegionList"; }
 
-    /// String to access the element subregion map
+    /// @return String to access the element subregion map
     static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
 
-    /// String to access the element map
+    /// @return String to access the element map
     static constexpr char const * elementListString() { return "elemList"; }
 
     /// Accessor to reference position
@@ -408,20 +407,6 @@ public:
   //END_SPHINX_REFPOS_ACCESS
 
   /**
-   * @brief Return the reference position array  of the nodes of the embedded surfaces.
-   * @return the location of the nodes of the embedded surfaces
-   */
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosition()
-  { return m_embeddedSurfNodesPosition; }
-
-  /**
-   * @brief Return an immutable arrayView of the position.
-   * @return immutable arrayView of the location of the nodes of the embedded surfaces.
-   */
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > embSurfNodesPosition() const
-  { return m_embeddedSurfNodesPosition; }
-
-  /**
    * @brief Get a mutable total displacement array.
    * @return the total displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the total displacement does not exist
@@ -507,9 +492,6 @@ private:
   /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
   //END_SPHINX_REFPOS
-
-  /// reference position of the nodes defining the embedded surfaces
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_embeddedSurfNodesPosition;
 
   /// nodes-to-edges relation
   EdgeMapType m_toEdgesRelation;

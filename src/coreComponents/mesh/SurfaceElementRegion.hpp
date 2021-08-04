@@ -21,7 +21,7 @@
 #define GEOSX_MESH_SURFACEELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geosx
 {
@@ -146,16 +146,16 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    /// subRegion type string
+    /// @return subRegion type string
     static constexpr char const * subRegionTypeString() { return "subRegionType"; }
 
-    /// Fracture set string
+    /// @return Fracture set string
     static constexpr char const * fractureSetString() { return "fractureSet"; }
 
-    /// Default fracture aperture
+    /// @return Default fracture aperture
     static constexpr char const * defaultApertureString() { return "defaultAperture"; }
 
-    /// Rupture time string
+    /// @return Rupture time string
     static constexpr char const * ruptureTimeString() { return "ruptureTime"; }
   };
 
@@ -170,7 +170,10 @@ private:
 
 };
 
-ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType, "faceElement", "embeddedElement" )
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType,
+              "faceElement",
+              "embeddedElement" );
 
 } /* namespace geosx */
 

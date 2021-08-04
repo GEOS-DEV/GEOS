@@ -19,6 +19,7 @@
 
 
 #include "SurfaceElementSubRegion.hpp"
+#include "ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -29,6 +30,7 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
                                                   dataRepository::Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_surfaceElementsToCells(),
+  m_unmappedGlobalIndicesInToNodes(),
   m_toNodesRelation(),
   m_toEdgesRelation(),
   m_elementAperture(),
@@ -39,7 +41,6 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
 
   registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation ).
     setDescription( "Map to the edges attached to each SurfaceElement." );
-
 
   registerWrapper( viewKeyStruct::surfaceElementsToCellRegionsString(), &m_surfaceElementsToCells.m_toElementRegion ).
     setApplyDefaultValue( -1 ).
@@ -70,6 +71,9 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
     setDescription( "The amount of remaining mass that was introduced when the SurfaceElement was created." );
+
+  // TODO there has to be a cleaner way than this.
+  m_surfaceElementsToCells.setElementRegionManager( dynamicCast< ElementRegionManager & >( getParent().getParent().getParent().getParent() ) );
 
 }
 

@@ -2,26 +2,24 @@
 
 <Problem>
   <Solvers>
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Channel }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="300"
-      useMass="0">
+      computeCFLNumbers="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-10"
+        newtonTol="1.0e-9"
         newtonMaxIter="15"
-        maxTimeStepCuts="2"
         lineSearchMaxCuts="2"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
-    </CompositionalMultiphaseFlow>
+        directParallel="0"/>
+    </CompositionalMultiphaseFVM>
   </Solvers>
 
   <Mesh>
@@ -42,7 +40,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e7"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -61,7 +58,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
-      materialList="{ fluid1, rock, relperm }"/>
+      materialList="{ fluid1, rock, relperm, rockPerm }"/>
 
     <CellElementRegion
       name="Barrier"
@@ -75,18 +72,18 @@
         name="fluidTPFA"
         fieldName="pressure"
         targetRegions="{ Channel }"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <Constitutive>
-    <BlackOilFluid
+    <DeadOilFluid
       name="fluid1"
-      fluidType="DeadOil"
-      phaseNames="{ oil, gas, water }"
-      surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
-      componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
-      tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
+      phaseNames="{ oil, gas }"
+      surfaceDensities="{ 800.0, 0.9907 }"
+      componentMolarWeight="{ 114e-3, 16e-3 }"
+      tableFiles="{ pvdo.txt, pvdg.txt }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
@@ -95,40 +92,17 @@
 
     <BrooksCoreyRelativePermeability
       name="relperm"
-      phaseNames="{ oil, gas, water }"
-      phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
-      phaseRelPermExponent="{ 1.5, 1.5, 1.5 }"
-      phaseRelPermMaxValue="{ 0.9, 0.9, 0.9 }"/>
+      phaseNames="{ oil, gas }"
+      phaseMinVolumeFraction="{ 0.05, 0.05 }"
+      phaseRelPermExponent="{ 1.5, 1.5 }"
+      phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx_channel"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="permeability"
-      scale="1.0e-15"/>
-
-    <FieldSpecification
-      name="permy_channel"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="permeability"
-      scale="1.0e-15"/>
-
-    <FieldSpecification
-      name="permz_channel"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="permeability"
-      scale="1.0e-15"/>
-
     <FieldSpecification
       name="porosity_channel"
       initialCondition="1"
@@ -164,15 +138,6 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.4"/>
-
-    <FieldSpecification
-      name="initialComposition_water"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="globalCompFraction"
-      component="2"
-      scale="0.0"/>
   </FieldSpecifications>
 
   <Outputs>

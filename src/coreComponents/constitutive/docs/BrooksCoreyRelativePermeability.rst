@@ -35,7 +35,7 @@ node.
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/BrooksCoreyRelativePermeability.rst
+.. include:: /coreComponents/schema/docs/BrooksCoreyRelativePermeability.rst
 
 Below are some comments on the model parameters.
 
@@ -64,9 +64,9 @@ Example
    <Constitutive>
       ...
       <BrooksCoreyRelativePermeability name="relPerm"
-                                       phaseNames="oil water"
-                                       phaseMinVolumeFraction="0.02 0.015"
-                                       phaseRelPermExponent="2 2.5"
-                                       phaseRelPermMaxValue="0.8 1.0"/>
+                                       phaseNames="{oil, water}"
+                                       phaseMinVolumeFraction="{0.02, 0.015}"
+                                       phaseRelPermExponent="{2, 2.5}"
+                                       phaseRelPermMaxValue="{0.8, 1.0}"/>
       ...
    </Constitutive>

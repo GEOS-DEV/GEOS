@@ -18,13 +18,11 @@
 #include "CellElementSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
 #include "WellElementSubRegion.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include "EmbeddedSurfaceSubRegion.hpp"
 
 namespace geosx
 {
-
-class StableTimeStep;
 
 class FaceManager;
 
@@ -293,9 +291,9 @@ public:
    */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
-    /// String key for the material list
+    /// @return String key for the material list
     static constexpr char const * materialListString() { return "materialList"; }
-    /// String key for the element subregions
+    /// @return String key for the element subregions
     static constexpr char const * elementSubRegions() { return "elementSubRegions"; }
   };
 

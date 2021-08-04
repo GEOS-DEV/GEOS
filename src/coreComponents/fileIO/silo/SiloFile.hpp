@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/solid/SolidBase.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
@@ -653,6 +653,15 @@ public:
     m_plotFileRoot = fileRoot;
   }
 
+  /**
+   * @brief Sets the top-level output directory, under which Silo's output dir is nested
+   * @param path output directory path
+   */
+  void setOutputDirectory( string const & path )
+  {
+    m_siloDirectory = joinPath( path, "siloFiles" );
+  }
+
 private:
 
   /// pointer to the DBfile that this class is working on
@@ -675,7 +684,7 @@ private:
 
   string m_restartFileRoot;
 
-  string const m_siloDirectory;
+  string m_siloDirectory;
 
   string const m_siloDataSubDirectory = "data";
 

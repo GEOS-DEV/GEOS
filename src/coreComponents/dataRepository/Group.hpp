@@ -21,7 +21,7 @@
 #define GEOSX_DATAREPOSITORY_GROUP_HPP_
 
 #include "InputFlags.hpp"
-#include "dataRepository/ObjectCatalog.hpp"
+#include "ObjectCatalog.hpp"
 #include "MappedVector.hpp"
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
@@ -97,7 +97,7 @@ public:
    * @brief Move constructor
    * @param[in] source source Group
    */
-  Group( Group && source );
+  Group( Group && source ) = default;
 
   /**
    * @brief Destructor, deletes all Groups and Wrappers owned by this Group
@@ -114,10 +114,6 @@ public:
    */
   Group( Group const & ) = delete;
 
-  /**
-   * @brief Deleted move constructor.
-   */
-  Group( Group const && ) = delete;
 
   /**
    * @brief Deleted copy assignment operator.
@@ -331,7 +327,7 @@ public:
   }
 
   /**
-   * @copydoc getGroup( string const & )
+   * @copydoc getGroup( KEY const & )
    */
   template< typename T = Group, typename KEY = void >
   T const & getGroup( KEY const & key ) const
@@ -482,7 +478,7 @@ public:
   }
 
   /**
-   * @copydoc forSubGroups(LAMBDA)
+   * @copydoc forSubGroups(LAMBDA &&)
    */
   template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroups( LAMBDA && lambda ) const
@@ -497,7 +493,7 @@ public:
   }
 
   /**
-   * @copybrief forSubGroups(LAMBDA)
+   * @copybrief forSubGroups(LAMBDA &&)
    * @tparam GROUPTYPE        the first type that will be used in the attempted casting of group.
    * @tparam GROUPTYPES       a variadic list of types that will be used in the attempted casting of group.
    * @tparam LOOKUP_CONTAINER type of container of subgroup lookup keys (names or indices), must support range-based for
@@ -522,7 +518,7 @@ public:
   }
 
   /**
-   * @copybrief forSubGroups(LAMBDA)
+   * @copybrief forSubGroups(LAMBDA &&)
    * @tparam GROUPTYPE        the first type that will be used in the attempted casting of group.
    * @tparam GROUPTYPES       a variadic list of types that will be used in the attempted casting of group.
    * @tparam LOOKUP_CONTAINER type of container of subgroup lookup keys (names or indices), must support range-based for
@@ -574,7 +570,7 @@ public:
   }
 
   /**
-   * @copydoc forWrappers(LAMBDA)
+   * @copydoc forWrappers(LAMBDA &&)
    */
   template< typename LAMBDA >
   void forWrappers( LAMBDA && lambda ) const
@@ -837,35 +833,46 @@ public:
    * @brief Get the size required to pack a list of wrappers.
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
    * @return                 the size of the buffer required to pack the wrappers.
    */
   virtual localIndex packSize( string_array const & wrapperNames,
                                integer const recursive,
-                               bool on_device = false ) const;
+                               bool onDevice,
+                               parallelDeviceEvents & events ) const;
 
   /**
    * @brief Get the size required to pack a list of indices within a list of wrappers.
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] packList     the list of indices to pack
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
    * @return                 the size of the buffer required to pack the wrapper indices.
    */
   virtual localIndex packSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive,
-                               bool on_device = false ) const;
+                               bool onDevice,
+                               parallelDeviceEvents & events ) const;
 
   /**
    * @brief Pack a list of wrappers to a buffer.
    * @param[in,out] buffer   the buffer that will be packed.
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
    * @return                 the size of data packed to the buffer.
    *
    * This function takes in a reference to a pointer @p buffer, and packs data specified by
@@ -877,7 +884,8 @@ public:
   virtual localIndex pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            integer const recursive,
-                           bool on_device = false ) const;
+                           bool onDevice,
+                           parallelDeviceEvents & events ) const;
 
   /**
    * @brief Pack a list of indices within a list of wrappers.
@@ -885,8 +893,11 @@ public:
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] packList     the list of indices to pack
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
    * @return                 the size of data packed to the buffer.
    *
    * This function takes in a reference to a pointer @p buffer, and packs data specified by
@@ -898,15 +909,19 @@ public:
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
                            integer const recursive,
-                           bool on_device = false ) const;
+                           bool onDevice,
+                           parallelDeviceEvents & events ) const;
 
   /**
    * @brief Unpack a buffer.
    * @param[in,out] buffer   the buffer to unpack
    * @param[in,out] packList the list of indices that will be unpacked.
    * @param[in] recursive    whether or not to perform a recursive unpack.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
    * @return                 the number of bytes unpacked.
    *
    * This function takes a reference to a pointer to const buffer type, and
@@ -918,7 +933,8 @@ public:
   virtual localIndex unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
-                             bool on_device = false );
+                             bool onDevice,
+                             parallelDeviceEvents & events );
 
   ///@}
 
@@ -945,7 +961,7 @@ public:
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
-    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << "doesn't have a child" << key, std::domain_error );
+    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
     return *wrapper;
   }
 
@@ -956,7 +972,7 @@ public:
   WrapperBase & getWrapperBase( KEY const & key )
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
-    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << "doesn't have a child" << key, std::domain_error );
+    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
     return *wrapper;
   }
 

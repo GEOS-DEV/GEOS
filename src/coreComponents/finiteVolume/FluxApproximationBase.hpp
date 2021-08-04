@@ -24,7 +24,7 @@
 #include "finiteVolume/FluxStencil.hpp"
 #include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -171,28 +171,31 @@ public:
    */
   struct viewKeyStruct
   {
-    /// The key for fieldName
+    /// @return The key for fieldName
     static constexpr char const * fieldNameString() { return "fieldName"; }
 
-    /// The key for coefficientName
+    /// @return The key for coefficientName
     static constexpr char const * coeffNameString() { return "coefficientName"; }
 
-    /// The key for targetRegions
+    /// @return The key for coefficientName
+    static constexpr char const * coefficientModelNamesString() { return "coefficientModelNames"; }
+
+    /// @return The key for targetRegions
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
-    /// The key for areaRelTol
+    /// @return The key for areaRelTol
     static constexpr char const * areaRelativeToleranceString() { return "areaRelTol"; }
 
-    /// The key for transMultiplier
+    /// @return The key for transMultiplier
     static constexpr char const * transMultiplierString() { return "TransMultiplier"; }
 
 
     // Keys below are for wrappers registered on MeshLevel, not the current object
 
-    /// The key for cellStencil
+    /// @return The key for cellStencil
     static constexpr char const * cellStencilString() { return "cellStencil"; }
 
-    /// The key for fractureStencil
+    /// @return The key for fractureStencil
     static constexpr char const * fractureStencilString() { return "fractureStencil"; }
   };
 
@@ -201,7 +204,7 @@ public:
    */
   struct groupKeyStruct
   {
-    /// Key under which the top-level group for all FV stencils will be registered on MeshLevel
+    /// @return Key under which the top-level group for all FV stencils will be registered on MeshLevel
     static constexpr auto stencilMeshGroupString() { return "finiteVolumeStencils"; }
   };
 
@@ -215,8 +218,20 @@ public:
    */
   string_array & targetRegions()       { return m_targetRegions; }
 
+  /**
+   * @brief Returns the coeff model name.
+   * @return the coeff model name
+   */
+  string_array const & coefficientModelNames() const { return m_coefficientModelNames; }
+  /**
+   * @copydoc coefficientModelNames() const
+   */
+  string_array & coefficientModelNames()       { return m_coefficientModelNames; }
+
+
 protected:
 
+  /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -262,6 +277,9 @@ protected:
 
   /// name of the coefficient field
   string m_coeffName;
+
+  /// names of coefficient models to build the stencil for
+  string_array m_coefficientModelNames;
 
   /// names of target regions to build the stencil for
   string_array m_targetRegions;

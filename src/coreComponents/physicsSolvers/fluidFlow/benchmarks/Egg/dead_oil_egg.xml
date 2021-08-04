@@ -12,25 +12,27 @@
       targetRegions="{ reservoir, wellRegion1, wellRegion2, wellRegion3, wellRegion4, wellRegion5, wellRegion6, wellRegion7, wellRegion8, wellRegion9, wellRegion10, wellRegion11, wellRegion12 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
-        newtonMaxIter="10"
-        newtonMinIter="1"
+        newtonMaxIter="25"
         dtCutIterLimit="0.9"
         dtIncIterLimit="0.6"
         timestepCutFactor="0.1"
         maxTimeStepCuts="10"
         lineSearchAction="None"/>
-      <!-- Note that the direct solver is going to be quite slow -->
-      <!-- This block will be updated when Hypre becomes the default  -->
       <LinearSolverParameters
-        solverType="direct"/>
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="1e-4"
+        krylovAdaptiveTol="1"
+        krylovWeakestTol="1e-2"/>
     </CompositionalMultiphaseReservoir>
 
-    <CompositionalMultiphaseFlow
+    <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
       targetRegions="{ reservoir }"
       discretization="fluidTPFA"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="297.15"
       maxCompFractionChange="0.5"
@@ -58,7 +60,7 @@
         name="wellControls2"
         type="producer"
         control="BHP"
-        referenceElevation="28" 
+        referenceElevation="28"
         targetBHP="3.9e7"
         targetPhaseRate="1e6"
         targetPhaseName="oil"/>
@@ -66,7 +68,7 @@
         name="wellControls3"
         type="producer"
         control="BHP"
-        referenceElevation="28" 
+        referenceElevation="28"
         targetBHP="3.9e7"
         targetPhaseRate="1e6"
         targetPhaseName="oil"/>
@@ -74,7 +76,7 @@
         name="wellControls4"
         type="producer"
         control="BHP"
-        referenceElevation="28" 
+        referenceElevation="28"
         targetBHP="3.9e7"
         targetPhaseRate="1e6"
         targetPhaseName="oil"/>
@@ -82,58 +84,58 @@
         name="wellControls5"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20" 
+        referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
-        injectionStream="{ 0.0, 0.0, 1.0 }"/>
+        injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls6"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20" 
+        referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
-        injectionStream="{ 0.0, 0.0, 1.0 }"/>
+        injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls7"
         type="injector"
         control="totalVolRate"
-        referenceElevation="40" 
+        referenceElevation="40"
         targetBHP="9e7"
         targetTotalRate="8e-3"
-        injectionStream="{ 0.0, 0.0, 1.0 }"/>
+        injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls8"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20" 
+        referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
-        injectionStream="{ 0.0, 0.0, 1.0 }"/>
+        injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls9"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20" 
+        referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
-        injectionStream="{ 0.0, 0.0, 1.0 }"/>
+        injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls10"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20" 
+        referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
-        injectionStream="{ 0.0, 0.0, 1.0 }"/>
+        injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls11"
         type="injector"
         control="totalVolRate"
-        referenceElevation="20" 
+        referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
-        injectionStream="{ 0.0, 0.0, 1.0 }"/>
+        injectionStream="{ 0.0, 1.0 }"/>
       <WellControls
         name="wellControls12"
         type="injector"
@@ -141,7 +143,7 @@
         referenceElevation="20"
         targetBHP="9e7"
         targetTotalRate="8e-3"
-        injectionStream="{ 0.0, 0.0, 1.0 }"/>
+        injectionStream="{ 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
 
@@ -235,7 +237,7 @@
         distanceFromHead="2"/>
       <Perforation
         name="producer3_perf2"
-        distanceFromHead="8"/>
+        distanceFromHead="6"/>
       <Perforation
         name="producer3_perf3"
         distanceFromHead="10"/>
@@ -550,80 +552,71 @@
         distanceFromHead="30"/>
     </InternalWell>
   </Mesh>
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
 
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS -->
   <Events
     maxTime="1.5e7">
-
     <PeriodicEvent
       name="vtk"
       timeFrequency="2e6"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
-   
+
     <PeriodicEvent
       name="timeHistoryOutput1"
       timeFrequency="1.5e7"
-      targetExactTimestep="1"
-      target="/Outputs/timeHistoryOutput1" />
+      target="/Outputs/timeHistoryOutput1"/>
 
     <PeriodicEvent
       name="timeHistoryOutput2"
       timeFrequency="1.5e7"
-      targetExactTimestep="1"
-      target="/Outputs/timeHistoryOutput2" />
+      target="/Outputs/timeHistoryOutput2"/>
 
     <PeriodicEvent
       name="timeHistoryOutput3"
       timeFrequency="1.5e7"
-      targetExactTimestep="1"
-      target="/Outputs/timeHistoryOutput3" />
-    
+      target="/Outputs/timeHistoryOutput3"/>
+
     <PeriodicEvent
       name="timeHistoryOutput4"
       timeFrequency="1.5e7"
-      targetExactTimestep="1"
-      target="/Outputs/timeHistoryOutput4" />
+      target="/Outputs/timeHistoryOutput4"/>
 
     <PeriodicEvent
       name="solverApplications"
+      maxEventDt="5e5"
       target="/Solvers/coupledFlowAndWells"/>
 
     <PeriodicEvent
       name="timeHistoryCollection1"
-      timeFrequency="4e5"
-      targetExactTimestep="1"
-      target="/Tasks/wellRateCollection1" />
+      timeFrequency="1e6"
+      target="/Tasks/wellRateCollection1"/>
 
     <PeriodicEvent
       name="timeHistoryCollection2"
-      timeFrequency="4e5"
-      targetExactTimestep="1"
-      target="/Tasks/wellRateCollection2" />
+      timeFrequency="1e6"
+      target="/Tasks/wellRateCollection2"/>
 
     <PeriodicEvent
       name="timeHistoryCollection3"
-      timeFrequency="4e5"
-      targetExactTimestep="1"
-      target="/Tasks/wellRateCollection3" />
+      timeFrequency="1e6"
+      target="/Tasks/wellRateCollection3"/>
 
     <PeriodicEvent
       name="timeHistoryCollection4"
-      timeFrequency="4e5"
-      targetExactTimestep="1"
-      target="/Tasks/wellRateCollection4" />
-    
+      timeFrequency="1e6"
+      target="/Tasks/wellRateCollection4"/>
   </Events>
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS_END -->
-  
   <!-- SPHINX_TUT_DEAD_OIL_EGG_NUMERICAL_METHODS -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -633,7 +626,7 @@
     <CellElementRegion
       name="reservoir"
       cellBlocks="{ DEFAULT_HEX }"
-      materialList="{ fluid, rock, relperm }"/>
+      materialList="{ fluid, rock, relperm, rockPerm }"/>
 
     <WellElementRegion
       name="wellRegion1"
@@ -683,32 +676,35 @@
       name="wellRegion12"
       materialList="{ fluid, relperm }"/>
   </ElementRegions>
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS_END -->
-  
   <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE -->
   <Constitutive>
-    <BlackOilFluid
+    <DeadOilFluid
       name="fluid"
-      fluidType="DeadOil"
-      phaseNames="{ oil, gas, water }"
-      surfaceDensities="{ 848.9, 0.9907, 1025.2 }"
-      componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
-      tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
+      phaseNames="{ oil, water }"
+      surfaceDensities="{ 848.9, 1025.2 }"
+      componentMolarWeight="{ 114e-3, 18e-3 }"
+      tableFiles="{ pvdo.txt, pvtw.txt }"/>
 
     <BrooksCoreyRelativePermeability
       name="relperm"
-      phaseNames="{ oil, gas, water }"
-      phaseMinVolumeFraction="{ 0.1, 0.0, 0.2 }"
-      phaseRelPermExponent="{ 4.0, 2.0, 3.0 }"
-      phaseRelPermMaxValue="{ 0.8, 1.0, 0.75 }"/>
+      phaseNames="{ oil, water }"
+      phaseMinVolumeFraction="{ 0.1, 0.2 }"
+      phaseRelPermExponent="{ 4.0, 3.0 }"
+      phaseRelPermMaxValue="{ 0.8, 0.75 }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
       referencePressure="0"
       compressibility="1e-13"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
   </Constitutive>
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE_END -->
-  
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS -->
   <FieldSpecifications>
     <FieldSpecification
@@ -734,16 +730,7 @@
       objectPath="ElementRegions/reservoir/DEFAULT_HEX"
       fieldName="globalCompFraction"
       component="0"
-      scale="1.0"/>
-
-    <FieldSpecification
-      name="initialComposition_gas"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
-      fieldName="globalCompFraction"
-      component="1"
-      scale="0.0"/>
+      scale="0.9"/>
 
     <FieldSpecification
       name="initialComposition_water"
@@ -751,11 +738,11 @@
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/DEFAULT_HEX"
       fieldName="globalCompFraction"
-      component="2"
-      scale="0.0"/>
+      component="1"
+      scale="0.1"/>
   </FieldSpecifications>
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS_END -->
-  
   <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT -->
   <Outputs>
     <VTK
@@ -763,48 +750,48 @@
 
     <TimeHistory
       name="timeHistoryOutput1"
-      sources="{/Tasks/wellRateCollection1}"
-      filename="wellRateHistory1" />
+      sources="{ /Tasks/wellRateCollection1 }"
+      filename="wellRateHistory1"/>
 
     <TimeHistory
       name="timeHistoryOutput2"
-      sources="{/Tasks/wellRateCollection2}"
-      filename="wellRateHistory2" />
+      sources="{ /Tasks/wellRateCollection2 }"
+      filename="wellRateHistory2"/>
 
     <TimeHistory
       name="timeHistoryOutput3"
-      sources="{/Tasks/wellRateCollection3}"
-      filename="wellRateHistory3" />
+      sources="{ /Tasks/wellRateCollection3 }"
+      filename="wellRateHistory3"/>
 
     <TimeHistory
       name="timeHistoryOutput4"
-      sources="{/Tasks/wellRateCollection4}"
-      filename="wellRateHistory4" />
-    
+      sources="{ /Tasks/wellRateCollection4 }"
+      filename="wellRateHistory4"/>
   </Outputs>
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT_END -->
-  
   <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS -->
   <Tasks>
-    
     <PackCollection
       name="wellRateCollection1"
       objectPath="ElementRegions/wellRegion1/wellRegion1uniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate" />
+      fieldName="wellElementMixtureConnectionRate"/>
+
     <PackCollection
       name="wellRateCollection2"
       objectPath="ElementRegions/wellRegion2/wellRegion2uniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate" />
+      fieldName="wellElementMixtureConnectionRate"/>
+
     <PackCollection
       name="wellRateCollection3"
       objectPath="ElementRegions/wellRegion3/wellRegion3uniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate" />
+      fieldName="wellElementMixtureConnectionRate"/>
+
     <PackCollection
       name="wellRateCollection4"
       objectPath="ElementRegions/wellRegion4/wellRegion4uniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate" />
-    
+      fieldName="wellElementMixtureConnectionRate"/>
   </Tasks>
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS_END -->
-  
 </Problem>

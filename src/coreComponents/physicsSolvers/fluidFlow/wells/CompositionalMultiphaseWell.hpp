@@ -19,24 +19,19 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
-#include "WellSolverBase.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
+#include "constitutive/fluid/layouts.hpp"
+#include "constitutive/relativePermeability/layouts.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-class Group;
-}
 
 namespace constitutive
 {
 class ConstitutiveManager;
 class MultiFluidBase;
 }
-class WellElementSubRegion;
 
 /**
  * @class CompositionalMultiphaseWell
@@ -190,7 +185,7 @@ public:
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
-  virtual string resElementDofName() const override { return CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString(); }
+  virtual string resElementDofName() const override { return CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(); }
 
   virtual localIndex numFluidComponents() const override { return m_numComponents; }
 
@@ -255,30 +250,30 @@ public:
 
     // inputs
     static constexpr char const * temperatureString() { return "wellTemperature"; }
-    static constexpr char const * useMassFlagString() { return CompositionalMultiphaseFlow::viewKeyStruct::useMassFlagString(); }
+    static constexpr char const * useMassFlagString() { return CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(); }
 
-    static constexpr char const * relPermNamesString() { return CompositionalMultiphaseFlow::viewKeyStruct::relPermNamesString(); }
+    static constexpr char const * relPermNamesString() { return CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString(); }
 
-    static constexpr char const * maxCompFracChangeString() { return CompositionalMultiphaseFlow::viewKeyStruct::maxCompFracChangeString(); }
+    static constexpr char const * maxCompFracChangeString() { return CompositionalMultiphaseBase::viewKeyStruct::maxCompFracChangeString(); }
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
-    static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseFlow::viewKeyStruct::allowLocalCompDensChoppingString(); }
+    static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
     // primary solution field
-    static constexpr char const * pressureString() { return CompositionalMultiphaseFlow::viewKeyStruct::pressureString(); }
-    static constexpr char const * deltaPressureString() { return CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString(); }
-    static constexpr char const * globalCompDensityString() { return CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString(); }
-    static constexpr char const * deltaGlobalCompDensityString() { return CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString(); }
+    static constexpr char const * pressureString() { return CompositionalMultiphaseBase::viewKeyStruct::pressureString(); }
+    static constexpr char const * deltaPressureString() { return CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString(); }
+    static constexpr char const * globalCompDensityString() { return CompositionalMultiphaseBase::viewKeyStruct::globalCompDensityString(); }
+    static constexpr char const * deltaGlobalCompDensityString() { return CompositionalMultiphaseBase::viewKeyStruct::deltaGlobalCompDensityString(); }
     static constexpr char const * mixtureConnRateString() { return "wellElementMixtureConnectionRate"; }
     static constexpr char const * deltaMixtureConnRateString() { return "deltaWellElementMixtureConnectionRate"; }
 
     // saturations
-    static constexpr char const * phaseVolumeFractionString() { return CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString(); }
-    static constexpr char const * dPhaseVolumeFraction_dPressureString() { return CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString(); }
-    static constexpr char const * dPhaseVolumeFraction_dGlobalCompDensityString() { return CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString(); }
+    static constexpr char const * phaseVolumeFractionString() { return CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionString(); }
+    static constexpr char const * dPhaseVolumeFraction_dPressureString() { return CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString(); }
+    static constexpr char const * dPhaseVolumeFraction_dGlobalCompDensityString() { return CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString(); }
 
     // global component fractions
-    static constexpr char const * globalCompFractionString() { return CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString(); }
-    static constexpr char const * dGlobalCompFraction_dGlobalCompDensityString() { return CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString(); }
+    static constexpr char const * globalCompFractionString() { return CompositionalMultiphaseBase::viewKeyStruct::globalCompFractionString(); }
+    static constexpr char const * dGlobalCompFraction_dGlobalCompDensityString() { return CompositionalMultiphaseBase::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString(); }
 
     // total mass densities
     static constexpr char const * totalMassDensityString() { return "totalMassDensity"; }
@@ -343,12 +338,14 @@ private:
 
   /**
    * @brief Compute all the perforation rates for this well
-   * @param well the well with its perforations
+   * @param subRegion the well element region for which the fields are resized
+   * @param targetIndex index of the target region
    */
   void computePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step
+   * @param domain the domain containing the well manager to access individual wells
    */
   void resetViews( DomainPartition & domain ) override;
 
@@ -358,17 +355,11 @@ private:
    */
   void initializeWells( DomainPartition & domain ) override;
 
-  /**
-   * @brief Resize the allocated multidimensional fields
-   * @param well the well for which the fields are resized
-   */
-  void resizeFields( WellElementSubRegion & subRegion );
-
   /// the max number of fluid phases
-  localIndex m_numPhases;
+  integer m_numPhases;
 
   /// the number of fluid components
-  localIndex m_numComponents;
+  integer m_numComponents;
 
   /// the (uniform) temperature
   real64 m_temperature;
@@ -399,35 +390,34 @@ private:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPres;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPres;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_COMP > > m_resCompDens;
 
   /// views into other reservoir variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resPhaseVolFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVolFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_resPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dResPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dResPhaseVolFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResCompFrac_dCompDens;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resPhaseMob;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseMob_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dResCompFrac_dCompDens;
 
   /// views into reservoir material fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseMassDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_resPhaseDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dResPhaseDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dResPhaseDens_dComp;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseVisc;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVisc_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseVisc_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_resPhaseMassDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_resPhaseCompFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseCompFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > > m_dResPhaseCompFrac_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_resPhaseVisc;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dResPhaseVisc_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dResPhaseVisc_dComp;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseRelPerm;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseRelPerm_dPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_resPhaseCompFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_dResPhaseCompFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > m_dResPhaseCompFrac_dComp;
+
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > > m_resPhaseRelPerm;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::relperm::USD_RELPERM_DS > > m_dResPhaseRelPerm_dPhaseVolFrac;
 
 };
 

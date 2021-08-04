@@ -18,7 +18,7 @@
 
 
 #include "DataTypes.hpp"
-#include "common/Logger.hpp"
+#include "Logger.hpp"
 #include "LvArray/src/system.hpp"
 
 namespace geosx
