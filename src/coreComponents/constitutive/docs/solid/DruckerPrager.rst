@@ -83,7 +83,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/DruckerPrager.rst
+.. include:: /coreComponents/schema/docs/DruckerPrager.rst
 
 Example
 ~~~~~~~~~~~~~~~

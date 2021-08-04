@@ -47,7 +47,7 @@ The following attributes are supported.  The "default" keyword in front of certa
 is the default value adopted for a region unless the user separately specifies a heterogeneous field via the
 ``FieldSpecification`` mechanism. 
 
-.. include:: /coreComponents/fileIO/schema/docs/ElasticTransverseIsotropic.rst
+.. include:: /coreComponents/schema/docs/ElasticTransverseIsotropic.rst
 
 Example
 =========================

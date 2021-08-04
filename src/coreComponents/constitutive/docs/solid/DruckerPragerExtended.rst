@@ -42,7 +42,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/DruckerPragerExtended.rst
+.. include:: /coreComponents/schema/docs/DruckerPragerExtended.rst
 
 Example
 ~~~~~~~~~~~~~~~

@@ -18,7 +18,7 @@ XML Structure
 -------------
 A typical XML file to run the triaxial driver will have the following key elements.  We present the whole file first, before digging into the individual blocks.
 
-.. code-block:: xml
+.. code-block:: console
 
    src/coreComponents/unitTests/constitutiveTests/testTriaxial_sphinxExample.xml
 
@@ -30,7 +30,7 @@ Internally, the triaxial driver uses a simple form of time-stepping to advance t
 
 The key parameters for the TriaxialDriver are:
 
-.. include:: /coreComponents/fileIO/schema/docs/TriaxialDriver.rst
+.. include:: /coreComponents/schema/docs/TriaxialDriver.rst
 
 .. note::
 

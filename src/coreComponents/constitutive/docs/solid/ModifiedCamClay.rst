@@ -56,7 +56,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/ModifiedCamClay.rst
+.. include:: /coreComponents/schema/docs/ModifiedCamClay.rst
 
 Example
 ~~~~~~~~~~~~~~~~~~~

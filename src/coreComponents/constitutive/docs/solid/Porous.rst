@@ -37,11 +37,11 @@ As an example, the following attributes are supported for a ``PoroElasticIsotrop
 Note that most of the parameters derive from the underlying solid model,
 with a few additional parameters added for the Biot parameters. 
 
-.. include:: /coreComponents/fileIO/schema/docs/PoroElasticIsotropic.rst
+.. include:: /coreComponents/schema/docs/PoroElasticIsotropic.rst
 
 The parameters for a ``PoroDruckerPrager`` model are:
 
-.. include:: /coreComponents/fileIO/schema/docs/PoroDruckerPrager.rst
+.. include:: /coreComponents/schema/docs/PoroDruckerPrager.rst
 
 Other models will be similar.
 
