@@ -23,6 +23,7 @@
 #define GEOSX_COMMON_MPIWRAPPER_HPP_
 
 #include "DataTypes.hpp"
+#include "mesh/ElementType.hpp"
 
 #if defined(GEOSX_USE_MPI)
   #include <mpi.h>
@@ -584,6 +585,7 @@ template<> inline MPI_Datatype MpiWrapper::getMpiType< signed char >()          
 template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned char >()          { return MPI_UNSIGNED_CHAR; }
 
 template<> inline MPI_Datatype MpiWrapper::getMpiType< int >()                    { return MPI_INT; }
+template<> inline MPI_Datatype MpiWrapper::getMpiType< ElementType >()            { return MPI_INT; }
 template<> inline MPI_Datatype MpiWrapper::getMpiType< long int >()               { return MPI_LONG; }
 template<> inline MPI_Datatype MpiWrapper::getMpiType< long long int >()          { return MPI_LONG_LONG; }
 
