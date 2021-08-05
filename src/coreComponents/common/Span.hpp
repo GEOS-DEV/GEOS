@@ -66,9 +66,7 @@ public:
   Span( T * const ptr, size_type const size ) noexcept
     : m_data( ptr ),
     m_size( size )
-  {
-    GEOSX_ASSERT_GE( size, 0 );
-  }
+  {}
 
   /**
    * @brief Construct a span from pair of iterators.
@@ -193,7 +191,6 @@ public:
    */
   T & operator[]( size_type const i ) const
   {
-    GEOSX_ASSERT_GE( i, 0 );
     GEOSX_ASSERT_GT( m_size, i );
     return m_data[i];
   }
