@@ -90,12 +90,12 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ fluid1, rock, rockPerm }"/>
+      materialList="{ fluid1, rock, rockPerm, rockPorosity, nullSolid }"/>
 
     <CellElementRegion
       name="Region2"
       cellBlocks="{ block2 }"
-      materialList="{ fluid2, rock, rockPerm }"/>
+      materialList="{ fluid2, rock, rockPerm, rockPorosity, nullSolid }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -116,10 +116,19 @@
       referenceViscosity="0.0001"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="0.0"
-      compressibility="1e-9"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel name="nullSolid"/>
+
+    <PressurePorosity
+     name="rockPorosity"
+     defaultReferencePorosity="0.05"
+     referencePressure = "0.0"
+     compressibility="1.0e-9"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -128,11 +137,11 @@
 
   <FieldSpecifications>
     <FieldSpecification
-      name="referencePorosity"
+      name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
-      fieldName="referencePorosity"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rockPorosity_porosity"
       scale="0.05"/>
 
     <FieldSpecification

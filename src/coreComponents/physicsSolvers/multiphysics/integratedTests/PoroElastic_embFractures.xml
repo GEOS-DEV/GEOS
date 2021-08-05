@@ -37,7 +37,7 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain, Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }"
+      solidNames="{ porousRock }"
       permeabilityNames="{ rockPerm, fracPerm }"/>
 
     <EmbeddedSurfaceGenerator
@@ -114,7 +114,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ rock, water, rockPerm }"/>
+      materialList="{ rock, water, rockPerm, rockPorosity }"/>
 
     <SurfaceElementRegion
       name="Fracture"
@@ -168,6 +168,13 @@
   </Constitutive>
 
   <FieldSpecifications>
+    <FieldSpecification
+      name="Porosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rockPorosity_newPorosity"
+      scale="0.2"/>
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"

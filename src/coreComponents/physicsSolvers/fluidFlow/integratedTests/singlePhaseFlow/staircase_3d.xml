@@ -66,7 +66,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
-      materialList="{ water, rock, channelPerm }"/>
+      materialList="{ water, rock, channelPerm, rockPorosity, nullSolid }"/>
 
     <CellElementRegion
       name="Barrier"
@@ -94,10 +94,19 @@
       compressibility="5e-10"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="0.0"
-      compressibility="1e-9"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="channelPerm"/>
+
+    <NullModel name="nullSolid"/>
+
+    <PressurePorosity
+     name="rockPorosity"
+     defaultReferencePorosity="0.05"
+     referencePressure = "0.0"
+     compressibility="1.0e-9"/>
 
     <ConstantPermeability
       name="channelPerm"
@@ -109,9 +118,9 @@
       name="porosity_channel"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="referencePorosity"
-      scale="0.1"/>
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rockPorosity_porosity"
+      scale="0.05"/>
 
     <FieldSpecification
       name="initialPressure_channel"

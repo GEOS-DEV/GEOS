@@ -42,6 +42,21 @@ PorousSolid< SOLID_TYPE >::PorousSolid( string const & name, Group * const paren
 template< typename SOLID_TYPE >
 PorousSolid< SOLID_TYPE >::~PorousSolid() = default;
 
+template< typename SOLID_TYPE >
+void PorousSolid< SOLID_TYPE >::initializePreSubGroups()
+{
+  CoupledSolid< SOLID_TYPE, BiotPorosity, ConstantPermeability >::initializePreSubGroups();
+  if( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
+  {
+    GEOSX_ERROR( " The coupled solid "<<this->getName()<<
+                 " expects a solid model of type "<<SOLID_TYPE::catalogName()<<
+                 " but the specified solid model \""<<this->m_solidModelName<<
+                 "\" is of type" << getSolidModel().getCatalogName() );
+  }
+}
+
+
+
 // Register all PorousSolid model types.
 typedef PorousSolid< ElasticIsotropic > PorousElasticIsotropic;
 typedef PorousSolid< ElasticTransverseIsotropic > PorousElasticTransverseIsotropic;

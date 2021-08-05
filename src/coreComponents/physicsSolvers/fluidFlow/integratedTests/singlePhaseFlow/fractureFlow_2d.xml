@@ -8,7 +8,7 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }"
+      solidNames="{ fractureFilling }"
       permeabilityNames="{ fracturePerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
@@ -105,8 +105,7 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ fracturePerm }"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -114,12 +113,12 @@
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, rockPerm, rockPorosity }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-5"
-      materialList="{ water, rock, fracturePerm }"/>
+      materialList="{ water, fractureFilling, fracturePerm, fracturePorosity }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -131,14 +130,39 @@
       compressibility="5e-10"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+      
+    <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="0.0"
-      compressibility="1e-9"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>  
+
+    <NullModel name="nullSolid"/>
+
+    <PressurePorosity
+     name="rockPorosity"
+     defaultReferencePorosity="0.05"
+     referencePressure = "0.0"
+     compressibility="1.0e-9"/>
 
     <ConstantPermeability
-      name="fracturePerm"
+      name="rockPerm"
       permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+    
+    <PressurePorosity
+     name="fracturePorosity"
+     defaultReferencePorosity="1.00"
+     referencePressure = "0.0"
+     compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+      
   </Constitutive>
 
   <FieldSpecifications>
@@ -149,6 +173,15 @@
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
+      
+    <FieldSpecification
+      name="fracPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="fracturePorosity_porosity"
+      scale="1.00"/>  
+      
 
     <FieldSpecification
       name="source"

@@ -108,19 +108,7 @@ public:
   /// Destructor
   virtual ~CoupledSolid() override;
 
-  /**
-   * @brief Catalog name
-   * @return Static catalog string
-   */
-  static string catalogName() { return string( "Coupled" ) + SOLID_TYPE::m_catalogNameString; }
-
-  /**
-   * @brief Get catalog name
-   * @return Catalog name string
-   */
-  virtual string getCatalogName() const override { return catalogName(); }
-
-  virtual void initializePreSubGroups() override final;
+  virtual void initializePreSubGroups() override;
 
   /**
    * @brief Create a instantiation of the PorousSolidUpdates class
@@ -175,13 +163,6 @@ template< typename SOLID_TYPE,
           typename PERM_TYPE >
 void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::initializePreSubGroups()
 {
-  if( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
-  {
-    GEOSX_ERROR( " The coupled solid "<<this->getName()<<
-                 " expects a solid model of type "<<SOLID_TYPE::catalogName()<<
-                 " but the specified solid model \""<<m_solidModelName<<
-                 "\" is of type" << getSolidModel().getCatalogName() );
-  }
   if( PORO_TYPE::catalogName() != getPorosityModel().getCatalogName() )
   {
     GEOSX_ERROR( " The coupled solid "<< this->getName()<<

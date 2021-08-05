@@ -71,12 +71,12 @@
     <CellElementRegion
       name="Top"
       cellBlocks="{ Top_TETRA }"
-      materialList="{ water, rock, rockPerm }"/>
+      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid  }"/>
 
     <CellElementRegion
       name="Bot"
       cellBlocks="{ Bottom_TETRA }"
-      materialList="{ water, rock, rockPerm }"/>
+      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid  }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -88,10 +88,19 @@
       compressibility="1e-9"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="1e6"
-      compressibility="1e-9"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>  
+
+    <NullModel name="nullSolid"/>
+
+    <PressurePorosity
+     name="rockPorosity"
+     defaultReferencePorosity="0.05"
+     referencePressure = "1.0e6"
+     compressibility="1.0e-9"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -100,11 +109,11 @@
 
   <FieldSpecifications>
     <FieldSpecification
-      name="TopReferencePorosity"
+      name="TopPorosity"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Top/Top_TETRA"
-      fieldName="referencePorosity"
+      fieldName="rockPorosity_porosity"
       scale="0.05"/>
 
     <FieldSpecification
@@ -116,11 +125,11 @@
       scale="2e5"/>
 
     <FieldSpecification
-      name="BotReferencePorosity"
+      name="BotPorosity"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Bot/Bottom_TETRA"
-      fieldName="referencePorosity"
+      fieldName="rockPorosity_porosity"
       scale="0.05"/>
 
     <FieldSpecification

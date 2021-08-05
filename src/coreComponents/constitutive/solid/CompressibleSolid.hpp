@@ -121,7 +121,7 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "CompressibleSolid" ) + PORO_TYPE::catalogName() + PERM_TYPE::catalogName(); }
+  static string catalogName() { return string( "CompressibleSolid" ) + PERM_TYPE::catalogName(); }
 
   /**
    * @brief Get catalog name

@@ -9,7 +9,7 @@
       targetRegions="{ Region1, Region2 }"
       fluidNames="{ fluid }"
       solidNames="{ rock1, rock2 }"
-      permeabilityNames="{ rock1Perm, rock2Perm }">
+      permeabilityNames="{ rockPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
@@ -67,8 +67,7 @@
       <TwoPointFluxApproximation
         name="tpfaFlow"
         fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rock1Perm, rock2Perm }"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -76,12 +75,12 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ fluid, rock1, rock1Perm }"/>
+      materialList="{ fluid, rock1, rockPerm, rock1Porosity, nullSolid }"/>
 
     <CellElementRegion
       name="Region2"
       cellBlocks="{ block2 }"
-      materialList="{ fluid, rock2, rock2Perm }"/>
+      materialList="{ fluid, rock2, rockPerm, rock1Porosity, nullSolid }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -93,32 +92,52 @@
       compressibility="0.0"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+   <CompressibleSolidConstantPermeability
       name="rock1"
-      referencePressure="0.0"
-      compressibility="1e-8"/>
-
-    <PoreVolumeCompressibleSolid
+      solidModelName="nullSolid"
+      porosityModelName="rock1Porosity"
+      permeabilityModelName="rockPerm"/>
+      
+   <CompressibleSolidConstantPermeability
       name="rock2"
-      referencePressure="0.0"
-      compressibility="1e-10"/>
+      solidModelName="nullSolid"
+      porosityModelName="rock2Porosity"
+      permeabilityModelName="rockPerm"/>   
+
+    <NullModel name="nullSolid"/>
+
+    <PressurePorosity
+     name="rock1Porosity"
+     defaultReferencePorosity="0.05"
+     referencePressure = "0.0"
+     compressibility="1.0e-8"/>
+     
+    <PressurePorosity
+     name="rock2Porosity"
+     defaultReferencePorosity="0.05"
+     referencePressure = "0.0"
+     compressibility="1.0e-10"/> 
 
     <ConstantPermeability
-      name="rock1Perm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
-
-    <ConstantPermeability
-      name="rock2Perm"
+      name="rockPerm"
       permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification
-      name="referencePorosity"
+      name="Porosity1"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
-      fieldName="referencePorosity"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rock1Porosity_porosity"
+      scale="0.05"/>
+      
+      <FieldSpecification
+      name="Porosity2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rock2Porosity_porosity"
       scale="0.05"/>
 
     <FieldSpecification
