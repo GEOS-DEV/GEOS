@@ -88,7 +88,6 @@ VTK_ARRAY const & getDataArray( vtkFieldData & source, char const * name )
  */
 bool checkIntersection(double box1[6], double box2[6])
 {
-    //GEOSX_LOG_RANK(box2[0] << " and " box1[0] and)
     return box1[0] < box2[1] && box1[1]> box2[0] && box1[2] < box2[3] && box1[3]> box2[2] && box1[4] < box2[5] && box1[5]> box2[4];
 }
 
@@ -147,7 +146,6 @@ vtkSmartPointer<vtkUnstructuredGrid> loadVTKMesh( Path const & filePath )
       }
     } 
   }
-  GEOSX_LOG_RANK( loadedMesh->GetNumberOfCells());
 
   return loadedMesh;
 }
@@ -286,10 +284,9 @@ std::vector< TYPE > communicateAttributes( std::vector< TYPE > const & attribute
  */
 void countCellsAndFaces(std::map<int, std::vector<vtkIdType>> &regionsHex, std::map<int, std::vector<vtkIdType>> &regionsTetra,
                         std::map<int, std::vector<vtkIdType>> &regionsWedges, std::map<int, std::vector<vtkIdType>> &regionsPyramids,
-                        std::set<int> &regions, std::map<int, std::vector<vtkIdType>> &surfaces, std::vector<int> &allSurfaces,
-                        DomainPartition &domain, vtkUnstructuredGrid &mesh)
+                        std::map<int, std::vector<vtkIdType>> &surfaces, std::vector<int> &allSurfaces,
+                        vtkUnstructuredGrid &mesh)
 {
-  CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
   vtkIntArray const * const attributeDataArray = getDataArrayOptional< vtkIntArray >( *mesh.GetCellData(), "attribute" );
 
   auto countCell = [&](localIndex c, std::map<int,std::vector<vtkIdType >> & regionsElem ) { // auto can be multiple types in the same function
@@ -333,18 +330,6 @@ void countCellsAndFaces(std::map<int, std::vector<vtkIdType>> &regionsHex, std::
     }
   }
 
-  // Fill the region set
-  auto fillRegionSet = [&](std::map<int,std::vector<vtkIdType >> & regionsElem ) {
-  for( auto const & region : regionsElem )
-  {
-    regions.insert(region.first);
-  }
-  };
-  fillRegionSet(regionsHex);
-  fillRegionSet(regionsTetra);
-  fillRegionSet(regionsPyramids);
-  fillRegionSet(regionsWedges);
-
   // Communicate all the cells blocks
   std::vector< int > cellBlockRegionIndex( regionsHex.size() + regionsTetra.size() + 
                                            regionsPyramids.size() + regionsWedges.size() );
@@ -355,11 +340,11 @@ void countCellsAndFaces(std::map<int, std::vector<vtkIdType>> &regionsHex, std::
     
   unsigned int count =0;
   auto fillCellBlockNames = [&](std::map<int,std::vector<vtkIdType >> & regionsElem,  ElementType type ) {
-  for( auto const & region : regionsElem )
-  {
-    cellBlockRegionIndex[count] = region.first;
-    cellBlockElementType[count++] = type;
-  }
+    for( auto const & region : regionsElem )
+    {
+      cellBlockRegionIndex[count] = region.first;
+      cellBlockElementType[count++] = type;
+    }
   };
   fillCellBlockNames(regionsHex, ElementType::Hexahedron);
   fillCellBlockNames(regionsTetra, ElementType::Tetrahedron);
@@ -379,27 +364,20 @@ void countCellsAndFaces(std::map<int, std::vector<vtkIdType>> &regionsHex, std::
       switch (allCellBlockElementType[j])
       {
       case ElementType::Tetrahedron:
-        name += "tetrahedron";
         regionsTetra[allCellBlockRegionIndex[i]];
         break;
       case ElementType::Hexahedron:
-        name += "hexahedron";
         regionsHex[allCellBlockRegionIndex[i]];
         break;
       case ElementType::Prism:
-        name += "wedges";
         regionsWedges[allCellBlockRegionIndex[i]];
         break;
       case ElementType::Pyramid:
-        name += "pyramids";
         regionsPyramids[allCellBlockRegionIndex[i]];
         break;
       default:
         GEOSX_ERROR(allCellBlockElementType[j] << " is not a recognized cell type");
       }
-      GEOSX_LOG_RANK("register " << name);
-      CellBlock & cellBlock = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( name );
-      cellBlock.setElementType(allCellBlockElementType[j] );
     }
   }
 
@@ -411,7 +389,6 @@ void countCellsAndFaces(std::map<int, std::vector<vtkIdType>> &regionsHex, std::
     surfaceVector.push_back( surface.first );
   }
   allSurfaces = communicateAttributes(surfaceVector);
-  GEOSX_LOG_RANK("begin surface name");
 }
 
 /**
@@ -579,7 +556,7 @@ void writeCellBlock( string const & name, std::vector<vtkIdType > const & cellId
   assert(region_id >= -1 );
   string const cellBlockName = region_id != -1  ? std::to_string(region_id) + "_" + name : name;
 
-  CellBlock & cellBlock = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( cellBlockName );
+  CellBlock & cellBlock = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
   int numPointsPerCell = getNumberOfPoints( cellType);
   cellBlock.setElementType( getElementType(cellType) );
   CellBlock::NodeMapType & cellToVertex = cellBlock.nodeList();
@@ -593,7 +570,6 @@ void writeCellBlock( string const & name, std::vector<vtkIdType > const & cellId
     if( dimension == 1 )
     {
       real64_array & property = cellBlock.addProperty< real64_array >( array->GetName() );
-      GEOSX_LOG_RANK("writing " << array->GetName() << " on " << cellBlockName);
       localIndex cellCount = 0;
       for( vtkIdType c : cellIds )
       {
@@ -657,45 +633,23 @@ void writeCellBlock( string const & name, std::vector<vtkIdType > const & cellId
 void writeCellBlocks( DomainPartition& domain,
                       std::map<int,std::vector<vtkIdType >> & regionsHex, std::map<int,std::vector<vtkIdType >> & regionsTetra,
                       std::map<int,std::vector<vtkIdType >> & regionsWedges, std::map<int,std::vector<vtkIdType >> & regionsPyramids,
-                      std::set< int > & regions, std::vector< vtkDataArray * > & arraysToBeImported,
+                      std::vector< vtkDataArray * > & arraysToBeImported,
                       vtkUnstructuredGrid & mesh)
 {
   CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
 
-  if( !regions.empty() )
-  {
-    for (int region : regions)
+  auto writeCellBlockForElementType= [&](string const & name,std::map<int,std::vector<vtkIdType >> & cellBlocks, int vtkType ) {
+    for( auto & cellBlock : cellBlocks )
     {
-      std::map< int, std::vector<vtkIdType >>::iterator it;
-      it = regionsHex.find(region);
-      if( it != regionsHex.end())
-      {
-        writeCellBlock("hexahedron", it->second, it->first, VTK_HEXAHEDRON, cellBlockManager, arraysToBeImported, mesh);
-      }
-      it = regionsTetra.find(region);
-      if( it != regionsTetra.end())
-      {
-        writeCellBlock("tetrahedron", it->second, it->first, VTK_TETRA, cellBlockManager, arraysToBeImported, mesh);
-      }
-      it = regionsWedges.find(region);
-      if( it != regionsWedges.end())
-      {
-        writeCellBlock("wedges", it->second, it->first, VTK_WEDGE, cellBlockManager, arraysToBeImported,mesh);
-      }
-      it = regionsPyramids.find(region);
-      if( it != regionsPyramids.end())
-        writeCellBlock("pyramids", it->second, it->first, VTK_PYRAMID, cellBlockManager, arraysToBeImported, mesh);
+      writeCellBlock(name, cellBlock.second, cellBlock.first, vtkType, cellBlockManager, arraysToBeImported, mesh);
     }
-  }
-  else
-  {
-      writeCellBlock("hexahedron", regionsHex[-1], -1, VTK_HEXAHEDRON, cellBlockManager, arraysToBeImported, mesh);
-      writeCellBlock("tetrahedron", regionsTetra[-1], -1, VTK_TETRA, cellBlockManager, arraysToBeImported, mesh);
-      writeCellBlock("wedges", regionsWedges[-1], -1, VTK_WEDGE, cellBlockManager, arraysToBeImported, mesh);
-      writeCellBlock("pyramids", regionsPyramids[-1], -1, VTK_PYRAMID, cellBlockManager, arraysToBeImported, mesh);
-  }
+  };
+  
+  writeCellBlockForElementType("hexahedron", regionsHex, VTK_HEXAHEDRON);
+  writeCellBlockForElementType("tetrahedron", regionsTetra, VTK_TETRA);
+  writeCellBlockForElementType("wedges", regionsWedges, VTK_WEDGE);
+  writeCellBlockForElementType("pyramids", regionsPyramids, VTK_PYRAMID);
 }
-
 
 /**
  * @param[in] nodeManager the NodeManager of the domain in which the poiints will be copied.
@@ -756,16 +710,15 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   std::map<int,std::vector<vtkIdType >> regionsPyramids;
 
   // surface and greionids
-  std::set<int> regions;
   std::map<int, std::vector<vtkIdType >> surfaces; //local to this rank
   std::vector<int> allSurfaces; // global to the whole mesh
   std::vector< string > allCellBlockNames;
 
-  countCellsAndFaces( regionsHex, regionsTetra, regionsWedges, regionsPyramids, regions, surfaces, allSurfaces, domain, *m_vtkMesh);
+  countCellsAndFaces( regionsHex, regionsTetra, regionsWedges, regionsPyramids, surfaces, allSurfaces, *m_vtkMesh);
 
   std::vector< vtkDataArray * > arraysToBeImported = findArrayToBeImported(*m_vtkMesh);
 
-  writeCellBlocks( domain,regionsHex, regionsTetra, regionsWedges, regionsPyramids, regions, arraysToBeImported, *m_vtkMesh );
+  writeCellBlocks( domain,regionsHex, regionsTetra, regionsWedges, regionsPyramids, arraysToBeImported, *m_vtkMesh );
 
   writeSurfaces( nodeManager, allSurfaces, surfaces, *m_vtkMesh);
 
