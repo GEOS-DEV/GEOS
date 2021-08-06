@@ -92,7 +92,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
-      materialList="{ fluid, rock, relperm, rockPerm }"/>
+      materialList="{ fluid, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
 
     <CellElementRegion
       name="Barrier"
@@ -108,8 +108,7 @@
         name="fluidTPFA"
         fieldName="pressure"
         targetRegions="{ Channel }"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -128,10 +127,19 @@
       waterCompressibility="0.00000000041"
       waterViscosity="0.0003"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="0.0"
-      compressibility="1e-9"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel name="nullSolid"/>
+    
+    <PressurePorosity
+     name="rockPorosity"
+     defaultReferencePorosity="0.2"
+     referencePressure = "0.0"
+     compressibility="1.0e-9"/>
 
     <BrooksCoreyBakerRelativePermeability
       name="relperm"
@@ -150,14 +158,6 @@
   <!-- END_SPHINX_INCLUDE_CONST_BLOCK -->
   <!-- START_SPHINX_INCLUDE_PERM_BLOCK -->
   <FieldSpecifications>
-    <FieldSpecification
-      name="porosity_channel"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="referencePorosity"
-      scale="0.2"/>
-
     <!-- END_SPHINX_INCLUDE_PERM_BLOCK -->
     <!-- Initial pressure: ~50 bar -->
     <!-- START_SPHINX_INCLUDE_INIT_BLOCK -->

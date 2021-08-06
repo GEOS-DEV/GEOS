@@ -504,7 +504,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh ) const
     } );
   } );
 
-  // CUDA does not want the host_device lambda to be defined inside the generic lambda
+  // for some reason CUDA does not want the host_device lambda to be defined inside the generic lambda
   // I need the exact type of the subRegion for updateSolidflowProperties to work well.
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                                                    auto & subRegion )
@@ -515,7 +515,15 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh ) const
     updateRelPermModel( subRegion, targetIndex );
     updatePhaseMobility( subRegion, targetIndex );
     updateCapPressureModel( subRegion, targetIndex );
+
+    CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+
+    // saves porosity in oldPorosity
+    porousSolid.saveConvergedState();
+
   } );
+
+
 
 }
 
