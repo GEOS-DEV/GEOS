@@ -23,12 +23,12 @@ The plastic strain tensor is obtained from the flow rule:
 in which :math:`\dot{\lambda} \geq 0` is the magnitude of plastic strain rate and :math:`g` is the plastic potential. The elastic strain is related to Cauchy stress tensor in rate form as:
 
 .. math::
-  \dot{\boldsymbol{\sigma}} = \tensor{c}^e \cdot \dot{\boldsymbol{\epsilon}}^e,
+  \dot{\boldsymbol{\sigma}} = \tensor{c}^e : \dot{\boldsymbol{\epsilon}}^e,
 
 where :math:`\tensor{c}^e` is the fourth order elastic stiffness tensor. The Cauchy stress tensor is related to the total strain as
 
 .. math::
-  \dot{\boldsymbol{\sigma}} = \boldsymbol{c}^{ep} \cdot \dot{\boldsymbol{\epsilon}}, 
+  \dot{\boldsymbol{\sigma}} = \boldsymbol{c}^{ep} : \dot{\boldsymbol{\epsilon}}, 
   
 in which :math:`\tensor{c}^{ep}` is the fourth order elasto-plastic stiffness tensor.
 
@@ -74,4 +74,3 @@ Three-Invariant Models
 ----------------------------------
 
 Several three-invariant models are under active development, but are not yet available in develop.  If you are interested in helping to add additional material models, please submit a feature request.
-

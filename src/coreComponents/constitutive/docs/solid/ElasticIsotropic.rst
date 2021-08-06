@@ -15,7 +15,7 @@ expressed as:
    \sigma_{ij} = \lambda \epsilon_{kk} + 2 \mu \epsilon_{ij},
 
 where :math:`\sigma_{ij}` is the :math:`ij` component of the Cauchy stress tensor,
-:math:`\epsilon_{ij}` is the :math:`ij` component of the the strain tensor,
+:math:`\epsilon_{ij}` is the :math:`ij` component of the strain tensor,
 :math:`\lambda` is the first Lamé elastic constant,
 and :math:`\mu` is the elastic shear modulus.
 

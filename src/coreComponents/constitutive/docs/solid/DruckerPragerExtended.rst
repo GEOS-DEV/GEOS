@@ -30,7 +30,7 @@ If :math:`b_r < b_i`, hardening behavior will be observed, while for :math:`b_r 
 In the resulting model, the yield surface begins at an initial position defined by the initial cohesion and friction angle.
 As plastic deformation occurs, the friction angle hardens (or softens) so that it asymptoptically approaches a
 residual friction angle.  The vertex of the cone remains fixed in p-q space, but the cohesion intercept evolves in
-tandem with the friction angle.  See Liu et al. (2020) for complete details.
+tandem with the friction angle.  See `Liu et al. (2020) <https://doi.org/10.1007/s00603-019-01992-5>` for complete details.
 
 In order to allow for non-associative behavior, we define a "dilation ratio" parameter :math:`\theta \in [0,1]` such
 that :math:`b' = \theta b`, where :math:`b'` is the slope of the plastic potential surface, while :math:`b` is 
@@ -62,4 +62,3 @@ Example
       defaultHardening="0.001"
     />
   </Constitutive>
-

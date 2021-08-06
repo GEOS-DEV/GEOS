@@ -22,15 +22,15 @@ This model may be used to represent a solid material with plastic response to lo
 
 The material behavior is linear elastic (see :ref:`ElasticIsotropic`) for :math:`f < 0`, and plastic for :math:`f =0`.
 The two material parameters :math:`a` and :math:`b` are derived by approximating the Mohr-Coulomb surface with a cone.
-Figure 1 shows the Mohr-Coulomb yield surface and circumscribing Drucker-Prager surface in principal stress space.
-The Drucker-Prager yield surface has a circular cross-section in the deviatoric plane that passes through the tension or compression corners of the Mohr-Coulomb yield surface, as shown in the Figure 2.
+Figure 3 shows the Mohr-Coulomb yield surface and circumscribing Drucker-Prager surface in principal stress space.
+The Drucker-Prager yield surface has a circular cross-section in the deviatoric plane that passes through the tension or compression corners of the Mohr-Coulomb yield surface, as shown in the Figure 4.
 The material parameters :math:`a` and :math:`b` are derived as:
 
 .. math::
    a = \frac{6 \, c \, \cos\phi}{3 \pm \sin\phi} \, , \quad b=\frac{6  \, \sin\phi}{3 \pm \sin\phi}
 
 where plus signs are for circles passing through the tension corners, and minus signs are for circles passing through compression corners.
-Also, :math:`\phi` and :math:`c` denote friction angle and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope shown in Figure 3.
+Also, :math:`\phi` and :math:`c` denote friction angle and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope shown in Figure 5.
 In GEOSX, we use a compression corner fit (minus signs) to convert the user-specified friction angle and cohesion to :math:`a` and :math:`b`.
 
 .. _deviatoricView:
