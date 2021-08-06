@@ -129,7 +129,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="rock1Porosity_porosity"
+      fieldName="rock1Porosity_referencePorosity"
       scale="0.05"/>
       
       <FieldSpecification
@@ -137,7 +137,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="rock2Porosity_porosity"
+      fieldName="rock2Porosity_referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification

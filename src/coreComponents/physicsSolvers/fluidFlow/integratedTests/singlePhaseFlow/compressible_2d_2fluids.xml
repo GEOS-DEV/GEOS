@@ -142,7 +142,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="rockPorosity_porosity"
+      fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification

@@ -121,7 +121,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/elementSubRegions/DEFAULT_TETRA"
-      fieldName="rockPorosity_porosity"
+      fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification

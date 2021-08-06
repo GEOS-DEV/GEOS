@@ -113,7 +113,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Top/Top_TETRA"
-      fieldName="rockPorosity_porosity"
+      fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification
@@ -129,7 +129,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Bot/Bottom_TETRA"
-      fieldName="rockPorosity_porosity"
+      fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification
