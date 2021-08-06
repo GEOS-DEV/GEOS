@@ -31,9 +31,9 @@ class ParallelPlatesPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  ParallelPlatesPermeabilityUpdate( arrayView2d< real64 > const & permeability,
-                                    arrayView2d< real64 > const & dPerm_dPressure,
-                                    arrayView2d< real64 > const & dPerm_dAperture )
+  ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
+                                    arrayView3d< real64 > const & dPerm_dPressure,
+                                    arrayView3d< real64 > const & dPerm_dAperture )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dAperture( dPerm_dAperture )
   {}
@@ -48,14 +48,14 @@ public:
                            localIndex const q,
                            real64 const & effectiveAperture ) const override
   {
-    GEOSX_UNUSED_VAR( q );
-
     compute( effectiveAperture,
-             m_permeability[k],
-             m_dPerm_dAperture[k] );
+             m_permeability[k][q],
+             m_dPerm_dAperture[k][q] );
   }
+
 private:
-  arrayView2d< real64 > m_dPerm_dAperture;
+
+  arrayView3d< real64 > m_dPerm_dAperture;
 
 };
 
@@ -63,9 +63,8 @@ private:
 class ParallelPlatesPermeability : public PermeabilityBase
 {
 public:
-  ParallelPlatesPermeability( string const & name, Group * const parent );
 
-  virtual ~ParallelPlatesPermeability() override = default;
+  ParallelPlatesPermeability( string const & name, Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -96,7 +95,8 @@ public:
   {} viewKeys;
 
 private:
-  array2d< real64 > m_dPerm_dAperture;
+
+  array3d< real64 > m_dPerm_dAperture;
 
 };
 
