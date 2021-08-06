@@ -80,25 +80,6 @@ void PorosityBase::postProcessInput()
     setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
-void PorosityBase::initializePostInitialConditionsPreSubGroups()
-{
-
-  localIndex const numE = numElem();
-  localIndex const numQ = numQuad();
-
-  arrayView2d< real64 const > newPorosity = m_newPorosity;
-  arrayView2d< real64 >       oldPorosity = m_oldPorosity;
-
-  //TODO once default component for fieldspec becomes -1 this should become newPorosity[k][q];
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < numQ; ++q )
-    {
-      oldPorosity[k][q] = newPorosity[k][0];
-    }
-  } );
-
-}
 
 void PorosityBase::saveConvergedState() const
 {

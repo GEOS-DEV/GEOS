@@ -51,10 +51,10 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  void updateFromPressure( localIndex const k,
-                           localIndex const q,
-                           real64 const & pressure,
-                           real64 const & deltaPressure ) const
+  virtual void updateFromPressure( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & pressure,
+                                   real64 const & deltaPressure ) const override final
   {
     m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );

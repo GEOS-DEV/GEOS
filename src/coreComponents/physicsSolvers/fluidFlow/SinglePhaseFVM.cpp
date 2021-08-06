@@ -123,21 +123,18 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
     arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
     arrayView1d< real64 const > const & densOld        = subRegion.template getReference< array1d< real64 > >( BASE::viewKeyStruct::densityOldString() );
 
-    ConstitutiveBase const & solidModel = subRegion.template getConstitutiveModel< ConstitutiveBase >( m_solidModelNames[targetIndex] );
+    CoupledSolidBase const & solidModel = subRegion. template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
 
-    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &localResidualNorm] ( auto & castedSolidModel )
-    {
-      arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
+    arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
 
-      ResidualNormKernel::launch< parallelDevicePolicy<>, parallelDeviceReduce >( localRhs,
-                                                                                  rankOffset,
-                                                                                  dofNumber,
-                                                                                  elemGhostRank,
-                                                                                  volume,
-                                                                                  densOld,
-                                                                                  porosityOld,
-                                                                                  localResidualNorm );
-    } );
+    ResidualNormKernel::launch< parallelDevicePolicy<>, parallelDeviceReduce >( localRhs,
+                                                                                rankOffset,
+                                                                                dofNumber,
+                                                                                elemGhostRank,
+                                                                                volume,
+                                                                                densOld,
+                                                                                porosityOld,
+                                                                                localResidualNorm );
   } );
 
   // compute global residual norm

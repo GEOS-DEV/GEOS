@@ -199,8 +199,6 @@ public:
   }
 
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
-
 protected:
   virtual void postProcessInput() override;
 

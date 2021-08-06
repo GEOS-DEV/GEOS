@@ -170,6 +170,45 @@ struct ConstitutivePassThru< CompressibleSolidBase >
 };
 
 
+/**
+ * Specialization for all CoupledSolid models.
+ */
+template<>
+struct ConstitutivePassThru< CoupledSolidBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+                                 CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< DruckerPrager >,
+                                 PorousSolid< ElasticIsotropic >,
+                                 PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< DamageSpectral< ElasticIsotropic > >,
+                                 PorousSolid< DamageVolDev< ElasticIsotropic > >,
+                                 PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
+                                                                                       std::forward< LAMBDA >( lambda ) );
+  }
+
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+                                 CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< DruckerPrager >,
+                                 PorousSolid< ElasticIsotropic >,
+                                 PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< DamageSpectral< ElasticIsotropic > >,
+                                 PorousSolid< DamageVolDev< ElasticIsotropic > >,
+                                 PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
+                                                                                       std::forward< LAMBDA >( lambda ) );
+  }
+};
+
 
 }
 }

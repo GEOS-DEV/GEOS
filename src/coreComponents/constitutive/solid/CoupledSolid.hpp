@@ -73,6 +73,18 @@ public:
     return m_porosityUpdate.getPorosity( k, q );
   }
 
+  GEOSX_HOST_DEVICE
+  virtual void updateFromPressure( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & pressure,
+                                   real64 const & deltaPressure ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(pressure);
+    GEOSX_UNUSED_VAR(deltaPressure);
+  }
+
 protected:
   typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
 
