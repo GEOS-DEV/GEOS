@@ -319,11 +319,13 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
     // Iterate on cell types
     for( auto const & subPart : regionPtr->SubParts )
     {
-      if( PAMELA::ELEMENTS::TypeToFamily.at( static_cast< int >( subPart.second->ElementType ) ) == PAMELA::ELEMENTS::FAMILY::POLYHEDRON )
+      // Ignore non-polyhedrons elements (somehow they exist within a polyhedron Part in PAMELA data model).
+      auto const elementFamily = PAMELA::ELEMENTS::TypeToFamily.at( static_cast< int >( subPart.second->ElementType ) );
+      if( elementFamily == PAMELA::ELEMENTS::FAMILY::POLYHEDRON )
       {
-        string const cellBlockName = makeRegionLabel( regionName, getElementLabel( subPart.second->ElementType ) );
+        string cellBlockName = makeRegionLabel( regionName, getElementLabel( subPart.second->ElementType ) );
         importCellBlock( subPart.second, cellBlockName, cellBlockManager );
-        m_cellBlockRegions.emplace( cellBlockName, polyhedronPart.first );
+        m_cellBlockRegions.emplace( std::move( cellBlockName ), polyhedronPart.first );
       }
     }
   }
@@ -357,14 +359,16 @@ void importRegularField( PAMELA::VariableDouble & source,
   {
     using ArrayType = decltype( array );
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
-    auto const view = wrapperT.referenceAsView();
+    auto const view = wrapperT.reference().toView();
 
-    GEOSX_ERROR_IF_NE_MSG( view.size() / view.size( 0 ), LvArray::integerConversion< localIndex >( source.offset ),
-                           "PAMELA import: mismatch in number of components for field " << source.Label );
+    localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( source.offset );
+    localIndex const numComponentsDst = view.size() / view.size( 0 );
+    GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
+                           "PAMELA mesh import: mismatch in number of components for field " << source.Label );
 
     // Sanity check, shouldn't happen
     GEOSX_ERROR_IF_NE_MSG( view.size( 0 ), LvArray::integerConversion< localIndex >( indexMap.size() ),
-                           "PAMELA import: mismatch in size for field " << source.Label );
+                           "PAMELA mesh import: mismatch in size for field " << source.Label );
 
     for( int i = 0; i < view.size( 0 ); ++i )
     {
@@ -390,14 +394,16 @@ void importMaterialField( PAMELA::VariableDouble & source,
   {
     using ArrayType = decltype( array );
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
-    auto const view = wrapperT.referenceAsView();
+    auto const view = wrapperT.reference().toView();
 
-    GEOSX_ERROR_IF_NE_MSG( view.size() / ( view.size( 0 ) * view.size( 1 ) ), LvArray::integerConversion< localIndex >( source.offset ),
-                           "PAMELA import: mismatch in number of components for field " << source.Label );
+    localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( source.offset );
+    localIndex const numComponentsDst = view.size() / ( view.size( 0 ) * view.size( 1 ) );
+    GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
+                           "PAMELA mesh import: mismatch in number of components for field " << source.Label );
 
     // Sanity check, shouldn't happen
     GEOSX_ERROR_IF_NE_MSG( view.size( 0 ), LvArray::integerConversion< localIndex >( indexMap.size() ),
-                           "PAMELA import: mismatch in size for field " << source.Label );
+                           "PAMELA mesh import: mismatch in size for field " << source.Label );
 
     for( int i = 0; i < view.size( 0 ); ++i )
     {
@@ -435,7 +441,7 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
   return materialWrapperNames;
 }
 
-}
+} // namespace
 
 void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
 {
@@ -472,6 +478,10 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
       GEOSX_ASSERT( meshProperty != nullptr );
 
       // Find destination
+      GEOSX_THROW_IF( !subRegion.hasWrapper( wrapperName ),
+                      "PAMELA mesh import: target field not found: " << wrapperName << ".\n" <<
+                      "Please check the spelling in " << viewKeyStruct::fieldNamesInGEOSXString() << " attribute.",
+                      InputError );
       WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );
 
       // Decide if field is constitutive or not
