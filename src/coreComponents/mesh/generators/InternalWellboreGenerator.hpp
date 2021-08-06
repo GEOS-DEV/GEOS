@@ -65,7 +65,7 @@ protected:
   void coordinateTransformation( array2d< real64, nodes::REFERENCE_POSITION_PERM > & X,
                                  std::map< string, SortedArray< localIndex > > & nodeSets ) override final;
 
-  virtual inline bool isCartesian() const override final
+  inline bool isCartesian() const override final
   {
     return false;
   }

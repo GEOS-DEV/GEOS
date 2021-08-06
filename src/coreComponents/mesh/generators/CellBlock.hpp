@@ -175,7 +175,7 @@ public:
   arrayView1d< globalIndex > localToGlobalMap()
   { return m_localToGlobalMap; }
 
-  arrayView1d< globalIndex const > localToGlobalMap() const override
+  array1d< globalIndex > const & localToGlobalMap() const override
   { return m_localToGlobalMap; }
 
   /**

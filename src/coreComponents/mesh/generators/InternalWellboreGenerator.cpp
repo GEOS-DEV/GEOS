@@ -294,7 +294,7 @@ void InternalWellboreGenerator::setConnectivityForPeriodicBoundaries( int ( & gl
 
 void InternalWellboreGenerator::coordinateTransformation( array2d< real64, nodes::REFERENCE_POSITION_PERM > & X, std::map< string, SortedArray< localIndex > > & nodeSets )
 {
-  localIndex const numNodes = X.size();
+  localIndex const numNodes = X.size( 0 );
 
   // Already existing
   SortedArray< localIndex > & xnegNodes = nodeSets.at( "xneg" );

@@ -98,7 +98,7 @@ public:
    * @brief Get local to global map.
    * @return The mapping relationship as a array.
    */
-  virtual arrayView1d< globalIndex const > localToGlobalMap() const = 0;
+  virtual array1d< globalIndex > const & localToGlobalMap() const = 0;
 
   /**
    * @brief Helper function to apply a lambda function over all the external properties of the subregion

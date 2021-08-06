@@ -110,12 +110,7 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC & source )
   this->edgeList() = source.getElemToEdges();
   this->faceList() = source.getElemToFaces();
 
-  arrayView1d< globalIndex const > const sourceLocalToGlobal = source.localToGlobalMap();
-  this->m_localToGlobalMap.resize( sourceLocalToGlobal.size() );
-  for( localIndex i = 0; i < localToGlobalMap().size(); ++i )
-  {
-    this->m_localToGlobalMap[ i ] = sourceLocalToGlobal[ i ];
-  }
+  this->m_localToGlobalMap = source.localToGlobalMap();
 
   this->constructGlobalToLocalMap();
   source.forExternalProperties( [&]( WrapperBase & wrapper )
