@@ -17,17 +17,11 @@
  */
 
 // Source includes
-#include "managers/initialization.hpp"
-#include "managers/ProblemManager.hpp"
-#include "managers/GeosxState.hpp"
+#include "mainInterface/initialization.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mainInterface/GeosxState.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
-
-// TPL includes
-#ifdef GEOSX_USE_CALIPER
-#include <caliper/cali-manager.h>
-#endif
 
 // System includes
 #include <chrono>

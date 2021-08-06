@@ -26,8 +26,7 @@
     execute each of its two sub-events -->
     <PeriodicEvent
       name="periodic_d"
-      cycleFrequency="3"
-      logLevel="0">
+      cycleFrequency="3">
       <PeriodicEvent
         name="subevent_a"/>
       <PeriodicEvent
@@ -47,8 +46,7 @@
     <PeriodicEvent
       name="periodic_f"
       beginTime="6.1"
-      endTime="8.3"
-      logLevel="0">
+      endTime="8.3">
       <PeriodicEvent
         name="subevent_c"/>
       <PeriodicEvent

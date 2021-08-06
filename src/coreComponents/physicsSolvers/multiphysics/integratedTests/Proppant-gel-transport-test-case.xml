@@ -3,7 +3,7 @@
 <!--# # -->
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <ProppantTransport
       name="ProppantTransport"
       logLevel="1"
@@ -11,18 +11,17 @@
       proppantDiameter="4.5e-4"
       frictionCoefficient="0.04"
       criticalShieldsNumber="0.0"
-      maxProppantConcentration="0.6"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       proppantNames="{ sand }"
-      solidNames="{ rock }">
+      solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
         lineSearchAction="None"
-        maxTimeStepCuts="5"
-        newtonMinIter="1"/>
+        maxTimeStepCuts="5"/>
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-7"/>
@@ -41,7 +40,8 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }">
+      solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
@@ -54,8 +54,6 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Fracture }"
       solidMaterialNames="{ granite }"
       rockToughness="1e6"/>
@@ -77,33 +75,33 @@
   <Geometry>
     <Box
       name="left0"
-      xMin="-0.001, -0.001, -0.001"
-      xMax="0.001, 0.013, 0.3148"/>
+      xMin="{ -0.001, -0.001, -0.001 }"
+      xMax="{ 0.001, 0.013, 0.3148 }"/>
 
     <Box
       name="left1"
-      xMin="-0.001, -0.001, 0.07"
-      xMax="0.001, 0.013, 0.09"/>
+      xMin="{ -0.001, -0.001, 0.07 }"
+      xMax="{ 0.001, 0.013, 0.09 }"/>
 
     <Box
       name="left2"
-      xMin="-0.001, -0.001, 0.15"
-      xMax="0.001, 0.013, 0.17"/>
+      xMin="{ -0.001, -0.001, 0.15 }"
+      xMax="{ 0.001, 0.013, 0.17 }"/>
 
     <Box
       name="left3"
-      xMin="-0.001, -0.001, 0.22"
-      xMax="0.001, 0.013, 0.25"/>
+      xMin="{ -0.001, -0.001, 0.22 }"
+      xMax="{ 0.001, 0.013, 0.25 }"/>
 
     <Box
       name="right"
-      xMin="-0.001, 1.21, 0.29"
-      xMax="0.001, 1.2419, 0.3148"/>
+      xMin="{ -0.001, 1.21, 0.29 }"
+      xMax="{ 0.001, 1.2419, 0.3148 }"/>
 
     <Box
       name="fracture"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01, 1.2419, 0.3148"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 1.2419, 0.3148 }"/>
   </Geometry>
 
   <Events
@@ -124,8 +122,6 @@
     integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <!--    
@@ -141,7 +137,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ fracPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -154,7 +151,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="7.62e-3"
-      materialList="{ water, rock, sand }"/>
+      materialList="{ water, rock, sand, fracPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -162,32 +159,29 @@
       name="water"
       componentNames="{ gel }"
       referencePressure="1e5"
-      referenceDensity="1000"
       compressibility="0e-10"
-      referenceViscosity="0.001"
       referenceProppantDensity="2550.0"
       defaultDensity="{ 800.0 }"
       defaultViscosity="{ 0.1 }"
-      defaultCompressibility="{ 0.0 }"
-      maxProppantConcentration="0.6"/>
+      defaultCompressibility="{ 0.0 }"/>
 
     <ParticleFluid
       name="sand"
       particleSettlingModel="Stokes"
       hinderedSettlingCoefficient="5.0"
-      isCollisionalSlip="0"
       proppantDensity="2550.0"
-      proppantDiameter="4.5e-4"
-      maxProppantConcentration="0.6"/>
+      proppantDiameter="4.5e-4"/>
 
     <PoroElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"
       defaultShearModulus="1.0e9"
-      BiotCoefficient="1"
       compressibility="1.6155088853e-18"
       referencePressure="2.125e6"/>
+
+    <ParallelPlatesPermeability
+      name="fracPerm"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -230,7 +224,6 @@
       initialCondition="1"
       objectPath="ElementRegions/Fracture"
       fieldName="isProppantBoundary"
-      scale="0"
       component="0"
       setNames="{ fracture }"/>
 

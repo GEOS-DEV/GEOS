@@ -46,13 +46,9 @@ BlackOilFluid::BlackOilFluid( string const & name, Group * const parent )
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "List of filenames with input PVT tables" );
 
-  registerWrapper( viewKeyStruct::fluidTypeString(), &m_fluidType ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Type of black-oil fluid. Valid options:\n* " + EnumStrings< FluidType >::concat( "\n* " ) );
 }
 
-BlackOilFluid::~BlackOilFluid()
-{}
+BlackOilFluid::~BlackOilFluid() = default;
 
 std::unique_ptr< ConstitutiveBase >
 BlackOilFluid::deliverClone( string const & name,
@@ -66,6 +62,20 @@ BlackOilFluid::deliverClone( string const & name,
   return clone;
 }
 
+namespace
+{
+
+template< typename ARRAY >
+void checkInputSize( ARRAY const & array, localIndex const expected, string const & attr )
+{
+  GEOSX_THROW_IF_NE_MSG( array.size(), expected,
+                         "BlackOilFluid: invalid number of entries in " << attr << " attribute",
+                         InputError );
+
+}
+
+}
+
 void BlackOilFluid::postProcessInput()
 {
   // TODO maybe use different names?
@@ -75,19 +85,8 @@ void BlackOilFluid::postProcessInput()
 
   localIndex const NP = numFluidPhases();
 
-  #define BOFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
-    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-    { \
-      GEOSX_ERROR( "BlackOilFluid: invalid number of entries in " \
-                   << (attr) << " attribute (" \
-                   << (data).size() << "given, " \
-                   << (expected) << " expected)" ); \
-    }
-
-  BOFLUID_CHECK_INPUT_LENGTH( m_surfaceDensities, NP, viewKeyStruct::surfaceDensitiesString() )
-  BOFLUID_CHECK_INPUT_LENGTH( m_tableFiles, NP, viewKeyStruct::surfaceDensitiesString() )
-
-  #undef BOFLUID_CHECK_INPUT_LENGTH
+  checkInputSize( m_surfaceDensities, NP, viewKeyStruct::surfaceDensitiesString() );
+  checkInputSize( m_tableFiles, NP, viewKeyStruct::tableFilesString() );
 }
 
 void BlackOilFluid::createFluid()
@@ -97,26 +96,11 @@ void BlackOilFluid::createFluid()
   std::vector< double > densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
   std::vector< double > molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
 
-  switch( m_fluidType )
-  {
-    case FluidType::LiveOil:
-    {
-      m_fluid = pvt::MultiphaseSystemBuilder::buildLiveOil( phases, tableFiles, densities, molarWeights );
-      break;
-    }
-    case FluidType::DeadOil:
-    {
-      m_fluid = pvt::MultiphaseSystemBuilder::buildDeadOil( phases, tableFiles, densities, molarWeights );
-      break;
-    }
-    default:
-    {
-      GEOSX_ERROR( "Unknown fluid type" );
-    }
-  }
+  m_fluid = pvt::MultiphaseSystemBuilder::buildLiveOil( phases, tableFiles, densities, molarWeights );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, string const &, Group * const )
+
 } // namespace constitutive
 
 } // namespace geosx

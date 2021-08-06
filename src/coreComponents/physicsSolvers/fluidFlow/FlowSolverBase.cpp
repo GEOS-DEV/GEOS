@@ -20,10 +20,9 @@
 
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/DomainPartition.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 namespace geosx
 {
@@ -63,6 +62,11 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setSizedFromParent( 0 ).
     setDescription( "Names of solid constitutive models for each region." );
 
+  this->registerWrapper( viewKeyStruct::permeabilityNamesString(), &m_permeabilityModelNames ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
+    setDescription( "Names of permeability constitutive models for each region." );
+
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString(), &m_fluxEstimate ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -90,9 +94,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
         setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::permeabilityString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        reference().resizeDimension< 1 >( 3 );
+
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() ).
         setApplyDefaultValue( 0.0 );
     } );
@@ -108,10 +110,6 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
         setApplyDefaultValue( 1.0 );
-
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::permeabilityString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        reference().resizeDimension< 1 >( 3 );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() ).
         setApplyDefaultValue( 0.0 );
@@ -134,13 +132,14 @@ void FlowSolverBase::postProcessInput()
   SolverBase::postProcessInput();
   checkModelNames( m_fluidModelNames, viewKeyStruct::fluidNamesString() );
   checkModelNames( m_solidModelNames, viewKeyStruct::solidNamesString() );
+  checkModelNames( m_permeabilityModelNames, viewKeyStruct::permeabilityNamesString() );
 }
 
 void FlowSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   // Validate solid models in regions (fluid models are validated by derived classes)
   domain.getMeshBodies().forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
@@ -158,16 +157,25 @@ void FlowSolverBase::initializePreSubGroups()
   {
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
     array1d< string > & stencilTargetRegions = fluxApprox.targetRegions();
+    array1d< string > & stencilCoeffModelNames = fluxApprox.coefficientModelNames();
+
     std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
-    for( auto const & targetRegion : targetRegionNames() )
+    map< string, string > coeffModelNames;
+
+    arrayView1d< const string > const & regionNames = targetRegionNames();
+
+    for( localIndex i=0; i< regionNames.size(); i++ )
     {
-      stencilTargetRegionsSet.insert( targetRegion );
+      stencilTargetRegionsSet.insert( regionNames[i] );
+      coeffModelNames[regionNames[i]] =  m_permeabilityModelNames[i];
     }
 
     stencilTargetRegions.clear();
+    stencilCoeffModelNames.clear();
     for( auto const & targetRegion : stencilTargetRegionsSet )
     {
       stencilTargetRegions.emplace_back( targetRegion );
+      stencilCoeffModelNames.emplace_back( coeffModelNames[targetRegion] );
     }
   }
 }
@@ -176,7 +184,7 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );;
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   resetViews( mesh );

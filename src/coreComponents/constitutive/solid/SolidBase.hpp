@@ -98,7 +98,6 @@ protected:
     LvArray::tensorOps::copy< 6 >( m_newStress[k][q], stress );
   }
 
-
 public:
 
   /// A reference the current material stress at quadrature points.
@@ -118,6 +117,21 @@ public:
    * are most useful for implicit finite element formulations.
    */
   ///@{
+
+  /**
+   * @brief Get bulkModulus
+   * @param[in] k Element index.
+   * @return the bulkModulus of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
+
+    return 0;
+  }
+
 
   /**
    * @brief Small strain update.
@@ -355,6 +369,19 @@ public:
 
   ///@}
 
+  /**
+   * @brief Save converged state data at index (k,q)
+   *
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void saveConvergedState( localIndex const k,
+                                   localIndex const q ) const
+  {
+    LvArray::tensorOps::copy< 6 >( m_oldStress[k][q], m_newStress[k][q] );
+  }
 
   /**
    * @brief Return the current elastic strain at a given material point (small-strain interface)
@@ -577,7 +604,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
-  virtual void saveConvergedState() const;
+  virtual void saveConvergedState() const override;
 
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct

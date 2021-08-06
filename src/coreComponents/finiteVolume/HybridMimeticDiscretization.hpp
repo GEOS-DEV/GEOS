@@ -63,21 +63,22 @@ public:
    */
   struct viewKeyStruct
   {
-    /// The key for coefficientName
+    /// @return The key for coefficientName
     static constexpr char const * coeffNameString() { return "coefficientName"; }
 
-    /// The key for transMultiplier
+    /// @return The key for transMultiplier
     static constexpr char const * transMultiplierString() { return "TransMultiplier"; }
 
-    /// The key for the type of inner product
+    /// @return The key for the type of inner product
     static constexpr char const * innerProductTypeString() { return "innerProductType"; }
 
-    /// The key for the inner product
+    /// @return The key for the inner product
     static constexpr char const * innerProductString() { return "innerProduct"; }
   };
 
 protected:
 
+  /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;

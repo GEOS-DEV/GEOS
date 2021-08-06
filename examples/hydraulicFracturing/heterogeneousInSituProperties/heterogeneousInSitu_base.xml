@@ -3,7 +3,7 @@
 <Problem>
   <!-- SPHINX_HYDROFRACTURE_SOLVERS -->
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
@@ -18,7 +18,6 @@
         newtonMaxIter="50"
         lineSearchMaxCuts="10"/>
       <LinearSolverParameters
-        logLevel="0"
         solverType="gmres"
         preconditionerType="amg"/>
     </Hydrofracture>
@@ -26,41 +25,35 @@
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="5"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-10"
-        logLevel="0"/>
+        krylovTol="1.0e-10"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }"
       meanPermCoeff="0.8">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-12"
-        logLevel="0"/>
+        krylovTol="1.0e-12"/>
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ rock }"
       rockToughness="$K_upscaled$"
@@ -139,7 +132,6 @@
       defaultDensity="1000"
       defaultViscosity="$mu_upscaled$"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
       referenceViscosity="$mu_upscaled$"
       viscosibility="0.0"/>
@@ -149,7 +141,6 @@
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"
       defaultShearModulus="1.0e9"
-      BiotCoefficient="1"
       compressibility="1.6155088853e-18"
       referencePressure="2.125e6"/>
 
@@ -161,6 +152,9 @@
         coordinates="{ -1.0e-3, 0.0 }"
         values="{ 1.0e-6, 1.0e-4 }"/>
     </Contact>
+
+    <ParallelPlatesPermeability
+      name="fracPerm"/>
   </Constitutive>
 
   <NumericalMethods>
@@ -174,7 +168,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ fracPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -185,8 +180,7 @@
       name="flow_rate"
       inputVarNames="{ time }"
       coordinateFiles="{ $table_root$/flowRate_time.csv }"
-      voxelFile="$table_root$/flowRate.csv"
-      interpolation="linear"/>
+      voxelFile="$table_root$/flowRate.csv"/>
 
     <!-- Geologic Model -->
     <TableFunction

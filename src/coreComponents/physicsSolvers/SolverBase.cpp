@@ -18,7 +18,7 @@
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -80,6 +80,7 @@ SolverBase::SolverBase( string const & name,
 
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_localRhs.setName( this->getName() + "/localRhs" );
+  m_matrix.setDofManager( &m_dofManager );
 }
 
 SolverBase::~SolverBase() = default;
@@ -233,8 +234,8 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   implicitStepSetup( time_n, dt, domain );
 
   // zero out matrix/rhs before assembly
-  m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
-  m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
+  m_localMatrix.zero();
+  m_localRhs.zero();
 
   // call assemble to fill the matrix and the rhs
   assembleSystem( time_n,
@@ -255,6 +256,12 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   if( m_assemblyCallback )
   {
     m_assemblyCallback( m_localMatrix, m_localRhs );
+  }
+
+  // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
+  if( m_precond )
+  {
+    m_precond->clear();
   }
 
   // Compose parallel LA matrix/rhs out of local LA matrix/rhs
@@ -328,8 +335,8 @@ bool SolverBase::lineSearch( real64 const & time_n,
     applySystemSolution( dofManager, localSolution, localScaleFactor, domain );
 
     // re-assemble system
-    localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
-    localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
+    localMatrix.zero();
+    localRhs.zero();
     assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
     // apply boundary conditions to system
@@ -460,8 +467,8 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       }
 
       // zero out matrix/rhs before assembly
-      m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
-      m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
+      m_localMatrix.zero();
+      m_localRhs.zero();
 
       // call assemble to fill the matrix and the rhs
       assembleSystem( time_n,
@@ -555,6 +562,12 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       if( krylovParams.useAdaptiveTol )
       {
         krylovParams.relTolerance = eisenstatWalker( residualNorm, lastResidual, krylovParams.weakestTol );
+      }
+
+      // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
+      if( m_precond )
+      {
+        m_precond->clear();
       }
 
       // Compose parallel LA matrix/rhs out of local LA matrix/rhs
@@ -651,7 +664,7 @@ void SolverBase::setupSystem( DomainPartition & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
 
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
@@ -791,48 +804,23 @@ void SolverBase::solveSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
-//  Keep for debugging comparisons
-//  static int count = 0;
-//  if( count < 2 )
-//  {
-//  std::cout<<"************************* MATRIX *************************"<<std::endl;
-//  std::cout<<matrix<<std::endl<<std::endl;
-//  std::cout<<"************************* RHS *************************"<<std::endl;
-//  std::cout<<rhs<<std::endl<<std::endl;
-//  }
-
   LinearSolverParameters const & params = m_linearSolverParameters.get();
-
-  // TODO: We probably want to keep an instance of linear solver as a member of physics solver
-  //       so we can have constant access to last solve statistics, convergence history, etc.
-  //       This requires unifying "LAI interface" solvers with "native" Krylov solvers somehow.
+  matrix.setDofManager( &dofManager );
 
   if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {
-    LinearSolver solver( params );
-    solver.solve( matrix, solution, rhs, &dofManager );
-    m_linearSolverResult = solver.result();
+    std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
+    solver->setup( matrix );
+    solver->solve( rhs, solution );
+    m_linearSolverResult = solver->result();
   }
   else
   {
-    m_precond->compute( matrix, dofManager );
+    m_precond->setup( matrix );
     std::unique_ptr< KrylovSolver< ParallelVector > > solver = KrylovSolver< ParallelVector >::create( params, matrix, *m_precond );
     solver->solve( rhs, solution );
     m_linearSolverResult = solver->result();
-    // We need to destroy the preconditioner here, because some LAI (like Trilinos) needs some
-    // information from the original matrix to destroy the preconditioner and due to the natural
-    // order, matrix will be destroyed before, making the code crashing with a segmentation fault
-    m_precond->clear();
   }
-
-  //  Keep for debugging comparisons
-//  if( count < 2 )
-//  {
-//  std::cout<<"************************* SOLUTION *************************"<<std::endl;
-//  std::cout<<solution<<std::endl<<std::endl;
-//  }
-//  ++count;
-
 
   if( params.stopIfError )
   {

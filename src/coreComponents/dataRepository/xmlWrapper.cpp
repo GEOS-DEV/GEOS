@@ -22,26 +22,31 @@ namespace geosx
 {
 using namespace dataRepository;
 
-void xmlWrapper::stringToInputVariable( R1Tensor & target, string const & inputValue )
+template< typename T, int SIZE >
+void xmlWrapper::stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue )
 {
   std::istringstream ss( inputValue );
 
   real64 value;
   int count = 0;
-  while( ss.peek() == ',' || ss.peek() == ' ' )
+  while( ss.peek() == '{' || ss.peek() == ' ' )
   {
     ss.ignore();
   }
   while( !((ss>>value).fail()) )
   {
     target[count++] = value;
-    while( ss.peek() == ',' || ss.peek() == ' ' )
+    while( ss.peek() == ',' || ss.peek() == ' ' || ss.peek() == '}' )
     {
       ss.ignore();
     }
   }
-  GEOSX_ERROR_IF( count!=3, "incorrect number of components specified for R1Tensor" );
+  GEOSX_ERROR_IF( count!=SIZE, "incorrect number of components specified for Tensor" );
 }
+
+
+template void xmlWrapper::stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue );
+template void xmlWrapper::stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue );
 
 void xmlWrapper::addIncludedXML( xmlNode & targetNode )
 {
@@ -73,6 +78,30 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
     {
       targetNode.append_copy( importNode );
     }
+  }
+}
+
+void xmlWrapper::buildMultipleInputXML( string_array const & inputFileList, string & inputFileName )
+{
+  if( inputFileList.size() == 1 )
+  {
+    inputFileName = inputFileList[0];
+  }
+  else
+  {
+    // Write the composite xml file
+    inputFileName = "composite_input.xml";
+    xmlWrapper::xmlDocument compositeTree;
+    xmlWrapper::xmlNode compositeRoot = compositeTree.append_child( "Problem" );
+    xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( "Included" );
+
+    for( auto & fileName: inputFileList )
+    {
+      xmlWrapper::xmlNode fileNode = includedRoot.append_child( "File" );
+      fileNode.append_attribute( "name" ) = fileName.c_str();
+    }
+
+    compositeTree.save_file( inputFileName.c_str() );
   }
 }
 

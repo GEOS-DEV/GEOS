@@ -18,16 +18,16 @@
  */
 #include "TwoPointFluxApproximation.hpp"
 
-#include "managers/ProblemManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/FaceElementStencil.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "ProjectionEDFMHelper.hpp"
-#include "managers/GeosxState.hpp"
+#include "mainInterface/GeosxState.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 #if defined( __INTEL_COMPILER )
@@ -101,7 +101,9 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
-    elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );
+    elemManager.constructMaterialArrayViewAccessor< real64, 2 >( m_coeffName,
+                                                                 m_targetRegions,
+                                                                 m_coefficientModelNames );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
@@ -245,7 +247,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
-    elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );
+    elemManager.constructMaterialArrayViewAccessor< real64, 2 >( m_coeffName,
+                                                                 m_targetRegions,
+                                                                 m_coefficientModelNames );
 
   arrayView1d< real64 const > faceArea   = faceManager.faceArea();
   arrayView2d< real64 const > faceCenter = faceManager.faceCenter();
@@ -257,8 +261,8 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 
   FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
   CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
-  fractureStencil.move( LvArray::MemorySpace::CPU );
-  cellStencil.move( LvArray::MemorySpace::CPU );
+  fractureStencil.move( LvArray::MemorySpace::host );
+  cellStencil.move( LvArray::MemorySpace::host );
 
 
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( faceElementRegionName );
@@ -727,17 +731,24 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
                                                                 EmbeddedSurfaceSubRegion const & fractureSubRegion,
                                                                 localIndex const fractureRegionIndex ) const
 {
-  EdgeManager const & embSurfEdgeManager = mesh.getEmbdSurfEdgeManager();
-  NodeManager & nodeManager = mesh.getNodeManager();
+
+  EdgeManager const & embSurfEdgeManager = mesh.getEmbSurfEdgeManager();
+  ElementRegionManager & elemManager = mesh.getElemManager();
+  EmbeddedSurfaceNodeManager & nodeManager = mesh.getEmbSurfNodeManager();
 
   // Get the stencils
   FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
   CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
-  fractureStencil.move( LvArray::MemorySpace::CPU );
-  cellStencil.move( LvArray::MemorySpace::CPU );
+  fractureStencil.move( LvArray::MemorySpace::host );
+  cellStencil.move( LvArray::MemorySpace::host );
 
-  arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter().toViewConst();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.embSurfNodesPosition();
+  SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( embeddedSurfaceRegionName );
+  localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
+
+  EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+  // arrayView1d< real64 const > const & fractureElemArea   = fractureSubRegion.getElementArea();
+  arrayView2d< real64 const > const fractureElemCenter = fractureSubRegion.getElementCenter();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager.faceList();
 
@@ -820,6 +831,11 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getSubRegion<EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
 
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coeffTensor =
+    elemManager.constructMaterialArrayViewAccessor< real64, 2 >( m_coeffName,
+                                                                 m_targetRegions,
+                                                                 m_coefficientModelNames );
+
   addFractureFractureConnections( mesh, fractureSubRegion, fractureRegionIndex );
   addFractureMatrixConnections( mesh, fractureSubRegion, fractureRegionIndex );
 
@@ -857,7 +873,9 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const coefficient =
-    elemManager.constructArrayViewAccessor< real64, 2 >( m_coeffName );
+    elemManager.constructMaterialArrayViewAccessor< real64, 2 >( m_coeffName,
+                                                                 m_targetRegions,
+                                                                 m_coefficientModelNames );
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 

@@ -2,11 +2,10 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <SolidMechanics_LagrangianFEM
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ shale }">
@@ -136,7 +135,6 @@
     <Silo
       name="siloOutput"
       parallelThreads="32"
-      plotFileRoot="plot"
       childDirectory="sub"/>
 
     <Restart
@@ -146,7 +144,7 @@
   <Geometry>
     <Box
       name="source"
-      xMin="-1.0, -1.0e-6, -1.0"
-      xMax="0.041, 1.0e-6, 0.041"/>
+      xMin="{ -1.0, -1.0e-6, -1.0 }"
+      xMax="{ 0.041, 1.0e-6, 0.041 }"/>
   </Geometry>
 </Problem>

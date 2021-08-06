@@ -20,7 +20,7 @@
 #define GEOSX_CONSITUTIVE_EXPONENTIALRELATION_HPP_
 
 #include "common/DataTypes.hpp"
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 #include <cmath>
 
@@ -40,7 +40,10 @@ enum class ExponentApproximationType : integer
   Quadratic
 };
 
-ENUM_STRINGS( ExponentApproximationType, "exponential", "linear", "quadratic" )
+ENUM_STRINGS( ExponentApproximationType,
+              "exponential",
+              "linear",
+              "quadratic" );
 
 namespace detail
 {

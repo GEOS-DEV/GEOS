@@ -24,6 +24,7 @@
 
 namespace geosx
 {
+
 //*****************************************************************************
 /**
  * @brief Implements kernels for solving Laplace's equation.
@@ -87,6 +88,7 @@ public:
   LaplaceFEMKernel( NodeManager const & nodeManager,
                     EdgeManager const & edgeManager,
                     FaceManager const & faceManager,
+                    localIndex const targetRegionIndex,
                     SUBREGION_TYPE const & elementSubRegion,
                     FE_TYPE const & finiteElementSpace,
                     CONSTITUTIVE_TYPE & inputConstitutiveType,
@@ -98,6 +100,7 @@ public:
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -241,6 +244,12 @@ protected:
   arrayView1d< real64 const > const m_primaryField;
 
 };
+
+/// The factory used to construct a LaplaceFEMKernel.
+using LaplaceFEMKernelFactory = finiteElement::KernelFactory< LaplaceFEMKernel,
+                                                              arrayView1d< globalIndex const > const &,
+                                                              globalIndex, CRSMatrixView< real64, globalIndex const > const &,
+                                                              arrayView1d< real64 > const &, string const & >;
 
 } // namespace geosx
 

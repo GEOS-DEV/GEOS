@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <!-- SPHINX_SNEDDON_SOLVER -->
     <SolidMechanicsEmbeddedFractures
       name="mechSolve"
@@ -17,9 +17,7 @@
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsEmbeddedFractures>
 
     <SolidMechanicsLagrangianSSLE
@@ -37,9 +35,9 @@
       fractureRegion="Fracture"
       logLevel="1"/>
   </Solvers>
-  <!-- SPHINX_SNEDDON_SOLVER_END -->
 
-<!-- SPHINX_SNEDDON_MESH -->
+  <!-- SPHINX_SNEDDON_SOLVER_END -->
+  <!-- SPHINX_SNEDDON_MESH -->
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -51,22 +49,21 @@
       ny="{ 10, 101, 10 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
-      
   </Mesh>
-<!-- SPHINX_SNEDDON_MESH_END -->
 
+  <!-- SPHINX_SNEDDON_MESH_END -->
   <!-- SPHINX_SNEDDON_GEOMETRY -->
   <Geometry>
     <BoundedPlane
       name="FracturePlane"
-      normal="0, 1, 0"
-      origin="500, 500.5, 50"
-      lengthVector="1, 0, 0"
-      widthVector="0, 0, 1"
+      normal="{ 0, 1, 0 }"
+      origin="{ 500, 500.5, 50 }"
+      lengthVector="{ 1, 0, 0 }"
+      widthVector="{ 0, 0, 1 }"
       dimensions="{ 20, 100 }"/>
   </Geometry>
+
   <!-- SPHINX_SNEDDON_GEOMETRY_END -->
-  
   <!-- SPHINX_SNEDDON_EVENTS -->
   <Events
     maxTime="10">
@@ -78,33 +75,23 @@
       name="solverApplications"
       forceDt="10"
       target="/Solvers/mechSolve"/>
- <!-- SPHINX_SNEDDON_EVENTS_END -->
- 
+
+    <!-- SPHINX_SNEDDON_EVENTS_END -->
     <PeriodicEvent
       name="outputs"
       cycleFrequency="10"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="10.0"
-      targetExactTimestep="1"
-      target="/Tasks/displacementJumpCollection" />
+      target="/Tasks/displacementJumpCollection"/>
 
     <PeriodicEvent
       name="timeHistoryOutput"
       timeFrequency="10.0"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
-
-    <SoloEvent
-      name="cellCentersCollection" 
-      target="/Tasks/cellCentersCollection" />
-
-    <SoloEvent
-      name="cellCentersOutput" 
-      target="/Outputs/cellCentersOutput" />      
   </Events>
 
   <NumericalMethods>
@@ -125,18 +112,18 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ rock }"
+      materialList="{ }"
       defaultAperture="1e-3"/>
   </ElementRegions>
+
   <!-- SPHINX_SNEDDON_REGIONS_END -->
-  
   <Constitutive>
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
-      
+
     <Contact
       name="fractureContact"
       penaltyStiffness="0.0e8">
@@ -172,46 +159,33 @@
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
-      
-      <FieldSpecification
+
+    <FieldSpecification
       name="Traction"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="fractureTraction"
       component="0"
-      scale="-1.00e5"/>      
+      scale="-1.00e5"/>
   </FieldSpecifications>
+
   <!-- SPHINX_SNEDDON_BC_END -->
-  
   <Tasks>
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="displacementJump"
-      minSetSize="120"/>
-      
-    <PackCollection
-      name="cellCentersCollection"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="elementCenter"
-      minSetSize="120"/>      
+      fieldName="displacementJump"/>
   </Tasks>
 
   <Outputs>
     <VTK
       name="vtkOutput"
       plotFileRoot="Sneddon"
-      plotLevel="3"
-      writeBinaryData="1"/>
-      
+      plotLevel="3"/>
+
     <TimeHistory
       name="timeHistoryOutput"
-      sources="{/Tasks/displacementJumpCollection}"
-      filename="displacementJump_history" />
-      
-    <TimeHistory
-      name="cellCentersOutput"
-      sources="{/Tasks/cellCentersCollection}"
-      filename="cell_centers" />
+      sources="{ /Tasks/displacementJumpCollection }"
+      filename="displacementJump_history"/>
   </Outputs>
 </Problem>

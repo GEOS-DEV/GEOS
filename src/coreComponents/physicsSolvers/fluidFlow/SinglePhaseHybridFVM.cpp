@@ -22,9 +22,8 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -46,6 +45,7 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
 
   // one cell-centered dof per cell
   m_numDofPerCell = 1;
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM;
 
 }
 
@@ -64,9 +64,7 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 
     // primary variables: face pressures changes
     faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the accumulated pressure updates at the faces." );
+      setRestartFlags( RestartFlags::NO_WRITE );
   } );
 }
 
@@ -74,7 +72,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 {
   SinglePhaseBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
@@ -90,7 +88,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
   SinglePhaseBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = mesh.getElemManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -119,7 +117,6 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
   GEOSX_ERROR_IF_LE_MSG( minVal.get(), 0.0,
                          "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0" );
-
 }
 
 void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
@@ -140,7 +137,7 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
@@ -165,7 +162,6 @@ void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
   forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
   {
     facePres[iface] += dFacePres[iface];
-    dFacePres[iface] = 0.0;
   } );
 }
 
@@ -178,6 +174,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   // in AssembleOneSidedMassFluxes
   dofManager.addField( viewKeyStruct::pressureString(),
                        DofManager::Location::Elem,
+                       1,
                        targetRegionNames() );
 
   dofManager.addCoupling( viewKeyStruct::pressureString(),
@@ -187,6 +184,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   // setup the connectivity of face fields
   dofManager.addField( viewKeyStruct::facePressureString(),
                        DofManager::Location::Face,
+                       1,
                        targetRegionNames() );
 
   dofManager.addCoupling( viewKeyStruct::facePressureString(),
@@ -196,8 +194,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   // setup coupling between pressure and face pressure
   dofManager.addCoupling( viewKeyStruct::facePressureString(),
                           viewKeyStruct::pressureString(),
-                          DofManager::Connector::Elem,
-                          true );
+                          DofManager::Connector::Elem );
 }
 
 void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -272,6 +269,9 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     SingleFluidBase const & fluid =
       getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
+    arrayView2d< real64 const > const & permeability =
+      getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] ).permeability();
+
     mimeticInnerProductDispatch( mimeticInnerProductBase,
                                  [&] ( auto const mimeticInnerProduct )
     {
@@ -292,6 +292,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                                    faceGhostRank,
                                                    facePres,
                                                    dFacePres,
+                                                   permeability,
                                                    faceGravCoef,
                                                    transMultiplier,
                                                    m_mobility.toNestedViewConst(),
@@ -521,7 +522,7 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
   fieldNames["face"].emplace_back( string( viewKeyStruct::deltaFacePressureString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
@@ -545,7 +546,7 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, string const &, Group * const )

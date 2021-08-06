@@ -24,13 +24,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
-class FieldSpecificationBase;
-class DomainPartition;
-
 /**
  * @class FlowSolverBase
  *
@@ -79,6 +72,8 @@ public:
 
   arrayView1d< string const > solidModelNames() const { return m_solidModelNames; }
 
+  arrayView1d< string const > permeabilityModelNames() const { return m_permeabilityModelNames; }
+
   virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
 
 
@@ -96,6 +91,7 @@ public:
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
+    static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * pressureString() { return "pressure"; }
     static constexpr char const * deltaPressureString() { return "deltaPressure"; }
     static constexpr char const * deltaVolumeString() { return "deltaVolume"; }
@@ -140,7 +136,7 @@ private:
 
 protected:
 
-  void precomputeData( MeshLevel & mesh );
+  virtual void precomputeData( MeshLevel & mesh );
 
   virtual void postProcessInput() override;
 
@@ -154,6 +150,9 @@ protected:
   /// name of the solid constitutive model
   array1d< string > m_solidModelNames;
 
+  /// name of the permeability constituive model
+  array1d< string > m_permeabilityModelNames;
+
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
 
@@ -161,7 +160,7 @@ protected:
   integer m_coupledWellsFlag;
 
   /// the number of Degrees of Freedom per cell
-  localIndex m_numDofPerCell;
+  integer m_numDofPerCell;
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 

@@ -3,14 +3,13 @@
 <Problem>
   <!-- SPHINX_Gravity -->
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <!-- SPHINX_GravityEnd -->
     <!-- SPHINX_SolidMechanicsSolver -->
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      logLevel="0"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ shale }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
@@ -18,9 +17,7 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
@@ -56,7 +53,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -126,12 +122,11 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
 
-    <FieldSpecification
+    <Traction
       name="xposconstraint"
       objectPath="faceManager"
-      fieldName="Traction"
-      component="1"
       scale="1.0e6"
+      direction="{ 0, 1, 0 }"
       functionName="timeFunction"
       setNames="{ xpos }"/>
   </FieldSpecifications>
@@ -151,7 +146,6 @@
     <Silo
       name="siloOutput"
       parallelThreads="32"
-      plotFileRoot="plot"
       childDirectory="sub"/>
 
     <Restart

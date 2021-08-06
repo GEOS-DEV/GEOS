@@ -17,8 +17,9 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "LvArray/src/output.hpp"
+
 
 namespace geosx
 {
@@ -32,6 +33,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   m_topRank( -1 ),
   m_searchDepth( 10 )
 {
+  m_elementType = ElementType::Line;
 
   registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName );
   registerWrapper( viewKeyStruct::wellNodeListString(), &m_toNodesRelation );
@@ -46,7 +48,6 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   this->setNumNodesPerElement( 2 );
   this->setNumFacesPerElement( 0 );
   m_toNodesRelation.resizeDimension< 1 >( this->numNodesPerElement() );
-  m_elementTypeString = "BEAM";
 }
 
 
@@ -71,7 +72,7 @@ namespace
  * @param[out] boundaryNodes set of local well nodes that are at the boundary between this rank
                and another rank
  */
-void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
+void collectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
                                    SortedArray< globalIndex >      const & localElems,
                                    SortedArray< globalIndex > & localNodes,
                                    SortedArray< globalIndex > & boundaryNodes )
@@ -119,7 +120,7 @@ void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
  * @param[in] ei the index of the reservoir element
  * @return true if "location" is contained in reservoir element ei, false otherwise
  */
-bool IsPointInsideElement( NodeManager const & nodeManager,
+bool isPointInsideElement( NodeManager const & nodeManager,
                            R1Tensor const & location,
                            CellBlock const & subRegion,
                            localIndex ei )
@@ -150,7 +151,7 @@ bool IsPointInsideElement( NodeManager const & nodeManager,
  * @param[in] ei the index of the reservoir element
  * @param[inout] nodes the nodes that have already been visited
  */
-void CollectElementNodes( CellBlock const & subRegion,
+void collectElementNodes( CellBlock const & subRegion,
                           localIndex ei,
                           SortedArray< localIndex > & nodes )
 {
@@ -179,7 +180,7 @@ void CollectElementNodes( CellBlock const & subRegion,
  * @param[inout] esrMatched the subregion index of the reservoir element that contains "location", if any
  * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
  */
-bool VisitNeighborElements( MeshLevel const & mesh,
+bool visitNeighborElements( MeshLevel const & mesh,
                             R1Tensor const & location,
                             SortedArray< localIndex > & nodes,
                             SortedArray< globalIndex > & elements,
@@ -229,7 +230,7 @@ bool VisitNeighborElements( MeshLevel const & mesh,
 
         // perform the test to see if the point is in this reservoir element
         // if the point is in the resevoir element, save the indices and stop the search
-        if( IsPointInsideElement( nodeManager, location, subRegion, eiLocal ))
+        if( isPointInsideElement( nodeManager, location, subRegion, eiLocal ))
         {
           erMatched  = er;
           esrMatched = esr;
@@ -240,7 +241,7 @@ bool VisitNeighborElements( MeshLevel const & mesh,
         // otherwise add the nodes of this element to the set of new nodes to visit
         else
         {
-          CollectElementNodes( subRegion, eiLocal, nodes );
+          collectElementNodes( subRegion, eiLocal, nodes );
         }
       }
     }
@@ -266,7 +267,7 @@ bool VisitNeighborElements( MeshLevel const & mesh,
  * @param[inout] esrInit the subregion index of the reservoir element from which we start the search
  * @param[inout] eiInit the element index of the reservoir element from which we start the search
  */
-void InitializeLocalSearch( MeshLevel const & mesh,
+void initializeLocalSearch( MeshLevel const & mesh,
                             R1Tensor const & location,
                             localIndex & erInit,
                             localIndex & esrInit,
@@ -305,7 +306,7 @@ void InitializeLocalSearch( MeshLevel const & mesh,
  * @param[inout] esrMatched the subregion index of the reservoir element that contains "location", if any
  * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
  */
-bool SearchLocalElements( MeshLevel const & mesh,
+bool searchLocalElements( MeshLevel const & mesh,
                           R1Tensor const & location,
                           localIndex const & searchDepth,
                           localIndex const & erInit,
@@ -335,7 +336,7 @@ bool SearchLocalElements( MeshLevel const & mesh,
 
   // collect the nodes of the current element
   // they will be used to access the neighbors and check if they contain the perforation
-  CollectElementNodes( subRegion, eiInit, nodes );
+  collectElementNodes( subRegion, eiInit, nodes );
 
   // if no match is found, enlarge the neighborhood m_searchDepth'th times
   for( localIndex d = 0; d < searchDepth; ++d )
@@ -345,7 +346,7 @@ bool SearchLocalElements( MeshLevel const & mesh,
     // search the reservoir elements that can be accessed from the set "nodes"
     // stop if a reservoir element containing the perforation is found
     // if not, enlarge the set "nodes"
-    resElemFound = VisitNeighborElements( mesh, location, nodes, elements,
+    resElemFound = visitNeighborElements( mesh, location, nodes, elements,
                                           erMatched, esrMatched, eiMatched );
     if( resElemFound || nNodes == nodes.size())
     {
@@ -382,8 +383,9 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   // this is enforced in the InternalWellGenerator that currently merges two perforations
   // if they belong to the same well element. This is a temporary solution.
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
-  GEOSX_ERROR_IF( sharedElems.size() > 0,
-                  "Well " << getName() << " contains shared well elements" );
+  GEOSX_THROW_IF( sharedElems.size() > 0,
+                  "Well " << wellGeometry.getName() << " contains shared well elements",
+                  InputError );
 
 
   // In Steps 1 and 2 we determine the local objects on this rank (elems and nodes)
@@ -418,12 +420,10 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   // 2) collect the local nodes and tag the boundary nodes using element info
   // now that all the elements have been assigned, we collected the local nodes
   // and tag the boundary nodes (i.e., the nodes in contact with both local and remote elems)
-  CollectLocalAndBoundaryNodes( wellGeometry,
+  collectLocalAndBoundaryNodes( wellGeometry,
                                 localElems,
                                 localNodes,
                                 boundaryNodes );
-
-  //DebugNodeManager( mesh );
 
   // 3) size update in the nodeManager
   // this is necessary to later use the node matching procedure
@@ -434,8 +434,6 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
                          boundaryNodes,
                          nodeOffsetGlobal );
 
-  //DebugNodeManager( mesh );
-
   // 4) resize the well element subregion
   // and construct local to global, global to local, maps, etc
   constructSubRegionLocalElementMaps( mesh,
@@ -443,8 +441,6 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
                                       localElems,
                                       nodeOffsetGlobal,
                                       elemOffsetGlobal );
-
-  //DebugWellElementSubRegions( elemStatusGlobal, elemOffsetGlobal );
 
   // 5) node-to-elem map update in the nodeManager
   // This map will be used by MeshLevel::GenerateAdjacencyLists
@@ -486,12 +482,12 @@ void WellElementSubRegion::assignUnownedElementsInReservoir( MeshLevel & mesh,
     //         note that this reservoir element does not necessarily contain the center of the well element
     //         this "init" reservoir element will be used in SearchLocalElements to find the reservoir element that
     //         contains the well element
-    InitializeLocalSearch( mesh, location,
+    initializeLocalSearch( mesh, location,
                            erInit, esrInit, eiInit );
 
     // Step 2: then, search for the reservoir element that contains the well element
     //         to do that, we loop over the reservoir elements that are in the neighborhood of (erInit,esrInit,eiInit)
-    bool resElemFound = SearchLocalElements( mesh, location, m_searchDepth,
+    bool resElemFound = searchLocalElements( mesh, location, m_searchDepth,
                                              erInit, esrInit, eiInit,
                                              erMatched, esrMatched, eiMatched );
 
@@ -537,11 +533,12 @@ void WellElementSubRegion::checkPartitioningValidity( InternalWellGenerator cons
       globalIndex const numBranches = prevElemIdsGlobal[iwelemGlobal].size();
       globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches-1];
 
-      GEOSX_ERROR_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
-                      "The structure of well " << getName() << " is invalid. " <<
+      GEOSX_THROW_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
+                      "The structure of well " << wellGeometry.getName() << " is invalid. " <<
                       " The main reason for this error is that there may be no perforation" <<
                       " in the bottom well element of the well, which is required to have" <<
-                      " a well-posed problem." );
+                      " a well-posed problem.",
+                      InputError );
 
       if( elemStatusGlobal[prevGlobal] == WellElemStatus::LOCAL )
       {
@@ -798,12 +795,12 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
     //         note that this reservoir element does not necessarily contain the center of the well element
     //         this "init" reservoir element will be used in SearchLocalElements to find the reservoir element that
     //         contains the well element
-    InitializeLocalSearch( mesh, location,
+    initializeLocalSearch( mesh, location,
                            erInit, esrInit, eiInit );
 
     // Step 2: then, search for the reservoir element that contains the well element
     //         to do that, we loop over the reservoir elements that are in the neighborhood of (erInit,esrInit,eiInit)
-    bool resElemFound = SearchLocalElements( mesh, location, m_searchDepth,
+    bool resElemFound = searchLocalElements( mesh, location, m_searchDepth,
                                              erInit, esrInit, eiInit,
                                              erMatched, esrMatched, eiMatched );
 
@@ -910,90 +907,6 @@ void WellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
   ObjectManagerBase::fixUpDownMaps( nodeList(),
                                     m_unmappedGlobalIndicesInNodelist,
                                     clearIfUnmapped );
-}
-
-void WellElementSubRegion::debugNodeManager( MeshLevel const & mesh ) const
-{
-  NodeManager const & nodeManager = mesh.getNodeManager();
-  // arrayView2d< real64 const > const & X = nodeManager.referencePosition();
-
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != 1 )
-  {
-    return;
-  }
-
-  GEOSX_LOG_RANK( "++++++++++++++++++++++++++" );
-  GEOSX_LOG_RANK( "WellElementSubRegion = " << getName() );
-  GEOSX_LOG_RANK( "Number of local well elements = " << size() );
-  GEOSX_LOG_RANK( "Number of local node elements = " << nodeManager.size() );
-
-  if( nodeManager.size() > 0 )
-  {
-    return;
-  }
-
-  arrayView1d< globalIndex const > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
-  for( localIndex inodeLocal = 0; inodeLocal < nodeManager.size(); ++inodeLocal )
-  {
-    std::cout << "nodeManager.localToGlobalMap["    << inodeLocal << "] = " << nodeLocalToGlobal[inodeLocal]  << std::endl;
-  }
-}
-
-void WellElementSubRegion::debugWellElementSubRegions( arrayView1d< integer const > const & elemStatusGlobal, globalIndex elemOffsetGlobal ) const
-{
-  if( size() == 0 )
-  {
-    return;
-  }
-
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) < 1 )
-  {
-    return;
-  }
-
-  GEOSX_LOG_RANK( "++++++++++++++++++++++++++" );
-  GEOSX_LOG_RANK( "WellElementSubRegion = " << getName() );
-  GEOSX_LOG_RANK( "Number of local well elements = " << size() );
-
-  for( localIndex iwelem = 0; iwelem < size(); ++iwelem )
-  {
-    GEOSX_LOG_RANK_VAR( iwelem );
-    GEOSX_LOG_RANK_VAR( m_nextWellElementIndex[iwelem] );
-    GEOSX_LOG_RANK_VAR( m_nextWellElementIndexGlobal[iwelem] );
-    GEOSX_LOG_RANK_VAR( m_elementCenter[iwelem] );
-    GEOSX_LOG_RANK_VAR( m_localToGlobalMap[iwelem] );
-    GEOSX_LOG_RANK_VAR( elemStatusGlobal[m_localToGlobalMap[iwelem] - elemOffsetGlobal] );
-    GEOSX_LOG_RANK_VAR( m_topWellElementIndex );
-  }
-}
-
-void WellElementSubRegion::debugWellElementSubRegionsAfterSetupCommunications() const
-{
-  if( size() == 0 )
-  {
-    return;
-  }
-
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != 1 )
-  {
-    return;
-  }
-
-  GEOSX_LOG_RANK( "++++++++++++++++++++++++++" );
-  GEOSX_LOG_RANK( "WellElementSubRegion = " << getName() );
-  GEOSX_LOG_RANK( "Number of local well elements = " << size() );
-  GEOSX_LOG_RANK( "Number of ghost well elements = " << this->getNumberOfGhosts() );
-
-  for( localIndex iwelem = 0; iwelem < size(); ++iwelem )
-  {
-    GEOSX_LOG_RANK_VAR( iwelem );
-    GEOSX_LOG_RANK_VAR( m_nextWellElementIndex[iwelem] );
-    GEOSX_LOG_RANK_VAR( m_nextWellElementIndexGlobal[iwelem] );
-    GEOSX_LOG_RANK_VAR( m_elementCenter[iwelem] );
-    GEOSX_LOG_RANK_VAR( m_localToGlobalMap[iwelem] );
-    GEOSX_LOG_RANK_VAR( m_ghostRank[iwelem] );
-    GEOSX_LOG_RANK_VAR( m_topWellElementIndex );
-  }
 }
 
 }

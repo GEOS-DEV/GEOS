@@ -84,6 +84,9 @@ public:
   // Use transverse isotropic form of inner product compression
   using DiscretizationOps = SolidModelDiscretizationOpsTransverseIsotropic;
 
+  /// Use base version of saveConvergedState
+  using SolidBaseUpdates::saveConvergedState;
+
   // total strain interfaces
 
   GEOSX_HOST_DEVICE
@@ -535,7 +538,7 @@ public:
    *        data in this.
    * @return An instantiation of ElasticTransverseIsotropicUpdates.
    */
-  ElasticTransverseIsotropicUpdates createKernelUpdates()
+  ElasticTransverseIsotropicUpdates createKernelUpdates() const
   {
     return ElasticTransverseIsotropicUpdates( m_c11,
                                               m_c13,
