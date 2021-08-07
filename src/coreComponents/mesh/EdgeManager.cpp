@@ -86,11 +86,7 @@ void EdgeManager::buildEdges( CellBlockManagerABC const & cellBlockManager,
   resize( cellBlockManager.numEdges() );
 
   faceManager.edgeList().base() = cellBlockManager.getFaceToEdges();
-  // FIXME I don't know what I am doing...
-  auto const & edgeToFaces = cellBlockManager.getEdgeToFaces();
-  m_toFacesRelation.base().reserve( edgeToFaces.size() );
-  m_toFacesRelation.base().reserveValues( edgeToFaces.valueCapacity() );
-  m_toFacesRelation.base() = edgeToFaces;
+  m_toFacesRelation.base() = cellBlockManager.getEdgeToFaces();
 
   m_toNodesRelation.base() = cellBlockManager.getEdgeToNodes();
 

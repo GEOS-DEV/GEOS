@@ -94,7 +94,7 @@ void NodeManager::setFaceMaps( CellBlockManagerABC const & cellBlockManager, Fac
 {
   GEOSX_MARK_FUNCTION;
 
-  m_toFacesRelation = cellBlockManager.getNodeToFaces();
+  m_toFacesRelation.base() = cellBlockManager.getNodeToFaces();
 
   m_toFacesRelation.setRelatedObject( faceManager );
 }
