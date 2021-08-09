@@ -31,8 +31,8 @@ class ConstantPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  ConstantPermeabilityUpdate( arrayView2d< real64 > const & permeability,
-                              arrayView2d< real64 > const & dPerm_dPressure )
+  ConstantPermeabilityUpdate( arrayView3d< real64 > const & permeability,
+                              arrayView3d< real64 > const & dPerm_dPressure )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure )
   {}
 
@@ -44,9 +44,8 @@ private:
 class ConstantPermeability : public PermeabilityBase
 {
 public:
-  ConstantPermeability( string const & name, Group * const parent );
 
-  virtual ~ConstantPermeability() override;
+  ConstantPermeability( string const & name, Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -78,9 +77,11 @@ public:
   } viewKeys;
 
 protected:
+
   virtual void postProcessInput() override;
 
 private:
+
   R1Tensor m_permeabilityComponents;
 
 };
