@@ -293,7 +293,7 @@
 		<!--beginTime => time at which BC will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--component => Component of field (if tensor) to apply boundary condition to-->
-		<xsd:attribute name="component" type="integer" default="0" />
+		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--direction => Direction to apply boundary condition to-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => time at which bc will stop being applied-->
@@ -319,7 +319,7 @@
 		<!--beginTime => time at which BC will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--component => Component of field (if tensor) to apply boundary condition to-->
-		<xsd:attribute name="component" type="integer" default="0" />
+		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--direction => Direction to apply boundary condition to-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => time at which bc will stop being applied-->
@@ -345,7 +345,7 @@
 		<!--beginTime => time at which BC will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--component => Component of field (if tensor) to apply boundary condition to-->
-		<xsd:attribute name="component" type="integer" default="0" />
+		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--direction => Direction to apply boundary condition to-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => time at which bc will stop being applied-->

@@ -665,15 +665,18 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
 template< typename T >
 int MpiWrapper::allReduce( T const * const sendbuf,
                            T * const recvbuf,
-                           int count,
+                           int const count,
                            MPI_Op MPI_PARAM( op ),
                            MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   MPI_Datatype const MPI_TYPE = getMpiType< T >();
-  return MPI_Allreduce( sendbuf, recvbuf, count, MPI_TYPE, op, comm );
+  return MPI_Allreduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, MPI_TYPE, op, comm );
 #else
-  memcpy( recvbuf, sendbuf, count*sizeof(T) );
+  if( sendbuf != recvbuf )
+  {
+    memcpy( recvbuf, sendbuf, count * sizeof( T ) );
+  }
   return 0;
 #endif
 }

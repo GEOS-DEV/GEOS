@@ -31,9 +31,9 @@ class CarmanKozenyPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  CarmanKozenyPermeabilityUpdate( arrayView2d< real64 > const & permeability,
-                                  arrayView2d< real64 > const & dPerm_dPressure,
-                                  arrayView2d< real64 > const & dPerm_dPorosity,
+  CarmanKozenyPermeabilityUpdate( arrayView3d< real64 > const & permeability,
+                                  arrayView3d< real64 > const & dPerm_dPressure,
+                                  arrayView3d< real64 > const & dPerm_dPorosity,
                                   real64 const particleDiameter,
                                   real64 const sphericity )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
@@ -52,17 +52,15 @@ public:
                                    localIndex const q,
                                    real64 const & porosity ) const override
   {
-    GEOSX_UNUSED_VAR( q ); // to do: perm will have to be define per quadrature point.
-
     compute( porosity,
-             m_permeability[k],
-             m_dPerm_dPorosity[k] );
+             m_permeability[k][q],
+             m_dPerm_dPorosity[k][q] );
   }
 
 private:
 
   /// dPermeability_dPorosity
-  arrayView2d< real64 > m_dPerm_dPorosity;
+  arrayView3d< real64 > m_dPerm_dPorosity;
 
   /// Particle diameter
   real64 m_particleDiameter;
@@ -76,9 +74,8 @@ private:
 class CarmanKozenyPermeability : public PermeabilityBase
 {
 public:
-  CarmanKozenyPermeability( string const & name, Group * const parent );
 
-  virtual ~CarmanKozenyPermeability() override = default;
+  CarmanKozenyPermeability( string const & name, Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -114,12 +111,10 @@ public:
     static constexpr char const * sphericityString() { return "sphericity"; }
   } viewKeys;
 
-protected:
-  virtual void postProcessInput() override;
-
 private:
+
   /// dPermeability_dPorosity
-  array2d< real64 > m_dPerm_dPorosity;
+  array3d< real64 > m_dPerm_dPorosity;
 
   /// Particle diameter
   real64 m_particleDiameter;
@@ -155,4 +150,4 @@ void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
 } /* namespace geosx */
 
 
-#endif //GEOSX_CONSTITUTIVE_PERMEABILITY_FRACTUREPERMEABILITY_HPP_
+#endif //GEOSX_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_

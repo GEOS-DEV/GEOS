@@ -94,7 +94,7 @@
       name="mesh"
       file="../../../../../../../GEOSXDATA/DataSets/SPE10/EclipseBottomLayers/SPE10_LAYERS_83_84_85.GRDECL"
       fieldsToImport="{ PERM, PORO }"
-      fieldNamesInGEOSX="{ permeability, referencePorosity }"/>
+      fieldNamesInGEOSX="{ rockPerm_permeability, referencePorosity }"/>
 
     <InternalWell
       name="wellProducer1"
@@ -220,8 +220,20 @@
 
     <PeriodicEvent
       name="timeHistoryOutput"
-      timeFrequency="1.5e7"
-      target="/Outputs/timeHistoryOutput"/>
+      timeFrequency="1.5e7">
+      <PeriodicEvent
+        name="timeHistoryOutput1"
+        target="/Outputs/timeHistoryOutput1"/>
+      <PeriodicEvent
+        name="timeHistoryOutput2"
+        target="/Outputs/timeHistoryOutput2"/>
+      <PeriodicEvent
+        name="timeHistoryOutput3"
+        target="/Outputs/timeHistoryOutput3"/>
+      <PeriodicEvent
+        name="timeHistoryOutput4"
+        target="/Outputs/timeHistoryOutput4"/>
+    </PeriodicEvent>
 
     <PeriodicEvent
       name="solverApplications"
@@ -354,9 +366,24 @@
       name="restartOutput"/>
 
     <TimeHistory
-      name="timeHistoryOutput"
-      sources="{ /Tasks/wellRateCollection1, /Tasks/wellRateCollection2, /Tasks/wellRateCollection3, /Tasks/wellRateCollection4 }"
-      filename="wellRateHistory"/>
+      name="timeHistoryOutput1"
+      sources="{ /Tasks/wellRateCollection1 }"
+      filename="wellRateHistory1"/>
+
+    <TimeHistory
+      name="timeHistoryOutput2"
+      sources="{ /Tasks/wellRateCollection2 }"
+      filename="wellRateHistory2"/>
+
+    <TimeHistory
+      name="timeHistoryOutput3"
+      sources="{ /Tasks/wellRateCollection3 }"
+      filename="wellRateHistory3"/>
+
+    <TimeHistory
+      name="timeHistoryOutput4"
+      sources="{ /Tasks/wellRateCollection4 }"
+      filename="wellRateHistory4"/>
   </Outputs>
 
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT_END -->

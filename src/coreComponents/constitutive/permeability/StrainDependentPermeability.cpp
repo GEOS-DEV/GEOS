@@ -31,8 +31,6 @@ StrainDependentPermeability::StrainDependentPermeability( string const & name, G
   PermeabilityBase( name, parent )
 {}
 
-StrainDependentPermeability::~StrainDependentPermeability() = default;
-
 std::unique_ptr< ConstitutiveBase >
 StrainDependentPermeability::deliverClone( string const & name,
                                            Group * const parent ) const
@@ -45,9 +43,6 @@ void StrainDependentPermeability::allocateConstitutiveData( dataRepository::Grou
 {
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
-
-void StrainDependentPermeability::postProcessInput()
-{}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, StrainDependentPermeability, string const &, Group * const )
 
