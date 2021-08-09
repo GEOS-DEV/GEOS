@@ -113,6 +113,11 @@ public:
   void generateMesh();
 
   /**
+   * @brief Import field data from external sources (e.g. mesh generator).
+   */
+  void importFields();
+
+  /**
    * @brief Allocates constitutive relations according to the discretizations
    *   on each subregion.
    */
