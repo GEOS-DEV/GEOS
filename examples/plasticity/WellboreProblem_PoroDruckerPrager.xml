@@ -49,8 +49,8 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
   <ExtendedDruckerPrager 
     name="rock"
     defaultDensity="2700"
-    defaultBulkModulus="11111111111.1"
-    defaultShearModulus="8333333333.33"
+    defaultBulkModulus="1.111e10"
+    defaultShearModulus="8.333e9"
     defaultCohesion="1.0e6"
     defaultInitialFrictionAngle="15.27"
     defaultResidualFrictionAngle="23.05"
@@ -190,7 +190,7 @@ Reference: Cheng, A. H. D. (2016). Poroelasticity (Vol. 877). Switzerland: Sprin
 <!-- SPHINX_WELLBORE_POROELASTICSOLVER -->
 <Solvers gravityVector="{0.0, 0.0, 0.0}">
 <SinglePhasePoromechanics 
-  name="PoroelasticitySolver" 
+  name="PoromechanicsSolver" 
   solidSolverName="mechanicsSolver"
   fluidSolverName="SinglePhaseFlowSolver"
   porousMaterialNames="{porousRock}"
