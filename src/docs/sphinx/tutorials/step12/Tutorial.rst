@@ -8,7 +8,7 @@ Tutorial 12: PoroMechanical Models for Wellbore Problems
 
 **Context**
 
-The main objective of this tutorial is to demonstrate how to use the internal wellbore mesh generator and poromechanical solvers in GEOSX to tackle wellbore problems in porous media. In this tutorial, a poroplastic model is applied to find the solution of rock deformation within the vicinity of a vertical wellbore, considering elastoplastic deformation, fluid diffusion and poromechanical coupling effect. To do so, a single phase flow solver is fully coupled with a Lagrangian mechanics solver in GEOSX and the Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is chosen as the material model for the solid domain. We first solve this problem with the existing poroelastic solver and verify the modeling results with the corresponding analytical solutions. Then, the verified case is employed to test the newly implemented poroplasticity solver in GEOSX, whose results are compared with the ones obtained from the poroelastic case to highlight the impact of plasticity in this specific problem.
+The main objective of this tutorial is to demonstrate how to use the internal wellbore mesh generator and poromechanical solvers in GEOSX to tackle wellbore problems in porous media. In this tutorial, a poroplastic model is applied to find the solution of rock deformation within the vicinity of a vertical wellbore, considering elastoplastic deformation, fluid diffusion and poromechanical coupling effect. To do so, a single phase flow solver is fully coupled with a Lagrangian mechanics solver and the Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is chosen as the material model for the solid domain. We first solve this problem with a poroelastic model and verify the modeling results with the corresponding analytical solutions. Then, the verified case is modified to test a poroplastic version, whose results are compared with the ones obtained from the poroelastic case to highlight the impact of plasticity in this specific problem.
  
 
 **Objectives**
@@ -43,7 +43,7 @@ The xml input file for the test case with poroplasticity is located at:
 Description of the case
 ------------------------------------------------------------------
 
-We simulate the wellbore problem subjected to anisotropic horizontal stress (:math:`\Sigma_h` and :math:`\Sigma_H`) and vertical stress (:math:`\Sigma_v`), as shown in Fig.1. This is a vertical wellbore, which is drilled in a porous medium. By changing the wellbore supporting pressure (could be traction and/or fluid loading), the mechanical deformation of the reservoir rock will be induced and evolve with time, due to fluid diffusion and coupling effect. Considering inelastic constitutive behavior, reservoir rock in the near wellbore region will experience elastoplastic deformation and a plastic zone will be developed and expand with time. To setup the base case, the poroelastic solver is employed to find the poroelastic solutions of this wellbore problem, which are verified with the analytical solution `(Detournay and Cheng, 1993)  <https://www.sciencedirect.com/science/article/pii/B9780080406152500113>`__ from the literature. Following that, a poroplastic solver in GEOSX is built and used to obtain the temporal and spatial solutions of pore pressure, displacement and stress fields around the wellbore, considering induced plastic deformation. 
+We simulate the wellbore problem subjected to anisotropic horizontal stress (:math:`\Sigma_h` and :math:`\Sigma_H`) and vertical stress (:math:`\Sigma_v`), as shown in Fig.1. This is a vertical wellbore, which is drilled in a porous medium. By changing the wellbore supporting pressure, the mechanical deformation of the reservoir rock will be induced and evolve with time, due to fluid diffusion and coupling effect. Considering inelastic constitutive behavior, the reservoir rock in the near wellbore region will experience elastoplastic deformation and a plastic zone will be developed and expand with time. To setup the base case, a poroelastic version is employed to find the poroelastic solutions of this wellbore problem, which are verified with the analytical solution `(Detournay and Cheng, 1993)  <https://www.sciencedirect.com/science/article/pii/B9780080406152500113>`__ from the literature. Following that, a poroplastic version is built and used to obtain the temporal and spatial solutions of pore pressure, displacement and stress fields around the wellbore, considering induced plastic deformation. 
 
 
 .. _problemSketchFig:
@@ -107,9 +107,9 @@ Then, we customize a *coupling solver* between these single-physics
 solvers as an additional solver.
 This approach allows for generality and flexibility in constructing multi-physics solvers.
 The order of specifying these solvers is not restricted in GEOSX.
-Note that end-users should give each single-physic solver a meaningful and distinct name, as GEOSX will recognize these single-physics solvers based on their customized names and create user-expected coupling.
+Note that end-users should give each single-physics solver a meaningful and distinct name, as GEOSX will recognize these single-physics solvers based on their customized names and create user-expected coupling.
 
-As demonstrated in this tutorial, to setup a poro-mechanical coupling, we need to effectively define three different solvers in the XML file:
+As demonstrated in this tutorial, to setup a poromechanical coupling, we need to define three different solvers in the XML file:
 
 - the small strain Lagrangian mechanics solver, a solver of type ``SolidMechanics_LagrangianFEM`` called here ``mechanicsSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
 
@@ -141,7 +141,7 @@ in their corresponding documents.
 In this tutorial, let us focus on the coupling solver.
 This solver (``PoroelasticitySolver``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``SinglePhaseFlowSolver``) and solid solver (here: ``mechanicsSolver``).
-These solvers are forced to interact through the ``porousMaterialNames="{porousRock}"`` with all the constitutive models. We specify the the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Omega``).
+These solvers are forced to interact through the ``porousMaterialNames="{porousRock}"`` with all the constitutive models. We specify the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Omega``).
 And more parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics solvers will be simultaneously called and executed for solving the wellbore problem here.
 
 
@@ -171,7 +171,7 @@ Constitutive model: defining material properties with constitutive laws
 For this test problem, the solid and fluid materials are named as ``rock`` and ``water`` respectively, whose mechanical properties are specified in the ``Constitutive`` section. In this tutorial, different material models, linear elastic isotropic model (see :ref:`LinearElasticIsotropic`) and Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`), are used to solve the mechanical deformation, which is the only difference between the poroelastic and poroplastic cases in this tutorial.
 
 
-For the poroelastic case, linear elastic isotropic solid model ``PoroElasticIsotropic`` is used to describe the linear elastic isotropic response of ``rock`` to loading. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the transport phenomenon of ``water`` upon injection:
+For the poroelastic case, linear elastic isotropic solid model ``PoroElasticIsotropic`` is used to describe the linear elastic isotropic response of ``rock`` to loading. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the flow of ``water`` upon injection:
 
 .. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_PoroElastic.xml
     :language: xml
@@ -179,7 +179,7 @@ For the poroelastic case, linear elastic isotropic solid model ``PoroElasticIsot
     :end-before: <!-- SPHINX_WELLBORE_MATERIAL_END -->
 
 
-For the poroplastic case, Extended Drucker-Prager model ``PoroExtendedDruckerPrager`` is used to simulate the elastoplastic behavior of ``rock``. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is employed to handle the storage and transport of ``water``: 
+For the poroplastic case, Extended Drucker-Prager model ``PoroExtendedDruckerPrager`` is used to simulate the elastoplastic behavior of ``rock``. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is employed to handle the storage and flow of ``water``: 
 
 
 .. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_PoroDruckerPrager.xml
@@ -189,12 +189,12 @@ For the poroplastic case, Extended Drucker-Prager model ``PoroExtendedDruckerPra
 
 
 As for the material parameters, ``defaultInitialFrictionAngle``, ``defaultResidualFrictionAngle`` and ``defaultCohesion`` denote the initial friction angle, the residual friction angle, and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope in the :math:`\Sigma` - :math:`\Tau` plane.
-As the residual friction angle ``defaultResidualFrictionAngle`` is larger than the initial one ``defaultInitialFrictionAngle``, the strain hardening model is automatically chosen, whose hardening rate is given as ``defaultHardening="0.01"``. 
+As the residual friction angle ``defaultResidualFrictionAngle`` is larger than the initial one ``defaultInitialFrictionAngle``, a strain hardening model is automatically chosen, whose hardening rate is given as ``defaultHardening="0.01"``. 
 If the residual friction angle is set to be less than the initial one, strain weakening will take place. 
 And ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
 For this coupled problem, the Biot’s coefficient ``BiotCoefficient`` is assumed to be 1.
-If using an incompressible fluid, user can lower the fluid compressibility ``compressibility`` to 0.
-The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units. And stress-dependent porosity model ``rockPorosity`` and constant permeability ``rockPerm`` model are defined in this section.
+If using an incompressible fluid, the user can lower the fluid compressibility ``compressibility`` to 0.
+The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units. A stress-dependent porosity model ``rockPorosity`` and constant permeability ``rockPerm`` model are defined in this section.
 
 
 
@@ -235,7 +235,7 @@ You may note :
  - ``nodeManager`` and ``faceManager`` in the ``objectPath`` indicate that the boundary conditions are applied to the element nodes and faces, respectively;
  - ``fieldName`` is the name of the field registered in GEOSX;
  - Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively;
- - And the non-zero values given by ``Scale`` indicate the magnitude of the loading;
+ - And the non-zero values given by ``scale`` indicate the magnitude of the loading;
  - Some shorthands, such as ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain. For instance, ``xneg`` means the portion of the computational domain located at the left-most in the x-axis, while ``xpos`` refers to the portion located at the right-most area in the x-axis. Similar shorthands include ``ypos``, ``yneg``, ``zpos``, and ``zneg``;
  - The mud pressure loading has a negative value due to the negative sign convention for compressive stress in GEOSX. 
 
@@ -323,7 +323,7 @@ For the same 3D wellbore problem, the poroplastic case is thereafter tested and 
    Fig.5 Simulation result of Syy: PoroElastic vs. PoroPlastic
 
 
-By using python scripts, we can extract the simulation results along any direction and provide detailed comparisons between different cases. Here, the pore pressure, radial displacement, radial and tangential effective stresses along the direction of minimum horizontal stress are obtained at different time steps and plotted against the corresponding ones of the poroelastic case. Because of fluid diffusion and coupling effect, Fig.6 shows that these solutions evolve with time for both cases. As mentioned above, plastic zone is developed in the vicinity of the wellbore, due to stress concentration. As for the far field region, these two cases become almost identical, as the rock deformation is governed by poroelasticity.    
+By using python scripts, we can extract the simulation results along any direction and provide detailed comparisons between different cases. Here, the pore pressure, radial displacement, radial and tangential effective stresses along the direction of minimum horizontal stress are obtained at different time steps and plotted against the corresponding ones of the poroelastic case. Because of fluid diffusion and coupling effect, Fig.6 shows that these solutions evolve with time for both cases. As mentioned above, a plastic zone is developed in the vicinity of the wellbore, due to stress concentration. As for the far field region, these two cases become almost identical, with the rock deformation governed by poroelasticity.    
 
 
 .. _problemVerificationFig2:
@@ -332,7 +332,7 @@ By using python scripts, we can extract the simulation results along any directi
    :width: 1000
    :figclass: align-center
 
-   Fig.6 Comparing PoroPlastic case with PoroElastic case at different time
+   Fig.6 Comparing the PoroPlastic case with the PoroElastic case at different times
 
  
 
@@ -353,5 +353,4 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
   - More on plasticity models, please see :ref:`TwoInvariantPlasticity`.
   - More on wellbore meshes, please see :ref:`InternalWellbore`.
   - More on multiphysics solvers, please see :ref:`PoroelasticSolver`.
-
 
