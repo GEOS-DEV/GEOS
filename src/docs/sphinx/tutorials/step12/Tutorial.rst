@@ -43,7 +43,7 @@ The xml input file for the test case with poroplasticity is located at:
 Description of the case
 ------------------------------------------------------------------
 
-We simulate the wellbore problem subjected to anisotropic horizontal stress (:math:`\Sigma_h` and :math:`\Sigma_H`) and vertical stress (:math:`\Sigma_v`), as shown in Fig.1. This is a vertical wellbore, which is drilled in a porous medium. By changing the wellbore supporting pressure, the mechanical deformation of the reservoir rock will be induced and evolve with time, due to fluid diffusion and coupling effect. Considering inelastic constitutive behavior, the reservoir rock in the near wellbore region will experience elastoplastic deformation and a plastic zone will be developed and expand with time. To setup the base case, a poroelastic version is employed to find the poroelastic solutions of this wellbore problem, which are verified with the analytical solution `(Detournay and Cheng, 1993)  <https://www.sciencedirect.com/science/article/pii/B9780080406152500113>`__ from the literature. Following that, a poroplastic version is built and used to obtain the temporal and spatial solutions of pore pressure, displacement and stress fields around the wellbore, considering induced plastic deformation. 
+We simulate the wellbore problem subjected to anisotropic horizontal stress (:math:`\sigma_h` and :math:`\sigma_H`) and vertical stress (:math:`\sigma_v`), as shown in Fig.1. This is a vertical wellbore, which is drilled in a porous medium. By changing the wellbore supporting pressure, the mechanical deformation of the reservoir rock will be induced and evolve with time, due to fluid diffusion and coupling effect. Considering inelastic constitutive behavior, the reservoir rock in the near wellbore region will experience elastoplastic deformation and a plastic zone will be developed and expand with time. To setup the base case, a poroelastic version is employed to find the poroelastic solutions of this wellbore problem, which are verified with the analytical solution `(Detournay and Cheng, 1993)  <https://www.sciencedirect.com/science/article/pii/B9780080406152500113>`__ from the literature. Following that, a poroplastic version is built and used to obtain the temporal and spatial solutions of pore pressure, displacement and stress fields around the wellbore, considering induced plastic deformation. 
 
 
 .. _problemSketchFig:
@@ -188,7 +188,7 @@ For the poroplastic case, Extended Drucker-Prager model ``PoroExtendedDruckerPra
     :end-before: <!-- SPHINX_WELLBORE_MATERIAL_END -->
 
 
-As for the material parameters, ``defaultInitialFrictionAngle``, ``defaultResidualFrictionAngle`` and ``defaultCohesion`` denote the initial friction angle, the residual friction angle, and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope in the :math:`\Sigma` - :math:`\Tau` plane.
+As for the material parameters, ``defaultInitialFrictionAngle``, ``defaultResidualFrictionAngle`` and ``defaultCohesion`` denote the initial friction angle, the residual friction angle, and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope.
 As the residual friction angle ``defaultResidualFrictionAngle`` is larger than the initial one ``defaultInitialFrictionAngle``, a strain hardening model is automatically chosen, whose hardening rate is given as ``defaultHardening="0.01"``. 
 If the residual friction angle is set to be less than the initial one, strain weakening will take place. 
 ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
@@ -206,7 +206,7 @@ The next step is to specify fields, including:
   - The initial value (the in-situ stresses and pore pressure have to be initialized)
   - The boundary conditions (traction and fluid loading at the wellbore wall and constraints of the outer boundaries have to be set)
 
-In this tutorial, we need to specify anisotropic horizontal stress (:math:`\Sigma_h` = -9.0 MPa and :math:`\Sigma_H` = -11.0 MPa) and vertical stress (:math:`\Sigma_v` = -12.0 MPa). 
+In this tutorial, we need to specify anisotropic horizontal stress (:math:`\sigma_h` = -9.0 MPa and :math:`\sigma_H` = -11.0 MPa) and vertical stress (:math:`\sigma_v` = -12.0 MPa). 
 A compressive traction (``InnerMechanicalLoad``) :math:`P_w` = -10 MPa and fluid loading (``InnerFluidLoad``) :math:`P_wf` = 10 MPa are applied at the wellbore wall ``rneg``.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
@@ -258,11 +258,11 @@ The parameters used in the simulation are summarized in the following table, whi
 +------------------+-------------------------+------------------+--------------------+
 | :math:`c_h`      | Hardening Rate          | [-]              | 0.01               |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`\Sigma_h` | Min Horizontal Stress   | [MPa]            | -9.0               |
+| :math:`\sigma_h` | Min Horizontal Stress   | [MPa]            | -9.0               |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`\Sigma_H` | Max Horizontal Stress   | [MPa]            | -11.0              |
+| :math:`\sigma_H` | Max Horizontal Stress   | [MPa]            | -11.0              |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`\Sigma_v` | Vertical Stress         | [MPa]            | -12.0              |
+| :math:`\sigma_v` | Vertical Stress         | [MPa]            | -12.0              |
 +------------------+-------------------------+------------------+--------------------+
 | :math:`a_0`      | Initial Well Radius     | [m]              | 0.1                |
 +------------------+-------------------------+------------------+--------------------+
@@ -311,7 +311,7 @@ For the above poroelastic example, an analytical solution `(Detournay and Cheng,
 
 
 
-For the same 3D wellbore problem, the poroplastic case is thereafter tested and compared with the poroelastic one. Fig.5 shows the distribution of :math:`\Sigma_yy` in the near wellbore region for both cases. As observed, a relaxation of the tangential stress along the direction of minimum horizontal stress is detected for the poroplastic case, which can be attributed to the plastic response of the rock.
+For the same 3D wellbore problem, the poroplastic case is thereafter tested and compared with the poroelastic one. Fig.5 shows the distribution of :math:`\sigma_yy` in the near wellbore region for both cases. As observed, a relaxation of the tangential stress along the direction of minimum horizontal stress is detected for the poroplastic case, which can be attributed to the plastic response of the rock.
 
 
 .. _problemVerificationFig3:
