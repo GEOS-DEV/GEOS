@@ -88,7 +88,7 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
 ``cb1``.
 
 
-.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_PoroDruckerPrager.xml
+.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_Base.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_MESH -->
     :end-before: <!-- SPHINX_WELLBORE_MESH_END -->
@@ -111,9 +111,9 @@ Note that end-users should give each single-physics solver a meaningful and dist
 
 As demonstrated in this tutorial, to setup a poromechanical coupling, we need to define three different solvers in the XML file:
 
-- the small strain Lagrangian mechanics solver, a solver of type ``SolidMechanics_LagrangianFEM`` called here ``mechanicsSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
+- the mechanics solver, a solver of type ``SolidMechanics_LagrangianFEM`` called here ``mechanicsSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
 
-.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_PoroDruckerPrager.xml
+.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_Base.xml
   :language: xml
   :start-after: <!-- SPHINX_WELLBORE_MECHANICALSOLVER -->
   :end-before: <!-- SPHINX_WELLBORE_MECHANICALSOLVER_END -->
@@ -121,15 +121,15 @@ As demonstrated in this tutorial, to setup a poromechanical coupling, we need to
 
 - the single-phase flow solver, a solver of type ``SinglePhaseFVM`` called here ``SinglePhaseFlowSolver`` (more information on these solvers at :ref:`SinglePhaseFlow`),
 
-.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_PoroDruckerPrager.xml
+.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_Base.xml
   :language: xml
   :start-after: <!-- SPHINX_WELLBORE_SINGLEPHASEFVM -->
   :end-before: <!-- SPHINX_WELLBORE_SINGLEPHASEFVM_END -->
 
 
-- the coupling solver (``Poroelastic``) that will bind the two single-physics solvers above, which is named as ``PoroelasticitySolver`` (more information at :ref:`PoroelasticSolver`).
+- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``PoromechanicsSolver`` (more information at :ref:`SinglePhasePoromechanics`).
 
-.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_PoroDruckerPrager.xml
+.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_Base.xml
   :language: xml
   :start-after: <!-- SPHINX_WELLBORE_POROELASTICSOLVER -->
   :end-before: <!-- SPHINX_WELLBORE_POROELASTICSOLVER_END -->
@@ -139,10 +139,10 @@ The two single-physics solvers are parameterized as explained
 in their corresponding documents. 
 
 In this tutorial, let us focus on the coupling solver.
-This solver (``PoroelasticitySolver``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
+This solver (``PoromechanicsSolver``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``SinglePhaseFlowSolver``) and solid solver (here: ``mechanicsSolver``).
 These solvers are forced to interact through the ``porousMaterialNames="{porousRock}"`` with all the constitutive models. We specify the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Omega``).
-And more parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics solvers will be simultaneously called and executed for solving the wellbore problem here.
+More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics solvers will be simultaneously called and executed for solving the wellbore problem here.
 
 
 Numerical methods: specifying discretization methods for multiphysics solvers
@@ -159,7 +159,7 @@ please see the dedicated :ref:`FiniteElement` section.
 The finite volume method requires the specification of a discretization scheme.
 Here, we use a two-point flux approximation scheme (``singlePhaseTPFA``), as described in the dedicated documentation (found here: :ref:`FiniteVolume`).
 
-.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_PoroDruckerPrager.xml
+.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_Base.xml
   :language: xml
   :start-after: <!-- SPHINX_WELLBORE_NUMERICAL -->
   :end-before: <!-- SPHINX_WELLBORE_NUMERICAL_END -->
@@ -191,7 +191,7 @@ For the poroplastic case, Extended Drucker-Prager model ``PoroExtendedDruckerPra
 As for the material parameters, ``defaultInitialFrictionAngle``, ``defaultResidualFrictionAngle`` and ``defaultCohesion`` denote the initial friction angle, the residual friction angle, and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope in the :math:`\Sigma` - :math:`\Tau` plane.
 As the residual friction angle ``defaultResidualFrictionAngle`` is larger than the initial one ``defaultInitialFrictionAngle``, a strain hardening model is automatically chosen, whose hardening rate is given as ``defaultHardening="0.01"``. 
 If the residual friction angle is set to be less than the initial one, strain weakening will take place. 
-And ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
+``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
 For this coupled problem, the Biot’s coefficient ``BiotCoefficient`` is assumed to be 1.
 If using an incompressible fluid, the user can lower the fluid compressibility ``compressibility`` to 0.
 The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units. A stress-dependent porosity model ``rockPorosity`` and constant permeability ``rockPerm`` model are defined in this section.
@@ -212,7 +212,7 @@ The remaining parts of the outer boundaries are subjected to roller constraints.
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_PoroDruckerPrager.xml
+.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_Base.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_BC -->
     :end-before: <!-- SPHINX_WELLBORE_BC_END -->
@@ -221,9 +221,9 @@ These boundary conditions are set up through the ``FieldSpecifications`` section
 With ``tractionType="normal"``, traction is applied to the wellbore wall ``rneg`` as a pressure specified from the product of scale ``scale="-10.0e6"`` and the outward face normal. 
 A table function ``timeFunction`` is used to define the time-dependent loading. 
 The ``coordinates`` and ``values`` form a time-magnitude
-pair for the loading time history. In this case, the loading magnitude decreases linearly as the time evolves. 
+pair for the loading time history. In this case, the loading magnitude is given as: 
 
-.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_PoroDruckerPrager.xml
+.. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_Base.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_TABLE -->
     :end-before: <!-- SPHINX_WELLBORE_TABLE_END -->
@@ -285,7 +285,7 @@ The parameters used in the simulation are summarized in the following table, whi
 Inspecting results
 ---------------------------------
 
-As defined in the ``Events`` section, we run this simulation for 497640 seconds. In the above examples, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. 
+As defined in the ``Events`` section, we run this simulation for 497640 seconds. In the above examples, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Please note that a non-dimensional time is used in the analytical solution, and the end time here leads to a non-dimensional end time of t* = 4.62. 
 
 Using the poroelastic solver, Fig.3 shows the prediction of pore pressure distribution upon fluid injection.
 
@@ -350,7 +350,7 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
 **For more details**
 
-  - More on plasticity models, please see :ref:`TwoInvariantPlasticity`.
+  - More on plasticity models, please see :ref:`SolidModels`.
   - More on wellbore meshes, please see :ref:`InternalWellbore`.
-  - More on multiphysics solvers, please see :ref:`PoroelasticSolver`.
+  - More on multiphysics solvers, please see :ref:`SinglePhasePoromechanics`.
 
