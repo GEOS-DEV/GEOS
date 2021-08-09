@@ -73,7 +73,25 @@ public:
    * @param[in] domain the domain partition from which to construct the mesh object
    */
   virtual void generateMesh( DomainPartition & domain ) = 0;
+
+  /**
+   * @brief Import data from external sources (e.g. dataset that comes with a mesh).
+   * @param[in] domain the domain partition
+   */
+  virtual void importFields( DomainPartition & domain ) const
+  {
+    GEOSX_UNUSED_VAR( domain )
+  }
+
+  /**
+   * @brief Free internal resources associated with mesh/data import.
+   *
+   * This is relevant for mesh generators that load external mesh files.
+   * Once this method is called, they can release any memory allocated.
+   */
+  virtual void freeResources() {}
 };
+
 }
 
 #endif /* GEOSX_MESH_GENERATORS_MESHGENERATORBASE_HPP */

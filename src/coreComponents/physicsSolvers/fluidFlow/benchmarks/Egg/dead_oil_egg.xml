@@ -154,7 +154,7 @@
       name="mesh"
       file="../../../../../../../GEOSXDATA/DataSets/Egg/egg.msh"
       fieldsToImport="{ PERM }"
-      fieldNamesInGEOSX="{ permeability }"/>
+      fieldNamesInGEOSX="{ rockPerm_permeability }"/>
 
     <InternalWell
       name="wellProducer1"

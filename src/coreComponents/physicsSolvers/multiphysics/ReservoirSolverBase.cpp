@@ -77,8 +77,8 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
   // loop over the wells
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
-    array1d< array1d< arrayView2d< real64 const > > > const permeability =
-      elemManager.constructMaterialArrayViewAccessor< real64, 2 >( PermeabilityBase::viewKeyStruct::permeabilityString(),
+    array1d< array1d< arrayView3d< real64 const > > > const permeability =
+      elemManager.constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::permeabilityString(),
                                                                    m_flowSolver->targetRegionNames(),
                                                                    m_flowSolver->permeabilityModelNames() );
 

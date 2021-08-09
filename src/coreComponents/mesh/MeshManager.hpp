@@ -58,15 +58,21 @@ public:
 
   /**
    * @brief Generate the meshes of the physical DomainPartition.
-   * @param[in] domain a pointer to the physical DomainPartition
+   * @param[in] domain a reference to the physical domain
    */
   void generateMeshes( DomainPartition & domain );
 
   /**
    * @brief Generate the different mesh levels in a MeshBody of the domain.
-   * @param[in] domain a pointer to the physical DomainPartition
+   * @param[in] domain a reference to the physical domain
    */
   void generateMeshLevels( DomainPartition & domain );
+
+  /**
+   * @brief Import data from external sources (e.g. dataset that comes with a mesh).
+   * @param[in] domain a reference to the physical domain
+   */
+  void importFields( DomainPartition & domain );
 
 private:
 
