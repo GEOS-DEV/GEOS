@@ -21,7 +21,6 @@ The following libraries are linked to by GEOSX:
 ============= ========== =========================== ============================= =====================================
 Name          Version    Enable option               Path variable                 Description
 ============= ========== =========================== ============================= =====================================
-axom_         0.3.1      *mandatory*                 :code:`AXOM_DIR`              CS infrastructure components for HPC applications.
 Adiak_        0.2.0      :code:`ENABLE_CALIPER`      :code:`ADIAK_DIR`             Library for collecting metadata from HPC application runs, and distributing that metadata to subscriber tools.
 Caliper_      2.4.0      :code:`ENABLE_CALIPER`      :code:`CALIPER_DIR`           Instrumentation and performance profiling library.
 conduit_      0.5.0      *mandatory*                 :code:`CONDUIT_DIR`           Simplified Data Exchange for HPC Simulations.
@@ -53,7 +52,6 @@ sphinx_       1.8.5      :code:`ENABLE_SPHINX`       :code:`SPHINX_EXECUTABLE`  
 uncrustify_   401a409    :code:`ENABLE_UNCRUSTIFY`   :code:`UNCRUSTIFY_EXECUTABLE` A source code beautifier for C, C++, C#, ObjectiveC, D, Java, Pawn and VALA.
 ============= ========== =========================== ============================= =====================================
 
-.. _axom : https://github.com/LLNL/axom
 .. _Adiak : https://github.com/LLNL/Adiak
 .. _Caliper: https://github.com/LLNL/Caliper
 .. _conduit: https://github.com/LLNL/conduit
@@ -108,7 +106,7 @@ The recommended steps to build TPLs are:
   * ``--installpath`` or ``-ip`` is the installation directory(wraps ``CMAKE_INSTALL_PREFIX``).
   * ``--buildtype`` or ``-bt`` is a wrapper to the ``CMAKE_BUILD_TYPE`` option.
   * ``--hostconfig`` or ``-hc`` is a path to host-config file.
-  * all unrecognized options are passed to CMake.
+  * all other command-line options are passed to CMake.
 
 - Run the build:
 

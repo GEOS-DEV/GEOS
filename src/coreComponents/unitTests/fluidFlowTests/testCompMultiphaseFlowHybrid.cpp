@@ -38,6 +38,7 @@ char const * xmlInput =
   "                                 targetRegions=\"{Region}\"\n"
   "                                 fluidNames=\"{fluid1}\"\n"
   "                                 solidNames=\"{rock}\"\n"
+  "                                 permeabilityNames=\"{rockPerm}\"\n"
   "                                 relPermNames=\"{relperm}\"\n"
   "                                 temperature=\"297.15\"\n"
   "                                 useMass=\"1\">\n"
@@ -67,7 +68,7 @@ char const * xmlInput =
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
-  "    <CellElementRegion name=\"Region\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm}\" />\n"
+  "    <CellElementRegion name=\"Region\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, rockPerm}\" />\n"
   "  </ElementRegions>\n"
   "  <Constitutive>\n"
   "    <CompositionalMultiphaseFluid name=\"fluid1\"\n"
@@ -91,29 +92,10 @@ char const * xmlInput =
   "                                     phaseMinVolumeFraction=\"{0.1, 0.15}\"\n"
   "                                     phaseRelPermExponent=\"{2.0, 2.0}\"\n"
   "                                     phaseRelPermMaxValue=\"{0.8, 0.9}\"/>\n"
+  "  <ConstantPermeability name=\"rockPerm\"\n"
+  "                      permeabilityComponents=\"{2.0e-16, 2.0e-16, 2.0e-16}\"/> \n"
   "  </Constitutive>\n"
   "  <FieldSpecifications>\n"
-  "    <FieldSpecification name=\"permx\"\n"
-  "               component=\"0\"\n"
-  "               initialCondition=\"1\"  \n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"permy\"\n"
-  "               component=\"1\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"permz\"\n"
-  "               component=\"2\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
   "    <FieldSpecification name=\"referencePorosity\"\n"
   "               initialCondition=\"1\"\n"
   "               setNames=\"{all}\"\n"
@@ -219,14 +201,16 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
     arrayView1d< real64 const > const & pres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::pressureString() );
     pres.move( LvArray::MemorySpace::host, false );
+
     arrayView1d< real64 > const & dPres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaPressureString() );
 
-    arrayView2d< real64 const > const & compDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::globalCompDensityString() );
+    arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::globalCompDensityString() );
     compDens.move( LvArray::MemorySpace::host, false );
-    arrayView2d< real64 > const & dCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaGlobalCompDensityString() );
+
+    arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaGlobalCompDensityString() );
 
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {

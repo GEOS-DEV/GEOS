@@ -617,6 +617,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                   SortedArrayView< localIndex const > const & targetSet )
   {
     integer const component = bc.getComponent();
+    GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+
     forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                             [=] GEOSX_DEVICE ( localIndex const i )
     {
@@ -628,6 +630,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                   SortedArrayView< localIndex const > const & targetSet )
   {
     integer const component = bc.getComponent();
+    GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+
     forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                             [=] GEOSX_DEVICE ( localIndex const i )
     {
@@ -800,8 +804,8 @@ SolidMechanicsLagrangianFEM::
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
     arrayView2d< real64 const, nodes::ACCELERATION_USD > const a_n = nodeManager.acceleration();
-    arrayView1d< R1Tensor > const vtilde = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.vTilde );
-    arrayView1d< R1Tensor > const uhatTilde = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.uhatTilde );
+    arrayView2d< real64 > const vtilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.vTilde );
+    arrayView2d< real64 > const uhatTilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.uhatTilde );
 
     real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
@@ -870,8 +874,8 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
     arrayView2d< real64, nodes::ACCELERATION_USD > const a_n = nodeManager.acceleration();
-    arrayView1d< R1Tensor const > const vtilde    = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.vTilde );
-    arrayView1d< R1Tensor const > const uhatTilde = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.uhatTilde );
+    arrayView2d< real64 const > const vtilde    = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.vTilde );
+    arrayView2d< real64 const > const uhatTilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.uhatTilde );
     real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
 
