@@ -43,7 +43,7 @@ The xml input file for the test case with poroplasticity is located at:
 Description of the case
 ------------------------------------------------------------------
 
-We simulate the wellbore problem subjected to anisotropic horizontal stress (:math:`\sigma_h` and :math:`\sigma_H`) and vertical stress (:math:`\sigma_v`), as shown in Fig.1. This is a vertical wellbore, which is drilled in a porous medium. By changing the wellbore supporting pressure, the mechanical deformation of the reservoir rock will be induced and evolve with time, due to fluid diffusion and coupling effect. Considering inelastic constitutive behavior, the reservoir rock in the near wellbore region will experience elastoplastic deformation and a plastic zone will be developed and expand with time. To setup the base case, a poroelastic version is employed to find the poroelastic solutions of this wellbore problem, which are verified with the analytical solution `(Detournay and Cheng, 1993)  <https://www.sciencedirect.com/science/article/pii/B9780080406152500113>`__ from the literature. Following that, a poroplastic version is built and used to obtain the temporal and spatial solutions of pore pressure, displacement and stress fields around the wellbore, considering induced plastic deformation. 
+We simulate the wellbore problem subjected to anisotropic horizontal stress (:math:`\sigma_h` and :math:`\sigma_H`) and vertical stress (:math:`\sigma_v`), as shown below. This is a vertical wellbore, which is drilled in a porous medium. By changing the wellbore supporting pressure, the mechanical deformation of the reservoir rock will be induced and evolve with time, due to fluid diffusion and coupling effect. Considering inelastic constitutive behavior, the reservoir rock in the near wellbore region will experience elastoplastic deformation and a plastic zone will be developed and expand with time. To setup the base case, a poroelastic version is employed to find the poroelastic solutions of this wellbore problem, which are verified with the analytical solution `(Detournay and Cheng, 1993)  <https://www.sciencedirect.com/science/article/pii/B9780080406152500113>`__ from the literature. Following that, a poroplastic version is built and used to obtain the temporal and spatial solutions of pore pressure, displacement and stress fields around the wellbore, considering induced plastic deformation. 
 
 
 .. _problemSketchFig:
@@ -52,7 +52,7 @@ We simulate the wellbore problem subjected to anisotropic horizontal stress (:ma
    :width: 500
    :figclass: align-center
 
-   Fig.1 Sketch of the wellbore problem 
+   Sketch of the wellbore problem 
 
 
 ------------------------------------------------------------------
@@ -65,7 +65,7 @@ In this tutorial, we focus our attention on the ``Mesh`` tags, the ``Solver`` ta
 Mesh: discretizing computational domain
 --------------------------------------------------------------------
 
-Fig.2 shows the generated mesh that is used for solving this wellbore problem
+Following figure shows the generated mesh that is used for solving this wellbore problem
 
 .. _problemSketchFig:
 .. figure:: PoroDP_WellMesh.png
@@ -73,7 +73,7 @@ Fig.2 shows the generated mesh that is used for solving this wellbore problem
    :width: 500
    :figclass: align-center
 
-   Fig.2 Generated mesh for the wellbore problem
+   Generated mesh for the wellbore problem
 
 
 Let us take a closer look at the geometry of this wellbore problem.
@@ -287,7 +287,7 @@ Inspecting results
 
 As defined in the ``Events`` section, we run this simulation for 497640 seconds. In the above examples, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Please note that a non-dimensional time is used in the analytical solution, and the end time here leads to a non-dimensional end time of t* = 4.62. 
 
-Using the poroelastic solver, Fig.3 shows the prediction of pore pressure distribution upon fluid injection.
+Using the poroelastic solver, below figure shows the prediction of pore pressure distribution upon fluid injection.
 
 .. _problemVerificationFig1:
 .. figure:: PoroElastic_PP.png
@@ -295,10 +295,10 @@ Using the poroelastic solver, Fig.3 shows the prediction of pore pressure distri
    :width: 1000
    :figclass: align-center
 
-   Fig.3 Simulation result of pore pressure distribution
+   Simulation result of pore pressure distribution
 
 
-For the above poroelastic example, an analytical solution `(Detournay and Cheng, 1993)  <https://www.sciencedirect.com/science/article/pii/B9780080406152500113>`__ is hereby employed to verify the accuracy of the numerical results. Fig.4 shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of pore pressure, radial displacement, effective radial and tangential stresses along the minimum horizontal stress direction (x-axis). One can observe that GEOSX results correlate very well with the analytical solutions for the poroelastic case. 
+For the above poroelastic example, an analytical solution `(Detournay and Cheng, 1993)  <https://www.sciencedirect.com/science/article/pii/B9780080406152500113>`__ is hereby employed to verify the accuracy of the numerical results. Following figure shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of pore pressure, radial displacement, effective radial and tangential stresses along the minimum horizontal stress direction (x-axis). One can observe that GEOSX results correlate very well with the analytical solutions for the poroelastic case. 
 
 
 .. _problemVerificationFig2:
@@ -307,11 +307,11 @@ For the above poroelastic example, an analytical solution `(Detournay and Cheng,
    :width: 1000
    :figclass: align-center
 
-   Fig.4 Comparing GEOSX results with analytical solutions
+   Comparing GEOSX results with analytical solutions
 
 
 
-For the same 3D wellbore problem, the poroplastic case is thereafter tested and compared with the poroelastic one. Fig.5 shows the distribution of :math:`\sigma_yy` in the near wellbore region for both cases. As observed, a relaxation of the tangential stress along the direction of minimum horizontal stress is detected for the poroplastic case, which can be attributed to the plastic response of the rock.
+For the same 3D wellbore problem, the poroplastic case is thereafter tested and compared with the poroelastic one. Below figure shows the distribution of :math:`\sigma_yy` in the near wellbore region for both cases. As observed, a relaxation of the tangential stress along the direction of minimum horizontal stress is detected for the poroplastic case, which can be attributed to the plastic response of the rock.
 
 
 .. _problemVerificationFig3:
@@ -320,19 +320,19 @@ For the same 3D wellbore problem, the poroplastic case is thereafter tested and 
    :width: 1000
    :figclass: align-center
 
-   Fig.5 Simulation result of Syy: PoroElastic vs. PoroPlastic
+   Simulation result of Syy: PoroElastic vs. PoroPlastic
 
 
-By using python scripts, we can extract the simulation results along any direction and provide detailed comparisons between different cases. Here, the pore pressure, radial displacement, radial and tangential effective stresses along the direction of minimum horizontal stress are obtained at different time steps and plotted against the corresponding ones of the poroelastic case. Because of fluid diffusion and coupling effect, Fig.6 shows that these solutions evolve with time for both cases. As mentioned above, a plastic zone is developed in the vicinity of the wellbore, due to stress concentration. As for the far field region, these two cases become almost identical, with the rock deformation governed by poroelasticity.    
+By using python scripts, we can extract the simulation results along any direction and provide detailed comparisons between different cases. Here, the pore pressure, radial displacement, radial and tangential effective stresses along the direction of minimum horizontal stress are obtained at different time steps and plotted against the corresponding ones of the poroelastic case. Because of fluid diffusion and coupling effect, following figure shows that these solutions evolve with time for both cases. As mentioned above, a plastic zone is developed in the vicinity of the wellbore, due to stress concentration. As for the far field region, these two cases become almost identical, with the rock deformation governed by poroelasticity.    
 
 
-.. _problemVerificationFig2:
+.. _problemVerificationFig4:
 .. figure:: PoroDP_X.png
    :align: center
    :width: 1000
    :figclass: align-center
 
-   Fig.6 Comparing the PoroPlastic case with the PoroElastic case at different times
+   Comparing the PoroPlastic case with the PoroElastic case at different times
 
  
 
