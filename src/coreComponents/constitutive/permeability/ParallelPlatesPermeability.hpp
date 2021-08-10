@@ -61,7 +61,7 @@ public:
   {
     GEOSX_UNUSED_VAR( q );
 
-    compute( effectiveAperture,
+    compute( hydraulicAperture,
              m_permeability[k][0],
              m_dPerm_dAperture[k][0] );
   }
