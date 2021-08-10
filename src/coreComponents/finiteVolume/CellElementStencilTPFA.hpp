@@ -250,14 +250,14 @@ void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
       LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
     }
 
-    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er][esr][ei], faceNormal );
+    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er][esr][ei][0], faceNormal );
     halfTrans[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
 
     // correct negative weight issue arising from non-K-orthogonal grids
     if( halfTrans[i] < 0.0 )
     {
       LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
-                                                permeability[er][esr][ei],
+                                                permeability[er][esr][ei][0],
                                                 m_cellToFaceVec[iconn][i] );
       halfTrans[i] = m_weights[iconn][i];
       halfTrans[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );

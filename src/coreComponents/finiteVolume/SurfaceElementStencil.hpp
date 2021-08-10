@@ -264,8 +264,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
   localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 const t0 = m_weights[iconn][0] * permeability[er0][esr0][ei0][0]; // this is a bit insane to access perm
-  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0];
+  real64 const t0 = m_weights[iconn][0] * permeability[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
+  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
 
   real64 const harmonicWeight   = t0*t1 / (t0+t1);
   real64 const arithmeticWeight = (t0+t1)/2;
@@ -277,8 +277,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   transmissibility[0] = value;
   transmissibility[1] = -value;
 
-  real64 const dt0 = m_weights[iconn][0] * dPerm_dPressure[er0][esr0][ei0][0];
-  real64 const dt1 = m_weights[iconn][1] * dPerm_dPressure[er1][esr1][ei1][0];
+  real64 const dt0 = m_weights[iconn][0] * dPerm_dPressure[er0][esr0][ei0][0][0];
+  real64 const dt1 = m_weights[iconn][1] * dPerm_dPressure[er1][esr1][ei1][0][0];
 
   real64 dHarmonic[2];
   dHarmonic[0] = dt0 * t1 / (t0 + t1 ) - dt0 / ( (t0 + t1) * (t0 + t1) );
@@ -311,8 +311,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
   localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 const t0 = m_weights[iconn][0] * permeability[er0][esr0][ei0][0]; // this is a bit insane to access perm
-  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0];
+  real64 const t0 = m_weights[iconn][0] * permeability[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
+  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
 
   real64 const harmonicWeight   = t0*t1 / (t0+t1);
   real64 const arithmeticWeight = (t0+t1) / 2;
@@ -324,8 +324,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   transmissibility[0] = value;
   transmissibility[1] = -value;
 
-  real64 const dt0_dp = m_weights[iconn][0] * dPerm_dPressure[er0][esr0][ei0][0];
-  real64 const dt1_dp = m_weights[iconn][1] * dPerm_dPressure[er1][esr1][ei1][0];
+  real64 const dt0_dp = m_weights[iconn][0] * dPerm_dPressure[er0][esr0][ei0][0][0];
+  real64 const dt1_dp = m_weights[iconn][1] * dPerm_dPressure[er1][esr1][ei1][0][0];
 
   real64 dHarmonic_dpres[2];
   dHarmonic_dpres[0] = dt0_dp * t1 / (t0 + t1 ) - dt0_dp / ( (t0 + t1) * (t0 + t1) );
@@ -338,8 +338,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   dTrans_dPressure[0] = meanPermCoeff * dHarmonic_dpres[0] + (1 - meanPermCoeff) * dArithmetic_dpres[0];
   dTrans_dPressure[1] = -( meanPermCoeff * dHarmonic_dpres[1] + (1 - meanPermCoeff) * dArithmetic_dpres[1] );
 
-  real64 const dt0_da = m_weights[iconn][0] * dPerm_dAperture[er0][esr0][ei0][0];
-  real64 const dt1_da = m_weights[iconn][1] * dPerm_dAperture[er1][esr1][ei1][0];
+  real64 const dt0_da = m_weights[iconn][0] * dPerm_dAperture[er0][esr0][ei0][0][0];
+  real64 const dt1_da = m_weights[iconn][1] * dPerm_dAperture[er1][esr1][ei1][0][0];
 
   real64 dHarmonic_dAper[2];
   dHarmonic_dAper[0] = dt0_da * t1 / (t0 + t1 ) - dt0_da / ( (t0 + t1) * (t0 + t1) );
