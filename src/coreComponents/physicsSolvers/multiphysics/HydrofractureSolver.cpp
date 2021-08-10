@@ -681,12 +681,13 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                                                      dofManager,
                                                                      localMatrix,
                                                                      localRhs );
-  m_flowSolver->assembleFluxTerms( time,
-                                   dt,
-                                   domain,
-                                   dofManager,
-                                   localMatrix,
-                                   localRhs );
+  m_flowSolver->assembleHydrofracFluxTerms( time,
+                                            dt,
+                                            domain,
+                                            dofManager,
+                                            localMatrix,
+                                            localRhs,
+                                            getDerivativeFluxResidual_dAperture() );
 
 
   assembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );

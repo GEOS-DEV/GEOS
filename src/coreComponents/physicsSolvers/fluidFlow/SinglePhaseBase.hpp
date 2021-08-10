@@ -183,6 +183,7 @@ public:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
+   * @param jumpDofKey dofKey of the displacement jump
    */
   virtual void
   assemblePoroelasticFluxTerms( real64 const time_n,
@@ -192,6 +193,25 @@ public:
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
                                 string const & jumpDofKey ) = 0;
+
+  /**
+   * @brief assembles the flux terms for all cells for the hydrofracture case
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
+   * @param dR_dAper
+   */
+  virtual void
+  assembleHydrofracFluxTerms( real64 const time_n,
+                              real64 const dt,
+                              DomainPartition & domain,
+                              DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs,
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) = 0;
 
   void
   applyDirichletBC( real64 const time_n,
