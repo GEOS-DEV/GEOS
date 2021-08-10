@@ -68,7 +68,7 @@ char const * xmlInput =
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
-  "    <CellElementRegion name=\"Region\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, rockPerm}\" />\n"
+  "    <CellElementRegion name=\"Region\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, rockPerm, rockPorosity, nullSolid}\" />\n"
   "  </ElementRegions>\n"
   "  <Constitutive>\n"
   "    <CompositionalMultiphaseFluid name=\"fluid1\"\n"
@@ -84,16 +84,22 @@ char const * xmlInput =
   "                                                          {0, 0, 0, 0},\n"
   "                                                          {0, 0, 0, 0},\n"
   "                                                          {0, 0, 0, 0} }\"/>\n"
-  "    <PoreVolumeCompressibleSolid name=\"rock\"\n"
-  "                                 referencePressure=\"0.0\"\n"
-  "                                 compressibility=\"1e-9\"/>\n"
+  "    <CompressibleSolidConstantPermeability name=\"rock\"\n"
+  "        solidModelName=\"nullSolid\"\n"
+  "        porosityModelName=\"rockPorosity\"\n"
+  "        permeabilityModelName=\"rockPerm\"/>\n"
+  "   <NullModel name=\"nullSolid\"/> \n"
+  "   <PressurePorosity name=\"rockPorosity\"\n"
+  "                     defaultReferencePorosity=\"0.05\"\n"
+  "                     referencePressure = \"0.0\"\n"
+  "                     compressibility=\"1.0e-9\"/>\n"
+  "  <ConstantPermeability name=\"rockPerm\"\n"
+  "                        permeabilityComponents=\"{2.0e-16, 2.0e-16, 2.0e-16}\"/> \n"
   "    <BrooksCoreyRelativePermeability name=\"relperm\"\n"
   "                                     phaseNames=\"{oil, gas}\"\n"
   "                                     phaseMinVolumeFraction=\"{0.1, 0.15}\"\n"
   "                                     phaseRelPermExponent=\"{2.0, 2.0}\"\n"
   "                                     phaseRelPermMaxValue=\"{0.8, 0.9}\"/>\n"
-  "  <ConstantPermeability name=\"rockPerm\"\n"
-  "                      permeabilityComponents=\"{2.0e-16, 2.0e-16, 2.0e-16}\"/> \n"
   "  </Constitutive>\n"
   "  <FieldSpecifications>\n"
   "    <FieldSpecification name=\"initialPressure\"\n"
@@ -229,7 +235,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateState( subRegion2, targetIndex2 );
+          solver.updateFluidState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();
@@ -254,7 +260,7 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateState( subRegion2, targetIndex2 );
+          solver.updateFluidState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();

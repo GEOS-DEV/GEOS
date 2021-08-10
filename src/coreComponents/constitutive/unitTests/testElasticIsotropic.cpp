@@ -64,9 +64,7 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     "<Constitutive>"
     "   <ElasticIsotropic"
     "      name=\"granite\" "
-    "      defaultReferencePorosity=\"0.2\" "
-    "      grainBulkModulus=\"1e15\" "
-    "      defaultGrainDensity=\"2700\" "
+    "      defaultDensity=\"2700\" "
     "      defaultBulkModulus=\"" + std::to_string( K ) + "\" "
                                                           "      defaultShearModulus=\"" + std::to_string( G ) + "\"/>"
                                                                                                                  "</Constitutive>";

@@ -23,7 +23,7 @@
   <Constitutive>
     <ExtendedDruckerPrager
       name="drucker"
-      defaultGrainDensity="2700"
+      defaultDensity="2700"
       defaultBulkModulus="500"
       defaultShearModulus="300"
       defaultCohesion="0.0"

@@ -23,8 +23,7 @@
   <Constitutive>
     <ElasticIsotropic
       name="elastic"
-      grainBulkModulus="1e15"
-      defaultGrainDensity="2700"
+      defaultDensity="2700"
       defaultBulkModulus="500"
       defaultShearModulus="300"/>
   </Constitutive>

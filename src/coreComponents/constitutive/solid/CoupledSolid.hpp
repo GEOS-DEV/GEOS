@@ -79,10 +79,10 @@ public:
                                    real64 const & pressure,
                                    real64 const & deltaPressure ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(pressure);
-    GEOSX_UNUSED_VAR(deltaPressure);
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( pressure );
+    GEOSX_UNUSED_VAR( deltaPressure );
   }
 
 protected:
