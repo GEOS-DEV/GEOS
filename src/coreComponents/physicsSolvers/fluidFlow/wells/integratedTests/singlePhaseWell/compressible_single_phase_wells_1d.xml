@@ -112,8 +112,7 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -121,7 +120,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock, rockPerm }"/>
+      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
 
     <WellElementRegion
       name="wellRegion1"
@@ -142,12 +141,21 @@
       referenceViscosity="0.005"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+   <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="0.0"
-      compressibility="1e-9"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
 
-    <ConstantPermeability
+   <NullModel name="nullSolid"/>
+
+   <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      referencePressure = "0.0"
+      compressibility="1.0e-9"/>
+
+   <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
@@ -158,7 +166,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
-      fieldName="referencePorosity"
+      fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification

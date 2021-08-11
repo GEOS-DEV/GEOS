@@ -8,7 +8,7 @@
       discretization="fluidTPFA"
       fluidNames="{ fluid1 }"
       solidNames="{ rock, fractureFilling }"
-      permeabilityNames="{ rockPerm, fracPerm }"
+      permeabilityNames="{ rockPerm, fracturePerm }"
       relPermNames="{ relperm }"
       temperature="300"
       useMass="0"
@@ -48,21 +48,21 @@
   <Geometry>
     <Box
       name="source"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 1.01, 1.01"/>
+      xMin="{-0.01, -0.01, -0.01}"
+      xMax="{1.01, 1.01, 1.01}"/>
 
     <Box
       name="sink"
-      xMin=" 40.99, 40.99, -0.01"
-      xMax="41.01, 41.01, 1.01"/>
-    
+      xMin="{40.99, 40.99, -0.01}"
+      xMax="{41.01, 41.01, 1.01}"/>
+
     <BoundedPlane
       name="FracturePlane"
-      normal="0, 1, 0"
-      origin="18.5, 3.5, 0.5"
-      lengthVector="1, 0, 0"
-      widthVector="0, 0, 1"
-      dimensions="{ 25, 1 }"/>  
+      normal="{0, 1, 0}"
+      origin="{18.5, 3.5, 0.5}"
+      lengthVector="{1, 0, 0}"
+      widthVector="{0, 0, 1}"
+      dimensions="{ 25, 1 }"/>
   </Geometry>
 
   <Events
@@ -70,7 +70,7 @@
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
-    
+
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e5"
@@ -96,11 +96,11 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ block1 }"
-      materialList="{ fluid1, rock, rockPerm, relperm }"/>
-	<SurfaceElementRegion 
+      materialList="{ fluid1, rock, rockPerm, relperm, rockPorosity, nullSolid }"/>
+	<SurfaceElementRegion
 	  name="Fracture"
 	  defaultAperture="1.0e-4"
-	  materialList="{ fluid1, fractureFilling, relperm, fracPerm }"
+	  materialList="{ fluid1, fractureFilling, relperm, fracturePerm, fracturePorosity, nullSolid }"
 	  subRegionType="embeddedElement" />
   </ElementRegions>
 
@@ -112,17 +112,38 @@
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
-    <CompressibleRock
-      name="rock"
-      referencePressure="0.0"
-      defaultReferencePorosity ="0.2"
-      compressibility="1e-9"/>
-      
-    <CompressibleRock
-      name="fractureFilling"
-      referencePressure="0.0"
-      defaultReferencePorosity ="1.0"
-      compressibility="0.0"/>
+      <CompressibleSolidParallelPlatesPermeability
+         name="fractureFilling"
+         solidModelName="nullSolid"
+         porosityModelName="fracturePorosity"
+         permeabilityModelName="fracturePerm"/>
+
+       <CompressibleSolidConstantPermeability
+         name="rock"
+         solidModelName="nullSolid"
+         porosityModelName="rockPorosity"
+         permeabilityModelName="rockPerm"/>
+
+       <NullModel name="nullSolid"/>
+
+       <PressurePorosity
+        name="rockPorosity"
+        defaultReferencePorosity="0.2"
+        referencePressure = "0.0"
+        compressibility="1.0e-9"/>
+
+       <ConstantPermeability
+         name="rockPerm"
+         permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
+
+       <PressurePorosity
+        name="fracturePorosity"
+        defaultReferencePorosity="1.00"
+        referencePressure = "0.0"
+        compressibility="0.0"/>
+
+       <ParallelPlatesPermeability
+         name="fracturePerm"/>
 
     <BrooksCoreyRelativePermeability
       name="relperm"
@@ -130,13 +151,6 @@
       phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
       phaseRelPermExponent="{ 1.5, 1.5, 1.5 }"
       phaseRelPermMaxValue="{ 0.9, 0.9, 0.9 }"/>
-      
-    <ParallelPlatesPermeability
-      name="fracPerm"/>
-    
-    <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="1.0e-16, 1.0e-16, 1.0e-16"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -148,7 +162,7 @@
       objectPath="ElementRegions/Domain/block1"
       fieldName="pressure"
       scale="5e6"/>
-      
+
     <FieldSpecification
       name="initialFracturePressure"
       initialCondition="1"
@@ -166,7 +180,7 @@
       fieldName="globalCompFraction"
       component="0"
       scale="0.6"/>
-      
+
     <FieldSpecification
       name="initialCompositionFracture_oil"
       initialCondition="1"
@@ -174,7 +188,7 @@
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.6"/>      
+      scale="0.6"/>
 
     <FieldSpecification
       name="initialComposition_gas"
@@ -184,7 +198,7 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.399"/>
-      
+
     <FieldSpecification
       name="initialCompositionFracture_gas"
       initialCondition="1"
@@ -193,7 +207,7 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.399"/>
-      
+
     <FieldSpecification
       name="initialComposition_water"
       initialCondition="1"
@@ -202,7 +216,7 @@
       fieldName="globalCompFraction"
       component="2"
       scale="0.001"/>
-      
+
     <FieldSpecification
       name="initialCompositionFracture_water"
       initialCondition="1"

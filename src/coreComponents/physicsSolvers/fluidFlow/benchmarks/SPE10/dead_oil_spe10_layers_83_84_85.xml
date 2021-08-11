@@ -94,7 +94,7 @@
       name="mesh"
       file="../../../../../../../GEOSXDATA/DataSets/SPE10/EclipseBottomLayers/SPE10_LAYERS_83_84_85.GRDECL"
       fieldsToImport="{ PERM, PORO }"
-      fieldNamesInGEOSX="{ rockPerm_permeability, referencePorosity }"/>
+      fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity }"/>
 
     <InternalWell
       name="wellProducer1"
@@ -265,8 +265,7 @@
       <TwoPointFluxApproximation
         name="fluidTPFA"
         fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -276,7 +275,7 @@
     <CellElementRegion
       name="reservoir"
       cellBlocks="{ DEFAULT_HEX }"
-      materialList="{ fluid, rock, relperm, rockPerm }"/>
+      materialList="{ fluid, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
 
     <WellElementRegion
       name="wellRegion1"
@@ -316,10 +315,19 @@
       phaseRelPermExponent="{ 2.0, 2.0 }"
       phaseRelPermMaxValue="{ 0.1, 1.0 }"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="1e7"
-      compressibility="1e-10"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      referencePressure = "1.0e7"
+      compressibility="1.0e-10"/>
 
     <ConstantPermeability
       name="rockPerm"
