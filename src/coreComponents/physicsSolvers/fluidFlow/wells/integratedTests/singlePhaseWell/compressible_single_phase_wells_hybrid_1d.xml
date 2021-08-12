@@ -142,18 +142,19 @@
       referenceViscosity="0.005"
       viscosibility="0.0"/>
 
-   <CompressibleSolidConstantPermeability
+    <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
 
-    <NullModel name="nullSolid"/>
+    <NullModel
+      name="nullSolid"/>
 
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.05"
-      referencePressure = "0.0"
+      referencePressure="0.0"
       compressibility="1.0e-9"/>
 
     <ConstantPermeability

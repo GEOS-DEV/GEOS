@@ -22,7 +22,8 @@ namespace geosx
 {
 
 SurfaceElementStencil::SurfaceElementStencil():
-  StencilBase< SurfaceElementStencil_Traits, SurfaceElementStencil >()
+  StencilBase< SurfaceElementStencil_Traits, SurfaceElementStencil >(),
+  m_meanPermCoefficient( 1.0 )
 {}
 
 void SurfaceElementStencil::move( LvArray::MemorySpace const space )

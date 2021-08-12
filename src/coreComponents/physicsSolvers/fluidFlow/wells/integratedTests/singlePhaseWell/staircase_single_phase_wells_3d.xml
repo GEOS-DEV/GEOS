@@ -146,19 +146,20 @@
       compressibility="5e-10"
       viscosibility="0.0"/>
 
-   <CompressibleSolidConstantPermeability
+    <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
 
-   <NullModel name="nullSolid"/>
+    <NullModel
+      name="nullSolid"/>
 
-   <PressurePorosity
-     name="rockPorosity"
-     defaultReferencePorosity="0.1"
-     referencePressure = "0.0"
-     compressibility="1.0e-9"/>
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -166,7 +167,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-
     <FieldSpecification
       name="initialPressure_channel"
       initialCondition="1"

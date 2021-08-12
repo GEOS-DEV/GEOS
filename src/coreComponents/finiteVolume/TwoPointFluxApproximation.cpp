@@ -41,6 +41,12 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
                                                       Group * const parent )
   : FluxApproximationBase( name, parent )
 {
+
+  registerWrapper( viewKeyStruct::meanPermCoefficientString(), &m_meanPermCoefficient ).
+			setInputFlag( InputFlags::OPTIONAL ).
+			setApplyDefaultValue( 1.0 ).
+			setDescription( "" );
+
   registerWrapper< CellElementStencilTPFA >( viewKeyStruct::cellStencilString() ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
@@ -188,6 +194,8 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
                                                       string const & faceElementRegionName,
                                                       bool const initFlag ) const
 {
+  std::cout << "I am initializing this"	<< std::endl;
+
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -213,6 +221,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
     faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
 
   SurfaceElementStencil & fractureStencil = getStencil< SurfaceElementStencil >( mesh, viewKeyStruct::fractureStencilString() );
+  fractureStencil.setMeanPermCoefficient( m_meanPermCoefficient );
   CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
   FaceElementToCellStencil & faceToCellStencil = getStencil< FaceElementToCellStencil >( mesh, viewKeyStruct::faceToCellStencilString() );
   fractureStencil.move( LvArray::MemorySpace::host );
@@ -527,6 +536,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 #endif
     } );
   }
+
+  std::cout << "after this step the size is" << 	fractureStencil.size() << std::endl;
+
 
   // add connections for FaceElements to/from CellElements.
 

@@ -92,31 +92,32 @@
       compressibility="0.0"
       viscosibility="0.0"/>
 
-   <CompressibleSolidConstantPermeability
+    <CompressibleSolidConstantPermeability
       name="rock1"
       solidModelName="nullSolid"
       porosityModelName="rock1Porosity"
       permeabilityModelName="rockPerm"/>
-      
-   <CompressibleSolidConstantPermeability
+
+    <CompressibleSolidConstantPermeability
       name="rock2"
       solidModelName="nullSolid"
       porosityModelName="rock2Porosity"
-      permeabilityModelName="rockPerm"/>   
+      permeabilityModelName="rockPerm"/>
 
-    <NullModel name="nullSolid"/>
+    <NullModel
+      name="nullSolid"/>
 
     <PressurePorosity
-     name="rock1Porosity"
-     defaultReferencePorosity="0.05"
-     referencePressure = "0.0"
-     compressibility="1.0e-8"/>
-     
+      name="rock1Porosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="0.0"
+      compressibility="1.0e-8"/>
+
     <PressurePorosity
-     name="rock2Porosity"
-     defaultReferencePorosity="0.05"
-     referencePressure = "0.0"
-     compressibility="1.0e-10"/> 
+      name="rock2Porosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="0.0"
+      compressibility="1.0e-10"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -131,8 +132,8 @@
       objectPath="ElementRegions/Region1/block1"
       fieldName="rock1Porosity_referencePorosity"
       scale="0.05"/>
-      
-      <FieldSpecification
+
+    <FieldSpecification
       name="Porosity2"
       initialCondition="1"
       setNames="{ all }"

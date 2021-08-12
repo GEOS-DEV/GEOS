@@ -91,10 +91,12 @@ public:
                                 IndexContainerType & elementSubRegionIndices,
                                 IndexContainerType & elementIndices,
                                 WeightContainerType & weights,
-                                ArrayOfArrays< R1Tensor > & cellCenterToEdgeCenters )
+                                ArrayOfArrays< R1Tensor > & cellCenterToEdgeCenters,
+								real64 const meanPermCoefficient )
 
     : StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
-    m_cellCenterToEdgeCenters( cellCenterToEdgeCenters.toView() )
+    m_cellCenterToEdgeCenters( cellCenterToEdgeCenters.toView() ),
+	m_meanPermCoefficient( meanPermCoefficient )
   {}
 
   /// Default copy constructor
@@ -165,6 +167,8 @@ public:
 
 private:
   ArrayOfArraysView< R1Tensor > m_cellCenterToEdgeCenters;
+
+  real64 m_meanPermCoefficient;
 };
 
 /**
@@ -215,7 +219,8 @@ public:
                            m_elementSubRegionIndices,
                            m_elementIndices,
                            m_weights,
-                           m_cellCenterToEdgeCenters );
+                           m_cellCenterToEdgeCenters,
+						   m_meanPermCoefficient );
   }
 
 
@@ -241,15 +246,21 @@ public:
   ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 
+  void setMeanPermCoefficient( real64 const & meanPermCoefficient )
+  {
+	  m_meanPermCoefficient = meanPermCoefficient;
+  }
+
 private:
 
   ArrayOfArrays< R1Tensor > m_cellCenterToEdgeCenters;
+
+  real64 m_meanPermCoefficient;
 
 };
 
 template< typename PERMTYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
                                                             PERMTYPE permeability,
                                                             PERMTYPE dPerm_dPressure,
@@ -270,9 +281,7 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   real64 const harmonicWeight   = t0*t1 / (t0+t1);
   real64 const arithmeticWeight = (t0+t1)/2;
 
-  real64 const meanPermCoeff = 1.0; //TODO make it a member
-
-  real64 const value = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
+  real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
 
   transmissibility[0] = value;
   transmissibility[1] = -value;
@@ -288,8 +297,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   dArithmetic[0] = dt0 / 2;
   dArithmetic[1] = dt1 / 2;
 
-  dTrans_dPressure[0] = meanPermCoeff * dHarmonic[0] + (1 - meanPermCoeff) * dArithmetic[0];
-  dTrans_dPressure[1] = -( meanPermCoeff * dHarmonic[1] + (1 - meanPermCoeff) * dArithmetic[1] );
+  dTrans_dPressure[0] = m_meanPermCoefficient * dHarmonic[0] + (1 - m_meanPermCoefficient) * dArithmetic[0];
+  dTrans_dPressure[1] = -( m_meanPermCoefficient * dHarmonic[1] + (1 - m_meanPermCoefficient) * dArithmetic[1] );
 }
 
 
@@ -317,9 +326,7 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   real64 const harmonicWeight   = t0*t1 / (t0+t1);
   real64 const arithmeticWeight = (t0+t1) / 2;
 
-  real64 const meanPermCoeff = 1.0; //TODO make it a member
-
-  real64 const value = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
+  real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
 
   transmissibility[0] = value;
   transmissibility[1] = -value;
@@ -335,8 +342,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   dArithmetic_dpres[0] = dt0_dp / 2;
   dArithmetic_dpres[1] = dt1_dp / 2;
 
-  dTrans_dPressure[0] = meanPermCoeff * dHarmonic_dpres[0] + (1 - meanPermCoeff) * dArithmetic_dpres[0];
-  dTrans_dPressure[1] = -( meanPermCoeff * dHarmonic_dpres[1] + (1 - meanPermCoeff) * dArithmetic_dpres[1] );
+  dTrans_dPressure[0] = m_meanPermCoefficient * dHarmonic_dpres[0] + (1 - m_meanPermCoefficient) * dArithmetic_dpres[0];
+  dTrans_dPressure[1] = -( m_meanPermCoefficient * dHarmonic_dpres[1] + (1 - m_meanPermCoefficient) * dArithmetic_dpres[1] );
 
   real64 const dt0_da = m_weights[iconn][0] * dPerm_dAperture[er0][esr0][ei0][0][0];
   real64 const dt1_da = m_weights[iconn][1] * dPerm_dAperture[er1][esr1][ei1][0][0];
@@ -349,8 +356,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   dArithmetic_dAper[0] = dt0_da / 2;
   dArithmetic_dAper[1] = dt1_da / 2;
 
-  dTrans_dAperture[0] = 0.0* ( meanPermCoeff * dHarmonic_dAper[0] + (1 - meanPermCoeff) * dArithmetic_dAper[0] );
-  dTrans_dAperture[1] = 0.0* ( -( meanPermCoeff * dHarmonic_dAper[1] + (1 - meanPermCoeff) * dArithmetic_dAper[1] ) );
+  dTrans_dAperture[0] = 0.0* ( m_meanPermCoefficient * dHarmonic_dAper[0] + (1 - m_meanPermCoefficient) * dArithmetic_dAper[0] );
+  dTrans_dAperture[1] = 0.0* ( -( m_meanPermCoefficient * dHarmonic_dAper[1] + (1 - m_meanPermCoefficient) * dArithmetic_dAper[1] ) );
 }
 
 

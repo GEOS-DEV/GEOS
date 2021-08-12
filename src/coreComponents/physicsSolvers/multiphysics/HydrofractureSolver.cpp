@@ -66,6 +66,10 @@ HydrofractureSolver::HydrofractureSolver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. " );
 
+  registerWrapper( viewKeyStruct::couplingTypeOptionStringString(), &m_couplingTypeOption ).
+      setInputFlag( InputFlags::REQUIRED ).
+      setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
+
   m_numResolves[0] = 0;
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hydrofracture;
@@ -184,18 +188,17 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
       // currently the only method is implicit time integration
       dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
-      if( m_surfaceGenerator!=nullptr )  // is this check really necessary ?
+
+      if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
       {
-        if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
-        {
-          locallyFractured = 1;
-        }
-        MpiWrapper::allReduce( &locallyFractured,
-                               &globallyFractured,
-                               1,
-                               MPI_MAX,
-                               MPI_COMM_GEOSX );
+    	  locallyFractured = 1;
       }
+      MpiWrapper::allReduce( &locallyFractured,
+    		                 &globallyFractured,
+			                 1,
+			                 MPI_MAX,
+			                 MPI_COMM_GEOSX );
+
       if( globallyFractured == 0 )
       {
         break;
@@ -958,8 +961,15 @@ HydrofractureSolver::
   GEOSX_MARK_FUNCTION;
   SinglePhasePoromechanicsSolver::applySystemSolution( dofManager, localSolution, scalingFactor, domain );
 
-  updateDeformationForCoupling( domain );
+
 }
+
+void HydrofractureSolver::updateState( DomainPartition & domain )
+{
+	updateDeformationForCoupling( domain );
+	m_flowSolver->updateState( domain );
+}
+
 
 
 real64
@@ -1022,7 +1032,7 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
       maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
     }
     // TODO This is way too much. The With the full system rowSize is not a good estimate for this.
-    for( localIndex row = localMatrix.numRows(); row < numRows; ++row )
+    for( localIndex row = 0; row < numRows; ++row )
     {
       derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
     }
@@ -1032,10 +1042,12 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->getDiscretization() );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
+	std::cout << " size: " << stencil.size() << std::endl;
+
     for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );

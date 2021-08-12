@@ -204,18 +204,19 @@
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
-   <CompressibleSolidConstantPermeability
+    <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
 
-    <NullModel name="nullSolid"/>
+    <NullModel
+      name="nullSolid"/>
 
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.05"
-      referencePressure = "0.0"
+      referencePressure="0.0"
       compressibility="1.0e-9"/>
 
     <TableRelativePermeability

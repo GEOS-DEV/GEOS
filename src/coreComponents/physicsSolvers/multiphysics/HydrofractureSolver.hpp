@@ -105,6 +105,8 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
 
+  virtual void updateState( DomainPartition & domain ) override final;
+
   void updateDeformationForCoupling( DomainPartition & domain );
 
 //  void ApplyFractureFluidCoupling( DomainPartition * const domain,

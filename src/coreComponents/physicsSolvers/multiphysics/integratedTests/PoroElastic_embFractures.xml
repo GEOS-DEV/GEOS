@@ -164,18 +164,19 @@
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
       permeabilityModelName="fracturePerm"/>
-      
-    <NullModel name="nullSolid"/>
+
+    <NullModel
+      name="nullSolid"/>
 
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
 
     <PressurePorosity
-     name="fracturePorosity"
-     defaultReferencePorosity="1.00"
-     referencePressure = "0.0"
-     compressibility="0.0"/>
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>
@@ -189,15 +190,15 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rockPorosity_porosity"
       scale="0.2"/>
-      
+
     <FieldSpecification
       name="fracPorosity"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
       fieldName="fracturePorosity_porosity"
-      scale="1.00"/>      
-      
+      scale="1.00"/>
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"

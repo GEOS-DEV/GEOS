@@ -23,7 +23,6 @@
         directParallel="0"
         logLevel="0"/>
     </CompositionalMultiphaseFVM>
-
   </Solvers>
 
   <Mesh>
@@ -42,13 +41,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{1.01, 1.01, 1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin="{40.99, -0.01, -0.01}"
-      xMax="{41.01, 1.01, 1.01}"/>
+      xMin="{ 40.99, -0.01, -0.01 }"
+      xMax="{ 41.01, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
@@ -103,23 +102,24 @@
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
-   <CompressibleSolidConstantPermeability
+    <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
 
-    <NullModel name="nullSolid"/>
+    <NullModel
+      name="nullSolid"/>
 
     <PressurePorosity
-     name="rockPorosity"
-     defaultReferencePorosity="0.2"
-     referencePressure = "0.0"
-     compressibility="1.0e-9"/>
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{1.0e-16, 1.0e-16, 1.0e-16}"/>
+      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
 
     <BrooksCoreyRelativePermeability
       name="relperm"

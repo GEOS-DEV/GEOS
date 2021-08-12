@@ -98,15 +98,16 @@
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>  
+      permeabilityModelName="rockPerm"/>
 
-    <NullModel name="nullSolid"/>
+    <NullModel
+      name="nullSolid"/>
 
     <PressurePorosity
-     name="rockPorosity"
-     defaultReferencePorosity="0.05"
-     referencePressure = "1.0e6"
-     compressibility="1.0e-9"/>
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="1.0e6"
+      compressibility="1.0e-9"/>
 
     <ConstantPermeability
       name="rockPerm"

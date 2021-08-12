@@ -410,6 +410,9 @@ void FaceElementFluxKernel::
 
   static constexpr real64 TINY = 1e-10;
 
+  std::cout << "I m in here" <<std::endl;
+  std::cout << "size: " << stencilWrapper.size() <<std::endl;
+
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
@@ -454,6 +457,8 @@ void FaceElementFluxKernel::
       }
 
     }
+
+    std::cout<< "pressure" << pres[0][0][0] << std::endl;
 
     compute( stencilSize,
              seri[iconn],

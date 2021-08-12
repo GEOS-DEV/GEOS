@@ -95,7 +95,7 @@
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock, rockPerm,rockPorosity, nullSolid  }"/>
+      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
 
     <SurfaceElementRegion
       name="Fracture"
@@ -113,39 +113,39 @@
       compressibility="5e-10"
       viscosibility="0.0"/>
 
-   <CompressibleSolidParallelPlatesPermeability
+    <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
       permeabilityModelName="fracturePerm"/>
-      
+
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>  
+      permeabilityModelName="rockPerm"/>
 
-    <NullModel name="nullSolid"/>
+    <NullModel
+      name="nullSolid"/>
 
     <PressurePorosity
-     name="rockPorosity"
-     defaultReferencePorosity="0.01"
-     referencePressure = "0.0"
-     compressibility="1.0e-9"/>
+      name="rockPorosity"
+      defaultReferencePorosity="0.01"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
 
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
-    
+
     <PressurePorosity
-     name="fracturePorosity"
-     defaultReferencePorosity="1.00"
-     referencePressure = "0.0"
-     compressibility="0.0"/>
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>
-      
   </Constitutive>
 
   <FieldSpecifications>
@@ -156,7 +156,7 @@
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
-      
+
     <FieldSpecification
       name="Porosity"
       initialCondition="1"
@@ -164,14 +164,14 @@
       objectPath="ElementRegions/Region2/cb1"
       fieldName="rockPorosity_referencePorosity"
       scale="0.01"/>
-      
+
     <FieldSpecification
       name="fracPorosity"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
       fieldName="fracturePorosity_porosity"
-      scale="1.00"/>    
+      scale="1.00"/>
 
     <FieldSpecification
       name="initialPressure"

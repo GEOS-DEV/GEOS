@@ -57,6 +57,8 @@ public:
     static constexpr char const * edfmStencilString() { return "edfmStencil"; }
 
     static constexpr char const * faceToCellStencilString() { return "faceElementToCellStencil"; }
+
+    static constexpr char const * meanPermCoefficientString() { return "meanPermCoefficient"; }
   };
 
 protected:
@@ -80,6 +82,10 @@ protected:
 
   virtual void addEDFracToFractureStencil( MeshLevel & mesh,
                                            string const & embeddedSurfaceRegionName ) const override;
+
+private:
+
+  real64 m_meanPermCoefficient;
 
 
 };
