@@ -309,8 +309,12 @@ times with the numerical solution (markers).
        hydromechanicalParameters["porosity"] = float(param2.get("defaultReferencePorosity"))
        hydromechanicalParameters["fluidViscosity"] = float(param3.get("defaultViscosity"))
        hydromechanicalParameters["fluidCompressibility"] = float(param3.get("compressibility"))
-       hydromechanicalParameters["permeability"] = float( re.sub(r"[^e0-9.-]","", param4.get("permeabilityComponents").split()[0] ) )
-
+       
+       perm = param4.get("permeabilityComponents")
+       perm = perm[1:-1]
+       perm = np.array(perm.split(','),float)
+       hydromechanicalParameters["permeability"] = perm[0]
+       
        return hydromechanicalParameters
 
 
