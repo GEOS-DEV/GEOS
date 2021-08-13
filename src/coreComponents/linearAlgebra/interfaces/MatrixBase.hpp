@@ -635,6 +635,11 @@ protected:
                      Vector & y,
                      bool useTranspose = false ) const = 0;
 
+  virtual void separateComponentFilter( MATRIX & dst,
+                                        localIndex const dofPerPoint ) {}
+
+
+
   /**
    * @brief Multiply all elements by scalingFactor.
    * @param scalingFactor Scaling factor.

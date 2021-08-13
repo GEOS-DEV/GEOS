@@ -1431,6 +1431,7 @@ void DofManager::setupFrom( DofManager const & source,
   reorderByRank();
 }
 
+#if 1
 template< typename MATRIX >
 void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
                                  MPI_Comm const & comm,
@@ -1487,6 +1488,10 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
   restrictor.createWithLocalSize( rowSize, colSize, 1, comm );
   restrictor.open();
 
+  array1d<globalIndex> rows;
+  array1d<globalIndex> cols;
+  array1d<real64> values;
+
   for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
   {
     FieldDescription const & fieldNew = fieldsSelected[k];
@@ -1499,13 +1504,9 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
     localIndex const numLocalNodes = fieldNew.numLocalDof / fieldNew.numComponents;
 
 
-    array1d<globalIndex> rows;
-    array1d<globalIndex> cols;
-    array1d<real64> values;
     rows.resize( numLocalNodes*mask.size() );
     cols.resize( numLocalNodes*mask.size() );
-    values.resize( 1 );
-    values[0] = 1.0;
+    values.resize( numLocalNodes*mask.size() );
 
     for( localIndex i = 0; i < numLocalNodes; ++i )
     {
@@ -1521,6 +1522,8 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
 
         rows( i*mask.size() + newComp ) = row;
         cols( i*mask.size() + newComp ) = col;
+        values[ i*mask.size() + newComp ] = 1.0;
+
 #else
         restrictor.insert( fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp ),
                            fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp ),
@@ -1533,26 +1536,123 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
 #if defined(COLLECT)
 
 #if defined(GEOSX_USE_HYPRE_CUDA)
-//    rows.move( LvArray::MemorySpace::cuda, false );
+    rows.move( LvArray::MemorySpace::cuda, false );
     cols.move( LvArray::MemorySpace::cuda, false );
     values.move( LvArray::MemorySpace::cuda, false );
 #endif
+
+#if 0
     for( localIndex row=0; row<rows.size(); ++row )
     {
-//      printf( "rows[%i] = %i \n", row, rows[row]);
-//      printf( "cols[%i] = %i \n", row, cols[row]);
       restrictor.insert( rows[row],
                          cols.data()+row,
                          values.data(),
                          1 );
     }
+#else
+    restrictor.insert( rows.data(),
+                       cols.data(),
+                       values.data(),
+                       rows.size(),
+                       1 );
 #endif
 
-  }
+#endif
 
+#undef COLLECT
+
+  }
   restrictor.close();
 }
+#else
+template< typename MATRIX >
+void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
+                                 MPI_Comm const & comm,
+                                 bool const transpose,
+                                 MATRIX & restrictor ) const
+{
+  GEOSX_ERROR_IF( !m_reordered, "Cannot make restrictors before reorderByRank() has been called." );
 
+  // 1. Populate selected fields and compute some basic dimensions
+  // array1d< FieldDescription > fieldsSelected( selection.size() );
+  std::vector< FieldDescription > fieldsSelected( selection.size() );
+
+  for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
+  {
+    SubComponent const & dof = selection[k];
+    FieldDescription const & fieldOld = m_fields[getFieldIndex( dof.fieldName )];
+    FieldDescription & fieldNew = fieldsSelected[k];
+
+    fieldNew.name = selection[k].fieldName;
+    fieldNew.numComponents = dof.mask.size();
+    fieldNew.numLocalDof = fieldOld.numLocalDof / fieldOld.numComponents * fieldNew.numComponents;
+    fieldNew.numGlobalDof = fieldOld.numGlobalDof / fieldOld.numComponents * fieldNew.numComponents;
+    fieldNew.rankOffset = fieldOld.rankOffset / fieldOld.numComponents * fieldNew.numComponents;
+  }
+
+  // 2. Compute remaining offsets (we mostly just need globalOffset, but it depends on others)
+
+  globalIndex blockOffset = 0;
+  for( auto & field : fieldsSelected )
+  {
+    field.blockOffset = blockOffset;
+    blockOffset += field.numGlobalDof;
+  }
+
+  globalIndex globalOffset = std::accumulate( fieldsSelected.begin(), fieldsSelected.end(), globalIndex( 0 ),
+                                              []( localIndex const n, FieldDescription const & f )
+  { return n + f.rankOffset; } );
+
+  for( auto & field : fieldsSelected )
+  {
+    field.globalOffset = globalOffset;
+    globalOffset += field.numLocalDof;
+  }
+
+  // 3. Build the restrictor field by field
+
+  localIndex const numLocalDofSelected = std::accumulate( fieldsSelected.begin(), fieldsSelected.end(), localIndex( 0 ),
+                                                          []( localIndex const n, FieldDescription const & f )
+  { return n + f.numLocalDof; } );
+
+  localIndex const rowSize = transpose ? numLocalDofs() : numLocalDofSelected;
+  localIndex const colSize = transpose ? numLocalDofSelected : numLocalDofs();
+
+
+  CRSMatrix<real64> localRestrictor;
+  localRestrictor.resize( rowSize, colSize, 1 );
+
+
+  for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
+  {
+    FieldDescription const & fieldNew = fieldsSelected[k];
+    FieldDescription const & fieldOld = m_fields[getFieldIndex( fieldNew.name )];
+
+    FieldDescription const & fieldRow = transpose ? fieldOld : fieldNew;
+    FieldDescription const & fieldCol = transpose ? fieldNew : fieldOld;
+
+    CompMask const mask = selection[k].mask;
+    localIndex const numLocalNodes = fieldNew.numLocalDof / fieldNew.numComponents;
+
+    for( localIndex i = 0; i < numLocalNodes; ++i )
+    {
+      integer newComp = 0;
+      for( integer const oldComp : mask )
+      {
+        globalIndex const row = fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp ) - rankOffset();
+
+        if( row < 0 || row >=localRestrictor.numRows() ) continue;
+        globalIndex const col = fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp );
+        real64 const one = 1.0;
+        localRestrictor.addToRowBinarySearchUnsorted<parallelDeviceAtomic>( row, &col, &one, 1 );
+        ++newComp;
+      }
+    }
+
+  }
+  restrictor.create( localRestrictor.toViewConst(), comm );
+}
+#endif
 void DofManager::printFieldInfo( std::ostream & os ) const
 {
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )

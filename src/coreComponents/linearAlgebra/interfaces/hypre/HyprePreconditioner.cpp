@@ -437,7 +437,8 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
     //Auu.print(std::cout);
     {
       Stopwatch timer( m_componentFilterTime );
-      LAIHelperFunctions::separateComponentFilter( Auu, m_precondMatrix, m_params.dofsPerNode );
+//      LAIHelperFunctions::separateComponentFilter( Auu, m_precondMatrix, m_params.dofsPerNode );
+      Auu.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
     }
     //std::cout << "SDC Matrix" << std::endl;
     //m_precondMatrix.print(std::cout);

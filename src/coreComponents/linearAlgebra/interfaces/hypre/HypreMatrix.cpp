@@ -583,12 +583,28 @@ void HypreMatrix::insert( globalIndex const * rowIndices,
                           globalIndex const * colIndices,
                           real64 const * values,
                           localIndex const numRows,
-                          localIndex const numCols )
+                          localIndex const  )
 {
-  for( localIndex i = 0; i < numRows; ++i )
+
+  array1d< HYPRE_Int > nCols;
+  nCols.resize(numRows);
+  for( int i=0; i<numRows; ++i )
   {
-    insert( rowIndices[i], colIndices, values + numCols * i, numCols );
+    nCols[i] = 1;
   }
+  nCols.move( LvArray::MemorySpace::cuda, false );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
+                                                    numRows,
+                                                    nCols.data(),
+                                                    hypre::toHypreBigInt( rowIndices ),
+                                                    hypre::toHypreBigInt( colIndices ),
+                                                    values
+                                                   ) );
+
+//  for( localIndex i = 0; i < numRows; ++i )
+//  {
+//    insert( rowIndices[i], colIndices, values + numCols * i, numCols );
+//  }
 }
 
 void HypreMatrix::apply( HypreVector const & src,
@@ -882,6 +898,211 @@ void HypreMatrix::leftScale( HypreVector const & vec )
     }
   } );
 }
+
+#if 0
+void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
+                                           localIndex const dofsPerNode )
+{
+//  GEOSX_MARK_FUNCTION;
+  GEOSX_ERROR_IF( dofsPerNode < 2, "Function requires dofsPerNode > 1" );
+
+  const localIndex numRows  = numLocalRows();
+  const localIndex maxEntries = maxRowLength();
+  const localIndex maxDstEntries = maxEntries / dofsPerNode;
+
+  dst.createWithGlobalSize( numGlobalRows(),
+                            numGlobalCols(),
+                            maxEntries,
+                            MPI_COMM_GEOSX );
+  dst.setDofManager( dofManager() );
+//  dst.open();
+
+
+  array1d< HYPRE_BigInt > rows( numRows );
+  array1d< HYPRE_Int > numCols(numRows);
+
+  for( globalIndex r = 0; r < numRows; ++r )
+  {
+    rows[r] = r + ilower();
+  }
+
+//  rows.move(LvArray::MemorySpace::cuda );
+//  numCols.move(LvArray::MemorySpace::cuda);
+
+  printf( "breakpoint 1\n");
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetRowCounts( m_ij_mat,
+                                                     numRows,
+                                                     rows.data(),
+                                                     numCols.data() ) );
+
+  printf( "breakpoint 2\n");
+
+
+
+  array1d< HYPRE_BigInt > colsData(maxEntries);
+  arrayView1d<HYPRE_BigInt> const cols = colsData;
+
+  array1d< real64 > valuesData(maxEntries);
+  arrayView1d< real64 > const values = valuesData;
+
+  array1d< HYPRE_BigInt > srcIndicesData(maxEntries);
+  arrayView1d< HYPRE_BigInt > srcIndices = srcIndicesData;
+
+  array1d< real64 > srcValuesData(maxEntries);
+  arrayView1d< real64 > srcValues = srcValuesData;
+
+//  srcIndices.move(LvArray::MemorySpace::cuda );
+//  srcValues.move(LvArray::MemorySpace::cuda);
+
+  array1d<HYPRE_Int> countsData(numRows);
+  arrayView1d<HYPRE_Int> const counts = countsData;
+
+  for( globalIndex r = 0; r < numRows; ++r )
+  {
+    counts[0] = 0;
+  }
+
+
+  for( globalIndex r = 0; r < numRows; ++r )
+  {
+
+//    printf( "breakpoint 3 - %d\n", r );
+
+    GEOSX_LAI_CHECK_ERROR( hypre_IJMatrixGetValuesParCSR( m_ij_mat,
+                                                          -1,
+                                                          &(numCols[r]),
+                                                          &(rows[r]),
+                                                          srcIndices.data(),
+                                                          srcValues.data() ) );
+
+//    printf( "breakpoint 4 - %d\n", r );
+
+    HYPRE_BigInt const row = r + ilower();
+    HYPRE_BigInt const rowComponent = row % dofsPerNode;
+    HYPRE_Int const rowLength = numCols[r];
+
+    forAll< parallelHostPolicy >( rowLength,
+                                        [=] GEOSX_HOST_DEVICE ( localIndex const c )
+    {
+      globalIndex const col = srcIndices( c );
+      globalIndex const colComponent = col % dofsPerNode;
+      if( rowComponent == colComponent )
+      {
+        cols[counts[r]] = col;
+        values[counts[r]] = srcValues( c );
+        ++counts[r];
+      }
+    } );
+
+//    printf( "breakpoint 5 - %d\n", r );
+    counts.move(LvArray::MemorySpace::cuda );
+    cols.move(LvArray::MemorySpace::cuda );
+    values.move(LvArray::MemorySpace::cuda);
+
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( dst.m_ij_mat,
+                                                      1,
+                                                      &(counts[r]),
+                                                      &row,//(rows[r]),
+                                                      cols.data(),
+                                                      values.data() ) );
+
+//    printf( "breakpoint 6 - %d\n", r );
+
+
+  }
+  printf( "breakpoint 7 \n" );
+//  dst.close();
+  printf( "breakpoint 8 \n" );
+}
+#else
+void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
+                                           localIndex const dofsPerNode )
+{
+  const localIndex numLocRows  = numLocalRows();
+
+  array1d< HYPRE_BigInt > rows( numLocRows );
+  array1d< HYPRE_Int > numCols( numLocRows );
+
+  std::iota( rows.begin(), rows.end(), ilower() );
+
+  printf( "breakpoint 1\n");
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetRowCounts( m_ij_mat,
+                                                     numLocRows,
+                                                     rows.data(),
+                                                     numCols.data() ) );
+
+
+  const HYPRE_Int maxEntries = *(std::max_element( numCols.begin(), numCols.end() ) );
+  const HYPRE_Int maxDstEntries = maxEntries / dofsPerNode;
+
+  printf( "breakpoint 2\n");
+
+
+  CRSMatrix< real64 > tempMat;
+  tempMat.resize( numLocRows, numGlobalCols(), maxDstEntries );
+
+  array1d< HYPRE_BigInt > colsData(maxEntries);
+  arrayView1d<HYPRE_BigInt> const cols = colsData;
+
+  array1d< real64 > valuesData(maxEntries);
+  arrayView1d< real64 > const values = valuesData;
+
+  array1d< HYPRE_BigInt > srcIndicesData(maxEntries);
+  arrayView1d< HYPRE_BigInt > srcIndices = srcIndicesData;
+
+  array1d< real64 > srcValuesData(maxEntries);
+  arrayView1d< real64 > srcValues = srcValuesData;
+
+//  srcIndices.move(LvArray::MemorySpace::cuda );
+//  srcValues.move(LvArray::MemorySpace::cuda);
+
+  array1d<HYPRE_Int> countsData(numLocRows);
+  arrayView1d<HYPRE_Int> const counts = countsData;
+
+  for( globalIndex r = 0; r < numLocRows; ++r )
+  {
+    counts[0] = 0;
+  }
+
+
+
+
+  for( HYPRE_Int r = 0; r < numLocRows; ++r )
+  {
+    HYPRE_BigInt const row = r + ilower();
+    HYPRE_BigInt const rowComponent = row % dofsPerNode;
+
+    GEOSX_LAI_CHECK_ERROR( hypre_IJMatrixGetValuesParCSR( m_ij_mat,
+                                                          -1,
+                                                          &(numCols[r]),
+                                                          &(rows[r]),
+                                                          srcIndices.data(),
+                                                          srcValues.data() ) );
+
+
+
+    for( localIndex c = 0; c < numCols[r]; ++c )
+    {
+      globalIndex const col = srcIndices( c );
+      globalIndex const colComponent = col % dofsPerNode;
+      if( rowComponent == colComponent )
+      {
+        cols[counts[r]] = col;
+        values[counts[r]] = srcValues( c );
+        ++counts[r];
+      }
+    }
+
+    tempMat.insertNonZeros( r, cols.data(), values.data(), counts[r] );
+  }
+
+  dst.create( tempMat.toViewConst(), MPI_COMM_GEOSX );
+  dst.setDofManager( dofManager() );
+
+}
+
+#endif
 
 void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale, bool samePattern )
 {

@@ -26,8 +26,8 @@
         lineSearchMaxCuts="3"/>
       <LinearSolverParameters
         solverType="gmres"
-        preconditionerType="amg"
-        logLevel="0"/>
+        preconditionerType="mgr"
+        logLevel="1"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
