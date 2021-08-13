@@ -311,7 +311,7 @@ For the above poroelastic example, an analytical solution `(Detournay and Cheng,
 
 
 
-For the same 3D wellbore problem, the poroplastic case is thereafter tested and compared with the poroelastic one. Below figure shows the distribution of :math:`\sigma_{yy}` in the near wellbore region for both cases. As observed, a relaxation of the tangential stress along the direction of minimum horizontal stress is detected for the poroplastic case, which can be attributed to the plastic response of the rock.
+For the same 3D wellbore problem, the poroplastic case is thereafter tested and compared with the poroelastic one. The figure below shows the distribution of :math:`\sigma_{yy}` in the near wellbore region for both cases. As expected, a relaxation of the tangential stress along the direction of minimum horizontal stress is detected, which can be attributed to the plastic response of the rock.
 
 
 .. _problemVerificationFig3:
