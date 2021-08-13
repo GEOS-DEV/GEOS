@@ -311,8 +311,7 @@ times with the numerical solution (markers).
        hydromechanicalParameters["fluidCompressibility"] = float(param3.get("compressibility"))
        
        perm = param4.get("permeabilityComponents")
-       perm = perm[1:-1]
-       perm = np.array(perm.split(','),float)
+       perm = np.array(perm[1:-1].split(','),float)
        hydromechanicalParameters["permeability"] = perm[0]
        
        return hydromechanicalParameters
