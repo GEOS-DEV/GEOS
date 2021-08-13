@@ -34,7 +34,7 @@ contained within a single xml file that is located at:
 Description of the case
 ------------------------------------------------------------------
 
-We simulate a drained wellbore problem subjected to isotropic horizontal stress (:math:`\Sigma_h`) and vertical stress (:math:`\Sigma_v`). By lowering the wellbore supporting pressure (:math:`P_w`), the wellbore contracts, and the reservoir rock experiences elastoplastic deformation. A plastic zone develops in the near wellbore region, as shown in Fig.1.
+We simulate a drained wellbore problem subjected to isotropic horizontal stress (:math:`\sigma_h`) and vertical stress (:math:`\sigma_v`). By lowering the wellbore supporting pressure (:math:`P_w`), the wellbore contracts, and the reservoir rock experiences elastoplastic deformation. A plastic zone develops in the near wellbore region, as shown below.
 
 
 .. _problemSketchFig:
@@ -43,7 +43,7 @@ We simulate a drained wellbore problem subjected to isotropic horizontal stress 
    :width: 500
    :figclass: align-center
 
-   Fig.1 Sketch of the wellbore problem `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__
+   Sketch of the wellbore problem `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__
 
 
 To simulate this phenomenon, the strain hardening Extended Drucker-Prager model with an associated plastic flow rule in GEOSX is used in this tutorial. Displacement and stress fields around the wellbore are numerically calculated. These numerical predictions are then compared with the corresponding analytical solutions `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__ from the literature. 
@@ -60,7 +60,7 @@ the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
 Mesh: discretizing computational domain
 --------------------------------------------------------------------
 
-Fig.2 shows the generated mesh that is used for solving this 3D wellbore problem
+Following figure shows the generated mesh that is used for solving this 3D wellbore problem
 
 .. _problemSketchFig:
 .. figure:: WellMesh.png
@@ -68,7 +68,7 @@ Fig.2 shows the generated mesh that is used for solving this 3D wellbore problem
    :width: 500
    :figclass: align-center
 
-   Fig.2 Generated mesh for the wellbore problem
+   Generated mesh for the wellbore problem
 
 
 Let us take a closer look at the geometry of this wellbore problem.
@@ -119,7 +119,7 @@ A homogeneous domain with one solid material is assumed, whose mechanical proper
 Recall that in the ``SolidMechanics_LagrangianFEM`` section, 
 ``rock`` is designated as the material in the computational domain. 
 Here, Extended Drucker Prager model ``ExtendedDruckerPrager`` is used to simulate the elastoplastic behavior of ``rock``.
-As for the material parameters, ``defaultInitialFrictionAngle``, ``defaultResidualFrictionAngle`` and ``defaultCohesion`` denote the initial friction angle, the residual friction angle, and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope in the :math:`\Sigma` - :math:`\Tau` plane.
+As for the material parameters, ``defaultInitialFrictionAngle``, ``defaultResidualFrictionAngle`` and ``defaultCohesion`` denote the initial friction angle, the residual friction angle, and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope.
 As the residual friction angle ``defaultResidualFrictionAngle`` is larger than the initial one ``defaultInitialFrictionAngle``, a  strain hardening model is adopted, whose hardening rate is given as ``defaultHardening="0.01"``. 
 If the residual friction angle is set to be less than the initial one, strain weakening will take place. 
 Setting ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
@@ -134,7 +134,7 @@ The next step is to specify fields, including:
   - The initial value (the in-situ stresses and traction at the wellbore wall have to be initialized)
   - The boundary conditions (the reduction of wellbore pressure and constraints of the outer boundaries have to be set)
 
-In this tutorial, we need to specify isotropic horizontal stress (:math:`\Sigma_h` = -11.25 MPa) and vertical stress (:math:`\Sigma_v` = -15.0 MPa). 
+In this tutorial, we need to specify isotropic horizontal stress (:math:`\sigma_h` = -11.25 MPa) and vertical stress (:math:`\sigma_v` = -15.0 MPa). 
 To reach equilibrium, a compressive traction :math:`P_w` = -11.25 MPa is instantaneously applied at the wellbore wall ``rneg`` at time :math:`t` = 0 s, which will then be gradually reduced to a lower value (-2.0 MPa) to let wellbore contract.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
@@ -185,9 +185,9 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+-------------------------+------------------+---------------+
 | :math:`c_h`      | Hardening Rate          | [-]              | 0.01          |
 +------------------+-------------------------+------------------+---------------+
-| :math:`\Sigma_h` | Horizontal Stress       | [MPa]            | -11.25        |
+| :math:`\sigma_h` | Horizontal Stress       | [MPa]            | -11.25        |
 +------------------+-------------------------+------------------+---------------+
-| :math:`\Sigma_v` | Vertical Stress         | [MPa]            | -15.0         |
+| :math:`\sigma_v` | Vertical Stress         | [MPa]            | -15.0         |
 +------------------+-------------------------+------------------+---------------+
 | :math:`a_0`      | Initial Well Radius     | [m]              | 0.1           |
 +------------------+-------------------------+------------------+---------------+
@@ -198,7 +198,7 @@ The parameters used in the simulation are summarized in the following table.
 Inspecting results
 ---------------------------------
 
-In the above example, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Fig.3 shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of normal stress components, stress path, the supporting wellbore pressure and wellbore size. It is clear that the GEOSX predictions are in excellent agreement with the analytical results. 
+In the above example, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Below figure shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of normal stress components, stress path, the supporting wellbore pressure and wellbore size. It is clear that the GEOSX predictions are in excellent agreement with the analytical results. 
 
 
 .. _problemVerificationFig:
@@ -207,7 +207,7 @@ In the above example, we requested silo-format output files. We can therefore im
    :width: 1000
    :figclass: align-center
 
-   Fig.3 Comparing GEOSX results with analytical solutions
+   Comparing GEOSX results with analytical solutions
 
 
 For the same wellbore problem, using different constitutive models (plastic vs. elastic), obviously, distinct differences in rock deformation and distribution of resultant stresses is also observed and highlighted.  
