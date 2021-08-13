@@ -244,7 +244,6 @@ times with the numerical solution (markers).
    import xml.etree.ElementTree as ElementTree
    from mpmath import *
    import math
-   import re
 
 
    class terzaghi:
