@@ -309,6 +309,10 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
 
     aper0.setValues< parallelDevicePolicy<> >( aper );
 
+    // Needed coz faceElems don't exist when initializing.
+    CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+    porousSolid.saveConvergedState();
+
     updateSolidFlowProperties( subRegion, targetIndex );
     updateFluidState( subRegion, targetIndex );
   } );
@@ -453,6 +457,7 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
 
   arrayView1d< real64 const > const & densityOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
   arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
+  arrayView1d< real64 const > const & deltaVolume = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString() );
 
   ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, fluidModelNames()[targetIndex] );
   FluidPropViews const fluidProps = getFluidProperties( fluid );
@@ -481,6 +486,7 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
                                                  dofNumber,
                                                  ghostRank,
                                                  volume,
+                                                 deltaVolume,
                                                  porosityOld,
                                                  porosity,
                                                  dPoro_dPres,

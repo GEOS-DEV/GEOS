@@ -33,19 +33,32 @@ public:
 
   ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                     arrayView3d< real64 > const & dPerm_dPressure,
-                                    arrayView3d< real64 > const & dPerm_dAperture )
+                                    arrayView3d< real64 > const & dPerm_dAper )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
-    m_dPerm_dAperture( dPerm_dAperture )
+      m_dPerm_dAperture( dPerm_dAper )
   {}
 
   GEOSX_HOST_DEVICE
-  void compute( real64 const & hydraulicAperture,
+  void compute( real64 const & oldHydraulicAperture,
+                real64 const & newHydraulicAperture,
                 arraySlice1d< real64 > const & permeability,
                 arraySlice1d< real64 > const & dPerm_dAperture ) const
   {
     // Technically this is not a permeability but it's convenient to definite like this.
-    real64 const perm  = hydraulicAperture*hydraulicAperture*hydraulicAperture / 12.0;
-    real64 const dPerm = hydraulicAperture*hydraulicAperture / 4.0;
+
+
+//    real64 const perm  = newHydraulicAperture*newHydraulicAperture*newHydraulicAperture / 12.0;
+//    real64 const dPerm = newHydraulicAperture*newHydraulicAperture / 4.0;
+
+    real64 const perm = 0.25 * ( oldHydraulicAperture*oldHydraulicAperture*oldHydraulicAperture +
+                                 oldHydraulicAperture*oldHydraulicAperture*newHydraulicAperture +
+                                 oldHydraulicAperture*newHydraulicAperture*newHydraulicAperture +
+                                 newHydraulicAperture*newHydraulicAperture*newHydraulicAperture ) / 12;
+
+    real64 const dPerm  = 0.25 * ( oldHydraulicAperture*oldHydraulicAperture +
+                                   2*oldHydraulicAperture*newHydraulicAperture +
+                                   3*newHydraulicAperture*newHydraulicAperture ) / 12;
+
 
     for( int dim=0; dim < 3; dim++ )
     {
@@ -56,12 +69,14 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & hydraulicAperture ) const override final
+                                                   localIndex const q,
+                                                   real64 const & oldHydraulicAperture,
+                                                   real64 const & newHydraulicAperture ) const override final
   {
     GEOSX_UNUSED_VAR( q );
 
-    compute( hydraulicAperture,
+    compute( oldHydraulicAperture,
+             newHydraulicAperture,
              m_permeability[k][0],
              m_dPerm_dAperture[k][0] );
   }

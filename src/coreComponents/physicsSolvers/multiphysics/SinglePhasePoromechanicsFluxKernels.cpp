@@ -410,9 +410,6 @@ void FaceElementFluxKernel::
 
   static constexpr real64 TINY = 1e-10;
 
-  std::cout << "I m in here" <<std::endl;
-  std::cout << "size: " << stencilWrapper.size() <<std::endl;
-
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
@@ -457,8 +454,6 @@ void FaceElementFluxKernel::
       }
 
     }
-
-    std::cout<< "pressure" << pres[0][0][0] << std::endl;
 
     compute( stencilSize,
              seri[iconn],
@@ -558,11 +553,17 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
   for( localIndex ke = 0; ke < 2; ++ke )
   {
     dFlux_dAper[ke] = dFlux_dTrans[ke] * dTrans_dAper[ke];
+    std::cout << "dTrans_dAper " << dTrans_dAper[ke] << std::endl;
+    std::cout << "dFlux_dTrans " << dFlux_dTrans[ke] << std::endl;
   }
 
   // populate local flux vector and derivatives
   flux[0] =  dt * fluxVal;
   flux[1] = -dt * fluxVal;
+
+  std::cout << "fluxVal: " << dt * fluxVal << std::endl;
+  std::cout << "dFluxDAper " << dFlux_dAper[0] << std::endl;
+  std::cout << "dFluxDAper " << dFlux_dAper[1] << std::endl;
 
   fluxJacobian[0][0] += dFlux_dP[0];
   fluxJacobian[0][1] += dFlux_dP[1];

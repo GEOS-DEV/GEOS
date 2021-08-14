@@ -37,10 +37,10 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::newPorosityString(), &m_newPorosity ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( 0.2 ); // will be overwritten
+    setApplyDefaultValue( 1.0 ); // will be overwritten but it's important for newly created faceElements.
 
   registerWrapper( viewKeyStruct::oldPorosityString(), &m_oldPorosity ).
-    setApplyDefaultValue( 0.0 );// will be overwritten
+    setApplyDefaultValue( 1.0 );// will be overwritten but it's important for newly created faceElements.
 
   registerWrapper( viewKeyStruct::dPorosity_dPressureString(), &m_dPorosity_dPressure ).
     setApplyDefaultValue( 0.0 );// will be overwritten

@@ -245,7 +245,8 @@ void FlowSolverBase::updateSolidFlowProperties( SurfaceElementSubRegion & subReg
   arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
   arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-  arrayView1d< real64 const > const effectiveAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
+  arrayView1d< real64 const > const newHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
+  arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct:: viewKeyStruct::aperture0String() );
 
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
 
@@ -257,7 +258,7 @@ void FlowSolverBase::updateSolidFlowProperties( SurfaceElementSubRegion & subReg
     {
       for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
       {
-        porousWrapper.updateFromPressureAndAperture( k, q, pressure[k], deltaPressure[k], effectiveAperture[k] );
+        porousWrapper.updateFromPressureAndAperture( k, q, pressure[k], deltaPressure[k], oldHydraulicAperture[k], newHydraulicAperture[k] );
       }
     } );
   } );

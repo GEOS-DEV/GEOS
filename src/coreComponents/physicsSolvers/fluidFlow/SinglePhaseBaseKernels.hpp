@@ -200,6 +200,7 @@ struct AccumulationKernel
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & elemGhostRank,
                       arrayView1d< real64 const > const & volume,
+                      arrayView1d< real64 const > const & deltaVolume,
                       arrayView2d< real64 const > const & porosityOld,
                       arrayView2d< real64 const > const & porosityNew,
                       arrayView2d< real64 const > const & dPoro_dPres,
@@ -218,9 +219,9 @@ struct AccumulationKernel
       {
         real64 localAccum, localAccumJacobian;
 
-        real64 const poreVolNew = volume[ei] * porosityNew[ei][0];
+        real64 const poreVolNew = ( volume[ei] + deltaVolume[ei] ) * porosityNew[ei][0];
         real64 const poreVolOld = volume[ei] * porosityOld[ei][0];
-        real64 const dPoreVol_dPres = volume[ei] * dPoro_dPres[ei][0];
+        real64 const dPoreVol_dPres = ( volume[ei] + deltaVolume[ei] ) * dPoro_dPres[ei][0];
 
         compute( dens[ei][0],
                  densOld[ei],

@@ -194,8 +194,6 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
                                                       string const & faceElementRegionName,
                                                       bool const initFlag ) const
 {
-  std::cout << "I am initializing this"	<< std::endl;
-
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager const & edgeManager = mesh.getEdgeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -536,9 +534,6 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 #endif
     } );
   }
-
-  std::cout << "after this step the size is" << 	fractureStencil.size() << std::endl;
-
 
   // add connections for FaceElements to/from CellElements.
 

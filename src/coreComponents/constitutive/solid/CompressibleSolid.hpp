@@ -66,11 +66,12 @@ public:
                                       localIndex const q,
                                       real64 const & pressure,
                                       real64 const & deltaPressure,
-                                      real64 const & hydraulicAperture ) const
+                                      real64 const & oldHydraulicAperture,
+                                      real64 const & newHydraulicAperture ) const
   {
     m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
-    m_permUpdate.updateFromAperture( k, q, hydraulicAperture );
+    m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
 
 private:

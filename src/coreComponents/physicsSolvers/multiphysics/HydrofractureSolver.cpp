@@ -216,7 +216,8 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
                                                              domain.getNeighbors(),
                                                              false );
 
-        this->updateDeformationForCoupling( domain );
+        // this->updateDeformationForCoupling( domain );
+        this->updateState( domain );
 
         if( getLogLevel() >= 1 )
         {
@@ -1046,8 +1047,6 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
-	std::cout << " size: " << stencil.size() << std::endl;
-
     for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );

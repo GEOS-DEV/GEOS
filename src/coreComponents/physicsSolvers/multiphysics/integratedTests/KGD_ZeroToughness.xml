@@ -16,14 +16,14 @@
       surfaceGeneratorName="SurfaceGen"
       porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
-      logLevel="4"
+      logLevel="1"
       discretization="FE1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
-        newtonMaxIter="2"
+        newtonMaxIter="20"
         lineSearchMaxCuts="3"/>
       <LinearSolverParameters
         directParallel="0"/>

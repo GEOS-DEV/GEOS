@@ -76,13 +76,15 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
     real64 const pressure = pres[er][esr][ei] + dPres[er][esr][ei];
     real64 const gravD = gravCoef[er][esr][ei];
     real64 const pot = transmissibility[ke] * ( pressure - densMean * gravD );
+    std::cout<< "transmissibility " << transmissibility[ke] << std::endl;
+    std::cout<< "pressure " << pressure << std::endl;
 
     potDif += pot;
     dPotDif_dTrans[ke] = ( pressure - densMean * gravD );
     sumWeightGrav += transmissibility[ke] * gravD;
     potScale = fmax( potScale, fabs( pot ) );
   }
-
+  std::cout<< "potDif " << potDif << std::endl;
   // compute upwinding tolerance
   real64 constexpr upwRelTol = 1e-8;
   real64 const upwAbsTol = fmax( potScale * upwRelTol, LvArray::NumericLimits< real64 >::epsilon );
@@ -112,6 +114,7 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
 
   // compute the final flux and derivative w.r.t transmissibility
   fluxVal = mobility * potDif;
+  std::cout << "mobility: " << mobility << std::endl;
 
   for( localIndex ke = 0; ke < 2; ++ke )
   {

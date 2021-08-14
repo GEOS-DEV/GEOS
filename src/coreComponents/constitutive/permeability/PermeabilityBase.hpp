@@ -72,11 +72,13 @@ public:
   GEOSX_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
-                                   real64 const & aperture ) const
+                                   real64 const & oldHydraulicAperture,
+                                   real64 const & newHydraulicAperture ) const
   {
     GEOSX_UNUSED_VAR( k );
     GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( aperture );
+    GEOSX_UNUSED_VAR( oldHydraulicAperture );
+    GEOSX_UNUSED_VAR( newHydraulicAperture );
   }
 
 protected:

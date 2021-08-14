@@ -326,7 +326,9 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   real64 const harmonicWeight   = t0*t1 / (t0+t1);
   real64 const arithmeticWeight = (t0+t1) / 2;
 
-  real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
+  std::cout << "harmonic weight: " << harmonicWeight << std::endl;
+
+  real64 const value = m_meanPermCoefficient * harmonicWeight + 0.5 * (1 - m_meanPermCoefficient) * arithmeticWeight;
 
   transmissibility[0] = value;
   transmissibility[1] = -value;
@@ -342,8 +344,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   dArithmetic_dpres[0] = dt0_dp / 2;
   dArithmetic_dpres[1] = dt1_dp / 2;
 
-  dTrans_dPressure[0] = m_meanPermCoefficient * dHarmonic_dpres[0] + (1 - m_meanPermCoefficient) * dArithmetic_dpres[0];
-  dTrans_dPressure[1] = -( m_meanPermCoefficient * dHarmonic_dpres[1] + (1 - m_meanPermCoefficient) * dArithmetic_dpres[1] );
+  dTrans_dPressure[0] =    m_meanPermCoefficient * dHarmonic_dpres[0] + 0.5 * (1 - m_meanPermCoefficient) * dArithmetic_dpres[0];
+  dTrans_dPressure[1] = -( m_meanPermCoefficient * dHarmonic_dpres[1] + 0.5 * (1 - m_meanPermCoefficient) * dArithmetic_dpres[1] );
 
   real64 const dt0_da = m_weights[iconn][0] * dPerm_dAperture[er0][esr0][ei0][0][0];
   real64 const dt1_da = m_weights[iconn][1] * dPerm_dAperture[er1][esr1][ei1][0][0];
@@ -356,8 +358,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   dArithmetic_dAper[0] = dt0_da / 2;
   dArithmetic_dAper[1] = dt1_da / 2;
 
-  dTrans_dAperture[0] = 0.0* ( m_meanPermCoefficient * dHarmonic_dAper[0] + (1 - m_meanPermCoefficient) * dArithmetic_dAper[0] );
-  dTrans_dAperture[1] = 0.0* ( -( m_meanPermCoefficient * dHarmonic_dAper[1] + (1 - m_meanPermCoefficient) * dArithmetic_dAper[1] ) );
+  dTrans_dAperture[0] =   ( m_meanPermCoefficient * dHarmonic_dAper[0] + 0.5 * (1 - m_meanPermCoefficient) * dArithmetic_dAper[0] );
+  dTrans_dAperture[1] = - ( m_meanPermCoefficient * dHarmonic_dAper[1] + 0.5 * (1 - m_meanPermCoefficient) * dArithmetic_dAper[1] ) ;
 }
 
 
