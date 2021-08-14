@@ -114,7 +114,7 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress.setValues< serialPolicy >( 0 );
+    stress.zero();
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 1 ] = strain;
@@ -133,7 +133,7 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress.setValues< serialPolicy >( 0 );
+    stress.zero();
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 2 ] = strain;
@@ -152,7 +152,7 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress.setValues< serialPolicy >( 0 );
+    stress.zero();
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 5 ] = strain;
@@ -171,7 +171,7 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress.setValues< serialPolicy >( 0 );
+    stress.zero();
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 4 ] = strain;
@@ -190,7 +190,7 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
   }
 
   {
-    stress.setValues< serialPolicy >( 0 );
+    stress.zero();
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 3 ] = strain;

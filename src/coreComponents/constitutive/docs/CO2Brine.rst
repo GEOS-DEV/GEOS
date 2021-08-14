@@ -40,8 +40,8 @@ The user can parameterize the construction of the table by specifying the salini
 | FlashModel | CO2Solubility | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
 +------------+---------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
 
-Note that the pressures are in Pascal, and the temperatures are in degree Celsius.
-The temperature must be between 10 and 350 degrees Celsius.
+Note that the pressures are in Pascal, and the temperatures are in Kelvin.
+The temperature must be between 283.15 and 623.15 Kelvin.
 The table is populated using the model of Duan and Sun (2003).
 Specifically, we solve the following nonlinear CO2 equation of state (equation (A1) in Duan and Sun, 2003) for each pair :math:`(p,T)` to obtain the reduced volume, :math:`V_r`.
 
@@ -86,13 +86,13 @@ CO2 phase density and viscosity
 -------------------------------
 
 In GEOSX, the computation of the CO2 phase density and viscosity  is entirely based on look-up in precomputed tables.
-The user defines the pressure (in Pascal) and temperature (in degrees Celsius) axis of the density table in the form:
+The user defines the pressure (in Pascal) and temperature (in Kelvin) axis of the density table in the form:
 
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
 | DensityFun | SpanWagnerCO2Density | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` |
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
 
-This correlation is valid for pressures less than :math:`8 \times 10^8` Pascal and temperatures less than 800 degrees Celsius.  
+This correlation is valid for pressures less than :math:`8 \times 10^8` Pascal and temperatures less than 1073.15 Kelvin.  
 Using these parameters, GEOSX internally constructs a two-dimensional table storing the values of density as a function of pressure and temperature.
 This table is populated as explained in the work of Span and Wagner (1996) by solving the following nonlinear Helmholtz energy equation for each pair :math:`(p,T)` to obtain the value of density, :math:`\rho_{g}`:
 
@@ -110,7 +110,7 @@ The pressure and temperature axis of the viscosity table can be parameterized in
 | ViscosityFun | FenghourCO2Viscosity | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` |
 +--------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
 
-This correlation is valid for pressures less than :math:`3 \times 10^8` Pascal and temperatures less than 1220 degrees Celsius.  
+This correlation is valid for pressures less than :math:`3 \times 10^8` Pascal and temperatures less than 1493.15 Kelvin.  
 This table is populated as explained in the work of Fenghour and Wakeham (1998) by computing the CO2 phase viscosity, :math:`\mu_g`, as follows:
 
 .. math::
@@ -134,7 +134,7 @@ The user specifies the (constant) salinity and defines the pressure and temperat
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
 
 The pressure must be in Pascal and must be less than :math:`5 \times 10^7` Pascal.
-The temperature must be in degree Celsius and must be between 10 and 350 degrees Celsius.
+The temperature must be in Kelvin and must be between 283.15 and 623.15 Kelvin.
 Using these parameters, GEOSX performs a preprocessing step to construct a two-dimensional table storing the brine density, :math:`\rho_{\ell,table}` for the specified salinity as a function of pressure and temperature using the expression:
 
 .. math::
@@ -193,7 +193,7 @@ The model is represented by ``<CO2BrineFluid>`` node in the input.
 
 The following attributes are supported:
 
-.. include:: ../../../coreComponents/fileIO/schema/docs/CO2BrineFluid.rst
+.. include:: ../../../coreComponents/schema/docs/CO2BrineFluid.rst
 
 Supported phase names are:
 

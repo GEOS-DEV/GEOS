@@ -16,7 +16,7 @@
 
   <!-- With this value of g, the stress matches what we'd expect with the correct value: -12998.1 -->
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
@@ -25,12 +25,9 @@
       targetRegions="{ Region1 }"
       solidMaterialNames="{ rock }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
-        newtonMaxIter="5"/>
+        newtonTol="1.0e-8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
@@ -66,6 +63,7 @@
       name="Region1"
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
+
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb2 }"
@@ -78,7 +76,6 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>

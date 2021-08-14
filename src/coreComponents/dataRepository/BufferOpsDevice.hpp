@@ -17,12 +17,11 @@
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
 #include "LvArray/src/limits.hpp"
 #include "BufferOps.hpp"
 
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include <type_traits>
 
@@ -166,10 +165,10 @@ PackDataDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
-PackDataByIndexDevice( buffer_unit_type * & buffer,
-                       ArrayView< T const, NDIM, USD > const & var,
-                       T_INDICES const & indices,
-                       parallelDeviceEvents & events );
+PackDataByIndexDevice ( buffer_unit_type * & buffer,
+                        ArrayView< T const, NDIM, USD > const & var,
+                        T_INDICES const & indices,
+                        parallelDeviceEvents & events );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, typename T_INDICES >

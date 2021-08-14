@@ -41,11 +41,11 @@
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #define GEOSX_USE_CUDA
 
+/// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
+#define GEOSX_USE_PVTPackage
+
 /// Enables use of Python (CMake option ENABLE_PYTHON)
 #define GEOSX_USE_PYGEOSX
-
-/// Enables use of GEOSX PTP module (CMake option ENABLE_GEOSX_PTP)
-#define USE_GEOSX_PTP
 
 /// Enables use of RAJA (CMake option ENABLE_RAJA)
 #define GEOSX_USE_RAJA
@@ -90,7 +90,7 @@
 /// CMake option CMAKE_BUILD_TYPE
 #define GEOSX_CMAKE_BUILD_TYPE "Release"
 
-/// The type that localIndex will be alaised to.
+/// The type that localIndex will be aliased to.
 #define GEOSX_LOCALINDEX_TYPE std::ptrdiff_t
 
 /// An integer flag representing the type that localIndex will be aliased to.

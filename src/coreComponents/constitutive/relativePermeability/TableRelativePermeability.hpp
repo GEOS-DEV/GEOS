@@ -21,7 +21,7 @@
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
-#include "managers/Functions/TableFunction.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geosx
 {
@@ -37,8 +37,8 @@ public:
                                    arrayView1d< real64 const > const & phaseMinVolumeFraction,
                                    arrayView1d< integer const > const & phaseTypes,
                                    arrayView1d< integer const > const & phaseOrder,
-                                   arrayView3d< real64 > const & phaseRelPerm,
-                                   arrayView4d< real64 > const & dPhaseRelPerm_dPhaseVolFrac )
+                                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
                                       phaseRelPerm,
@@ -48,29 +48,15 @@ public:
     m_phaseMinVolumeFraction( phaseMinVolumeFraction )
   {}
 
-  /// Default copy constructor
-  TableRelativePermeabilityUpdate( TableRelativePermeabilityUpdate const & ) = default;
-
-  /// Default move constructor
-  TableRelativePermeabilityUpdate( TableRelativePermeabilityUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  TableRelativePermeabilityUpdate & operator=( TableRelativePermeabilityUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  TableRelativePermeabilityUpdate & operator=( TableRelativePermeabilityUpdate && ) = delete;
+  GEOSX_HOST_DEVICE
+  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                        arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                        arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseRelPerm,
-                        arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & phaseVolFraction ) const override
+                       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
   {
     compute( phaseVolFraction,
              m_phaseRelPerm[k][q],
@@ -161,17 +147,13 @@ private:
 };
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
+inline void
 TableRelativePermeabilityUpdate::
-  compute( arraySlice1d< real64 const > const & phaseVolFraction,
-           arraySlice1d< real64 > const & phaseRelPerm,
-           arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
+  compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+           arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  for( real64 & val : dPhaseRelPerm_dPhaseVolFrac )
-  {
-    val = 0.0;
-  }
+  LvArray::forValuesInSlice( dPhaseRelPerm_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
   using PT = RelativePermeabilityBase::PhaseType;
   integer const ipWater = m_phaseOrder[PT::WATER];

@@ -18,11 +18,12 @@
 #define GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
+#include "common/Span.hpp"
 #include "InputFlags.hpp"
 #include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "managers/TimeHistory/HistoryDataSpec.hpp"
+#include "HistoryDataSpec.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
 #include "LvArray/src/python/python.hpp"
@@ -448,6 +449,16 @@ public:
   }
 
   /**
+   * @brief Returns flag that indicates whether the contents of the wrapper
+   *   have been successfully read from the input file.
+   * @return true if the contents of the wrapper have been read from input.
+   */
+  bool getSuccessfulReadFromInput() const
+  {
+    return m_successfulReadFromInput;
+  }
+
+  /**
    * @brief Set the description string of the wrapper.
    * @param description the description
    * @return a pointer to this wrapper
@@ -537,6 +548,42 @@ public:
    */
   virtual std::type_info const & getTypeId() const = 0;
 
+  /**
+   * @brief Return the number of dimensions of the array.
+   * @return the number of dimensions of the array if T is an array, and 0 otherwise
+   */
+  virtual int numArrayDims() const = 0;
+
+  /**
+   * @brief Return the number of components in a multidimensional array.
+   * @return total size along all dimensions except first if T is an array, and 0 otherwise
+   */
+  virtual localIndex numArrayComp() const = 0;
+
+  /**
+   * @brief Set dimension labels for an array.
+   * @param dim dimension index (must be less than number of array dimensions)
+   * @param labels array of labels
+   * @return reference to @p this (for convenience of call chaining)
+   *
+   * Dimension labels are typically used in visualization output to give context to plots
+   * of multidimensional data, such as fluid component and phase names.
+   * This method provides a way for physics modules (solvers and constitutive models) to
+   * communicate meaningful labels to output drivers (such as VTK and Silo).
+   *
+   * An error is raised if wrapped type is not LvArray::Array.
+   */
+  virtual WrapperBase & setDimLabels( integer dim, Span< string const > labels ) = 0;
+
+  /**
+   * @brief Get dimension labels of an array.
+   * @param dim dimension index (must be less than number of array dimensions)
+   * @return reference to array of labels (empty unless set via setDimLabels)
+   *
+   * An error is raised if wrapped type is not LvArray::Array.
+   */
+  virtual Span< string const > getDimLabels( integer dim ) const = 0;
+
   ///@}
 
 #if defined(USE_TOTALVIEW_OUTPUT)
@@ -594,6 +641,9 @@ protected:
 
   /// Flag to store if this wrapped object should be read from input
   InputFlags m_inputFlag;
+
+  /// Flag to indicate if wrapped object was successfully read from input
+  bool m_successfulReadFromInput;
 
   /// A string description of the wrapped object
   string m_description;

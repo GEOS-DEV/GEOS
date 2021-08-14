@@ -48,6 +48,7 @@ public:
   using DiscretizationOps = typename DamageUpdates< UPDATE_BASE >::DiscretizationOps;
 
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
+  using DamageUpdates< UPDATE_BASE >::saveConvergedState;
 
   using DamageUpdates< UPDATE_BASE >::getDegradationValue;
   using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;
@@ -154,7 +155,7 @@ public:
   virtual string getCatalogName() const override { return catalogName(); }
 
 
-  KernelWrapper createKernelUpdates()
+  KernelWrapper createKernelUpdates() const
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
                                                                        m_strainEnergyDensity.toView(),

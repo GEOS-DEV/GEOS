@@ -3,7 +3,7 @@
 <!--# # -->
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <!-- SPHINX_PROPPANT_TRANSPORT_SOLVER_BEGIN -->
     <ProppantTransport
       name="ProppantTransport"
@@ -12,16 +12,14 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       proppantNames="{ sand }"
-      solidNames="{ rock }">
+      solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"
-        lineSearchAction="None"
-        newtonMinIter="1"/>
+        lineSearchAction="None"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </ProppantTransport>
 
     <!-- SPHINX_PROPPANT_TRANSPORT_SOLVER_END -->
@@ -31,12 +29,7 @@
       proppantSolverName="ProppantTransport"
       flowSolverName="SinglePhaseFVM"
       targetRegions="{ Fracture }"
-      logLevel="1">
-      <NonlinearSolverParameters
-        newtonMinIter="1"
-        newtonMaxIter="5"/>
-      <LinearSolverParameters/>
-    </FlowProppantTransport>
+      logLevel="1"/>
 
     <!-- SPHINX_PROPPANT_COUPLED_SOLVER_END -->
     <!-- SPHINX_PROPPANT_FLOW_SOLVER_BEGIN -->
@@ -46,12 +39,12 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }">
+      solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"
-        lineSearchAction="None"
-        newtonMinIter="1"/>
+        lineSearchAction="None"/>
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-12"/>
@@ -60,8 +53,6 @@
     <!-- SPHINX_PROPPANT_FLOW_SOLVER_END -->
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Fracture }"
       solidMaterialNames="{ granite }"
       rockToughness="1e6"
@@ -84,33 +75,33 @@
   <Geometry>
     <Box
       name="left"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="0.01, 1.01, 25.01"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 1.01, 25.01 }"/>
 
     <Box
       name="right"
-      xMin="-0.01, 23.99, -0.01"
-      xMax="0.01, 25.01, 25.01"/>
+      xMin="{ -0.01, 23.99, -0.01 }"
+      xMax="{ 0.01, 25.01, 25.01 }"/>
 
     <Box
       name="top"
-      xMin="-0.01, -0.01, 23.99"
-      xMax="0.01, 25.01, 25.01"/>
+      xMin="{ -0.01, -0.01, 23.99 }"
+      xMax="{ 0.01, 25.01, 25.01 }"/>
 
     <Box
       name="bot"
-      xMin="-0.01, -0.01, -0.01"
-      xMax="0.01, 25.01, 1.01"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 25.01, 1.01 }"/>
 
     <Box
       name="source"
-      xMin="-0.01, 11.99, 11.99"
-      xMax="0.01, 13.01, 13.01"/>
+      xMin="{ -0.01, 11.99, 11.99 }"
+      xMax="{ 0.01, 13.01, 13.01 }"/>
 
     <Box
       name="fracture"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01, 25.01, 25.01"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 25.01, 25.01 }"/>
   </Geometry>
 
   <Events
@@ -131,8 +122,6 @@
     integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -147,7 +136,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ fracPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -160,28 +150,29 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-3"
-      materialList="{ water, rock, sand }"/>
+      materialList="{ water, rock, sand, fracPerm }"/>
   </ElementRegions>
 
   <Constitutive>
     <ProppantSlurryFluid
       name="water"
       referencePressure="1e5"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       referenceProppantDensity="1200.0"/>
 
     <ParticleFluid
       name="sand"
       particleSettlingModel="Stokes"
-      hinderedSettlingCoefficient="5.9"
       proppantDensity="1200.0"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
       referencePressure="0.0"
       compressibility="1e-9"/>
+
+    <ConstantPermeability
+      name="fracPerm"
+      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -299,8 +290,6 @@
       component="0"
       setNames="{ bot }"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo

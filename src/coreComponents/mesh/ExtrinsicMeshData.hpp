@@ -16,8 +16,8 @@
  * @file ExtrinsicMeshData.hpp
  */
 
-#ifndef GEOSX_EXTRINSIC_MESH_DATA_HPP_
-#define GEOSX_EXTRINSIC_MESH_DATA_HPP_
+#ifndef GEOSX_MESH_EXTRINSIC_MESH_DATA_HPP_
+#define GEOSX_MESH_EXTRINSIC_MESH_DATA_HPP_
 
 #include "codingUtilities/traits.hpp"
 #include "dataRepository/RestartFlags.hpp"
@@ -97,6 +97,14 @@ EXTRINSIC_MESH_DATA_TRAIT( ParentIndex,
                            LEVEL_2,
                            WRITE_AND_READ,
                            "Index of parent within the mesh object it is registered on." );
+
+EXTRINSIC_MESH_DATA_TRAIT( ParentEdgeIndex,
+                           "parentEdgeIndex",
+                           array1d< localIndex >,
+                           -1,
+                           LEVEL_2,
+                           WRITE_AND_READ,
+                           "Index of parent edge within the mesh object it is registered on." );
 
 EXTRINSIC_MESH_DATA_TRAIT( ChildIndex,
                            "childIndex",
@@ -293,4 +301,4 @@ EXTRINSIC_MESH_DATA_TRAIT( IsFaceSeparable,
 } // namespace extrinsicMeshData
 } // namespace geosx
 
-#endif /* GEOSX_MESH_MESHFIELDS_HPP_ */
+#endif /* GEOSX_MESH_EXTRINSIC_MESH_DATA_HPP_ */

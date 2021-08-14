@@ -17,26 +17,21 @@
  */
 
 #include "SurfaceGenerator.hpp"
+#include "ParallelTopologyChange.hpp"
 
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
-#include "mpiCommunications/SpatialPartition.hpp"
+
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "managers/NumericalMethodsManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-
-#ifdef USE_GEOSX_PTP
-#include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
-#endif
 
 namespace geosx
 {
@@ -296,7 +291,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
 void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );//this->getGroupByPath<DomainPartition>("/Problem/domain");
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
     MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
@@ -400,7 +395,8 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 
 void SurfaceGenerator::postRestartInitialization()
 {
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );//this->getGroupByPath<DomainPartition>("/Problem/domain");
+
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -519,15 +515,15 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key() ) );
   fieldNames["node"].emplace_back( string( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() ) );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {
-    elemSubRegion.moveSets( LvArray::MemorySpace::CPU );
+    elemSubRegion.moveSets( LvArray::MemorySpace::host );
   } );
-  faceManager.moveSets( LvArray::MemorySpace::CPU );
-  edgeManager.moveSets( LvArray::MemorySpace::CPU );
-  nodeManager.moveSets( LvArray::MemorySpace::CPU );
+  faceManager.moveSets( LvArray::MemorySpace::host );
+  edgeManager.moveSets( LvArray::MemorySpace::host );
+  nodeManager.moveSets( LvArray::MemorySpace::host );
 
   if( !prefrac )
   {
@@ -595,15 +591,15 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       }
     }
 
-#ifdef USE_GEOSX_PTP
+#ifdef GEOSX_USE_MPI
 
     modifiedObjects.clearNewFromModified();
 
     // 1) Assign new global indices to the new objects
-    getGlobalState().getCommunicationTools().assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
-    getGlobalState().getCommunicationTools().assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
-    getGlobalState().getCommunicationTools().assignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
-//    getGlobalState().getCommunicationTools().AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
+    CommunicationTools::getInstance().assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
+    CommunicationTools::getInstance().assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
+    CommunicationTools::getInstance().assignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
+//    CommunicationTools::getInstance().AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
 
     ModifiedObjectLists receivedObjects;
 
@@ -687,25 +683,25 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   {
     elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
     {
-      elemSubRegion.nodeList().registerTouch( LvArray::MemorySpace::CPU );
-      elemSubRegion.edgeList().registerTouch( LvArray::MemorySpace::CPU );
-      elemSubRegion.faceList().registerTouch( LvArray::MemorySpace::CPU );
+      elemSubRegion.nodeList().registerTouch( LvArray::MemorySpace::host );
+      elemSubRegion.edgeList().registerTouch( LvArray::MemorySpace::host );
+      elemSubRegion.faceList().registerTouch( LvArray::MemorySpace::host );
     } );
 
 
-    faceManager.nodeList().toView().registerTouch( LvArray::MemorySpace::CPU );
-//    faceManager.edgeList().registerTouch( LvArray::MemorySpace::CPU );
-    faceManager.elementList().registerTouch( LvArray::MemorySpace::CPU );
-    faceManager.elementRegionList().registerTouch( LvArray::MemorySpace::CPU );
-    faceManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::CPU );
+    faceManager.nodeList().toView().registerTouch( LvArray::MemorySpace::host );
+//    faceManager.edgeList().registerTouch( LvArray::MemorySpace::host );
+    faceManager.elementList().registerTouch( LvArray::MemorySpace::host );
+    faceManager.elementRegionList().registerTouch( LvArray::MemorySpace::host );
+    faceManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::host );
 
-    edgeManager.nodeList().registerTouch( LvArray::MemorySpace::CPU );
+    edgeManager.nodeList().registerTouch( LvArray::MemorySpace::host );
 
-//    nodeManager.edgeList().registerTouch( LvArray::MemorySpace::CPU );
-//    nodeManager.faceList()().registerTouch( LvArray::MemorySpace::CPU );
-//    nodeManager.elementList().registerTouch( LvArray::MemorySpace::CPU );
-//    nodeManager.elementRegionList().registerTouch( LvArray::MemorySpace::CPU );
-//    nodeManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::CPU );
+//    nodeManager.edgeList().registerTouch( LvArray::MemorySpace::host );
+//    nodeManager.faceList()().registerTouch( LvArray::MemorySpace::host );
+//    nodeManager.elementList().registerTouch( LvArray::MemorySpace::host );
+//    nodeManager.elementRegionList().registerTouch( LvArray::MemorySpace::host );
+//    nodeManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::host );
 
   }
 
@@ -2773,8 +2769,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
   SIFOnEdge.resize( edgeManager.size() );
 
 
-  SIFNode.setValues< parallelHostPolicy >( 0 );
-  SIFonFace.setValues< parallelHostPolicy >( 0 );
+  SIFNode.zero();
+  SIFonFace.zero();
 
   arrayView2d< real64 const > const &
   fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() );
@@ -2826,17 +2822,17 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
 
 
-  nodeManager.totalDisplacement().move( LvArray::MemorySpace::CPU, false );
+  nodeManager.totalDisplacement().move( LvArray::MemorySpace::host, false );
   elementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
   {
     for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
     {
       subRegion.getConstitutiveModel( m_solidMaterialNames[mat] ).
-        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( LvArray::MemorySpace::CPU,
+        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( LvArray::MemorySpace::host,
                                                                                                                        false );
     }
   } );
-  displacement.move( LvArray::MemorySpace::CPU, false );
+  displacement.move( LvArray::MemorySpace::host, false );
 
 
   for( localIndex const trailingFaceIndex : m_trailingFaces )
@@ -3045,6 +3041,12 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
           tipNodeSIF = pow( (fabs( tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea ) + fabs( tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea )
                              + fabs( tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea )), 0.5 );
+
+          if( LvArray::tensorOps::AiBi< 3 >( trailingNodeDisp, faceNormalVector ) < 0.0 )  //In case the aperture is negative with the
+                                                                                           // presence of confining stress.
+          {
+            tipNodeSIF *= -1;
+          }
 
           SIFNode_All[nodeIndex].emplace_back( tipNodeSIF );
 

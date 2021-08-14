@@ -32,14 +32,8 @@
 /// IJVector struct forward declaration
 extern "C" struct hypre_IJVector_struct;
 
-/// IJVector pointer alias
-using HYPRE_IJVector = hypre_IJVector_struct *;
-
 /// ParVector struct forward definition
 extern "C" struct hypre_ParVector_struct;
-
-/// ParVector pointer alias
-using HYPRE_ParVector = hypre_ParVector_struct *;
 
 ///@}
 
@@ -55,6 +49,12 @@ namespace geosx
 class HypreVector final : private VectorBase< HypreVector >
 {
 public:
+
+  /// IJVector pointer alias
+  using HYPRE_IJVector = hypre_IJVector_struct *;
+
+  /// ParVector pointer alias
+  using HYPRE_ParVector = hypre_ParVector_struct *;
 
   /**
    * @name Constructor/Destructor Methods
@@ -226,6 +226,11 @@ public:
    * @copydoc VectorBase<HypreVector>::extractLocalVector
    */
   virtual real64 * extractLocalVector() override;
+
+  /**
+   * @copydoc VectorBase<HypreVector>::extract
+   */
+  virtual void extract( arrayView1d< real64 > const & localVector ) const override;
 
   /**
    * @copydoc VectorBase<HypreVector>::getComm

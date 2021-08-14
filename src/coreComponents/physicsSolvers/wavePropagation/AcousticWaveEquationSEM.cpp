@@ -21,9 +21,9 @@
 
 #include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/ProblemManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -175,7 +175,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
   arrayView1d< localIndex > const sourceIsLocal = m_sourceIsLocal.toView();
   sourceNodeIds.setValues< serialPolicy >( -1 );
   sourceConstants.setValues< serialPolicy >( -1 );
-  sourceIsLocal.setValues< serialPolicy >( 0 );
+  sourceIsLocal.zero();
 
   arrayView2d< real64 const > const receiverCoordinates = m_receiverCoordinates.toViewConst();
   arrayView2d< localIndex > const receiverNodeIds = m_receiverNodeIds.toView();
@@ -183,7 +183,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
   arrayView1d< localIndex > const receiverIsLocal = m_receiverIsLocal.toView();
   receiverNodeIds.setValues< serialPolicy >( -1 );
   receiverConstants.setValues< serialPolicy >( -1 );
-  receiverIsLocal.setValues< serialPolicy >( 0 );
+  receiverIsLocal.zero();
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -193,7 +193,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                                                                        CellElementSubRegion & elementSubRegion )
     {
 
-      GEOSX_THROW_IF( elementSubRegion.getElementTypeString() != "C3D8",
+      GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                       "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
                       InputError );
 
@@ -328,8 +328,11 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
     {
       if( receiverIsLocal[ircv] == 1 )
       {
+        // Note: this "manual" output to file is temporary
+        //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+        // TODO: remove the (sprintf+saveSismo) and replace with TimeHistory
         char filename[50];
-        sprintf( filename, "sismoTraceReceiver%0ld.txt", ircv );
+        sprintf( filename, "sismoTraceReceiver%0d.txt", static_cast< int >( ircv ) );
         this->saveSismo( isismo, p_rcvs[ircv], filename );
       }
     }
@@ -349,7 +352,7 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -366,7 +369,7 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 
 void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   real64 const time = 0.0;
@@ -389,7 +392,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   /// damping matrix to be computed for each dof in the boundary of the mesh
   arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
 
-  damping.setValues< serialPolicy >( 0.0 );
+  damping.zero();
 
   /// get array of indicators: 1 if face is on the free surface; 0 otherwise
   arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
@@ -498,8 +501,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
-  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  FunctionManager const & functionManager = FunctionManager::getInstance();
 
   FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
   NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
@@ -532,8 +535,8 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
     {
       real64 const value = bc.getScale();
 
-      freeSurfaceFaceIndicator.setValues< serialPolicy >( 0 );
-      freeSurfaceNodeIndicator.setValues< serialPolicy >( 0 );
+      freeSurfaceFaceIndicator.zero();
+      freeSurfaceNodeIndicator.zero();
 
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
@@ -706,7 +709,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( "pressure_np1" );
 
-  CommunicationTools syncFields;
+  CommunicationTools & syncFields = CommunicationTools::getInstance();
   syncFields.synchronizeFields( fieldNames,
                                 domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                 domain.getNeighbors(),

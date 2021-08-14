@@ -19,14 +19,16 @@
 #ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 #define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ElementType.hpp"
+#include "mesh/ObjectManagerBase.hpp"
+
 namespace geosx
 {
 
 class NodeManager;
 class FaceManager;
 class MeshLevel;
-class DomainPartition;
+
 namespace constitutive
 {
 class ConstitutiveBase;
@@ -222,23 +224,17 @@ public:
 
   /**
    * @brief Get the type of element in this subregion.
-   * @return a string specifying the type of element in this subregion
-   *
-   * See class FiniteElementBase for possible element type.
+   * @return the type of element in this subregion
    */
-  virtual string getElementTypeString() const { return m_elementTypeString; }
+  ElementType getElementType() const
+  { return m_elementType; }
 
   /**
    * @brief Set the type of element in this subregion.
-   * @param[in] elementType a string specifying the element type
+   * @param[in] elementType the element type
    */
-  virtual void setElementType( string const & elementType );
-
-  /**
-   * @brief Get the VTK ordering for this subregion.
-   * @return the VTK node ordering
-   */
-  std::vector< int > getVTKNodeOrdering() const;
+  virtual void setElementType( ElementType const elementType )
+  { m_elementType = elementType; }
 
   ///@}
 
@@ -300,9 +296,7 @@ protected:
   array1d< real64 > m_elementVolume;
 
   /// Type of element in this subregion.
-  string m_elementTypeString;
-
-  /// Type of element in this subregion.
+  ElementType m_elementType;
 };
 
 

@@ -24,7 +24,7 @@
 #include "finiteVolume/FluxStencil.hpp"
 #include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -177,6 +177,9 @@ public:
     /// @return The key for coefficientName
     static constexpr char const * coeffNameString() { return "coefficientName"; }
 
+    /// @return The key for coefficientName
+    static constexpr char const * coefficientModelNamesString() { return "coefficientModelNames"; }
+
     /// @return The key for targetRegions
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
@@ -215,8 +218,20 @@ public:
    */
   string_array & targetRegions()       { return m_targetRegions; }
 
+  /**
+   * @brief Returns the coeff model name.
+   * @return the coeff model name
+   */
+  string_array const & coefficientModelNames() const { return m_coefficientModelNames; }
+  /**
+   * @copydoc coefficientModelNames() const
+   */
+  string_array & coefficientModelNames()       { return m_coefficientModelNames; }
+
+
 protected:
 
+  /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -262,6 +277,9 @@ protected:
 
   /// name of the coefficient field
   string m_coeffName;
+
+  /// names of coefficient models to build the stencil for
+  string_array m_coefficientModelNames;
 
   /// names of target regions to build the stencil for
   string_array m_targetRegions;

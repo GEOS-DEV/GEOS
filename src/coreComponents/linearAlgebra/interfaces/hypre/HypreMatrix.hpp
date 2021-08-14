@@ -20,8 +20,9 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
-#include "HypreVector.hpp"
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreExport.hpp"
+#include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
 /**
@@ -35,14 +36,8 @@
 /// IJMatrix struct forward declaration
 extern "C" struct hypre_IJMatrix_struct;
 
-/// IJMatrix pointer alias
-using HYPRE_IJMatrix = hypre_IJMatrix_struct *;
-
 /// ParCSRMatrix struct forward declaration
 extern "C" struct hypre_ParCSRMatrix_struct;
-
-/// ParCSRMatrix pointer alias
-using HYPRE_ParCSRMatrix = hypre_ParCSRMatrix_struct *;
 
 ///@}
 
@@ -63,6 +58,15 @@ public:
   /// Compatible vector type
   using Vector = HypreVector;
 
+  /// Associated exporter type
+  using Export = HypreExport;
+
+  /// IJMatrix pointer alias
+  using HYPRE_IJMatrix = hypre_IJMatrix_struct *;
+
+  /// ParCSRMatrix pointer alias
+  using HYPRE_ParCSRMatrix = hypre_ParCSRMatrix_struct *;
+
   /**
    * @name Constructor/Destructor Methods
    */
@@ -73,14 +77,33 @@ public:
    *
    * Create an empty (distributed) matrix.
    */
-
   HypreMatrix();
 
   /**
    * @brief Copy constructor.
-   * @param[in] src the matrix to be copied
+   * @param[in] src matrix to be copied
    */
   HypreMatrix( HypreMatrix const & src );
+
+  /**
+   * @brief Move constructor.
+   * @param src matrix to be moved from
+   */
+  HypreMatrix( HypreMatrix && src ) noexcept;
+
+  /**
+   * @brief Copy assignment.
+   * @param src matrix to be copied
+   * @return the new vector
+   */
+  HypreMatrix & operator=( HypreMatrix const & src );
+
+  /**
+   * @brief Move assignment.
+   * @param src matrix to be moved from
+   * @return the new vector
+   */
+  HypreMatrix & operator=( HypreMatrix && src ) noexcept;
 
   /**
    * @brief Virtual destructor.
@@ -102,6 +125,8 @@ public:
   using MatrixBase::modifiable;
   using MatrixBase::ready;
   using MatrixBase::residual;
+  using MatrixBase::setDofManager;
+  using MatrixBase::dofManager;
 
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                        MPI_Comm const & comm ) override final;
@@ -172,27 +197,15 @@ public:
 
   virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+                    arraySlice2d< real64 const > const & values ) override;
 
   virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+                    arraySlice2d< real64 const > const & values ) override;
 
   virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
-
-  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
-
-  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
-
-  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
+                       arraySlice2d< real64 const > const & values ) override;
 
   virtual void add( globalIndex const * rowIndices,
                     globalIndex const * colIndices,
@@ -262,7 +275,7 @@ public:
   virtual void addDiagonal( HypreVector const & src ) override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::maxRowLength
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::maxRowLength
    */
   virtual localIndex maxRowLength() const override;
 
@@ -270,7 +283,7 @@ public:
 
   virtual localIndex globalRowLength( globalIndex globalRowIndex ) const override;
 
-  virtual void getRowCopy( globalIndex globalRow,
+  virtual void getRowCopy( globalIndex globalRowIndex,
                            arraySlice1d< globalIndex > const & colIndices,
                            arraySlice1d< real64 > const & values ) const override;
 
@@ -279,67 +292,67 @@ public:
   virtual void extractDiagonal( HypreVector & dst ) const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numGlobalRows
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::numGlobalRows
    */
   virtual globalIndex numGlobalRows() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numGlobalCols
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::numGlobalCols
    */
   virtual globalIndex numGlobalCols() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numLocalRows
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::numLocalRows
    */
   virtual localIndex numLocalRows() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numLocalCols
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::numLocalCols
    */
   virtual localIndex numLocalCols() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::ilower
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::ilower
    */
   virtual globalIndex ilower() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::iupper
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::iupper
    */
   virtual globalIndex iupper() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::jlower
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::jlower
    */
   virtual globalIndex jlower() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::jupper
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::jupper
    */
   virtual globalIndex jupper() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numLocalNonzeros
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::numLocalNonzeros
    */
   virtual localIndex numLocalNonzeros() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::numGlobalNonzeros
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::numGlobalNonzeros
    */
   virtual globalIndex numGlobalNonzeros() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::normInf
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::normInf
    */
   virtual real64 normInf() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::norm1
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::norm1
    */
   virtual real64 norm1() const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::normFrobenius
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::normFrobenius
    */
   virtual real64 normFrobenius() const override;
 
@@ -348,7 +361,7 @@ public:
   virtual globalIndex getGlobalRowID( localIndex const index ) const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreMatrix>::getComm
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::getComm
    */
   virtual MPI_Comm getComm() const override;
 
@@ -381,12 +394,12 @@ private:
   /**
    * Pointer to underlying HYPRE_IJMatrix type.
    */
-  HYPRE_IJMatrix m_ij_mat = nullptr;
+  HYPRE_IJMatrix m_ij_mat{};
 
   /**
    * Pointer to underlying HYPRE_ParCSRMatrix type.
    */
-  HYPRE_ParCSRMatrix m_parcsr_mat = nullptr;
+  HYPRE_ParCSRMatrix m_parcsr_mat{};
 
 };
 

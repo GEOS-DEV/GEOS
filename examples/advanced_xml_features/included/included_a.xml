@@ -2,19 +2,17 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      inputFluxEstimate="1">
+      permeabilityNames="{ rockPerm }">
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-12"
-        logLevel="0"/>
+        krylovTol="1.0e-12"/>
     </SinglePhaseFVM>
   </Solvers>
 
@@ -34,12 +32,12 @@
   <Geometry>
     <Box
       name="source"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 1.01, 1.01"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin=" 8.99, -0.01, -0.01"
-      xMax="10.01, 1.01, 1.01"/>
+      xMin="{ 8.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 1.01 }"/>
   </Geometry>
 </Problem>

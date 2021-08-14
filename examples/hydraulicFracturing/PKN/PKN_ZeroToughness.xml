@@ -8,7 +8,7 @@
   </Included>
 
   <Solvers
-    gravityVector="0.0, 0.0, -0.0">
+    gravityVector="{ 0.0, 0.0, -0.0 }">
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
@@ -22,8 +22,7 @@
       initialDt="0.1">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
-        newtonMaxIter="50"
-        lineSearchMaxCuts="4"/>
+        newtonMaxIter="50"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"
@@ -34,41 +33,35 @@
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="5"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-10"
-        logLevel="0"/>
+        krylovTol="1.0e-10"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }"
       inputFluxEstimate="1.0">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-12"
-        logLevel="0"/>
+        krylovTol="1.0e-12"/>
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       nodeBasedSIF="1"
       solidMaterialNames="{ rock }"
@@ -84,7 +77,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, fracPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -93,7 +86,6 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-12"
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
@@ -103,7 +95,6 @@
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"
       defaultShearModulus="12.0e9"
-      BiotCoefficient="1"
       compressibility="1.6155088853e-18"
       referencePressure="2.125e6"/>
 
@@ -115,6 +106,9 @@
         coordinates="{ -1.0e-3, 0.0 }"
         values="{ 0.002e-3, 0.02e-3 }"/>
     </Contact>
+
+    <ParallelPlatesPermeability
+      name="fracPerm"/>
   </Constitutive>
 
   <Outputs>

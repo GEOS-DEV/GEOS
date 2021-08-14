@@ -2,11 +2,10 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <SolidMechanicsLagrangianSSLE
       name="lagSolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ granite }">
@@ -14,15 +13,11 @@
         newtonTol="1.0e-3"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ granite }"
       rockToughness="1e6"
@@ -45,18 +40,18 @@
   <Geometry>
     <Box
       name="fracPlaneX"
-      xMin="-0.1, -1e3, -1e3"
-      xMax="0.1, 1e3, 1e3"/>
+      xMin="{ -0.1, -1e3, -1e3 }"
+      xMax="{ 0.1, 1e3, 1e3 }"/>
 
     <Box
       name="fracPlaneY"
-      xMin="-1e3, -0.1, -1e3"
-      xMax="1e3, 0.1, 1e3"/>
+      xMin="{ -1e3, -0.1, -1e3 }"
+      xMax="{ 1e3, 0.1, 1e3 }"/>
 
     <Box
       name="fracPlaneZ"
-      xMin="-1e3, -1e3, -0.1"
-      xMax="1e3, 1e3, 0.1"/>
+      xMin="{ -1e3, -1e3, -0.1 }"
+      xMax="{ 1e3, 1e3, 0.1 }"/>
   </Geometry>
 
   <Events
@@ -188,9 +183,7 @@
   <Outputs>
     <Silo
       name="siloOutput"
-      plotLevel="3"
-      parallelThreads="1"
-      plotFileRoot="plot"/>
+      plotLevel="3"/>
 
     <Restart
       name="restartOutput"/>

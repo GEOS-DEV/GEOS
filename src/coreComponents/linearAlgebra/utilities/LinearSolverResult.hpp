@@ -79,6 +79,13 @@ struct LinearSolverResult
   }
 };
 
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverResult::Status,
+              "InProgress",
+              "Success",
+              "NotConverged",
+              "Breakdown" );
+
 }
 
 #endif //GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERRESULT_HPP_

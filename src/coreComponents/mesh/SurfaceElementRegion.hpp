@@ -21,7 +21,7 @@
 #define GEOSX_MESH_SURFACEELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geosx
 {
@@ -170,7 +170,10 @@ private:
 
 };
 
-ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType, "faceElement", "embeddedElement" )
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType,
+              "faceElement",
+              "embeddedElement" );
 
 } /* namespace geosx */
 

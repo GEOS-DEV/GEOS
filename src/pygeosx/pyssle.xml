@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <Solvers>
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
@@ -32,7 +31,7 @@
       name="solverApplications"
       forceDt="1.0e-5"
       target="/Solvers/lagsolve"/>
-    
+
     <PeriodicEvent
       name="python"
       cycleFrequency="10"
@@ -124,7 +123,7 @@
   <Geometry>
     <Box
       name="source"
-      xMin="-1, -1, -1"
-      xMax="1.1, 1.1, 1.1"/>
+      xMin="{ -1, -1, -1 }"
+      xMax="{ 1.1, 1.1, 1.1 }"/>
   </Geometry>
 </Problem>

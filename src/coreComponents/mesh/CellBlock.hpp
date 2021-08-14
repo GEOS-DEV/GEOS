@@ -21,8 +21,8 @@
 
 #include "ElementSubRegionBase.hpp"
 #include "FaceManager.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "utilities/ComputationalGeometry.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -111,7 +111,7 @@ public:
    */
   ///@{
 
-  virtual void setElementType( string const & elementType ) override;
+  virtual void setElementType( ElementType const elementType ) override;
 
   /**
    * @brief Get the number of the nodes in a face of the element.
@@ -261,25 +261,32 @@ private:
     }
     LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
 
-    if( m_numNodesPerElement == 8 )
+    switch( m_elementType )
     {
-      m_elementVolume[k] = computationalGeometry::HexVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 4 )
-    {
-      m_elementVolume[k] = computationalGeometry::TetVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 6 )
-    {
-      m_elementVolume[k] = computationalGeometry::WedgeVolume( Xlocal );
-    }
-    else if( m_numNodesPerElement == 5 )
-    {
-      m_elementVolume[k] = computationalGeometry::PyramidVolume( Xlocal );
-    }
-    else
-    {
-      GEOSX_ERROR( "GEOX does not support cells with " << m_numNodesPerElement << " nodes" );
+      case ElementType::Hexahedron:
+      {
+        m_elementVolume[k] = computationalGeometry::HexVolume( Xlocal );
+        break;
+      }
+      case ElementType::Tetrahedron:
+      {
+        m_elementVolume[k] = computationalGeometry::TetVolume( Xlocal );
+        break;
+      }
+      case ElementType::Prism:
+      {
+        m_elementVolume[k] = computationalGeometry::WedgeVolume( Xlocal );
+        break;
+      }
+      case ElementType::Pyramid:
+      {
+        m_elementVolume[k] = computationalGeometry::PyramidVolume( Xlocal );
+        break;
+      }
+      default:
+      {
+        GEOSX_ERROR( "Volume calculation not supported for element type: " << m_elementType );
+      }
     }
   }
 };

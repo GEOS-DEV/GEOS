@@ -51,7 +51,7 @@ macro(find_and_register)
                        PATHS ${arg_LIBRARY_DIRECTORIES}
                        REQUIRED ON)
 
-    blt_register_library(NAME ${arg_NAME}
+    blt_import_library(NAME ${arg_NAME}
                          INCLUDES ${${arg_NAME}_INCLUDE_DIR}
                          LIBRARIES ${${arg_NAME}_LIBRARIES} ${arg_EXTRA_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON
@@ -68,11 +68,11 @@ set(thirdPartyLibs "")
 
 include(cmake/thirdparty/FindMathLibraries.cmake)
 
-blt_register_library(NAME blas
+blt_import_library(NAME blas
                      TREAT_INCLUDES_AS_SYSTEM ON
                      LIBRARIES ${BLAS_LIBRARIES})
 
-blt_register_library(NAME lapack
+blt_import_library(NAME lapack
                      DEPENDS_ON blas
                      TREAT_INCLUDES_AS_SYSTEM ON
                      LIBRARIES ${LAPACK_LIBRARIES})
@@ -83,7 +83,7 @@ blt_register_library(NAME lapack
 if(ENABLE_MKL)
     message(STATUS "Using Intel MKL")
 
-    blt_register_library(NAME mkl
+    blt_import_library(NAME mkl
                          INCLUDES ${MKL_INCLUDE_DIRS}
                          LIBRARIES ${MKL_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
@@ -97,7 +97,7 @@ if(ENABLE_MKL)
 elseif(ENABLE_ESSL)
     message(STATUS "Using up IBM ESSL")
 
-    blt_register_library(NAME essl
+    blt_import_library(NAME essl
                          INCLUDES ${ESSL_INCLUDE_DIRS}
                          LIBRARIES ${ESSL_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
@@ -120,7 +120,7 @@ if(DEFINED HDF5_DIR)
     set(HDF5_NO_FIND_PACKAGE_CONFIG_FILE ON)
     include(FindHDF5)
 
-    blt_register_library(NAME hdf5
+    blt_import_library(NAME hdf5
                          INCLUDES ${HDF5_INCLUDE_DIRS}
                          LIBRARIES ${HDF5_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
@@ -141,6 +141,16 @@ if(DEFINED CONDUIT_DIR)
                  PATHS ${CONDUIT_DIR}/lib/cmake
                  NO_DEFAULT_PATH)
 
+    set( CONDUIT_TARGETS conduit conduit_relay conduit_blueprint )
+    foreach( targetName ${CONDUIT_TARGETS} )
+        get_target_property( includeDirs 
+                             ${targetName}
+                             INTERFACE_INCLUDE_DIRECTORIES)
+                             
+        set_property(TARGET ${targetName} 
+                     APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                     ${includeDirs})
+    endforeach()
     set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit )
 else()
     message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
@@ -244,13 +254,15 @@ if(DEFINED ADIAK_DIR)
     message(STATUS "ADIAK_DIR = ${ADIAK_DIR}")
 
     find_package(adiak REQUIRED
-                 PATHS ${ADIAK_DIR}/lib/cmake/adiak
+                 PATHS ${ADIAK_DIR}
                  NO_DEFAULT_PATH)
 
-    blt_register_library(NAME adiak
-                         INCLUDES ${adiak_INCLUDE_DIRS}
-                         LIBRARIES ${adiak_LIBRARIES}
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+    set_property(TARGET adiak
+                 APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                 ${adiak_INCLUDE_DIR} )
+    set_property(TARGET adiak
+                 APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+                 ${adiak_INCLUDE_DIR} )
 
     set(ENABLE_ADIAK ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} adiak)
@@ -273,10 +285,13 @@ if(DEFINED CALIPER_DIR)
                  PATHS ${CALIPER_DIR}
                  NO_DEFAULT_PATH)
 
-    blt_register_library(NAME caliper
-                         INCLUDES ${caliper_INCLUDE_PATH}
-                         LIBRARIES caliper
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+    set_property(TARGET caliper
+                 APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                 ${caliper_INCLUDE_PATH} )
+
+    set_property(TARGET caliper
+                 APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+                 ${caliper_INCLUDE_PATH} )
 
     set(ENABLE_CALIPER ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} caliper)
@@ -410,7 +425,7 @@ endif()
 ################################
 # HYPRE
 ################################
-if(DEFINED HYPRE_DIR)
+if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
     if( ENABLE_HYPRE_CUDA )
@@ -448,7 +463,7 @@ endif()
 ################################
 # TRILINOS
 ################################
-if(DEFINED TRILINOS_DIR)
+if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
   
     include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
@@ -456,7 +471,7 @@ if(DEFINED TRILINOS_DIR)
     list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
 
-    blt_register_library(NAME trilinos
+    blt_import_library(NAME trilinos
                          DEPENDS_ON ${TRILINOS_DEPENDS}
                          INCLUDES ${Trilinos_INCLUDE_DIRS} 
                          LIBRARIES ${Trilinos_LIBRARIES}
@@ -480,7 +495,7 @@ endif()
 ###############################
 # PETSC
 ###############################
-if(DEFINED PETSC_DIR)
+if(DEFINED PETSC_DIR AND ENABLE_PETSC)
     message(STATUS "PETSC_DIR = ${PETSC_DIR}")
 
     find_and_register(NAME petsc
@@ -510,6 +525,16 @@ if(DEFINED VTK_DIR)
                  PATHS ${VTK_DIR}
                  NO_DEFAULT_PATH)
 
+    set( VTK_TARGETS VTK::WrappingTools VTK::WrapHierarchy VTK::WrapPython VTK::WrapPythonInit VTK::ParseJava VTK::WrapJava VTK::loguru VTK::kwiml VTK::vtksys VTK::utf8 VTK::CommonCore VTK::CommonMath VTK::CommonTransforms VTK::CommonMisc VTK::CommonSystem VTK::CommonDataModel VTK::CommonExecutionModel VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::IOCore VTK::expat VTK::IOXMLParser VTK::IOXML )
+    foreach( targetName ${VTK_TARGETS} )
+
+        get_target_property( includeDirs ${targetName}  INTERFACE_INCLUDE_DIRECTORIES)
+    
+        set_property(TARGET ${targetName} 
+                     APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                     ${includeDirs})
+    endforeach()
+    
     set(ENABLE_VTK ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} vtk)
 else()
