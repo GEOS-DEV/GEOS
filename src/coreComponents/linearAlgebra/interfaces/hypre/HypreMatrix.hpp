@@ -264,10 +264,8 @@ public:
 
   virtual void transpose( HypreMatrix & dst ) const override;
 
-
   virtual void separateComponentFilter( HypreMatrix & dst,
                                         localIndex const dofPerPoint ) override;
-
 
   virtual real64 clearRow( globalIndex const row,
                            bool const keepDiag = false,

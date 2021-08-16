@@ -186,119 +186,6 @@ MATRIX permuteMatrix( MATRIX const & matrix,
  * @param dst         the target (filtered) matrix
  * @param dofsPerNode number of degrees-of-freedom per node
  */
-#if 0
-template< typename MATRIX >
-void separateComponentFilter( MATRIX const & src,
-                              MATRIX & dst,
-                              const localIndex dofsPerNode )
-{
-  GEOSX_MARK_FUNCTION;
-  GEOSX_ERROR_IF( dofsPerNode < 2, "Function requires dofsPerNode > 1" );
-
-  const localIndex localRows  = src.numLocalRows();
-  const localIndex maxEntries = src.maxRowLength();
-  const localIndex maxDstEntries = maxEntries / dofsPerNode;
-
-  CRSMatrix< real64 > tempMat;
-  tempMat.resize( localRows, src.numGlobalCols(), maxDstEntries );
-
-  array1d< globalIndex > srcIndices;
-  array1d< real64 > srcValues;
-
-#define COLLECT
-
-#ifdef COLLECT
-  array1d< globalIndex > cols;
-  array1d< real64 > values;
-#endif
-
-  real64 loopTime=0;
-  real64 initTime=0;
-  real64 rowCopyTime=0;
-  real64 resizeTime=0;
-  real64 fillTime=0;
-  real64 insertTime=0;
-  {
-  Stopwatch timer(loopTime);
-  for( globalIndex r = 0; r < localRows; ++r )
-  {
-    globalIndex row ;
-    globalIndex rowComponent;
-    localIndex  rowLength ;
-    real64 temp;
-    {
-      Stopwatch timer2( temp );
-    row = r + src.ilower();
-    rowComponent = row % dofsPerNode;
-    rowLength = src.globalRowLength( row );
-    }
-    initTime += temp;
-
-    {
-      Stopwatch timer2( temp );
-      srcIndices.resize(rowLength);
-      srcValues.resize(rowLength);
-#ifdef COLLECT
-      cols.resize( rowLength );
-      values.resize( rowLength );
-#endif
-    }
-    resizeTime += temp;
-    localIndex count = 0;
-
-
-    {
-      Stopwatch timer2( temp );
-      src.getRowCopy( row, srcIndices, srcValues );
-    }
-    rowCopyTime += temp;
-
-
-
-    {
-      Stopwatch timer2( temp );
-    for( localIndex c = 0; c < rowLength; ++c )
-    {
-      globalIndex const col = srcIndices( c );
-      globalIndex const colComponent = col % dofsPerNode;
-      if( rowComponent == colComponent )
-      {
-#ifdef COLLECT
-        cols[count] = col;
-        values[count] = srcValues( c );
-        ++count;
-#else
-        tempMat.insertNonZero( r, col, srcValues( c ) );
-#endif
-      }
-    }
-    }
-    fillTime += temp;
-
-#ifdef COLLECT
-    {
-      Stopwatch timer2( temp );
-      tempMat.insertNonZeros( r, cols.data(), values.data(), count );
-    }
-    insertTime += temp;
-#endif
-  }
-  }
-
-  real64 createTime=0;
-
-  {
-    Stopwatch timer(createTime);
-    dst.create( tempMat.toViewConst(), MPI_COMM_GEOSX );
-    dst.setDofManager( src.dofManager() );
-  }
-
-  std::cout<<"loopTime, initTime, rowCopyTime, resizeTime, fillTime, insertTime, createTime = "<<loopTime<<", "<<initTime<<", "<<rowCopyTime<<", "<<resizeTime<<", "<<fillTime<<", "<<insertTime<<", "<<createTime<<std::endl;
-
-#undef COLLECT
-
-}
-#else
 template< typename MATRIX >
 void separateComponentFilter( MATRIX const & src,
                               MATRIX & dst,
@@ -364,7 +251,6 @@ void separateComponentFilter( MATRIX const & src,
   dst.setDofManager( src.dofManager() );
 
 }
-#endif
 
 /**
  * @brief Computes rigid body modes
