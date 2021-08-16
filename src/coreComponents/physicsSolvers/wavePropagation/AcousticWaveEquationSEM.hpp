@@ -73,6 +73,12 @@ public:
 
   /**@}*/
 
+  /**
+   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
+   * @param time_n the time of evaluation of the source
+   * @param rhs the right hand side vector to be computed
+   */
+  virtual void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs ) override;
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
@@ -103,13 +109,6 @@ private:
    * @param mesh mesh of the computational domain
    */
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh ) override;
-
-  /**
-   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param time_n the time of evaluation of the source
-   * @param rhs the right hand side vector to be computed
-   */
-  virtual void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml

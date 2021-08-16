@@ -120,7 +120,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     }
 
     real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
-    real64 const faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+    real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
 
     if( faceArea < areaTolerance )
     {
@@ -839,7 +839,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   for( localIndex kf : faceSet )
   {
     real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
-    real64 const faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], nodePosition, faceCenter, faceNormal, areaTolerance );
+    real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf], nodePosition, faceCenter, faceNormal, areaTolerance );
 
     for( localIndex ke = 0; ke < numPts; ++ke )
     {

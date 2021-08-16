@@ -136,8 +136,8 @@ bool isPointInsideElement( NodeManager const & nodeManager,
   }
 
   // if the point is in the element, save the indices and stop the search
-  if( computationalGeometry::IsPointInsidePolyhedron( nodeManager.referencePosition(),
-                                                      faceNodes,
+  if( computationalGeometry::isPointInsidePolyhedron( nodeManager.referencePosition(),
+                                                      faceNodes.toNestedViewConst(),
                                                       location ))
   {
     isInsideElement = true;

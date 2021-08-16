@@ -192,7 +192,7 @@ real64 ComputeSurfaceArea( arrayView2d< real64 const > const & points,
 template< typename CENTER_TYPE, typename NORMAL_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 Centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
+real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
                            CENTER_TYPE && center,
                            NORMAL_TYPE && normal,
@@ -349,9 +349,9 @@ int sign( T const val )
  * @brief Check if a point is inside a convex polyhedron (3D polygon)
  * @tparam POINT_TYPE type of @p point
  * @param[in] nodeCoordinates a global array of nodal coordinates
- * @param[in] faceNodeIndicies ordered lists of node indices for each face of the polyhedron
+ * @param[in] faceNodeIndices ordered lists of node indices for each face of the polyhedron
  * @param[in] point coordinates of the query point
- * @param[in] areaTolerance same as in Centroid_3DPolygon
+ * @param[in] areaTolerance same as in centroid_3DPolygon
  * @return whether the point is inside
  *
  * @note Face nodes must all be ordered the same way (i.e. CW or CCW),
@@ -361,18 +361,18 @@ int sign( T const val )
  */
 template< typename POINT_TYPE >
 GEOSX_HOST_DEVICE
-bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
-                              array1d< array1d< localIndex > > const & faceNodeIndicies,
+bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
+                              arrayView1d< arrayView1d< localIndex const > const > const & faceNodeIndices,
                               POINT_TYPE const & point,
                               real64 const areaTolerance = 0.0 )
 {
-  localIndex const numFaces = faceNodeIndicies.size( 0 );
+  localIndex const numFaces = faceNodeIndices.size( 0 );
   R1Tensor faceCenter, faceNormal;
   int prev_sign = 0;
 
   for( localIndex kf = 0; kf < numFaces; ++kf )
   {
-    Centroid_3DPolygon( faceNodeIndicies[kf], nodeCoordinates, faceCenter, faceNormal, areaTolerance );
+    centroid_3DPolygon( faceNodeIndices[kf], nodeCoordinates, faceCenter, faceNormal, areaTolerance );
 
     LvArray::tensorOps::subtract< 3 >( faceCenter, point );
     int const s = sign( LvArray::tensorOps::AiBi< 3 >( faceNormal, faceCenter ) );

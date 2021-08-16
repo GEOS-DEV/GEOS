@@ -29,6 +29,261 @@ namespace geosx
 namespace AcousticWaveEquationSEMKernels
 {
 
+struct PrecomputeSourceAndReceiverKernel
+{
+
+  /**
+   * @brief Convert a mesh element point coordinate into a coorinate on the reference element
+   * @param coords coordinate of the point
+   * @param coordsOnRefElem to contain the coordinate computed in the reference element
+   * @param elementIndex index of the element containing the coords
+   * @param faceNodeIndices array of face of the element
+   * @param elemsToNodes map to obtaint global nodes from element index
+   * @param X array of mesh nodes coordinates
+   * @return true if coords is inside the element num index
+   */
+  template< typename FE_TYPE >
+  GEOSX_HOST_DEVICE
+  static bool
+  computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
+                                        real64 (& coordsOnRefElem)[3],
+                                        localIndex const & elementIndex,
+                                        arrayView1d< arrayView1d< localIndex const > const > const faceNodeIndices,
+                                        arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X )
+  {
+    if( computationalGeometry::isPointInsidePolyhedron( X, faceNodeIndices, coords ) )
+    {
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+      real64 xLocal[numNodesPerElem][3];
+      for( localIndex a = 0; a < numNodesPerElem; ++a )
+      {
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          xLocal[a][i] = X( elemsToNodes( elementIndex, a ), i );
+        }
+      }
+
+      // coordsOnRefElem = invJ*(coords-coordsNode_0)
+      localIndex const q = 0;
+
+      real64 invJ[3][3] = {{0}};
+      FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
+
+      real64 coordsRef[3] = {0};
+      for( localIndex i = 0; i < 3; ++i )
+      {
+        coordsRef[i] = coords[i] - xLocal[q][i];
+      }
+
+      for( localIndex i = 0; i < 3; ++i )
+      {
+        // Init at (-1,-1,-1) as the origin of the referential elem
+        coordsOnRefElem[i] = -1.0;
+        for( localIndex j = 0; j < 3; ++j )
+        {
+          coordsOnRefElem[i] += invJ[i][j]*coordsRef[j];
+        }
+      }
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
+  template< typename EXEC_POLICY, typename FE_TYPE >
+  static void
+  launch( localIndex const size,
+          localIndex const numNodesPerElem,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+          arrayView1d< arrayView1d< localIndex > const > const faceNodeIndices,
+          arrayView2d< real64 const > const sourceCoordinates,
+          arrayView1d< localIndex > const sourceIsLocal,
+          arrayView2d< localIndex > const sourceNodeIds,
+          arrayView2d< real64 > const sourceConstants,
+          arrayView2d< real64 const > const receiverCoordinates,
+          arrayView1d< localIndex > const receiverIsLocal,
+          arrayView2d< localIndex > const receiverNodeIds,
+          arrayView2d< real64 > const receiverConstants )
+  {
+
+    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      CellBlock::getAllFaceNodes< ElementType::Hexahedron >( k,
+                                                             faceNodeIndices,
+                                                             elemsToNodes );
+
+      /// loop over all the source that haven't been found yet
+      for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
+      {
+        if( sourceIsLocal[isrc] == 0 )
+        {
+          real64 const coords[3] = { sourceCoordinates[isrc][0],
+                                     sourceCoordinates[isrc][1],
+                                     sourceCoordinates[isrc][2] };
+
+          real64 coordsOnRefElem[3]{};
+          bool const sourceFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                                                    coordsOnRefElem,
+                                                                                    k,
+                                                                                    faceNodeIndices.toNestedViewConst(),
+                                                                                    elemsToNodes,
+                                                                                    X );
+          if( sourceFound )
+          {
+            sourceIsLocal[isrc] = 1;
+            real64 Ntest[8];
+            finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
+
+            for( localIndex a=0; a< numNodesPerElem; ++a )
+            {
+              sourceNodeIds[isrc][a] = elemsToNodes[k][a];
+              sourceConstants[isrc][a] = Ntest[a];
+            }
+          }
+        }
+      } // End loop over all source
+
+      /// loop over all the receiver that haven't been found yet
+      for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
+      {
+        if( receiverIsLocal[ircv] == 0 )
+        {
+          real64 const coords[3] = { receiverCoordinates[ircv][0],
+                                     receiverCoordinates[ircv][1],
+                                     receiverCoordinates[ircv][2] };
+
+          real64 coordsOnRefElem[3]{};
+          bool const receiverFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                                                      coordsOnRefElem,
+                                                                                      k,
+                                                                                      faceNodeIndices.toNestedViewConst(),
+                                                                                      elemsToNodes,
+                                                                                      X );
+          if( receiverFound )
+          {
+            receiverIsLocal[ircv] = 1;
+
+            real64 Ntest[8];
+            finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
+
+            for( localIndex a=0; a< numNodesPerElem; ++a )
+            {
+              receiverNodeIds[ircv][a] = elemsToNodes[k][a];
+              receiverConstants[ircv][a] = Ntest[a];
+            }
+          }
+        }
+      } // End loop over receiver
+    } );
+  }
+};
+
+template< typename FE_TYPE >
+struct MassAndDampingMatrixKernel
+{
+
+  MassAndDampingMatrixKernel( FE_TYPE const & finiteElement )
+    : m_finiteElement( finiteElement )
+  {}
+
+  template< typename EXEC_POLICY >
+  void
+  launch( localIndex const size,
+          localIndex const numFacesPerElem,
+          localIndex const numNodesPerFace,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+          arrayView2d< localIndex const > const elemsToFaces,
+          ArrayOfArraysView< localIndex const > const facesToNodes,
+          arrayView1d< integer const > const facesDomainBoundaryIndicator,
+          arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
+          arrayView2d< real64 const > const faceNormal,
+          arrayView1d< real64 const > const velocity,
+          arrayView1d< real64 > const mass,
+          arrayView1d< real64 > const damping )
+  {
+    forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+      real64 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
+      real64 xLocal[ numNodesPerElem ][ 3 ];
+      for( localIndex a = 0; a < numNodesPerElem; ++a )
+      {
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          xLocal[a][i] = X( elemsToNodes( k, a ), i );
+        }
+      }
+
+      real64 N[ numNodesPerElem ];
+      real64 gradN[ numNodesPerElem ][ 3 ];
+
+      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+      {
+        FE_TYPE::calcN( q, N );
+        real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+
+        for( localIndex a = 0; a < numNodesPerElem; ++a )
+        {
+          // RAJA atomic
+          mass[elemsToNodes[k][a]] +=  invC2 * detJ * N[a];
+        }
+      }
+
+      real64 const alpha = 1.0 / velocity[k];
+
+      for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
+      {
+        localIndex const iface = elemsToFaces[k][kfe];
+
+        /// Face on the domain boundary and not on free surface
+        if( facesDomainBoundaryIndicator[iface] == 1 && freeSurfaceFaceIndicator[iface] != 1 )
+        {
+          for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+          {
+            FE_TYPE::calcN( q, N );
+            real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+
+            real64 invJ[3][3] = {{ 0 }};
+            FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
+
+            for( localIndex a = 0; a < numNodesPerFace; ++a )
+            {
+              /// compute ds=||detJ*invJ*normalFace_{kfe}||
+              real64 tmp[3] = { 0 };
+              real64 ds = 0.0;
+              for( localIndex i = 0; i < 3; ++i )
+              {
+                for( localIndex j = 0; j < 3; ++j )
+                {
+                  tmp[i] += invJ[j][i] * faceNormal[iface][j];
+                }
+                ds += tmp[i] * tmp[i];
+              }
+              ds = sqrt( ds );
+
+              localIndex const inode = facesToNodes[iface][a];
+              damping[inode] += alpha * detJ * ds * N[a];
+            }
+          }
+        }
+      }
+    } ); // end loop over element
+  }
+
+  /// The finite element space/discretization object for the element type in the subRegion
+  FE_TYPE const & m_finiteElement;
+
+};
+
+
 /**
  * @brief Implements kernels for solving the acoustic wave equations
  *   explicit central FD method and SEM

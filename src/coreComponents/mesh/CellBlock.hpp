@@ -146,6 +146,20 @@ public:
 
 
   /**
+   * @brief Get all the local indices of the nodes for all the face of the element.
+   * @tparam ELEM_TYPE the geometrical type of the element
+   * @param elementIndex the local index of the target element
+   * @param nodeIndices a reference to the array of node indices of the face
+   * @param elemsToNodes map from element index to node index
+   */
+  template< ElementType ELEM_TYPE >
+  GEOSX_HOST_DEVICE
+  static void
+  getAllFaceNodes( localIndex const elementIndex,
+                   arrayView1d< arrayView1d< localIndex > const > nodeIndices,
+                   arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes );
+
+  /**
    * @brief Get the element-to-node map.
    * @return a reference to the element-to-node map
    */
@@ -290,6 +304,49 @@ private:
     }
   }
 };
+
+/// @copydoc geosx::CellBlock::getAllFaceNodes
+template<>
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+CellBlock::getAllFaceNodes< ElementType::Hexahedron >( localIndex const elementIndex,
+                                                       arrayView1d< arrayView1d< localIndex > const > nodeIndices,
+                                                       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes )
+{
+  {
+    nodeIndices[0][0] = elemsToNodes[elementIndex][0];
+    nodeIndices[0][1] = elemsToNodes[elementIndex][1];
+    nodeIndices[0][2] = elemsToNodes[elementIndex][5];
+    nodeIndices[0][3] = elemsToNodes[elementIndex][4];
+
+    nodeIndices[1][0] = elemsToNodes[elementIndex][0];
+    nodeIndices[1][1] = elemsToNodes[elementIndex][2];
+    nodeIndices[1][2] = elemsToNodes[elementIndex][3];
+    nodeIndices[1][3] = elemsToNodes[elementIndex][1];
+
+    nodeIndices[2][0] = elemsToNodes[elementIndex][0];
+    nodeIndices[2][1] = elemsToNodes[elementIndex][4];
+    nodeIndices[2][2] = elemsToNodes[elementIndex][6];
+    nodeIndices[2][3] = elemsToNodes[elementIndex][2];
+
+    nodeIndices[3][0] = elemsToNodes[elementIndex][1];
+    nodeIndices[3][1] = elemsToNodes[elementIndex][3];
+    nodeIndices[3][2] = elemsToNodes[elementIndex][7];
+    nodeIndices[3][3] = elemsToNodes[elementIndex][5];
+
+    nodeIndices[4][0] = elemsToNodes[elementIndex][3];
+    nodeIndices[4][1] = elemsToNodes[elementIndex][2];
+    nodeIndices[4][2] = elemsToNodes[elementIndex][6];
+    nodeIndices[4][3] = elemsToNodes[elementIndex][7];
+
+    nodeIndices[5][0] = elemsToNodes[elementIndex][4];
+    nodeIndices[5][1] = elemsToNodes[elementIndex][5];
+    nodeIndices[5][2] = elemsToNodes[elementIndex][7];
+    nodeIndices[5][3] = elemsToNodes[elementIndex][6];
+  }
+
+}
 
 }
 
