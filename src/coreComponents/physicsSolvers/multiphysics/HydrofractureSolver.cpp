@@ -697,6 +697,8 @@ void HydrofractureSolver::assembleSystem( real64 const time,
   assembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
 
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
+
+  this->getRefDerivativeFluxResidual_dAperture()->zero();
 }
 
 void HydrofractureSolver::applyBoundaryConditions( real64 const time,

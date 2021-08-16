@@ -190,7 +190,7 @@ struct FluxKernel
     GEOSX_UNUSED_VAR( numFluxElems );
 
     real64 fluxVal = 0.0;
-    real64 dFlux_dTrans[2] = {0.0, 0.0};
+    real64 dFlux_dTrans = 0.0;
     real64 dFlux_dP[2] = {0.0, 0.0};
 
     computeSinglePhaseFlux( seri, sesri, sei,

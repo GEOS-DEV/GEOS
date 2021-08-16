@@ -49,7 +49,7 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
                              ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                              real64 & fluxVal,
                              real64 ( & dFlux_dP )[2],
-                             real64 ( & dFlux_dTrans )[2] )
+                             real64 & dFlux_dTrans  )
 {
   // average density
   real64 densMean = 0.0;
@@ -63,9 +63,10 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
 
   // compute potential difference
   real64 potDif = 0.0;
-  real64 dPotDif_dTrans[2] = {0.0, 0.0};
+  real64 dPotDif_dTrans = 0.0;
   real64 sumWeightGrav = 0.0;
   real64 potScale = 0.0;
+  int signPotDiff[2] = {1,-1};
 
   for( localIndex ke = 0; ke < 2; ++ke )
   {
@@ -76,15 +77,14 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
     real64 const pressure = pres[er][esr][ei] + dPres[er][esr][ei];
     real64 const gravD = gravCoef[er][esr][ei];
     real64 const pot = transmissibility[ke] * ( pressure - densMean * gravD );
-    std::cout<< "transmissibility " << transmissibility[ke] << std::endl;
-    std::cout<< "pressure " << pressure << std::endl;
 
     potDif += pot;
-    dPotDif_dTrans[ke] = ( pressure - densMean * gravD );
+    dPotDif_dTrans += signPotDiff[ke] * ( pressure - densMean * gravD );
     sumWeightGrav += transmissibility[ke] * gravD;
+
     potScale = fmax( potScale, fabs( pot ) );
   }
-  std::cout<< "potDif " << potDif << std::endl;
+
   // compute upwinding tolerance
   real64 constexpr upwRelTol = 1e-8;
   real64 const upwAbsTol = fmax( potScale * upwRelTol, LvArray::NumericLimits< real64 >::epsilon );
@@ -114,14 +114,13 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
 
   // compute the final flux and derivative w.r.t transmissibility
   fluxVal = mobility * potDif;
-  std::cout << "mobility: " << mobility << std::endl;
+
+  dFlux_dTrans = mobility * dPotDif_dTrans;
 
   for( localIndex ke = 0; ke < 2; ++ke )
   {
-    dFlux_dTrans[ke] = mobility * dPotDif_dTrans[ke];
-
     dFlux_dP[ke] = mobility * ( transmissibility[ke] - dDensMean_dP[ke] * sumWeightGrav )
-                   + dMobility_dP[ke] * potDif + dFlux_dTrans[ke] * dTrans_dPres[ke];
+                   + dMobility_dP[ke] * potDif + dFlux_dTrans * dTrans_dPres[ke];
   }
 }
 

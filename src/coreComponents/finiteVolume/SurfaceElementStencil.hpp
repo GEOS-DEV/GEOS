@@ -290,8 +290,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   real64 const dt1 = m_weights[iconn][1] * dPerm_dPressure[er1][esr1][ei1][0][0];
 
   real64 dHarmonic[2];
-  dHarmonic[0] = dt0 * t1 / (t0 + t1 ) - dt0 / ( (t0 + t1) * (t0 + t1) );
-  dHarmonic[1] = t0 * dt1 / (t0 + t1 ) - dt1 / ( (t0 + t1) * (t0 + t1) );
+  dHarmonic[0] = ( dt0 * t1 * (t0 + t1 ) - dt0 * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
+  dHarmonic[1] = ( t0 * dt1 * (t0 + t1 ) - dt1 * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
 
   real64 dArithmetic[2];
   dArithmetic[0] = dt0 / 2;
@@ -326,8 +326,6 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   real64 const harmonicWeight   = t0*t1 / (t0+t1);
   real64 const arithmeticWeight = (t0+t1) / 2;
 
-  std::cout << "harmonic weight: " << harmonicWeight << std::endl;
-
   real64 const value = m_meanPermCoefficient * harmonicWeight + 0.5 * (1 - m_meanPermCoefficient) * arithmeticWeight;
 
   transmissibility[0] = value;
@@ -337,8 +335,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   real64 const dt1_dp = m_weights[iconn][1] * dPerm_dPressure[er1][esr1][ei1][0][0];
 
   real64 dHarmonic_dpres[2];
-  dHarmonic_dpres[0] = dt0_dp * t1 / (t0 + t1 ) - dt0_dp / ( (t0 + t1) * (t0 + t1) );
-  dHarmonic_dpres[1] = t0 * dt1_dp / (t0 + t1 ) - dt1_dp / ( (t0 + t1) * (t0 + t1) );
+  dHarmonic_dpres[0] = ( dt0_dp * t1 * (t0 + t1 ) - dt0_dp * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
+  dHarmonic_dpres[1] = ( dt0_dp * t1 * (t0 + t1 ) - dt0_dp * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
 
   real64 dArithmetic_dpres[2];
   dArithmetic_dpres[0] = dt0_dp / 2;
@@ -351,8 +349,8 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   real64 const dt1_da = m_weights[iconn][1] * dPerm_dAperture[er1][esr1][ei1][0][0];
 
   real64 dHarmonic_dAper[2];
-  dHarmonic_dAper[0] = dt0_da * t1 / (t0 + t1 ) - dt0_da / ( (t0 + t1) * (t0 + t1) );
-  dHarmonic_dAper[1] = t0 * dt1_da / (t0 + t1 ) - dt1_da / ( (t0 + t1) * (t0 + t1) );
+  dHarmonic_dAper[0] = ( dt0_da * t1 * (t0 + t1 ) - dt0_da * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
+  dHarmonic_dAper[1] = ( t0 * dt1_da * (t0 + t1 ) - dt1_da * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
 
   real64 dArithmetic_dAper[2];
   dArithmetic_dAper[0] = dt0_da / 2;

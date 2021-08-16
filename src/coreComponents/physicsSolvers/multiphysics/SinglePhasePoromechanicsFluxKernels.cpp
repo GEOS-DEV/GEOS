@@ -244,7 +244,7 @@ void EmbeddedSurfaceFluxKernel::
   GEOSX_UNUSED_VAR( numFluxElems );
 
   real64 fluxVal = 0.0;
-  real64 dFlux_dTrans[2] = {0.0, 0.0};
+  real64 dFlux_dTrans = 0.0;
   real64 dFlux_dP[2] = {0.0, 0.0};
 
   computeSinglePhaseFlux( seri, sesri, sei,
@@ -261,15 +261,15 @@ void EmbeddedSurfaceFluxKernel::
                           dFlux_dP,
                           dFlux_dTrans );
 
-  real64 dFlux_dAper[2] = {0.0, 0.0};
-  for( localIndex ke = 0; ke < 2; ++ke )
-  {
-    dFlux_dAper[ke] = dFlux_dTrans[ke] * dTrans_dAper[ke];
-  }
+
 
   // populate local flux vector and derivatives
   flux[0] =  dt * fluxVal;
   flux[1] = -dt * fluxVal;
+
+  real64 dFlux_dAper[2] = {0.0, 0.0};
+  dFlux_dAper[0] = dt * dFlux_dTrans * dTrans_dAper[0];
+  dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dAper[1];
 
   for( localIndex ke = 0; ke < 2; ++ke )
   {
@@ -532,7 +532,7 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
 
   GEOSX_UNUSED_VAR( numFluxElems );
   real64 fluxVal = 0.0;
-  real64 dFlux_dTrans[2] = {0.0, 0.0};
+  real64 dFlux_dTrans = 0.0;
   real64 dFlux_dP[2] = {0.0, 0.0};
 
   computeSinglePhaseFlux( seri, sesri, sei,
@@ -549,26 +549,18 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
                           dFlux_dP,
                           dFlux_dTrans );
 
-  real64 dFlux_dAper[2] = {0.0, 0.0};
-  for( localIndex ke = 0; ke < 2; ++ke )
-  {
-    dFlux_dAper[ke] = dFlux_dTrans[ke] * dTrans_dAper[ke];
-    std::cout << "dTrans_dAper " << dTrans_dAper[ke] << std::endl;
-    std::cout << "dFlux_dTrans " << dFlux_dTrans[ke] << std::endl;
-  }
-
   // populate local flux vector and derivatives
   flux[0] =  dt * fluxVal;
   flux[1] = -dt * fluxVal;
 
-  std::cout << "fluxVal: " << dt * fluxVal << std::endl;
-  std::cout << "dFluxDAper " << dFlux_dAper[0] << std::endl;
-  std::cout << "dFluxDAper " << dFlux_dAper[1] << std::endl;
+  real64 dFlux_dAper[2] = {0.0, 0.0};
+  dFlux_dAper[0] = dt * dFlux_dTrans * dTrans_dAper[0];
+  dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dAper[1];
 
-  fluxJacobian[0][0] += dFlux_dP[0];
-  fluxJacobian[0][1] += dFlux_dP[1];
-  fluxJacobian[1][0] -= dFlux_dP[0];
-  fluxJacobian[1][1] -= dFlux_dP[1];
+  fluxJacobian[0][0] += dFlux_dP[0] * dt;
+  fluxJacobian[0][1] += dFlux_dP[1] * dt;
+  fluxJacobian[1][0] -= dFlux_dP[0] * dt;
+  fluxJacobian[1][1] -= dFlux_dP[1] * dt;
 
   dFlux_dAperture[0][0] += dFlux_dAper[0];
   dFlux_dAperture[0][1] += dFlux_dAper[1];
