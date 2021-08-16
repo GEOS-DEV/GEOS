@@ -1,46 +1,46 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers gravityVector="{0.0, 0.0, 0.0}">
-    <PhaseFieldFracture name="PhaseFieldSolve"
-                 solidSolverName="SolidMechSolve"
-                 damageSolverName="DamageSolve"
-                 couplingTypeOption="FixedStress"
-                 logLevel="2"
-                 subcycling = "0"
-                 discretization="FE1"
-                 targetRegions="{Region1}">
-    <NonlinearSolverParameters newtonMaxIter="50"/>
-    <LinearSolverParameters
-      solverType="direct"
-      directParallel="0"
-      logLevel="0"/>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      couplingTypeOption="FixedStress"
+      logLevel="2"
+      subcycling="0"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"/>
+      <LinearSolverParameters
+        directParallel="0"/>
     </PhaseFieldFracture>
 
-    <SolidMechanicsLagrangianSSLE name="SolidMechSolve"
-                                  timeIntegrationOption="QuasiStatic"
-                                  logLevel="1"
-                                  discretization="FE1"
-                                  targetRegions="{Region1}"
-                                  solidMaterialNames="{shale}"
-                                  >
-          <NonlinearSolverParameters newtonMaxIter="50"
-                                     newtonTol="1.0e-6"/>
-          <LinearSolverParameters
-             solverType="direct"
-             directParallel="0"
-             logLevel="0"/>
+    <SolidMechanicsLagrangianSSLE
+      name="SolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }"
+      solidMaterialNames="{ shale }">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
-    <PhaseFieldDamageFEM name="DamageSolve"
-                discretization="FE1"
-                timeIntegrationOption="SteadyState"
-                fieldName="Damage"
-                solidMaterialNames="{shale}"
-                localDissipation = "Quadratic"
-                logLevel="1"
-                targetRegions="{Region1}">
-    </PhaseFieldDamageFEM>
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      solidMaterialNames="{ shale }"
+      localDissipation="Quadratic"
+      logLevel="1"
+      targetRegions="{ Region1 }"/>
   </Solvers>
 
   <!-- <Mesh>
@@ -77,13 +77,11 @@
     <PeriodicEvent
       name="vtkOutput"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/DamageAndLoad_VTKOutput"/>
 
     <PeriodicEvent
       name="siloOutputs"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/DamageAndLoad_SiloOutput"/>
 
     <PeriodicEvent
@@ -134,7 +132,6 @@
       fieldName="TotalDisplacement"
       component="0"
       objectPath="nodeManager"
-      scale="0"
       setNames="{ xneg }"/>
 
     <FieldSpecification
@@ -142,7 +139,6 @@
       fieldName="TotalDisplacement"
       component="1"
       objectPath="nodeManager"
-      scale="0"
       setNames="{ all }"/>
 
     <FieldSpecification
@@ -150,13 +146,11 @@
       fieldName="TotalDisplacement"
       component="2"
       objectPath="nodeManager"
-      scale="0"
       setNames="{ all }"/>
 
     <FieldSpecification
       name="pointSource"
       fieldName="Damage"
-      initialCondition="0"
       objectPath="nodeManager"
       scale="1"
       setNames="{ middle }"/>
@@ -166,22 +160,19 @@
     <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the
     symbolic math function should expect the variables to be given, and an expression that it will compile.
     A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
-    <TableFunction 
+    <TableFunction
       name="f_b"
-      inputVarNames="{time}"
-      coordinates="{0, 130}"
-      values="{-0.5, 129.5}"/>
+      inputVarNames="{ time }"
+      coordinates="{ 0, 130 }"
+      values="{ -0.5, 129.5 }"/>
   </Functions>
 
   <Outputs>
     <Silo
-      name="DamageAndLoad_SiloOutput"
-      parallelThreads="1"
-      plotFileRoot="plot"/>
+      name="DamageAndLoad_SiloOutput"/>
 
     <VTK
       name="DamageAndLoad_VTKOutput"
-      parallelThreads="1"
       plotFileRoot="plot"/>
 
     <Restart
@@ -191,7 +182,7 @@
   <Geometry>
     <Box
       name="middle"
-      xMin="{-0.334, -1.001, -1.001}"
-      xMax="{+0.334, +0.001, +1.001}"/>
+      xMin="{ -0.334, -1.001, -1.001 }"
+      xMax="{ +0.334, +0.001, +1.001 }"/>
   </Geometry>
 </Problem>

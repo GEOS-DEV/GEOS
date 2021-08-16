@@ -661,7 +661,7 @@ FieldSpecificationBase::
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const
 {
-  integer const component = getComponent();
+  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
   string const & functionName = getReference< string >( viewKeyStruct::functionNameString() );
   FunctionManager & functionManager = FunctionManager::getInstance();
 
@@ -736,7 +736,7 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
                                                                  CRSMatrixView< real64, globalIndex const > const & matrix ) const
 
 {
-  integer const component = getComponent();
+  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
   forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, component] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     localIndex const a = targetSet[ i ];

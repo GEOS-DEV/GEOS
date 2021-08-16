@@ -244,6 +244,7 @@ times with the numerical solution (markers).
    import xml.etree.ElementTree as ElementTree
    from mpmath import *
    import math
+   import re
 
 
    class terzaghi:
@@ -283,23 +284,10 @@ times with the numerical solution (markers).
    def getHydromechanicalParametersFromXML( xmlFilePath ):
        tree = ElementTree.parse(xmlFilePath)
 
-       param1 = tree.find('Constitutive/PoroElasticIsotropic')
-       param2 = tree.find('Constitutive/CompressibleSinglePhaseFluid')
-       param3 = tree.findall('FieldSpecifications/FieldSpecification')
-
-       found_porosity = False
-       found_permeability = False
-       porosity = 0.0
-       for elem in param3:
-           if elem.get("fieldName") == "permeability" and elem.get("component") == "0":
-               permeability = float(elem.get("initialCondition")) * float(elem.get("scale"))
-               found_permeability = True
-
-           if elem.get("fieldName") == "referencePorosity":
-               porosity = float(elem.get("initialCondition")) * float(elem.get("scale"))
-               found_porosity = True
-
-           if found_permeability and found_porosity: break
+       param1 = tree.find('Constitutive/ElasticIsotropic')
+       param2 = tree.find('Constitutive/BiotPorosity')
+       param3 = tree.find('Constitutive/CompressibleSinglePhaseFluid')
+       param4 = tree.find('Constitutive/ConstantPermeability')
 
        hydromechanicalParameters = dict.fromkeys(["youngModulus",
                                                   "poissonRation",
@@ -311,11 +299,17 @@ times with the numerical solution (markers).
 
        hydromechanicalParameters["youngModulus"] = float(param1.get("defaultYoungsModulus"))
        hydromechanicalParameters["poissonRation"] = float(param1.get("defaultPoissonRatio"))
-       hydromechanicalParameters["biotCoefficient"] = float(param1.get("BiotCoefficient"))
-       hydromechanicalParameters["fluidViscosity"] = float(param2.get("defaultViscosity"))
-       hydromechanicalParameters["fluidCompressibility"] = float(param2.get("compressibility"))
-       hydromechanicalParameters["porosity"] = porosity
-       hydromechanicalParameters["permeability"] = permeability
+
+       E = hydromechanicalParameters["youngModulus"]
+       nu = hydromechanicalParameters["poissonRation"]
+       K = E / 3.0 / (1.0 - 2.0 * nu )
+       Kg = float(param2.get("grainBulkModulus"))
+
+       hydromechanicalParameters["biotCoefficient"] = 1.0 - K / Kg
+       hydromechanicalParameters["porosity"] = float(param2.get("defaultReferencePorosity"))
+       hydromechanicalParameters["fluidViscosity"] = float(param3.get("defaultViscosity"))
+       hydromechanicalParameters["fluidCompressibility"] = float(param3.get("compressibility"))
+       hydromechanicalParameters["permeability"] = float( re.sub(r"[^e0-9.-]","", param4.get("permeabilityComponents").split()[0] ) )
 
        return hydromechanicalParameters
 
@@ -382,7 +376,6 @@ times with the numerical solution (markers).
 
    if __name__ == "__main__":
        main()
-
 
 
 
