@@ -104,7 +104,7 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name,
                     "Value in each block indicates factor to scale the radial increment."
                     "Larger numbers indicate larger radial elements." );
 
-  registerWrapper( viewKeyStruct::setRadialCoordsString(), &m_radialCoords ).
+  registerWrapper( viewKeyStruct::hardRadialCoordsString(), &m_radialCoords ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Sets the radial spacing to specified values" );
