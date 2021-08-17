@@ -2,13 +2,12 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="FIM"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact">
@@ -16,34 +15,26 @@
         newtonTol="1.0e-5"
         newtonMaxIter="50"
         lineSearchMaxCuts="10"/>
-      <LinearSolverParameters
-        logLevel="0"
-        solverType="direct"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       solidMaterialNames="{ rock }"
-      contactRelationName="fractureContact">
-    </SolidMechanicsLagrangianSSLE>
+      contactRelationName="fractureContact"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }">
-    </SinglePhaseFVM>
+      solidNames="{ rock }"
+      permeabilityNames="{ fracPerm }"/>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Domain }"
       solidMaterialNames="{ rock }"
       rockToughness="1.0e6"/>
@@ -65,13 +56,13 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 0.01, 100.01, 1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 100.01, 1.01 }"/>
 
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 0.01, 1.01, 1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
@@ -102,7 +93,6 @@
     integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
       targetExactTimestep="0"
       target="/Outputs/siloOutput"/>
 
@@ -124,7 +114,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ fracPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -136,7 +127,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      materialList="{ water, rock }"
+      materialList="{ water, rock, fracPerm }"
       defaultAperture="1e-4"/>
   </ElementRegions>
 
@@ -146,7 +137,6 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
@@ -156,7 +146,6 @@
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"
       defaultShearModulus="1.0e9"
-      BiotCoefficient="1"
       compressibility="1.6155088853e-18"
       referencePressure="2.125e6"/>
 
@@ -168,6 +157,10 @@
         coordinates="{ -1.0e-3, 0.0 }"
         values="{ 1.0e-6, 1.0e-4 }"/>
     </Contact>
+
+    <ConstantPermeability
+      name="fracPerm"
+      permeabilityComponents="{ 1.0e-4, 1.0e-4, 1.0e-4 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -237,8 +230,6 @@
       scale="-1.0"
       setNames="{ source }"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo

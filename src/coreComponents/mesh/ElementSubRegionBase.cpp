@@ -51,28 +51,4 @@ ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const p
 ElementSubRegionBase::~ElementSubRegionBase()
 {}
 
-void ElementSubRegionBase::setElementType( string const & elementType )
-{
-  m_elementTypeString = elementType;
-}
-
-std::vector< int > ElementSubRegionBase::getVTKNodeOrdering() const
-{
-  if( !m_elementTypeString.compare( 0, 4, "C3D4" ))
-    return { 1, 0, 2, 3 };
-  if( !m_elementTypeString.compare( 0, 4, "C3D8" ))
-    return { 0, 1, 3, 2, 4, 5, 7, 6 };
-  if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
-    return { 0, 3, 4, 1, 2, 5, 0, 0 };
-  if( !m_elementTypeString.compare( 0, 4, "C3D5" ))
-    return { 0, 3, 2, 1, 4, 0, 0, 0 };
-  if( !m_elementTypeString.compare( 0, 4, "BEAM" ))
-    return { 0, 1 };
-
-  GEOSX_ERROR( "Unrecognized elementType: " << m_elementTypeString );
-  return {};
-}
-
-
-
 } /* namespace geosx */

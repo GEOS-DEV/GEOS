@@ -19,24 +19,19 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
-#include "WellSolverBase.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "constitutive/fluid/layouts.hpp"
+#include "constitutive/relativePermeability/layouts.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geosx
 {
-
-namespace dataRepository
-{
-class Group;
-}
 
 namespace constitutive
 {
 class ConstitutiveManager;
 class MultiFluidBase;
 }
-class WellElementSubRegion;
 
 /**
  * @class CompositionalMultiphaseWell
@@ -343,12 +338,14 @@ private:
 
   /**
    * @brief Compute all the perforation rates for this well
-   * @param well the well with its perforations
+   * @param subRegion the well element region for which the fields are resized
+   * @param targetIndex index of the target region
    */
   void computePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step
+   * @param domain the domain containing the well manager to access individual wells
    */
   void resetViews( DomainPartition & domain ) override;
 
@@ -358,17 +355,11 @@ private:
    */
   void initializeWells( DomainPartition & domain ) override;
 
-  /**
-   * @brief Resize the allocated multidimensional fields
-   * @param well the well for which the fields are resized
-   */
-  void resizeFields( WellElementSubRegion & subRegion );
-
   /// the max number of fluid phases
-  localIndex m_numPhases;
+  integer m_numPhases;
 
   /// the number of fluid components
-  localIndex m_numComponents;
+  integer m_numComponents;
 
   /// the (uniform) temperature
   real64 m_temperature;
@@ -399,34 +390,34 @@ private:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPres;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPres;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_COMP > > m_resCompDens;
 
   /// views into other reservoir variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resPhaseVolFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVolFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_resPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dResPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dResPhaseVolFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResCompFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dResCompFrac_dCompDens;
 
   /// views into reservoir material fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseDens_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_resPhaseDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dResPhaseDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dResPhaseDens_dComp;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseMassDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_resPhaseMassDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseVisc;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVisc_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseVisc_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_resPhaseVisc;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dResPhaseVisc_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dResPhaseVisc_dComp;
 
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_resPhaseCompFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseCompFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > > m_dResPhaseCompFrac_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_resPhaseCompFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_dResPhaseCompFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > m_dResPhaseCompFrac_dComp;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseRelPerm;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseRelPerm_dPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > > m_resPhaseRelPerm;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::relperm::USD_RELPERM_DS > > m_dResPhaseRelPerm_dPhaseVolFrac;
 
 };
 

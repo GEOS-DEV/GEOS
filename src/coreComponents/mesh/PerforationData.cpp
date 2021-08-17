@@ -110,15 +110,11 @@ void decideWellDirection( VEC_TYPE const & topToBottomVec,
 
 void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
                                                    WellElementSubRegion const & wellElemSubRegion,
-                                                   string const & permeabilityKey )
+                                                   array1d< array1d< arrayView3d< real64 const > > > const & perm )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   WellElementSubRegion::NodeMapType const & elemToNodeMap = wellElemSubRegion.nodeList();
-
-  // get the permeability in the domain
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const perm =
-    mesh.getElemManager().constructArrayViewAccessor< real64, 2 >( permeabilityKey );
 
   // for all the local perforations on this well
   for( localIndex iperf = 0; iperf < size(); ++iperf )
@@ -126,8 +122,13 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
 
     // if the well transmissibility has been read from the XML
     // then skip the computation of the well transmissibility carried out below
-    if( m_wellTransmissibility[iperf] > 0 )
+    if( m_wellTransmissibility[iperf] >= 0 )
     {
+      WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
+      GEOSX_LOG_RANK_IF( isZero( m_wellTransmissibility[iperf] ),
+                         "\n \nWarning! A perforation is defined with a zero transmissibility in " << wellRegion.getWellGeneratorName() << "! \n" <<
+                         "The simulation is going to proceed with this zero transmissibility,\n" <<
+                         "but a better strategy to shut down a perforation is to remove the <Perforation> block from the XML\n \n" );
       continue;
     }
 
@@ -143,6 +144,13 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     // get an approximate dx, dy, dz for the reservoir element
     // this is done by computing a bounding box
     getReservoirElementDimensions( mesh, er, esr, ei, dx, dy, dz );
+
+    if( dx <= 0 || dy <= 0 || dz <= 0 )
+    {
+      WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
+      GEOSX_THROW( "The reservoir element dimensions (dx, dy, and dz) should be positive in " << wellRegion.getWellGeneratorName(),
+                   InputError );
+    }
 
     real64 d1 = 0;
     real64 d2 = 0;
@@ -165,7 +173,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     // check if this is a vertical well or a horizontal well
     // assign d1, d2, h, k1, and k2 accordingly
     decideWellDirection( topToBottomVec,
-                         dx, dy, dz, perm[er][esr][ei],
+                         dx, dy, dz, perm[er][esr][ei][0],
                          d1, d2, h, k1, k2 );
 
     real64 const k21 = k1 > 0
@@ -187,16 +195,24 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     arrayView1d< real64 const > const & wellElemRadius =
       wellElemSubRegion.getReference< array1d< real64 > >( WellElementSubRegion::viewKeyStruct::radiusString() );
 
-    GEOSX_ERROR_IF( rEq < wellElemRadius[wellElemIndex],
-                    "The equivalent radius r_eq = " << rEq <<
-                    " is smaller than the well radius (r = " << wellElemRadius[wellElemIndex] <<
-                    ") in " << getName() );
+    if( rEq < wellElemRadius[wellElemIndex] )
+    {
+      WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
+      GEOSX_THROW( "The equivalent radius r_eq = " << rEq <<
+                   " is smaller than the well radius (r = " << wellElemRadius[wellElemIndex] <<
+                   ") in " << wellRegion.getWellGeneratorName(),
+                   InputError );
+    }
 
     // compute the well Peaceman index
     m_wellTransmissibility[iperf] = 2 * M_PI * kh / std::log( rEq / wellElemRadius[wellElemIndex] );
 
-    GEOSX_ERROR_IF( m_wellTransmissibility[iperf] <= 0,
-                    "The well index is negative or equal to zero in " << getName() );
+    if( m_wellTransmissibility[iperf] <= 0 )
+    {
+      WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
+      GEOSX_THROW( "The well index is negative or equal to zero in " << wellRegion.getWellGeneratorName(),
+                   InputError );
+    }
   }
 }
 
@@ -212,7 +228,7 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
 
   // compute the bounding box of the element
   real64 boxDims[ 3 ];
-  computationalGeometry::GetBoundingBox( ei,
+  computationalGeometry::getBoundingBox( ei,
                                          subRegion.nodeList(),
                                          nodeManager.referencePosition(),
                                          boxDims );
@@ -224,10 +240,6 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
   // dz is computed as vol / (dx * dy)
   dz  = subRegion.getElementVolume()[ei];
   dz /= dx * dy;
-
-  GEOSX_ERROR_IF( dx <= 0 || dy <= 0 || dz <= 0,
-                  "The reservoir element dimensions (dx, dy, and dz) should be positive in " << getName() );
-
 }
 
 void PerforationData::connectToWellElements( InternalWellGenerator const & wellGeometry,
