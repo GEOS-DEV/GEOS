@@ -100,7 +100,6 @@
       phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
       flashModelParaFile="co2flash.txt"/>
 
-    
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
@@ -114,8 +113,8 @@
       name="rockPorosity"
       defaultReferencePorosity="0.2"
       referencePressure="0.0"
-      compressibility="1.0e-9"/>  
-      
+      compressibility="1.0e-9"/>
+
     <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ gas, water }"
@@ -129,7 +128,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-
     <FieldSpecification
       name="barrierTransMult"
       initialCondition="1"

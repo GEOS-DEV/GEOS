@@ -171,14 +171,14 @@
       porosityModelName="fracturePorosity"
       permeabilityModelName="fracturePerm"/>
 
-     <NullModel
+    <NullModel
       name="nullSolid"/>
 
-     <PressurePorosity
+    <PressurePorosity
       name="fracturePorosity"
       defaultReferencePorosity="1.00"
       referencePressure="0.0"
-      compressibility="0.0"/> 
+      compressibility="0.0"/>
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>

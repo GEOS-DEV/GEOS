@@ -25,7 +25,7 @@
       contactRelationName="fractureContact"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{fractureFilling}"
+      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }">
@@ -97,7 +97,7 @@
       compressibility="5e-12"
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
-    
+
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"

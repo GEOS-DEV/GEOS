@@ -70,7 +70,6 @@ public:
                                       real64 const & newHydraulicAperture ) const
   {
     m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
-    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
 

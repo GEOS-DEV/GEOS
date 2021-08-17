@@ -227,13 +227,7 @@ void FlowSolverBase::updateSolidFlowProperties( CellElementSubRegion & subRegion
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
-      {
-        porousWrapper.updateFromPressure( k, q, pressure[k], deltaPressure[k] );
-      }
-    } );
+    execute1( porousWrapper, subRegion, pressure, deltaPressure );
   } );
 }
 
@@ -254,13 +248,8 @@ void FlowSolverBase::updateSolidFlowProperties( SurfaceElementSubRegion & subReg
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
-      {
-        porousWrapper.updateFromPressureAndAperture( k, q, pressure[k], deltaPressure[k], oldHydraulicAperture[k], newHydraulicAperture[k] );
-      }
-    } );
+    execute2( porousWrapper, subRegion, pressure, deltaPressure, oldHydraulicAperture, newHydraulicAperture );
+
   } );
 }
 

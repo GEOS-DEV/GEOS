@@ -14,7 +14,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{fractureFilling}"
+      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
@@ -80,7 +80,7 @@
   </ElementRegions>
 
   <Constitutive>
-   <CompressibleSinglePhaseFluid
+    <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
       defaultViscosity="0.005"

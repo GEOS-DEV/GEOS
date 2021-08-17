@@ -148,8 +148,8 @@
       componentMolarWeight="{ 44e-3, 18e-3 }"
       phasePVTParaFiles="{ pvt_tables/pvtgas.txt, pvt_tables/pvtliquid.txt }"
       flashModelParaFile="pvt_tables/co2flash.txt"/>
-      
-   <CompressibleSolidConstantPermeability
+
+    <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
@@ -162,7 +162,7 @@
       name="rockPorosity"
       defaultReferencePorosity="0.1"
       referencePressure="1.0e7"
-      compressibility="4.5e-10"/>  
+      compressibility="4.5e-10"/>
 
     <BrooksCoreyRelativePermeability
       name="relperm"

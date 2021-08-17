@@ -149,22 +149,22 @@
       proppantDensity="2550.0"
       proppantDiameter="4.0e-4"/>
 
-     <CompressibleSolidConstantPermeability
+    <CompressibleSolidConstantPermeability
       name="fractureFilling"
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
       permeabilityModelName="fracturePerm"/>
 
-     <NullModel
+    <NullModel
       name="nullSolid"/>
 
-     <PressurePorosity
+    <PressurePorosity
       name="fracturePorosity"
       defaultReferencePorosity="1.00"
       referencePressure="0.0"
       compressibility="0.0"/>
 
-     <ConstantPermeability
+    <ConstantPermeability
       name="fracturePerm"
       permeabilityComponents="{ 1.0e-4, 1.0e-4, 1.0e-4 }"/>
   </Constitutive>

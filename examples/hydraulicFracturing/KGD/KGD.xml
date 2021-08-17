@@ -9,7 +9,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{}"
+      porousMaterialNames="{ }"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"

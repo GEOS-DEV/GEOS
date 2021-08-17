@@ -112,25 +112,6 @@ public:
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
-    m_fluidPhaseDensity( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).phaseDensity() ),
-    m_fluidPhaseDensityOld( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseDensityOldString() ) ),
-    m_dFluidPhaseDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).dPhaseDensity_dPressure() ),
-    m_dFluidPhaseDensity_dGlobalCompFraction( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).dPhaseDensity_dGlobalCompFraction() ),
-    m_fluidPhaseCompFrac( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).phaseCompFraction() ),
-    m_fluidPhaseCompFracOld( elementSubRegion.template getReference< array3d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseComponentFractionOldString() ) ),
-    m_dFluidPhaseCompFrac_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).dPhaseCompFraction_dPressure() ),
-    m_fluidPhaseMassDensity( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] ).phaseMassDensity() ),
-    m_fluidPhaseSaturation( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionString() )),
-    m_fluidPhaseSaturationOld( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionOldString() )),
-    m_dFluidPhaseSaturation_dPressure( elementSubRegion.template getReference< array2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString() )),
-    m_dFluidPhaseSaturation_dGlobalCompDensity( elementSubRegion.template getReference< array3d< real64 > >(
-                                                  CompositionalMultiphaseBase::viewKeyStruct:: dPhaseVolumeFraction_dGlobalCompDensityString() )),
-    m_dGlobalCompFraction_dGlobalCompDensity( elementSubRegion.template getReference< array3d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() )),
-    m_dFluidPhaseCompFraction_dGlobalCompFraction( elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >(
-                                                     fluidModelNames[targetRegionIndex] ).dPhaseCompFraction_dGlobalCompFraction() ),
-    m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() ) ),
-    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() ) ),
     m_numComponents( numComponents ),
     m_numPhases( numPhases )
   {

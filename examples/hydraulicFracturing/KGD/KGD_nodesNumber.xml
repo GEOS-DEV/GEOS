@@ -9,7 +9,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{fractureFilling}"
+      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       logLevel="2"
       discretization="FE1"
@@ -165,12 +165,12 @@
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
-   <ElasticIsotropic
+    <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"
       defaultShearModulus="12.0e9"/>
-      
+
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
       solidModelName="nullSolid"
@@ -184,11 +184,11 @@
       name="fracturePorosity"
       defaultReferencePorosity="1.00"
       referencePressure="0.0"
-      compressibility="0.0"/>  
-      
+      compressibility="0.0"/>
+
     <ParallelPlatesPermeability
-      name="fracturePerm"/>  
-      
+      name="fracturePerm"/>
+
     <Contact
       name="fractureContact"
       penaltyStiffness="1.0e0">

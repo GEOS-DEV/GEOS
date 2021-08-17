@@ -10,7 +10,7 @@
       contactRelationName="fractureContact"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{fractureFilling}"
+      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       discretization="FE1"
       targetRegions="{ Fracture }">
@@ -129,7 +129,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid  }"/>
+      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
   </ElementRegions>
 
   <Constitutive>

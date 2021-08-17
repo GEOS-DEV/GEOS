@@ -806,7 +806,6 @@ CFLFluxKernel::
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
   localIndex constexpr NUM_ELEMS   = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
-  localIndex constexpr MAX_STENCIL = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {

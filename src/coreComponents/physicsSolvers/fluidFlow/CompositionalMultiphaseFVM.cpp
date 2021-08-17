@@ -254,8 +254,6 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     arrayView1d< real64 > const & compCFLNumber = subRegion.getReference< array1d< real64 > >( viewKeyStruct::componentCFLNumberString() );
 
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & porosityRef =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
 
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );

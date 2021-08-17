@@ -91,7 +91,7 @@
       compressibility="0.0"
       viscosibility="0.0"/>
 
-   <CompressibleSolidConstantPermeability
+    <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"

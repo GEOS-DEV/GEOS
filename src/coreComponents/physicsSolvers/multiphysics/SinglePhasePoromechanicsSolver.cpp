@@ -314,7 +314,6 @@ void SinglePhasePoromechanicsSolver::applySystemSolution( DofManager const & dof
 void SinglePhasePoromechanicsSolver::updateState( DomainPartition & domain )
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const & nodeManager = mesh.getNodeManager();
 
   this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
                                                                           auto & subRegion )

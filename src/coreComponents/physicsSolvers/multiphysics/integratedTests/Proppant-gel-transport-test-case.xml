@@ -170,21 +170,21 @@
       hinderedSettlingCoefficient="5.0"
       proppantDensity="2550.0"
       proppantDiameter="4.5e-4"/>
-      
+
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
       permeabilityModelName="fracturePerm"/>
 
-     <NullModel
+    <NullModel
       name="nullSolid"/>
 
-     <PressurePorosity
+    <PressurePorosity
       name="fracturePorosity"
       defaultReferencePorosity="1.00"
       referencePressure="0.0"
-      compressibility="0.0"/> 
+      compressibility="0.0"/>
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>
