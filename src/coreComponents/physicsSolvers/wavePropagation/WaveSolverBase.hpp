@@ -100,10 +100,8 @@ protected:
   /**
    * @brief Save the sismo trace in file
    * @param iseismo index number of the seismo trace
-   * @param val_pressure value of the pressure for iseismo
-   * @param filename name of the output file
    */
-  virtual void saveSeismo( localIndex iseismo, real64 val_pressure, char *filename );
+  virtual void saveSeismo( localIndex const iseismo ) = 0;
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;

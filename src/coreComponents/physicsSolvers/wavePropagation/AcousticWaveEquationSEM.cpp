@@ -282,29 +282,29 @@ void AcousticWaveEquationSEM::computeSeismoTrace( localIndex const iseismo, arra
     }
   } );
 
-  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
-  {
-    if( this->m_outputSismoTrace == 1 )
-    {
-      if( receiverIsLocal[ircv] == 1 )
-      {
-        // Note: this "manual" output to file is temporary
-        //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-        // TODO: remove the (sprintf+saveSeismo) and replace with TimeHistory
-        char filename[50];
-        sprintf( filename, "seismoTraceReceiver%0d.txt", static_cast< int >( ircv ) );
-        this->saveSeismo( iseismo, p_rcvs[ircv], filename );
-      }
-    }
-  } );
+  // TODO: remove the saveSeismo and replace with TimeHistory
+  this->saveSeismo( iseismo );
 }
 
 /// Use for now until we get the same functionality in TimeHistory
-void AcousticWaveEquationSEM::saveSeismo( localIndex iseismo, real64 val_pressure, char *filename )
+void AcousticWaveEquationSEM::saveSeismo( localIndex const iseismo )
 {
-  std::ofstream f( filename, std::ios::app );
-  f<< iseismo << " " << val_pressure << std::endl;
-  f.close();
+  arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
+  arrayView1d< real64 const > const p_rcvs   = m_pressureNp1AtReceivers.toViewConst();
+
+  forAll< serialPolicy >( receiverIsLocal.size(), [=] ( localIndex const ircv )
+  {
+    if( receiverIsLocal[ircv] == 1 )
+    {
+      // Note: this "manual" output to file is temporary
+      //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+      char filename[50];
+      sprintf( filename, "seismoTraceReceiver%0d.txt", static_cast< int >( ircv ) );
+      std::ofstream f( filename, std::ios::app );
+      f<< iseismo << " " << p_rcvs[ircv] << std::endl;
+      f.close();
+    }
+  } );
 }
 
 void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
@@ -528,7 +528,10 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     rhs[a] = 0.0;
   } );
 
-  computeSeismoTrace( cycleNumber, p_np1 );
+  if( this->m_outputSismoTrace == 1 )
+  {
+    computeSeismoTrace( cycleNumber, p_np1 );
+  }
 
   return dt;
 }

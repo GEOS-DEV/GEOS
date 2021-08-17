@@ -108,13 +108,4 @@ real64 WaveSolverBase::evaluateRicker( real64 const & time_n, real64 const & f0,
   return pulse;
 }
 
-/// Use for now until we get the same functionality in TimeHistory
-void WaveSolverBase::saveSeismo( localIndex iseismo, real64 val_pressure, char *filename )
-{
-  std::ofstream f( filename, std::ios::app );
-  f<< iseismo << " " << val_pressure << std::endl;
-  f.close();
-}
-
-
 } /* namespace geosx */

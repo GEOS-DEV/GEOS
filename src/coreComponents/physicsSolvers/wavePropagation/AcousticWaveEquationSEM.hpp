@@ -128,10 +128,8 @@ private:
   /**
    * @brief Save the sismo trace in file
    * @param isismo index number of the sismo trace
-   * @param val_pressure value of the pressure for isismo
-   * @param filename name of the output file
    */
-  virtual void saveSeismo( localIndex isismo, real64 val_pressure, char *filename ) override;
+  virtual void saveSeismo( localIndex const iseismo ) override;
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
