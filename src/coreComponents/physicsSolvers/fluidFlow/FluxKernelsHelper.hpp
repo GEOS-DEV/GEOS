@@ -49,7 +49,7 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
                              ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                              real64 & fluxVal,
                              real64 ( & dFlux_dP )[2],
-                             real64 & dFlux_dTrans  )
+                             real64 & dFlux_dTrans )
 {
   // average density
   real64 densMean = 0.0;
@@ -66,7 +66,7 @@ void computeSinglePhaseFlux( arraySlice1d< localIndex const > const & seri,
   real64 dPotDif_dTrans = 0.0;
   real64 sumWeightGrav = 0.0;
   real64 potScale = 0.0;
-  int signPotDiff[2] = {1,-1};
+  int signPotDiff[2] = {1, -1};
 
   for( localIndex ke = 0; ke < 2; ++ke )
   {

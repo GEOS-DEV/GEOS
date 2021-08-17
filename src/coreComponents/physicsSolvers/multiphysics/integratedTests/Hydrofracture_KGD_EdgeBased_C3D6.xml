@@ -8,10 +8,10 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ porousRock, fractureFilling }"
+      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       discretization="FE1"
-      targetRegions="{ Region2, Fracture }"
+      targetRegions="{ Fracture }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
@@ -143,7 +143,7 @@
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb1 }"
-      materialList="{ water, porousRock, rock, rockPerm, rockPorosity }"/>
+      materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
@@ -161,26 +161,11 @@
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
-    <PorousElasticIsotropic
-      name="porousRock"
-      solidModelName="rock"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
-
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"
       defaultShearModulus="1.0e9"/>
-
-    <BiotPorosity
-      name="shalePorosity"
-      grainBulkModulus="1.0e27"
-      defaultReferencePorosity="0.00"/>
-
-    <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"

@@ -43,9 +43,9 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
 {
 
   registerWrapper( viewKeyStruct::meanPermCoefficientString(), &m_meanPermCoefficient ).
-			setInputFlag( InputFlags::OPTIONAL ).
-			setApplyDefaultValue( 1.0 ).
-			setDescription( "" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "" );
 
   registerWrapper< CellElementStencilTPFA >( viewKeyStruct::cellStencilString() ).
     setRestartFlags( RestartFlags::NO_WRITE );

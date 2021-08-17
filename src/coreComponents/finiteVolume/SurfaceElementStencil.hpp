@@ -92,11 +92,11 @@ public:
                                 IndexContainerType & elementIndices,
                                 WeightContainerType & weights,
                                 ArrayOfArrays< R1Tensor > & cellCenterToEdgeCenters,
-								real64 const meanPermCoefficient )
+                                real64 const meanPermCoefficient )
 
     : StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
     m_cellCenterToEdgeCenters( cellCenterToEdgeCenters.toView() ),
-	m_meanPermCoefficient( meanPermCoefficient )
+    m_meanPermCoefficient( meanPermCoefficient )
   {}
 
   /// Default copy constructor
@@ -220,7 +220,7 @@ public:
                            m_elementIndices,
                            m_weights,
                            m_cellCenterToEdgeCenters,
-						   m_meanPermCoefficient );
+                           m_meanPermCoefficient );
   }
 
 
@@ -248,7 +248,7 @@ public:
 
   void setMeanPermCoefficient( real64 const & meanPermCoefficient )
   {
-	  m_meanPermCoefficient = meanPermCoefficient;
+    m_meanPermCoefficient = meanPermCoefficient;
   }
 
 private:
@@ -357,7 +357,7 @@ void SurfaceElementStencilWrapper::computeTransmissibility( localIndex iconn,
   dArithmetic_dAper[1] = dt1_da / 2;
 
   dTrans_dAperture[0] =   ( m_meanPermCoefficient * dHarmonic_dAper[0] + 0.5 * (1 - m_meanPermCoefficient) * dArithmetic_dAper[0] );
-  dTrans_dAperture[1] = - ( m_meanPermCoefficient * dHarmonic_dAper[1] + 0.5 * (1 - m_meanPermCoefficient) * dArithmetic_dAper[1] ) ;
+  dTrans_dAperture[1] = -( m_meanPermCoefficient * dHarmonic_dAper[1] + 0.5 * (1 - m_meanPermCoefficient) * dArithmetic_dAper[1] );
 }
 
 

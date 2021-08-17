@@ -35,7 +35,7 @@ public:
                                     arrayView3d< real64 > const & dPerm_dPressure,
                                     arrayView3d< real64 > const & dPerm_dAper )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
-      m_dPerm_dAperture( dPerm_dAper )
+    m_dPerm_dAperture( dPerm_dAper )
   {}
 
   GEOSX_HOST_DEVICE
@@ -69,9 +69,9 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
-                                                   localIndex const q,
-                                                   real64 const & oldHydraulicAperture,
-                                                   real64 const & newHydraulicAperture ) const override final
+                                   localIndex const q,
+                                   real64 const & oldHydraulicAperture,
+                                   real64 const & newHydraulicAperture ) const override final
   {
     GEOSX_UNUSED_VAR( q );
 

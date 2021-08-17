@@ -442,7 +442,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::PorousSolidBase,
                                     CellElementSubRegion >( mesh,
-                                                            targetRegionNames(),
+                                                            m_solidSolver->targetRegionNames(),
                                                             m_solidSolver->getDiscretizationName(),
                                                             m_porousMaterialNames,
                                                             EFEMkernelFactory );

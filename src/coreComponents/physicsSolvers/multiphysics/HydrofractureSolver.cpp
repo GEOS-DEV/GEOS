@@ -67,8 +67,8 @@ HydrofractureSolver::HydrofractureSolver( const string & name,
     setDescription( "Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. " );
 
   registerWrapper( viewKeyStruct::couplingTypeOptionStringString(), &m_couplingTypeOption ).
-      setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Coupling method. Valid options:\n* " + EnumStrings< CouplingTypeOption >::concat( "\n* " ) );
 
   m_numResolves[0] = 0;
 
@@ -191,13 +191,13 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
 
       if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
       {
-    	  locallyFractured = 1;
+        locallyFractured = 1;
       }
       MpiWrapper::allReduce( &locallyFractured,
-    		                 &globallyFractured,
-			                 1,
-			                 MPI_MAX,
-			                 MPI_COMM_GEOSX );
+                             &globallyFractured,
+                             1,
+                             MPI_MAX,
+                             MPI_COMM_GEOSX );
 
       if( globallyFractured == 0 )
       {
@@ -969,8 +969,8 @@ HydrofractureSolver::
 
 void HydrofractureSolver::updateState( DomainPartition & domain )
 {
-	updateDeformationForCoupling( domain );
-	m_flowSolver->updateState( domain );
+  updateDeformationForCoupling( domain );
+  m_flowSolver->updateState( domain );
 }
 
 

@@ -125,10 +125,19 @@ XML Symbolic Math:
       compressibility="5e-10"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="0.0"
-      compressibility="1e-9"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="$porosity$"
+      referencePressure="0.0"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -144,14 +153,6 @@ XML Symbolic Math:
   </Outputs>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="referencePorosity"
-      scale="$porosity$"/>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
