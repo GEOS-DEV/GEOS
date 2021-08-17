@@ -12,8 +12,8 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       proppantNames="{ sand }"
-      solidNames="{ rock }"
-      permeabilityNames="{ fracPerm }">
+      solidNames="{ fractureFilling }"
+      permeabilityNames="{ fracturePerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
@@ -36,8 +36,8 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ fracPerm }">
+      solidNames="{ fractureFilling }"
+      permeabilityNames="{ fracturePerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
@@ -120,7 +120,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{ fracPerm }"/>
+        coefficientModelNames="{ fracturePerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -128,12 +128,12 @@
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock, sand }"/>
+      materialList="{ water, sand }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="7.63e-3"
-      materialList="{ water, rock, sand, fracPerm }"/>
+      materialList="{ water, fractureFilling, sand, fracturePerm, fracturePorosity }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -149,13 +149,23 @@
       proppantDensity="2550.0"
       proppantDiameter="4.0e-4"/>
 
-    <PoreVolumeCompressibleSolid
-      name="rock"
-      referencePressure="0.0"
-      compressibility="1e-9"/>
+     <CompressibleSolidConstantPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
 
-    <ConstantPermeability
-      name="fracPerm"
+     <NullModel
+      name="nullSolid"/>
+
+     <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+     <ConstantPermeability
+      name="fracturePerm"
       permeabilityComponents="{ 1.0e-4, 1.0e-4, 1.0e-4 }"/>
   </Constitutive>
 

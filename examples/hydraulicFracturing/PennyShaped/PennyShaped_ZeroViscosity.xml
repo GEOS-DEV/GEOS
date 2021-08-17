@@ -13,11 +13,12 @@
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      porousMaterialNames="{fractureFilling}"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"
-      porousMaterialNames="{porousRock}"
       contactRelationName="fractureContact"
       maxNumResolves="5"
       initialDt="0.1">

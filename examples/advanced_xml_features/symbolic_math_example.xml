@@ -137,6 +137,7 @@ XML Symbolic Math:
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="$porosity$"
+      compressibility="1.0e-9"
       referencePressure="0.0"/>
 
     <ConstantPermeability

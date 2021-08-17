@@ -13,11 +13,12 @@
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      porousMaterialNames="{fractureFilling}"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"
-      porousMaterialNames="{porousRock}"
       contactRelationName="fractureContact"
       maxNumResolves="2">
       <NonlinearSolverParameters
@@ -49,8 +50,7 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"
-      meanPermCoeff="0.8">
+      permeabilityNames="{ fracturePerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>

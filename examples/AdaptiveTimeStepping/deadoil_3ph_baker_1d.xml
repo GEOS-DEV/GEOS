@@ -105,6 +105,7 @@
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.05"
+      compressibility="1.0e-9"
       referencePressure="0.0"/>
 
     <BrooksCoreyBakerRelativePermeability

@@ -83,12 +83,12 @@
     <CellElementRegion
       name="Reservoir"
       cellBlocks="{ Reservoir_TETRA }"
-      materialList="{ fluid, rock, relperm, rockPerm }"/>
+      materialList="{ fluid, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
 
     <CellElementRegion
       name="Burden"
       cellBlocks="{ Overburden_TETRA, Underburden_TETRA }"
-      materialList="{ rock }"/>
+      materialList="{ rock, rockPerm, rockPorosity, nullSolid }"/>
 
     <WellElementRegion
       name="wellRegion"
@@ -148,11 +148,21 @@
       componentMolarWeight="{ 44e-3, 18e-3 }"
       phasePVTParaFiles="{ pvt_tables/pvtgas.txt, pvt_tables/pvtliquid.txt }"
       flashModelParaFile="pvt_tables/co2flash.txt"/>
-
-    <PoreVolumeCompressibleSolid
+      
+   <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="1e7"
-      compressibility="4.5e-10"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="1.0e7"
+      compressibility="4.5e-10"/>  
 
     <BrooksCoreyRelativePermeability
       name="relperm"
@@ -169,14 +179,6 @@
   <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
   <!-- SPHINX_FIELD_CASE_Co2_FIELD -->
   <FieldSpecifications>
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Reservoir"
-      fieldName="referencePorosity"
-      scale="0.1"/>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"

@@ -806,6 +806,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="coefficientName" type="string" use="required" />
 		<!--fieldName => Name of primary solution field-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
+		<!--meanPermCoefficient => (no description available)-->
+		<xsd:attribute name="meanPermCoefficient" type="real64" default="1" />
 		<!--targetRegions => List of regions to build the stencil for-->
 		<xsd:attribute name="targetRegions" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
