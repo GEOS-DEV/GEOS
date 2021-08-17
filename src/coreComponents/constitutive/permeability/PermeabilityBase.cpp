@@ -43,8 +43,6 @@ PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
     setApplyDefaultValue( 0.0 );     // will be overwritten
 }
 
-PermeabilityBase::~PermeabilityBase() = default;
-
 std::unique_ptr< ConstitutiveBase >
 PermeabilityBase::deliverClone( string const & name,
                                 Group * const parent ) const
@@ -55,14 +53,12 @@ PermeabilityBase::deliverClone( string const & name,
 void PermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_permeability.resize( 0, 3 );
-  m_dPerm_dPressure.resize( 0, 3 );
+  // NOTE: enforcing 1 quadrature point
+  m_permeability.resize( 0, 1, 3 );
+  m_dPerm_dPressure.resize( 0, 1, 3 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
-
-void PermeabilityBase::postProcessInput()
-{}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PermeabilityBase, string const &, Group * const )
 }
