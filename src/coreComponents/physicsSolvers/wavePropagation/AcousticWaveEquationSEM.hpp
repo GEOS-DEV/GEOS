@@ -32,6 +32,7 @@ class AcousticWaveEquationSEM : public WaveSolverBase
 public:
 
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using ATOMIC_POLICY = parallelDeviceAtomic;
 
   AcousticWaveEquationSEM( const std::string & name,
                            Group * const parent );
@@ -80,6 +81,13 @@ public:
    */
   virtual void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs ) override;
 
+  /**
+   * @brief Compute the pressure at each receiver coordinate in one time step
+   * @param iseismo the index number of of the seismo trace
+   * @param pressure_np1 the array to save the pressure value at the receiver position
+   */
+  virtual void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 ) override;
+
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
     static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
@@ -116,13 +124,6 @@ private:
    * @param domain the partition domain
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
-
-  /**
-   * @brief Compute the pressure at each receiver coordinate in one time step
-   * @param iseismo the index number of of the seismo trace
-   * @param pressure_np1 the array to save the pressure value at the receiver position
-   */
-  virtual void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 ) override;
 
   /**
    * @brief Save the sismo trace in file

@@ -33,7 +33,7 @@ struct PrecomputeSourceAndReceiverKernel
 {
 
   /**
-   * @brief Convert a mesh element point coordinate into a coorinate on the reference element
+   * @brief Convert a mesh element point coordinate into a coordinate on the reference element
    * @param coords coordinate of the point
    * @param coordsOnRefElem to contain the coordinate computed in the reference element
    * @param elementIndex index of the element containing the coords
@@ -67,10 +67,10 @@ struct PrecomputeSourceAndReceiverKernel
       // coordsOnRefElem = invJ*(coords-coordsNode_0)
       localIndex const q = 0;
 
-      real64 invJ[3][3] = {{0}};
+      real64 invJ[3][3] = {{ 0 }};
       FE_TYPE::invJacobianTransformation( q, xLocal, invJ );
 
-      real64 coordsRef[3] = {0};
+      real64 coordsRef[3] = { 0 };
       for( localIndex i = 0; i < 3; ++i )
       {
         coordsRef[i] = coords[i] - xLocal[q][i];
@@ -93,13 +93,29 @@ struct PrecomputeSourceAndReceiverKernel
     }
   }
 
+  /**
+   * @brief Launches the precomputation of the source and receiver terms
+   * @param size the number of cells in the subRegion
+   * @param numNodesPerElem number of nodes per element
+   * @param X coordinates of the nodes
+   * @param elemsToNodes map from element to nodes
+   * @param faceNodeIndices cell-wise storage for the nodes
+   * @param sourceCoordinates coordinates of the source terms
+   * @param sourceIsLocal flag indicating whether the source is local or not
+   * @param sourceNodeIds indices of the nodes of the element where the source is located
+   * @param sourceNodeConstants constant part of the source terms
+   * @param receiverCoordinates coordinates of the receiver terms
+   * @param receiverIsLocal flag indicating whether the receiver is local or not
+   * @param receiverNodeIds indices of the nodes of the element where the receiver is located
+   * @param receiverNodeConstants constant part of the receiver term
+   */
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
           localIndex const numNodesPerElem,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-          arrayView1d< arrayView1d< localIndex > const > const faceNodeIndices,
+          arrayView1d< arrayView1d< arrayView1d< localIndex > const > const > const allFaceNodeIndices,
           arrayView2d< real64 const > const sourceCoordinates,
           arrayView1d< localIndex > const sourceIsLocal,
           arrayView2d< localIndex > const sourceNodeIds,
@@ -112,6 +128,9 @@ struct PrecomputeSourceAndReceiverKernel
 
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
+      // TODO: allocate a smaller array of arrays here
+      arrayView1d< arrayView1d< localIndex > const > faceNodeIndices = allFaceNodeIndices[k];
+
       CellBlock::getAllFaceNodes< ElementType::Hexahedron >( k,
                                                              faceNodeIndices,
                                                              elemsToNodes );
@@ -138,16 +157,16 @@ struct PrecomputeSourceAndReceiverKernel
             real64 Ntest[8];
             finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
-            for( localIndex a=0; a< numNodesPerElem; ++a )
+            for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
               sourceNodeIds[isrc][a] = elemsToNodes[k][a];
               sourceConstants[isrc][a] = Ntest[a];
             }
           }
         }
-      } // End loop over all source
+      } // End loop over all sources
 
-      /// loop over all the receiver that haven't been found yet
+      /// loop over all the receivers that haven't been found yet
       for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
       {
         if( receiverIsLocal[ircv] == 0 )
@@ -170,15 +189,16 @@ struct PrecomputeSourceAndReceiverKernel
             real64 Ntest[8];
             finiteElement::LagrangeBasis1::TensorProduct3D::value( coordsOnRefElem, Ntest );
 
-            for( localIndex a=0; a< numNodesPerElem; ++a )
+            for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
               receiverNodeIds[ircv][a] = elemsToNodes[k][a];
               receiverConstants[ircv][a] = Ntest[a];
             }
           }
         }
-      } // End loop over receiver
+      } // End loop over receivers
     } );
+
   }
 };
 
@@ -190,7 +210,23 @@ struct MassAndDampingMatrixKernel
     : m_finiteElement( finiteElement )
   {}
 
-  template< typename EXEC_POLICY >
+  /**
+   * @brief Launches the precomputation of the mass and damping matrices
+   * @param size the number of cells in the subRegion
+   * @param numFacesPerElem number of faces per element
+   * @param numNodesPerFace number of nodes per face
+   * @param X coordinates of the nodes
+   * @param elemsToNodes map from element to nodes
+   * @param elemsToFaces map from element to faces
+   * @param facesToNodes map from face to nodes
+   * @param facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
+   * @param freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
+   * @param faceNormal normal vectors at the faces
+   * @param velocity cell-wise velocity
+   * @param mass diagonal of the mass matrix
+   * @param damping diagonal of the damping matrix
+   */
+  template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
           localIndex const numFacesPerElem,
@@ -232,8 +268,8 @@ struct MassAndDampingMatrixKernel
 
         for( localIndex a = 0; a < numNodesPerElem; ++a )
         {
-          // RAJA atomic
-          mass[elemsToNodes[k][a]] +=  invC2 * detJ * N[a];
+          real64 const localIncrement = invC2 * detJ * N[a];
+          RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][a]], localIncrement );
         }
       }
 
@@ -243,7 +279,7 @@ struct MassAndDampingMatrixKernel
       {
         localIndex const iface = elemsToFaces[k][kfe];
 
-        /// Face on the domain boundary and not on free surface
+        // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[iface] == 1 && freeSurfaceFaceIndicator[iface] != 1 )
         {
           for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
@@ -256,7 +292,7 @@ struct MassAndDampingMatrixKernel
 
             for( localIndex a = 0; a < numNodesPerFace; ++a )
             {
-              /// compute ds=||detJ*invJ*normalFace_{kfe}||
+              // compute ds = || detJ*invJ*normalFace_{kfe} ||
               real64 tmp[3] = { 0 };
               real64 ds = 0.0;
               for( localIndex i = 0; i < 3; ++i )
@@ -269,8 +305,8 @@ struct MassAndDampingMatrixKernel
               }
               ds = sqrt( ds );
 
-              localIndex const inode = facesToNodes[iface][a];
-              damping[inode] += alpha * detJ * ds * N[a];
+              real64 const localIncrement = alpha * detJ * ds * N[a];
+              RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes[iface][a]], localIncrement );
             }
           }
         }
@@ -428,9 +464,9 @@ public:
       for( localIndex j=0; j<numNodesPerElem; ++j )
       {
         real64 const Rh_ij = detJ * LvArray::tensorOps::AiBi< 3 >( gradN[ i ], gradN[ j ] );
+        real64 const localIncrement = Rh_ij*m_p_n[m_elemsToNodes[k][j]];
 
-        m_stiffnessVector[m_elemsToNodes[k][i]] += Rh_ij*m_p_n[m_elemsToNodes[k][j]];
-
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
       }
     }
   }

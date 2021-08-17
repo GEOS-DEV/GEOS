@@ -207,10 +207,16 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        array1d< array1d< localIndex > > faceNodeIndices( numFacesPerElem );
-        for( localIndex iface = 0; iface < numFacesPerElem; ++iface )
+
+        // TODO remove
+        array1d< array1d< array1d< localIndex > > > allFaceNodeIndices( elementSubRegion.size() );
+        for( localIndex ei = 0; ei < elementSubRegion.size(); ++ei )
         {
-          faceNodeIndices[iface].resize( 4 );
+          allFaceNodeIndices[ei].resize( numFacesPerElem );
+          for( localIndex iface = 0; iface < numFacesPerElem; ++iface )
+          {
+            allFaceNodeIndices[ei][iface].resize( 4 );
+          }
         }
 
         AcousticWaveEquationSEMKernels::PrecomputeSourceAndReceiverKernel
@@ -218,7 +224,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                                             numNodesPerElem,
                                             X,
                                             elemsToNodes,
-                                            faceNodeIndices.toNestedView(),
+                                            allFaceNodeIndices.toNestedView(),
                                             sourceCoordinates,
                                             sourceIsLocal,
                                             sourceNodeIds,
@@ -263,14 +269,15 @@ void AcousticWaveEquationSEM::computeSeismoTrace( localIndex const iseismo, arra
 
   arrayView1d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
 
-  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+  forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
   {
     if( receiverIsLocal[ircv] == 1 )
     {
       p_rcvs[ircv] = 0.0;
       for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
       {
-        p_rcvs[ircv] += pressure_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
+        real64 const localIncrement = pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+        RAJA::atomicAdd< ATOMIC_POLICY >( &p_rcvs[ircv], localIncrement );
       }
     }
   } );
@@ -354,20 +361,19 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         localIndex const numNodesPerFace = 4;
 
         AcousticWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY >( elementSubRegion.size(),
-                                               numFacesPerElem,
-                                               numNodesPerFace,
-                                               X,
-                                               elemsToNodes,
-                                               elemsToFaces,
-                                               facesToNodes,
-                                               facesDomainBoundaryIndicator,
-                                               freeSurfaceFaceIndicator,
-                                               faceNormal,
-                                               velocity,
-                                               mass,
-                                               damping );
-
+        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                              numFacesPerElem,
+                                                              numNodesPerFace,
+                                                              X,
+                                                              elemsToNodes,
+                                                              elemsToFaces,
+                                                              facesToNodes,
+                                                              facesDomainBoundaryIndicator,
+                                                              freeSurfaceFaceIndicator,
+                                                              faceNormal,
+                                                              velocity,
+                                                              mass,
+                                                              damping );
       } );
     } );
   } );
