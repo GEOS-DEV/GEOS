@@ -63,19 +63,6 @@ A typical GEOSX input file contains the following XML tags:
  #. :ref:`Outputs <Outputs_tag_single_phase_internal_mesh>`
 
 
-In addition to the data required to solve the problem,
-it is a best practice to start an XML file with an optional header (called a *schema*)
-that specifies the naming conventions used in the XML file.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN -->
-  :end-before: <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN_END -->
-
-The attributes ``xmlns:xsi`` and ``xsi:noNamespaceSchemaLocation`` are used to define the file format and schema.
-This header is optional, but it can be used to configure various xml validation tools.
-
-
 .. _Solver_tag_single_phase_internal_mesh:
 
 Defining a solver
