@@ -81,7 +81,7 @@ Parameters can be used throughout the input file (or an included input file) by 
 Barring any circular-definition errors, parameters can be used within other parameters.
 For example, see the parameter ``mu_upscaled``.
 The value of this parameter is a symbolic expression, which is denoted by the surrounding back-ticks, and is dependent upon two other parameters.
-During pre-processing, geosx_xml_tools will subsititute the parameter definitions, and evaluate the symbolic expression using a python-derived syntax.
+During pre-processing, geosx_xml_tools will substitute the parameter definitions, and evaluate the symbolic expression using a python-derived syntax.
 
 A number of the input parameters include optional unit definitions, which are denoted by the square brackets following a value.
 For example, the parameter ``t_max`` is used to set the maximum time for the simulation to 20 minutes.

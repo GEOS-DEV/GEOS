@@ -96,7 +96,7 @@ Then, we define a *coupling solver* between these single-physics
 solvers as another, separate, solver.
 This approach allows for generality and flexibility in our multi-physics resolutions.
 The order in which these solver specifications is done is not important.
-It is important, though, to instantiate each single-physic solver
+It is important, though, to instantiate each single-physics solver
 with meaningful names. The names given to these single-physics solver instances
 will be used to recognize them and create the coupling.
 
