@@ -61,6 +61,12 @@ public:
     return getBasePorosityModel().getPorosity();
   }
 
+  arrayView1d< real64 const > const getReferencePorosity() const
+  {
+	return getBasePorosityModel().getReferencePorosity();
+  }
+
+
   arrayView2d< real64 const > const  getDporosity_dPressure() const
   { return getBasePorosityModel().dPorosity_dPressure(); }
 

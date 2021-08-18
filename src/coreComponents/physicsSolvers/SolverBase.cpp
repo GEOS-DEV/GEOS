@@ -869,7 +869,7 @@ void SolverBase::updateState( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
   GEOSX_ERROR( "SolverBase::updateState called!. Should be overridden." );
 }
 
-void SolverBase::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( const ) )
+void SolverBase::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden." );
 }

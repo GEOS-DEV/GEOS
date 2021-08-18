@@ -53,11 +53,11 @@ public:
    */
   struct viewKeyStruct : FluxApproximationBase::viewKeyStruct
   {
-    /// @return The key for fractureStencil
+    /// @return The key for edfStencil
     static constexpr char const * edfmStencilString() { return "edfmStencil"; }
-
+    /// @return The key for faceElementToCellStencil
     static constexpr char const * faceToCellStencilString() { return "faceElementToCellStencil"; }
-
+    /// @return The key for the meanPermCoefficient
     static constexpr char const * meanPermCoefficientString() { return "meanPermCoefficient"; }
   };
 
@@ -85,6 +85,7 @@ protected:
 
 private:
 
+  /// mean permeability coefficient
   real64 m_meanPermCoefficient;
 
 

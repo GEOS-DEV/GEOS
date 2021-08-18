@@ -112,14 +112,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="porosity_channel"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="referencePorosity"
-      scale="0.2"/>
-
     <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
       name="initialPressure"

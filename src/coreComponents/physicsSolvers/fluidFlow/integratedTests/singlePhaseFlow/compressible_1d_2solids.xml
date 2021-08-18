@@ -80,7 +80,7 @@
     <CellElementRegion
       name="Region2"
       cellBlocks="{ block2 }"
-      materialList="{ fluid, rock2, rockPerm, rock1Porosity, nullSolid }"/>
+      materialList="{ fluid, rock2, rockPerm, rock2Porosity, nullSolid }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -125,22 +125,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="Porosity1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="rock1Porosity_referencePorosity"
-      scale="0.05"/>
-
-    <FieldSpecification
-      name="Porosity2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="rock2Porosity_referencePorosity"
-      scale="0.05"/>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"

@@ -377,6 +377,7 @@ struct ResidualNormKernel
                       localIndex const numComponents,
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & ghostRank,
+					  arrayView1d< real64 const> const & refPoro,
                       arrayView1d< real64 const > const & volume,
                       arrayView1d< real64 const > const & totalDensOld,
                       real64 & localResidualNorm )
@@ -388,7 +389,7 @@ struct ResidualNormKernel
       if( ghostRank[ei] < 0 )
       {
         localIndex const localRow = dofNumber[ei] - rankOffset;
-        real64 const normalizer = totalDensOld[ei] * volume[ei];
+        real64 const normalizer = totalDensOld[ei] * refPoro[ei] * volume[ei];
 
         for( localIndex idof = 0; idof < numComponents + 1; ++idof )
         {

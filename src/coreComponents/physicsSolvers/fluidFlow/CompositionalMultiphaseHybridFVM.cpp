@@ -27,6 +27,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 
 
 /**
@@ -719,7 +720,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
   // 1. Compute the residual for the mass conservation equations
 
   forTargetSubRegionsComplete( mesh,
-                               [&]( localIndex const,
+                               [&]( localIndex const targetIndex,
                                     localIndex const,
                                     localIndex const,
                                     ElementRegionBase const &,
@@ -730,6 +731,10 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const & totalDensOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
 
+    CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+
+    arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
+
     real64 subRegionResidualNorm = 0.0;
     CompositionalMultiphaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                                     parallelDeviceReduce >( localRhs,
@@ -737,6 +742,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                                                             numFluidComponents(),
                                                                                             elemDofNumber,
                                                                                             elemGhostRank,
+																							referencePorosity,
                                                                                             volume,
                                                                                             totalDensOld,
                                                                                             subRegionResidualNorm );

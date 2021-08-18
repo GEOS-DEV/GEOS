@@ -179,6 +179,13 @@ public:
 
 
   /**
+   * @brief Const/non-mutable accessor for referencePorosity.
+   * @return Accessor
+   */
+  arrayView1d< real64 const > const  getReferencePorosity() const { return m_referencePorosity; }
+
+
+  /**
    * @brief Const/non-mutable accessor for dPorosity_dPressure
    * @return Accessor
    */

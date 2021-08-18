@@ -152,6 +152,11 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
                                                               true );
 }
 
+void LaplaceBaseH1::updateState( DomainPartition &  domain )
+{
+	GEOSX_UNUSED_VAR( domain )
+}
+
 /*
    APPLY BOUNDARY CONDITIONS
    Here, this call is the generic call from SolverBase.
