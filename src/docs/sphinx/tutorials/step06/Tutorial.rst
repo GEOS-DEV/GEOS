@@ -70,7 +70,7 @@ It consists of 3 blocks **CompositionalMultiphaseFlow**, **CompositionalMultipha
 
 In the **CompositionalMultiphaseFlow** (:ref:`CompositionalMultiphaseFlow`), a classical multiphase compositional solver is detailed, including a TPFA discretization, reference to fluid data through ``fluidNames``, to solid data through ``solidNames`` and to relative permeability models through ``relPermNames`` attributes.
 
-The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilBottomLayersSPE10` for detailed tutorial on wells integration). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines a  **WellControls** sub-tag, that can specified injector and producer `control` splitting between BHP-controlled or rate-controlled. Alongside with that attribute are the ``targetBHP`` and ``targetRate`` that specify the maximal admissible pressure and rate for the well. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture.
+The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilBottomLayersSPE10` for detailed tutorial on wells integration). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines a  **WellControls** sub-tag, that can specify injector and producer `control` splitting between BHP-controlled or rate-controlled. Alongside with that attribute are the ``targetBHP`` and ``targetRate`` that specify the maximal admissible pressure and rate for the well. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture.
 
 The coupling section **CompositionalMultiphaseReservoir** describes the binding between those two previous elements (see :ref:`TutorialPoroelasticity` for detailed tutorial on coupling physics in GEOSX). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solvers attributes). 
 
@@ -104,13 +104,13 @@ block is not needed.
 Specifying events
 ------------------------
         
-The solver is applied as a periodic event whose target is referred to as **Solvers/coupledFlowAndWells** name-tag.
+The solver is applied as a periodic event whose target is referred to as **Solvers/coupledFlowAndWells** nametag.
 Using the ``maxEventDt`` attribute, we specify a max time step size of 1.5 x 10^6 seconds.
 
 The output event triggers a vtk output  every 10^7 seconds, constraining the solver schedule to match exactly these dates.
 The output path to data is specified as a ``target`` of this **PeriodicEvent**.
 
-An other periodic event is defined under the name ``restarts``.
+Another periodic event is defined under the name ``restarts``.
 It consists of saved checkpoints every 5 x 10^6 seconds, whose physical output folder name is defined under the **Output** tag.
 
 Finally, the time history collection and output events are used to trigger the mechanisms involved in the generation of a time series of well pressure (see the procedure outlined in :ref:`TasksManager`).
