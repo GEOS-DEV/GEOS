@@ -46,9 +46,9 @@ Group * CellBlockManager::createChild( string const & GEOSX_UNUSED_PARAM( childK
 
 ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
 {
-  // The functions works in three steps.
+  // The function works in three steps.
   // First finds the number of elements attached to each node.
-  // Then second then allocates the vectors, including extra allocations.
+  // Then second step allocates the vectors, including extra allocations.
   // Last, the output vector is filled.
 
   // First step: how many elements for each node, stored in the elemsPerNode array.
@@ -160,7 +160,7 @@ struct NodesAndElementOfFace
    *
    * Each face may belong to multiple elements.
    * But during the identification process (we loop on each face of each element),
-   * we store the the bovious cell we are iterating on.
+   * we store the cell we are iterating on.
    * The we'll be able to identify the duplicated faces because we also have the nodes.
    */
   localIndex element;
