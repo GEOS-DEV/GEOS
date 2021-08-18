@@ -193,7 +193,7 @@ This explains why we need to extend the geometry limits to 0.01 beyond the coord
   :end-before: <!-- SPHINX_TUT_INT_HEX_GEOMETRY_END -->
 
 There are several methods to achieve similar conditions (Dirichlet boundary condition on faces, etc.).
-The **Box** defined here is one of the simplest approach.
+The **Box** defined here is one of the simplest approaches.
 Just like meshes and solvers, boxes are named objects and will be registered and used using their handle (``source`` and ``sink``).
 We can refer to their handle later in the input file when assigning property values to them.
 
