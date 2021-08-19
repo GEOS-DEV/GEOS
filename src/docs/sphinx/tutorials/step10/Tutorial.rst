@@ -149,6 +149,13 @@ Inspecting results
 This plot compares the analytical pressure solution (continuous lines) at selected
 times with the numerical solution (markers).
 
+.. figure:: Verification.png
+   :align: center
+   :width: 1000
+   :figclass: align-center
+
+   Comparing GEOSX results with analytical solution
+
 .. plot::
 
    import matplotlib
