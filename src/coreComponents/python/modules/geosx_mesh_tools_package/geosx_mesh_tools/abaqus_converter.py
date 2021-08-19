@@ -19,8 +19,8 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
     """
     # Initialize the logger if it is empty
     if not logger:
-      logging.basicConfig(level=logging.WARNING)
-      logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.WARNING)
+        logger = logging.getLogger(__name__)
 
     # Keep track of the number of warnings
     n_warnings = 0
@@ -75,7 +75,7 @@ def convert_abaqus_to_gmsh(input_mesh, output_mesh, logger=None):
                     region_id = -1
                     for region in region_list:
                         if (element_id in mesh.cell_sets[region][block_id]):
-                            region_id = mesh.field_data[region][block_id]
+                            region_id = mesh.field_data[region][0]
 
                     # Test to see if the element is a quad or triangle
                     tag_id = mesh.field_data[nodeset_name][0]
@@ -142,7 +142,7 @@ def main():
     logging.basicConfig(level=logging.WARNING)
     logger = logging.getLogger(__name__)
     if args.verbose:
-      logger.setLevel(logging.INFO)
+        logger.setLevel(logging.INFO)
 
     # Call the converter
     err = convert_abaqus_to_gmsh(args.input, args.output, logger)
