@@ -146,7 +146,7 @@ These boundary conditions are set up through the ``FieldSpecifications`` section
     :end-before: <!-- SPHINX_DP_WELLBORE_BC_END -->
 
 
-With ``tractionType="1"``, traction is applied to the wellbore wall ``rneg`` as a pressure specified from the product of scale ``scale="-11.25e6"`` and the outward face normal. 
+With ``tractionType="normal"``, traction is applied to the wellbore wall ``rneg`` as a pressure specified from the product of scale ``scale="-11.25e6"`` and the outward face normal. 
 A table function ``timeFunction`` is used to define the time-dependent traction ``ExternalLoad``. 
 The ``coordinates`` and ``values`` form a time-magnitude
 pair for the loading time history. In this case, the loading magnitude decreases linearly as the time evolves. 
@@ -227,6 +227,6 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
 **For more details**
 
-  - More on plasticity models, please see :ref:`TwoInvariantPlasticity`.
+  - More on plasticity models, please see :ref:`SolidModels`.
   - More on wellbore meshes, please see :ref:`InternalWellbore`.
   - More on functions, please see :ref:`FunctionManager`.

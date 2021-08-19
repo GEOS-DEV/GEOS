@@ -51,7 +51,7 @@ the boundary subject to roller constraints and impervious.
    :width: 500
    :figclass: align-center
 
-   Sketch of the the setup for Terzaghi's problem.
+   Sketch of the setup for Terzaghi's problem.
 
 GEOSX will calculate displacement and pressure fields along the column as a
 function of time.
@@ -96,7 +96,7 @@ Then, we define a *coupling solver* between these single-physics
 solvers as another, separate, solver.
 This approach allows for generality and flexibility in our multi-physics resolutions.
 The order in which these solver specifications is done is not important.
-It is important, though, to instantiate each single-physic solvers
+It is important, though, to instantiate each single-physics solver
 with meaningful names. The names given to these single-physics solver instances
 will be used to recognize them and create the coupling.
 
@@ -134,7 +134,7 @@ Multiphysics numerical methods
 
 Numerical methods in multiphysics settings are similar to single physics numerical methods. All can be defined under the same ``NumericalMethods`` XML tag.
 In this problem, we use finite volume for flow and finite elements for solid mechanics.
-Both of these methods require additional parameterization attributes to be defined here.
+Both methods require additional parameterization attributes to be defined here.
 
 As we have seen before, the coupling solver and the solid mechanics solver require the specification of a discretization method called ``FE1``.
 This discretization method is defined here as a finite element method
@@ -244,7 +244,6 @@ times with the numerical solution (markers).
    import xml.etree.ElementTree as ElementTree
    from mpmath import *
    import math
-   import re
 
 
    class terzaghi:
@@ -309,8 +308,11 @@ times with the numerical solution (markers).
        hydromechanicalParameters["porosity"] = float(param2.get("defaultReferencePorosity"))
        hydromechanicalParameters["fluidViscosity"] = float(param3.get("defaultViscosity"))
        hydromechanicalParameters["fluidCompressibility"] = float(param3.get("compressibility"))
-       hydromechanicalParameters["permeability"] = float( re.sub(r"[^e0-9.-]","", param4.get("permeabilityComponents").split()[0] ) )
-
+       
+       perm = param4.get("permeabilityComponents")
+       perm = np.array(perm[1:-1].split(','),float)
+       hydromechanicalParameters["permeability"] = perm[0]
+       
        return hydromechanicalParameters
 
 
