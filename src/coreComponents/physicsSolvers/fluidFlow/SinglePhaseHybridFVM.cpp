@@ -200,7 +200,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
 
 void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                               real64 const dt,
-                                              DomainPartition & domain,
+                                              DomainPartition const & domain,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
@@ -310,7 +310,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 
 void SinglePhaseHybridFVM::assemblePoroelasticFluxTerms( real64 const time_n,
                                                          real64 const dt,
-                                                         DomainPartition & domain,
+                                                         DomainPartition const & domain,
                                                          DofManager const & dofManager,
                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs,
@@ -328,7 +328,7 @@ void SinglePhaseHybridFVM::assemblePoroelasticFluxTerms( real64 const time_n,
 
 void SinglePhaseHybridFVM::assembleHydrofracFluxTerms( real64 const time_n,
                                                        real64 const dt,
-                                                       DomainPartition & domain,
+                                                       DomainPartition const & domain,
                                                        DofManager const & dofManager,
                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                        arrayView1d< real64 > const & localRhs,

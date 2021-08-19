@@ -158,8 +158,6 @@ public:
    */
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void initializePreSubGroups() override final;
-
   /**
    * @brief Create a instantiation of the PorousSolidUpdates class
    *        that refers to the data in this.

@@ -90,8 +90,8 @@ struct FluxKernel
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
-//    constexpr localIndex maxNumFluxElems = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
-//    constexpr localIndex maxStencilSize  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
+    constexpr localIndex MAX_NUM_ELEMS     = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
+    constexpr localIndex MAX_STENCIL_SIZE  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
 
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
@@ -104,19 +104,19 @@ struct FluxKernel
       localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
 
       // working arrays
-      stackArray1d< globalIndex, STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX > dofColIndices( stencilSize );
-      stackArray1d< real64, STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX > localFlux( numFluxElems );
-      stackArray2d< real64, STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX * STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, stencilSize );
+      stackArray1d< globalIndex, MAX_NUM_ELEMS > dofColIndices( stencilSize );
+      stackArray1d< real64, MAX_NUM_ELEMS > localFlux( numFluxElems );
+      stackArray2d< real64, MAX_NUM_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, stencilSize );
 
       // compute transmissibility
-      real64 transmissiblity[2], dTrans_dPres[2];
-      stencilWrapper.computeTransmissibility( iconn,
-                                              permeability,
-                                              dPerm_dPres,
-                                              transmissiblity,
-                                              dTrans_dPres );
+      real64 transmissiblity[MAX_STENCIL_SIZE], dTrans_dPres[MAX_STENCIL_SIZE];
+      stencilWrapper.computeWeights( iconn,
+                                     permeability,
+                                     dPerm_dPres,
+                                     transmissiblity,
+                                     dTrans_dPres );
 
-      compute( stencilSize,
+      compute( numFluxElems,
                seri[iconn],
                sesri[iconn],
                sei[iconn],
@@ -168,14 +168,15 @@ struct FluxKernel
    *
    *
    */
+  template< localIndex MAX_STENCIL_SIZE >
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[2],
-           real64 const (&dTrans_dPres)[2],
+           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
+           real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -187,35 +188,42 @@ struct FluxKernel
            arraySlice1d< real64 > const & flux,
            arraySlice2d< real64 > const & fluxJacobian )
   {
-    GEOSX_UNUSED_VAR( numFluxElems );
 
-    real64 fluxVal = 0.0;
-    real64 dFlux_dTrans = 0.0;
-    real64 dFlux_dP[2] = {0.0, 0.0};
-
-    computeSinglePhaseFlux( seri, sesri, sei,
-                            transmissibility,
-                            dTrans_dPres,
-                            pres,
-                            dPres,
-                            gravCoef,
-                            dens,
-                            dDens_dPres,
-                            mob,
-                            dMob_dPres,
-                            fluxVal,
-                            dFlux_dP,
-                            dFlux_dTrans );
-
-    // populate local flux vector and derivatives
-    flux[0] =  dt * fluxVal;
-    flux[1] = -dt * fluxVal;
-
-
-    for( localIndex ke = 0; ke < 2; ++ke )
+    localIndex k[2];
+    for( k[0]=0; k[0]<numFluxElems; ++k[0] )
     {
-      fluxJacobian[0][ke] =  dt * dFlux_dP[ke];
-      fluxJacobian[1][ke] = -dt * dFlux_dP[ke];
+      for( k[1]=k[0]+1; k[1]<numFluxElems; ++k[1] )
+      {
+
+        real64 fluxVal = 0.0;
+        real64 dFlux_dTrans = 0.0;
+        real64 trans[2] = {transmissibility[k[0]], transmissibility[k[1]]};
+        real64 dTrans[2] = { dTrans_dPres[k[0]], dTrans_dPres[k[1]] };
+        real64 dFlux_dP[2] = {0.0, 0.0};
+
+        computeSinglePhaseFlux( seri, sesri, sei,
+                                trans,
+                                dTrans,
+                                pres,
+                                dPres,
+                                gravCoef,
+                                dens,
+                                dDens_dPres,
+                                mob,
+                                dMob_dPres,
+                                fluxVal,
+                                dFlux_dP,
+                                dFlux_dTrans );
+
+        // populate local flux vector and derivatives
+        flux[k[0]] +=  dt * fluxVal;
+        flux[k[1]] -=  dt * fluxVal;
+
+        fluxJacobian[k[0]][k[0]] += dt * dFlux_dP[0];
+        fluxJacobian[k[0]][k[1]] += dt * dFlux_dP[1];
+        fluxJacobian[k[1]][k[0]] -= dt * dFlux_dP[0];
+        fluxJacobian[k[1]][k[1]] -= dt * dFlux_dP[1];
+      }
     }
   }
 };

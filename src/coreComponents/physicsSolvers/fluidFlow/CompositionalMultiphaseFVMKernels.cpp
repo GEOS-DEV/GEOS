@@ -247,8 +247,8 @@ FluxKernel::
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
-           real64 const (&transmissibility)[2],
-           real64 const (&dTrans_dPres)[2],
+           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
+           real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -563,12 +563,12 @@ FluxKernel::
     stackArray2d< real64, MAX_NUM_ELEMS * NC * MAX_STENCIL_SIZE * NDOF > localFluxJacobian( numFluxElems * NC, stencilSize * NDOF );
 
     // compute transmissibility
-    real64 transmissiblity[2], dTrans_dPres[2];
-    stencilWrapper.computeTransmissibility( iconn,
-                                            permeability,
-                                            dPerm_dPres,
-                                            transmissiblity,
-                                            dTrans_dPres );
+    real64 transmissiblity[MAX_STENCIL_SIZE], dTrans_dPres[MAX_STENCIL_SIZE];
+    stencilWrapper.computeWeights( iconn,
+                                   permeability,
+                                   dPerm_dPres,
+                                   transmissiblity,
+                                   dTrans_dPres );
 
 
 
@@ -699,7 +699,7 @@ INST_FluxKernel( 5, FaceElementToCellStencilWrapper );
 
 /******************************** CFLFluxKernel ********************************/
 
-template< localIndex NC, localIndex NUM_ELEMS >
+template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
 GEOSX_HOST_DEVICE
 void
 CFLFluxKernel::
@@ -709,7 +709,7 @@ CFLFluxKernel::
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
-           real64 const (&transmissibility)[2],
+           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
            ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
@@ -806,35 +806,37 @@ CFLFluxKernel::
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
   localIndex constexpr NUM_ELEMS   = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
+  localIndex constexpr MAX_STENCIL_SIZE   = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
+
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
     // compute transmissibility
-    real64 transmissiblity[2], dTrans_dPres[2];
-    stencilWrapper.computeTransmissibility( iconn,
-                                            permeability,
-                                            dPerm_dPres,
-                                            transmissiblity,
-                                            dTrans_dPres );
+    real64 transmissiblity[MAX_STENCIL_SIZE], dTrans_dPres[MAX_STENCIL_SIZE];
+    stencilWrapper.computeWeights( iconn,
+                                   permeability,
+                                   dPerm_dPres,
+                                   transmissiblity,
+                                   dTrans_dPres );
 
     localIndex const stencilSize = meshMapUtilities::size1( sei, iconn );
 
-    CFLFluxKernel::compute< NC, NUM_ELEMS >( numPhases,
-                                             stencilSize,
-                                             dt,
-                                             seri[iconn],
-                                             sesri[iconn],
-                                             sei[iconn],
-                                             transmissiblity,
-                                             pres,
-                                             gravCoef,
-                                             phaseRelPerm,
-                                             phaseVisc,
-                                             phaseDens,
-                                             phaseMassDens,
-                                             phaseCompFrac,
-                                             phaseOutflux,
-                                             compOutflux );
+    CFLFluxKernel::compute< NC, NUM_ELEMS, MAX_STENCIL_SIZE >( numPhases,
+                                                               stencilSize,
+                                                               dt,
+                                                               seri[iconn],
+                                                               sesri[iconn],
+                                                               sei[iconn],
+                                                               transmissiblity,
+                                                               pres,
+                                                               gravCoef,
+                                                               phaseRelPerm,
+                                                               phaseVisc,
+                                                               phaseDens,
+                                                               phaseMassDens,
+                                                               phaseCompFrac,
+                                                               phaseOutflux,
+                                                               compOutflux );
   } );
 }
 

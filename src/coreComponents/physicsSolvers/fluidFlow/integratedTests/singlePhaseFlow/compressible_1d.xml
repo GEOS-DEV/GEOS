@@ -9,7 +9,8 @@
       fluidNames="{ water }"
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
-      targetRegions="{ Region1 }">
+      targetRegions="{ Region1 }"
+      logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>

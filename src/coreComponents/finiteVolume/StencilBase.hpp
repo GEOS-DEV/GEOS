@@ -30,27 +30,15 @@ template< typename LEAFCLASSTRAITS >
 class StencilWrapperBase
 {
 public:
-  StencilWrapperBase( typename LEAFCLASSTRAITS::IndexContainerType & elementRegionIndices,
-                      typename LEAFCLASSTRAITS::IndexContainerType & elementSubRegionIndices,
-                      typename LEAFCLASSTRAITS::IndexContainerType & elementIndices,
-                      typename LEAFCLASSTRAITS::WeightContainerType & weights ):
+  StencilWrapperBase( typename LEAFCLASSTRAITS::IndexContainerType const & elementRegionIndices,
+                      typename LEAFCLASSTRAITS::IndexContainerType const & elementSubRegionIndices,
+                      typename LEAFCLASSTRAITS::IndexContainerType const & elementIndices,
+                      typename LEAFCLASSTRAITS::WeightContainerType const & weights ):
     m_elementRegionIndices( elementRegionIndices.toViewConst() ),
     m_elementSubRegionIndices( elementSubRegionIndices.toViewConst() ),
     m_elementIndices( elementIndices.toViewConst() ),
     m_weights( weights.toViewConst() )
   {};
-
-  /// Default copy constructor
-  StencilWrapperBase( StencilWrapperBase const & ) = default;
-
-  /// Default move constructor
-  StencilWrapperBase( StencilWrapperBase && ) = default;
-
-  /// Deleted copy assignment operator
-  StencilWrapperBase & operator=( StencilWrapperBase const & ) = delete;
-
-  /// Deleted move assignment operator
-  StencilWrapperBase & operator=( StencilWrapperBase && ) = delete;
 
   /**
    * @brief Const access to the element regions indices.

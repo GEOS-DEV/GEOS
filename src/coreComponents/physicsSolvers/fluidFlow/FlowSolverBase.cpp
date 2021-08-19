@@ -32,6 +32,44 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
+template< typename POROUSWRAPPER_TYPE >
+void execute1( POROUSWRAPPER_TYPE porousWrapper,
+               CellElementSubRegion & subRegion,
+               arrayView1d< real64 const > const & pressure,
+               arrayView1d< real64 const > const & deltaPressure )
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      porousWrapper.updateFromPressure( k, q,
+                                        pressure[k],
+                                        deltaPressure[k] );
+    }
+  } );
+}
+
+template< typename POROUSWRAPPER_TYPE >
+void execute2( POROUSWRAPPER_TYPE porousWrapper,
+               SurfaceElementSubRegion & subRegion,
+               arrayView1d< real64 const > const & pressure,
+               arrayView1d< real64 const > const & deltaPressure,
+               arrayView1d< real64 const > const & oldHydraulicAperture,
+               arrayView1d< real64 const > const & newHydraulicAperture )
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      porousWrapper.updateFromPressureAndAperture( k, q,
+                                                   pressure[k],
+                                                   deltaPressure[k],
+                                                   oldHydraulicAperture[k],
+                                                   newHydraulicAperture[k] );
+    }
+  } );
+}
+
 FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
   SolverBase( name, parent ),

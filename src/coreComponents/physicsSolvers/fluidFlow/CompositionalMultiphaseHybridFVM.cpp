@@ -307,7 +307,7 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_
 
 
 void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
-                                                          DomainPartition & domain,
+                                                          DomainPartition const & domain,
                                                           DofManager const & dofManager,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs ) const
@@ -742,7 +742,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                                                             numFluidComponents(),
                                                                                             elemDofNumber,
                                                                                             elemGhostRank,
-																							referencePorosity,
+                                                                                            referencePorosity,
                                                                                             volume,
                                                                                             totalDensOld,
                                                                                             subRegionResidualNorm );

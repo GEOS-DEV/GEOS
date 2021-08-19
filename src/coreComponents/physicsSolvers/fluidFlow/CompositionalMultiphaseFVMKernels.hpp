@@ -124,8 +124,8 @@ struct FluxKernel
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
-           real64 const (&transmissibility)[2],
-           real64 const (&dTrans_dPres)[2],
+           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
+           real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -200,7 +200,7 @@ struct CFLFluxKernel
   template< typename VIEWTYPE >
   using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
 
-  template< localIndex NC, localIndex NUM_ELEMS >
+  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const numPhases,
@@ -209,7 +209,7 @@ struct CFLFluxKernel
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
-           real64 const (&transmissibility)[2],
+           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
            ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,

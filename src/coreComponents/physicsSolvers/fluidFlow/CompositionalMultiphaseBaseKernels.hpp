@@ -377,7 +377,7 @@ struct ResidualNormKernel
                       localIndex const numComponents,
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & ghostRank,
-					  arrayView1d< real64 const> const & refPoro,
+                      arrayView1d< real64 const > const & refPoro,
                       arrayView1d< real64 const > const & volume,
                       arrayView1d< real64 const > const & totalDensOld,
                       real64 & localResidualNorm )

@@ -62,15 +62,12 @@ class CellElementStencilTPFAWrapper : public StencilWrapperBase< CellElementSten
 public:
 
   template< typename VIEWTYPE >
-  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< typename VIEWTYPE >
-  using PermeabilityViewAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
-
-  CellElementStencilTPFAWrapper( IndexContainerType & elementRegionIndices,
-                                 IndexContainerType & elementSubRegionIndices,
-                                 IndexContainerType & elementIndices,
-                                 WeightContainerType & weights,
+  CellElementStencilTPFAWrapper( IndexContainerType const & elementRegionIndices,
+                                 IndexContainerType const & elementSubRegionIndices,
+                                 IndexContainerType const & elementIndices,
+                                 WeightContainerType const & weights,
                                  arrayView2d< real64 > const & faceNormal,
                                  arrayView3d< real64 > const & cellToFaceVec,
                                  arrayView1d< real64 > const & transMultiplier )
@@ -81,27 +78,12 @@ public:
     m_transMultiplier( transMultiplier )
   {}
 
-  /// Default copy constructor
-  CellElementStencilTPFAWrapper( CellElementStencilTPFAWrapper const & ) = default;
-
-  /// Default move constructor
-  CellElementStencilTPFAWrapper( CellElementStencilTPFAWrapper && ) = default;
-
-  /// Deleted copy assignment operator
-  CellElementStencilTPFAWrapper & operator=( CellElementStencilTPFAWrapper const & ) = delete;
-
-  /// Deleted move assignment operator
-  CellElementStencilTPFAWrapper & operator=( CellElementStencilTPFAWrapper && ) = delete;
-
-
-  template< typename PERMTYPE >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void computeTransmissibility( localIndex iconn,
-                                PERMTYPE permeability,
-                                PERMTYPE dPerm_dPressure,
-                                real64 ( &transmissibility )[2],
-                                real64 ( &dTrans_dPressure )[2] ) const;
+  void computeWeights( localIndex iconn,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar,
+                       real64 ( &weight )[2],
+                       real64 ( &dWeight_dVar )[2] ) const;
 
   /**
    * @brief Give the number of stencil entries.
@@ -155,9 +137,6 @@ class CellElementStencilTPFA : public StencilBase< CellElementStencilTPFA_Traits
 {
 public:
 
-  template< typename VIEWTYPE >
-  using CoefficientAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
-
   /**
    * @brief Default constructor.
    */
@@ -199,7 +178,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  StencilWrapper createStencilWrapper()
+  StencilWrapper createStencilWrapper() const
   {
     return StencilWrapper( m_elementRegionIndices,
                            m_elementSubRegionIndices,
@@ -217,18 +196,16 @@ private:
 
 };
 
-template< typename PERMTYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
-                                                             PERMTYPE permeability,
-                                                             PERMTYPE dPerm_dPressure,
-                                                             real64 (& transmissibility)[2],
-                                                             real64 (& dTrans_dPressure )[2] ) const
+inline void CellElementStencilTPFAWrapper::computeWeights( localIndex iconn,
+                                                           CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                                           CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                                                           real64 (& weight)[2],
+                                                           real64 (& dWeight_dVar )[2] ) const
 {
-  GEOSX_UNUSED_VAR( dPerm_dPressure );
+  GEOSX_UNUSED_VAR( dCoeff_dVar );
 
-  real64 halfTrans[2];
+  real64 halfWeight[2];
 
   // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
@@ -238,7 +215,7 @@ void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
     localIndex const esr =  m_elementSubRegionIndices[iconn][i];
     localIndex const ei  =  m_elementIndices[iconn][i];
 
-    halfTrans[i] = m_weights[iconn][i];
+    halfWeight[i] = m_weights[iconn][i];
 
     // Proper computation
     real64 faceNormal[3], faceConormal[3];
@@ -250,23 +227,23 @@ void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
       LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
     }
 
-    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er][esr][ei][0], faceNormal );
-    halfTrans[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
+    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei][0], faceNormal );
+    halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
 
     // correct negative weight issue arising from non-K-orthogonal grids
-    if( halfTrans[i] < 0.0 )
+    if( halfWeight[i] < 0.0 )
     {
       LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
-                                                permeability[er][esr][ei][0],
+                                                coefficient[er][esr][ei][0],
                                                 m_cellToFaceVec[iconn][i] );
-      halfTrans[i] = m_weights[iconn][i];
-      halfTrans[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
+      halfWeight[i] = m_weights[iconn][i];
+      halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
     }
   }
 
   // Do harmonic and arithmetic averaging
-  real64 const product = halfTrans[0]*halfTrans[1];
-  real64 const sum = halfTrans[0]+halfTrans[1];
+  real64 const product = halfWeight[0]*halfWeight[1];
+  real64 const sum = halfWeight[0]+halfWeight[1];
 
   real64 const harmonicWeight   = sum > 0 ? product / sum : 0.0;
   real64 const arithmeticWeight = sum / 2;
@@ -276,11 +253,11 @@ void CellElementStencilTPFAWrapper::computeTransmissibility( localIndex iconn,
   real64 const value = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
   for( localIndex ke = 0; ke < 2; ++ke )
   {
-    transmissibility[ke] = m_transMultiplier[iconn] * value * (ke == 0 ? 1 : -1);
+    weight[ke] = m_transMultiplier[iconn] * value * (ke == 0 ? 1 : -1);
   }
 
-  dTrans_dPressure[0] = 0.0;
-  dTrans_dPressure[1] = 0.0;
+  dWeight_dVar[0] = 0.0;
+  dWeight_dVar[1] = 0.0;
 }
 
 

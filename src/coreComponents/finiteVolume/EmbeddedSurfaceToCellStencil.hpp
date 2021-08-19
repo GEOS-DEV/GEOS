@@ -62,30 +62,15 @@ class EmbeddedSurfaceToCellStencilWrapper : public StencilWrapperBase< EmbeddedS
 public:
 
   template< typename VIEWTYPE >
-  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< typename VIEWTYPE >
-  using CoefficientAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
-
-  EmbeddedSurfaceToCellStencilWrapper( IndexContainerType & elementRegionIndices,
-                                       IndexContainerType & elementSubRegionIndices,
-                                       IndexContainerType & elementIndices,
-                                       WeightContainerType & weights )
+  EmbeddedSurfaceToCellStencilWrapper( IndexContainerType const & elementRegionIndices,
+                                       IndexContainerType const & elementSubRegionIndices,
+                                       IndexContainerType const & elementIndices,
+                                       WeightContainerType const & weights )
 
     : StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights )
   {}
-
-  /// Default copy constructor
-  EmbeddedSurfaceToCellStencilWrapper( EmbeddedSurfaceToCellStencilWrapper const & ) = default;
-
-  /// Default move constructor
-  EmbeddedSurfaceToCellStencilWrapper( EmbeddedSurfaceToCellStencilWrapper && ) = default;
-
-  /// Deleted copy assignment operator
-  EmbeddedSurfaceToCellStencilWrapper & operator=( EmbeddedSurfaceToCellStencilWrapper const & ) = delete;
-
-  /// Deleted move assignment operator
-  EmbeddedSurfaceToCellStencilWrapper & operator=( EmbeddedSurfaceToCellStencilWrapper && ) = delete;
 
   /**
    * @brief Give the number of stencil entries.
@@ -121,25 +106,22 @@ public:
   }
 
 
-  template< typename PERMTYPE >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void computeTransmissibility( localIndex iconn,
-                                PERMTYPE permeability,
-                                PERMTYPE dPerm_dPressure,
-                                real64 ( &transmissibility )[2],
-                                real64 ( &dTrans_dPressure )[2] ) const;
+  void computeWeights( localIndex iconn,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar,
+                       real64 ( &weight )[MAX_STENCIL_SIZE],
+                       real64 ( &dWeight_dVar )[MAX_STENCIL_SIZE] ) const;
 
-  template< typename PERMTYPE >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void computeTransmissibility( localIndex iconn,
-                                PERMTYPE permeability,
-                                PERMTYPE dPerm_dPressure,
-                                PERMTYPE dPerm_dAperture,
-                                real64 ( &transmissibility )[2],
-                                real64 ( &dTrans_dPressure )[2],
-                                real64 ( &dTrans_dAperture )[2] ) const;
+  void computeWeights( localIndex iconn,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar1,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar2,
+                       real64 ( &weight )[MAX_STENCIL_SIZE],
+                       real64 ( &dWeight_dVar1 )[MAX_STENCIL_SIZE],
+                       real64 ( &dWeight_dVar2 )[MAX_STENCIL_SIZE] ) const;
+
 
 private:
 
@@ -187,7 +169,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  StencilWrapper createStencilWrapper()
+  StencilWrapper createStencilWrapper() const
   {
     return StencilWrapper( m_elementRegionIndices,
                            m_elementSubRegionIndices,
@@ -218,14 +200,12 @@ private:
 
 };
 
-template< typename PERMTYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex iconn,
-                                                                   PERMTYPE permeability,
-                                                                   PERMTYPE dPerm_dPressure,
-                                                                   real64 (& transmissibility)[2],
-                                                                   real64 (& dTrans_dPressure )[2] ) const
+inline void EmbeddedSurfaceToCellStencilWrapper::computeWeights( localIndex iconn,
+                                                                 CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                                                 CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                                                                 real64 ( & weight )[MAX_STENCIL_SIZE],
+                                                                 real64 ( & dWeight_dVar )[MAX_STENCIL_SIZE] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
@@ -235,30 +215,28 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
 //  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
 //  localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( permeability[er0][esr0][ei0][0] );
-//  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
+  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
+//  real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
 
   real64 const harmonicWeight   = t0; // *t1 / (t0+t1);
 
   real64 const value =  harmonicWeight;
 
-  transmissibility[0] = value;
-  transmissibility[1] = -value;
+  weight[0] = value;
+  weight[1] = -value;
 
-  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0][0];
-  dTrans_dPressure[1] = 0.0;
+  dWeight_dVar[0] = 0.0 * dCoeff_dVar[er0][esr0][ei0][0][0];
+  dWeight_dVar[1] = 0.0;
 }
 
-template< typename PERMTYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex iconn,
-                                                                   PERMTYPE permeability,
-                                                                   PERMTYPE dPerm_dPressure,
-                                                                   PERMTYPE dPerm_dAperture,
-                                                                   real64 (& transmissibility)[2],
-                                                                   real64 (& dTrans_dPressure )[2],
-                                                                   real64 (& dTrans_dAperture )[2] ) const
+inline void EmbeddedSurfaceToCellStencilWrapper::computeWeights( localIndex iconn,
+                                                                 CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                                                 CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
+                                                                 CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
+                                                                 real64 (& weight)[MAX_STENCIL_SIZE],
+                                                                 real64 (& dWeight_dVar1 )[MAX_STENCIL_SIZE],
+                                                                 real64 (& dWeight_dVar2 )[MAX_STENCIL_SIZE] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
@@ -268,21 +246,21 @@ void EmbeddedSurfaceToCellStencilWrapper::computeTransmissibility( localIndex ic
   //  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
   //  localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( permeability[er0][esr0][ei0][0] );
-  //  real64 const t1 = m_weights[iconn][1] * permeability[er1][esr1][ei1][0][0];
+  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
+  //  real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
 
   real64 const harmonicWeight   = t0; // *t1 / (t0+t1);
 
   real64 const value =  harmonicWeight;
 
-  transmissibility[0] = value;
-  transmissibility[1] = -value;
+  weight[0] = value;
+  weight[1] = -value;
 
-  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0][0];
-  dTrans_dPressure[1] = 0.0;
+  dWeight_dVar1[0] = 0.0 * dCoeff_dVar1[er0][esr0][ei0][0][0];
+  dWeight_dVar1[1] = 0.0;
 
-  dTrans_dAperture[0] = 0.0 * dPerm_dAperture[er0][esr0][ei0][0][0];
-  dTrans_dAperture[1] = 0.0;
+  dWeight_dVar2[0] = 0.0 * dCoeff_dVar2[er0][esr0][ei0][0][0];
+  dWeight_dVar2[1] = 0.0;
 }
 } /* namespace geosx */
 

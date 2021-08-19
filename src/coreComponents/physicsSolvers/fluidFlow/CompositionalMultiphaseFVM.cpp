@@ -80,14 +80,14 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
 
 
 void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
-                                                    DomainPartition & domain,
+                                                    DomainPartition const & domain,
                                                     DofManager const & dofManager,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   /*
    * Force phase compositions to be moved to device.
@@ -131,9 +131,9 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     } );
   } );
 
-  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
@@ -332,7 +332,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
                                                         numFluidComponents(),
                                                         dofNumber,
                                                         elemGhostRank,
-														referencePorosity,
+                                                        referencePorosity,
                                                         volume,
                                                         totalDensOld,
                                                         subRegionResidualNorm );

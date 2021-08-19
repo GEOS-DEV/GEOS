@@ -62,15 +62,12 @@ class FaceElementToCellStencilWrapper : public StencilWrapperBase< FaceElementTo
 public:
 
   template< typename VIEWTYPE >
-  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< typename VIEWTYPE >
-  using CoefficientAccessor = ElementRegionManager::MaterialViewAccessor< VIEWTYPE >;
-
-  FaceElementToCellStencilWrapper( IndexContainerType & elementRegionIndices,
-                                   IndexContainerType & elementSubRegionIndices,
-                                   IndexContainerType & elementIndices,
-                                   WeightContainerType & weights,
+  FaceElementToCellStencilWrapper( IndexContainerType const & elementRegionIndices,
+                                   IndexContainerType const & elementSubRegionIndices,
+                                   IndexContainerType const & elementIndices,
+                                   WeightContainerType const & weights,
                                    arrayView2d< real64 > const & faceNormal,
                                    arrayView2d< real64 > const & cellToFaceVec,
                                    arrayView1d< real64 > const & transMultiplier )
@@ -79,18 +76,6 @@ public:
     m_cellToFaceVec( cellToFaceVec ),
     m_transMultiplier( transMultiplier )
   {}
-
-  /// Default copy constructor
-  FaceElementToCellStencilWrapper( FaceElementToCellStencilWrapper const & ) = default;
-
-  /// Default move constructor
-  FaceElementToCellStencilWrapper( FaceElementToCellStencilWrapper && ) = default;
-
-  /// Deleted copy assignment operator
-  FaceElementToCellStencilWrapper & operator=( FaceElementToCellStencilWrapper const & ) = delete;
-
-  /// Deleted move assignment operator
-  FaceElementToCellStencilWrapper & operator=( FaceElementToCellStencilWrapper && ) = delete;
 
   /**
    * @brief Give the number of stencil entries.
@@ -125,25 +110,21 @@ public:
     return NUM_POINT_IN_FLUX;
   }
 
-  template< typename PERMTYPE >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void computeTransmissibility( localIndex iconn,
-                                PERMTYPE permeability,
-                                PERMTYPE dPerm_dPressure,
-                                real64 ( &transmissibility )[2],
-                                real64 ( &dTrans_dPressure )[2] ) const;
+  void computeWeights( localIndex iconn,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar,
+                       real64 ( &weight )[MAX_STENCIL_SIZE],
+                       real64 ( &dWeight_dVar )[MAX_STENCIL_SIZE] ) const;
 
-  template< typename PERMTYPE >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void computeTransmissibility( localIndex iconn,
-                                PERMTYPE permeability,
-                                PERMTYPE dPerm_dPressure,
-                                PERMTYPE dPerm_dAperture,
-                                real64 ( &transmissibility )[2],
-                                real64 ( &dTrans_dPressure )[2],
-                                real64 ( &dTrans_dAperture )[2] ) const;
+  void computeWeights( localIndex iconn,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar1,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar2,
+                       real64 ( &weight )[MAX_STENCIL_SIZE],
+                       real64 ( &dWeight_dVar1 )[MAX_STENCIL_SIZE],
+                       real64 ( &dWeight_dVar2 )[MAX_STENCIL_SIZE] ) const;
 
 private:
 
@@ -189,7 +170,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  StencilWrapper createStencilWrapper()
+  StencilWrapper createStencilWrapper() const
   {
     return StencilWrapper( m_elementRegionIndices,
                            m_elementSubRegionIndices,
@@ -226,63 +207,59 @@ private:
 
 };
 
-template< typename PERMTYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void FaceElementToCellStencilWrapper::computeTransmissibility( localIndex iconn,
-                                                               PERMTYPE permeability,
-                                                               PERMTYPE dPerm_dPressure,
-                                                               real64 (& transmissibility)[2],
-                                                               real64 (& dTrans_dPressure )[2] ) const
+inline void FaceElementToCellStencilWrapper::computeWeights( localIndex iconn,
+                                                             CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                                             CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                                                             real64 ( & weight )[MAX_STENCIL_SIZE],
+                                                             real64 ( & dWeight_dVar )[MAX_STENCIL_SIZE] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];
 
-  real64 halfTrans = m_weights[iconn][0];
+  real64 halfWeight = m_weights[iconn][0];
 
   real64 faceConormal[3];
 
-  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er0][esr0][ei0][0], m_faceNormal[iconn] );
-  halfTrans *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal ) * m_transMultiplier[iconn];
+  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
+  halfWeight *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal ) * m_transMultiplier[iconn];
 
-  transmissibility[0] = halfTrans;
-  transmissibility[1] = -halfTrans;
+  weight[0] = halfWeight;
+  weight[1] = -halfWeight;
 
-  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0][0];
-  dTrans_dPressure[1] = 0.0;
+  dWeight_dVar[0] = 0.0 * dCoeff_dVar[er0][esr0][ei0][0][0];
+  dWeight_dVar[1] = 0.0;
 }
 
-template< typename PERMTYPE >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void FaceElementToCellStencilWrapper::computeTransmissibility( localIndex iconn,
-                                                               PERMTYPE permeability,
-                                                               PERMTYPE dPerm_dPressure,
-                                                               PERMTYPE dPerm_dAperture,
-                                                               real64 (& transmissibility)[2],
-                                                               real64 (& dTrans_dPressure )[2],
-                                                               real64 (& dTrans_dAperture )[2] ) const
+inline void FaceElementToCellStencilWrapper::computeWeights( localIndex iconn,
+                                                             CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                                             CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
+                                                             CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
+                                                             real64 (& weight)[MAX_STENCIL_SIZE],
+                                                             real64 (& dWeight_dVar1 )[MAX_STENCIL_SIZE],
+                                                             real64 (& dWeight_dVar2 )[MAX_STENCIL_SIZE] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];
 
-  real64 halfTrans = m_weights[iconn][0];
+  real64 halfWeight = m_weights[iconn][0];
 
   real64 faceConormal[3];
 
-  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, permeability[er0][esr0][ei0][0], m_faceNormal[iconn] );
-  halfTrans *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal ) * m_transMultiplier[iconn];
+  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
+  halfWeight *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal ) * m_transMultiplier[iconn];
 
-  transmissibility[0] = halfTrans;
-  transmissibility[1] = -halfTrans;
+  weight[0] = halfWeight;
+  weight[1] = -halfWeight;
 
-  dTrans_dPressure[0] = 0.0 * dPerm_dPressure[er0][esr0][ei0][0][0];
-  dTrans_dPressure[1] = 0.0;
+  dWeight_dVar1[0] = 0.0 * dCoeff_dVar1[er0][esr0][ei0][0][0];
+  dWeight_dVar1[1] = 0.0;
 
-  dTrans_dAperture[0] = 0.0 * dPerm_dAperture[er0][esr0][ei0][0][0];
-  dTrans_dAperture[1] = 0.0;
+  dWeight_dVar2[0] = 0.0 * dCoeff_dVar2[er0][esr0][ei0][0][0];
+  dWeight_dVar2[1] = 0.0;
 }
 
 

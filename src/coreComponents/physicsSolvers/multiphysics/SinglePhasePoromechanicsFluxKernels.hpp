@@ -92,15 +92,16 @@ struct EmbeddedSurfaceFluxKernel
    *
    *
    */
+  template< localIndex MAX_STENCIL_SIZE >
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[2],
-           real64 const (&dTrans_dPres)[2],
-           real64 const (&dTrans_dAper)[2],
+           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
+           real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
+           real64 const (&dTrans_dAper)[MAX_STENCIL_SIZE],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -176,15 +177,16 @@ struct FaceElementFluxKernel
    *
    *
    */
+  template< localIndex MAX_STENCIL_SIZE >
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[2],
-           real64 const (&dTrans_dPres)[2],
-           real64 const (&dTrans_dAper)[2],
+           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
+           real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
+           real64 const (&dTrans_dAper)[MAX_STENCIL_SIZE],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,

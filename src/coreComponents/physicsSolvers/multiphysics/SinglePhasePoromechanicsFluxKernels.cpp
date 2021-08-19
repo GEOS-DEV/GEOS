@@ -146,8 +146,8 @@ void EmbeddedSurfaceFluxKernel::
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
-  constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
-  constexpr localIndex maxStencilSize = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
+  constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
+  constexpr localIndex MAX_STENCIL_SIZE = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
 
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
@@ -161,19 +161,19 @@ void EmbeddedSurfaceFluxKernel::
     localIndex const numDofs = stencilSize * 2;// pressure and normal jump
 
     // working arrays
-    stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( numDofs );
-    stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
-    stackArray2d< real64, maxNumFluxElems * maxStencilSize > localFluxJacobian( numFluxElems, numDofs );
+    stackArray1d< globalIndex, MAX_NUM_FLUX_ELEMS > dofColIndices( numDofs );
+    stackArray1d< real64, MAX_NUM_FLUX_ELEMS > localFlux( numFluxElems );
+    stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, numDofs );
 
     // compute transmissibility
-    real64 transmissibility[2], dTrans_dPres[2], dTrans_dAper[2];
-    stencilWrapper.computeTransmissibility( iconn,
-                                            permeability,
-                                            dPerm_dPres,
-                                            dPerm_dAper,
-                                            transmissibility,
-                                            dTrans_dPres,
-                                            dTrans_dAper );
+    real64 transmissibility[MAX_STENCIL_SIZE], dTrans_dPres[MAX_STENCIL_SIZE], dTrans_dAper[MAX_STENCIL_SIZE];
+    stencilWrapper.computeWeights( iconn,
+                                   permeability,
+                                   dPerm_dPres,
+                                   dPerm_dAper,
+                                   transmissibility,
+                                   dTrans_dPres,
+                                   dTrans_dAper );
 
     compute( stencilSize,
              seri[iconn],
@@ -222,14 +222,15 @@ void EmbeddedSurfaceFluxKernel::
   } );
 }
 
+template< localIndex MAX_STENCIL_SIZE >
 void EmbeddedSurfaceFluxKernel::
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[2],
-           real64 const (&dTrans_dPres)[2],
-           real64 const (&dTrans_dAper)[2],
+           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
+           real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
+           real64 const (&dTrans_dAper)[MAX_STENCIL_SIZE],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -245,11 +246,13 @@ void EmbeddedSurfaceFluxKernel::
 
   real64 fluxVal = 0.0;
   real64 dFlux_dTrans = 0.0;
+  real64 trans[2] = {transmissibility[0], transmissibility[1]};
+  real64 dTrans[2] = { dTrans_dPres[0], dTrans_dPres[1] };
   real64 dFlux_dP[2] = {0.0, 0.0};
 
   computeSinglePhaseFlux( seri, sesri, sei,
-                          transmissibility,
-                          dTrans_dPres,
+                          trans,
+                          dTrans,
                           pres,
                           dPres,
                           gravCoef,
@@ -399,8 +402,8 @@ void FaceElementFluxKernel::
                                           arrayView1d< real64 > const & localRhs,
                                           CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
-  constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
-  constexpr localIndex maxStencilSize  = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
+  constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
+  constexpr localIndex MAX_STENCIL_SIZE  = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
 
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
@@ -417,24 +420,24 @@ void FaceElementFluxKernel::
     localIndex const numDofs = stencilSize; // pressures
 
     // working arrays
-    stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( numDofs );
-    stackArray1d< localIndex, maxNumFluxElems > localColIndices( numFluxElems );
+    stackArray1d< globalIndex, MAX_NUM_FLUX_ELEMS > dofColIndices( numDofs );
+    stackArray1d< localIndex, MAX_NUM_FLUX_ELEMS > localColIndices( numFluxElems );
 
-    stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
-    stackArray2d< real64, maxNumFluxElems * maxStencilSize > localFluxJacobian( numFluxElems, numDofs );
+    stackArray1d< real64, MAX_NUM_FLUX_ELEMS > localFlux( numFluxElems );
+    stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, numDofs );
 
     // need to store this for later use in determining the dFlux_dU terms when using better permeabilty approximations.
-    stackArray2d< real64, maxNumFluxElems *maxStencilSize > dFlux_dAper( numFluxElems, stencilSize );
+    stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > dFlux_dAper( numFluxElems, stencilSize );
 
     // compute transmissibility
-    real64 transmissiblity[2], dTrans_dPres[2], dTrans_dAper[2];
-    stencilWrapper.computeTransmissibility( iconn,
-                                            permeability,
-                                            dPerm_dPres,
-                                            dPerm_dAper,
-                                            transmissiblity,
-                                            dTrans_dPres,
-                                            dTrans_dAper );
+    real64 transmissiblity[MAX_STENCIL_SIZE], dTrans_dPres[MAX_STENCIL_SIZE], dTrans_dAper[MAX_STENCIL_SIZE];
+    stencilWrapper.computeWeights( iconn,
+                                   permeability,
+                                   dPerm_dPres,
+                                   dPerm_dAper,
+                                   transmissiblity,
+                                   dTrans_dPres,
+                                   dTrans_dAper );
 
     // TODO does this need to be here??
     localIndex const er = seri[iconn][0];
@@ -507,16 +510,16 @@ void FaceElementFluxKernel::
 }
 
 
-
+template< localIndex MAX_STENCIL_SIZE >
 GEOSX_HOST_DEVICE
 void
 FaceElementFluxKernel::compute( localIndex const numFluxElems,
                                 arraySlice1d< localIndex const > const & seri,
                                 arraySlice1d< localIndex const > const & sesri,
                                 arraySlice1d< localIndex const > const & sei,
-                                real64 const (&transmissibility)[2],
-                                real64 const (&dTrans_dPres)[2],
-                                real64 const (&dTrans_dAper)[2],
+                                real64 const (&transmissibility)[MAX_STENCIL_SIZE],
+                                real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
+                                real64 const (&dTrans_dAper)[MAX_STENCIL_SIZE],
                                 ElementViewConst< arrayView1d< real64 const > > const & pres,
                                 ElementViewConst< arrayView1d< real64 const > > const & dPres,
                                 ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -530,42 +533,50 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
                                 arraySlice2d< real64 > const & dFlux_dAperture )
 {
 
-  GEOSX_UNUSED_VAR( numFluxElems );
-  real64 fluxVal = 0.0;
-  real64 dFlux_dTrans = 0.0;
-  real64 dFlux_dP[2] = {0.0, 0.0};
+  localIndex k[2];
+  for( k[0]=0; k[0]<numFluxElems; ++k[0] )
+  {
+    for( k[1]=k[0]+1; k[1]<numFluxElems; ++k[1] )
+    {
+      real64 fluxVal = 0.0;
+      real64 dFlux_dTrans = 0.0;
+      real64 trans[2] = {transmissibility[k[0]], transmissibility[k[1]]};
+      real64 dTrans[2] = { dTrans_dPres[k[0]], dTrans_dPres[k[1]] };
+      real64 dFlux_dP[2] = {0.0, 0.0};
 
-  computeSinglePhaseFlux( seri, sesri, sei,
-                          transmissibility,
-                          dTrans_dPres,
-                          pres,
-                          dPres,
-                          gravCoef,
-                          dens,
-                          dDens_dPres,
-                          mob,
-                          dMob_dPres,
-                          fluxVal,
-                          dFlux_dP,
-                          dFlux_dTrans );
+      computeSinglePhaseFlux( seri, sesri, sei,
+                              trans,
+                              dTrans,
+                              pres,
+                              dPres,
+                              gravCoef,
+                              dens,
+                              dDens_dPres,
+                              mob,
+                              dMob_dPres,
+                              fluxVal,
+                              dFlux_dP,
+                              dFlux_dTrans );
 
-  // populate local flux vector and derivatives
-  flux[0] =  dt * fluxVal;
-  flux[1] = -dt * fluxVal;
+      // populate local flux vector and derivatives
+      flux[k[0]] += dt * fluxVal;
+      flux[k[1]] -= dt * fluxVal;
 
-  real64 dFlux_dAper[2] = {0.0, 0.0};
-  dFlux_dAper[0] = dt * dFlux_dTrans * dTrans_dAper[0];
-  dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dAper[1];
+      real64 dFlux_dAper[2] = {0.0, 0.0};
+      dFlux_dAper[0] = dt * dFlux_dTrans * dTrans_dAper[k[0]];
+      dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dAper[k[1]];
 
-  fluxJacobian[0][0] += dFlux_dP[0] * dt;
-  fluxJacobian[0][1] += dFlux_dP[1] * dt;
-  fluxJacobian[1][0] -= dFlux_dP[0] * dt;
-  fluxJacobian[1][1] -= dFlux_dP[1] * dt;
+      fluxJacobian[k[0]][k[0]] += dFlux_dP[0] * dt;
+      fluxJacobian[k[0]][k[1]] += dFlux_dP[1] * dt;
+      fluxJacobian[k[1]][k[0]] -= dFlux_dP[0] * dt;
+      fluxJacobian[k[1]][k[1]] -= dFlux_dP[1] * dt;
 
-  dFlux_dAperture[0][0] += dFlux_dAper[0];
-  dFlux_dAperture[0][1] += dFlux_dAper[1];
-  dFlux_dAperture[1][0] -= dFlux_dAper[0];
-  dFlux_dAperture[1][1] -= dFlux_dAper[1];
+      dFlux_dAperture[k[0]][k[0]] += dFlux_dAper[0];
+      dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
+      dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];
+      dFlux_dAperture[k[1]][k[1]] -= dFlux_dAper[1];
+    }
+  }
 }
 
 

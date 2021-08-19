@@ -435,9 +435,9 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
                                                        false );
 }
 
-void PhaseFieldDamageFEM::updateState( DomainPartition &  domain )
+void PhaseFieldDamageFEM::updateState( DomainPartition & domain )
 {
-	GEOSX_UNUSED_VAR( domain )
+  GEOSX_UNUSED_VAR( domain )
 }
 
 void PhaseFieldDamageFEM::applyBoundaryConditions(

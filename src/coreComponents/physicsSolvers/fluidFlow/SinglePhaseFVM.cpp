@@ -173,18 +173,18 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 template< typename BASE >
 void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
                                                 real64 const dt,
-                                                DomainPartition & domain,
+                                                DomainPartition const & domain,
                                                 DofManager const & dofManager,
                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                 arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
@@ -221,7 +221,7 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
                                                            real64 const dt,
-                                                           DomainPartition & domain,
+                                                           DomainPartition const & domain,
                                                            DofManager const & dofManager,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs,
@@ -229,11 +229,11 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & pressureDofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
@@ -280,7 +280,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 template< typename BASE >
 void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
                                                          real64 const dt,
-                                                         DomainPartition & domain,
+                                                         DomainPartition const & domain,
                                                          DofManager const & dofManager,
                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs,
@@ -288,11 +288,11 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >

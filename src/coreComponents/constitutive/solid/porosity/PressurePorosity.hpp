@@ -51,8 +51,12 @@ public:
                         real64 const & referencePorosity ) const
   {
 
-    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
-    dPorosity_dPressure =  m_compressibility * porosity;
+    // TODO use full exponential.
+//    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
+//    dPorosity_dPressure =  m_compressibility * porosity;
+    porosity = referencePorosity * ( m_compressibility * (pressure - m_referencePressure) + 1 );
+    dPorosity_dPressure = m_compressibility * referencePorosity;
+
   }
 
   GEOSX_HOST_DEVICE
@@ -71,7 +75,6 @@ private:
   real64 m_referencePressure;
 
   real64 m_compressibility;
-
 };
 
 

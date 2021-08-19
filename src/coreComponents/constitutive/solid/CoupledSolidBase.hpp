@@ -63,7 +63,7 @@ public:
 
   arrayView1d< real64 const > const getReferencePorosity() const
   {
-	return getBasePorosityModel().getReferencePorosity();
+    return getBasePorosityModel().getReferencePorosity();
   }
 
 
