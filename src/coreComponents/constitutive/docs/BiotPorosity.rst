@@ -12,9 +12,9 @@ Overview
 Accodirng to the poroelasticity theory, the porostiy (pore volume) change with respect to pressure is expressed as the following Biot Porosity Model:
 
 .. math::
-   \frac{d_{\phi}}{dp} = {\alpha}{\frac{d_{\epsilon}}{dp} + \frac{\alpha - \phi}{K_s} 
-  
-where :math:`\alpha` is the Biot coefficient, :math:`\epsilon` is the volumetric strain, :math:`K_s` is the bulk modulus of grain, and :math:`p` is the pressure.
+   \frac{d{\phi}}{dp} = {\alpha}{\frac{d{\epsilon}}{dp} + \frac{\alpha - \phi}{K_s}
+
+where :math:`\alpha` is the Biot coefficient, :math:`\epsilon` is the volumetric strain, :math:`K_s` is the bulk modulus of the grains and :math:`p` is the pressure.
 
 
 Parameters
@@ -32,8 +32,6 @@ The following attributes are supported:
 
 .. include:: /coreComponents/schema/docs/BiotPorosity.rst
 
-
-
 Example
 =======================
 
@@ -46,5 +44,3 @@ Example
                     defaultReferencePorosity="0.3"/>
       ...
    </Constitutive>
-
-

@@ -12,9 +12,9 @@ Overview
 This model assumes a simple exponential law for the porosity as function of pressure, i.e.
 
 .. math::
-   \phi = \phi_{ref} \, exp ( c \cdot ( p - p_{ref} )
+   \phi = \phi_{ref} \, exp ( c \cdot ( p - p_{ref} ) )
 
-where :math:`\phi_{ref}` is the reference porosity at  reference pressure, :math:`p_{ref}` and :math:`c` is the compressibility.
+where :math:`\phi_{ref}` is the reference porosity at  reference pressure, :math:`p_{ref}` , :math:`p` is the pressure and, :math:`c` is the compressibility.
 
 
 Parameters

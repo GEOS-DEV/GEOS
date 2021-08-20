@@ -28,6 +28,6 @@ Example
    <Constitutive>
       ...
       <ConstantPermeability name="matrixPerm"
-                            permeabilityComponents="{}""  />
+                            permeabilityComponents="{1.0e-12, 1.0e-12, 1.0e-12}"/>
       ...
    </Constitutive>
