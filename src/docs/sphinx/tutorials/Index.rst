@@ -1,7 +1,7 @@
 .. _Tutorials:
 
 
-Tutorials
+Tutorials & Examples
 =================================
 
 The easiest way to learn to use GEOSX is through worked examples.
