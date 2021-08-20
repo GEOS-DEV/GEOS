@@ -19,7 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_DEADOILFLUID_HPP_
 
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/BlackOilFluidBase.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geosx
@@ -29,7 +29,7 @@ namespace constitutive
 {
 
 /**
- * @brief Kernel wrapper class for DeadOilFluild
+ * @brief Kernel wrapper class for DeadOilFluid
  *        This kernel can be called on the GPU
  */
 class DeadOilFluidUpdate final : public MultiFluidBaseUpdate
@@ -234,22 +234,11 @@ private:
   /// Water viscosity
   real64 const m_waterViscosity;
 
-
 };
 
-class DeadOilFluid : public MultiFluidBase
+class DeadOilFluid : public BlackOilFluidBase
 {
 public:
-
-  using exec_policy = parallelDevicePolicy<>;
-
-  struct PhaseType
-  {
-    static constexpr integer OIL            = 0;
-    static constexpr integer GAS            = 1;
-    static constexpr integer WATER          = 2;
-    static constexpr integer MAX_NUM_PHASES = 3;
-  };
 
   DeadOilFluid( string const & name, Group * const parent );
 
@@ -310,108 +299,17 @@ public:
                           m_dTotalDensity_dGlobalCompFraction );
   }
 
-  struct viewKeyStruct : MultiFluidBase::viewKeyStruct
-  {
-    static constexpr char const * surfacePhaseMassDensitiesString() { return "surfaceDensities"; }
-    static constexpr char const * tableFilesString() { return "tableFiles"; }
-    static constexpr char const * formationVolumeFactorTableNamesString() { return "hydrocarbonFormationVolFactorTableNames"; }
-    static constexpr char const * viscosityTableNamesString() { return "hydrocarbonViscosityTableNames"; }
-    static constexpr char const * waterRefPressureString() { return "waterReferencePressure"; }
-    static constexpr char const * waterFormationVolumeFactorString() { return "waterFormationVolumeFactor"; }
-    static constexpr char const * waterCompressibilityString() { return "waterCompressibility"; }
-    static constexpr char const * waterViscosityString() { return "waterViscosity"; }
-
-  };
-
-
-protected:
-
-  virtual void postProcessInput() override;
-
-  virtual void initializePostSubGroups() override;
-
 private:
-
-  /**
-   * @brief Read all the PVT table provided by the user in Eclipse format
-   */
-  void readInputDataFromPVTFiles();
 
   /**
    * @brief Use the TableFunctions provided by the user to get the PVT data
    */
-  void useProvidedTableFunctions();
+  virtual void useProvidedTableFunctions() override;
 
   /**
-   * @brief Open the file "filename", read the table inside, and fill "values" with the table values
-   * @param[in] filename the name of the file containing the table
-   * @param[inout] values an array of arrays containing the table values
+   * @brief Read all the PVT table provided by the user in Eclipse format
    */
-  void readTable( string const & filename,
-                  array1d< array1d< real64 > > & values ) const;
-
-  /**
-   * @brief Fill the water data (formation vol factor, compressibility, etc)
-   * @param[in] tableValues the values in the water table
-   */
-  void fillWaterData( array1d< array1d< real64 > > const & tableValues );
-
-  /**
-   * @brief Fill the hydrocarbon data (pressure, formation vol factor, viscosity)
-   * @param[in] ip the index of the phase
-   * @param[in] tableValues the values in the oil or gas table
-   */
-  void fillHydrocarbonData( localIndex const ip,
-                            array1d< array1d< real64 > > const & tableValues );
-
-
-  /// create all the table kernel wrappers
-  void createAllKernelWrappers();
-
-  /// check that the table makes sense
-  void validateTable( TableFunction const & table ) const;
-
-  // Input data
-
-  // Black-oil table filenames
-  path_array m_tableFiles;
-
-  // Fluid data
-
-  /// Names of the formation volume factor tables
-  array1d< string > m_formationVolFactorTableNames;
-
-  /// Names of the viscosity tables
-  array1d< string > m_viscosityTableNames;
-
-  /// Surface densities
-  array1d< real64 > m_surfacePhaseMassDensity;
-
-  /// Water reference pressure
-  real64 m_waterRefPressure;
-
-  /// Water formation volume factor
-  real64 m_waterFormationVolFactor;
-
-  /// Water compressibility
-  real64 m_waterCompressibility;
-
-  /// Water viscosity
-  real64 m_waterViscosity;
-
-
-  /// Data after processing of input
-
-  /// Phase ordering info
-  array1d< integer > m_phaseTypes;
-  array1d< integer > m_phaseOrder;
-  array1d< integer > m_hydrocarbonPhaseOrder;
-
-  /// Table kernel wrappers to interpolate in the oil and gas (B vs p) tables
-  array1d< TableFunction::KernelWrapper > m_formationVolFactorTables;
-
-  /// Table kernel wrappers to interpolate in the oil and gas (\mu vs p) tables
-  array1d< TableFunction::KernelWrapper > m_viscosityTables;
+  virtual void readInputDataFromPVTFiles() override;
 
 };
 

@@ -766,7 +766,6 @@ struct PerforationKernel
       // 1) copy the variables from the reservoir and well element
 
       // a) get reservoir variables
-
       // get the reservoir (sub)region and element indices
       localIndex const er  = resElementRegion[iperf];
       localIndex const esr = resElementSubRegion[iperf];
@@ -842,6 +841,12 @@ struct PerforationKernel
                           dResPhaseVisc_dComp[er][esr][ei][0][ip],
                           dVisc_dC );
 
+          // skip the rest of the calculation if the phase is absent
+          bool const phaseExists = (resDens > 0) && (resVisc > 0);
+          if( !phaseExists )
+          {
+            continue;
+          }
           // relative permeability
           real64 const resRelPerm = resPhaseRelPerm[er][esr][ei][0][ip];
           real64 dResRelPerm_dP = 0.0;
@@ -930,7 +935,6 @@ struct PerforationKernel
 
         real64 resTotalMob     = 0.0;
         real64 dResTotalMob_dP = 0.0;
-
         // we re-compute here the total mass (when useMass == 1) or molar (when useMass == 0) density
         real64 wellElemTotalDens = 0;
         for( localIndex ic = 0; ic < NC; ++ic )
@@ -941,40 +945,46 @@ struct PerforationKernel
         // first, compute the reservoir total mobility (excluding phase density)
         for( localIndex ip = 0; ip < NP; ++ip )
         {
-          // viscosity
-          real64 const resVisc = resPhaseVisc[er][esr][ei][0][ip];
-          real64 const dResVisc_dP  = dResPhaseVisc_dPres[er][esr][ei][0][ip];
-          applyChainRule( NC, dResCompFrac_dCompDens[er][esr][ei],
-                          dResPhaseVisc_dComp[er][esr][ei][0][ip],
-                          dVisc_dC );
 
-          // relative permeability
-          real64 const resRelPerm = resPhaseRelPerm[er][esr][ei][0][ip];
-          real64 dResRelPerm_dP = 0.0;
-          for( localIndex jc = 0; jc < NC; ++jc )
+          // skip the rest of the calculation if the phase is absent
+          bool const phaseExists = (resPhaseVisc[er][esr][ei][0][ip] > 0);
+          if( phaseExists > 0 )
           {
-            dRelPerm_dC[jc] = 0;
-          }
+            // viscosity
+            real64 const resVisc = resPhaseVisc[er][esr][ei][0][ip];
+            real64 const dResVisc_dP = dResPhaseVisc_dPres[er][esr][ei][0][ip];
+            applyChainRule( NC, dResCompFrac_dCompDens[er][esr][ei],
+                            dResPhaseVisc_dComp[er][esr][ei][0][ip],
+                            dVisc_dC );
 
-          for( localIndex jp = 0; jp < NP; ++jp )
-          {
-            real64 const dResRelPerm_dS = dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-            dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac_dPres[er][esr][ei][jp];
-
+            // relative permeability
+            real64 const resRelPerm = resPhaseRelPerm[er][esr][ei][0][ip];
+            real64 dResRelPerm_dP = 0.0;
             for( localIndex jc = 0; jc < NC; ++jc )
             {
-              dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac_dComp[er][esr][ei][jp][jc];
+              dRelPerm_dC[jc] = 0;
             }
-          }
 
-          // increment total mobility
-          resTotalMob     += resRelPerm / resVisc;
-          dResTotalMob_dP += ( dResRelPerm_dP * resVisc - resRelPerm * dResVisc_dP )
-                             / ( resVisc * resVisc );
-          for( localIndex ic = 0; ic < NC; ++ic )
-          {
-            dResTotalMob_dC[ic] += ( dRelPerm_dC[ic] * resVisc - resRelPerm * dVisc_dC[ic] )
-                                   / ( resVisc * resVisc );
+            for( localIndex jp = 0; jp < NP; ++jp )
+            {
+              real64 const dResRelPerm_dS = dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
+              dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac_dPres[er][esr][ei][jp];
+
+              for( localIndex jc = 0; jc < NC; ++jc )
+              {
+                dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac_dComp[er][esr][ei][jp][jc];
+              }
+            }
+
+            // increment total mobility
+            resTotalMob     += resRelPerm / resVisc;
+            dResTotalMob_dP += ( dResRelPerm_dP * resVisc - resRelPerm * dResVisc_dP )
+                               / ( resVisc * resVisc );
+            for( localIndex ic = 0; ic < NC; ++ic )
+            {
+              dResTotalMob_dC[ic] += ( dRelPerm_dC[ic] * resVisc - resRelPerm * dVisc_dC[ic] )
+                                     / ( resVisc * resVisc );
+            }
           }
         }
 

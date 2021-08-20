@@ -161,6 +161,160 @@ void applyChainRuleInPlace( localIndex const N,
   copy( N, work, df_dxy );
 }
 
+// TODO: make sure this is a good place
+// TODO: check/fix the implementation of these functions
+
+template< typename T >
+void findSurroundingIndex( array1d< T > const & x,
+                           T xval,
+                           integer & iminus,
+                           integer & iplus )
+{
+  GEOSX_THROW_IF( x.empty(), "Interpolation table is empty", InputError );
+  GEOSX_THROW_IF( x[0] > xval, "Input x value is out of range, extrapolation not allowed", InputError );
+
+  // search for interval
+  for( iplus = 1; iplus < x.size() - 1 && x[iplus] < xval; ++iplus )
+  { }
+  iminus = iplus - 1;
+}
+
+
+// TODO: replace with something from LvArray
+template< typename T >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void findSurroundingIndex( arrayView1d< T const > const & x,
+                           T xval,
+                           integer & iminus,
+                           integer & iplus )
+{
+  // search for interval
+  for( iplus = 1; iplus < x.size() - 1 && x[iplus] < xval; ++iplus )
+  { }
+  iminus = iplus - 1;
+}
+
+template< typename T >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void findSurroundingIndex( arraySlice1d< const T > const & x,
+                           T xval,
+                           integer & iminus,
+                           integer & iplus )
+{
+  // search for interval
+  for( iplus = 1; iplus < x.size() - 1 && x[iplus] < xval; ++iplus )
+  { }
+  iminus = iplus - 1;
+}
+
+template< typename T >
+void interpolation1( array1d< T > const & xin,
+                     array1d< T > const & yin,
+                     array1d< T > const & xout,
+                     array1d< T > & yout )
+{
+  GEOSX_THROW_IF( xin.size() != yin.size(), "interpolation1: size mismatch!", InputError );
+  GEOSX_THROW_IF( xout.size() != yout.size(), "interpolation1: size mismatch!", InputError );
+  for( localIndex n = 0; n != xout.size(); ++n )
+  {
+    T const x = xout[n];
+    GEOSX_THROW_IF( xin[0] > x, "interpolation1: input x out of range, cannot extrapolate below the limits", InputError );
+
+    // search for interval
+    integer i_minus, i_plus;
+    findSurroundingIndex( xin, x, i_minus, i_plus );
+
+    if( i_minus == i_plus )
+    {
+      yout[n] = yin[i_minus];
+    }
+    else
+    {
+      yout[n] = yin[i_minus] * ( xin[i_plus] - x ) / ( xin[i_plus] - xin[i_minus] )
+                + yin[i_plus] * ( ( x - xin[i_minus] ) / ( xin[i_plus] - xin[i_minus] ) );
+      GEOSX_THROW_IF( yout[n] < 0.0, "interpolation1: negative value", InputError );
+    }
+  }
+}
+
+template< typename T >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+T linearInterpolation( T dminus,
+                       T dplus,
+                       T xminus,
+                       T xplus )
+{
+  T const f = dminus / ( dminus + dplus );
+  return f * xplus + ( 1 - f ) * xminus;
+}
+
+template< typename T >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void linearInterpolation( T dminus,
+                          T dplus,
+                          T xminus,
+                          T xplus,
+                          T & x,
+                          T & dx )
+{
+  T const f = dminus / ( dminus + dplus );
+  T const df = 1./( dminus + dplus );
+  x = f * xplus + ( 1 - f ) * xminus;
+  dx = df*(xplus - xminus);
+}
+
+template< typename T >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+T linearInterpolation( T x1,
+                       T y1,
+                       T x2,
+                       T y2,
+                       T x3 )
+{
+  return linearInterpolation( x3 - x1, x2 - x3, y1, y2 );
+}
+
+template< typename T >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void linearInterpolation( T x1,
+                          T y1,
+                          T x2,
+                          T y2,
+                          T x3,
+                          T & x,
+                          T & dx )
+{
+  linearInterpolation( x3 - x1, x2 - x3, y1, y2, x, dx );
+}
+
+template< typename T >
+T linearExtrapolation( T x1,
+                       T y1,
+                       T x2,
+                       T y2,
+                       T x3 )
+{
+  return ( y2 - y1 ) / ( x2 - x1 ) * ( x3 - x2 ) + y2;
+}
+
+template< typename T >
+T logExtrapolation( T x1,
+                    T y1,
+                    T x2,
+                    T y2,
+                    T x3 )
+{
+  T const lny = ( log( y2 ) - log( y1 ) ) / ( log( x2 ) - log( x1 ) ) * ( log( x3 ) - log( x2 ) ) + log( y2 );
+  return exp( lny );
+}
+
+
 } // namespace geosx
 
 #endif /* GEOSX_CODINGUTILITIES_UTILITIES_H_ */

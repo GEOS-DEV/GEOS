@@ -55,6 +55,20 @@ PhaseMobilityKernel::
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
+
+    // compute the phase mobility only if the phase is present
+    bool const phaseExists = (phaseDens[ip] > 0);
+    if( !phaseExists )
+    {
+      phaseMob[ip] = 0.;
+      dPhaseMob_dPres[ip] = 0.;
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dPhaseMob_dComp[ip][jc] = 0.;
+      }
+      continue;
+    }
+
     real64 const density = phaseDens[ip];
     real64 const dDens_dP = dPhaseDens_dPres[ip];
     applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dDens_dC );
@@ -81,7 +95,6 @@ PhaseMobilityKernel::
       }
     }
 
-
     real64 const mobility = relPerm * density / viscosity;
 
     phaseMob[ip] = mobility;
@@ -94,7 +107,6 @@ PhaseMobilityKernel::
       dPhaseMob_dComp[ip][jc] = dRelPerm_dC[jc] * density / viscosity
                                 + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
     }
-
   }
 }
 

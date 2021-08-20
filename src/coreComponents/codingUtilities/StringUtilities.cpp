@@ -88,5 +88,39 @@ string_array tokenize( const string & str, const string & delimiters )
   return tokens;
 }
 
+void trim( string & str )
+{
+  if( !str.empty() )
+  {
+    int const first = int( str.find_first_not_of( " \r" ) );
+    int const last = int( str.find_last_not_of( " \r" ) );
+    if( first < 0 )
+    {
+      str.resize( 0 );
+    }
+    else
+    {
+      str = str.substr( first, ( last - first + 1 ) );
+    }
+
+  }
+}
+
+
+bool removeStringAndFollowingContentFromLine( string toBeRemoved,
+                                              string & line )
+{
+  // check if the line has a semi-colon
+  std::size_t const pos = line.find( toBeRemoved );
+  bool res = false;
+  if( pos != string::npos )
+  {
+    // remove the character and everything afterwards
+    line = line.substr( 0, pos );
+    res = true;
+  }
+  return res;
+}
+
 }
 }

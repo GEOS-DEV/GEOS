@@ -147,6 +147,15 @@ PhaseVolumeFractionKernel::
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
+
+    // set the saturation to zero if the phase is absent
+    bool const phaseExists = (phaseFrac[ip] > 0);
+    if( !phaseExists )
+    {
+      phaseVolFrac[ip] = 0.;
+      continue;
+    }
+
     // Expression for volume fractions: S_p = (nu_p / rho_p) * rho_t
     real64 const phaseDensInv = 1.0 / phaseDens[ip];
 

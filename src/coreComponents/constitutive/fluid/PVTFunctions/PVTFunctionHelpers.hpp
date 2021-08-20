@@ -16,6 +16,8 @@
  * @file PVTFunctionHelpers.hpp
  */
 
+#include "common/DataTypes.hpp"
+
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONHELPERS_HPP
 #define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONHELPERS_HPP
 
@@ -27,6 +29,38 @@ namespace constitutive
 
 namespace PVTProps
 {
+
+class BlackOilTables
+{
+public:
+
+  static void
+  readTable( string const & fileName,
+             array1d< array1d< real64 > > & data,
+             integer minRowLength );
+
+  void
+  buildAllTables( localIndex const ipOil,
+                  localIndex const ipWater,
+                  localIndex const ipGas,
+                  array1d< integer > const & phases,
+                  path_array const & tableFileNames );
+
+private:
+
+  array1d< array1d< array1d< real64 > > >
+  readAllTables( localIndex const ipWater,
+                 array1d< integer > const & phases,
+                 path_array const & tableFileNames ) const;
+
+public:
+
+  array1d< array1d< real64 > > m_oilTable;
+  array1d< array1d< real64 > > m_gasTable;
+  array1d< real64 > m_waterTable;
+
+};
+
 
 class PTTableCoordinates
 {

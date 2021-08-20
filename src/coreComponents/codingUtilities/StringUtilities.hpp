@@ -97,6 +97,23 @@ string padValue( T value, int size )
   return paddedStringStream.str();
 }
 
+void trim( string & str );
+
+bool removeStringAndFollowingContentFromLine( string toBeRemoved,
+                                              string & line );
+
+template< typename T >
+void fromStringTo( string const & data,
+                   array1d< T > & v )
+{
+  std::istringstream iss( data );
+  T sub;
+  while( iss >> sub )
+  {
+    v.emplace_back( sub );
+  }
+}
+
 } // namespace stringutilities
 } // namespace geosx
 
