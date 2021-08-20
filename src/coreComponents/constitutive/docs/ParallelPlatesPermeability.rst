@@ -13,8 +13,8 @@ The parallel plates permeability model defines the relationship between the effe
 be smooth and parallel to each other and separated by a uniform aperture.
 
 .. math::
-   k =  \frac{a^3}{12} 
-  
+   k =  \frac{a^3}{12}
+
 where :math:`a` denotes the effective fracture aperture.
 
 Please note that :math:`k` dimensionally is not a permeability.
@@ -45,8 +45,6 @@ Example
 
    <Constitutive>
       ...
-      <ParallelPlatesPermeability name="fracPerm"/>
+      <ParallelPlatesPermeability name="fracturePerm"/>
       ...
    </Constitutive>
-
-
