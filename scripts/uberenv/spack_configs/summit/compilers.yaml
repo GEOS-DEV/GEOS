@@ -2,14 +2,14 @@ compilers:
 - compiler:
     spec: gcc@10.2.0
     paths:
-      cc: /sw/summit/gcc/10.2.0/bin/gcc
-      cxx: /sw/summit/gcc/10.2.0/bin/g++
-      f77: /sw/summit/gcc/10.2.0/bin/gfortran
-      fc: /sw/summit/gcc/10.2.0/bin/gfortran
+      cc: /sw/summit/gcc/10.2.0-2/bin/gcc
+      cxx: /sw/summit/gcc/10.2.0-2/bin/g++
+      f77: /sw/summit/gcc/10.2.0-2/bin/gfortran
+      fc: /sw/summit/gcc/10.2.0-2/bin/gfortran
     flags:
       cflags: -mcpu=native -mtune=native
       cxxflags: -mcpu=native -mtune=native
-    operating_system: rhel7
+    operating_system: rhel8
     target: ppc64le
     modules: [gcc/10.2.0]
     environment: {}

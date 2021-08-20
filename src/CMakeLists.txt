@@ -1,5 +1,10 @@
 cmake_minimum_required( VERSION 3.9 )
 
+# At the moment we are manually passing the cuda arch flag.
+if(${CMAKE_VERSION} VERSION_GREATER "3.18.0") 
+  cmake_policy(SET CMP0104 OLD)
+endif()
+
 ################################
 # GEOSX
 ################################
