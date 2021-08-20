@@ -70,29 +70,34 @@ void FaceManager::resize( localIndex const newSize )
 }
 
 /**
- * @brief Populate the mappings from face to element region, and from face to element subregion.
- * @param [in] elementManager the ElementRegionManager associated with this mesh level. Regions and subregions come from it.
- * @param [out] elemRegionList the face to element region map.
- * @param [out] elemSubRegionList the face to element subregion map.
+ * @brief Populates the face to element region and face to element subregion mappings.
+ * @param [in] elementMgr the ElementRegionManager associated with this mesh level. Regions and subregions come from it.
+ * @param [in] f2e the face to element maps (on face may belong to up to 2 elements).
+ * @param [in,out] f2er the face to element region map (on face may belong to up to 2 regions).
+ * @param [in,out] f2esr the face to element subregion map (on face may belong to up to 2 sub-regions).
  *
- * @note @p elemRegionList and @p elemSubRegionList needs to have the correct dimensions. Values are all overwritten.
+ * @warning @p f2er and @p f2esr need to have the correct dimensions (numFaces, 2). Values are all overwritten.
+ * @note When a face only points to single one region/sub-region, the second element will equal -1.
  */
-void populateRegions( ElementRegionManager const & elementManager,
-                      arrayView2d< localIndex > const & elemRegionList,
-                      arrayView2d< localIndex > const & elemSubRegionList )
+void populateRegions( ElementRegionManager const & elementMgr,
+                      arrayView2d< localIndex const > const & f2e,
+                      arrayView2d< localIndex > const & f2er,
+                      arrayView2d< localIndex > const & f2esr )
 {
-  GEOSX_ERROR_IF_NE( 2, elemRegionList.size( 1 ) );
-  GEOSX_ERROR_IF_NE( 2, elemSubRegionList.size( 1 ) );
+  GEOSX_ERROR_IF_NE( f2e.size( 0 ), f2er.size( 0 ) );
+  GEOSX_ERROR_IF_NE( f2e.size( 0 ), f2esr.size( 0 ) );
+  GEOSX_ERROR_IF_NE( 2, f2er.size( 1 ) );
+  GEOSX_ERROR_IF_NE( 2, f2esr.size( 1 ) );
 
-  elemRegionList.setValues< serialPolicy >( -1 );
-  elemSubRegionList.setValues< serialPolicy >( -1 );
+  f2er.setValues< serialPolicy >( -1 );
+  f2esr.setValues< serialPolicy >( -1 );
 
-  for( typename dataRepository::indexType er = 0; er < elementManager.numRegions(); ++er )
+  for( typename dataRepository::indexType er = 0; er < elementMgr.numRegions(); ++er )
   {
-    ElementRegionBase const & elemRegion = elementManager.getRegion( er );
+    ElementRegionBase const & elementRegion = elementMgr.getRegion( er );
 
     // loop over all the subregions
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >(
+    elementRegion.forElementSubRegionsIndex< CellElementSubRegion >(
       [&]( localIndex const esr, CellElementSubRegion const & subRegion )
     {
       FixedOneToManyRelation const & elementToFaces = subRegion.faceList();
@@ -100,24 +105,20 @@ void populateRegions( ElementRegionManager const & elementManager,
       {
         for( localIndex iFace = 0; iFace < subRegion.numFacesPerElement(); ++iFace )
         {
+          // There is an implicit convention here.
+          // The face to element mappings (f2e) binds a face index to two elements indices (possibly being -1),
+          // like `iFace -> (e0, e1)`.The face to regions (f2r) and sub-regions (f2sr)
+          // respectively bind face index to the regions/sub-regions: `iFace -> (er0, er1)` and `iFace -> (esr0, esr1)`.
+          // It is assumed in the code that triplets (`e0`, `er0`, `esr0`) and (`e1`, `er1`, `esr1`) are consistent.
+          // `e0` should belong to both `er0` and `esr0`. Same for index 1.
+          // Any mismatch will probably result in a bug.
+
           localIndex const & faceId = elementToFaces( iElement, iFace );
-          // Storing in the first free slot (i.e. not -1)
-          if( elemSubRegionList( faceId, 0 ) == -1 )
-          {
-            elemSubRegionList( faceId, 0 ) = esr;
-          }
-          else
-          {
-            elemSubRegionList( faceId, 1 ) = esr;
-          }
-          if( elemRegionList( faceId, 0 ) == -1 )
-          {
-            elemRegionList( faceId, 0 ) = er;
-          }
-          else
-          {
-            elemRegionList( faceId, 1 ) = er;
-          }
+          GEOSX_ERROR_IF( f2e( faceId, 0 ) != iElement && f2e( faceId, 1 ) != iElement,
+                          "No region/subregion could be defined for face " << iFace << " of element " << iElement << "." );
+          localIndex const i = f2e( faceId, 0 ) == iElement ? 0 : 1;
+          f2esr( faceId, i ) = esr;
+          f2er( faceId, i ) = er;
         }
       }
     } );
@@ -134,12 +135,13 @@ void FaceManager::buildFaces( CellBlockManagerABC const & cellBlockManager,
 
   resize( cellBlockManager.numFaces() );
 
+  m_toElements.m_toElementIndex = cellBlockManager.getFaceToElements();
+  nodeList().base() = cellBlockManager.getFaceToNodes();
+
   populateRegions( elementManager,
+                   m_toElements.m_toElementIndex.toViewConst(),
                    m_toElements.m_toElementRegion,
                    m_toElements.m_toElementSubRegion );
-
-  m_toElements.m_toElementIndex = cellBlockManager.getFaceToElements(); // TODO do better
-  nodeList().base() = cellBlockManager.getFaceToNodes(); // TODO
 
   // First create the sets
   auto const & nodeSets = nodeManager.sets().wrappers();

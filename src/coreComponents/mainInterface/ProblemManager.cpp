@@ -483,6 +483,24 @@ void ProblemManager::initializationOrder( string_array & order )
   }
 }
 
+template< typename T >
+std::ostream & operator<<( std::ostream & stream,
+                           ArrayOfSets< T > const array )
+{
+  stream << "{ ";
+
+  for( localIndex i = 0; i < array.size(); ++i )
+  {
+    std::vector< T > tmp( array[i].begin(), array[i].end() );
+    std::sort( tmp.begin(), tmp.end() );
+    stream << ", {";
+    std::copy( tmp.cbegin(), tmp.cend(), std::ostream_iterator< T >( stream, ", " ) );
+    stream << "}\n";
+  }
+
+  stream << " }\n";
+  return stream;
+}
 
 void ProblemManager::generateMesh()
 {
@@ -553,6 +571,69 @@ void ProblemManager::generateMesh()
 
   FaceManager & faceManager = meshLevel.getFaceManager();
   EdgeManager & edgeManager = meshLevel.getEdgeManager();
+
+  { // debug
+    NodeManager & nodeManager = meshLevel.getNodeManager();
+
+    std::cout << "nodeManager.edgeList().base()" << std::endl;
+    std::cout << nodeManager.edgeList().base() << std::endl;
+    std::cout << "nodeManager.faceList().base()" << std::endl;
+    std::cout << nodeManager.faceList().base() << std::endl;
+    std::cout << "nodeManager.elementList()" << std::endl;
+    std::cout << nodeManager.elementList() << std::endl;
+
+    std::cout << "edgeManager.nodeList()" << std::endl;
+    std::cout << edgeManager.nodeList() << std::endl;
+    std::cout << "edgeManager.faceList().base()" << std::endl;
+    std::cout << edgeManager.faceList().base() << std::endl;
+
+    std::cout << "faceManager.nodeList()" << std::endl;
+    std::cout << faceManager.nodeList() << std::endl;
+    std::cout << "faceManager.edgeList()" << std::endl;
+    std::cout << faceManager.edgeList() << std::endl;
+    std::cout << "faceManager.elementList()" << std::endl;
+    std::cout << faceManager.elementList() << std::endl;
+
+    std::cout << "nodeManager.elementRegionList()" << std::endl;
+    std::cout << nodeManager.elementRegionList() << std::endl;
+    std::cout << "nodeManager.elementSubRegionList()" << std::endl;
+    std::cout << nodeManager.elementSubRegionList() << std::endl;
+
+    std::cout << "faceManager.elementRegionList()" << std::endl;
+    std::cout << faceManager.elementRegionList() << std::endl;
+    std::cout << "faceManager.elementSubRegionList()" << std::endl;
+    std::cout << faceManager.elementSubRegionList() << std::endl;
+
+//    std::cout << faceManager.getDomainBoundaryIndicator() << std::endl;
+
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    std::cout << "wells" << std::endl;
+
+    elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
+    {
+      std::cout << std::endl;
+
+      std::cout << "subRegion.nodeList()" << std::endl;
+      std::cout << subRegion.nodeList() << std::endl;
+      std::cout << "subRegion.edgeList()" << std::endl;
+      std::cout << subRegion.edgeList() << std::endl;
+      std::cout << "subRegion.faceList()" << std::endl;
+      std::cout << subRegion.faceList() << std::endl;
+    } );
+    std::cout << "cells" << std::endl;
+    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    {
+      std::cout << std::endl;
+
+      std::cout << subRegion.size() << std::endl;
+      std::cout << "subRegion.nodeList()" << std::endl;
+      std::cout << subRegion.nodeList() << std::endl;
+      std::cout << "subRegion.edgeList()" << std::endl;
+      std::cout << subRegion.edgeList() << std::endl;
+      std::cout << "subRegion.faceList()" << std::endl;
+      std::cout << subRegion.faceList() << std::endl;
+    } );
+  }
 
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );

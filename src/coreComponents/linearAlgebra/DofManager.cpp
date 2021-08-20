@@ -845,7 +845,7 @@ void DofManager::setSparsityPatternOneBlock( SparsityPatternView< globalIndex > 
     arraySlice1d< globalIndex const > const dofIndicesCol = connLocCol.getColumns( irow );
     for( globalIndex const globalRow : dofIndicesRow )
     {
-      localIndex const localRow = globalRow - globalDofOffset;
+      globalIndex const localRow = globalRow - globalDofOffset;
       if( localRow >= 0 && localRow < pattern.numRows() )
       {
         pattern.insertNonZeros( localRow, dofIndicesCol.begin(), dofIndicesCol.end() );

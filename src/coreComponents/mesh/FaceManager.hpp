@@ -370,36 +370,49 @@ public:
   /**
    * @brief Get a mutable accessor to the faces-to-ElementRegion relation.
    * @return non-const reference to faces-to-ElementRegion relation
+   * @copydetails FaceManager::elementList()
    */
   array2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementRegion relation.
    * @return const reference to nodes-to-ElementRegion relation
+   * @copydetails FaceManager::elementList()
    */
   arrayView2d< localIndex const > elementRegionList() const { return m_toElements.m_toElementRegion; }
 
   /**
    * @brief Get a mutable accessor to the faces-to-ElementSubRegion relation.
    * @return non-const reference to faces-to-ElementSubRegion relation
+   * @copydetails FaceManager::elementList()
    */
   array2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementSubRegion relation.
    * @return const reference to faces-to-ElementSubRegion relation
+   * @copydetails FaceManager::elementList()
    */
   arrayView2d< localIndex const > elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Get a mutable accessor to the faces-to-element-index relation.
    * @return non-const reference to faces-to-element-index relation
+   * @details There is an implicit convention here.
+   * @p elementList binds a face index to two elements indices (possibly being -1),
+   * like <tt>f -> (e0, e1)</tt>. @p elementRegionList and @p elementSubRegionList
+   * respectively bind face index to the regions/sub-regions:
+   * <tt>f -> (er0, er1)</tt> and <tt>f -> (esr0, esr1)</tt>.
+   * It is assumed in the code that triplets (`e0`, `er0`, `esr0`) and (`e1`, `er1`, `esr1`)
+   * are consistent. `e0` should belong to both `er0` and `esr0`. Same for index 1.
+   * Any mismatch will probably result in a bug.
    */
   array2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
 
   /**
    * @brief Get an imutable accessor to the faces-to-element-index relation.
    * @return const reference to faces-to-elements relation
+   * @copydetails FaceManager::elementList()
    */
   arrayView2d< localIndex const > elementList() const { return m_toElements.m_toElementIndex; }
 
