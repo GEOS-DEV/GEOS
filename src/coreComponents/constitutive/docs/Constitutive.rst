@@ -5,7 +5,7 @@ Constitutive Models
 
 Constitutive models describe relations between various physical quantities.
 In a physics simulation they are used to model the response or state of material (solid, fluid, or a mixture) as a function of input variables.
-There are many types of constitutive models available in GEOSX.  
+There are many types of constitutive models available in GEOSX.
 These models are grouped together based on their input/output interface.
 
 .. toctree::
@@ -15,6 +15,7 @@ These models are grouped together based on their input/output interface.
    FluidModels
    RelativePermeabilityModels
    CapillaryPressureModels
+   Porous
 
 In an input XML file, constitutive models are listed in the ``<Constitutive>`` block.
 Each parameterized model has its own XML tag, and each must be assigned a unique name via the ``name`` attribute.
@@ -30,7 +31,7 @@ A typical ``<Constitutive>`` and ``<ElementRegions>`` block will look like:
     <Constitutive>
 
       <!-- Define a compressible, single-phase fluid called "water"-->
-      <CompressibleSinglePhaseFluid 
+      <CompressibleSinglePhaseFluid
         name="water"
         referencePressure="2.125e6"
         referenceDensity="1000"
@@ -43,7 +44,7 @@ A typical ``<Constitutive>`` and ``<ElementRegions>`` block will look like:
     <ElementRegions>
 
       <!--Add water to the material list for region 1-->
-      <ElementRegion 
+      <ElementRegion
          name="region1"
          cellBlocks="cellBlock1"
          materialList="water"/>
@@ -53,5 +54,3 @@ A typical ``<Constitutive>`` and ``<ElementRegions>`` block will look like:
     ... remainder of problem definition here ...
 
   </Problem>
-
-
