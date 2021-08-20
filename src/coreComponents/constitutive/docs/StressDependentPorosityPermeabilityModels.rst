@@ -1,6 +1,6 @@
-.. _SolidPermeabilityPorosityModels:
+.. _PorousSolidPorosityPermeabilityModels:
 
-Solid Permeability Porosity Models
+Porous Solid Porosity Permeability Models
 ============================
 
 .. toctree::
