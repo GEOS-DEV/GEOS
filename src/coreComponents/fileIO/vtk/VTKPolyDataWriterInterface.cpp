@@ -760,7 +760,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
 #if defined(__APPLE__) && defined(__MACH__)
   LvArray::system::FloatingPointExceptionGuard guard;
 #endif
-  
+
   string const stepSubFolder = getTimeStepSubFolder( time );
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
