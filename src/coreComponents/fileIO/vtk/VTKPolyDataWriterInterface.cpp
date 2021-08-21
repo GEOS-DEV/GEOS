@@ -755,6 +755,12 @@ void VTKPolyDataWriterInterface::write( real64 const time,
                                         integer const cycle,
                                         DomainPartition const & domain )
 {
+  // This guard prevents crashes observed on MacOS due to a floating point exception
+  // triggered inside VTK by a progress indicator
+  #if defined(__APPLE__) && defined(__MACH__)
+    LvArray::system::FloatingPointExceptionGuard guard;
+  #endif
+  
   string const stepSubFolder = getTimeStepSubFolder( time );
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
