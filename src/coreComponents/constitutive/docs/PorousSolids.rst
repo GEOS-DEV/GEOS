@@ -37,6 +37,17 @@ of the peremability model of choice, as shown in the following example for the `
                                             solidModelName="nullSolid"
                                             porosityModelName="rockPorosity"
                                             permeabilityModelName="rockPermeability"/>
+
+    <NullModel name="nullSolid"/>
+
+    <PressurePorosity name="rockPorosity"
+                      referencePressure="1.0e27"
+                      defaultReferencePorosity="0.3"
+                      compressibility="1.0e-9"/>
+
+    <ConstantPermeability name="rockPermeability"
+                          permeabilityComponents="{ 1.0e-4, 1.0e-4, 1.0e-4 }"/>
+
    </Constitutive>
 
 
@@ -63,10 +74,22 @@ with a certain permeability can be defined as
 .. code-block:: xml
 
     <Constitutive>
-      <PorousElasticIsotropic name="porousRock"
-                              porosityModelName="rockPorosity"
-                              solidModelName="rockSkeleton"
-                              permeabilityModelName="rockPermeability"/>
+     <PorousElasticIsotropic name="porousRock"
+                             porosityModelName="rockPorosity"
+                             solidModelName="rockSkeleton"
+                             permeabilityModelName="rockPermeability"/>
+
+     <ElasticIsotropic name="rockSkeleton"
+                       defaultDensity="0"
+                       defaultYoungsModulus="1.0e4"
+                       defaultPoissonRatio="0.2"/>
+
+     <BiotPorosity name="rockPorosity"
+                   grainBulkModulus="1.0e27"
+                   defaultReferencePorosity="0.3"/>
+
+  <ConstantPermeability name="rockPermeability"
+                        permeabilityComponents="{ 1.0e-4, 1.0e-4, 1.0e-4 }"/>
     </Constitutive>
 
 Note that any of the previously described solid models is used by the `PorousSolid` model
