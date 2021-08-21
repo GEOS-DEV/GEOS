@@ -6,18 +6,37 @@ Porous Solids
 
 Overview
 ========================
+Simulation of fluid flow in poroous media and of poromechanics,
+requires to define, along with fluid properties, the hydrodynamical properties of
+the solid matrix. Thus, for porous media flow and and poromecanical simulation in GEOSX,
+two types of composite constitutive models can be defined to specify the characteristics
+of a porous material: (1) a `CompressibleSolid` model, used for flow only simulations and which
+assumes that all poromechanical effects can be represented by the pressure dependency of the
+porosity; (2) a `PorousSolid` model which, instead allows to couple any solid model with
+a `BiotPorosity` model and to include permeability dependency on the mechanical response.
+
+
+Both these composite  models require to provide the names of the solid, porosity and permeability models
+that, combined, define the porous material. The following sections outline how these models can be
+defined in the Constitutive block of the xml input files and which type of submodels they
+allow for.
 
 CompressibleSolid
 ========================
+This composite constitutive model requires to define a `NullModel` as solid model, since
+no mechanical properties are used, a `PressurePorosity` model and any type of `Permeability` model.
+
+To define this composite model the keywork `CompressibleSolid` has to be appendended to the name
+of the peremability model of choice, as shown in the following example for the `ConstantPermeability` one.
 
 
 .. code-block:: xml
 
    <Constitutive>
      <CompressibleSolidConstantPermeability name="porousRock"
-                                           solidModelName="nullSolid"
-                                           porosityModelName="rockPorosity"
-                                           permeabilityModelName="rockPermeability"/>
+                                            solidModelName="nullSolid"
+                                            porosityModelName="rockPorosity"
+                                            permeabilityModelName="rockPermeability"/>
    </Constitutive>
 
 
@@ -36,6 +55,11 @@ where :math:`\sigma_{ij}` is the :math:`ij` component of the total stress tensor
 :math:`p` is fluid pressure,
 and :math:`\delta` is the Kronecker delta.
 
+The `PorousSolid` models simply append the keyword Porous in front of the solid model they contain,
+e.g., PorousElasticIsotropic, PorousDruckerPrager, and so on. Additionally, they require to
+define a `BiotPorosity` model and a `ConstantPermeability` model. For example, a Poroelastic material
+with a certain permeability can be defined as
+
 .. code-block:: xml
 
     <Constitutive>
@@ -45,5 +69,6 @@ and :math:`\delta` is the Kronecker delta.
                               permeabilityModelName="rockPermeability"/>
     </Constitutive>
 
-Note that any of the previously described solid models may then be used to compute the effective stress, leading to either
-poro-elastic, poro-plastic, or poro-damage behavior depending on the specific model chose.
+Note that any of the previously described solid models is used by the `PorousSolid` model
+to compute the effective stress, leading to either poro-elastic, poro-plastic, or poro-damage
+behavior depending on the specific model chose.
