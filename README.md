@@ -28,7 +28,7 @@ several institutions.  The bulk of the code has been written by contributors fro
 three main organizations:
   - Lawrence Livermore National Laboratory
   - Stanford University
-  - Total, S.A.
+  - TotalEnergies.
 
 See our
 [authors](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/Contributors.html)
