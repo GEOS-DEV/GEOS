@@ -9,7 +9,7 @@ Biot Porosity Model
 Overview
 ======================
 
-Accodirng to the poroelasticity theory, the porostiy (pore volume) change with respect to pressure is expressed as the following Biot Porosity Model:
+According to poroelasticity theory, the porosity (pore volume) change with respect to pressure is expressed via the following Biot Porosity Model:
 
 .. math::
    \frac{d{\phi}}{dp} = {\alpha}{\frac{d{\epsilon}}{dp} + \frac{\alpha - \phi}{K_s}
@@ -22,7 +22,7 @@ Parameters
 
 The Biot Porosity Model can be called in the
 ``<Constitutive>`` block of the input XML file.
-This permeability model must be assigned a unique name via
+This porosity model must be assigned a unique name via the
 ``name`` attribute.
 This name is used to assign the model to regions of the physical
 domain via a ``materialList`` attribute in the ``<ElementRegions>``
