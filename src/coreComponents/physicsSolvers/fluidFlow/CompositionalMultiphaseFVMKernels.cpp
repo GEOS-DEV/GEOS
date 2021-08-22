@@ -43,6 +43,7 @@ PhaseMobilityKernel::
            arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseVisc_dComp,
            arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dComp,
            arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseMob,
@@ -57,7 +58,7 @@ PhaseMobilityKernel::
   {
 
     // compute the phase mobility only if the phase is present
-    bool const phaseExists = (phaseDens[ip] > 0);
+    bool const phaseExists = (phaseVolFrac[ip] > 0);
     if( !phaseExists )
     {
       phaseMob[ip] = 0.;
@@ -122,6 +123,7 @@ void PhaseMobilityKernel::
           arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp,
           arrayView2d< real64, compflow::USD_PHASE > const & phaseMob,
@@ -139,6 +141,7 @@ void PhaseMobilityKernel::
                        dPhaseVisc_dComp[a][0],
                        phaseRelPerm[a][0],
                        dPhaseRelPerm_dPhaseVolFrac[a][0],
+                       phaseVolFrac[a],
                        dPhaseVolFrac_dPres[a],
                        dPhaseVolFrac_dComp[a],
                        phaseMob[a],
@@ -159,6 +162,7 @@ void PhaseMobilityKernel::
           arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp,
           arrayView2d< real64, compflow::USD_PHASE > const & phaseMob,
@@ -177,6 +181,7 @@ void PhaseMobilityKernel::
                        dPhaseVisc_dComp[a][0],
                        phaseRelPerm[a][0],
                        dPhaseRelPerm_dPhaseVolFrac[a][0],
+                       phaseVolFrac[a],
                        dPhaseVolFrac_dPres[a],
                        dPhaseVolFrac_dComp[a],
                        phaseMob[a],
@@ -199,6 +204,7 @@ void PhaseMobilityKernel::
                       arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp, \
                       arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm, \
                       arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac, \
+                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac, \
                       arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres, \
                       arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp, \
                       arrayView2d< real64, compflow::USD_PHASE > const & phaseMob, \
@@ -217,6 +223,7 @@ void PhaseMobilityKernel::
                       arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp, \
                       arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm, \
                       arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac, \
+                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac, \
                       arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres, \
                       arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp, \
                       arrayView2d< real64, compflow::USD_PHASE > const & phaseMob, \
@@ -689,6 +696,7 @@ CFLFluxKernel::
            arraySlice1d< real64 const > const stencilWeights,
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
@@ -700,6 +708,7 @@ CFLFluxKernel::
   // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
   for( localIndex ip = 0; ip < numPhases; ++ip )
   {
+
     // clear working arrays
     real64 densMean{};
 
@@ -744,6 +753,13 @@ CFLFluxKernel::
     localIndex const esr_up = sesri[k_up];
     localIndex const ei_up  = sei[k_up];
 
+    // compute the phase flux only if the phase is present
+    bool const phaseExists = (phaseVolFrac[er_up][esr_up][ei_up][ip] > 0);
+    if( !phaseExists )
+    {
+      continue;
+    }
+
     real64 const mobility = phaseRelPerm[er_up][esr_up][ei_up][0][ip] / phaseVisc[er_up][esr_up][ei_up][0][ip];
 
     // increment the phase (volumetric) outflux of the upstream cell
@@ -769,6 +785,7 @@ CFLFluxKernel::
           STENCIL_TYPE const & stencil,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
@@ -796,6 +813,7 @@ CFLFluxKernel::
                                                           weights[iconn],
                                                           pres,
                                                           gravCoef,
+                                                          phaseVolFrac,
                                                           phaseRelPerm,
                                                           phaseVisc,
                                                           phaseDens,
@@ -814,6 +832,7 @@ CFLFluxKernel::
                                 STENCIL_TYPE const & stencil, \
                                 ElementViewConst< arrayView1d< real64 const > > const & pres, \
                                 ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
+                                ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac, \
                                 ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm, \
                                 ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc, \
                                 ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
@@ -844,10 +863,11 @@ GEOSX_FORCE_INLINE
 void
 CFLKernel::
   computePhaseCFL( real64 const & poreVol,
+                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
                    arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > phaseRelPerm,
                    arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > dPhaseRelPerm_dPhaseVolFrac,
                    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseVisc,
-                   arraySlice1d< real64 const, compflow::USD_PHASE- 1 > phaseOutflux,
+                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseOutflux,
                    real64 & phaseCFLNumber )
 {
   // first, check which phases are mobile in the cell
@@ -856,11 +876,14 @@ CFLKernel::
   localIndex numMobilePhases = 0;
   for( localIndex ip = 0; ip < NP; ++ip )
   {
-    mob[ip] = phaseRelPerm[ip] / phaseVisc[ip];
-    if( mob[ip] > minPhaseMobility )
+    if( phaseVolFrac[ip] > 0 )
     {
-      mobilePhases[numMobilePhases] = ip;
-      numMobilePhases++;
+      mob[ip] = phaseRelPerm[ip] / phaseVisc[ip];
+      if( mob[ip] > minPhaseMobility )
+      {
+        mobilePhases[numMobilePhases] = ip;
+        numMobilePhases++;
+      }
     }
   }
 
@@ -956,6 +979,7 @@ CFLKernel::
           arrayView2d< real64 const > const & pvMult,
           arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc,
@@ -976,6 +1000,7 @@ CFLKernel::
     // phase CFL number
     real64 cellPhaseCFLNumber = 0.0;
     computePhaseCFL< NP >( poreVol,
+                           phaseVolFrac[ei],
                            phaseRelPerm[ei][0],
                            dPhaseRelPerm_dPhaseVolFrac[ei][0],
                            phaseVisc[ei][0],
@@ -1008,6 +1033,7 @@ CFLKernel::
                       arrayView2d< real64 const > const & pvMult, \
                       arrayView2d< real64 const, compflow::USD_COMP > const & compDens, \
                       arrayView2d< real64 const, compflow::USD_COMP > const & compFrac, \
+                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac, \
                       arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm, \
                       arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac, \
                       arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc, \

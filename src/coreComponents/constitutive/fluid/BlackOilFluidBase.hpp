@@ -29,7 +29,6 @@ namespace geosx
 namespace constitutive
 {
 
-
 class BlackOilFluidBase : public MultiFluidBase
 {
 public:
@@ -67,7 +66,9 @@ protected:
 
   virtual void initializePostSubGroups() override;
 
-  /// create all the table kernel wrappers
+  /**
+   * @brief Create all the table kernel wrappers
+   */
   virtual void createAllKernelWrappers();
 
   /**
@@ -94,7 +95,10 @@ protected:
   void fillHydrocarbonData( localIndex const ip,
                             array1d< array1d< real64 > > const & tableValues );
 
-  /// check that the table makes sense
+  /**
+   * @brief Check that the table values make sense
+   * @param[in] table the values in the oil or gas table
+   */
   void validateTable( TableFunction const & table ) const;
 
 
@@ -126,7 +130,6 @@ protected:
   /// Water viscosity
   real64 m_waterViscosity;
 
-
   /// Data after processing of input
 
   /// Phase ordering info
@@ -141,7 +144,6 @@ protected:
   array1d< TableFunction::KernelWrapper > m_viscosityTables;
 
 };
-
 
 } //namespace constitutive
 

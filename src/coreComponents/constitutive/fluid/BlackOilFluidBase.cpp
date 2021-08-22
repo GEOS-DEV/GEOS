@@ -22,7 +22,7 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace stringutilities;
+
 namespace constitutive
 {
 
@@ -231,8 +231,6 @@ void BlackOilFluidBase::createAllKernelWrappers()
 
   if( m_formationVolFactorTables.size() == 0 && m_viscosityTables.size() == 0 )
   {
-
-    // TODO: remove what is not necessary here
 
     // loop over the hydrocarbon phases
     for( localIndex iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )

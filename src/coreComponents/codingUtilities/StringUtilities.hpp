@@ -97,11 +97,27 @@ string padValue( T value, int size )
   return paddedStringStream.str();
 }
 
+/**
+ * @brief Trim the string
+ * @param[inout] str the string to trim
+ */
 void trim( string & str );
 
-bool removeStringAndFollowingContentFromLine( string toBeRemoved,
+/**
+ * @brief Search for a string in the line, and return the line truncated before the string
+ * @param[in] toBeRemoved the string to search for in the line
+ * @param[inout] line the line to truncate
+ * @return true if the string was found in the line, false otherwise
+ */
+bool removeStringAndFollowingContentFromLine( string const & toBeRemoved,
                                               string & line );
 
+/**
+ * @brief Take a string, and return a array1d with the cast values
+ * @tparam T the type to which the string will be cast
+ * @param[in] data the string to turn into an array1d
+ * @param[out] v the array1d that stores the cast values
+ */
 template< typename T >
 void fromStringTo( string const & data,
                    array1d< T > & v )

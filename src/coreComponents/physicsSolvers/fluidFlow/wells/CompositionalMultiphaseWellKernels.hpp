@@ -678,6 +678,7 @@ struct PerforationKernel
           localIndex const numPhases,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & dResPres,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dResPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dResPhaseVolFrac_dComp,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dResCompFrac_dCompDens,
@@ -842,7 +843,7 @@ struct PerforationKernel
                           dVisc_dC );
 
           // skip the rest of the calculation if the phase is absent
-          bool const phaseExists = (resDens > 0) && (resVisc > 0);
+          bool const phaseExists = (resPhaseVolFrac[er][esr][ei][ip] > 0);
           if( !phaseExists )
           {
             continue;
@@ -947,7 +948,7 @@ struct PerforationKernel
         {
 
           // skip the rest of the calculation if the phase is absent
-          bool const phaseExists = (resPhaseVisc[er][esr][ei][0][ip] > 0);
+          bool const phaseExists = (resPhaseVolFrac[er][esr][ei][ip] > 0);
           if( phaseExists > 0 )
           {
             // viscosity

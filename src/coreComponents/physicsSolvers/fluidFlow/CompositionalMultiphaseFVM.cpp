@@ -220,6 +220,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
                                             stencil,
                                             m_pressure.toNestedViewConst(),
                                             m_gravCoef.toNestedViewConst(),
+                                            m_phaseVolFrac.toNestedViewConst(),
                                             m_phaseRelPerm.toNestedViewConst(),
                                             m_phaseVisc.toNestedViewConst(),
                                             m_phaseDens.toNestedViewConst(),
@@ -251,6 +252,8 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
     arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() );
+    arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
 
     ConstitutiveBase const & solid = getConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
     arrayView2d< real64 const > const & pvMult =
@@ -272,6 +275,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
                                         pvMult,
                                         compDens,
                                         compFrac,
+                                        phaseVolFrac,
                                         phaseRelPerm,
                                         dPhaseRelPerm_dPhaseVolFrac,
                                         phaseVisc,
@@ -523,6 +527,9 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIn
 
   // inputs
 
+  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
+
   arrayView2d< real64 const, compflow::USD_PHASE > const dPhaseVolFrac_dPres =
     dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
 
@@ -558,6 +565,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIn
                                                 dPhaseVisc_dComp,
                                                 phaseRelPerm,
                                                 dPhaseRelPerm_dPhaseVolFrac,
+                                                phaseVolFrac,
                                                 dPhaseVolFrac_dPres,
                                                 dPhaseVolFrac_dComp,
                                                 phaseMob,

@@ -30,15 +30,34 @@ namespace constitutive
 namespace PVTProps
 {
 
+/**
+ * @class BlackOilTables
+ *
+ * A class to read and store the PVT tables from file
+ */
 class BlackOilTables
 {
 public:
 
+  /**
+   * @brief Read a table from file and check its row length
+   * @param[in] fileName the name of the file
+   * @param[in] minRowLength the expected minimum row length (3 for water, 4 for gas and oil)
+   * @param[out] data the data from the table
+   */
   static void
   readTable( string const & fileName,
-             array1d< array1d< real64 > > & data,
-             integer minRowLength );
+             integer minRowLength,
+             array1d< array1d< real64 > > & data );
 
+  /**
+   * @brief Read all the raw data from file, and copy the raw data into the phase tables
+   * @param[in] ipOil the index of the oil phase
+   * @param[in] ipWater the index of the water phase
+   * @param[in] ipGas the index of the gas phase
+   * @param[in] phases the array of phase indices
+   * @param[in] tableFileNames the names of the table files
+   */
   void
   buildAllTables( localIndex const ipOil,
                   localIndex const ipWater,
@@ -48,6 +67,13 @@ public:
 
 private:
 
+  /**
+   * @brief Call function readTable for each phase
+   * @param[in] ipWater the index of the water phase
+   * @param[in] phases the array of phase indices
+   * @param[in] tableFileNames the names of the table files
+   * @return the raw data for all phases
+   */
   array1d< array1d< array1d< real64 > > >
   readAllTables( localIndex const ipWater,
                  array1d< integer > const & phases,
@@ -55,8 +81,13 @@ private:
 
 public:
 
+  /// The oil phase PVT table read from file
   array1d< array1d< real64 > > m_oilTable;
+
+  /// The gas phase PVT table read from file
   array1d< array1d< real64 > > m_gasTable;
+
+  /// The water phase PVT table read from file
   array1d< real64 > m_waterTable;
 
 };

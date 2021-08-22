@@ -102,12 +102,11 @@ void trim( string & str )
     {
       str = str.substr( first, ( last - first + 1 ) );
     }
-
   }
 }
 
 
-bool removeStringAndFollowingContentFromLine( string toBeRemoved,
+bool removeStringAndFollowingContentFromLine( string const & toBeRemoved,
                                               string & line )
 {
   // check if the line has a semi-colon

@@ -94,19 +94,30 @@ public:
 
 public:
 
+    /// Rs array
     arrayView1d< real64 const > m_Rs;
+    /// Bubble-point pressure array
     arrayView1d< real64 const > m_bubblePressure;
 
-    // saturated
+    // Saturated data (free gas phase present)
+
+    /// Saturated oil phase formation volume factor
     arrayView1d< real64 const > m_saturatedBo;
+    /// Saturated oil phase viscosity
     arrayView1d< real64 const > m_saturatedViscosity;
 
-    // unsaturated
+    // Undersaturated data (no free gas)
+
+    /// Undersaturated pressure
     arrayView2d< real64 const > m_undersaturatedPressure2d;
+    /// Undersaturated oil phase formation volume factor
     arrayView2d< real64 const > m_undersaturatedBo2d;
+    /// Undersaturated oil phase viscosity
     arrayView2d< real64 const > m_undersaturatedViscosity2d;
 
+    /// Surface mass density
     arrayView1d< real64 const > m_surfaceMassDensity;
+    /// Surface mole density
     arrayView1d< real64 const > m_surfaceMoleDensity;
 
   };
@@ -114,32 +125,46 @@ public:
 public:
 
   PVTOData()
-    : m_maxRelativePressure( 0.0 ),
-    m_minRelativePressure( 0.0 ),
+    :
+    m_maxRelativePressure( 0.0 ),
     m_nSaturatedPoints( 0 )
   {}
 
   KernelWrapper createKernelWrapper() const;
 
+  /// Max pressure used for the construction of the undersaturated tables
+  real64 m_maxRelativePressure;
+
+  /// Rs array
   array1d< real64 > m_Rs;
+  /// Bubble-point pressure array
   array1d< real64 > m_bubblePressure;
 
-  real64 m_maxRelativePressure;
-  real64 m_minRelativePressure;
+  // Saturated data (free gas phase present)
 
-  // saturated
+  /// Number of saturated points
   localIndex m_nSaturatedPoints;
+  /// Saturated oil phase formation volume factor
   array1d< real64 > m_saturatedBo;
+  /// Saturated oil phase viscosity
   array1d< real64 > m_saturatedViscosity;
-  // unsaturated
+
+  // Undersaturated data (no free gas)
+
+  /// Undersaturated pressure
   array2d< real64 > m_undersaturatedPressure2d;
+  /// Undersaturated oil phase formation volume factor
   array2d< real64 > m_undersaturatedBo2d;
+  /// Undersaturated oil phase viscosity
   array2d< real64 > m_undersaturatedViscosity2d;
 
+  /// Surface mass density
   array1d< real64 > m_surfaceMassDensity;
+  /// Surface mole density
   array1d< real64 > m_surfaceMoleDensity;
 
-  // temporary arrays, can be discarded after construction
+  // temporary arrays used in the construction of the undersaturated arrays
+  // can be discarded after construction
   array1d< array1d< real64 > > m_undersaturatedPressure;
   array1d< array1d< real64 > > m_undersaturatedBo;
   array1d< array1d< real64 > > m_undersaturatedViscosity;

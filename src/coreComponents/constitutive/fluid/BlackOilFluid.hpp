@@ -80,7 +80,7 @@ public:
                        arrayView2d< real64, multifluid::USD_FLUID > const & dTotalDensity_dPressure,
                        arrayView2d< real64, multifluid::USD_FLUID > const & dTotalDensity_dTemperature,
                        arrayView3d< real64, multifluid::USD_FLUID_DC > const & dTotalDensity_dGlobalCompFraction,
-                       const PVTOData::KernelWrapper PVTO )
+                       PVTOData::KernelWrapper const PVTO )
     : MultiFluidBaseUpdate( componentMolarWeight,
                             useMass,
                             phaseFraction,
@@ -390,32 +390,53 @@ public:
 
 private:
 
-  /**
-   * @brief Use the TableFunctions provided by the user to get the PVT data
-   */
   virtual void useProvidedTableFunctions() override;
+
+  virtual void readInputDataFromPVTFiles() override;
+
+  virtual void createAllKernelWrappers() override;
 
   /**
    * @brief Read all the PVT table provided by the user in Eclipse format
+   * @param[in] oilTable the oil table data read from file
+   * @param[in] oilSurfaceMassDensity the oil phase surface mass density
+   * @param[in] oilSurfaceMolecularWeight the oil phase surface molecular weight
+   * @param[in] gasSurfaceMassDensity the oil phase surface mass density
+   * @param[in] gasSurfaceMolecularWeight the oil phase surface molecular weight
    */
-  virtual void readInputDataFromPVTFiles() override;
-
-
-  void fillPVTOData( array1d< array1d< real64 > > const & PVT,
+  void fillPVTOData( array1d< array1d< real64 > > const & oilTable,
                      real64 oilSurfaceMassDensity,
                      real64 oilSurfaceMolecularWeight,
                      real64 gasSurfaceMassDensity,
                      real64 gasSurfaceMolecularWeight );
 
-  void extendUnderSaturatedProperties();
+  /**
+   * @brief Form the tables:
+   *    - m_undersaturatedPressure
+   *    - m_undersaturatedBO
+   *    - m_undersaturatedVisc
+   *  using the input data
+   */
+  void createUndersaturatedProperties();
 
-  void createUnderSaturatedProperties();
+  /**
+   * @brief Extrapolate the tables:
+   *    - m_undersaturatedPressure
+   *    - m_undersaturatedBO
+   *    - m_undersaturatedVisc
+   *  up to the value of m_maxRelativePressure
+   */
+  void extendUndersaturatedProperties();
 
-  void checkTableConsistency() const;
-
+  /**
+   * @brief Refine the undersaturated tables and copy the data into the final 2D arrays that will be used in the kernel
+   */
   void refineTableAndCopy( localIndex const nLevel );
 
-  void createAllKernelWrappers() override;
+  /**
+   * @brief Check the monotonicity of the PVTO table values
+   */
+  void checkTableConsistency() const;
 
   /// The data needed to compute the oil phase properties
   PVTOData m_PVTO;
@@ -651,11 +672,12 @@ BlackOilFluidUpdate::computeEquilibrium( real64 pressure,
     return;
   }
 
-  // 3. Compute Rs
+  // 3. Compute Rs (saturated) as a function of pressure
 
   // oil
   real64 const & oilSurfaceMoleDensity = m_PVTOView.m_surfaceMoleDensity[PT::OIL];
-  real64 RsSat, dRsSat_dP = 0.;
+  real64 RsSat = 0.0;
+  real64 dRsSat_dP = 0.0;
   computeRs( pressure, RsSat, dRsSat_dP );
 
   // gas
@@ -666,33 +688,36 @@ BlackOilFluidUpdate::computeEquilibrium( real64 pressure,
     RsSat = minForPhasePresence;
   }
 
+  // 4. Use the saturated Rs and density to compute the gas phase fraction
+  //    Note : we assume the oil component cannot enter the gas phase
+
   real64 const Kg = ( oilSurfaceMoleDensity + gasSurfaceMoleDensity * RsSat ) / ( RsSat * gasSurfaceMoleDensity );
-  real64 const dKg_dP = -oilSurfaceMoleDensity / gasSurfaceMoleDensity * dRsSat_dP / (RsSat * RsSat);
-  real64 const V = zo / ( 1. - Kg ) + zg;
-  real64 const dV_dP = zo / ( (1. - Kg)*(1. - Kg) ) *  dKg_dP;
-  real64 const dV_dzo = 1. / ( 1. - Kg );
-  real64 const dV_dzg = 1.;
+  real64 const dKg_dP = -oilSurfaceMoleDensity / gasSurfaceMoleDensity * dRsSat_dP / ( RsSat * RsSat );
+  real64 const gasPhaseFraction = zo / ( 1. - Kg ) + zg;
+  real64 const dGasPhaseFraction_dP = zo / ( ( 1. - Kg ) * ( 1. - Kg ) ) *  dKg_dP;
+  real64 const dGasPhaseFraction_dzo = 1. / ( 1. - Kg );
+  real64 const dGasPhaseFraction_dzg = 1.;
 
   // 4. Update phase fraction and phase component fractions
 
   // 4.1 The gas phase is present
-  if( ( 0 < V ) && ( V < 1 ) )
+  if( ( gasPhaseFraction > 0 ) && ( gasPhaseFraction < 1 ) )
   {
 
     // phase fractions
-    phaseFraction[PT::OIL] = 1. - V - zw;
-    phaseFraction[PT::GAS] = V;
+    phaseFraction[PT::OIL] = 1. - gasPhaseFraction - zw;
+    phaseFraction[PT::GAS] = gasPhaseFraction;
     phaseFraction[PT::WATER] =  zw;
 
     if( needDerivs )
     {
-      dPhaseFraction_dPressure[PT::OIL] = -dV_dP;
-      dPhaseFraction_dPressure[PT::GAS] = dV_dP;
-      dPhaseFraction_dGlobalCompFraction[PT::OIL][icOil] = -dV_dzo;
-      dPhaseFraction_dGlobalCompFraction[PT::OIL][icGas] = -dV_dzg;
+      dPhaseFraction_dPressure[PT::OIL] = -dGasPhaseFraction_dP;
+      dPhaseFraction_dPressure[PT::GAS] = dGasPhaseFraction_dP;
+      dPhaseFraction_dGlobalCompFraction[PT::OIL][icOil] = -dGasPhaseFraction_dzo;
+      dPhaseFraction_dGlobalCompFraction[PT::OIL][icGas] = -dGasPhaseFraction_dzg;
       dPhaseFraction_dGlobalCompFraction[PT::OIL][icWater] = -1.;
-      dPhaseFraction_dGlobalCompFraction[PT::GAS][icOil] = dV_dzo;
-      dPhaseFraction_dGlobalCompFraction[PT::GAS][icGas] = dV_dzg;
+      dPhaseFraction_dGlobalCompFraction[PT::GAS][icOil] = dGasPhaseFraction_dzo;
+      dPhaseFraction_dGlobalCompFraction[PT::GAS][icGas] = dGasPhaseFraction_dzg;
       dPhaseFraction_dGlobalCompFraction[PT::WATER][icWater] = 1.;
     }
 
@@ -865,7 +890,7 @@ BlackOilFluidUpdate::computeDensitiesViscosities( real64 pressure,
 
   }
 
-  // 3. Oil phase: can be saturated and unsaturated
+  // 3. Oil phase: make the distinction between saturated and unsaturated conditions
 
   if( isOil )
   {
@@ -883,22 +908,32 @@ BlackOilFluidUpdate::computeDensitiesViscosities( real64 pressure,
     // saturated conditions
     if( isGas )
     {
+
+      // compute Rs as a function of pressure
       computeRs( pressure, Rs, dRs_dP );
+
+      // compute saturated properties (Bo, viscosity) as a function of Rs
       computeSaturatedBoVisc( Rs, dRs_dP, Bo, dBo_dP, visc, dVisc_dP );
+
     }
     // unsaturated conditions
     else
     {
+
+      // compute Rs as a function of composition
       real64 const densRatio = m_PVTOView.m_surfaceMoleDensity[PT::OIL] / m_PVTOView.m_surfaceMoleDensity[PT::GAS];
       Rs = densRatio * composition[icGas] / composition[icOil];
-      dRs_dC[icOil] = -densRatio * composition[icGas] / (composition[icOil]*composition[icOil]);
+      dRs_dC[icOil] = -densRatio * composition[icGas] / (composition[icOil] * composition[icOil]);
       dRs_dC[icGas] = densRatio  / composition[icOil];
 
-      // use numerical derivatives
+      // compute undersaturated properties (Bo, viscosity) by two-step interpolation in undersaturated tables
+      // this part returns numerical derivatives
       computeUndersaturatedBoVisc( needDerivs, HNC_BO, pressure, Rs, dRs_dC, Bo, dBo_dP, dBo_dC,
                                    visc, dVisc_dP, dVisc_dC );
+
     }
 
+    // compute densities
     computeMassMoleDensity( needDerivs, true, HNC_BO, Rs, dRs_dP, dRs_dC, Bo, dBo_dP, dBo_dC,
                             phaseMassDens[ipOil], dPhaseMassDens_dPres[ipOil],
                             dPhaseMassDens_dGlobalCompFrac[ipOil] );
@@ -908,10 +943,11 @@ BlackOilFluidUpdate::computeDensitiesViscosities( real64 pressure,
 
     phaseMW[ipOil] = phaseMassDens[ipOil] / phaseDens[ipOil];
     real64 const tmp = 1. / ( phaseDens[ipOil] * phaseDens[ipOil] );
-    dPhaseMW_dPres[ipOil] = ( dPhaseMassDens_dPres[ipOil] * phaseDens[ipOil] - dPhaseDens_dPres[ipOil]*phaseMassDens[ipOil] ) * tmp;
+    dPhaseMW_dPres[ipOil] = ( dPhaseMassDens_dPres[ipOil] * phaseDens[ipOil] - dPhaseDens_dPres[ipOil] * phaseMassDens[ipOil] ) * tmp;
     for( localIndex ic = 0; ic < NC_BO; ++ic )
     {
-      dPhaseMW_dGlobalCompFrac[ipOil*NC_BO+ic] = (dPhaseMassDens_dGlobalCompFrac[ipOil][ic] * phaseDens[ipOil] - dPhaseDens_dGlobalCompFrac[ipOil][ic]*phaseMassDens[ipOil])*tmp;
+      dPhaseMW_dGlobalCompFrac[ipOil*NC_BO+ic] = ( dPhaseMassDens_dGlobalCompFrac[ipOil][ic] * phaseDens[ipOil]
+                                                   - dPhaseDens_dGlobalCompFrac[ipOil][ic] * phaseMassDens[ipOil] ) * tmp;
     }
 
     if( m_useMass )
@@ -927,6 +963,8 @@ BlackOilFluidUpdate::computeDensitiesViscosities( real64 pressure,
       }
     }
 
+    // copy viscosity into the final array
+    // TODO: skip this step
     phaseVisc[ipOil] = visc;
     if( needDerivs )
     {

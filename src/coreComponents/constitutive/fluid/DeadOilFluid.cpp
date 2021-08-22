@@ -45,7 +45,7 @@ void DeadOilFluid::readInputDataFromPVTFiles()
   for( localIndex ip = 0; ip < numFluidPhases(); ++ip )
   {
     tableValues.clear();
-    PVTProps::BlackOilTables::readTable( m_tableFiles[ip], tableValues, 3 );
+    PVTProps::BlackOilTables::readTable( m_tableFiles[ip], 3, tableValues );
 
     if( m_phaseTypes[ip] == PhaseType::WATER )
     {

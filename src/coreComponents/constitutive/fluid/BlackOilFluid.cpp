@@ -107,10 +107,10 @@ void BlackOilFluid::readInputDataFromPVTFiles()
   checkTableConsistency();
 
   // create missing undersaturated branches
-  createUnderSaturatedProperties();
+  createUndersaturatedProperties();
 
   // extend existing branches
-  extendUnderSaturatedProperties();
+  extendUndersaturatedProperties();
 
   // refine table branches
   refineTableAndCopy( 100 );
@@ -119,7 +119,7 @@ void BlackOilFluid::readInputDataFromPVTFiles()
   checkTableConsistency();
 }
 
-void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & PVT,
+void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
                                   real64 oilSurfaceMassDensity,
                                   real64 oilSurfaceMolecularWeight,
                                   real64 gasSurfaceMassDensity,
@@ -127,9 +127,9 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & PVT,
 {
   // count number of saturated points
   localIndex nSaturatedPoints = 0;
-  for( localIndex i = 0; i < PVT.size(); ++i )
+  for( localIndex i = 0; i < oilTable.size(); ++i )
   {
-    if( PVT[i].size() == 4 )
+    if( oilTable[i].size() == 4 )
     {
       nSaturatedPoints++;
     }
@@ -146,13 +146,13 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & PVT,
   m_PVTO.m_undersaturatedViscosity.resize( nSaturatedPoints );
 
   localIndex iSat = 0;
-  for( localIndex i = 0; i < PVT.size(); ++i )
+  for( localIndex i = 0; i < oilTable.size(); ++i )
   {
     // saturated part
-    m_PVTO.m_Rs[iSat] = PVT[i][0];
-    m_PVTO.m_bubblePressure[iSat] = PVT[i][1];
-    m_PVTO.m_saturatedBo[iSat] = PVT[i][2];
-    m_PVTO.m_saturatedViscosity[iSat] = PVT[i][3];
+    m_PVTO.m_Rs[iSat] = oilTable[i][0];
+    m_PVTO.m_bubblePressure[iSat] = oilTable[i][1];
+    m_PVTO.m_saturatedBo[iSat] = oilTable[i][2];
+    m_PVTO.m_saturatedViscosity[iSat] = oilTable[i][3];
 
     // add unsaturated properties: pressure = P - Pbub
     m_PVTO.m_undersaturatedPressure[iSat].emplace_back( 0 );
@@ -161,14 +161,14 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & PVT,
 
     localIndex branchSize = 0;
     localIndex j = i + 1;
-    while( PVT[j].size() == 3 )
+    while( oilTable[j].size() == 3 )
     {
-      m_PVTO.m_undersaturatedPressure[iSat].emplace_back( PVT[j][0] - m_PVTO.m_bubblePressure[iSat] );
-      m_PVTO.m_undersaturatedBo[iSat].emplace_back( PVT[j][1] );
-      m_PVTO.m_undersaturatedViscosity[iSat].emplace_back( PVT[j][2] );
+      m_PVTO.m_undersaturatedPressure[iSat].emplace_back( oilTable[j][0] - m_PVTO.m_bubblePressure[iSat] );
+      m_PVTO.m_undersaturatedBo[iSat].emplace_back( oilTable[j][1] );
+      m_PVTO.m_undersaturatedViscosity[iSat].emplace_back( oilTable[j][2] );
       branchSize++;
       j++;
-      if( j == PVT.size())
+      if( j == oilTable.size())
       {
         break;
       }
@@ -202,15 +202,14 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & PVT,
     m_PVTO.m_undersaturatedViscosity.emplace( 0, tmp );
   }
 
+
+  /// find the max relative pressure (later used to extend the tables)
   m_PVTO.m_maxRelativePressure = 0;
-  m_PVTO.m_minRelativePressure = 1e8;
 
   for( localIndex i = 0; i < m_PVTO.m_nSaturatedPoints; ++i )
   {
     real64 const maxP = *( std::max_element( m_PVTO.m_undersaturatedPressure[i].begin(), m_PVTO.m_undersaturatedPressure[i].end() ) );
-    real64 const minP = *( std::min_element( m_PVTO.m_undersaturatedPressure[i].begin(), m_PVTO.m_undersaturatedPressure[i].end() ) );
     m_PVTO.m_maxRelativePressure = std::max( maxP, m_PVTO.m_maxRelativePressure );
-    m_PVTO.m_minRelativePressure = std::min( minP, m_PVTO.m_minRelativePressure );
   }
 
   // densities
@@ -227,38 +226,7 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & PVT,
 
 }
 
-void BlackOilFluid::extendUnderSaturatedProperties()
-{
-  // extrapolate m_undersaturated properties up to max pressure
-  for( localIndex i = 0; i < m_PVTO.m_nSaturatedPoints; ++i )
-  {
-    real64 const dPext = m_PVTO.m_maxRelativePressure - m_PVTO.m_undersaturatedPressure[i].back();
-
-    array1d< real64 > const & Pusat = m_PVTO.m_undersaturatedPressure[i];
-    array1d< real64 > const & Bousat = m_PVTO.m_undersaturatedBo[i];
-    array1d< real64 > const & viscusat = m_PVTO.m_undersaturatedViscosity[i];
-
-    if( std::fabs( dPext ) > 0 )
-    {
-      localIndex const branchSize = m_PVTO.m_undersaturatedPressure[i].size();
-      real64 const Bo = linearExtrapolation( Pusat[branchSize - 2],
-                                             Bousat[branchSize - 2],
-                                             Pusat[branchSize - 1],
-                                             Bousat[branchSize - 1],
-                                             m_PVTO.m_maxRelativePressure );
-      real64 const visc = linearExtrapolation( Pusat[branchSize - 2],
-                                               viscusat[branchSize - 2],
-                                               Pusat[branchSize - 1],
-                                               viscusat[branchSize - 1],
-                                               m_PVTO.m_maxRelativePressure );
-      m_PVTO.m_undersaturatedBo[i].emplace_back( Bo );
-      m_PVTO.m_undersaturatedViscosity[i].emplace_back( visc );
-      m_PVTO.m_undersaturatedPressure[i].emplace_back( m_PVTO.m_maxRelativePressure );
-    }
-  }
-}
-
-void BlackOilFluid::createUnderSaturatedProperties()
+void BlackOilFluid::createUndersaturatedProperties()
 {
   localIndex upperBranchIndex = m_PVTO.m_nSaturatedPoints - 1;
 
@@ -283,8 +251,8 @@ void BlackOilFluid::createUnderSaturatedProperties()
         lowerBranchIndex = upperBranchIndex;
       }
 
-      real64 dRs_up = std::fabs( m_PVTO.m_Rs[upperBranchIndex] - m_PVTO.m_Rs[iCurrent] );
-      real64 dRs_dn = std::fabs( m_PVTO.m_Rs[iCurrent] - m_PVTO.m_Rs[lowerBranchIndex] );
+      real64 const dRs_up = std::fabs( m_PVTO.m_Rs[upperBranchIndex] - m_PVTO.m_Rs[iCurrent] );
+      real64 const dRs_dn = std::fabs( m_PVTO.m_Rs[iCurrent] - m_PVTO.m_Rs[lowerBranchIndex] );
 
       // generate merge of pressures
       std::vector< real64 > pTarget; // TODO: change to array1d
@@ -354,6 +322,37 @@ void BlackOilFluid::createUnderSaturatedProperties()
   }
 }
 
+void BlackOilFluid::extendUndersaturatedProperties()
+{
+  // extrapolate m_undersaturated properties up to max pressure
+  for( localIndex i = 0; i < m_PVTO.m_nSaturatedPoints; ++i )
+  {
+    real64 const dPext = m_PVTO.m_maxRelativePressure - m_PVTO.m_undersaturatedPressure[i].back();
+
+    array1d< real64 > const & Pusat = m_PVTO.m_undersaturatedPressure[i];
+    array1d< real64 > const & Bousat = m_PVTO.m_undersaturatedBo[i];
+    array1d< real64 > const & viscusat = m_PVTO.m_undersaturatedViscosity[i];
+
+    if( std::fabs( dPext ) > 0 )
+    {
+      localIndex const branchSize = m_PVTO.m_undersaturatedPressure[i].size();
+      real64 const Bo = linearExtrapolation( Pusat[branchSize - 2],
+                                             Bousat[branchSize - 2],
+                                             Pusat[branchSize - 1],
+                                             Bousat[branchSize - 1],
+                                             m_PVTO.m_maxRelativePressure );
+      real64 const visc = linearExtrapolation( Pusat[branchSize - 2],
+                                               viscusat[branchSize - 2],
+                                               Pusat[branchSize - 1],
+                                               viscusat[branchSize - 1],
+                                               m_PVTO.m_maxRelativePressure );
+      m_PVTO.m_undersaturatedBo[i].emplace_back( Bo );
+      m_PVTO.m_undersaturatedViscosity[i].emplace_back( visc );
+      m_PVTO.m_undersaturatedPressure[i].emplace_back( m_PVTO.m_maxRelativePressure );
+    }
+  }
+}
+
 void BlackOilFluid::refineTableAndCopy( localIndex const nLevels )
 {
   std::vector< real64 > refineP; // TODO:change to array1d
@@ -409,7 +408,7 @@ void BlackOilFluid::refineTableAndCopy( localIndex const nLevels )
     }
   }
 
-  // copy undersaturated into array2d
+  // copy undersaturated data into the final 2D arrays that will be used in the kernels
   m_PVTO.m_undersaturatedPressure2d.resize( m_PVTO.m_nSaturatedPoints, ppSize );
   m_PVTO.m_undersaturatedBo2d.resize( m_PVTO.m_nSaturatedPoints, ppSize );
   m_PVTO.m_undersaturatedViscosity2d.resize( m_PVTO.m_nSaturatedPoints, ppSize );

@@ -31,8 +31,8 @@ namespace PVTProps
 
 void
 BlackOilTables::readTable( string const & fileName,
-                           array1d< array1d< real64 > > & data,
-                           integer minRowLength )
+                           integer minRowLength,
+                           array1d< array1d< real64 > > & data )
 {
   std::ifstream is( fileName );
   GEOSX_ASSERT_GE_MSG( is.is_open(), true, "Could not open file: " + fileName );
@@ -90,7 +90,7 @@ BlackOilTables::readAllTables( localIndex const ipWater,
   for( localIndex i = 0; i < numPhases; ++i )
   {
     localIndex const rowMinLength = ( phaseTypes[i] == ipWater ) ? 4 : 3;
-    readTable( tableFileNames[i], result[i], rowMinLength );
+    readTable( tableFileNames[i], rowMinLength, result[i] );
   }
   return result;
 }
@@ -109,7 +109,7 @@ BlackOilTables::buildAllTables( localIndex const ipOil,
   GEOSX_ERROR_IF( !containsOil, "The oil phase must be defined for all PVT models" );
 
   // reading data from files
-  const array1d< array1d< array1d< real64 > > > phaseTables = readAllTables( ipWater, phaseTypes, tableFiles );
+  array1d< array1d< array1d< real64 > > > const phaseTables = readAllTables( ipWater, phaseTypes, tableFiles );
 
   // finalize table construction
   for( localIndex i = 0; i < phaseTypes.size(); ++i )

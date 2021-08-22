@@ -1255,6 +1255,7 @@ void CompositionalMultiphaseWell::computePerforationRates( WellElementSubRegion 
                                                        numFluidPhases(),
                                                        m_resPres.toNestedViewConst(),
                                                        m_deltaResPres.toNestedViewConst(),
+                                                       m_resPhaseVolFrac.toNestedViewConst(),
                                                        m_dResPhaseVolFrac_dPres.toNestedViewConst(),
                                                        m_dResPhaseVolFrac_dCompDens.toNestedViewConst(),
                                                        m_dResCompFrac_dCompDens.toNestedViewConst(),
