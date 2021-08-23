@@ -192,7 +192,7 @@ public:
    */
   void computeWellTransmissibility( MeshLevel const & mesh,
                                     WellElementSubRegion const & wellElemSubRegion,
-                                    array1d< array1d< arrayView2d< real64 const > > > const & perm );
+                                    array1d< array1d< arrayView3d< real64 const > > > const & perm );
 
   ///@}
 

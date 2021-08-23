@@ -63,23 +63,32 @@ void TestMeshImport( string const & inputStringMesh,
   CellBlockManager & cellBlockManager = domain->getGroup< CellBlockManager >( keys::cellManager );
   nodeManager.setNodesInformation( cellBlockManager );
 
-  // This method will call the CopyElementSubRegionFromCellBlocks that will trigger the property transfer.
   elemManager.generateMesh( cellBlockManager );
 
+  // Register the target field on the mesh prior to import
+  if( !propertyToTest.empty() )
+  {
+    elemManager.forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
+    {
+      subRegion.registerWrapper< array2d< real64 > >( propertyToTest ).reference().resizeDimension< 1 >( 3 );
+    } );
+  }
+
+  // Trigger import of the field
+  meshManager.importFields( *domain );
 
   // Check if the computed center match with the imported center
   if( !propertyToTest.empty() )
   {
-    auto centerProperty = elemManager.constructArrayViewAccessor< real64, 2 >( propertyToTest );
-    elemManager.forElementSubRegionsComplete< ElementSubRegionBase >(
-      [&]( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & elemSubRegion )
+    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
-      elemSubRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
-      arrayView2d< real64 const > const elemCenter = elemSubRegion.getElementCenter();
-      for( localIndex ei = 0; ei < elemSubRegion.size(); ei++ )
+      subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+      arrayView2d< real64 const > const centerProperty = subRegion.getReference< array2d< real64 > >( propertyToTest );
+      for( localIndex ei = 0; ei < subRegion.size(); ei++ )
       {
         real64 center[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemCenter[ ei ] );
-        LvArray::tensorOps::subtract< 3 >( center, centerProperty[er][esr][ei] );
+        LvArray::tensorOps::subtract< 3 >( center, centerProperty[ei] );
         GEOSX_ERROR_IF_GT_MSG( LvArray::tensorOps::l2Norm< 3 >( center ), meshBody.getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
       }
     } );

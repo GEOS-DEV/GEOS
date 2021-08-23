@@ -1534,7 +1534,7 @@ FluxKernel::
     subRegion.getReference< array2d< real64 > >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
   arrayView1d< real64 const > const & elemVolume =
     subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
-  arrayView2d< real64 const > const & elemPerm = permeabilityModel.permeability();
+  arrayView3d< real64 const > const & elemPerm = permeabilityModel.permeability();
 
   // get the cell-centered depth
   arrayView1d< real64 const > const & elemGravCoef =
@@ -1549,7 +1549,7 @@ FluxKernel::
     stackArray2d< real64, NF *NF > transMatrix( NF, NF );
     stackArray2d< real64, NF *NF > transMatrixGrav( NF, NF );
 
-    real64 const perm[ 3 ] = { elemPerm[ei][0], elemPerm[ei][1], elemPerm[ei][2] };
+    real64 const perm[ 3 ] = { elemPerm[ei][0][0], elemPerm[ei][0][1], elemPerm[ei][0][2] };
 
     // recompute the local transmissibility matrix at each iteration
     // we can decide later to precompute transMatrix if needed
