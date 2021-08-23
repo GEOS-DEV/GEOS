@@ -500,8 +500,6 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
       }
     }
   } );
-
-//  cellBlockManager.buildMaps();
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, string const &, Group * const )

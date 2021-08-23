@@ -403,9 +403,11 @@ public:
    * like <tt>f -> (e0, e1)</tt>. @p elementRegionList and @p elementSubRegionList
    * respectively bind face index to the regions/sub-regions:
    * <tt>f -> (er0, er1)</tt> and <tt>f -> (esr0, esr1)</tt>.
-   * It is assumed in the code that triplets (`e0`, `er0`, `esr0`) and (`e1`, `er1`, `esr1`)
+   * It is assumed in the code that triplets obtained at indices @p 0 and @p 1 of all these pairs,
+   * respectively (`e0`, `er0`, `esr0`) and (`e1`, `er1`, `esr1`),
    * are consistent. `e0` should belong to both `er0` and `esr0`. Same for index 1.
-   * Any mismatch will probably result in a bug.
+   * In particular, any mismatch like <tt>f -> (e0, e1)</tt> and
+   * <tt>f -> (er1, er0)</tt> will probably result in a bug.
    */
   array2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
 
