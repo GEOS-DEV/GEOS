@@ -9,12 +9,14 @@ Kozeny-Carman Permeability Model
 Overview
 ======================
 
-In the Kozeny-Carman model, the permeability of a porous medium is governed by several key parameters, including porosity, grain size, and grain shape:
+In the Kozeny-Carman model (see `Kozeny-Carman`_), the permeability of a porous medium
+is governed by several key parameters, including porosity, grain size, and grain shape:
 
 .. math::
-   k =  \frac{{{s_{\epsilon}}{D_p}}^2 {\phi}^3} {150 {1 - \phi}^2} 
-  
-where :math:`s_{\epsilon}` is the sphericity of the particles, :math:`D_p` is the particle diameter, :math:`\phi` is the porosity of the porous medium.
+   k =  \frac{{{s_{\epsilon}}{D_p}}^2 {\phi}^3} {150 {1 - \phi}^2}
+
+where :math:`s_{\epsilon}` is the sphericity of the particles, :math:`D_p` is the particle
+diameter, :math:`\phi` is the porosity of the porous medium.
 
 
 Parameters
@@ -47,4 +49,4 @@ Example
       ...
    </Constitutive>
 
-
+   .. _Kozeny-Carman: https://en.wikipedia.org/wiki/Kozeny%E2%80%93Carman_equation

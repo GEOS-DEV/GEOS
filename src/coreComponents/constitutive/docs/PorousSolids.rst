@@ -6,7 +6,7 @@ Porous Solids
 
 Overview
 ========================
-Simulation of fluid flow in poroous media and of poromechanics,
+Simulation of fluid flow in porous media and of poromechanics,
 requires to define, along with fluid properties, the hydrodynamical properties of
 the solid matrix. Thus, for porous media flow and and poromecanical simulation in GEOSX,
 two types of composite constitutive models can be defined to specify the characteristics

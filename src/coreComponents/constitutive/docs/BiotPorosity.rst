@@ -9,13 +9,15 @@ Biot Porosity Model
 Overview
 ======================
 
-According to poroelasticity theory, the porosity (pore volume) change with respect to pressure is expressed via the following Biot Porosity Model:
+According to the poroelasticity theory, the porosity (pore volume), :math:`\phi`, can be computed as
 
 .. math::
-   \phi = phi_{ref} + \alpha \nabla ( \epsilon_v - \epsilon_{ref} ) + (p - p_{ref}) / N;
+   \phi = phi_{ref} + \alpha \nabla ( \epsilon_v - \epsilon_{v,\,ref} ) + (p - p_{ref}) / N.
 
-where :math:`\alpha` is the Biot coefficient, :math:`\epsilon` is the strain, :math:`p` is the fluid pressure
-and :math:`N = \frac{K_s}{b - \phi_{ref}}`
+Here, :math:`phi_{ref}` is the porosity at a reference state with pressure :math:`p_{ref}` and
+volumetric strain :math:`\epsilon_{v,\,ref}`. Additionally, :math:`\alpha` is the Biot coefficient,
+:math:`\epsilon_v` is the volumetric strain, :math:`p` is the fluid pressure
+and :math:`N = \frac{K_s}{\alpha - \phi_{ref}}`, where :math:`{K_s}` is the grain bulk modulus.
 
 
 Parameters

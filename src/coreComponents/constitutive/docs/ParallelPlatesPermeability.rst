@@ -9,15 +9,16 @@ Parallel Plates Permeability Model
 Overview
 ======================
 
-The parallel plates permeability model defines the relationship between the effective fracture aperture and its corresponding permeability. In the model, the two fracture walls are assumed to
-be smooth and parallel to each other and separated by a uniform aperture.
+The parallel plates permeability model defines the relationship between the hydraulic
+fracture aperture and its corresponding permeability following the classic lubrication model (`Witherspoon et al.`_ ) .
+In the model, the two fracture walls are assumed to be smooth and parallel to each other and separated by a uniform aperture.
 
 .. math::
    k =  \frac{a^3}{12}
 
 where :math:`a` denotes the effective fracture aperture.
 
-Please note that :math:`k` dimensionally is not a permeability.
+Please note that :math:`k` dimensionally is not a permeability (as it is expressed in :math:`m^3`).
 
 
 
@@ -37,14 +38,4 @@ The following attributes are supported:
 .. include:: /coreComponents/schema/docs/ParallelPlatesPermeability.rst
 
 
-
-Example
-=======================
-
-.. code-block:: xml
-
-   <Constitutive>
-      ...
-      <ParallelPlatesPermeability name="fracturePerm"/>
-      ...
-   </Constitutive>
+.. _Witherspoon et al.: http://arxiv.org/abs/ https://agupubs.onlinelibrary.wiley.com/doi/pdf/10.1029/WR016i006p01016
