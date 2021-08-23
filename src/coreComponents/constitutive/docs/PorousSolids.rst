@@ -10,24 +10,24 @@ Simulation of fluid flow in poroous media and of poromechanics,
 requires to define, along with fluid properties, the hydrodynamical properties of
 the solid matrix. Thus, for porous media flow and and poromecanical simulation in GEOSX,
 two types of composite constitutive models can be defined to specify the characteristics
-of a porous material: (1) a `CompressibleSolid` model, used for flow only simulations and which
+of a porous material: (1) a `CompressibleSolid` model, used for flow-only simulations and which
 assumes that all poromechanical effects can be represented by the pressure dependency of the
-porosity; (2) a `PorousSolid` model which, instead allows to couple any solid model with
-a `BiotPorosity` model and to include permeability dependency on the mechanical response.
+porosity; (2) a `PorousSolid` model which, instead, allows to couple any solid model with
+a `BiotPorosity` model and to include permeability's dependence on the mechanical response.
 
 
-Both these composite  models require to provide the names of the solid, porosity and permeability models
+Both these composite  models require the names of the solid, porosity and permeability models
 that, combined, define the porous material. The following sections outline how these models can be
 defined in the Constitutive block of the xml input files and which type of submodels they
 allow for.
 
 CompressibleSolid
 ========================
-This composite constitutive model requires to define a `NullModel` as solid model, since
-no mechanical properties are used, a `PressurePorosity` model and any type of `Permeability` model.
+This composite constitutive model requires to define a `NullModel` as solid model (since
+no mechanical properties are used), a `PressurePorosity` model and any type of `Permeability` model.
 
-To define this composite model the keywork `CompressibleSolid` has to be appendended to the name
-of the peremability model of choice, as shown in the following example for the `ConstantPermeability` one.
+To define this composite model the keyword `CompressibleSolid` has to be appended to the name
+of the permeability model of choice, as shown in the following example for the `ConstantPermeability` model.
 
 
 .. code-block:: xml
@@ -94,4 +94,4 @@ with a certain permeability can be defined as
 
 Note that any of the previously described solid models is used by the `PorousSolid` model
 to compute the effective stress, leading to either poro-elastic, poro-plastic, or poro-damage
-behavior depending on the specific model chose.
+behavior depending on the specific model chosen.

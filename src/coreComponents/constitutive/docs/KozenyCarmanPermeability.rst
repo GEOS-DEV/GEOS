@@ -9,7 +9,7 @@ Kozeny-Carman Permeability Model
 Overview
 ======================
 
-In the Kozeny-Carman equation, the permeability of a porous medium is governed by multiple key parameters, including porosity, grain size, and grain shape:
+In the Kozeny-Carman model, the permeability of a porous medium is governed by several key parameters, including porosity, grain size, and grain shape:
 
 .. math::
    k =  \frac{{{s_{\epsilon}}{D_p}}^2 {\phi}^3} {150 {1 - \phi}^2} 
@@ -22,7 +22,7 @@ Parameters
 
 The Kozeny-Carman Permeability Model can be called in the
 ``<Constitutive>`` block of the input XML file.
-This permeability model must be assigned a unique name via
+This permeability model must be assigned a unique name via the
 ``name`` attribute.
 This name is used to assign the model to regions of the physical
 domain via a ``materialList`` attribute in the ``<ElementRegions>``
