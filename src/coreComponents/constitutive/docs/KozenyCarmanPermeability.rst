@@ -9,7 +9,7 @@ Kozeny-Carman Permeability Model
 Overview
 ======================
 
-In the Kozeny-Carman model (see `Kozeny-Carman`_), the permeability of a porous medium
+In the Kozeny-Carman model (see `ref`_), the permeability of a porous medium
 is governed by several key parameters, including porosity, grain size, and grain shape:
 
 .. math::
@@ -49,4 +49,4 @@ Example
       ...
    </Constitutive>
 
-   .. _Kozeny-Carman: https://en.wikipedia.org/wiki/Kozeny%E2%80%93Carman_equation
+   .. _ref: https://en.wikipedia.org/wiki/Kozeny%E2%80%93Carman_equation

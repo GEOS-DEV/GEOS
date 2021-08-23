@@ -12,9 +12,9 @@ Overview
 According to the poroelasticity theory, the porosity (pore volume), :math:`\phi`, can be computed as
 
 .. math::
-   \phi = phi_{ref} + \alpha \nabla ( \epsilon_v - \epsilon_{v,\,ref} ) + (p - p_{ref}) / N.
+   \phi = \phi_{ref} + \alpha \nabla ( \epsilon_v - \epsilon_{v,\,ref} ) + (p - p_{ref}) / N.
 
-Here, :math:`phi_{ref}` is the porosity at a reference state with pressure :math:`p_{ref}` and
+Here, :math:`\phi_{ref}` is the porosity at a reference state with pressure :math:`p_{ref}` and
 volumetric strain :math:`\epsilon_{v,\,ref}`. Additionally, :math:`\alpha` is the Biot coefficient,
 :math:`\epsilon_v` is the volumetric strain, :math:`p` is the fluid pressure
 and :math:`N = \frac{K_s}{\alpha - \phi_{ref}}`, where :math:`{K_s}` is the grain bulk modulus.
