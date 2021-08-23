@@ -16,7 +16,7 @@ In this model, the two fracture walls are assumed to be smooth and parallel to e
 .. math::
    k =  \frac{a^3}{12}
 
-where :math:`a` denotes the effective fracture aperture.
+where :math:`a` denotes the hydraulic fracture aperture.
 
 Please note that :math:`k` dimensionally is not a permeability (as it is expressed in :math:`m^3`).
 
