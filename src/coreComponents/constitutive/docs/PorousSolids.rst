@@ -73,7 +73,7 @@ with a certain permeability can be defined as
 
 .. code-block:: xml
 
-    <Constitutive>
+   <Constitutive>
      <PorousElasticIsotropic name="porousRock"
                              porosityModelName="rockPorosity"
                              solidModelName="rockSkeleton"
@@ -88,9 +88,9 @@ with a certain permeability can be defined as
                    grainBulkModulus="1.0e27"
                    defaultReferencePorosity="0.3"/>
 
-  <ConstantPermeability name="rockPermeability"
+     <ConstantPermeability name="rockPermeability"
                         permeabilityComponents="{ 1.0e-4, 1.0e-4, 1.0e-4 }"/>
-    </Constitutive>
+   </Constitutive>
 
 Note that any of the previously described solid models is used by the `PorousSolid` model
 to compute the effective stress, leading to either poro-elastic, poro-plastic, or poro-damage

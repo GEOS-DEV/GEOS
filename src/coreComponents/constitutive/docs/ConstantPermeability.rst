@@ -17,7 +17,7 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/schema/docs/CarmanKozenyPermeability.rst
+.. include:: /coreComponents/schema/docs/ConstantPermeability.rst
 
 
 Example
