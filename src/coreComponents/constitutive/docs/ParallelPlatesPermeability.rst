@@ -18,7 +18,7 @@ In this model, the two fracture walls are assumed to be smooth and parallel to e
 
 where :math:`a` denotes the hydraulic fracture aperture.
 
-Please note that :math:`k` dimensionally is not a permeability (as it is expressed in :math:`m^3`).
+Remark: :math:`k`, dimensionally, is not a permeability (as it is expressed in :math:`m^3`).
 
 
 
