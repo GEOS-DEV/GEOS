@@ -452,7 +452,16 @@ void setComponentMetadata( Wrapper< Array< T, NDIM, PERM > > const & wrapper,
                            vtkAOSDataArrayTemplate< T > & data )
 {
   auto const view = wrapper.referenceAsView();
-  data.SetNumberOfComponents( view.size() / view.size( 0 ) );
+
+  // check the size of the first dimension to handle the case of an empty region
+  if( view.size( 0 ) > 0 )
+  {
+    data.SetNumberOfComponents( view.size() / view.size( 0 ) );
+  }
+  else
+  {
+    data.SetNumberOfComponents( 0 );
+  }
 
   Span< string const > labels[NDIM-1];
   for( integer dim = 1; dim < NDIM; ++dim )
@@ -460,12 +469,15 @@ void setComponentMetadata( Wrapper< Array< T, NDIM, PERM > > const & wrapper,
     labels[dim-1] = getDimLabels( wrapper, dim );
   }
 
-  integer compIndex = 0;
-  LvArray::forValuesInSliceWithIndices( view[0], [&]( T const &, auto const ... indices )
+  if( view.size( 0 ) > 0 )
   {
-    using idx_seq = std::make_integer_sequence< integer, sizeof...(indices) >;
-    data.SetComponentName( compIndex++, makeComponentName( labels, idx_seq{}, indices ... ).c_str() );
-  } );
+    integer compIndex = 0;
+    LvArray::forValuesInSliceWithIndices( view[0], [&]( T const &, auto const ... indices )
+    {
+      using idx_seq = std::make_integer_sequence< integer, sizeof...(indices) >;
+      data.SetComponentName( compIndex++, makeComponentName( labels, idx_seq{}, indices ... ).c_str() );
+    } );
+  }
 }
 
 template< class SUBREGION = Group >
