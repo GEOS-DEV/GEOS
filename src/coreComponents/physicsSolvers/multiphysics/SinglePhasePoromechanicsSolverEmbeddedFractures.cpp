@@ -628,7 +628,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
     } );
 
     // update fracture's permeability and porosity
-    m_flowSolver->updateSolidFlowProperties( subRegion, targetIndex );
+    m_flowSolver->updatePorosityAndPermeability( subRegion, targetIndex );
     // update fluid model
     m_flowSolver->updateFluidState( subRegion, targetIndex );
 

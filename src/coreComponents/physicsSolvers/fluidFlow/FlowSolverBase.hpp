@@ -98,11 +98,11 @@ public:
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
   };
 
-  void updateSolidFlowProperties( CellElementSubRegion & subRegion,
-                                  localIndex const targetIndex ) const;
+  void updatePorosityAndPermeability( CellElementSubRegion & subRegion,
+                                      localIndex const targetIndex ) const;
 
-  void updateSolidFlowProperties( SurfaceElementSubRegion & subRegion,
-                                  localIndex const targetIndex ) const;
+  void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
+                                      localIndex const targetIndex ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step

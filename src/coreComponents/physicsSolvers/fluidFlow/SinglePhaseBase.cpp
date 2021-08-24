@@ -202,7 +202,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
     subRegion.template getWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).setDefaultValue( defaultDensity );
 
-    updateSolidFlowProperties( subRegion, targetIndex );
+    updatePorosityAndPermeability( subRegion, targetIndex );
     updateFluidState( subRegion, targetIndex );
 
     CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
@@ -290,7 +290,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     dVol.zero();
 
     // This should fix NaN density in newly created fracture elements
-    updateSolidFlowProperties( subRegion, targetIndex );
+    updatePorosityAndPermeability( subRegion, targetIndex );
     updateFluidState( subRegion, targetIndex );
   } );
 
@@ -306,7 +306,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
     porousSolid.saveConvergedState();
 
-    updateSolidFlowProperties( subRegion, targetIndex );
+    updatePorosityAndPermeability( subRegion, targetIndex );
     updateFluidState( subRegion, targetIndex );
   } );
 
@@ -639,7 +639,7 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
   this->template forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
                                                                                                    auto & subRegion )
   {
-    updateSolidFlowProperties( subRegion, targetIndex );
+    updatePorosityAndPermeability( subRegion, targetIndex );
     updateFluidState( subRegion, targetIndex );
   } );
 }
@@ -669,7 +669,7 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 
     dPres.zero();
 
-    updateSolidFlowProperties( subRegion, targetIndex );
+    updatePorosityAndPermeability( subRegion, targetIndex );
     updateFluidState( subRegion, targetIndex );
   } );
 }

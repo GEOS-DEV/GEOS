@@ -509,7 +509,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh ) const
   {
     // 3. Update dependent state quantities
     updatePhaseVolumeFraction( subRegion, targetIndex );
-    updateSolidFlowProperties( subRegion, targetIndex );
+    updatePorosityAndPermeability( subRegion, targetIndex );
     updateRelPermModel( subRegion, targetIndex );
     updatePhaseMobility( subRegion, targetIndex );
     updateCapPressureModel( subRegion, targetIndex );
@@ -1116,7 +1116,7 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
     dCompDens.zero();
 
     // update porosity and permeability
-    updateSolidFlowProperties( subRegion, targetIndex );
+    updatePorosityAndPermeability( subRegion, targetIndex );
     // update all fluid properties
     updateFluidState( subRegion, targetIndex );
   } );
@@ -1163,7 +1163,7 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex, auto & subRegion )
   {
     // update porosity and permeability
-    updateSolidFlowProperties( subRegion, targetIndex );
+    updatePorosityAndPermeability( subRegion, targetIndex );
     // update all fluid properties
     updateFluidState( subRegion, targetIndex );
   } );
