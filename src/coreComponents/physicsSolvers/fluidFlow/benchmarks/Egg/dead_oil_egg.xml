@@ -63,7 +63,7 @@
         referenceElevation="28"
         targetBHP="3.9e7"
         targetPhaseRate="1e6"
-        targetPhaseName="oil"/>
+        targetPhaseName="oil"/>   <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
       <WellControls
         name="wellControls3"
         type="producer"
@@ -147,7 +147,7 @@
     </CompositionalMultiphaseWell>
   </Solvers>
 
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH -->
   <Mesh>
     <PAMELAMeshGenerator
@@ -220,7 +220,7 @@
       <Perforation
         name="producer2_perf7"
         distanceFromHead="26"/>
-    </InternalWell>
+    </InternalWell>   <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
 
     <InternalWell
       name="wellProducer3"
@@ -553,7 +553,7 @@
     </InternalWell>
   </Mesh>
 
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS -->
   <Events
     maxTime="1.5e7">
