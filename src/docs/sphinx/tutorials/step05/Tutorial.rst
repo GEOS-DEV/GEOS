@@ -8,7 +8,7 @@ Tutorial 5: Multiphase flow with wells
 **Context**
 
 In this tutorial, we build on the concepts presented in :ref:`TutorialDeadOilBottomLayersSPE10`
-to show how to set up a multiphase water injection problem with wells in the  
+to show how to set up a multiphase water injection problem with wells in
 the three-dimensional `Egg model <https://rmets.onlinelibrary.wiley.com/doi/full/10.1002/gdj3.21>`_.
 The twelve wells (four producers and eight injectors) are placed according to the description
 of the original test case.

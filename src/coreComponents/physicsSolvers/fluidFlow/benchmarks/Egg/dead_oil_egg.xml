@@ -63,7 +63,10 @@
         referenceElevation="28"
         targetBHP="3.9e7"
         targetPhaseRate="1e6"
-        targetPhaseName="oil"/>   <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
+        targetPhaseName="oil"/>   
+
+      <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
+
       <WellControls
         name="wellControls3"
         type="producer"
@@ -220,7 +223,9 @@
       <Perforation
         name="producer2_perf7"
         distanceFromHead="26"/>
-    </InternalWell>   <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
+    </InternalWell>   
+
+    <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
 
     <InternalWell
       name="wellProducer3"
@@ -634,7 +639,9 @@
 
     <WellElementRegion
       name="wellRegion2"
-      materialList="{ fluid, relperm }"/>   <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS_END -->
+      materialList="{ fluid, relperm }"/>   
+
+    <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS_END -->
 
     <WellElementRegion
       name="wellRegion3"
