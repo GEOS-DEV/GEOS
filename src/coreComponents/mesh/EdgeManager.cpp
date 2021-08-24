@@ -119,7 +119,6 @@ void EdgeManager::buildEdges( localIndex const numNodes,
                                              faceToEdgeMap,
                                              m_toFacesRelation,
                                              m_toNodesRelation );
-  // FIXME I've no idea of what I am doing
   m_toNodesRelation.resize( numEdges );
 //  m_edgesToFractureConnectorsEdges.resize( numEdges );
   m_fractureConnectorsEdgesToEdges.resize( numEdges );

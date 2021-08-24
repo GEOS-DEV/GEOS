@@ -288,9 +288,9 @@ struct EdgeBuilder
 /**
  * @brief Add an edge to the face to edge map, edge to face map, and edge to node map.
  * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
- * @param [in/out] faceToEdgeMap the map from face IDs to edge IDs.
- * @param [in/out] edgeToFacemap the map from edgeIDs to faceIDs.
- * @param [in/out] edgeToNodeMap the map from edgeIDs to nodeIDs.
+ * @param [in,out] faceToEdgeMap the map from face IDs to edge IDs.
+ * @param [in,out] edgeToFacemap the map from edgeIDs to faceIDs.
+ * @param [in,out] edgeToNodeMap the map from edgeIDs to nodeIDs.
  * @param [in] edgeID the ID of the edge to add.
  * @param [in] firstNodeID the ID of the first node of the edge.
  * @param [in] firstMatch the index of the first EdgeBuilder that describes this edge in edgesByLowestNode[ firstNodeID ].
@@ -326,7 +326,7 @@ void addEdge( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
  * @brief Populate the edgesByLowestNode map.
  * @param [in] numNodes The number of nodes.
  * @param [in] faceToNodeMap a map that associates an ordered list of nodes with each face.
- * @param [in/out] edgesByLowestNode of size numNodes, where each sub array has been preallocated to hold
+ * @param [in,out] edgesByLowestNode of size numNodes, where each sub array has been preallocated to hold
  *        *enough* space.
  * For each edge of each face, this function gets the lowest node in the edge n0, creates an EdgeBuilder
  * associated with the edge and then appends the EdgeBuilder to edgesByLowestNode[ n0 ]. Finally it sorts
@@ -434,9 +434,9 @@ localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > c
  * @param [in] edgesByLowestNode and array of size numNodes of arrays of EdgeBuilders associated with each node.
  * @param [in] uniqueEdgeOffsets an array containing the unique ID of the first edge associated with each node.
  * @param [in] faceToNodeMap the map from faces to nodes.
- * @param [in/out] faceToEdgeMap the map from face IDs to edge IDs.
- * @param [in/out] edgeToFacemap the map from edgeIDs to faceIDs.
- * @param [in/out] edgeToNodeMap the map from edgeIDs to nodeIDs.
+ * @param [in,out] faceToEdgeMap the map from face IDs to edge IDs.
+ * @param [in,out] edgeToFacemap the map from edgeIDs to faceIDs.
+ * @param [in,out] edgeToNodeMap the map from edgeIDs to nodeIDs.
  */
 void populateEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestNode,
                        arrayView1d< localIndex const > const & uniqueEdgeOffsets,

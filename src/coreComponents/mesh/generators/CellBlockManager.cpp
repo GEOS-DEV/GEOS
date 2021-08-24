@@ -463,7 +463,7 @@ void fillElementToEdgesOfCellBlocks( ArrayOfArrays< localIndex > const & faceToE
   for( localIndex iCellBlock = 0; iCellBlock < cellBlocks.numSubGroups(); ++iCellBlock )
   {
     CellBlock & cellBlock = cellBlocks.getGroup< CellBlock >( iCellBlock );
-    array2d< localIndex > const & cellToFaces = cellBlock.getElemToFaces();
+    arrayView2d< localIndex const > const & cellToFaces = cellBlock.getElemToFaces();
 
     // We build the edges of each face of each cell,
     // so we can construct the cell to edges mapping.
@@ -472,7 +472,7 @@ void fillElementToEdgesOfCellBlocks( ArrayOfArrays< localIndex > const & faceToE
     // to remove the duplicates.
 
     // Loop over the cells
-    for( localIndex kc = 0; kc < cellBlock.size(); kc++ )
+    for( localIndex kc = 0; kc < cellBlock.numElements(); kc++ )
     {
       int count = 0;
       for( localIndex kf = 0; kf < cellBlock.numFacesPerElement(); kf++ )
@@ -579,7 +579,6 @@ void CellBlockManager::buildMaps()
   fillElementToEdgesOfCellBlocks( m_faceToEdges, this->getCellBlocks() );
 }
 
-//TODO return views
 ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes() const
 {
   return m_faceToNodes;

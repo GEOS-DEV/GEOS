@@ -104,7 +104,7 @@ public:
 
   /**
    * @brief Function to generate new global indices of a simple object (node, edge, face)
-   * @param[in/out] object A reference to the object that needs new global indices
+   * @param[in,out] object A reference to the object that needs new global indices
    * @param[in] indexList the list of local indices that need new global indices
    */
   void assignNewGlobalIndicesSerial( ObjectManagerBase & object,
@@ -113,7 +113,7 @@ public:
 
   /**
    * @brief Function to generate new global indices for elements
-   * @param[in/out] elementManager A reference to the ElementRegionManager that needs new global indices
+   * @param[in,out] elementManager A reference to the ElementRegionManager that needs new global indices
    * @param[in] indexList the list of local indices that need new global indices
    */
   void
