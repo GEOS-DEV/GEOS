@@ -71,12 +71,16 @@ public:
   virtual localIndex size() const = 0;
 
 protected:
+  /// The container for the element region indices for each point in each stencil
   typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementRegionIndices;
 
+  /// The container for the element sub region indices for each point in each stencil
   typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementSubRegionIndices;
 
+  /// The container for the element indices for each point in each stencil
   typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementIndices;
 
+  /// The container for the weights for each point in each stencil
   typename LEAFCLASSTRAITS::WeightContainerViewConstType m_weights;
 
 };

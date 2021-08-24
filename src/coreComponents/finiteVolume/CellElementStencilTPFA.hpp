@@ -149,6 +149,12 @@ public:
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 
+  /**
+   * @brief Add the vectors need to compute the transmissiblity to the Stencil.
+   * @param[in] transMultiplier the transmissibility multiplier
+   * @param[in] faceNormal the normal to the face
+   * @param[in] cellToFaceVec distance vector between the cell center and the face
+   */
   void addVectors( real64 const & transMultiplier,
                    real64 const (&faceNormal)[3],
                    real64 const (&cellToFaceVec)[2][3] );

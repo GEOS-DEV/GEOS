@@ -50,9 +50,6 @@ struct CellElementStencilMPFA_Traits
   /// The array view to const type for the stencil weights
   using WeightContainerViewConstType = ArrayOfArraysView< real64 const >;
 
-  ///
-  using CoefficientAccessorViewConstType = ArrayOfArraysView< real64 const >;
-
   /// Number of points the flux is between (always 2)
   static localIndex constexpr NUM_POINT_IN_FLUX = 2;
 
