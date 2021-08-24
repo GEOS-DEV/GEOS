@@ -8,8 +8,8 @@ Tutorial 4: Multiphase flow
 
 In this tutorial, we set up a multiphase, multicomponent test case (see :ref:`CompositionalMultiphaseFlow`).
 The permeability field corresponds to the two bottom layers (layers 84 and 85) of the SPE10 test case.
-The thermodynamic behavior of the fluid mixture is specified using a simple immiscible (Dead-Oil) model.
-Injection and production are performed using boundary conditions.
+The thermodynamic behavior of the fluid mixture is specified using a simple immiscible two-phase (Dead-Oil) model.
+Injection and production are simulated using boundary conditions.
 
 **Objective**
 
@@ -52,27 +52,27 @@ scheme based on the standard two-point approximation of the flux (TPFA).
 More information on this solver can be found at :ref:`CompositionalMultiphaseFlow`.  
 
 Let us have a closer look at the **Solvers** XML block displayed below.
-The solver has a name (here, ``compositionalMultiphaseFlow``) that can be chosen by the user and is not imposed by GEOSX.
+The solver has a name (here, ``compflow``) that can be chosen by the user and is not imposed by GEOSX.
 Note that this name is used in the **Events** XML block to trigger the application of the solver.
 Using the ``targetRegions`` attribute, the solver defines the target regions on which it is applied.
 In this tutorial, there is only one region, named ``reservoir``.
 
-The constitutive models defined on these target regions must be specified in the **CompositionalMultiphaseFVM** block.
+The constitutive models defined on these target regions must be listed in the **CompositionalMultiphaseFVM** block.
 This is done by passing the name of the fluid PVT model using the ``fluidNames`` attribute, the name of the solid compressibility model
 using the ``solidNames`` attribute, the name of the rock permeability model using the ``permeabilityNames`` attribute, and the name of
 the relative permeability model using the ``relPermNames`` attribute.
 If a capillary pressure model is employed in the simulation, its name must also be passed here, using the ``capPressureNames`` attribute.
 All the constitutive model names passed here must be defined in the **Constitutive** block of the XML file (see below).
 
-The **CompositionalMultiphaseFVM** block contains two important sub-blocks (**NonlinearSolverParameters** and **LinearSolverParameters**).
-In **NonlinearSolverParameters**, one can fine-tune the nonlinear tolerance and the heuristics used to increase the time step size.
+The **CompositionalMultiphaseFVM** block contains two important sub-blocks, namely **NonlinearSolverParameters** and **LinearSolverParameters**.
+In **NonlinearSolverParameters**, one can finely tune the nonlinear tolerance, the application of the linear search algorithm, and the heuristics used to increase the time step size.
 In **LinearSolverParameters**, the user can specify the linear tolerance, the type of (direct or iterative) linear solver, and the
 type of preconditioner, if any.
 For large multiphase flow problems, we recommend using an iterative linear solver (``solverType="gmres"`` or ``solverType="fgmres"``) combined
 with the multigrid reduction (MGR) preconditioner (``preconditionerType="mgr"``). More information about the MGR preconditioner can be found in :ref:`LinearSolvers`.
 
 .. note::
-        For non-trivial simulations, we recommend setting the ``initialDt`` attribute to a small value (relative to the time scale of the problem) in seconds. If the simulation appears to be slow, use ``logLevel=1`` in **CompositionalMultiphaseFVM** to detect potential Newton convergence problems. If the Newton solver struggles, please set ``lineSearchAction=Attempt`` in **NonlinearSolverParameters**. If the Newton convergence is good, please add ``logLevel=1`` in the **LinearSolverParameters** block to detect linear solver problems, especially if an iterative linear solver is used.
+        For non-trivial simulations, we recommend setting the ``initialDt`` attribute to a small value (relative to the time scale of the problem) in seconds. If the simulation appears to be slow, use ``logLevel="1"`` in **CompositionalMultiphaseFVM** to detect potential Newton convergence problems. If the Newton solver struggles, please set ``lineSearchAction="Attempt"`` in **NonlinearSolverParameters**. If the Newton convergence is good, please add ``logLevel="1"`` in the **LinearSolverParameters** block to detect linear solver problems, especially if an iterative linear solver is used.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
@@ -88,7 +88,7 @@ Mesh
 In this simulation, we define a simple mesh generated internally using the **InternalMesh** generator, as
 illustrated in the previous tutorials.
 The mesh dimensions and cell sizes are chosen to be those specified in the SPE10 test case, but are limited to the two bottom layers.
-Note that the mesh description must be done in meters.
+The mesh description must be done in meters.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
@@ -122,7 +122,7 @@ serving different purposes, namely solver application and result output.
 
 The periodic event named ``solverApplications`` triggers the application of the solver on its target region. 
 This event must point to the solver by name.
-In this tutorial, the name of the solver is ``compositionalMultiphaseFlow`` and was defined in the **Solvers** block.
+In this tutorial, the name of the solver is ``compflow`` and was defined in the **Solvers** block.
 The time step is initialized using the ``initialDt`` attribute of the flow solver.
 Then, if the solver converges in more than a certain number of nonlinear iterations (by default, 40% of the
 maximum number of nonlinear iterations), the time step will be increased until it reaches the maximum
@@ -202,15 +202,15 @@ For a simulation performed with the **CompositionalMultiphaseFVM** physics solve
 at least four types of constitutive models must be specified in the **Constitutive** XML block:
 
 - a fluid model describing the thermodynamics behavior of the fluid mixture,
-- a rock permeability model,
 - a relative permeability model,
+- a rock permeability model,
 - a rock compressibility model.
 
 All these models use SI units exclusively.
 A capillary pressure model can also be specified in this block but is omitted here for simplicity.
   
 Here, we introduce a fluid model describing a simplified mixture thermodynamic behavior.
-Specifically, we use an immiscible two-phase Dead-Oil model by placing the XML tag **DeadOilFluid**.
+Specifically, we use an immiscible two-phase (Dead Oil) model by placing the XML tag **DeadOilFluid**.
 Other fluid models can be used with the **CompositionalMultiphaseFVM** solver, as explained in :ref:`FluidModels`.
 
 With the tag **BrooksCoreyRelativePermeability**, we define a relative permeability model.
@@ -246,17 +246,17 @@ regions and the physics solvers to their respective constitutive models.
 Initial and boundary conditions
 --------------------------------
 
-In the **FieldSpecifications** section, we define the initial/boundary conditions as well
+In the **FieldSpecifications** section, we define the initial and boundary conditions as well
 as the geological properties (porosity, permeability).
 All this is done using SI units.
-Here, we focus on the specification of the initial/boundary conditions for
+Here, we focus on the specification of the initial and boundary conditions for
 a simulation performed with the **CompositionalMultiphaseFVM** solver.
 We refer to :ref:`TutorialSinglePhaseFlowWithInternalMesh` for a more general
 discussion on the **FieldSpecification** XML blocks.
 
 For a simulation performed with the **CompositionalMultiphaseFVM** solver,
 we have to set the initial pressure as well as the initial global component
-fractions (in this case, the oil, gas, and water component fractions).
+fractions (in this case, the oil and water component fractions).
 The ``component`` attribute of the **FieldSpecification** XML block must use the
 order in which the ``phaseNames`` have been defined in the **DeadOilFluid**
 XML block. In other words, ``component=0`` is used to initialize the oil
@@ -289,8 +289,8 @@ Note that the name defined here must match the names used in the **Events** XML 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
-  :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT -->
-  :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT_END -->
+  :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUTS -->
+  :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUTS_END -->
 
 
       
@@ -305,33 +305,33 @@ The first few lines appearing to the console are indicating that the XML element
 
 .. code-block:: console
 
-Adding Solver of type CompositionalMultiphaseFVM, named compflow
-Adding Mesh: InternalMesh, mesh
-Adding Geometric Object: Box, source
-Adding Geometric Object: Box, sink1
-Adding Geometric Object: Box, sink2
-Adding Geometric Object: Box, sink3
-Adding Geometric Object: Box, sink4
-Adding Event: PeriodicEvent, outputs
-Adding Event: PeriodicEvent, solverApplications
-   TableFunction: permxFunc
-   TableFunction: permyFunc
-   TableFunction: permzFunc
-   TableFunction: poroFunc
-   TableFunction: B_o_table
-   TableFunction: visc_o_table
-Adding Output: VTK, vtkOutput
-Adding Object CellElementRegion named region from ObjectManager::Catalog.
+  Adding Solver of type CompositionalMultiphaseFVM, named compflow
+  Adding Mesh: InternalMesh, mesh
+  Adding Geometric Object: Box, source
+  Adding Geometric Object: Box, sink1
+  Adding Geometric Object: Box, sink2
+  Adding Geometric Object: Box, sink3
+  Adding Geometric Object: Box, sink4
+  Adding Event: PeriodicEvent, outputs
+  Adding Event: PeriodicEvent, solverApplications
+  TableFunction: permxFunc
+  TableFunction: permyFunc
+  TableFunction: permzFunc
+  TableFunction: poroFunc
+  TableFunction: B_o_table
+  TableFunction: visc_o_table
+  Adding Output: VTK, vtkOutput
+  Adding Object CellElementRegion named region from ObjectManager::Catalog.
   region/block/fluid is allocated with 1 quadrature points.
   region/block/rock is allocated with 1 quadrature points.
-  region/block/relperm is allocated with 1 quadrature points.
+  aaregion/block/relperm is allocated with 1 quadrature points.
 			
 At this point, we are done with the case set-up and
 the code steps into the execution of the simulation itself:
 
 .. code-block:: console
 		
-Time: 0s, dt:1000s, Cycle: 0
+  Time: 0s, dt:1000s, Cycle: 0
 
     Attempt:  0, NewtonIter:  0
     ( Rfluid ) = (2.28e+00) ;     ( R ) = ( 2.28e+00 ) ; 
@@ -342,9 +342,9 @@ Time: 0s, dt:1000s, Cycle: 0
     ( Rfluid ) = (8.86e-05) ;     ( R ) = ( 8.86e-05 ) ; 
     Last LinSolve(iter,res) = (   2, 8.92e-03 ) ;
     
-compflow: Max phase CFL number: 0.00399585
-compflow: Max component CFL number: 0.152466
-compflow: Newton solver converged in less than 16 iterations, time-step required will be doubled.
+  compflow: Max phase CFL number: 0.00399585
+  compflow: Max component CFL number: 0.152466
+  compflow: Newton solver converged in less than 16 iterations, time-step required will be doubled.
 
 ------------------------------------
 Visualization

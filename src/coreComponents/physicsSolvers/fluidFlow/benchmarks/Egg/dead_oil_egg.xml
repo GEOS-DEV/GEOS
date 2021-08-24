@@ -634,7 +634,7 @@
 
     <WellElementRegion
       name="wellRegion2"
-      materialList="{ fluid, relperm }"/>
+      materialList="{ fluid, relperm }"/>   <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS_END -->
 
     <WellElementRegion
       name="wellRegion3"
@@ -677,7 +677,6 @@
       materialList="{ fluid, relperm }"/>
   </ElementRegions>
 
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS_END -->
   <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE -->
   <Constitutive>
     <DeadOilFluid
@@ -743,7 +742,7 @@
   </FieldSpecifications>
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS_END -->
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT -->
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS -->
   <Outputs>
     <VTK
       name="vtkOutput"/>
@@ -769,7 +768,7 @@
       filename="wellRateHistory4"/>
   </Outputs>
 
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT_END -->
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS_END -->
   <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS -->
   <Tasks>
     <PackCollection

@@ -8,7 +8,7 @@ Tutorial 5: Multiphase flow with wells
 **Context**
 
 In this tutorial, we build on the concepts presented in :ref:`TutorialDeadOilBottomLayersSPE10`
-to show how to to set up a multiphase water injection problem with wells in the  
+to show how to set up a multiphase water injection problem with wells in the  
 the three-dimensional `Egg model <https://rmets.onlinelibrary.wiley.com/doi/full/10.1002/gdj3.21>`_.
 The twelve wells (four producers and eight injectors) are placed according to the description
 of the original test case.
@@ -16,7 +16,7 @@ of the original test case.
 **Objectives**
 
 In this tutorial, we re-use many GEOSX features already presented in
-:ref:`TutorialDeadOilBottomLayersSPE10`, with a focus on:
+:ref:`TutorialDeadOilBottomLayersSPE10`, but we now focus on:
 
 - how to import an external mesh with embedded geological properties (permeability) in the GMSH format (``.msh``),
 - how to set up the wells.
@@ -85,10 +85,10 @@ There is no need to specify these parameters at the level of the single-physics 
 Any solver information specified in the single-physics XML blocks will not be taken into account.
 
 .. note::
-        It is worth repeating the ``logLevel=1`` parameter at the level of the well solver to make sure that a notification is issued when the well control is switched (from rate control to BHP control, for instance).
+        It is worth repeating the ``logLevel="1"`` parameter at the level of the well solver to make sure that a notification is issued when the well control is switched (from rate control to BHP control, for instance).
 
-Here, we instruct GEOSX to perform at least ``newtonMinIter = 1`` Newton iterations and
-at most ``newtonMaxIter = 10``. GEOSX will adjust the time step size as follows:
+Here, we instruct GEOSX to perform at most ``newtonMaxIter = "10"`` Newton iterations. 
+GEOSX will adjust the time step size as follows:
 
 - if the Newton solver converges in ``dtIncIterLimit x newtonMaxIter = 5`` iterations or fewer, GEOSX will double the time step size for the next time step,
 - if the Newton solver converges in ``dtCutIterLimit x newtonMaxIter = 8`` iterations or more, GEOSX will reduce the time step size for the next time step by a factor ``timestepCutFactor = 0.1``,
@@ -134,16 +134,16 @@ the attribute ``wellRegionName``), and the corresponding well control
 
 Each well is defined using a vertical polyline going through the seven layers of the
 mesh, with a perforation in each layer.
+The well placement implemented here follows the pattern of the original test case.
 The well geometry must be specified in meters.
 
 The location of the perforations is found internally using the linear distance along the wellbore
 from the top of the well, specified by the attribute ``distanceFromHead``.
 It is the responsibility of the user to make sure that there is a perforation in the bottom cell
 of the well mesh otherwise an error will be thrown and the simulation will terminate.
-
 For each perforation, the well transmissibility factors employed to compute the perforation rates are calculated
 internally using the Peaceman formulation.
-The well placement implemented here follows the pattern of the original test case.
+
 
 .. image:: egg_model.png
    :width: 400px
@@ -196,7 +196,7 @@ Numerical methods
 
 In the ``NumericalMethods`` XML block, we instruct GEOSX to use a TPFA finite-volume
 numerical scheme.
-This part is identical to the corresponding section of :ref:`TutorialDeadOilBottomLayersSPE10`.
+This part is similar to the corresponding section of :ref:`TutorialDeadOilBottomLayersSPE10`, and has been adapted to match the specifications of the Egg model.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
   :language: xml
@@ -240,8 +240,8 @@ The **CompositionalMultiphaseFVM** physics solver relies on at least four types 
 models listed in the **Constitutive** XML block:
 
 - a fluid model describing the thermodynamics behavior of the fluid mixture,
-- a rock permeability model,
 - a relative permeability model,
+- a rock permeability model,
 - a rock compressibility model.
 
 All the parameters must be provided using the SI unit system.
@@ -293,8 +293,8 @@ Note that the name defined here must match the name used in the **Events** XML b
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
   :language: xml
-  :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT -->
-  :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT_END -->
+  :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS -->
+  :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS_END -->
 
 .. _Tasks_tag_dead_oil_egg_model:
 
@@ -394,7 +394,7 @@ the code steps into the execution of the simulation itself:
 
 .. code-block:: console
 
-Time: 0s, dt:10000s, Cycle: 0
+  Time: 0s, dt:10000s, Cycle: 0
 
     Attempt:  0, NewtonIter:  0
     ( Rfluid ) = (9.39e+01) ;     ( R ) = ( 1.06e+02 ) ; 
@@ -411,7 +411,7 @@ Time: 0s, dt:10000s, Cycle: 0
     ( Rfluid ) = (7.46e-05) ;     ( R ) = ( 7.50e-05 ) ; 
     Last LinSolve(iter,res) = (   3, 5.09e-03 ) ;
     
-coupledFlowAndWells: Newton solver converged in less than 15 iterations, time-step required will be doubled.
+  coupledFlowAndWells: Newton solver converged in less than 15 iterations, time-step required will be doubled.
 
 ------------------------------------
 Visualization
