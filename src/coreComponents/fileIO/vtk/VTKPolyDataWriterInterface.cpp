@@ -443,6 +443,25 @@ void setComponentMetadata( Wrapper< Array< T, 2, PERM > > const & wrapper,
 }
 
 /**
+ * @brief Produces a temporary array slice from a view that can be looped over.
+ * @param view the source view
+ * @return a fake slice that does not point to real data but has correct dims/strides.
+ * @note The slice is only valid as long as the @p view is in scope.
+ *       Values in the slice may be uninitialized and should not be used.
+ */
+template< typename T, int NDIM, int USD >
+ArraySlice< T const, NDIM - 1, USD - 1 >
+makeTemporarySlice( ArrayView< T const, NDIM, USD > const & view )
+{
+  // The following works in all compilers, but technically invokes undefined behavior:
+  // return ArraySlice< T, NDIM - 1, USD - 1 >( nullptr, view.dims() + 1, view.strides() + 1 );
+  localIndex const numComp = LvArray::indexing::multiplyAll< NDIM - 1 >( view.dims() + 1 );
+  static array1d< T > arr;
+  arr.template resizeWithoutInitializationOrDestruction( numComp );
+  return ArraySlice< T const, NDIM - 1, USD - 1 >( arr.data(), view.dims() + 1, view.strides() + 1 );
+}
+
+/**
  * @brief Generic component metadata handler for multidimensional arrays.
  * @param wrapper GEOSX typed wrapper over source array
  * @param data VTK typed data array
@@ -451,8 +470,7 @@ template< typename T, int NDIM, typename PERM >
 void setComponentMetadata( Wrapper< Array< T, NDIM, PERM > > const & wrapper,
                            vtkAOSDataArrayTemplate< T > & data )
 {
-  auto const view = wrapper.referenceAsView();
-  data.SetNumberOfComponents( view.size() / view.size( 0 ) );
+  data.SetNumberOfComponents( wrapper.numArrayComp() );
 
   Span< string const > labels[NDIM-1];
   for( integer dim = 1; dim < NDIM; ++dim )
@@ -460,8 +478,11 @@ void setComponentMetadata( Wrapper< Array< T, NDIM, PERM > > const & wrapper,
     labels[dim-1] = getDimLabels( wrapper, dim );
   }
 
+  auto const view = wrapper.referenceAsView();
+  auto const slice = view.size( 0 ) > 0 ? view[0] : makeTemporarySlice( view );
+
   integer compIndex = 0;
-  LvArray::forValuesInSliceWithIndices( view[0], [&]( T const &, auto const ... indices )
+  LvArray::forValuesInSliceWithIndices( slice, [&]( T const &, auto const ... indices )
   {
     using idx_seq = std::make_integer_sequence< integer, sizeof...(indices) >;
     data.SetComponentName( compIndex++, makeComponentName( labels, idx_seq{}, indices ... ).c_str() );
@@ -755,6 +776,12 @@ void VTKPolyDataWriterInterface::write( real64 const time,
                                         integer const cycle,
                                         DomainPartition const & domain )
 {
+  // This guard prevents crashes observed on MacOS due to a floating point exception
+  // triggered inside VTK by a progress indicator
+#if defined(__APPLE__) && defined(__MACH__)
+  LvArray::system::FloatingPointExceptionGuard guard;
+#endif
+
   string const stepSubFolder = getTimeStepSubFolder( time );
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {

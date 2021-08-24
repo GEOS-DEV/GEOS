@@ -430,7 +430,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
       {
         solver.resetStateToBeginningOfStep( domain );
 
-        // here is the perturbation in the pressure of the well element
+        // here is the perturbation in the rate of the well element
         real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
         dConnRate.move( LvArray::MemorySpace::host, true );
         dConnRate[iwelem] = dRate;
