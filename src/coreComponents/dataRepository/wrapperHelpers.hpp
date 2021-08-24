@@ -683,7 +683,13 @@ int numArrayDims( T const & GEOSX_UNUSED_PARAM( var ) )
 template< typename T, int NDIM, int USD >
 localIndex numArrayComp( ArrayView< T const, NDIM, USD > const & var )
 {
-  return var.size() / var.size( 0 );
+  return LvArray::indexing::multiplyAll< NDIM - 1 >( var.dims() + 1 );
+}
+
+template< typename T >
+localIndex numArrayComp( ArrayView< T const, 1, 0 > const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return 1;
 }
 
 template< typename T >
