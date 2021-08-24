@@ -362,7 +362,7 @@ void importRegularField( PAMELA::VariableDouble & source,
     auto const view = wrapperT.reference().toView();
 
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( source.offset );
-    localIndex const numComponentsDst = view.size() / view.size( 0 );
+    localIndex const numComponentsDst = wrapperT.numArrayComp();
     GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
                            "PAMELA mesh import: mismatch in number of components for field " << source.Label );
 
