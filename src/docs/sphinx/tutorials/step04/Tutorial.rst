@@ -1,23 +1,23 @@
 .. _TutorialDeadOilBottomLayersSPE10:
 
 ####################################################################
-Tutorial 4: Multiphase flow with wells
+Tutorial 4: Multiphase flow
 ####################################################################
 
 **Context**
 
 In this tutorial, we set up a multiphase, multicomponent test case (see :ref:`CompositionalMultiphaseFlow`).
-The permeability field corresponds to the three bottom layers (layers 83, 84, and 85) of the SPE10 test case.
-The thermodynamic behavior of the fluid mixture is specified using a Dead-Oil model.
-Injection and production are performed using multi-segmented wells.
+The permeability field corresponds to the two bottom layers (layers 84 and 85) of the SPE10 test case.
+The thermodynamic behavior of the fluid mixture is specified using a simple immiscible (Dead-Oil) model.
+Injection and production are performed using boundary conditions.
 
-**Objectives**
+**Objective**
 
-At the end of this tutorial you will know:
+The main objective of this tutorial is to review the main elements of a simple two-phase simulation in GEOSX, including:
 
-  - how to import an external mesh with embedded geological properties (porosity and permeability) in the Eclipse format (``.grdecl``),
-  - how to set up a multiphase, multicomponent simulation,
-  - how to couple reservoir flow with wells.
+- the compositional multiphase flow solver,
+- the multiphase constutive models,
+- the specifications of multiphase boundary conditions.
 
 **Input file**
 
@@ -25,16 +25,7 @@ This tutorial is based on the XML file located at
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
-
-The mesh file used in this tutorial is not stored in the main GEOSX repository.
-To run the test case specified in the XML file, you must first download the GEOSXDATA repository.  
-The XML file that we are going to describe assumes that the GEOSXDATA repository has been
-cloned in the same folder as the GEOSX repository.
-
-.. note::
-        GEOSXDATA is a separate repository in which we store large mesh files in order to keep the main GEOSX repository lightweight.
-
+  src/coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
 
 ------------------------------------
 GEOSX input file
@@ -55,88 +46,53 @@ The XML file considered here follows the typical structure of the GEOSX input fi
 
 .. _Solver_tag_dead_oil_bottom_layers_spe10:
 
-Solvers: coupling reservoir flow with wells
--------------------------------------------
+Solvers: setting up the multiphase solver
+-----------------------------------------
 
-In GEOSX, the simulation of reservoir flow with wells is set up by combining three solvers
-listed and parameterized in the **Solvers** XML block of the input file.
-We introduce separately a flow solver and a well solver acting on different regions of the
-domain---respectively, the reservoir region and the well regions.
-To drive the simulation and bind these single-physics solvers, we also specify a *coupling solver*
-between the reservoir flow solver and the well solver.
-This coupling of single-physics solvers is the generic approach used in GEOSX to
-define multiphysics problems.
-It is illustrated in :ref:`TutorialPoroelasticity` for a poroelastic test case. 
-
-The three solvers employed in this tutorial are:
-
- - the single-physics reservoir flow solver, a solver of type **CompositionalMultiphaseFlow** named ``compositionalMultiphaseFlow`` (more information on this solver at :ref:`CompositionalMultiphaseFlow`),
- - the single-physics well solver, a solver of type **CompositionalMultiphaseWell** named ``compositionalMultiphaseWell`` (more information on this solver at :ref:`CompositionalMultiphaseWell`),
- - the coupling solver that binds the two single-physics solvers above, an object of type **CompositionalMultiphaseReservoir** named ``coupledFlowAndWells``.
+In GEOSX, the setup of a multiphase simulation starts in the **Solvers** XML block of the input file.
+This tutorial is relies on a solver of type **CompositionalMultiphaseFVM** that implements a fully implicit finite-volume
+scheme based on the standard two-point approximation of the flux (TPFA).
+More information on this solver can be found at :ref:`CompositionalMultiphaseFlow`.  
 
 Let us have a closer look at the **Solvers** XML block displayed below.
-Each solver has a name that can be chosen by the user and is not imposed by GEOSX.
-These names are used here to point the coupling solver to the single-physics solvers
-using the attributes ``flowSolverName`` and ``wellSolverName``. The name of the coupling
-solver is also used in the **Events** XML block to trigger the application of the solver.
-The coupling solver defines all the target regions on which the single-physics solvers
-are applied, namely the reservoir region (named ``reservoir`` here) and one region for each well.
+The solver has a name (here, ``compositionalMultiphaseFlow``) that can be chosen by the user and is not imposed by GEOSX.
+Note that this name is used in the **Events** XML block to trigger the application of the solver.
+Using the ``targetRegions`` attribute, the solver defines the target regions on which it is applied.
+In this tutorial, there is only one region, named ``reservoir``.
 
-The simulation is fully coupled and driven by the coupled solver. Therefore, the time stepping
-information (here, ``initialDt``, but there may be other parameters used to fine-tune the time
-stepping strategy), the nonlinear solver parameters, and the linear solver parameters must be
-specified at the level of the coupling solver. There is no need to specify these parameters at
-the level of the single-physics solvers. 
-Note that it is worth repeating the ``logLevel=1`` parameter at the level of the well solver
-to make sure that a notification is issued when the well control is switched (from rate control
-to BHP control, for instance).
+The constitutive models defined on these target regions must be specified in the **CompositionalMultiphaseFVM** block.
+This is done by passing the name of the fluid PVT model using the ``fluidNames`` attribute, the name of the solid compressibility model
+using the ``solidNames`` attribute, the name of the rock permeability model using the ``permeabilityNames`` attribute, and the name of
+the relative permeability model using the ``relPermNames`` attribute.
+If a capillary pressure model is employed in the simulation, its name must also be passed here, using the ``capPressureNames`` attribute.
+All the constitutive model names passed here must be defined in the **Constitutive** block of the XML file (see below).
 
-Note that the same fluid and relative permeability
-models (set with the ``fluidNames`` and ``relPermNames`` attributes) must be used in the two
-single-physics solvers.
-GEOSX will throw an error and terminate the simulation if it is not the case.
+The **CompositionalMultiphaseFVM** block contains two important sub-blocks (**NonlinearSolverParameters** and **LinearSolverParameters**).
+In **NonlinearSolverParameters**, one can fine-tune the nonlinear tolerance and the heuristics used to increase the time step size.
+In **LinearSolverParameters**, the user can specify the linear tolerance, the type of (direct or iterative) linear solver, and the
+type of preconditioner, if any.
+For large multiphase flow problems, we recommend using an iterative linear solver (``solverType="gmres"`` or ``solverType="fgmres"``) combined
+with the multigrid reduction (MGR) preconditioner (``preconditionerType="mgr"``). More information about the MGR preconditioner can be found in :ref:`LinearSolvers`.
 
-Take note of the specification of well constraints and controls in the single-physics
-well solver with ``control``, ``targetBHP``, ``targetRate``
-and ``injectionStream`` (for the composition of the multiphase injection fluid).
+.. note::
+        For non-trivial simulations, we recommend setting the ``initialDt`` attribute to a small value (relative to the time scale of the problem) in seconds. If the simulation appears to be slow, use ``logLevel=1`` in **CompositionalMultiphaseFVM** to detect potential Newton convergence problems. If the Newton solver struggles, please set ``lineSearchAction=Attempt`` in **NonlinearSolverParameters**. If the Newton convergence is good, please add ``logLevel=1`` in the **LinearSolverParameters** block to detect linear solver problems, especially if an iterative linear solver is used.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->
 
 .. _Mesh_tag_dead_oil_bottom_layers_spe10:
 
-Specifying a reservoir mesh and defining the geometry of the wells
-------------------------------------------------------------------
+Specifying a reservoir mesh
+---------------------------
 
-In the presence of wells, the **Mesh** block of the XML input file includes two parts:
+In this simulation, we define a simple mesh generated internally using the **InternalMesh** generator, as
+illustrated in the previous tutorials.
+The mesh dimensions and cell sizes are chosen to be those specified in the SPE10 test case, but are limited to the two bottom layers.
+Note that the mesh description must be done in meters.
 
- - a sub-block **PAMELAMeshGenerator** defining the reservoir mesh (see :ref:`TutorialSinglePhaseFlowExternalMesh` for more on this),
- - a collection of sub-blocks **InternalWell** defining the geometry of the wells.
-
-In this tutorial, the reservoir mesh is imported from an Eclipse ``.grdecl`` mesh file that
-describes the mesh. It also contains the value of the three components of the permeability
-(in the x, y, and z directions) and the value of the porosity for each cell.
-The import is requested in the **PAMELAMeshGenerator** XML sub-block. The mesh description
-must be done in meters, and the permeability field must be specified in square meters (not in Darcy or milliDarcy).
-More information about the mesh importer can be found in :ref:`Meshes`.
-
-Each well is defined internally (i.e., not imported from a file) in a separate **InternalWell**
-XML sub-block. An **InternalWell** sub-block must point to the reservoir mesh that the well perforates
-using the attribute ``meshName``, to the region corresponding to this well using the attribute
-``wellRegionName``, and to the control of this well using the attribute ``wellControl``.
-
-In this tutorial, the five wells have the same structure, with one vertical segment
-discretized into four well cells.
-We define three perforations along the well (one perforation for each layer of the reservoir mesh).
-The location of the perforations is found internally using the linear distance along the wellbore
-from the top of the well, specified by the attribute ``distanceFromHead``.
-It is the responsibility of the user to make sure that there is a perforation in the bottom cell
-of the well mesh otherwise an error will be thrown and the simulation will terminate. The well
-geometry must be specified in meters.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH_END -->
@@ -146,9 +102,15 @@ geometry must be specified in meters.
 Geometry tag
 -----------------
 
-The **Geometry** XML block was used in the previous tutorials to specify boundary conditions.
-Since we use wells and assume no-flow boundary conditions in this tutorial, the **Geometry**
-block is not needed.
+As in the previous tutorials, the **Geometry** XML block is used to select the cells in which the boundary conditions are applied.
+To mimic the setup of the original SPE10 test case, we place a source term in the middle of the domain, and a sink term in each corner.
+The specification of the boundary conditions applied to the selected mesh cells is done in the **FieldSpecifications** block of the XML file
+using the names of the boxes defined here.
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY -->
+  :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY_END -->
 
 .. _Events_tag_dead_oil_bottom_layers_spe10:
 
@@ -193,7 +155,7 @@ Finally, the time history output events instruct GEOSX when to output (i.e., wri
 
 More information about events can be found at :ref:`EventManager`.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS_END -->
@@ -214,7 +176,7 @@ TPFA is currently the only numerical scheme that can be used with a flow solver 
 There is no numerical scheme to specify for the well mesh.
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS_END -->
@@ -253,7 +215,7 @@ and to the constitutive models introduced in the **Constitutive** block.
 As before, this is done using the names chosen by the user when these blocks
 are defined.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS_END -->
@@ -304,7 +266,7 @@ We remind the reader that the attribute ``name`` of the constitutive models defi
 must be used in the **ElementRegions** and **Solvers** XML blocks to point the element
 regions and the physics solvers to their respective constitutive models.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE_END -->
@@ -340,7 +302,7 @@ two-phase flow, we set the initial component fraction of gas to zero.
 There is no initialization to perform in the wells since the well
 properties are initialized internally using the reservoir initial conditions.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
@@ -356,7 +318,7 @@ Specifying the output formats
 In this section, we request an output of the results in VTK format, an output of the restart file, and the output of the well rate history to four HDF5 files (one for each producer).
 Note that the names defined here must match the names used in the **Events** XML block to define the output frequency.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT_END -->
@@ -372,7 +334,7 @@ This task is defined here, in the **PackCollection** XML sub-block of the **Task
 The task contains the path to the object on which the field to collect is registered (here, a ``WellElementSubRegion``) and the name of the field (here, ``wellElementMixtureConnectionRate``).
 The details of the history collection mechanism can be found in :ref:`TasksManager`. 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS_END -->
@@ -486,71 +448,13 @@ We can load this file into Paraview directly and visualize results:
 .. |pic2| image:: saturation.gif
    :width: 45%
 
-Using the time series output by GEOSX, we can extract the well rates. The script
-and image below illustrate how to post-process the hdf5 file to extract and plot
-useful information. Note that the difference in rates shown below can be explained
-by the fact that two producers are located in high-permeability regions, while the
-two other producers are located in very low permeability regions. 
-
-.. plot::
-
-   import matplotlib
-   import matplotlib.pyplot as plt
-   import numpy as np
-   import h5py
-
-   def main():
-
-       numWells = 4
-       iplt = -1
-       cmap = plt.get_cmap("tab10")
-
-       # Loop over the four producers 
-       for iw in range(1,numWells+1):
-
-           # File path
-           hdf5FilePath = "wellRateHistory"+str(iw)+".hdf5"    
-
-           # Read HDF5
-           hf = h5py.File(hdf5FilePath, 'r')
-           time = hf.get('Time')
-           time = np.array(time)
-           massRate = hf.get('wellElementMixtureConnectionRate')
-           massRate = np.array(massRate)
-        
-           # Some comments about the computation of the volumetric rate here:
-           # A proper oil rate constraint for individual wells is currently being implemented
-           # In the meantime, the volume rate is (wrongly) computed by dividing
-           # the total mass rate by the surface oil density 
-        
-           # Conversions
-           inCubicMeters = 1/848.9
-           inDays = 1.0 / (24 * 3600)
-        
-           # Plot HDF5 content (here, the rate at the well)
-           iplt += 1
-           plt.semilogy(time[:,0]*inDays, abs(massRate[:,0])*inCubicMeters/inDays, '-o', color=cmap(iplt), label='Producer #'+str(iw))
-
-       plt.xlim( -1, 175)
-       plt.ylim( 0.01, 1000 )
-    
-       plt.grid()
-       plt.xlabel('time [days]')
-       plt.ylabel('total rate [cubic meters per day]')
-       plt.legend(bbox_to_anchor=(0.71, 0.975), loc='upper left', borderaxespad=0.)
-       plt.show()
-
-   if __name__ == "__main__":
-       main()
-
-
 ------------------------------------
 To go further
 ------------------------------------
 
 **Feedback on this tutorial**
 
-This concludes the tutorial on setting up a Dead-Oil simulation in a channelized permeability field.
+This concludes the tutorial on setting up an immiscible two-phase flow simulation in a channelized permeability field.
 For any feedback on this tutorial, please submit
 a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 

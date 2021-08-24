@@ -1,7 +1,7 @@
 .. _TutorialDeadOilEgg:
 
 ########################################################
-Tutorial 5: Multiphase flow in the Egg model  
+Tutorial 5: Multiphase flow with wells
 ########################################################
 
 **Context**
