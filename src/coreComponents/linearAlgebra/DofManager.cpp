@@ -1522,17 +1522,9 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
       }
     }
 
-#if defined(GEOSX_USE_HYPRE_CUDA)
-    rows.move( LvArray::MemorySpace::cuda, false );
-    cols.move( LvArray::MemorySpace::cuda, false );
-    values.move( LvArray::MemorySpace::cuda, false );
-#endif
-
-    restrictor.insert( rows.data(),
-                       cols.data(),
-                       values.data(),
-                       rows.size(),
-                       1 );
+    restrictor.insert( rows.toViewConst(),
+                       cols.toViewConst(),
+                       values.toViewConst() );
 
 
   }

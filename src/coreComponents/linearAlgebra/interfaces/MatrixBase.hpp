@@ -489,6 +489,17 @@ protected:
                        localIndex const numRows,
                        localIndex const numCols ) = 0;
 
+  /**
+   * @brief Insert values stored in 3 linear vectors.
+   * @param rowIndices Array of global row indices
+   * @param colIndices Array of global column indices
+   * @param values Array of values
+   *
+   */
+  virtual void insert( arrayView1d<globalIndex const> const & rowIndices,
+                       arrayView1d<globalIndex const> const & colIndices,
+                       arrayView1d<real64 const> const & values ) = 0;
+
   ///@}
 
   /**
@@ -636,7 +647,7 @@ protected:
                      bool useTranspose = false ) const = 0;
 
   virtual void separateComponentFilter( MATRIX & dst,
-                                        localIndex const dofPerPoint ) {}
+                                        localIndex const dofPerPoint ) = 0;
 
 
 

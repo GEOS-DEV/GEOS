@@ -572,29 +572,41 @@ void HypreMatrix::insert( globalIndex const * rowIndices,
                           localIndex const numRows,
                           localIndex const  numCols)
 {
-
-#if defined(GEOSX_USE_HYPRE_CUDA)
-  array1d< HYPRE_Int > nCols;
-  nCols.resize(numRows);
-  for( int i=0; i<numRows; ++i )
-  {
-    nCols[i] = 1;
-  }
-  nCols.move( LvArray::MemorySpace::cuda, false );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
-                                                    numRows,
-                                                    nCols.data(),
-                                                    hypre::toHypreBigInt( rowIndices ),
-                                                    hypre::toHypreBigInt( colIndices ),
-                                                    values
-                                                   ) );
-#else
   for( localIndex i = 0; i < numRows; ++i )
   {
     insert( rowIndices[i], colIndices, values + numCols * i, numCols );
   }
-#endif
 }
+
+void HypreMatrix::insert( arrayView1d<globalIndex const> const & rowIndices,
+                          arrayView1d<globalIndex const> const & colIndices,
+                          arrayView1d<real64 const> const & values )
+{
+  GEOSX_LAI_ASSERT_EQ( rowIndices.size(), colIndices.size() );
+  GEOSX_LAI_ASSERT_GE( rowIndices.size(), values.size() );
+
+  HYPRE_BigInt const numRows = rowIndices.size();
+
+  array1d< HYPRE_Int > nCols(numRows);
+  for( int i=0; i<numRows; ++i )
+  {
+    nCols[i] = 1;
+  }
+#if defined(GEOSX_USE_HYPRE_CUDA)
+  rowIndices.move( LvArray::MemorySpace::cuda, false );
+  colIndices.move( LvArray::MemorySpace::cuda, false );
+  values.move( LvArray::MemorySpace::cuda, false );
+  nCols.move( LvArray::MemorySpace::cuda, false );
+#endif
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixAddToValues( m_ij_mat,
+                                                    numRows,
+                                                    nCols.data(),
+                                                    hypre::toHypreBigInt( rowIndices.data() ),
+                                                    hypre::toHypreBigInt( colIndices.data() ),
+                                                    values.data()
+                                                   ) );
+}
+
 
 void HypreMatrix::apply( HypreVector const & src,
                          HypreVector & dst ) const
@@ -907,75 +919,75 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
                                                      numCols.data() ) );
 
 
-  const HYPRE_Int maxEntries = *(std::max_element( numCols.begin(), numCols.end() ) );
-  const HYPRE_Int maxDstEntries = maxEntries / dofsPerNode;
+
+  HYPRE_Int const maxRowEntries = *(std::max_element( numCols.begin(), numCols.end() ) );
+  HYPRE_Int const maxDstEntries = maxRowEntries / dofsPerNode;
 
   CRSMatrix< real64 > tempMat;
   tempMat.resize( numLocRows, numGlobalCols(), maxDstEntries );
   CRSMatrixView< real64 > const tempMatView = tempMat.toView();
 
-  array1d< HYPRE_BigInt > colsData(maxEntries);
-  arrayView1d<HYPRE_BigInt> const cols = colsData;
+//#define SINGLE_READ
+#ifdef SINGLE_READ
+  HYPRE_Int const numEntries = std::accumulate( numCols.begin(), numCols.end(), 0, std::plus<HYPRE_Int>() );
 
-  array1d< real64 > valuesData(maxEntries);
-  arrayView1d< real64 > const values = valuesData;
-
-  array1d< HYPRE_BigInt > srcIndicesData(maxEntries);
+  array1d< HYPRE_BigInt > srcIndicesData(numEntries);
   arrayView1d< HYPRE_BigInt > srcIndices = srcIndicesData;
 
-  array1d< real64 > srcValuesData(maxEntries);
+  array1d< real64 > srcValuesData( numEntries);
   arrayView1d< real64 > srcValues = srcValuesData;
 
-  array1d<HYPRE_Int> countsData(numLocRows);
-  arrayView1d<HYPRE_Int> const counts = countsData;
+  GEOSX_LAI_CHECK_ERROR( hypre_IJMatrixGetValuesParCSR( m_ij_mat,
+                                                        numLocRows,
+                                                        numCols.data(),
+                                                        rows.data(),
+                                                        srcIndices.data(),
+                                                        srcValues.data() ) );
 
-  for( globalIndex r = 0; r < numLocRows; ++r )
-  {
-    counts[0] = 0;
-  }
 
-
-//#define HYPREMATRIX_SCF_RAJA
-#ifndef HYPREMATRIX_SCF_RAJA
-  for( HYPRE_Int r = 0; r < numLocRows; ++r )
 #else
+  array2d< HYPRE_BigInt > srcIndicesData(numLocRows, maxRowEntries);
+  arrayView2d< HYPRE_BigInt > srcIndices = srcIndicesData;
+
+  array2d< real64 > srcValuesData( numLocRows, maxRowEntries);
+  arrayView2d< real64 > srcValues = srcValuesData;
+#endif
+
+
   forAll<parallelHostPolicy>( numLocRows,
                               [&] GEOSX_HOST
                               ( HYPRE_Int const r )
-#endif
   {
     HYPRE_BigInt const rowComponent = rows[r] % dofsPerNode;
+#ifdef SINGLE_READ
+
+
+#else
 
     GEOSX_LAI_CHECK_ERROR( hypre_IJMatrixGetValuesParCSR( m_ij_mat,
                                                           -1,
                                                           &(numCols[r]),
                                                           &(rows[r]),
-                                                          srcIndices.data(),
-                                                          srcValues.data() ) );
-
-
+                                                          srcIndices[r],
+                                                          srcValues[r] ) );
 
     for( localIndex c = 0; c < numCols[r]; ++c )
     {
-      globalIndex const col = srcIndices( c );
+      globalIndex const col = srcIndices( r, c );
       globalIndex const colComponent = col % dofsPerNode;
       if( rowComponent == colComponent )
       {
-        cols[counts[r]] = col;
-        values[counts[r]] = srcValues( c );
-        ++counts[r];
+        tempMatView.insertNonZero( r, col, srcValues(r,c) );
       }
     }
-
-    tempMatView.insertNonZeros( r, cols.data(), values.data(), counts[r] );
-  }
-#ifdef HYPREMATRIX_SCF_RAJA
-  );
 #endif
+
+
+  } );
+
   dst.create( tempMatView.toViewConst(), MPI_COMM_GEOSX );
   dst.setDofManager( dofManager() );
 
-#undef HYPREMATRIX_SCF_RAJA
 }
 
 void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale, bool samePattern )
