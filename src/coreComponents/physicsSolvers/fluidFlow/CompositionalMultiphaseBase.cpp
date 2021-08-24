@@ -204,8 +204,6 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 1 >( m_numPhases );
       subRegion.registerWrapper< array3d< real64, compflow::LAYOUT_PHASE_COMP > >( viewKeyStruct::phaseComponentFractionOldString() ).
         reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityString() );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::porosityOldString() );
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();

@@ -259,13 +259,10 @@ public:
     // intermediate fields
     static constexpr char const * mobilityString() { return "mobility"; }
     static constexpr char const * dMobility_dPressureString() { return "dMobility_dPressure"; }
-    static constexpr char const * porosityString() { return "porosity"; }
 
     // backup fields
-    static constexpr char const * porosityOldString() { return "porosityOld"; }
     static constexpr char const * densityOldString() { return "densityOld"; }
     static constexpr char const * transTMultString() { return "transTMult"; }
-    static constexpr char const * poroMultString() { return "poroMult"; }
   };
 
   /**
@@ -312,17 +309,6 @@ protected:
    */
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
-  /**
-   * @brief Extract pore volume multiplier array from a subregion.
-   * @param subRegion the subregion reference
-   * @return array view for pore volume multiplier
-   *
-   * This function allows derived solvers to specialize access to pore volume multiplier that
-   * is used in accumulation kernel. For example, it is used by SinglePhaseProppantBase to use
-   * multiplier produced by ProppantTransport solver, which we otherwise don't know about.
-   * This design should DEFINITELY be revisited.
-   */
-  virtual arrayView1d< real64 const > getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;

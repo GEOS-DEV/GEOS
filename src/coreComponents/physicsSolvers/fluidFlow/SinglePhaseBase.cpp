@@ -95,8 +95,6 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.template registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultString() ).
         setDefaultValue( 1.0 ).
         reference().template resizeDimension< 1 >( 3 );
-      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::poroMultString() ).
-        setDefaultValue( 1.0 );
     } );
 
     FaceManager & faceManager = meshLevel.getFaceManager();
@@ -116,11 +114,6 @@ void SinglePhaseBase::validateFluidModels( DomainPartition const & domain ) cons
     MeshLevel const & meshLevel = dynamicCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
     validateModelMapping< SingleFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
   }
-}
-
-arrayView1d< real64 const > SinglePhaseBase::getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const
-{
-  return subRegion.getReference< array1d< real64 > >( viewKeyStruct::poroMultString() );
 }
 
 SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( ConstitutiveBase const & fluid ) const

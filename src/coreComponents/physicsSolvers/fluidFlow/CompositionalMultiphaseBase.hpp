@@ -286,10 +286,6 @@ public:
 
     static constexpr char const * phaseMobilityOldString() { return "phaseMobilityOld"; }
 
-    static constexpr char const * porosityString() { return "porosity"; }
-
-    static constexpr char const * porosityOldString() { return "porosityOld"; }
-
     // these are allocated on faces for BC application until we can get constitutive models on faces
     static constexpr char const * phaseViscosityString() { return "phaseViscosity"; }
 

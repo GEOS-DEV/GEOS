@@ -90,15 +90,18 @@ struct FluxKernel
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
-    constexpr localIndex MAX_NUM_ELEMS     = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
-    constexpr localIndex MAX_STENCIL_SIZE  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
-
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
+    constexpr localIndex MAX_NUM_ELEMS     = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
+    constexpr localIndex MAX_STENCIL_SIZE  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
 
-    forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [stencilWrapper, dt, rankOffset, dofNumber, ghostRank,
+															  pres, dPres, gravCoef, dens, dDens_dPres, mob,
+															  dMob_dPres, permeability, dPerm_dPres,
+															  seri, sesri, sei, MAX_NUM_ELEMS, MAX_STENCIL_SIZE,
+															  localMatrix, localRhs] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
       localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
       localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
