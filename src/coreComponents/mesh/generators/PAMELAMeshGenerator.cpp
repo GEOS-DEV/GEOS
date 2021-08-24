@@ -298,14 +298,12 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
   domain.getMetisNeighborList() = m_pamelaMesh->getNeighborList();
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-
   //TODO for the moment we only consider on mesh level "Level0"
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( "Level0" );
-  NodeManager & nodeManager = meshLevel0.getNodeManager();
+  meshBody.registerGroup< MeshLevel >( "Level0" );
+
   CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
 
   // Dealing with nodes
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > & X = cellBlockManager.getNodesPositions();
   real64 const scaleFactor[3] = { m_scale, m_scale, m_scale * ( m_isZReverse ? -1 : 1 ) };
   real64 const lengthScale = importNodes( *m_pamelaMesh, scaleFactor, cellBlockManager );
   meshBody.setGlobalLengthScale( lengthScale );
