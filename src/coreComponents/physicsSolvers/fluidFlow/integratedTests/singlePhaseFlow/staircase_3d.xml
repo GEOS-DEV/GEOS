@@ -105,7 +105,7 @@
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.05"
+      defaultReferencePorosity="0.1"
       referencePressure="0.0"
       compressibility="1.0e-9"/>
 
@@ -139,7 +139,7 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Silo
+    <VTK
       name="siloOutput"/>
 
     <Restart
