@@ -498,7 +498,7 @@ a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/iss
 
 **Next tutorial**
 
-In :ref:`TutorialCO2FieldCaseUnstructuredGrid`, we learn how to run a
+In :ref:`TutorialCO2FieldCase`, we learn how to run a
 more complex test case based on an unstructured mesh.
 
 **For more details**
