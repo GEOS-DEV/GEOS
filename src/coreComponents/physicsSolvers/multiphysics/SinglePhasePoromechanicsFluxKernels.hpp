@@ -92,16 +92,16 @@ struct EmbeddedSurfaceFluxKernel
    *
    *
    */
-  template< localIndex MAX_STENCIL_SIZE >
+  template< localIndex MAX_NUM_OF_CONNECTIONS >
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
-           real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
-           real64 const (&dTrans_dAper)[MAX_STENCIL_SIZE],
+           real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
+           real64 const (&dTrans_dPres)[MAX_NUM_OF_CONNECTIONS][2],
+           real64 const (&dTrans_dAper)[MAX_NUM_OF_CONNECTIONS][2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -177,16 +177,16 @@ struct FaceElementFluxKernel
    *
    *
    */
-  template< localIndex MAX_STENCIL_SIZE >
+  template< localIndex MAX_NUM_OF_CONNECTIONS >
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
-           real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
-           real64 const (&dTrans_dAper)[MAX_STENCIL_SIZE],
+           real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
+           real64 const (&dTrans_dPres)[MAX_NUM_OF_CONNECTIONS][2],
+           real64 const (&dTrans_dAper)[MAX_NUM_OF_CONNECTIONS][2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,

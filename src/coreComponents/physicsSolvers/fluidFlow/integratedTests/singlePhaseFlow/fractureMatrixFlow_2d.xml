@@ -153,7 +153,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+      permeabilityComponents="{ 5.0e-19, 5.0e-19, 5.0e-19 }"/>
 
     <PressurePorosity
       name="fracturePorosity"
@@ -215,7 +215,7 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Silo
+    <VTK
       name="siloOutput"
       plotFileRoot="fractureMatrixFlow"/>
 

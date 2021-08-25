@@ -54,6 +54,9 @@ struct CellElementStencilTPFA_Traits
 
   /// Maximum number of points in a stencil (this is 2 for TPFA)
   static constexpr localIndex MAX_STENCIL_SIZE = 2;
+
+  /// Maximum number of connections in a stencil
+  static constexpr localIndex MAX_NUM_OF_CONNECTIONS = 1;
 };
 
 class CellElementStencilTPFAWrapper : public StencilWrapperBase< CellElementStencilTPFA_Traits >,
@@ -82,8 +85,8 @@ public:
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar,
-                       real64 ( &weight )[2],
-                       real64 ( &dWeight_dVar )[2] ) const;
+                       real64 ( &weight )[1][2],
+                       real64 ( &dWeight_dVar )[1][2] ) const;
 
   /**
    * @brief Give the number of stencil entries.
@@ -206,8 +209,8 @@ GEOSX_HOST_DEVICE
 inline void CellElementStencilTPFAWrapper::computeWeights( localIndex iconn,
                                                            CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                                                            CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                                                           real64 (& weight)[2],
-                                                           real64 (& dWeight_dVar )[2] ) const
+                                                           real64 (& weight)[1][2],
+                                                           real64 (& dWeight_dVar )[1][2] ) const
 {
   GEOSX_UNUSED_VAR( dCoeff_dVar );
 
@@ -259,11 +262,11 @@ inline void CellElementStencilTPFAWrapper::computeWeights( localIndex iconn,
   real64 const value = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
   for( localIndex ke = 0; ke < 2; ++ke )
   {
-    weight[ke] = m_transMultiplier[iconn] * value * (ke == 0 ? 1 : -1);
+    weight[0][ke] = m_transMultiplier[iconn] * value * (ke == 0 ? 1 : -1);
   }
 
-  dWeight_dVar[0] = 0.0;
-  dWeight_dVar[1] = 0.0;
+  dWeight_dVar[0][0] = 0.0;
+  dWeight_dVar[0][1] = 0.0;
 }
 
 

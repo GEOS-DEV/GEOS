@@ -53,6 +53,9 @@ struct EmbeddedSurfaceToCellStencil_Traits
 
   /// Maximum number of points in a stencil (this is 2 for TPFA)
   static constexpr localIndex MAX_STENCIL_SIZE = 2;
+
+  /// Maximum number of connections in a stencil
+  static constexpr localIndex MAX_NUM_OF_CONNECTIONS = 1;
 };
 
 
@@ -110,17 +113,17 @@ public:
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar,
-                       real64 ( &weight )[MAX_STENCIL_SIZE],
-                       real64 ( &dWeight_dVar )[MAX_STENCIL_SIZE] ) const;
+                       real64 ( &weight )[1][2],
+                       real64 ( &dWeight_dVar )[1][2] ) const;
 
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar1,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar2,
-                       real64 ( &weight )[MAX_STENCIL_SIZE],
-                       real64 ( &dWeight_dVar1 )[MAX_STENCIL_SIZE],
-                       real64 ( &dWeight_dVar2 )[MAX_STENCIL_SIZE] ) const;
+                       real64 ( &weight )[1][2],
+                       real64 ( &dWeight_dVar1 )[1][2],
+                       real64 ( &dWeight_dVar2 )[1][2] ) const;
 
 
 private:
@@ -204,8 +207,8 @@ GEOSX_HOST_DEVICE
 inline void EmbeddedSurfaceToCellStencilWrapper::computeWeights( localIndex iconn,
                                                                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                                                                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                                                                 real64 ( & weight )[MAX_STENCIL_SIZE],
-                                                                 real64 ( & dWeight_dVar )[MAX_STENCIL_SIZE] ) const
+                                                                 real64 ( & weight )[1][2],
+                                                                 real64 ( & dWeight_dVar )[1][2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
@@ -222,11 +225,11 @@ inline void EmbeddedSurfaceToCellStencilWrapper::computeWeights( localIndex icon
 
   real64 const value =  harmonicWeight;
 
-  weight[0] = value;
-  weight[1] = -value;
+  weight[0][0] = value;
+  weight[0][1] = -value;
 
-  dWeight_dVar[0] = 0.0 * dCoeff_dVar[er0][esr0][ei0][0][0];
-  dWeight_dVar[1] = 0.0;
+  dWeight_dVar[0][0] = 0.0 * dCoeff_dVar[er0][esr0][ei0][0][0];
+  dWeight_dVar[0][1] = 0.0;
 }
 
 GEOSX_HOST_DEVICE
@@ -234,9 +237,9 @@ inline void EmbeddedSurfaceToCellStencilWrapper::computeWeights( localIndex icon
                                                                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                                                                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
                                                                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
-                                                                 real64 (& weight)[MAX_STENCIL_SIZE],
-                                                                 real64 (& dWeight_dVar1 )[MAX_STENCIL_SIZE],
-                                                                 real64 (& dWeight_dVar2 )[MAX_STENCIL_SIZE] ) const
+                                                                 real64 (& weight)[1][2],
+                                                                 real64 (& dWeight_dVar1 )[1][2],
+                                                                 real64 (& dWeight_dVar2 )[1][2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
@@ -253,14 +256,14 @@ inline void EmbeddedSurfaceToCellStencilWrapper::computeWeights( localIndex icon
 
   real64 const value =  harmonicWeight;
 
-  weight[0] = value;
-  weight[1] = -value;
+  weight[0][0] = value;
+  weight[0][1] = -value;
 
-  dWeight_dVar1[0] = 0.0 * dCoeff_dVar1[er0][esr0][ei0][0][0];
-  dWeight_dVar1[1] = 0.0;
+  dWeight_dVar1[0][0] = 0.0 * dCoeff_dVar1[er0][esr0][ei0][0][0];
+  dWeight_dVar1[0][1] = 0.0;
 
-  dWeight_dVar2[0] = 0.0 * dCoeff_dVar2[er0][esr0][ei0][0][0];
-  dWeight_dVar2[1] = 0.0;
+  dWeight_dVar2[0][0] = 0.0 * dCoeff_dVar2[er0][esr0][ei0][0][0];
+  dWeight_dVar2[0][1] = 0.0;
 }
 } /* namespace geosx */
 

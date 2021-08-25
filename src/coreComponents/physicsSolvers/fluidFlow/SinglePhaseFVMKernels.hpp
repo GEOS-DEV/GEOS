@@ -96,11 +96,12 @@ struct FluxKernel
 
     constexpr localIndex MAX_NUM_ELEMS     = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
     constexpr localIndex MAX_STENCIL_SIZE  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
+    constexpr localIndex MAX_NUM_OF_CONNECTIONS  = STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS;
 
     forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [stencilWrapper, dt, rankOffset, dofNumber, ghostRank,
-															  pres, dPres, gravCoef, dens, dDens_dPres, mob,
-															  dMob_dPres, permeability, dPerm_dPres,
-															  seri, sesri, sei, localMatrix, localRhs] GEOSX_HOST_DEVICE ( localIndex const iconn )
+                                                              pres, dPres, gravCoef, dens, dDens_dPres, mob,
+                                                              dMob_dPres, permeability, dPerm_dPres,
+                                                              seri, sesri, sei, localMatrix, localRhs] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
       localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
       localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
@@ -111,18 +112,18 @@ struct FluxKernel
       stackArray2d< real64, MAX_NUM_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, stencilSize );
 
       // compute transmissibility
-      real64 transmissiblity[MAX_STENCIL_SIZE], dTrans_dPres[MAX_STENCIL_SIZE];
+      real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2];
       stencilWrapper.computeWeights( iconn,
                                      permeability,
                                      dPerm_dPres,
-                                     transmissiblity,
+                                     transmissibility,
                                      dTrans_dPres );
 
       compute( numFluxElems,
                seri[iconn],
                sesri[iconn],
                sei[iconn],
-               transmissiblity,
+               transmissibility,
                dTrans_dPres,
                pres,
                dPres,
@@ -170,15 +171,15 @@ struct FluxKernel
    *
    *
    */
-  template< localIndex MAX_STENCIL_SIZE >
+  template< localIndex MAX_NUM_OF_CONNECTIONS >
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
-           real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
+           real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
+           real64 const (&dTrans_dPres)[MAX_NUM_OF_CONNECTIONS][2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -192,18 +193,22 @@ struct FluxKernel
   {
 
     localIndex k[2];
+    localIndex connectionIndex = 0;;
     for( k[0]=0; k[0]<numFluxElems; ++k[0] )
     {
       for( k[1]=k[0]+1; k[1]<numFluxElems; ++k[1] )
       {
-
         real64 fluxVal = 0.0;
         real64 dFlux_dTrans = 0.0;
-        real64 trans[2] = {transmissibility[k[0]], transmissibility[k[1]]};
-        real64 dTrans[2] = { dTrans_dPres[k[0]], dTrans_dPres[k[1]] };
+        real64 const trans[2] = {transmissibility[connectionIndex][0], transmissibility[connectionIndex][1]};
+        real64 const dTrans[2] = { dTrans_dPres[connectionIndex][0], dTrans_dPres[connectionIndex][1] };
         real64 dFlux_dP[2] = {0.0, 0.0};
+        localIndex const regionIndex[2]    = {seri[k[0]], seri[k[1]]};
+        localIndex const subRegionIndex[2] = {sesri[k[0]], sesri[k[1]]};
+        localIndex const elementIndex[2]   = {sei[k[0]], sei[k[1]]};
 
-        computeSinglePhaseFlux( seri, sesri, sei,
+
+        computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
                                 trans,
                                 dTrans,
                                 pres,
@@ -225,6 +230,8 @@ struct FluxKernel
         fluxJacobian[k[0]][k[1]] += dt * dFlux_dP[1];
         fluxJacobian[k[1]][k[0]] -= dt * dFlux_dP[0];
         fluxJacobian[k[1]][k[1]] -= dt * dFlux_dP[1];
+
+        connectionIndex++;
       }
     }
   }

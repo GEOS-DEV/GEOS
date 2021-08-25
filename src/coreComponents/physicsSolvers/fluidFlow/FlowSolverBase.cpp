@@ -252,7 +252,7 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh )
 FlowSolverBase::~FlowSolverBase() = default;
 
 void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRegion,
-                                                localIndex const targetIndex ) const
+                                                    localIndex const targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -270,7 +270,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
 }
 
 void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
-                                                localIndex const targetIndex ) const
+                                                    localIndex const targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
 

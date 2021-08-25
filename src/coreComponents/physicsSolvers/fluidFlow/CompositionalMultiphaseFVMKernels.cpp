@@ -247,8 +247,8 @@ FluxKernel::
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
-           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
-           real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
+           real64 const (&transmissibility)[2],
+           real64 const (&dTrans_dPres)[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -549,6 +549,7 @@ FluxKernel::
 
   constexpr localIndex MAX_NUM_ELEMS = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
   constexpr localIndex MAX_STENCIL_SIZE  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
+  constexpr localIndex MAX_NUM_OF_CONNECTIONS  = STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS;
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
@@ -563,11 +564,11 @@ FluxKernel::
     stackArray2d< real64, MAX_NUM_ELEMS * NC * MAX_STENCIL_SIZE * NDOF > localFluxJacobian( numFluxElems * NC, stencilSize * NDOF );
 
     // compute transmissibility
-    real64 transmissiblity[MAX_STENCIL_SIZE], dTrans_dPres[MAX_STENCIL_SIZE];
+    real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2];
     stencilWrapper.computeWeights( iconn,
                                    permeability,
                                    dPerm_dPres,
-                                   transmissiblity,
+                                   transmissibility,
                                    dTrans_dPres );
 
 
@@ -578,8 +579,8 @@ FluxKernel::
                                                                 seri[iconn],
                                                                 sesri[iconn],
                                                                 sei[iconn],
-                                                                transmissiblity,
-                                                                dTrans_dPres,
+                                                                transmissibility[0],
+                                                                dTrans_dPres[0],
                                                                 pres,
                                                                 dPres,
                                                                 gravCoef,
@@ -709,7 +710,7 @@ CFLFluxKernel::
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
-           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
+           real64 const (&transmissibility)[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
            ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
@@ -807,12 +808,14 @@ CFLFluxKernel::
 
   localIndex constexpr NUM_ELEMS   = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
   localIndex constexpr MAX_STENCIL_SIZE   = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
+  localIndex constexpr MAX_NUM_OF_CONNECTIONS  = STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS;
 
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
     // compute transmissibility
-    real64 transmissiblity[MAX_STENCIL_SIZE], dTrans_dPres[MAX_STENCIL_SIZE];
+    real64 transmissiblity[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2];
+
     stencilWrapper.computeWeights( iconn,
                                    permeability,
                                    dPerm_dPres,
@@ -827,7 +830,7 @@ CFLFluxKernel::
                                                                seri[iconn],
                                                                sesri[iconn],
                                                                sei[iconn],
-                                                               transmissiblity,
+                                                               transmissiblity[0],
                                                                pres,
                                                                gravCoef,
                                                                phaseRelPerm,

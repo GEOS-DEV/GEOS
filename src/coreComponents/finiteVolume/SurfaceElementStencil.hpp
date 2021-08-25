@@ -73,6 +73,9 @@ struct SurfaceElementStencil_Traits
 
   /// Maximum number of points in a stencil
   static localIndex constexpr MAX_STENCIL_SIZE = 6;
+
+  /// Maximum number of connections in a stencil
+  static localIndex constexpr MAX_NUM_OF_CONNECTIONS = MAX_STENCIL_SIZE * (MAX_STENCIL_SIZE - 1) / 2;
 };
 
 
@@ -130,8 +133,8 @@ public:
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar,
-                       real64 ( &weight )[MAX_STENCIL_SIZE],
-                       real64 ( &dWeight_dVar )[MAX_STENCIL_SIZE] ) const;
+                       real64 ( &weight )[MAX_NUM_OF_CONNECTIONS][2],
+                       real64 ( &dWeight_dVar )[MAX_NUM_OF_CONNECTIONS][2] ) const;
 
 
   GEOSX_HOST_DEVICE
@@ -139,9 +142,9 @@ public:
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar1,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar2,
-                       real64 ( &weight )[MAX_STENCIL_SIZE],
-                       real64 ( &dWeight_dVar1 )[MAX_STENCIL_SIZE],
-                       real64 ( &dWeight_dVar2 )[MAX_STENCIL_SIZE] ) const;
+                       real64 ( &weight )[MAX_NUM_OF_CONNECTIONS][2],
+                       real64 ( &dWeight_dVar1 )[MAX_NUM_OF_CONNECTIONS][2],
+                       real64 ( &dWeight_dVar2 )[MAX_NUM_OF_CONNECTIONS][2] ) const;
 
   ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
@@ -244,41 +247,65 @@ GEOSX_HOST_DEVICE
 inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
                                                           CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                                                           CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                                                          real64 ( & weight )[MAX_STENCIL_SIZE],
-                                                          real64 ( & dWeight_dVar )[MAX_STENCIL_SIZE] ) const
+                                                          real64 ( & weight )[MAX_NUM_OF_CONNECTIONS][2],
+                                                          real64 ( & dWeight_dVar )[MAX_NUM_OF_CONNECTIONS][2] ) const
 {
-  localIndex const er0  =  m_elementRegionIndices[iconn][0];
-  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
-  localIndex const ei0  =  m_elementIndices[iconn][0];
 
-  localIndex const er1  =  m_elementRegionIndices[iconn][1];
-  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
-  localIndex const ei1  =  m_elementIndices[iconn][1];
+  // TODO: this should become star-delta method
+  real64 sumOfTrans = 0.0;
+  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
+  {
+    localIndex const er  =  m_elementRegionIndices[iconn][k];
+    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+    localIndex const ei  =  m_elementIndices[iconn][k];
 
-  real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
-  real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
+    sumOfTrans += coefficient[er][esr][ei][0][0] * m_weights[iconn][0];
+  }
 
-  real64 const harmonicWeight   = t0*t1 / (t0+t1);
-  real64 const arithmeticWeight = (t0+t1)/2;
+  localIndex k[2];
+  localIndex connectionIndex = 0;
+  for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
+  {
+    for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
+    {
+      localIndex const er0  =  m_elementRegionIndices[iconn][k[0]];
+      localIndex const esr0 =  m_elementSubRegionIndices[iconn][k[0]];
+      localIndex const ei0  =  m_elementIndices[iconn][k[0]];
 
-  real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
+      localIndex const er1  =  m_elementRegionIndices[iconn][k[1]];
+      localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
+      localIndex const ei1  =  m_elementIndices[iconn][k[1]];
 
-  weight[0] = value;
-  weight[1] = -value;
+      real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
+      real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
 
-  real64 const dt0 = m_weights[iconn][0] * dCoeff_dVar[er0][esr0][ei0][0][0];
-  real64 const dt1 = m_weights[iconn][1] * dCoeff_dVar[er1][esr1][ei1][0][0];
+      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
+      real64 const arithmeticWeight = 0.25 * (t0+t1);
 
-  real64 dHarmonic[2];
-  dHarmonic[0] = ( dt0 * t1 * (t0 + t1 ) - dt0 * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
-  dHarmonic[1] = ( t0 * dt1 * (t0 + t1 ) - dt1 * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
+      real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
 
-  real64 dArithmetic[2];
-  dArithmetic[0] = dt0 / 2;
-  dArithmetic[1] = dt1 / 2;
+      weight[connectionIndex][0] = value;
+      weight[connectionIndex][1] = -value;
 
-  dWeight_dVar[0] = m_meanPermCoefficient * dHarmonic[0] + (1 - m_meanPermCoefficient) * dArithmetic[0];
-  dWeight_dVar[1] = -( m_meanPermCoefficient * dHarmonic[1] + (1 - m_meanPermCoefficient) * dArithmetic[1] );
+      real64 const dt0 = m_weights[iconn][0] * dCoeff_dVar[er0][esr0][ei0][0][0];
+      real64 const dt1 = m_weights[iconn][1] * dCoeff_dVar[er1][esr1][ei1][0][0];
+
+      real64 dHarmonic[2];
+      dHarmonic[0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+      dHarmonic[1] = ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+
+      real64 dArithmetic[2];
+      dArithmetic[0] = 0.25 * dt0;
+      dArithmetic[1] = 0.25 * dt1;
+
+      dWeight_dVar[connectionIndex][0] = m_meanPermCoefficient * dHarmonic[0] + (1 - m_meanPermCoefficient) * dArithmetic[0];
+      dWeight_dVar[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic[1] + (1 - m_meanPermCoefficient) * dArithmetic[1] );
+
+      connectionIndex++;
+    }
+  }
+
+
 }
 
 
@@ -287,56 +314,78 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
                                                           CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                                                           CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
                                                           CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
-                                                          real64 (& weight)[MAX_STENCIL_SIZE],
-                                                          real64 (& dWeight_dVar1 )[MAX_STENCIL_SIZE],
-                                                          real64 (& dWeight_dVar2 )[MAX_STENCIL_SIZE] ) const
+                                                          real64 (& weight)[MAX_NUM_OF_CONNECTIONS][2],
+                                                          real64 (& dWeight_dVar1 )[MAX_NUM_OF_CONNECTIONS][2],
+                                                          real64 (& dWeight_dVar2 )[MAX_NUM_OF_CONNECTIONS][2] ) const
 {
-  localIndex const er0  =  m_elementRegionIndices[iconn][0];
-  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
-  localIndex const ei0  =  m_elementIndices[iconn][0];
+  // TODO: this should become star-delta method
+  real64 sumOfTrans = 0.0;
+  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
+  {
+    localIndex const er  =  m_elementRegionIndices[iconn][k];
+    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+    localIndex const ei  =  m_elementIndices[iconn][k];
 
-  localIndex const er1  =  m_elementRegionIndices[iconn][1];
-  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
-  localIndex const ei1  =  m_elementIndices[iconn][1];
+    sumOfTrans += coefficient[er][esr][ei][0][0] * m_weights[iconn][0];
+  }
 
-  real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
-  real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
 
-  real64 const harmonicWeight   = t0*t1 / (t0+t1);
-  real64 const arithmeticWeight = (t0+t1) / 2;
+  localIndex k[2];
+  localIndex connectionIndex = 0;
+  for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
+  {
+    for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
+    {
+      localIndex const er0  =  m_elementRegionIndices[iconn][k[0]];
+      localIndex const esr0 =  m_elementSubRegionIndices[iconn][k[0]];
+      localIndex const ei0  =  m_elementIndices[iconn][k[0]];
 
-  real64 const value = m_meanPermCoefficient * harmonicWeight + 0.5 * (1 - m_meanPermCoefficient) * arithmeticWeight;
+      localIndex const er1  =  m_elementRegionIndices[iconn][k[1]];
+      localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
+      localIndex const ei1  =  m_elementIndices[iconn][k[1]];
 
-  weight[0] = value;
-  weight[1] = -value;
+      real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
+      real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
 
-  real64 const dt0_dvar1 = m_weights[iconn][0] * dCoeff_dVar1[er0][esr0][ei0][0][0];
-  real64 const dt1_dvar1 = m_weights[iconn][1] * dCoeff_dVar1[er1][esr1][ei1][0][0];
+      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
+      real64 const arithmeticWeight = 0.25 * (t0+t1);
 
-  real64 dHarmonic_dvar1[2];
-  dHarmonic_dvar1[0] = ( dt0_dvar1 * t1 * (t0 + t1 ) - dt0_dvar1 * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
-  dHarmonic_dvar1[1] = ( dt0_dvar1 * t1 * (t0 + t1 ) - dt0_dvar1 * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
+      real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
 
-  real64 dArithmetic_dvar1[2];
-  dArithmetic_dvar1[0] = dt0_dvar1 / 2;
-  dArithmetic_dvar1[1] = dt1_dvar1 / 2;
+      weight[connectionIndex][0] = value;
+      weight[connectionIndex][1] = -value;
 
-  dWeight_dVar1[0] =    m_meanPermCoefficient * dHarmonic_dvar1[0] + 0.5 * (1 - m_meanPermCoefficient) * dArithmetic_dvar1[0];
-  dWeight_dVar1[1] = -( m_meanPermCoefficient * dHarmonic_dvar1[1] + 0.5 * (1 - m_meanPermCoefficient) * dArithmetic_dvar1[1] );
+      real64 const dt0_dvar1 = m_weights[iconn][0] * dCoeff_dVar1[er0][esr0][ei0][0][0];
+      real64 const dt1_dvar1 = m_weights[iconn][1] * dCoeff_dVar1[er1][esr1][ei1][0][0];
 
-  real64 const dt0_dvar2 = m_weights[iconn][0] * dCoeff_dVar2[er0][esr0][ei0][0][0];
-  real64 const dt1_dvar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][0];
+      real64 dHarmonic_dvar1[2];
+      dHarmonic_dvar1[0] = ( dt0_dvar1 * t1 * sumOfTrans - dt0_dvar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+      dHarmonic_dvar1[1] = ( dt0_dvar1 * t1 * sumOfTrans - dt0_dvar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 
-  real64 dHarmonic_dvar2[2];
-  dHarmonic_dvar2[0] = ( dt0_dvar2 * t1 * (t0 + t1 ) - dt0_dvar2 * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
-  dHarmonic_dvar2[1] = ( t0 * dt1_dvar2 * (t0 + t1 ) - dt1_dvar2 * t0 * t1 ) / ( (t0 + t1) * (t0 + t1) );
+      real64 dArithmetic_dvar1[2];
+      dArithmetic_dvar1[0] = 0.25 * dt0_dvar1;
+      dArithmetic_dvar1[1] = 0.25 * dt1_dvar1;
 
-  real64 dArithmetic_dvar2[2];
-  dArithmetic_dvar2[0] = dt0_dvar2 / 2;
-  dArithmetic_dvar2[1] = dt1_dvar2 / 2;
+      dWeight_dVar1[connectionIndex][0] =    m_meanPermCoefficient * dHarmonic_dvar1[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar1[0];
+      dWeight_dVar1[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic_dvar1[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar1[1] );
 
-  dWeight_dVar2[0] =   ( m_meanPermCoefficient * dHarmonic_dvar2[0] + 0.5 * (1 - m_meanPermCoefficient) * dArithmetic_dvar2[0] );
-  dWeight_dVar2[1] = -( m_meanPermCoefficient * dHarmonic_dvar2[1] + 0.5 * (1 - m_meanPermCoefficient) * dArithmetic_dvar2[1] );
+      real64 const dt0_dvar2 = m_weights[iconn][0] * dCoeff_dVar2[er0][esr0][ei0][0][0];
+      real64 const dt1_dvar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][0];
+
+      real64 dHarmonic_dvar2[2];
+      dHarmonic_dvar2[0] = ( dt0_dvar2 * t1 * sumOfTrans - dt0_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+      dHarmonic_dvar2[1] = ( t0 * dt1_dvar2 * sumOfTrans - dt1_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+
+      real64 dArithmetic_dvar2[2];
+      dArithmetic_dvar2[0] = 0.25 * dt0_dvar2;
+      dArithmetic_dvar2[1] = 0.25 * dt1_dvar2;
+
+      dWeight_dVar2[connectionIndex][0] =   ( m_meanPermCoefficient * dHarmonic_dvar2[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[0] );
+      dWeight_dVar2[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic_dvar2[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[1] );
+
+      connectionIndex++;
+    }
+  }
 }
 
 

@@ -8,7 +8,8 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      permeabilityNames="{ fracturePerm }"
+      logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"/>

@@ -148,6 +148,7 @@ void EmbeddedSurfaceFluxKernel::
 {
   constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
   constexpr localIndex MAX_STENCIL_SIZE = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
+  constexpr localIndex MAX_NUM_OF_CONNECTIONS  = SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS;
 
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
@@ -166,7 +167,7 @@ void EmbeddedSurfaceFluxKernel::
     stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, numDofs );
 
     // compute transmissibility
-    real64 transmissibility[MAX_STENCIL_SIZE], dTrans_dPres[MAX_STENCIL_SIZE], dTrans_dAper[MAX_STENCIL_SIZE];
+    real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2], dTrans_dAper[MAX_NUM_OF_CONNECTIONS][2];
     stencilWrapper.computeWeights( iconn,
                                    permeability,
                                    dPerm_dPres,
@@ -222,15 +223,15 @@ void EmbeddedSurfaceFluxKernel::
   } );
 }
 
-template< localIndex MAX_STENCIL_SIZE >
+template< localIndex MAX_NUM_OF_CONNECTIONS >
 void EmbeddedSurfaceFluxKernel::
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[MAX_STENCIL_SIZE],
-           real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
-           real64 const (&dTrans_dAper)[MAX_STENCIL_SIZE],
+           real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
+           real64 const (&dTrans_dPres)[MAX_NUM_OF_CONNECTIONS][2],
+           real64 const (&dTrans_dAper)[MAX_NUM_OF_CONNECTIONS][2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -246,11 +247,15 @@ void EmbeddedSurfaceFluxKernel::
 
   real64 fluxVal = 0.0;
   real64 dFlux_dTrans = 0.0;
-  real64 trans[2] = {transmissibility[0], transmissibility[1]};
-  real64 dTrans[2] = { dTrans_dPres[0], dTrans_dPres[1] };
+  real64 trans[2] = {transmissibility[0][0], transmissibility[0][1]};
+  real64 dTrans[2] = { dTrans_dPres[0][0], dTrans_dPres[0][1] };
   real64 dFlux_dP[2] = {0.0, 0.0};
+  localIndex const regionIndex[2]    = {seri[0], seri[1]};
+  localIndex const subRegionIndex[2] = {sesri[0], sesri[1]};
+  localIndex const elementIndex[2]   = {sei[0], sei[1]};
 
-  computeSinglePhaseFlux( seri, sesri, sei,
+
+  computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
                           trans,
                           dTrans,
                           pres,
@@ -271,8 +276,8 @@ void EmbeddedSurfaceFluxKernel::
   flux[1] = -dt * fluxVal;
 
   real64 dFlux_dAper[2] = {0.0, 0.0};
-  dFlux_dAper[0] = dt * dFlux_dTrans * dTrans_dAper[0];
-  dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dAper[1];
+  dFlux_dAper[0] = dt * dFlux_dTrans * dTrans_dAper[0][0];
+  dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dAper[0][1];
 
   for( localIndex ke = 0; ke < 2; ++ke )
   {
@@ -404,6 +409,7 @@ void FaceElementFluxKernel::
 {
   constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
   constexpr localIndex MAX_STENCIL_SIZE  = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
+  constexpr localIndex MAX_NUM_OF_CONNECTIONS  = SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS;
 
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
@@ -430,39 +436,44 @@ void FaceElementFluxKernel::
     stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > dFlux_dAper( numFluxElems, stencilSize );
 
     // compute transmissibility
-    real64 transmissiblity[MAX_STENCIL_SIZE], dTrans_dPres[MAX_STENCIL_SIZE], dTrans_dAper[MAX_STENCIL_SIZE];
+    real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2], dTrans_dAper[MAX_NUM_OF_CONNECTIONS][2];
     stencilWrapper.computeWeights( iconn,
                                    permeability,
                                    dPerm_dPres,
                                    dPerm_dAper,
-                                   transmissiblity,
+                                   transmissibility,
                                    dTrans_dPres,
                                    dTrans_dAper );
 
-    // TODO does this need to be here??
-    localIndex const er = seri[iconn][0];
-    localIndex const esr = sesri[iconn][0];
-    for( localIndex k = 0; k < numFluxElems; ++k )
+    // TODO: this should become connection based and it should be moved.
+    localIndex k[2];
+    localIndex connectionIndex = 0;
+    for( k[0]=0; k[0]<numFluxElems; ++k[0] )
     {
-
-      localIndex const ei = sei[iconn][k];
-
-      if( fabs( LvArray::tensorOps::AiBi< 3 >( cellCenterToEdgeCenters[iconn][k], gravityVector ) ) > TINY )
+      localIndex const er = seri[iconn][k[0]];
+      localIndex const esr = sesri[iconn][k[0]];
+      localIndex const ei = sei[iconn][k[0]];
+      for( k[1]=k[0]+1; k[1]<numFluxElems; ++k[1] )
       {
-        transmissiblity[k] *= transTMultiplier[er][esr][ei][1];
+        if( fabs( LvArray::tensorOps::AiBi< 3 >( cellCenterToEdgeCenters[iconn][k[0]], gravityVector ) ) > TINY )
+        {
+          transmissibility[connectionIndex][0] *= transTMultiplier[er][esr][ei][1];
+          transmissibility[connectionIndex][1] *= transTMultiplier[er][esr][ei][1];
+        }
+        else
+        {
+          transmissibility[connectionIndex][0] *= transTMultiplier[er][esr][ei][0];
+          transmissibility[connectionIndex][1] *= transTMultiplier[er][esr][ei][0];
+        }
+        connectionIndex++;
       }
-      else
-      {
-        transmissiblity[k] *= transTMultiplier[er][esr][ei][0];
-      }
-
     }
 
     compute( stencilSize,
              seri[iconn],
              sesri[iconn],
              sei[iconn],
-             transmissiblity,
+             transmissibility,
              dTrans_dPres,
              dTrans_dAper,
              pres,
@@ -510,16 +521,16 @@ void FaceElementFluxKernel::
 }
 
 
-template< localIndex MAX_STENCIL_SIZE >
+template< localIndex MAX_NUM_OF_CONNECTIONS >
 GEOSX_HOST_DEVICE
 void
 FaceElementFluxKernel::compute( localIndex const numFluxElems,
                                 arraySlice1d< localIndex const > const & seri,
                                 arraySlice1d< localIndex const > const & sesri,
                                 arraySlice1d< localIndex const > const & sei,
-                                real64 const (&transmissibility)[MAX_STENCIL_SIZE],
-                                real64 const (&dTrans_dPres)[MAX_STENCIL_SIZE],
-                                real64 const (&dTrans_dAper)[MAX_STENCIL_SIZE],
+                                real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
+                                real64 const (&dTrans_dPres)[MAX_NUM_OF_CONNECTIONS][2],
+                                real64 const (&dTrans_dAper)[MAX_NUM_OF_CONNECTIONS][2],
                                 ElementViewConst< arrayView1d< real64 const > > const & pres,
                                 ElementViewConst< arrayView1d< real64 const > > const & dPres,
                                 ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -534,17 +545,21 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
 {
 
   localIndex k[2];
+  localIndex connectionIndex = 0;
   for( k[0]=0; k[0]<numFluxElems; ++k[0] )
   {
     for( k[1]=k[0]+1; k[1]<numFluxElems; ++k[1] )
     {
       real64 fluxVal = 0.0;
       real64 dFlux_dTrans = 0.0;
-      real64 trans[2] = {transmissibility[k[0]], transmissibility[k[1]]};
-      real64 dTrans[2] = { dTrans_dPres[k[0]], dTrans_dPres[k[1]] };
+      real64 trans[2] = {transmissibility[connectionIndex][0], transmissibility[connectionIndex][1]};
+      real64 dTrans[2] = { dTrans_dPres[connectionIndex][0], dTrans_dPres[connectionIndex][1] };
       real64 dFlux_dP[2] = {0.0, 0.0};
+      localIndex const regionIndex[2]    = {seri[k[0]], seri[k[1]]};
+      localIndex const subRegionIndex[2] = {sesri[k[0]], sesri[k[1]]};
+      localIndex const elementIndex[2]   = {sei[k[0]], sei[k[1]]};
 
-      computeSinglePhaseFlux( seri, sesri, sei,
+      computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
                               trans,
                               dTrans,
                               pres,
@@ -563,8 +578,8 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
       flux[k[1]] -= dt * fluxVal;
 
       real64 dFlux_dAper[2] = {0.0, 0.0};
-      dFlux_dAper[0] = dt * dFlux_dTrans * dTrans_dAper[k[0]];
-      dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dAper[k[1]];
+      dFlux_dAper[0] = dt * dFlux_dTrans * dTrans_dAper[connectionIndex][0];
+      dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dAper[connectionIndex][1];
 
       fluxJacobian[k[0]][k[0]] += dFlux_dP[0] * dt;
       fluxJacobian[k[0]][k[1]] += dFlux_dP[1] * dt;
@@ -575,6 +590,8 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
       dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
       dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];
       dFlux_dAperture[k[1]][k[1]] -= dFlux_dAper[1];
+
+      connectionIndex++;
     }
   }
 }
