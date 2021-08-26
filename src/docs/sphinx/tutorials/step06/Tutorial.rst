@@ -23,7 +23,7 @@ The XML file for this test case is located at :
 
   src/coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
 
-This mesh is a simple internally generated regular grid ( 50x1x150 ).
+This mesh is a simple internally generated regular grid (50 x 1 x 150).
 A single CO :sub:`2` injection well is at the center of the reservoir.
 
 The XML file considered here follows the typical structure of the GEOSX input files:
@@ -53,13 +53,12 @@ They consist of three blocks **CompositionalMultiphaseFVM**, **CompositionalMult
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_SOLVER_END -->
 
 In the **CompositionalMultiphaseFVM** (:ref:`CompositionalMultiphaseFlow`), a classical multiphase compositional solver with a TPFA discretization is described.
-The flow solver definition includes a list of names to point to fluid constitutive data through ``fluidNames``, to solid constitutive data through ``solidNames``, to permeability data through ``permeabilityNames``
-and to relative permeability constitutive data through ``relPermNames`` attributes.
+The flow solver definition includes a list of names to point to fluid constitutive data through ``fluidNames``, solid constitutive data through ``solidNames``, permeability data through ``permeabilityNames`` and relative permeability constitutive data through ``relPermNames`` attributes.
 
-The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilEgg` for detailed tutorial on wells). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines a  **WellControls** sub-tag.
-This sub-tag specifies the CO :sub:`2` injector control mode: the well is initially rate controlled, with a rate specified in ``targetRate`` a maximum pressure specified in ``targetBHP``. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture (here, pure CO :sub:`2`).
+The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilEgg` for detailed tutorial). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines a  **WellControls** sub-tag.
+This sub-tag specifies the CO :sub:`2` injector control mode: the well is initially rate-controlled, with a rate specified in ``targetRate`` and a maximum pressure specified in ``targetBHP``. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture (here, pure CO :sub:`2`).
 
-The **CompositionalMultiphaseReservoir** coupling section describes the binding between those two previous elements (see :ref:`TutorialPoroelasticity` for detailed tutorial on coupling physics in GEOSX). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solvers attributes). 
+The **CompositionalMultiphaseReservoir** coupling section describes the binding between those two previous elements (see :ref:`TutorialPoroelasticity` for detailed tutorial on coupling physics in GEOSX). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solver attributes). 
 
 .. _Mesh_tag_co2_field_case:
 
@@ -68,7 +67,7 @@ The **CompositionalMultiphaseReservoir** coupling section describes the binding 
 Mesh and well geometry
 ----------------------
 
-The **Mesh** tag is used as in previous tutorials to import the field mesh either internally (:ref:`TutorialSinglePhaseFlowWithInternalMesh`) or externally (:ref:`TutorialSinglePhaseFlowExternalMesh`). In the current tutorial, this tag is the internal generation of well is defined with the **InternalWell** sub-tag. Apart from the ``name`` identifier attribute and their ``wellRegionName`` (:ref:`ElementRegions <ElementRegions_tag_co2_field_case>`) and ``wellControlsName`` (:ref:`Solver <Solver_tag_co2_field_case>`) binding attributes, ``polylineNodeCoords`` and ``polylineSegmentConn`` attributes are used to define the path of the wellbore and connections between its nodes. The ``numElementsPerSegment`` is discretizing the wellbore segments while the ``radius`` attribute specifies the wellbore radius (:ref:`TutorialDeadOilEgg` for details on wells). Once the wellbore is defined and discretized, the position of **Perforations** is defined using curvilinear distance from the head of the wellbore (``distanceFromHead``).
+In this tutorial, the **Mesh** tag is used to generate the reservoir mesh internally (:ref:`TutorialSinglePhaseFlowWithInternalMesh`). The internal generation of well is defined with the **InternalWell** sub-tag. Apart from the ``name`` identifier attribute and their ``wellRegionName`` (:ref:`ElementRegions <ElementRegions_tag_co2_field_case>`) and ``wellControlsName`` (:ref:`Solver <Solver_tag_co2_field_case>`) binding attributes, ``polylineNodeCoords`` and ``polylineSegmentConn`` attributes are used to define the path of the wellbore and connections between its nodes. The ``numElementsPerSegment`` is discretizing the wellbore segments while the ``radius`` attribute specifies the wellbore radius (:ref:`TutorialDeadOilEgg` for details on wells). Once the wellbore is defined and discretized, the position of **Perforations** is defined using the linear distance from the head of the wellbore (``distanceFromHead``).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
   :language: xml
@@ -112,11 +111,9 @@ Numerical methods
 The **TwoPointFluxApproximation** is chosen for the fluid equation discretization. The tag specifies:
 
 - A primary field to solve for as ``fieldName``. For a flow problem, this field is pressure. 
-- A ``fieldName`` used to specify boundary objects with boundary conditions.
+- A set of target regions in ``targetRegions``. 
 - A ``coefficientName`` pointing to the field used for TPFA transmissibilities construction.
 - A ``coefficientModelNames`` used to specify the permeability constitutive model(s).
-
-Here, we specify ``targetRegions``
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
   :language: xml
@@ -149,7 +146,7 @@ Under the **Constitutive** tag, four items can be found:
 - **CO2BrineFluid** : this tag defines phase names, component molar weights, and fluid behaviors such as CO :sub:`2` solubility in brine and viscosity/density dependencies on pressure and temperature. 
 - **PoreVolumeCompressibleSolid** : this tag contains all the data needed to model rock compressibility.
 - **BrooksCoreyRelativePermeability** : this tag defines the relative permeability model for each phase, its end-point values, residual volume fractions (saturations), and Corey exponents.
-- **ConstantPermeability** : this tag defines the permeability model that is set to a simple constant diagonal tensor, whose values are defined in ``permeabilityComponent``.
+- **ConstantPermeability** : this tag defines the permeability model that is set to a simple constant diagonal tensor, whose values are defined in ``permeabilityComponent``. Note that these values will be overwritten by the permeability field imported in **FieldSpecifications**.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
   :language: xml
@@ -158,7 +155,7 @@ Under the **Constitutive** tag, four items can be found:
 
 The PVT data specified by **CO2BrineFluid** is set to model the behavior of the CO :sub:`2`-brine system as a function of pressure, temperature, and salinity.
 We currently rely on a two-phase, two-component (CO :sub:`2` and H :sub:`2` O) model in which salinity is a constant parameter in space and in time.
-The model is described in detail in  :ref:`CO2-EOS`).
+The model is described in detail in  :ref:`CO2-EOS`.
 The model definition requires three text files:
 
 In *co2flash.txt*, we define the CO :sub:`2` solubility model used to compute the amount of CO :sub:`2` dissolved in the brine phase as a function of pressure (in Pascal), temperature (in Kelvin), and salinity (in units of molality):
@@ -167,9 +164,11 @@ In *co2flash.txt*, we define the CO :sub:`2` solubility model used to compute th
 
    FlashModel CO2Solubility  1e6 1.5e7 5e4 367.15 369.15 1 0
 
-The first keyword is an identifier for the model type (here, a flash model). It is followed by the model name. Then, the lower, upper and step increment values for pressure and temperature range are specified.
+The first keyword is an identifier for the model type (here, a flash model). It is followed by the model name. Then, the lower, upper, and step increment values for pressure and temperature range are specified.
 The trailing 0 defines a zero-salinity in the model. 
-Note that the water component is not allowed to evaporate into the CO :sub:`2` -rich phase.  
+Note that the water component is not allowed to evaporate into the CO :sub:`2` -rich phase.
+
+
 The *pvtgas.txt* and *pvtliquid.txt* files define the models used to compute the density and viscosity of the two phases, as follows:
 
 .. code:: 
@@ -183,8 +182,8 @@ The *pvtgas.txt* and *pvtliquid.txt* files define the models used to compute the
         ViscosityFun BrineViscosity 0
 
 In these files, the first keyword of each line is an identifier for the model type (either a density or a viscosity model).
-It is followed by the model name
-Then, the lower, upper and step increment values for pressure and temperature range are specified.
+It is followed by the model name.
+Then, the lower, upper, and step increment values for pressure and temperature range are specified.
 The trailing 0 for ``BrineCO2Density`` and ``BrineViscosity`` entry is the salinity of the brine, set to zero.
 
 .. note::
@@ -205,9 +204,9 @@ Here, these fields are homogeneous, except for the permeability field that is ta
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_FIELD_END -->
 
 .. note::
-        In this case we are using the same permeability field (*perm.geos*) for all the directions. Note also that
+        In this case, we are using the same permeability field (*perm.geos*) for all the directions. Note also that
         the ``fieldName`` values are set to *rockPerm_permeability* to access the permeability field handled as
-        a **Constitutive** law.
+        a **Constitutive** law. These permeability values will overwrite the values already set in the **Constitutive** block. 
 
 .. _Outputs_tag_co2_field_case:
 
