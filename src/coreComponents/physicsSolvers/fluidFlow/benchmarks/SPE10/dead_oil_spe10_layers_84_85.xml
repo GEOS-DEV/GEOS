@@ -1,6 +1,8 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS -->
   <Solvers>
 
     <CompositionalMultiphaseFVM
@@ -11,10 +13,10 @@
       solidNames="{ rock }"
       relPermNames="{ relperm }"
       permeabilityNames="{ rockPerm }"
-      targetRegions="{ region }"      
+      targetRegions="{ reservoir }"      
       temperature="300"
       useMass="1"
-      initialDt="1"
+      initialDt="1e3"
       maxCompFractionChange="0.2"
       computeCFLNumbers="1">
       <NonlinearSolverParameters
@@ -31,7 +33,9 @@
     </CompositionalMultiphaseFVM>
 
   </Solvers>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->  
 
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH -->
   <Mesh>
     <InternalMesh
       name="mesh"
@@ -44,7 +48,9 @@
       nz="{ 2 }"
       cellBlockNames="{ block }"/>
   </Mesh>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH_END -->
 
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY -->  
   <Geometry>
 
     <Box
@@ -69,7 +75,9 @@
       xMax="{ 365.8, 670.60, 2.00 }"/>
     
   </Geometry>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY_END -->  
 
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->  
   <Events
     maxTime="8e7">
 
@@ -85,25 +93,31 @@
       target="/Solvers/compflow"/>
     
   </Events>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS_END -->  
 
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS -->  
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
         fieldName="pressure"
-        targetRegions="{ region }"
+        targetRegions="{ reservoir }"
         coefficientName="permeability"
         coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS_END -->
 
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS -->
   <ElementRegions>
     <CellElementRegion
-      name="region"
+      name="reservoir"
       cellBlocks="{ block }"
       materialList="{ fluid, rock, relperm, rockPerm }"/>
   </ElementRegions>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS_END -->
 
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE -->
   <Constitutive>
 
     <DeadOilFluid
@@ -135,14 +149,16 @@
       permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-18 }"/>
     
   </Constitutive>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE_END -->
 
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS -->  
   <FieldSpecifications>
     <FieldSpecification
       name="permx"
       component="0"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/region/block"
+      objectPath="ElementRegions/reservoir/block"
       fieldName="rockPerm_permeability"
       functionName="permxFunc"
       scale="9.869233e-16"/>
@@ -151,7 +167,7 @@
       component="1"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/region/block"
+      objectPath="ElementRegions/reservoir/block"
       fieldName="rockPerm_permeability"
       functionName="permyFunc"
       scale="9.869233e-16"/>
@@ -160,7 +176,7 @@
       component="2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/region/block"
+      objectPath="ElementRegions/reservoir/block"
       fieldName="rockPerm_permeability"
       functionName="permzFunc"
       scale="9.869233e-16"/>
@@ -169,7 +185,7 @@
       name="referencePorosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/region/block"
+      objectPath="ElementRegions/reservoir/block"
       fieldName="referencePorosity"
       functionName="poroFunc"
       scale="1.0"/>
@@ -178,14 +194,14 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/region/block"
+      objectPath="ElementRegions/reservoir/block"
       fieldName="pressure"
       scale="4.1369e+7"/>
     <FieldSpecification
       name="initialComposition_oil"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/region/block"
+      objectPath="ElementRegions/reservoir/block"
       fieldName="globalCompFraction"
       component="0"
       scale="0.9999"/>
@@ -193,14 +209,14 @@
       name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/region/block"
+      objectPath="ElementRegions/reservoir/block"
       fieldName="globalCompFraction"
       component="1"
       scale="0.0001"/>
     
     <SourceFlux
       name="sourceTerm"
-      objectPath="ElementRegions/region/block"
+      objectPath="ElementRegions/reservoir/block"
       scale="-0.07279"
       component="1"
       setNames="{ source }"/>
@@ -208,26 +224,28 @@
     <FieldSpecification
       name="sinkPressure"
       setNames="{ sink1, sink2, sink3, sink4 }"         
-      objectPath="ElementRegions/region/block"
+      objectPath="ElementRegions/reservoir/block"
       fieldName="pressure"
       scale="2.7579e+7"/>
     <FieldSpecification
       name="sinkComposition_oil"
       setNames="{ sink1, sink2, sink3, sink4 }"
-      objectPath="ElementRegions/region/block"
+      objectPath="ElementRegions/reservoir/block"
       fieldName="globalCompFraction"
       component="0"
       scale="0.9999"/>
     <FieldSpecification
       name="sinkComposition_water"
       setNames="{ sink1, sink2, sink3, sink4 }"
-      objectPath="ElementRegions/region/block"
+      objectPath="ElementRegions/reservoir/block"
       fieldName="globalCompFraction"
       component="1"
       scale="0.0001"/>
 
   </FieldSpecifications>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
 
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FUNCTIONS -->  
   <Functions>
     <TableFunction 
       name="permxFunc"
@@ -267,10 +285,13 @@
       interpolation="linear"/>
     
   </Functions>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FUNCTIONS_END -->    
 
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUTS -->    
   <Outputs>
     <VTK
       name="vtkOutput"/>
   </Outputs>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUTS_END -->      
   
 </Problem>

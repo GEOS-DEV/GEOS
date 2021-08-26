@@ -334,7 +334,7 @@ the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 **Next tutorial**
 
 In the next tutorial :ref:`TutorialDeadOilBottomLayersSPE10`, we will learn how
-to run a dead oil case on a SPE10 channelized layer.
+to run a multiphase flow case on a SPE10 channelized layer.
 
 **For more details**
 
