@@ -37,11 +37,11 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 41 }"
-      yCoords="{ 0, 41 }"
+      xCoords="{ 0, 5 }"
+      yCoords="{ 0, 5 }"
       zCoords="{ 0, 1 }"
-      nx="{ 41 }"
-      ny="{ 41 }"
+      nx="{ 5 }"
+      ny="{ 5 }"
       nz="{ 1 }"
       cellBlockNames="{ block1 }"/>
   </Mesh>
@@ -54,16 +54,16 @@
 
     <Box
       name="sink"
-      xMin="{ 40.99, 40.99, -0.01 }"
-      xMax="{ 41.01, 41.01, 1.01 }"/>
+      xMin="{ 3.99, 3.99, -0.01 }"
+      xMax="{ 5.01, 5.01, 1.01 }"/>
 
     <BoundedPlane
       name="FracturePlane"
       normal="{ 0, 1, 0 }"
-      origin="{ 18.5, 3.5, 0.5 }"
+      origin="{ 2.5, 1.5, 0.5 }"
       lengthVector="{ 1, 0, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 25, 1 }"/>
+      dimensions="{ 3, 1 }"/>
   </Geometry>
 
   <Events
