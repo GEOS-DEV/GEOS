@@ -192,15 +192,16 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  PoromechanicsKernels::MultiphaseKernelFactory kernelFactory( displacementDofNumber,
-                                                               flowDofKey,
-                                                               dofManager.rankOffset(),
-                                                               gravityVectorData,
-                                                               numComponents,
-                                                               numPhases,
-                                                               m_flowSolver->fluidModelNames(),
-                                                               localMatrix,
-                                                               localRhs );
+  PoromechanicsKernels::MultiphaseKernelDispatch kernelDispatch( "geosx::Multiphase",
+                                                                 displacementDofNumber,
+                                                                 flowDofKey,
+                                                                 dofManager.rankOffset(),
+                                                                 gravityVectorData,
+                                                                 numComponents,
+                                                                 numPhases,
+                                                                 m_flowSolver->fluidModelNames(),
+                                                                 localMatrix,
+                                                                 localRhs );
 
   // Cell-based contributions
   m_solidSolver->getMaxForce() =
@@ -211,7 +212,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                             targetRegionNames(),
                                                             this->getDiscretizationName(),
                                                             porousMaterialNames(),
-                                                            kernelFactory );
+                                                            kernelDispatch );
 
 
 

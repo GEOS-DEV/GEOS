@@ -577,18 +577,18 @@ protected:
   localIndex const m_numPhases;
 };
 
-using MultiphaseKernelFactory = finiteElement::KernelFactory< Multiphase,
-                                                              arrayView1d< globalIndex const > const &,
-                                                              string const &,
-                                                              globalIndex const,
-                                                              real64 const (&)[3],
-                                                              localIndex const,
-                                                              localIndex const,
-                                                              arrayView1d< string const > const,
-                                                              CRSMatrixView< real64, globalIndex const > const &,
-                                                              arrayView1d< real64 > const & >;
+using MultiphaseKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( Multiphase ),
+                                                                arrayView1d< globalIndex const > const &,
+                                                                string const &,
+                                                                globalIndex const,
+                                                                real64 const (&)[3],
+                                                                localIndex const,
+                                                                localIndex const,
+                                                                arrayView1d< string const > const,
+                                                                CRSMatrixView< real64, globalIndex const > const &,
+                                                                arrayView1d< real64 > const & >;
 
-} // namespace PoroelasticKernels
+} // namespace PoromechanicsKernels
 
 } // namespace geosx
 

@@ -292,17 +292,17 @@ protected:
 };
 
 /// The factory used to construct a ImplicitNewmark kernel.
-using ImplicitNewmarkFactory = finiteElement::KernelFactory< ImplicitNewmark,
-                                                             arrayView1d< globalIndex const > const &,
-                                                             globalIndex,
-                                                             CRSMatrixView< real64, globalIndex const > const &,
-                                                             arrayView1d< real64 > const &,
-                                                             real64 const (&)[3],
-                                                             real64,
-                                                             real64,
-                                                             real64,
-                                                             real64,
-                                                             real64 >;
+using ImplicitNewmarkDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( ImplicitNewmark ),
+                                                               arrayView1d< globalIndex const > const &,
+                                                               globalIndex,
+                                                               CRSMatrixView< real64, globalIndex const > const &,
+                                                               arrayView1d< real64 > const &,
+                                                               real64 const (&)[3],
+                                                               real64,
+                                                               real64,
+                                                               real64,
+                                                               real64,
+                                                               real64 >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

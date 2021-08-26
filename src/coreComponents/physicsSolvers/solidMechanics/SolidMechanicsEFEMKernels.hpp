@@ -475,14 +475,14 @@ protected:
 };
 
 /// The factory used to construct a QuasiStatic kernel.
-using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
-                                                         EmbeddedSurfaceSubRegion const &,
-                                                         arrayView1d< globalIndex const > const &,
-                                                         arrayView1d< globalIndex const > const &,
-                                                         globalIndex const,
-                                                         CRSMatrixView< real64, globalIndex const > const &,
-                                                         arrayView1d< real64 > const &,
-                                                         real64 const (&) [3] >;
+using QuasiStaticDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( QuasiStatic ),
+                                                           EmbeddedSurfaceSubRegion const &,
+                                                           arrayView1d< globalIndex const > const &,
+                                                           arrayView1d< globalIndex const > const &,
+                                                           globalIndex const,
+                                                           CRSMatrixView< real64, globalIndex const > const &,
+                                                           arrayView1d< real64 > const &,
+                                                           real64 const (&) [3] >;
 
 } // namespace SolidMechanicsEFEMKernels
 

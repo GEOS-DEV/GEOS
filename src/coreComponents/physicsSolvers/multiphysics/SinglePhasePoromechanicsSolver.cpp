@@ -197,13 +197,14 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  PoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                pDofKey,
-                                                                dofManager.rankOffset(),
-                                                                localMatrix,
-                                                                localRhs,
-                                                                gravityVectorData,
-                                                                m_flowSolver->fluidModelNames() );
+  PoromechanicsKernels::SinglePhaseKernelDispatch kernelDispatch( "geosx::PoromechanicsKernels::SinglePhase",
+                                                                  dispDofNumber,
+                                                                  pDofKey,
+                                                                  dofManager.rankOffset(),
+                                                                  localMatrix,
+                                                                  localRhs,
+                                                                  gravityVectorData,
+                                                                  m_flowSolver->fluidModelNames() );
 
   // Cell-based contributions
   m_solidSolver->getMaxForce() =
@@ -214,7 +215,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                             targetRegionNames(),
                                                             this->getDiscretizationName(),
                                                             porousMaterialNames(),
-                                                            kernelFactory );
+                                                            kernelDispatch );
 
   // Face-based contributions
   m_flowSolver->assembleFluxTerms( time_n, dt,

@@ -274,13 +274,14 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  SolidMechanicsEFEMKernels::QuasiStaticFactory kernelFactory( subRegion,
-                                                               dispDofNumber,
-                                                               jumpDofNumber,
-                                                               dofManager.rankOffset(),
-                                                               localMatrix,
-                                                               localRhs,
-                                                               gravityVectorData );
+  SolidMechanicsEFEMKernels::QuasiStaticDispatch kernelDispatch( "geosx::Quasistatic",
+                                                                  subRegion,
+                                                                  dispDofNumber,
+                                                                  jumpDofNumber,
+                                                                  dofManager.rankOffset(),
+                                                                  localMatrix,
+                                                                  localRhs,
+                                                                  gravityVectorData );
 
   real64 maxTraction = finiteElement::
                          regionBasedKernelApplication
@@ -290,7 +291,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                  targetRegionNames(),
                                                  m_solidSolver->getDiscretizationName(),
                                                  m_solidSolver->solidMaterialNames(),
-                                                 kernelFactory );
+                                                 kernelDispatch );
 
   GEOSX_UNUSED_VAR( maxTraction );
 }

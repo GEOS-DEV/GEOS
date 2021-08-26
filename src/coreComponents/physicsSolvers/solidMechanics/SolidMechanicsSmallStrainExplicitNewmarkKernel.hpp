@@ -340,9 +340,9 @@ protected:
 #undef UPDATE_STRESS
 
 /// The factory used to construct a ExplicitSmallStrain kernel.
-using ExplicitSmallStrainFactory = finiteElement::KernelFactory< ExplicitSmallStrain,
-                                                                 real64,
-                                                                 string const & >;
+using ExplicitSmallStrainDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( ExplicitSmallStrain ),
+                                                                   real64,
+                                                                   string const & >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

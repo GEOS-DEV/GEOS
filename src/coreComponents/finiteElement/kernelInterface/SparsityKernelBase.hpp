@@ -171,6 +171,50 @@ private:
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
+
+template < typename POLICY, 
+           typename SUBREGION_TYPE, 
+           typename CONSTITUTIVE_TYPE,
+           typename FE_TYPE, 
+           template < typename, typename, typename > class KERNEL_TEMPLATE >
+real64 buildSparsityAndInvoke( localIndex const numElems,
+                               NodeManager const & nodeManager, 
+                               EdgeManager const & edgeManager,
+                               FaceManager const & faceManager,
+                               localIndex const targetRegionIndex,
+                               SUBREGION_TYPE const & elementSubRegion,
+                               FE_TYPE const & finiteElementSpace,
+                               CONSTITUTIVE_TYPE & inputConstitutiveType,
+                               arrayView1d< globalIndex const > const & inputDofNumber,
+                               globalIndex const rankOffset,
+                               SparsityPattern< globalIndex > & inputSparsityPattern )
+{
+    // this requires the underlying kernel be fully specified and instantiated.. which means we'll compile it
+    // to avoid this we'll have to JIT a function that handles 
+    using Kernel = KERNEL_TEMPLATE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
+    using SPARSITY_KERNEL_TYPE = SparsityKernelBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, Kernel::numDofPerTestSupportPoint, Kernel::numDofPerTrialSupportPoint >;
+    SPARSITY_KERNEL_TYPE kernel ( nodeManager,
+                                  edgeManager,
+                                  faceManager,
+                                  targetRegionIndex,
+                                  elementSubRegion,
+                                  finiteElementSpace,
+                                  inputConstitutiveType,
+                                  inputDofNumber,
+                                  rankOffset,
+                                  inputSparsityPattern );
+    return SPARSITY_KERNEL_TYPE::template kernelLaunch< POLICY, SPARSITY_KERNEL_TYPE >( numElems, kernel );
+}
+
+#if JITTI
+  #define SparsityKernelDispatch SparsityKernelJITDispatch
+#else
+  #define SparsityKernelDispatch SparsityKernelTemplateDispatch
+#endif
+
+jitti::CompilationInfo getSparsityCompilationInfo( );
+
+
 /**
  * @brief Helper struct to define a specialization of
  *   #::geosx::finiteElement::SparsityKernelBase that may be used to generate the sparsity pattern.
@@ -180,7 +224,7 @@ private:
 template< template< typename,
                     typename,
                     typename > class KERNEL_TEMPLATE >
-class SparsityKernelFactory
+class SparsityKernelTemplateDispatch
 {
 public:
 
@@ -190,9 +234,11 @@ public:
    * @param rankOffset The global rank offset.
    * @param inputSparsityPattern The local sparsity pattern.
    */
-  SparsityKernelFactory( arrayView1d< globalIndex const > const & inputDofNumber,
-                         globalIndex const rankOffset,
-                         SparsityPattern< globalIndex > & inputSparsityPattern ):
+  SparsityKernelTemplateDispatch( string const & scopedKernelName, 
+                                  arrayView1d< globalIndex const > const & inputDofNumber,
+                                  globalIndex const rankOffset,
+                                  SparsityPattern< globalIndex > & inputSparsityPattern ):
+    m_kernelName( scopedKernelName ),
     m_inputDofNumber( inputDofNumber ),
     m_rankOffset( rankOffset ),
     m_inputSparsityPattern( inputSparsityPattern )
@@ -212,34 +258,141 @@ public:
    * @param inputConstitutiveType The constitutive relation.
    * @return A new instance of @c SparsityKernelBase specialized for @c KERNEL_TEMPLATE.
    */
-  template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
-  auto createKernel( NodeManager const & nodeManager,
-                     EdgeManager const & edgeManager,
-                     FaceManager const & faceManager,
-                     localIndex const targetRegionIndex,
-                     SUBREGION_TYPE const & elementSubRegion,
-                     FE_TYPE const & finiteElementSpace,
-                     CONSTITUTIVE_TYPE & inputConstitutiveType )
+  template< typename POLICY, 
+            typename SUBREGION_TYPE,
+            typename CONSTITUTIVE_TYPE,
+            typename FE_TYPE >
+  real64 invoke( localIndex const numElems,
+                 NodeManager const & nodeManager,
+                 EdgeManager const & edgeManager,
+                 FaceManager const & faceManager,
+                 localIndex const targetRegionIndex,
+                 SUBREGION_TYPE const & elementSubRegion,
+                 FE_TYPE const & finiteElementSpace,
+                 CONSTITUTIVE_TYPE & inputConstitutiveType )
   {
-    using Kernel = KERNEL_TEMPLATE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
-
-    return SparsityKernelBase< SUBREGION_TYPE,
-                               CONSTITUTIVE_TYPE,
-                               FE_TYPE,
-                               Kernel::numDofPerTestSupportPoint,
-                               Kernel::numDofPerTrialSupportPoint >( nodeManager,
-                                                                     edgeManager,
-                                                                     faceManager,
-                                                                     targetRegionIndex,
-                                                                     elementSubRegion,
-                                                                     finiteElementSpace,
-                                                                     inputConstitutiveType,
-                                                                     m_inputDofNumber,
-                                                                     m_rankOffset,
-                                                                     m_inputSparsityPattern );
+    return buildSparsityAndInvoke< POLICY, 
+                                   SUBREGION_TYPE,
+                                   CONSTITUTIVE_TYPE, 
+                                   FE_TYPE,
+                                   KERNEL_TEMPLATE >( numElems,
+                                                      nodeManager,
+                                                      edgeManager,
+                                                      faceManager,
+                                                      targetRegionIndex,
+                                                      elementSubRegion,
+                                                      finiteElementSpace,
+                                                      inputConstitutiveType,
+                                                      m_inputDofNumber,
+                                                      m_rankOffset,
+                                                      m_inputSparsityPattern );
   }
 
 private:
+  string const m_kernelName;
+  /// The input degree of freedom numbers.
+  arrayView1d< globalIndex const > const & m_inputDofNumber;
+  /// The global rank offset.
+  globalIndex const m_rankOffset;
+  /// The local sparsity pattern.
+  SparsityPattern< globalIndex > & m_inputSparsityPattern;
+};
+
+
+/**
+ * @brief Helper struct to define a specialization of
+ *   #::geosx::finiteElement::SparsityKernelBase that may be used to generate the sparsity pattern.
+ * @tparam KERNEL_TEMPLATE Templated class that defines the physics kernel.
+ *   Most likely derives from SparsityKernelBase.
+ */
+template< template< typename,
+                    typename,
+                    typename > class KERNEL_TEMPLATE >
+class SparsityKernelJITDispatch
+{
+public:
+
+  /**
+   * @brief Constructor.
+   * @param inputDofNumber An array containing the input degree of freedom numbers.
+   * @param rankOffset The global rank offset.
+   * @param inputSparsityPattern The local sparsity pattern.
+   */
+  SparsityKernelJITDispatch( string const & scopedKernelName, 
+                             arrayView1d< globalIndex const > const & inputDofNumber,
+                             globalIndex const rankOffset,
+                             SparsityPattern< globalIndex > & inputSparsityPattern ):
+    m_kernelName( scopedKernelName ),
+    m_inputDofNumber( inputDofNumber ),
+    m_rankOffset( rankOffset ),
+    m_inputSparsityPattern( inputSparsityPattern )
+  {}
+
+  /**
+   * @brief Return a new instance of @c SparsityKernelBase specialized for @c KERNEL_TEMPLATE.
+   * @tparam SUBREGION_TYPE The type of of @p elementSubRegion.
+   * @tparam CONSTITUTIVE_TYPE The type of @p inputConstitutiveType.
+   * @tparam FE_TYPE The type of @p finiteElementSpace.
+   * @param nodeManager The node manager.
+   * @param edgeManager The edge manager.
+   * @param faceManager The face manager.
+   * @param targetRegionIndex The target region index.
+   * @param elementSubRegion The sub region on which to generate the sparsity.
+   * @param finiteElementSpace The finite element space.
+   * @param inputConstitutiveType The constitutive relation.
+   * @return A new instance of @c SparsityKernelBase specialized for @c KERNEL_TEMPLATE.
+   */
+  template< typename POLICY, 
+            typename SUBREGION_TYPE,
+            typename CONSTITUTIVE_TYPE,
+            typename FE_TYPE >
+  real64 invoke( localIndex const numElems,
+                 NodeManager const & nodeManager,
+                 EdgeManager const & edgeManager,
+                 FaceManager const & faceManager,
+                 localIndex const targetRegionIndex,
+                 SUBREGION_TYPE const & elementSubRegion,
+                 FE_TYPE const & finiteElementSpace,
+                 CONSTITUTIVE_TYPE & inputConstitutiveType )
+  {
+    jitti::CompilationInfo info = getSparsityCompilationInfo();
+    info.templateParams = LvArray::system::demangleType< POLICY >() + ", " +
+                          LvArray::system::demangleType< SUBREGION_TYPE >() + ", " + 
+                          LvArray::system::demangleType< CONSTITUTIVE_TYPE >() + ", " +
+                          LvArray::system::demangleType< FE_TYPE >() + ", " +
+                          m_kernelName;
+    // Unfortunately can't just decltype(&buildSparsityAndInvoke) since we can't fully specify the function template
+    using JIT_SPARSITY_DISPATCH = real64(*)( localIndex const,
+                                             NodeManager const &, 
+                                             EdgeManager const &,
+                                             FaceManager const &,
+                                             localIndex const,
+                                             SUBREGION_TYPE const &,
+                                             FE_TYPE const &,
+                                             CONSTITUTIVE_TYPE &,
+                                             arrayView1d< globalIndex const > const &,
+                                             globalIndex const,
+                                             SparsityPattern< globalIndex > & );
+    string outputDir( JITTI_OUTPUT_DIR );
+    outputDir += "/";
+    static jitti::Cache< JIT_SPARSITY_DISPATCH > buildCache( time(NULL), outputDir );
+    auto & jitSparsityDispatch = buildCache.getOrLoadOrCompile( info );
+    return jitSparsityDispatch( numElems,
+                                nodeManager,
+                                edgeManager,
+                                faceManager,
+                                targetRegionIndex,
+                                elementSubRegion,
+                                finiteElementSpace,
+                                inputConstitutiveType,
+                                m_inputDofNumber,
+                                m_rankOffset,
+                                m_inputSparsityPattern );
+
+  }
+
+private:
+  string const m_kernelName;
   /// The input degree of freedom numbers.
   arrayView1d< globalIndex const > const & m_inputDofNumber;
   /// The global rank offset.
@@ -273,11 +426,10 @@ private:
  * pattern specified in the physics kernels.
  */
 template< typename REGION_TYPE,
-          template< typename SUBREGION_TYPE,
-                    typename CONSTITUTIVE_TYPE,
-                    typename FE_TYPE > class KERNEL_TEMPLATE >
+          typename KERNEL_WRAPPER >
 static
-real64 fillSparsity( MeshLevel & mesh,
+real64 fillSparsity( string const & kernelName,
+                     MeshLevel & mesh,
                      arrayView1d< string const > const & targetRegions,
                      string const & discretizationName,
                      arrayView1d< globalIndex const > const & inputDofNumber,
@@ -286,7 +438,7 @@ real64 fillSparsity( MeshLevel & mesh,
 {
   GEOSX_MARK_FUNCTION;
 
-  SparsityKernelFactory< KERNEL_TEMPLATE > KernelFactory( inputDofNumber, rankOffset, inputSparsityPattern );
+  KERNEL_WRAPPER kernelDispatch( kernelName, inputDofNumber, rankOffset, inputSparsityPattern );
 
   regionBasedKernelApplication< serialPolicy,
                                 constitutive::NullModel,
@@ -294,7 +446,7 @@ real64 fillSparsity( MeshLevel & mesh,
                                                targetRegions,
                                                discretizationName,
                                                arrayView1d< string const >(),
-                                               KernelFactory );
+                                               kernelDispatch );
 
   return 0;
 }

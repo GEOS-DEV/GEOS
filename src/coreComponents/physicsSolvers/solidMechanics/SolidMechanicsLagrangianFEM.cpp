@@ -267,7 +267,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   real64 rval = 0;
   if( m_strainTheory==0 )
   {
-    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
+    auto kernelDispatch = SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrainDispatch( "geosx::ExplicitSmallStrain", dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
@@ -275,11 +275,11 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
                                                                    targetRegions,
                                                                    finiteElementName,
                                                                    constitutiveNames,
-                                                                   kernelFactory );
+                                                                   kernelDispatch );
   }
   else if( m_strainTheory==1 )
   {
-    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
+    auto kernelDispatch = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainDispatch( "geosx::ExplicitFiniteStraing", dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
@@ -287,7 +287,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
                                                                    targetRegions,
                                                                    finiteElementName,
                                                                    constitutiveNames,
-                                                                   kernelFactory );
+                                                                   kernelDispatch );
   }
   else
   {
@@ -952,22 +952,25 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
 
     finiteElement::
       fillSparsity< FaceElementSubRegion,
-                    SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
-                                                                       allFaceElementRegions,
-                                                                       this->getDiscretizationName(),
-                                                                       dofNumber,
-                                                                       dofManager.rankOffset(),
-                                                                       sparsityPattern );
-
+                    finiteElement::SparsityKernelDispatch< JITTI_TPARAM( SolidMechanicsLagrangianFEMKernels::QuasiStatic ) > >
+                    ( "geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic",
+                      mesh,
+                      allFaceElementRegions,
+                      this->getDiscretizationName(),
+                      dofNumber,
+                      dofManager.rankOffset(),
+                      sparsityPattern );
   }
   finiteElement::
     fillSparsity< CellElementSubRegion,
-                  SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
-                                                                     targetRegionNames(),
-                                                                     this->getDiscretizationName(),
-                                                                     dofNumber,
-                                                                     dofManager.rankOffset(),
-                                                                     sparsityPattern );
+                  finiteElement::SparsityKernelDispatch< JITTI_TPARAM( SolidMechanicsLagrangianFEMKernels::QuasiStatic ) > >
+                  ( "geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic",
+                    mesh,
+                    targetRegionNames(),
+                    this->getDiscretizationName(),
+                    dofNumber,
+                    dofManager.rankOffset(),
+                    sparsityPattern );
 
   sparsityPattern.compress();
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
@@ -991,23 +994,25 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   {
     GEOSX_UNUSED_VAR( dt );
     assemblyLaunch< constitutive::SolidBase,
-                    SolidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
-                                                                              dofManager,
-                                                                              localMatrix,
-                                                                              localRhs );
+                    SolidMechanicsLagrangianFEMKernels::QuasiStaticDispatch >( "geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic",
+                                                                               domain,
+                                                                               dofManager,
+                                                                               localMatrix,
+                                                                               localRhs );
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
     assemblyLaunch< constitutive::SolidBase,
-                    SolidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
-                                                                                  dofManager,
-                                                                                  localMatrix,
-                                                                                  localRhs,
-                                                                                  m_newmarkGamma,
-                                                                                  m_newmarkBeta,
-                                                                                  m_massDamping,
-                                                                                  m_stiffnessDamping,
-                                                                                  dt );
+                    SolidMechanicsLagrangianFEMKernels::ImplicitNewmarkDispatch >( "geosx::SolidMechanicsLagrangianFEMKernels::ImplicitNewmark",
+                                                                                   domain,
+                                                                                   dofManager,
+                                                                                   localMatrix,
+                                                                                   localRhs,
+                                                                                   m_newmarkGamma,
+                                                                                   m_newmarkBeta,
+                                                                                   m_massDamping,
+                                                                                   m_stiffnessDamping,
+                                                                                   dt );
   }
 
   if( getLogLevel() >= 2 )

@@ -19,6 +19,7 @@ set( finiteElement_headers
      elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
      elementFormulations/LagrangeBasis1.hpp
      elementFormulations/LagrangeBasis2.hpp
+     ${CMAKE_BINARY_DIR}/include/kernelJITCompileCommands.hpp
    )
 #
 # Specify all sources
@@ -26,6 +27,7 @@ set( finiteElement_headers
 set( finiteElement_sources
      FiniteElementDiscretization.cpp
      FiniteElementDiscretizationManager.cpp
+     kernelInterface/kernelJIT.cpp
    )
 
 set( dependencyList dataRepository )
@@ -37,11 +39,21 @@ endif()
 blt_add_library( NAME                  finiteElement
                  SOURCES               ${finiteElement_sources}
                  HEADERS               ${finiteElement_headers}
-                 DEPENDS_ON            ${dependencyList}
+                 DEFINES               JITTI_OUTPUT_DIR="${CMAKE_BINARY_DIR}/lib/jitti"
+                 DEPENDS_ON            ${dependencyList} jitti
                  OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
                
 target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+
+add_custom_command( OUTPUT ${CMAKE_BINARY_DIR}/include/kernelJITCompileCommands.hpp
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR} 
+                    COMMAND python ${CMAKE_CURRENT_LIST_DIR}/../LvArray/src/jitti/generateCompileCommandsHeader.py 
+                                   ${CMAKE_BINARY_DIR}/compile_commands.json
+                                   --cpp ${CMAKE_CURRENT_LIST_DIR}/kernelInterface/kernelJIT.cpp 
+                                   --hpp ${CMAKE_BINARY_DIR}/include/kernelJITCompileCommands.hpp
+                                   --include ${CMAKE_BINARY_DIR}/include 
+                                   --linker ${CMAKE_CXX_COMPILER} )
 
 geosx_add_code_checks( PREFIX finiteElement )
 

@@ -24,8 +24,10 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "LvArray/src/jitti/Cache.hpp"
 
 namespace geosx
 {
@@ -258,52 +260,24 @@ protected:
   FE_TYPE const & m_finiteElementSpace;
 };
 
-/**
- * @class KernelFactory
- * @brief Used to forward arguments to a class that implements the KernelBase interface.
- * @tparam KERNEL_TYPE The template class to construct, should implement the KernelBase interface.
- * @tparam ARGS The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
- */
-template< template< typename SUBREGION_TYPE,
-                    typename CONSTITUTIVE_TYPE,
-                    typename FE_TYPE > class KERNEL_TYPE,
-          typename ... ARGS >
-class KernelFactory
-{
-public:
-
-  /**
-   * @brief Initialize the factory.
-   * @param args The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
-   */
-  KernelFactory( ARGS ... args ):
-    m_args( args ... )
-  {}
-
-  /**
-   * @brief Create a new kernel with the given standard arguments.
-   * @tparam SUBREGION_TYPE The type of @p elementSubRegion.
-   * @tparam CONSTITUTIVE_TYPE The type of @p inputConstitutiveType.
-   * @tparam FE_TYPE The type of @p finiteElementSpace.
-   * @param nodeManager The node manager.
-   * @param edgeManager The edge manager.
-   * @param faceManager The face manager.
-   * @param targetRegionIndex The target region index.
-   * @param elementSubRegion The subregion to execute on.
-   * @param finiteElementSpace The finite element space.
-   * @param inputConstitutiveType The constitutive relation.
-   * @return A new kernel constructed with the given arguments and @c ARGS.
-   */
-  template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
-  KERNEL_TYPE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > createKernel(
+  template< typename POLICY,
+            typename SUBREGION_TYPE,
+            typename CONSTITUTIVE_TYPE,
+            typename FE_TYPE,
+            template< typename, typename, typename > class KERNEL_TEMPLATE, 
+            typename KERNEL_CONSTRUCTOR_PARAMS >
+  real64 buildKernelAndInvoke(
+    localIndex const numElems,
     NodeManager & nodeManager,
     EdgeManager const & edgeManager,
     FaceManager const & faceManager,
     localIndex const targetRegionIndex,
     SUBREGION_TYPE const & elementSubRegion,
     FE_TYPE const & finiteElementSpace,
-    CONSTITUTIVE_TYPE & inputConstitutiveType )
+    CONSTITUTIVE_TYPE & inputConstitutiveType,
+    KERNEL_CONSTRUCTOR_PARAMS const & kernelParamsTuple )
   {
+    using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
     camp::tuple< NodeManager &,
                  EdgeManager const &,
                  FaceManager const &,
@@ -317,16 +291,149 @@ public:
                                                       elementSubRegion,
                                                       finiteElementSpace,
                                                       inputConstitutiveType };
-
-    auto allArgs = camp::tuple_cat_pair( standardArgs, m_args );
-    return camp::make_from_tuple< KERNEL_TYPE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > >( allArgs );
+    auto allArgs = camp::tuple_cat_pair( standardArgs, kernelParamsTuple );
+    KERNEL_TYPE kernel = camp::make_from_tuple< KERNEL_TYPE >( allArgs );
+    return KERNEL_TYPE::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernel );
   }
 
-private:
-  /// The arguments to append to the standard kernel constructor arguments.
-  camp::tuple< ARGS ... > m_args;
-};
+// cpp20 should allow some simplification here, since prior to that string literals can't be used as value template params
+//   and camp doesn't appear to have a mechanism to mitigate this
+#if JITTI 
+  #define JITTI_TPARAM( X ) std::nullptr_t
+  #define KernelDispatch KernelJITDispatch
+#else 
+  #define JITTI_TPARAM( X ) X
+  #define KernelDispatch KernelTemplateDispatch
+#endif
 
+  jitti::CompilationInfo getKernelCompilationInfo( );
+
+  /**
+   * @class KernelTemplateDispatch
+   * @brief Used to forward arguments to a class that implements the KernelBase interface.
+   * @tparam KERNEL_TYPE The template class to construct, should implement the KernelBase interface.
+   * @tparam ARGS The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
+   */
+  // template< typename KernelClass > // subclass on typename vs const char * which will do the JIT
+  template< template < typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE > class KERNEL_TYPE, typename ... ARGS >
+  class KernelTemplateDispatch
+  {
+  public:
+
+    /**
+     * @brief Initialize the factory.
+     * @param args The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
+     */
+    KernelTemplateDispatch( string const & scopedKernelName, ARGS ... args ):
+      m_kernelName( scopedKernelName ),
+      m_args( args ... )
+    {}
+
+    template < typename POLICY, 
+               typename SUBREGION_TYPE,
+               typename FE_TYPE,
+               typename CONSTITUTIVE_TYPE >
+    real64 invoke( localIndex const numElems,
+                   NodeManager & nodeManager,
+                   EdgeManager const & edgeManager,
+                   FaceManager const & faceManager,
+                   localIndex const targetRegionIndex,
+                   SUBREGION_TYPE const & elementSubRegion,
+                   FE_TYPE const & finiteElementSpace,
+                   CONSTITUTIVE_TYPE & inputConstitutiveType )
+    { 
+      return buildKernelAndInvoke< POLICY,
+                                   SUBREGION_TYPE,
+                                   CONSTITUTIVE_TYPE,
+                                   FE_TYPE,
+                                   KERNEL_TYPE,
+                                   decltype( m_args )> ( numElems, 
+                                                         nodeManager,
+                                                         edgeManager,
+                                                         faceManager,
+                                                         targetRegionIndex,
+                                                         elementSubRegion,
+                                                         finiteElementSpace,
+                                                         inputConstitutiveType,
+                                                         m_args );
+
+    }
+
+  private:
+
+    string const m_kernelName;
+    /// The arguments to append to the standard kernel constructor arguments.
+    camp::tuple< ARGS ... > m_args;
+  };
+
+  //  compiles the kernel using jitti caching
+  template < std::nullptr_t, typename ... ARGS >
+  class KernelJITDispatch
+  {
+    
+    /**
+     * @brief Initialize the factory.
+     * @param args The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
+     */
+    KernelJITDispatch( string const & scopedKernelName, ARGS ... args ):
+      m_kernelName( scopedKernelName ),
+      m_args( args ... )
+    {}
+
+    template < typename POLICY,
+               typename SUBREGION_TYPE,
+               typename FE_TYPE,
+               typename CONSTITUTIVE_TYPE >
+    real64 invoke( localIndex const numElems,
+                   NodeManager & nodeManager,
+                   EdgeManager const & edgeManager,
+                   FaceManager const & faceManager,
+                   localIndex const targetRegionIndex,
+                   SUBREGION_TYPE const & elementSubRegion,
+                   FE_TYPE const & finiteElementSpace,
+                   CONSTITUTIVE_TYPE & inputConstitutiveType )
+    { 
+      jitti::CompilationInfo info = getKernelCompilationInfo( );
+
+      info.templateParams = LvArray::system::demangleType< POLICY >() + ", " +
+                            LvArray::system::demangleType< SUBREGION_TYPE >() + ", " + 
+                            LvArray::system::demangleType< CONSTITUTIVE_TYPE >() + ", " +
+                            LvArray::system::demangleType< FE_TYPE >() + ", " +
+                            m_kernelName +
+                            LvArray::system::demangleType< decltype( m_args ) >();
+
+      // Unfortunately can't just decltype(&buildKernelAndInvoke) since we can't fully specify the function template
+      using JIT_KERNEL_DISPATCH = real64 (*)( localIndex const, 
+                                              NodeManager &,
+                                              EdgeManager const &,
+                                              FaceManager const &,
+                                              localIndex const, 
+                                              SUBREGION_TYPE const &, 
+                                              FE_TYPE const &, 
+                                              CONSTITUTIVE_TYPE const &, 
+                                              decltype( m_args ) const & );
+      string outputDir(JITTI_OUTPUT_DIR);
+      outputDir += "/";
+      static jitti::Cache< JIT_KERNEL_DISPATCH > buildCache( time(NULL), outputDir );
+      auto & jitKernelDispatch = buildCache.getOrLoadOrCompile( info );
+
+      return jitKernelDispatch( numElems,
+                                nodeManager, 
+                                edgeManager, 
+                                faceManager,
+                                targetRegionIndex,
+                                elementSubRegion,
+                                finiteElementSpace,
+                                inputConstitutiveType,
+                                m_args );
+    }
+
+  private:
+
+    string const m_kernelName;
+    /// The arguments to append to the standard kernel constructor arguments.
+    camp::tuple< ARGS ... > m_args;
+  };
 
 //*****************************************************************************
 //*****************************************************************************
@@ -357,13 +464,13 @@ private:
 template< typename POLICY,
           typename CONSTITUTIVE_BASE,
           typename SUBREGION_TYPE,
-          typename KERNEL_FACTORY >
+          typename KERNEL_DISPATCH >
 static
 real64 regionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & targetRegions,
                                      string const & finiteElementName,
                                      arrayView1d< string const > const & constitutiveNames,
-                                     KERNEL_FACTORY & kernelFactory )
+                                     KERNEL_DISPATCH & kernelDispatch )
 {
   GEOSX_MARK_FUNCTION;
   // save the maximum residual contribution for scaling residuals for convergence criteria.
@@ -381,7 +488,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                                 &nodeManager,
                                                                 &edgeManager,
                                                                 &faceManager,
-                                                                &kernelFactory,
+                                                                &kernelDispatch,
                                                                 &finiteElementName]
                                                                  ( localIndex const targetRegionIndex, auto & elementSubRegion )
   {
@@ -407,7 +514,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                                        &edgeManager,
                                                                        &faceManager,
                                                                        targetRegionIndex,
-                                                                       &kernelFactory,
+                                                                       &kernelDispatch,
                                                                        &elementSubRegion,
                                                                        &finiteElementName,
                                                                        numElems]
@@ -422,25 +529,20 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                   &edgeManager,
                                   &faceManager,
                                   targetRegionIndex,
-                                  &kernelFactory,
+                                  &kernelDispatch,
                                   &elementSubRegion,
                                   numElems,
                                   &castedConstitutiveRelation] ( auto const finiteElement )
       {
-        auto kernel = kernelFactory.createKernel( nodeManager,
-                                                  edgeManager,
-                                                  faceManager,
-                                                  targetRegionIndex,
-                                                  elementSubRegion,
-                                                  finiteElement,
-                                                  castedConstitutiveRelation );
-
-        using KERNEL_TYPE = decltype( kernel );
-
-        // Call the kernelLaunch function, and store the maximum contribution to the residual.
-        maxResidualContribution =
-          std::max( maxResidualContribution,
-                    KERNEL_TYPE::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernel ) );
+        maxResidualContribution = std::max( maxResidualContribution,
+                                            kernelDispatch.template invoke< POLICY >( numElems,
+                                                                                      nodeManager, 
+                                                                                      edgeManager,
+                                                                                      faceManager,
+                                                                                      targetRegionIndex,
+                                                                                      elementSubRegion,
+                                                                                      finiteElement,
+                                                                                      castedConstitutiveRelation ) );
       } );
     } );
 
