@@ -17,6 +17,7 @@
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
+#include "math/extrapolation/Extrapolation.hpp"
 
 namespace geosx
 {
@@ -37,7 +38,7 @@ void BlackOilFluid::postProcessInput()
   BlackOilFluidBase::postProcessInput();
 
   GEOSX_THROW_IF( numFluidPhases() != 3,
-                  "BlackOilFluid model named " << getName() << ": this model only support three-phase flow ",
+                  "BlackOilFluid model named " << getName() << ": this model only supports three-phase flow ",
                   InputError );
 }
 
@@ -65,9 +66,9 @@ BlackOilFluid::deliverClone( string const & name,
   return clone;
 }
 
-void BlackOilFluid::useProvidedTableFunctions()
+void BlackOilFluid::readInputDataFromTableFunctions()
 {
-  GEOSX_ERROR( "BlackOilFluid: this option is not implemented yet" );
+  GEOSX_ERROR( "BlackOilFluid: this option is not implemented yet, please provide PVT files in standard Eclipse format" );
 }
 
 void BlackOilFluid::readInputDataFromPVTFiles()
@@ -110,7 +111,7 @@ void BlackOilFluid::readInputDataFromPVTFiles()
   extendUndersaturatedProperties();
 
   // refine table branches
-  refineUndersaturatedTables( 7 );
+  refineUndersaturatedTables( 100 );
 
   // check consistency
   checkTableConsistency();
@@ -202,11 +203,11 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
   if( !isZero( m_PVTO.Rs[0] ) )
   {
     real64 const refPressure = 101325.0;
-    real64 const viscosity = logExtrapolation( m_PVTO.bubblePressure[1],
-                                               m_PVTO.bubblePressure[0],
-                                               m_PVTO.saturatedViscosity[1],
-                                               m_PVTO.saturatedViscosity[0],
-                                               refPressure );
+    real64 const viscosity = extrapolation::logExtrapolation( m_PVTO.bubblePressure[1],
+                                                              m_PVTO.bubblePressure[0],
+                                                              m_PVTO.saturatedViscosity[1],
+                                                              m_PVTO.saturatedViscosity[0],
+                                                              refPressure );
 
 
     m_PVTO.Rs.emplace( 0, 0. );
@@ -329,10 +330,10 @@ void BlackOilFluid::createUndersaturatedProperties()
         // Bo
         arrayView1d< real64 const > const & BoUp = m_PVTO.undersaturatedBo[iBranchUp];
         arrayView1d< real64 const > const & BoLow = m_PVTO.undersaturatedBo[iBranchLow];
-        linearInterpolation( presUp, BoUp,
-                             pres.toViewConst(), BoInterpUp.toView() );
-        linearInterpolation( presLow, BoLow,
-                             pres.toViewConst(), BoInterpLow.toView() );
+        interpolation::linearInterpolation( presUp, BoUp,
+                                            pres.toViewConst(), BoInterpUp.toView() );
+        interpolation::linearInterpolation( presLow, BoLow,
+                                            pres.toViewConst(), BoInterpLow.toView() );
         real64 const BoSlopeUp  = ( BoInterpUp[i] - BoInterpUp[i - 1] ) / ( pres[i] - pres[i - 1] );
         real64 const BoSlopeLow = ( BoInterpLow[i] - BoInterpLow[i - 1] ) / ( pres[i] - pres[i - 1] );
         real64 const BoSlope    = ( 1 / dRsUp * BoSlopeUp + 1 / dRsLow * BoSlopeLow ) / ( 1 / dRsUp + 1 / dRsLow );
@@ -341,10 +342,10 @@ void BlackOilFluid::createUndersaturatedProperties()
         // viscosity
         arrayView1d< real64 const > const & viscUp = m_PVTO.undersaturatedViscosity[iBranchUp];
         arrayView1d< real64 const > const & viscLow = m_PVTO.undersaturatedViscosity[iBranchLow];
-        linearInterpolation( presUp, viscUp,
-                             pres.toViewConst(), viscInterpUp.toView() );
-        linearInterpolation( presLow, viscLow,
-                             pres.toViewConst(), viscInterpLow.toView() );
+        interpolation::linearInterpolation( presUp, viscUp,
+                                            pres.toViewConst(), viscInterpUp.toView() );
+        interpolation::linearInterpolation( presLow, viscLow,
+                                            pres.toViewConst(), viscInterpLow.toView() );
         real64 const viscSlopeUp  = ( viscInterpUp[i] - viscInterpUp[i - 1] ) / ( pres[i] - pres[i - 1] );
         real64 const viscSlopeLow = ( viscInterpLow[i] - viscInterpLow[i - 1] ) / ( pres[i] - pres[i - 1] );
         real64 const viscSlope    = ( 1 / dRsUp * viscSlopeUp + 1 / dRsLow * viscSlopeLow ) / ( 1 / dRsUp + 1 / dRsLow );
@@ -373,12 +374,12 @@ void BlackOilFluid::extendUndersaturatedProperties()
       localIndex const branchSize = m_PVTO.undersaturatedPressure[i].size();
 
       // then we compute an extrapolated value of Bo and viscosity
-      real64 const Bo = linearExtrapolation( presUndersat[branchSize - 2], presUndersat[branchSize - 1],
-                                             BoUndersat[branchSize - 2], BoUndersat[branchSize - 1],
-                                             m_PVTO.maxRelativePressure );
-      real64 const visc = linearExtrapolation( presUndersat[branchSize - 2], presUndersat[branchSize - 1],
-                                               viscUndersat[branchSize - 2], viscUndersat[branchSize - 1],
-                                               m_PVTO.maxRelativePressure );
+      real64 const Bo = extrapolation::linearExtrapolation( presUndersat[branchSize - 2], presUndersat[branchSize - 1],
+                                                            BoUndersat[branchSize - 2], BoUndersat[branchSize - 1],
+                                                            m_PVTO.maxRelativePressure );
+      real64 const visc = extrapolation::linearExtrapolation( presUndersat[branchSize - 2], presUndersat[branchSize - 1],
+                                                              viscUndersat[branchSize - 2], viscUndersat[branchSize - 1],
+                                                              m_PVTO.maxRelativePressure );
 
       // then add thes values to the undersaturated tables
       m_PVTO.undersaturatedPressure[i].emplace_back( m_PVTO.maxRelativePressure );
@@ -422,15 +423,13 @@ void BlackOilFluid::refineUndersaturatedTables( localIndex const numRefinedPress
   for( localIndex i = 0; i < m_PVTO.numSaturatedPoints; ++i )
   {
     // Bo
-    m_PVTO.undersaturatedBo[i].resize( refinedPres.size() );
-    linearInterpolation( m_PVTO.undersaturatedPressure[i].toViewConst(), m_PVTO.undersaturatedBo[i].toViewConst(),
-                         refinedPres.toViewConst(), refinedProp.toView() );
+    interpolation::linearInterpolation( m_PVTO.undersaturatedPressure[i].toViewConst(), m_PVTO.undersaturatedBo[i].toViewConst(),
+                                        refinedPres.toViewConst(), refinedProp.toView() );
     m_PVTO.undersaturatedBo[i] = refinedProp;
 
     // viscosity
-    m_PVTO.undersaturatedViscosity[i].resize( refinedPres.size() );
-    linearInterpolation( m_PVTO.undersaturatedPressure[i].toViewConst(), m_PVTO.undersaturatedViscosity[i].toViewConst(),
-                         refinedPres.toViewConst(), refinedProp.toView() );
+    interpolation::linearInterpolation( m_PVTO.undersaturatedPressure[i].toViewConst(), m_PVTO.undersaturatedViscosity[i].toViewConst(),
+                                        refinedPres.toViewConst(), refinedProp.toView() );
     m_PVTO.undersaturatedViscosity[i] = refinedProp;
 
     // copy pressure

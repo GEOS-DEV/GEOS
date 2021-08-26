@@ -22,7 +22,8 @@
 #include "constitutive/fluid/BlackOilFluidBase.hpp"
 #include "constitutive/fluid/PVTOData.hpp"
 #include "functions/TableFunction.hpp"
-#include "codingUtilities/Utilities.hpp"
+//#include "codingUtilities/Utilities.hpp"
+#include "math/interpolation/Interpolation.hpp"
 
 namespace geosx
 {
@@ -394,7 +395,7 @@ protected:
 
 private:
 
-  virtual void useProvidedTableFunctions() override;
+  virtual void readInputDataFromTableFunctions() override;
 
   virtual void readInputDataFromPVTFiles() override;
 
@@ -1145,9 +1146,9 @@ BlackOilFluidUpdate::computeRs( real64 const presBub,
                                                               presBub );
   integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( m_PVTOView.m_bubblePressure.size()-1 ) );
   integer const iLow = iUp-1;
-  linearInterpolation( presBub - m_PVTOView.m_bubblePressure[iLow], m_PVTOView.m_bubblePressure[iUp] - presBub,
-                       m_PVTOView.m_Rs[iLow], m_PVTOView.m_Rs[iUp],
-                       Rs, dRs_dPres );
+  interpolation::linearInterpolation( presBub - m_PVTOView.m_bubblePressure[iLow], m_PVTOView.m_bubblePressure[iUp] - presBub,
+                                      m_PVTOView.m_Rs[iLow], m_PVTOView.m_Rs[iUp],
+                                      Rs, dRs_dPres );
 }
 
 GEOSX_HOST_DEVICE
@@ -1169,12 +1170,12 @@ BlackOilFluidUpdate::computeSaturatedBoViscosity( real64 const Rs,
   integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( RsVec.size()-1 ) );
   integer const iLow = iUp-1;
 
-  linearInterpolation( Rs - RsVec[iLow], RsVec[iUp] - Rs,
-                       BoVec[iLow], BoVec[iUp],
-                       Bo, dBo_dPres );
-  linearInterpolation( Rs - RsVec[iLow], RsVec[iUp] - Rs,
-                       viscVec[iLow], viscVec[iUp],
-                       visc, dVisc_dPres );
+  interpolation::linearInterpolation( Rs - RsVec[iLow], RsVec[iUp] - Rs,
+                                      BoVec[iLow], BoVec[iUp],
+                                      Bo, dBo_dPres );
+  interpolation::linearInterpolation( Rs - RsVec[iLow], RsVec[iUp] - Rs,
+                                      viscVec[iLow], viscVec[iUp],
+                                      visc, dVisc_dPres );
 
   // chain rule
   dBo_dPres *= dRs_dPres;
@@ -1242,8 +1243,8 @@ BlackOilFluidUpdate::computeUndersaturatedBoViscosity( real64 const Rs,
   integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( RsVec.size()-1 ) );
   integer const iLow = iUp-1;
 
-  real64 const presBub = linearInterpolation( Rs - m_PVTOView.m_Rs[iLow], m_PVTOView.m_Rs[iUp] - Rs,
-                                              m_PVTOView.m_bubblePressure[iLow], m_PVTOView.m_bubblePressure[iUp] );
+  real64 const presBub = interpolation::linearInterpolation( Rs - m_PVTOView.m_Rs[iLow], m_PVTOView.m_Rs[iUp] - Rs,
+                                                             m_PVTOView.m_bubblePressure[iLow], m_PVTOView.m_bubblePressure[iUp] );
   real64 const deltaPres = pres - presBub;
 
   // Step 2: get indices in undersatured pressure table
@@ -1262,21 +1263,21 @@ BlackOilFluidUpdate::computeUndersaturatedBoViscosity( real64 const Rs,
   arraySlice1d< real64 const > const & BoUp = m_PVTOView.m_undersaturatedBo2d[iUp];
   arraySlice1d< real64 const > const & BoLow = m_PVTOView.m_undersaturatedBo2d[iLow];
 
-  real64 const BoInterpLow = linearInterpolation( deltaPres-presLow[iLowP], presLow[iUpP]-deltaPres,
-                                                  BoLow[iLowP], BoLow[iUpP] );
-  real64 const BoInterpUp = linearInterpolation( deltaPres-presUp[iLowP], presUp[iUpP]-deltaPres,
-                                                 BoUp[iLowP], BoUp[iUpP] );
-  Bo = linearInterpolation( deltaRsLow, deltaRsUp, BoInterpLow, BoInterpUp );
+  real64 const BoInterpLow = interpolation::linearInterpolation( deltaPres-presLow[iLowP], presLow[iUpP]-deltaPres,
+                                                                 BoLow[iLowP], BoLow[iUpP] );
+  real64 const BoInterpUp = interpolation::linearInterpolation( deltaPres-presUp[iLowP], presUp[iUpP]-deltaPres,
+                                                                BoUp[iLowP], BoUp[iUpP] );
+  Bo = interpolation::linearInterpolation( deltaRsLow, deltaRsUp, BoInterpLow, BoInterpUp );
 
   // Step 4: interpolate for viscosity
   arraySlice1d< real64 const > const & viscUp = m_PVTOView.m_undersaturatedViscosity2d[iUp];
   arraySlice1d< real64 const > const & viscLow = m_PVTOView.m_undersaturatedViscosity2d[iLow];
 
-  real64 const viscInterpLow = linearInterpolation( deltaPres-presLow[iLowP], presLow[iUpP]-deltaPres,
-                                                    viscLow[iLowP], viscLow[iUpP] );
-  real64 const viscInterpUp = linearInterpolation( deltaPres-presUp[iLowP], presUp[iUpP]-deltaPres,
-                                                   viscUp[iLowP], viscUp[iUpP] );
-  visc = linearInterpolation( deltaRsLow, deltaRsUp, viscInterpLow, viscInterpUp );
+  real64 const viscInterpLow = interpolation::linearInterpolation( deltaPres-presLow[iLowP], presLow[iUpP]-deltaPres,
+                                                                   viscLow[iLowP], viscLow[iUpP] );
+  real64 const viscInterpUp = interpolation::linearInterpolation( deltaPres-presUp[iLowP], presUp[iUpP]-deltaPres,
+                                                                  viscUp[iLowP], viscUp[iUpP] );
+  visc = interpolation::linearInterpolation( deltaRsLow, deltaRsUp, viscInterpLow, viscInterpUp );
 }
 
 GEOSX_HOST_DEVICE

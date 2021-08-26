@@ -203,7 +203,7 @@ void BlackOilFluidBase::postProcessInput()
   // we make the distinction between the two input options
   if( m_tableFiles.empty() )
   {
-    useProvidedTableFunctions();
+    readInputDataFromTableFunctions();
   }
   else
   {

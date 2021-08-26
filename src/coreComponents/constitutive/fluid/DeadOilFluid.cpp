@@ -59,7 +59,7 @@ void DeadOilFluid::readInputDataFromPVTFiles()
   }
 }
 
-void DeadOilFluid::useProvidedTableFunctions()
+void DeadOilFluid::readInputDataFromTableFunctions()
 {
   GEOSX_THROW_IF( m_tableFiles.size() > 0,
                   "DeadOilFluid model named " << getName() << ": input is redundant (user provided both TableFunction names and pvt files)",

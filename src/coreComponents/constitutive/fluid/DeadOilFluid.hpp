@@ -304,7 +304,7 @@ private:
   /**
    * @brief Use the TableFunctions provided by the user to get the PVT data
    */
-  virtual void useProvidedTableFunctions() override;
+  virtual void readInputDataFromTableFunctions() override;
 
   /**
    * @brief Read all the PVT table provided by the user in Eclipse format

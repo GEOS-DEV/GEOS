@@ -80,7 +80,7 @@ protected:
   /**
    * @brief Use the TableFunctions provided by the user to get the PVT data
    */
-  virtual void useProvidedTableFunctions() = 0;
+  virtual void readInputDataFromTableFunctions() = 0;
 
   /**
    * @brief Read all the PVT table provided by the user in Eclipse format
