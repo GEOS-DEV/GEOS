@@ -13,9 +13,7 @@
         lineSearchAction="None"
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
@@ -25,9 +23,9 @@
       targetRegions="{ Region1 }"
       fluidNames="{ fluid1 }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
-      temperature="297.15"
-      useMass="0"/>
+      temperature="297.15"/>
 
     <!-- SPHINX_COMP_WELL_SOLVER -->
     <CompositionalMultiphaseWell
@@ -36,8 +34,7 @@
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
       fluidNames="{ fluid1 }"
       relPermNames="{ relperm }"
-      wellTemperature="297.15"
-      useMass="0">
+      wellTemperature="297.15">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -50,7 +47,7 @@
         name="wellControls2"
         type="producer"
         control="phaseVolRate"
-        referenceElevation="0.5"        
+        referenceElevation="0.5"
         targetBHP="2e6"
         targetPhaseRate="2.5e-7"
         targetPhaseName="oil"/>
@@ -58,7 +55,7 @@
         name="wellControls3"
         type="injector"
         control="totalVolRate"
-        referenceElevation="0.5"        
+        referenceElevation="0.5"
         targetBHP="4e7"
         targetTotalRate="5e-7"
         injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
@@ -154,7 +151,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e3"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -169,7 +165,8 @@
       <TwoPointFluxApproximation
         name="fluidTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -177,7 +174,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ cb1 }"
-      materialList="{ fluid1, rock, relperm }"/>
+      materialList="{ fluid1, rock, relperm, rockPerm }"/>
 
     <WellElementRegion
       name="wellRegion1"
@@ -219,36 +216,13 @@
       phaseMinVolumeFraction="{ 0.1, 0.15 }"
       phaseRelPermExponent="{ 2.0, 2.0 }"
       phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="permeability"
-      scale="2.0e-16"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="permeability"
-      scale="2.0e-16"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="permeability"
-      scale="2.0e-16"/>
-
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
@@ -303,8 +277,6 @@
       component="3"
       scale="0.001"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo

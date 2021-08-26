@@ -1,4 +1,3 @@
-
 /*
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
@@ -18,15 +17,16 @@
  */
 
 #include "HyprePreconditioner.hpp"
+#include "HypreMGR.hpp"
 
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
-#include "linearAlgebra/interfaces/hypre/HypreMGRStrategies.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 #include <_hypre_utilities.h>
 #include <_hypre_parcsr_ls.h>
+
 #include <_hypre_IJ_mv.h>
 
 #include <cfenv>
@@ -345,95 +345,6 @@ void createILU( LinearSolverParameters const & params,
   precond.destroy = HYPRE_ILUDestroy;
 }
 
-void createMGR( LinearSolverParameters const & params,
-                DofManager const * const dofManager,
-                HyprePrecWrapper & precond,
-                HypreMGRData & mgrData )
-{
-  GEOSX_ERROR_IF( dofManager == nullptr, "MGR preconditioner requires a DofManager instance" );
-
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRCreate( &precond.ptr ) );
-
-  // Hypre's parameters to use MGR as a preconditioner
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.logLevel ) ) );
-
-  array1d< localIndex > const numComponentsPerField = dofManager->numComponentsPerField();
-  dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
-
-  if( params.logLevel >= 1 )
-  {
-    GEOSX_LOG_RANK_0( numComponentsPerField );
-  }
-  if( params.logLevel >= 2 )
-  {
-    GEOSX_LOG_RANK_VAR( mgrData.pointMarkers );
-  }
-
-  using namespace hypre::mgr;
-  switch( params.mgr.strategy )
-  {
-    case LinearSolverParameters::MGR::StrategyType::singlePhasePoroelastic:
-    case LinearSolverParameters::MGR::StrategyType::hydrofracture:
-    {
-      setStrategy< SinglePhasePoroelastic >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
-    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM:
-    {
-      setStrategy< CompositionalMultiphaseFVM >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
-    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoir:
-    {
-      setStrategy< CompositionalMultiphaseReservoir >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
-    case LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM:
-    {
-      setStrategy< CompositionalMultiphaseHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
-    case LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics:
-    {
-      setStrategy< LagrangianContactMechanics >( params.mgr, numComponentsPerField, precond, mgrData );
-      break;
-    }
-    default:
-    {
-      GEOSX_ERROR( "Unsupported MGR strategy: " << params.mgr.strategy );
-    }
-  }
-
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseSolver( precond.ptr,
-                                                   mgrData.coarseSolver.solve,
-                                                   mgrData.coarseSolver.setup,
-                                                   mgrData.coarseSolver.ptr ) );
-  precond.setup = HYPRE_MGRSetup;
-  precond.solve = HYPRE_MGRSolve;
-  precond.destroy = HYPRE_MGRDestroy;
-
-  // Set custom F-solver based on SDC for mechanics case
-  if( params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && params.mgr.separateComponents )
-  {
-    HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr );
-    HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 );
-    HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 );
-    HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 );
-    HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 );
-    HYPRE_BoomerAMGSetAggNumLevels( mgrData.mechSolver.ptr, 1 );
-    HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 );
-
-    mgrData.mechSolver.setup = HYPRE_BoomerAMGSetup;
-    mgrData.mechSolver.solve = HYPRE_BoomerAMGSolve;
-    mgrData.mechSolver.destroy = HYPRE_BoomerAMGDestroy;
-
-    // Ignore the setup function here, since we'll be performing it manually in setupSeparateComponent()
-    HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, hypre::HYPRE_DummySetup, mgrData.mechSolver.ptr );
-  }
-}
-
 } // namespace
 
 HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params )
@@ -482,7 +393,7 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
     case LinearSolverParameters::PreconditionerType::mgr:
     {
       m_mgrData = std::make_unique< HypreMGRData >();
-      createMGR( m_params, dofManager, *m_precond, *m_mgrData );
+      hypre::mgr::createMGR( m_params, dofManager, *m_precond, *m_mgrData );
       break;
     }
     case LinearSolverParameters::PreconditionerType::iluk:
@@ -513,7 +424,7 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
     GEOSX_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "MGR preconditioner requires a DofManager instance" );
     HypreMatrix Pu;
     HypreMatrix Auu;
-    mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, 0, 3 } }, mat.getComm(), true, Pu );
+    mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
     mat.multiplyPtAP( Pu, Auu );
     LAIHelperFunctions::separateComponentFilter( Auu, m_precondMatrix, m_params.dofsPerNode );
   }

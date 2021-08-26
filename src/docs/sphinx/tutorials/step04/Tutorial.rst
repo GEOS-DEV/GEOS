@@ -244,7 +244,7 @@ hexahedral meshes in GEOSX.
 
 The **CellElementRegion** must also point to the constitutive models that are used to update
 the dynamic rock and fluid properties in the cells of the reservoir mesh.
-The names ``fluid``, ``rock``, and ``relperm`` used for this in the ``materialList``
+The names ``fluid``, ``rock``, ``rockPerm`` and ``relperm`` used for this in the ``materialList``
 correspond to the attribute ``name`` of the **Constitutive** block.
 
 We also define five **WellElementRegions** corresponding to the five wells.
@@ -266,10 +266,11 @@ Defining material properties with constitutive laws
 ---------------------------------------------------------------------
 
 For a simulation performed with the **CompositionalMultiphaseFlow** 
-physics solver, at least three types of constitutive models must be
+physics solver, at least four types of constitutive models must be
 specified in the **Constitutive** XML block:
 
 - a fluid model describing the thermodynamics behavior of the fluid mixture,
+- a rock permeability model,
 - a relative permeability model,
 - a rock compressibility model.
 
@@ -291,11 +292,13 @@ viscosities (i.e., 0.001 Pa.s). Therefore, we set the end point of the oil
 relative permeability to 0.1 to preserve the mobility ratio of the SPE10 test case.
      
 .. note::
-        The names and order of the phases listed for the attribute ``phaseNames`` must be identical in the fluid model (here, **BlackOilFluid**) and the relative permeability model (here, **BrooksCoreyRelativePermeability**). Otherwise, GEOSX will throw an error and terminate. 
+   The names and order of the phases listed for the attribute ``phaseNames`` must be identical in the fluid model
+   (here, **BlackOilFluid**) and the relative permeability model (here, **BrooksCoreyRelativePermeability**).
+   Otherwise, GEOSX will throw an error and terminate.
 
-We also introduce a model to define the rock compressibility. This step is similar
-to what is described in the previous tutorials (see for instance
-:ref:`TutorialSinglePhaseFlowWithInternalMesh`).
+We also introduce models to define rock compressibility and permeability.
+This step is similar to what is described in the previous tutorials
+(see for instance :ref:`TutorialSinglePhaseFlowWithInternalMesh`).
 
 We remind the reader that the attribute ``name`` of the constitutive models defined here
 must be used in the **ElementRegions** and **Solvers** XML blocks to point the element

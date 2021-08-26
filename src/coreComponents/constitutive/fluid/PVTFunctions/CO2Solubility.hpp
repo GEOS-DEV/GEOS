@@ -40,44 +40,40 @@ class CO2SolubilityUpdate final : public FlashModelBaseUpdate
 public:
 
   CO2SolubilityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                       TableFunction * CO2SolubilityTable,
-                       localIndex const CO2Index,
-                       localIndex const waterIndex,
-                       localIndex const phaseGasIndex,
-                       localIndex const phaseLiquidIndex )
+                       TableFunction const & CO2SolubilityTable,
+                       integer const CO2Index,
+                       integer const waterIndex,
+                       integer const phaseGasIndex,
+                       integer const phaseLiquidIndex )
     : FlashModelBaseUpdate( componentMolarWeight ),
-    m_CO2SolubilityTable( CO2SolubilityTable->createKernelWrapper() ),
+    m_CO2SolubilityTable( CO2SolubilityTable.createKernelWrapper() ),
     m_CO2Index( CO2Index ),
     m_waterIndex( waterIndex ),
     m_phaseGasIndex( phaseGasIndex ),
     m_phaseLiquidIndex( phaseLiquidIndex )
   {}
 
-  /// Default copy constructor
-  CO2SolubilityUpdate( CO2SolubilityUpdate const & ) = default;
-
-  /// Default move constructor
-  CO2SolubilityUpdate( CO2SolubilityUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  CO2SolubilityUpdate & operator=( CO2SolubilityUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  CO2SolubilityUpdate & operator=( CO2SolubilityUpdate && ) = delete;
-
+  template< int USD1, int USD2, int USD3 >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void compute( real64 const & pressure,
-                        real64 const & temperature,
-                        arraySlice1d< real64 const > const & compFraction,
-                        arraySlice1d< real64 > const & phaseFraction,
-                        arraySlice1d< real64 > const & dPhaseFraction_dPressure,
-                        arraySlice1d< real64 > const & dPhaseFraction_dTemperature,
-                        arraySlice2d< real64 > const & dPhaseFraction_dCompFraction,
-                        arraySlice2d< real64 > const & phaseCompFraction,
-                        arraySlice2d< real64 > const & dPhaseCompFraction_dPressure,
-                        arraySlice2d< real64 > const & dPhaseCompFraction_dTemperature,
-                        arraySlice3d< real64 > const & dPhaseCompFraction_dCompFraction ) const override;
+  void compute( real64 const & pressure,
+                real64 const & temperature,
+                arraySlice1d< real64 const, USD1 > const & compFraction,
+                arraySlice1d< real64, USD2 > const & phaseFraction,
+                arraySlice2d< real64, USD3 > const & phaseCompFraction ) const;
+
+  template< int USD1, int USD2, int USD3, int USD4, int USD5 >
+  GEOSX_HOST_DEVICE
+  void compute( real64 const & pressure,
+                real64 const & temperature,
+                arraySlice1d< real64 const, USD1 > const & compFraction,
+                arraySlice1d< real64, USD2 > const & phaseFraction,
+                arraySlice1d< real64, USD2 > const & dPhaseFraction_dPressure,
+                arraySlice1d< real64, USD2 > const & dPhaseFraction_dTemperature,
+                arraySlice2d< real64, USD3 > const & dPhaseFraction_dCompFraction,
+                arraySlice2d< real64, USD4 > const & phaseCompFraction,
+                arraySlice2d< real64, USD4 > const & dPhaseCompFraction_dPressure,
+                arraySlice2d< real64, USD4 > const & dPhaseCompFraction_dTemperature,
+                arraySlice3d< real64, USD5 > const & dPhaseCompFraction_dCompFraction ) const;
 
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
   {
@@ -91,16 +87,16 @@ protected:
   TableFunction::KernelWrapper m_CO2SolubilityTable;
 
   /// Index of the CO2 phase
-  localIndex const m_CO2Index;
+  integer m_CO2Index;
 
   /// Index of the water phase
-  localIndex const m_waterIndex;
+  integer m_waterIndex;
 
   /// Index of the gas phase
-  localIndex const m_phaseGasIndex;
+  integer m_phaseGasIndex;
 
   /// Index of the liquid phase
-  localIndex const m_phaseLiquidIndex;
+  integer m_phaseLiquidIndex;
 
 };
 
@@ -108,16 +104,16 @@ class CO2Solubility : public FlashModelBase
 {
 public:
 
-  CO2Solubility( string_array const & inputPara,
+  CO2Solubility( string_array const & inputParams,
                  string_array const & phaseNames,
                  string_array const & componentNames,
                  array1d< real64 > const & componentMolarWeight );
 
-  ~CO2Solubility() override {}
+  ~CO2Solubility() override = default;
 
   static string catalogName() { return "CO2Solubility"; }
 
-  virtual string getCatalogName() const override final { return catalogName(); }
+  virtual string getCatalogName() const final { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CO2SolubilityUpdate;
@@ -126,69 +122,130 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper();
+  KernelWrapper createKernelWrapper() const;
 
 private:
 
-  void makeTable( string_array const & inputPara );
-
-  void calculateCO2Solubility( real64 const & tolerance,
-                               PVTProps::PTTableCoordinates const & tableCoords,
-                               real64 const & salinity,
-                               array1d< real64 > const & values );
-
-  void CO2SolubilityFunction( real64 const & tolerance,
-                              real64 const & T,
-                              real64 const & P,
-                              real64 & V_r,
-                              real64 (*f)( real64 const & x1, real64 const & x2, real64 const & x3 ) );
-
   /// Table to compute solubility as a function of pressure and temperature
-  TableFunction * m_CO2SolubilityTable;
+  TableFunction const * m_CO2SolubilityTable;
 
   /// Index of the CO2 component
-  localIndex m_CO2Index;
+  integer m_CO2Index;
 
   /// Index of the water component
-  localIndex m_waterIndex;
+  integer m_waterIndex;
 
   /// Index of the gas phase
-  localIndex m_phaseGasIndex;
+  integer m_phaseGasIndex;
 
   /// Index of the liquid phase
-  localIndex m_phaseLiquidIndex;
+  integer m_phaseLiquidIndex;
 };
 
+template< int USD1, int USD2, int USD3 >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void CO2SolubilityUpdate::compute( real64 const & pressure,
-                                   real64 const & temperature,
-                                   arraySlice1d< real64 const > const & compFraction,
-                                   arraySlice1d< real64 > const & phaseFraction,
-                                   arraySlice1d< real64 > const & dPhaseFraction_dPressure,
-                                   arraySlice1d< real64 > const & dPhaseFraction_dTemperature,
-                                   arraySlice2d< real64 > const & dPhaseFraction_dCompFraction,
-                                   arraySlice2d< real64 > const & phaseCompFraction,
-                                   arraySlice2d< real64 > const & dPhaseCompFraction_dPressure,
-                                   arraySlice2d< real64 > const & dPhaseCompFraction_dTemperature,
-                                   arraySlice3d< real64 > const & dPhaseCompFraction_dCompFraction ) const
+inline void
+CO2SolubilityUpdate::compute( real64 const & pressure,
+                              real64 const & temperature,
+                              arraySlice1d< real64 const, USD1 > const & compFraction,
+                              arraySlice1d< real64, USD2 > const & phaseFraction,
+                              arraySlice2d< real64, USD3 > const & phaseCompFraction ) const
 {
   // solubility mol/kg(water)  X = Csat/W
   real64 const input[2] = { pressure, temperature };
-  real64 solubility = 0.0;
-  real64 solubilityDeriv[2]{};
+  real64 solubility;
+  real64 solubilityDeriv[2];
+
+  m_CO2SolubilityTable.compute( input, solubility, solubilityDeriv );
+  solubility *= m_componentMolarWeight[m_waterIndex];
+
+  // Y = C/W = z/(1-z)
+  real64 Y;
+
+  if( compFraction[m_CO2Index] > 1.0 - minForDivision )
+  {
+    Y = compFraction[m_CO2Index] / minForDivision;
+  }
+  else
+  {
+    real64 const oneMinusCompFracInv = 1.0 / (1.0 - compFraction[m_CO2Index]);
+    Y = compFraction[m_CO2Index] * oneMinusCompFracInv;
+  }
+
+  if( Y < solubility )
+  {
+    // liquid phase only
+
+    // 1) Compute phase fractions
+
+    phaseFraction[m_phaseLiquidIndex] = 1.0;
+    phaseFraction[m_phaseGasIndex] = 0.0;
+
+    // 2) Compute phase component fractions
+
+    for( localIndex ic = 0; ic < 2; ++ic )
+    {
+      phaseCompFraction[m_phaseLiquidIndex][ic] = compFraction[ic];
+      // the two following lines are not present in Yue's code, unclear if this will have some consequences
+      phaseCompFraction[m_phaseGasIndex][m_CO2Index] = 1.0;
+      phaseCompFraction[m_phaseGasIndex][m_waterIndex] = 0.0;
+    }
+  }
+  else
+  {
+    // two-phase flow
+
+    // 1) Compute phase fractions
+
+    // liquid phase fraction = (Csat + W) / (C + W) = (Csat/W + 1) / (C/W + 1)
+    real64 const onePlusYInv = 1.0 / ( 1.0 + Y );
+    phaseFraction[m_phaseLiquidIndex] = (solubility + 1.0) * onePlusYInv;
+    phaseFraction[m_phaseGasIndex] = 1.0 - phaseFraction[m_phaseLiquidIndex];
+
+    // 2) Compute phase component fractions
+
+    // liquid phase composition  CO2 = Csat / (Csat + W) = (Csat/W) / (Csat/W + 1)
+    real64 const onePlusSolubilityInv = 1.0 / ( 1.0 + solubility );
+    phaseCompFraction[m_phaseLiquidIndex][m_CO2Index] = solubility * onePlusSolubilityInv;
+
+    phaseCompFraction[m_phaseLiquidIndex][m_waterIndex] = 1.0 - phaseCompFraction[m_phaseLiquidIndex][m_CO2Index];
+
+    // gas phase composition  CO2 = 1.0
+    phaseCompFraction[m_phaseGasIndex][m_CO2Index] = 1.0;
+    phaseCompFraction[m_phaseGasIndex][m_waterIndex] = 0.0;
+  }
+}
+
+template< int USD1, int USD2, int USD3, int USD4, int USD5 >
+GEOSX_HOST_DEVICE
+inline void
+CO2SolubilityUpdate::compute( real64 const & pressure,
+                              real64 const & temperature,
+                              arraySlice1d< real64 const, USD1 > const & compFraction,
+                              arraySlice1d< real64, USD2 > const & phaseFraction,
+                              arraySlice1d< real64, USD2 > const & dPhaseFraction_dPressure,
+                              arraySlice1d< real64, USD2 > const & dPhaseFraction_dTemperature,
+                              arraySlice2d< real64, USD3 > const & dPhaseFraction_dCompFraction,
+                              arraySlice2d< real64, USD4 > const & phaseCompFraction,
+                              arraySlice2d< real64, USD4 > const & dPhaseCompFraction_dPressure,
+                              arraySlice2d< real64, USD4 > const & dPhaseCompFraction_dTemperature,
+                              arraySlice3d< real64, USD5 > const & dPhaseCompFraction_dCompFraction ) const
+{
+  // solubility mol/kg(water)  X = Csat/W
+  real64 const input[2] = { pressure, temperature };
+  real64 solubility;
+  real64 solubilityDeriv[2];
   m_CO2SolubilityTable.compute( input, solubility, solubilityDeriv );
 
   solubility *= m_componentMolarWeight[m_waterIndex];
-  for( localIndex i = 0; i < 2; ++i )
+  for( integer ic = 0; ic < 2; ++ic )
   {
-    solubilityDeriv[i] *= m_componentMolarWeight[m_waterIndex];
+    solubilityDeriv[ic] *= m_componentMolarWeight[m_waterIndex];
   }
 
-  real64 Y = 0.0;
-  real64 dY_dCompFrac[2]{};
-
   // Y = C/W = z/(1-z)
+  real64 Y;
+  real64 dY_dCompFrac[2];
 
   if( compFraction[m_CO2Index] > 1.0 - minForDivision )
   {
@@ -204,6 +261,8 @@ void CO2SolubilityUpdate::compute( real64 const & pressure,
     dY_dCompFrac[m_waterIndex] = 0.0;
   }
 
+  auto setZero = []( real64 & val ){ val = 0.0; };
+
   if( Y < solubility )
   {
     // liquid phase only
@@ -212,18 +271,9 @@ void CO2SolubilityUpdate::compute( real64 const & pressure,
 
     phaseFraction[m_phaseLiquidIndex] = 1.0;
     phaseFraction[m_phaseGasIndex] = 0.0;
-    for( real64 & val : dPhaseFraction_dPressure )
-    {
-      val = 0.0;
-    }
-    for( real64 & val : dPhaseFraction_dTemperature )
-    {
-      val = 0.0;
-    }
-    for( real64 & val : dPhaseFraction_dCompFraction )
-    {
-      val = 0.0;
-    }
+    LvArray::forValuesInSlice( dPhaseFraction_dPressure, setZero );
+    LvArray::forValuesInSlice( dPhaseFraction_dTemperature, setZero );
+    LvArray::forValuesInSlice( dPhaseFraction_dCompFraction, setZero );
 
     // 2) Compute phase component fractions
 
@@ -239,15 +289,8 @@ void CO2SolubilityUpdate::compute( real64 const & pressure,
         dPhaseCompFraction_dCompFraction[m_phaseGasIndex][ic][jc] = 0.0;
       }
     }
-    for( real64 & val : dPhaseCompFraction_dPressure )
-    {
-      val = 0.0;
-    }
-    for( real64 & val : dPhaseCompFraction_dTemperature )
-    {
-      val = 0.0;
-    }
-
+    LvArray::forValuesInSlice( dPhaseCompFraction_dPressure, setZero );
+    LvArray::forValuesInSlice( dPhaseCompFraction_dTemperature, setZero );
   }
   else
   {
@@ -293,10 +336,7 @@ void CO2SolubilityUpdate::compute( real64 const & pressure,
     dPhaseCompFraction_dTemperature[m_phaseGasIndex][m_waterIndex] = 0.0;
 
     // phaseCompFraction does not depend on globalComponentFraction
-    for( real64 & val : dPhaseCompFraction_dCompFraction )
-    {
-      val = 0.0;
-    }
+    LvArray::forValuesInSlice( dPhaseCompFraction_dCompFraction, setZero );
   }
 }
 

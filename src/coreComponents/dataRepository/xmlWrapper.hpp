@@ -102,6 +102,16 @@ public:
   static void addIncludedXML( xmlNode & targetNode );
 
   /**
+   * @brief Function to handle multiple input xml files.
+   * @param inputFileList the list of input xml files
+   * @param inputFileName the input xml file name
+   *
+   * This function checks for multiple xml files, and will build
+   * a new input xml file with an included block if neccesary
+   */
+  static void buildMultipleInputXML( string_array const & inputFileList, string & inputFileName );
+
+  /**
    * @name String to variable parsing.
    *
    * These functions take in @p value and parse that string based on the type of
@@ -180,13 +190,14 @@ public:
     {
       // parse the string/attribute into a value
       stringToInputVariable( rval, xmlatt.value() );
+      return true;
     }
     else
     {
       // set the value to the default value
       equate( rval, defVal );
+      return false;
     }
-    return true;
   }
 
   /**

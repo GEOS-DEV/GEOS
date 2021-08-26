@@ -25,20 +25,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-namespace keys
-{
-string const nodeCoords       = "polylineNodeCoords";
-string const segmentConn      = "polylineSegmentConn";
-string const nElems           = "numElementsPerSegment";
-string const radius           = "radius";
-string const wellRegionName   = "wellRegionName";
-string const wellControlsName = "wellControlsName";
-string const meshBodyName     = "meshName";
-}
-}
-
 /**
  * @class InternalWellGenerator
  *
@@ -211,6 +197,20 @@ public:
 
   ///@}
 
+  ///@cond DO_NOT_DOCUMENT
+  struct viewKeyStruct
+  {
+    constexpr static char const * polylineNodeCoordsString() { return "polylineNodeCoords"; }
+    constexpr static char const * polylineSegmentConnString() { return "polylineSegmentConn"; }
+    constexpr static char const * numElementsPerSegmentString() { return "numElementsPerSegment"; }
+    constexpr static char const * radiusString() { return "radius"; }
+    constexpr static char const * wellRegionNameString() { return "wellRegionName"; }
+    constexpr static char const * wellControlsNameString() { return "wellControlsName"; }
+    constexpr static char const * meshNameString() { return "meshName"; }
+    constexpr static char const * perforationString() { return "Perforation"; }
+  };
+  /// @endcond
+
 protected:
 
   /**
@@ -247,9 +247,16 @@ private:
   void connectPerforationsToWellElements();
 
   /**
+   * @brief Make sure that the perforation locations are valid:
+   *   - for partitioning purposes
+   *   - to have a well-posed problem
+   */
+  void checkPerforationLocationsValidity();
+
+  /**
    * @brief Merge perforations on the elements with multiple perforations.
    */
-  void mergePerforations();
+  void mergePerforations( array1d< array1d< localIndex > > const & elemToPerfMap );
 
   /**
    * @brief At a given node, find the next segment going in the direction of the bottom of the well.
