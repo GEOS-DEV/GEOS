@@ -216,7 +216,6 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
                                                              domain.getNeighbors(),
                                                              false );
 
-        // this->updateDeformationForCoupling( domain );
         this->updateState( domain );
 
         if( getLogLevel() >= 1 )
