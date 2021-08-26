@@ -126,7 +126,15 @@ vtkSmartPointer<vtkUnstructuredGrid> loadVTKMesh( Path const & filePath )
 
   if( extension == "pvtu" )
   {
-    read(vtkSmartPointer<vtkXMLPUnstructuredGridReader>::New());
+    vtkSmartPointer<vtkXMLPUnstructuredGridReader> vtkUgReader = vtkSmartPointer<vtkXMLPUnstructuredGridReader>::New();
+    vtkUgReader->SetFileName( filePath.c_str() );
+    vtkUgReader->UpdateInformation();
+    int numberOfPieces = vtkUgReader->GetNumberOfPieces();
+    if( MpiWrapper::commRank() < numberOfPieces )
+    {
+      vtkUgReader->UpdatePiece(MpiWrapper::commRank(),2,0);
+    }
+    loadedMesh = vtkUgReader->GetOutput();
   }
   else
   {
@@ -170,6 +178,7 @@ vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & l
   generator->SetInputDataObject(vtkUnstructuredGrid::SafeDownCast( rdsf->GetOutputDataObject(0)));
   generator->Update();
   vtkSmartPointer< vtkUnstructuredGrid > mesh = vtkUnstructuredGrid::SafeDownCast( generator->GetOutputDataObject(0));
+  GEOSX_LOG_RANK("number of cells after " << mesh->GetNumberOfCells());
   return mesh;
 }
 
@@ -690,7 +699,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   m_vtkMesh =redistributeMesh(*loadedMesh);
   MpiWrapper::barrier();
 
-  GEOSX_LOG_RANK_0(" Successfully redistributed the mesh on the " << controller->GetNumberOfProcesses() << " MPI processes");
+  GEOSX_LOG_RANK_0("Successfully redistributed the mesh on the " << controller->GetNumberOfProcesses() << " MPI processes");
 
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
