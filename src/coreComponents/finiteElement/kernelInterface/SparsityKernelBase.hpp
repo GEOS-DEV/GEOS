@@ -189,8 +189,9 @@ real64 buildSparsityAndInvoke( localIndex const numElems,
                                globalIndex const rankOffset,
                                SparsityPattern< globalIndex > & inputSparsityPattern )
 {
-    // this requires the underlying kernel be fully specified and instantiated.. which means we'll compile it
-    // to avoid this we'll have to JIT a function that handles 
+    // this requires the underlying kernel be fully specified.. which should result in it compiling, thus sparsity needs to be jitted as well
+    // if we could move the numDofPerXXX out of the kernel classes and have a different mechanism to specify them without full specifying the kernel
+    //  class we could get away without jitting the sparsity as well
     using Kernel = KERNEL_TEMPLATE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
     using SPARSITY_KERNEL_TYPE = SparsityKernelBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, Kernel::numDofPerTestSupportPoint, Kernel::numDofPerTrialSupportPoint >;
     SPARSITY_KERNEL_TYPE kernel ( nodeManager,
@@ -206,7 +207,8 @@ real64 buildSparsityAndInvoke( localIndex const numElems,
     return SPARSITY_KERNEL_TYPE::template kernelLaunch< POLICY, SPARSITY_KERNEL_TYPE >( numElems, kernel );
 }
 
-#if JITTI
+#define JITTI 1
+#if JITTI == 1
   #define SparsityKernelDispatch SparsityKernelJITDispatch
 #else
   #define SparsityKernelDispatch SparsityKernelTemplateDispatch
@@ -305,9 +307,7 @@ private:
  * @tparam KERNEL_TEMPLATE Templated class that defines the physics kernel.
  *   Most likely derives from SparsityKernelBase.
  */
-template< template< typename,
-                    typename,
-                    typename > class KERNEL_TEMPLATE >
+template < typename _ >
 class SparsityKernelJITDispatch
 {
 public:

@@ -296,9 +296,10 @@ protected:
     return KERNEL_TYPE::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernel );
   }
 
+#define JITTI 1
 // cpp20 should allow some simplification here, since prior to that string literals can't be used as value template params
 //   and camp doesn't appear to have a mechanism to mitigate this
-#if JITTI 
+#if JITTI == 1
   #define JITTI_TPARAM( X ) std::nullptr_t
   #define KernelDispatch KernelJITDispatch
 #else 
@@ -367,10 +368,10 @@ protected:
   };
 
   //  compiles the kernel using jitti caching
-  template < std::nullptr_t, typename ... ARGS >
+  template < typename _, typename ... ARGS >
   class KernelJITDispatch
   {
-    
+  public:
     /**
      * @brief Initialize the factory.
      * @param args The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
