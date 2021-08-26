@@ -52,6 +52,7 @@ char const * xmlInput =
   "                                 targetRegions=\"{Region2}\"\n"
   "                                 fluidNames=\"{fluid1}\"\n"
   "                                 solidNames=\"{rock}\"\n"
+  "                                 permeabilityNames=\"{ rockPerm }\"\n"
   "                                 relPermNames=\"{relperm}\"\n"
   "                                 capPressureNames=\"{cappressure}\"\n"
   "                                 temperature=\"297.15\"\n"
@@ -78,11 +79,12 @@ char const * xmlInput =
   "    <FiniteVolume>\n"
   "      <TwoPointFluxApproximation name=\"fluidTPFA\"\n"
   "                                 fieldName=\"pressure\"\n"
-  "                                 coefficientName=\"permeability\"/>\n"
+  "                                 coefficientName=\"permeability\"\n"
+  "                                 coefficientModelNames=\"{ rockPerm }\" />\n"
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
-  "    <CellElementRegion name=\"Region2\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, cappressure}\" />\n"
+  "    <CellElementRegion name=\"Region2\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, cappressure, rockPerm}\" />\n"
   "  </ElementRegions>\n"
   "  <Constitutive>\n"
   "    <CompositionalMultiphaseFluid name=\"fluid1\"\n"
@@ -112,29 +114,10 @@ char const * xmlInput =
   "                                  phaseCapPressureExponentInv=\"{4.25, 3.5}\"\n"
   "                                  phaseEntryPressure=\"{0., 1e8}\"\n"
   "                                  capPressureEpsilon=\"0.0\"/> \n"
+  "    <ConstantPermeability name=\"rockPerm\""
+  "                          permeabilityComponents=\"{ 1.0e-17, 1.0e-17, 1.0e-17 }\" />\n"
   "  </Constitutive>\n"
   "  <FieldSpecifications>\n"
-  "    <FieldSpecification name=\"permx\"\n"
-  "               component=\"0\"\n"
-  "               initialCondition=\"1\"  \n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region2/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"permy\"\n"
-  "               component=\"1\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region2/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"permz\"\n"
-  "               component=\"2\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region2/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
   "    <FieldSpecification name=\"referencePorosity\"\n"
   "               initialCondition=\"1\"\n"
   "               setNames=\"{all}\"\n"
@@ -351,7 +334,7 @@ auto getElementAccessor( Group const * const group,
     data = cap->getReference< Array< T, N > >( key );
   }
 
-  data.move( LvArray::MemorySpace::CPU, false );
+  data.move( LvArray::MemorySpace::host, false );
   auto view = AccessorHelper< FULL >::template makeElementAccessor< N, T >( data.data() + stencilElemIndices[0],
                                                                             stencilSize,
                                                                             stencilRegIndices,

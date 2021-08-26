@@ -18,6 +18,10 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEFLOWUPWINDHELPERKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEFLOWUPWINDHELPERKERNELS_HPP
 
+#include "common/DataLayouts.hpp"
+#include "constitutive/fluid/layouts.hpp"
+#include "constitutive/capillaryPressure/layouts.hpp"
+
 namespace geosx
 {
 
@@ -32,6 +36,8 @@ namespace CompositionalMultiphaseFlowUpwindHelperKernels
  */
 template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+using namespace constitutive;
 /// This enum to select the proper physics in Upwind class specialization
 enum class term
 {
@@ -68,17 +74,17 @@ struct UpwindHelpers
                                ElementViewConst< arrayView1d< real64 const > > const & pres,
                                ElementViewConst< arrayView1d< real64 const > > const & dPres,
                                ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                               ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-                               ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-                               ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
-                               ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-                               ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-                               ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                               ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-                               ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-                               ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-                               ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-                               ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+                               ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+                               ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
+                               ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dComp,
+                               ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+                               ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+                               ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                               ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+                               ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+                               ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+                               ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+                               ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                                integer const capPressureFlag,
                                localIndex( &k_up ),
                                real64( &phaseFlux ),
@@ -256,17 +262,17 @@ struct UpwindHelpers
                               ElementViewConst< arrayView1d< real64 const > > const & pres,
                               ElementViewConst< arrayView1d< real64 const > > const & dPres,
                               ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                              ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-                              ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-                              ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
-                              ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-                              ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-                              ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                              ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-                              ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-                              ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-                              ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-                              ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+                              ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+                              ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
+                              ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dComp,
+                              ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+                              ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+                              ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                              ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+                              ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+                              ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+                              ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+                              ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                               integer const capPressureFlag,
                               localIndex( &k_up ),
                               real64( &phaseFlux ),
@@ -275,9 +281,6 @@ struct UpwindHelpers
                               )
   {
     // to be implemented (Bosma et al.)
-
-
-
   }
 
 /**
@@ -340,20 +343,20 @@ struct UpwindHelpers
     ElementViewConst< arrayView1d< real64 const > > const & pres,
     ElementViewConst< arrayView1d< real64 const > > const & dPres,
     ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-    ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-    ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-    ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
-    ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-    ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-    ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-    ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
-    ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-    ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp,
-    ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-    ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-    ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-    ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-    ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+    ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+    ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
+    ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dComp,
+    ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+    ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+    ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+    ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
+    ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
+    ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dComp,
+    ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+    ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+    ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+    ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+    ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
     localIndex const capPressureFlag,
     localIndex (&k_up),
     localIndex (&k_up_o),
@@ -572,21 +575,21 @@ struct UpwindHelpers
                          arraySlice1d< real64 const > const stencilWeights,
                          real64 const totFlux, //in fine should be a ElemnetViewConst once seq form are in place
                          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                         ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                         ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-                         ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-                         ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-                         ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-                         ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-                         ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-                         ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+                         ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                         ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+                         ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+                         ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+                         ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+                         ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+                         ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+                         ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                          real64 & potHead,
                          real64 ( & dPotHead_dPres)[MAX_STENCIL],
                          real64 (& dPotHead_dComp)[MAX_STENCIL][NC],
                          real64 ( & dProp_dComp)[NC] ) {};
   };
 /*****/
-// TODO specializing for viscous ?
+
   template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
   struct formPotential< NC, term::Viscous, NUM_ELEMS, MAX_STENCIL >
   {
@@ -601,14 +604,14 @@ struct UpwindHelpers
                          arraySlice1d< real64 const > const GEOSX_UNUSED_PARAM( stencilWeights ),
                          real64 const totFlux,
                          ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( gravCoef ),
-                         ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dCompFrac_dCompDens ),
-                         ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( phaseMassDens ),
-                         ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseMassDens_dPres ),
-                         ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseMassDens_dComp ),
-                         ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseVolFrac_dPres ),
-                         ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseVolFrac_dComp ),
-                         ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( phaseCapPressure ),
-                         ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseCapPressure_dPhaseVolFrac ),
+                         ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & GEOSX_UNUSED_PARAM( dCompFrac_dCompDens ),
+                         ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & GEOSX_UNUSED_PARAM( phaseMassDens ),
+                         ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & GEOSX_UNUSED_PARAM( dPhaseMassDens_dPres ),
+                         ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & GEOSX_UNUSED_PARAM( dPhaseMassDens_dComp ),
+                         ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & GEOSX_UNUSED_PARAM( dPhaseVolFrac_dPres ),
+                         ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & GEOSX_UNUSED_PARAM( dPhaseVolFrac_dComp ),
+                         ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & GEOSX_UNUSED_PARAM( phaseCapPressure ),
+                         ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & GEOSX_UNUSED_PARAM( dPhaseCapPressure_dPhaseVolFrac ),
                          real64 & pot,
                          real64( &GEOSX_UNUSED_PARAM( dPot_dPres ))[MAX_STENCIL],
                          real64( &GEOSX_UNUSED_PARAM( dPot_dComp ) )[MAX_STENCIL][NC],
@@ -645,14 +648,14 @@ struct UpwindHelpers
                          arraySlice1d< real64 const > const stencilWeights,
                          real64 const GEOSX_UNUSED_PARAM( totFlux ), //in fine should be a ElemnetViewConst once seq form are in place
                          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                         ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                         ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-                         ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-                         ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-                         ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseVolFrac_dPres ),
-                         ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseVolFrac_dComp ),
-                         ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( phaseCapPressure ),
-                         ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseCapPressure_dPhaseVolFrac ),
+                         ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                         ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+                         ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+                         ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+                         ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & GEOSX_UNUSED_PARAM( dPhaseVolFrac_dPres ),
+                         ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & GEOSX_UNUSED_PARAM( dPhaseVolFrac_dComp ),
+                         ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & GEOSX_UNUSED_PARAM( phaseCapPressure ),
+                         ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & GEOSX_UNUSED_PARAM( dPhaseCapPressure_dPhaseVolFrac ),
                          real64 & pot,
                          real64 ( & dPot_dPres )[NUM_ELEMS],
                          real64 (& dPot_dComp )[NUM_ELEMS][NC],
@@ -751,14 +754,14 @@ struct UpwindHelpers
                          arraySlice1d< real64 const > const stencilWeights,
                          real64 const GEOSX_UNUSED_PARAM( totFlux ),  //in fine should be a ElemnetViewConst once seq form are in place
                          ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( gravCoef ),
-                         ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dCompFrac_dCompDens ),
-                         ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( phaseMassDens ),
-                         ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseMassDens_dPres ),
-                         ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM( dPhaseMassDens_dComp ),
-                         ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-                         ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-                         ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-                         ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+                         ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & GEOSX_UNUSED_PARAM( dCompFrac_dCompDens ),
+                         ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & GEOSX_UNUSED_PARAM( phaseMassDens ),
+                         ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & GEOSX_UNUSED_PARAM( dPhaseMassDens_dPres ),
+                         ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & GEOSX_UNUSED_PARAM( dPhaseMassDens_dComp ),
+                         ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+                         ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+                         ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+                         ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                          real64 & pot,
                          real64 ( & dPot_dPres)[MAX_STENCIL],
                          real64 (& dPot_dComp)[MAX_STENCIL][NC],
@@ -820,10 +823,10 @@ struct UpwindHelpers
                              arraySlice1d< localIndex const > const seri,
                              arraySlice1d< localIndex const > const sesri,
                              arraySlice1d< localIndex const > const sei,
-                             ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                             ElementViewConst< arrayView3d< real64 const > > const & phaseDens,
-                             ElementViewConst< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-                             ElementViewConst< arrayView4d< real64 const > > const & dPhaseDens_dComp,
+                             ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                             ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
+                             ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
+                             ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dComp,
                              real64 & field,
                              real64 ( & dField_dPres)[MAX_STENCIL],
                              real64 (& dField_dComp)[MAX_STENCIL][NC]
@@ -875,10 +878,10 @@ struct UpwindHelpers
                              arraySlice1d< localIndex const > const seri,
                              arraySlice1d< localIndex const > const sesri,
                              arraySlice1d< localIndex const > const sei,
-                             ElementViewConst< arrayView4d< real64 const > > const & phaseCompFrac,
-                             ElementViewConst< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
-                             ElementViewConst< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
-                             ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
+                             ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
+                             ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
+                             ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dComp,
+                             ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
                              real64 const & phaseFlux,
                              real64 const (&dPhaseFlux_dPres)[MAX_STENCIL],
                              real64 const (&dPhaseFlux_dComp)[MAX_STENCIL][NC],
@@ -958,17 +961,17 @@ struct UpwindHelpers
              ElementViewConst< arrayView1d< real64 const > > const & pres,
              ElementViewConst< arrayView1d< real64 const > > const & dPres,
              ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-             ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-             ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-             ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-             ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-             ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-             ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-             ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
-             ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-             ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-             ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-             ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+             ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+             ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+             ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+             ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+             ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+             ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
+             ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dComp,
+             ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+             ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+             ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+             ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
              integer const capPressureFlag,
              localIndex & upwindDir,
              real64 & mob,
@@ -1052,17 +1055,17 @@ struct UpwindHelpers
                 ElementViewConst< arrayView1d< real64 const > > const & pres,
                 ElementViewConst< arrayView1d< real64 const > > const & dPres,
                 ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-                ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-                ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-                ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-                ElementViewConst< arrayView2d< real64 const > > const & dPhaseMob_dPres,
-                ElementViewConst< arrayView3d< real64 const > > const & dPhaseMob_dComp,
-                ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-                ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-                ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-                ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+                ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+                ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+                ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+                ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+                ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
+                ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dComp,
+                ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+                ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+                ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+                ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                 integer const capPressureFlag,
                 localIndex & k_up_main,
                 real64 & fflow,
@@ -1216,15 +1219,15 @@ public:
                      ElementViewConst< arrayView1d< real64 const > > const & pres,
                      ElementViewConst< arrayView1d< real64 const > > const & dPres,
                      ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                     ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-                     ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                     ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-                     ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-                     ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-                     ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-                     ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-                     ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-                     ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+                     ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+                     ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                     ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+                     ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+                     ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+                     ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+                     ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+                     ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+                     ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                      integer const capPressureFlag,
                      localIndex & upwindDir
                      )
@@ -1271,7 +1274,7 @@ public:
                          arraySlice1d< localIndex const > const seri,
                          arraySlice1d< localIndex const > const sesri,
                          arraySlice1d< localIndex const > const sei,
-                         ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
+                         ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
                          real64 & wpot,
                          LAMBDA && fn )
   {
@@ -1344,15 +1347,15 @@ public:
                       ElementViewConst< arrayView1d< real64 const > > const & pres,
                       ElementViewConst< arrayView1d< real64 const > > const & dPres,
                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( phaseMob ),
-                      ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                      ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-                      ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-                      ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-                      ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-                      ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-                      ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-                      ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+                      ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & GEOSX_UNUSED_PARAM( phaseMob ),
+                      ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                      ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+                      ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+                      ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+                      ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+                      ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+                      ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+                      ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                       integer const capPressureFlag,
                       localIndex & GEOSX_UNUSED_PARAM( source ),
                       real64 & pot
@@ -1439,15 +1442,15 @@ public:
                       ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
                       ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dPres ),
                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                      ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-                      ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                      ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-                      ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-                      ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-                      ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-                      ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-                      ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-                      ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+                      ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+                      ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                      ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+                      ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+                      ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+                      ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+                      ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+                      ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+                      ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                       integer const capPressureFlag,
                       localIndex & GEOSX_UNUSED_PARAM( source ),
                       real64 & pot
@@ -1576,15 +1579,15 @@ public:
                       ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
                       ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dPres ),
                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                      ElementViewConst< arrayView2d< real64 const > > const & phaseMob,
-                      ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                      ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-                      ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-                      ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-                      ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-                      ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-                      ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-                      ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+                      ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+                      ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                      ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+                      ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+                      ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+                      ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+                      ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+                      ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+                      ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                       integer const GEOSX_UNUSED_PARAM( capPressureFlag ),
                       localIndex & GEOSX_UNUSED_PARAM( source ),
                       real64 & pot
@@ -1628,79 +1631,6 @@ public:
 
         } );
   }
-//    // reinit source and target depending on gravity orientation
-//
-//    //form gravHead for the currentPhase
-//    // then form GravHead
-//    real64 gravHead{};
-//    real64 dGravHead_dP[NUM_ELEMS]{};
-//    real64 dGravHead_dC[NUM_ELEMS][NC]{};
-//    real64 dProp_dC[NC]{};
-//
-//    UpwindHelpers::formGravHead( ip,
-//                                 stencilSize,
-//                                 seri,
-//                                 sesri,
-//                                 sei,
-//                                 stencilWeights,
-//                                 gravCoef,
-//                                 dCompFrac_dCompDens,
-//                                 phaseMassDens,
-//                                 dPhaseMassDens_dPres,
-//                                 dPhaseMassDens_dComp,
-//                                 gravHead,
-//                                 dGravHead_dP,
-//                                 dGravHead_dC,
-//                                 dProp_dC );
-//
-//    localIndex const k_up = 0;
-//    localIndex const k_dw = 1;
-//
-//    //loop other other phases to form
-//    for( localIndex jp = 0; jp < numPhase; ++jp )
-//    {
-//
-//      if( jp != ip )
-//      {
-//        // then form GravHead
-//        real64 gravHeadOther{};
-//        real64 dGravHeadOther_dP[NUM_ELEMS]{};
-//        real64 dGravHeadOther_dC[NUM_ELEMS][NC]{};
-//        real64 dPropOther_dC[NC]{};
-//
-//        localIndex const er_up = seri[k_up];
-//        localIndex const esr_up = sesri[k_up];
-//        localIndex const ei_up = sei[k_up];
-//
-//        localIndex const er_dw = seri[k_dw];
-//        localIndex const esr_dw = sesri[k_dw];
-//        localIndex const ei_dw = sei[k_dw];
-//
-//        UpwindHelpers::formGravHead( jp,
-//                                     stencilSize,
-//                                     seri,
-//                                     sesri,
-//                                     sei,
-//                                     stencilWeights,
-//                                     gravCoef,
-//                                     dCompFrac_dCompDens,
-//                                     phaseMassDens,
-//                                     dPhaseMassDens_dPres,
-//                                     dPhaseMassDens_dComp,
-//                                     gravHeadOther,
-//                                     dGravHeadOther_dP,
-//                                     dGravHeadOther_dC,
-//                                     dPropOther_dC );
-//
-//        real64 const mob_up = phaseMob[er_up][esr_up][ei_up][jp];
-//        real64 const mob_dw = phaseMob[er_dw][esr_dw][ei_dw][jp];
-//
-//        pot += ( gravHead - gravHeadOther >= 0 ) ? mob_dw * ( gravHeadOther - gravHead ) :
-//               mob_up * ( gravHeadOther - gravHead );
-//
-//
-//      }
-//    }
 
 };
 //Special case for Viscous as the assembly of potential is different
@@ -1729,15 +1659,15 @@ public:
                       ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
                       ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dPres ),
                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                      ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( phaseMob ),
-                      ElementViewConst< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-                      ElementViewConst< arrayView3d< real64 const > > const & phaseMassDens,
-                      ElementViewConst< arrayView3d< real64 const > > const & dPhaseMassDens_dPres,
-                      ElementViewConst< arrayView4d< real64 const > > const & dPhaseMassDens_dComp,
-                      ElementViewConst< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
-                      ElementViewConst< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
-                      ElementViewConst< arrayView3d< real64 const > > const & phaseCapPressure,
-                      ElementViewConst< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
+                      ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & GEOSX_UNUSED_PARAM( phaseMob ),
+                      ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+                      ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
+                      ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
+                      ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
+                      ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+                      ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
+                      ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
+                      ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                       integer const GEOSX_UNUSED_PARAM( capPressureFlag ),
                       localIndex & GEOSX_UNUSED_PARAM( source ),
                       real64 & pot
