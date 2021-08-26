@@ -10,9 +10,10 @@ GEOSX is configured via one (or more) `Extensible Markup Language <https://en.wi
 These files contain a set of elements and attributes that closely follow the internal datastructure of GEOSX.
 When running GEOSX, these files are specified using the `-i` argument:
 
-```
-geosx -i input.xml
-```
+.. code-block:: bash
+
+    geosx -i input.xml
+
 
 
 XML Components
@@ -20,23 +21,24 @@ XML Components
 
 The following illustrates some of the key features of a GEOSX-format xml file:
 
-```xml
-<?xml version="1.0" ?>
+.. code-block:: xml
 
-<Problem>
-    <BlockA
-        someAttribute="1.234">
+    <?xml version="1.0" ?>
 
-        <!-- Some comment -->
-        <BlockB
-          name="firstNamedBlock"
-          anotherAttribute="0"/>
-        <BlockB
-          name="secondNamedBlock"
-          anotherAttribute="1"/>
-    </BlockA>
-</Problem>
-```
+    <Problem>
+        <BlockA
+            someAttribute="1.234">
+
+            <!-- Some comment -->
+            <BlockB
+              name="firstNamedBlock"
+              anotherAttribute="0"/>
+            <BlockB
+              name="secondNamedBlock"
+              anotherAttribute="1"/>
+        </BlockA>
+    </Problem>
+
 
 The two basic components of an xml file are blocks, which are specified using angle brackets ("<BlockA>  </BlockA>"), and attributes that are attached to blocks (attributeName="attributeValue").
 Block and attributes can use any Ascii character aside from `<`, `&`, `'`, and `"` (if necessary, use `&lt;`, `&amp;`, `&apos;`, or `&quot;`).
@@ -57,11 +59,11 @@ Input Validation
 
 The optional `xmlns:xsi` and `xsi:noNamespaceSchemaLocation` attributes in the Problem block can be used to indicate the type of document and the location of the xml schema to the text editor:
 
-```xml
-<Problem
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="/path/to/schema.xsd" />
-```
+.. code-block:: xml
+
+    <Problem
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="/path/to/schema.xsd" />
 
 The schema contains a list of xml blocks and attributes that are supported by GEOSX, indicates whether a given object is optional or required, and defines the format of the object (string, floating point number, etc.).
 A copy of the schema is included in the GEOSX source code (/path/to/GEOSX/src/coreComponents/schema/schema.xsd).
@@ -94,24 +96,25 @@ As an additional step for SublimLinter-xmllint, you will need to add a linter co
 To do so, go to Preferences/Package Settings/SublimeLinter/Settings.
 In the right-hand side of the new window, add the xmllint configuration:
 
-```python
-{
-    "linters": {
-        "xmllint":
-        {
-            "args": "--schema /path/to/schema.xsd",
-            "styles": [
-                {
-                    "mark_style": "fill",
-                    "scope": "region.bluish",
-                    "types": ["error"],
-                    "icon": "stop",
-                }
-            ]
-        },
+.. code-block:: python
+
+    {
+        "linters": {
+            "xmllint":
+            {
+                "args": "--schema /path/to/schema.xsd",
+                "styles": [
+                    {
+                        "mark_style": "fill",
+                        "scope": "region.bluish",
+                        "types": ["error"],
+                        "icon": "stop",
+                    }
+                ]
+            },
+        }
     }
-}
-```
+
 
 
 Eclipse

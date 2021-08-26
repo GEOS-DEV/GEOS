@@ -31,6 +31,11 @@ The xml input file for this test case is located at:
 
   src/coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
 
+**Validation tools**
+
+If you have not already done so, please use or enable an xml validation tool (see **User Guide/Input Files/Input Validation**).
+This will help you identify common issues that may occur when workign with input file.
+
 
 ------------------------------------
 GEOSX input files
