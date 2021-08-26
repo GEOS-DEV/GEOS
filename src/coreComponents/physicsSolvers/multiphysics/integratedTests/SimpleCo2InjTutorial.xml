@@ -10,7 +10,7 @@
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
       initialDt="1e2"
-      targetRegions="{ Reservoir, wellRegion }">
+      targetRegions="{ reservoir, wellRegion }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         lineSearchAction="Attempt"
@@ -26,7 +26,7 @@
 
     <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
-      targetRegions="{ Reservoir }"
+      targetRegions="{ reservoir }"
       discretization="fluidTPFA"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
@@ -90,7 +90,7 @@
   <!-- SPHINX_FIELD_CASE_Co2_REGION -->
   <ElementRegions>
     <CellElementRegion
-      name="Reservoir"
+      name="reservoir"
       cellBlocks="{ cb1 }"
       materialList="{ fluid, rock, relperm, rockPerm }"/>
 
@@ -141,7 +141,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
-        targetRegions="{ Reservoir }"
+        targetRegions="{ reservoir }"
         fieldName="pressure"
         coefficientName="permeability"
         coefficientModelNames="{ rockPerm }"/>
@@ -214,7 +214,7 @@
       name="referencePorosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Reservoir"
+      objectPath="ElementRegions/reservoir"
       fieldName="referencePorosity"
       scale="0.1"/>
 
@@ -222,7 +222,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Reservoir"
+      objectPath="ElementRegions/reservoir"
       fieldName="pressure"
       scale="1.25e7"/>
 
@@ -230,7 +230,7 @@
       name="initialComposition_co2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Reservoir"
+      objectPath="ElementRegions/reservoir"
       fieldName="globalCompFraction"
       component="0"
       scale="0.0"/>
@@ -239,7 +239,7 @@
       name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Reservoir"
+      objectPath="ElementRegions/reservoir"
       fieldName="globalCompFraction"
       component="1"
       scale="1.0"/>

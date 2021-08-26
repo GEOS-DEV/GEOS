@@ -1,20 +1,18 @@
 .. _TutorialCO2FieldCase:
 
 ##################################################################
-Tutorial 6: CO :sub:`2` injection into an internal grid
+Tutorial 6: CO :sub:`2` injection
 ##################################################################
 
 **Context**
 
-In this tutorial, we go on with our previous field case (see :ref:`TutorialFieldCase`) adding a CO :sub:`2` injection well at the bottom
-of the domain.
+In this tutorial, we show how to set up a multiphase simulation of CO :sub:`2` injection. 
 
 **Objectives**
 
 At the end of this tutorial you will know:
 
- - how to set up a CO :sub:`2` injection scenario,
- - how to add well coupling into the domain, 
+ - how to set up a CO :sub:`2` injection scenario with a well,
  - how to run a case using MPI-parallelism.
 
 **Input file**
@@ -26,49 +24,51 @@ The XML file for this test case is located at :
   src/coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
 
 This mesh is a simple internally generated regular grid ( 50x1x150 ).
-A single CO :sub:`2` injection wellbore is at the center of the reservoir.
-
-------------------------------------
-GEOSX input file
-------------------------------------
+A single CO :sub:`2` injection well is at the center of the reservoir.
 
 The XML file considered here follows the typical structure of the GEOSX input files:
 
  #. :ref:`Solver <Solver_tag_co2_field_case>`
  #. :ref:`Mesh <Mesh_tag_co2_field_case>`
- #. :ref:`Geometry <Geometry_tag_co2_field_case>`
  #. :ref:`Events <Events_tag_co2_field_case>`
  #. :ref:`NumericalMethods <NumericalMethods_tag_co2_field_case>`
  #. :ref:`ElementRegions <ElementRegions_tag_co2_field_case>`
  #. :ref:`Constitutive <Constitutive_tag_co2_field_case>`
  #. :ref:`FieldSpecifications <FieldSpecifications_tag_co2_field_case>`
  #. :ref:`Outputs <Outputs_tag_co2_field_case>`
-
+ #. :ref:`Tasks <Tasks_tag_co2_field_case>`    
 
 .. _Solver_tag_co2_field_case:
 
-Defining a solver
------------------
+--------------------------------
+Multiphase flow and well solvers
+--------------------------------
+
 Let us inspect the **Solver** XML tags.
-It consists of 3 blocks **CompositionalMultiphaseFlow**, **CompositionalMultiphaseWell** and **CompositionalMultiphaseReservoir**, which are respectively handling the solution from multiphase flow in the reservoir, multiphase flow in the wells, and coupling between those two parts.
+They consist of three blocks **CompositionalMultiphaseFVM**, **CompositionalMultiphaseWell** and **CompositionalMultiphaseReservoir**, which are respectively handling the solution from multiphase flow in the reservoir, multiphase flow in the wells, and coupling between those two parts.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_SOLVER_END -->
 
-In the **CompositionalMultiphaseFVM** (:ref:`CompositionalMultiphaseFlow`), a classical multiphase compositional solver is detailed, including a TPFA discretization, reference to fluid data through ``fluidNames``, to solid data through ``solidNames``, to permeability data through ``permeabilityNames``
-and to relative permeability models through ``relPermNames`` attributes.
+In the **CompositionalMultiphaseFVM** (:ref:`CompositionalMultiphaseFlow`), a classical multiphase compositional solver with a TPFA discretization is described.
+The flow solver definition includes a list of names to point to fluid constitutive data through ``fluidNames``, to solid constitutive data through ``solidNames``, to permeability data through ``permeabilityNames``
+and to relative permeability constitutive data through ``relPermNames`` attributes.
 
-The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilBottomLayersSPE10` for detailed tutorial on wells integration). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines a  **WellControls** sub-tag, that can specify injector and producer `control` splitting between BHP-controlled or rate-controlled. Alongside with that attribute are the ``targetBHP`` and ``targetRate`` that specify the maximal admissible pressure and rate for the well. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture.
+The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilEgg` for detailed tutorial on wells). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines a  **WellControls** sub-tag.
+This sub-tag specifies the CO :sub:`2` injector control mode: the well is initially rate controlled, with a rate specified in ``targetRate`` a maximum pressure specified in ``targetBHP``. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture (here, pure CO :sub:`2`).
 
-The coupling section **CompositionalMultiphaseReservoir** describes the binding between those two previous elements (see :ref:`TutorialPoroelasticity` for detailed tutorial on coupling physics in GEOSX). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solvers attributes). 
+The **CompositionalMultiphaseReservoir** coupling section describes the binding between those two previous elements (see :ref:`TutorialPoroelasticity` for detailed tutorial on coupling physics in GEOSX). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solvers attributes). 
 
 .. _Mesh_tag_co2_field_case:
 
-Specifying a computational mesh
----------------------------------
-The **Mesh** tag is used as in previous tutorials to import the field mesh either internally (:ref:`TutorialSinglePhaseFlowWithInternalMesh`) or externally (:ref:`TutorialSinglePhaseFlowExternalMesh`). In the current tutorial, this tag is also of paramount importance as it is where the **InternalWell** multi-segmented wells are defined. Apart from the ``name`` identifier attribute and their ``wellRegionName`` (:ref:`ElementRegions <ElementRegions_tag_co2_field_case>`) and ``wellControlsName`` (:ref:`Solver <Solver_tag_co2_field_case>`) binding attributes, ``polylineNodeCoords`` and ``polylineSegmentConn`` attributes are used to define the path of the wellbore and connections between its nodes. The ``numElementsPerSegment`` is discretizing the wellbore segments while the ``radius`` attribute specifies the wellbore radius (:ref:`TutorialDeadOilBottomLayersSPE10` for details on wellbore use). Once the wellbore is defined and discretized, the position of **Perforations** is defined using curvilinear distance from the head of the wellbore (``distanceFromHead``).
+
+----------------------
+Mesh and well geometry
+----------------------
+
+The **Mesh** tag is used as in previous tutorials to import the field mesh either internally (:ref:`TutorialSinglePhaseFlowWithInternalMesh`) or externally (:ref:`TutorialSinglePhaseFlowExternalMesh`). In the current tutorial, this tag is the internal generation of well is defined with the **InternalWell** sub-tag. Apart from the ``name`` identifier attribute and their ``wellRegionName`` (:ref:`ElementRegions <ElementRegions_tag_co2_field_case>`) and ``wellControlsName`` (:ref:`Solver <Solver_tag_co2_field_case>`) binding attributes, ``polylineNodeCoords`` and ``polylineSegmentConn`` attributes are used to define the path of the wellbore and connections between its nodes. The ``numElementsPerSegment`` is discretizing the wellbore segments while the ``radius`` attribute specifies the wellbore radius (:ref:`TutorialDeadOilEgg` for details on wells). Once the wellbore is defined and discretized, the position of **Perforations** is defined using curvilinear distance from the head of the wellbore (``distanceFromHead``).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
   :language: xml
@@ -79,31 +79,23 @@ The **Mesh** tag is used as in previous tutorials to import the field mesh eithe
         It is the responsibility of the user to make sure that there is a perforation in the bottom cell of the well mesh, otherwise an error will be thrown and the simulation will terminate.
 
 
-.. _Geometry_tag_co2_field_case:
-
-Geometry tag
-----------------
-
-The **Geometry** XML block was used in single-phase tutorials to specify boundary conditions.
-Since we use wells and assume no-flow boundary conditions in this tutorial, the **Geometry**
-block is not needed.
-
 
 .. _Events_tag_co2_field_case:
 
-Specifying events
-------------------------
+--------
+Events
+--------
         
-The solver is applied as a periodic event whose target is referred to as **Solvers/coupledFlowAndWells** nametag.
+The solver is applied as a periodic event whose target is referred to as ``coupledFlowAndWells`` nametag.
 Using the ``maxEventDt`` attribute, we specify a max time step size of 5 x 10^6 seconds.
 
-The output event triggers a vtk output  every 10^7 seconds, constraining the solver schedule to match exactly these dates.
+The output event triggers a VTK output  every 10^7 seconds, constraining the solver schedule to match exactly these dates.
 The output path to data is specified as a ``target`` of this **PeriodicEvent**.
 
 Another periodic event is defined under the name ``restarts``.
 It consists of saved checkpoints every 5 x 10^7 seconds, whose physical output folder name is defined under the **Output** tag.
 
-Finally, the time history collection and output events are used to trigger the mechanisms involved in the generation of a time series of well pressure (see the procedure outlined in :ref:`TasksManager`).
+Finally, the time history collection and output events are used to trigger the mechanisms involved in the generation of a time series of well pressure (see the procedure outlined in :ref:`TasksManager`, and the example in :ref:`TutorialDeadOilEgg`).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
   :language: xml
@@ -113,15 +105,16 @@ Finally, the time history collection and output events are used to trigger the m
 
 .. _NumericalMethods_tag_co2_field_case:
 
-Defining Numerical Methods
-----------------------------------
+-----------------
+Numerical methods
+-----------------
 
-The ``TwoPointFluxApproximation`` is chosen as our fluid equation discretization. The tag specifies:
+The **TwoPointFluxApproximation** is chosen for the fluid equation discretization. The tag specifies:
 
 - A primary field to solve for as ``fieldName``. For a flow problem, this field is pressure. 
 - A ``fieldName`` used to specify boundary objects with boundary conditions.
-- A ``coefficientName`` pointing to the field used for TPFA transmissibilities constructions.
-- A ``coefficientModelNames`` used for specifying what constitutive model to use for permeability.
+- A ``coefficientName`` pointing to the field used for TPFA transmissibilities construction.
+- A ``coefficientModelNames`` used to specify the permeability constitutive model(s).
 
 Here, we specify ``targetRegions``
 
@@ -132,12 +125,12 @@ Here, we specify ``targetRegions``
 
 .. _ElementRegions_tag_co2_field_case:
 
-Defining regions in the mesh
------------------------------------
+---------------
+Element regions
+---------------
 
-The novelty compared to :ref:`TutorialFieldCase`, here, is the addition of **WellElementRegions** that are not bound to a cellBlock
-and contain a list of modeled materials.
-
+We define a **CellElementRegion** pointing to the cell block defining the reservoir mesh, and a **WellElementRegion** for the well.
+The two regions contain a list of constitutive models names.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
   :language: xml
@@ -147,12 +140,13 @@ and contain a list of modeled materials.
 
 .. _Constitutive_tag_co2_field_case:
 
-Defining material properties with constitutive laws
--------------------------------------------------------
+-----------------
+Constitutive laws
+-----------------
 
-Under the **Constitutive** tag, three items can be found:
+Under the **Constitutive** tag, four items can be found:
 
-- **MultiPhaseMultiComponentFluid** : this tag defines phase names, component molar weights and characteristic behaviors such as viscosity and density dependencies with respect to pressure and temperature. 
+- **CO2BrineFluid** : this tag defines phase names, component molar weights, and fluid behaviors such as CO :sub:`2` solubility in brine and viscosity/density dependencies on pressure and temperature. 
 - **PoreVolumeCompressibleSolid** : this tag contains all the data needed to model rock compressibility.
 - **BrooksCoreyRelativePermeability** : this tag defines the relative permeability model for each phase, its end-point values, residual volume fractions (saturations), and Corey exponents.
 - **ConstantPermeability** : this tag defines the permeability model that is set to a simple constant diagonal tensor, whose values are defined in ``permeabilityComponent``.
@@ -162,7 +156,21 @@ Under the **Constitutive** tag, three items can be found:
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
 
-One can notice that the PVT data specified by **MultiPhaseMultiComponentFluid** is set to model the behavior of CO2 in the liquid and gas phases as a function of pressure and temperature. These *pvtgas.txt* and *pvtliquid.txt* files are composed as follows:
+The PVT data specified by **CO2BrineFluid** is set to model the behavior of the CO :sub:`2`-brine system as a function of pressure, temperature, and salinity.
+We currently rely on a two-phase, two-component (CO :sub:`2` and H :sub:`2` O) model in which salinity is a constant parameter in space and in time.
+The model is described in detail in  :ref:`CO2-EOS`).
+The model definition requires three text files:
+
+In *co2flash.txt*, we define the CO :sub:`2` solubility model used to compute the amount of CO :sub:`2` dissolved in the brine phase as a function of pressure (in Pascal), temperature (in Kelvin), and salinity (in units of molality):
+
+.. code::
+
+   FlashModel CO2Solubility  1e6 1.5e7 5e4 367.15 369.15 1 0
+
+The first keyword is an identifier for the model type (here, a flash model). It is followed by the model name. Then, the lower, upper and step increment values for pressure and temperature range are specified.
+The trailing 0 defines a zero-salinity in the model. 
+Note that the water component is not allowed to evaporate into the CO :sub:`2` -rich phase.  
+The *pvtgas.txt* and *pvtliquid.txt* files define the models used to compute the density and viscosity of the two phases, as follows:
 
 .. code:: 
 
@@ -174,17 +182,21 @@ One can notice that the PVT data specified by **MultiPhaseMultiComponentFluid** 
         DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0
         ViscosityFun BrineViscosity 0
 
-The first keyword is an identifier for either a density or a viscosity model, generated by GEOSX at runtime. It is followed by an identifier for the type of model (see :ref:`FluidModels`). Then, the lower, upper and step increment values for pressure and temperature range are specified. The trailing 0 for BrineCO2Density entry is the salinity of the brine (see :ref:`CO2-EOS`).
+In these files, the first keyword of each line is an identifier for the model type (either a density or a viscosity model).
+It is followed by the model name
+Then, the lower, upper and step increment values for pressure and temperature range are specified.
+The trailing 0 for ``BrineCO2Density`` and ``BrineViscosity`` entry is the salinity of the brine, set to zero.
 
 .. note::
-  The *0* value for *BrineViscosity* indicates that liquid CO2 viscosity is constant with respect to pressure and temperature. 
+   It is the responsibility of the user to make sure that the pressure and temperature values encountered in the simulation (in the reservoir and in the well) are within the bounds specified in the PVT files. GEOSX will not throw an error if a value outside these bounds is encountered, but the (nonlinear) behavior of the simulation and quality of the results will likely be negatively impacted.  
 
 .. _FieldSpecifications_tag_co2_field_case:
 
-Defining properties with the FieldSpecifications
----------------------------------------------------------------------
+----------------------
+Property specification
+----------------------
 
-As in previous tutorials, the **FieldSpecifications** tag is used to declare fields such as directional permeability, reference porosity, initial pressure, and compositions.
+The **FieldSpecifications** tag is used to declare fields such as directional permeability, reference porosity, initial pressure, and compositions.
 Here, these fields are homogeneous, except for the permeability field that is taken as an heterogeneous log-normally distributed field and specified in **Functions** as in :ref:`TutorialFieldCase`.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
@@ -199,8 +211,9 @@ Here, these fields are homogeneous, except for the permeability field that is ta
 
 .. _Outputs_tag_co2_field_case:
 
-Specifying output formats
-----------------------------------
+------
+Output
+------
 
 The **Outputs** XML tag is used to write visualization, restart, and time history files.
 
@@ -214,10 +227,11 @@ Finally, we require an output of the well pressure history using the **TimeHisto
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_OUTPUT -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_OUTPUT_END -->
 
-.. _Tasks_tag_dead_oil_egg_model:
+.. _Tasks_tag_co2_field_case:
 
-Specifying tasks
-----------------------------------
+-----
+Tasks
+-----
 
 In the **Events** block, we have defined an event requesting that a task periodically collects the pressure at the well.
 This task is defined here, in the **PackCollection** XML sub-block of the **Tasks** block.
@@ -246,7 +260,7 @@ The simulation can be launched with on 4 cores using MPI-parallelism:
 
   mpirun -np 4 geosx -i SimpleCo2InjTutorial.xml -x 1 -y 1 -z 4
 
-A restart from a checkpoint file `FieldCaseCo2InjTutorial_restart_000000024.root` is always available thanks to the following command line :
+A restart from a checkpoint file `SimpleCo2InjTutorial_restart_000000024.root` is always available thanks to the following command line :
 
 .. code-block:: console
 
@@ -256,30 +270,32 @@ The output then shows the loading of HDF5 restart files by each core.
 
 .. code-block:: console
 
-        Loading restart file /work/simu/geosx/test/SimpleCo2InjTutorial_restart_000000024
-        Rank 0: rankFilePattern = /work/simu/geosx/test/SimpleCo2InjTutorial_restart_000000024/rank_%07d.hdf5
-        Rank 0: Reading in restart file at /work/simu/geosx/test/SimpleCo2InjTutorial_restart_000000024/rank_0000000.hdf5
-        Rank 1: Reading in restart file at /work/simu/geosx/test/SimpleCo2InjTutorial_restart_000000024/rank_0000001.hdf5
-        Rank 3: Reading in restart file at /work/simu/geosx/test/SimpleCo2InjTutorial_restart_000000024/rank_0000003.hdf5
-        Rank 2: Reading in restart file at /work/simu/geosx/test/SimpleCo2InjTutorial_restart_000000024/rank_0000002.hdf5
+        Loading restart file SimpleCo2InjTutorial_restart_000000024
+        Rank 0: rankFilePattern = SimpleCo2InjTutorial_restart_000000024/rank_%07d.hdf5
+        Rank 0: Reading in restart file at SimpleCo2InjTutorial_restart_000000024/rank_0000000.hdf5
+        Rank 1: Reading in restart file at SimpleCo2InjTutorial_restart_000000024/rank_0000001.hdf5
+        Rank 3: Reading in restart file at SimpleCo2InjTutorial_restart_000000024/rank_0000003.hdf5
+        Rank 2: Reading in restart file at SimpleCo2InjTutorial_restart_000000024/rank_0000002.hdf5
 
+and the simulation restarts from this point in time. 	
 
-------------------------------------
-Visualization of results
-------------------------------------
+-------------
+Visualization
+-------------
 
-Post-treating under Paraview, we can observe the CO :sub:`2` plume moving upward under buoyancy effects and
+Post-treating in Paraview, we can observe the CO :sub:`2` plume moving upward under buoyancy effects and
 forming a gas cap at the top of the domain,
 
-.. image:: fcCo2-sat-0.png
-   :width: 400px
-.. image:: fcCo2-sat-1.png
-   :width: 400px
-.. image:: fcCo2-sat-2.png
-   :width: 400px
+|pic1| |pic2| |pic3|
 
-Inspecting the heterogeneous values of the log permeability allows to explain the values of the gas saturations
-moving upward
+.. |pic1| image:: fcCo2-sat-0.png
+   :width: 32%
+.. |pic2| image:: fcCo2-sat-1.png
+   :width: 32%
+.. |pic3| image:: fcCo2-sat-2.png
+   :width: 32%
+
+The heterogeneous values of the log permeability field can also be visualized in Paraview:
 
 .. image:: fcCo2-logK.png
    :width: 400px
