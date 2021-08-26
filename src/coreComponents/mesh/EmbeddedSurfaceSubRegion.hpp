@@ -208,6 +208,7 @@ public:
     /// @return Fracture traction derivative w.r.t. jump string
     static constexpr char const * dTraction_dJumpString()   { return "dTraction_dJump"; }
 
+    /// @return Fracture traction derivative w.r.t. pressure string
     static constexpr char const * dTraction_dPressureString()   { return "dTraction_dPressure"; }
 
     /// @return surfaces with ghost nodes list string

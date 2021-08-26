@@ -122,10 +122,10 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
   array2d< real64 > fluxJacobian( numElems, stencilSize );
 
   // transmissibility
-  real64 transmissibility[2];
-  transmissibility[0] = weights[0][0];
-  transmissibility[1] = weights[0][1];
-  real64 dTrans_dPres[2] = {0.0, 0.0};
+  real64 transmissibility[1][2];
+  transmissibility[0][0] = weights[0][0];
+  transmissibility[0][1] = weights[0][1];
+  real64 dTrans_dPres[1][2] = {{0.0, 0.0}};
 
   FluxKernel::compute( stencilSize,
                        seri[0],

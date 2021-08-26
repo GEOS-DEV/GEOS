@@ -78,15 +78,30 @@ struct SurfaceElementStencil_Traits
   static localIndex constexpr MAX_NUM_OF_CONNECTIONS = MAX_STENCIL_SIZE * (MAX_STENCIL_SIZE - 1) / 2;
 };
 
-
+/**
+ * @class SurfaceElementStencilWrapper
+ *
+ * Class to provide access to the SurfaceElementStencil that may be
+ * called from a kernel function.
+ */
 class SurfaceElementStencilWrapper : public StencilWrapperBase< SurfaceElementStencil_Traits >,
   public SurfaceElementStencil_Traits
 {
 public:
 
+  /// Coefficient view accessory type
   template< typename VIEWTYPE >
   using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
+  /**
+   * @brief Constructor
+   * @param elementRegionIndices The container for the element region indices for each point in each stencil
+   * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
+   * @param elementIndices The container for the element indices for each point in each stencil
+   * @param weights The container for the weights for each point in each stencil
+   * @param cellCenterToEdgeCenters Cell center to Edge center vector
+   * @param meanPermCoefficient Mean permeability coefficient
+   */
   SurfaceElementStencilWrapper( IndexContainerType const & elementRegionIndices,
                                 IndexContainerType const & elementSubRegionIndices,
                                 IndexContainerType const & elementIndices,
@@ -129,6 +144,14 @@ public:
     return stencilSize( index );
   }
 
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
@@ -137,6 +160,16 @@ public:
                        real64 ( &dWeight_dVar )[MAX_NUM_OF_CONNECTIONS][2] ) const;
 
 
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar1 view accessor to the derivative of the coefficient w.r.t to the variable 1
+   * @param[in] dCoeff_dVar2 view accessor to the derivative of the coefficient w.r.t to the variable 2
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar1 derivative of the weigths w.r.t to the variable 1
+   * @param[out] dWeight_dVar2 derivative of the weigths w.r.t to the variable 2
+   */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
@@ -146,12 +179,18 @@ public:
                        real64 ( &dWeight_dVar1 )[MAX_NUM_OF_CONNECTIONS][2],
                        real64 ( &dWeight_dVar2 )[MAX_NUM_OF_CONNECTIONS][2] ) const;
 
+  /**
+   * @brief Accessor to the CellCenterToEdgeCenter vector
+   * @return the view const to the CellCenterToEdgeCenter vector
+   */
   ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 
 private:
+  /// Cell center to Edge center vector
   ArrayOfArraysView< R1Tensor > m_cellCenterToEdgeCenters;
 
+  /// Mean permeability coefficient
   real64 m_meanPermCoefficient;
 };
 
@@ -230,6 +269,10 @@ public:
   ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 
+  /**
+   * @brief sets the value of the mean perm conefficient
+   * @param meanPermCoefficient value to be set
+   */
   void setMeanPermCoefficient( real64 const & meanPermCoefficient )
   {
     m_meanPermCoefficient = meanPermCoefficient;
@@ -237,8 +280,10 @@ public:
 
 private:
 
+  /// Distance between the center of the face element and the center of the connecting edge.
   ArrayOfArrays< R1Tensor > m_cellCenterToEdgeCenters;
 
+  /// Mean permeability coefficient
   real64 m_meanPermCoefficient;
 
 };

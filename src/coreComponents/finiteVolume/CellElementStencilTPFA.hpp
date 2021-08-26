@@ -59,14 +59,33 @@ struct CellElementStencilTPFA_Traits
   static constexpr localIndex MAX_NUM_OF_CONNECTIONS = 1;
 };
 
+
+/**
+ * @class CellElementStencilTPFAWrapper
+ *
+ * Class to provide access to the cellElement stencil that may be
+ * called from a kernel function.
+ */
 class CellElementStencilTPFAWrapper : public StencilWrapperBase< CellElementStencilTPFA_Traits >,
   public CellElementStencilTPFA_Traits
 {
 public:
 
+  /// Coefficient view accessory type
   template< typename VIEWTYPE >
   using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
+
+  /**
+   * @brief Constructor
+   * @param elementRegionIndices The container for the element region indices for each point in each stencil
+   * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
+   * @param elementIndices The container for the element indices for each point in each stencil
+   * @param weights The container for the weights for each point in each stencil
+   * @param faceNormal Face normal vector
+   * @param cellToFaceVec Cell center to face center vector
+   * @param transMultiplier Transmissibility multiplier
+   */
   CellElementStencilTPFAWrapper( IndexContainerType const & elementRegionIndices,
                                  IndexContainerType const & elementSubRegionIndices,
                                  IndexContainerType const & elementIndices,
@@ -81,6 +100,14 @@ public:
     m_transMultiplier( transMultiplier )
   {}
 
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,

@@ -58,15 +58,31 @@ struct FaceElementToCellStencil_Traits
   static constexpr localIndex MAX_NUM_OF_CONNECTIONS = 1;
 };
 
-
+/**
+ * @class FaceElementToCellStencilWrapper
+ *
+ * Class to provide access to the FaceElementToCellStencil that may be
+ * called from a kernel function.
+ */
 class FaceElementToCellStencilWrapper : public StencilWrapperBase< FaceElementToCellStencil_Traits >,
   public FaceElementToCellStencil_Traits
 {
 public:
 
+  /// Coefficient view accessory type
   template< typename VIEWTYPE >
   using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
+  /**
+   * @brief Constructor
+   * @param elementRegionIndices The container for the element region indices for each point in each stencil
+   * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
+   * @param elementIndices The container for the element indices for each point in each stencil
+   * @param weights The container for the weights for each point in each stencil
+   * @param faceNormal Face normal vector
+   * @param cellToFaceVec Cell center to face center vector
+   * @param transMultiplier Transmissibility multiplier
+   */
   FaceElementToCellStencilWrapper( IndexContainerType const & elementRegionIndices,
                                    IndexContainerType const & elementSubRegionIndices,
                                    IndexContainerType const & elementIndices,
@@ -113,6 +129,14 @@ public:
     return NUM_POINT_IN_FLUX;
   }
 
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
@@ -120,6 +144,16 @@ public:
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar )[1][2] ) const;
 
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar1 view accessor to the derivative of the coefficient w.r.t to the variable 1
+   * @param[in] dCoeff_dVar2 view accessor to the derivative of the coefficient w.r.t to the variable 2
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar1 derivative of the weigths w.r.t to the variable 1
+   * @param[out] dWeight_dVar2 derivative of the weigths w.r.t to the variable 2
+   */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
@@ -131,8 +165,13 @@ public:
 
 private:
 
+  /// Face normal vector
   arrayView2d< real64 > m_faceNormal;
+
+  /// Cell center to face center vector
   arrayView2d< real64 > m_cellToFaceVec;
+
+  /// Transmissibility multiplier
   arrayView1d< real64 > m_transMultiplier;
 };
 
@@ -160,8 +199,12 @@ public:
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 
-
-
+  /**
+   * @brief Adds the vectors need to compute weights needed in kernels
+   * @param transMultiplier transmissibility multiplier
+   * @param faceNormal face normal vector
+   * @param cellToFaceVec cell to face vector
+   */
   void addVectors( real64 const & transMultiplier,
                    real64 const (&faceNormal)[3],
                    real64 const (&cellToFaceVec)[3] );

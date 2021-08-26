@@ -25,11 +25,23 @@
 
 namespace geosx
 {
-
+/**
+ * @class StencilWrapperBase
+ *
+ * Class to provide access to the computation of stencil weights that may be
+ * called from a kernel function.
+ */
 template< typename LEAFCLASSTRAITS >
 class StencilWrapperBase
 {
 public:
+  /**
+   * @brief Constructor
+   * @param elementRegionIndices The container for the element region indices for each point in each stencil
+   * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
+   * @param elementIndices The container for the element indices for each point in each stencil
+   * @param weights The container for the weights for each point in each stencil
+   */
   StencilWrapperBase( typename LEAFCLASSTRAITS::IndexContainerType const & elementRegionIndices,
                       typename LEAFCLASSTRAITS::IndexContainerType const & elementSubRegionIndices,
                       typename LEAFCLASSTRAITS::IndexContainerType const & elementIndices,

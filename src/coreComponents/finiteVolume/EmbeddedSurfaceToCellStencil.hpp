@@ -58,15 +58,28 @@ struct EmbeddedSurfaceToCellStencil_Traits
   static constexpr localIndex MAX_NUM_OF_CONNECTIONS = 1;
 };
 
-
+/**
+ * @class EmbeddedSurfaceToCellStencilWrapper
+ *
+ * Class to provide access to the EmbeddedSurfaceToCellStencil that may be
+ * called from a kernel function.
+ */
 class EmbeddedSurfaceToCellStencilWrapper : public StencilWrapperBase< EmbeddedSurfaceToCellStencil_Traits >,
   public EmbeddedSurfaceToCellStencil_Traits
 {
 public:
 
+  /// Coefficient view accessory type
   template< typename VIEWTYPE >
   using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
+  /**
+   * @brief Constructor
+   * @param elementRegionIndices The container for the element region indices for each point in each stencil
+   * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
+   * @param elementIndices The container for the element indices for each point in each stencil
+   * @param weights The container for the weights for each point in each stencil
+   */
   EmbeddedSurfaceToCellStencilWrapper( IndexContainerType const & elementRegionIndices,
                                        IndexContainerType const & elementSubRegionIndices,
                                        IndexContainerType const & elementIndices,
@@ -108,7 +121,14 @@ public:
     return NUM_POINT_IN_FLUX;
   }
 
-
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
@@ -116,6 +136,16 @@ public:
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar )[1][2] ) const;
 
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar1 view accessor to the derivative of the coefficient w.r.t to the variable 1
+   * @param[in] dCoeff_dVar2 view accessor to the derivative of the coefficient w.r.t to the variable 2
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar1 derivative of the weigths w.r.t to the variable 1
+   * @param[out] dWeight_dVar2 derivative of the weigths w.r.t to the variable 2
+   */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
