@@ -18,7 +18,6 @@
 
 #include "SinglePhaseFVM.hpp"
 
-#include "../multiphysics/SinglePhasePoromechanicsFluxKernels.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
@@ -32,7 +31,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsFluxKernels.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code

@@ -157,6 +157,14 @@
   </Constitutive>
 
   <FieldSpecifications>
+    <FieldSpecification
+      name="Porosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1"
+      fieldName="rockPorosity_porosity"
+      scale="0.05"/>
+  
     <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
       name="initialPressure"
