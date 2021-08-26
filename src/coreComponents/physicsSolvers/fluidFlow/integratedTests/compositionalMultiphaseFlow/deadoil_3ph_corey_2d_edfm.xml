@@ -79,6 +79,12 @@
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.5e7"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+
+    <PeriodicEvent
       name="solverApplications1"
       beginTime="0"
       target="/Solvers/compflow"/>
@@ -301,5 +307,9 @@
       name="vtkOutput"
       plotFileRoot="deadoil_fractured2dReservoir"
       plotLevel="1"/>
+    
+    <Restart
+      name="restartOutput"/>
+
   </Outputs>
 </Problem>
