@@ -26,14 +26,10 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-constexpr integer BlackOilFluidBase::PhaseType::GAS;
-constexpr integer BlackOilFluidBase::PhaseType::OIL;
-constexpr integer BlackOilFluidBase::PhaseType::WATER;
-
 namespace
 {
 
-std::unordered_map< string, integer > const phaseDict =
+static std::unordered_map< string, integer > const phaseDict =
 {
   { "gas", BlackOilFluidBase::PhaseType::GAS   },
   { "oil", BlackOilFluidBase::PhaseType::OIL   },
@@ -95,15 +91,15 @@ BlackOilFluidBase::BlackOilFluidBase( string const & name,
 void BlackOilFluidBase::fillWaterData( array1d< array1d< real64 > > const & tableValues )
 {
   GEOSX_THROW_IF( tableValues.size() != 1,
-                  "BlackOilFluidBase: the water table must contain one line and only one",
+                  "In the Black/DeadOilFluid model named " << getName() << ": the water table must contain one line and only one",
                   InputError );
   GEOSX_THROW_IF( tableValues[0].size() != 4,
-                  "BlackOilFluidBase: four columns (pressure, formation volume factor, compressibility, and viscosity) are expected for water",
+                  "In the Black/DeadOilFluid model named " << getName() << ": four columns (pressure, formation volume factor, compressibility, and viscosity) are expected for water",
                   InputError );
 
   GEOSX_THROW_IF( m_waterRefPressure > 0.0 || m_waterFormationVolFactor > 0.0
                   || m_waterCompressibility > 0.0 || m_waterViscosity > 0.0,
-                  "BlackOilFluidBase: input is redundant (user provided both water data and a water pvt file)",
+                  "In the Black/DeadOilFluid model named " << getName() << ": input is redundant (user provided both water data and a water pvt file)",
                   InputError );
 
   m_waterRefPressure = tableValues[0][0];
@@ -112,20 +108,20 @@ void BlackOilFluidBase::fillWaterData( array1d< array1d< real64 > > const & tabl
   m_waterViscosity = tableValues[0][3];
 
   GEOSX_THROW_IF( m_waterRefPressure <= 0.0,
-                  "BlackOilFluidBase: a strictly positive value must be provided for: "
-                  << viewKeyStruct::waterRefPressureString(),
+                  "In the Black/DeadOilFluid model named " << getName() << ": a strictly positive value must be provided for: "
+                                                           << viewKeyStruct::waterRefPressureString(),
                   InputError );
   GEOSX_THROW_IF( m_waterFormationVolFactor <= 0.0,
-                  "BlackOilFluidBase: a strictly positive value must be provided for: "
-                  << viewKeyStruct::waterFormationVolumeFactorString(),
+                  "In the Black/DeadOilFluid model named " << getName() << ": a strictly positive value must be provided for: "
+                                                           << viewKeyStruct::waterFormationVolumeFactorString(),
                   InputError );
   GEOSX_THROW_IF( m_waterCompressibility <= 0.0,
-                  "BlackOilFluidBase: a strictly positive value must be provided for: "
-                  << viewKeyStruct::waterCompressibilityString(),
+                  "In the Black/DeadOilFluid model named " << getName() << ": a strictly positive value must be provided for: "
+                                                           << viewKeyStruct::waterCompressibilityString(),
                   InputError );
   GEOSX_THROW_IF( m_waterViscosity <= 0.0,
-                  "BlackOilFluidBase: a strictly positive value must be provided for: "
-                  << viewKeyStruct::waterViscosityString(),
+                  "In the Black/DeadOilFluid model named " << getName() << ": a strictly positive value must be provided for: "
+                                                           << viewKeyStruct::waterViscosityString(),
                   InputError );
 }
 
@@ -143,7 +139,7 @@ void BlackOilFluidBase::fillHydrocarbonData( localIndex const ip,
   for( localIndex i = 0; i < tableValues.size(); ++i )
   {
     GEOSX_THROW_IF( tableValues[i].size() != 3,
-                    "BlackOilFluidBase: three columns (pressure, formation volume factor, and viscosity) are expected for oil and gas",
+                    "In the Black/DeadOilFluid model named " << getName() << ": three columns (pressure, formation volume factor, and viscosity) are expected for oil and gas",
                     InputError );
 
     pressureCoords[0][i] = tableValues[i][0];
@@ -179,17 +175,18 @@ void BlackOilFluidBase::postProcessInput()
   MultiFluidBase::postProcessInput();
 
   m_phaseTypes.resize( numFluidPhases() );
-  m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
+  m_phaseOrder.resize( MAX_NUM_PHASES );
   m_phaseOrder.setValues< serialPolicy >( -1 );
 
   for( localIndex ip = 0; ip < numFluidPhases(); ++ip )
   {
     auto it = phaseDict.find( m_phaseNames[ip] );
     GEOSX_THROW_IF( it == phaseDict.end(),
-                    "BlackOilFluidBase: phase not supported: " << m_phaseNames[ip],
+                    "In the Black/DeadOilFluid model named " << getName() << ": phase not supported: " << m_phaseNames[ip],
                     InputError );
     integer const phaseIndex = it->second;
-    GEOSX_THROW_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "BlackOilFluidBase: invalid phase index " << phaseIndex,
+    GEOSX_THROW_IF( phaseIndex >= MAX_NUM_PHASES,
+                    "In the Black/DeadOilFluid model named " << getName() << ": invalid phase index " << phaseIndex,
                     InputError );
 
     m_phaseTypes[ip] = phaseIndex;
@@ -197,20 +194,20 @@ void BlackOilFluidBase::postProcessInput()
   }
 
   GEOSX_THROW_IF( m_surfacePhaseMassDensity.size() != m_phaseNames.size(),
-                  "BlackOilFluidBase: the number of surfacePhaseMassDensities is inconsistent with the phase names",
+                  "In the Black/DeadOilFluid model named " << getName() << ": the number of surfacePhaseMassDensities is inconsistent with the phase names",
                   InputError );
   GEOSX_THROW_IF( m_componentMolarWeight.size() != m_phaseNames.size(),
-                  "BlackOilFluidBase: the number of componentMolarWeights is inconsistent with the phase names",
+                  "In the Black/DeadOilFluid model named " << getName() << ": the number of componentMolarWeights is inconsistent with the phase names",
                   InputError );
 
   // we make the distinction between the two input options
-  if( !m_tableFiles.empty() )
+  if( m_tableFiles.empty() )
   {
-    readInputDataFromPVTFiles();
+    useProvidedTableFunctions();
   }
   else
   {
-    useProvidedTableFunctions();
+    readInputDataFromPVTFiles();
   }
 
 }
@@ -226,7 +223,7 @@ void BlackOilFluidBase::createAllKernelWrappers()
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
   GEOSX_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
-                  "BlackOilFluidBase: the number of hydrocarbon phases should be equal to 1 (oil) or 2 (oil+gas)",
+                  "In the Black/DeadOilFluid model named " << getName() << ": the number of hydrocarbon phases should be equal to 1 (oil) or 2 (oil+gas)",
                   InputError );
 
   if( m_formationVolFactorTables.size() == 0 && m_viscosityTables.size() == 0 )
@@ -253,16 +250,16 @@ void BlackOilFluidBase::validateTable( TableFunction const & table ) const
   array1d< real64 > const & property = table.getValues();
 
   GEOSX_THROW_IF( table.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                  "BlackOilFluidBase: the interpolation method in the table must be linear",
+                  "In the Black/DeadOilFluid model named " << getName() << ": the interpolation method in the table named " << table.getName() << " must be linear",
                   InputError );
   GEOSX_THROW_IF( property.size() <= 1,
-                  "BlackOilFluidBase: each PVT table must contain at least 2 values",
+                  "In the Black/DeadOilFluid model named " << getName() << ": the table named " << table.getName() << " must contain at least 2 values",
                   InputError );
 
   for( localIndex i = 2; i < property.size(); ++i )
   {
     GEOSX_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
-                    "BlackOilFluidBase: the values in each PVT table must monotone",
+                    "In the Black/DeadOilFluid model named " << getName() << ": the values in the table named " << table.getName() << " must monotone",
                     InputError );
   }
 }

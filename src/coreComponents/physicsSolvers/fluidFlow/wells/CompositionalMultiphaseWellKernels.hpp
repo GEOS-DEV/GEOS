@@ -949,43 +949,45 @@ struct PerforationKernel
 
           // skip the rest of the calculation if the phase is absent
           bool const phaseExists = (resPhaseVolFrac[er][esr][ei][ip] > 0);
-          if( phaseExists > 0 )
+          if( !phaseExists )
           {
-            // viscosity
-            real64 const resVisc = resPhaseVisc[er][esr][ei][0][ip];
-            real64 const dResVisc_dP = dResPhaseVisc_dPres[er][esr][ei][0][ip];
-            applyChainRule( NC, dResCompFrac_dCompDens[er][esr][ei],
-                            dResPhaseVisc_dComp[er][esr][ei][0][ip],
-                            dVisc_dC );
+            continue;
+          }
 
-            // relative permeability
-            real64 const resRelPerm = resPhaseRelPerm[er][esr][ei][0][ip];
-            real64 dResRelPerm_dP = 0.0;
+          // viscosity
+          real64 const resVisc = resPhaseVisc[er][esr][ei][0][ip];
+          real64 const dResVisc_dP = dResPhaseVisc_dPres[er][esr][ei][0][ip];
+          applyChainRule( NC, dResCompFrac_dCompDens[er][esr][ei],
+                          dResPhaseVisc_dComp[er][esr][ei][0][ip],
+                          dVisc_dC );
+
+          // relative permeability
+          real64 const resRelPerm = resPhaseRelPerm[er][esr][ei][0][ip];
+          real64 dResRelPerm_dP = 0.0;
+          for( localIndex jc = 0; jc < NC; ++jc )
+          {
+            dRelPerm_dC[jc] = 0;
+          }
+
+          for( localIndex jp = 0; jp < NP; ++jp )
+          {
+            real64 const dResRelPerm_dS = dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
+            dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac_dPres[er][esr][ei][jp];
+
             for( localIndex jc = 0; jc < NC; ++jc )
             {
-              dRelPerm_dC[jc] = 0;
+              dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac_dComp[er][esr][ei][jp][jc];
             }
+          }
 
-            for( localIndex jp = 0; jp < NP; ++jp )
-            {
-              real64 const dResRelPerm_dS = dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-              dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac_dPres[er][esr][ei][jp];
-
-              for( localIndex jc = 0; jc < NC; ++jc )
-              {
-                dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac_dComp[er][esr][ei][jp][jc];
-              }
-            }
-
-            // increment total mobility
-            resTotalMob     += resRelPerm / resVisc;
-            dResTotalMob_dP += ( dResRelPerm_dP * resVisc - resRelPerm * dResVisc_dP )
-                               / ( resVisc * resVisc );
-            for( localIndex ic = 0; ic < NC; ++ic )
-            {
-              dResTotalMob_dC[ic] += ( dRelPerm_dC[ic] * resVisc - resRelPerm * dVisc_dC[ic] )
-                                     / ( resVisc * resVisc );
-            }
+          // increment total mobility
+          resTotalMob     += resRelPerm / resVisc;
+          dResTotalMob_dP += ( dResRelPerm_dP * resVisc - resRelPerm * dResVisc_dP )
+                             / ( resVisc * resVisc );
+          for( localIndex ic = 0; ic < NC; ++ic )
+          {
+            dResTotalMob_dC[ic] += ( dRelPerm_dC[ic] * resVisc - resRelPerm * dVisc_dC[ic] )
+                                   / ( resVisc * resVisc );
           }
         }
 

@@ -223,16 +223,16 @@ private:
   arrayView1d< TableFunction::KernelWrapper const > m_viscosityTables;
 
   /// Water reference pressure
-  real64 const m_waterRefPressure;
+  real64 m_waterRefPressure;
 
   /// Water formation volume factor
-  real64 const m_waterFormationVolFactor;
+  real64 m_waterFormationVolFactor;
 
   /// Water compressibility
-  real64 const m_waterCompressibility;
+  real64 m_waterCompressibility;
 
   /// Water viscosity
-  real64 const m_waterViscosity;
+  real64 m_waterViscosity;
 
 };
 

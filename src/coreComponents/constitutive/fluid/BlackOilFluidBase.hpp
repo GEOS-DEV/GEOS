@@ -35,17 +35,23 @@ public:
 
   using exec_policy = parallelDevicePolicy<>;
 
+  static constexpr integer MAX_NUM_PHASES = 3;
+
   struct PhaseType
   {
-    static constexpr integer OIL            = 0;
-    static constexpr integer GAS            = 1;
-    static constexpr integer WATER          = 2;
-    static constexpr integer MAX_NUM_PHASES = 3;
+    enum : integer
+    {
+      OIL = 0,
+      GAS = 1,
+      WATER = 2,
+    };
   };
 
   BlackOilFluidBase( string const & name, Group * const parent );
 
   virtual ~BlackOilFluidBase() override = default;
+
+public:
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
@@ -132,9 +138,13 @@ protected:
 
   /// Data after processing of input
 
-  /// Phase ordering info
+  // Phase ordering info (all the constitutive arrays (density, viscosity, fractions, etc) use the phase ordering of the XML
+
+  /// Map from the phase ordering defined in the XML (by the user) to the phase ordering in struct PhaseType
   array1d< integer > m_phaseTypes;
+  /// Map from the phase ordering in struct PhaseType to the phase ordering defined in the XML (by the user)
   array1d< integer > m_phaseOrder;
+  /// Map from the phase ordering in struct PhaseType to the hydrocarbon phase ordering deduced from the XML
   array1d< integer > m_hydrocarbonPhaseOrder;
 
   /// Table kernel wrappers to interpolate in the oil and gas (B vs p) tables

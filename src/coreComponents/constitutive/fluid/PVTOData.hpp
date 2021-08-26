@@ -27,7 +27,7 @@ namespace geosx
 namespace constitutive
 {
 
-class PVTOData
+struct PVTOData
 {
 public:
 
@@ -47,34 +47,6 @@ public:
                    arrayView2d< real64 const > const & undersaturatedViscosity,
                    arrayView1d< real64 const > const & surfaceMassDensity,
                    arrayView1d< real64 const > const & surfaceMoleDensity );
-
-    /// Default constructor for the kernel wrapper
-    KernelWrapper() = default;
-
-    /// Default copy constructor
-    KernelWrapper( KernelWrapper const & ) = default;
-
-    /// Default move constructor
-    KernelWrapper( KernelWrapper && ) = default;
-
-    /// Copy assignment operator
-    KernelWrapper & operator=( KernelWrapper const & ) = delete;
-
-    /// Deleted move assignment operator
-    KernelWrapper & operator=( KernelWrapper && ) = delete;
-
-    /**
-     * @brief The function that populates the wrapper
-     */
-    void create( arrayView1d< real64 const > const & Rs,
-                 arrayView1d< real64 const > const & bubblePressure,
-                 arrayView1d< real64 const > const & saturatedBo,
-                 arrayView1d< real64 const > const & saturatedViscosity,
-                 arrayView2d< real64 const > const & undersaturatedPressure,
-                 arrayView2d< real64 const > const & undersaturatedBo,
-                 arrayView2d< real64 const > const & undersaturatedViscosity,
-                 arrayView1d< real64 const > const & surfaceMassDensity,
-                 arrayView1d< real64 const > const & surfaceMoleDensity );
 
     void move( LvArray::MemorySpace const space, bool const touch )
     {
@@ -124,52 +96,44 @@ public:
 
 public:
 
-  PVTOData()
-    :
-    m_maxRelativePressure( 0.0 ),
-    m_nSaturatedPoints( 0 )
-  {}
-
   KernelWrapper createKernelWrapper() const;
 
   /// Max pressure used for the construction of the undersaturated tables
-  real64 m_maxRelativePressure;
+  real64 maxRelativePressure = 0.0;
 
   /// Rs array
-  array1d< real64 > m_Rs;
+  array1d< real64 > Rs;
   /// Bubble-point pressure array
-  array1d< real64 > m_bubblePressure;
+  array1d< real64 > bubblePressure;
 
   // Saturated data (free gas phase present)
 
   /// Number of saturated points
-  localIndex m_nSaturatedPoints;
+  localIndex numSaturatedPoints = 0;
   /// Saturated oil phase formation volume factor
-  array1d< real64 > m_saturatedBo;
+  array1d< real64 > saturatedBo;
   /// Saturated oil phase viscosity
-  array1d< real64 > m_saturatedViscosity;
+  array1d< real64 > saturatedViscosity;
 
   // Undersaturated data (no free gas)
 
   /// Undersaturated pressure
-  array2d< real64 > m_undersaturatedPressure2d;
+  array2d< real64 > undersaturatedPressure2d;
   /// Undersaturated oil phase formation volume factor
-  array2d< real64 > m_undersaturatedBo2d;
+  array2d< real64 > undersaturatedBo2d;
   /// Undersaturated oil phase viscosity
-  array2d< real64 > m_undersaturatedViscosity2d;
+  array2d< real64 > undersaturatedViscosity2d;
 
   /// Surface mass density
-  array1d< real64 > m_surfaceMassDensity;
+  array1d< real64 > surfaceMassDensity;
   /// Surface mole density
-  array1d< real64 > m_surfaceMoleDensity;
+  array1d< real64 > surfaceMoleDensity;
 
   // temporary arrays used in the construction of the undersaturated arrays
   // can be discarded after construction
-  array1d< array1d< real64 > > m_undersaturatedPressure;
-  array1d< array1d< real64 > > m_undersaturatedBo;
-  array1d< array1d< real64 > > m_undersaturatedViscosity;
-
-  KernelWrapper m_kernelWrapper;
+  array1d< array1d< real64 > > undersaturatedPressure;
+  array1d< array1d< real64 > > undersaturatedBo;
+  array1d< array1d< real64 > > undersaturatedViscosity;
 
 };
 

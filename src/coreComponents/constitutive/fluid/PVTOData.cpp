@@ -22,15 +22,15 @@ namespace constitutive
 
 PVTOData::KernelWrapper PVTOData::createKernelWrapper() const
 {
-  return PVTOData::KernelWrapper( m_Rs.toViewConst(),
-                                  m_bubblePressure.toViewConst(),
-                                  m_saturatedBo.toViewConst(),
-                                  m_saturatedViscosity.toViewConst(),
-                                  m_undersaturatedPressure2d.toViewConst(),
-                                  m_undersaturatedBo2d.toViewConst(),
-                                  m_undersaturatedViscosity2d.toViewConst(),
-                                  m_surfaceMassDensity.toViewConst(),
-                                  m_surfaceMoleDensity.toViewConst());
+  return PVTOData::KernelWrapper( Rs.toViewConst(),
+                                  bubblePressure.toViewConst(),
+                                  saturatedBo.toViewConst(),
+                                  saturatedViscosity.toViewConst(),
+                                  undersaturatedPressure2d.toViewConst(),
+                                  undersaturatedBo2d.toViewConst(),
+                                  undersaturatedViscosity2d.toViewConst(),
+                                  surfaceMassDensity.toViewConst(),
+                                  surfaceMoleDensity.toViewConst());
 }
 
 PVTOData::KernelWrapper::KernelWrapper( arrayView1d< real64 const > const & Rs,
@@ -53,27 +53,6 @@ PVTOData::KernelWrapper::KernelWrapper( arrayView1d< real64 const > const & Rs,
   m_surfaceMassDensity( surfaceMassDensity ),
   m_surfaceMoleDensity( surfaceMoleDensity )
 {}
-
-void PVTOData::KernelWrapper::create( arrayView1d< real64 const > const & Rs,
-                                      arrayView1d< real64 const > const & bubblePressure,
-                                      arrayView1d< real64 const > const & saturatedBo,
-                                      arrayView1d< real64 const > const & saturatedViscosity,
-                                      arrayView2d< real64 const > const & undersaturatedPressure,
-                                      arrayView2d< real64 const > const & undersaturatedBo,
-                                      arrayView2d< real64 const > const & undersaturatedViscosity,
-                                      arrayView1d< real64 const > const & surfaceMassDensity,
-                                      arrayView1d< real64 const > const & surfaceMoleDensity )
-{
-  m_Rs = Rs;
-  m_bubblePressure = bubblePressure;
-  m_saturatedBo = saturatedBo;
-  m_saturatedViscosity = saturatedViscosity;
-  m_undersaturatedPressure2d = undersaturatedPressure;
-  m_undersaturatedBo2d = undersaturatedBo;
-  m_undersaturatedViscosity2d = undersaturatedViscosity;
-  m_surfaceMassDensity = surfaceMassDensity;
-  m_surfaceMoleDensity = surfaceMoleDensity;
-}
 
 } //namespace constitutive
 

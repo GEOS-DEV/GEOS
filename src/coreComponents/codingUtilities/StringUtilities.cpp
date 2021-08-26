@@ -88,37 +88,41 @@ string_array tokenize( const string & str, const string & delimiters )
   return tokens;
 }
 
-void trim( string & str )
+string trim( string const & str,
+             string const & charsToRemove )
 {
-  if( !str.empty() )
+  string newStr = str;
+  if( !newStr.empty() )
   {
-    int const first = int( str.find_first_not_of( " \r" ) );
-    int const last = int( str.find_last_not_of( " \r" ) );
-    if( first < 0 )
+    std::size_t const first = newStr.find_first_not_of( charsToRemove );
+    std::size_t const last = newStr.find_last_not_of( charsToRemove );
+    if( first != string::npos )
     {
-      str.resize( 0 );
+      newStr = newStr.substr( first, ( last - first + 1 ) );
     }
     else
     {
-      str = str.substr( first, ( last - first + 1 ) );
+      newStr.resize( 0 );
     }
   }
+  return newStr;
 }
 
 
-bool removeStringAndFollowingContentFromLine( string const & toBeRemoved,
-                                              string & line )
+string removeStringAndFollowingContent( string const & str,
+                                        string const & strToRemove )
 {
-  // check if the line has a semi-colon
-  std::size_t const pos = line.find( toBeRemoved );
-  bool res = false;
+  string newStr = str;
+
+  // check if the line contains the string to remove
+  std::size_t const pos = newStr.find( strToRemove );
+
   if( pos != string::npos )
   {
     // remove the character and everything afterwards
-    line = line.substr( 0, pos );
-    res = true;
+    newStr = newStr.substr( 0, pos );
   }
-  return res;
+  return newStr;
 }
 
 }

@@ -30,12 +30,6 @@ namespace geosx
 namespace constitutive
 {
 
-static constexpr real64 minForPhasePresence = 1e-10;
-
-static constexpr localIndex NC_BO = 3;
-static constexpr localIndex NP_BO = 3;
-static constexpr localIndex HNC_BO = NC_BO - 1;
-
 /**
  * @brief Kernel wrapper class for BlackOilFluid
  *        This kernel can be called on the GPU
@@ -43,6 +37,12 @@ static constexpr localIndex HNC_BO = NC_BO - 1;
 class BlackOilFluidUpdate final : public MultiFluidBaseUpdate
 {
 public:
+
+  static constexpr real64 minForPhasePresence = 1e-10;
+
+  static constexpr localIndex NC_BO = 3;
+  static constexpr localIndex NP_BO = 3;
+  static constexpr localIndex HNC_BO = NC_BO - 1;
 
   BlackOilFluidUpdate( arrayView1d< integer const > const & phaseTypes,
                        arrayView1d< integer const > const & phaseOrder,
@@ -248,49 +248,49 @@ private:
                       arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const & dPhaseVisc_dGlobalCompFrac ) const;
 
   GEOSX_HOST_DEVICE
-  void computeRs( real64 Pb,
+  void computeRs( real64 const presBub,
                   real64 & Rs,
-                  real64 & dRs_dP ) const;
+                  real64 & dRs_dPres ) const;
 
   GEOSX_HOST_DEVICE
-  void computeSaturatedBoVisc( real64 Rs,
-                               real64 dRs_dP,
-                               real64 & Bo,
-                               real64 & dBo_dP,
-                               real64 & visc,
-                               real64 & dVisc_dP )  const;
-
-  GEOSX_HOST_DEVICE
-  void computeUndersaturatedBoVisc( bool needDerivs,
-                                    localIndex numHydrocarbonComp,
-                                    real64 P,
-                                    real64 Rs,
-                                    real64 const dRs_dC[],
+  void computeSaturatedBoViscosity( real64 const Rs,
+                                    real64 const dRs_dPres,
                                     real64 & Bo,
-                                    real64 & dBo_dP,
-                                    real64 dBo_dC[],
+                                    real64 & dBo_dPres,
                                     real64 & visc,
-                                    real64 & dVisc_dP,
-                                    real64 dvisc_dC[] ) const;
+                                    real64 & dVisc_dPres )  const;
 
   GEOSX_HOST_DEVICE
-  void computeUndersaturatedBoVisc( real64 Rs,
-                                    real64 P,
-                                    real64 & Bo,
-                                    real64 & visc ) const;
+  void computeUndersaturatedBoViscosity( bool const needDerivs,
+                                         localIndex const numHydrocarbonComp,
+                                         real64 const pres,
+                                         real64 const Rs,
+                                         real64 const dRs_dComp[],
+                                         real64 & Bo,
+                                         real64 & dBo_dPres,
+                                         real64 dBo_dComp[],
+                                         real64 & visc,
+                                         real64 & dVisc_dPres,
+                                         real64 dvisc_dComp[] ) const;
 
   GEOSX_HOST_DEVICE
-  void computeMassMoleDensity( bool needDerivs,
-                               bool useMass,
-                               localIndex numHydrocarbonComp,
-                               real64 Rs,
-                               real64 dRs_dP,
-                               real64 const dRs_dC[],
-                               real64 Bo,
-                               real64 dBo_dP,
-                               real64 const dBo_dC[],
+  void computeUndersaturatedBoViscosity( real64 const Rs,
+                                         real64 const pres,
+                                         real64 & Bo,
+                                         real64 & visc ) const;
+
+  GEOSX_HOST_DEVICE
+  void computeMassMoleDensity( bool const needDerivs,
+                               bool const useMass,
+                               localIndex const numHydrocarbonComp,
+                               real64 const Rs,
+                               real64 const dRs_dPres,
+                               real64 const dRs_dComp[],
+                               real64 const Bo,
+                               real64 const dBo_dPres,
+                               real64 const dBo_dComp[],
                                real64 & dens,
-                               real64 & dDens_dP,
+                               real64 & dDens_dPres,
                                arraySlice1d< real64, multifluid::USD_PHASE_DC - 3 > const & dDens_dC ) const;
 
   /// Phase ordering info
@@ -308,16 +308,16 @@ private:
   arrayView1d< TableFunction::KernelWrapper const > m_viscosityTables;
 
   /// Water reference pressure
-  real64 const m_waterRefPressure;
+  real64 m_waterRefPressure;
 
   /// Water formation volume factor
-  real64 const m_waterFormationVolFactor;
+  real64 m_waterFormationVolFactor;
 
   /// Water compressibility
-  real64 const m_waterCompressibility;
+  real64 m_waterCompressibility;
 
   /// Water viscosity
-  real64 const m_waterViscosity;
+  real64 m_waterViscosity;
 
   /// Data needed to update the oil phase properties
   PVTOData::KernelWrapper m_PVTOView;
@@ -388,13 +388,15 @@ public:
                           m_PVTO.createKernelWrapper());
   }
 
+protected:
+
+  virtual void postProcessInput() override;
+
 private:
 
   virtual void useProvidedTableFunctions() override;
 
   virtual void readInputDataFromPVTFiles() override;
-
-  virtual void createAllKernelWrappers() override;
 
   /**
    * @brief Read all the PVT table provided by the user in Eclipse format
@@ -405,10 +407,10 @@ private:
    * @param[in] gasSurfaceMolecularWeight the oil phase surface molecular weight
    */
   void fillPVTOData( array1d< array1d< real64 > > const & oilTable,
-                     real64 oilSurfaceMassDensity,
-                     real64 oilSurfaceMolecularWeight,
-                     real64 gasSurfaceMassDensity,
-                     real64 gasSurfaceMolecularWeight );
+                     real64 const oilSurfaceMassDensity,
+                     real64 const oilSurfaceMolecularWeight,
+                     real64 const gasSurfaceMassDensity,
+                     real64 const gasSurfaceMolecularWeight );
 
   /**
    * @brief Form the tables:
@@ -424,14 +426,15 @@ private:
    *    - m_undersaturatedPressure
    *    - m_undersaturatedBO
    *    - m_undersaturatedVisc
-   *  up to the value of m_maxRelativePressure
+   *  up to the value of m_maxRelativePressure (if the data is missing for a given branch)
    */
   void extendUndersaturatedProperties();
 
   /**
    * @brief Refine the undersaturated tables and copy the data into the final 2D arrays that will be used in the kernel
    */
-  void refineTableAndCopy( localIndex const nLevel );
+  void refineUndersaturatedTables( localIndex const numRefinedPresPoints );
+  void refineTableAndCopyOld( localIndex const nLevels );
 
   /**
    * @brief Check the monotonicity of the PVTO table values
@@ -705,20 +708,20 @@ BlackOilFluidUpdate::computeEquilibrium( real64 pressure,
   {
 
     // phase fractions
-    phaseFraction[PT::OIL] = 1. - gasPhaseFraction - zw;
-    phaseFraction[PT::GAS] = gasPhaseFraction;
-    phaseFraction[PT::WATER] =  zw;
+    phaseFraction[ipOil] = 1. - gasPhaseFraction - zw;
+    phaseFraction[ipGas] = gasPhaseFraction;
+    phaseFraction[ipWater] =  zw;
 
     if( needDerivs )
     {
-      dPhaseFraction_dPressure[PT::OIL] = -dGasPhaseFraction_dP;
-      dPhaseFraction_dPressure[PT::GAS] = dGasPhaseFraction_dP;
-      dPhaseFraction_dGlobalCompFraction[PT::OIL][icOil] = -dGasPhaseFraction_dzo;
-      dPhaseFraction_dGlobalCompFraction[PT::OIL][icGas] = -dGasPhaseFraction_dzg;
-      dPhaseFraction_dGlobalCompFraction[PT::OIL][icWater] = -1.;
-      dPhaseFraction_dGlobalCompFraction[PT::GAS][icOil] = dGasPhaseFraction_dzo;
-      dPhaseFraction_dGlobalCompFraction[PT::GAS][icGas] = dGasPhaseFraction_dzg;
-      dPhaseFraction_dGlobalCompFraction[PT::WATER][icWater] = 1.;
+      dPhaseFraction_dPressure[ipOil] = -dGasPhaseFraction_dP;
+      dPhaseFraction_dPressure[ipGas] = dGasPhaseFraction_dP;
+      dPhaseFraction_dGlobalCompFraction[ipOil][icOil] = -dGasPhaseFraction_dzo;
+      dPhaseFraction_dGlobalCompFraction[ipOil][icGas] = -dGasPhaseFraction_dzg;
+      dPhaseFraction_dGlobalCompFraction[ipOil][icWater] = -1.;
+      dPhaseFraction_dGlobalCompFraction[ipGas][icOil] = dGasPhaseFraction_dzo;
+      dPhaseFraction_dGlobalCompFraction[ipGas][icGas] = dGasPhaseFraction_dzg;
+      dPhaseFraction_dGlobalCompFraction[ipWater][icWater] = 1.;
     }
 
     // oil
@@ -752,9 +755,9 @@ BlackOilFluidUpdate::computeEquilibrium( real64 pressure,
   {
 
     // phase fractions
-    phaseFraction[PT::OIL] = 1. - zw;
-    phaseFraction[PT::GAS] = 0.;
-    phaseFraction[PT::WATER] =  zw;
+    phaseFraction[ipOil] = 1. - zw;
+    phaseFraction[ipGas] = 0.;
+    phaseFraction[ipWater] =  zw;
 
     // oil
     phaseCompFraction[ipOil][icOil] = zo;
@@ -768,8 +771,8 @@ BlackOilFluidUpdate::computeEquilibrium( real64 pressure,
 
     if( needDerivs )
     {
-      dPhaseFraction_dGlobalCompFraction[PT::OIL][icWater] = -1.;
-      dPhaseFraction_dGlobalCompFraction[PT::WATER][icWater] = 1.;
+      dPhaseFraction_dGlobalCompFraction[ipOil][icWater] = -1.;
+      dPhaseFraction_dGlobalCompFraction[ipWater][icWater] = 1.;
       dPhaseCompFraction_dGlobalCompFraction[ipOil][icOil][icOil] = 1.;
       dPhaseCompFraction_dGlobalCompFraction[ipOil][icGas][icGas] = 1.;
     }
@@ -895,15 +898,15 @@ BlackOilFluidUpdate::computeDensitiesViscosities( real64 pressure,
   if( isOil )
   {
 
-    real64 Rs;
-    real64 dRs_dC[] = {0., 0.};
-    real64 dRs_dP = 0.;
-    real64 Bo = 0.;
-    real64 dBo_dP = 0.;
-    real64 dBo_dC[] = {0., 0.};
-    real64 visc = 0.;
-    real64 dVisc_dP = 0.;
-    real64 dVisc_dC[] = {0., 0.};
+    real64 Rs = 0.0;
+    real64 dRs_dC[2]{};
+    real64 dRs_dP = 0.0;
+    real64 Bo = 0.0;
+    real64 dBo_dP = 0.0;
+    real64 dBo_dC[2]{};
+    real64 visc = 0.0;
+    real64 dVisc_dP = 0.0;
+    real64 dVisc_dC[2]{};
 
     // saturated conditions
     if( isGas )
@@ -913,7 +916,7 @@ BlackOilFluidUpdate::computeDensitiesViscosities( real64 pressure,
       computeRs( pressure, Rs, dRs_dP );
 
       // compute saturated properties (Bo, viscosity) as a function of Rs
-      computeSaturatedBoVisc( Rs, dRs_dP, Bo, dBo_dP, visc, dVisc_dP );
+      computeSaturatedBoViscosity( Rs, dRs_dP, Bo, dBo_dP, visc, dVisc_dP );
 
     }
     // unsaturated conditions
@@ -928,8 +931,8 @@ BlackOilFluidUpdate::computeDensitiesViscosities( real64 pressure,
 
       // compute undersaturated properties (Bo, viscosity) by two-step interpolation in undersaturated tables
       // this part returns numerical derivatives
-      computeUndersaturatedBoVisc( needDerivs, HNC_BO, pressure, Rs, dRs_dC, Bo, dBo_dP, dBo_dC,
-                                   visc, dVisc_dP, dVisc_dC );
+      computeUndersaturatedBoViscosity( needDerivs, HNC_BO, pressure, Rs, dRs_dC, Bo, dBo_dP, dBo_dC,
+                                        visc, dVisc_dP, dVisc_dC );
 
     }
 
@@ -987,7 +990,7 @@ BlackOilFluidUpdate::convertToMolar( arraySlice1d< real64 const, compflow::USD_C
   {
     for( localIndex jc = 0; jc < NC_BO; ++jc )
     {
-      dCompMoleFrac_dCompMassFrac[ic][jc] = 0.;
+      dCompMoleFrac_dCompMassFrac[ic][jc] = 0.0;
     }
   }
 
@@ -1132,58 +1135,67 @@ BlackOilFluidUpdate::convertToMass( real64 const dCompMoleFrac_dCompMassFrac[NC_
 
 GEOSX_HOST_DEVICE
 inline void
-BlackOilFluidUpdate::computeRs( real64 Pb,
+BlackOilFluidUpdate::computeRs( real64 const presBub,
                                 real64 & Rs,
-                                real64 & dRs_dP ) const
+                                real64 & dRs_dPres ) const
 {
-  integer iLowerBranch, iUpperBranch;
-  findSurroundingIndex( m_PVTOView.m_bubblePressure, Pb, iLowerBranch, iUpperBranch );
-  linearInterpolation( m_PVTOView.m_bubblePressure[iLowerBranch], m_PVTOView.m_Rs[iLowerBranch],
-                       m_PVTOView.m_bubblePressure[iUpperBranch], m_PVTOView.m_Rs[iUpperBranch],
-                       Pb, Rs, dRs_dP );
+
+  integer const idx = LvArray::sortedArrayManipulation::find( m_PVTOView.m_bubblePressure.begin(),
+                                                              m_PVTOView.m_bubblePressure.size(),
+                                                              presBub );
+  integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( m_PVTOView.m_bubblePressure.size()-1 ) );
+  integer const iLow = iUp-1;
+  linearInterpolation( presBub - m_PVTOView.m_bubblePressure[iLow], m_PVTOView.m_bubblePressure[iUp] - presBub,
+                       m_PVTOView.m_Rs[iLow], m_PVTOView.m_Rs[iUp],
+                       Rs, dRs_dPres );
 }
 
 GEOSX_HOST_DEVICE
 inline void
-BlackOilFluidUpdate::computeSaturatedBoVisc( real64 Rs,
-                                             real64 dRs_dP,
-                                             real64 & Bo,
-                                             real64 & dBo_dP,
-                                             real64 & visc,
-                                             real64 & dVisc_dP ) const
-{
-  integer iLowerBranch, iUpperBranch;
-  arraySlice1d< real64 const > const & RsVec = m_PVTOView.m_Rs;
-  arraySlice1d< real64 const > const & BoVec = m_PVTOView.m_saturatedBo;
-  arraySlice1d< real64 const > const & viscVec = m_PVTOView.m_saturatedViscosity;
-
-  findSurroundingIndex( RsVec, Rs, iLowerBranch, iUpperBranch );
-  linearInterpolation( Rs - RsVec[iLowerBranch], RsVec[iUpperBranch] - Rs,
-                       BoVec[iLowerBranch], BoVec[iUpperBranch],
-                       Bo, dBo_dP );
-  linearInterpolation( Rs - RsVec[iLowerBranch], RsVec[iUpperBranch] - Rs,
-                       viscVec[iLowerBranch], viscVec[iUpperBranch],
-                       visc, dVisc_dP );
-  // chain rule
-  dBo_dP *= dRs_dP;
-  dVisc_dP *= dRs_dP;
-}
-
-GEOSX_HOST_DEVICE
-inline void
-BlackOilFluidUpdate::computeUndersaturatedBoVisc( bool needDerivs,
-                                                  localIndex numHydrocarbonComp,
-                                                  real64 P,
-                                                  real64 Rs,
-                                                  real64 const dRs_dC[],
+BlackOilFluidUpdate::computeSaturatedBoViscosity( real64 const Rs,
+                                                  real64 const dRs_dPres,
                                                   real64 & Bo,
-                                                  real64 & dBo_dP,
-                                                  real64 dBo_dC[],
+                                                  real64 & dBo_dPres,
                                                   real64 & visc,
-                                                  real64 & dVisc_dP,
-                                                  real64 dVisc_dC[] ) const
+                                                  real64 & dVisc_dPres ) const
 {
-  computeUndersaturatedBoVisc( Rs, P, Bo, visc );
+  arrayView1d< real64 const > const & RsVec = m_PVTOView.m_Rs;
+  arrayView1d< real64 const > const & BoVec = m_PVTOView.m_saturatedBo;
+  arrayView1d< real64 const > const & viscVec = m_PVTOView.m_saturatedViscosity;
+
+  integer const idx = LvArray::sortedArrayManipulation::find( RsVec.begin(),
+                                                              RsVec.size(),
+                                                              Rs );
+  integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( RsVec.size()-1 ) );
+  integer const iLow = iUp-1;
+
+  linearInterpolation( Rs - RsVec[iLow], RsVec[iUp] - Rs,
+                       BoVec[iLow], BoVec[iUp],
+                       Bo, dBo_dPres );
+  linearInterpolation( Rs - RsVec[iLow], RsVec[iUp] - Rs,
+                       viscVec[iLow], viscVec[iUp],
+                       visc, dVisc_dPres );
+
+  // chain rule
+  dBo_dPres *= dRs_dPres;
+  dVisc_dPres *= dRs_dPres;
+}
+
+GEOSX_HOST_DEVICE
+inline void
+BlackOilFluidUpdate::computeUndersaturatedBoViscosity( bool const needDerivs,
+                                                       localIndex const numHydrocarbonComp,
+                                                       real64 const P,
+                                                       real64 const Rs,
+                                                       real64 const dRs_dComp[],
+                                                       real64 & Bo,
+                                                       real64 & dBo_dPres,
+                                                       real64 dBo_dComp[],
+                                                       real64 & visc,
+                                                       real64 & dVisc_dPres,
+                                                       real64 dVisc_dComp[] ) const
+{
+  computeUndersaturatedBoViscosity( Rs, P, Bo, visc );
 
   if( needDerivs )
   {
@@ -1191,25 +1203,25 @@ BlackOilFluidUpdate::computeUndersaturatedBoVisc( bool needDerivs,
 
     // 1. dPres
     real64 const eps = 1e-6;
-    real64 const inv_eps = 1./eps;
-    real64 const Peps = P + eps;
-    real64 Bo_eps = 0.;
-    real64 visc_eps = 0.;
-    computeUndersaturatedBoVisc( Rs, Peps, Bo_eps, visc_eps );
-    dBo_dP = (Bo_eps - Bo) * inv_eps;
-    dVisc_dP = (visc_eps - visc) * inv_eps;
+    real64 const inv_eps = 1.0 / eps;
+    real64 const P_eps = P + eps;
+    real64 Bo_eps   = 0.0;
+    real64 visc_eps = 0.0;
+    computeUndersaturatedBoViscosity( Rs, P_eps, Bo_eps, visc_eps );
+    dBo_dPres = (Bo_eps - Bo) * inv_eps;
+    dVisc_dPres = (visc_eps - visc) * inv_eps;
 
     // 2. dRs
     real64 const Rs_eps = Rs + eps;
-    computeUndersaturatedBoVisc( Rs_eps, P, Bo_eps, visc_eps );
+    computeUndersaturatedBoViscosity( Rs_eps, P, Bo_eps, visc_eps );
     real64 const dBo_dRs =   (Bo_eps - Bo) * inv_eps;
     real64 const dVisc_dRs = (visc_eps - visc) * inv_eps;
 
-    // 3. chainrule to dC
+    // 3. chainrule to dComp
     for( localIndex i = 0; i < numHydrocarbonComp; ++i )
     {
-      dBo_dC[i] = dBo_dRs * dRs_dC[i];
-      dVisc_dC[i] = dVisc_dRs * dRs_dC[i];
+      dBo_dComp[i] = dBo_dRs * dRs_dComp[i];
+      dVisc_dComp[i] = dVisc_dRs * dRs_dComp[i];
     }
   }
 
@@ -1217,60 +1229,70 @@ BlackOilFluidUpdate::computeUndersaturatedBoVisc( bool needDerivs,
 
 GEOSX_HOST_DEVICE
 inline void
-BlackOilFluidUpdate::computeUndersaturatedBoVisc( real64 Rs,
-                                                  real64 P,
-                                                  real64 & Bo,
-                                                  real64 & visc ) const
+BlackOilFluidUpdate::computeUndersaturatedBoViscosity( real64 const Rs,
+                                                       real64 const pres,
+                                                       real64 & Bo,
+                                                       real64 & visc ) const
 {
-  integer iLowerBranch, iUpperBranch;
+  // Step 1: interpolate for presBub
+  arrayView1d< real64 const > const RsVec = m_PVTOView.m_Rs;
+  integer idx = LvArray::sortedArrayManipulation::find( RsVec.begin(),
+                                                        RsVec.size(),
+                                                        Rs );
+  integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( RsVec.size()-1 ) );
+  integer const iLow = iUp-1;
 
-  arraySlice1d< real64 const > const RsVec = m_PVTOView.m_Rs;
+  real64 const presBub = linearInterpolation( Rs - m_PVTOView.m_Rs[iLow], m_PVTOView.m_Rs[iUp] - Rs,
+                                              m_PVTOView.m_bubblePressure[iLow], m_PVTOView.m_bubblePressure[iUp] );
+  real64 const deltaPres = pres - presBub;
 
-  findSurroundingIndex( RsVec, Rs, iLowerBranch, iUpperBranch );
+  // Step 2: get indices in undersatured pressure table
+  real64 const deltaRsUp = LvArray::math::abs( m_PVTOView.m_Rs[iUp] - Rs );
+  real64 const deltaRsLow = LvArray::math::abs( Rs - m_PVTOView.m_Rs[iLow] );
+  arraySlice1d< real64 const > const & presUp = m_PVTOView.m_undersaturatedPressure2d[iUp];
+  arraySlice1d< real64 const > const & presLow = m_PVTOView.m_undersaturatedPressure2d[iLow];
 
-  real64 const Pbub = linearInterpolation( m_PVTOView.m_Rs[iLowerBranch], m_PVTOView.m_bubblePressure[iLowerBranch],
-                                           m_PVTOView.m_Rs[iUpperBranch], m_PVTOView.m_bubblePressure[iUpperBranch],
-                                           Rs );
+  idx = LvArray::sortedArrayManipulation::find( presUp.begin(),
+                                                presUp.size(),
+                                                deltaPres );
+  integer const iUpP  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( presUp.size()-1 ) );
+  integer const iLowP = iUpP-1;
 
-  real64 const Prel = P - Pbub;
+  // Step 3: interpolate for Bo
+  arraySlice1d< real64 const > const & BoUp = m_PVTOView.m_undersaturatedBo2d[iUp];
+  arraySlice1d< real64 const > const & BoLow = m_PVTOView.m_undersaturatedBo2d[iLow];
 
-  real64 const dRs_up = std::abs( m_PVTOView.m_Rs[iUpperBranch] - Rs );
-  real64 const dRs_dn = std::abs( Rs - m_PVTOView.m_Rs[iLowerBranch] );
+  real64 const BoInterpLow = linearInterpolation( deltaPres-presLow[iLowP], presLow[iUpP]-deltaPres,
+                                                  BoLow[iLowP], BoLow[iUpP] );
+  real64 const BoInterpUp = linearInterpolation( deltaPres-presUp[iLowP], presUp[iUpP]-deltaPres,
+                                                 BoUp[iLowP], BoUp[iUpP] );
+  Bo = linearInterpolation( deltaRsLow, deltaRsUp, BoInterpLow, BoInterpUp );
 
-  arraySlice1d< real64 const > const & Pup = m_PVTOView.m_undersaturatedPressure2d[iUpperBranch];
-  arraySlice1d< real64 const > const & Pdn = m_PVTOView.m_undersaturatedPressure2d[iLowerBranch];
-  integer iLowerP, iUpperP;
-  findSurroundingIndex( Pup, Prel, iLowerP, iUpperP );
+  // Step 4: interpolate for viscosity
+  arraySlice1d< real64 const > const & viscUp = m_PVTOView.m_undersaturatedViscosity2d[iUp];
+  arraySlice1d< real64 const > const & viscLow = m_PVTOView.m_undersaturatedViscosity2d[iLow];
 
-  // Bo
-  arraySlice1d< real64 const > const & Bo_up = m_PVTOView.m_undersaturatedBo2d[iUpperBranch];
-  arraySlice1d< real64 const > const & Bo_dn = m_PVTOView.m_undersaturatedBo2d[iLowerBranch];
-  real64 const BoInterp_dn = linearInterpolation( Pdn[iLowerP], Bo_dn[iLowerP], Pdn[iUpperP], Bo_dn[iUpperP], Prel );
-  real64 const BoInterp_up = linearInterpolation( Pup[iLowerP], Bo_up[iLowerP], Pup[iUpperP], Bo_up[iUpperP], Prel );
-  Bo = linearInterpolation( dRs_dn, dRs_up, BoInterp_dn, BoInterp_up );
-
-  // viscosity
-  arraySlice1d< real64 const > const & visc_up = m_PVTOView.m_undersaturatedViscosity2d[iUpperBranch];
-  arraySlice1d< real64 const > const & visc_dn = m_PVTOView.m_undersaturatedViscosity2d[iLowerBranch];
-  real64 const viscInterp_dn = linearInterpolation( Pdn[iLowerP], visc_dn[iLowerP], Pdn[iUpperP], visc_dn[iUpperP], Prel );
-  real64 const viscInterp_up = linearInterpolation( Pup[iLowerP], visc_up[iLowerP], Pup[iUpperP], visc_up[iUpperP], Prel );
-  visc = linearInterpolation( dRs_dn, dRs_up, viscInterp_dn, viscInterp_up );
+  real64 const viscInterpLow = linearInterpolation( deltaPres-presLow[iLowP], presLow[iUpP]-deltaPres,
+                                                    viscLow[iLowP], viscLow[iUpP] );
+  real64 const viscInterpUp = linearInterpolation( deltaPres-presUp[iLowP], presUp[iUpP]-deltaPres,
+                                                   viscUp[iLowP], viscUp[iUpP] );
+  visc = linearInterpolation( deltaRsLow, deltaRsUp, viscInterpLow, viscInterpUp );
 }
 
 GEOSX_HOST_DEVICE
 inline void
-BlackOilFluidUpdate::computeMassMoleDensity( bool needDerivs,
-                                             bool useMass,
-                                             localIndex numHydrocarbonComp,
-                                             real64 Rs,
-                                             real64 dRs_dP,
-                                             real64 const dRs_dC[],
-                                             real64 Bo,
-                                             real64 dBo_dP,
-                                             real64 const dBo_dC[],
+BlackOilFluidUpdate::computeMassMoleDensity( bool const needDerivs,
+                                             bool const useMass,
+                                             localIndex const numHydrocarbonComp,
+                                             real64 const Rs,
+                                             real64 const dRs_dPres,
+                                             real64 const dRs_dComp[],
+                                             real64 const Bo,
+                                             real64 const dBo_dPres,
+                                             real64 const dBo_dComp[],
                                              real64 & dens,
-                                             real64 & dDens_dP,
-                                             arraySlice1d< real64, multifluid::USD_PHASE_DC - 3 > const & dDens_dC ) const
+                                             real64 & dDens_dPres,
+                                             arraySlice1d< real64, multifluid::USD_PHASE_DC - 3 > const & dDens_dComp ) const
 {
   using PT = BlackOilFluid::PhaseType;
 
@@ -1284,10 +1306,10 @@ BlackOilFluidUpdate::computeMassMoleDensity( bool needDerivs,
   dens =  Binv * tmp;
   if( needDerivs )
   {
-    dDens_dP = Binv * Binv * (Bo * gasDens * dRs_dP - tmp * dBo_dP);
+    dDens_dPres = Binv * Binv * (Bo * gasDens * dRs_dPres - tmp * dBo_dPres);
     for( localIndex i = 0; i < numHydrocarbonComp; ++i )
     {
-      dDens_dC[i] = Binv * Binv * (Bo * gasDens * dRs_dC[i] - tmp * dBo_dC[i]);
+      dDens_dComp[i] = Binv * Binv * (Bo * gasDens * dRs_dComp[i] - tmp * dBo_dComp[i]);
     }
   }
 }

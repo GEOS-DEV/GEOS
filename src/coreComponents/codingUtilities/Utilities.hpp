@@ -161,159 +161,124 @@ void applyChainRuleInPlace( localIndex const N,
   copy( N, work, df_dxy );
 }
 
-// TODO: make sure this is a good place
-// TODO: check/fix the implementation of these functions
+// TODO: move to the interpolation folder
 
+/**
+ * @brief Perform linear extrapolation of function f(x) at x3 using the known values of f on interval between x1 and x2
+ * @tparam T the value type
+ * @param[in] x1 first bound of the interval
+ * @param[in] x2 second bound of the interval
+ * @param[in] f1 value of function f(x) evaluated at x1
+ * @param[in] f2 value of function f(x) evaluated at x2
+ * @param[in] x3 value at which we want to extrapolate linearly function f(x)
+ * @return the value of function f(x) extrapolated at x3
+ */
 template< typename T >
-void findSurroundingIndex( array1d< T > const & x,
-                           T xval,
-                           integer & iminus,
-                           integer & iplus )
+T linearExtrapolation( T const x1,
+                       T const x2,
+                       T const f1,
+                       T const f2,
+                       T const x3 )
 {
-  GEOSX_THROW_IF( x.empty(), "Interpolation table is empty", InputError );
-  GEOSX_THROW_IF( x[0] > xval, "Input x value is out of range, extrapolation not allowed", InputError );
-
-  // search for interval
-  for( iplus = 1; iplus < x.size() - 1 && x[iplus] < xval; ++iplus )
-  { }
-  iminus = iplus - 1;
+  return ( f2 - f1 ) / ( x2 - x1 ) * ( x3 - x2 ) + f2;
 }
 
-
-// TODO: replace with something from LvArray
-template< typename T >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void findSurroundingIndex( arrayView1d< T const > const & x,
-                           T xval,
-                           integer & iminus,
-                           integer & iplus )
-{
-  // search for interval
-  for( iplus = 1; iplus < x.size() - 1 && x[iplus] < xval; ++iplus )
-  { }
-  iminus = iplus - 1;
-}
-
-template< typename T >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void findSurroundingIndex( arraySlice1d< const T > const & x,
-                           T xval,
-                           integer & iminus,
-                           integer & iplus )
-{
-  // search for interval
-  for( iplus = 1; iplus < x.size() - 1 && x[iplus] < xval; ++iplus )
-  { }
-  iminus = iplus - 1;
-}
-
-template< typename T >
-void interpolation1( array1d< T > const & xin,
-                     array1d< T > const & yin,
-                     array1d< T > const & xout,
-                     array1d< T > & yout )
-{
-  GEOSX_THROW_IF( xin.size() != yin.size(), "interpolation1: size mismatch!", InputError );
-  GEOSX_THROW_IF( xout.size() != yout.size(), "interpolation1: size mismatch!", InputError );
-  for( localIndex n = 0; n != xout.size(); ++n )
-  {
-    T const x = xout[n];
-    GEOSX_THROW_IF( xin[0] > x, "interpolation1: input x out of range, cannot extrapolate below the limits", InputError );
-
-    // search for interval
-    integer i_minus, i_plus;
-    findSurroundingIndex( xin, x, i_minus, i_plus );
-
-    if( i_minus == i_plus )
-    {
-      yout[n] = yin[i_minus];
-    }
-    else
-    {
-      yout[n] = yin[i_minus] * ( xin[i_plus] - x ) / ( xin[i_plus] - xin[i_minus] )
-                + yin[i_plus] * ( ( x - xin[i_minus] ) / ( xin[i_plus] - xin[i_minus] ) );
-      GEOSX_THROW_IF( yout[n] < 0.0, "interpolation1: negative value", InputError );
-    }
-  }
-}
-
-template< typename T >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-T linearInterpolation( T dminus,
-                       T dplus,
-                       T xminus,
-                       T xplus )
-{
-  T const f = dminus / ( dminus + dplus );
-  return f * xplus + ( 1 - f ) * xminus;
-}
-
-template< typename T >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void linearInterpolation( T dminus,
-                          T dplus,
-                          T xminus,
-                          T xplus,
-                          T & x,
-                          T & dx )
-{
-  T const f = dminus / ( dminus + dplus );
-  T const df = 1./( dminus + dplus );
-  x = f * xplus + ( 1 - f ) * xminus;
-  dx = df*(xplus - xminus);
-}
-
-template< typename T >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-T linearInterpolation( T x1,
-                       T y1,
-                       T x2,
-                       T y2,
-                       T x3 )
-{
-  return linearInterpolation( x3 - x1, x2 - x3, y1, y2 );
-}
-
-template< typename T >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void linearInterpolation( T x1,
-                          T y1,
-                          T x2,
-                          T y2,
-                          T x3,
-                          T & x,
-                          T & dx )
-{
-  linearInterpolation( x3 - x1, x2 - x3, y1, y2, x, dx );
-}
-
-template< typename T >
-T linearExtrapolation( T x1,
-                       T y1,
-                       T x2,
-                       T y2,
-                       T x3 )
-{
-  return ( y2 - y1 ) / ( x2 - x1 ) * ( x3 - x2 ) + y2;
-}
-
+/**
+ * @brief Perform log extrapolation of function f(x) at x3 using the known values of f on interval between x1 and x2
+ * @tparam T the value type
+ * @param[in] x1 first bound of the interval
+ * @param[in] x2 second bound of the interval
+ * @param[in] f1 value of function f(x) evaluated at x1
+ * @param[in] f2 value of function f(x) evaluated at x2
+ * @param[in] x3 value at which we want to extrapolate logarithmically function f(x)
+ * @return the value of function f(x) extrapolated at x3
+ */
 template< typename T >
 T logExtrapolation( T x1,
-                    T y1,
                     T x2,
-                    T y2,
+                    T f1,
+                    T f2,
                     T x3 )
 {
-  T const lny = ( log( y2 ) - log( y1 ) ) / ( log( x2 ) - log( x1 ) ) * ( log( x3 ) - log( x2 ) ) + log( y2 );
-  return exp( lny );
+  T const lnf3 = ( log( f2 ) - log( f1 ) ) / ( log( x2 ) - log( x1 ) ) * ( log( x3 ) - log( x2 ) ) + log( f2 );
+  return exp( lnf3 );
 }
 
+/**
+ * @brief Perform linear interpolation of function f(x) at x3 on interval [x1,x2]
+ * @tparam T the value type
+ * @param[in] dx1 length of interval [x1,x3]: x3-x1
+ * @param[in] dx2 length of interval [x3,x2]: x2-x3
+ * @param[in] f1 value of function f(x) evaluated at x1
+ * @param[in] f2 value of function f(x) evaluated at x2
+ * @return the interpolated value of function f(x) at x3
+ */
+template< typename T >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+T linearInterpolation( T const dx1,
+                       T const dx2,
+                       T const f1,
+                       T const f2 )
+{
+  T const alpha = dx1 / ( dx1 + dx2 );
+  return alpha * f2 + ( 1.0 - alpha ) * f1;
+}
+
+/**
+ * @brief Perform linear interpolation of function f(x) at x3 on interval [x1,x2]
+ * @tparam T the value type
+ * @param[in] dx1 length of interval [x1,x3]: x3-x1
+ * @param[in] dx2 length of interval [x3,x2]: x2-x3
+ * @param[in] f1 value of function f(x) evaluated at x1
+ * @param[in] f2 value of function f(x) evaluated at x2
+ * @param[out] f the interpolated value of function f(x) at x3
+ * @param[out] df_dx the derivative (wrt x) of the interpolated value of function f(x) at x3
+ */
+template< typename T >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void linearInterpolation( T const dx1,
+                          T const dx2,
+                          T const f1,
+                          T const f2,
+                          T & f,
+                          T & df_dx )
+{
+  T const alpha = dx1 / ( dx1 + dx2 );
+  T const dAlpha_dx = 1.0 / ( dx1 + dx2 );
+  f = alpha * f2 + ( 1.0 - alpha ) * f1;
+  df_dx = dAlpha_dx * ( f2 - f1 );
+}
+
+/**
+ * @brief Perform linear interpolation of function f(x) for all the values of a given array
+ * @tparam T the value type
+ * @param[in] xIn the values at which we know the value of f(x)
+ * @param[in] fIn the known values of function f(x) at the values in xIn
+ * @param[in] xOut the values where we want to interpolate f(x)
+ * @param[out] fOut the interpolated values of f(x) at xOut
+ */
+template< typename T >
+void linearInterpolation( arrayView1d< T const > const & xIn,
+                          arrayView1d< T const > const & fIn,
+                          arrayView1d< T const > const & xOut,
+                          arrayView1d< T > const & fOut )
+{
+  GEOSX_ASSERT_EQ_MSG( xIn.size(), fIn.size(), "linearInterpolation: size mismatch in the xIn and fIn input vectors" );
+  GEOSX_ASSERT_EQ_MSG( xOut.size(), fOut.size(), "linearInterpolation: size mismatch in the xOut and fOut input vectors" );
+
+  for( localIndex i = 0; i < xOut.size(); ++i )
+  {
+    integer const idx = LvArray::sortedArrayManipulation::find( xIn.begin(),
+                                                                xIn.size(),
+                                                                xOut[i] );
+    integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ),
+                                             LvArray::integerConversion< integer >( xIn.size()-1 ) );
+    integer const iLow = iUp-1;
+    fOut[i] = linearInterpolation( xOut[i] - xIn[iLow], xIn[iUp] - xOut[i], fIn[iLow], fIn[iUp] );
+  }
+}
 
 } // namespace geosx
 

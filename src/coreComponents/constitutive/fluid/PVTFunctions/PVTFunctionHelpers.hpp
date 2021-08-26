@@ -65,6 +65,27 @@ public:
                   array1d< integer > const & phases,
                   path_array const & tableFileNames );
 
+  /**
+   * @brief Getter for the oil table
+   * @return the oil table
+   */
+  array1d< array1d< real64 > > const &
+  getOilTable() const { return m_oilTable; }
+
+  /**
+   * @brief Getter for the gas table
+   * @return the gas table
+   */
+  array1d< array1d< real64 > > const &
+  getGasTable() const { return m_gasTable; }
+
+  /**
+   * @brief Getter for the water table
+   * @return the water table
+   */
+  array1d< real64 > const &
+  getWaterTable() const { return m_waterTable; }
+
 private:
 
   /**
@@ -78,8 +99,6 @@ private:
   readAllTables( localIndex const ipWater,
                  array1d< integer > const & phases,
                  path_array const & tableFileNames ) const;
-
-public:
 
   /// The oil phase PVT table read from file
   array1d< array1d< real64 > > m_oilTable;

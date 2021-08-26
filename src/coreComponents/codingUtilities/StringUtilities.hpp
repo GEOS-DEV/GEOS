@@ -99,35 +99,40 @@ string padValue( T value, int size )
 
 /**
  * @brief Trim the string
- * @param[inout] str the string to trim
+ * @param[in] str the string to trim
+ * @param[in] charsToRemove the list of characters to remove
+ * @return the trimmed string
  */
-void trim( string & str );
+string trim( string const & str,
+             string const & charsToRemove );
 
 /**
  * @brief Search for a string in the line, and return the line truncated before the string
- * @param[in] toBeRemoved the string to search for in the line
- * @param[inout] line the line to truncate
- * @return true if the string was found in the line, false otherwise
+ * @param[in] str the line to truncate
+ * @param[in] strToRemove the string to search for in the line
+ * @return the new (truncated) string
  */
-bool removeStringAndFollowingContentFromLine( string const & toBeRemoved,
-                                              string & line );
+string removeStringAndFollowingContent( string const & str,
+                                        string const & strToRemove );
 
 /**
  * @brief Take a string, and return a array1d with the cast values
  * @tparam T the type to which the string will be cast
- * @param[in] data the string to turn into an array1d
- * @param[out] v the array1d that stores the cast values
+ * @param[in] str the string to turn into an array1d
+ * @return the array1d that stores the cast values
  */
 template< typename T >
-void fromStringTo( string const & data,
-                   array1d< T > & v )
+array1d< T > fromStringToArray( string const & str )
 {
-  std::istringstream iss( data );
+  array1d< T > v;
   T sub;
+
+  std::istringstream iss( str );
   while( iss >> sub )
   {
     v.emplace_back( sub );
   }
+  return v;
 }
 
 } // namespace stringutilities

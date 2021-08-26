@@ -35,22 +35,19 @@ BlackOilTables::readTable( string const & fileName,
                            array1d< array1d< real64 > > & data )
 {
   std::ifstream is( fileName );
-  GEOSX_ASSERT_GE_MSG( is.is_open(), true, "Could not open file: " + fileName );
-
-  constexpr std::streamsize bufSize = 256;
-  char buf[bufSize];
+  GEOSX_ERROR_IF( !is.is_open(),
+                  "BlackOilTables: could not open file: " << fileName );
 
   // Read line-by-line until eof
-  while( is.getline( buf, bufSize ) )
+  string str;
+  while( std::getline( is, str ) )
   {
-    string str( buf );
-
     // Remove whitespace and end-of-line characters, if any
-    stringutilities::trim( str );
+    str = stringutilities::trim( str, " \r" );
 
     // Remove # and -- (Eclipse-style) comments
-    stringutilities::removeStringAndFollowingContentFromLine( "#", str );
-    stringutilities::removeStringAndFollowingContentFromLine( "--", str );
+    str = stringutilities::removeStringAndFollowingContent( str, "#" );
+    str = stringutilities::removeStringAndFollowingContent( str, "--" );
 
     // Skip empty or comment-only strings
     if( str.empty() )
@@ -60,7 +57,8 @@ BlackOilTables::readTable( string const & fileName,
 
     // Add and read a new line entry
     data.emplace_back( 0 );
-    stringutilities::fromStringTo( str, data.back() );
+    array1d< real64 > newLine = stringutilities::fromStringToArray< real64 >( str );
+    data.back() = newLine;
 
     // Remove line entry of no data read
     if( data.back().empty() )
@@ -74,8 +72,8 @@ BlackOilTables::readTable( string const & fileName,
   for( localIndex i = 0; i < data.size(); ++i )
   {
     GEOSX_ERROR_IF( data[i].size() < minRowLength,
-                    "Too few entries in a row of table " + fileName
-                    + ", minimum " + std::to_string( minRowLength ) + " required" );
+                    "BlackOilTables: too few entries in row " << i << " of table " << fileName
+                                                              << ", minimum " << std::to_string( minRowLength ) << " required" );
   }
 }
 
