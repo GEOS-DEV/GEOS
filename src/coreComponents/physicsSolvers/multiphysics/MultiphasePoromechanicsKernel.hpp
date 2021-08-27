@@ -142,7 +142,6 @@ public:
 
       m_fluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::pressureString() );
       m_deltaFluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::deltaPressureString() );
-      m_poroRef = elementSubRegion.template getReference< array1d< real64 > >( keys::referencePorosityString() );
     }
 
     // extract views into multiphase solver data
@@ -284,6 +283,7 @@ public:
     real64 dPorosity_dPressure;
     real64 dPorosity_dVolStrainIncrement;
     real64 dTotalStress_dPressure;
+
 
     // --- Update effective stress tensor (stored in totalStress)
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
@@ -567,14 +567,12 @@ protected:
   /// The rank-global delta-fluid pressure array.
   arrayView1d< real64 const > m_deltaFluidPressure;
 
-  /// The rank-global reference porosity array
-  arrayView1d< real64 const > m_poroRef;
-
   /// Number of components
   localIndex const m_numComponents;
 
   /// Number of phases
   localIndex const m_numPhases;
+
 };
 
 using MultiphaseKernelFactory = finiteElement::KernelFactory< Multiphase,
