@@ -54,6 +54,9 @@ public:
 
     localIndex numSupportPoints;
     real64 quadratureWeight;
+    real64 basisFunctionsIntegralMean[MAXCELLNODES];
+    real64 stabilizationMatrix[MAXCELLNODES][MAXCELLNODES];
+    real64 basisDerivativesIntegralMean[MAXCELLNODES][3];
   };
 
   struct Initialization : public FiniteElementBase::Initialization
@@ -91,7 +94,15 @@ public:
                              arrayView1d< real64 const > const faceAreas,
                              real64 const (&cellCenter)[3],
                              real64 const & cellVolume
-                             );
+                             )
+    {
+      computeProjectors( cellIndex, nodesCoords, cellToNodeMap,
+                         elementToFaceMap, faceToNodeMap, faceToEdgeMap,
+                         edgeToNodeMap, faceCenters, faceNormals,
+                         faceAreas, cellCenter, cellVolume,
+                         m_numSupportPoints, m_quadratureWeight, m_basisFunctionsIntegralMean,
+                         m_stabilizationMatrix, m_basisDerivativesIntegralMean );
+    }
 
   GEOSX_HOST_DEVICE
   static constexpr localIndex getMaxSupportPoints()
@@ -133,15 +144,38 @@ public:
   }
 
   /**
-   * @brief Empty setup method.
+   * @brief Setup method.
    * @param cellIndex The index of the cell with respect to the cell sub region to which the element
-   * has been initialized previously (see @ref initialize).
+   * has been initialized previously (see @ref fillInitialization).
    * @param stack Object that holds stack variables.
    */
   GEOSX_HOST_DEVICE
-  static void setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-                          StackVariables & GEOSX_UNUSED_PARAM( stack ) )
-  {}
+  static void setupStack( localIndex const & cellIndex,
+                          Initialization const & initialization,
+                          StackVariables & stack )
+  {
+    real64 const cellCenter[3] { initialization.cellCenters( cellIndex, 0 ),
+        initialization.cellCenters( cellIndex, 1 ),
+        initialization.cellCenters( cellIndex, 2 ) };
+    real64 const cellVolume = initialization.cellVolumes(cellIndex);
+    computeProjectors( cellIndex,
+                       initialization.nodesCoords,
+                       initialization.cellToNodeMap,
+                       initialization.cellToFaceMap,
+                       initialization.faceToNodeMap,
+                       initialization.faceToEdgeMap,
+                       initialization.edgeToNodeMap,
+                       initialization.faceCenters,
+                       initialization.faceNormals,
+                       initialization.faceAreas,
+                       cellCenter,
+                       cellVolume,
+                       stack.numSupportPoints,
+                       stack.quadratureWeight,
+                       stack.basisFunctionsIntegralMean,
+                       stack.stabilizationMatrix,
+                       stack.basisDerivativesIntegralMean );
+  }
 
   GEOSX_HOST_DEVICE
   void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
@@ -269,7 +303,26 @@ private:
                           real64 const (&cellCenter)[3],
                           real64 ( &basisIntegrals )[MAXFACENODES],
                           real64 ( &threeDMonomialIntegrals )[3] );
-
+    GEOSX_HOST_DEVICE
+    static void
+    computeProjectors( localIndex const & cellIndex,
+                       InputNodeCoords const & nodesCoords,
+                       InputCellToNodeMap const & cellToNodeMap,
+                       InputCellToFaceMap const & elementToFaceMap,
+                       InputFaceToNodeMap const & faceToNodeMap,
+                       InputFaceToEdgeMap const & faceToEdgeMap,
+                       InputEdgeToNodeMap const & edgeToNodeMap,
+                       arrayView2d< real64 const > const faceCenters,
+                       arrayView2d< real64 const > const faceNormals,
+                       arrayView1d< real64 const > const faceAreas,
+                       real64 const (&cellCenter)[3],
+                       real64 const & cellVolume,
+                       localIndex & numSupportPoints,
+                       real64 & quadratureWeight,
+                       real64 (&basisFunctionsIntegralMean)[MAXCELLNODES],
+                       real64 (&stabilizationMatrix)[MAXCELLNODES][MAXCELLNODES],
+                       real64 (&basisDerivativesIntegralMean)[MAXCELLNODES][3]
+                       );
 };
 }
 }

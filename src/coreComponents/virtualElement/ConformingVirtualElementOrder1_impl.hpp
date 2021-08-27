@@ -24,24 +24,29 @@ namespace finiteElement
 template< localIndex MCN, localIndex MFN >
 GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
-processLocalGeometry( localIndex const & cellIndex,
-                      InputNodeCoords const & nodesCoords,
-                      InputCellToNodeMap const & cellToNodeMap,
-                      InputCellToFaceMap const & elementToFaceMap,
-                      InputFaceToNodeMap const & faceToNodeMap,
-                      InputFaceToEdgeMap const & faceToEdgeMap,
-                      InputEdgeToNodeMap const & edgeToNodeMap,
-                      arrayView2d< real64 const > const faceCenters,
-                      arrayView2d< real64 const > const faceNormals,
-                      arrayView1d< real64 const > const faceAreas,
-                      real64 const (&cellCenter)[3],
-                      real64 const & cellVolume
-                      )
+computeProjectors( localIndex const & cellIndex,
+                   InputNodeCoords const & nodesCoords,
+                   InputCellToNodeMap const & cellToNodeMap,
+                   InputCellToFaceMap const & elementToFaceMap,
+                   InputFaceToNodeMap const & faceToNodeMap,
+                   InputFaceToEdgeMap const & faceToEdgeMap,
+                   InputEdgeToNodeMap const & edgeToNodeMap,
+                   arrayView2d< real64 const > const faceCenters,
+                   arrayView2d< real64 const > const faceNormals,
+                   arrayView1d< real64 const > const faceAreas,
+                   real64 const (&cellCenter)[3],
+                   real64 const & cellVolume,
+                   localIndex & numSupportPoints,
+                   real64 & quadratureWeight,
+                   real64 (&basisFunctionsIntegralMean)[MCN],
+                   real64 (&stabilizationMatrix)[MCN][MCN],
+                   real64 (&basisDerivativesIntegralMean)[MCN][3]
+                   )
 {
   localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
   localIndex const numCellPoints = cellToNodeMap[cellIndex].size();
-  m_numSupportPoints = numCellPoints;
-  m_quadratureWeight = cellVolume;
+  numSupportPoints = numCellPoints;
+  quadratureWeight = cellVolume;
 
   // Compute cell diameter.
   real64 cellDiameter = ConformingVirtualElementOrder1< MCN, MFN >::
@@ -200,7 +205,7 @@ processLocalGeometry( localIndex const & cellIndex,
 
   // Compute integral mean of basis functions and of derivatives of basis functions.
   // Compute VEM degrees of freedom of the piNabla projection minus the identity (used for
-  // m_stabilizationMatrix).
+  // stabilizationMatrix).
   real64 const invCellVolume = 1.0/cellVolume;
   real64 const monomialDerivativeInverse = cellDiameter*cellDiameter*invCellVolume;
   real64 piNablaVemDofsMinusIdentity[ MCN ][ MCN ];
@@ -230,14 +235,14 @@ processLocalGeometry( localIndex const & cellIndex,
                       piNablaDofs[2]*monomBoundaryIntegrals[2] -
                       piNablaDofs[3]*monomBoundaryIntegrals[3] )/monomBoundaryIntegrals[0];
     // - integrate piNabla proj and compute integral means
-    m_basisFunctionsIntegralMean[numBasisFunction] =
+    basisFunctionsIntegralMean[numBasisFunction] =
       piNablaDofs[0] + invCellVolume * (piNablaDofs[1]*monomInternalIntegrals[0]
                                         + piNablaDofs[2]*monomInternalIntegrals[1]
                                         + piNablaDofs[3] * monomInternalIntegrals[2]);
     // - compute integral means of derivatives
     for( localIndex i = 0; i < 3; ++i )
     {
-      m_basisDerivativesIntegralMean[numBasisFunction][i] =
+      basisDerivativesIntegralMean[numBasisFunction][i] =
         -invCellVolume *basisTimesNormalBoundaryInt[numBasisFunction][i];
     }
     // - compute VEM dofs of piNabla projection
@@ -262,7 +267,7 @@ processLocalGeometry( localIndex const & cellIndex,
       {
         rowColProd += piNablaVemDofsMinusIdentity[ k ][ i ]*piNablaVemDofsMinusIdentity[ k ][ j ];
       }
-      m_stabilizationMatrix[ i ][ j ] = cellDiameter*rowColProd;
+      stabilizationMatrix[ i ][ j ] = cellDiameter*rowColProd;
     }
   }
 }

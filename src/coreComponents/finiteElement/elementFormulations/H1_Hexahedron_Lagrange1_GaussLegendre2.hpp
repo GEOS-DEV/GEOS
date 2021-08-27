@@ -123,6 +123,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   static void setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
+                          Initialization const & GEOSX_UNUSED_PARAM( initialization ),
                           StackVariables & GEOSX_UNUSED_PARAM( stack ) )
   {}
 

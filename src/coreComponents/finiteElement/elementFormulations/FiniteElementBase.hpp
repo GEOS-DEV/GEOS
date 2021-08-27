@@ -139,9 +139,10 @@ public:
   template< typename LEAF >
   GEOSX_HOST_DEVICE
   void setup( localIndex const & cellIndex,
+              typename LEAF::Initialization const & initialization,
               typename LEAF::StackVariables & stack ) const
   {
-    LEAF::setupStack( cellIndex, stack );
+    LEAF::setupStack( cellIndex, initialization, stack );
   }
 
   /**

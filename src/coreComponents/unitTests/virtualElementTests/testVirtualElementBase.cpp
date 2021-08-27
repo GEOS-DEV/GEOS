@@ -205,7 +205,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
     //                              cellCenters( cellIndex, 1 ),
     //                              cellCenters( cellIndex, 2 ) };
     typename VEM::StackVariables stack;
-    virtualElement.template setup< VEM >( cellIndex, stack );
+    virtualElement.template setup< VEM >( cellIndex, initialization, stack );
     // virtualElement.processLocalGeometry( cellIndex,
     //                                      nodesCoords,
     //                                      cellToNodeMap,
