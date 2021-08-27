@@ -13,6 +13,7 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
      fluidFlow/FlowSolverBase.hpp
+     fluidFlow/FluxKernelsHelper.hpp
      fluidFlow/HybridFVMHelperKernels.hpp          
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
@@ -39,6 +40,8 @@ set( physicsSolvers_headers
      multiphysics/PhaseFieldFractureSolver.hpp
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhasePoromechanicsKernel.hpp
+     multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp
+     multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
      multiphysics/SinglePhasePoromechanicsSolver.hpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
      multiphysics/SinglePhaseReservoir.hpp
@@ -85,7 +88,6 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseBase.cpp
      fluidFlow/SinglePhaseBaseKernels.cpp
      fluidFlow/SinglePhaseFVM.cpp
-     fluidFlow/SinglePhaseFVMKernels.cpp
      fluidFlow/SinglePhaseHybridFVM.cpp     
      fluidFlow/SinglePhaseProppantBase.cpp     
      fluidFlow/wells/CompositionalMultiphaseWell.cpp
@@ -102,6 +104,7 @@ set( physicsSolvers_sources
      multiphysics/SinglePhasePoromechanicsSolver.cpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
      multiphysics/SinglePhaseReservoir.cpp
+     multiphysics/SinglePhasePoromechanicsFluxKernels.cpp
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/LaplaceVEM.cpp

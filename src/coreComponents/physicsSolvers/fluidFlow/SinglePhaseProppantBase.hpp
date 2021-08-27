@@ -62,8 +62,6 @@ protected:
 
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const override;
 
-  virtual arrayView1d< real64 const > getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const override;
-
 private:
 
   virtual void resetViewsPrivate( ElementRegionManager const & elemManager ) override;
