@@ -72,12 +72,19 @@ public:
 
   /**
    * @brief Empty initialization method.
-   * @param subRegion The cell sub-region for which the element has to be initialized.
+   * @param nodeManager The node manager.
+   * @param edgeManager The edge manager.
+   * @param faceManager The face manager.
+   * @param cellSubRegion The cell sub-region for which the element has to be initialized.
+   * @param initialization Object that holds initialization properties.
    */
-  virtual void initialize( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                           EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                           FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                           CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ) ) override
+  GEOSX_HOST_DEVICE
+  static void fillInitialization( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                                  EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
+                                  FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
+                                  CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                                  Initialization & GEOSX_UNUSED_PARAM( initialization )
+                                  )
   {}
 
   /**

@@ -91,22 +91,44 @@ public:
    */
   struct StackVariables
   {
-      /**
-       * Default constructor
-       */
-      GEOSX_HOST_DEVICE
-      StackVariables()
-      {}
+    /**
+     * Default constructor
+     */
+    GEOSX_HOST_DEVICE
+    StackVariables()
+    {}
+  };
+
+  struct Initialization
+  {
+    /**
+     * Constructor
+     */
+    GEOSX_HOST_DEVICE
+    Initialization()
+    {}
   };
 
   /**
    * @brief Abstract initialization method.
+   * @details It calls the fillInitialization method of the specific element implementation.
+   * @param nodeManager The node manager.
+   * @param edgeManager The edge manager.
+   * @param faceManager The face manager.
    * @param subRegion The cell sub-region for which the element has to be initialized.
    */
-  virtual void initialize( NodeManager const & nodeManager,
-                           EdgeManager const & edgeManager,
-                           FaceManager const & faceManager,
-                           CellElementSubRegion const & cellSubRegion ) = 0;
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  void initialize( NodeManager const & nodeManager,
+                   EdgeManager const & edgeManager,
+                   FaceManager const & faceManager,
+                   CellElementSubRegion const & cellSubRegion,
+                   typename LEAF::Initialization & initialization
+                   ) const
+  {
+    LEAF::fillInitialization( nodeManager, edgeManager, faceManager, cellSubRegion,
+                              initialization );
+  }
 
   /**
    * @brief Abstract setup method, possibly computing cell-dependent properties.
@@ -116,7 +138,8 @@ public:
    */
   template< typename LEAF >
   GEOSX_HOST_DEVICE
-  void setup( localIndex const & cellIndex, typename LEAF::StackVariables & stack ) const
+  void setup( localIndex const & cellIndex,
+              typename LEAF::StackVariables & stack ) const
   {
     LEAF::setupStack( cellIndex, stack );
   }

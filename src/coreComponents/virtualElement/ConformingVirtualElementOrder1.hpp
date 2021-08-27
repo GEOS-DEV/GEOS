@@ -45,12 +45,37 @@ public:
 
   struct StackVariables : public FiniteElementBase::StackVariables
   {
-      /**
-       * Default constructor
-       */
-      GEOSX_HOST_DEVICE
-      StackVariables()
-      {}
+    /**
+     * Default constructor
+     */
+    GEOSX_HOST_DEVICE
+    StackVariables()
+    {}
+
+    localIndex numSupportPoints;
+    real64 quadratureWeight;
+  };
+
+  struct Initialization : public FiniteElementBase::Initialization
+  {
+    /**
+     * Constructor
+     */
+    GEOSX_HOST_DEVICE
+    Initialization()
+    {}
+
+    InputNodeCoords nodesCoords;
+    InputCellToNodeMap cellToNodeMap;
+    InputCellToFaceMap cellToFaceMap;
+    InputFaceToNodeMap faceToNodeMap;
+    InputFaceToEdgeMap faceToEdgeMap;
+    InputEdgeToNodeMap edgeToNodeMap;
+    arrayView2d< real64 const > faceCenters;
+    arrayView2d< real64 const > faceNormals;
+    arrayView1d< real64 const > faceAreas;
+    arrayView2d< real64 const > cellCenters;
+    arrayView1d< real64 const > cellVolumes;
   };
 
   GEOSX_HOST_DEVICE
@@ -86,14 +111,26 @@ public:
     return m_numSupportPoints;
   }
 
-  /**
-   * @brief Empty initialization method.
-   * @param subRegion The cell sub-region for which the element has to be initialized.
-   */
-  void initialize( NodeManager const & nodeManager,
-                   EdgeManager const & edgeManager,
-                   FaceManager const & faceManager,
-                   CellElementSubRegion const & cellSubRegion ) override;
+  GEOSX_HOST_DEVICE
+  static void fillInitialization( NodeManager const & nodeManager,
+                                  EdgeManager const & edgeManager,
+                                  FaceManager const & faceManager,
+                                  CellElementSubRegion const & cellSubRegion,
+                                  Initialization & initialization
+                                  )
+  {
+    initialization.nodesCoords = nodeManager.referencePosition();
+    initialization.cellToNodeMap = cellSubRegion.nodeList();
+    initialization.cellToFaceMap = cellSubRegion.faceList().toViewConst();
+    initialization.faceToNodeMap = faceManager.nodeList().toViewConst();
+    initialization.faceToEdgeMap = faceManager.edgeList().toViewConst();
+    initialization.edgeToNodeMap = edgeManager.nodeList().toViewConst();
+    initialization.faceCenters = faceManager.faceCenter();
+    initialization.faceNormals = faceManager.faceNormal();
+    initialization.faceAreas = faceManager.faceArea();
+    initialization.cellCenters = cellSubRegion.getElementCenter();
+    initialization.cellVolumes = cellSubRegion.getElementVolume();
+  }
 
   /**
    * @brief Empty setup method.
