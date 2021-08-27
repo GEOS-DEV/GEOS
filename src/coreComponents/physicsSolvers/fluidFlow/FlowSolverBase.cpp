@@ -42,9 +42,9 @@ void execute1( POROUSWRAPPER_TYPE porousWrapper,
   {
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
-      porousWrapper.updateFromPressure( k, q,
-                                        pressure[k],
-                                        deltaPressure[k] );
+      porousWrapper.updateStateFromPressure( k, q,
+                                             pressure[k],
+                                             deltaPressure[k] );
     }
   } );
 }
@@ -61,11 +61,11 @@ void execute2( POROUSWRAPPER_TYPE porousWrapper,
   {
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
-      porousWrapper.updateFromPressureAndAperture( k, q,
-                                                   pressure[k],
-                                                   deltaPressure[k],
-                                                   oldHydraulicAperture[k],
-                                                   newHydraulicAperture[k] );
+      porousWrapper.updateStateFromPressureAndAperture( k, q,
+                                                        pressure[k],
+                                                        deltaPressure[k],
+                                                        oldHydraulicAperture[k],
+                                                        newHydraulicAperture[k] );
     }
   } );
 }
