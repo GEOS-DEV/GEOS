@@ -52,9 +52,7 @@ public:
                                    localIndex const q,
                                    real64 const & porosity ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( porosity );
+    GEOSX_UNUSED_VAR( k, q, porosity );
   }
 
   GEOSX_HOST_DEVICE
@@ -63,20 +61,16 @@ public:
                                          real64 const & pressure,
                                          real64 const & volStrain ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( pressure );
-    GEOSX_UNUSED_VAR( volStrain );
+    GEOSX_UNUSED_VAR( k, q, pressure, volStrain );
   }
 
   GEOSX_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
-                                   real64 const & aperture ) const
+                                   real64 const & oldHydraulicAperture,
+                                   real64 const & newHydraulicAperture ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( aperture );
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
 
 protected:

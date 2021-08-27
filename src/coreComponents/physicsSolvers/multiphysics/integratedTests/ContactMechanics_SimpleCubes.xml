@@ -145,13 +145,11 @@
   </ElementRegions>
 
   <Constitutive>
-    <PoroElasticIsotropic
+    <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="3.33333333333333e3"
-      defaultShearModulus="2.0e3"
-      compressibility="1.6155088853e-18"
-      referencePressure="2.125e6"/>
+      defaultShearModulus="2.0e3"/>
 
     <Coulomb
       name="fractureMaterial"

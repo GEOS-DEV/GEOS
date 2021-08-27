@@ -523,6 +523,7 @@ struct FluxKernel
           localIndex esr,
           CellElementSubRegion const & subRegion,
           constitutive::SingleFluidBase const & fluid,
+          constitutive::PermeabilityBase const & permeabilityModel,
           SortedArrayView< localIndex const > const & regionFilter,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
           arrayView2d< localIndex const > const & elemRegionList,
@@ -533,7 +534,6 @@ struct FluxKernel
           arrayView1d< integer const > const & faceGhostRank,
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & dFacePres,
-          arrayView3d< real64 const > const & elemPerm,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & transMultiplier,
           ElementViewConst< arrayView1d< real64 const > > const & mob,
@@ -562,6 +562,10 @@ struct FluxKernel
       subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString() );
     arrayView1d< real64 const > const elemVolume =
       subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
+
+    arrayView3d< real64 const > const elemPerm = permeabilityModel.permeability();
+    // TODO add this dependency to the compute function
+    //arrayView3d< real64 const > const elemdPermdPres = permeabilityModel.dPerm_dPressure();
 
     // get the cell-centered depth
     arrayView1d< real64 const > const elemGravCoef =

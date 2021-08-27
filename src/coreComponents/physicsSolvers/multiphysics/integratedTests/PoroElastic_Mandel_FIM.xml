@@ -137,8 +137,7 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ shalePerm }"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -188,7 +187,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
-      fieldName="shalePorosity_newPorosity"
+      fieldName="shalePorosity_porosity"
       scale="0.00"/>
 
     <FieldSpecification

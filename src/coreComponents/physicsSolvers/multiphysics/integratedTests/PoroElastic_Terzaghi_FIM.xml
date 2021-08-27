@@ -30,7 +30,7 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }"
       fluidNames="{ fluid }"
-      solidNames="{ skeleton }"
+      solidNames="{ porousRock }"
       permeabilityNames="{ skeletonPerm }"/>
   </Solvers>
 
@@ -163,7 +163,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/cb1"
-      fieldName="skeletonPorosity_newPorosity"
+      fieldName="skeletonPorosity_porosity"
       scale="0.3"/>
 
     <FieldSpecification

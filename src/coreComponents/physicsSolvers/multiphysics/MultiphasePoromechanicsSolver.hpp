@@ -106,6 +106,8 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override;
 
+  virtual void updateState( DomainPartition & domain ) override;
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
