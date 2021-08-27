@@ -171,7 +171,7 @@ Constitutive model: defining material properties with constitutive laws
 For this test problem, the solid and fluid materials are named as ``rock`` and ``water`` respectively, whose mechanical properties are specified in the ``Constitutive`` section. In this tutorial, different material models, linear elastic isotropic model (see :ref:`LinearElasticIsotropic`) and Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`), are used to solve the mechanical deformation, which is the only difference between the poroelastic and poroplastic cases in this tutorial.
 
 
-For the poroelastic case, linear elastic isotropic solid model ``PoroElasticIsotropic`` is used to describe the linear elastic isotropic response of ``rock`` to loading. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the flow of ``water`` upon injection:
+For the poroelastic case, ``PorousElasticIsotropic`` model is used to describe the linear elastic isotropic response of ``rock`` to loading. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the flow of ``water`` upon injection:
 
 .. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_PoroElastic.xml
     :language: xml
@@ -179,7 +179,7 @@ For the poroelastic case, linear elastic isotropic solid model ``PoroElasticIsot
     :end-before: <!-- SPHINX_WELLBORE_MATERIAL_END -->
 
 
-For the poroplastic case, Extended Drucker-Prager model ``PoroExtendedDruckerPrager`` is used to simulate the elastoplastic behavior of ``rock``. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is employed to handle the storage and flow of ``water``: 
+For the poroplastic case, ``PorousExtendedDruckerPrager`` model is used to simulate the elastoplastic behavior of ``rock``. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is employed to handle the storage and flow of ``water``: 
 
 
 .. literalinclude:: ../../../../../examples/plasticity/WellboreProblem_PoroDruckerPrager.xml
@@ -192,7 +192,6 @@ As for the material parameters, ``defaultInitialFrictionAngle``, ``defaultResidu
 As the residual friction angle ``defaultResidualFrictionAngle`` is larger than the initial one ``defaultInitialFrictionAngle``, a strain hardening model is automatically chosen, whose hardening rate is given as ``defaultHardening="0.01"``. 
 If the residual friction angle is set to be less than the initial one, strain weakening will take place. 
 ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
-For this coupled problem, the Biot’s coefficient ``BiotCoefficient`` is assumed to be 1.
 If using an incompressible fluid, the user can lower the fluid compressibility ``compressibility`` to 0.
 The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units. A stress-dependent porosity model ``rockPorosity`` and constant permeability ``rockPerm`` model are defined in this section.
 
