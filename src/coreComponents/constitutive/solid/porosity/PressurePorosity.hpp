@@ -51,14 +51,18 @@ public:
                         real64 const & referencePorosity ) const
   {
 
-    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
-    dPorosity_dPressure =  m_compressibility * porosity;
+    // TODO use full exponential.
+//    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
+//    dPorosity_dPressure =  m_compressibility * porosity;
+    porosity = referencePorosity * ( m_compressibility * (pressure - m_referencePressure) + 1 );
+    dPorosity_dPressure = m_compressibility * referencePorosity;
+
   }
 
   GEOSX_HOST_DEVICE
-  virtual void updatePorosity( localIndex const k,
-                               localIndex const q,
-                               real64 const & pressure ) const
+  virtual void updateFromPressure( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & pressure ) const override final
   {
     computePorosity( pressure,
                      m_newPorosity[k][q],
@@ -71,7 +75,6 @@ private:
   real64 m_referencePressure;
 
   real64 m_compressibility;
-
 };
 
 

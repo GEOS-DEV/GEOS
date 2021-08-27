@@ -9,7 +9,8 @@
       fluidNames="{ water }"
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
-      targetRegions="{ Region1 }">
+      targetRegions="{ Region1 }"
+      logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
@@ -76,7 +77,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ water, rock, rockPerm }"/>
+      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -88,10 +89,20 @@
       compressibility="5e-10"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
       referencePressure="0.0"
-      compressibility="1e-9"/>
+      compressibility="1.0e-9"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -100,11 +111,11 @@
 
   <FieldSpecifications>
     <FieldSpecification
-      name="referencePorosity"
+      name="Porosity"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
-      fieldName="referencePorosity"
+      fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification

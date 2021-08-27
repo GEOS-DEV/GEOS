@@ -48,6 +48,19 @@ public:
    */
   TwoPointFluxApproximation( string const & name, dataRepository::Group * const parent );
 
+  /**
+   * @brief View keys.
+   */
+  struct viewKeyStruct : FluxApproximationBase::viewKeyStruct
+  {
+    /// @return The key for edfStencil
+    static constexpr char const * edfmStencilString() { return "edfmStencil"; }
+    /// @return The key for faceElementToCellStencil
+    static constexpr char const * faceToCellStencilString() { return "faceElementToCellStencil"; }
+    /// @return The key for the meanPermCoefficient
+    static constexpr char const * meanPermCoefficientString() { return "meanPermCoefficient"; }
+  };
+
 protected:
 
   virtual void registerCellStencil( Group & stencilGroup ) const override;
@@ -69,6 +82,11 @@ protected:
 
   virtual void addEDFracToFractureStencil( MeshLevel & mesh,
                                            string const & embeddedSurfaceRegionName ) const override;
+
+private:
+
+  /// mean permeability coefficient
+  real64 m_meanPermCoefficient;
 
 
 };

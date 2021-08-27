@@ -229,7 +229,7 @@ public:
     real64 dPorosity_dVolStrainIncrement;
     real64 dTotalStress_dPressure;
 
-    // --- Update effective stress tensor (stored in totalStress)
+    // --- Update total stress tensor
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
 
@@ -249,7 +249,6 @@ public:
     real64 const pressureStressTerm = -dTotalStress_dPressure * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
 
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, pressureStressTerm );
-
 
     // Evaluate body force vector
     real64 bodyForce[3] = { m_gravityVector[0],
@@ -401,7 +400,6 @@ protected:
 
   /// The rank-global delta-fluid pressure array.
   arrayView1d< real64 const > const m_deltaFluidPressure;
-
 };
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,

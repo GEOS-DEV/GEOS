@@ -1535,6 +1535,9 @@ FluxKernel::
   arrayView1d< real64 const > const & elemVolume =
     subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
 
+  // TODO add this dependency to the compute function
+  //arrayView3d< real64 const > const elemdPermdPres = permeabilityModel.dPerm_dPressure();
+
   arrayView3d< real64 const > const & elemPerm = permeabilityModel.permeability();
 
   // get the cell-centered depth

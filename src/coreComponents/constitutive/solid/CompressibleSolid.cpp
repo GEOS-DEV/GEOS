@@ -21,6 +21,7 @@
 #include "porosity/PressurePorosity.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "constitutive/permeability/ParallelPlatesPermeability.hpp"
 
 namespace geosx
 {
@@ -43,9 +44,11 @@ CompressibleSolid< PORO_TYPE, PERM_TYPE >::~CompressibleSolid() = default;
 // Register all CompressibleSolid model types.
 typedef CompressibleSolid< PressurePorosity, ConstantPermeability > CompressibleRockConstant;
 typedef CompressibleSolid< PressurePorosity, CarmanKozenyPermeability > CompressibleRockCK;
+typedef CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > FractureRock;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockCK, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, FractureRock, string const &, Group * const )
 
 
 }

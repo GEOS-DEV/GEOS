@@ -59,17 +59,6 @@ public:
                                                             Group * const parent ) const;
 
 
-  virtual void stateUpdatePointPressure( real64 const & GEOSX_UNUSED_PARAM( pres ),
-                                         localIndex const GEOSX_UNUSED_PARAM( k ),
-                                         localIndex const GEOSX_UNUSED_PARAM( q ) ) {}
-
-  virtual void stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
-                                         arrayView1d< real64 const > const & dPres )
-  {
-    GEOSX_UNUSED_VAR( pres )
-    GEOSX_UNUSED_VAR( dPres )
-  }
-
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const
   {}
