@@ -44,9 +44,7 @@ public:
                 arraySlice1d< real64 > const & permeability,
                 arraySlice1d< real64 > const & dPerm_dAperture ) const
   {
-    // Technically this is not a permeability but it's convenient to definite like this.
-
-
+    // TODO: maybe move to this computation or have the possibility of choosing.
 //    real64 const perm  = newHydraulicAperture*newHydraulicAperture*newHydraulicAperture / 12.0;
 //    real64 const dPerm = newHydraulicAperture*newHydraulicAperture / 4.0;
 
