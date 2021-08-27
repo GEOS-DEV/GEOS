@@ -132,6 +132,7 @@ public:
 
     constexpr static char const * dTraction_dJumpString() { return "dTraction_dJump"; }
 
+    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
   };
 
   string const & getContactRelationName() const { return m_contactRelationName; }
@@ -161,6 +162,9 @@ private:
 
   /// contact relation name string
   string m_contactRelationName;
+
+  /// decide whether to use static condensation or not
+  integer m_useStaticCondensation;
 };
 
 

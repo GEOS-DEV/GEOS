@@ -52,6 +52,7 @@ set( physicsSolvers_headers
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
      solidMechanics/SolidMechanicsEFEMKernels.hpp
+     solidMechanics/SolidMechanicsEFEMStaticCondensationKernels.hpp
      solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp
      solidMechanics/SolidMechanicsEmbeddedFractures.hpp
      solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
