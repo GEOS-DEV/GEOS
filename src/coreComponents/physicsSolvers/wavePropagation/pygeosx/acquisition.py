@@ -116,6 +116,14 @@ class Acquisition:
 
 
 
+    def calculDt(self):
+        if self.xml is None:
+            raise ValueError("You must link the seismic acquisition with xml file to be able to calculte the simulation time step dt")
+        
+        
+
+
+
     def limitedAperture(self, aperture_dist, aperture_depth):
         self.limited_aperture=True
 
@@ -195,7 +203,6 @@ class Acquisition:
             internal_mesh['nx'] = "{"+str(nx)+"}"
             internal_mesh['ny'] = "{"+str(ny)+"}"
             internal_mesh['nz'] = "{"+str(nz)+"}"
-
             
             box['xMin'] = str(boundary[0][0]-0.01)+","+str(boundary[1][0]-0.01)+","+str(boundary[2][1]-0.01)
             box['xMax'] = str(boundary[0][1]+0.01)+","+str(boundary[1][1]+0.01)+","+str(boundary[2][1]+0.01)
@@ -261,9 +268,12 @@ class Acquisition:
 
                 velocity_file = self.velocity_model.split('.')[0] + self.shots[shot_ind].id+ ".geos"
 
+                max_vel=0
                 with open(velocity_file, 'w') as vfla:
                     for line in keep_line:
                         vfla.write(line)
+                        if float(line) > min_vel:
+                            max_vel =  float(line)
                     """
                     for ind in range(len(velocity_model_value)):
                         if ind not in remove_line:
