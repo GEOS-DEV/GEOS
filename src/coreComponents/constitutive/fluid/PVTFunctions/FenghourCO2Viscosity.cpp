@@ -114,13 +114,20 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, density );
   calculateCO2Viscosity( tableCoords, density, viscosity );
 
-  TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2ViscosityTable" ) );
-  viscosityTable->setTableCoordinates( tableCoords.getCoords() );
-  viscosityTable->setTableValues( viscosity );
-  viscosityTable->reInitializeFunction();
-  viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  return viscosityTable;
+  // TODO: fix name/uniqueness
+  if( functionManager.hasGroup< TableFunction >( "CO2ViscosityTable" ) )
+  {
+    return functionManager.getGroupPointer< TableFunction >( "CO2ViscosityTable" );
+  }
+  else
+  {
+    TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2ViscosityTable" ) );
+    viscosityTable->setTableCoordinates( tableCoords.getCoords() );
+    viscosityTable->setTableValues( viscosity );
+    viscosityTable->reInitializeFunction();
+    viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return viscosityTable;
+  }
 }
 
 } // namespace
