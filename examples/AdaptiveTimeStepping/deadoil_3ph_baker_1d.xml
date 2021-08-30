@@ -82,7 +82,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ fluid1, rock, relperm, rockPerm }"/>
+      materialList="{ fluid1, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -93,10 +93,20 @@
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="0.0"
-      compressibility="1e-9"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      compressibility="1.0e-9"
+      referencePressure="0.0"/>
 
     <BrooksCoreyBakerRelativePermeability
       name="relperm"
@@ -113,14 +123,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="referencePorosity"
-      scale="0.05"/>
-
     <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
       name="initialPressure"

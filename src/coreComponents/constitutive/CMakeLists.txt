@@ -55,6 +55,7 @@ set( constitutive_headers
      relativePermeability/layouts.hpp
      relativePermeability/relativePermeabilitySelector.hpp
      solid/CompressibleSolid.hpp
+     solid/CoupledSolidBase.hpp
      solid/CoupledSolid.hpp
      solid/Damage.hpp
      solid/DamageSpectral.hpp
@@ -65,8 +66,6 @@ set( constitutive_headers
      solid/ElasticIsotropic.hpp
      solid/ElasticTransverseIsotropic.hpp
      solid/InvariantDecompositions.hpp
-     solid/PoreVolumeCompressibleSolid.hpp
-     solid/PoroElastic.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
@@ -119,7 +118,8 @@ set( constitutive_sources
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/TableRelativePermeability.cpp        
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
-     solid/CompressibleSolid.cpp 
+     solid/CompressibleSolid.cpp
+     solid/CoupledSolidBase.cpp   
      solid/Damage.cpp
      solid/DamageSpectral.cpp
      solid/DamageVolDev.cpp
@@ -127,8 +127,6 @@ set( constitutive_sources
      solid/DruckerPragerExtended.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticTransverseIsotropic.cpp
-     solid/PoreVolumeCompressibleSolid.cpp
-     solid/PoroElastic.cpp
      solid/PorousSolid.cpp
      solid/SolidBase.cpp
      solid/TriaxialDriver.cpp

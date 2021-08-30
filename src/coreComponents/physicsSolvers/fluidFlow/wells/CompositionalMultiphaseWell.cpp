@@ -813,7 +813,7 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
 
 }
 
-void CompositionalMultiphaseWell::updateState( WellElementSubRegion & subRegion, localIndex const targetIndex )
+void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex )
 {
   // update properties
   updateComponentFraction( subRegion );
@@ -919,7 +919,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
     // 5) Recompute the pressure-dependent properties
     // Note: I am leaving that here because I would like to use the perforationRates (computed in UpdateState)
     //       to better initialize the rates
-    updateState( subRegion, targetIndex );
+    updateSubRegionState( subRegion, targetIndex );
 
     // 6) Estimate the well rates
     // TODO: initialize rates using perforation rates
@@ -1334,10 +1334,6 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
                                                        domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                        domain.getNeighbors(),
                                                        true );
-
-  // update properties
-  updateStateAll( domain );
-
 }
 
 void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domain )
@@ -1405,7 +1401,7 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
   } );
 
   // call constitutive models
-  updateStateAll( domain );
+  updateState( domain );
 }
 
 

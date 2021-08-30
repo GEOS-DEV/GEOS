@@ -158,7 +158,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e4"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
@@ -181,7 +181,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ cb1 }"
-      materialList="{ fluid1, rock, relperm, rockPerm }"/>
+      materialList="{ fluid1, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
 
     <WellElementRegion
       name="wellRegion1"
@@ -204,10 +204,20 @@
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
       referencePressure="0.0"
-      compressibility="1e-9"/>
+      compressibility="1.0e-9"/>
 
     <TableRelativePermeability
       name="relperm"
@@ -221,14 +231,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="referencePorosity"
-      scale="0.05"/>
-
     <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
       name="initialPressure"
@@ -290,8 +292,8 @@
   </Functions>
 
   <Outputs>
-    <Silo
-      name="siloOutput"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>
