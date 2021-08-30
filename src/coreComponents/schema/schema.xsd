@@ -1141,7 +1141,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetPhaseRateTableName" type="string" default="" />
 		<!--targetTotalRate => Target total volumetric rate-->
 		<xsd:attribute name="targetTotalRate" type="real64" default="0" />
-		<!--targetTotalRateTableName => Name of the rate table when the rate is a time dependent function-->
+		<!--targetTotalRateTableName => Name of the total rate table when the rate is a time dependent function-->
 		<xsd:attribute name="targetTotalRateTableName" type="string" default="" />
 		<!--type => Well type. Valid options:
 * producer

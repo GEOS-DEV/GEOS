@@ -130,6 +130,10 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
 
   // set deltas to zero and recompute dependent quantities
   resetStateToBeginningOfStep( domain );
+
+  // backup fields used in time derivative approximation
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  backupFields( mesh );
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -139,14 +143,17 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
 {
-  // then assemble the mass balance equations
+  // assemble the accumulation term in the mass balance equations
+  assembleAccumulationTerms( domain, dofManager, localMatrix, localRhs );
+
+  // then assemble the flux terms in the mass balance equations
   assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the volume balance equations
-  assembleVolumeBalanceTerms( time, dt, domain, dofManager, localMatrix, localRhs );
+  assembleVolumeBalanceTerms( domain, dofManager, localMatrix, localRhs );
 
   // then assemble the pressure relations between well elements
-  formPressureRelations( domain, dofManager, localMatrix, localRhs );
+  assemblePressureRelations( domain, dofManager, localMatrix, localRhs );
 }
 
 void WellSolverBase::updateStateAll( DomainPartition & domain )

@@ -423,9 +423,25 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_PressureRel )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->formPressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->getWellSolver()->assemblePressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
+
+TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Accum )
+{
+  real64 const perturb = std::sqrt( eps );
+  real64 const tol = 1e-1; // 10% error margin
+
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+  testNumericalJacobian( *solver, domain, perturb, tol,
+                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs )
+  {
+    solver->getWellSolver()->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );
+  } );
+}
+
 
 int main( int argc, char * * argv )
 {

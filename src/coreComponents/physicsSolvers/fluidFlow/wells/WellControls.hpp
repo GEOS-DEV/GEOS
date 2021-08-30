@@ -165,11 +165,10 @@ public:
 
 
   /**
-   * @brief Get the target Bottom Hole Pressure value.
-   * @return a value for the target Bottom Hole Pressure
+   * @brief Get the target bottom hole pressure value.
+   * @return a value for the target bottom hole pressure
    */
-//  const real64 & getTargetBHP() const { return m_targetBHP; }
-  real64 getTargetBHP( real64 const & currentTime )const
+  real64 getTargetBHP( real64 const & currentTime ) const
   {
     return m_targetBHPTable->evaluate( &currentTime );
   }
@@ -178,7 +177,7 @@ public:
    * @brief Get the target total rate
    * @return the target total rate
    */
-  real64 getTargetTotalRate( real64 const & currentTime )const
+  real64 getTargetTotalRate( real64 const & currentTime ) const
   {
     return m_targetTotalRateTable->evaluate( &currentTime );
   }
@@ -187,8 +186,7 @@ public:
    * @brief Get the target phase rate
    * @return the target phase rate
    */
-//  const real64 & getTargetPhaseRate() const { return m_targetPhaseRate; }
-  real64 getTargetPhaseRate( real64 const & currentTime )const
+  real64 getTargetPhaseRate( real64 const & currentTime ) const
   {
     return m_targetPhaseRateTable->evaluate( &currentTime );
   }
@@ -294,8 +292,6 @@ public:
 protected:
 
   virtual void postProcessInput() override;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
 

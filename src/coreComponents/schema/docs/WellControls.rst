@@ -18,7 +18,7 @@ targetPhaseName          string                              Name of the target 
 targetPhaseRate          real64                     0        Target phase volumetric rate                                                                                                                        
 targetPhaseRateTableName string                              Name of the phase rate table when the rate is a time dependent function                                                                             
 targetTotalRate          real64                     0        Target total volumetric rate                                                                                                                        
-targetTotalRateTableName string                              Name of the rate table when the rate is a time dependent function                                                                                   
+targetTotalRateTableName string                              Name of the total rate table when the rate is a time dependent function                                                                             
 type                     geosx_WellControls_Type    required | Well type. Valid options:                                                                                                                           
                                                              | * producer                                                                                                                                          
                                                              | * injector                                                                                                                                          

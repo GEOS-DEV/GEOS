@@ -44,7 +44,7 @@
         control="phaseVolRate"
         referenceElevation="12"
         targetBHP="1e6"
-        targetPhaseRateTableName="PhaseRateTable"
+        targetPhaseRateTableName="phaseRateTable"
         targetPhaseName="water"/>
       <WellControls
         name="wellControls2"
@@ -52,7 +52,7 @@
         control="totalVolRate"
         referenceElevation="12"
         targetBHP="1.45e7"
-        targetTotalRate="5e-8"
+        targetTotalRateTableName="totalRateTable"
         injectionStream="{ 0.995, 0.005 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -214,10 +214,15 @@
 
 
   <Functions>
-    <TableFunction name="PhaseRateTable"
+    <TableFunction name="phaseRateTable"
                    inputVarNames="{time}"
-                   coordinates="{0, 5e4}"
-                   values="{1e-7, 2e-7}" 
+                   coordinates="{0, 2.01e4, 5e4}"
+                   values="{1e-7, 2e-7, 2e-7}" 
+                   interpolation = "lower"/>
+    <TableFunction name="totalRateTable"
+                   inputVarNames="{time}"
+                   coordinates="{0, 2.01e4, 5e4}"
+                   values="{5e-8, 0, 0}" 
                    interpolation = "lower"/>
   </Functions>
 
