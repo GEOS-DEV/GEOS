@@ -15,7 +15,7 @@
         newtonTol="1e-8"  
         newtonMaxIter="20"/>
        <LinearSolverParameters 
-         solverType="direct"/> 
+	 directParallel="0"/> 
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM

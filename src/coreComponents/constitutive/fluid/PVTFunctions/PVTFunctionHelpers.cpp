@@ -56,14 +56,10 @@ BlackOilTables::readTable( string const & fileName,
     }
 
     // Add and read a new line entry
-    data.emplace_back( 0 );
     array1d< real64 > newLine = stringutilities::fromStringToArray< real64 >( str );
-    data.back() = newLine;
-
-    // Remove line entry of no data read
-    if( data.back().empty() )
+    if( !newLine.empty() )
     {
-      data.pop_back();
+      data.emplace_back( std::move( newLine ) );
     }
   }
 

@@ -153,6 +153,11 @@ PhaseVolumeFractionKernel::
     if( !phaseExists )
     {
       phaseVolFrac[ip] = 0.;
+      dPhaseVolFrac_dPres[ip] = 0.;
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dPhaseVolFrac_dComp[ip][jc] = 0.;
+      }
       continue;
     }
 

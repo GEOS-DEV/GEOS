@@ -14,14 +14,14 @@
         maxTimeStepCuts="5"
         newtonTol="1e-8"  
         newtonMaxIter="20"/>
-       <LinearSolverParameters 
-         solverType="direct"/> 
+      <LinearSolverParameters 
+        directParallel="0"/> 
     </CompositionalMultiphaseReservoir>
 
-    <CompositionalMultiphaseFVM
+    <CompositionalMultiphaseHybridFVM
       name="compositionalMultiphaseFlow"
       logLevel="1"
-      discretization="fluidTPFA"
+      discretization="fluidHM"
       targetRegions="{ region }"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
@@ -138,11 +138,10 @@
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+      <HybridMimeticDiscretization
+        name="fluidHM"
+        innerProductType="TPFA"
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 

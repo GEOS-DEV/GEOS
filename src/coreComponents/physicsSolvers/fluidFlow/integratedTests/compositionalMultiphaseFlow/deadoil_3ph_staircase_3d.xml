@@ -12,11 +12,11 @@
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
+      maxCompFractionChange="0.3"
       temperature="300">
       <NonlinearSolverParameters
         newtonTol="1.0e-10"
-        newtonMaxIter="15"
-        lineSearchMaxCuts="2"/>
+        newtonMaxIter="15"/>
       <LinearSolverParameters
         directParallel="0"/>
     </CompositionalMultiphaseFVM>
