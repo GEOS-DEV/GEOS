@@ -155,18 +155,32 @@ Element: CompressibleSinglePhaseFluid
 .. include:: ../../coreComponents/schema/docs/CompressibleSinglePhaseFluid.rst
 
 
-.. _XML_CompressibleSolidPressurePorosityCarmanKozenyPermeability:
+.. _XML_CompressibleSolidCarmanKozenyPermeability:
 
-Element: CompressibleSolidPressurePorosityCarmanKozenyPermeability
-==================================================================
-.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityCarmanKozenyPermeability.rst
+Element: CompressibleSolidCarmanKozenyPermeability
+==================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidCarmanKozenyPermeability.rst
 
 
-.. _XML_CompressibleSolidPressurePorosityConstantPermeability:
+.. _XML_CompressibleSolidConstantPermeability:
 
-Element: CompressibleSolidPressurePorosityConstantPermeability
-==============================================================
-.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityConstantPermeability.rst
+Element: CompressibleSolidConstantPermeability
+==============================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability.rst
+
+
+.. _XML_CompressibleSolidConstantPlusParallelPlatesPermeability:
+
+Element: CompressibleSolidConstantPlusParallelPlatesPermeability
+================================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPlusParallelPlatesPermeability.rst
+
+
+.. _XML_CompressibleSolidParallelPlatesPermeability:
+
+Element: CompressibleSolidParallelPlatesPermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability.rst
 
 
 .. _XML_ConstantPermeability:
@@ -174,6 +188,13 @@ Element: CompressibleSolidPressurePorosityConstantPermeability
 Element: ConstantPermeability
 =============================
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability.rst
+
+
+.. _XML_ConstantPlusParallelPlatesPermeability:
+
+Element: ConstantPlusParallelPlatesPermeability
+===============================================
+.. include:: ../../coreComponents/schema/docs/ConstantPlusParallelPlatesPermeability.rst
 
 
 .. _XML_Constitutive:
@@ -552,41 +573,6 @@ Element: PhaseFieldDamageFEM
 Element: PhaseFieldFracture
 ===========================
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
-
-
-.. _XML_PoreVolumeCompressibleSolid:
-
-Element: PoreVolumeCompressibleSolid
-====================================
-.. include:: ../../coreComponents/schema/docs/PoreVolumeCompressibleSolid.rst
-
-
-.. _XML_PoroDruckerPrager:
-
-Element: PoroDruckerPrager
-==========================
-.. include:: ../../coreComponents/schema/docs/PoroDruckerPrager.rst
-
-
-.. _XML_PoroElasticIsotropic:
-
-Element: PoroElasticIsotropic
-=============================
-.. include:: ../../coreComponents/schema/docs/PoroElasticIsotropic.rst
-
-
-.. _XML_PoroElasticTransverseIsotropic:
-
-Element: PoroElasticTransverseIsotropic
-=======================================
-.. include:: ../../coreComponents/schema/docs/PoroElasticTransverseIsotropic.rst
-
-
-.. _XML_PoroExtendedDruckerPrager:
-
-Element: PoroExtendedDruckerPrager
-==================================
-.. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager.rst
 
 
 .. _XML_PorousDruckerPrager:
@@ -1048,18 +1034,32 @@ Datastructure: CompressibleSinglePhaseFluid
 .. include:: ../../coreComponents/schema/docs/CompressibleSinglePhaseFluid_other.rst
 
 
-.. _DATASTRUCTURE_CompressibleSolidPressurePorosityCarmanKozenyPermeability:
+.. _DATASTRUCTURE_CompressibleSolidCarmanKozenyPermeability:
 
-Datastructure: CompressibleSolidPressurePorosityCarmanKozenyPermeability
-========================================================================
-.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityCarmanKozenyPermeability_other.rst
+Datastructure: CompressibleSolidCarmanKozenyPermeability
+========================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidCarmanKozenyPermeability_other.rst
 
 
-.. _DATASTRUCTURE_CompressibleSolidPressurePorosityConstantPermeability:
+.. _DATASTRUCTURE_CompressibleSolidConstantPermeability:
 
-Datastructure: CompressibleSolidPressurePorosityConstantPermeability
-====================================================================
-.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityConstantPermeability_other.rst
+Datastructure: CompressibleSolidConstantPermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_CompressibleSolidConstantPlusParallelPlatesPermeability:
+
+Datastructure: CompressibleSolidConstantPlusParallelPlatesPermeability
+======================================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPlusParallelPlatesPermeability_other.rst
+
+
+.. _DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability:
+
+Datastructure: CompressibleSolidParallelPlatesPermeability
+==========================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ConstantPermeability:
@@ -1067,6 +1067,13 @@ Datastructure: CompressibleSolidPressurePorosityConstantPermeability
 Datastructure: ConstantPermeability
 ===================================
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ConstantPlusParallelPlatesPermeability:
+
+Datastructure: ConstantPlusParallelPlatesPermeability
+=====================================================
+.. include:: ../../coreComponents/schema/docs/ConstantPlusParallelPlatesPermeability_other.rst
 
 
 .. _DATASTRUCTURE_Constitutive:
@@ -1473,41 +1480,6 @@ Datastructure: PhaseFieldDamageFEM
 Datastructure: PhaseFieldFracture
 =================================
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
-
-
-.. _DATASTRUCTURE_PoreVolumeCompressibleSolid:
-
-Datastructure: PoreVolumeCompressibleSolid
-==========================================
-.. include:: ../../coreComponents/schema/docs/PoreVolumeCompressibleSolid_other.rst
-
-
-.. _DATASTRUCTURE_PoroDruckerPrager:
-
-Datastructure: PoroDruckerPrager
-================================
-.. include:: ../../coreComponents/schema/docs/PoroDruckerPrager_other.rst
-
-
-.. _DATASTRUCTURE_PoroElasticIsotropic:
-
-Datastructure: PoroElasticIsotropic
-===================================
-.. include:: ../../coreComponents/schema/docs/PoroElasticIsotropic_other.rst
-
-
-.. _DATASTRUCTURE_PoroElasticTransverseIsotropic:
-
-Datastructure: PoroElasticTransverseIsotropic
-=============================================
-.. include:: ../../coreComponents/schema/docs/PoroElasticTransverseIsotropic_other.rst
-
-
-.. _DATASTRUCTURE_PoroExtendedDruckerPrager:
-
-Datastructure: PoroExtendedDruckerPrager
-========================================
-.. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager_other.rst
 
 
 .. _DATASTRUCTURE_PorousDruckerPrager:

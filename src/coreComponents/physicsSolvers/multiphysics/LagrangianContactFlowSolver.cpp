@@ -51,13 +51,12 @@ using namespace interpolation;
 
 LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & name,
                                                           Group * const parent ):
-  SolverBase( name, parent ),
+  SinglePhasePoromechanicsSolver( name, parent ),
   m_contactSolverName(),
   m_flowSolverName(),
   m_contactSolver( nullptr ),
   m_flowSolver( nullptr ),
-  m_stabilizationName( "" ),
-  m_defaultConductivity( -1.0 )
+  m_stabilizationName( "" )
 {
   registerWrapper( viewKeyStruct::contactSolverNameString(), &m_contactSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -70,10 +69,6 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
   registerWrapper( viewKeyStruct::stabilizationNameString(), &m_stabilizationName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact with flow solver" );
-
-  registerWrapper( viewKeyStruct::defaultConductivityString(), &m_defaultConductivity ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Value of the default conductivity C_{f,0} for the fracture" );
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
@@ -91,7 +86,7 @@ void LagrangianContactFlowSolver::registerDataOnMesh( Group & )
 
 void LagrangianContactFlowSolver::initializePreSubGroups()
 {
-  SolverBase::initializePreSubGroups();
+  SinglePhasePoromechanicsSolver::initializePreSubGroups();
 }
 
 void LagrangianContactFlowSolver::implicitStepSetup( real64 const & time_n,
@@ -165,6 +160,8 @@ void LagrangianContactFlowSolver::setupSystem( DomainPartition & domain,
   localRhs.setName( this->getName() + "/localRhs" );
   localSolution.setName( this->getName() + "/localSolution" );
 
+  setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
+
   if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
     createPreconditioner( domain );
@@ -182,9 +179,9 @@ void LagrangianContactFlowSolver::implicitStepComplete( real64 const & time_n,
 void LagrangianContactFlowSolver::postProcessInput()
 {
   m_contactSolver = &this->getParent().getGroup< LagrangianContactSolver >( m_contactSolverName );
-  m_flowSolver = &this->getParent().getGroup< FlowSolverBase >( m_flowSolverName );
+  m_flowSolver = &this->getParent().getGroup< SinglePhaseBase >( m_flowSolverName );
 
-  SolverBase::postProcessInput();
+  SinglePhasePoromechanicsSolver::postProcessInput();
 }
 
 void LagrangianContactFlowSolver::initializePostInitialConditionsPreSubGroups()
@@ -207,21 +204,6 @@ real64 LagrangianContactFlowSolver::solverStep( real64 const & time_n,
                                                 int const cycleNumber,
                                                 DomainPartition & domain )
 {
-  {
-    // FIXME: to put somewhere else ...
-    MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
-    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-    {
-      if( subRegion.hasWrapper( m_pressureKey ) )
-      {
-        arrayView1d< real64 > const & conductivity0 =
-          subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::conductivity0String() );
-        conductivity0.setValues< parallelHostPolicy >( m_defaultConductivity );
-      }
-    } );
-  }
-
   real64 dtReturn = dt;
 
   implicitStepSetup( time_n,
@@ -549,7 +531,8 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
     if( !isNewtonConverged )
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
-      stepDt *= dtCutFactor;
+      if (stepDt >= 0.25)
+        stepDt *= dtCutFactor;
       GEOSX_LOG_LEVEL_RANK_0 ( 1, "New dt = " <<  stepDt );
     }
     if( isActiveSetConverged )
@@ -574,7 +557,7 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
 
   if( !isActiveSetConverged )
   {
-    GEOSX_ERROR( "Active set did not reached a solution. Terminating..." );
+    //GEOSX_ERROR( "Active set did not reached a solution. Terminating..." );
   }
   else
   {
@@ -735,16 +718,33 @@ void LagrangianContactFlowSolver::assembleSystem( real64 const time,
                                    localRhs );
 
   updateOpeningForFlow( domain );
-  m_flowSolver->assembleSystem( time,
-                                dt,
-                                domain,
-                                dofManager,
-                                localMatrix,
-                                localRhs );
+
+  //m_flowSolver->assembleSystem( time,
+  //                              dt,
+  //                              domain,
+  //                              dofManager,
+  //                              localMatrix,
+  //                              localRhs );
+
+  m_flowSolver->resetViews( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
+
+  m_flowSolver->assembleAccumulationTerms< parallelDevicePolicy<> >( domain,
+                                                                     dofManager,
+                                                                     localMatrix,
+                                                                     localRhs );
+  m_flowSolver->assembleHydrofracFluxTerms( time,
+                                            dt,
+                                            domain,
+                                            dofManager,
+                                            localMatrix,
+                                            localRhs,
+                                            getDerivativeFluxResidual_dAperture() );
 
   assembleForceResidualDerivativeWrtPressure( domain, dofManager, localMatrix, localRhs );
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, dofManager, localMatrix, localRhs );
   assembleStabilization( domain, dofManager, localMatrix, localRhs );
+
+  getRefDerivativeFluxResidual_dAperture()->zero();
 }
 
 void LagrangianContactFlowSolver::applyBoundaryConditions( real64 const time,
@@ -1073,14 +1073,14 @@ void LagrangianContactFlowSolver::
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
 
-  stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
     for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
-      typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-      typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+      typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+      typename SurfaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+      typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
       FaceElementSubRegion const & elementSubRegion =
         elemManager.getRegion( seri[iconn][0] ).getSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
@@ -1152,7 +1152,7 @@ void LagrangianContactFlowSolver::
 
   arrayView2d< localIndex const > const & elemsToFaces = fractureSubRegion.faceList();
 
-  stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
     forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
     {
@@ -1161,7 +1161,7 @@ void LagrangianContactFlowSolver::
       // A fracture connector has to be an edge shared by two faces
       if( numFluxElems == 2 )
       {
-        typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+        typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
         // First index: face element. Second index: node
         for( localIndex kf = 0; kf < 2; ++kf )
@@ -1309,7 +1309,7 @@ void LagrangianContactFlowSolver::
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   CRSMatrixView< real64 const, localIndex const > const &
-  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture().toViewConst();
+  dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
 
   string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
   string const & presDofKey = dofManager.getKey( m_pressureKey );
@@ -1510,9 +1510,9 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
 
   arrayView1d< globalIndex const > const & presDofNumber = fractureSubRegion.getReference< globalIndex_array >( presDofKey );
 
-  stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
-    typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+    typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
     forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
     {
@@ -1819,6 +1819,65 @@ void LagrangianContactFlowSolver::setNextDt( real64 const & currentDt,
                                              real64 & nextDt )
 {
   nextDt = currentDt;
+}
+
+
+void LagrangianContactFlowSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
+                                                              DofManager const & dofManager,
+                                                              CRSMatrix< real64, globalIndex > & localMatrix )
+{
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  std::unique_ptr< CRSMatrix< real64, localIndex > > &
+  derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
+
+  {
+    localIndex numRows = 0;
+    this->template forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const,
+                                                                           auto const & elementSubRegion )
+    {
+      numRows += elementSubRegion.size();
+    } );
+
+    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
+    derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
+
+    derivativeFluxResidual_dAperture->reserveNonZeros( localMatrix.numNonZeros() );
+    localIndex maxRowSize = -1;
+    for( localIndex row = 0; row < localMatrix.numRows(); ++row )
+    {
+      localIndex const rowSize = localMatrix.numNonZeros( row );
+      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
+    }
+    // TODO This is way too much. The With the full system rowSize is not a good estimate for this.
+    for( localIndex row = 0; row < numRows; ++row )
+    {
+      derivativeFluxResidual_dAperture->reserveNonZeros( row, maxRowSize );
+    }
+  }
+
+  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
+
+  fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+  {
+    for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+    {
+      localIndex const numFluxElems = stencil.stencilSize( iconn );
+      typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+      for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+      {
+        for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
+        {
+          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
+        }
+      }
+    }
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactFlowSolver, string const &, Group * const )

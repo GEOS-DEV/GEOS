@@ -213,9 +213,6 @@ public:
 
     /// @return Mass creation string.
     constexpr static char const * creationMassString() { return "creationMass"; }
-
-    /// Embedded surface element default conductivity string.
-    constexpr static char const * elementDefaultConductivityString() { return "elementDefaultConductivity"; };
   };
 
   /// Map between the surface elements and the cells
@@ -237,9 +234,6 @@ protected:
 
   /// Member level field for the element center
   array1d< real64 > m_elementArea;
-
-  /// Member level field for the edefault conductivity
-  array1d< real64 > m_elementDefaultConductivity;
 
 };
 

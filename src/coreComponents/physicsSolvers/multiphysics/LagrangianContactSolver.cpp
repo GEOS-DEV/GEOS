@@ -339,7 +339,6 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-
         if( ghostRank[kfe] < 0 )
         {
           real64 const area = faceArea[kfe];
@@ -355,11 +354,9 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
           for( localIndex i = 0; i < 2; ++i )
           {
             localIndex const faceIndex = elemsToFaces[kfe][i];
-            localIndex const ke = faceToElemIndex[faceIndex][0] >= 0 ? 0 : 1;
-
-            localIndex const er = faceToElemRegion[faceIndex][ke];
-            localIndex const esr = faceToElemSubRegion[faceIndex][ke];
-            localIndex const ei = faceToElemIndex[faceIndex][ke];
+            localIndex const er = faceToElemRegion[faceIndex][0];
+            localIndex const esr = faceToElemSubRegion[faceIndex][0];
+            localIndex const ei = faceToElemIndex[faceIndex][0];
 
             real64 const volume = elemVolume[er][esr][ei];
 
@@ -1039,6 +1036,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
   real64 const momentumR2 = localSum0.get();
 
   real64 contactR2 = 0.0;
+
   forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const, FaceElementSubRegion const & subRegion )
   {
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
@@ -1549,8 +1547,7 @@ void LagrangianContactSolver::
                   }
                 }
 
-                // check to avoid very (small) negative values for limitTau caused by positive traction[kfe][0]
-                real64 const limitTau = ( traction[kfe][0] < 0.0 ) ? contactRelation.limitTangentialTractionNorm( traction[kfe][0] ) : 0.0;
+                real64 const limitTau = contactRelation.limitTangentialTractionNorm( traction[kfe][0] );
                 real64 sliding[ 2 ] = { localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] };
                 real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
 
@@ -1566,8 +1563,8 @@ void LagrangianContactSolver::
 
                   // A symmetric 2x2 matrix.
                   real64 dUdgT[ 3 ];
-                  dUdgT[ 0 ] = sliding[ 1 ] * sliding[ 1 ] * limitTau / std::pow( slidingNorm, 3 );
-                  dUdgT[ 1 ] = sliding[ 0 ] * sliding[ 0 ] * limitTau / std::pow( slidingNorm, 3 );
+                  dUdgT[ 0 ] = (slidingNorm * slidingNorm - sliding[ 0 ] * sliding[ 0 ]) * limitTau / std::pow( slidingNorm, 3 );
+                  dUdgT[ 1 ] = (slidingNorm * slidingNorm - sliding[ 1 ] * sliding[ 1 ]) * limitTau / std::pow( slidingNorm, 3 );
                   dUdgT[ 2 ] = -sliding[ 0 ] * sliding[ 1 ] * limitTau / std::pow( slidingNorm, 3 );
 
                   for( localIndex kf = 0; kf < 2; ++kf )
@@ -1746,9 +1743,9 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
 
   arrayView1d< globalIndex const > const & tracDofNumber = fractureSubRegion.getReference< globalIndex_array >( tracDofKey );
 
-  stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
-    typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+    typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
     forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
     {

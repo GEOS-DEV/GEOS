@@ -22,7 +22,8 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/multiphysics/LagrangianContactSolver.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geosx
 {
@@ -30,7 +31,7 @@ namespace geosx
 class LagrangianContactSolver;
 class FlowSolverBase;
 
-class LagrangianContactFlowSolver : public SolverBase
+class LagrangianContactFlowSolver : public SinglePhasePoromechanicsSolver
 {
 public:
   LagrangianContactFlowSolver( const std::string & name,
@@ -163,13 +164,27 @@ public:
                             integer const cycleNumber,
                             DomainPartition & domain );
 
+  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
+  {
+    return m_derivativeFluxResidual_dAperture;
+  }
+
+  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
+  {
+    return m_derivativeFluxResidual_dAperture->toViewConstSizes();
+  }
+
+  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
+  {
+    return m_derivativeFluxResidual_dAperture->toViewConst();
+  }
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * contactSolverNameString() { return "contactSolverName"; }
     constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
     constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
 
-    constexpr static char const * defaultConductivityString() { return "defaultConductivity"; }
   } LagrangianContactFlowSolverViewKeys;
 
 protected:
@@ -199,17 +214,20 @@ protected:
                                       DofManager const & dofManager,
                                       SparsityPatternView< globalIndex > const & pattern ) const;
 
+  void
+  setUpDflux_dApertureMatrix( DomainPartition & domain,
+                              DofManager const & dofManager,
+                              CRSMatrix< real64, globalIndex > & localMatrix );
+
 private:
 
   string m_contactSolverName;
   string m_flowSolverName;
 
   LagrangianContactSolver * m_contactSolver;
-  FlowSolverBase * m_flowSolver;
+  SinglePhaseBase * m_flowSolver;
 
   string m_stabilizationName;
-
-  real64 m_defaultConductivity;
 
   integer m_activeSetIter = 0;
 
@@ -224,6 +242,9 @@ private:
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
   void createPreconditioner( DomainPartition const & domain );
+
+  // it is only important for this case.
+  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
 };
 

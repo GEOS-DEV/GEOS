@@ -81,6 +81,8 @@ public:
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
+  virtual void updateState( DomainPartition & domain ) override final;
+
   virtual void
     resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
 

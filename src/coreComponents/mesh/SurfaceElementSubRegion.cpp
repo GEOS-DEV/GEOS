@@ -72,11 +72,6 @@ SurfaceElementSubRegion::SurfaceElementSubRegion( string const & name,
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
     setDescription( "The amount of remaining mass that was introduced when the SurfaceElement was created." );
 
-  registerWrapper< real64_array >( viewKeyStruct::elementDefaultConductivityString() ).
-    setApplyDefaultValue( -1.0 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
-    setDescription( "Scalar value of default conductivity C_{f,0} for a fracturing face." );
-
   // TODO there has to be a cleaner way than this.
   m_surfaceElementsToCells.setElementRegionManager( dynamicCast< ElementRegionManager & >( getParent().getParent().getParent().getParent() ) );
 

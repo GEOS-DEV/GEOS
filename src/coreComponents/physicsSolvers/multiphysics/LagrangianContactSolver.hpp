@@ -281,7 +281,7 @@ public:
                                        bool printAll = false ) const;
 
   bool isElementInOpenState( FaceElementSubRegion const & subRegion,
-                             localIndex const kfe ) const;
+                                                 localIndex const kfe ) const;
 
   void computeRotationMatrices( DomainPartition & domain ) const;
 
