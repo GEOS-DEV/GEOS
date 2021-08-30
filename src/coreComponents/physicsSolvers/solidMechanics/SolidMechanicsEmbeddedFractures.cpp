@@ -18,8 +18,8 @@
 
 #include "SolidMechanicsEmbeddedFractures.hpp"
 
-#include "SolidMechanicsEFEMKernels.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
@@ -30,7 +30,8 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsEFEMKernels.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsEFEMStaticCondensationKernels.hpp"
 
 namespace geosx
 {
@@ -44,7 +45,7 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
   m_solidSolverName(),
   m_fractureRegionName(),
   m_solidSolver( nullptr ),
-  m_useStaticConensation()
+  m_useStaticCondensation()
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -59,9 +60,9 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
   registerWrapper( viewKeyStruct::useStaticCondensationString(), &m_useStaticCondensation ).
-      setInputFlag( InputFlags::OPTIONAL ).
-      setApplyDefaultValue(0).
-      setDescription( "Defines whether to use static condensation or not." );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Defines whether to use static condensation or not." );
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
@@ -246,7 +247,8 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
     localMatrix.setName( this->getName() + "/localMatrix" );
     localRhs.setName( this->getName() + "/localRhs" );
     localSolution.setName( this->getName() + "/localSolution" );
-  }else
+  }
+  else
   {
     m_solidSolver->setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
   }
@@ -289,13 +291,13 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
     string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
     arrayView1d< globalIndex const > const jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
-    SolidMechanicsEFEMKernels::QuasiStaticFactory kernelFactory( subRegion,
-                                                                 dispDofNumber,
-                                                                 jumpDofNumber,
-                                                                 dofManager.rankOffset(),
-                                                                 localMatrix,
-                                                                 localRhs,
-                                                                 gravityVectorData );
+    SolidMechanicsEFEMKernels::EFEMFactory kernelFactory( subRegion,
+                                                          dispDofNumber,
+                                                          jumpDofNumber,
+                                                          dofManager.rankOffset(),
+                                                          localMatrix,
+                                                          localRhs,
+                                                          gravityVectorData );
 
     real64 maxTraction = finiteElement::
                            regionBasedKernelApplication
@@ -306,15 +308,17 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                    m_solidSolver->getDiscretizationName(),
                                                    m_solidSolver->solidMaterialNames(),
                                                    kernelFactory );
+
+    GEOSX_UNUSED_VAR( maxTraction );
   }
   else
   {
-    SolidMechanicsEFEMKernels::QuasiStaticFactory kernelFactory( subRegion,
-                                                                 dispDofNumber,
-                                                                 dofManager.rankOffset(),
-                                                                 localMatrix,
-                                                                 localRhs,
-                                                                 gravityVectorData );
+    SolidMechanicsEFEMKernels::EFEMStaticCondensationFactory kernelFactory( subRegion,
+                                                                            dispDofNumber,
+                                                                            dofManager.rankOffset(),
+                                                                            localMatrix,
+                                                                            localRhs,
+                                                                            gravityVectorData );
 
     real64 maxTraction = finiteElement::
                            regionBasedKernelApplication
@@ -325,9 +329,9 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                    m_solidSolver->getDiscretizationName(),
                                                    m_solidSolver->solidMaterialNames(),
                                                    kernelFactory );
-  }
 
-  GEOSX_UNUSED_VAR( maxTraction );
+    GEOSX_UNUSED_VAR( maxTraction );
+  }
 }
 
 void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
@@ -534,7 +538,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
   // Matrix residual
   real64 const solidResidualNorm = m_solidSolver->calculateResidualNorm( domain, dofManager, localRhs );
 
-  if(!m_useStaticCondensation)
+  if( !m_useStaticCondensation )
   {
     // Fracture residual
     MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
@@ -550,8 +554,8 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
     real64 globalResidualNorm[2] = {0, 0};
 
     forTargetSubRegions< EmbeddedSurfaceSubRegion >( mesh, [&]( localIndex const targetIndex,
-        EmbeddedSurfaceSubRegion const & subRegion )
-        {
+                                                                EmbeddedSurfaceSubRegion const & subRegion )
+    {
       GEOSX_UNUSED_VAR( targetIndex );
 
       arrayView1d< globalIndex const > const &
@@ -597,7 +601,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
       }
 
       MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
-        } );
+    } );
 
     real64 const fractureResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
     // time-step when maxForce = 0;
@@ -612,7 +616,8 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
     }
 
     return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
-  }else
+  }
+  else
   {
     return solidResidualNorm;
   }
@@ -630,11 +635,11 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                       scalingFactor,
                                       domain );
 
-  if ( !m_useStaticCondensation )
+  if( !m_useStaticCondensation )
   {
-  dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::deltaDispJumpString(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::deltaDispJumpString(), -scalingFactor );
 
-  dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::dispJumpString(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::dispJumpString(), -scalingFactor );
 
 
   }
