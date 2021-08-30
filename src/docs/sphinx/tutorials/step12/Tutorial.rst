@@ -207,7 +207,7 @@ The next step is to specify fields, including:
   - The boundary conditions (traction and fluid loading at the wellbore wall and constraints of the outer boundaries have to be set)
 
 In this tutorial, we need to specify anisotropic horizontal stress (:math:`\sigma_h` = -9.0 MPa and :math:`\sigma_H` = -11.0 MPa) and vertical stress (:math:`\sigma_v` = -12.0 MPa). 
-A compressive traction (``InnerMechanicalLoad``) :math:`P_w` = -10 MPa and fluid loading (``InnerFluidLoad``) :math:`P_wf` = 10 MPa are applied at the wellbore wall ``rneg``.
+A compressive traction (``InnerMechanicalLoad``) :math:`P_w` = -10 MPa and fluid loading (``InnerFluidLoad``) :math:`P_f` = 10 MPa are applied at the wellbore wall ``rneg``.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
@@ -268,7 +268,7 @@ The parameters used in the simulation are summarized in the following table, whi
 +------------------+-------------------------+------------------+--------------------+
 | :math:`P_w`      | Traction at Well        | [MPa]            | -10.0              |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`P_wf`     | Fluid Pressure at Well  | [MPa]            | 10.0               |
+| :math:`P_f`      | Fluid Pressure at Well  | [MPa]            | 10.0               |
 +------------------+-------------------------+------------------+--------------------+
 | :math:`\rho_f`   | Fluid Density           | [kg/m\ :sup:`3`] | 1000.0             |
 +------------------+-------------------------+------------------+--------------------+
@@ -311,7 +311,7 @@ For the above poroelastic example, an analytical solution `(Detournay and Cheng,
 
 
 
-For the same 3D wellbore problem, the poroplastic case is thereafter tested and compared with the poroelastic one. Below figure shows the distribution of :math:`\sigma_yy` in the near wellbore region for both cases. As observed, a relaxation of the tangential stress along the direction of minimum horizontal stress is detected for the poroplastic case, which can be attributed to the plastic response of the rock.
+For the same 3D wellbore problem, the poroplastic case is thereafter tested and compared with the poroelastic one. The figure below shows the distribution of :math:`\sigma_{yy}` in the near wellbore region for both cases. As expected, a relaxation of the tangential stress along the direction of minimum horizontal stress is detected, which can be attributed to the plastic response of the rock.
 
 
 .. _problemVerificationFig3:

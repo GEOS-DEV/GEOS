@@ -115,7 +115,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{ fracPerm }"/>
+        meanPermCoefficient="0.8"/>
     </FiniteVolume>
   </NumericalMethods>
 

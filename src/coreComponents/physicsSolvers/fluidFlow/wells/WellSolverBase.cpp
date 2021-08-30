@@ -156,14 +156,14 @@ void WellSolverBase::assembleSystem( real64 const time,
   assemblePressureRelations( domain, dofManager, localMatrix, localRhs );
 }
 
-void WellSolverBase::updateStateAll( DomainPartition & domain )
+void WellSolverBase::updateState( DomainPartition & domain )
 {
 
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
                                                                WellElementSubRegion & subRegion )
   {
-    updateState( subRegion, targetIndex );
+    updateSubRegionState( subRegion, targetIndex );
   } );
 
 }

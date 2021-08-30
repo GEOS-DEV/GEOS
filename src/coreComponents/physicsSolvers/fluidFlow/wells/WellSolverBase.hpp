@@ -238,13 +238,13 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  virtual void updateStateAll( DomainPartition & domain );
+  virtual void updateState( DomainPartition & domain ) override;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param well the well containing all the primary and dependent fields
    */
-  virtual void updateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
+  virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
