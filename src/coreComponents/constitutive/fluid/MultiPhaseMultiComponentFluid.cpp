@@ -17,10 +17,6 @@
  */
 #include "MultiPhaseMultiComponentFluid.hpp"
 
-#include "common/Path.hpp"
-#include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "constitutive/fluid/PVTFunctions/FlashModelBase.hpp"
-#include "constitutive/fluid/PVTFunctions/PVTFunctionBase.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 
 namespace geosx
@@ -123,12 +119,9 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
   for( string const & filename : m_phasePVTParaFiles )
   {
     std::ifstream is( filename );
-    constexpr std::streamsize buf_size = 256;
-    char buf[buf_size];
-
-    while( is.getline( buf, buf_size ) )
+    string str;
+    while( std::getline( is, str ) )
     {
-      string const str( buf );
       string_array const strs = stringutilities::tokenize( str, " " );
 
       if( strs[0] == "DensityFun" )
@@ -136,12 +129,10 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
         if( strs[1] == P1DENS::catalogName() )
         {
           m_p1Density = std::make_unique< P1DENS >( strs, m_componentNames, m_componentMolarWeight );
-          m_p1DensityWrapper.emplace_back( m_p1Density->createKernelWrapper() );
         }
         else if( strs[1] == P2DENS::catalogName() )
         {
           m_p2Density = std::make_unique< P2DENS >( strs, m_componentNames, m_componentMolarWeight );
-          m_p2DensityWrapper.emplace_back( m_p2Density->createKernelWrapper() );
         }
       }
       else if( strs[0] == "ViscosityFun" )
@@ -149,12 +140,10 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
         if( strs[1] == P1VISC::catalogName() )
         {
           m_p1Viscosity = std::make_unique< P1VISC >( strs, m_componentNames, m_componentMolarWeight );
-          m_p1ViscosityWrapper.emplace_back( m_p1Viscosity->createKernelWrapper() );
         }
         else if( strs[1] == P2VISC::catalogName() )
         {
           m_p2Viscosity = std::make_unique< P2VISC >( strs, m_componentNames, m_componentMolarWeight );
-          m_p2ViscosityWrapper.emplace_back( m_p2Viscosity->createKernelWrapper() );
         }
       }
       else
@@ -173,17 +162,13 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
   // 2) Create the flash model
   {
     std::ifstream is( m_flashModelParaFile );
-    constexpr std::streamsize buf_size = 256;
-    char buf[buf_size];
-
-    while( is.getline( buf, buf_size ) )
+    string str;
+    while( std::getline( is, str ) )
     {
-      string const str( buf );
       string_array const strs = stringutilities::tokenize( str, " " );
       if( strs[0] == "FlashModel" && strs[1] == FLASH::catalogName() )
       {
         m_flash = std::make_unique< FLASH >( strs, m_phaseNames, m_componentNames, m_componentMolarWeight );
-        m_flashWrapper.emplace_back( m_flash->createKernelWrapper() );
       }
       else
       {
@@ -197,6 +182,79 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
                   "CO2BrineFluid model named " << getName() << ": " << FLASH::catalogName() << " not found",
                   InputError );
 }
+
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
+typename MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWrapper
+MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::createKernelWrapper() const
+{
+  return KernelWrapper( m_p1Index,
+                        m_p2Index,
+                        *m_p1Density,
+                        *m_p1Viscosity,
+                        *m_p2Density,
+                        *m_p2Viscosity,
+                        *m_flash,
+                        m_componentMolarWeight.toViewConst(),
+                        m_useMass,
+                        { m_phaseFraction,
+                          m_dPhaseFraction_dPressure,
+                          m_dPhaseFraction_dTemperature,
+                          m_dPhaseFraction_dGlobalCompFraction },
+                        { m_phaseDensity,
+                          m_dPhaseDensity_dPressure,
+                          m_dPhaseDensity_dTemperature,
+                          m_dPhaseDensity_dGlobalCompFraction },
+                        { m_phaseMassDensity,
+                          m_dPhaseMassDensity_dPressure,
+                          m_dPhaseMassDensity_dTemperature,
+                          m_dPhaseMassDensity_dGlobalCompFraction },
+                        { m_phaseViscosity,
+                          m_dPhaseViscosity_dPressure,
+                          m_dPhaseViscosity_dTemperature,
+                          m_dPhaseViscosity_dGlobalCompFraction },
+                        { m_phaseCompFraction,
+                          m_dPhaseCompFraction_dPressure,
+                          m_dPhaseCompFraction_dTemperature,
+                          m_dPhaseCompFraction_dGlobalCompFraction },
+                        { m_totalDensity,
+                          m_dTotalDensity_dPressure,
+                          m_dTotalDensity_dTemperature,
+                          m_dTotalDensity_dGlobalCompFraction } );
+}
+
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
+MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWrapper::
+  KernelWrapper( localIndex const p1Index,
+                 localIndex const p2Index,
+                 P1DENS const & p1DensityWrapper,
+                 P1VISC const & p1ViscosityWrapper,
+                 P2DENS const & p2DensityWrapper,
+                 P2VISC const & p2ViscosityWrapper,
+                 FLASH const & flashWrapper,
+                 arrayView1d< geosx::real64 const > const & componentMolarWeight,
+                 bool useMass,
+                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseFraction,
+                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseDensity,
+                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseMassDensity,
+                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseViscosity,
+                 MultiFluidBase::KernelWrapper::PhaseCompViews const & phaseCompFraction,
+                 MultiFluidBase::KernelWrapper::FluidPropViews const & totalDensity )
+  : MultiFluidBase::KernelWrapper( componentMolarWeight,
+                                   useMass,
+                                   phaseFraction,
+                                   phaseDensity,
+                                   phaseMassDensity,
+                                   phaseViscosity,
+                                   phaseCompFraction,
+                                   totalDensity ),
+  m_p1Index( p1Index ),
+  m_p2Index( p2Index ),
+  m_p1Density( p1DensityWrapper.createKernelWrapper() ),
+  m_p1Viscosity( p1ViscosityWrapper.createKernelWrapper() ),
+  m_p2Density( p2DensityWrapper.createKernelWrapper() ),
+  m_p2Viscosity( p2ViscosityWrapper.createKernelWrapper() ),
+  m_flash( flashWrapper.createKernelWrapper() )
+{}
 
 // explicit instantiation of the model template; unfortunately we can't use CO2BrineFluid alias for this
 template class MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,

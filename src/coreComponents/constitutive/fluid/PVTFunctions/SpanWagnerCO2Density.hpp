@@ -109,7 +109,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper();
+  KernelWrapper createKernelWrapper() const;
 
   static
   void calculateCO2Density( real64 const & tolerance,
@@ -137,8 +137,7 @@ void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
   GEOSX_UNUSED_VAR( phaseComposition );
 
   real64 const input[2] = { pressure, temperature };
-  real64 densityDeriv[2];
-  m_CO2DensityTable.compute( input, value, densityDeriv );
+  value = m_CO2DensityTable.compute( input );
 
   if( !useMass )
   {
@@ -163,11 +162,11 @@ void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
   GEOSX_UNUSED_VAR( phaseComposition,
                     dPhaseComposition_dPressure,
                     dPhaseComposition_dTemperature,
-                    dPhaseComposition_dGlobalCompFraction )
+                    dPhaseComposition_dGlobalCompFraction );
 
   real64 const input[2] = { pressure, temperature };
   real64 densityDeriv[2];
-  m_CO2DensityTable.compute( input, value, densityDeriv );
+  value = m_CO2DensityTable.compute( input, densityDeriv );
   dValue_dPressure = densityDeriv[0];
   dValue_dTemperature = densityDeriv[1];
 

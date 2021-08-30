@@ -89,6 +89,7 @@ void calculateCO2Viscosity( PTTableCoordinates const & tableCoords,
 }
 
 TableFunction const * makeViscosityTable( string_array const & inputParams,
+                                          string const & prefix,
                                           FunctionManager & functionManager )
 {
   PTTableCoordinates tableCoords;
@@ -114,17 +115,16 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, density );
   calculateCO2Viscosity( tableCoords, density, viscosity );
 
-  // TODO: fix name/uniqueness
-  if( functionManager.hasGroup< TableFunction >( "CO2ViscosityTable" ) )
+  string const tableName = prefix + "_CO2ViscosityTable";
+  if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( "CO2ViscosityTable" );
+    return functionManager.getGroupPointer< TableFunction >( tableName );
   }
   else
   {
-    TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2ViscosityTable" ) );
+    TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     viscosityTable->setTableCoordinates( tableCoords.getCoords() );
     viscosityTable->setTableValues( viscosity );
-    viscosityTable->reInitializeFunction();
     viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return viscosityTable;
   }
@@ -139,10 +139,10 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string_array const & inputParams,
                      componentNames,
                      componentMolarWeight )
 {
-  m_CO2ViscosityTable = makeViscosityTable( inputParams, FunctionManager::getInstance() );
+  m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
-FenghourCO2Viscosity::KernelWrapper FenghourCO2Viscosity::createKernelWrapper()
+FenghourCO2Viscosity::KernelWrapper FenghourCO2Viscosity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         *m_CO2ViscosityTable );

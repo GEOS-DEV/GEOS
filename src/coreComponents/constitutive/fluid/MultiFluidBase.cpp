@@ -172,14 +172,14 @@ void MultiFluidBase::postProcessInput()
   integer const numComp = numFluidComponents();
   integer const numPhase = numFluidPhases();
 
-  GEOSX_THROW_IF( numComp == 0 || numComp > MAX_NUM_COMPONENTS,
-                  getName() << ": number of fluid components must be between 1 and " << MAX_NUM_COMPONENTS << ", got " << numComp,
+  GEOSX_THROW_IF( numComp< 1 || numComp > MAX_NUM_COMPONENTS,
+                  getFullName() << ": number of fluid components must be between 1 and " << MAX_NUM_COMPONENTS << ", got " << numComp,
                   InputError );
-  GEOSX_THROW_IF( numPhase == 0 || numPhase > MAX_NUM_PHASES,
-                  getName() << ": number of fluid phases must be between 1 and " << MAX_NUM_PHASES << ", got " << numPhase,
+  GEOSX_THROW_IF( numPhase< 1 || numPhase > MAX_NUM_PHASES,
+                  getFullName() << ": number of fluid phases must be between 1 and " << MAX_NUM_PHASES << ", got " << numPhase,
                   InputError );
   GEOSX_THROW_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
-                         getName() << ": invalid number of entries in " << viewKeyStruct::componentMolarWeightString() << " attribute",
+                         getFullName() << ": invalid number of entries in " << viewKeyStruct::componentMolarWeightString() << " attribute",
                          InputError );
 
   // call to correctly set member array tertiary sizes on the 'main' material object

@@ -49,10 +49,6 @@ public:
 
   BlackOilFluidBase( string const & name, Group * const parent );
 
-  virtual ~BlackOilFluidBase() override = default;
-
-public:
-
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
     static constexpr char const * surfacePhaseMassDensitiesString() { return "surfaceDensities"; }
@@ -63,10 +59,71 @@ public:
     static constexpr char const * waterFormationVolumeFactorString() { return "waterFormationVolumeFactor"; }
     static constexpr char const * waterCompressibilityString() { return "waterCompressibility"; }
     static constexpr char const * waterViscosityString() { return "waterViscosity"; }
-
   };
 
 protected:
+
+  struct WaterParams
+  {
+    real64 referencePressure = 0.0;  ///< Water reference pressure
+    real64 formationVolFactor = 0.0; ///< Water formation volume factor
+    real64 compressibility = 0.0;    ///< Water compressibility
+    real64 viscosity = 0.0;          ///< Water viscosity
+  };
+
+  class KernelWrapper : public MultiFluidBase::KernelWrapper
+  {
+protected:
+
+    KernelWrapper( arrayView1d< integer const > const & phaseTypes,
+                   arrayView1d< integer const > const & phaseOrder,
+                   arrayView1d< integer const > const & hydrocarbonPhaseOrder,
+                   arrayView1d< real64 const > const & surfacePhaseMassDensity,
+                   arrayView1d< TableFunction::KernelWrapper const > const & formationVolFactorTables,
+                   arrayView1d< TableFunction::KernelWrapper const > const & viscosityTables,
+                   WaterParams const waterParams,
+                   arrayView1d< real64 const > const & componentMolarWeight,
+                   bool useMass,
+                   PhasePropViews const & phaseFraction,
+                   PhasePropViews const & phaseDensity,
+                   PhasePropViews const & phaseMassDensity,
+                   PhasePropViews const & phaseViscosity,
+                   PhaseCompViews const & phaseCompFraction,
+                   FluidPropViews const & totalDensity )
+      : MultiFluidBase::KernelWrapper( componentMolarWeight,
+                                       useMass,
+                                       phaseFraction,
+                                       phaseDensity,
+                                       phaseMassDensity,
+                                       phaseViscosity,
+                                       phaseCompFraction,
+                                       totalDensity ),
+      m_phaseTypes( phaseTypes ),
+      m_phaseOrder( phaseOrder ),
+      m_hydrocarbonPhaseOrder( hydrocarbonPhaseOrder ),
+      m_surfacePhaseMassDensity( surfacePhaseMassDensity ),
+      m_formationVolFactorTables( formationVolFactorTables ),
+      m_viscosityTables( viscosityTables ),
+      m_waterParams( waterParams )
+    {}
+
+    /// Phase ordering info
+    arrayView1d< integer const > m_phaseTypes;
+    arrayView1d< integer const > m_phaseOrder;
+    arrayView1d< integer const > m_hydrocarbonPhaseOrder;
+
+    /// Surface mass density for each phase
+    arrayView1d< real64 const > m_surfacePhaseMassDensity;
+
+    /// Table kernel wrappers to interpolate in the oil and gas (B vs p) tables
+    arrayView1d< TableFunction::KernelWrapper const > m_formationVolFactorTables;
+
+    /// Table kernel wrappers to interpolate in the oil and gas (\mu vs p) tables
+    arrayView1d< TableFunction::KernelWrapper const > m_viscosityTables;
+
+    /// Water parameters
+    WaterParams m_waterParams;
+  };
 
   virtual void postProcessInput() override;
 
@@ -98,7 +155,7 @@ protected:
    * @param[in] ip the index of the phase
    * @param[in] tableValues the values in the oil or gas table
    */
-  void fillHydrocarbonData( localIndex const ip,
+  void fillHydrocarbonData( integer const ip,
                             array1d< array1d< real64 > > const & tableValues );
 
   /**
@@ -107,6 +164,10 @@ protected:
    */
   void validateTable( TableFunction const & table ) const;
 
+  /**
+   * @brief Check water parameters for correctness.
+   */
+  void validateWaterParams() const;
 
   // Input data
 
@@ -124,17 +185,8 @@ protected:
   /// Surface densities
   array1d< real64 > m_surfacePhaseMassDensity;
 
-  /// Water reference pressure
-  real64 m_waterRefPressure;
-
-  /// Water formation volume factor
-  real64 m_waterFormationVolFactor;
-
-  /// Water compressibility
-  real64 m_waterCompressibility;
-
-  /// Water viscosity
-  real64 m_waterViscosity;
+  /// Water parameters
+  WaterParams m_waterParams;
 
   /// Data after processing of input
 

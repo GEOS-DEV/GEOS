@@ -66,7 +66,7 @@ void BrineViscosity::makeCoefficients( string_array const & inputPara )
   m_coef1 =  d * (1.0 - exp( k * m )) * waterVisc;
 }
 
-BrineViscosity::KernelWrapper BrineViscosity::createKernelWrapper()
+BrineViscosity::KernelWrapper BrineViscosity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         m_coef0,

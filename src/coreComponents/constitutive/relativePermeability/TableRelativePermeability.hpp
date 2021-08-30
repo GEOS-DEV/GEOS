@@ -28,70 +28,50 @@ namespace geosx
 namespace constitutive
 {
 
-class TableRelativePermeabilityUpdate final : public RelativePermeabilityBaseUpdate
-{
-public:
-
-  TableRelativePermeabilityUpdate( arrayView1d< TableFunction::KernelWrapper const > const & waterOilRelPermTableKernelWrappers,
-                                   arrayView1d< TableFunction::KernelWrapper const > const & gasOilRelPermTableKernelWrappers,
-                                   arrayView1d< real64 const > const & phaseMinVolumeFraction,
-                                   arrayView1d< integer const > const & phaseTypes,
-                                   arrayView1d< integer const > const & phaseOrder,
-                                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
-    : RelativePermeabilityBaseUpdate( phaseTypes,
-                                      phaseOrder,
-                                      phaseRelPerm,
-                                      dPhaseRelPerm_dPhaseVolFrac ),
-    m_waterOilRelPermTableKernelWrappers( waterOilRelPermTableKernelWrappers ),
-    m_gasOilRelPermTableKernelWrappers( gasOilRelPermTableKernelWrappers ),
-    m_phaseMinVolumeFraction( phaseMinVolumeFraction )
-  {}
-
-  GEOSX_HOST_DEVICE
-  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                        arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                        arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
-
-  GEOSX_HOST_DEVICE
-  virtual void update( localIndex const k,
-                       localIndex const q,
-                       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
-  {
-    compute( phaseVolFraction,
-             m_phaseRelPerm[k][q],
-             m_dPhaseRelPerm_dPhaseVolFrac[k][q] );
-  }
-
-private:
-
-  /// Kernel wrappers for the water-oil relative permeabilities
-  arrayView1d< TableFunction::KernelWrapper const > m_waterOilRelPermTableKernelWrappers;
-
-  /// Kernel wrappers for the gas-oil relative permeabilities
-  arrayView1d< TableFunction::KernelWrapper const > m_gasOilRelPermTableKernelWrappers;
-
-  /// Minimum volume fraction for each phase (deduced from the table)
-  arrayView1d< real64 const > m_phaseMinVolumeFraction;
-
-};
-
 class TableRelativePermeability : public RelativePermeabilityBase
 {
 public:
 
   TableRelativePermeability( std::string const & name, dataRepository::Group * const parent );
 
-  virtual ~TableRelativePermeability() override;
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name, Group * const parent ) const override;
-
   static std::string catalogName() { return "TableRelativePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = TableRelativePermeabilityUpdate;
+  class KernelWrapper final : public RelativePermeabilityBaseUpdate
+  {
+public:
+
+    KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & waterOilRelPermTableKernelWrappers,
+                   arrayView1d< TableFunction::KernelWrapper const > const & gasOilRelPermTableKernelWrappers,
+                   arrayView1d< real64 const > const & phaseMinVolumeFraction,
+                   arrayView1d< integer const > const & phaseTypes,
+                   arrayView1d< integer const > const & phaseOrder,
+                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac );
+
+    GEOSX_HOST_DEVICE
+    virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                          arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                          arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
+
+    GEOSX_HOST_DEVICE
+    virtual void update( localIndex const k,
+                         localIndex const q,
+                         arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override;
+
+private:
+
+    /// Kernel wrappers for the water-oil relative permeabilities
+    arrayView1d< TableFunction::KernelWrapper const > m_waterOilRelPermTableKernelWrappers;
+
+    /// Kernel wrappers for the gas-oil relative permeabilities
+    arrayView1d< TableFunction::KernelWrapper const > m_gasOilRelPermTableKernelWrappers;
+
+    /// Minimum volume fraction for each phase (deduced from the table)
+    arrayView1d< real64 const > m_phaseMinVolumeFraction;
+  };
 
   /**
    * @brief Create an update kernel wrapper.
@@ -104,13 +84,9 @@ public:
     static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
     static constexpr char const * waterOilRelPermTableNamesString() { return "waterOilRelPermTableNames"; }
     static constexpr char const * gasOilRelPermTableNamesString() { return "gasOilRelPermTableNames"; }
-
-    using ViewKey = dataRepository::ViewKey;
-    ViewKey phaseMinVolumeFraction = { phaseMinVolumeFractionString() };
-    ViewKey waterOilRelPermTableNames = { waterOilRelPermTableNamesString() };
-    ViewKey gasOilRelPermTableNames = { gasOilRelPermTableNamesString() };
-
-  } vieKeysTableRelativePermeability;
+    static constexpr char const * waterOilRelPermTableWrappersString() { return "waterOilRelPermTableWrappers"; }
+    static constexpr char const * gasOilRelPermTableWrappersString() { return "gasOilRelPermTableWrappers"; }
+  };
 
 private:
 
@@ -148,7 +124,7 @@ private:
 
 GEOSX_HOST_DEVICE
 inline void
-TableRelativePermeabilityUpdate::
+TableRelativePermeability::KernelWrapper::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
            arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
@@ -173,14 +149,12 @@ TableRelativePermeabilityUpdate::
     using WOPT = RelativePermeabilityBase::WaterOilPairPhaseType;
 
     // water rel perm
-    m_waterOilRelPermTableKernelWrappers[WOPT::WATER].compute( &(phaseVolFraction)[ipWater],
-                                                               phaseRelPerm[ipWater],
-                                                               &(dPhaseRelPerm_dPhaseVolFrac)[ipWater][ipWater] );
+    phaseRelPerm[ipWater] = m_waterOilRelPermTableKernelWrappers[WOPT::WATER].compute( &(phaseVolFraction)[ipWater],
+                                                                                       &(dPhaseRelPerm_dPhaseVolFrac)[ipWater][ipWater] );
 
     // oil rel perm
-    m_waterOilRelPermTableKernelWrappers[WOPT::OIL].compute( &(phaseVolFraction)[ipOil],
-                                                             oilRelPerm_wo,
-                                                             &dOilRelPerm_wo_dOilVolFrac );
+    oilRelPerm_wo = m_waterOilRelPermTableKernelWrappers[WOPT::OIL].compute( &(phaseVolFraction)[ipOil],
+                                                                             &dOilRelPerm_wo_dOilVolFrac );
   }
 
 
@@ -190,14 +164,12 @@ TableRelativePermeabilityUpdate::
     using GOPT = RelativePermeabilityBase::GasOilPairPhaseType;
 
     // gas rel perm
-    m_gasOilRelPermTableKernelWrappers[GOPT::GAS].compute( &(phaseVolFraction)[ipGas],
-                                                           phaseRelPerm[ipGas],
-                                                           &(dPhaseRelPerm_dPhaseVolFrac)[ipGas][ipGas] );
+    phaseRelPerm[ipGas] = m_gasOilRelPermTableKernelWrappers[GOPT::GAS].compute( &(phaseVolFraction)[ipGas],
+                                                                                 &(dPhaseRelPerm_dPhaseVolFrac)[ipGas][ipGas] );
 
     // oil rel perm
-    m_gasOilRelPermTableKernelWrappers[GOPT::OIL].compute( &(phaseVolFraction)[ipOil],
-                                                           oilRelPerm_go,
-                                                           &dOilRelPerm_go_dOilVolFrac );
+    oilRelPerm_go = m_gasOilRelPermTableKernelWrappers[GOPT::OIL].compute( &(phaseVolFraction)[ipOil],
+                                                                           &dOilRelPerm_go_dOilVolFrac );
   }
 
 
@@ -231,6 +203,18 @@ TableRelativePermeabilityUpdate::
                                           phaseRelPerm[ipOil],
                                           dPhaseRelPerm_dPhaseVolFrac[ipOil] );
   }
+}
+
+GEOSX_HOST_DEVICE
+inline void
+TableRelativePermeability::KernelWrapper::
+  update( localIndex const k,
+          localIndex const q,
+          arraySlice1d< geosx::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
+{
+  compute( phaseVolFraction,
+           m_phaseRelPerm[k][q],
+           m_dPhaseRelPerm_dPhaseVolFrac[k][q] );
 }
 
 } // namespace constitutive

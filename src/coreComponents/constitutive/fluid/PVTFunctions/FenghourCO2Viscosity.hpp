@@ -104,7 +104,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper();
+  KernelWrapper createKernelWrapper() const;
 
 private:
 
@@ -121,11 +121,10 @@ void FenghourCO2ViscosityUpdate::compute( real64 const & pressure,
                                           real64 & value,
                                           bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition, useMass )
+  GEOSX_UNUSED_VAR( phaseComposition, useMass );
 
   real64 const input[2] = { pressure, temperature };
-  real64 densityDeriv[2];
-  m_CO2ViscosityTable.compute( input, value, densityDeriv );
+  value = m_CO2ViscosityTable.compute( input );
 }
 
 template< int USD1, int USD2, int USD3, int USD4 >
@@ -146,11 +145,11 @@ void FenghourCO2ViscosityUpdate::compute( real64 const & pressure,
                     dPhaseComposition_dPressure,
                     dPhaseComposition_dTemperature,
                     dPhaseComposition_dGlobalCompFraction,
-                    useMass )
+                    useMass );
 
   real64 const input[2] = { pressure, temperature };
   real64 densityDeriv[2];
-  m_CO2ViscosityTable.compute( input, value, densityDeriv );
+  value = m_CO2ViscosityTable.compute( input, densityDeriv );
 
   dValue_dPressure = densityDeriv[0];
   dValue_dTemperature = densityDeriv[1];

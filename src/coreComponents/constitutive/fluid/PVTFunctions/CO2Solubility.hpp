@@ -153,10 +153,7 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 {
   // solubility mol/kg(water)  X = Csat/W
   real64 const input[2] = { pressure, temperature };
-  real64 solubility;
-  real64 solubilityDeriv[2];
-
-  m_CO2SolubilityTable.compute( input, solubility, solubilityDeriv );
+  real64 solubility = m_CO2SolubilityTable.compute( input );
   solubility *= m_componentMolarWeight[m_waterIndex];
 
   // Y = C/W = z/(1-z)
@@ -233,9 +230,8 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 {
   // solubility mol/kg(water)  X = Csat/W
   real64 const input[2] = { pressure, temperature };
-  real64 solubility;
   real64 solubilityDeriv[2];
-  m_CO2SolubilityTable.compute( input, solubility, solubilityDeriv );
+  real64 solubility = m_CO2SolubilityTable.compute( input, solubilityDeriv );
 
   solubility *= m_componentMolarWeight[m_waterIndex];
   for( integer ic = 0; ic < 2; ++ic )

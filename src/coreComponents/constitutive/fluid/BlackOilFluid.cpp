@@ -31,7 +31,11 @@ BlackOilFluid::BlackOilFluid( string const & name,
                               Group * const parent )
   :
   BlackOilFluidBase( name, parent )
-{}
+{
+  registerWrapper( "PVTO", &m_PVTO )
+    .setSizedFromParent( 0 )
+    .setRestartFlags( RestartFlags::NO_WRITE );
+}
 
 void BlackOilFluid::postProcessInput()
 {
@@ -40,30 +44,6 @@ void BlackOilFluid::postProcessInput()
   GEOSX_THROW_IF( numFluidPhases() != 3,
                   "BlackOilFluid model named " << getName() << ": this model only supports three-phase flow ",
                   InputError );
-}
-
-std::unique_ptr< ConstitutiveBase >
-BlackOilFluid::deliverClone( string const & name,
-                             Group * const parent ) const
-{
-  std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
-  BlackOilFluid & model = dynamicCast< BlackOilFluid & >( *clone );
-  model.m_phaseTypes = m_phaseTypes;
-  model.m_phaseOrder = m_phaseOrder;
-  model.m_hydrocarbonPhaseOrder = m_hydrocarbonPhaseOrder;
-
-  model.m_PVTO.Rs = m_PVTO.Rs;
-  model.m_PVTO.bubblePressure = m_PVTO.bubblePressure;
-  model.m_PVTO.saturatedBo = m_PVTO.saturatedBo;
-  model.m_PVTO.saturatedViscosity = m_PVTO.saturatedViscosity;
-  model.m_PVTO.undersaturatedPressure2d = m_PVTO.undersaturatedPressure2d;
-  model.m_PVTO.undersaturatedBo2d = m_PVTO.undersaturatedBo2d;
-  model.m_PVTO.undersaturatedViscosity2d = m_PVTO.undersaturatedViscosity2d;
-  model.m_PVTO.surfaceMassDensity = m_PVTO.surfaceMassDensity;
-  model.m_PVTO.surfaceMoleDensity = m_PVTO.surfaceMoleDensity;
-
-  model.createAllKernelWrappers();
-  return clone;
 }
 
 void BlackOilFluid::readInputDataFromTableFunctions()
@@ -132,12 +112,12 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
 
   // Step 1: count the number of saturated points by looping through oilTable, and resize tables accordingly
 
-  localIndex numSaturatedPoints = 0;
-  for( localIndex i = 0; i < oilTable.size(); ++i )
+  integer numSaturatedPoints = 0;
+  for( integer i = 0; i < oilTable.size(); ++i )
   {
     if( oilTable[i].size() == 4 )
     {
-      numSaturatedPoints++;
+      ++numSaturatedPoints;
     }
   }
   m_PVTO.numSaturatedPoints = numSaturatedPoints;
@@ -154,8 +134,8 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
 
   // Step 2: copy values from the tables
 
-  localIndex iSat = 0;
-  for( localIndex i = 0; i < oilTable.size(); ++i )
+  integer iSat = 0;
+  for( integer i = 0; i < oilTable.size(); ++i )
   {
 
     // Step 2.1: get the saturated values
@@ -177,8 +157,8 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
 
     // Note: these undersaturated values may be absent, in which case an undersaturated branch is created in createUndersaturatedProperties
 
-    localIndex branchSize = 0;
-    localIndex j = i + 1;
+    integer branchSize = 0;
+    integer j = i + 1;
     while( oilTable[j].size() == 3 )
     {
       m_PVTO.undersaturatedPressure[iSat].emplace_back( oilTable[j][0] - m_PVTO.bubblePressure[iSat] );
@@ -186,7 +166,7 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
       m_PVTO.undersaturatedViscosity[iSat].emplace_back( oilTable[j][2] );
       branchSize++;
       j++;
-      if( j == oilTable.size())
+      if( j == oilTable.size() )
       {
         break;
       }
@@ -231,7 +211,7 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
   // Step 4: find the max relative pressure (later used to extend the tables)
 
   m_PVTO.maxRelativePressure = 0;
-  for( localIndex i = 0; i < m_PVTO.numSaturatedPoints; ++i )
+  for( integer i = 0; i < m_PVTO.numSaturatedPoints; ++i )
   {
     real64 const maxP = *( std::max_element( m_PVTO.undersaturatedPressure[i].begin(), m_PVTO.undersaturatedPressure[i].end() ) );
     m_PVTO.maxRelativePressure = std::max( maxP, m_PVTO.maxRelativePressure );
@@ -240,8 +220,8 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
 
   // Step 5: save surface densities (for now, this info is passed twice to the kernels)
 
-  m_PVTO.surfaceMassDensity.resize( BlackOilFluidUpdate::NC_BO-1 );
-  m_PVTO.surfaceMoleDensity.resize( BlackOilFluidUpdate::NC_BO-1 );
+  m_PVTO.surfaceMassDensity.resize( NC_BO-1 );
+  m_PVTO.surfaceMoleDensity.resize( NC_BO-1 );
 
   using PT = BlackOilFluid::PhaseType;
 
@@ -255,14 +235,14 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
 
 void BlackOilFluid::createUndersaturatedProperties()
 {
-  localIndex iBranchUp = m_PVTO.numSaturatedPoints - 1;
+  integer iBranchUp = m_PVTO.numSaturatedPoints - 1;
 
   // This function creates undersaturated properties ONLY IF it is not provided by the user
   // Specifically, if undersaturated data is missing, we construct undersaturated branches by interpolation, starting from second highest Rs
 
-  for( localIndex iCurrent = m_PVTO.numSaturatedPoints - 2; iCurrent >= 0; --iCurrent )
+  for( integer iCurrent = m_PVTO.numSaturatedPoints - 2; iCurrent >= 0; --iCurrent )
   {
-    localIndex iBranchLow = iCurrent;
+    integer iBranchLow = iCurrent;
 
     // if only the saturated part is present, then we populate the undersaturated part
     // otherwise, we do not do anything for this saturated value
@@ -270,7 +250,7 @@ void BlackOilFluid::createUndersaturatedProperties()
     {
 
       // search for a lower undersaturated branch already created
-      for( localIndex iLow = iCurrent; iLow >= 0; --iLow )
+      for( integer iLow = iCurrent; iLow >= 0; --iLow )
       {
         if( m_PVTO.undersaturatedPressure[iLow].size() > 1 )
         {
@@ -289,11 +269,11 @@ void BlackOilFluid::createUndersaturatedProperties()
       // Step 1: collect all the pressure values in the undersaturated pressure tables on these branches
 
       std::vector< real64 > allPressures;
-      for( localIndex i = 0; i < m_PVTO.undersaturatedPressure[iBranchUp].size(); ++i )
+      for( integer i = 0; i < m_PVTO.undersaturatedPressure[iBranchUp].size(); ++i )
       {
         allPressures.emplace_back( m_PVTO.undersaturatedPressure[iBranchUp][i] );
       }
-      for( localIndex i = 0; i < m_PVTO.undersaturatedPressure[iBranchLow].size(); ++i )
+      for( integer i = 0; i < m_PVTO.undersaturatedPressure[iBranchLow].size(); ++i )
       {
         allPressures.emplace_back( m_PVTO.undersaturatedPressure[iBranchLow][i] );
       }
@@ -303,7 +283,7 @@ void BlackOilFluid::createUndersaturatedProperties()
       // Step 2: put these pressures into an array1d (for views later), we should ultimately remove this step
 
       array1d< real64 > pres( allPressures.size() );
-      for( localIndex i = 0; i < pres.size(); ++i )
+      for( integer i = 0; i < pres.size(); ++i )
       {
         pres[i] = allPressures[i];
       }
@@ -318,7 +298,7 @@ void BlackOilFluid::createUndersaturatedProperties()
       real64 const dRsUp = LvArray::math::abs( m_PVTO.Rs[iBranchUp] - m_PVTO.Rs[iCurrent] );
       real64 const dRsLow = LvArray::math::abs( m_PVTO.Rs[iCurrent] - m_PVTO.Rs[iBranchLow] );
 
-      for( localIndex i = 1; i < pres.size(); ++i )
+      for( integer i = 1; i < pres.size(); ++i )
       {
 
         // pressure
@@ -360,7 +340,7 @@ void BlackOilFluid::createUndersaturatedProperties()
 void BlackOilFluid::extendUndersaturatedProperties()
 {
   // for all the branches in the undersaturated tables
-  for( localIndex i = 0; i < m_PVTO.numSaturatedPoints; ++i )
+  for( integer i = 0; i < m_PVTO.numSaturatedPoints; ++i )
   {
     real64 const deltaPresExtended = m_PVTO.maxRelativePressure - m_PVTO.undersaturatedPressure[i].back();
 
@@ -371,7 +351,7 @@ void BlackOilFluid::extendUndersaturatedProperties()
     // if the (desired) max pressure is above the largest undersaturated pressure currently in the table
     if( LvArray::math::abs( deltaPresExtended ) > 0 )
     {
-      localIndex const branchSize = m_PVTO.undersaturatedPressure[i].size();
+      integer const branchSize = LvArray::integerConversion< integer >( m_PVTO.undersaturatedPressure[i].size() );
 
       // then we compute an extrapolated value of Bo and viscosity
       real64 const Bo = extrapolation::linearExtrapolation( presUndersat[branchSize - 2], presUndersat[branchSize - 1],
@@ -390,16 +370,14 @@ void BlackOilFluid::extendUndersaturatedProperties()
   }
 }
 
-
-
-void BlackOilFluid::refineUndersaturatedTables( localIndex const numRefinedPressurePoints )
+void BlackOilFluid::refineUndersaturatedTables( integer const numRefinedPressurePoints )
 {
   // Step 1: find the maximum pressure found in the table
 
   real64 maxPresInTable = 0;
-  for( localIndex i = 0; i < m_PVTO.numSaturatedPoints; ++i )
+  for( integer i = 0; i < m_PVTO.numSaturatedPoints; ++i )
   {
-    for( localIndex j = 0; j < m_PVTO.undersaturatedPressure[i].size(); ++j )
+    for( integer j = 0; j < m_PVTO.undersaturatedPressure[i].size(); ++j )
     {
       if( maxPresInTable < m_PVTO.undersaturatedPressure[i][j] )
       {
@@ -411,7 +389,7 @@ void BlackOilFluid::refineUndersaturatedTables( localIndex const numRefinedPress
   // Step 2: populate the refinedPres table from 0 to the max pressure found above
 
   array1d< real64 > refinedPres( numRefinedPressurePoints );
-  for( localIndex i = 0; i < numRefinedPressurePoints; ++i )
+  for( integer i = 0; i < numRefinedPressurePoints; ++i )
   {
     refinedPres[i] = i * ( maxPresInTable / ( numRefinedPressurePoints - 1 ) );
   }
@@ -420,7 +398,7 @@ void BlackOilFluid::refineUndersaturatedTables( localIndex const numRefinedPress
   // Step 3: interpolate in the Bo and viscosity tables to get the refined undersaturated values
 
   array1d< real64 > refinedProp( refinedPres.size() );
-  for( localIndex i = 0; i < m_PVTO.numSaturatedPoints; ++i )
+  for( integer i = 0; i < m_PVTO.numSaturatedPoints; ++i )
   {
     // Bo
     interpolation::linearInterpolation( m_PVTO.undersaturatedPressure[i].toViewConst(), m_PVTO.undersaturatedBo[i].toViewConst(),
@@ -441,9 +419,9 @@ void BlackOilFluid::refineUndersaturatedTables( localIndex const numRefinedPress
   m_PVTO.undersaturatedPressure2d.resize( m_PVTO.numSaturatedPoints, refinedPres.size() );
   m_PVTO.undersaturatedBo2d.resize( m_PVTO.numSaturatedPoints, refinedPres.size() );
   m_PVTO.undersaturatedViscosity2d.resize( m_PVTO.numSaturatedPoints, refinedPres.size() );
-  for( localIndex i = 0; i < m_PVTO.numSaturatedPoints; ++i )
+  for( integer i = 0; i < m_PVTO.numSaturatedPoints; ++i )
   {
-    for( localIndex j = 0; j < refinedPres.size(); ++j )
+    for( integer j = 0; j < refinedPres.size(); ++j )
     {
       m_PVTO.undersaturatedPressure2d[i][j] = m_PVTO.undersaturatedPressure[i][j];
       m_PVTO.undersaturatedBo2d[i][j] = m_PVTO.undersaturatedBo[i][j];
@@ -452,45 +430,124 @@ void BlackOilFluid::refineUndersaturatedTables( localIndex const numRefinedPress
   }
 }
 
-
 void BlackOilFluid::checkTableConsistency() const
 {
   using PT = BlackOilFluid::PhaseType;
 
   // check for the presence of one bubble point
   GEOSX_THROW_IF( m_PVTO.undersaturatedPressure[m_PVTO.numSaturatedPoints - 1].size() <= 1,
-                  "BlackOilFluid model named " << getName() << ": At least one bubble pressure is required in " << m_tableFiles[m_phaseOrder[PT::OIL]], InputError );
+                  getFullName() << ": At least one bubble pressure is required in " << m_tableFiles[m_phaseOrder[PT::OIL]],
+                  InputError );
 
   // check for saturated region
-  for( localIndex i = 0; i < m_PVTO.numSaturatedPoints - 1; ++i )
+  for( integer i = 0; i < m_PVTO.numSaturatedPoints - 1; ++i )
   {
     // Rs must increase with Pb
     GEOSX_THROW_IF( ( m_PVTO.Rs[i + 1] - m_PVTO.Rs[i] ) <= 0,
-                    "BlackOilFluid model named " << getName() << ": Rs must increase with Pb in " << m_tableFiles[m_phaseOrder[PT::OIL]], InputError );
+                    getFullName() << ": Rs must increase with Pb in " << m_tableFiles[m_phaseOrder[PT::OIL]],
+                    InputError );
     // Bo must increase with Pb
     GEOSX_THROW_IF( ( m_PVTO.saturatedBo[i + 1] - m_PVTO.saturatedBo[i] ) <= 0,
-                    "BlackOilFluid model named " << getName() << ": Bo must increase with Pb in saturated region in " << m_tableFiles[m_phaseOrder[PT::OIL]], InputError );
+                    getFullName() << ": Bo must increase with Pb in saturated region in " << m_tableFiles[m_phaseOrder[PT::OIL]],
+                    InputError );
     // Viscosity must decrease with Pb
     GEOSX_THROW_IF( ( m_PVTO.saturatedViscosity[i + 1] - m_PVTO.saturatedViscosity[i] ) >= 0,
-                    "BlackOilFluid model named " << getName() << ": Viscosity must decrease with Pb in saturated region in " << m_tableFiles[m_phaseOrder[PT::OIL]], InputError );
+                    getFullName() << ": Viscosity must decrease with Pb in saturated region in " << m_tableFiles[m_phaseOrder[PT::OIL]],
+                    InputError );
   }
 
   // check for under-saturated branches
-  for( localIndex i = 0; i < m_PVTO.numSaturatedPoints; ++i )
+  for( integer i = 0; i < m_PVTO.numSaturatedPoints; ++i )
   {
-    for( localIndex j = 0; j < m_PVTO.undersaturatedPressure[i].size() - 1; ++j )
+    for( integer j = 0; j < m_PVTO.undersaturatedPressure[i].size() - 1; ++j )
     {
       // Pressure
       GEOSX_THROW_IF( ( m_PVTO.undersaturatedPressure[i][j + 1] - m_PVTO.undersaturatedPressure[i][j] ) <= 0,
-                      "BlackOilFluid model named " << getName() << ": P must decrease in undersaturated region in " << m_tableFiles[m_phaseOrder[PT::OIL]], InputError );
+                      getFullName() << ": P must decrease in undersaturated region in " << m_tableFiles[m_phaseOrder[PT::OIL]],
+                      InputError );
       // Bo must decrease with P
       GEOSX_THROW_IF( ( m_PVTO.undersaturatedBo[i][j + 1] - m_PVTO.undersaturatedBo[i][j] ) >= 0,
-                      "BlackOilFluid model named " << getName() << ": Bo must decrease with P in undersaturated region in " << m_tableFiles[m_phaseOrder[PT::OIL]], InputError );
+                      getFullName() << ": Bo must decrease with P in undersaturated region in " << m_tableFiles[m_phaseOrder[PT::OIL]],
+                      InputError );
       // Viscosity must increase with Pb
       GEOSX_THROW_IF( ( m_PVTO.undersaturatedViscosity[i][j + 1] - m_PVTO.undersaturatedViscosity[i][j] ) < -1e-10,
-                      "BlackOilFluid model named " << getName() << ": Viscosity must increase with P in undersaturated region in " << m_tableFiles[m_phaseOrder[PT::OIL]], InputError );
+                      getFullName() << ": Viscosity must increase with P in undersaturated region in " << m_tableFiles[m_phaseOrder[PT::OIL]],
+                      InputError );
     }
   }
+}
+
+BlackOilFluid::KernelWrapper::
+  KernelWrapper( arrayView1d< geosx::integer const > const & phaseTypes,
+                 arrayView1d< geosx::integer const > const & phaseOrder,
+                 arrayView1d< geosx::integer const > const & hydrocarbonPhaseOrder,
+                 arrayView1d< geosx::real64 const > const & surfacePhaseMassDensity,
+                 arrayView1d< geosx::TableFunction::KernelWrapper const > const & formationVolFactorTables,
+                 arrayView1d< geosx::TableFunction::KernelWrapper const > const & viscosityTables,
+                 BlackOilFluidBase::WaterParams const waterParams,
+                 arrayView1d< geosx::real64 const > const & componentMolarWeight,
+                 bool useMass,
+                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseFraction,
+                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseDensity,
+                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseMassDensity,
+                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseViscosity,
+                 MultiFluidBase::KernelWrapper::PhaseCompViews const & phaseCompFraction,
+                 MultiFluidBase::KernelWrapper::FluidPropViews const & totalDensity,
+                 PVTOData const & PVTO )
+  : BlackOilFluidBase::KernelWrapper( phaseTypes,
+                                      phaseOrder,
+                                      hydrocarbonPhaseOrder,
+                                      surfacePhaseMassDensity,
+                                      formationVolFactorTables,
+                                      viscosityTables,
+                                      waterParams,
+                                      componentMolarWeight,
+                                      useMass,
+                                      phaseFraction,
+                                      phaseDensity,
+                                      phaseMassDensity,
+                                      phaseViscosity,
+                                      phaseCompFraction,
+                                      totalDensity ),
+  m_PVTOView( PVTO.createKernelWrapper() )
+{}
+
+BlackOilFluid::KernelWrapper BlackOilFluid::createKernelWrapper() const
+{
+  return KernelWrapper( m_phaseTypes,
+                        m_phaseOrder,
+                        m_hydrocarbonPhaseOrder,
+                        m_surfacePhaseMassDensity,
+                        m_formationVolFactorTables,
+                        m_viscosityTables,
+                        m_waterParams,
+                        m_componentMolarWeight,
+                        m_useMass,
+                        { m_phaseFraction,
+                          m_dPhaseFraction_dPressure,
+                          m_dPhaseFraction_dTemperature,
+                          m_dPhaseFraction_dGlobalCompFraction },
+                        { m_phaseDensity,
+                          m_dPhaseDensity_dPressure,
+                          m_dPhaseDensity_dTemperature,
+                          m_dPhaseDensity_dGlobalCompFraction },
+                        { m_phaseMassDensity,
+                          m_dPhaseMassDensity_dPressure,
+                          m_dPhaseMassDensity_dTemperature,
+                          m_dPhaseMassDensity_dGlobalCompFraction },
+                        { m_phaseViscosity,
+                          m_dPhaseViscosity_dPressure,
+                          m_dPhaseViscosity_dTemperature,
+                          m_dPhaseViscosity_dGlobalCompFraction },
+                        { m_phaseCompFraction,
+                          m_dPhaseCompFraction_dPressure,
+                          m_dPhaseCompFraction_dTemperature,
+                          m_dPhaseCompFraction_dGlobalCompFraction },
+                        { m_totalDensity,
+                          m_dTotalDensity_dPressure,
+                          m_dTotalDensity_dTemperature,
+                          m_dTotalDensity_dGlobalCompFraction },
+                        m_PVTO );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BlackOilFluid, string const &, Group * const )

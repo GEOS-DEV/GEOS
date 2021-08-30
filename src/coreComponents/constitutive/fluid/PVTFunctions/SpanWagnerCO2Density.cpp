@@ -208,6 +208,7 @@ real64 spanWagnerCO2DensityFunction( real64 const & tolerance,
 
 
 TableFunction const * makeDensityTable( string_array const & inputParams,
+                                        string const & prefix,
                                         FunctionManager & functionManager )
 {
   PTTableCoordinates tableCoords;
@@ -231,16 +232,16 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, densities );
 
   // TODO: fix name/uniqueness
-  if( functionManager.hasGroup< TableFunction >( "CO2DensityTable" ) )
+  string const & tableName = prefix + "_CO2DensityTable";
+  if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( "CO2DensityTable" );
+    return functionManager.getGroupPointer< TableFunction >( tableName );
   }
   else
   {
-    TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2DensityTable" ) );
+    TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     densityTable->setTableCoordinates( tableCoords.getCoords() );
     densityTable->setTableValues( densities );
-    densityTable->reInitializeFunction();
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
   }
@@ -279,10 +280,10 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string_array const & inputParams,
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
 
-  m_CO2DensityTable = makeDensityTable( inputParams, FunctionManager::getInstance() );
+  m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
-SpanWagnerCO2Density::KernelWrapper SpanWagnerCO2Density::createKernelWrapper()
+SpanWagnerCO2Density::KernelWrapper SpanWagnerCO2Density::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         *m_CO2DensityTable,

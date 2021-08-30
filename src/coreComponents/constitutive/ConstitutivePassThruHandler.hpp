@@ -43,8 +43,7 @@ struct ConstitutivePassThruHandler<>
   template< typename BASE, typename LAMBDA >
   static void execute( BASE & relation, LAMBDA lambda )
   {
-    GEOSX_UNUSED_VAR( relation )
-    GEOSX_UNUSED_VAR( lambda )
+    GEOSX_UNUSED_VAR( relation, lambda );
     GEOSX_ERROR( "The constitutive model " << relation.getName() << " was not dispatched." <<
                  "The model type does not match the list of supported types." );
   }

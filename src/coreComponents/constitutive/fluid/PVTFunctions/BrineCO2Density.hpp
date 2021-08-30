@@ -114,7 +114,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper();
+  KernelWrapper createKernelWrapper() const;
 
 
 private:
@@ -147,9 +147,7 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
   constexpr real64 d = -5.044e-7;
 
   real64 const input[2] = { pressure, temperature };
-  real64 density;
-  real64 densityDeriv[2];
-  m_brineDensityTable.compute( input, density, densityDeriv );
+  real64 const density = m_brineDensityTable.compute( input );
 
   // equation (2) from Garcia (2001)
   real64 const squaredTemp = temperature * temperature;
@@ -202,9 +200,8 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
   constexpr real64 d = -5.044e-7;
 
   real64 const input[2] = { pressure, temperature };
-  real64 density;
   real64 densityDeriv[2];
-  m_brineDensityTable.compute( input, density, densityDeriv );
+  real64 const density = m_brineDensityTable.compute( input, densityDeriv );
 
   // equation (2) from Garcia (2001)
   real64 const squaredTemp = temperature * temperature;
