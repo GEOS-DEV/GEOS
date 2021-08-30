@@ -840,10 +840,10 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     SortedArray< string > processedRegionNames;
     localIndex iR = 0;
 
-    // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex 
+    // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex
     //  calculation is correct? Not actually needed in parallel since we still have ghost nodes in that case and
     //  the count has not been altered due to periodicity.
-    if( std::any_of( partition.m_Periodic.begin(), partition.m_Periodic.end(), [](int & dimPeriodic) { return dimPeriodic == 1; } ) )
+    if( std::any_of( partition.m_Periodic.begin(), partition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ) )
     {
       for( int i = 0; i < m_dim; ++i )
       {

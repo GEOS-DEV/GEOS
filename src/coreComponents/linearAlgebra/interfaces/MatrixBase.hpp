@@ -496,9 +496,9 @@ protected:
    * @param values Array of values
    *
    */
-  virtual void insert( arrayView1d<globalIndex const> const & rowIndices,
-                       arrayView1d<globalIndex const> const & colIndices,
-                       arrayView1d<real64 const> const & values ) = 0;
+  virtual void insert( arrayView1d< globalIndex const > const & rowIndices,
+                       arrayView1d< globalIndex const > const & colIndices,
+                       arrayView1d< real64 const > const & values ) = 0;
 
   ///@}
 

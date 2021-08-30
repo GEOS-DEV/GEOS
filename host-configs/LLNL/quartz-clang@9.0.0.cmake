@@ -17,3 +17,4 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/libmkl_intel_lp64.so
                   CACHE STRING "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/quartz-base.cmake)
+set(HYPRE_DIR /usr/workspace/settgast/Codes/geosx/hypre/src/hypre CACHE PATH "" FORCE)

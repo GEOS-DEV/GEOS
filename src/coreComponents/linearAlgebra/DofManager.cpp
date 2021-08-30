@@ -1487,9 +1487,9 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
   restrictor.createWithLocalSize( rowSize, colSize, 1, comm );
   restrictor.open();
 
-  array1d<globalIndex> rows;
-  array1d<globalIndex> cols;
-  array1d<real64> values;
+  array1d< globalIndex > rows;
+  array1d< globalIndex > cols;
+  array1d< real64 > values;
 
   for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
   {

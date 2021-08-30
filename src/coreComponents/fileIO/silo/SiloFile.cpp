@@ -2212,10 +2212,10 @@ void SiloFile::writeDataField( string const & meshName,
     {
       castedField[i].resize( nels );
       vars[i] = static_cast< void * >( (castedField[i]).data() );
-      forAll<serialPolicy>( nels, [=,&castedField] GEOSX_HOST ( localIndex const k )
-      {
-        castedField[i][k] = SiloFileUtilities::CastField< OUTTYPE >( field[k], i );
-      } );
+      forAll< serialPolicy >( nels, [=, &castedField] GEOSX_HOST ( localIndex const k )
+        {
+          castedField[i][k] = SiloFileUtilities::CastField< OUTTYPE >( field[k], i );
+        } );
     }
   }
 

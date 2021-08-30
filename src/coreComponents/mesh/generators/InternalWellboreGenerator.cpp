@@ -267,13 +267,13 @@ void InternalWellboreGenerator::postProcessInput()
     GEOSX_ERROR_IF( m_cartesianOuterBoundary < 0, "useCartesianOuterBoundary must be > 0" );
     real64 const innerLimit = m_vertices[0][m_cartesianOuterBoundary];
     real64 const outerLimit = m_vertices[0].size();
-    GEOSX_ERROR_IF( m_cartesianMappingInnerRadius < 1e98 &&
-                    m_cartesianMappingInnerRadius > outerLimit,
-                    "cartesianMappingInnerRadius must be inside the outer radius of the mesh");
+    GEOSX_ERROR_IF( m_cartesianMappingInnerRadius< 1e98 &&
+                                                   m_cartesianMappingInnerRadius > outerLimit,
+                    "cartesianMappingInnerRadius must be inside the outer radius of the mesh" );
 
     GEOSX_ERROR_IF( m_cartesianMappingInnerRadius < innerLimit,
                     "cartesianMappingInnerRadius must be outside the radius "
-                    "of the inner boundary of the region specified by useCartesianOuterBoundary");
+                    "of the inner boundary of the region specified by useCartesianOuterBoundary" );
 
     if( m_cartesianMappingInnerRadius > 1e98 )
     {
@@ -504,15 +504,15 @@ void InternalWellboreGenerator::coordinateTransformation( NodeManager & nodeMana
     }
   }
   /*
-  std::cout<<"xnegNodes: "<<xnegNodes<<std::endl;
-  std::cout<<"xposNodes: "<<xposNodes<<std::endl;
-  std::cout<<"ynegNodes: "<<ynegNodes<<std::endl;
-  std::cout<<"yposNodes: "<<yposNodes<<std::endl;
-  std::cout<<"rnegNodes: "<<rnegNodes<<std::endl;
-  std::cout<<"rposNodes: "<<rposNodes<<std::endl;
-  std::cout<<"tnegNodes: "<<tnegNodes<<std::endl;
-  std::cout<<"tposNodes: "<<tposNodes<<std::endl;
-  */
+     std::cout<<"xnegNodes: "<<xnegNodes<<std::endl;
+     std::cout<<"xposNodes: "<<xposNodes<<std::endl;
+     std::cout<<"ynegNodes: "<<ynegNodes<<std::endl;
+     std::cout<<"yposNodes: "<<yposNodes<<std::endl;
+     std::cout<<"rnegNodes: "<<rnegNodes<<std::endl;
+     std::cout<<"rposNodes: "<<rposNodes<<std::endl;
+     std::cout<<"tnegNodes: "<<tnegNodes<<std::endl;
+     std::cout<<"tposNodes: "<<tposNodes<<std::endl;
+   */
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellboreGenerator, string const &, Group * const )

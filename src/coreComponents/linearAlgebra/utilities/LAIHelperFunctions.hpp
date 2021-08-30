@@ -203,7 +203,7 @@ void separateComponentFilter( MATRIX const & src,
 
   array1d< globalIndex > srcIndices;
   array1d< real64 > srcValues;
-  array1d< localIndex > numCols(localRows);
+  array1d< localIndex > numCols( localRows );
 
 
   array1d< globalIndex > cols;
@@ -211,24 +211,23 @@ void separateComponentFilter( MATRIX const & src,
 
 
 
-
   for( globalIndex r = 0; r < localRows; ++r )
   {
-    globalIndex row ;
+    globalIndex row;
     globalIndex rowComponent;
-    localIndex  rowLength ;
+    localIndex rowLength;
     row = r + src.ilower();
     rowComponent = row % dofsPerNode;
     rowLength = src.globalRowLength( row );
 
-      srcIndices.resize(rowLength);
-      srcValues.resize(rowLength);
-      cols.resize( rowLength );
-      values.resize( rowLength );
+    srcIndices.resize( rowLength );
+    srcValues.resize( rowLength );
+    cols.resize( rowLength );
+    values.resize( rowLength );
     localIndex count = 0;
 
 
-      src.getRowCopy( row, srcIndices, srcValues );
+    src.getRowCopy( row, srcIndices, srcValues );
 
 
 

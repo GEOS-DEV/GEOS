@@ -270,7 +270,7 @@ void DomainPartition::addNeighbors( const unsigned int idim,
       }
     }
     int const neighborRank = MpiWrapper::cartRank( cartcomm, ncoords );
-    if( !me && !std::any_of( m_neighbors.begin(), m_neighbors.end(), [=](NeighborCommunicator const & nn) { return nn.neighborRank( ) == neighborRank; } ) )
+    if( !me && !std::any_of( m_neighbors.begin(), m_neighbors.end(), [=]( NeighborCommunicator const & nn ) { return nn.neighborRank( ) == neighborRank; } ) )
     {
       m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
     }

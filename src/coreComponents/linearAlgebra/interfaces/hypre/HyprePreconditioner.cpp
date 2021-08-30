@@ -424,13 +424,13 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
     HypreMatrix Pu;
     HypreMatrix Auu;
     {
-      Stopwatch timer(m_makeRestrictorTime);
+      Stopwatch timer( m_makeRestrictorTime );
       mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
     }
     //std::cout << "Pu Matrix" << std::endl;
     //Pu.print(std::cout);
     {
-      Stopwatch timer(m_computeAuuTime);
+      Stopwatch timer( m_computeAuuTime );
       mat.multiplyPtAP( Pu, Auu );
     }
 //    std::cout << "Auu Matrix" << std::endl;

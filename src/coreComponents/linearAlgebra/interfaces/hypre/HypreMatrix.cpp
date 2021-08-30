@@ -362,7 +362,7 @@ void HypreMatrix::insert( globalIndex const rowIndex0,
   array1d< HYPRE_BigInt > rowIndexDevice( 1 );
   array1d< HYPRE_BigInt > colIndexDevice( 1 );
   array1d< HYPRE_Int > ncolsDevice( 1 );
-  array1d< real64 > valueDevice(1);
+  array1d< real64 > valueDevice( 1 );
 
   rowIndexDevice[0] = rowIndex0;
   colIndexDevice[0] = colIndex0;
@@ -570,7 +570,7 @@ void HypreMatrix::insert( globalIndex const * rowIndices,
                           globalIndex const * colIndices,
                           real64 const * values,
                           localIndex const numRows,
-                          localIndex const  numCols)
+                          localIndex const numCols )
 {
   for( localIndex i = 0; i < numRows; ++i )
   {
@@ -578,16 +578,16 @@ void HypreMatrix::insert( globalIndex const * rowIndices,
   }
 }
 
-void HypreMatrix::insert( arrayView1d<globalIndex const> const & rowIndices,
-                          arrayView1d<globalIndex const> const & colIndices,
-                          arrayView1d<real64 const> const & values )
+void HypreMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
+                          arrayView1d< globalIndex const > const & colIndices,
+                          arrayView1d< real64 const > const & values )
 {
   GEOSX_LAI_ASSERT_EQ( rowIndices.size(), colIndices.size() );
   GEOSX_LAI_ASSERT_GE( rowIndices.size(), values.size() );
 
   HYPRE_BigInt const numRows = rowIndices.size();
 
-  array1d< HYPRE_Int > nCols(numRows);
+  array1d< HYPRE_Int > nCols( numRows );
   for( int i=0; i<numRows; ++i )
   {
     nCols[i] = 1;
@@ -604,7 +604,7 @@ void HypreMatrix::insert( arrayView1d<globalIndex const> const & rowIndices,
                                                     hypre::toHypreBigInt( rowIndices.data() ),
                                                     hypre::toHypreBigInt( colIndices.data() ),
                                                     values.data()
-                                                   ) );
+                                                    ) );
 }
 
 
@@ -927,18 +927,30 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
   tempMat.resize( numLocRows, numGlobalCols(), maxDstEntries );
   CRSMatrixView< real64 > const tempMatView = tempMat.toView();
 
+// Single read is slower on host
+// Single read is slower on GPU because hypre interface moves memory to host.
+// A direct interface with parcsr should circumvent memory motion.
 //#define SINGLE_READ
 #ifdef SINGLE_READ
-  HYPRE_Int const numEntries = std::accumulate( numCols.begin(), numCols.end(), 0, std::plus<HYPRE_Int>() );
+  array1d< HYPRE_BigInt > offsetsData( numLocRows );
+  arrayView1d< HYPRE_BigInt > const offsets = offsetsData;
 
-  array1d< HYPRE_BigInt > srcIndicesData(numEntries);
+  HYPRE_Int numEntries = 0;
+  for( HYPRE_Int r=0; r<numLocRows; ++r )
+  {
+    offsets[r] = numEntries;
+    numEntries += numCols[r];
+  }
+
+  std::cout<<numEntries<<std::endl;
+  array1d< HYPRE_BigInt > srcIndicesData( numEntries );
   arrayView1d< HYPRE_BigInt > srcIndices = srcIndicesData;
 
-  array1d< real64 > srcValuesData( numEntries);
+  array1d< real64 > srcValuesData( numEntries );
   arrayView1d< real64 > srcValues = srcValuesData;
 
   GEOSX_LAI_CHECK_ERROR( hypre_IJMatrixGetValuesParCSR( m_ij_mat,
-                                                        numLocRows,
+                                                        -numLocRows,
                                                         numCols.data(),
                                                         rows.data(),
                                                         srcIndices.data(),
@@ -946,40 +958,51 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
 
 
 #else
-  array2d< HYPRE_BigInt > srcIndicesData(numLocRows, maxRowEntries);
+  array2d< HYPRE_BigInt > srcIndicesData( numLocRows, maxRowEntries );
   arrayView2d< HYPRE_BigInt > srcIndices = srcIndicesData;
 
-  array2d< real64 > srcValuesData( numLocRows, maxRowEntries);
+  array2d< real64 > srcValuesData( numLocRows, maxRowEntries );
   arrayView2d< real64 > srcValues = srcValuesData;
 #endif
 
-
-  forAll<parallelHostPolicy>( numLocRows,
-                              [&] GEOSX_HOST
-                              ( HYPRE_Int const r )
+#ifdef SINGLE_READ
+  forAll< parallelDevicePolicy< 32 > >( numLocRows,
+                                        [=] GEOSX_HOST_DEVICE
+                                          ( HYPRE_Int const r )
   {
     HYPRE_BigInt const rowComponent = rows[r] % dofsPerNode;
-#ifdef SINGLE_READ
-
-
-#else
-
-    GEOSX_LAI_CHECK_ERROR( hypre_IJMatrixGetValuesParCSR( m_ij_mat,
-                                                          -1,
-                                                          &(numCols[r]),
-                                                          &(rows[r]),
-                                                          srcIndices[r],
-                                                          srcValues[r] ) );
-
     for( localIndex c = 0; c < numCols[r]; ++c )
     {
-      globalIndex const col = srcIndices( r, c );
+      globalIndex const col = srcIndices( offsets[r] + c );
       globalIndex const colComponent = col % dofsPerNode;
       if( rowComponent == colComponent )
       {
-        tempMatView.insertNonZero( r, col, srcValues(r,c) );
+        tempMatView.insertNonZero( r, col, srcValues( offsets[r] + c ) );
       }
     }
+#else
+  forAll< parallelHostPolicy >( numLocRows,
+                                [&] GEOSX_HOST
+                                  ( HYPRE_Int const r )
+    {
+      HYPRE_BigInt const rowComponent = rows[r] % dofsPerNode;
+
+      GEOSX_LAI_CHECK_ERROR( hypre_IJMatrixGetValuesParCSR( m_ij_mat,
+                                                            -1,
+                                                            &(numCols[r]),
+                                                            &(rows[r]),
+                                                            srcIndices[r],
+                                                            srcValues[r] ) );
+
+      for( localIndex c = 0; c < numCols[r]; ++c )
+      {
+        globalIndex const col = srcIndices( r, c );
+        globalIndex const colComponent = col % dofsPerNode;
+        if( rowComponent == colComponent )
+        {
+          tempMatView.insertNonZero( r, col, srcValues( r, c ) );
+        }
+      }
 #endif
 
 
@@ -1000,10 +1023,10 @@ void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale, bool 
 
   HYPRE_ParCSRMatrix parCSRMatrix;
   GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixAdd( 1.0,
-                                          unwrapped(),
-                                          scale,
-                                          src.unwrapped(),
-                                          &parCSRMatrix ) );
+                                                unwrapped(),
+                                                scale,
+                                                src.unwrapped(),
+                                                &parCSRMatrix ) );
 
   parCSRtoIJ( parCSRMatrix );
 }
@@ -1206,7 +1229,7 @@ localIndex HypreMatrix::getLocalRowID( globalIndex const index ) const
   GEOSX_LAI_ASSERT( created() );
   HYPRE_BigInt ilower, iupper, jlower, jupper;
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJMatrixGetLocalRange( m_ij_mat, &ilower, &iupper, &jlower, &jupper ) );
-  return (index >= ilower && index <= iupper) ? LvArray::integerConversion< localIndex >( index - ilower ) : -1;
+  return (index >= ilower && index <= iupper ) ? LvArray::integerConversion< localIndex >( index - ilower ) : -1;
 }
 
 globalIndex HypreMatrix::getGlobalRowID( localIndex const index ) const
@@ -1371,71 +1394,71 @@ void HypreMatrix::write( string const & filename,
   switch( format )
   {
     case LAIOutputFormat::NATIVE_ASCII:
-    {
-      GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixPrintIJ( m_parcsr_mat, 1, 1, filename.c_str() ) );
-      break;
-    }
+      {
+        GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixPrintIJ( m_parcsr_mat, 1, 1, filename.c_str() ) );
+        break;
+      }
     case LAIOutputFormat::MATRIX_MARKET:
-    {
-      MPI_Comm const comm = getComm();
-      int const rank = MpiWrapper::commRank( comm );
-
-      if( numGlobalRows() * numGlobalCols() == 0 )
       {
-        if( rank == 0 )
+        MPI_Comm const comm = getComm();
+        int const rank = MpiWrapper::commRank( comm );
+
+        if( numGlobalRows() * numGlobalCols() == 0 )
         {
-          FILE * fp = std::fopen( filename.c_str(), "w" );
-          hypre_fprintf( fp, "%s", "%%MatrixMarket matrix coordinate real general\n" );
-          hypre_fprintf( fp, "%lld %lld %d\n", numGlobalRows(), numGlobalCols(), 0 );
-          std::fclose( fp );
-        }
-      }
-      else
-      {
-        // Copy distributed parcsr matrix in a local CSR matrix on every process with at least one row
-        // Warning: works for a parcsr matrix that is smaller than 2^31-1
-        hypre_CSRMatrix * const fullMatrix = hypre_ParCSRMatrixToCSRMatrixAll( m_parcsr_mat );
-
-        // Identify the smallest process where CSRmatrix exists
-        int const printID = MpiWrapper::min( fullMatrix ? rank : MpiWrapper::commSize( comm ), comm );
-
-        // Write to file CSRmatrix on one rank
-        if( rank == printID )
-        {
-          FILE * fp = std::fopen( filename.c_str(), "w" );
-
-          HYPRE_Int const num_rows = hypre_CSRMatrixNumRows( fullMatrix );
-          HYPRE_Int const num_cols = hypre_CSRMatrixNumCols( fullMatrix );
-          HYPRE_Int const num_nnz  = hypre_CSRMatrixNumNonzeros( fullMatrix );
-
-          HYPRE_Real const * const matrix_data = hypre_CSRMatrixData( fullMatrix );
-          HYPRE_Int const * const matrix_i     = hypre_CSRMatrixI( fullMatrix );
-          HYPRE_Int const * const matrix_j     = hypre_CSRMatrixJ( fullMatrix );
-
-          hypre_fprintf( fp, "%s", "%%MatrixMarket matrix coordinate real general\n" );
-          hypre_fprintf( fp, "%d %d %d\n", num_rows, num_cols, num_nnz );
-          for( HYPRE_Int i = 0; i < num_rows; i++ )
+          if( rank == 0 )
           {
-            for( HYPRE_Int j = matrix_i[i]; j < matrix_i[i+1]; j++ )
-            {
-              hypre_fprintf( fp, "%d %d %.16e\n", i + 1, matrix_j[j] + 1, matrix_data[j] );
-            }
+            FILE * fp = std::fopen( filename.c_str(), "w" );
+            hypre_fprintf( fp, "%s", "%%MatrixMarket matrix coordinate real general\n" );
+            hypre_fprintf( fp, "%lld %lld %d\n", numGlobalRows(), numGlobalCols(), 0 );
+            std::fclose( fp );
           }
-          std::fclose( fp );
         }
-
-        // Destroy CSRmatrix
-        if( fullMatrix )
+        else
         {
-          GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( fullMatrix ) );
+          // Copy distributed parcsr matrix in a local CSR matrix on every process with at least one row
+          // Warning: works for a parcsr matrix that is smaller than 2^31-1
+          hypre_CSRMatrix * const fullMatrix = hypre_ParCSRMatrixToCSRMatrixAll( m_parcsr_mat );
+
+          // Identify the smallest process where CSRmatrix exists
+          int const printID = MpiWrapper::min( fullMatrix ? rank : MpiWrapper::commSize( comm ), comm );
+
+          // Write to file CSRmatrix on one rank
+          if( rank == printID )
+          {
+            FILE * fp = std::fopen( filename.c_str(), "w" );
+
+            HYPRE_Int const num_rows = hypre_CSRMatrixNumRows( fullMatrix );
+            HYPRE_Int const num_cols = hypre_CSRMatrixNumCols( fullMatrix );
+            HYPRE_Int const num_nnz  = hypre_CSRMatrixNumNonzeros( fullMatrix );
+
+            HYPRE_Real const * const matrix_data = hypre_CSRMatrixData( fullMatrix );
+            HYPRE_Int const * const matrix_i     = hypre_CSRMatrixI( fullMatrix );
+            HYPRE_Int const * const matrix_j     = hypre_CSRMatrixJ( fullMatrix );
+
+            hypre_fprintf( fp, "%s", "%%MatrixMarket matrix coordinate real general\n" );
+            hypre_fprintf( fp, "%d %d %d\n", num_rows, num_cols, num_nnz );
+            for( HYPRE_Int i = 0; i < num_rows; i++ )
+            {
+              for( HYPRE_Int j = matrix_i[i]; j < matrix_i[i+1]; j++ )
+              {
+                hypre_fprintf( fp, "%d %d %.16e\n", i + 1, matrix_j[j] + 1, matrix_data[j] );
+              }
+            }
+            std::fclose( fp );
+          }
+
+          // Destroy CSRmatrix
+          if( fullMatrix )
+          {
+            GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( fullMatrix ) );
+          }
         }
+        break;
       }
-      break;
-    }
     default:
-    {
-      GEOSX_ERROR( "Unsupported matrix output format" );
-    }
+      {
+        GEOSX_ERROR( "Unsupported matrix output format" );
+      }
   }
 }
 

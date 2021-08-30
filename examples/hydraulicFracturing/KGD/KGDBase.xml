@@ -2,7 +2,7 @@
 
 <Problem>
   <Mesh>
-    <InternalMesh
+    <!-- \InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ -340, -40, 40, 340 }"
@@ -11,6 +11,17 @@
       nx="{ 150, 80, 150 }"
       ny="{ 100, 80 }"
       nz="{ 2 }"
+      cellBlockNames="{ cb1 }"/-->
+
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -2, 2 }"
+      yCoords="{ 0, 2 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 4 }"
+      ny="{ 2 }"
+      nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
 
     <!-- InternalMesh name="mesh1"
@@ -51,7 +62,7 @@
   </Geometry>
 
   <Events
-    maxTime="50.0">
+    maxTime="0.2">
     <!-- SoloEvent 
       name="initialPlot"
       target="/Outputs/siloOutput"
