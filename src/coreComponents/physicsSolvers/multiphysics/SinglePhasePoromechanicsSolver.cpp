@@ -197,8 +197,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  PoromechanicsKernels::SinglePhaseKernelDispatch kernelDispatch( "geosx::PoromechanicsKernels::SinglePhase",
-                                                                  dispDofNumber,
+  PoromechanicsKernels::SinglePhaseKernelDispatch kernelDispatch( dispDofNumber,
                                                                   pDofKey,
                                                                   dofManager.rankOffset(),
                                                                   localMatrix,

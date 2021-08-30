@@ -296,17 +296,6 @@ protected:
     return KERNEL_TYPE::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernel );
   }
 
-#define JITTI 1
-// cpp20 should allow some simplification here, since prior to that string literals can't be used as value template params
-//   and camp doesn't appear to have a mechanism to mitigate this
-#if JITTI == 1
-  #define JITTI_TPARAM( X ) std::nullptr_t
-  #define KernelDispatch KernelJITDispatch
-#else 
-  #define JITTI_TPARAM( X ) X
-  #define KernelDispatch KernelTemplateDispatch
-#endif
-
   jitti::CompilationInfo getKernelCompilationInfo( );
 
   /**
@@ -315,9 +304,8 @@ protected:
    * @tparam KERNEL_TYPE The template class to construct, should implement the KernelBase interface.
    * @tparam ARGS The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
    */
-  // template< typename KernelClass > // subclass on typename vs const char * which will do the JIT
-  template< template < typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE > class KERNEL_TYPE, typename ... ARGS >
-  class KernelTemplateDispatch
+  template < template < typename CONSTITUTIVE_TYPE, typename SUBREGION_TYPE, typename FE_TYPE > class KERNEL_TYPE, typename ... ARGS >
+  class KernelDispatchTemplate
   {
   public:
 
@@ -325,8 +313,7 @@ protected:
      * @brief Initialize the factory.
      * @param args The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
      */
-    KernelTemplateDispatch( string const & scopedKernelName, ARGS ... args ):
-      m_kernelName( scopedKernelName ),
+    KernelDispatchTemplate( ARGS ... args ):
       m_args( args ... )
     {}
 
@@ -362,22 +349,20 @@ protected:
 
   private:
 
-    string const m_kernelName;
     /// The arguments to append to the standard kernel constructor arguments.
     camp::tuple< ARGS ... > m_args;
   };
 
-  //  compiles the kernel using jitti caching
-  template < typename _, typename ... ARGS >
-  class KernelJITDispatch
+  //  compiles the kernel using jitti
+  template < const char * NAME, typename ... ARGS >
+  class KernelDispatchJIT
   {
   public:
     /**
      * @brief Initialize the factory.
      * @param args The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
      */
-    KernelJITDispatch( string const & scopedKernelName, ARGS ... args ):
-      m_kernelName( scopedKernelName ),
+    KernelDispatchJIT( ARGS ... args ):
       m_args( args ... )
     {}
 
@@ -400,7 +385,7 @@ protected:
                             LvArray::system::demangleType< SUBREGION_TYPE >() + ", " + 
                             LvArray::system::demangleType< CONSTITUTIVE_TYPE >() + ", " +
                             LvArray::system::demangleType< FE_TYPE >() + ", " +
-                            m_kernelName +
+                            string( NAME ) + ", " +
                             LvArray::system::demangleType< decltype( m_args ) >();
 
       // Unfortunately can't just decltype(&buildKernelAndInvoke) since we can't fully specify the function template
@@ -431,10 +416,21 @@ protected:
 
   private:
 
-    string const m_kernelName;
     /// The arguments to append to the standard kernel constructor arguments.
     camp::tuple< ARGS ... > m_args;
   };
+
+// Would VASTLY prefer to use template specialization on the above class(es) and allow JITTI_TPARAM to ultimately 
+//  decide on whether to JIT or not.. but current language restrictions on templating and our in-code restrictions on
+//   the kernels due to the 'using' statements throughout the code to define specific kernel dispatchers make that
+//   devwork intractable.
+// We can't use 'using' here due to differences in the above templates as well... nor a nice preprocessor macro... 
+//   so we're basically left with only one option
+#if JITTI == 1
+  #define KernelDispatch KernelDispatchJIT
+#else
+  #define KernelDispatch KernelDispatchTemplate
+#endif
 
 //*****************************************************************************
 //*****************************************************************************

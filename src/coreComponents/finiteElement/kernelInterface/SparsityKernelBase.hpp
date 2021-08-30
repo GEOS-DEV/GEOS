@@ -207,13 +207,6 @@ real64 buildSparsityAndInvoke( localIndex const numElems,
     return SPARSITY_KERNEL_TYPE::template kernelLaunch< POLICY, SPARSITY_KERNEL_TYPE >( numElems, kernel );
 }
 
-#define JITTI 1
-#if JITTI == 1
-  #define SparsityKernelDispatch SparsityKernelJITDispatch
-#else
-  #define SparsityKernelDispatch SparsityKernelTemplateDispatch
-#endif
-
 jitti::CompilationInfo getSparsityCompilationInfo( );
 
 
@@ -226,7 +219,7 @@ jitti::CompilationInfo getSparsityCompilationInfo( );
 template< template< typename,
                     typename,
                     typename > class KERNEL_TEMPLATE >
-class SparsityKernelTemplateDispatch
+class SparsityKernelDispatchTemplate
 {
 public:
 
@@ -236,11 +229,9 @@ public:
    * @param rankOffset The global rank offset.
    * @param inputSparsityPattern The local sparsity pattern.
    */
-  SparsityKernelTemplateDispatch( string const & scopedKernelName, 
-                                  arrayView1d< globalIndex const > const & inputDofNumber,
+  SparsityKernelDispatchTemplate( arrayView1d< globalIndex const > const & inputDofNumber,
                                   globalIndex const rankOffset,
                                   SparsityPattern< globalIndex > & inputSparsityPattern ):
-    m_kernelName( scopedKernelName ),
     m_inputDofNumber( inputDofNumber ),
     m_rankOffset( rankOffset ),
     m_inputSparsityPattern( inputSparsityPattern )
@@ -291,7 +282,7 @@ public:
   }
 
 private:
-  string const m_kernelName;
+
   /// The input degree of freedom numbers.
   arrayView1d< globalIndex const > const & m_inputDofNumber;
   /// The global rank offset.
@@ -307,8 +298,8 @@ private:
  * @tparam KERNEL_TEMPLATE Templated class that defines the physics kernel.
  *   Most likely derives from SparsityKernelBase.
  */
-template < typename _ >
-class SparsityKernelJITDispatch
+template < const char * NAME >
+class SparsityKernelDispatchJIT
 {
 public:
 
@@ -318,11 +309,9 @@ public:
    * @param rankOffset The global rank offset.
    * @param inputSparsityPattern The local sparsity pattern.
    */
-  SparsityKernelJITDispatch( string const & scopedKernelName, 
-                             arrayView1d< globalIndex const > const & inputDofNumber,
+  SparsityKernelDispatchJIT( arrayView1d< globalIndex const > const & inputDofNumber,
                              globalIndex const rankOffset,
                              SparsityPattern< globalIndex > & inputSparsityPattern ):
-    m_kernelName( scopedKernelName ),
     m_inputDofNumber( inputDofNumber ),
     m_rankOffset( rankOffset ),
     m_inputSparsityPattern( inputSparsityPattern )
@@ -360,7 +349,7 @@ public:
                           LvArray::system::demangleType< SUBREGION_TYPE >() + ", " + 
                           LvArray::system::demangleType< CONSTITUTIVE_TYPE >() + ", " +
                           LvArray::system::demangleType< FE_TYPE >() + ", " +
-                          m_kernelName;
+                          string( NAME );
     // Unfortunately can't just decltype(&buildSparsityAndInvoke) since we can't fully specify the function template
     using JIT_SPARSITY_DISPATCH = real64(*)( localIndex const,
                                              NodeManager const &, 
@@ -392,7 +381,7 @@ public:
   }
 
 private:
-  string const m_kernelName;
+
   /// The input degree of freedom numbers.
   arrayView1d< globalIndex const > const & m_inputDofNumber;
   /// The global rank offset.
@@ -400,6 +389,12 @@ private:
   /// The local sparsity pattern.
   SparsityPattern< globalIndex > & m_inputSparsityPattern;
 };
+
+#if JITTI == 1
+  #define SparsityKernelDispatch SparsityKernelDispatchJIT
+#else
+  #define SparsityKernelDispatch SparsityKernelDispatchTemplate
+#endif
 
 //*****************************************************************************
 //*****************************************************************************
@@ -428,8 +423,7 @@ private:
 template< typename REGION_TYPE,
           typename KERNEL_WRAPPER >
 static
-real64 fillSparsity( string const & kernelName,
-                     MeshLevel & mesh,
+real64 fillSparsity( MeshLevel & mesh,
                      arrayView1d< string const > const & targetRegions,
                      string const & discretizationName,
                      arrayView1d< globalIndex const > const & inputDofNumber,
@@ -438,7 +432,7 @@ real64 fillSparsity( string const & kernelName,
 {
   GEOSX_MARK_FUNCTION;
 
-  KERNEL_WRAPPER kernelDispatch( kernelName, inputDofNumber, rankOffset, inputSparsityPattern );
+  KERNEL_WRAPPER kernelDispatch( inputDofNumber, rankOffset, inputSparsityPattern );
 
   regionBasedKernelApplication< serialPolicy,
                                 constitutive::NullModel,

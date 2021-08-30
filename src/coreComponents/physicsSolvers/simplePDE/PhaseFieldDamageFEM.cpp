@@ -229,13 +229,12 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
   localMatrix.zero();
   localRhs.zero();
 
-  PhaseFieldDamageKernelDispatch kernelDispatch( "geosx::PhaseFieldDamageKernel",
-                                                  dofIndex,
-                                                  dofManager.rankOffset(),
-                                                  localMatrix,
-                                                  localRhs,
-                                                  m_fieldName,
-                                                  m_localDissipationOption=="Linear" ? 1 : 2 );
+  PhaseFieldDamageKernelDispatch kernelDispatch( dofIndex,
+                                                 dofManager.rankOffset(),
+                                                 localMatrix,
+                                                 localRhs,
+                                                 m_fieldName,
+                                                 m_localDissipationOption=="Linear" ? 1 : 2 );
 
   finiteElement::
     regionBasedKernelApplication< parallelDevicePolicy<>,

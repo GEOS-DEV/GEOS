@@ -109,8 +109,7 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
                                                   8*8*3 );
 
   finiteElement::fillSparsity< CellElementSubRegion, 
-                               finiteElement::SparsityKernelDispatch< JITTI_TPARAM( LaplaceFEMKernel ) > >( "geosx::LaplaceFEMKernel",
-                                                                                                            mesh,
+                               finiteElement::SparsityKernelDispatch< JITTI_TPARAM( LaplaceFEMKernel ) > >( mesh,
                                                                                                             targetRegionNames(),
                                                                                                             this->getDiscretizationName(),
                                                                                                             dofIndex,
@@ -159,7 +158,7 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
   //                                               globalIndex, CRSMatrixView< real64, globalIndex const > const &,
   //                                               arrayView1d< real64 > const &, string const & >( "geosx::LaplaceFEMKernel" );
 
-  LaplaceFEMKernelDispatch kernelDispatch( "geosx::LaplaceFEMKernel", dofIndex, dofManager.rankOffset(), localMatrix, localRhs, m_fieldName );
+  LaplaceFEMKernelDispatch kernelDispatch( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, m_fieldName );
 
   finiteElement::
     regionBasedKernelApplication< parallelDevicePolicy< 32 >,

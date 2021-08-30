@@ -267,7 +267,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   real64 rval = 0;
   if( m_strainTheory==0 )
   {
-    auto kernelDispatch = SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrainDispatch( "geosx::ExplicitSmallStrain", dt, elementListName );
+    auto kernelDispatch = SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrainDispatch( dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
@@ -279,7 +279,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   }
   else if( m_strainTheory==1 )
   {
-    auto kernelDispatch = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainDispatch( "geosx::ExplicitFiniteStraing", dt, elementListName );
+    auto kernelDispatch = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainDispatch( dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
@@ -951,10 +951,8 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
     } );
 
     finiteElement::
-      fillSparsity< FaceElementSubRegion,
-                    finiteElement::SparsityKernelDispatch< JITTI_TPARAM( SolidMechanicsLagrangianFEMKernels::QuasiStatic ) > >
-                    ( "geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic",
-                      mesh,
+      fillSparsity< FaceElementSubRegion, SolidMechanicsLagrangianFEMKernels::QuasiStaticSparsityDispatch >
+                    ( mesh,
                       allFaceElementRegions,
                       this->getDiscretizationName(),
                       dofNumber,
@@ -962,10 +960,8 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                       sparsityPattern );
   }
   finiteElement::
-    fillSparsity< CellElementSubRegion,
-                  finiteElement::SparsityKernelDispatch< JITTI_TPARAM( SolidMechanicsLagrangianFEMKernels::QuasiStatic ) > >
-                  ( "geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic",
-                    mesh,
+    fillSparsity< CellElementSubRegion, SolidMechanicsLagrangianFEMKernels::QuasiStaticSparsityDispatch >
+                  ( mesh,
                     targetRegionNames(),
                     this->getDiscretizationName(),
                     dofNumber,
@@ -994,8 +990,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   {
     GEOSX_UNUSED_VAR( dt );
     assemblyLaunch< constitutive::SolidBase,
-                    SolidMechanicsLagrangianFEMKernels::QuasiStaticDispatch >( "geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic",
-                                                                               domain,
+                    SolidMechanicsLagrangianFEMKernels::QuasiStaticDispatch >( domain,
                                                                                dofManager,
                                                                                localMatrix,
                                                                                localRhs );
@@ -1003,8 +998,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
     assemblyLaunch< constitutive::SolidBase,
-                    SolidMechanicsLagrangianFEMKernels::ImplicitNewmarkDispatch >( "geosx::SolidMechanicsLagrangianFEMKernels::ImplicitNewmark",
-                                                                                   domain,
+                    SolidMechanicsLagrangianFEMKernels::ImplicitNewmarkDispatch >( domain,
                                                                                    dofManager,
                                                                                    localMatrix,
                                                                                    localRhs,

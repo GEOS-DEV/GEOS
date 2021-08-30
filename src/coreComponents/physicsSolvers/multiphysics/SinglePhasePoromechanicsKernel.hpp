@@ -404,7 +404,8 @@ protected:
 
 };
 
-using SinglePhaseKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( SinglePhase ),
+JITTI_NAME( geosx::PoromechanicsKernels::SinglePhase );
+using SinglePhaseKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( geosx::PoromechanicsKernels::SinglePhase ),
                                                                  arrayView1d< globalIndex const > const &,
                                                                  string const &,
                                                                  globalIndex const,
@@ -413,7 +414,7 @@ using SinglePhaseKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( S
                                                                  real64 const (&)[3],
                                                                  arrayView1d< string const > const >;
 
-} // namespace PoroelasticKernels
+} // namespace PoromechanicsKernels
 
 } // namespace geosx
 

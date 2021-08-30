@@ -21,6 +21,7 @@
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACEFEMKERNELS_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
 namespace geosx
 {
@@ -246,12 +247,16 @@ protected:
 };
 
 /// The factory used to construct a LaplaceFEMKernel.
-using LaplaceFEMKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( LaplaceFEMKernel ),
+JITTI_NAME( geosx::LaplaceFEMKernel );
+using LaplaceFEMKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( geosx::LaplaceFEMKernel ),
                                                                 arrayView1d< globalIndex const > const &,
                                                                 globalIndex,
                                                                 CRSMatrixView< real64, globalIndex const > const &,
                                                                 arrayView1d< real64 > const &, 
                                                                 string const & >;
+
+using LaplaceSparsityDispatch = finiteElement::SparsityKernelDispatch< JITTI_TPARAM( geosx::LaplaceFEMKernel ) >;
+
 
 } // namespace geosx
 

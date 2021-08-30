@@ -475,7 +475,8 @@ protected:
 };
 
 /// The factory used to construct a QuasiStatic kernel.
-using QuasiStaticDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( QuasiStatic ),
+JITTI_NAME( geosx::SolidMechanicsEFEMKernels::QuasiStatic )
+using QuasiStaticDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( geosx::SolidMechanicsEFEMKernels::QuasiStatic ),
                                                            EmbeddedSurfaceSubRegion const &,
                                                            arrayView1d< globalIndex const > const &,
                                                            arrayView1d< globalIndex const > const &,

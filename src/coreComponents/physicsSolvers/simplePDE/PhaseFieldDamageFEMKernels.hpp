@@ -287,7 +287,8 @@ protected:
 
 };
 
-using PhaseFieldDamageKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( PhaseFieldDamageKernel ),
+JITTI_NAME( geosx::PhaseFieldDamageKernel );
+using PhaseFieldDamageKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( geosx::PhaseFieldDamageKernel ),
                                                                       arrayView1d< globalIndex const > const &,
                                                                       globalIndex,
                                                                       CRSMatrixView< real64, globalIndex const > const &,

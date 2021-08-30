@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
 namespace geosx
 {
@@ -329,12 +330,15 @@ protected:
 };
 
 /// The factory used to construct a QuasiStatic kernel.
-using QuasiStaticDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( QuasiStatic ),
+JITTI_NAME( geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic );
+using QuasiStaticDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic ),
                                                            arrayView1d< globalIndex const > const &,
                                                            globalIndex,
                                                            CRSMatrixView< real64, globalIndex const > const &,
                                                            arrayView1d< real64 > const &,
                                                            real64 const (&)[3] >;
+
+using QuasiStaticSparsityDispatch = finiteElement::SparsityKernelDispatch< JITTI_TPARAM( geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic ) >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

@@ -163,8 +163,7 @@ public:
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
-  void assemblyLaunch( string const & kernelClass,
-                       DomainPartition & domain,
+  void assemblyLaunch( DomainPartition & domain,
                        DofManager const & dofManager,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs,
@@ -309,8 +308,7 @@ ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-void SolidMechanicsLagrangianFEM::assemblyLaunch( string const & kernelClass,
-                                                  DomainPartition & domain,
+void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs,
@@ -326,8 +324,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( string const & kernelClass,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  KERNEL_WRAPPER kernelWrapper( kernelClass,
-                                dofNumber,
+  KERNEL_WRAPPER kernelWrapper( dofNumber,
                                 dofManager.rankOffset(),
                                 localMatrix,
                                 localRhs,

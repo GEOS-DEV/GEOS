@@ -192,8 +192,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  PoromechanicsKernels::MultiphaseKernelDispatch kernelDispatch( "geosx::Multiphase",
-                                                                 displacementDofNumber,
+  PoromechanicsKernels::MultiphaseKernelDispatch kernelDispatch( displacementDofNumber,
                                                                  flowDofKey,
                                                                  dofManager.rankOffset(),
                                                                  gravityVectorData,
