@@ -200,7 +200,8 @@ public:
 #undef UPDATE_STRESS
 
 /// The factory used to construct a ExplicitFiniteStrain kernel.
-using ExplicitFiniteStrainDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( ExplicitFiniteStrain ),
+JITTI_DECL( explicitFiniteStrain, geosx::SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain, __FILE__ );
+using ExplicitFiniteStrainDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( explicitFiniteStrain, geosx::SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain ),
                                                                     real64,
                                                                     string const & >;
 

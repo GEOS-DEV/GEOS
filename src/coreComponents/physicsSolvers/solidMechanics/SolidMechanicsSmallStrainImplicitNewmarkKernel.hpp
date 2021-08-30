@@ -292,7 +292,8 @@ protected:
 };
 
 /// The factory used to construct a ImplicitNewmark kernel.
-using ImplicitNewmarkDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( ImplicitNewmark ),
+JITTI_DECL( implcitNewmarkJIT, geosx::SolidMechanicsLagrangianFEMKernels::ImplicitNewmark, __FILE__ );
+using ImplicitNewmarkDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( implcitNewmarkJIT, geosx::SolidMechanicsLagrangianFEMKernels::ImplicitNewmark ),
                                                                arrayView1d< globalIndex const > const &,
                                                                globalIndex,
                                                                CRSMatrixView< real64, globalIndex const > const &,

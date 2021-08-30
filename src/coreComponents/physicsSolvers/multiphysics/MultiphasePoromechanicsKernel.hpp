@@ -577,8 +577,8 @@ protected:
   localIndex const m_numPhases;
 };
 
-JITTI_NAME( geosx::PoromechanicsKernels::Multiphase );
-using MultiphaseKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( geosx::PoromechanicsKernels::Multiphase ),
+JITTI_DECL( multiphaseJIT, geosx::PoromechanicsKernels::Multiphase, __FILE__ );
+using MultiphaseKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( multiphaseJIT, geosx::PoromechanicsKernels::Multiphase ),
                                                                 arrayView1d< globalIndex const > const &,
                                                                 string const &,
                                                                 globalIndex const,

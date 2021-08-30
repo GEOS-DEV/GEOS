@@ -247,15 +247,15 @@ protected:
 };
 
 /// The factory used to construct a LaplaceFEMKernel.
-JITTI_NAME( geosx::LaplaceFEMKernel );
-using LaplaceFEMKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( geosx::LaplaceFEMKernel ),
+JITTI_DECL( laplaceFEMKernelJIT, geosx::LaplaceFEMKernel, __FILE__ );
+using LaplaceFEMKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( laplaceFEMKernelJIT, geosx::LaplaceFEMKernel ),
                                                                 arrayView1d< globalIndex const > const &,
                                                                 globalIndex,
                                                                 CRSMatrixView< real64, globalIndex const > const &,
                                                                 arrayView1d< real64 > const &, 
                                                                 string const & >;
 
-using LaplaceSparsityDispatch = finiteElement::SparsityKernelDispatch< JITTI_TPARAM( geosx::LaplaceFEMKernel ) >;
+using LaplaceSparsityDispatch = finiteElement::SparsityKernelDispatch< JITTI_TPARAM( laplaceFEMKernelJIT, geosx::LaplaceFEMKernel ) >;
 
 
 } // namespace geosx

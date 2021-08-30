@@ -207,9 +207,6 @@ real64 buildSparsityAndInvoke( localIndex const numElems,
     return SPARSITY_KERNEL_TYPE::template kernelLaunch< POLICY, SPARSITY_KERNEL_TYPE >( numElems, kernel );
 }
 
-jitti::CompilationInfo getSparsityCompilationInfo( );
-
-
 /**
  * @brief Helper struct to define a specialization of
  *   #::geosx::finiteElement::SparsityKernelBase that may be used to generate the sparsity pattern.
@@ -292,13 +289,15 @@ private:
 };
 
 
+jitti::CompilationInfo getSparsityCompilationInfo( const string & );
+
 /**
  * @brief Helper struct to define a specialization of
  *   #::geosx::finiteElement::SparsityKernelBase that may be used to generate the sparsity pattern.
  * @tparam KERNEL_TEMPLATE Templated class that defines the physics kernel.
  *   Most likely derives from SparsityKernelBase.
  */
-template < const char * NAME >
+template < const char * NAME, const char * HEADER >
 class SparsityKernelDispatchJIT
 {
 public:
@@ -344,7 +343,8 @@ public:
                  FE_TYPE const & finiteElementSpace,
                  CONSTITUTIVE_TYPE & inputConstitutiveType )
   {
-    jitti::CompilationInfo info = getSparsityCompilationInfo();
+    string header( HEADER );
+    jitti::CompilationInfo info = getSparsityCompilationInfo( header );
     info.templateParams = LvArray::system::demangleType< POLICY >() + ", " +
                           LvArray::system::demangleType< SUBREGION_TYPE >() + ", " + 
                           LvArray::system::demangleType< CONSTITUTIVE_TYPE >() + ", " +
@@ -362,7 +362,7 @@ public:
                                              arrayView1d< globalIndex const > const &,
                                              globalIndex const,
                                              SparsityPattern< globalIndex > & );
-    string outputDir( JITTI_OUTPUT_DIR );
+    string outputDir( STRINGIZE( JITTI_OUTPUT_DIR ) );
     outputDir += "/";
     static jitti::Cache< JIT_SPARSITY_DISPATCH > buildCache( time(NULL), outputDir );
     auto & jitSparsityDispatch = buildCache.getOrLoadOrCompile( info );

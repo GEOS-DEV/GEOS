@@ -27,6 +27,7 @@
 #include "mesh/MeshLevel.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/MpiWrapper.hpp"
 #include "LvArray/src/jitti/Cache.hpp"
 
 namespace geosx
@@ -296,8 +297,6 @@ protected:
     return KERNEL_TYPE::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernel );
   }
 
-  jitti::CompilationInfo getKernelCompilationInfo( );
-
   /**
    * @class KernelTemplateDispatch
    * @brief Used to forward arguments to a class that implements the KernelBase interface.
@@ -353,8 +352,10 @@ protected:
     camp::tuple< ARGS ... > m_args;
   };
 
+  jitti::CompilationInfo getKernelCompilationInfo( const string & header );
   //  compiles the kernel using jitti
-  template < const char * NAME, typename ... ARGS >
+  template < const char * NAME, const char * HEADER, typename ... ARGS >
+  //template < template < const char * NAME, const char * HEADER > class constexpr_jitti_info< NAME, HEADER > CONSTEXPR_INFO, typename ... ARGS >
   class KernelDispatchJIT
   {
   public:
@@ -378,8 +379,9 @@ protected:
                    SUBREGION_TYPE const & elementSubRegion,
                    FE_TYPE const & finiteElementSpace,
                    CONSTITUTIVE_TYPE & inputConstitutiveType )
-    { 
-      jitti::CompilationInfo info = getKernelCompilationInfo( );
+    {
+      string header( HEADER );
+      jitti::CompilationInfo info = getKernelCompilationInfo( header );
 
       info.templateParams = LvArray::system::demangleType< POLICY >() + ", " +
                             LvArray::system::demangleType< SUBREGION_TYPE >() + ", " + 
@@ -396,11 +398,17 @@ protected:
                                               localIndex const, 
                                               SUBREGION_TYPE const &, 
                                               FE_TYPE const &, 
-                                              CONSTITUTIVE_TYPE const &, 
+                                              CONSTITUTIVE_TYPE &, 
                                               decltype( m_args ) const & );
-      string outputDir(JITTI_OUTPUT_DIR);
+      string outputDir( STRINGIZE( JITTI_OUTPUT_DIR ) );
       outputDir += "/";
       static jitti::Cache< JIT_KERNEL_DISPATCH > buildCache( time(NULL), outputDir );
+
+      if( MpiWrapper::commRank( ) == 0 )
+      {
+        buildCache.getOrLoadOrCompile( info );
+      }
+      MpiWrapper::barrier( );
       auto & jitKernelDispatch = buildCache.getOrLoadOrCompile( info );
 
       return jitKernelDispatch( numElems,

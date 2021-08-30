@@ -109,12 +109,12 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
                                                   8*8*3 );
 
   finiteElement::fillSparsity< CellElementSubRegion, 
-                               finiteElement::SparsityKernelDispatch< JITTI_TPARAM( LaplaceFEMKernel ) > >( mesh,
-                                                                                                            targetRegionNames(),
-                                                                                                            this->getDiscretizationName(),
-                                                                                                            dofIndex,
-                                                                                                            dofManager.rankOffset(),
-                                                                                                            sparsityPattern );
+                               LaplaceSparsityDispatch >( mesh,
+                                                          targetRegionNames(),
+                                                          this->getDiscretizationName(),
+                                                          dofIndex,
+                                                          dofManager.rankOffset(),
+                                                          sparsityPattern );
 
   sparsityPattern.compress();
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );

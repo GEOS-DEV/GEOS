@@ -340,7 +340,8 @@ protected:
 #undef UPDATE_STRESS
 
 /// The factory used to construct a ExplicitSmallStrain kernel.
-using ExplicitSmallStrainDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( ExplicitSmallStrain ),
+JITTI_DECL( explicitSmallStrainJIT, geosx::SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrain, __FILE__ );
+using ExplicitSmallStrainDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( explicitSmallStrainJIT, geosx::SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrain ),
                                                                    real64,
                                                                    string const & >;
 

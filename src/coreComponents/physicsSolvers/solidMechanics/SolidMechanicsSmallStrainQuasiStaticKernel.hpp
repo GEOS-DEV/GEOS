@@ -330,15 +330,15 @@ protected:
 };
 
 /// The factory used to construct a QuasiStatic kernel.
-JITTI_NAME( geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic );
-using QuasiStaticDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic ),
+JITTI_DECL( quasiStaticJIT, geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic, __FILE__ );
+using QuasiStaticDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( quasiStaticJIT, geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic ),
                                                            arrayView1d< globalIndex const > const &,
                                                            globalIndex,
                                                            CRSMatrixView< real64, globalIndex const > const &,
                                                            arrayView1d< real64 > const &,
                                                            real64 const (&)[3] >;
 
-using QuasiStaticSparsityDispatch = finiteElement::SparsityKernelDispatch< JITTI_TPARAM( geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic ) >;
+using QuasiStaticSparsityDispatch = finiteElement::SparsityKernelDispatch< JITTI_TPARAM( quasiStaticJIT, geosx::SolidMechanicsLagrangianFEMKernels::QuasiStatic ) >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

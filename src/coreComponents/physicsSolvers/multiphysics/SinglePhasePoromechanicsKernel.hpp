@@ -404,8 +404,8 @@ protected:
 
 };
 
-JITTI_NAME( geosx::PoromechanicsKernels::SinglePhase );
-using SinglePhaseKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( geosx::PoromechanicsKernels::SinglePhase ),
+JITTI_DECL( singlePhaseJIT, geosx::PoromechanicsKernels::SinglePhase, __FILE__ );
+using SinglePhaseKernelDispatch = finiteElement::KernelDispatch< JITTI_TPARAM( singlePhaseJIT, geosx::PoromechanicsKernels::SinglePhase ),
                                                                  arrayView1d< globalIndex const > const &,
                                                                  string const &,
                                                                  globalIndex const,
