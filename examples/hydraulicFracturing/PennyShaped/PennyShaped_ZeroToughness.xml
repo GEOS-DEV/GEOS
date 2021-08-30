@@ -13,10 +13,12 @@
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region2, Fracture }"
+      targetRegions="{ Domain }"
       contactRelationName="fractureContact"
       maxNumResolves="1"
       initialDt="0.1">
@@ -34,7 +36,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Domain }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
@@ -62,7 +64,7 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Domain }"
       nodeBasedSIF="1"
       solidMaterialNames="{ rock }"
       rockToughness="0.3e6"/>
@@ -70,14 +72,14 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region2"
+      name="Domain"
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="0.03e-3"
-      materialList="{ water, rock, fracPerm }"/>
+      defaultAperture="0.02e-3"
+      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -90,25 +92,38 @@
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
-    <PoroElasticIsotropic
+    <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"
-      defaultShearModulus="12.0e9"
-      compressibility="1.6155088853e-18"
-      referencePressure="2.125e6"/>
+      defaultShearModulus="12.0e9"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
 
     <Contact
       name="fractureContact"
       penaltyStiffness="1.0e0">
       <TableFunction
         name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 0.002e-3, 0.03e-3 }"/>
+        coordinates="{ -0.01, -1.0e-3, 0.0 }"
+        values="{ 0.005, 0.01e-3, 0.02e-3 }"/>
     </Contact>
-
-    <ParallelPlatesPermeability
-      name="fracPerm"/>
   </Constitutive>
 
   <Outputs>

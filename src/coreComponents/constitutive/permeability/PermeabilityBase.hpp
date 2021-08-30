@@ -52,9 +52,7 @@ public:
                                    localIndex const q,
                                    real64 const & porosity ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( porosity );
+    GEOSX_UNUSED_VAR( k, q, porosity );
   }
 
   GEOSX_HOST_DEVICE
@@ -63,42 +61,37 @@ public:
                                          real64 const & pressure,
                                          real64 const & volStrain ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( pressure );
-    GEOSX_UNUSED_VAR( volStrain );
+    GEOSX_UNUSED_VAR( k, q, pressure, volStrain );
   }
 
   GEOSX_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
-                                   real64 const & aperture ) const
+                                   real64 const & oldHydraulicAperture,
+                                   real64 const & newHydraulicAperture ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( aperture );
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
 
 protected:
 
-  PermeabilityBaseUpdate( arrayView2d< real64 > const & permeability,
-                          arrayView2d< real64 > const & dPerm_dPressure )
+  PermeabilityBaseUpdate( arrayView3d< real64 > const & permeability,
+                          arrayView3d< real64 > const & dPerm_dPressure )
     : m_permeability( permeability ),
     m_dPerm_dPressure( dPerm_dPressure )
   {}
 
-  arrayView2d< real64 > m_permeability;
+  arrayView3d< real64 > m_permeability;
 
-  arrayView2d< real64 > m_dPerm_dPressure;
+  arrayView3d< real64 > m_dPerm_dPressure;
 };
 
 
 class PermeabilityBase : public ConstitutiveBase
 {
 public:
-  PermeabilityBase( string const & name, Group * const parent );
 
-  virtual ~PermeabilityBase() override;
+  PermeabilityBase( string const & name, Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -110,9 +103,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  arrayView2d< real64 const > const permeability() const { return m_permeability; }
+  arrayView3d< real64 const > permeability() const { return m_permeability; }
 
-  arrayView2d< real64 const > const dPerm_dPressure() const { return m_dPerm_dPressure; }
+  arrayView3d< real64 const > dPerm_dPressure() const { return m_dPerm_dPressure; }
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -122,11 +115,10 @@ public:
   } viewKeys;
 
 protected:
-  virtual void postProcessInput() override;
 
-  array2d< real64 > m_permeability;
+  array3d< real64 > m_permeability;
 
-  array2d< real64 > m_dPerm_dPressure;
+  array3d< real64 > m_dPerm_dPressure;
 };
 
 }/* namespace constitutive */

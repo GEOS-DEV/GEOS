@@ -43,7 +43,8 @@ ParallelPlatesPermeability::deliverClone( string const & name,
 void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_dPerm_dAperture.resize( 0, 3 );
+  // NOTE: enforcing 1 quadrature point
+  m_dPerm_dAperture.resize( 0, 1, 3 );
 
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

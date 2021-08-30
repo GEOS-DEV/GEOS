@@ -63,19 +63,6 @@ A typical GEOSX input file contains the following XML tags:
  #. :ref:`Outputs <Outputs_tag_single_phase_internal_mesh>`
 
 
-In addition to the data required to solve the problem,
-it is a best practice to start an XML file with an optional header (called a *schema*)
-that specifies the naming conventions used in the XML file.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN -->
-  :end-before: <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN_END -->
-
-The attributes ``xmlns:xsi`` and ``xsi:noNamespaceSchemaLocation`` are used to define the file format and schema.
-This header is optional, but it can be used to configure various xml validation tools.
-
-
 .. _Solver_tag_single_phase_internal_mesh:
 
 Defining a solver
@@ -206,7 +193,7 @@ This explains why we need to extend the geometry limits to 0.01 beyond the coord
   :end-before: <!-- SPHINX_TUT_INT_HEX_GEOMETRY_END -->
 
 There are several methods to achieve similar conditions (Dirichlet boundary condition on faces, etc.).
-The **Box** defined here is one of the simplest approach.
+The **Box** defined here is one of the simplest approaches.
 Just like meshes and solvers, boxes are named objects and will be registered and used using their handle (``source`` and ``sink``).
 We can refer to their handle later in the input file when assigning property values to them.
 
@@ -302,24 +289,25 @@ and assigns physical properties to them: density, viscosity, compressibility...
 
 
 In this tutorial, the physical properties of the materials
-defined as ``water`` and ``rock`` are provided here,
+defined as ``water``, ``rock`` and ``rockPerm`` are provided here,
 each material being derived from a different material type:
-a ``CompressibleSinglePhaseFluid``
-for the water, and a ``PoreVolumeCompressibleSolid`` for the rock.
+``CompressibleSinglePhaseFluid``
+for the water, ``PoreVolumeCompressibleSolid`` for the rock, and
+``ConstantPermeability`` for rock permeability.
 The list of attributes differs between these constitutive materials.
 
 
-The names ``water`` and ``rock`` are defined by the user
+The names ``water``, ``rock`` and ``rockPerm`` are defined by the user
 as handles to specific instances of physical materials.
 GEOSX uses S.I. units throughout, not field units.
 Pressures, for instance, are in Pascal, not psia.
 
 
-Note that we had used the handles ``water`` and ``rock`` in the input file
+Note that we had used the handles ``water``, ``rock`` and ``rockPerm`` in the input file
 in the ElementRegions section of the XML file,
-before the registration of these materials took place here, in Constitutive element. This highlights an important aspect of using XML in GEOSX:
-the order in which objects are registered and used
-in the XML file is not important.
+before the registration of these materials took place here, in Constitutive element.
+This highlights an important aspect of using XML in GEOSX:
+the order in which objects are registered and used in the XML file is not important.
 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml

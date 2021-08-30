@@ -526,11 +526,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   arrayView1d< real64 const > const & dPres =
     subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-  arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
-  arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
-
   arrayView1d< real64 const > const & connRate =
     subRegion.getReference< array1d< real64 > >( viewKeyStruct::mixtureConnRateString() );
   arrayView1d< real64 const > const & dConnRate =
@@ -548,6 +543,10 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseFrac = fluid.phaseFraction();
   arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseFrac_dPres = fluid.dPhaseFraction_dPressure();
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp = fluid.dPhaseFraction_dGlobalCompFraction();
+
+  arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens = fluid.totalDensity();
+  arrayView2d< real64 const, multifluid::USD_FLUID > const & dTotalDens_dPres = fluid.dTotalDensity_dPressure();
+  arrayView3d< real64 const, multifluid::USD_FLUID_DC > const & dTotalDens_dComp = fluid.dTotalDensity_dGlobalCompFraction();
 
   arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens = fluid.phaseDensity();
   arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
@@ -589,12 +588,13 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 fluidWrapper,
                                 pres,
                                 dPres,
-                                compDens,
-                                dCompDens,
                                 compFrac,
                                 dCompFrac_dCompDens,
                                 connRate,
                                 dConnRate,
+                                totalDens,
+                                dTotalDens_dPres,
+                                dTotalDens_dComp,
                                 phaseDens,
                                 dPhaseDens_dPres,
                                 dPhaseDens_dComp,
@@ -615,10 +615,13 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 dCurrentPhaseVolRate_dRate,
                                 &iwelemRef] ( localIndex const )
     {
+      stackArray1d< real64, maxNumComp > work( numComp );
+
+      // Step 1: evaluate the phase and total density in the reference element
+
       //    We need to evaluate the density as follows:
       //      - Surface conditions: using the surface pressure provided by the user
       //      - Reservoir conditions: using the pressure in the top element
-
       if( useSurfaceConditions )
       {
         // we need to compute the surface density
@@ -630,31 +633,42 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         fluidWrapper.update( iwelemRef, 0, refPres, temp, compFrac[iwelemRef] );
       }
 
-      // total volume rate
+      // Step 2: update the total volume rate
+
       real64 const currentTotalRate = connRate[iwelemRef] + dConnRate[iwelemRef];
-      real64 totalDens = 0;
+
+      // Step 2.1: compute the inverse of the total density and derivatives
+
+      real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
+      real64 const dTotalDensInv_dPres = -dTotalDens_dPres[iwelemRef][0] * totalDensInv * totalDensInv;
+      stackArray1d< real64, maxNumComp > dTotalDensInv_dCompDens( numComp );
       for( localIndex ic = 0; ic < numComp; ++ic )
       {
-        totalDens += compDens[iwelemRef][ic] + dCompDens[iwelemRef][ic];
+        dTotalDensInv_dCompDens[ic] = -dTotalDens_dComp[iwelemRef][0][ic] * totalDensInv * totalDensInv;
       }
-      real64 const totalDensInv = 1.0 / totalDens;
+      applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], dTotalDensInv_dCompDens, work.data() );
+
+      // Step 2.2: divide the total mass/molar rate by the total density to get the total volumetric rate
       currentTotalVolRate = currentTotalRate * totalDensInv;
-      dCurrentTotalVolRate_dPres = 0; // using the fact that totalDens = \sum_c compDens (independent of pressure)
+      dCurrentTotalVolRate_dPres = ( useSurfaceConditions ==  0 ) * currentTotalRate * dTotalDensInv_dPres;
       dCurrentTotalVolRate_dRate = totalDensInv;
       for( localIndex ic = 0; ic < numComp; ++ic )
       {
-        dCurrentTotalVolRate_dCompDens[ic] = -currentTotalVolRate * totalDensInv; // using the fact that totalDens = \sum_c compDens
+        dCurrentTotalVolRate_dCompDens[ic] = currentTotalRate * dTotalDensInv_dCompDens[ic];
       }
 
-      // phase volume rate
-      stackArray1d< real64, maxNumComp > work( numComp );
+      // Step 3: update the phase volume rate
       for( localIndex ip = 0; ip < numPhase; ++ip )
       {
+
+        // Step 3.1: compute the inverse of the (phase density * phase fraction) and derivatives
         real64 const phaseDensInv = 1.0 / phaseDens[iwelemRef][0][ip];
         real64 const phaseFracTimesPhaseDensInv = phaseFrac[iwelemRef][0][ip] * phaseDensInv;
         real64 const dPhaseFracTimesPhaseDensInv_dPres = dPhaseFrac_dPres[iwelemRef][0][ip] * phaseDensInv
                                                          - dPhaseDens_dPres[iwelemRef][0][ip] * phaseFracTimesPhaseDensInv * phaseDensInv;
 
+
+        // Step 3.2: divide the total mass/molar rate by the (phase density * phase fraction) to get the phase volumetric rate
         currentPhaseVolRate[ip] = currentTotalRate * phaseFracTimesPhaseDensInv;
         dCurrentPhaseVolRate_dPres[ip] = ( useSurfaceConditions ==  0 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dPres;
         dCurrentPhaseVolRate_dRate[ip] = phaseFracTimesPhaseDensInv;
@@ -791,7 +805,7 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
 
 }
 
-void CompositionalMultiphaseWell::updateState( WellElementSubRegion & subRegion, localIndex const targetIndex )
+void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex )
 {
   // update properties
   updateComponentFraction( subRegion );
@@ -897,7 +911,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
     // 5) Recompute the pressure-dependent properties
     // Note: I am leaving that here because I would like to use the perforationRates (computed in UpdateState)
     //       to better initialize the rates
-    updateState( subRegion, targetIndex );
+    updateSubRegionState( subRegion, targetIndex );
 
     // 6) Estimate the well rates
     // TODO: initialize rates using perforation rates
@@ -1311,10 +1325,6 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
                                                        domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                        domain.getNeighbors(),
                                                        true );
-
-  // update properties
-  updateStateAll( domain );
-
 }
 
 void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domain )
@@ -1382,7 +1392,7 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
   } );
 
   // call constitutive models
-  updateStateAll( domain );
+  updateState( domain );
 }
 
 

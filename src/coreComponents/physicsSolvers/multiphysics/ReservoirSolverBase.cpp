@@ -25,7 +25,6 @@
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
-
 namespace geosx
 {
 
@@ -77,8 +76,8 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
   // loop over the wells
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
-    array1d< array1d< arrayView2d< real64 const > > > const permeability =
-      elemManager.constructMaterialArrayViewAccessor< real64, 2 >( PermeabilityBase::viewKeyStruct::permeabilityString(),
+    array1d< array1d< arrayView3d< real64 const > > > const permeability =
+      elemManager.constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::permeabilityString(),
                                                                    m_flowSolver->targetRegionNames(),
                                                                    m_flowSolver->permeabilityModelNames() );
 
@@ -291,7 +290,7 @@ void ReservoirSolverBase::assembleSystem( real64 const time_n,
    * moved to device, the calculation is wrong. the problem should go away when fluid updates
    * are executed on device.
    */
-  m_wellSolver->updateStateAll( domain );
+  m_wellSolver->updateState( domain );
 
   // assemble J_WW (excluding perforation rates)
   m_wellSolver->assembleSystem( time_n, dt,
@@ -369,6 +368,12 @@ void ReservoirSolverBase::applySystemSolution( DofManager const & dofManager,
   m_flowSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
   // update the well variables
   m_wellSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+}
+
+void ReservoirSolverBase::updateState( DomainPartition & domain )
+{
+  m_flowSolver->updateState( domain );
+  m_wellSolver->updateState( domain );
 }
 
 void ReservoirSolverBase::resetStateToBeginningOfStep( DomainPartition & domain )

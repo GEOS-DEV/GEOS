@@ -9,6 +9,8 @@ physics solvers to be included in the simulation.
 .. toctree::
    :maxdepth: 2
 
+   SolutionStrategy
+
    solidMechanics/docs/SolidMechanics
 
    fluidFlow/docs/SinglePhaseFlow
@@ -21,4 +23,3 @@ physics solvers to be included in the simulation.
 
    fluidFlow/docs/ProppantTransport
 
-   SolutionStrategy

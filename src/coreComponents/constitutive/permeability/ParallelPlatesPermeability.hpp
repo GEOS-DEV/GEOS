@@ -31,31 +31,57 @@ class ParallelPlatesPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  ParallelPlatesPermeabilityUpdate( arrayView2d< real64 > const & permeability,
-                                    arrayView2d< real64 > const & dPerm_dPressure,
-                                    arrayView2d< real64 > const & dPerm_dAperture )
+  ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
+                                    arrayView3d< real64 > const & dPerm_dPressure,
+                                    arrayView3d< real64 > const & dPerm_dAper )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
-    m_dPerm_dAperture( dPerm_dAperture )
+    m_dPerm_dAperture( dPerm_dAper )
   {}
 
   GEOSX_HOST_DEVICE
-  void compute( real64 const & effectiveAperture,
+  void compute( real64 const & oldHydraulicAperture,
+                real64 const & newHydraulicAperture,
                 arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dAperture ) const;
+                arraySlice1d< real64 > const & dPerm_dAperture ) const
+  {
+    // TODO: maybe move to this computation or have the possibility of choosing.
+//    real64 const perm  = newHydraulicAperture*newHydraulicAperture*newHydraulicAperture / 12.0;
+//    real64 const dPerm = newHydraulicAperture*newHydraulicAperture / 4.0;
+
+    real64 const perm = 0.25 * ( oldHydraulicAperture*oldHydraulicAperture*oldHydraulicAperture +
+                                 oldHydraulicAperture*oldHydraulicAperture*newHydraulicAperture +
+                                 oldHydraulicAperture*newHydraulicAperture*newHydraulicAperture +
+                                 newHydraulicAperture*newHydraulicAperture*newHydraulicAperture ) / 12;
+
+    real64 const dPerm  = 0.25 * ( oldHydraulicAperture*oldHydraulicAperture +
+                                   2*oldHydraulicAperture*newHydraulicAperture +
+                                   3*newHydraulicAperture*newHydraulicAperture ) / 12;
+
+
+    for( int dim=0; dim < 3; dim++ )
+    {
+      permeability[dim]     = perm;
+      dPerm_dAperture[dim]  = dPerm;
+    }
+  }
 
   GEOSX_HOST_DEVICE
-  void updateFromAperture( localIndex const k,
-                           localIndex const q,
-                           real64 const & effectiveAperture ) const override
+  virtual void updateFromAperture( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & oldHydraulicAperture,
+                                   real64 const & newHydraulicAperture ) const override final
   {
     GEOSX_UNUSED_VAR( q );
 
-    compute( effectiveAperture,
-             m_permeability[k],
-             m_dPerm_dAperture[k] );
+    compute( oldHydraulicAperture,
+             newHydraulicAperture,
+             m_permeability[k][0],
+             m_dPerm_dAperture[k][0] );
   }
+
 private:
-  arrayView2d< real64 > m_dPerm_dAperture;
+
+  arrayView3d< real64 > m_dPerm_dAperture;
 
 };
 
@@ -63,9 +89,8 @@ private:
 class ParallelPlatesPermeability : public PermeabilityBase
 {
 public:
-  ParallelPlatesPermeability( string const & name, Group * const parent );
 
-  virtual ~ParallelPlatesPermeability() override = default;
+  ParallelPlatesPermeability( string const & name, Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -96,28 +121,10 @@ public:
   {} viewKeys;
 
 private:
-  array2d< real64 > m_dPerm_dAperture;
+
+  array3d< real64 > m_dPerm_dAperture;
 
 };
-
-
-GEOSX_HOST_DEVICE
-void ParallelPlatesPermeabilityUpdate::compute( real64 const & effectiveAperture,
-                                                arraySlice1d< real64 > const & permeability,
-                                                arraySlice1d< real64 > const & dPerm_dAperture ) const
-{
-  // Technically this is not a permeability but it's convenient to definite like this.
-  real64 const perm  = effectiveAperture*effectiveAperture*effectiveAperture / 12.0;
-  real64 const dPerm = 3*effectiveAperture*effectiveAperture / 12.0;
-
-  for( int dim=0; dim < 3; dim++ )
-  {
-    permeability[dim]     = perm;
-    dPerm_dAperture[dim]  = dPerm;
-  }
-}
-
-
 
 }/* namespace constitutive */
 
