@@ -133,7 +133,7 @@ public:
   /**
    * @brief Abstract setup method, possibly computing cell-dependent properties.
    * @param cellIndex The index of the cell with respect to the cell sub region to which the element has been initialized previously (see
-   *@ref initialize).
+   * @ref initialize).
    * @param stack Object that holds stack variables.
    */
   template< typename LEAF >
@@ -199,6 +199,25 @@ public:
                    real64 const (&X)[LEAF::numNodes][3],
                    real64 ( &gradN )[LEAF::numNodes][3] ) const;
 
+  /**
+   * @brief Get the shape function gradients.
+   * @tparam LEAF Type of the derived finite element implementation.
+   * @param k The element index.
+   * @param q The quadrature point index.
+   * @param X Array of coordinates as the reference for the gradients.
+   * @param stack Stack variables relative to the element @param k created by a call to @ref setup
+   * @param gradN Return array of the shape function gradients.
+   * @return The determinant of the Jacobian transformation matrix.
+   *
+   * This function calls the function to calculate shape function gradients.
+   */
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  real64 getGradN( localIndex const k,
+                   localIndex const q,
+                   real64 const (&X)[LEAF::numNodes][3],
+                   typename LEAF::StackVariables const & stack,
+                   real64 ( &gradN )[LEAF::numNodes][3] ) const;
 
   /**
    * @brief Get the shape function gradients.
@@ -560,6 +579,19 @@ real64 FiniteElementBase::getGradN( localIndex const k,
 {
   GEOSX_UNUSED_VAR( k );
   return LEAF::calcGradN( q, X, gradN );
+}
+
+template< typename LEAF >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 FiniteElementBase::getGradN( localIndex const k,
+                                    localIndex const q,
+                                    real64 const (&X)[LEAF::numNodes][3],
+                                    typename LEAF::StackVariables const & stack,
+                                    real64 ( & gradN )[LEAF::numNodes][3] ) const
+{
+  GEOSX_UNUSED_VAR( k );
+  return LEAF::calcGradN( q, X, stack, gradN );
 }
 
 template< typename LEAF >

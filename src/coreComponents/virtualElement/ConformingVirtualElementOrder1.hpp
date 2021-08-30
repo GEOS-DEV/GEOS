@@ -95,14 +95,14 @@ public:
                              real64 const (&cellCenter)[3],
                              real64 const & cellVolume
                              )
-    {
-      computeProjectors( cellIndex, nodesCoords, cellToNodeMap,
-                         elementToFaceMap, faceToNodeMap, faceToEdgeMap,
-                         edgeToNodeMap, faceCenters, faceNormals,
-                         faceAreas, cellCenter, cellVolume,
-                         m_numSupportPoints, m_quadratureWeight, m_basisFunctionsIntegralMean,
-                         m_stabilizationMatrix, m_basisDerivativesIntegralMean );
-    }
+  {
+    computeProjectors( cellIndex, nodesCoords, cellToNodeMap,
+                       elementToFaceMap, faceToNodeMap, faceToEdgeMap,
+                       edgeToNodeMap, faceCenters, faceNormals,
+                       faceAreas, cellCenter, cellVolume,
+                       m_numSupportPoints, m_quadratureWeight, m_basisFunctionsIntegralMean,
+                       m_stabilizationMatrix, m_basisDerivativesIntegralMean );
+  }
 
   GEOSX_HOST_DEVICE
   static constexpr localIndex getMaxSupportPoints()
@@ -155,9 +155,9 @@ public:
                           StackVariables & stack )
   {
     real64 const cellCenter[3] { initialization.cellCenters( cellIndex, 0 ),
-        initialization.cellCenters( cellIndex, 1 ),
-        initialization.cellCenters( cellIndex, 2 ) };
-    real64 const cellVolume = initialization.cellVolumes(cellIndex);
+                                 initialization.cellCenters( cellIndex, 1 ),
+                                 initialization.cellCenters( cellIndex, 2 ) };
+    real64 const cellVolume = initialization.cellVolumes( cellIndex );
     computeProjectors( cellIndex,
                        initialization.nodesCoords,
                        initialization.cellToNodeMap,
@@ -202,11 +202,46 @@ public:
     return transformedQuadratureWeight( q, X );
   }
 
+  /**
+   * @brief Calculate the shape functions derivatives wrt the physical
+   *   coordinates.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param gradN Array to contain the shape function derivatives for all
+   *   support points at the coordinates of the quadrature point @p q.
+   * @return The determinant of the parent/physical transformation matrix.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static real64 calcGradN( localIndex const q,
+                           real64 const (&X)[maxSupportPoints][3],
+                           StackVariables const & stack,
+                           real64 ( & gradN )[maxSupportPoints][3] )
+  {
+    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
+    {
+      gradN[i][0] = stack.basisDerivativesIntegralMean[i][0];
+      gradN[i][1] = stack.basisDerivativesIntegralMean[i][1];
+      gradN[i][2] = stack.basisDerivativesIntegralMean[i][2];
+    }
+    return transformedQuadratureWeight( q, X, stack );
+  }
+
   GEOSX_HOST_DEVICE
   real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
                                       real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3] ) const
   {
     return m_quadratureWeight;
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
+                                             real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3],
+                                             StackVariables const & stack )
+  {
+    return stack.quadratureWeight;
   }
 
   GEOSX_HOST_DEVICE
@@ -303,8 +338,8 @@ private:
                           real64 const (&cellCenter)[3],
                           real64 ( &basisIntegrals )[MAXFACENODES],
                           real64 ( &threeDMonomialIntegrals )[3] );
-    GEOSX_HOST_DEVICE
-    static void
+  GEOSX_HOST_DEVICE
+  static void
     computeProjectors( localIndex const & cellIndex,
                        InputNodeCoords const & nodesCoords,
                        InputCellToNodeMap const & cellToNodeMap,
@@ -319,9 +354,9 @@ private:
                        real64 const & cellVolume,
                        localIndex & numSupportPoints,
                        real64 & quadratureWeight,
-                       real64 (&basisFunctionsIntegralMean)[MAXCELLNODES],
-                       real64 (&stabilizationMatrix)[MAXCELLNODES][MAXCELLNODES],
-                       real64 (&basisDerivativesIntegralMean)[MAXCELLNODES][3]
+                       real64 ( &basisFunctionsIntegralMean )[MAXCELLNODES],
+                       real64 ( &stabilizationMatrix )[MAXCELLNODES][MAXCELLNODES],
+                       real64 ( &basisDerivativesIntegralMean )[MAXCELLNODES][3]
                        );
 };
 }
