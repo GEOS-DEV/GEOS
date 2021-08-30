@@ -3,14 +3,6 @@
 <Problem>
   <FieldSpecifications>
     <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="referencePorosity"
-      scale="0.05"/>
-
-    <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"

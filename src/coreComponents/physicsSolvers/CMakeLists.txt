@@ -39,6 +39,8 @@ set( physicsSolvers_headers
      multiphysics/PhaseFieldFractureSolver.hpp
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhasePoromechanicsKernel.hpp
+     multiphysics/SinglePhasePoromechanicsEFEMKernel.hpp
+     multiphysics/SinglePhasePoromechanicsFluxKernels.hpp
      multiphysics/SinglePhasePoromechanicsSolver.hpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.hpp
      multiphysics/SinglePhaseReservoir.hpp
@@ -103,6 +105,7 @@ set( physicsSolvers_sources
      multiphysics/SinglePhasePoromechanicsSolver.cpp
      multiphysics/SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
      multiphysics/SinglePhaseReservoir.cpp
+     multiphysics/SinglePhasePoromechanicsFluxKernels.cpp
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/LaplaceVEM.cpp
