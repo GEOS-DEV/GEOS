@@ -38,8 +38,7 @@ CellBlockManager::~CellBlockManager()
 }
 
 void CellBlockManager::resize( integer_array const & numElements,
-                               string_array const & regionNames,
-                               string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
+                               string_array const & regionNames )
 {
   localIndex const numRegions = LvArray::integerConversion< localIndex >( regionNames.size());
   for( localIndex reg=0; reg<numRegions; ++reg )
@@ -47,15 +46,6 @@ void CellBlockManager::resize( integer_array const & numElements,
     this->getRegion( regionNames[reg] ).resize( numElements[reg] );
   }
 }
-
-
-//CellBlock & CellBlockManager::CreateRegion( string const & regionName,
-//                                             string const & elementType,
-//                                             integer const & numElements )
-//{
-////  ElementRegion * elemRegion = elementRegions.registerGroup( regionNames );
-////  elemRegion->resize(numElements);
-//}
 
 Group * CellBlockManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {

@@ -10,7 +10,6 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      logLevel="0"
       targetRegions="{ Omega }"
       solidMaterialNames="{ shale }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
@@ -18,9 +17,7 @@
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
@@ -36,11 +33,11 @@
       nt="{ 8 }"
       nz="{ 3 }"
       trajectory="{ { -0.1, 0.0, 0.0 },
-                    {  0.1, 0.0, 3.0 } }"
+                    { 0.1, 0.0, 3.0 } }"
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
-  </Mesh> 
+  </Mesh>
 
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
@@ -60,7 +57,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -85,7 +81,6 @@
       name="Omega"
       cellBlocks="{ cb1 }"
       materialList="{ shale }"/>
-      
   </ElementRegions>
 
   <Constitutive>
@@ -101,7 +96,6 @@
 
   <!-- SPHINX_BoundaryConditions -->
   <FieldSpecifications>
-
     <FieldSpecification
       name="xConstraint"
       objectPath="nodeManager"
@@ -129,12 +123,10 @@
     <Traction
       name="innerPressure"
       objectPath="faceManager"
-      tractionType="1"
+      tractionType="normal"
       scale="-1.0e6"
       functionName="timeFunction"
       setNames="{ rneg }"/>
-      
-      
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->
@@ -144,7 +136,7 @@
       name="timeFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0, 10.0 }"
-      values=     "{ 0.0, 0.0, 10.0 }"/>
+      values="{ 0.0, 0.0, 10.0 }"/>
   </Functions>
 
   <!-- SPHINX_TableFunctionEnd -->
@@ -152,7 +144,6 @@
     <Silo
       name="siloOutput"
       parallelThreads="32"
-      plotFileRoot="plot"
       childDirectory="sub"/>
 
     <Restart

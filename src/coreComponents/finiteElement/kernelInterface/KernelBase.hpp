@@ -413,8 +413,6 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                                        numElems]
                                                                         ( auto & castedConstitutiveRelation )
     {
-      string const elementTypeString = elementSubRegion.getElementTypeString();
-
       FiniteElementBase &
       subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
 

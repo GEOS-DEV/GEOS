@@ -191,18 +191,19 @@ void PhaseFieldDamageFEM::setupSystem( DomainPartition & domain,
   SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 }
 
-void PhaseFieldDamageFEM::implicitStepComplete(
-  real64 const & GEOSX_UNUSED_PARAM( time_n ),
-  real64 const & GEOSX_UNUSED_PARAM( dt ),
-  DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void PhaseFieldDamageFEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                                real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-void PhaseFieldDamageFEM::setupDofs(
-  DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
-  DofManager & dofManager ) const
+void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+                                     DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
-  dofManager.addField( m_fieldName, DofManager::Location::Node );
+  dofManager.addField( m_fieldName,
+                       DofManager::Location::Node,
+                       1,
+                       targetRegionNames() );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
@@ -285,7 +286,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
         real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
 
         arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-        std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
+        std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.getElementType() );
         localIndex const n_q_points = finiteElement->n_quadrature_points();
 
         //real64 ell = m_lengthScale;                       //phase-field length scale

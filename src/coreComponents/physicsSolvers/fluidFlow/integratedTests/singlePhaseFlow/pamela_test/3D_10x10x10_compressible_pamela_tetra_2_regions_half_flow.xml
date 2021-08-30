@@ -2,12 +2,13 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, -9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="1"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       discretization="singlePhaseTPFA"
       targetRegions="{ Bot }">
       <NonlinearSolverParameters
@@ -28,8 +29,8 @@
   <Geometry>
     <Box
       name="midplane"
-      xMin="{-0.1, -0.1, 4.9}"
-      xMax="{10.1, 10.1, 5.1}"/>
+      xMin="{ -0.1, -0.1, 4.9 }"
+      xMax="{ 10.1, 10.1, 5.1 }"/>
   </Geometry>
 
   <Events
@@ -47,7 +48,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -63,6 +63,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"
         targetRegions="{ Bot }"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -76,7 +77,7 @@
     <CellElementRegion
       name="Bot"
       cellBlocks="{ Bottom_TETRA }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -84,46 +85,21 @@
       name="water"
       defaultDensity="1000"
       defaultViscosity="0.001"
-      referencePressure="0.0"
-      referenceDensity="1000"
+      referencePressure="1e6"
       compressibility="1e-9"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
-      referencePressure="0.0"
+      referencePressure="1e6"
       compressibility="1e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-14, 2.0e-14, 2.0e-14 }"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="BotPermx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Bot/Bottom_TETRA"
-      fieldName="permeability"
-      scale="2.0e-14"/>
-
-    <FieldSpecification
-      name="BotPermy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Bot/Bottom_TETRA"
-      fieldName="permeability"
-      scale="2.0e-14"/>
-
-    <FieldSpecification
-      name="BotPermz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Bot/Bottom_TETRA"
-      fieldName="permeability"
-      scale="2.0e-14"/>
-
     <FieldSpecification
       name="BotReferencePorosity"
       initialCondition="1"
@@ -138,17 +114,15 @@
       setNames="{ all }"
       objectPath="ElementRegions/Bot/Bottom_TETRA"
       fieldName="pressure"
-      scale="1e5"/>
+      scale="1e6"/>
 
     <FieldSpecification
       name="MidplanePressure"
       setNames="{ midplane }"
       objectPath="faceManager"
-      fieldName="facePressure"
-      scale="2e5"/>
+      fieldName="pressure"
+      scale="2e6"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <Silo

@@ -41,11 +41,11 @@
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #define GEOSX_USE_CUDA
 
+/// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
+#define GEOSX_USE_PVTPackage
+
 /// Enables use of Python (CMake option ENABLE_PYTHON)
 #define GEOSX_USE_PYGEOSX
-
-/// Enables use of GEOSX PTP module (CMake option ENABLE_GEOSX_PTP)
-#define USE_GEOSX_PTP
 
 /// Enables use of RAJA (CMake option ENABLE_RAJA)
 #define GEOSX_USE_RAJA
@@ -72,11 +72,11 @@
 #define GEOSX_USE_PETSC
 
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
-#define GEOSX_LA_INTERFACE Trilinos
+#define GEOSX_LA_INTERFACE Hypre
 /// Macro defined when Trilinos interface is selected
-#define GEOSX_LA_INTERFACE_TRILINOS
+/* #undef GEOSX_LA_INTERFACE_TRILINOS */
 /// Macro defined when Hypre interface is selected
-/* #undef GEOSX_LA_INTERFACE_HYPRE */
+#define GEOSX_LA_INTERFACE_HYPRE
 /// Macro defined when PETSc interface is selected
 /* #undef GEOSX_LA_INTERFACE_PETSC */
 

@@ -28,13 +28,12 @@ namespace CompositionalMultiphaseBaseKernels
 
 template< localIndex NC >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 ComponentFractionKernel::
-  compute( arraySlice1d< real64 const > const compDens,
-           arraySlice1d< real64 const > const dCompDens,
-           arraySlice1d< real64 > const compFrac,
-           arraySlice2d< real64 > const dCompFrac_dCompDens )
+  compute( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compDens,
+           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompDens,
+           arraySlice1d< real64, compflow::USD_COMP - 1 > const compFrac,
+           arraySlice2d< real64, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens )
 {
   real64 totalDensity = 0.0;
 
@@ -60,10 +59,10 @@ template< localIndex NC >
 void
 ComponentFractionKernel::
   launch( localIndex const size,
-          arrayView2d< real64 const > const & compDens,
-          arrayView2d< real64 const > const & dCompDens,
-          arrayView2d< real64 > const & compFrac,
-          arrayView3d< real64 > const & dCompFrac_dCompDens )
+          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
+          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
+          arrayView2d< real64, compflow::USD_COMP > const & compFrac,
+          arrayView3d< real64, compflow::USD_COMP_DC > const & dCompFrac_dCompDens )
 {
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
   {
@@ -78,10 +77,10 @@ template< localIndex NC >
 void
 ComponentFractionKernel::
   launch( SortedArrayView< localIndex const > const & targetSet,
-          arrayView2d< real64 const > const & compDens,
-          arrayView2d< real64 const > const & dCompDens,
-          arrayView2d< real64 > const & compFrac,
-          arrayView3d< real64 > const & dCompFrac_dCompDens )
+          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
+          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
+          arrayView2d< real64, compflow::USD_COMP > const & compFrac,
+          arrayView3d< real64, compflow::USD_COMP_DC > const & dCompFrac_dCompDens )
 {
   forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
   {
@@ -97,17 +96,17 @@ ComponentFractionKernel::
   template \
   void ComponentFractionKernel:: \
     launch< NC >( localIndex const size, \
-                  arrayView2d< real64 const > const & compDens, \
-                  arrayView2d< real64 const > const & dCompDens, \
-                  arrayView2d< real64 > const & compFrac, \
-                  arrayView3d< real64 > const & dCompFrac_dCompDens ); \
+                  arrayView2d< real64 const, compflow::USD_COMP > const & compDens, \
+                  arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens, \
+                  arrayView2d< real64, compflow::USD_COMP > const & compFrac, \
+                  arrayView3d< real64, compflow::USD_COMP_DC > const & dCompFrac_dCompDens ); \
   template \
   void ComponentFractionKernel:: \
     launch< NC >( SortedArrayView< localIndex const > const & targetSet, \
-                  arrayView2d< real64 const > const & compDens, \
-                  arrayView2d< real64 const > const & dCompDens, \
-                  arrayView2d< real64 > const & compFrac, \
-                  arrayView3d< real64 > const & dCompFrac_dCompDens )
+                  arrayView2d< real64 const, compflow::USD_COMP > const & compDens, \
+                  arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens, \
+                  arrayView2d< real64, compflow::USD_COMP > const & compFrac, \
+                  arrayView3d< real64, compflow::USD_COMP_DC > const & dCompFrac_dCompDens )
 
 INST_ComponentFractionKernel( 1 );
 INST_ComponentFractionKernel( 2 );
@@ -121,21 +120,20 @@ INST_ComponentFractionKernel( 5 );
 
 template< localIndex NC, localIndex NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 PhaseVolumeFractionKernel::
-  compute( arraySlice1d< real64 const > const & compDens,
-           arraySlice1d< real64 const > const & dCompDens,
-           arraySlice2d< real64 const > const & dCompFrac_dCompDens,
-           arraySlice1d< real64 const > const & phaseDens,
-           arraySlice1d< real64 const > const & dPhaseDens_dPres,
-           arraySlice2d< real64 const > const & dPhaseDens_dComp,
-           arraySlice1d< real64 const > const & phaseFrac,
-           arraySlice1d< real64 const > const & dPhaseFrac_dPres,
-           arraySlice2d< real64 const > const & dPhaseFrac_dComp,
-           arraySlice1d< real64 > const & phaseVolFrac,
-           arraySlice1d< real64 > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64 > const & dPhaseVolFrac_dComp )
+  compute( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & compDens,
+           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & dCompDens,
+           arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
+           arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & phaseDens,
+           arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & dPhaseDens_dPres,
+           arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const & dPhaseDens_dComp,
+           arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & phaseFrac,
+           arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & dPhaseFrac_dPres,
+           arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const & dPhaseFrac_dComp,
+           arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFrac,
+           arraySlice1d< real64, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
+           arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dComp )
 {
   real64 work[NC];
 
@@ -182,18 +180,18 @@ PhaseVolumeFractionKernel::
 template< localIndex NC, localIndex NP >
 void PhaseVolumeFractionKernel::
   launch( localIndex const size,
-          arrayView2d< real64 const > const & compDens,
-          arrayView2d< real64 const > const & dCompDens,
-          arrayView3d< real64 const > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const > const & phaseDens,
-          arrayView3d< real64 const > const & dPhaseDens_dPres,
-          arrayView4d< real64 const > const & dPhaseDens_dComp,
-          arrayView3d< real64 const > const & phaseFrac,
-          arrayView3d< real64 const > const & dPhaseFrac_dPres,
-          arrayView4d< real64 const > const & dPhaseFrac_dComp,
-          arrayView2d< real64 > const & phaseVolFrac,
-          arrayView2d< real64 > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 > const & dPhaseVolFrac_dComp )
+          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
+          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
+          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDens,
+          arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & dPhaseDens_dPres,
+          arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseDens_dComp,
+          arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseFrac,
+          arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & dPhaseFrac_dPres,
+          arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp,
+          arrayView2d< real64, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp )
 {
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
   {
@@ -215,18 +213,18 @@ void PhaseVolumeFractionKernel::
 template< localIndex NC, localIndex NP >
 void PhaseVolumeFractionKernel::
   launch( SortedArrayView< localIndex const > const & targetSet,
-          arrayView2d< real64 const > const & compDens,
-          arrayView2d< real64 const > const & dCompDens,
-          arrayView3d< real64 const > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const > const & phaseDens,
-          arrayView3d< real64 const > const & dPhaseDens_dPres,
-          arrayView4d< real64 const > const & dPhaseDens_dComp,
-          arrayView3d< real64 const > const & phaseFrac,
-          arrayView3d< real64 const > const & dPhaseFrac_dPres,
-          arrayView4d< real64 const > const & dPhaseFrac_dComp,
-          arrayView2d< real64 > const & phaseVolFrac,
-          arrayView2d< real64 > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 > const & dPhaseVolFrac_dComp )
+          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
+          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
+          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDens,
+          arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & dPhaseDens_dPres,
+          arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseDens_dComp,
+          arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseFrac,
+          arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & dPhaseFrac_dPres,
+          arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp,
+          arrayView2d< real64, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp )
 {
   forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
   {
@@ -251,34 +249,34 @@ void PhaseVolumeFractionKernel::
   void \
   PhaseVolumeFractionKernel:: \
     launch< NC, NP >( localIndex const size, \
-                      arrayView2d< real64 const > const & compDens, \
-                      arrayView2d< real64 const > const & dCompDens, \
-                      arrayView3d< real64 const > const & dCompFrac_dCompDens, \
-                      arrayView3d< real64 const > const & phaseDens, \
-                      arrayView3d< real64 const > const & dPhaseDens_dPres, \
-                      arrayView4d< real64 const > const & dPhaseDens_dComp, \
-                      arrayView3d< real64 const > const & phaseFrac, \
-                      arrayView3d< real64 const > const & dPhaseFrac_dPres, \
-                      arrayView4d< real64 const > const & dPhaseFrac_dComp, \
-                      arrayView2d< real64 > const & phaseVolFrac, \
-                      arrayView2d< real64 > const & dPhaseVolFrac_dPres, \
-                      arrayView3d< real64 > const & dPhaseVolFrac_dComp ); \
+                      arrayView2d< real64 const, compflow::USD_COMP > const & compDens, \
+                      arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens, \
+                      arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens, \
+                      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDens, \
+                      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & dPhaseDens_dPres, \
+                      arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseDens_dComp, \
+                      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseFrac, \
+                      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & dPhaseFrac_dPres, \
+                      arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp, \
+                      arrayView2d< real64, compflow::USD_PHASE > const & phaseVolFrac, \
+                      arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dPres, \
+                      arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp ); \
   template \
   void \
   PhaseVolumeFractionKernel:: \
     launch< NC, NP >( SortedArrayView< localIndex const > const & targetSet, \
-                      arrayView2d< real64 const > const & compDens, \
-                      arrayView2d< real64 const > const & dCompDens, \
-                      arrayView3d< real64 const > const & dCompFrac_dCompDens, \
-                      arrayView3d< real64 const > const & phaseDens, \
-                      arrayView3d< real64 const > const & dPhaseDens_dPres, \
-                      arrayView4d< real64 const > const & dPhaseDens_dComp, \
-                      arrayView3d< real64 const > const & phaseFrac, \
-                      arrayView3d< real64 const > const & dPhaseFrac_dPres, \
-                      arrayView4d< real64 const > const & dPhaseFrac_dComp, \
-                      arrayView2d< real64 > const & phaseVolFrac, \
-                      arrayView2d< real64 > const & dPhaseVolFrac_dPres, \
-                      arrayView3d< real64 > const & dPhaseVolFrac_dComp )
+                      arrayView2d< real64 const, compflow::USD_COMP > const & compDens, \
+                      arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens, \
+                      arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens, \
+                      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDens, \
+                      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & dPhaseDens_dPres, \
+                      arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseDens_dComp, \
+                      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseFrac, \
+                      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & dPhaseFrac_dPres, \
+                      arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp, \
+                      arrayView2d< real64, compflow::USD_PHASE > const & phaseVolFrac, \
+                      arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dPres, \
+                      arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp )
 
 INST_PhaseVolumeFractionKernel( 1, 1 );
 INST_PhaseVolumeFractionKernel( 2, 1 );
@@ -305,7 +303,6 @@ INST_PhaseVolumeFractionKernel( 5, 3 );
 
 template< localIndex NC >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 AccumulationKernel::
   compute( localIndex const numPhases,
@@ -314,19 +311,19 @@ AccumulationKernel::
            real64 const & porosityRef,
            real64 const & pvMult,
            real64 const & dPvMult_dPres,
-           arraySlice2d< real64 const > const & dCompFrac_dCompDens,
-           arraySlice1d< real64 const > const & phaseVolFracOld,
-           arraySlice1d< real64 const > const & phaseVolFrac,
-           arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
-           arraySlice1d< real64 const > const & phaseDensOld,
-           arraySlice1d< real64 const > const & phaseDens,
-           arraySlice1d< real64 const > const & dPhaseDens_dPres,
-           arraySlice2d< real64 const > const & dPhaseDens_dComp,
-           arraySlice2d< real64 const > const & phaseCompFracOld,
-           arraySlice2d< real64 const > const & phaseCompFrac,
-           arraySlice2d< real64 const > const & dPhaseCompFrac_dPres,
-           arraySlice3d< real64 const > const & dPhaseCompFrac_dComp,
+           arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFracOld,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
+           arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dCompDens,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseDensOld,
+           arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & phaseDens,
+           arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & dPhaseDens_dPres,
+           arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const & dPhaseDens_dComp,
+           arraySlice2d< real64 const, compflow::USD_PHASE_COMP-1 > const & phaseCompFracOld,
+           arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP-2 > const & phaseCompFrac,
+           arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP-2 > const & dPhaseCompFrac_dPres,
+           arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC-2 > const & dPhaseCompFrac_dComp,
            real64 ( & localAccum )[NC],
            real64 ( & localAccumJacobian )[NC][NC + 1] )
 {
@@ -416,23 +413,24 @@ AccumulationKernel::
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & volume,
+          arrayView1d< real64 >       const & porosityNew,
           arrayView1d< real64 const > const & porosityOld,
           arrayView1d< real64 const > const & porosityRef,
           arrayView2d< real64 const > const & pvMult,
           arrayView2d< real64 const > const & dPvMult_dPres,
-          arrayView3d< real64 const > const & dCompFrac_dCompDens,
-          arrayView2d< real64 const > const & phaseVolFracOld,
-          arrayView2d< real64 const > const & phaseVolFrac,
-          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens,
-          arrayView2d< real64 const > const & phaseDensOld,
-          arrayView3d< real64 const > const & phaseDens,
-          arrayView3d< real64 const > const & dPhaseDens_dPres,
-          arrayView4d< real64 const > const & dPhaseDens_dComp,
-          arrayView3d< real64 const > const & phaseCompFracOld,
-          arrayView4d< real64 const > const & phaseCompFrac,
-          arrayView4d< real64 const > const & dPhaseCompFrac_dPres,
-          arrayView5d< real64 const > const & dPhaseCompFrac_dComp,
+          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFracOld,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseDensOld,
+          arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDens,
+          arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & dPhaseDens_dPres,
+          arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseDens_dComp,
+          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & phaseCompFracOld,
+          arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac,
+          arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres,
+          arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
@@ -445,6 +443,9 @@ AccumulationKernel::
 
     real64 localAccum[NC];
     real64 localAccumJacobian[NC][NDOF];
+
+    // update porosity
+    porosityNew[ei] = pvMult[ei][0]*porosityRef[ei];
 
     compute< NC >( numPhases,
                    volume[ei],
@@ -500,23 +501,24 @@ AccumulationKernel::
                   arrayView1d< globalIndex const > const & dofNumber, \
                   arrayView1d< integer const > const & elemGhostRank, \
                   arrayView1d< real64 const > const & volume, \
+                  arrayView1d< real64 >       const & porosityNew, \
                   arrayView1d< real64 const > const & porosityOld, \
                   arrayView1d< real64 const > const & porosityRef, \
                   arrayView2d< real64 const > const & pvMult, \
                   arrayView2d< real64 const > const & dPvMult_dPres, \
-                  arrayView3d< real64 const > const & dCompFrac_dCompDens, \
-                  arrayView2d< real64 const > const & phaseVolFracOld, \
-                  arrayView2d< real64 const > const & phaseVolFrac, \
-                  arrayView2d< real64 const > const & dPhaseVolFrac_dPres, \
-                  arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens, \
-                  arrayView2d< real64 const > const & phaseDensOld, \
-                  arrayView3d< real64 const > const & phaseDens, \
-                  arrayView3d< real64 const > const & dPhaseDens_dPres, \
-                  arrayView4d< real64 const > const & dPhaseDens_dComp, \
-                  arrayView3d< real64 const > const & phaseCompFracOld, \
-                  arrayView4d< real64 const > const & phaseCompFrac, \
-                  arrayView4d< real64 const > const & dPhaseCompFrac_dPres, \
-                  arrayView5d< real64 const > const & dPhaseCompFrac_dComp, \
+                  arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens, \
+                  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFracOld, \
+                  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac, \
+                  arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres, \
+                  arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens, \
+                  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseDensOld, \
+                  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDens, \
+                  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & dPhaseDens_dPres, \
+                  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseDens_dComp, \
+                  arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & phaseCompFracOld, \
+                  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac, \
+                  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres, \
+                  arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp, \
                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                   arrayView1d< real64 > const & localRhs )
 
@@ -533,16 +535,15 @@ INST_AccumulationKernel( 5 );
 
 template< localIndex NC, localIndex NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 VolumeBalanceKernel::
   compute( real64 const & volume,
            real64 const & porosityRef,
            real64 const & pvMult,
            real64 const & dPvMult_dPres,
-           arraySlice1d< real64 const > const & phaseVolFrac,
-           arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
+           arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dCompDens,
            real64 & localVolBalance,
            real64 * const localVolBalanceJacobian )
 {
@@ -592,9 +593,9 @@ VolumeBalanceKernel::
           arrayView1d< real64 const > const & porosityRef,
           arrayView2d< real64 const > const & pvMult,
           arrayView2d< real64 const > const & dPvMult_dPres,
-          arrayView2d< real64 const > const & phaseVolFrac,
-          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
@@ -648,9 +649,9 @@ VolumeBalanceKernel::
                       arrayView1d< real64 const > const & porosityRef, \
                       arrayView2d< real64 const > const & pvMult, \
                       arrayView2d< real64 const > const & dPvMult_dPres, \
-                      arrayView2d< real64 const > const & phaseVolFrac, \
-                      arrayView2d< real64 const > const & dPhaseVolFrac_dPres, \
-                      arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens, \
+                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac, \
+                      arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres, \
+                      arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens, \
                       CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                       arrayView1d< real64 > const & localRhs )
 

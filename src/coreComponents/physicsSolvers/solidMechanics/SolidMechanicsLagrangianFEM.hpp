@@ -193,10 +193,10 @@ public:
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                     arrayView1d< real64 > const & localRhs );
 
-  void crsApplyTractionBC( real64 const time,
-                           DofManager const & dofManager,
-                           DomainPartition & domain,
-                           arrayView1d< real64 > const & localRhs );
+  void applyTractionBC( real64 const time,
+                        DofManager const & dofManager,
+                        DomainPartition & domain,
+                        arrayView1d< real64 > const & localRhs );
 
   void applyChomboPressure( DofManager const & dofManager,
                             DomainPartition & domain,
@@ -234,7 +234,6 @@ public:
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
-    static constexpr char const * effectiveStressString() { return "effectiveStress"; }
 
     dataRepository::ViewKey vTilde = { vTildeString() };
     dataRepository::ViewKey uhatTilde = { uhatTildeString() };
@@ -256,11 +255,6 @@ public:
   SortedArray< localIndex > & getElemsNotAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
     return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() );
-  }
-
-  void setEffectiveStress( integer const input )
-  {
-    m_effectiveStress = input;
   }
 
   real64 & getMaxForce() { return m_maxForce; }
@@ -296,19 +290,15 @@ protected:
   SortedArray< localIndex > m_targetNodes;
   MPI_iCommData m_iComm;
 
-  /// Indicates whether or not to use effective stress when integrating the
-  /// stress divergence in the kernels. This means calling the poroelastic
-  /// variant of the solid mechanics kernels.
-  integer m_effectiveStress;
-
-  SolidMechanicsLagrangianFEM();
-
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
 
 };
 
-ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption, "QuasiStatic", "ImplicitDynamic", "ExplicitDynamic" )
+ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
+              "QuasiStatic",
+              "ImplicitDynamic",
+              "ExplicitDynamic" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************

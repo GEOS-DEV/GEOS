@@ -2,25 +2,22 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0, 0, 0}">
-    <MultiphasePoroelastic
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <MultiphasePoromechanics
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
       fluidSolverName="TwoPhaseFlowSolver"
-      couplingTypeOption="FIM"
+      porousMaterialNames="{ porousRock }"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="15"
-        maxTimeStepCuts="2"
         lineSearchMaxCuts="2"/>
       <LinearSolverParameters
-	solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
-    </MultiphasePoroelastic>
+        directParallel="0"/>
+    </MultiphasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
       name="LinearElasticitySolver"
@@ -28,8 +25,7 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ skeleton }">
-    </SolidMechanicsLagrangianSSLE>
+      solidMaterialNames="{ skeleton }"/>
 
     <CompositionalMultiphaseFVM
       name="TwoPhaseFlowSolver"
@@ -38,10 +34,9 @@
       targetRegions="{ Domain }"
       fluidNames="{ fluid1 }"
       solidNames="{ skeleton }"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
-      temperature="300"
-      useMass="0">
-    </CompositionalMultiphaseFVM>
+      temperature="300"/>
   </Solvers>
 
   <Mesh>
@@ -60,13 +55,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 1.01, 1.01, 10.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 10.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ 8.99, -0.01, -0.01}"
-      xMax="{10.01, 1.01, 10.01}"/>
+      xMin="{ 8.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 10.01 }"/>
   </Geometry>
 
   <Events
@@ -74,13 +69,16 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e5"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e5"
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
       forceDt="1e4"
-      beginTime="0"
       endTime="1e5"
       target="/Solvers/MultiphasePoroelasticitySolver"/>
 
@@ -93,7 +91,6 @@
     <PeriodicEvent
       name="restarts"
       timeFrequency="3e5"
-      targetExactTimestep="1"
       target="/Outputs/restartOutput"/>
   </Events>
 
@@ -108,7 +105,8 @@
       <TwoPointFluxApproximation
         name="fluidTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -116,7 +114,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ block1 }"
-      materialList="{ fluid1, skeleton, relperm }"/>
+      materialList="{ fluid1, skeleton, relperm, rockPerm, porousRock, rockPorosity }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -127,12 +125,17 @@
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
       tableFiles="{ pvt_tables/pvdo.txt, pvt_tables/pvdg.txt, pvt_tables/pvtw.txt }"/>
 
-    <PoroElasticIsotropic
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="skeleton"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
       name="skeleton"
       defaultDensity="1.0"
       defaultYoungsModulus="1.e9"
-      defaultPoissonRatio="0.2"
-      BiotCoefficient="1.0"/>
+      defaultPoissonRatio="0.2"/>
 
     <BrooksCoreyBakerRelativePermeability
       name="relperm"
@@ -142,42 +145,32 @@
       waterOilRelPermMaxValue="{ 0.8, 0.9 }"
       gasOilRelPermExponent="{ 3, 3 }"
       gasOilRelPermMaxValue="{ 0.4, 0.9 }"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="1.0e27"
+      defaultReferencePorosity="0.05"/>
   </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
-    <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1"
+      objectPath="ElementRegions"
       fieldName="referencePorosity"
+      scale="0.05"/>
+
+    <FieldSpecification
+      name="Porosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1"
+      fieldName="rockPorosity_newPorosity"
       scale="0.05"/>
 
     <!-- Initial pressure: ~5 bar -->
@@ -311,6 +304,9 @@
   <Outputs>
     <Silo
       name="siloOutput"/>
+
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>

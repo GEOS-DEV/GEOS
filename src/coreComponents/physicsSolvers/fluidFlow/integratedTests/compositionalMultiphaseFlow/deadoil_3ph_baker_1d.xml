@@ -9,20 +9,17 @@
       targetRegions="{ region }"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="300"
-      useMass="0">
+      computeCFLNumbers="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-10"
         newtonMaxIter="15"
-        maxTimeStepCuts="2"
         lineSearchMaxCuts="2"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </CompositionalMultiphaseFVM>
-
   </Solvers>
 
   <Mesh>
@@ -41,13 +38,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 1.01, 1.01, 1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ 8.99, -0.01, -0.01}"
-      xMax="{10.01, 1.01, 1.01}"/>
+      xMin="{ 8.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
@@ -55,13 +52,11 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e6"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
       forceDt="1e4"
-      beginTime="0"
       endTime="1e5"
       target="/Solvers/compflow"/>
 
@@ -83,7 +78,8 @@
       <TwoPointFluxApproximation
         name="fluidTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -91,7 +87,7 @@
     <CellElementRegion
       name="region"
       cellBlocks="{ block1 }"
-      materialList="{ fluid, rock, relperm }"/>
+      materialList="{ fluid, rock, relperm, rockPerm }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -115,36 +111,13 @@
       waterOilRelPermMaxValue="{ 0.8, 0.9 }"
       gasOilRelPermExponent="{ 3, 3 }"
       gasOilRelPermMaxValue="{ 0.4, 0.9 }"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/region/block1"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/region/block1"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/region/block1"
-      fieldName="permeability"
-      scale="1.0e-16"/>
-
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"

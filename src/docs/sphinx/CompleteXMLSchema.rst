@@ -22,6 +22,13 @@ Element: Benchmarks
 .. include:: ../../coreComponents/schema/docs/Benchmarks.rst
 
 
+.. _XML_BiotPorosity:
+
+Element: BiotPorosity
+=====================
+.. include:: ../../coreComponents/schema/docs/BiotPorosity.rst
+
+
 .. _XML_BlackOilFluid:
 
 Element: BlackOilFluid
@@ -76,6 +83,13 @@ Element: BrooksCoreyRelativePermeability
 Element: CO2BrineFluid
 ======================
 .. include:: ../../coreComponents/schema/docs/CO2BrineFluid.rst
+
+
+.. _XML_CarmanKozenyPermeability:
+
+Element: CarmanKozenyPermeability
+=================================
+.. include:: ../../coreComponents/schema/docs/CarmanKozenyPermeability.rst
 
 
 .. _XML_CellElementRegion:
@@ -139,6 +153,27 @@ Element: CompositionalMultiphaseWell
 Element: CompressibleSinglePhaseFluid
 =====================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSinglePhaseFluid.rst
+
+
+.. _XML_CompressibleSolidPressurePorosityCarmanKozenyPermeability:
+
+Element: CompressibleSolidPressurePorosityCarmanKozenyPermeability
+==================================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityCarmanKozenyPermeability.rst
+
+
+.. _XML_CompressibleSolidPressurePorosityConstantPermeability:
+
+Element: CompressibleSolidPressurePorosityConstantPermeability
+==============================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityConstantPermeability.rst
+
+
+.. _XML_ConstantPermeability:
+
+Element: ConstantPermeability
+=============================
+.. include:: ../../coreComponents/schema/docs/ConstantPermeability.rst
 
 
 .. _XML_Constitutive:
@@ -407,11 +442,11 @@ Element: Mesh
 .. include:: ../../coreComponents/schema/docs/Mesh.rst
 
 
-.. _XML_MultiphasePoroelastic:
+.. _XML_MultiphasePoromechanics:
 
-Element: MultiphasePoroelastic
-==============================
-.. include:: ../../coreComponents/schema/docs/MultiphasePoroelastic.rst
+Element: MultiphasePoromechanics
+================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
 .. _XML_NonlinearSolverParameters:
@@ -456,6 +491,13 @@ Element: PackCollection
 .. include:: ../../coreComponents/schema/docs/PackCollection.rst
 
 
+.. _XML_ParallelPlatesPermeability:
+
+Element: ParallelPlatesPermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/ParallelPlatesPermeability.rst
+
+
 .. _XML_Parameter:
 
 Element: Parameter
@@ -489,6 +531,13 @@ Element: Perforation
 Element: PeriodicEvent
 ======================
 .. include:: ../../coreComponents/schema/docs/PeriodicEvent.rst
+
+
+.. _XML_PermeabilityBase:
+
+Element: PermeabilityBase
+=========================
+.. include:: ../../coreComponents/schema/docs/PermeabilityBase.rst
 
 
 .. _XML_PhaseFieldDamageFEM:
@@ -540,18 +589,39 @@ Element: PoroExtendedDruckerPrager
 .. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager.rst
 
 
-.. _XML_Poroelastic:
+.. _XML_PorousDruckerPrager:
 
-Element: Poroelastic
-====================
-.. include:: ../../coreComponents/schema/docs/Poroelastic.rst
+Element: PorousDruckerPrager
+============================
+.. include:: ../../coreComponents/schema/docs/PorousDruckerPrager.rst
 
 
-.. _XML_PoroelasticEmbeddedFractures:
+.. _XML_PorousElasticIsotropic:
 
-Element: PoroelasticEmbeddedFractures
-=====================================
-.. include:: ../../coreComponents/schema/docs/PoroelasticEmbeddedFractures.rst
+Element: PorousElasticIsotropic
+===============================
+.. include:: ../../coreComponents/schema/docs/PorousElasticIsotropic.rst
+
+
+.. _XML_PorousElasticTransverseIsotropic:
+
+Element: PorousElasticTransverseIsotropic
+=========================================
+.. include:: ../../coreComponents/schema/docs/PorousElasticTransverseIsotropic.rst
+
+
+.. _XML_PorousExtendedDruckerPrager:
+
+Element: PorousExtendedDruckerPrager
+====================================
+.. include:: ../../coreComponents/schema/docs/PorousExtendedDruckerPrager.rst
+
+
+.. _XML_PressurePorosity:
+
+Element: PressurePorosity
+=========================
+.. include:: ../../coreComponents/schema/docs/PressurePorosity.rst
 
 
 .. _XML_Problem:
@@ -617,6 +687,20 @@ Element: SinglePhaseHybridFVM
 .. include:: ../../coreComponents/schema/docs/SinglePhaseHybridFVM.rst
 
 
+.. _XML_SinglePhasePoromechanics:
+
+Element: SinglePhasePoromechanics
+=================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics.rst
+
+
+.. _XML_SinglePhasePoromechanicsEmbeddedFractures:
+
+Element: SinglePhasePoromechanicsEmbeddedFractures
+==================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
+
+
 .. _XML_SinglePhaseProppantFVM:
 
 Element: SinglePhaseProppantFVM
@@ -678,6 +762,13 @@ Element: Solvers
 Element: SourceFlux
 ===================
 .. include:: ../../coreComponents/schema/docs/SourceFlux.rst
+
+
+.. _XML_StrainDependentPermeability:
+
+Element: StrainDependentPermeability
+====================================
+.. include:: ../../coreComponents/schema/docs/StrainDependentPermeability.rst
 
 
 .. _XML_SurfaceElementRegion:
@@ -824,6 +915,13 @@ Datastructure: Benchmarks
 .. include:: ../../coreComponents/schema/docs/Benchmarks_other.rst
 
 
+.. _DATASTRUCTURE_BiotPorosity:
+
+Datastructure: BiotPorosity
+===========================
+.. include:: ../../coreComponents/schema/docs/BiotPorosity_other.rst
+
+
 .. _DATASTRUCTURE_BlackOilFluid:
 
 Datastructure: BlackOilFluid
@@ -878,6 +976,13 @@ Datastructure: BrooksCoreyRelativePermeability
 Datastructure: CO2BrineFluid
 ============================
 .. include:: ../../coreComponents/schema/docs/CO2BrineFluid_other.rst
+
+
+.. _DATASTRUCTURE_CarmanKozenyPermeability:
+
+Datastructure: CarmanKozenyPermeability
+=======================================
+.. include:: ../../coreComponents/schema/docs/CarmanKozenyPermeability_other.rst
 
 
 .. _DATASTRUCTURE_CellElementRegion:
@@ -941,6 +1046,27 @@ Datastructure: CompositionalMultiphaseWell
 Datastructure: CompressibleSinglePhaseFluid
 ===========================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSinglePhaseFluid_other.rst
+
+
+.. _DATASTRUCTURE_CompressibleSolidPressurePorosityCarmanKozenyPermeability:
+
+Datastructure: CompressibleSolidPressurePorosityCarmanKozenyPermeability
+========================================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityCarmanKozenyPermeability_other.rst
+
+
+.. _DATASTRUCTURE_CompressibleSolidPressurePorosityConstantPermeability:
+
+Datastructure: CompressibleSolidPressurePorosityConstantPermeability
+====================================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityConstantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ConstantPermeability:
+
+Datastructure: ConstantPermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/ConstantPermeability_other.rst
 
 
 .. _DATASTRUCTURE_Constitutive:
@@ -1237,11 +1363,11 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/schema/docs/MeshBodies_other.rst
 
 
-.. _DATASTRUCTURE_MultiphasePoroelastic:
+.. _DATASTRUCTURE_MultiphasePoromechanics:
 
-Datastructure: MultiphasePoroelastic
-====================================
-.. include:: ../../coreComponents/schema/docs/MultiphasePoroelastic_other.rst
+Datastructure: MultiphasePoromechanics
+======================================
+.. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
 .. _DATASTRUCTURE_NonlinearSolverParameters:
@@ -1286,6 +1412,13 @@ Datastructure: PackCollection
 .. include:: ../../coreComponents/schema/docs/PackCollection_other.rst
 
 
+.. _DATASTRUCTURE_ParallelPlatesPermeability:
+
+Datastructure: ParallelPlatesPermeability
+=========================================
+.. include:: ../../coreComponents/schema/docs/ParallelPlatesPermeability_other.rst
+
+
 .. _DATASTRUCTURE_Parameter:
 
 Datastructure: Parameter
@@ -1319,6 +1452,13 @@ Datastructure: Perforation
 Datastructure: PeriodicEvent
 ============================
 .. include:: ../../coreComponents/schema/docs/PeriodicEvent_other.rst
+
+
+.. _DATASTRUCTURE_PermeabilityBase:
+
+Datastructure: PermeabilityBase
+===============================
+.. include:: ../../coreComponents/schema/docs/PermeabilityBase_other.rst
 
 
 .. _DATASTRUCTURE_PhaseFieldDamageFEM:
@@ -1370,18 +1510,39 @@ Datastructure: PoroExtendedDruckerPrager
 .. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager_other.rst
 
 
-.. _DATASTRUCTURE_Poroelastic:
+.. _DATASTRUCTURE_PorousDruckerPrager:
 
-Datastructure: Poroelastic
-==========================
-.. include:: ../../coreComponents/schema/docs/Poroelastic_other.rst
+Datastructure: PorousDruckerPrager
+==================================
+.. include:: ../../coreComponents/schema/docs/PorousDruckerPrager_other.rst
 
 
-.. _DATASTRUCTURE_PoroelasticEmbeddedFractures:
+.. _DATASTRUCTURE_PorousElasticIsotropic:
 
-Datastructure: PoroelasticEmbeddedFractures
-===========================================
-.. include:: ../../coreComponents/schema/docs/PoroelasticEmbeddedFractures_other.rst
+Datastructure: PorousElasticIsotropic
+=====================================
+.. include:: ../../coreComponents/schema/docs/PorousElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PorousElasticTransverseIsotropic:
+
+Datastructure: PorousElasticTransverseIsotropic
+===============================================
+.. include:: ../../coreComponents/schema/docs/PorousElasticTransverseIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PorousExtendedDruckerPrager:
+
+Datastructure: PorousExtendedDruckerPrager
+==========================================
+.. include:: ../../coreComponents/schema/docs/PorousExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_PressurePorosity:
+
+Datastructure: PressurePorosity
+===============================
+.. include:: ../../coreComponents/schema/docs/PressurePorosity_other.rst
 
 
 .. _DATASTRUCTURE_Problem:
@@ -1447,6 +1608,20 @@ Datastructure: SinglePhaseHybridFVM
 .. include:: ../../coreComponents/schema/docs/SinglePhaseHybridFVM_other.rst
 
 
+.. _DATASTRUCTURE_SinglePhasePoromechanics:
+
+Datastructure: SinglePhasePoromechanics
+=======================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:
+
+Datastructure: SinglePhasePoromechanicsEmbeddedFractures
+========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
+
+
 .. _DATASTRUCTURE_SinglePhaseProppantFVM:
 
 Datastructure: SinglePhaseProppantFVM
@@ -1508,6 +1683,13 @@ Datastructure: Solvers
 Datastructure: SourceFlux
 =========================
 .. include:: ../../coreComponents/schema/docs/SourceFlux_other.rst
+
+
+.. _DATASTRUCTURE_StrainDependentPermeability:
+
+Datastructure: StrainDependentPermeability
+==========================================
+.. include:: ../../coreComponents/schema/docs/StrainDependentPermeability_other.rst
 
 
 .. _DATASTRUCTURE_SurfaceElementRegion:
