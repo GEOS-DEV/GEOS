@@ -230,13 +230,20 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
   SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, densities );
 
-  TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2DensityTable" ) );
-  densityTable->setTableCoordinates( tableCoords.getCoords() );
-  densityTable->setTableValues( densities );
-  densityTable->reInitializeFunction();
-  densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  return densityTable;
+  // TODO: fix name/uniqueness
+  if( functionManager.hasGroup< TableFunction >( "CO2DensityTable" ) )
+  {
+    return functionManager.getGroupPointer< TableFunction >( "CO2DensityTable" );
+  }
+  else
+  {
+    TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2DensityTable" ) );
+    densityTable->setTableCoordinates( tableCoords.getCoords() );
+    densityTable->setTableValues( densities );
+    densityTable->reInitializeFunction();
+    densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return densityTable;
+  }
 }
 
 } // namespace
