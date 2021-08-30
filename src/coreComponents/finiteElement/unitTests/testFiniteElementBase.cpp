@@ -32,10 +32,18 @@ class TestFiniteElementBase final : public FiniteElementBase
   virtual localIndex getNumQuadraturePoints() const override {return 8;};
   GEOSX_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const override {return 8;};
-  virtual void initialize( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                           EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                           FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                           CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ) ) override
+  GEOSX_HOST_DEVICE
+  static void fillInitialization( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                                  EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
+                                  FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
+                                  CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                                  Initialization & GEOSX_UNUSED_PARAM( initialization )
+                                  )
+  {}
+  GEOSX_HOST_DEVICE
+  static void setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
+                          Initialization const & GEOSX_UNUSED_PARAM( initialization ),
+                          StackVariables & GEOSX_UNUSED_PARAM( stack ) )
   {}
 };
 
