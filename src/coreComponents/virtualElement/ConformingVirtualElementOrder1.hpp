@@ -117,9 +117,21 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  static localIndex getNumQuadraturePoints( StackVariables const & GEOSX_UNUSED_PARAM( stack ) )
+  {
+    return numQuadraturePoints;
+  }
+
+  GEOSX_HOST_DEVICE
   localIndex getNumSupportPoints() const override
   {
     return m_numSupportPoints;
+  }
+
+  GEOSX_HOST_DEVICE
+  static localIndex getNumSupportPoints( StackVariables const & stack )
+  {
+    return stack.numSupportPoints;
   }
 
   GEOSX_HOST_DEVICE
