@@ -38,9 +38,9 @@ computeProjectors( localIndex const & cellIndex,
                    real64 const & cellVolume,
                    localIndex & numSupportPoints,
                    real64 & quadratureWeight,
-                   real64 (&basisFunctionsIntegralMean)[MCN],
-                   real64 (&stabilizationMatrix)[MCN][MCN],
-                   real64 (&basisDerivativesIntegralMean)[MCN][3]
+                   real64 (& basisFunctionsIntegralMean)[MCN],
+                   real64 (& stabilizationMatrix)[MCN][MCN],
+                   real64 (& basisDerivativesIntegralMean)[MCN][3]
                    )
 {
   localIndex const numCellFaces = elementToFaceMap[cellIndex].size();

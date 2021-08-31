@@ -30,13 +30,14 @@ CommandLineOptions g_commandLineOptions;
 
 template< typename VEM >
 GEOSX_HOST_DEVICE
-static void checkIntegralMeanConsistency( VEM const & virtualElement )
+static void checkIntegralMeanConsistency( VEM const & virtualElement,
+                                          typename VEM::StackVariables const & stack )
 {
   real64 basisFunctionsIntegralMean[VEM::getMaxSupportPoints()];
-  virtualElement.calcN( 0, basisFunctionsIntegralMean );
+  VEM::calcN( 0, stack, basisFunctionsIntegralMean );
   real64 sum = 0;
   for( localIndex iBasisFun = 0;
-       iBasisFun < virtualElement.getNumSupportPoints(); ++iBasisFun )
+       iBasisFun < virtualElement.template numSupportPoints< VEM >( stack ); ++iBasisFun )
   {
     sum += basisFunctionsIntegralMean[iBasisFun];
   }
@@ -48,15 +49,17 @@ static void checkIntegralMeanConsistency( VEM const & virtualElement )
 template< typename VEM >
 GEOSX_HOST_DEVICE
 static void
-checkIntegralMeanDerivativesConsistency( VEM const & virtualElement )
+checkIntegralMeanDerivativesConsistency( VEM const & virtualElement,
+                                         typename VEM::StackVariables const & stack )
 {
-  real64 const dummy[VEM::maxSupportPoints][3] { { 0.0 } };
+  real64 const dummy[VEM::getMaxSupportPoints()][3] { { 0.0 } };
+  localIndex const k = 0;
   for( localIndex q = 0; q < virtualElement.getNumQuadraturePoints(); ++q )
   {
     real64 basisDerivativesIntegralMean[VEM::getMaxSupportPoints()][3];
-    virtualElement.calcGradN( q, dummy, basisDerivativesIntegralMean );
+    virtualElement.template getGradN< VEM >( k, q, dummy, stack, basisDerivativesIntegralMean );
     real64 sumX = 0, sumY = 0, sumZ = 0;
-    for( localIndex iBasisFun = 0; iBasisFun < virtualElement.getNumSupportPoints(); ++iBasisFun )
+    for( localIndex iBasisFun = 0; iBasisFun < virtualElement.template numSupportPoints< VEM >( stack ); ++iBasisFun )
     {
       sumX += basisDerivativesIntegralMean[iBasisFun][0];
       sumY += basisDerivativesIntegralMean[iBasisFun][1];
@@ -82,7 +85,8 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                       localIndex const & cellIndex,
                                       CellElementSubRegion::NodeMapType const & cellToNodes,
                                       arrayView2d< real64 const > const & cellCenters,
-                                      VEM const & virtualElement )
+                                      VEM const & virtualElement,
+                                      typename VEM::StackVariables const & stack )
 {
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
@@ -120,7 +124,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
     stabTimeMonomialDofsNorm = 0;
     for( localIndex j = 0; j < numCellPoints; ++j )
     {
-      stabTimeMonomialDofs( i ) += virtualElement.calcStabilizationValue( i, j );
+      stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j, stack );
     }
     stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
   }
@@ -135,7 +139,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
       stabTimeMonomialDofs( i ) = 0;
       for( localIndex j = 0; j < numCellPoints; ++j )
       {
-        stabTimeMonomialDofs( i ) += virtualElement.calcStabilizationValue( i, j ) *
+        stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j, stack ) *
                                      monomialVemDofs( monomInd, j );
       }
       stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
@@ -149,14 +153,15 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
 template< typename VEM >
 GEOSX_HOST_DEVICE
 static void checkSumOfQuadratureWeights( real64 const & cellVolume,
-                                         VEM const & virtualElement )
+                                         VEM const & virtualElement,
+                                         typename VEM::StackVariables stack )
 {
   real64 sum = 0.0;
   real64 const dummy[VEM::maxSupportPoints][3] { { 0.0 } };
-  for( localIndex q = 0; q < virtualElement.getNumQuadraturePoints(); ++q )
+  for( localIndex q = 0; q < virtualElement.template numQuadraturePoints< VEM >( stack ); ++q )
   {
     real64 weight =
-      virtualElement.transformedQuadratureWeight( q, dummy );
+      virtualElement.transformedQuadratureWeight( q, dummy, stack );
     sum += weight;
   }
   EXPECT_TRUE( LvArray::math::abs( sum - cellVolume ) < 1e-15 )
@@ -219,12 +224,11 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
     //                                      cellCenter,
     //                                      cellVolumes[cellIndex] );
 
-    checkIntegralMeanConsistency< VEM >( virtualElement );
-    checkIntegralMeanDerivativesConsistency< VEM >( virtualElement );
-    checkStabilizationMatrixConsistency< VEM >( nodesCoords, cellIndex,
-                                                cellToNodeMap, cellCenters,
-                                                virtualElement );
-    checkSumOfQuadratureWeights< VEM >( cellVolumes[cellIndex], virtualElement );
+    checkIntegralMeanConsistency< VEM >( virtualElement, stack );
+    checkIntegralMeanDerivativesConsistency< VEM >( virtualElement, stack );
+    checkStabilizationMatrixConsistency< VEM >( nodesCoords, cellIndex, cellToNodeMap,
+                                                cellCenters, virtualElement, stack );
+    checkSumOfQuadratureWeights< VEM >( cellVolumes[cellIndex], virtualElement, stack );
   } );
 }
 

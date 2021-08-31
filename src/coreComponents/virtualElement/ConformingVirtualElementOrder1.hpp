@@ -37,6 +37,7 @@ public:
   using InputEdgeToNodeMap = arrayView2d< localIndex const >;
 
   static constexpr localIndex maxSupportPoints = MAXCELLNODES;
+  static constexpr localIndex numNodes = MAXCELLNODES;
   static constexpr localIndex numQuadraturePoints = 1;
 
   ConformingVirtualElementOrder1() = default;
@@ -273,6 +274,15 @@ public:
                                  localIndex const jBasisFunction ) const
   {
     return m_stabilizationMatrix[iBasisFunction][jBasisFunction];
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static real64 calcStabilizationValue( localIndex const iBasisFunction,
+                                        localIndex const jBasisFunction,
+                                        StackVariables const & stack )
+  {
+    return stack.stabilizationMatrix[iBasisFunction][jBasisFunction];
   }
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
