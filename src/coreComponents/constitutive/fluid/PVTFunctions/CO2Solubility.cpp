@@ -225,13 +225,20 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateCO2Solubility( tolerance, tableCoords, salinity, values );
 
-  TableFunction * const solubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2SolubilityTable" ) );
-  solubilityTable->setTableCoordinates( tableCoords.getCoords() );
-  solubilityTable->setTableValues( values );
-  solubilityTable->reInitializeFunction();
-  solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  return solubilityTable;
+  // TODO: fix name/uniqueness
+  if( functionManager.hasGroup< TableFunction >( "CO2SolubilityTable" ) )
+  {
+    return functionManager.getGroupPointer< TableFunction >( "CO2SolubilityTable" );
+  }
+  else
+  {
+    TableFunction * const solubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2SolubilityTable" ) );
+    solubilityTable->setTableCoordinates( tableCoords.getCoords() );
+    solubilityTable->setTableValues( values );
+    solubilityTable->reInitializeFunction();
+    solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return solubilityTable;
+  }
 }
 
 } // namespace

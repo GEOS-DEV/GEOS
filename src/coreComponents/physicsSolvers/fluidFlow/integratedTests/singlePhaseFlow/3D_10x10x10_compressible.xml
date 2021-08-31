@@ -90,7 +90,7 @@
     <CellElementRegion
       name="mainRegion"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock, rockPerm }"/>
+      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
   </ElementRegions>
 
   <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS_END -->
@@ -104,10 +104,20 @@
       compressibility="5e-10"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
       referencePressure="0.0"
-      compressibility="1e-9"/>
+      compressibility="1.0e-9"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -118,11 +128,11 @@
   <!-- SPHINX_TUT_INT_HEX_FIELDS -->
   <FieldSpecifications>
     <FieldSpecification
-      name="referencePorosity"
+      name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
-      fieldName="referencePorosity"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification

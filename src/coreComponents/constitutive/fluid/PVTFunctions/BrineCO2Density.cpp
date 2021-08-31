@@ -79,7 +79,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
 
   // initialize salinity
   GEOSX_THROW_IF( inputParams.size() < 9,
-                  "Invalid property input!",
+                  "BrineCO2Density: invalid property input!",
                   InputError );
   real64 salinity = 0.0;
   try
@@ -88,19 +88,26 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "Invalid property argument:" + string( e.what() ), InputError );
+    GEOSX_THROW( "BrineCO2Density: invalid property argument:" + string( e.what() ), InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateBrineDensity( tableCoords, salinity, densities );
 
-  TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "brineDensityTable" ) );
-  densityTable->setTableCoordinates( tableCoords.getCoords() );
-  densityTable->setTableValues( densities );
-  densityTable->reInitializeFunction();
-  densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  return densityTable;
+  // TODO: fix name/uniqueness
+  if( functionManager.hasGroup< TableFunction >( "brineDensityTable" ) )
+  {
+    return functionManager.getGroupPointer< TableFunction >( "brineDensityTable" );
+  }
+  else
+  {
+    TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "brineDensityTable" ) );
+    densityTable->setTableCoordinates( tableCoords.getCoords() );
+    densityTable->setTableValues( densities );
+    densityTable->reInitializeFunction();
+    densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return densityTable;
+  }
 }
 
 } // namespace

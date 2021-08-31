@@ -284,11 +284,9 @@ struct AccumulationKernel
   GEOSX_HOST_DEVICE
   static void
     compute( localIndex const numPhases,
-             real64 const & volume,
-             real64 const & porosityOld,
-             real64 const & porosityRef,
-             real64 const & pvMult,
-             real64 const & dPvMult_dPres,
+             real64 const & poreVolOld,
+             real64 const & poreVolNew,
+             real64 const & dPoreVol_dP,
              arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
              arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFracOld,
              arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
@@ -313,11 +311,9 @@ struct AccumulationKernel
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & volume,
-          arrayView1d< real64 >       const & porosity,
-          arrayView1d< real64 const > const & porosityOld,
-          arrayView1d< real64 const > const & porosityRef,
-          arrayView2d< real64 const > const & pvMult,
-          arrayView2d< real64 const > const & dPvMult_dPres,
+          arrayView2d< real64 const > const & porosityOld,
+          arrayView2d< real64 const > const & porosityNew,
+          arrayView2d< real64 const > const & dPoro_dPres,
           arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFracOld,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
@@ -346,9 +342,8 @@ struct VolumeBalanceKernel
   GEOSX_HOST_DEVICE
   static void
   compute( real64 const & volume,
-           real64 const & porosityRef,
-           real64 const & pvMult,
-           real64 const & dPvMult_dPres,
+           real64 const & porosityNew,
+           real64 const & dPoro_dPres,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dCompDens,
@@ -362,9 +357,8 @@ struct VolumeBalanceKernel
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & volume,
-          arrayView1d< real64 const > const & porosityRef,
-          arrayView2d< real64 const > const & pvMult,
-          arrayView2d< real64 const > const & dPvMult_dPres,
+          arrayView2d< real64 const > const & porosityNew,
+          arrayView2d< real64 const > const & dPoro_dPres,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens,
@@ -408,7 +402,6 @@ struct ResidualNormKernel
   }
 
 };
-
 
 
 /******************************** SolutionCheckKernel ********************************/
@@ -502,7 +495,7 @@ void KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 } // namespace helpers
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
+void KernelLaunchSelector1( localIndex const numComp, ARGS && ... args )
 {
   internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {
@@ -511,7 +504,7 @@ void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
 }
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ... args )
+void KernelLaunchSelector2( localIndex const numComp, localIndex const numPhase, ARGS && ... args )
 {
   internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {
