@@ -35,36 +35,6 @@ using namespace geosx::constitutive::PVTProps;
 
 /// Black-oil tables written into temporary files during testing
 
-static const char * pvtgTableContent = "#\tPg(Pa)\t\tRv(sm3/sm3)\tBg(m3/sm3)\tVisc(Pa.s)\n"
-                                       "\n"
-                                       "\t3000000\t\t0.000132\t0.04234\t    0.00001344\n"
-                                       "\t\t\t\t0\t\t\t0.04231\t    0.00001389\n"
-                                       "\t6000000\t\t0.000124\t0.02046\t    0.0000142\n"
-                                       "\t\t\t\t0\t\t\t0.02043\t    0.0000145\n"
-                                       "\t9000000\t\t0.000126\t0.01328\t    0.00001526\n"
-                                       "\t\t\t\t0\t\t\t0.01325\t    0.00001532\n"
-                                       "   12000000\t\t0.000135\t0.00977\t    0.0000166\n"
-                                       "\t\t\t\t0\t\t\t0.00973\t    0.00001634\n"
-                                       "   15000000\t\t0.000149\t0.00773\t    0.00001818\n"
-                                       "\t\t\t\t0\t\t\t0.00769\t    0.00001752\n"
-                                       "   18000000\t\t0.000163\t0.006426\t0.00001994\n"
-                                       "\t\t\t\t0\t\t\t0.006405\t0.00001883\n"
-                                       "   21000000\t\t0.000191\t0.005541\t0.00002181\n"
-                                       "\t\t\t\t0\t\t\t0.005553\t0.00002021\n"
-                                       "   24000000\t\t0.000225\t0.004919\t0.0000237\n"
-                                       "\t\t\t\t0\t\t\t0.004952\t0.00002163\n"
-                                       "   27000000\t\t0.000272\t0.004471\t0.00002559\n"
-                                       "\t\t\t\t0\t\t\t0.004511\t0.00002305\n"
-                                       "   29500000\t\t0.000354\t0.004194\t0.00002714\n"
-                                       "\t\t\t\t0\t\t\t0.004225\t0.00002423\n"
-                                       "   31000000\t\t0.000403\t0.004031\t0.00002806\n"
-                                       "\t\t\t\t0.000354\t0.004059\t0.00002768\n"
-                                       "   33000000\t\t0.000354\t0.00391\t    0.00002832\n"
-                                       "\t\t\t\t0\t\t\t0.003913\t0.00002583\n"
-                                       "   53000000\t\t0.000479\t0.003868\t0.00002935\n"
-                                       "\t\t\t\t0.000354\t0.0039\t\t0.00002842\n"
-                                       "\t\t\t\t0\t\t\t0.003903\t0.00002593";
-
 static const char * pvtoTableContent = "# Rs[sm3/sm3]\tPbub[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\n"
                                        "\n"
                                        "  2\t            2000000\t    1.02\t    0.000975\n"
@@ -506,8 +476,6 @@ MultiFluidBase & makeLiveOilFluid( string const & name, Group * parent )
 {
   BlackOilFluid & fluid = parent->registerGroup< BlackOilFluid >( name );
 
-  // TODO we should actually create a fake XML node with data, but this seemed easier...
-
   string_array & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   compNames.resize( 3 );
   compNames[0] = "oil"; compNames[1] = "gas"; compNames[2] = "water";
@@ -520,13 +488,13 @@ MultiFluidBase & makeLiveOilFluid( string const & name, Group * parent )
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
 
-  array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluid::viewKeyStruct::surfaceDensitiesString() );
+  array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluidBase::viewKeyStruct::surfacePhaseMassDensitiesString() );
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
 
-  path_array & tableNames = fluid.getReference< path_array >( BlackOilFluid::viewKeyStruct::tableFilesString() );
+  path_array & tableNames = fluid.getReference< path_array >( BlackOilFluidBase::viewKeyStruct::tableFilesString() );
   tableNames.resize( 3 );
-  tableNames[0] = "pvto.txt"; tableNames[1] = "pvtg.txt"; tableNames[2] = "pvtw.txt";
+  tableNames[0] = "pvto.txt"; tableNames[1] = "pvdg.txt"; tableNames[2] = "pvtw.txt";
 
   fluid.postProcessInputRecursive();
   return fluid;
@@ -548,11 +516,11 @@ MultiFluidBase & makeDeadOilFluid( string const & name, Group * parent )
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "water"; phaseNames[2] = "gas";
 
-  array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluid::viewKeyStruct::surfaceDensitiesString() );
+  array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluidBase::viewKeyStruct::surfacePhaseMassDensitiesString() );
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 1022.0; surfaceDens[2] = 0.9907;
 
-  path_array & tableNames = fluid.getReference< path_array >( BlackOilFluid::viewKeyStruct::tableFilesString() );
+  path_array & tableNames = fluid.getReference< path_array >( BlackOilFluidBase::viewKeyStruct::tableFilesString() );
   tableNames.resize( 3 );
   tableNames[0] = "pvdo.txt"; tableNames[1] = "pvdw.txt"; tableNames[2] = "pvdg.txt";
 
@@ -687,7 +655,7 @@ public:
   LiveOilFluidTest()
   {
     writeTableToFile( "pvto.txt", pvtoTableContent );
-    writeTableToFile( "pvtg.txt", pvtgTableContent );
+    writeTableToFile( "pvdg.txt", pvdgTableContent );
     writeTableToFile( "pvtw.txt", pvtwTableContent );
 
     parent.resize( 1 );
@@ -700,7 +668,7 @@ public:
   ~LiveOilFluidTest()
   {
     removeFile( "pvto.txt" );
-    removeFile( "pvtg.txt" );
+    removeFile( "pvdg.txt" );
     removeFile( "pvtw.txt" );
   }
 };
@@ -709,33 +677,36 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
 {
   fluid->setMassFlag( false );
 
-  // TODO test over a range of values
-  real64 const P = 5e6;
+  real64 const P[3] = { 5.4e6, 1.24e7, 3.21e7 };
   real64 const T = 297.15;
   array1d< real64 > comp( 3 );
-  comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
+  comp[0] = 0.79999; comp[1] = 0.2; comp[2] = 0.00001;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
-  real64 const relTol = 1e-4;
+  real64 const relTol = 1e-12;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol );
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
+  }
 }
 
 TEST_F( LiveOilFluidTest, numericalDerivativesMass )
 {
   fluid->setMassFlag( true );
 
-  // TODO test over a range of values
-  real64 const P = 5e6;
+  real64 const P[3] = { 5.4e6, 1.24e7, 3.21e7 };
   real64 const T = 297.15;
   array1d< real64 > comp( 3 );
-  comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
+  comp[0] = 0.79999; comp[1] = 0.2; comp[2] = 0.00001;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
-  real64 const relTol = 1e-2;
-  real64 const absTol = 1e-14;
+  real64 const relTol = 1e-12;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol, absTol );
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
+  }
 }
 
 class DeadOilFluidTest : public CompositionalFluidTestBase

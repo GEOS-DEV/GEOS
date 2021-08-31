@@ -1191,6 +1191,11 @@ void CompositionalMultiphaseBase::resetViews( MeshLevel & mesh )
       elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_COMP_DC >( keys::dGlobalCompFraction_dGlobalCompDensityString() );
     m_dCompFrac_dCompDens.setName( getName() + "/accessors/" + keys::dGlobalCompFraction_dGlobalCompDensityString() );
 
+    m_phaseVolFrac.clear();
+    m_phaseVolFrac =
+      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( keys::phaseVolumeFractionString() );
+    m_phaseVolFrac.setName( getName() + "/accessors/" + keys::phaseVolumeFractionString() );
+
     m_dPhaseVolFrac_dPres.clear();
     m_dPhaseVolFrac_dPres =
       elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( keys::dPhaseVolumeFraction_dPressureString() );
