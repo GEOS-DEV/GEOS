@@ -2,12 +2,16 @@
 
 
 ####################################################
-Tutorial 13: Cased elastic wellbore problem
+Cased elastic wellbore problem
 ####################################################
 
 
-**Context**
-This example uses the solid mechanic solver (:ref:`SolidMechanicsLagrangianSSLE`) for solving a cased wellbore problem subjected to a pressure test.
+------------------------------------------------------------------
+Problem description
+------------------------------------------------------------------
+
+This example uses the solid mechanic solver (:ref:`SolidMechanicsLagrangianSSLE`) for solving a cased wellbore problem subjected to a pressure test. The problem geometry is composed a steel casing, a cement sheath and rock formation. Isotropic linear elastic behavior is assumed for all the three materials. The casing-cement and cement-rock contact interfaces are supposed to be perfect.
+
 
 
 **Objectives**
@@ -40,13 +44,6 @@ The benchmark script is located at:
 
 
 ------------------------------------------------------------------
-Problem description
-------------------------------------------------------------------
-
-The problem geometry is composed a steel casing, a cement sheath and rock formation. Isotropic linear elastic behavior is assumed for all the three materials. The casing-cement and cement-rock contact interfaces are supposed to be perfect.
-
-
-------------------------------------------------------------------
 Preparing the input file
 ------------------------------------------------------------------
 
@@ -67,6 +64,7 @@ Mesh
   :start-after: <!-- SPHINX_WellboreMesh -->
   :end-before: <!-- SPHINX_WellboreMeshEnd -->
 
+.. image:: mesh.png
 
 Materials
 --------------------------------------------------------------------
@@ -89,6 +87,6 @@ Boundary conditions
 Results & Benchmark
 ---------------------------------
 
-
+.. image:: validation.png
 
 
