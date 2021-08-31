@@ -88,5 +88,36 @@ string_array tokenize( const string & str, const string & delimiters )
   return tokens;
 }
 
+string trim( string const & str,
+             string const & charsToRemove )
+{
+  string newStr = "";
+
+  std::size_t const first = str.find_first_not_of( charsToRemove );
+  std::size_t const last = str.find_last_not_of( charsToRemove );
+  if( first != string::npos )
+  {
+    newStr = str.substr( first, ( last - first + 1 ) );
+  }
+  return newStr;
+}
+
+
+string removeStringAndFollowingContent( string const & str,
+                                        string const & strToRemove )
+{
+  string newStr = str;
+
+  // check if the line contains the string to remove
+  std::size_t const pos = newStr.find( strToRemove );
+
+  if( pos != string::npos )
+  {
+    // remove the character and everything afterwards
+    newStr = newStr.substr( 0, pos );
+  }
+  return newStr;
+}
+
 }
 }

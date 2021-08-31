@@ -15,11 +15,14 @@ set( constitutive_headers
      capillaryPressure/layouts.hpp
      contact/ContactRelationBase.hpp
      contact/Coulomb.hpp
+     fluid/BlackOilFluidBase.hpp	
+     fluid/BlackOilFluid.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
      fluid/DeadOilFluid.hpp
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
+     fluid/PVTOData.hpp
      fluid/PVTFunctions/BrineCO2Density.hpp
      fluid/PVTFunctions/BrineViscosity.hpp
      fluid/PVTFunctions/CO2Solubility.hpp
@@ -88,14 +91,18 @@ set( constitutive_sources
      contact/ContactRelationBase.cpp
      contact/Coulomb.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
+     fluid/BlackOilFluidBase.cpp
+     fluid/BlackOilFluid.cpp
      fluid/DeadOilFluid.cpp
      fluid/MultiFluidBase.cpp
      fluid/MultiPhaseMultiComponentFluid.cpp
+     fluid/PVTOData.cpp
      fluid/PVTFunctions/BrineCO2Density.cpp
      fluid/PVTFunctions/BrineViscosity.cpp
      fluid/PVTFunctions/CO2Solubility.cpp
      fluid/PVTFunctions/FenghourCO2Viscosity.cpp
      fluid/PVTFunctions/SpanWagnerCO2Density.cpp
+     fluid/PVTFunctions/PVTFunctionHelpers.cpp     
      fluid/ParticleFluid.cpp              
      fluid/ParticleFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp
@@ -133,14 +140,12 @@ set( dependencyList events dataRepository functions )
 if( ENABLE_PVTPackage )
     set( constitutive_headers
          ${constitutive_headers}
-         fluid/BlackOilFluid.hpp
          fluid/CompositionalMultiphaseFluid.hpp
          fluid/MultiFluidPVTPackageWrapper.hpp
        )
 
     set( constitutive_sources
          ${constitutive_sources}
-         fluid/BlackOilFluid.cpp
          fluid/CompositionalMultiphaseFluid.cpp
          fluid/MultiFluidPVTPackageWrapper.cpp
        )

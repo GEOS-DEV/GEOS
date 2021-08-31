@@ -678,6 +678,7 @@ struct PerforationKernel
           localIndex const numPhases,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & dResPres,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dResPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dResPhaseVolFrac_dComp,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dResCompFrac_dCompDens,
@@ -766,7 +767,6 @@ struct PerforationKernel
       // 1) copy the variables from the reservoir and well element
 
       // a) get reservoir variables
-
       // get the reservoir (sub)region and element indices
       localIndex const er  = resElementRegion[iperf];
       localIndex const esr = resElementSubRegion[iperf];
@@ -842,6 +842,12 @@ struct PerforationKernel
                           dResPhaseVisc_dComp[er][esr][ei][0][ip],
                           dVisc_dC );
 
+          // skip the rest of the calculation if the phase is absent
+          bool const phaseExists = (resPhaseVolFrac[er][esr][ei][ip] > 0);
+          if( !phaseExists )
+          {
+            continue;
+          }
           // relative permeability
           real64 const resRelPerm = resPhaseRelPerm[er][esr][ei][0][ip];
           real64 dResRelPerm_dP = 0.0;
@@ -930,7 +936,6 @@ struct PerforationKernel
 
         real64 resTotalMob     = 0.0;
         real64 dResTotalMob_dP = 0.0;
-
         // we re-compute here the total mass (when useMass == 1) or molar (when useMass == 0) density
         real64 wellElemTotalDens = 0;
         for( localIndex ic = 0; ic < NC; ++ic )
@@ -941,9 +946,17 @@ struct PerforationKernel
         // first, compute the reservoir total mobility (excluding phase density)
         for( localIndex ip = 0; ip < NP; ++ip )
         {
+
+          // skip the rest of the calculation if the phase is absent
+          bool const phaseExists = (resPhaseVolFrac[er][esr][ei][ip] > 0);
+          if( !phaseExists )
+          {
+            continue;
+          }
+
           // viscosity
           real64 const resVisc = resPhaseVisc[er][esr][ei][0][ip];
-          real64 const dResVisc_dP  = dResPhaseVisc_dPres[er][esr][ei][0][ip];
+          real64 const dResVisc_dP = dResPhaseVisc_dPres[er][esr][ei][0][ip];
           applyChainRule( NC, dResCompFrac_dCompDens[er][esr][ei],
                           dResPhaseVisc_dComp[er][esr][ei][0][ip],
                           dVisc_dC );
