@@ -130,6 +130,23 @@ public:
                      real64 ( &N )[numNodes] );
 
   /**
+   * @brief Calculate shape functions values for each support point at a
+   *   quadrature point.
+   * @param q Index of the quadrature point.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( localIndex const q,
+                     StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+                     real64 ( & N )[numNodes] )
+  {
+    return calcN( q, N );
+  }
+
+  /**
    * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates.
    * @param q Index of the quadrature point.
@@ -154,10 +171,14 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
-                           StackVariables const & stack,
-                           real64 ( &gradN )[numNodes][3] );
+                           StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+                           real64 ( & gradN )[numNodes][3] )
+  {
+    return calcGradN( q, X, gradN );
+  }
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -470,17 +491,6 @@ real64 H1_Pyramid_Lagrange1_Gauss5::calcGradN( localIndex const q,
   applyJacobianTransformationToShapeFunctionsDerivatives( q, J, gradN );
 
   return detJ * quadratureWeight( q );
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-real64
-H1_Pyramid_Lagrange1_Gauss5::calcGradN( localIndex const q,
-                                        real64 const (&X)[numNodes][3],
-                                        StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                                        real64 ( & gradN )[numNodes][3] )
-{
-  return calcGradN( q, X, gradN );
 }
 
 //*************************************************************************************************

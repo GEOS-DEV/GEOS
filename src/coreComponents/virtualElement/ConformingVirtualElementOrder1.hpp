@@ -188,6 +188,18 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
+                     StackVariables const & stack,
+                     real64 ( & N )[maxSupportPoints] )
+  {
+    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
+    {
+      N[i] = stack.basisFunctionsIntegralMean[i];
+    }
+  }
+
+  GEOSX_HOST_DEVICE
   real64 calcGradN( localIndex const q,
                     real64 const ( &X )[maxSupportPoints][3],
                     real64 ( & gradN )[maxSupportPoints][3] ) const

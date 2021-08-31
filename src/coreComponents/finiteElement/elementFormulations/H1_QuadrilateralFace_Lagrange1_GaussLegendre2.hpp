@@ -123,6 +123,23 @@ public:
                      real64 ( &N )[numNodes] );
 
   /**
+   * @brief Calculate shape functions values for each support point at a
+   *   quadrature point.
+   * @param q Index of the quadrature point.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( localIndex const q,
+                     StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+                     real64 ( & N )[numNodes] )
+  {
+    return calcN( q, N );
+  }
+
+  /**
    * @brief Calculate the integration weights for a quadrature point.
    * @param q Index of the quadrature point.
    * @param X Array containing the coordinates of the support points.
