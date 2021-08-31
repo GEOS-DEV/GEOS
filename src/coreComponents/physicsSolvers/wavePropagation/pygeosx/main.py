@@ -18,7 +18,7 @@ acq = EQUISPACEDAcquisition(boundary=[[0,13520],[0,13520],[0,4200]],
                             end_source_pos      = [10001, 7001],
                             start_receivers_pos = [[101, 7001]],
                             end_receivers_pos   = [[13001, 7001]],
-                            number_of_sources   = 2,
+                            number_of_sources   = 4,
                             number_of_receivers = 100,
                             source_depth = 4099,
                             receivers_depth = 4149)
@@ -27,7 +27,7 @@ acq = EQUISPACEDAcquisition(boundary=[[0,13520],[0,13520],[0,4200]],
 acq.add_xml(args.xml)
 acq.limitedAperture(3000, 2000)
 
-acqs = acq.split(2)
+acqs = acq.split(4)
 
 cluster = SLURMCluster(job_name="seismicAcquisition", nodes=1, cores=16, 
                        env_extra=["physics/geosx_deps","physics/pygeosx"], python="$Python3_EXECUTABLE",
@@ -35,7 +35,7 @@ cluster = SLURMCluster(job_name="seismicAcquisition", nodes=1, cores=16,
 
 
 client = Client(cluster)
-client.scale(2)
+client.scale(4)
 
 #future = client.submit(acoustic_shots, acq, args.xml, cores=6, x_partition=6)
 futures = client.map(acoustic_shots, acqs, cores=16, x_partition=8, y_partition=2)

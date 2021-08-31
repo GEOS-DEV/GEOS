@@ -120,8 +120,6 @@ class Acquisition:
         if self.xml is None:
             raise ValueError("You must link the seismic acquisition with xml file to be able to calculte the simulation time step dt")
         
-        
-
 
 
     def limitedAperture(self, aperture_dist, aperture_depth):
@@ -164,7 +162,6 @@ class Acquisition:
 
         if isinstance(self.velocity_model, str):
             tablefunction =[elem.attrib for elem in root.iter('TableFunction')][0]
-            vf = open(self.velocity_model)
 
             with open(self.velocity_model.split("_velModel")[0]+"_xlin.geos", 'r') as xf:
                 xlin = xf.readlines()
@@ -187,7 +184,6 @@ class Acquisition:
                     velocity_model_index.append(ind)
             vf.close()
 
-            velocity_model = []
 
         xml = []
         shot_ind = 0
@@ -208,31 +204,10 @@ class Acquisition:
             box['xMax'] = str(boundary[0][1]+0.01)+","+str(boundary[1][1]+0.01)+","+str(boundary[2][1]+0.01)
 
             if isinstance(self.velocity_model, str):
-                remove_line=[]
                 xlocal=[]
                 ylocal=[]
                 zlocal=[]
-                """
-                for i in range(lx):
-                    if float(xlin[i])<boundary[0][0] or float(xlin[i])>boundary[0][1]:
-                        remove_line.append(velocity_model_index[i*ly*lz:(i+1)*ly*lz])
-                    else:
-                        xlocal.append(xlin[i])
-                        for j in range(ly):
-                            if float(ylin[j])<boundary[1][0] or float(ylin[j])>boundary[1][1]:
-                                remove_line.append(velocity_model_index[i*ly*lz+j*lz : i*ly*lz+(j+1)*lz])
-                            else:
-                                if ylin[j] not in ylocal:
-                                    ylocal.append(ylin[j])
-                                for k in range(lz):
-                                    if float(zlin[k])<boundary[2][0] or float(zlin[k])>boundary[2][1]:
-                                        remove_line.append([velocity_model_index[i*ly*lz + j*lz + k]])
-                                    else:
-                                        if zlin[k] not in zlocal:
-                                            zlocal.append(zlin[k])
-                
-                remove_line = [elem for list in remove_line for elem in list]
-                """
+
                 keep_line=[]
                 localToGlobal=[]
                 for i in range(lx):
@@ -272,14 +247,8 @@ class Acquisition:
                 with open(velocity_file, 'w') as vfla:
                     for line in keep_line:
                         vfla.write(line)
-                        if float(line) > min_vel:
+                        if float(line) > max_vel:
                             max_vel =  float(line)
-                    """
-                    for ind in range(len(velocity_model_value)):
-                        if ind not in remove_line:
-                            vfla.write(velocity_model_value[ind])
-                            localToGlobal.append(ind)
-                    """
                 vfla.close()
 
                 tablefunction['coordinateFiles']="{"+xlin_file+","+ylin_file+","+zlin_file+"}"
@@ -544,13 +513,11 @@ class EQUISPACEDAcquisition(Acquisition):
                 yr = np.linspace(start_receivers_pos[i][1], end_receivers_pos[i][1], number_of_receivers[i]).tolist()
 
         receivers_temp = ReceiverSet([Receiver([x, y, receivers_depth]) for x, y in list(zip(xr, yr))])
-        #print(receivers_temp)
         receivers.append(deepcopy(receivers_temp))
 
         xs = np.linspace(start_source_pos[0], end_source_pos[0], number_of_sources).tolist()
         ys = np.linspace(start_source_pos[1], end_source_pos[1], number_of_sources).tolist()
 
-        # receivers = receivers.getInsideDomain(box)
         shots = []
 
         for i in range(len(xs)):
@@ -1108,7 +1075,7 @@ class SourceSet:
             self.n = 0
         else:
             self.source_list = source_list
-            self.n = len(source_list) #Number of sources
+            self.n = len(source_list)
 
 
     def append(self, source):

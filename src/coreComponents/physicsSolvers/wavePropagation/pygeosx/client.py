@@ -150,7 +150,10 @@ class Client:
         self.cluster.finalize_script()
         
         bashfile = self.cluster.job_file()
-        output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
+
+        if isinstance(self.cluster, SLURMCluster):
+            output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
+
         job_id = output.split()[-1].decode()
 
         print("Job : " + job_id+ " has been submited")
