@@ -201,7 +201,7 @@ real64 spanWagnerCO2DensityFunction( real64 const & tolerance,
   }
 
   GEOSX_THROW_IF( count == maxIter,
-                  "CO2Solubility NR convergence fails! " << "dre = " << dre << ", tolerance = " << tolerance,
+                  "SpanWagnerCO2Density: Newton convergence fails in CO2 solubility computation: " << "dre = " << dre << ", tolerance = " << tolerance,
                   InputError );
   return rho;
 }
@@ -223,20 +223,27 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "Invalid property argument:" + string( e.what()),
+    GEOSX_THROW( "SpanWagnerCO2Density: invalid property argument:" + string( e.what()),
                  InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
   SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, densities );
 
-  TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2DensityTable" ) );
-  densityTable->setTableCoordinates( tableCoords.getCoords() );
-  densityTable->setTableValues( densities );
-  densityTable->reInitializeFunction();
-  densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  return densityTable;
+  // TODO: fix name/uniqueness
+  if( functionManager.hasGroup< TableFunction >( "CO2DensityTable" ) )
+  {
+    return functionManager.getGroupPointer< TableFunction >( "CO2DensityTable" );
+  }
+  else
+  {
+    TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2DensityTable" ) );
+    densityTable->setTableCoordinates( tableCoords.getCoords() );
+    densityTable->setTableValues( densities );
+    densityTable->reInitializeFunction();
+    densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return densityTable;
+  }
 }
 
 } // namespace

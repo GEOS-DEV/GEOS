@@ -104,7 +104,7 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "Invalid property argument:" + string( e.what() ), InputError );
+    GEOSX_THROW( "FenghourCO2Viscosity: invalid property argument:" + string( e.what() ), InputError );
   }
 
   localIndex const nP = tableCoords.nPressures();
@@ -114,13 +114,20 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, density );
   calculateCO2Viscosity( tableCoords, density, viscosity );
 
-  TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2ViscosityTable" ) );
-  viscosityTable->setTableCoordinates( tableCoords.getCoords() );
-  viscosityTable->setTableValues( viscosity );
-  viscosityTable->reInitializeFunction();
-  viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  return viscosityTable;
+  // TODO: fix name/uniqueness
+  if( functionManager.hasGroup< TableFunction >( "CO2ViscosityTable" ) )
+  {
+    return functionManager.getGroupPointer< TableFunction >( "CO2ViscosityTable" );
+  }
+  else
+  {
+    TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2ViscosityTable" ) );
+    viscosityTable->setTableCoordinates( tableCoords.getCoords() );
+    viscosityTable->setTableValues( viscosity );
+    viscosityTable->reInitializeFunction();
+    viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return viscosityTable;
+  }
 }
 
 } // namespace

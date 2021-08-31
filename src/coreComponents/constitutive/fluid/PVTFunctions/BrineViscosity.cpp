@@ -51,7 +51,7 @@ void BrineViscosity::makeCoefficients( string_array const & inputPara )
 
   real64 m = -1.0;
 
-  GEOSX_ERROR_IF( inputPara.size() < 3, "Invalid BrineViscosity input!" );
+  GEOSX_ERROR_IF( inputPara.size() < 3, "BrineViscosity: invalid BrineViscosity input!" );
 
   try
   {
@@ -59,7 +59,7 @@ void BrineViscosity::makeCoefficients( string_array const & inputPara )
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_ERROR( "Invalid BrineViscosity argument:" + string( e.what() ) );
+    GEOSX_ERROR( "BrineViscosity: invalid argument:" + string( e.what() ) );
   }
 
   m_coef0 = (1.0 + a * m + b * m * m + c * m * m * m) * waterVisc;

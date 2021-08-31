@@ -205,6 +205,7 @@ struct PerforationKernel
   static void
   compute( real64 const & resPres,
            real64 const & dResPres,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & resPhaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dResPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dResPhaseVolFrac_dComp,
            arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dResCompFrac_dCompDens,
@@ -240,6 +241,7 @@ struct PerforationKernel
   launch( localIndex const size,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & dResPres,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dResPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dResPhaseVolFrac_dComp,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dResCompFrac_dCompDens,

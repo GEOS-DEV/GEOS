@@ -692,7 +692,15 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       {
 
         // Step 3.1: compute the inverse of the (phase density * phase fraction) and derivatives
-        real64 const phaseDensInv = 1.0 / phaseDens[iwelemRef][0][ip];
+
+        // skip the rest of this function if phase ip is absent
+        bool const phaseExists = (phaseFrac[iwelemRef][0][ip] > 0);
+        if( !phaseExists )
+        {
+          continue;
+        }
+
+        real64 const phaseDensInv =  1.0 / phaseDens[iwelemRef][0][ip];
         real64 const phaseFracTimesPhaseDensInv = phaseFrac[iwelemRef][0][ip] * phaseDensInv;
         real64 const dPhaseFracTimesPhaseDensInv_dPres = dPhaseFrac_dPres[iwelemRef][0][ip] * phaseDensInv
                                                          - dPhaseDens_dPres[iwelemRef][0][ip] * phaseFracTimesPhaseDensInv * phaseDensInv;
@@ -1362,6 +1370,7 @@ void CompositionalMultiphaseWell::computePerforationRates( WellElementSubRegion 
                                                 perforationData->size(),
                                                 m_resPres.toNestedViewConst(),
                                                 m_deltaResPres.toNestedViewConst(),
+                                                m_resPhaseVolFrac.toNestedViewConst(),
                                                 m_dResPhaseVolFrac_dPres.toNestedViewConst(),
                                                 m_dResPhaseVolFrac_dCompDens.toNestedViewConst(),
                                                 m_dResCompFrac_dCompDens.toNestedViewConst(),

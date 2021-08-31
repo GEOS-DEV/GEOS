@@ -752,6 +752,7 @@ void
 PerforationKernel::
   compute( real64 const & resPres,
            real64 const & dResPres,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & resPhaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dResPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dResPhaseVolFrac_dComp,
            arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dResCompFrac_dCompDens,
@@ -873,6 +874,13 @@ PerforationKernel::
     for( localIndex ip = 0; ip < NP; ++ip )
     {
 
+      // skip the rest of the calculation if the phase is absent
+      bool const phaseExists = (resPhaseVolFrac[ip] > 0);
+      if( !phaseExists )
+      {
+        continue;
+      }
+
       // here, we have to recompute the reservoir phase mobility (not including density)
 
       // density
@@ -968,6 +976,14 @@ PerforationKernel::
     // first, compute the reservoir total mobility (excluding phase density)
     for( localIndex ip = 0; ip < NP; ++ip )
     {
+
+      // skip the rest of the calculation if the phase is absent
+      bool const phaseExists = (resPhaseVolFrac[ip] > 0);
+      if( !phaseExists )
+      {
+        continue;
+      }
+
       // viscosity
       real64 const resVisc = resPhaseVisc[ip];
       real64 const dResVisc_dP  = dResPhaseVisc_dPres[ip];
@@ -1051,6 +1067,7 @@ PerforationKernel::
   launch( localIndex const size,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & dResPres,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dResPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dResPhaseVolFrac_dComp,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dResCompFrac_dCompDens,
@@ -1090,14 +1107,17 @@ PerforationKernel::
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
   {
 
+    // get the index of the reservoir elem
     localIndex const er  = resElementRegion[iperf];
     localIndex const esr = resElementSubRegion[iperf];
     localIndex const ei  = resElementIndex[iperf];
+
     // get the index of the well elem
     localIndex const iwelem = perfWellElemIndex[iperf];
 
     compute< NC, NP >( resPres[er][esr][ei],
                        dResPres[er][esr][ei],
+                       resPhaseVolFrac[er][esr][ei],
                        dResPhaseVolFrac_dPres[er][esr][ei],
                        dResPhaseVolFrac_dComp[er][esr][ei],
                        dResCompFrac_dCompDens[er][esr][ei],
@@ -1137,6 +1157,7 @@ PerforationKernel::
     launch< NC, NP >( localIndex const size, \
                       ElementViewConst< arrayView1d< real64 const > > const & resPres, \
                       ElementViewConst< arrayView1d< real64 const > > const & dResPres, \
+                      ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac, \
                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dResPhaseVolFrac_dPres, \
                       ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dResPhaseVolFrac_dComp, \
                       ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dResCompFrac_dCompDens, \
