@@ -161,6 +161,7 @@ void applyChainRuleInPlace( localIndex const N,
   copy( N, work, df_dxy );
 }
 
+
 } // namespace geosx
 
 #endif /* GEOSX_CODINGUTILITIES_UTILITIES_H_ */

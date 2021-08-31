@@ -97,6 +97,44 @@ string padValue( T value, int size )
   return paddedStringStream.str();
 }
 
+/**
+ * @brief Trim the string
+ * @param[in] str the string to trim
+ * @param[in] charsToRemove the list of characters to remove
+ * @return the trimmed string
+ */
+string trim( string const & str,
+             string const & charsToRemove );
+
+/**
+ * @brief Search for a string in the line, and return the line truncated before the string
+ * @param[in] str the line to truncate
+ * @param[in] strToRemove the string to search for in the line
+ * @return the new (truncated) string
+ */
+string removeStringAndFollowingContent( string const & str,
+                                        string const & strToRemove );
+
+/**
+ * @brief Take a string, and return a array1d with the cast values
+ * @tparam T the type to which the string will be cast
+ * @param[in] str the string to turn into an array1d
+ * @return the array1d that stores the cast values
+ */
+template< typename T >
+array1d< T > fromStringToArray( string const & str )
+{
+  array1d< T > v;
+  T sub;
+
+  std::istringstream iss( str );
+  while( iss >> sub )
+  {
+    v.emplace_back( sub );
+  }
+  return v;
+}
+
 } // namespace stringutilities
 } // namespace geosx
 

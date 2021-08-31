@@ -201,7 +201,7 @@ real64 spanWagnerCO2DensityFunction( real64 const & tolerance,
   }
 
   GEOSX_THROW_IF( count == maxIter,
-                  "CO2Solubility NR convergence fails! " << "dre = " << dre << ", tolerance = " << tolerance,
+                  "SpanWagnerCO2Density: Newton convergence fails in CO2 solubility computation: " << "dre = " << dre << ", tolerance = " << tolerance,
                   InputError );
   return rho;
 }
@@ -223,7 +223,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "Invalid property argument:" + string( e.what()),
+    GEOSX_THROW( "SpanWagnerCO2Density: invalid property argument:" + string( e.what()),
                  InputError );
   }
 

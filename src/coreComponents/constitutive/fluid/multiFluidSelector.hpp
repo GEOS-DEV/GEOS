@@ -20,12 +20,12 @@
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/DeadOilFluid.hpp"
+#include "constitutive/fluid/BlackOilFluid.hpp"
 #include "constitutive/fluid/MultiPhaseMultiComponentFluid.hpp"
 
 #include "common/GeosxConfig.hpp"
 #ifdef GEOSX_USE_PVTPackage
 #include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
-#include "constitutive/fluid/BlackOilFluid.hpp"
 #endif
 
 namespace geosx
@@ -39,8 +39,8 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
   ConstitutivePassThruHandler< DeadOilFluid,
-#ifdef GEOSX_USE_PVTPackage
                                BlackOilFluid,
+#ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluid,
 #endif
                                CO2BrineFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
@@ -51,8 +51,8 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                  LAMBDA && lambda )
 {
   ConstitutivePassThruHandler< DeadOilFluid,
-#ifdef GEOSX_USE_PVTPackage
                                BlackOilFluid,
+#ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluid,
 #endif
                                CO2BrineFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );

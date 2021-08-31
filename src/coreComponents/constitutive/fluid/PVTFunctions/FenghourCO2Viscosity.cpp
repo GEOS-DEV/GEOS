@@ -104,7 +104,7 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "Invalid property argument:" + string( e.what() ), InputError );
+    GEOSX_THROW( "FenghourCO2Viscosity: invalid property argument:" + string( e.what() ), InputError );
   }
 
   localIndex const nP = tableCoords.nPressures();
