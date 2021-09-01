@@ -758,7 +758,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   array2d< real64, nodes::REFERENCE_POSITION_PERM > & X = cellBlockManager.getNodesPositions();
 
-  array1d< globalIndex > & nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
+  arrayView1d< globalIndex > const nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 
   {
     localIndex localNodeIndex = 0;

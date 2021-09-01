@@ -720,7 +720,7 @@ array1d< globalIndex > CellBlockManager::getNodeLocalToGlobal() const
   return m_nodeLocalToGlobal;
 }
 
-array1d< globalIndex > & CellBlockManager::getNodeLocalToGlobal()
+arrayView1d< globalIndex > CellBlockManager::getNodeLocalToGlobal()
 {
   return m_nodeLocalToGlobal;
 }

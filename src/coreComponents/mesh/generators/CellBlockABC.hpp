@@ -65,6 +65,12 @@ public:
   virtual localIndex numNodesPerElement() const = 0;
 
   /**
+   * @brief Get the number of edges per element.
+   * @return number of edges per element
+   */
+  virtual localIndex numEdgesPerElement() const = 0;
+
+  /**
    * @brief Get the number of faces per element.
    * @return number of faces per element
    */

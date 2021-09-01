@@ -52,7 +52,7 @@ public:
    * @return the name of this type in the catalog
    */
   static const string catalogName()
-  { return "CellElementSubRegion"; } // FIXME I don't know what I am doing
+  { return "CellElementSubRegion"; }
 
   /**
    * @copydoc catalogName()
@@ -86,9 +86,9 @@ public:
 
   /**
    * @brief Fill the CellElementSubRegion by copying those of the source CellBlock
-   * @param source the CellBlock whose properties (connectivity info) will be copied
+   * @param cellBlock the CellBlock whose properties (connectivity info) will be copied
    */
-  void copyFromCellBlock( CellBlockABC & source );
+  void copyFromCellBlock( CellBlockABC & cellBlock );
 
   ///@}
 
@@ -395,7 +395,7 @@ private:
       }
       default:
       {
-        GEOSX_ERROR( "Volume calculation not supported for element type: " << m_elementType );
+        GEOSX_ERROR( "Volume calculation not supported for element type " << m_elementType << " and for CellElementSubRegion " << getName() );
       }
     }
   }
@@ -420,12 +420,6 @@ private:
 
   /// Map from local Cell Elements to Embedded Surfaces
   EmbSurfMapType m_toEmbeddedSurfaces;
-
-  /**
-   * @brief Defines the (unique) element type of this cell element region.
-   * @param[in] elementType the element type
-   */
-  void setElementType( ElementType elementType ) override final;
 
   /**
    * @brief Pack element-to-node and element-to-face maps

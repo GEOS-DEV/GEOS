@@ -66,8 +66,6 @@ EdgeManager::~EdgeManager()
 
 void EdgeManager::resize( localIndex const newSize )
 {
-  // FIXME My tests say that this line could be commented out.
-  //       But those tests are not exhaustive.
   m_toFacesRelation.resize( newSize, 2 * faceMapExtraSpacePerEdge() );
   ObjectManagerBase::resize( newSize );
 }

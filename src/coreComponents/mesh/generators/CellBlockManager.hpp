@@ -96,7 +96,7 @@ public:
    *
    * @note This is meant to be used as a setter. Do not resize the vector yourself.
    */
-  array1d< globalIndex > & getNodeLocalToGlobal();
+  arrayView1d< globalIndex > getNodeLocalToGlobal();
 
   const std::map< string, SortedArray< localIndex > > & getNodeSets() const override;
 

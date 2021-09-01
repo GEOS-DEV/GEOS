@@ -60,7 +60,7 @@ void CellBlock::setElementType( ElementType elementType )
     }
     default:
     {
-      GEOSX_ERROR( "Invalid element type: " << m_elementType );
+      GEOSX_ERROR( "Invalid element type " << m_elementType << " for CellBlock " << getName() );
     }
   }
 

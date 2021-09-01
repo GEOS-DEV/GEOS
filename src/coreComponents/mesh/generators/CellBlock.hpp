@@ -84,6 +84,9 @@ public:
   localIndex numNodesPerElement() const override
   { return m_numNodesPerElement; }
 
+  localIndex numEdgesPerElement() const override
+  { return m_numEdgesPerElement; }
+
   localIndex numFacesPerElement() const override
   { return m_numFacesPerElement; }
 

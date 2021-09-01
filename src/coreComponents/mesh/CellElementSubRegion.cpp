@@ -50,70 +50,31 @@ CellElementSubRegion::~CellElementSubRegion()
   // Left blank
 }
 
-void CellElementSubRegion::setElementType( ElementType elementType )
+void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
 {
-  m_elementType = elementType;
+  // Defines the (unique) element type of this cell element region,
+  // and its associated number of nodes, edges, faces.
+  m_elementType = cellBlock.getElementType();
+  m_numNodesPerElement = cellBlock.numNodesPerElement();
+  m_numEdgesPerElement = cellBlock.numEdgesPerElement();
+  m_numFacesPerElement = cellBlock.numFacesPerElement();
 
-  switch( m_elementType )
-  {
-    case ElementType::Hexahedron:
-    {
-      m_numNodesPerElement = 8;
-      m_numEdgesPerElement = 12;
-      m_numFacesPerElement = 6;
-      break;
-    }
-    case ElementType::Tetrahedron:
-    {
-      // Tetrahedron
-      m_numNodesPerElement = 4;
-      m_numEdgesPerElement = 6;
-      m_numFacesPerElement = 4;
-      break;
-    }
-    case ElementType::Prism:
-    {
-      // Triangular prism
-      m_numNodesPerElement = 6;
-      m_numEdgesPerElement = 9;
-      m_numFacesPerElement = 5;
-      break;
-    }
-    case ElementType::Pyramid:
-    {
-      // Pyramid
-      m_numNodesPerElement = 5;
-      m_numEdgesPerElement = 8;
-      m_numFacesPerElement = 5;
-      break;
-    }
-    default:
-    {
-      GEOSX_ERROR( "Error.  Don't know what kind of element this is." );
-    }
-  }
-
-  // If `setElementType` is called after the resize, the first dimension would be removed.
-  // We do not want that so we try to keep it.
+  // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
+  // before calling the `CellElementSubRegion::resize` in order to keep the first dimension.
+  // Be careful when refactoring.
   m_toNodesRelation.resize( this->size(), m_numNodesPerElement );
   m_toEdgesRelation.resize( this->size(), m_numEdgesPerElement );
   m_toFacesRelation.resize( this->size(), m_numFacesPerElement );
-}
+  this->resize( cellBlock.numElements() );
 
-void CellElementSubRegion::copyFromCellBlock( CellBlockABC & source )
-{
-  this->setElementType( source.getElementType() );
-  m_numNodesPerElement = source.numNodesPerElement();
-  m_numFacesPerElement = source.numFacesPerElement();
-  this->resize( source.size() );
-  this->nodeList() = source.getElemToNode();
-  this->edgeList() = source.getElemToEdges();
-  this->faceList() = source.getElemToFaces();
+  this->nodeList() = cellBlock.getElemToNode();
+  this->edgeList() = cellBlock.getElemToEdges();
+  this->faceList() = cellBlock.getElemToFaces();
 
-  this->m_localToGlobalMap = source.localToGlobalMap();
+  this->m_localToGlobalMap = cellBlock.localToGlobalMap();
 
   this->constructGlobalToLocalMap();
-  source.forExternalProperties( [&]( WrapperBase & wrapper )
+  cellBlock.forExternalProperties( [&]( WrapperBase & wrapper )
   {
     types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
     {

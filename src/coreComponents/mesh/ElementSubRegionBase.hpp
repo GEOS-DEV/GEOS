@@ -178,13 +178,6 @@ public:
   ElementType getElementType() const
   { return m_elementType; }
 
-  /**
-   * @brief Set the type of element in this subregion.
-   * @param[in] elementType the element type
-   */
-  virtual void setElementType( ElementType elementType )
-  { m_elementType = elementType; }
-
   ///@}
 
   /**
