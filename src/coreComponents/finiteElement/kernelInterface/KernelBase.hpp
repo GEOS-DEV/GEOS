@@ -409,7 +409,12 @@ protected:
         buildCache.getOrLoadOrCompile( info );
       }
       MpiWrapper::barrier( );
-      buildCache.refresh( );
+      // check if the library with the function is available
+      if ( buildCache.tryGet( info ) == nullptr )
+      {
+        // if not, refresh by reading the filesystem to find the new library on the first iteration
+        buildCache.refresh( );
+      }
       auto & jitKernelDispatch = buildCache.getOrLoad( info );
       return jitKernelDispatch( numElems,
                                 nodeManager, 
