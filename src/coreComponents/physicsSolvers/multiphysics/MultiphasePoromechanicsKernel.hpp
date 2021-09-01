@@ -20,6 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "constitutive/fluid/MultiFluidBase.hpp"
 
 namespace geosx
 {
