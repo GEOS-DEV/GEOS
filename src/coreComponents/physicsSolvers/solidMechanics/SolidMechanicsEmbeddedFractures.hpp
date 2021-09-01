@@ -151,6 +151,9 @@ protected:
 
 private:
 
+  void updateJump( DofManager const & dofManager,
+                   DomainPartition & domain );
+
   /// Solid mechanics solver name
   string m_solidSolverName;
 

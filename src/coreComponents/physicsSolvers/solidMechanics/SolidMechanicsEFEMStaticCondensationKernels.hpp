@@ -68,7 +68,7 @@ public:
   using Base::m_X;
   using Base::m_disp;
   using Base::m_uhat;
-  using Base:: m_w;
+  using Base::m_w;
   using Base::m_tractionVec;
   using Base::m_dTraction_dJump;
   using Base::m_nVec;
@@ -92,7 +92,7 @@ public:
                           SUBREGION_TYPE const & elementSubRegion,
                           FE_TYPE const & finiteElementSpace,
                           CONSTITUTIVE_TYPE & inputConstitutiveType,
-                          EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
+                          EmbeddedSurfaceSubRegion & embeddedSurfSubRegion,
                           arrayView1d< globalIndex const > const & uDofNumber,
                           globalIndex const rankOffset,
                           CRSMatrixView< real64, globalIndex const > const & inputMatrix,
@@ -201,10 +201,11 @@ public:
     real64 InvKww[3][3];
     LvArray::tensorOps::invert< 3 >( InvKww, stack.localKww );
 
-    // Residual (Ru = Kuw * Inv(Kww)Rw
-    real64 KuwInvKww[nUdof][3];
+    // Residual (Ru -= Kuw * Inv(Kww)Rw)
+    real64 KuwInvKww[nUdof][3], Ruw[nUdof];
     LvArray::tensorOps::Rij_eq_AikBkj< nUdof, 3, 3 >( KuwInvKww, stack.localKuw, InvKww );
-    LvArray::tensorOps::Ri_eq_AijBj< nUdof, 3 >( stack.localRu, KuwInvKww, stack.localRw );
+    LvArray::tensorOps::Ri_eq_AijBj< nUdof, 3 >( Ruw, KuwInvKww, stack.localRw );
+    LvArray::tensorOps::scaledAdd< nUdof >( stack.localRu, Ruw, -1 );
 
     // Jacobian to add to Kuu block  ( Kuu -= Kuw * Inv(Kww) * Kwu )
     real64 InvKwwKwu[3][nUdof];
@@ -234,7 +235,7 @@ public:
 
 /// The factory used to construct a QuasiStatic kernel.
 using EFEMStaticCondensationFactory = finiteElement::KernelFactory< EFEMStaticCondensation,
-                                                                    EmbeddedSurfaceSubRegion const &,
+                                                                    EmbeddedSurfaceSubRegion &,
                                                                     arrayView1d< globalIndex const > const &,
                                                                     globalIndex const,
                                                                     CRSMatrixView< real64, globalIndex const > const &,

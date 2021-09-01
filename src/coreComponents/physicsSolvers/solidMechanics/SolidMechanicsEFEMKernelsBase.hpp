@@ -83,7 +83,7 @@ public:
                    SUBREGION_TYPE const & elementSubRegion,
                    FE_TYPE const & finiteElementSpace,
                    CONSTITUTIVE_TYPE & inputConstitutiveType,
-                   EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
+                   EmbeddedSurfaceSubRegion & embeddedSurfSubRegion,
                    arrayView1d< globalIndex const > const & uDofNumber,
                    globalIndex const rankOffset,
                    CRSMatrixView< real64, globalIndex const > const & inputMatrix,
@@ -101,16 +101,16 @@ public:
           inputMatrix,
           inputRhs,
           inputGravityVector ),
-    m_w( embeddedSurfSubRegion.displacementJump() ),
-    m_tractionVec( embeddedSurfSubRegion.tractionVector() ),
-    m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump() ),
-    m_nVec( embeddedSurfSubRegion.getNormalVector() ),
-    m_tVec1( embeddedSurfSubRegion.getTangentVector1() ),
-    m_tVec2( embeddedSurfSubRegion.getTangentVector2() ),
-    m_surfaceCenter( embeddedSurfSubRegion.getElementCenter()),
-    m_surfaceArea( embeddedSurfSubRegion.getElementArea()),
-    m_elementVolume( elementSubRegion.getElementVolume()),
-    m_fracturedElems( elementSubRegion.fracturedElementsList() ),
+    m_w( embeddedSurfSubRegion.displacementJump().toView() ),
+    m_tractionVec( embeddedSurfSubRegion.tractionVector().toViewConst() ),
+    m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump().toViewConst() ),
+    m_nVec( embeddedSurfSubRegion.getNormalVector().toViewConst() ),
+    m_tVec1( embeddedSurfSubRegion.getTangentVector1().toViewConst() ),
+    m_tVec2( embeddedSurfSubRegion.getTangentVector2().toViewConst() ),
+    m_surfaceCenter( embeddedSurfSubRegion.getElementCenter().toViewConst() ),
+    m_surfaceArea( embeddedSurfSubRegion.getElementArea().toViewConst() ),
+    m_elementVolume( elementSubRegion.getElementVolume().toViewConst() ),
+    m_fracturedElems( elementSubRegion.fracturedElementsList().toViewConst()),
     m_cellsToEmbeddedSurfaces( elementSubRegion.embeddedSurfacesList().toViewConst() )
   {}
 
@@ -118,7 +118,7 @@ public:
   /**
    * @copydoc finiteElement::KernelBase::StackVariables
    */
-  struct StackVariables : public Base::StackVariables
+  struct StackVariables  // it's better not to inherit all the stack variable. There is a lot of unused ones.
   {
 public:
     /// The number of displacement dofs per element.
@@ -132,8 +132,7 @@ public:
      */
     GEOSX_HOST_DEVICE
     StackVariables():
-      Base::StackVariables(),
-            dispEqnRowIndices{ 0 },
+      dispEqnRowIndices{ 0 },
       dispColIndices{ 0 },
       localRu{ 0.0 },
       localRw{ 0.0 },
@@ -170,7 +169,7 @@ public:
     /// Stack storage for the element local jump vector
     real64 wLocal[3];
 
-    /// Stack storage for the elenta displacement vector.
+    /// Stack storage for the element displacement vector.
     real64 uLocal[numUdofs];
 
     /// Stack storage for Area/Volume
@@ -185,6 +184,8 @@ public:
     /// Stack storage for the derivative of the traction
     real64 dTractiondw[3][3];
 
+    /// Stack storage for the constitutive stiffness at a quadrature point.
+    real64 constitutiveStiffness[ 6 ][ 6 ];
   };
   //***************************************************************************
 
@@ -339,7 +340,7 @@ public:
 
 protected:
 
-  arrayView2d< real64 const > const m_w;
+  arrayView2d< real64 > const m_w;
 
   arrayView2d< real64 const > const m_tractionVec;
 

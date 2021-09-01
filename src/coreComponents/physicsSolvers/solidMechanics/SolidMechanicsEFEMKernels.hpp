@@ -93,7 +93,7 @@ public:
         SUBREGION_TYPE const & elementSubRegion,
         FE_TYPE const & finiteElementSpace,
         CONSTITUTIVE_TYPE & inputConstitutiveType,
-        EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
+        EmbeddedSurfaceSubRegion & embeddedSurfSubRegion,
         arrayView1d< globalIndex const > const & uDofNumber,
         arrayView1d< globalIndex const > const & wDofNumber,
         globalIndex const rankOffset,
@@ -269,7 +269,7 @@ protected:
 
 /// The factory used to construct a QuasiStatic kernel.
 using EFEMFactory = finiteElement::KernelFactory< EFEM,
-                                                  EmbeddedSurfaceSubRegion const &,
+                                                  EmbeddedSurfaceSubRegion &,
                                                   arrayView1d< globalIndex const > const &,
                                                   arrayView1d< globalIndex const > const &,
                                                   globalIndex const,

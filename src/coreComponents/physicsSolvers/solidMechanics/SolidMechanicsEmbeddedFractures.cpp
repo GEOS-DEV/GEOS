@@ -32,6 +32,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsEFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsEFEMStaticCondensationKernels.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsEFEMJumpUpdateKernels.hpp"
 
 namespace geosx
 {
@@ -276,9 +277,9 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NodeManager const & nodeManager = mesh.getNodeManager();
-  ElementRegionManager const & elemManager = mesh.getElemManager();
-  SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
-  EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+  ElementRegionManager & elemManager = mesh.getElemManager();
+  SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+  EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
   string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
 
@@ -640,12 +641,10 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
     dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::deltaDispJumpString(), -scalingFactor );
 
     dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::dispJumpString(), -scalingFactor );
-
-
   }
   else
   {
-    /// Compute jump here.
+    updateJump( dofManager, domain );
   }
 
   std::map< string, string_array > fieldNames;
@@ -656,6 +655,45 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                                        domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                        domain.getNeighbors(),
                                                        true );
+}
+
+void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
+                                                  DomainPartition & domain )
+{
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  ElementRegionManager & elemManager = mesh.getElemManager();
+  SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+  EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+  string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+
+  arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+  CRSMatrix< real64, globalIndex >  voidMatrix;
+  array1d< real64 > voidRhs;
+
+  SolidMechanicsEFEMKernels::EFEMJumpUpdateFactory kernelFactory( subRegion,
+                                                                  dispDofNumber,
+                                                                  dofManager.rankOffset(),
+                                                                  voidMatrix.toViewConstSizes(),
+                                                                  voidRhs.toView(),
+                                                                  gravityVectorData );
+
+  real64 maxTraction = finiteElement::
+      regionBasedKernelApplication
+      < parallelDevicePolicy< 32 >,
+      constitutive::SolidBase,
+      CellElementSubRegion >( mesh,
+                              targetRegionNames(),
+                              m_solidSolver->getDiscretizationName(),
+                              m_solidSolver->solidMaterialNames(),
+                              kernelFactory );
+
+  GEOSX_UNUSED_VAR( maxTraction );
 }
 
 void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
