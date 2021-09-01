@@ -68,7 +68,8 @@ public:
     /// @endcond DO_NOT_DOCUMENT
 
     /**
-     * @brief Interpolate in the table
+     * @brief Interpolate in the table.
+     * @tparam IN_ARRAY type of input value array
      * @param[in] input vector of input value
      * @return interpolated value
      */
@@ -78,7 +79,7 @@ public:
     compute( IN_ARRAY const & input ) const;
 
     /**
-     * @brief Interpolate in the table with derivatives
+     * @brief Interpolate in the table with derivatives.
      * @param[in] input vector of input value
      * @param[out] derivatives vector of derivatives of interpolated value wrt the variables present in input
      * @return interpolated value
@@ -275,14 +276,14 @@ private:
    */
   KernelWrapper createKernelWrapper() const;
 
+  /// Struct containing lookup keys for data repository wrappers
   struct viewKeyStruct
   {
-    static constexpr char const * coordinates() { return "coordinates"; }
-    static constexpr char const * values() { return "values"; }
-    static constexpr char const * interpolation() { return "interpolation"; }
-    static constexpr char const * coordinateFiles() { return "coordinateFiles"; }
-    static constexpr char const * voxelFile() { return "voxelFile"; }
-    static constexpr char const * valueType() { return "valueType"; }
+    static constexpr char const * coordinatesString() { return "coordinates"; }         ///< Coordinate arrays
+    static constexpr char const * valuesString() { return "values"; }                   ///< Value array
+    static constexpr char const * interpolationString() { return "interpolation"; }     ///< Interpolation type
+    static constexpr char const * coordinateFilesString() { return "coordinateFiles"; } ///< List of files containing coordinates
+    static constexpr char const * voxelFileString() { return "voxelFile"; }             ///< Name of file containing values
   };
 
 private:
