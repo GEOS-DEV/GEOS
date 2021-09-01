@@ -409,8 +409,8 @@ protected:
         buildCache.getOrLoadOrCompile( info );
       }
       MpiWrapper::barrier( );
-      auto & jitKernelDispatch = buildCache.getOrLoadOrCompile( info );
-
+      buildCache.refresh( );
+      auto & jitKernelDispatch = buildCache.getOrLoad( info );
       return jitKernelDispatch( numElems,
                                 nodeManager, 
                                 edgeManager, 

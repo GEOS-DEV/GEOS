@@ -362,10 +362,22 @@ public:
                                              arrayView1d< globalIndex const > const &,
                                              globalIndex const,
                                              SparsityPattern< globalIndex > & );
+
     string outputDir( STRINGIZE( JITTI_OUTPUT_DIR ) );
     outputDir += "/";
     static jitti::Cache< JIT_SPARSITY_DISPATCH > buildCache( time(NULL), outputDir );
-    auto & jitSparsityDispatch = buildCache.getOrLoadOrCompile( info );
+    if ( MpiWrapper::commRank( ) == 0 )
+    {
+      buildCache.getOrLoadOrCompile( info );
+    }
+    MpiWrapper::barrier( );
+    // check if the library with the function is available
+    if ( buildCache.tryGet( info ) == nullptr )
+    {
+      // if not, refresh by reading the filesystem to find the new library on the first iteration
+      buildCache.refresh( );
+    }
+    auto & jitSparsityDispatch = buildCache.getOrLoad( info );
     return jitSparsityDispatch( numElems,
                                 nodeManager,
                                 edgeManager,
