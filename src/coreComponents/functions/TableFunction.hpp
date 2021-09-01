@@ -279,11 +279,11 @@ private:
   /// Struct containing lookup keys for data repository wrappers
   struct viewKeyStruct
   {
-    static constexpr char const * coordinatesString() { return "coordinates"; }         ///< Coordinate arrays
-    static constexpr char const * valuesString() { return "values"; }                   ///< Value array
-    static constexpr char const * interpolationString() { return "interpolation"; }     ///< Interpolation type
-    static constexpr char const * coordinateFilesString() { return "coordinateFiles"; } ///< List of files containing coordinates
-    static constexpr char const * voxelFileString() { return "voxelFile"; }             ///< Name of file containing values
+    static constexpr char const * coordinatesString() { return "coordinates"; }         ///< @return Key for coordinate arrays
+    static constexpr char const * valuesString() { return "values"; }                   ///< @return Key for value array
+    static constexpr char const * interpolationString() { return "interpolation"; }     ///< @return Key for interpolation type
+    static constexpr char const * coordinateFilesString() { return "coordinateFiles"; } ///< @return Key for list of files containing coordinates
+    static constexpr char const * voxelFileString() { return "voxelFile"; }             ///< @return Key for name of file containing values
   };
 
 private:
