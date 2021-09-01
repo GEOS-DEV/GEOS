@@ -42,8 +42,8 @@
       cellBlockNames="{ casing, cement, rock }"
       />
   </Mesh>
-
   <!-- SPHINX_WellboreMeshEnd -->
+
   <Events
     maxTime="1.0">
     <!-- This event is applied every cycle, and overrides the
