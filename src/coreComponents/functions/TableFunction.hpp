@@ -65,7 +65,7 @@ public:
     KernelWrapper( KernelWrapper const & ) = default;
     KernelWrapper( KernelWrapper && ) = default;
     KernelWrapper & operator=( KernelWrapper const & ) = default;
-    /// @endcond DO_NOT_DOCUMENT
+    /// @endcond
 
     /**
      * @brief Interpolate in the table.
@@ -75,8 +75,7 @@ public:
      */
     template< typename IN_ARRAY >
     GEOSX_HOST_DEVICE
-    real64
-    compute( IN_ARRAY const & input ) const;
+    real64 compute( IN_ARRAY const & input ) const;
 
     /**
      * @brief Interpolate in the table with derivatives.
@@ -86,8 +85,7 @@ public:
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
     GEOSX_HOST_DEVICE
-    real64
-    compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
+    real64 compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
 
     /**
      * @brief Move the KernelWrapper to the given execution space, optionally touching it.
@@ -279,11 +277,16 @@ private:
   /// Struct containing lookup keys for data repository wrappers
   struct viewKeyStruct
   {
-    static constexpr char const * coordinatesString() { return "coordinates"; }         ///< @return Key for coordinate arrays
-    static constexpr char const * valuesString() { return "values"; }                   ///< @return Key for value array
-    static constexpr char const * interpolationString() { return "interpolation"; }     ///< @return Key for interpolation type
-    static constexpr char const * coordinateFilesString() { return "coordinateFiles"; } ///< @return Key for list of files containing coordinates
-    static constexpr char const * voxelFileString() { return "voxelFile"; }             ///< @return Key for name of file containing values
+    /// @return Key for coordinate arrays
+    static constexpr char const * coordinatesString() { return "coordinates"; }
+    /// @return Key for value array
+    static constexpr char const * valuesString() { return "values"; }
+    /// @return Key for interpolation type
+    static constexpr char const * interpolationString() { return "interpolation"; }
+    /// @return Key for list of files containing table coordinates
+    static constexpr char const * coordinateFilesString() { return "coordinateFiles"; }
+    /// @return Key for name of file containing table values
+    static constexpr char const * voxelFileString() { return "voxelFile"; }
   };
 
 private:
