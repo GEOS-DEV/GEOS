@@ -53,7 +53,7 @@ namespace mgr
  * @todo:
  *   - Use block Jacobi for F-relaxation/interpolation of the reservoir densities (2nd level)
  */
-class CompositionalMultiphaseReservoirFVM : public MGRStrategyBase< 3 >
+class CompositionalMultiphaseReservoirFVM : public MGRStrategyBase< 4 >
 {
 public:
 
@@ -69,27 +69,35 @@ public:
     m_labels[0].resize( m_numBlocks - 1 );
     std::iota( m_labels[0].begin(), m_labels[0].begin() + numResLabels - 1, 0 );
     std::iota( m_labels[0].begin() + numResLabels - 1, m_labels[0].end(), numResLabels );
-    // Level 1: eliminate remaining densities of the reservoir block
-    m_labels[1].resize( m_numBlocks - numResLabels + 1 );
+    // Level 1: eliminate second-to-last density of the reservoir block
+    m_labels[1].resize( m_numBlocks - numResLabels + 2 );
     m_labels[1][0] = 0;
-    std::iota( m_labels[1].begin() + 1, m_labels[1].end(), numResLabels );
-    // Level 2: eliminate reservoir pressure
-    m_labels[2].resize( m_numBlocks - numResLabels );
-    std::iota( m_labels[2].begin(), m_labels[2].end(), numResLabels );
+    m_labels[1][1] = 1;
+    std::iota( m_labels[1].begin() + 2, m_labels[1].end(), numResLabels );
+    // Level 2: eliminate the last density of the reservoir block
+    m_labels[2].resize( m_numBlocks - numResLabels + 1 );
+    m_labels[2][0] = 0;
+    std::iota( m_labels[2].begin() + 1, m_labels[2].end(), numResLabels );
+    // Level 3: eliminate reservoir pressure
+    m_labels[3].resize( m_numBlocks - numResLabels );
+    std::iota( m_labels[3].begin(), m_labels[3].end(), numResLabels );
 
     setupLabels();
 
     m_levelFRelaxMethod[0] = 0; // Jacobi
     m_levelFRelaxMethod[1] = 0; // Jacobi
-    m_levelFRelaxMethod[2] = 2; // AMG V-cycle
+    m_levelFRelaxMethod[2] = 0; // Jacobi
+    m_levelFRelaxMethod[3] = 2; // AMG V-cycle
 
     m_levelCoarseGridMethod[0] = 1;
     m_levelCoarseGridMethod[1] = 1;
-    m_levelCoarseGridMethod[2] = 0;
+    m_levelCoarseGridMethod[2] = 1;
+    m_levelCoarseGridMethod[3] = 0;
 
     m_levelInterpType[0] = 2;
     m_levelInterpType[1] = 2;
     m_levelInterpType[2] = 2;
+    m_levelInterpType[3] = 2;
 
     m_numGlobalSmoothSweeps = 0;
   }

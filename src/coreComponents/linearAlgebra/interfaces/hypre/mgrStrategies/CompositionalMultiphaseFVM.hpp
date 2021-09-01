@@ -47,7 +47,7 @@ namespace mgr
  * @todo:
  *   - Experiment with block Jacobi for F-relaxation/interpolation of the reservoir densities
  */
-class CompositionalMultiphaseFVM : public MGRStrategyBase< 2 >
+class CompositionalMultiphaseFVM : public MGRStrategyBase< 3 >
 {
 public:
   /**
@@ -60,18 +60,24 @@ public:
     // Level 0: eliminate last density which corresponds to the volume constraint equation
     m_labels[0].resize( m_numBlocks - 1 );
     std::iota( m_labels[0].begin(), m_labels[0].end(), 0 );
-    // Level 1: eliminate the other density
-    m_labels[1].push_back( 0 );
+    // Level 1: eliminate second-to-last density
+    m_labels[1].resize( m_numBlocks - 2 );
+    std::iota( m_labels[1].begin(), m_labels[1].end(), 0 );
+    // Level 2: eliminate the last density
+    m_labels[2].push_back( 0 );
 
     setupLabels();
 
     m_levelFRelaxMethod[0] = 0; // Jacobi
     m_levelFRelaxMethod[1] = 0; // Jacobi
+    m_levelFRelaxMethod[2] = 0; // Jacobi
 
     m_levelInterpType[0] = 2;       // diagonal scaling (Jacobi)
     m_levelCoarseGridMethod[0] = 0; // standard Galerkin
     m_levelInterpType[1] = 2;       // diagonal scaling (Jacobi)
     m_levelCoarseGridMethod[1] = 0; // standard Galerkin
+    m_levelInterpType[2] = 2;       // diagonal scaling (Jacobi)
+    m_levelCoarseGridMethod[2] = 0; // standard Galerkin
 
     m_globalSmoothType = 16; // ILU(0)
     m_numGlobalSmoothSweeps = 0; // No global smoother
