@@ -1270,14 +1270,18 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactSolverName => Name of the contact solid mechanics solver to use in the contact with flow solver-->
 		<xsd:attribute name="contactSolverName" type="string" use="required" />
-		<!--defaultConductivity => Value of the default conductivity C_{f,0} for the fracture-->
-		<xsd:attribute name="defaultConductivity" type="real64" use="required" />
 		<!--flowSolverName => Name of the flow mechanics solver to use in the contact with flow solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poromechanics solver-->
+		<xsd:attribute name="fluidSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--porousMaterialNames => The name of the material that should be used in the constitutive updates-->
+		<xsd:attribute name="porousMaterialNames" type="string_array" use="required" />
+		<!--solidSolverName => Name of the solid mechanics solver to use in the poromechanics solver-->
+		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--stabilizationName => Name of the stabilization to use in the lagrangian contact with flow solver-->
 		<xsd:attribute name="stabilizationName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -2056,6 +2060,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstantPlusParallelPlatesPermeabilityType">
+		<!--defaultConductivity => Value of the default conductivity C_{f,0} for the fracture.-->
+		<xsd:attribute name="defaultConductivity" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

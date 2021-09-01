@@ -622,7 +622,7 @@ bool LagrangianContactFlowSolver::lineSearch( real64 const & time_n,
     }
     else
     {
-      localScaleFactor = ParabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
+      localScaleFactor = parabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
     }
 
     // Update x; keep the books on lambda
