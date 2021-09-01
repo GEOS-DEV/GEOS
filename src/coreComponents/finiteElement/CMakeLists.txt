@@ -39,7 +39,7 @@ endif()
 blt_add_library( NAME                  finiteElement
                  SOURCES               ${finiteElement_sources}
                  HEADERS               ${finiteElement_headers}
-                 DEFINES               JITTI_OUTPUT_DIR=${CMAKE_BINARY_DIR}/lib/jitti
+                 DEFINES               JITTI_OUTPUT_DIR=${CMAKE_BINARY_DIR}/lib/jitti ${JITTI_DEFINES}
                  DEPENDS_ON            ${dependencyList} jitti
                  OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )

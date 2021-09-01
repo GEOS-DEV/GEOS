@@ -126,6 +126,7 @@ blt_add_library( NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
                  HEADERS               ${physicsSolvers_headers}
                  DEPENDS_ON            ${dependencyList} ${externalComponentDeps}
+                 DEFINES               ${JITTI_DEFINES}
                  OBJECT                ${GEOSX_BUILD_OBJ_LIBS}
                )
 

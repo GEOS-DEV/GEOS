@@ -93,6 +93,16 @@ endif(NOT BLT_CXX_STD STREQUAL c++14)
 
 message("CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
 
+option( ENABLE_JITTI "Build all compute kernels just-in-time at runtime." OFF )
+
+if ( ENABLE_JITTI )
+  message( "JITTI is ENABLED")
+  set( JITTI_DEFINES "JITTI=1" )
+else ( )
+  set( JITTI_DEFINES "JITTI=0" )
+  message( "JITTI is DISABLED")
+endif ( )
+
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}")
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                  GNU   "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"

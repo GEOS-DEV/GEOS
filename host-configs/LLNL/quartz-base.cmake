@@ -29,5 +29,6 @@ set(ENABLE_OPENMP ON CACHE BOOL "")
 set(ENABLE_PAMELA ON CACHE BOOL "")
 set(ENABLE_PVTPackage ON CACHE BOOL "")
 set(ENABLE_PETSC OFF CACHE BOOL "Enables PETSc." FORCE)
+set(ENABLE_JITTI ON CACHE BOOL "Enables kernel JIT compilation." FORCE)
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)
