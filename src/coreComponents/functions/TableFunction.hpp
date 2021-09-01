@@ -60,11 +60,11 @@ public:
     /// @cond DO_NOT_DOCUMENT
     /// We need these SMFs to enable array1d< KernelWrapper > and avoid
     /// host-device errors with CUDA. Otherwise rule of 0 would be fine.
+    /// Note: move assignment suppressed but not deleted, on purpose!
     KernelWrapper() = default;
     KernelWrapper( KernelWrapper const & ) = default;
     KernelWrapper( KernelWrapper && ) = default;
     KernelWrapper & operator=( KernelWrapper const & ) = default;
-    KernelWrapper & operator=( KernelWrapper && ) = default;
     /// @endcond DO_NOT_DOCUMENT
 
     /**

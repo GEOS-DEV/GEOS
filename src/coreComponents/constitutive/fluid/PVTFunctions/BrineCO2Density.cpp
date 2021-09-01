@@ -71,7 +71,7 @@ void calculateBrineDensity( PTTableCoordinates const & tableCoords,
 }
 
 TableFunction const * makeDensityTable( string_array const & inputParams,
-                                        string const & prefix,
+                                        string const & functionName,
                                         FunctionManager & functionManager )
 {
   // initialize the (p,T) coordinates
@@ -89,13 +89,13 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "BrineCO2Density: invalid property argument:" + string( e.what() ), InputError );
+    GEOSX_THROW( functionName << ": invalid property argument: " << e.what(), InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateBrineDensity( tableCoords, salinity, densities );
 
-  string const tableName = prefix + "_brineDensityTable";
+  string const tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );
@@ -112,10 +112,11 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
 
 } // namespace
 
-BrineCO2Density::BrineCO2Density( string_array const & inputParams,
+BrineCO2Density::BrineCO2Density( string const & name,
+                                  string_array const & inputParams,
                                   string_array const & componentNames,
                                   array1d< real64 > const & componentMolarWeight ):
-  PVTFunctionBase( inputParams[1],
+  PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
 {
@@ -136,7 +137,7 @@ BrineCO2Density::KernelWrapper BrineCO2Density::createKernelWrapper() const
                         m_waterIndex );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineCO2Density, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineCO2Density, string const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // namespace PVTProps
 

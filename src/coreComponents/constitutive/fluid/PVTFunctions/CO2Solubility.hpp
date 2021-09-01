@@ -104,12 +104,11 @@ class CO2Solubility : public FlashModelBase
 {
 public:
 
-  CO2Solubility( string_array const & inputParams,
+  CO2Solubility( string const & name,
+                 string_array const & inputParams,
                  string_array const & phaseNames,
                  string_array const & componentNames,
                  array1d< real64 > const & componentMolarWeight );
-
-  ~CO2Solubility() override = default;
 
   static string catalogName() { return "CO2Solubility"; }
 

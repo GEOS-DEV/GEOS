@@ -23,6 +23,7 @@
 #include "pvt/pvt.hpp"
 
 #include <map>
+#include <utility>
 
 namespace geosx
 {
@@ -176,55 +177,37 @@ CompositionalMultiphaseFluid::KernelWrapper::
                  arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
                  arrayView1d< geosx::real64 const > const & componentMolarWeight,
                  bool useMass,
-                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseFraction,
-                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseDensity,
-                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseMassDensity,
-                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseViscosity,
-                 MultiFluidBase::KernelWrapper::PhaseCompViews const & phaseCompFraction,
-                 MultiFluidBase::KernelWrapper::FluidPropViews const & totalDensity )
+                 PhaseProp::ViewType phaseFraction,
+                 PhaseProp::ViewType phaseDensity,
+                 PhaseProp::ViewType phaseMassDensity,
+                 PhaseProp::ViewType phaseViscosity,
+                 PhaseComp::ViewType phaseCompFraction,
+                 FluidProp::ViewType totalDensity )
   : MultiFluidBase::KernelWrapper( componentMolarWeight,
                                    useMass,
-                                   phaseFraction,
-                                   phaseDensity,
-                                   phaseMassDensity,
-                                   phaseViscosity,
-                                   phaseCompFraction,
-                                   totalDensity ),
+                                   std::move( phaseFraction ),
+                                   std::move( phaseDensity ),
+                                   std::move( phaseMassDensity ),
+                                   std::move( phaseViscosity ),
+                                   std::move( phaseCompFraction ),
+                                   std::move( totalDensity ) ),
   m_fluid( fluid ),
   m_phaseTypes( phaseTypes )
 {}
 
 CompositionalMultiphaseFluid::KernelWrapper
-CompositionalMultiphaseFluid::createKernelWrapper() const
+CompositionalMultiphaseFluid::createKernelWrapper()
 {
   return KernelWrapper( *m_fluid,
                         m_phaseTypes,
                         m_componentMolarWeight,
                         m_useMass,
-                        { m_phaseFraction,
-                          m_dPhaseFraction_dPressure,
-                          m_dPhaseFraction_dTemperature,
-                          m_dPhaseFraction_dGlobalCompFraction },
-                        { m_phaseDensity,
-                          m_dPhaseDensity_dPressure,
-                          m_dPhaseDensity_dTemperature,
-                          m_dPhaseDensity_dGlobalCompFraction },
-                        { m_phaseMassDensity,
-                          m_dPhaseMassDensity_dPressure,
-                          m_dPhaseMassDensity_dTemperature,
-                          m_dPhaseMassDensity_dGlobalCompFraction },
-                        { m_phaseViscosity,
-                          m_dPhaseViscosity_dPressure,
-                          m_dPhaseViscosity_dTemperature,
-                          m_dPhaseViscosity_dGlobalCompFraction },
-                        { m_phaseCompFraction,
-                          m_dPhaseCompFraction_dPressure,
-                          m_dPhaseCompFraction_dTemperature,
-                          m_dPhaseCompFraction_dGlobalCompFraction },
-                        { m_totalDensity,
-                          m_dTotalDensity_dPressure,
-                          m_dTotalDensity_dTemperature,
-                          m_dTotalDensity_dGlobalCompFraction } );
+                        m_phaseFraction.toView(),
+                        m_phaseDensity.toView(),
+                        m_phaseMassDensity.toView(),
+                        m_phaseViscosity.toView(),
+                        m_phaseCompFraction.toView(),
+                        m_totalDensity.toView() );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, string const &, Group * const )

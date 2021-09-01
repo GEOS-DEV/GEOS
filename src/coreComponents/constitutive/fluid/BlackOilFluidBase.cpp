@@ -147,8 +147,8 @@ void BlackOilFluidBase::fillHydrocarbonData( integer const ip,
   }
 
   m_hydrocarbonPhaseOrder.emplace_back( ip );
-  string const formationVolFactorTableName = getName() + (m_phaseTypes[ip] == PhaseType::OIL ? "PVDO_Bo" : "PVDG_Bg");
-  string const viscosityTableName = getName() +  (m_phaseTypes[ip] == PhaseType::OIL ? "PVDO_visco" : "PVDG_viscg");
+  string const formationVolFactorTableName = getName() + (m_phaseTypes[ip] == PhaseType::OIL ? "_PVDO_Bo" : "_PVDG_Bg");
+  string const viscosityTableName = getName() +  (m_phaseTypes[ip] == PhaseType::OIL ? "_PVDO_visco" : "_PVDG_viscg");
   m_formationVolFactorTableNames.emplace_back( formationVolFactorTableName );
   m_viscosityTableNames.emplace_back( viscosityTableName );
 
@@ -268,6 +268,39 @@ void BlackOilFluidBase::validateWaterParams() const
                   getFullName() << ": a strictly positive value must be provided for: " << viewKeyStruct::waterViscosityString(),
                   InputError );
 }
+
+BlackOilFluidBase::KernelWrapper::
+  KernelWrapper( arrayView1d< integer const > phaseTypes,
+                 arrayView1d< integer const > phaseOrder,
+                 arrayView1d< integer const > hydrocarbonPhaseOrder,
+                 arrayView1d< real64 const > surfacePhaseMassDensity,
+                 arrayView1d< TableFunction::KernelWrapper const > formationVolFactorTables,
+                 arrayView1d< TableFunction::KernelWrapper const > viscosityTables,
+                 BlackOilFluidBase::WaterParams const waterParams,
+                 arrayView1d< real64 const > componentMolarWeight,
+                 bool const useMass,
+                 PhaseProp::ViewType phaseFraction,
+                 PhaseProp::ViewType phaseDensity,
+                 PhaseProp::ViewType phaseMassDensity,
+                 PhaseProp::ViewType phaseViscosity,
+                 PhaseComp::ViewType phaseCompFraction,
+                 FluidProp::ViewType totalDensity )
+  : MultiFluidBase::KernelWrapper( std::move( componentMolarWeight ),
+                                   useMass,
+                                   std::move( phaseFraction ),
+                                   std::move( phaseDensity ),
+                                   std::move( phaseMassDensity ),
+                                   std::move( phaseViscosity ),
+                                   std::move( phaseCompFraction ),
+                                   std::move( totalDensity ) ),
+  m_phaseTypes( std::move( phaseTypes ) ),
+  m_phaseOrder( std::move( phaseOrder ) ),
+  m_hydrocarbonPhaseOrder( std::move( hydrocarbonPhaseOrder ) ),
+  m_surfacePhaseMassDensity( std::move( surfacePhaseMassDensity ) ),
+  m_formationVolFactorTables( std::move( formationVolFactorTables ) ),
+  m_viscosityTables( std::move( viscosityTables ) ),
+  m_waterParams( waterParams )
+{}
 
 } // namespace constitutive
 

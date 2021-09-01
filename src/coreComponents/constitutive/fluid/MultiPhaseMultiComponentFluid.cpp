@@ -76,11 +76,11 @@ deliverClone( string const & name, Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
 
-  MultiPhaseMultiComponentFluid * const newConstitutiveRelation = dynamic_cast< MultiPhaseMultiComponentFluid * >(clone.get());
-  newConstitutiveRelation->m_p1Index = this->m_p1Index;
-  newConstitutiveRelation->m_p2Index = this->m_p2Index;
+  MultiPhaseMultiComponentFluid & newConstitutiveRelation = dynamicCast< MultiPhaseMultiComponentFluid & >( *clone );
+  newConstitutiveRelation.m_p1Index = m_p1Index;
+  newConstitutiveRelation.m_p2Index = m_p2Index;
 
-  newConstitutiveRelation->createPVTModels();
+  newConstitutiveRelation.createPVTModels();
 
   return clone;
 }
@@ -91,13 +91,13 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::pos
   MultiFluidBase::postProcessInput();
 
   GEOSX_THROW_IF_NE_MSG( numFluidPhases(), 2,
-                         "CO2BrineFluid model named " << getName() << ": The number of phases in this model should be equal to 2",
+                         getFullName() << ": number of phases in this model should be equal to 2",
                          InputError );
   GEOSX_THROW_IF_NE_MSG( numFluidComponents(), 2,
-                         "CO2BrineFluid model named " << getName() << ": The number of components in this model should be equal to 2",
+                         getFullName() << ": number of components in this model should be equal to 2",
                          InputError );
   GEOSX_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 2,
-                         "CO2BrineFluid model named " << getName() << ": The number of phasePVTParaFiles is not the same as the number of phases!",
+                         getFullName() << ": number of phasePVTParaFiles is not the same as the number of phases!",
                          InputError );
 
   // NOTE: for now, the names of the phases are still hardcoded here
@@ -128,36 +128,44 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
       {
         if( strs[1] == P1DENS::catalogName() )
         {
-          m_p1Density = std::make_unique< P1DENS >( strs, m_componentNames, m_componentMolarWeight );
+          m_p1Density = std::make_unique< P1DENS >( getName() + '_' + P1DENS::catalogName(), strs, m_componentNames, m_componentMolarWeight );
         }
         else if( strs[1] == P2DENS::catalogName() )
         {
-          m_p2Density = std::make_unique< P2DENS >( strs, m_componentNames, m_componentMolarWeight );
+          m_p2Density = std::make_unique< P2DENS >( getName() + '_' + P2DENS::catalogName(), strs, m_componentNames, m_componentMolarWeight );
         }
       }
       else if( strs[0] == "ViscosityFun" )
       {
         if( strs[1] == P1VISC::catalogName() )
         {
-          m_p1Viscosity = std::make_unique< P1VISC >( strs, m_componentNames, m_componentMolarWeight );
+          m_p1Viscosity = std::make_unique< P1VISC >( getName() + '_' + P1VISC::catalogName(), strs, m_componentNames, m_componentMolarWeight );
         }
         else if( strs[1] == P2VISC::catalogName() )
         {
-          m_p2Viscosity = std::make_unique< P2VISC >( strs, m_componentNames, m_componentMolarWeight );
+          m_p2Viscosity = std::make_unique< P2VISC >( getName() + '_' + P2VISC::catalogName(), strs, m_componentNames, m_componentMolarWeight );
         }
       }
       else
       {
-        GEOSX_THROW( "CO2BrineFluid model named " << getName() << ": Invalid PVT function: " << strs[0] << ".", InputError );
+        GEOSX_THROW( getFullName() << ": invalid PVT function: " << strs[0] << ".", InputError );
       }
     }
     is.close();
   }
 
-  GEOSX_THROW_IF( m_p1Density == nullptr, "CO2BrineFluid model named " << getName() << ": " << P1DENS::catalogName() << " model not found", InputError );
-  GEOSX_THROW_IF( m_p2Density == nullptr, "CO2BrineFluid model named " << getName() << ": " << P2DENS::catalogName() << " model not found", InputError );
-  GEOSX_THROW_IF( m_p1Viscosity == nullptr, "CO2BrineFluid model named " << getName() << ": " << P1VISC::catalogName() << " model not found", InputError );
-  GEOSX_THROW_IF( m_p2Viscosity == nullptr, "CO2BrineFluid model named " << getName() << ": " << P2VISC::catalogName() << " model not found", InputError );
+  GEOSX_THROW_IF( m_p1Density == nullptr,
+                  getFullName() << ": " << P1DENS::catalogName() << " model not found",
+                  InputError );
+  GEOSX_THROW_IF( m_p2Density == nullptr,
+                  getFullName() << ": " << P2DENS::catalogName() << " model not found",
+                  InputError );
+  GEOSX_THROW_IF( m_p1Viscosity == nullptr,
+                  getFullName() << ": " << P1VISC::catalogName() << " model not found",
+                  InputError );
+  GEOSX_THROW_IF( m_p2Viscosity == nullptr,
+                  getFullName() << ": " << P2VISC::catalogName() << " model not found",
+                  InputError );
 
   // 2) Create the flash model
   {
@@ -168,24 +176,24 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
       string_array const strs = stringutilities::tokenize( str, " " );
       if( strs[0] == "FlashModel" && strs[1] == FLASH::catalogName() )
       {
-        m_flash = std::make_unique< FLASH >( strs, m_phaseNames, m_componentNames, m_componentMolarWeight );
+        m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(), strs, m_phaseNames, m_componentNames, m_componentMolarWeight );
       }
       else
       {
-        GEOSX_THROW( "CO2BrineFluid model named " << getName() << ": Invalid flash model: " << strs[0] << ", " << strs[1] << ".", InputError );
+        GEOSX_THROW( getFullName() << ": invalid flash model: " << strs[0] << ", " << strs[1] << ".", InputError );
       }
     }
     is.close();
   }
 
   GEOSX_THROW_IF( m_flash == nullptr,
-                  "CO2BrineFluid model named " << getName() << ": " << FLASH::catalogName() << " not found",
+                  getFullName() << ": " << FLASH::catalogName() << " model not found",
                   InputError );
 }
 
 template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
 typename MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWrapper
-MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::createKernelWrapper() const
+MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::createKernelWrapper()
 {
   return KernelWrapper( m_p1Index,
                         m_p2Index,
@@ -196,30 +204,12 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::createKe
                         *m_flash,
                         m_componentMolarWeight.toViewConst(),
                         m_useMass,
-                        { m_phaseFraction,
-                          m_dPhaseFraction_dPressure,
-                          m_dPhaseFraction_dTemperature,
-                          m_dPhaseFraction_dGlobalCompFraction },
-                        { m_phaseDensity,
-                          m_dPhaseDensity_dPressure,
-                          m_dPhaseDensity_dTemperature,
-                          m_dPhaseDensity_dGlobalCompFraction },
-                        { m_phaseMassDensity,
-                          m_dPhaseMassDensity_dPressure,
-                          m_dPhaseMassDensity_dTemperature,
-                          m_dPhaseMassDensity_dGlobalCompFraction },
-                        { m_phaseViscosity,
-                          m_dPhaseViscosity_dPressure,
-                          m_dPhaseViscosity_dTemperature,
-                          m_dPhaseViscosity_dGlobalCompFraction },
-                        { m_phaseCompFraction,
-                          m_dPhaseCompFraction_dPressure,
-                          m_dPhaseCompFraction_dTemperature,
-                          m_dPhaseCompFraction_dGlobalCompFraction },
-                        { m_totalDensity,
-                          m_dTotalDensity_dPressure,
-                          m_dTotalDensity_dTemperature,
-                          m_dTotalDensity_dGlobalCompFraction } );
+                        m_phaseFraction.toView(),
+                        m_phaseDensity.toView(),
+                        m_phaseMassDensity.toView(),
+                        m_phaseViscosity.toView(),
+                        m_phaseCompFraction.toView(),
+                        m_totalDensity.toView() );
 }
 
 template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
@@ -231,22 +221,22 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
                  P2DENS const & p2DensityWrapper,
                  P2VISC const & p2ViscosityWrapper,
                  FLASH const & flashWrapper,
-                 arrayView1d< geosx::real64 const > const & componentMolarWeight,
-                 bool useMass,
-                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseFraction,
-                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseDensity,
-                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseMassDensity,
-                 MultiFluidBase::KernelWrapper::PhasePropViews const & phaseViscosity,
-                 MultiFluidBase::KernelWrapper::PhaseCompViews const & phaseCompFraction,
-                 MultiFluidBase::KernelWrapper::FluidPropViews const & totalDensity )
-  : MultiFluidBase::KernelWrapper( componentMolarWeight,
+                 arrayView1d< geosx::real64 const > componentMolarWeight,
+                 bool const useMass,
+                 PhaseProp::ViewType phaseFraction,
+                 PhaseProp::ViewType phaseDensity,
+                 PhaseProp::ViewType phaseMassDensity,
+                 PhaseProp::ViewType phaseViscosity,
+                 PhaseComp::ViewType phaseCompFraction,
+                 FluidProp::ViewType totalDensity )
+  : MultiFluidBase::KernelWrapper( std::move( componentMolarWeight ),
                                    useMass,
-                                   phaseFraction,
-                                   phaseDensity,
-                                   phaseMassDensity,
-                                   phaseViscosity,
-                                   phaseCompFraction,
-                                   totalDensity ),
+                                   std::move( phaseFraction ),
+                                   std::move( phaseDensity ),
+                                   std::move( phaseMassDensity ),
+                                   std::move( phaseViscosity ),
+                                   std::move( phaseCompFraction ),
+                                   std::move( totalDensity ) ),
   m_p1Index( p1Index ),
   m_p2Index( p2Index ),
   m_p1Density( p1DensityWrapper.createKernelWrapper() ),

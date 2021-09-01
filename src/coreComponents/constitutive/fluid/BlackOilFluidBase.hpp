@@ -75,37 +75,21 @@ protected:
   {
 protected:
 
-    KernelWrapper( arrayView1d< integer const > const & phaseTypes,
-                   arrayView1d< integer const > const & phaseOrder,
-                   arrayView1d< integer const > const & hydrocarbonPhaseOrder,
-                   arrayView1d< real64 const > const & surfacePhaseMassDensity,
-                   arrayView1d< TableFunction::KernelWrapper const > const & formationVolFactorTables,
-                   arrayView1d< TableFunction::KernelWrapper const > const & viscosityTables,
+    KernelWrapper( arrayView1d< integer const > phaseTypes,
+                   arrayView1d< integer const > phaseOrder,
+                   arrayView1d< integer const > hydrocarbonPhaseOrder,
+                   arrayView1d< real64 const > surfacePhaseMassDensity,
+                   arrayView1d< TableFunction::KernelWrapper const > formationVolFactorTables,
+                   arrayView1d< TableFunction::KernelWrapper const > viscosityTables,
                    WaterParams const waterParams,
-                   arrayView1d< real64 const > const & componentMolarWeight,
-                   bool useMass,
-                   PhasePropViews const & phaseFraction,
-                   PhasePropViews const & phaseDensity,
-                   PhasePropViews const & phaseMassDensity,
-                   PhasePropViews const & phaseViscosity,
-                   PhaseCompViews const & phaseCompFraction,
-                   FluidPropViews const & totalDensity )
-      : MultiFluidBase::KernelWrapper( componentMolarWeight,
-                                       useMass,
-                                       phaseFraction,
-                                       phaseDensity,
-                                       phaseMassDensity,
-                                       phaseViscosity,
-                                       phaseCompFraction,
-                                       totalDensity ),
-      m_phaseTypes( phaseTypes ),
-      m_phaseOrder( phaseOrder ),
-      m_hydrocarbonPhaseOrder( hydrocarbonPhaseOrder ),
-      m_surfacePhaseMassDensity( surfacePhaseMassDensity ),
-      m_formationVolFactorTables( formationVolFactorTables ),
-      m_viscosityTables( viscosityTables ),
-      m_waterParams( waterParams )
-    {}
+                   arrayView1d< real64 const > componentMolarWeight,
+                   bool const useMass,
+                   PhaseProp::ViewType phaseFraction,
+                   PhaseProp::ViewType phaseDensity,
+                   PhaseProp::ViewType phaseMassDensity,
+                   PhaseProp::ViewType phaseViscosity,
+                   PhaseComp::ViewType phaseCompFraction,
+                   FluidProp::ViewType totalDensity );
 
     /// Phase ordering info
     arrayView1d< integer const > m_phaseTypes;

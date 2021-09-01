@@ -89,7 +89,7 @@ void calculateCO2Viscosity( PTTableCoordinates const & tableCoords,
 }
 
 TableFunction const * makeViscosityTable( string_array const & inputParams,
-                                          string const & prefix,
+                                          string const & functionName,
                                           FunctionManager & functionManager )
 {
   PTTableCoordinates tableCoords;
@@ -105,7 +105,7 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "FenghourCO2Viscosity: invalid property argument:" + string( e.what() ), InputError );
+    GEOSX_THROW( functionName << ": invalid property argument: " << e.what(), InputError );
   }
 
   localIndex const nP = tableCoords.nPressures();
@@ -115,7 +115,7 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, density );
   calculateCO2Viscosity( tableCoords, density, viscosity );
 
-  string const tableName = prefix + "_CO2ViscosityTable";
+  string const tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );
@@ -132,10 +132,11 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
 
 } // namespace
 
-FenghourCO2Viscosity::FenghourCO2Viscosity( string_array const & inputParams,
+FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
+                                            string_array const & inputParams,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight )
-  : PVTFunctionBase( inputParams[1],
+  : PVTFunctionBase( name,
                      componentNames,
                      componentMolarWeight )
 {
@@ -148,7 +149,7 @@ FenghourCO2Viscosity::KernelWrapper FenghourCO2Viscosity::createKernelWrapper() 
                         *m_CO2ViscosityTable );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

@@ -198,7 +198,7 @@ void calculateCO2Solubility( real64 const & tolerance,
 }
 
 TableFunction const * makeSolubilityTable( string_array const & inputParams,
-                                           string const & prefix,
+                                           string const & functionName,
                                            FunctionManager & functionManager )
 {
   // initialize the (p,T) coordinates
@@ -226,7 +226,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateCO2Solubility( tolerance, tableCoords, salinity, values );
 
-  string const tableName = prefix + "_CO2SolubilityTable";
+  string const tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );
@@ -243,11 +243,12 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
 
 } // namespace
 
-CO2Solubility::CO2Solubility( string_array const & inputParams,
+CO2Solubility::CO2Solubility( string const & name,
+                              string_array const & inputParams,
                               string_array const & phaseNames,
                               string_array const & componentNames,
                               array1d< real64 > const & componentMolarWeight ):
-  FlashModelBase( inputParams[1],
+  FlashModelBase( name,
                   componentNames,
                   componentMolarWeight )
 {
@@ -283,7 +284,7 @@ CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
                         m_phaseLiquidIndex );
 }
 
-REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

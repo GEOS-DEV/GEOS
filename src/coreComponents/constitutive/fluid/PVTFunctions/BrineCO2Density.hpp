@@ -92,11 +92,10 @@ class BrineCO2Density : public PVTFunctionBase
 {
 public:
 
-  BrineCO2Density( string_array const & inputParams,
+  BrineCO2Density( string const & name,
+                   string_array const & inputParams,
                    string_array const & componentNames,
                    array1d< real64 > const & componentMolarWeight );
-
-  virtual ~BrineCO2Density() override = default;
 
   static string catalogName() { return "BrineCO2Density"; }
 

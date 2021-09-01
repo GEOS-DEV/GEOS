@@ -42,16 +42,16 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
     setDescription( "List of relative permeability tables for the pair (gas phase, oil phase)\n"
                     "The expected format is \"{ gasPermTableName, oilPermTableName }\", in that order" );
 
-  registerWrapper( viewKeyStruct::waterOilRelPermTableWrappersString(), &m_waterOilRelPermTableKernelWrappers ).
-    setSizedFromParent( 0 ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-
-  registerWrapper( viewKeyStruct::gasOilRelPermTableWrappersString(), &m_gasOilRelPermTableKernelWrappers ).
-    setSizedFromParent( 0 ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-
   registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
     setSizedFromParent( 0 );
+
+  registerWrapper( "waterOilRelPermTableWrappers", &m_waterOilRelPermTableKernelWrappers ).
+    setSizedFromParent( 0 ).
+    setRestartFlags( RestartFlags::NO_WRITE );
+
+  registerWrapper( "gasOilRelPermTableWrappers", &m_gasOilRelPermTableKernelWrappers ).
+    setSizedFromParent( 0 ).
+    setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 void TableRelativePermeability::postProcessInput()

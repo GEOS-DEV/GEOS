@@ -208,7 +208,7 @@ real64 spanWagnerCO2DensityFunction( real64 const & tolerance,
 
 
 TableFunction const * makeDensityTable( string_array const & inputParams,
-                                        string const & prefix,
+                                        string const & functionName,
                                         FunctionManager & functionManager )
 {
   PTTableCoordinates tableCoords;
@@ -224,15 +224,13 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "SpanWagnerCO2Density: invalid property argument:" + string( e.what()),
-                 InputError );
+    GEOSX_THROW( functionName << ": invalid property argument: " << e.what(), InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
   SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, densities );
 
-  // TODO: fix name/uniqueness
-  string const & tableName = prefix + "_CO2DensityTable";
+  string const & tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );
@@ -270,10 +268,11 @@ void SpanWagnerCO2Density::calculateCO2Density( real64 const & tolerance,
   }
 }
 
-SpanWagnerCO2Density::SpanWagnerCO2Density( string_array const & inputParams,
+SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
+                                            string_array const & inputParams,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight ):
-  PVTFunctionBase( inputParams[1],
+  PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
 {
@@ -290,7 +289,7 @@ SpanWagnerCO2Density::KernelWrapper SpanWagnerCO2Density::createKernelWrapper() 
                         m_CO2Index );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, string const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // namespace PVTProps
 

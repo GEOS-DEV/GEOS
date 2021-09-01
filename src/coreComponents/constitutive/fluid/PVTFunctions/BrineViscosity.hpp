@@ -82,7 +82,8 @@ class BrineViscosity : public PVTFunctionBase
 {
 public:
 
-  BrineViscosity( string_array const & inputPara,
+  BrineViscosity( string const & name,
+                  string_array const & inputPara,
                   string_array const & componentNames,
                   array1d< real64 > const & componentMolarWeight );
 

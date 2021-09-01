@@ -22,8 +22,7 @@
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/fluid/layouts.hpp"
-
-#include "RAJA/RAJA.hpp"
+#include "constitutive/fluid/MultiFluidUtils.hpp"
 
 namespace geosx
 {
@@ -94,76 +93,76 @@ public:
   void setMassFlag( bool const flag ) { m_useMass = flag; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseFraction() const
-  { return m_phaseFraction; }
+  { return m_phaseFraction.value; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseFraction_dPressure() const
-  { return m_dPhaseFraction_dPressure; }
+  { return m_phaseFraction.dPres; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseFraction_dTemperature() const
-  { return m_dPhaseFraction_dTemperature; }
+  { return m_phaseFraction.dTemp; }
 
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseFraction_dGlobalCompFraction() const
-  { return m_dPhaseFraction_dGlobalCompFraction; }
+  { return m_phaseFraction.dComp; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensity() const
-  { return m_phaseDensity; }
+  { return m_phaseDensity.value; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseDensity_dPressure() const
-  { return m_dPhaseDensity_dPressure; }
+  { return m_phaseDensity.dPres; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseDensity_dTemperature() const
-  { return m_dPhaseDensity_dTemperature; }
+  { return m_phaseDensity.dTemp; }
 
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseDensity_dGlobalCompFraction() const
-  { return m_dPhaseDensity_dGlobalCompFraction; }
+  { return m_phaseDensity.dComp; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseMassDensity() const
-  { return m_phaseMassDensity; }
+  { return m_phaseMassDensity.value; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseMassDensity_dPressure() const
-  { return m_dPhaseMassDensity_dPressure; }
+  { return m_phaseMassDensity.dPres; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseMassDensity_dTemperature() const
-  { return m_dPhaseMassDensity_dTemperature; }
+  { return m_phaseMassDensity.dTemp; }
 
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseMassDensity_dGlobalCompFraction() const
-  { return m_dPhaseMassDensity_dGlobalCompFraction; }
+  { return m_phaseMassDensity.dComp; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseViscosity() const
-  { return m_phaseViscosity; }
+  { return m_phaseViscosity.value; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseViscosity_dPressure() const
-  { return m_dPhaseViscosity_dPressure; }
+  { return m_phaseViscosity.dPres; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseViscosity_dTemperature() const
-  { return m_dPhaseViscosity_dTemperature; }
+  { return m_phaseViscosity.dTemp; }
 
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseViscosity_dGlobalCompFraction() const
-  { return m_dPhaseViscosity_dGlobalCompFraction; }
+  { return m_phaseViscosity.dComp; }
 
   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > phaseCompFraction() const
-  { return m_phaseCompFraction; }
+  { return m_phaseCompFraction.value; }
 
   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > dPhaseCompFraction_dPressure() const
-  { return m_dPhaseCompFraction_dPressure; }
+  { return m_phaseCompFraction.dPres; }
 
   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > dPhaseCompFraction_dTemperature() const
-  { return m_dPhaseCompFraction_dTemperature; }
+  { return m_phaseCompFraction.dTemp; }
 
   arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > dPhaseCompFraction_dGlobalCompFraction() const
-  { return m_dPhaseCompFraction_dGlobalCompFraction; }
+  { return m_phaseCompFraction.dComp; }
 
   arrayView2d< real64 const, multifluid::USD_FLUID > totalDensity() const
-  { return m_totalDensity; }
+  { return m_totalDensity.value; }
 
   arrayView2d< real64 const, multifluid::USD_FLUID > dTotalDensity_dPressure() const
-  { return m_dTotalDensity_dPressure; }
+  { return m_totalDensity.dPres; }
 
   arrayView2d< real64 const, multifluid::USD_FLUID > dTotalDensity_dTemperature() const
-  { return m_dTotalDensity_dTemperature; }
+  { return m_totalDensity.dTemp; }
 
   arrayView3d< real64 const, multifluid::USD_FLUID_DC > dTotalDensity_dGlobalCompFraction() const
-  { return m_dTotalDensity_dGlobalCompFraction; }
+  { return m_totalDensity.dComp; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -207,6 +206,10 @@ public:
 
 protected:
 
+  using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
+  using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
+  using FluidProp = MultiFluidVar< real64, 2, multifluid::LAYOUT_FLUID, multifluid::LAYOUT_FLUID_DC >;
+
   class KernelWrapper
   {
 public:
@@ -239,60 +242,36 @@ public:
     GEOSX_HOST_DEVICE
     integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseFraction.value.size( 2 ) ); }
 
-    /**
-     * @brief Struct holding views into fluid data, used to simplify parameter passing in kernel wrapper constructors.
-     * @tparam NDIM number of dimensions
-     * @tparam USD unit-stride-dim of primary property and derivatives
-     * @tparam USD_DC unit-stride-dim of compositional derivatives
-     */
-    template< int NDIM, int USD, int USD_DC >
-    struct PropViews
-    {
-      ArrayView< real64, NDIM, USD > value;                      ///< View into property values
-      ArrayView< real64, NDIM, USD > dPressure;                  ///< View into property pressure derivatives
-      ArrayView< real64, NDIM, USD > dTemperature;               ///< View into property temperature derivatives
-      ArrayView< real64, NDIM + 1, USD_DC > dGlobalCompFraction; ///< View into property compositional derivatives
-    };
-
-    /// Alias for phase property views struct
-    using PhasePropViews = PropViews< 3, multifluid::USD_PHASE, multifluid::USD_PHASE_DC >;
-
-    /// Alias for phase composition views struct
-    using PhaseCompViews = PropViews< 4, multifluid::USD_PHASE_COMP, multifluid::USD_PHASE_COMP_DC >;
-
-    /// Alias for fluid property views struct
-    using FluidPropViews = PropViews< 2, multifluid::USD_FLUID, multifluid::USD_FLUID_DC >;
-
 protected:
 
-    KernelWrapper( arrayView1d< real64 const > const & componentMolarWeight,
+    KernelWrapper( arrayView1d< real64 const > componentMolarWeight,
                    bool const useMass,
-                   PhasePropViews const & phaseFraction,
-                   PhasePropViews const & phaseDensity,
-                   PhasePropViews const & phaseMassDensity,
-                   PhasePropViews const & phaseViscosity,
-                   PhaseCompViews const & phaseCompFraction,
-                   FluidPropViews const & totalDensity )
-      : m_componentMolarWeight( componentMolarWeight ),
+                   PhaseProp::ViewType phaseFraction,
+                   PhaseProp::ViewType phaseDensity,
+                   PhaseProp::ViewType phaseMassDensity,
+                   PhaseProp::ViewType phaseViscosity,
+                   PhaseComp::ViewType phaseCompFraction,
+                   FluidProp::ViewType totalDensity )
+      : m_componentMolarWeight( std::move( componentMolarWeight ) ),
       m_useMass( useMass ),
-      m_phaseFraction( phaseFraction ),
-      m_phaseDensity( phaseDensity ),
-      m_phaseMassDensity( phaseMassDensity ),
-      m_phaseViscosity( phaseViscosity ),
-      m_phaseCompFraction( phaseCompFraction ),
-      m_totalDensity( totalDensity )
+      m_phaseFraction( std::move( phaseFraction ) ),
+      m_phaseDensity( std::move( phaseDensity ) ),
+      m_phaseMassDensity( std::move( phaseMassDensity ) ),
+      m_phaseViscosity( std::move( phaseViscosity ) ),
+      m_phaseCompFraction( std::move( phaseCompFraction ) ),
+      m_totalDensity( std::move( totalDensity ) )
     { }
 
     arrayView1d< real64 const > m_componentMolarWeight;
 
     bool m_useMass;
 
-    PhasePropViews m_phaseFraction;
-    PhasePropViews m_phaseDensity;
-    PhasePropViews m_phaseMassDensity;
-    PhasePropViews m_phaseViscosity;
-    PhaseCompViews m_phaseCompFraction;
-    FluidPropViews m_totalDensity;
+    PhaseProp::ViewType m_phaseFraction;
+    PhaseProp::ViewType m_phaseDensity;
+    PhaseProp::ViewType m_phaseMassDensity;
+    PhaseProp::ViewType m_phaseViscosity;
+    PhaseComp::ViewType m_phaseCompFraction;
+    FluidProp::ViewType m_totalDensity;
 
 private:
 
@@ -311,30 +290,12 @@ private:
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & dPhaseFraction_dPressure,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & dPhaseFraction_dTemperature,
-                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const & dPhaseFraction_dGlobalCompFraction,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & dPhaseDensity_dPressure,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & dPhaseDensity_dTemperature,
-                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const & dPhaseDensity_dGlobalCompFraction,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & dPhaseMassDensity_dPressure,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & dPhaseMassDensity_dTemperature,
-                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const & dPhaseMassDensity_dGlobalCompFraction,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & dPhaseViscosity_dPressure,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & dPhaseViscosity_dTemperature,
-                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const & dPhaseViscosity_dGlobalCompFraction,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & dPhaseCompFraction_dPressure,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & dPhaseCompFraction_dTemperature,
-                          arraySlice3d< real64, multifluid::USD_PHASE_COMP_DC-2 > const & dPhaseCompFraction_dGlobalCompFraction,
-                          real64 & totalDensity,
-                          real64 & dTotalDensity_dPressure,
-                          real64 & dTotalDensity_dTemperature,
-                          arraySlice1d< real64, multifluid::USD_FLUID_DC - 2 > const & dTotalDensity_dGlobalCompFraction ) const = 0;
+                          PhaseProp::SliceType const phaseFraction,
+                          PhaseProp::SliceType const phaseDensity,
+                          PhaseProp::SliceType const phaseMassDensity,
+                          PhaseProp::SliceType const phaseViscosity,
+                          PhaseComp::SliceType const phaseCompFraction,
+                          FluidProp::SliceType const totalDensity ) const = 0;
 
     GEOSX_HOST_DEVICE
     virtual void update( localIndex const k,
@@ -373,35 +334,12 @@ protected:
 
   // constitutive data
 
-  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseFraction;
-  array3d< real64, multifluid::LAYOUT_PHASE > m_dPhaseFraction_dPressure;
-  array3d< real64, multifluid::LAYOUT_PHASE > m_dPhaseFraction_dTemperature;
-  array4d< real64, multifluid::LAYOUT_PHASE_DC > m_dPhaseFraction_dGlobalCompFraction;
-
-  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseDensity;
-  array3d< real64, multifluid::LAYOUT_PHASE > m_dPhaseDensity_dPressure;
-  array3d< real64, multifluid::LAYOUT_PHASE > m_dPhaseDensity_dTemperature;
-  array4d< real64, multifluid::LAYOUT_PHASE_DC > m_dPhaseDensity_dGlobalCompFraction;
-
-  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseMassDensity;
-  array3d< real64, multifluid::LAYOUT_PHASE > m_dPhaseMassDensity_dPressure;
-  array3d< real64, multifluid::LAYOUT_PHASE > m_dPhaseMassDensity_dTemperature;
-  array4d< real64, multifluid::LAYOUT_PHASE_DC > m_dPhaseMassDensity_dGlobalCompFraction;
-
-  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseViscosity;
-  array3d< real64, multifluid::LAYOUT_PHASE > m_dPhaseViscosity_dPressure;
-  array3d< real64, multifluid::LAYOUT_PHASE > m_dPhaseViscosity_dTemperature;
-  array4d< real64, multifluid::LAYOUT_PHASE_DC > m_dPhaseViscosity_dGlobalCompFraction;
-
-  array4d< real64, multifluid::LAYOUT_PHASE_COMP > m_phaseCompFraction;
-  array4d< real64, multifluid::LAYOUT_PHASE_COMP > m_dPhaseCompFraction_dPressure;
-  array4d< real64, multifluid::LAYOUT_PHASE_COMP > m_dPhaseCompFraction_dTemperature;
-  array5d< real64, multifluid::LAYOUT_PHASE_COMP_DC > m_dPhaseCompFraction_dGlobalCompFraction;
-
-  array2d< real64, multifluid::LAYOUT_FLUID > m_totalDensity;
-  array2d< real64, multifluid::LAYOUT_FLUID > m_dTotalDensity_dPressure;
-  array2d< real64, multifluid::LAYOUT_FLUID > m_dTotalDensity_dTemperature;
-  array3d< real64, multifluid::LAYOUT_FLUID_DC > m_dTotalDensity_dGlobalCompFraction;
+  PhaseProp m_phaseFraction;
+  PhaseProp m_phaseDensity;
+  PhaseProp m_phaseMassDensity;
+  PhaseProp m_phaseViscosity;
+  PhaseComp m_phaseCompFraction;
+  FluidProp m_totalDensity;
 
 };
 

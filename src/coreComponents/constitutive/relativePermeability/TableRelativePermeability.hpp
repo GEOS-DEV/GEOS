@@ -84,8 +84,6 @@ private:
     static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
     static constexpr char const * waterOilRelPermTableNamesString() { return "waterOilRelPermTableNames"; }
     static constexpr char const * gasOilRelPermTableNamesString() { return "gasOilRelPermTableNames"; }
-    static constexpr char const * waterOilRelPermTableWrappersString() { return "waterOilRelPermTableWrappers"; }
-    static constexpr char const * gasOilRelPermTableWrappersString() { return "gasOilRelPermTableWrappers"; }
   };
 
 private:

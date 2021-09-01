@@ -87,11 +87,10 @@ class SpanWagnerCO2Density : public PVTFunctionBase
 {
 public:
 
-  SpanWagnerCO2Density( string_array const & inputParams,
+  SpanWagnerCO2Density( string const &,
+                        string_array const & inputParams,
                         string_array const & componentNames,
                         array1d< real64 > const & componentMolarWeight );
-
-  virtual ~SpanWagnerCO2Density() override = default;
 
   static string catalogName() { return "SpanWagnerCO2Density"; }
 
