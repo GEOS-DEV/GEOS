@@ -61,9 +61,11 @@ The internal wellbore mesh generator ``InternalWellbore`` is employed to define 
   :start-after: <!-- SPHINX_WellboreMesh -->
   :end-before: <!-- SPHINX_WellboreMeshEnd -->
 
-.. image:: mesh.png
-   :width: 100%
+.. figure:: mesh.png
    :align: center
+   :figclass: align-center
+
+   Mesh for simulating a cased wellbore
 
 Constitutives: define steel, cement and rock properties
 --------------------------------------------------------------------
@@ -210,4 +212,4 @@ To go further
 **Feedback on this example**
 
 This concludes the cased wellbore example.
-For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
