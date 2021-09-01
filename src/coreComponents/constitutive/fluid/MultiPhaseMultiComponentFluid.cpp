@@ -95,13 +95,13 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::pos
   MultiFluidBase::postProcessInput();
 
   GEOSX_THROW_IF_NE_MSG( numFluidPhases(), 2,
-                         "The number of phases in this model should be equal to 2",
+                         "CO2BrineFluid model named " << getName() << ": The number of phases in this model should be equal to 2",
                          InputError );
   GEOSX_THROW_IF_NE_MSG( numFluidComponents(), 2,
-                         "The number of components in this model should be equal to 2",
+                         "CO2BrineFluid model named " << getName() << ": The number of components in this model should be equal to 2",
                          InputError );
   GEOSX_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 2,
-                         "The number of phasePVTParaFiles is not the same as the number of phases!",
+                         "CO2BrineFluid model named " << getName() << ": The number of phasePVTParaFiles is not the same as the number of phases!",
                          InputError );
 
   // NOTE: for now, the names of the phases are still hardcoded here
@@ -159,16 +159,16 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
       }
       else
       {
-        GEOSX_THROW( "Error: Invalid PVT function: " << strs[0] << ".", InputError );
+        GEOSX_THROW( "CO2BrineFluid model named " << getName() << ": Invalid PVT function: " << strs[0] << ".", InputError );
       }
     }
     is.close();
   }
 
-  GEOSX_THROW_IF( m_p1Density == nullptr, P1DENS::catalogName() << " model not found", InputError );
-  GEOSX_THROW_IF( m_p2Density == nullptr, P2DENS::catalogName() << " model not found", InputError );
-  GEOSX_THROW_IF( m_p1Viscosity == nullptr, P1VISC::catalogName() << " model not found", InputError );
-  GEOSX_THROW_IF( m_p2Viscosity == nullptr, P2VISC::catalogName() << " model not found", InputError );
+  GEOSX_THROW_IF( m_p1Density == nullptr, "CO2BrineFluid model named " << getName() << ": " << P1DENS::catalogName() << " model not found", InputError );
+  GEOSX_THROW_IF( m_p2Density == nullptr, "CO2BrineFluid model named " << getName() << ": " << P2DENS::catalogName() << " model not found", InputError );
+  GEOSX_THROW_IF( m_p1Viscosity == nullptr, "CO2BrineFluid model named " << getName() << ": " << P1VISC::catalogName() << " model not found", InputError );
+  GEOSX_THROW_IF( m_p2Viscosity == nullptr, "CO2BrineFluid model named " << getName() << ": " << P2VISC::catalogName() << " model not found", InputError );
 
   // 2) Create the flash model
   {
@@ -187,14 +187,14 @@ void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::cre
       }
       else
       {
-        GEOSX_THROW( "Error: Invalid flash model: " << strs[0] << ", " << strs[1] << ".", InputError );
+        GEOSX_THROW( "CO2BrineFluid model named " << getName() << ": Invalid flash model: " << strs[0] << ", " << strs[1] << ".", InputError );
       }
     }
     is.close();
   }
 
   GEOSX_THROW_IF( m_flash == nullptr,
-                  FLASH::catalogName() << " not found",
+                  "CO2BrineFluid model named " << getName() << ": " << FLASH::catalogName() << " not found",
                   InputError );
 }
 
