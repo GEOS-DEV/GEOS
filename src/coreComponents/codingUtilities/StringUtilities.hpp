@@ -48,16 +48,31 @@ string toLower( string const & input );
 template< typename IT, typename S = char >
 string join( IT first, IT last, S const & delim = S())
 {
-  std::ostringstream oss;
-  if( first != last )
+  if( first == last )
   {
-    oss << *first;
+    return {};
   }
+  std::ostringstream oss;
+  oss << *first;
   while( ++first != last )
   {
     oss << delim << *first;
   }
   return oss.str();
+}
+
+/**
+ * @brief Join strings or other printable objects with a delimiter.
+ * @tparam CONTAINER type of container to join
+ * @tparam S    type of delimiter, usually char, char const * or string
+ * @param container container to join
+ * @param delim delimiter used to glue together strings
+ * @return a string containing input values concatenated with a delimiter
+ */
+template< typename CONTAINER, typename S = char >
+string join( CONTAINER const & cont, S const & delim = S() )
+{
+  return join( std::begin( cont ), std::end( cont ), delim );
 }
 
 /**

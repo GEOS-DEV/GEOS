@@ -1334,7 +1334,7 @@ real64 HypreMatrix::normFrobenius() const
 
 void HypreMatrix::rightScale( HypreVector const & vec )
 {
-  GEOSX_UNUSED_VAR( vec )
+  GEOSX_UNUSED_VAR( vec );
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_ERROR( "Not implemented" );
 }

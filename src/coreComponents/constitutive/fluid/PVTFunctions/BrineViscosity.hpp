@@ -82,7 +82,8 @@ class BrineViscosity : public PVTFunctionBase
 {
 public:
 
-  BrineViscosity( string_array const & inputPara,
+  BrineViscosity( string const & name,
+                  string_array const & inputPara,
                   string_array const & componentNames,
                   array1d< real64 > const & componentMolarWeight );
 
@@ -104,7 +105,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper();
+  KernelWrapper createKernelWrapper() const;
 
 private:
 
@@ -124,7 +125,7 @@ void BrineViscosityUpdate::compute( real64 const & pressure,
                                     real64 & value,
                                     bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( pressure, phaseComposition, useMass )
+  GEOSX_UNUSED_VAR( pressure, phaseComposition, useMass );
   value = m_coef0 + m_coef1 * temperature;
 }
 
@@ -147,7 +148,7 @@ void BrineViscosityUpdate::compute( real64 const & pressure,
                     dPhaseComposition_dPressure,
                     dPhaseComposition_dTemperature,
                     dPhaseComposition_dGlobalCompFraction,
-                    useMass )
+                    useMass );
 
   value = m_coef0 + m_coef1 * temperature;
   compute( pressure, temperature, phaseComposition, value, useMass );

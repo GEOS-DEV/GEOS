@@ -198,6 +198,7 @@ void calculateCO2Solubility( real64 const & tolerance,
 }
 
 TableFunction const * makeSolubilityTable( string_array const & inputParams,
+                                           string const & functionName,
                                            FunctionManager & functionManager )
 {
   // initialize the (p,T) coordinates
@@ -225,17 +226,16 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateCO2Solubility( tolerance, tableCoords, salinity, values );
 
-  // TODO: fix name/uniqueness
-  if( functionManager.hasGroup< TableFunction >( "CO2SolubilityTable" ) )
+  string const tableName = functionName + "_table";
+  if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( "CO2SolubilityTable" );
+    return functionManager.getGroupPointer< TableFunction >( tableName );
   }
   else
   {
-    TableFunction * const solubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2SolubilityTable" ) );
+    TableFunction * const solubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     solubilityTable->setTableCoordinates( tableCoords.getCoords() );
     solubilityTable->setTableValues( values );
-    solubilityTable->reInitializeFunction();
     solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return solubilityTable;
   }
@@ -243,11 +243,12 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
 
 } // namespace
 
-CO2Solubility::CO2Solubility( string_array const & inputParams,
+CO2Solubility::CO2Solubility( string const & name,
+                              string_array const & inputParams,
                               string_array const & phaseNames,
                               string_array const & componentNames,
                               array1d< real64 > const & componentMolarWeight ):
-  FlashModelBase( inputParams[1],
+  FlashModelBase( name,
                   componentNames,
                   componentMolarWeight )
 {
@@ -270,7 +271,7 @@ CO2Solubility::CO2Solubility( string_array const & inputParams,
   string const expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames );
 
-  m_CO2SolubilityTable = makeSolubilityTable( inputParams, FunctionManager::getInstance() );
+  m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
 }
 
 CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
@@ -283,7 +284,7 @@ CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
                         m_phaseLiquidIndex );
 }
 
-REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

@@ -141,14 +141,12 @@ if( ENABLE_PVTPackage )
     set( constitutive_headers
          ${constitutive_headers}
          fluid/CompositionalMultiphaseFluid.hpp
-         fluid/MultiFluidPVTPackageWrapper.hpp
-       )
+         )
 
     set( constitutive_sources
          ${constitutive_sources}
          fluid/CompositionalMultiphaseFluid.cpp
-         fluid/MultiFluidPVTPackageWrapper.cpp
-       )
+         )
        
     add_subdirectory( PVTPackage )
 

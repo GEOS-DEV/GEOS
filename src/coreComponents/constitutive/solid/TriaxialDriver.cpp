@@ -86,7 +86,7 @@ void TriaxialDriver::postProcessInput()
 
   // determine time increment
 
-  ArrayOfArraysView< real64 > coordinates = strainFunction.getCoordinates();
+  ArrayOfArraysView< real64 const > coordinates = strainFunction.getCoordinates().toViewConst();
   real64 const minTime = coordinates[0][0];
   real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
   real64 const dt = (maxTime-minTime) / m_numSteps;

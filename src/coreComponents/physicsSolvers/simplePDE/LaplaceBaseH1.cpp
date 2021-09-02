@@ -154,7 +154,7 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
 
 void LaplaceBaseH1::updateState( DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( domain )
+  GEOSX_UNUSED_VAR( domain );
 }
 
 /*
