@@ -16,6 +16,7 @@ known models.
    ElasticIsotropic
    ElasticIsotropicPressureDependent
    ElasticTransverseIsotropic
+   ElasticOrthotropic
    DruckerPrager
    DruckerPragerExtended
    ModifiedCamClay

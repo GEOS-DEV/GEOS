@@ -20,6 +20,7 @@
 #include "CoupledSolidBase.hpp"
 #include "ElasticIsotropic.hpp"
 #include "ElasticTransverseIsotropic.hpp"
+#include "ElasticOrthotropic.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
 #include "Damage.hpp"
