@@ -154,7 +154,7 @@
       name="mesh"
       file="../../../../../../../GEOSXDATA/DataSets/Egg/egg.msh"
       fieldsToImport="{ PERM }"
-      fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity }"/>
+      fieldNamesInGEOSX="{ rockPerm_permeability }"/>
 
     <InternalWell
       name="wellProducer1"
@@ -721,7 +721,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/reservoir/DEFAULT_HEX"
-      fieldName="referencePorosity"
+      fieldName="rockPorosity_referencePorosity"
       scale="0.2"/>
 
     <FieldSpecification
