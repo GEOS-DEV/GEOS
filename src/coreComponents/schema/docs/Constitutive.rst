@@ -24,7 +24,8 @@ DamageVolDevElasticIsotropic                node         :ref:`XML_DamageVolDevE
 DeadOilFluid                                node         :ref:`XML_DeadOilFluid`                                
 DruckerPrager                               node         :ref:`XML_DruckerPrager`                               
 ElasticIsotropic                            node         :ref:`XML_ElasticIsotropic`                            
-ElasticTransverseIsotropic                  node         :ref:`XML_ElasticTransverseIsotropic`                  
+ElasticTransverseIsotropic                  node         :ref:`XML_ElasticTransverseIsotropic`  
+ElasticOrthotropic                          node         :ref:`XML_ElasticOrthotropic`                  
 ExtendedDruckerPrager                       node         :ref:`XML_ExtendedDruckerPrager`                       
 NullModel                                   node         :ref:`XML_NullModel`                                   
 ParallelPlatesPermeability                  node         :ref:`XML_ParallelPlatesPermeability`                  

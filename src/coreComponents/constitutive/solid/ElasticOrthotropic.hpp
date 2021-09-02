@@ -691,7 +691,7 @@ public:
    *        data in this.
    * @return An instantiation of ElasticOrthotropicUpdates.
    */
-  ElasticOrthotropicUpdates createKernelUpdates()
+  ElasticOrthotropicUpdates createKernelUpdates() const
   {
     return ElasticOrthotropicUpdates( m_c11,
                                       m_c12,

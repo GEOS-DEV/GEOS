@@ -267,6 +267,13 @@ Element: ElasticTransverseIsotropic
 .. include:: ../../coreComponents/schema/docs/ElasticTransverseIsotropic.rst
 
 
+.. _XML_ElasticOrthotropic:
+
+Element: ElasticOrthotropic
+===================================
+.. include:: ../../coreComponents/schema/docs/ElasticOrthotropic.rst
+
+
 .. _XML_ElementRegions:
 
 Element: ElementRegions
