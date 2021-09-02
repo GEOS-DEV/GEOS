@@ -126,35 +126,35 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   #define GET_FLUID_DATA( FLUID, DIM, PERM, KEY ) \
     FLUID.getReference< Array< real64, DIM, PERM > >( MultiFluidBase::viewKeyStruct::KEY() )[0][0]
 
-  CompositionalVarContainer< 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseFrac {
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseFrac {
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseFractionString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseFraction_dPressureString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseFraction_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseFraction_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseDens {
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseDens {
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseDensityString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseDensity_dPressureString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseDensity_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseDensity_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseVisc {
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseVisc {
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseViscosityString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseViscosity_dPressureString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseViscosity_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseViscosity_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 2, USD_PHASE_COMP-2, USD_PHASE_COMP_DC-2 > phaseCompFrac {
+  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 > phaseCompFrac {
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, phaseCompFractionString ),
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, dPhaseCompFraction_dPressureString ),
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, dPhaseCompFraction_dTemperatureString ),
     GET_FLUID_DATA( fluid, 5, LAYOUT_PHASE_COMP_DC, dPhaseCompFraction_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 0, USD_FLUID - 2, USD_FLUID_DC - 2 > totalDens {
+  MultiFluidVarSlice< real64, 0, USD_FLUID - 2, USD_FLUID_DC - 2 > totalDens {
     GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, totalDensityString ),
     GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, dTotalDensity_dPressureString ),
     GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, dTotalDensity_dTemperatureString ),
@@ -323,30 +323,42 @@ void testValuesAgainstPreviousImplementation( CO2BrineFluid::KernelWrapper const
   StackArray< real64, 3, 2, LAYOUT_FLUID_DC >  dTotalDensity_dGlobalCompFraction( 1, 1, 2 );
 
   wrapper.compute( P, T, composition,
-                   phaseFraction[0][0],
-                   dPhaseFraction_dPressure[0][0],
-                   dPhaseFraction_dTemperature[0][0],
-                   dPhaseFraction_dGlobalCompFraction[0][0],
-                   phaseDensity[0][0],
-                   dPhaseDensity_dPressure[0][0],
-                   dPhaseDensity_dTemperature[0][0],
-                   dPhaseDensity_dGlobalCompFraction[0][0],
-                   phaseMassDensity[0][0],
-                   dPhaseMassDensity_dPressure[0][0],
-                   dPhaseMassDensity_dTemperature[0][0],
-                   dPhaseMassDensity_dGlobalCompFraction[0][0],
-                   phaseViscosity[0][0],
-                   dPhaseViscosity_dPressure[0][0],
-                   dPhaseViscosity_dTemperature[0][0],
-                   dPhaseViscosity_dGlobalCompFraction[0][0],
-                   phaseCompFraction[0][0],
-                   dPhaseCompFraction_dPressure[0][0],
-                   dPhaseCompFraction_dTemperature[0][0],
-                   dPhaseCompFraction_dGlobalCompFraction[0][0],
-                   totalDensity[0][0],
-                   dTotalDensity_dPressure[0][0],
-                   dTotalDensity_dTemperature[0][0],
-                   dTotalDensity_dGlobalCompFraction[0][0] );
+  {
+    phaseFraction[0][0],
+    dPhaseFraction_dPressure[0][0],
+    dPhaseFraction_dTemperature[0][0],
+    dPhaseFraction_dGlobalCompFraction[0][0]
+  },
+  {
+    phaseDensity[0][0],
+    dPhaseDensity_dPressure[0][0],
+    dPhaseDensity_dTemperature[0][0],
+    dPhaseDensity_dGlobalCompFraction[0][0]
+  },
+  {
+    phaseMassDensity[0][0],
+    dPhaseMassDensity_dPressure[0][0],
+    dPhaseMassDensity_dTemperature[0][0],
+    dPhaseMassDensity_dGlobalCompFraction[0][0]
+  },
+  {
+    phaseViscosity[0][0],
+    dPhaseViscosity_dPressure[0][0],
+    dPhaseViscosity_dTemperature[0][0],
+    dPhaseViscosity_dGlobalCompFraction[0][0]
+  },
+  {
+    phaseCompFraction[0][0],
+    dPhaseCompFraction_dPressure[0][0],
+    dPhaseCompFraction_dTemperature[0][0],
+    dPhaseCompFraction_dGlobalCompFraction[0][0]
+  },
+  {
+    totalDensity[0][0],
+    dTotalDensity_dPressure[0][0],
+    dTotalDensity_dTemperature[0][0],
+    dTotalDensity_dGlobalCompFraction[0][0]
+  } );
 
   checkRelativeError( totalDensity[0][0], savedTotalDensity, relTol );
   for( localIndex ip = 0; ip < 2; ++ip )

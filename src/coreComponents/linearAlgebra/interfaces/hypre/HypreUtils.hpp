@@ -146,7 +146,7 @@ inline HYPRE_Int HYPRE_SLUDistSetup( HYPRE_Solver solver,
                                      HYPRE_ParVector b,
                                      HYPRE_ParVector x )
 {
-  GEOSX_UNUSED_VAR( b, x )
+  GEOSX_UNUSED_VAR( b, x );
   return hypre_SLUDistSetup( &solver, A, 0 );
 }
 
@@ -163,7 +163,7 @@ inline HYPRE_Int HYPRE_SLUDistSolve( HYPRE_Solver solver,
                                      HYPRE_ParVector b,
                                      HYPRE_ParVector x )
 {
-  GEOSX_UNUSED_VAR( A )
+  GEOSX_UNUSED_VAR( A );
   return hypre_SLUDistSolve( solver, b, x );
 }
 
