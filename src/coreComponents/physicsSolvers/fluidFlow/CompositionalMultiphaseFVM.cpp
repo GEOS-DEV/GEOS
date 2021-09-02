@@ -122,12 +122,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp]
                                       GEOSX_HOST_DEVICE ( localIndex const )
     {
-      GEOSX_UNUSED_VAR( phaseCompFrac )
-      GEOSX_UNUSED_VAR( dPhaseCompFrac_dPres )
-      GEOSX_UNUSED_VAR( dPhaseCompFrac_dComp )
-      GEOSX_UNUSED_VAR( phaseMassDens )
-      GEOSX_UNUSED_VAR( dPhaseMassDens_dPres )
-      GEOSX_UNUSED_VAR( dPhaseMassDens_dComp )
+      GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
+                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp );
     } );
   } );
 

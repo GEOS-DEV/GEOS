@@ -812,6 +812,8 @@
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
+		<!--PVTO => (no description available)-->
+		<xsd:attribute name="PVTO" type="geosx_constitutive_PVTOData" />
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
 		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dPressure => (no description available)-->
@@ -848,6 +850,10 @@
 		<xsd:attribute name="dTotalDensity_dPressure" type="real64_array2d" />
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
+		<!--formationVolFactorTableWrappers => (no description available)-->
+		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--hydrocarbonPhaseOrder => (no description available)-->
+		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
 		<!--phaseCompFraction => (no description available)-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseDensity => (no description available)-->
@@ -856,12 +862,18 @@
 		<xsd:attribute name="phaseFraction" type="real64_array3d" />
 		<!--phaseMassDensity => (no description available)-->
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
+		<!--phaseOrder => (no description available)-->
+		<xsd:attribute name="phaseOrder" type="integer_array" />
+		<!--phaseTypes => (no description available)-->
+		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--phaseViscosity => (no description available)-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->
 		<xsd:attribute name="useMass" type="integer" />
+		<!--viscosityTableWrappers => (no description available)-->
+		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
@@ -1134,6 +1146,10 @@
 		<xsd:attribute name="dTotalDensity_dPressure" type="real64_array2d" />
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
+		<!--formationVolFactorTableWrappers => (no description available)-->
+		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--hydrocarbonPhaseOrder => (no description available)-->
+		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
 		<!--phaseCompFraction => (no description available)-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseDensity => (no description available)-->
@@ -1142,12 +1158,18 @@
 		<xsd:attribute name="phaseFraction" type="real64_array3d" />
 		<!--phaseMassDensity => (no description available)-->
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
+		<!--phaseOrder => (no description available)-->
+		<xsd:attribute name="phaseOrder" type="integer_array" />
+		<!--phaseTypes => (no description available)-->
+		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--phaseViscosity => (no description available)-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->
 		<xsd:attribute name="useMass" type="integer" />
+		<!--viscosityTableWrappers => (no description available)-->
+		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -1317,6 +1339,8 @@
 	<xsd:complexType name="TableRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
 		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
+		<!--gasOilRelPermTableWrappers => (no description available)-->
+		<xsd:attribute name="gasOilRelPermTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--phaseMinVolumeFraction => (no description available)-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" />
 		<!--phaseOrder => (no description available)-->
@@ -1325,6 +1349,8 @@
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--waterOilRelPermTableWrappers => (no description available)-->
+		<xsd:attribute name="waterOilRelPermTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->

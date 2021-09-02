@@ -80,7 +80,7 @@ public:
    */
   virtual void importFields( DomainPartition & domain ) const
   {
-    GEOSX_UNUSED_VAR( domain )
+    GEOSX_UNUSED_VAR( domain );
   }
 
   /**
