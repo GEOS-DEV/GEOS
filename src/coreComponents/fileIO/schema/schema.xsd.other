@@ -416,7 +416,7 @@
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
-			<xsd:element name="explicit_MPM" type="explicit_MPMType" />
+			<xsd:element name="materialPointMethod" type="materialPointMethodType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFVMType">
@@ -640,7 +640,7 @@
 		<!--trailingFaces => Set containing all the trailing faces-->
 		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
-	<xsd:complexType name="explicit_MPMType">
+	<xsd:complexType name="materialPointMethodType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -1482,13 +1482,13 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM, materialPointMethod-->
 		<xsd:attribute name="Acceleration" type="real64_array2d" />
 		<!--EmbSurfNodesPosition => (no description available)-->
 		<xsd:attribute name="EmbSurfNodesPosition" type="real64_array2d" />
 		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="IncrementalDisplacement" type="real64_array2d" />
-		<!--Mass => An array that holds the mass on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--Mass => An array that holds the mass on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM, materialPointMethod-->
 		<xsd:attribute name="Mass" type="real64_array" />
 		<!--ReferencePosition => (no description available)-->
 		<xsd:attribute name="ReferencePosition" type="real64_array2d" />
@@ -1496,7 +1496,7 @@
 		<xsd:attribute name="SIFNode" type="real64_array" />
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="TotalDisplacement" type="real64_array2d" />
-		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM, materialPointMethod-->
 		<xsd:attribute name="Velocity" type="real64_array2d" />
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />

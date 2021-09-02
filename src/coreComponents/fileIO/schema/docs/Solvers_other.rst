@@ -26,7 +26,7 @@ SolidMechanicsEmbeddedFractures  node :ref:`DATASTRUCTURE_SolidMechanicsEmbedded
 SolidMechanicsLagrangianSSLE     node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE`     
 SolidMechanics_LagrangianFEM     node :ref:`DATASTRUCTURE_SolidMechanics_LagrangianFEM`     
 SurfaceGenerator                 node :ref:`DATASTRUCTURE_SurfaceGenerator`                 
-explicit_MPM                     node :ref:`DATASTRUCTURE_explicit_MPM`                     
+materialPointMethod              node :ref:`DATASTRUCTURE_materialPointMethod`              
 ================================ ==== ===================================================== 
 
 

@@ -45,7 +45,7 @@ public:
   // "CatalogName()" return the string used as XML tag in the input file.
   // It ties the XML tag with this C++ classes. This is important.
 //static string catalogName() { return "MaterialPointMethod"; }
-  static string catalogName() { return "explicit_MPM"; }
+  static string catalogName() { return "materialPointMethod"; }
 
   // This method ties properties with their supporting mesh
   virtual void registerDataOnMesh( Group & meshBodies ) override final;

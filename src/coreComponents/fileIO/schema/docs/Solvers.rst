@@ -27,7 +27,7 @@ SolidMechanicsEmbeddedFractures  node               :ref:`XML_SolidMechanicsEmbe
 SolidMechanicsLagrangianSSLE     node               :ref:`XML_SolidMechanicsLagrangianSSLE`     
 SolidMechanics_LagrangianFEM     node               :ref:`XML_SolidMechanics_LagrangianFEM`     
 SurfaceGenerator                 node               :ref:`XML_SurfaceGenerator`                 
-explicit_MPM                     node               :ref:`XML_explicit_MPM`                     
+materialPointMethod              node               :ref:`XML_materialPointMethod`              
 ================================ ======== ========= =========================================== 
 
 

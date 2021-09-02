@@ -743,18 +743,18 @@ Element: WellElementRegion
 .. include:: ../../coreComponents/fileIO/schema/docs/WellElementRegion.rst
 
 
-.. _XML_explicit_MPM:
-
-Element: explicit_MPM
-=====================
-.. include:: ../../coreComponents/fileIO/schema/docs/explicit_MPM.rst
-
-
 .. _XML_lassen:
 
 Element: lassen
 ===============
 .. include:: ../../coreComponents/fileIO/schema/docs/lassen.rst
+
+
+.. _XML_materialPointMethod:
+
+Element: materialPointMethod
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/materialPointMethod.rst
 
 
 .. _XML_quartz:
@@ -1594,13 +1594,6 @@ Datastructure: embeddedSurfacesEdgeManager
 .. include:: ../../coreComponents/fileIO/schema/docs/embeddedSurfacesEdgeManager_other.rst
 
 
-.. _DATASTRUCTURE_explicit_MPM:
-
-Datastructure: explicit_MPM
-===========================
-.. include:: ../../coreComponents/fileIO/schema/docs/explicit_MPM_other.rst
-
-
 .. _DATASTRUCTURE_finiteVolumeStencils:
 
 Datastructure: finiteVolumeStencils
@@ -1613,6 +1606,13 @@ Datastructure: finiteVolumeStencils
 Datastructure: lassen
 =====================
 .. include:: ../../coreComponents/fileIO/schema/docs/lassen_other.rst
+
+
+.. _DATASTRUCTURE_materialPointMethod:
+
+Datastructure: materialPointMethod
+==================================
+.. include:: ../../coreComponents/fileIO/schema/docs/materialPointMethod_other.rst
 
 
 .. _DATASTRUCTURE_neighborData:

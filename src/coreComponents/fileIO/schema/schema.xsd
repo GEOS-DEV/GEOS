@@ -880,7 +880,7 @@ the relative residual norm satisfies:
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
-			<xsd:element name="explicit_MPM" type="explicit_MPMType" />
+			<xsd:element name="materialPointMethod" type="materialPointMethodType" />
 		</xsd:choice>
 		<!--gravityVector => Gravity vector used in the physics solvers-->
 		<xsd:attribute name="gravityVector" type="R1Tensor" default="0,0,-9.81" />
@@ -1603,7 +1603,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="explicit_MPMType">
+	<xsd:complexType name="materialPointMethodType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />

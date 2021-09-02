@@ -106,6 +106,25 @@ void MPM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
 
+	nodes.registerWrapper< array2d< real64, nodes::VELOCITY_PERM > >( keys::Velocity ).
+			setPlotLevel( PlotLevel::LEVEL_0 ).
+			setRegisteringObjects( this->getName()).
+			setDescription( "An array that holds the current velocity on the nodes." ).
+			reference().resizeDimension< 1 >( 3 );
+	//
+	nodes.registerWrapper< array2d< real64, nodes::ACCELERATION_PERM > >( keys::Acceleration ).
+			setPlotLevel( PlotLevel::LEVEL_1 ).
+			setRegisteringObjects( this->getName()).
+			setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
+					        "to hold the summation of nodal forces resulting from the governing equations." ).
+			reference().resizeDimension< 1 >( 3 );
+	//
+	nodes.registerWrapper< array1d< real64 > >( keys::Mass ).
+			setPlotLevel( PlotLevel::LEVEL_0 ).
+			setRegisteringObjects( this->getName()).
+			setDescription( "An array that holds the mass on the nodes." );
+
+
     nodes.registerWrapper< real64_array >( m_fieldName ).
       setApplyDefaultValue( 0.0 ).
       setPlotLevel( PlotLevel::LEVEL_0 ).
@@ -147,11 +166,49 @@ real64 MPM::solverStep( real64 const & time_n,
 }
 
 real64 MPM::explicitStep(
-  real64 const & GEOSX_UNUSED_PARAM( time_n ),
+  real64 const & time_n,
   real64 const & dt,
   const int GEOSX_UNUSED_PARAM( cycleNumber ),
-  DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+  DomainPartition & domain )
 {
+
+	  GEOSX_MARK_FUNCTION;
+
+	  #define USE_PHYSICS_LOOP
+
+	  // updateIntrinsicNodalData(domain);
+
+	  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+	  NodeManager & nodes = mesh.getNodeManager();
+
+//	  // save previous constitutive state data in preparation for next timestep
+//	  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+//	                                                          CellElementSubRegion & subRegion )
+//	  {
+//	    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+//	    constitutiveRelation.saveConvergedState();
+//	  } );
+
+	//
+	//FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+	//
+	// arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
+
+	//		arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
+	//		arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
+
+	arrayView2d< real64, nodes::VELOCITY_USD > & vel = nodes.getReference<array2d<real64, nodes::VELOCITY_PERM > >( keys::Velocity );
+	arrayView2d< real64, nodes::ACCELERATION_USD > & acc = nodes.getReference<array2d<real64, nodes::ACCELERATION_PERM > >( keys::Acceleration );
+
+	localIndex const N = vel.size( 0 );
+	forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
+			{
+		LvArray::tensorOps::scaledAdd< 3 >( vel[ i ], acc[ i ], dt );
+			} );
+
+	std::cout<<"MPM:explicitStep, time_n = "<<time_n<<std::endl;
+
+
   return dt;
 }
 
