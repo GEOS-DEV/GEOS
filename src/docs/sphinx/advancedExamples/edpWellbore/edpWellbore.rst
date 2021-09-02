@@ -1,14 +1,14 @@
-.. _TutorialPlasticity:
+.. _ExampleEDPWellbore:
 
 
 ####################################################
-Tutorial 11: Elasto-Plastic Model for Wellbore Problems without Fluid Flow
+Elasto-Plastic Model for Wellbore Problems without Fluid Flow
 ####################################################
 
 
 **Context**
 
-The main goal of this tutorial is to learn how to use the internal wellbore mesh generator and an elasto-plastic model to handle wellbore problems in GEOSX. The Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical results. The resulting model can be used as a base for more complex analysis (e.g., wellbore drilling, fluid injection and storage scenarios). 
+The main goal of this tutorial is to learn how to use the internal wellbore mesh generator and an elasto-plastic model to handle wellbore problems in GEOSX. The Extended Drucker-Prager model (see :ref:`DruckerPragerExtended`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical results. The resulting model can be used as a base for more complex analysis (e.g., wellbore drilling, fluid injection and storage scenarios). 
 
 
 **Objectives**
@@ -93,7 +93,7 @@ Solver: setting up the solid mechanics solver
 -----------------------------------------------------------
 
 For the drained wellbore problem, the pore pressure variation is omitted and can be subtracted from the analysis. Therefore, we just need to define a solid mechanics solver, which is called ``mechanicsSolver``. 
-This solid mechanics solver (see :ref:`SolidMechanicsLagrangianFEM`) is based on the small strain Lagrangian finite element formulation. 
+This solid mechanics solver (see :ref:`SolidMechanicsLagrangianFEM`) is based on the Lagrangian finite element formulation. 
 The problem is run as ``QuasiStatic`` without considering inertial effects. 
 The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. 
 The material is named as ``rock``, whose mechanical properties are specified in the ``Constitutive`` section.
@@ -191,7 +191,7 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+-------------------------+------------------+---------------+
 | :math:`a_0`      | Initial Well Radius     | [m]              | 0.1           |
 +------------------+-------------------------+------------------+---------------+
-| :math:`P_w`      | Mud Pressure            | [MPa]            | 2.0           |
+| :math:`P_w`      | Mud Pressure            | [MPa]            | -2.0          |
 +------------------+-------------------------+------------------+---------------+
 
 
@@ -227,6 +227,5 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
 **For more details**
 
-  - More on plasticity models, please see :ref:`SolidModels`.
-  - More on wellbore meshes, please see :ref:`InternalWellbore`.
+  - More on plasticity models, please see :ref:`DruckerPragerExtended`.
   - More on functions, please see :ref:`FunctionManager`.

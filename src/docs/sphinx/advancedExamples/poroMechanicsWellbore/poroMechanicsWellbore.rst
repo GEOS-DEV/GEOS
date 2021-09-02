@@ -1,8 +1,8 @@
-.. _TutorialPoroPlasticity:
+.. _ExamplePoroMechanicsWellbore:
 
 
 ####################################################
-Tutorial 12: PoroMechanical Models for Wellbore Problems
+PoroMechanical Models for Wellbore Problems
 ####################################################
 
 
@@ -349,7 +349,6 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
 **For more details**
 
-  - More on plasticity models, please see :ref:`SolidModels`.
-  - More on wellbore meshes, please see :ref:`InternalWellbore`.
+  - More on plasticity models, please see :ref:`DruckerPragerExtended`.
   - More on multiphysics solvers, please see :ref:`SinglePhasePoromechanics`.
 
