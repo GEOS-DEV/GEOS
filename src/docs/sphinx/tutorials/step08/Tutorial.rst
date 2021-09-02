@@ -296,7 +296,7 @@ times with the numerical solution (markers).
                                                   "porosity",
                                                   "permeability"])
 
-       hydromechanicalParameters["youngModulus"] = float(param1.get("defaultYoungsModulus"))
+       hydromechanicalParameters["youngModulus"] = float(param1.get("defaultYoungModulus"))
        hydromechanicalParameters["poissonRation"] = float(param1.get("defaultPoissonRatio"))
 
        E = hydromechanicalParameters["youngModulus"]
