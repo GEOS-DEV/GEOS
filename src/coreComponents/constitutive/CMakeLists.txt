@@ -65,6 +65,7 @@ set( constitutive_headers
      solid/DruckerPragerExtended.hpp
      solid/ElasticIsotropic.hpp
      solid/ElasticTransverseIsotropic.hpp
+     solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
@@ -73,6 +74,7 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
+     solid/SolidModelDiscretizationOpsOrthotropic.hpp
      solid/TriaxialDriver.hpp
      solid/porosity/BiotPorosity.hpp
      solid/porosity/PorosityBase.hpp
@@ -127,6 +129,7 @@ set( constitutive_sources
      solid/DruckerPragerExtended.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticTransverseIsotropic.cpp
+     solid/ElasticOrthotropic.cpp
      solid/PorousSolid.cpp
      solid/SolidBase.cpp
      solid/TriaxialDriver.cpp
