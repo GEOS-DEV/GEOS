@@ -2,13 +2,11 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <LagrangianContact
       name="lagrangiancontact"
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
-      logLevel="0"
-      activeSetMaxIter="10"
       targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial">
       <NonlinearSolverParameters
@@ -16,33 +14,25 @@
         logLevel="2"
         newtonMaxIter="10"
         lineSearchAction="Require"
-        lineSearchMaxCuts="2"
-        maxTimeStepCuts="2"/>
+        lineSearchMaxCuts="2"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </LagrangianContact>
 
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Region, Fracture }"
       solidMaterialNames="{ rock }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="5"/>
+        newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        krylovTol="1.0e-10"
-        logLevel="0"/>
+        krylovTol="1.0e-10"/>
     </SolidMechanicsLagrangianSSLE>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Region }"
       solidMaterialNames="{ rock }"
       rockToughness="1.0e6"
@@ -65,33 +55,33 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 0.01, 20.01, 20.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 20.01, 20.01 }"/>
 
     <Box
       name="core"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 0.01, 20.01, 20.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 20.01, 20.01 }"/>
 
     <Box
       name="front"
-      xMin="{ 3.99, -0.01, -0.01}"
-      xMax="{ 4.01, 20.01, 20.01}"/>
+      xMin="{ 3.99, -0.01, -0.01 }"
+      xMax="{ 4.01, 20.01, 20.01 }"/>
 
     <Box
       name="back"
-      xMin="{-4.01, -0.01, -0.01}"
-      xMax="{-3.99, 20.01, 20.01}"/>
+      xMin="{ -4.01, -0.01, -0.01 }"
+      xMax="{ -3.99, 20.01, 20.01 }"/>
 
     <Box
       name="xpos_top"
-      xMin="{-0.01, -0.01, 19.99}"
-      xMax="{ 4.01, 20.01, 20.01}"/>
+      xMin="{ -0.01, -0.01, 19.99 }"
+      xMax="{ 4.01, 20.01, 20.01 }"/>
 
     <Box
       name="bottom"
-      xMin="{-4.01, -0.01, -0.01}"
-      xMax="{ 4.01, 20.01, 0.01}"/>
+      xMin="{ -4.01, -0.01, -0.01 }"
+      xMax="{ 4.01, 20.01, 0.01 }"/>
   </Geometry>
 
   <Events
@@ -155,14 +145,11 @@
   </ElementRegions>
 
   <Constitutive>
-    <PoroElasticIsotropic
+    <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="3.33333333333333e3"
-      defaultShearModulus="2.0e3"
-      BiotCoefficient="1"
-      compressibility="1.6155088853e-18"
-      referencePressure="2.125e6"/>
+      defaultShearModulus="2.0e3"/>
 
     <Coulomb
       name="fractureMaterial"
@@ -238,7 +225,7 @@
     <Traction
       name="xload"
       objectPath="faceManager"
-      direction="{1,0,0}"
+      direction="{ 1, 0, 0 }"
       functionName="ForceTimeFunction"
       scale="-1.0e0"
       setNames="{ front }"/>
@@ -246,7 +233,7 @@
     <Traction
       name="zload"
       objectPath="faceManager"
-      direction="{0,0,1}"
+      direction="{ 0, 0, 1 }"
       functionName="ForceTimeFunction"
       scale="-3.e0"
       setNames="{ xpos_top }"/>

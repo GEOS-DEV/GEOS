@@ -12,6 +12,7 @@
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       targetRegions="{ mainRegion }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -42,13 +43,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{1.01, 1.01, 1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin="{8.99, 8.99, 8.99}"
-      xMax="{10.01, 10.01, 10.01}"/>
+      xMin="{ 8.99, 8.99, 8.99 }"
+      xMax="{ 10.01, 10.01, 10.01 }"/>
   </Geometry>
 
   <!-- SPHINX_TUT_INT_HEX_GEOMETRY_END -->
@@ -68,7 +69,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="100.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
   </Events>
 
@@ -79,7 +79,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -89,7 +90,7 @@
     <CellElementRegion
       name="mainRegion"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
   </ElementRegions>
 
   <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS_END -->
@@ -100,53 +101,38 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
       referencePressure="0.0"
-      compressibility="1e-9"/>
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-15 }"/>
   </Constitutive>
 
   <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE_END -->
   <!-- SPHINX_TUT_INT_HEX_FIELDS -->
   <FieldSpecifications>
     <FieldSpecification
-      name="permx"
-      component="0"
+      name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
-      fieldName="permeability"
-      scale="1.0e-12"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
-      fieldName="permeability"
-      scale="1.0e-12"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
-      fieldName="permeability"
-      scale="1.0e-15"/>
-
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
-      fieldName="referencePorosity"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification
@@ -174,8 +160,6 @@
 
   <!-- SPHINX_TUT_INT_HEX_FIELDS_END -->
   <!-- SPHINX_TUT_INT_HEX_BLANKS -->
-  <Functions/>
-
   <!-- SPHINX_TUT_INT_HEX_BLANKS_END -->
   <!-- SPHINX_TUT_INT_HEX_OUTPUTS -->
   <Outputs>

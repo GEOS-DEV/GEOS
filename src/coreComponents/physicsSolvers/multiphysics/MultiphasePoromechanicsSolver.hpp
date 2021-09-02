@@ -106,11 +106,17 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override;
 
+  virtual void updateState( DomainPartition & domain ) override;
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
+
+    constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
   };
+
+  arrayView1d< string const > porousMaterialNames() const { return m_porousMaterialNames; }
 
 protected:
 
@@ -118,6 +124,8 @@ protected:
 
   string m_solidSolverName;
   string m_flowSolverName;
+
+  array1d< string > m_porousMaterialNames;
 
   // pointer to the flow sub-solver
   CompositionalMultiphaseBase * m_flowSolver;

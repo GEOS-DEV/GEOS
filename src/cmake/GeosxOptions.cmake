@@ -1,10 +1,10 @@
-message("\nProcessing GeosxOptions.cmake")
-message("CMAKE_HOST_SYSTEM_NAME = ${CMAKE_HOST_SYSTEM_NAME}")
-message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
-message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
+message( "\nProcessing GeosxOptions.cmake" )
+message( "CMAKE_HOST_SYSTEM_NAME = ${CMAKE_HOST_SYSTEM_NAME}" )
+message( "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}" )
+message( "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
 
 ### OPTIONS ###
-option( GEOSX_ENABLE_FPE "" ON)
+option( GEOSX_ENABLE_FPE "" ON )
 
 option( ENABLE_CALIPER "" OFF )
 
@@ -20,7 +20,6 @@ option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
-option( ENABLE_GEOSX_PTP "" ON)
 option( ENABLE_PAMELA "" ON )
 option( ENABLE_PVTPackage "" ON )
 
@@ -65,12 +64,12 @@ endif()
 
 option( ENABLE_MPI "" ON )
 
-option(CUDA_ENABLED "" OFF)
+option( CUDA_ENABLED "" OFF )
 
 if( CMAKE_HOST_APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
-  option(ENABLE_OPENMP     "Enables OpenMP compiler support" OFF)
+  option( ENABLE_OPENMP "Enables OpenMP compiler support" OFF )
 else()
-  option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
+  option( ENABLE_OPENMP "Enables OpenMP compiler support" ON )
 endif()
 
 ### BUILD & BLT SETUP ###
@@ -88,13 +87,13 @@ option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
 #message( "SPHINX_FOUND = ${SPHINX_FOUND}" )
 #message( "SPHINX_EXECUTABLE = ${SPHINX_EXECUTABLE}" )
 
-if(NOT BLT_CXX_STD STREQUAL c++14)
-    MESSAGE(FATAL_ERROR "c++14 is NOT enabled. GEOSX requires c++14")
-endif(NOT BLT_CXX_STD STREQUAL c++14)
+if( NOT BLT_CXX_STD STREQUAL c++14 )
+    MESSAGE( FATAL_ERROR "c++14 is NOT enabled. GEOSX requires c++14" )
+endif( NOT BLT_CXX_STD STREQUAL c++14 )
 
-message("CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
+message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 
-blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}")
+blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                  GNU   "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
                                  CLANG "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
@@ -103,30 +102,28 @@ blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
                                  GNU "-Wno-unused-parameter -Wno-unused-variable"
                                  CLANG "-Wno-unused-parameter -Wno-unused-variable -fstandalone-debug"
-                                )
+                               )
 
-blt_append_custom_compiler_flag(FLAGS_VAR GEOSX_NINJA_FLAGS
-                  DEFAULT     " "
-                  GNU         "-fdiagnostics-color=always"
-                  CLANG       "-fcolor-diagnostics"
-                  )
+blt_append_custom_compiler_flag( FLAGS_VAR GEOSX_NINJA_FLAGS
+                                 DEFAULT " "
+                                 GNU     "-fdiagnostics-color=always"
+                                 CLANG   "-fcolor-diagnostics"
+                               )
 
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}")
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )
 endif()
 
 if( CMAKE_HOST_APPLE )
 #    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
 #    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
 elseif( CUDA_ENABLED )
-    set(GEOSX_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "")
-    set(GEOSX_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "")
+    set( GEOSX_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "" )
+    set( GEOSX_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "" )
 else()
-    set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE STRING "")
-    set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "")
+    set( GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE STRING "" )
+    set( GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "" )
 endif()
-
-
 
 if( ENABLE_HYPRE AND ENABLE_HYPRE_CUDA )
     set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
@@ -167,7 +164,7 @@ message( "GEOSX_LOCALINDEX_TYPE_FLAG = ${GEOSX_LOCALINDEX_TYPE_FLAG}" )
 message( "GEOSX_GLOBALINDEX_TYPE_FLAG = ${GEOSX_GLOBALINDEX_TYPE_FLAG}" )
 
 
-message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
+message( "CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}" )
 message( "GEOSX_LINK_PREPEND_FLAG=${GEOSX_LINK_PREPEND_FLAG}" )
 message( "GEOSX_LINK_POSTPEND_FLAG=${GEOSX_LINK_POSTPEND_FLAG}" )
-message("Leaving GeosxOptions.cmake\n")
+message( "Leaving GeosxOptions.cmake\n" )

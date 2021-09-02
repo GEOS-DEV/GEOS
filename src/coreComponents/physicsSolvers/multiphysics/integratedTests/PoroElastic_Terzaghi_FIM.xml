@@ -2,19 +2,18 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, 0.0}">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <!-- SPHINX_POROELASTIC_SOLVER -->
     <SinglePhasePoromechanics
       name="PoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
       fluidSolverName="SinglePhaseFlowSolver"
+      porousMaterialNames="{ porousRock }"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
       <LinearSolverParameters
-	solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhasePoromechanics>
 
     <SolidMechanicsLagrangianSSLE
@@ -23,8 +22,7 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ skeleton }">
-    </SolidMechanicsLagrangianSSLE>
+      solidMaterialNames="{ skeleton }"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlowSolver"
@@ -32,11 +30,11 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }"
       fluidNames="{ fluid }"
-      solidNames="{ skeleton }">
-    </SinglePhaseFVM>
+      solidNames="{ porousRock }"
+      permeabilityNames="{ skeletonPerm }"/>
   </Solvers>
-  <!-- SPHINX_POROELASTIC_SOLVER_END -->
 
+  <!-- SPHINX_POROELASTIC_SOLVER_END -->
   <!-- SPHINX_POROELASTIC_MESH -->
   <Mesh>
     <InternalMesh
@@ -52,7 +50,6 @@
   </Mesh>
 
   <!-- SPHINX_POROELASTIC_MESH_END -->
-
   <Events
     maxTime="90.0">
     <!--This event is applied every 1.0s.  The targetExactTimestep
@@ -61,12 +58,10 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="10.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="solverApplication0"
-      beginTime="0"
       endTime="1.e-5"
       forceDt="1.e-5"
       target="/Solvers/PoroelasticitySolver"/>
@@ -88,14 +83,13 @@
     <PeriodicEvent
       name="timeHistoryCollection"
       timeFrequency="10.0"
-      targetExactTimestep="1"
-      target="/Tasks/pressureCollection" />
+      target="/Tasks/pressureCollection"/>
 
     <PeriodicEvent
       name="timeHistoryOutput"
       timeFrequency="10.0"
       targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput" />
+      target="/Outputs/timeHistoryOutput"/>
 
     <PeriodicEvent
       name="restarts"
@@ -115,7 +109,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ skeletonPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -124,17 +119,22 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ skeleton, fluid }"/>
+      materialList="{ skeleton, fluid, porousRock, skeletonPerm, skeletonPorosity }"/>
   </ElementRegions>
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   <Constitutive>
-    <PoroElasticIsotropic
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="skeleton"
+      porosityModelName="skeletonPorosity"
+      permeabilityModelName="skeletonPerm"/>
+
+    <ElasticIsotropic
       name="skeleton"
       defaultDensity="0"
       defaultYoungModulus="1.0e4"
-      defaultPoissonRatio="0.2"
-      BiotCoefficient="1.0"/>
+      defaultPoissonRatio="0.2"/>
 
     <CompressibleSinglePhaseFluid
       name="fluid"
@@ -145,10 +145,27 @@
       compressibility="0.0e0"
       referenceViscosity="1"
       viscosibility="0.0"/>
+
+    <BiotPorosity
+      name="skeletonPorosity"
+      grainBulkModulus="1.0e27"
+      defaultReferencePorosity="0.3"/>
+
+    <ConstantPermeability
+      name="skeletonPerm"
+      permeabilityComponents="{ 1.0e-4, 1.0e-4, 1.0e-4 }"/>
   </Constitutive>
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
   <FieldSpecifications>
+    <FieldSpecification
+      name="Porosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="skeletonPorosity_porosity"
+      scale="0.3"/>
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -185,41 +202,6 @@
       scale="0.0"/>
 
     <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="permeability"
-      scale="1.0e-4"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="permeability"
-      scale="1.0e-4"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="permeability"
-      scale="1.0e-4"/>
-
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="referencePorosity"
-      scale="0.3"/>
-
-    <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
@@ -246,8 +228,7 @@
     <Traction
       name="xposconstraint"
       objectPath="faceManager"
-      direction="{1,0,0}"
-      tractionType="vector"
+      direction="{ 1, 0, 0 }"
       scale="1.0e0"
       setNames="{ xneg }"
       functionName="timeFunction"/>
@@ -274,12 +255,11 @@
 
     <TimeHistory
       name="timeHistoryOutput"
-      sources="{/Tasks/pressureCollection}"
-      filename="pressure_history" />
+      sources="{ /Tasks/pressureCollection }"
+      filename="pressure_history"/>
 
     <Restart
       name="restartOutput"/>
-
   </Outputs>
 
   <Tasks>
@@ -288,6 +268,4 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"/>
   </Tasks>
-
 </Problem>
-

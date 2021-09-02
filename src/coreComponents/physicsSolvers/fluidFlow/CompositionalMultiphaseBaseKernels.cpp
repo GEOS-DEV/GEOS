@@ -147,6 +147,20 @@ PhaseVolumeFractionKernel::
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
+
+    // set the saturation to zero if the phase is absent
+    bool const phaseExists = (phaseFrac[ip] > 0);
+    if( !phaseExists )
+    {
+      phaseVolFrac[ip] = 0.;
+      dPhaseVolFrac_dPres[ip] = 0.;
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dPhaseVolFrac_dComp[ip][jc] = 0.;
+      }
+      continue;
+    }
+
     // Expression for volume fractions: S_p = (nu_p / rho_p) * rho_t
     real64 const phaseDensInv = 1.0 / phaseDens[ip];
 
@@ -306,11 +320,9 @@ GEOSX_HOST_DEVICE
 void
 AccumulationKernel::
   compute( localIndex const numPhases,
-           real64 const & volume,
-           real64 const & porosityOld,
-           real64 const & porosityRef,
-           real64 const & pvMult,
-           real64 const & dPvMult_dPres,
+           real64 const & poreVolOld,
+           real64 const & poreVolNew,
+           real64 const & dPoreVol_dP,
            arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFracOld,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
@@ -343,19 +355,6 @@ AccumulationKernel::
       localAccumJacobian[i][j] = 0.0;
     }
   }
-
-  // compute fluid-independent (pore volume) part
-  real64 const volNew = volume;
-  real64 const volOld = volume;
-  real64 const dVol_dP = 0.0; // used in poroelastic solver
-
-  real64 const poroNew = porosityRef * pvMult;
-  real64 const poroOld = porosityOld;
-  real64 const dPoro_dP = porosityRef * dPvMult_dPres;
-
-  real64 const poreVolNew = volNew * poroNew;
-  real64 const poreVolOld = volOld * poroOld;
-  real64 const dPoreVol_dP = dVol_dP * poroNew + volNew * dPoro_dP;
 
   // sum contributions to component accumulation from each phase
   for( localIndex ip = 0; ip < NP; ++ip )
@@ -413,10 +412,9 @@ AccumulationKernel::
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & volume,
-          arrayView1d< real64 const > const & porosityOld,
-          arrayView1d< real64 const > const & porosityRef,
-          arrayView2d< real64 const > const & pvMult,
-          arrayView2d< real64 const > const & dPvMult_dPres,
+          arrayView2d< real64 const > const & porosityOld,
+          arrayView2d< real64 const > const & porosityNew,
+          arrayView2d< real64 const > const & dPoro_dPres,
           arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFracOld,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
@@ -443,12 +441,15 @@ AccumulationKernel::
     real64 localAccum[NC];
     real64 localAccumJacobian[NC][NDOF];
 
+    real64 const poreVolumeNew = volume[ei] * porosityNew[ei][0];
+    real64 const poreVolumeOld = volume[ei] * porosityOld[ei][0];
+    real64 const dPoreVolume_dPres = volume[ei] * dPoro_dPres[ei][0];
+
+
     compute< NC >( numPhases,
-                   volume[ei],
-                   porosityOld[ei],
-                   porosityRef[ei],
-                   pvMult[ei][0],
-                   dPvMult_dPres[ei][0],
+                   poreVolumeOld,
+                   poreVolumeNew,
+                   dPoreVolume_dPres,
                    dCompFrac_dCompDens[ei],
                    phaseVolFracOld[ei],
                    phaseVolFrac[ei],
@@ -497,10 +498,9 @@ AccumulationKernel::
                   arrayView1d< globalIndex const > const & dofNumber, \
                   arrayView1d< integer const > const & elemGhostRank, \
                   arrayView1d< real64 const > const & volume, \
-                  arrayView1d< real64 const > const & porosityOld, \
-                  arrayView1d< real64 const > const & porosityRef, \
-                  arrayView2d< real64 const > const & pvMult, \
-                  arrayView2d< real64 const > const & dPvMult_dPres, \
+                  arrayView2d< real64 const > const & porosityOld, \
+                  arrayView2d< real64 const > const & porosityNew, \
+                  arrayView2d< real64 const > const & dPoro_dPres, \
                   arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens, \
                   arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFracOld, \
                   arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac, \
@@ -525,7 +525,6 @@ INST_AccumulationKernel( 5 );
 
 #undef INST_AccumulationKernel
 
-
 /******************************** VolumeBalanceKernel ********************************/
 
 template< localIndex NC, localIndex NP >
@@ -533,9 +532,8 @@ GEOSX_HOST_DEVICE
 void
 VolumeBalanceKernel::
   compute( real64 const & volume,
-           real64 const & porosityRef,
-           real64 const & pvMult,
-           real64 const & dPvMult_dPres,
+           real64 const & porosity,
+           real64 const & dPoro_dPres,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dCompDens,
@@ -544,11 +542,8 @@ VolumeBalanceKernel::
 {
   localIndex constexpr NDOF = NC + 1;
 
-  real64 const poro     = porosityRef * pvMult;
-  real64 const dPoro_dP = porosityRef * dPvMult_dPres;
-
-  real64 const poreVol     = volume * poro;
-  real64 const dPoreVol_dP = volume * dPoro_dP;
+  real64 const poreVol     = volume * porosity;
+  real64 const dPoreVol_dP = volume * dPoro_dPres;
 
   localVolBalance = 1.0;
   for( localIndex i = 0; i < NDOF; ++i )
@@ -585,9 +580,8 @@ VolumeBalanceKernel::
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & volume,
-          arrayView1d< real64 const > const & porosityRef,
-          arrayView2d< real64 const > const & pvMult,
-          arrayView2d< real64 const > const & dPvMult_dPres,
+          arrayView2d< real64 const > const & porosity,
+          arrayView2d< real64 const > const & dPoro_dPres,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens,
@@ -605,9 +599,8 @@ VolumeBalanceKernel::
     real64 localVolBalanceJacobian[NDOF];
 
     compute< NC, NP >( volume[ei],
-                       porosityRef[ei],
-                       pvMult[ei][0],
-                       dPvMult_dPres[ei][0],
+                       porosity[ei][0],
+                       dPoro_dPres[ei][0],
                        phaseVolFrac[ei],
                        dPhaseVolFrac_dPres[ei],
                        dPhaseVolFrac_dCompDens[ei],
@@ -641,9 +634,8 @@ VolumeBalanceKernel::
                       arrayView1d< globalIndex const > const & dofNumber, \
                       arrayView1d< integer const > const & elemGhostRank, \
                       arrayView1d< real64 const > const & volume, \
-                      arrayView1d< real64 const > const & porosityRef, \
-                      arrayView2d< real64 const > const & pvMult, \
-                      arrayView2d< real64 const > const & dPvMult_dPres, \
+                      arrayView2d< real64 const > const & porosity, \
+                      arrayView2d< real64 const > const & dPoro_dPres, \
                       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac, \
                       arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres, \
                       arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens, \

@@ -137,12 +137,6 @@ public:
   void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
-   * @brief Update all relevant solid models using current values of pressure
-   * @param dataGroup the group storing the required fields
-   */
-  void updateSolidModel( Group & dataGroup, localIndex const targetIndex ) const;
-
-  /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param castedRelPerm the group storing the required fields
    */
@@ -160,11 +154,9 @@ public:
    */
   virtual void updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const = 0;
 
-  /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param domain the domain containing the mesh and fields
-   */
-  void updateState( Group & dataGroup, localIndex const targetIndex ) const;
+  void updateFluidState( Group & dataGroup, localIndex const targetIndex ) const;
+
+  virtual void updateState( DomainPartition & domain ) override final;
 
   /**
    * @brief Get the number of fluid components (species)
@@ -184,10 +176,10 @@ public:
    * @param dt time step
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
    */
-  void assembleAccumulationTerms( DomainPartition const & domain,
+  void assembleAccumulationTerms( DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs ) const;
@@ -294,8 +286,6 @@ public:
 
     static constexpr char const * phaseMobilityOldString() { return "phaseMobilityOld"; }
 
-    static constexpr char const * porosityOldString() { return "porosityOld"; }
-
     // these are allocated on faces for BC application until we can get constitutive models on faces
     static constexpr char const * phaseViscosityString() { return "phaseViscosity"; }
 
@@ -352,11 +342,14 @@ public:
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) const;
 
+
   /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
    */
   void chopNegativeDensities( DomainPartition & domain );
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
 protected:
 
@@ -364,22 +357,11 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override;
-
   /**
    * @brief Checks constitutive models for consistency
    * @param cm        reference to the global constitutive model manager
    */
   void validateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
-
-  /**
-   * @brief Resize the allocated multidimensional fields
-   * @param domain the domain containing the mesh and fields
-   *
-   * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
-   * once the number of phases/components is known (e.g. component fractions)
-   */
-  void resizeFields( MeshLevel & meshLevel ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -424,6 +406,7 @@ protected:
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dCompFrac_dCompDens;
 
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseVolFrac;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseVolFrac_dPres;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseVolFrac_dCompDens;
 

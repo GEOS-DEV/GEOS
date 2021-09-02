@@ -53,6 +53,7 @@ char const * xmlInput =
   "                                targetRegions=\"{Region1}\"\n"
   "                                fluidNames=\"{fluid1}\"\n"
   "                                solidNames=\"{rock}\"\n"
+  "                                permeabilityNames=\"{rockPerm}\"\n"
   "                                relPermNames=\"{relperm}\"\n"
   "                                temperature=\"297.15\"\n"
   "                                useMass=\"0\">\n"
@@ -119,13 +120,14 @@ char const * xmlInput =
   "    <FiniteVolume>\n"
   "      <TwoPointFluxApproximation name=\"fluidTPFA\"\n"
   "                                 fieldName=\"pressure\"\n"
-  "                                 coefficientName=\"permeability\"/>\n"
+  "                                 coefficientName=\"permeability\"\n"
+  "                                 coefficientModelNames=\"{rockPerm}\"/>\n"
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
   "    <CellElementRegion name=\"Region1\"\n"
   "                       cellBlocks=\"{cb1}\"\n"
-  "                       materialList=\"{fluid1, rock, relperm}\"/>\n"
+  "                       materialList=\"{fluid1, rock, relperm, rockPerm, rockPorosity, nullSolid}\"/>\n"
   "    <WellElementRegion name=\"wellRegion1\"\n"
   "                       materialList=\"{fluid1, relperm}\"/> \n"
   "    <WellElementRegion name=\"wellRegion2\"\n"
@@ -145,9 +147,17 @@ char const * xmlInput =
   "                                                          {0, 0, 0, 0},\n"
   "                                                          {0, 0, 0, 0},\n"
   "                                                          {0, 0, 0, 0} }\"/>\n"
-  "    <PoreVolumeCompressibleSolid name=\"rock\"\n"
-  "                                 referencePressure=\"0.0\"\n"
-  "                                 compressibility=\"1e-9\"/>\n"
+  "    <CompressibleSolidConstantPermeability name=\"rock\"\n"
+  "        solidModelName=\"nullSolid\"\n"
+  "        porosityModelName=\"rockPorosity\"\n"
+  "        permeabilityModelName=\"rockPerm\"/>\n"
+  "   <NullModel name=\"nullSolid\"/> \n"
+  "   <PressurePorosity name=\"rockPorosity\"\n"
+  "                     defaultReferencePorosity=\"0.05\"\n"
+  "                     referencePressure = \"0.0\"\n"
+  "                     compressibility=\"1.0e-9\"/>\n"
+  "  <ConstantPermeability name=\"rockPerm\"\n"
+  "                        permeabilityComponents=\"{2.0e-16, 2.0e-16, 2.0e-16}\"/> \n"
   "    <BrooksCoreyRelativePermeability name=\"relperm\"\n"
   "                                     phaseNames=\"{oil, gas}\"\n"
   "                                     phaseMinVolumeFraction=\"{0.1, 0.15}\"\n"
@@ -155,33 +165,6 @@ char const * xmlInput =
   "                                     phaseRelPermMaxValue=\"{0.8, 0.9}\"/>\n"
   "  </Constitutive>\n"
   "  <FieldSpecifications>\n"
-  "    <FieldSpecification name=\"permx\"\n"
-  "               component=\"0\"\n"
-  "               initialCondition=\"1\"  \n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region1/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"permy\"\n"
-  "               component=\"1\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region1/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"permz\"\n"
-  "               component=\"2\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region1/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"referencePorosity\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region1/cb1\"\n"
-  "               fieldName=\"referencePorosity\"\n"
-  "               scale=\"0.05\"/>\n"
   "    <FieldSpecification name=\"initialPressure\"\n"
   "               initialCondition=\"1\"\n"
   "               setNames=\"{all}\"\n"
@@ -309,12 +292,12 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
           flowSolver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                      ElementSubRegionBase & subRegion2 )
           {
-            flowSolver.updateState( subRegion2, targetIndex2 );
+            flowSolver.updateFluidState( subRegion2, targetIndex2 );
           } );
           wellSolver.forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const targetIndex3,
                                                                              WellElementSubRegion & subRegion3 )
           {
-            wellSolver.updateState( subRegion3, targetIndex3 );
+            wellSolver.updateSubRegionState( subRegion3, targetIndex3 );
           } );
 
 
@@ -340,7 +323,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
           flowSolver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                      ElementSubRegionBase & subRegion2 )
           {
-            flowSolver.updateState( subRegion2, targetIndex2 );
+            flowSolver.updateFluidState( subRegion2, targetIndex2 );
           } );
 
           residual.zero();
@@ -406,7 +389,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
         dWellElemPressure[iwelem] = dP;
 
         // after perturbing, update the pressure-dependent quantities in the well
-        wellSolver.updateState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();
@@ -427,7 +410,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
         dWellElemCompDens.move( LvArray::MemorySpace::host, true );
         dWellElemCompDens[iwelem][jc] = dRho;
 
-        wellSolver.updateState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();
@@ -447,12 +430,12 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
       {
         solver.resetStateToBeginningOfStep( domain );
 
-        // here is the perturbation in the pressure of the well element
+        // here is the perturbation in the rate of the well element
         real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
         dConnRate.move( LvArray::MemorySpace::host, true );
         dConnRate[iwelem] = dRate;
 
-        wellSolver.updateState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();

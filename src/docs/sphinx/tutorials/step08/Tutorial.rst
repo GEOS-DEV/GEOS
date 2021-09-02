@@ -51,7 +51,7 @@ the boundary subject to roller constraints and impervious.
    :width: 500
    :figclass: align-center
 
-   Sketch of the the setup for Terzaghi's problem.
+   Sketch of the setup for Terzaghi's problem.
 
 GEOSX will calculate displacement and pressure fields along the column as a
 function of time.
@@ -96,7 +96,7 @@ Then, we define a *coupling solver* between these single-physics
 solvers as another, separate, solver.
 This approach allows for generality and flexibility in our multi-physics resolutions.
 The order in which these solver specifications is done is not important.
-It is important, though, to instantiate each single-physic solvers
+It is important, though, to instantiate each single-physics solver
 with meaningful names. The names given to these single-physics solver instances
 will be used to recognize them and create the coupling.
 
@@ -134,7 +134,7 @@ Multiphysics numerical methods
 
 Numerical methods in multiphysics settings are similar to single physics numerical methods. All can be defined under the same ``NumericalMethods`` XML tag.
 In this problem, we use finite volume for flow and finite elements for solid mechanics.
-Both of these methods require additional parameterization attributes to be defined here.
+Both methods require additional parameterization attributes to be defined here.
 
 As we have seen before, the coupling solver and the solid mechanics solver require the specification of a discretization method called ``FE1``.
 This discretization method is defined here as a finite element method
@@ -283,23 +283,10 @@ times with the numerical solution (markers).
    def getHydromechanicalParametersFromXML( xmlFilePath ):
        tree = ElementTree.parse(xmlFilePath)
 
-       param1 = tree.find('Constitutive/PoroElasticIsotropic')
-       param2 = tree.find('Constitutive/CompressibleSinglePhaseFluid')
-       param3 = tree.findall('FieldSpecifications/FieldSpecification')
-
-       found_porosity = False
-       found_permeability = False
-       porosity = 0.0
-       for elem in param3:
-           if elem.get("fieldName") == "permeability" and elem.get("component") == "0":
-               permeability = float(elem.get("initialCondition")) * float(elem.get("scale"))
-               found_permeability = True
-
-           if elem.get("fieldName") == "referencePorosity":
-               porosity = float(elem.get("initialCondition")) * float(elem.get("scale"))
-               found_porosity = True
-
-           if found_permeability and found_porosity: break
+       param1 = tree.find('Constitutive/ElasticIsotropic')
+       param2 = tree.find('Constitutive/BiotPorosity')
+       param3 = tree.find('Constitutive/CompressibleSinglePhaseFluid')
+       param4 = tree.find('Constitutive/ConstantPermeability')
 
        hydromechanicalParameters = dict.fromkeys(["youngModulus",
                                                   "poissonRation",
@@ -311,12 +298,21 @@ times with the numerical solution (markers).
 
        hydromechanicalParameters["youngModulus"] = float(param1.get("defaultYoungModulus"))
        hydromechanicalParameters["poissonRation"] = float(param1.get("defaultPoissonRatio"))
-       hydromechanicalParameters["biotCoefficient"] = float(param1.get("BiotCoefficient"))
-       hydromechanicalParameters["fluidViscosity"] = float(param2.get("defaultViscosity"))
-       hydromechanicalParameters["fluidCompressibility"] = float(param2.get("compressibility"))
-       hydromechanicalParameters["porosity"] = porosity
-       hydromechanicalParameters["permeability"] = permeability
 
+       E = hydromechanicalParameters["youngModulus"]
+       nu = hydromechanicalParameters["poissonRation"]
+       K = E / 3.0 / (1.0 - 2.0 * nu )
+       Kg = float(param2.get("grainBulkModulus"))
+
+       hydromechanicalParameters["biotCoefficient"] = 1.0 - K / Kg
+       hydromechanicalParameters["porosity"] = float(param2.get("defaultReferencePorosity"))
+       hydromechanicalParameters["fluidViscosity"] = float(param3.get("defaultViscosity"))
+       hydromechanicalParameters["fluidCompressibility"] = float(param3.get("compressibility"))
+       
+       perm = param4.get("permeabilityComponents")
+       perm = np.array(perm[1:-1].split(','),float)
+       hydromechanicalParameters["permeability"] = perm[0]
+       
        return hydromechanicalParameters
 
 
@@ -382,7 +378,6 @@ times with the numerical solution (markers).
 
    if __name__ == "__main__":
        main()
-
 
 
 

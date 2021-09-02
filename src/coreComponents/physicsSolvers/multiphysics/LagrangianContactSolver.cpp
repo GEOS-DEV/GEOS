@@ -883,7 +883,7 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
     }
     else
     {
-      localScaleFactor = ParabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
+      localScaleFactor = parabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
     }
 
     // Update x; keep the books on lambda
@@ -1743,9 +1743,9 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
 
   arrayView1d< globalIndex const > const & tracDofNumber = fractureSubRegion.getReference< globalIndex_array >( tracDofKey );
 
-  stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
-    typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+    typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
     forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
     {

@@ -49,31 +49,44 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string name ):
   m_outputMode( VTKOutputMode::BINARY )
 {}
 
-string paddedRank( MPI_Comm const & comm, int const rank = -1 )
+static string paddedRank( MPI_Comm const & comm, int const rank = -1 )
 {
   int const width = LvArray::integerConversion< int >( std::to_string( MpiWrapper::commSize( comm ) ).size() );
   return stringutilities::padValue( rank >= 0 ? rank : MpiWrapper::commRank( comm ), width );
 }
 
-/**
- * @brief Gets the VTK cell identifier
- * @param[in] elementType the type of the element (using the abaqus nomenclature)
- * @return the VTK cell identifier
- */
-int toVTKCellType( const string & elementType )
+static int toVTKCellType( ElementType const elementType )
 {
-  static const std::map< string, int > geosx2VTKCellTypes =
+  switch( elementType )
   {
-    { "C3D4", VTK_TETRA },
-    { "C3D8", VTK_HEXAHEDRON },
-    { "C3D6", VTK_WEDGE },
-    { "C3D5", VTK_PYRAMID }
-  };
+    case ElementType::Line:          return VTK_LINE;
+    case ElementType::Triangle:      return VTK_TRIANGLE;
+    case ElementType::Quadrilateral: return VTK_QUAD;
+    case ElementType::Polygon:       return VTK_POLYGON;
+    case ElementType::Tetrahedron:    return VTK_TETRA;
+    case ElementType::Pyramid:       return VTK_PYRAMID;
+    case ElementType::Prism:         return VTK_WEDGE;
+    case ElementType::Hexahedron:    return VTK_HEXAHEDRON;
+    case ElementType::Polyhedron:    return VTK_POLYHEDRON;
+  }
+  return VTK_EMPTY_CELL;
+}
 
-  GEOSX_THROW_IF( geosx2VTKCellTypes.count( elementType ) == 0,
-                  "Element type not recognized for VTK output: " << elementType,
-                  std::runtime_error );
-  return geosx2VTKCellTypes.at( elementType );
+static std::vector< int > getVTKNodeOrdering( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Line:          return { 0, 1 };
+    case ElementType::Triangle:      return { 0, 1, 2 };
+    case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
+    case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
+    case ElementType::Tetrahedron:    return { 1, 0, 2, 3 };
+    case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
+    case ElementType::Prism:         return { 0, 4, 2, 1, 5, 3, 0, 0 };
+    case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
+  }
+  return {};
 }
 
 /**
@@ -179,7 +192,7 @@ getSurface( FaceElementSubRegion const & subRegion,
   geosx2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
   std::vector< vtkIdType > connectivity( subRegion.numNodesPerElement() );
-  std::vector< int > vtkOrdering = subRegion.getVTKNodeOrdering();
+  std::vector< int > vtkOrdering = getVTKNodeOrdering( subRegion.getElementType() );
 
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
@@ -267,8 +280,8 @@ getVtkCells( CellElementRegion const & region )
   region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
     std::vector< vtkIdType > connectivity( subRegion.numNodesPerElement() );
-    std::vector< int > vtkOrdering = subRegion.getVTKNodeOrdering();
-    int vtkCellType = toVTKCellType( subRegion.getElementTypeString() );
+    std::vector< int > vtkOrdering = getVTKNodeOrdering( subRegion.getElementType() );
+    int vtkCellType = toVTKCellType( subRegion.getElementType() );
     for( localIndex c = 0; c < subRegion.size(); c++ )
     {
       for( std::size_t i = 0; i < connectivity.size(); i++ )
@@ -430,6 +443,25 @@ void setComponentMetadata( Wrapper< Array< T, 2, PERM > > const & wrapper,
 }
 
 /**
+ * @brief Produces a temporary array slice from a view that can be looped over.
+ * @param view the source view
+ * @return a fake slice that does not point to real data but has correct dims/strides.
+ * @note The slice is only valid as long as the @p view is in scope.
+ *       Values in the slice may be uninitialized and should not be used.
+ */
+template< typename T, int NDIM, int USD >
+ArraySlice< T const, NDIM - 1, USD - 1 >
+makeTemporarySlice( ArrayView< T const, NDIM, USD > const & view )
+{
+  // The following works in all compilers, but technically invokes undefined behavior:
+  // return ArraySlice< T, NDIM - 1, USD - 1 >( nullptr, view.dims() + 1, view.strides() + 1 );
+  localIndex const numComp = LvArray::indexing::multiplyAll< NDIM - 1 >( view.dims() + 1 );
+  static array1d< T > arr;
+  arr.template resizeWithoutInitializationOrDestruction( numComp );
+  return ArraySlice< T const, NDIM - 1, USD - 1 >( arr.data(), view.dims() + 1, view.strides() + 1 );
+}
+
+/**
  * @brief Generic component metadata handler for multidimensional arrays.
  * @param wrapper GEOSX typed wrapper over source array
  * @param data VTK typed data array
@@ -438,8 +470,7 @@ template< typename T, int NDIM, typename PERM >
 void setComponentMetadata( Wrapper< Array< T, NDIM, PERM > > const & wrapper,
                            vtkAOSDataArrayTemplate< T > & data )
 {
-  auto const view = wrapper.referenceAsView();
-  data.SetNumberOfComponents( view.size() / view.size( 0 ) );
+  data.SetNumberOfComponents( wrapper.numArrayComp() );
 
   Span< string const > labels[NDIM-1];
   for( integer dim = 1; dim < NDIM; ++dim )
@@ -447,8 +478,11 @@ void setComponentMetadata( Wrapper< Array< T, NDIM, PERM > > const & wrapper,
     labels[dim-1] = getDimLabels( wrapper, dim );
   }
 
+  auto const view = wrapper.referenceAsView();
+  auto const slice = view.size( 0 ) > 0 ? view[0] : makeTemporarySlice( view );
+
   integer compIndex = 0;
-  LvArray::forValuesInSliceWithIndices( view[0], [&]( T const &, auto const ... indices )
+  LvArray::forValuesInSliceWithIndices( slice, [&]( T const &, auto const ... indices )
   {
     using idx_seq = std::make_integer_sequence< integer, sizeof...(indices) >;
     data.SetComponentName( compIndex++, makeComponentName( labels, idx_seq{}, indices ... ).c_str() );
@@ -742,6 +776,12 @@ void VTKPolyDataWriterInterface::write( real64 const time,
                                         integer const cycle,
                                         DomainPartition const & domain )
 {
+  // This guard prevents crashes observed on MacOS due to a floating point exception
+  // triggered inside VTK by a progress indicator
+#if defined(__APPLE__) && defined(__MACH__)
+  LvArray::system::FloatingPointExceptionGuard guard;
+#endif
+
   string const stepSubFolder = getTimeStepSubFolder( time );
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {

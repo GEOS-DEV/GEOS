@@ -17,6 +17,8 @@
  */
 
 #include "SurfaceGenerator.hpp"
+#include "ParallelTopologyChange.hpp"
+
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
@@ -30,10 +32,6 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-
-#ifdef USE_GEOSX_PTP
-#include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
-#endif
 
 namespace geosx
 {
@@ -484,8 +482,25 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
           fractureRegion.getSubRegion< FaceElementSubRegion >( 0 ).m_newFaceElements.clear();
         }
       }
+
+      // Create set "all" on the faceElementSubregion
+      FaceElementSubRegion & fractureSubRegion  = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
+
+      dataRepository::Group & setGroup =
+        fractureSubRegion.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+
+      SortedArray< localIndex > & targetSet =
+        setGroup.getWrapper< SortedArray< localIndex > >( "all" ).reference();
+
+      forAll< serialPolicy >( fractureSubRegion.size(), [&] ( localIndex const ei )
+
+      {
+        targetSet.insert( ei );
+      } );
     }
   }
+
+
 
   return rval;
 }
@@ -593,7 +608,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       }
     }
 
-#ifdef USE_GEOSX_PTP
+#ifdef GEOSX_USE_MPI
 
     modifiedObjects.clearNewFromModified();
 
@@ -1618,7 +1633,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
   array1d< integer > const & edgeIsExternal = edgeManager.isExternal();
   array1d< integer > const & nodeIsExternal = nodeManager.isExternal();
 
-  SurfaceElementRegion & fractureElementRegion = elementManager.getRegion< SurfaceElementRegion >( "Fracture" );
+  SurfaceElementRegion & fractureElementRegion = elementManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
   array1d< integer > const & isFaceSeparable = faceManager.getExtrinsicData< extrinsicMeshData::IsFaceSeparable >();
 
   array2d< real64 > const & faceNormals = faceManager.faceNormal();
@@ -3043,6 +3058,12 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
           tipNodeSIF = pow( (fabs( tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea ) + fabs( tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea )
                              + fabs( tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea )), 0.5 );
+
+          if( LvArray::tensorOps::AiBi< 3 >( trailingNodeDisp, faceNormalVector ) < 0.0 )  //In case the aperture is negative with the
+                                                                                           // presence of confining stress.
+          {
+            tipNodeSIF *= -1;
+          }
 
           SIFNode_All[nodeIndex].emplace_back( tipNodeSIF );
 

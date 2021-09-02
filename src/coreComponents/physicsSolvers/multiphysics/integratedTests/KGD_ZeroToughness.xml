@@ -8,53 +8,45 @@
   </Included>
 
   <Solvers
-    gravityVector="{0.0, 0.0, -0.0}">
+    gravityVector="{ 0.0, 0.0, -0.0 }">
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="20"
-        lineSearchAction="Attempt"
         lineSearchMaxCuts="3"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
-      logLevel="0"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       solidMaterialNames="{ rock }"
-      contactRelationName="fractureContact">
-    </SolidMechanicsLagrangianSSLE>
+      contactRelationName="fractureContact"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }"
-      inputFluxEstimate="1"
-      meanPermCoeff="0.8">
-    </SinglePhaseFVM>
+      solidNames="{ fractureFilling }"
+      permeabilityNames="{ fracturePerm }"/>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
       solidMaterialNames="{ rock }"
@@ -70,7 +62,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -79,24 +71,33 @@
       defaultDensity="1000"
       defaultViscosity="0.005"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-13"
       referenceViscosity="5.0e-3"
       viscosibility="0.0"/>
 
-    <!--ElasticIsotropic name="rock"
-                            defaultDensity="2700"
-                            defaultBulkModulus="20.0e9"
-                            defaultShearModulus="12.0e9"
-                            /-->
-    <PoroElasticIsotropic
+    <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"
-      defaultShearModulus="12.0e9"
-      BiotCoefficient="1"
-      compressibility="1.6155088853e-18"
-      referencePressure="2.125e6"/>
+      defaultShearModulus="12.0e9"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
 
     <Contact
       name="fractureContact"

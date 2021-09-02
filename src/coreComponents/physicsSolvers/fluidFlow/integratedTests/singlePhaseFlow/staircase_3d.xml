@@ -2,21 +2,19 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, -9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{ channelPerm }"
       targetRegions="{ Channel }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhaseFVM>
   </Solvers>
 
@@ -36,13 +34,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{ 7.99, -0.01, 9.99}"
-      xMax="{10.01, 2.01, 10.01}"/>
+      xMin="{ 7.99, -0.01, 9.99 }"
+      xMax="{ 10.01, 2.01, 10.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ 7.99, -0.01, -0.01}"
-      xMax="{10.01, 2.01, 0.01}"/>
+      xMin="{ 7.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 2.01, 0.01 }"/>
   </Geometry>
 
   <Events
@@ -50,7 +48,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="5000.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -69,7 +66,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, channelPerm, rockPorosity, nullSolid }"/>
 
     <CellElementRegion
       name="Barrier"
@@ -83,7 +80,8 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         targetRegions="{ Channel }"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ channelPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -93,53 +91,30 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="channelPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
       referencePressure="0.0"
-      compressibility="1e-9"/>
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="channelPerm"
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx_channel"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="permeability"
-      scale="2.0e-16"/>
-
-    <FieldSpecification
-      name="permy_channel"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="permeability"
-      scale="2.0e-16"/>
-
-    <FieldSpecification
-      name="permz_channel"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="permeability"
-      scale="2.0e-16"/>
-
-    <FieldSpecification
-      name="porosity_channel"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="referencePorosity"
-      scale="0.1"/>
-
     <FieldSpecification
       name="initialPressure_channel"
       initialCondition="1"
@@ -164,7 +139,7 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Silo
+    <VTK
       name="siloOutput"/>
 
     <Restart

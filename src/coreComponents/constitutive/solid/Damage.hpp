@@ -111,7 +111,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const
   {
-    GEOSX_UNUSED_VAR( d )
+    GEOSX_UNUSED_VAR( d );
     return 2.0;
   }
 
@@ -201,7 +201,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
-  KernelWrapper createKernelUpdates()
+  KernelWrapper createKernelUpdates() const
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
                                                                        m_strainEnergyDensity.toView(),
