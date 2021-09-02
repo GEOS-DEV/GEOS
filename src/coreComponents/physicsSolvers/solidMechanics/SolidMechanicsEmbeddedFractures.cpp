@@ -67,7 +67,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
-
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -78,6 +77,20 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
 void SolidMechanicsEmbeddedFractures::postProcessInput()
 {
   m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  linParams.dofsPerNode = 3;
+
+  if (m_useStaticCondensation)
+  {
+    linParams.isSymmetric = true;
+    linParams.amg.separateComponents = true;
+  }else
+  {
+    linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::embeddedFracturesMechanics;
+    linParams.mgr.separateComponents = true;
+    linParams.mgr.displacementFieldName = keys::TotalDisplacement;
+  }
 }
 
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
