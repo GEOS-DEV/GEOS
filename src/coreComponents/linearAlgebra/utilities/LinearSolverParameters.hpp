@@ -220,7 +220,7 @@ struct LinearSolverParameters
       multiphasePoromechanics,                   ///< multiphase poromechanics with finite volume compositional multiphase flow
       hydrofracture,                             ///< hydrofracture
       lagrangianContactMechanics,                ///< Lagrangian contact mechanics
-      embeddedFracturesMechanics                              ///< Embedded fractures mechanics
+      solidMechanicsEmbeddedFractures            ///< Embedded fractures mechanics
     };
 
     StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
@@ -301,7 +301,7 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "multiphasePoromechanics",
               "hydrofracture",
               "lagrangianContactMechanics",
-              "embeddedFracturesMechanics" );
+              "solidMechanicsEmbeddedFractures" );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::CycleType,

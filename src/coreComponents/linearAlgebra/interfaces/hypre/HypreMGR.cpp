@@ -32,6 +32,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/Hydrofracture.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SolidMechanicsEmbeddedFractures.hpp"
 
 #include "LvArray/src/output.hpp"
 
@@ -125,6 +126,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     case LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics:
     {
       setStrategy< LagrangianContactMechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures:
+    {
+      setStrategy< SolidMechanicsEmbeddedFractures >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     default:

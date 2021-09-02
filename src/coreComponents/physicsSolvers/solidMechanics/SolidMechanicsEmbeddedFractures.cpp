@@ -87,7 +87,7 @@ void SolidMechanicsEmbeddedFractures::postProcessInput()
     linParams.amg.separateComponents = true;
   }else
   {
-    linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::embeddedFracturesMechanics;
+    linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures;
     linParams.mgr.separateComponents = true;
     linParams.mgr.displacementFieldName = keys::TotalDisplacement;
   }
