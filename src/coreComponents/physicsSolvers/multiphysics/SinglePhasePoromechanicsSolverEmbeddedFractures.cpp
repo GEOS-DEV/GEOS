@@ -72,15 +72,9 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::postProcessInput()
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.dofsPerNode = 3;
 
-  linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures;
+  linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
   linParams.mgr.separateComponents = true;
   linParams.mgr.displacementFieldName = keys::TotalDisplacement;
-
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
-  m_linearSolverParameters.get().mgr.separateComponents = true;
-  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
-  m_linearSolverParameters.get().dofsPerNode = 3;
-
 }
 
 void SinglePhasePoromechanicsSolverEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
