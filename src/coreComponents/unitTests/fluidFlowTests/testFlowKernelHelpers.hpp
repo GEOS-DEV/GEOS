@@ -23,8 +23,8 @@ namespace geosx
 namespace detail
 {
 
-template< typename T, int NDIM >
-void setArrayElement( ArrayView< T, NDIM > const & arr,
+template< typename T, int NDIM , int USD >
+void setArrayElement( ArrayView< T, NDIM, USD > const & arr,
                       localIndex const dstIndex,
                       localIndex const srcIndex,
                       T const * const data )
@@ -54,14 +54,14 @@ struct AccessorHelper { };
 template<>
 struct AccessorHelper< false >
 {
-  template< int NDIM, typename T >
-  using ElementAccessor = Array< T, NDIM >;
+  template< int NDIM, typename T, typename PERM >
+  using ElementAccessor = Array< T, NDIM, PERM >;
 
-  template< int NDIM, typename T >
-  using MaterialAccessor = Array< T, NDIM >;
+  template< int NDIM, typename T, typename PERM >
+  using MaterialAccessor = Array< T, NDIM, PERM >;
 
-  template< int NDIM, typename T, typename ... DIMS >
-  static ElementAccessor< NDIM, T >
+  template< int NDIM, typename T, int USD=NDIM-1, typename PERM=camp::make_idx_seq_t< NDIM >, typename ... DIMS >
+  static ElementAccessor< NDIM, T, PERM >
   makeElementAccessor( T const * const data,
                        localIndex const stencilSize,
                        arraySlice1d< localIndex const > const & GEOSX_UNUSED_PARAM( stencilRegIndices ),
@@ -75,18 +75,18 @@ struct AccessorHelper< false >
       numElems = std::max( numElems, stencilElemIndices[i] + 1 );
     }
 
-    ElementAccessor< NDIM, T > acc( numElems, otherDims ... );
+    ElementAccessor< NDIM, T, PERM > acc( numElems, otherDims ... );
 
     for( int i = 0; i < stencilSize; ++i )
     {
-      detail::setArrayElement( acc, stencilElemIndices[i], i, data );
+      detail::setArrayElement< T, NDIM, USD >( acc, stencilElemIndices[i], i, data );
     }
 
     return acc;
   }
 
-  template< int NDIM, typename T, typename ... DIMS >
-  static MaterialAccessor< NDIM, T >
+  template< int NDIM, typename T, int USD=NDIM-1, typename PERM=camp::make_idx_seq_t< NDIM >, typename ... DIMS >
+  static MaterialAccessor< NDIM, T, PERM >
   makeMaterialAccessor( T const * const data,
                         localIndex const stencilSize,
                         arraySlice1d< localIndex const > const & GEOSX_UNUSED_PARAM( stencilRegIndices ),
@@ -101,11 +101,11 @@ struct AccessorHelper< false >
       numElems = std::max( numElems, stencilElemIndices[i] + 1 );
     }
 
-    MaterialAccessor< NDIM, T > acc( numElems, 1, otherDims ... );
+    MaterialAccessor< NDIM, T, PERM > acc( numElems, 1, otherDims ... );
 
     for( int i = 0; i < stencilSize; ++i )
     {
-      detail::setArrayElement( acc, stencilElemIndices[i], i, data );
+      detail::setArrayElement<T, NDIM, USD >( acc, stencilElemIndices[i], i, data );
     }
 
     return acc;
@@ -115,14 +115,14 @@ struct AccessorHelper< false >
 template<>
 struct AccessorHelper< true >
 {
-  template< int NDIM, typename T >
-  using ElementAccessor = ElementRegionManager::ElementViewAccessor< Array< T, NDIM > >;
+  template< int NDIM, typename T , typename PERM=camp::make_idx_seq_t< NDIM >>
+  using ElementAccessor = ElementRegionManager::ElementViewAccessor< Array< T, NDIM, PERM > >;
 
-  template< int NDIM, typename T >
-  using MaterialAccessor = ElementRegionManager::MaterialViewAccessor< Array< T, NDIM > >;
+  template< int NDIM, typename T, typename PERM=camp::make_idx_seq_t< NDIM >>
+  using MaterialAccessor = ElementRegionManager::MaterialViewAccessor< Array< T, NDIM, PERM > >;
 
-  template< int NDIM, typename T, typename ... DIMS >
-  static ElementAccessor< NDIM, T >
+  template< int NDIM, typename T, int USD=NDIM-1, typename PERM=camp::make_idx_seq_t< NDIM >, typename ... DIMS >
+  static ElementAccessor< NDIM, T, PERM >
   makeElementAccessor( T const * const data,
                        localIndex const stencilSize,
                        arraySlice1d< localIndex const > const & stencilRegIndices,
@@ -138,7 +138,7 @@ struct AccessorHelper< true >
       numElems = std::max( numElems, stencilElemIndices[i] + 1 );
     }
 
-    ElementAccessor< NDIM, T > acc;
+    ElementAccessor< NDIM, T, PERM > acc;
     acc.resize( numRegions );
     for( localIndex kr = 0; kr < numRegions; ++kr )
     {
@@ -151,14 +151,14 @@ struct AccessorHelper< true >
 
     for( int i = 0; i < stencilSize; ++i )
     {
-      detail::setArrayElement( acc[stencilRegIndices[i]][stencilSubRegIndices[i]], stencilElemIndices[i], i, data );
+      detail::setArrayElement<T, NDIM, USD>( acc[stencilRegIndices[i]][stencilSubRegIndices[i]], stencilElemIndices[i], i, data );
     }
 
     return acc;
   }
 
-  template< int NDIM, typename T, typename ... DIMS >
-  static ElementAccessor< NDIM, T >
+  template< int NDIM, typename T, int USD=NDIM-1, typename PERM=camp::make_idx_seq_t< NDIM >, typename ... DIMS >
+  static ElementAccessor< NDIM, T, PERM >
   makeMaterialAccessor( T const * const data,
                         localIndex const stencilSize,
                         arraySlice1d< localIndex const > const & stencilRegIndices,
@@ -189,7 +189,7 @@ struct AccessorHelper< true >
 
     for( int i = 0; i < stencilSize; ++i )
     {
-      detail::setArrayElement( acc[stencilRegIndices[i]][stencilSubRegIndices[i]][matIndex],
+      detail::setArrayElement<T, NDIM, USD >( acc[stencilRegIndices[i]][stencilSubRegIndices[i]][matIndex],
                                stencilElemIndices[i],
                                i,
                                data );

@@ -183,7 +183,7 @@ char const * xmlInput =
 #ifndef DEFINE_CAPB_FIELDS
 #define DEFINE_CAP_FIELDS( active ) \
   int const capPressureFlag = active; \
-  auto phaseCapPressureView = getElementAccessor< true, 3, real64 >( &cap, \
+  auto phaseCapPressureView = getElementAccessor< true, 3, real64, cappres::LAYOUT_CAPPRES  >( &cap, \
                                                                      CapillaryPressureBase::viewKeyStruct::phaseCapPressureString(), \
                                                                      MAX_STENCIL, \
                                                                      seri[iconn], \
@@ -191,7 +191,7 @@ char const * xmlInput =
                                                                      sei[iconn], \
                                                                      1, \
                                                                      NP ); \
-  auto dPhaseCapPressure_dPhaseVolFracView = getElementAccessor< true, 4, real64 >( &cap, \
+  auto dPhaseCapPressure_dPhaseVolFracView = getElementAccessor< true, 4, real64, cappres::LAYOUT_CAPPRES_DS >( &cap, \
                                                                                     CapillaryPressureBase::viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString(), \
                                                                                     MAX_STENCIL, \
                                                                                     seri[iconn], \
@@ -205,14 +205,14 @@ char const * xmlInput =
 
 #ifndef DEFINE_FLUID_FIELDS
 #define DEFINE_FLUID_FIELDS() \
-  auto phaseMassDensView = getElementAccessor< true, 3, real64 >( &fluid, \
+  auto phaseMassDensView = getElementAccessor< true, 3, real64, multifluid::LAYOUT_PHASE >( &fluid, \
                                                                   MultiFluidBase::viewKeyStruct::phaseMassDensityString(), \
                                                                   MAX_STENCIL, \
                                                                   seri[iconn], \
                                                                   sesri[iconn], \
                                                                   sei[iconn], 1, \
                                                                   NP ); \
-  auto dPhaseMassDens_dPView = getElementAccessor< true, 3, real64 >( &fluid, \
+  auto dPhaseMassDens_dPView = getElementAccessor< true, 3, real64, multifluid::LAYOUT_PHASE >( &fluid, \
                                                                       MultiFluidBase::viewKeyStruct::dPhaseMassDensity_dPressureString(), \
                                                                       MAX_STENCIL, \
                                                                       seri[iconn], \
@@ -220,7 +220,7 @@ char const * xmlInput =
                                                                       sei[iconn], \
                                                                       1, \
                                                                       NP ); \
-  auto dPhaseMassDens_dCView = getElementAccessor< true, 4, real64 >( &fluid, \
+  auto dPhaseMassDens_dCView = getElementAccessor< true, 4, real64, multifluid::LAYOUT_PHASE_DC >( &fluid, \
                                                                       MultiFluidBase::viewKeyStruct::dPhaseMassDensity_dGlobalCompFractionString(), \
                                                                       MAX_STENCIL, \
                                                                       seri[iconn], \
@@ -232,13 +232,13 @@ char const * xmlInput =
 
 #ifndef DEFINE_SUBR_FIELDS
 #define DEFINE_SUBR_FIELDS( A ) \
-  auto presView = getElementAccessor< true, 1, real64 >( &subRegion, \
+  auto presView = getElementAccessor< true, 1, real64, camp::make_idx_seq_t< 1 > >( &subRegion, \
                                                          CompositionalMultiphaseFVM::viewKeyStruct::pressureString(), \
                                                          MAX_STENCIL, \
                                                          seri[iconn], \
                                                          sesri[iconn], \
                                                          sei[iconn] ); \
-  auto dPresView = getElementAccessor< true, 1, real64 >( &subRegion, \
+  auto dPresView = getElementAccessor< true, 1, real64, camp::make_idx_seq_t< 1 > >( &subRegion, \
                                                           CompositionalMultiphaseFVM::viewKeyStruct::deltaPressureString(), \
                                                           MAX_STENCIL, \
                                                           seri[iconn], \
@@ -247,7 +247,7 @@ char const * xmlInput =
   Array< Array< Array< double, 1 >, 1 >, 1 > gravCoefView; \
   if( A ) \
   { \
-    gravCoefView = getElementAccessor< true, 1, real64 >( &subRegion, \
+    gravCoefView = getElementAccessor< true, 1, real64, camp::make_idx_seq_t< 1 > >( &subRegion, \
                                                           CompositionalMultiphaseFVM::viewKeyStruct::gravityCoefString(), \
                                                           MAX_STENCIL, \
                                                           seri[iconn], \
@@ -263,20 +263,20 @@ char const * xmlInput =
                                                                               sesri[iconn], \
                                                                               sei[iconn] ); \
   } \
-  auto phaseMobView = getElementAccessor< true, 2, real64 >( &subRegion, \
+  auto phaseMobView = getElementAccessor< true, 2, real64, compflow::LAYOUT_PHASE >( &subRegion, \
                                                              CompositionalMultiphaseFVM::viewKeyStruct::phaseMobilityString(), \
                                                              MAX_STENCIL, \
                                                              seri[iconn], \
                                                              sesri[iconn], \
                                                              sei[iconn], NP ); \
-  auto dPhaseMob_dPView = getElementAccessor< true, 2, real64 >( &subRegion, \
+  auto dPhaseMob_dPView = getElementAccessor< true, 2, real64, compflow::LAYOUT_PHASE >( &subRegion, \
                                                                  CompositionalMultiphaseFVM::viewKeyStruct::dPhaseMobility_dPressureString(), \
                                                                  MAX_STENCIL, \
                                                                  seri[iconn], \
                                                                  sesri[iconn], \
                                                                  sei[iconn], \
                                                                  NP ); \
-  auto dPhaseMob_dCView = getElementAccessor< true, 3, real64 >( &subRegion, \
+  auto dPhaseMob_dCView = getElementAccessor< true, 3, real64, compflow::LAYOUT_PHASE_DC >( &subRegion, \
                                                                  CompositionalMultiphaseFVM::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString(), \
                                                                  MAX_STENCIL, \
                                                                  seri[iconn], \
@@ -284,7 +284,7 @@ char const * xmlInput =
                                                                  sei[iconn], NP, \
                                                                  NC ); \
   auto \
-    dCompFrac_dCompDensView = getElementAccessor< true, 3, real64 >( &subRegion, \
+    dCompFrac_dCompDensView = getElementAccessor< true, 3, real64, compflow::LAYOUT_COMP_DC >( &subRegion, \
                                                                      CompositionalMultiphaseFVM::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString(), \
                                                                      MAX_STENCIL, \
                                                                      seri[iconn], \
@@ -292,14 +292,14 @@ char const * xmlInput =
                                                                      sei[iconn], \
                                                                      NC, \
                                                                      NC ); \
-  auto dPhaseVolFrac_dPView = getElementAccessor< true, 2, real64 >( &subRegion, \
+  auto dPhaseVolFrac_dPView = getElementAccessor< true, 2, real64, compflow::LAYOUT_PHASE >( &subRegion, \
                                                                      CompositionalMultiphaseFVM::viewKeyStruct::dPhaseVolumeFraction_dPressureString(), \
                                                                      MAX_STENCIL, \
                                                                      seri[iconn], \
                                                                      sesri[iconn], \
                                                                      sei[iconn], \
                                                                      NP ); \
-  auto dPhaseVolFrac_dCView = getElementAccessor< true, 3, real64 >( &subRegion, \
+  auto dPhaseVolFrac_dCView = getElementAccessor< true, 3, real64, compflow::LAYOUT_PHASE_DC >( &subRegion, \
                                                                      CompositionalMultiphaseFVM::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString(), \
                                                                      MAX_STENCIL, \
                                                                      seri[iconn], \
@@ -310,7 +310,7 @@ char const * xmlInput =
 #endif
 
 //// Sphinx end before input XML
-template< bool FULL, localIndex N, typename T, typename ... DIMS >
+template< bool FULL, localIndex N, typename T, typename PERM, int USD=LvArray::typeManipulation::getStrideOneDimension( PERM{} ), typename ... DIMS >
 auto getElementAccessor( Group const * const group,
                          std::string const & key,
                          localIndex const stencilSize,
@@ -320,22 +320,22 @@ auto getElementAccessor( Group const * const group,
                          DIMS... otherDims )
 {
 
-  ArrayView< T const, N > data;
+  ArrayView< T const, N, USD > data;
   if( ElementSubRegionBase const * const subRegion = dynamicCast< ElementSubRegionBase const * const >( group ) )
   {
-    data = subRegion->getReference< Array< T, N > >( key );
+    data = subRegion->getReference< Array< T, N, PERM > >( key );
   }
   else if( MultiFluidBase const * const fluid = dynamicCast< MultiFluidBase const * const >( group ) )
   {
-    data = fluid->getReference< Array< T, N > >( key );
+    data = fluid->getReference< Array< T, N, PERM > >( key );
   }
   else if( CapillaryPressureBase const * const cap = dynamicCast< CapillaryPressureBase const * const >( group ) )
   {
-    data = cap->getReference< Array< T, N > >( key );
+    data = cap->getReference< Array< T, N, PERM > >( key );
   }
 
   data.move( LvArray::MemorySpace::host, false );
-  auto view = AccessorHelper< FULL >::template makeElementAccessor< N, T >( data.data() + stencilElemIndices[0],
+  auto view = AccessorHelper< FULL >::template makeElementAccessor< N, T, USD, PERM >( data.data() + stencilElemIndices[0],
                                                                             stencilSize,
                                                                             stencilRegIndices,
                                                                             stencilSubRegIndices,
@@ -405,7 +405,6 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
 
         for( localIndex ip = 0; ip < NP; ++ip )
         {
-
 
           UHelpers::formPPUVelocity< NC, NUM_ELEMS, MAX_STENCIL >( NP,
                                                                    ip,

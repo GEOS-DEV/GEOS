@@ -238,7 +238,7 @@ struct UpwindHelpers
     }
 
     real64 const dMob_dP = dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
-    arraySlice1d< real64 const > const dMob_dC = dPhaseMob_dComp[er_up][esr_up][ei_up][ip];
+    arraySlice1d< real64 const, compflow::USD_PHASE_DC-2 > const dMob_dC = dPhaseMob_dComp[er_up][esr_up][ei_up][ip];
 
     // add contribution from upstream cell mobility derivatives
     dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
@@ -248,39 +248,6 @@ struct UpwindHelpers
       dPhaseFlux_dC[k_up][jc] += dMob_dC[jc] * potGrad;
     }
 
-  }
-
-  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
-  GEOSX_HOST_DEVICE
-  static void formWAVelocity( localIndex const numPhase,
-                              localIndex const ip,
-                              localIndex const stencilSize,
-                              arraySlice1d< localIndex const > const seri,
-                              arraySlice1d< localIndex const > const sesri,
-                              arraySlice1d< localIndex const > const sei,
-                              arraySlice1d< real64 const > const stencilWeights,
-                              ElementViewConst< arrayView1d< real64 const > > const & pres,
-                              ElementViewConst< arrayView1d< real64 const > > const & dPres,
-                              ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                              ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-                              ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
-                              ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dComp,
-                              ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
-                              ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp,
-                              ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-                              ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
-                              ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
-                              ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp,
-                              ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
-                              ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
-                              integer const capPressureFlag,
-                              localIndex( &k_up ),
-                              real64( &phaseFlux ),
-                              real64 ( & dPhaseFlux_dP )[MAX_STENCIL],
-                              real64 ( & dPhaseFlux_dC )[MAX_STENCIL][NC]
-                              )
-  {
-    // to be implemented (Bosma et al.)
   }
 
 /**
@@ -447,8 +414,6 @@ struct UpwindHelpers
       dFflow_dC
       );
 
-//      std::cout << k_up_g << " ";
-
     for( localIndex jp = 0; jp < numPhase; ++jp )
     {
       if( ip != jp )
@@ -520,8 +485,6 @@ struct UpwindHelpers
                                                                            dMobOther_dP,
                                                                            dMobOther_dC );
 
-
-//          std::cout << k_up_og << " ";
 
         // Assembling gravitational flux phase-wise as \phi_{i,g} = \sum_{k\nei} \lambda_k^{up,g} f_k^{up,g} (G_i - G_k)
         phaseFlux -= fflow * mobOther * ( pot - potOther );
@@ -894,9 +857,9 @@ struct UpwindHelpers
     localIndex const esr_up = sesri[k_up];
     localIndex const ei_up = sei[k_up];
 
-    arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up][esr_up][ei_up][0][ip];
-    arraySlice1d< real64 const > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][ei_up][0][ip];
-    arraySlice2d< real64 const > dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][ei_up][0][ip];
+    arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > phaseCompFracSub = phaseCompFrac[er_up][esr_up][ei_up][0][ip];
+    arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][ei_up][0][ip];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_COMP_DC-3 > dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][ei_up][0][ip];
 
     real64 dProp_dC[NC]{};
 
@@ -1233,7 +1196,6 @@ public:
                      )
   {
     real64 pot{};
-    localIndex source{};
 
     UPWIND< T >::template calcPotential< NC, NUM_ELEMS, MAX_STENCIL >( numPhase,
                                                                        ip,
@@ -1257,11 +1219,10 @@ public:
                                                                        phaseCapPressure,
                                                                        dPhaseCapPressure_dPhaseVolFrac,
                                                                        capPressureFlag,
-                                                                       source,
                                                                        pot );
 
     //all definition has been changed to fit pot>0 => first cell is upstream
-    upwindDir = ( pot > 0 ) ? source : ( ( source == 0 ) ? 1 : 0 );
+    upwindDir = ( pot > 0 ) ? 0 : 1;
   }
 
   //refactor getPotential - 3 overload// by phase
@@ -1357,7 +1318,6 @@ public:
                       ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
                       ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                       integer const capPressureFlag,
-                      localIndex & GEOSX_UNUSED_PARAM( source ),
                       real64 & pot
                       )
   {
@@ -1452,7 +1412,6 @@ public:
                       ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
                       ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                       integer const capPressureFlag,
-                      localIndex & GEOSX_UNUSED_PARAM( source ),
                       real64 & pot
                       )
   {
@@ -1589,7 +1548,6 @@ public:
                       ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
                       ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                       integer const GEOSX_UNUSED_PARAM( capPressureFlag ),
-                      localIndex & GEOSX_UNUSED_PARAM( source ),
                       real64 & pot
                       )
   {
@@ -1669,7 +1627,6 @@ public:
                       ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure,
                       ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
                       integer const GEOSX_UNUSED_PARAM( capPressureFlag ),
-                      localIndex & GEOSX_UNUSED_PARAM( source ),
                       real64 & pot
                       )
   {

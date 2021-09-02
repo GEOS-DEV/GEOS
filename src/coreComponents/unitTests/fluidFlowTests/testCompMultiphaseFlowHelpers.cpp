@@ -27,6 +27,10 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlowUpwindHelperKernels.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
+#include "common/DataLayouts.hpp"
+#include "constitutive/fluid/layouts.hpp"
+#include "constitutive/capillaryPressure/layouts.hpp"
+
 #include "unitTests/fluidFlowTests/testFlowKernelHelpers.hpp"
 // TPL includes
 #include <gtest/gtest.h>
@@ -317,26 +321,26 @@ void testCompositionalUpwindDensMult( CellElementStencilTPFA const & stencil,
   typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
   //some type rearganging
-  auto phaseDensView = AccessorHelper< FULL >::template makeElementAccessor< 3 >( &( phaseDens[0][0][0][0] ),
+  auto phaseDensView = AccessorHelper< FULL >::template makeElementAccessor< 3, real64, multifluid::USD_PHASE, multifluid::LAYOUT_PHASE >( &( phaseDens[0][0][0][0] ),
                                                                                   MAX_STENCIL,
                                                                                   seri[0],
                                                                                   sesri[0],
                                                                                   sei[0], 1, NP );
 
-  auto dPhaseDens_dPView = AccessorHelper< FULL >::template makeElementAccessor< 3 >( &( dPhaseDens_dP[0][0][0][0] ),
+  auto dPhaseDens_dPView = AccessorHelper< FULL >::template makeElementAccessor< 3, real64, multifluid::USD_PHASE, multifluid::LAYOUT_PHASE >( &( dPhaseDens_dP[0][0][0][0] ),
                                                                                       MAX_STENCIL,
                                                                                       seri[0],
                                                                                       sesri[0],
                                                                                       sei[0], 1, NP );
 
-  auto dPhaseDens_dCView = AccessorHelper< FULL >::template makeElementAccessor< 4 >( &( dPhaseDens_dC[0][0][0][0][0] ),
+  auto dPhaseDens_dCView = AccessorHelper< FULL >::template makeElementAccessor< 4, real64, multifluid::USD_PHASE_DC, multifluid::LAYOUT_PHASE_DC  >( &( dPhaseDens_dC[0][0][0][0][0] ),
                                                                                       MAX_STENCIL,
                                                                                       seri[0],
                                                                                       sesri[0],
                                                                                       sei[0], 1, NP, NC );
 
   auto dCompFrac_dCompDensView =
-    AccessorHelper< FULL >::template makeElementAccessor< 3 >( &( dCompFrac_dCompDens[0][0][0][0] ),
+    AccessorHelper< FULL >::template makeElementAccessor< 3, real64, compflow::USD_COMP_DC, compflow::LAYOUT_COMP_DC  >( &( dCompFrac_dCompDens[0][0][0][0] ),
                                                                MAX_STENCIL,
                                                                seri[0],
                                                                sesri[0],
@@ -410,28 +414,28 @@ void testCompositionalUpwindFormPhaseComp( CellElementStencilTPFA const & stenci
   typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
   //some type rearganging
-  auto phaseCompFracView = AccessorHelper< FULL >::template makeElementAccessor< 4 >( &( phaseCompFrac[0][0][0][0][0] ),
+  auto phaseCompFracView = AccessorHelper< FULL >::template makeElementAccessor< 4, real64, multifluid::USD_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP >( &( phaseCompFrac[0][0][0][0][0] ),
                                                                                       MAX_STENCIL,
                                                                                       seri[0],
                                                                                       sesri[0],
                                                                                       sei[0], 1, NP, NC );
 
   auto dPhaseCompFrac_dPView =
-    AccessorHelper< FULL >::template makeElementAccessor< 4 >( &( dPhaseCompFrac_dPres[0][0][0][0][0] ),
+    AccessorHelper< FULL >::template makeElementAccessor< 4, real64, multifluid::USD_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP >( &( dPhaseCompFrac_dPres[0][0][0][0][0] ),
                                                                MAX_STENCIL,
                                                                seri[0],
                                                                sesri[0],
                                                                sei[0], 1, NP, NC );
 
   auto dPhaseCompFrac_dCView =
-    AccessorHelper< FULL >::template makeElementAccessor< 5 >( &( dPhaseCompFrac_dComp[0][0][0][0][0][0] ),
+    AccessorHelper< FULL >::template makeElementAccessor< 5 , real64, multifluid::USD_PHASE_COMP_DC, multifluid::LAYOUT_PHASE_COMP_DC >( &( dPhaseCompFrac_dComp[0][0][0][0][0][0] ),
                                                                MAX_STENCIL,
                                                                seri[0],
                                                                sesri[0],
                                                                sei[0], 1, NP, NC, NC );
 
   auto dCompFrac_dCompDensView =
-    AccessorHelper< FULL >::template makeElementAccessor< 3 >( &( dCompFrac_dCompDens[0][0][0][0] ),
+    AccessorHelper< FULL >::template makeElementAccessor< 3, real64, compflow::USD_COMP_DC, compflow::LAYOUT_COMP_DC  >( &( dCompFrac_dCompDens[0][0][0][0] ),
                                                                MAX_STENCIL,
                                                                seri[0],
                                                                sesri[0],
@@ -533,53 +537,53 @@ void testCompositionalUpwindFormPotential( CellElementStencilTPFA const & stenci
                                                                                  sesri[0],
                                                                                  sei[0] );
 
-  auto phaseMassDensView = AccessorHelper< FULL >::template makeElementAccessor< 3 >( &( phaseMassDens[0][0][0][0] ),
+  auto phaseMassDensView = AccessorHelper< FULL >::template makeElementAccessor< 3, real64, multifluid::USD_PHASE, multifluid::LAYOUT_PHASE>( &( phaseMassDens[0][0][0][0] ),
                                                                                       MAX_STENCIL,
                                                                                       seri[0],
                                                                                       sesri[0],
                                                                                       sei[0], 1, NP );
 
   auto dPhaseMassDens_dPView =
-    AccessorHelper< FULL >::template makeElementAccessor< 3 >( &( dPhaseMassDens_dP[0][0][0][0] ),
+    AccessorHelper< FULL >::template makeElementAccessor< 3, real64, multifluid::USD_PHASE, multifluid::LAYOUT_PHASE>( &( dPhaseMassDens_dP[0][0][0][0] ),
                                                                MAX_STENCIL,
                                                                seri[0],
                                                                sesri[0],
                                                                sei[0], 1, NP );
 
   auto dPhaseMassDens_dCView =
-    AccessorHelper< FULL >::template makeElementAccessor< 4 >( &( dPhaseMassDens_dC[0][0][0][0][0] ),
+    AccessorHelper< FULL >::template makeElementAccessor< 4, real64, multifluid::USD_PHASE_DC, multifluid::LAYOUT_PHASE_DC>( &( dPhaseMassDens_dC[0][0][0][0][0] ),
                                                                MAX_STENCIL,
                                                                seri[0],
                                                                sesri[0],
                                                                sei[0], 1, NP, NC );
   auto dCompFrac_dCompDensView =
-    AccessorHelper< FULL >::template makeElementAccessor< 3 >( &( dCompFrac_dCompDens[0][0][0][0] ),
+    AccessorHelper< FULL >::template makeElementAccessor< 3, real64, compflow::USD_COMP_DC, compflow::LAYOUT_COMP_DC  >( &( dCompFrac_dCompDens[0][0][0][0] ),
                                                                MAX_STENCIL,
                                                                seri[0],
                                                                sesri[0],
                                                                sei[0], NC, NC );
 
   //capillary part
-  auto phaseCapPressureView = AccessorHelper< FULL >::template makeElementAccessor< 3 >( &( phaseCapPressure[0][0][0][0] ),
+  auto phaseCapPressureView = AccessorHelper< FULL >::template makeElementAccessor< 3, real64, cappres::USD_CAPPRES, cappres::LAYOUT_CAPPRES>( &( phaseCapPressure[0][0][0][0] ),
                                                                                          MAX_STENCIL,
                                                                                          seri[0],
                                                                                          sesri[0],
                                                                                          sei[0], 1, NP );
 
-  auto dPhaseCapPressure_dPhaseVolFracView = AccessorHelper< FULL >::template makeElementAccessor< 4 >( &( dPhaseCapPressure_dPhaseVolFrac[0][0][0][0][0] ),
+  auto dPhaseCapPressure_dPhaseVolFracView = AccessorHelper< FULL >::template makeElementAccessor< 4, real64, cappres::USD_CAPPRES_DS, cappres::LAYOUT_CAPPRES_DS>( &( dPhaseCapPressure_dPhaseVolFrac[0][0][0][0][0] ),
                                                                                                         MAX_STENCIL,
                                                                                                         seri[0],
                                                                                                         sesri[0],
                                                                                                         sei[0], 1, NP, NP );
 
-  auto dPhaseVolFrac_dPView = AccessorHelper< FULL >::template makeElementAccessor< 2 >( &( dPhaseVolFrac_dP[0][0][0] ),
+  auto dPhaseVolFrac_dPView = AccessorHelper< FULL >::template makeElementAccessor< 2, real64, compflow::USD_PHASE, compflow::LAYOUT_PHASE>( &( dPhaseVolFrac_dP[0][0][0] ),
                                                                                          MAX_STENCIL,
                                                                                          seri[0],
                                                                                          sesri[0],
                                                                                          sei[0], NP );
 
   //NP NC
-  auto dPhaseVolFrac_dCView = AccessorHelper< FULL >::template makeElementAccessor< 3 >( &( dPhaseVolFrac_dC[0][0][0][0] ),
+  auto dPhaseVolFrac_dCView = AccessorHelper< FULL >::template makeElementAccessor< 3, real64, compflow::USD_PHASE_DC, compflow::LAYOUT_PHASE_DC>( &( dPhaseVolFrac_dC[0][0][0][0] ),
                                                                                          MAX_STENCIL,
                                                                                          seri[0],
                                                                                          sesri[0],
