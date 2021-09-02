@@ -260,18 +260,18 @@ Element: ElasticIsotropic
 .. include:: ../../coreComponents/schema/docs/ElasticIsotropic.rst
 
 
+.. _XML_ElasticOrthotropic:
+
+Element: ElasticOrthotropic
+===========================
+.. include:: ../../coreComponents/schema/docs/ElasticOrthotropic.rst
+
+
 .. _XML_ElasticTransverseIsotropic:
 
 Element: ElasticTransverseIsotropic
 ===================================
 .. include:: ../../coreComponents/schema/docs/ElasticTransverseIsotropic.rst
-
-
-.. _XML_ElasticOrthotropic:
-
-Element: ElasticOrthotropic
-===================================
-.. include:: ../../coreComponents/schema/docs/ElasticOrthotropic.rst
 
 
 .. _XML_ElementRegions:
@@ -573,6 +573,13 @@ Element: PorousDruckerPrager
 Element: PorousElasticIsotropic
 ===============================
 .. include:: ../../coreComponents/schema/docs/PorousElasticIsotropic.rst
+
+
+.. _XML_PorousElasticOrthotropic:
+
+Element: PorousElasticOrthotropic
+=================================
+.. include:: ../../coreComponents/schema/docs/PorousElasticOrthotropic.rst
 
 
 .. _XML_PorousElasticTransverseIsotropic:
@@ -1132,6 +1139,13 @@ Datastructure: ElasticIsotropic
 .. include:: ../../coreComponents/schema/docs/ElasticIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_ElasticOrthotropic:
+
+Datastructure: ElasticOrthotropic
+=================================
+.. include:: ../../coreComponents/schema/docs/ElasticOrthotropic_other.rst
+
+
 .. _DATASTRUCTURE_ElasticTransverseIsotropic:
 
 Datastructure: ElasticTransverseIsotropic
@@ -1459,6 +1473,13 @@ Datastructure: PorousDruckerPrager
 Datastructure: PorousElasticIsotropic
 =====================================
 .. include:: ../../coreComponents/schema/docs/PorousElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PorousElasticOrthotropic:
+
+Datastructure: PorousElasticOrthotropic
+=======================================
+.. include:: ../../coreComponents/schema/docs/PorousElasticOrthotropic_other.rst
 
 
 .. _DATASTRUCTURE_PorousElasticTransverseIsotropic:
