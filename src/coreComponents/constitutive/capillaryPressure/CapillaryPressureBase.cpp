@@ -31,22 +31,13 @@ namespace
 
 integer toPhaseType( string const & lookup, string const & groupName )
 {
-  static std::unordered_map< string, integer > const phaseDict =
+  static unordered_map< string, integer > const phaseDict =
   {
     { "gas", CapillaryPressureBase::PhaseType::GAS },
     { "oil", CapillaryPressureBase::PhaseType::OIL },
     { "water", CapillaryPressureBase::PhaseType::WATER }
   };
-  auto const it = phaseDict.find( lookup );
-  if( it == phaseDict.end() )
-  {
-    std::vector< string > phaseNames;
-    std::transform( phaseDict.begin(), phaseDict.end(), std::back_inserter( phaseNames ), []( auto const & p ){ return p.first; } );
-    GEOSX_THROW( groupName << ": phase '" << lookup << "' not supported.\n" <<
-                 "Please use one of the following: " << stringutilities::join( phaseNames.begin(), phaseNames.end(), ", " ),
-                 InputError );
-  }
-  return it->second;
+  return findOption( phaseDict, lookup, CapillaryPressureBase::viewKeyStruct::phaseNamesString(), groupName );
 }
 
 } // namespace
@@ -78,7 +69,7 @@ void CapillaryPressureBase::postProcessInput()
 
   integer const numPhases = numFluidPhases();
   GEOSX_THROW_IF( numPhases< 2 || numPhases > MAX_NUM_PHASES,
-                  getName() << ": number of fluid phases must be between 2 and " << MAX_NUM_PHASES << ", got " << numPhases,
+                  getFullName() << ": number of fluid phases must be between 2 and " << MAX_NUM_PHASES << ", got " << numPhases,
                   InputError );
 
   m_phaseTypes.resize( numPhases );
@@ -86,13 +77,12 @@ void CapillaryPressureBase::postProcessInput()
 
   for( integer ip = 0; ip < numPhases; ++ip )
   {
-    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip], getName() );
+    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip], getFullName() );
     m_phaseOrder[m_phaseTypes[ip]] = LvArray::integerConversion< integer >( ip );
-
   }
 
   GEOSX_THROW_IF( m_phaseOrder[CapillaryPressureBase::REFERENCE_PHASE] < 0,
-                  "CapillaryPressureBase: reference oil phase has not been defined and should be included in model", InputError );
+                  getFullName() << ": reference oil phase has not been defined and should be included in model", InputError );
 
   // call to correctly set member array tertiary sizes on the 'main' material object
   resizeFields( 0, 0 );
