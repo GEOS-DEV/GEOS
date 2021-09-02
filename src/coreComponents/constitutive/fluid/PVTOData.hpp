@@ -48,7 +48,7 @@ public:
                    arrayView1d< real64 const > const & surfaceMassDensity,
                    arrayView1d< real64 const > const & surfaceMoleDensity );
 
-    void move( LvArray::MemorySpace const space, bool const touch )
+    void move( LvArray::MemorySpace const space, bool const touch ) const
     {
       m_Rs.move( space, touch );
       m_bubblePressure.move( space, touch );
@@ -109,7 +109,7 @@ public:
   // Saturated data (free gas phase present)
 
   /// Number of saturated points
-  localIndex numSaturatedPoints = 0;
+  integer numSaturatedPoints = 0;
   /// Saturated oil phase formation volume factor
   array1d< real64 > saturatedBo;
   /// Saturated oil phase viscosity
