@@ -1,8 +1,8 @@
 .. _TutorialElasticity:
 
-#####################################
-Tutorial 7: An elastic beam
-#####################################
+#################################################
+Boundary Conditions and Time-Dependent Functions
+#################################################
 
 **Context**
 

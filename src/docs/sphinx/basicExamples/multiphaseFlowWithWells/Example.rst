@@ -2,7 +2,7 @@
 .. _TutorialDeadOilEgg:
 
 ########################################################
-Multiphase flow with wells
+Multiphase Flow with Wells
 ########################################################
 
 **Context**

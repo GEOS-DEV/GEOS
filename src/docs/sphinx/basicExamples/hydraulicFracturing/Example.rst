@@ -1,17 +1,17 @@
 .. _TutorialHydraulicFractureWithAdvancedXML:
 
 #####################################################
-Tutorial 9: Hydraulic Fracturing 
+Hydraulic Fracturing 
 #####################################################
 
 **Context**
 
-In this tutorial, we use a fully coupled hydrofracture solver from GEOSX to solve for the propagation of a single fracture within a reservoir with heterogeneous in-situ properties.
+In this example, we use a fully coupled hydrofracture solver from GEOSX to solve for the propagation of a single fracture within a reservoir with heterogeneous in-situ properties.
 Advanced xml features will be used throughout the example.
 
 **Objectives**
 
-At the end of this tutorial you will know:
+At the end of this example you will know:
 
   - how to use multiple solvers for hydraulic fracturing problems,
   - how to specify pre-existing fractures and where new fractures can develop,
@@ -22,7 +22,7 @@ At the end of this tutorial you will know:
 
 **Input files**
 
-This tutorial uses a set of input files and table files located at:
+This example uses a set of input files and table files located at:
 
 .. code-block:: console
 
@@ -49,7 +49,7 @@ Preparing the input files
 
 The inputs for this case are contained inside a case-specific (``heterogeneousInSitu_singleFracture.xml``) and base (``heterogeneousInSitu_base.xml``) XML file.
 The ``tables`` directory contains the pre-constructed geologic model.
-This tutorial will first focus on the case-specific input file, which contains the key parameter definitions, then consider the base-file.
+This example will first focus on the case-specific input file, which contains the key parameter definitions, then consider the base-file.
 
 
 
@@ -284,10 +284,10 @@ To go further
 ------------------------------------------------------------------
 
 
-**Feedback on this tutorial**
+**Feedback on this example**
 
-This concludes the hydraulic fracturing tutorial.
-For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+This concludes the hydraulic fracturing example.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
 
 

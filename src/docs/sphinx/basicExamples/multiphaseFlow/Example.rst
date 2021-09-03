@@ -1,7 +1,7 @@
 .. _TutorialDeadOilBottomLayersSPE10:
 
 ####################################################################
-Multiphase flow
+Multiphase Flow
 ####################################################################
 
 **Context**
@@ -373,10 +373,6 @@ To go further
 This concludes the example on setting up an immiscible two-phase flow simulation in a channelized permeability field.
 For any feedback on this example, please submit
 a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
-
-**Next example**
-
-In :ref:`TutorialDeadOilEgg`, we learn how to run a multiphase test case with wells.
 
 **For more details**
 

@@ -1,7 +1,7 @@
 .. _TutorialSinglePhaseFlowExternalMesh:
 
 #########################################
-Tutorial 2: Using an external mesh
+External Meshes
 #########################################
 
 

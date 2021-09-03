@@ -1,7 +1,7 @@
 .. _TutorialFieldCase:
 
 #########################################
-Tutorial 3: A simple field case
+Regions and Property Specifications
 #########################################
 
 **Context**

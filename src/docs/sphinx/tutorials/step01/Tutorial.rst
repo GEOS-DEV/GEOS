@@ -1,7 +1,7 @@
 .. _TutorialSinglePhaseFlowWithInternalMesh:
 
 #####################################################
-Tutorial 1: First steps 
+First Steps 
 #####################################################
 
 **Context**

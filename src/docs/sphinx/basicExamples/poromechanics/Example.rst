@@ -2,20 +2,20 @@
 
 
 ##############################################
-Tutorial 8: Terzaghi's poroelastic problem
+Poromechanics
 ##############################################
 
 
 **Context**
 
-In this tutorial, we use a coupled solver to solve a poroelastic Terzaghi-type
+In this example, we use a coupled solver to solve a poroelastic Terzaghi-type
 problem, a classic benchmark in poroelasticity.
 We do so by coupling a single phase flow solver with a small-strain Lagrangian mechanics solver.
 
 
 **Objectives**
 
-At the end of this tutorial you will know:
+At the end of this example you will know:
 
   - how to use multiple solvers for poromechanical problems,
   - how to define finite elements and finite volume numerical methods.
@@ -23,7 +23,7 @@ At the end of this tutorial you will know:
 
 **Input file**
 
-This tutorial uses no external input files and everything required is
+This example uses no external input files and everything required is
 contained within a single GEOSX input file.
 The xml input file for this test case is located at:
 
@@ -386,10 +386,10 @@ To go further
 ------------------------------------------------------------------
 
 
-**Feedback on this tutorial**
+**Feedback on this example**
 
-This concludes the poroelastic tutorial.
-For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+This concludes the poroelastic example.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
 
 
