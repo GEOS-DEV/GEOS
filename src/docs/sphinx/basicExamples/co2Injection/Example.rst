@@ -1,16 +1,16 @@
 .. _TutorialCO2FieldCase:
 
 ##################################################################
-Tutorial 6: CO :sub:`2` injection
+CO :sub:`2` injection
 ##################################################################
 
 **Context**
 
-In this tutorial, we show how to set up a multiphase simulation of CO :sub:`2` injection. 
+In this example, we show how to set up a multiphase simulation of CO :sub:`2` injection. 
 
 **Objectives**
 
-At the end of this tutorial you will know:
+At the end of this example you will know:
 
  - how to set up a CO :sub:`2` injection scenario with a well,
  - how to run a case using MPI-parallelism.
@@ -55,10 +55,10 @@ They consist of three blocks **CompositionalMultiphaseFVM**, **CompositionalMult
 In the **CompositionalMultiphaseFVM** (:ref:`CompositionalMultiphaseFlow`), a classical multiphase compositional solver with a TPFA discretization is described.
 The flow solver definition includes a list of names to point to fluid constitutive data through ``fluidNames``, solid constitutive data through ``solidNames``, permeability data through ``permeabilityNames`` and relative permeability constitutive data through ``relPermNames`` attributes.
 
-The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilEgg` for detailed tutorial). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines a  **WellControls** sub-tag.
+The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilEgg` for detailed example). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines a  **WellControls** sub-tag.
 This sub-tag specifies the CO :sub:`2` injector control mode: the well is initially rate-controlled, with a rate specified in ``targetRate`` and a maximum pressure specified in ``targetBHP``. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture (here, pure CO :sub:`2`).
 
-The **CompositionalMultiphaseReservoir** coupling section describes the binding between those two previous elements (see :ref:`TutorialPoroelasticity` for detailed tutorial on coupling physics in GEOSX). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solver attributes). 
+The **CompositionalMultiphaseReservoir** coupling section describes the binding between those two previous elements (see :ref:`TutorialPoroelasticity` for detailed example on coupling physics in GEOSX). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solver attributes). 
 
 .. _Mesh_tag_co2_field_case:
 
@@ -67,7 +67,7 @@ The **CompositionalMultiphaseReservoir** coupling section describes the binding 
 Mesh and well geometry
 ----------------------
 
-In this tutorial, the **Mesh** tag is used to generate the reservoir mesh internally (:ref:`TutorialSinglePhaseFlowWithInternalMesh`). The internal generation of well is defined with the **InternalWell** sub-tag. Apart from the ``name`` identifier attribute and their ``wellRegionName`` (:ref:`ElementRegions <ElementRegions_tag_co2_field_case>`) and ``wellControlsName`` (:ref:`Solver <Solver_tag_co2_field_case>`) binding attributes, ``polylineNodeCoords`` and ``polylineSegmentConn`` attributes are used to define the path of the wellbore and connections between its nodes. The ``numElementsPerSegment`` is discretizing the wellbore segments while the ``radius`` attribute specifies the wellbore radius (:ref:`TutorialDeadOilEgg` for details on wells). Once the wellbore is defined and discretized, the position of **Perforations** is defined using the linear distance from the head of the wellbore (``distanceFromHead``).
+In this example, the **Mesh** tag is used to generate the reservoir mesh internally (:ref:`TutorialSinglePhaseFlowWithInternalMesh`). The internal generation of well is defined with the **InternalWell** sub-tag. Apart from the ``name`` identifier attribute and their ``wellRegionName`` (:ref:`ElementRegions <ElementRegions_tag_co2_field_case>`) and ``wellControlsName`` (:ref:`Solver <Solver_tag_co2_field_case>`) binding attributes, ``polylineNodeCoords`` and ``polylineSegmentConn`` attributes are used to define the path of the wellbore and connections between its nodes. The ``numElementsPerSegment`` is discretizing the wellbore segments while the ``radius`` attribute specifies the wellbore radius (:ref:`TutorialDeadOilEgg` for details on wells). Once the wellbore is defined and discretized, the position of **Perforations** is defined using the linear distance from the head of the wellbore (``distanceFromHead``).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
   :language: xml
@@ -304,14 +304,10 @@ The heterogeneous values of the log permeability field can also be visualized in
 To go further
 ------------------------------------
 
-**Feedback on this tutorial**
+**Feedback on this example**
 
-This concludes the CO :sub:`2` injection field case tutorial.
-For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
-
-**Next tutorial**
-
-In the next tutorial :ref:`TutorialElasticity`, we switch to mechanics and learn how to run a bending case to get familiar with mechanical problems in GEOSX.
+This concludes the CO :sub:`2` injection field case example.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
 **For more details**
 

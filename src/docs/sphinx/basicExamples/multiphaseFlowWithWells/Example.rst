@@ -2,12 +2,12 @@
 .. _TutorialDeadOilEgg:
 
 ########################################################
-Tutorial 5: Multiphase flow with wells
+Multiphase flow with wells
 ########################################################
 
 **Context**
 
-In this tutorial, we build on the concepts presented in :ref:`TutorialDeadOilBottomLayersSPE10`
+In this example, we build on the concepts presented in :ref:`TutorialDeadOilBottomLayersSPE10`
 to show how to set up a multiphase water injection problem with wells in
 the three-dimensional `Egg model <https://rmets.onlinelibrary.wiley.com/doi/full/10.1002/gdj3.21>`_.
 The twelve wells (four producers and eight injectors) are placed according to the description
@@ -15,7 +15,7 @@ of the original test case.
 
 **Objectives**
 
-In this tutorial, we re-use many GEOSX features already presented in
+In this example, we re-use many GEOSX features already presented in
 :ref:`TutorialDeadOilBottomLayersSPE10`, but we now focus on:
 
 - how to import an external mesh with embedded geological properties (permeability) in the GMSH format (``.msh``),
@@ -23,7 +23,7 @@ In this tutorial, we re-use many GEOSX features already presented in
 
 **Input file**
 
-This tutorial is based on the XML file located at
+This example is based on the XML file located at
 
 .. code-block:: console
 
@@ -64,7 +64,7 @@ This coupling of single-physics solvers is the generic approach used in GEOSX to
 define multiphysics problems.
 It is illustrated in :ref:`TutorialPoroelasticity` for a poroelastic test case. 
 
-The three solvers employed in this tutorial are:
+The three solvers employed in this example are:
 
  - the single-physics reservoir flow solver, a solver of type **CompositionalMultiphaseFVM** named ``compositionalMultiphaseFlow`` (more information on this solver at :ref:`CompositionalMultiphaseFlow`),
  - the single-physics well solver, a solver of type **CompositionalMultiphaseWell** named ``compositionalMultiphaseWell`` (more information on this solver at :ref:`CompositionalMultiphaseWell`),
@@ -174,7 +174,7 @@ nested block.
 We also define an output event instructing GEOSX to write out ``.vtk`` files at the time frequency specified
 by the attribute ``timeFrequency``.
 Here, we choose to output the results using the VTK format (see :ref:`TutorialSinglePhaseFlowExternalMesh`
-for a tutorial that uses the Silo output file format).
+for a example that uses the Silo output file format).
 The ``target`` attribute must point to the **VTK** sub-block of the **Outputs**
 block (defined at the end of the XML file) by name (here, ``vtkOutput``).
 
@@ -417,7 +417,7 @@ the code steps into the execution of the simulation itself:
 Visualization
 ------------------------------------
 
-A file compatible with Paraview is produced in this tutorial.
+A file compatible with Paraview is produced in this example.
 It is found in the output folder, and usually has the extension `.pvd`.
 More details about this file format can be found 
 `here <https://www.paraview.org/Wiki/ParaView/Data_formats#PVD_File_Format>`_.
@@ -490,16 +490,11 @@ as shown below.
 To go further
 ------------------------------------
 
-**Feedback on this tutorial**
+**Feedback on this example**
 
-This concludes the tutorial on setting up a Dead-Oil simulation in the Egg model.
-For any feedback on this tutorial, please submit
+This concludes the example on setting up a Dead-Oil simulation in the Egg model.
+For any feedback on this example, please submit
 a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
-
-**Next tutorial**
-
-In :ref:`TutorialCO2FieldCase`, we learn how to run a
-more complex test case based on an unstructured mesh.
 
 **For more details**
 

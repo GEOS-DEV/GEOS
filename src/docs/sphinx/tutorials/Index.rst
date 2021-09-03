@@ -1,7 +1,7 @@
 .. _Tutorials:
 
 
-Tutorials & Examples
+Tutorials
 =================================
 
 The easiest way to learn to use GEOSX is through worked examples.
@@ -21,17 +21,4 @@ Most of the tutorial models are also quite small, so that large computational re
    step03/Tutorial
 
    step04/Tutorial
-
-   step05/Tutorial
-
-   step06/Tutorial
-
-   step07/Tutorial
-
-   step08/Tutorial
-
-   step09/Tutorial
-
-   step10/Tutorial
-
 
