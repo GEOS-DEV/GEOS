@@ -180,7 +180,7 @@ public:
                                     arraySlice1d< real64 const > const & componentConcentration,
                                     real64 const shearRate ) const override
   {
-    GEOSX_UNUSED_VAR( shearRate )
+    GEOSX_UNUSED_VAR( shearRate );
     computeFluidDensity( pressure,
                          componentConcentration,
                          m_componentDensity[k][q],

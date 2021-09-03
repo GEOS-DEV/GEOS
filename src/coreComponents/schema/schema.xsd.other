@@ -379,8 +379,12 @@
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--cellStencil => (no description available)-->
 		<xsd:attribute name="cellStencil" type="geosx_CellElementStencilTPFA" />
+		<!--edfmStencil => (no description available)-->
+		<xsd:attribute name="edfmStencil" type="geosx_EmbeddedSurfaceToCellStencil" />
+		<!--faceElementToCellStencil => (no description available)-->
+		<xsd:attribute name="faceElementToCellStencil" type="geosx_EmbeddedSurfaceToCellStencil" />
 		<!--fractureStencil => (no description available)-->
-		<xsd:attribute name="fractureStencil" type="geosx_FaceElementStencil" />
+		<xsd:attribute name="fractureStencil" type="geosx_SurfaceElementStencil" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -752,8 +756,9 @@
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
-			<xsd:element name="CompressibleSolidPressurePorosityCarmanKozenyPermeability" type="CompressibleSolidPressurePorosityCarmanKozenyPermeabilityType" />
-			<xsd:element name="CompressibleSolidPressurePorosityConstantPermeability" type="CompressibleSolidPressurePorosityConstantPermeabilityType" />
+			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
+			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
+			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
@@ -769,11 +774,6 @@
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
-			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
-			<xsd:element name="PoroDruckerPrager" type="PoroDruckerPragerType" />
-			<xsd:element name="PoroElasticIsotropic" type="PoroElasticIsotropicType" />
-			<xsd:element name="PoroElasticTransverseIsotropic" type="PoroElasticTransverseIsotropicType" />
-			<xsd:element name="PoroExtendedDruckerPrager" type="PoroExtendedDruckerPragerType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
 			<xsd:element name="PorousElasticTransverseIsotropic" type="PorousElasticTransverseIsotropicType" />
@@ -791,14 +791,16 @@
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
 		<!--dPorosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
-		<!--newPorosity => (no description available)-->
-		<xsd:attribute name="newPorosity" type="real64_array2d" />
 		<!--oldPorosity => (no description available)-->
 		<xsd:attribute name="oldPorosity" type="real64_array2d" />
-		<!--refPorosity => (no description available)-->
-		<xsd:attribute name="refPorosity" type="real64_array" />
+		<!--porosity => (no description available)-->
+		<xsd:attribute name="porosity" type="real64_array2d" />
+		<!--referencePorosity => (no description available)-->
+		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
+		<!--PVTO => (no description available)-->
+		<xsd:attribute name="PVTO" type="geosx_constitutive_PVTOData" />
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
 		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dPressure => (no description available)-->
@@ -835,6 +837,10 @@
 		<xsd:attribute name="dTotalDensity_dPressure" type="real64_array2d" />
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
+		<!--formationVolFactorTableWrappers => (no description available)-->
+		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--hydrocarbonPhaseOrder => (no description available)-->
+		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
 		<!--phaseCompFraction => (no description available)-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseDensity => (no description available)-->
@@ -843,12 +849,18 @@
 		<xsd:attribute name="phaseFraction" type="real64_array3d" />
 		<!--phaseMassDensity => (no description available)-->
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
+		<!--phaseOrder => (no description available)-->
+		<xsd:attribute name="phaseOrder" type="integer_array" />
+		<!--phaseTypes => (no description available)-->
+		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--phaseViscosity => (no description available)-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->
 		<xsd:attribute name="useMass" type="integer" />
+		<!--viscosityTableWrappers => (no description available)-->
+		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
@@ -940,11 +952,11 @@
 	</xsd:complexType>
 	<xsd:complexType name="CarmanKozenyPermeabilityType">
 		<!--dPerm_dPorosity => (no description available)-->
-		<xsd:attribute name="dPerm_dPorosity" type="real64_array2d" />
+		<xsd:attribute name="dPerm_dPorosity" type="real64_array3d" />
 		<!--dPerm_dPressure =>  dPerm_dPressure of the rock.-->
-		<xsd:attribute name="dPerm_dPressure" type="real64_array2d" />
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability =>  permeability of the rock.-->
-		<xsd:attribute name="permeability" type="real64_array2d" />
+		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
@@ -1008,13 +1020,14 @@
 		<!--viscosity => (no description available)-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
-	<xsd:complexType name="CompressibleSolidPressurePorosityCarmanKozenyPermeabilityType" />
-	<xsd:complexType name="CompressibleSolidPressurePorosityConstantPermeabilityType" />
+	<xsd:complexType name="CompressibleSolidCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="CompressibleSolidConstantPermeabilityType" />
+	<xsd:complexType name="CompressibleSolidParallelPlatesPermeabilityType" />
 	<xsd:complexType name="ConstantPermeabilityType">
 		<!--dPerm_dPressure =>  dPerm_dPressure of the rock.-->
-		<xsd:attribute name="dPerm_dPressure" type="real64_array2d" />
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability =>  permeability of the rock.-->
-		<xsd:attribute name="permeability" type="real64_array2d" />
+		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="ContactType">
 		<xsd:choice minOccurs="0" maxOccurs="1">
@@ -1111,6 +1124,10 @@
 		<xsd:attribute name="dTotalDensity_dPressure" type="real64_array2d" />
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
+		<!--formationVolFactorTableWrappers => (no description available)-->
+		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--hydrocarbonPhaseOrder => (no description available)-->
+		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
 		<!--phaseCompFraction => (no description available)-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseDensity => (no description available)-->
@@ -1119,12 +1136,18 @@
 		<xsd:attribute name="phaseFraction" type="real64_array3d" />
 		<!--phaseMassDensity => (no description available)-->
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
+		<!--phaseOrder => (no description available)-->
+		<xsd:attribute name="phaseOrder" type="integer_array" />
+		<!--phaseTypes => (no description available)-->
+		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--phaseViscosity => (no description available)-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
 		<!--totalDensity => (no description available)-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->
 		<xsd:attribute name="useMass" type="integer" />
+		<!--viscosityTableWrappers => (no description available)-->
+		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -1207,11 +1230,11 @@
 	<xsd:complexType name="NullModelType" />
 	<xsd:complexType name="ParallelPlatesPermeabilityType">
 		<!--dPerm_dAperture => (no description available)-->
-		<xsd:attribute name="dPerm_dAperture" type="real64_array2d" />
+		<xsd:attribute name="dPerm_dAperture" type="real64_array3d" />
 		<!--dPerm_dPressure =>  dPerm_dPressure of the rock.-->
-		<xsd:attribute name="dPerm_dPressure" type="real64_array2d" />
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability =>  permeability of the rock.-->
-		<xsd:attribute name="permeability" type="real64_array2d" />
+		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="ParticleFluidType">
 		<!--collisionFactor => (no description available)-->
@@ -1231,109 +1254,9 @@
 	</xsd:complexType>
 	<xsd:complexType name="PermeabilityBaseType">
 		<!--dPerm_dPressure =>  dPerm_dPressure of the rock.-->
-		<xsd:attribute name="dPerm_dPressure" type="real64_array2d" />
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability =>  permeability of the rock.-->
-		<xsd:attribute name="permeability" type="real64_array2d" />
-	</xsd:complexType>
-	<xsd:complexType name="PoreVolumeCompressibleSolidType">
-		<!--dPVMult_dDensity => (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--poreVolumeMultiplier => (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-	</xsd:complexType>
-	<xsd:complexType name="PoroDruckerPragerType">
-		<!--bulkModulus => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="bulkModulus" type="real64_array" />
-		<!--cohesion => New cohesion state-->
-		<xsd:attribute name="cohesion" type="real64_array2d" />
-		<!--dPVMult_dDensity => (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--dilation => Plastic potential slope-->
-		<xsd:attribute name="dilation" type="real64_array" />
-		<!--friction => Yield surface slope-->
-		<xsd:attribute name="friction" type="real64_array" />
-		<!--hardening => Hardening rate-->
-		<xsd:attribute name="hardening" type="real64_array" />
-		<!--oldCohesion => Old cohesion state-->
-		<xsd:attribute name="oldCohesion" type="real64_array2d" />
-		<!--oldStress => Previous Material Stress-->
-		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--poreVolumeMultiplier => (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--shearModulus => Elastic Shear Modulus-->
-		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--stress => Current Material Stress-->
-		<xsd:attribute name="stress" type="real64_array3d" />
-	</xsd:complexType>
-	<xsd:complexType name="PoroElasticIsotropicType">
-		<!--bulkModulus => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="bulkModulus" type="real64_array" />
-		<!--dPVMult_dDensity => (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--oldStress => Previous Material Stress-->
-		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--poreVolumeMultiplier => (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--shearModulus => Elastic Shear Modulus-->
-		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--stress => Current Material Stress-->
-		<xsd:attribute name="stress" type="real64_array3d" />
-	</xsd:complexType>
-	<xsd:complexType name="PoroElasticTransverseIsotropicType">
-		<!--c11 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c11" type="real64_array" />
-		<!--c13 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c13" type="real64_array" />
-		<!--c33 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c33" type="real64_array" />
-		<!--c44 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c44" type="real64_array" />
-		<!--c66 => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="c66" type="real64_array" />
-		<!--dPVMult_dDensity => (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--oldStress => Previous Material Stress-->
-		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--poreVolumeMultiplier => (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--stress => Current Material Stress-->
-		<xsd:attribute name="stress" type="real64_array3d" />
-	</xsd:complexType>
-	<xsd:complexType name="PoroExtendedDruckerPragerType">
-		<!--bulkModulus => Elastic Bulk Modulus Field-->
-		<xsd:attribute name="bulkModulus" type="real64_array" />
-		<!--dPVMult_dDensity => (no description available)-->
-		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--dilationRatio => Plastic potential slope ratio-->
-		<xsd:attribute name="dilationRatio" type="real64_array" />
-		<!--hardening => Hardening parameter-->
-		<xsd:attribute name="hardening" type="real64_array" />
-		<!--initialFriction => Initial yield surface slope-->
-		<xsd:attribute name="initialFriction" type="real64_array" />
-		<!--oldStateVariable => Old equivalent plastic shear strain-->
-		<xsd:attribute name="oldStateVariable" type="real64_array2d" />
-		<!--oldStress => Previous Material Stress-->
-		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--poreVolumeMultiplier => (no description available)-->
-		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--pressureIntercept => Pressure point at cone vertex-->
-		<xsd:attribute name="pressureIntercept" type="real64_array" />
-		<!--residualFriction => Residual yield surface slope-->
-		<xsd:attribute name="residualFriction" type="real64_array" />
-		<!--shearModulus => Elastic Shear Modulus-->
-		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--stateVariable => New equivalent plastic shear strain-->
-		<xsd:attribute name="stateVariable" type="real64_array2d" />
-		<!--stress => Current Material Stress-->
-		<xsd:attribute name="stress" type="real64_array3d" />
+		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousDruckerPragerType" />
 	<xsd:complexType name="PorousElasticIsotropicType" />
@@ -1342,12 +1265,12 @@
 	<xsd:complexType name="PressurePorosityType">
 		<!--dPorosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
-		<!--newPorosity => (no description available)-->
-		<xsd:attribute name="newPorosity" type="real64_array2d" />
 		<!--oldPorosity => (no description available)-->
 		<xsd:attribute name="oldPorosity" type="real64_array2d" />
-		<!--refPorosity => (no description available)-->
-		<xsd:attribute name="refPorosity" type="real64_array" />
+		<!--porosity => (no description available)-->
+		<xsd:attribute name="porosity" type="real64_array2d" />
+		<!--referencePorosity => (no description available)-->
+		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSlurryFluidType">
 		<!--FluidDensity => (no description available)-->
@@ -1387,13 +1310,15 @@
 	</xsd:complexType>
 	<xsd:complexType name="StrainDependentPermeabilityType">
 		<!--dPerm_dPressure =>  dPerm_dPressure of the rock.-->
-		<xsd:attribute name="dPerm_dPressure" type="real64_array2d" />
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability =>  permeability of the rock.-->
-		<xsd:attribute name="permeability" type="real64_array2d" />
+		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="TableRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
 		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
+		<!--gasOilRelPermTableWrappers => (no description available)-->
+		<xsd:attribute name="gasOilRelPermTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--phaseMinVolumeFraction => (no description available)-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" />
 		<!--phaseOrder => (no description available)-->
@@ -1402,6 +1327,8 @@
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
+		<!--waterOilRelPermTableWrappers => (no description available)-->
+		<xsd:attribute name="waterOilRelPermTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->

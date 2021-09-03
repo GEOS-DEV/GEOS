@@ -49,6 +49,21 @@ public:
    */
   TwoPointFluxApproximation( string const & name, dataRepository::Group * const parent );
 
+  /**
+   * @brief View keys.
+   */
+  struct viewKeyStruct : FluxApproximationBase::viewKeyStruct
+  {
+    /// @return The key for edfStencil
+    static constexpr char const * edfmStencilString() { return "edfmStencil"; }
+    /// @return The key for faceElementToCellStencil
+    static constexpr char const * faceToCellStencilString() { return "faceElementToCellStencil"; }
+    /// @return The key for the meanPermCoefficient
+    static constexpr char const * meanPermCoefficientString() { return "meanPermCoefficient"; }
+    // constexpr static auto useProjectionEmbeddedFractureMethodString = "useProjectionEmbeddedFractureMethod";
+    static constexpr char const * useProjectionEmbeddedFractureMethodString() { return "useProjectionEmbeddedFractureMethod"; }
+  };
+
 protected:
   virtual void initializePreSubGroups() override final;
 
@@ -76,17 +91,17 @@ protected:
                                        EmbeddedSurfaceSubRegion const & fractureSubRegion,
                                        localIndex const fractureRegionIndex ) const;
 
+
   void addFractureMatrixConnections( MeshLevel & mesh,
                                      EmbeddedSurfaceSubRegion const & fractureSubRegion,
                                      localIndex const fractureRegionIndex ) const;
+private:
 
-  struct viewKeyStruct : FluxApproximationBase::viewKeyStruct
-  {
-    // constexpr static auto useProjectionEmbeddedFractureMethodString = "useProjectionEmbeddedFractureMethod";
-    static constexpr char const * useProjectionEmbeddedFractureMethodString() { return "useProjectionEmbeddedFractureMethod"; }
-  };
+  /// mean permeability coefficient
+  real64 m_meanPermCoefficient;
 
   int m_useProjectionEmbeddedFractureMethod;  // whether or not to do projection EDFM
+
   std::unique_ptr< ProjectionEDFMHelper > m_pedfmHelper{nullptr};
 };
 

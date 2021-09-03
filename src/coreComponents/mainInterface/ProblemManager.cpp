@@ -164,6 +164,8 @@ void ProblemManager::problemSetup()
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   initialize();
+
+  importFields();
 }
 
 
@@ -558,6 +560,19 @@ void ProblemManager::generateMesh()
 }
 
 
+void ProblemManager::importFields()
+{
+  GEOSX_MARK_FUNCTION;
+  DomainPartition & domain = getDomainPartition();
+  MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
+
+  meshManager.forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
+  {
+    generator.importFields( domain );
+    generator.freeResources();
+  } );
+}
+
 void ProblemManager::applyNumericalMethods()
 {
 
@@ -569,6 +584,7 @@ void ProblemManager::applyNumericalMethods()
 
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
+
 
 map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
 {
@@ -691,7 +707,6 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     }
   }
 }
-
 
 bool ProblemManager::runSimulation()
 {

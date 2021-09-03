@@ -23,6 +23,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "dataRepository/Group.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -121,12 +122,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp]
                                       GEOSX_HOST_DEVICE ( localIndex const )
     {
-      GEOSX_UNUSED_VAR( phaseCompFrac )
-      GEOSX_UNUSED_VAR( dPhaseCompFrac_dPres )
-      GEOSX_UNUSED_VAR( dPhaseCompFrac_dComp )
-      GEOSX_UNUSED_VAR( phaseMassDens )
-      GEOSX_UNUSED_VAR( dPhaseMassDens_dPres )
-      GEOSX_UNUSED_VAR( dPhaseMassDens_dComp )
+      GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
+                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp );
     } );
   } );
 
@@ -139,16 +136,20 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
   elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
-  fluxApprox.forAllStencils( mesh, [&] ( auto const & stencil )
+  fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
   {
+    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+
     KernelLaunchSelector1< FluxKernel >( m_numComponents,
                                          m_numPhases,
-                                         stencil,
+                                         stencilWrapper,
                                          dofManager.rankOffset(),
                                          elemDofNumber.toNestedViewConst(),
                                          m_elemGhostRank.toNestedViewConst(),
                                          m_pressure.toNestedViewConst(),
                                          m_deltaPressure.toNestedViewConst(),
+                                         m_permeability.toNestedViewConst(),
+                                         m_dPerm_dPressure.toNestedViewConst(),
                                          m_gravCoef.toNestedViewConst(),
                                          m_phaseMob.toNestedViewConst(),
                                          m_dPhaseMob_dPres.toNestedViewConst(),
@@ -202,9 +203,9 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   } );
 
   // Step 2: compute the total volumetric outflux for each reservoir cell by looping over faces
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutfluxAccessor =
     mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >, arrayView2d< real64, compflow::USD_PHASE > >( viewKeyStruct::phaseOutfluxString() );
@@ -212,14 +213,20 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > const & compOutfluxAccessor =
     mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >, arrayView2d< real64, compflow::USD_COMP > >( viewKeyStruct::componentOutfluxString() );
 
-  fluxApprox.forAllStencils( mesh, [&] ( auto const & stencil )
+  fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
   {
+
+    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+
     KernelLaunchSelector1< CFLFluxKernel >( m_numComponents,
                                             m_numPhases,
                                             dt,
-                                            stencil,
+                                            stencilWrapper,
                                             m_pressure.toNestedViewConst(),
                                             m_gravCoef.toNestedViewConst(),
+                                            m_permeability.toNestedViewConst(),
+                                            m_dPerm_dPressure.toNestedViewConst(),
+                                            m_phaseVolFrac.toNestedViewConst(),
                                             m_phaseRelPerm.toNestedViewConst(),
                                             m_phaseVisc.toNestedViewConst(),
                                             m_phaseDens.toNestedViewConst(),
@@ -244,17 +251,13 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     arrayView1d< real64 > const & compCFLNumber = subRegion.getReference< array1d< real64 > >( viewKeyStruct::componentCFLNumberString() );
 
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & porosityRef =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
 
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
     arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() );
-
-    ConstitutiveBase const & solid = getConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
-    arrayView2d< real64 const > const & pvMult =
-      solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString() );
+    arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
 
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
@@ -263,15 +266,20 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
     arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
 
+    CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+
     real64 subRegionMaxPhaseCFLNumber = 0.0;
     real64 subRegionMaxCompCFLNumber = 0.0;
+
+    arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
+
     KernelLaunchSelector2< CFLKernel >( m_numComponents, m_numPhases,
                                         subRegion.size(),
                                         volume,
-                                        porosityRef,
-                                        pvMult,
+                                        porosity,
                                         compDens,
                                         compFrac,
+                                        phaseVolFrac,
                                         phaseRelPerm,
                                         dPhaseRelPerm_dPhaseVolFrac,
                                         phaseVisc,
@@ -306,13 +314,16 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
   {
     arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
     arrayView1d< real64 const > const & totalDensOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
+
+    CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+
+    arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
 
     real64 subRegionResidualNorm = 0.0;
     ResidualNormKernel::launch< parallelDevicePolicy<>,
@@ -321,7 +332,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
                                                         numFluidComponents(),
                                                         dofNumber,
                                                         elemGhostRank,
-                                                        refPoro,
+                                                        referencePorosity,
                                                         volume,
                                                         totalDensOld,
                                                         subRegionResidualNorm );
@@ -497,11 +508,6 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString() ) );
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
-
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
-  {
-    updateState( subRegion, targetIndex );
-  } );
 }
 
 void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const
@@ -522,6 +528,9 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIn
     dataGroup.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString() );
 
   // inputs
+
+  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
 
   arrayView2d< real64 const, compflow::USD_PHASE > const dPhaseVolFrac_dPres =
     dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
@@ -558,6 +567,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIn
                                                 dPhaseVisc_dComp,
                                                 phaseRelPerm,
                                                 dPhaseRelPerm_dPhaseVolFrac,
+                                                phaseVolFrac,
                                                 dPhaseVolFrac_dPres,
                                                 dPhaseVolFrac_dComp,
                                                 phaseMob,

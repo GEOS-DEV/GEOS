@@ -76,7 +76,7 @@ char const * xmlInput =
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
-  "    <CellElementRegion name=\"Region2\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, cappressure, rockPerm}\" />\n"
+  "    <CellElementRegion name=\"Region2\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, cappressure, rockPerm, rockPorosity, nullSolid}\" />\n"
   "  </ElementRegions>\n"
   "  <Constitutive>\n"
   "    <CompositionalMultiphaseFluid name=\"fluid1\"\n"
@@ -92,9 +92,15 @@ char const * xmlInput =
   "                                                          {0, 0, 0, 0},\n"
   "                                                          {0, 0, 0, 0},\n"
   "                                                          {0, 0, 0, 0} }\"/>\n"
-  "    <PoreVolumeCompressibleSolid name=\"rock\"\n"
-  "                                 referencePressure=\"0.0\"\n"
-  "                                 compressibility=\"1e-9\"/>\n"
+  "    <CompressibleSolidConstantPermeability name=\"rock\"\n"
+  "        solidModelName=\"nullSolid\"\n"
+  "        porosityModelName=\"rockPorosity\"\n"
+  "        permeabilityModelName=\"rockPerm\"/>\n"
+  "   <NullModel name=\"nullSolid\"/> \n"
+  "   <PressurePorosity name=\"rockPorosity\"\n"
+  "                     defaultReferencePorosity=\"0.05\"\n"
+  "                     referencePressure = \"0.0\"\n"
+  "                     compressibility=\"1.0e-9\"/>\n"
   "    <BrooksCoreyRelativePermeability name=\"relperm\"\n"
   "                                     phaseNames=\"{oil, gas}\"\n"
   "                                     phaseMinVolumeFraction=\"{0.1, 0.15}\"\n"
@@ -110,12 +116,6 @@ char const * xmlInput =
   "                        permeabilityComponents=\"{2.0e-16, 2.0e-16, 2.0e-16}\"/> \n"
   "  </Constitutive>\n"
   "  <FieldSpecifications>\n"
-  "    <FieldSpecification name=\"referencePorosity\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region2/cb1\"\n"
-  "               fieldName=\"referencePorosity\"\n"
-  "               scale=\"0.05\"/>\n"
   "    <FieldSpecification name=\"initialPressure\"\n"
   "               initialCondition=\"1\"\n"
   "               setNames=\"{all}\"\n"
@@ -295,7 +295,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -327,7 +327,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -408,7 +408,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -440,7 +440,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -542,7 +542,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateState( subRegion2, targetIndex2 );
+          solver.updateFluidState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();
@@ -567,7 +567,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateState( subRegion2, targetIndex2 );
+          solver.updateFluidState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();

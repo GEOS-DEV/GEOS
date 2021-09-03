@@ -24,6 +24,7 @@
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -269,8 +270,8 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     SingleFluidBase const & fluid =
       getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
-    arrayView2d< real64 const > const & permeability =
-      getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] ).permeability();
+    PermeabilityBase const & permeabilityModel =
+      getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
 
     mimeticInnerProductDispatch( mimeticInnerProductBase,
                                  [&] ( auto const mimeticInnerProduct )
@@ -282,6 +283,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                                    esr,
                                                    subRegion,
                                                    fluid,
+                                                   permeabilityModel,
                                                    m_regionFilter.toViewConst(),
                                                    nodePosition,
                                                    elemRegionList,
@@ -292,7 +294,6 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                                    faceGhostRank,
                                                    facePres,
                                                    dFacePres,
-                                                   permeability,
                                                    faceGravCoef,
                                                    transMultiplier,
                                                    m_mobility.toNestedViewConst(),
@@ -305,6 +306,43 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                                    localRhs );
     } );
   } );
+}
+
+void SinglePhaseHybridFVM::assemblePoroelasticFluxTerms( real64 const time_n,
+                                                         real64 const dt,
+                                                         DomainPartition const & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         arrayView1d< real64 > const & localRhs,
+                                                         string const & jumpDofKey )
+{
+  GEOSX_UNUSED_VAR ( jumpDofKey );
+
+  assembleFluxTerms( time_n,
+                     dt,
+                     domain,
+                     dofManager,
+                     localMatrix,
+                     localRhs );
+}
+
+void SinglePhaseHybridFVM::assembleHydrofracFluxTerms( real64 const time_n,
+                                                       real64 const dt,
+                                                       DomainPartition const & domain,
+                                                       DofManager const & dofManager,
+                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                       arrayView1d< real64 > const & localRhs,
+                                                       CRSMatrixView< real64, localIndex const > const & dR_dAper )
+{
+  GEOSX_UNUSED_VAR ( time_n );
+  GEOSX_UNUSED_VAR ( dt );
+  GEOSX_UNUSED_VAR ( domain );
+  GEOSX_UNUSED_VAR ( dofManager );
+  GEOSX_UNUSED_VAR ( localMatrix );
+  GEOSX_UNUSED_VAR ( localRhs );
+  GEOSX_UNUSED_VAR ( dR_dAper );
+
+  GEOSX_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
 }
 
 void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
@@ -349,24 +387,30 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
   localIndex subRegionCounter = 0;
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                  ElementSubRegionBase const & subRegion )
+                                  auto const & subRegion )
   {
 
-    arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
+    arrayView1d< globalIndex const > const & elemDofNumber = subRegion.template getReference< array1d< globalIndex > >( elemDofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-    arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
+    arrayView1d< real64 const > const & densOld = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
 
-    SinglePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                                        parallelDeviceReduce >( localRhs,
-                                                                                rankOffset,
-                                                                                elemDofNumber,
-                                                                                elemGhostRank,
-                                                                                refPoro,
-                                                                                volume,
-                                                                                densOld,
-                                                                                localResidualNorm );
+    ConstitutiveBase const & solidModel = subRegion.template getConstitutiveModel< ConstitutiveBase >( m_solidModelNames[targetIndex] );
+
+    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &localResidualNorm] ( auto & castedSolidModel )
+    {
+      arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
+
+      SinglePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
+                                                          parallelDeviceReduce >( localRhs,
+                                                                                  rankOffset,
+                                                                                  elemDofNumber,
+                                                                                  elemGhostRank,
+                                                                                  volume,
+                                                                                  densOld,
+                                                                                  porosityOld,
+                                                                                  localResidualNorm );
+    } );
 
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     defaultViscosity += fluid.defaultViscosity();
@@ -523,12 +567,6 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString() ) );
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
-
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                  ElementSubRegionBase & subRegion )
-  {
-    updateState( subRegion, targetIndex );
-  } );
 }
 
 

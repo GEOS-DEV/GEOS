@@ -6,7 +6,7 @@ Tutorial 7: An elastic beam
 
 **Context**
 
-In this tutorial, we use a a small strain linear elastic based solid mechanics solver 
+In this tutorial, we use a small strain linear elastic based solid mechanics solver 
 (see :ref:`SolidMechanicsLagrangianFEM`) from GEOSX to solve for the bending problem of
 a three-dimensional cantilever beam. The beam is fixed at one end, and subjects to a traction force pointing to the y-positive direction on the other end. The beam is deformed in the x-y plane.
 

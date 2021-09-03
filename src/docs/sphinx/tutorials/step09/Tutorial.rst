@@ -6,7 +6,7 @@ Tutorial 9: Hydraulic Fracturing
 
 **Context**
 
-In this tutorial, we use a fully coupled hydrofracture solver from GEOSX to solve for the propagation of a single fracture within a reservoir with hetrogeneous in-situ properties.
+In this tutorial, we use a fully coupled hydrofracture solver from GEOSX to solve for the propagation of a single fracture within a reservoir with heterogeneous in-situ properties.
 Advanced xml features will be used throughout the example.
 
 **Objectives**
@@ -81,9 +81,9 @@ Parameters can be used throughout the input file (or an included input file) by 
 Barring any circular-definition errors, parameters can be used within other parameters.
 For example, see the parameter ``mu_upscaled``.
 The value of this parameter is a symbolic expression, which is denoted by the surrounding back-ticks, and is dependent upon two other parameters.
-During pre-processing, geosx_xml_tools will subsititue in the parameter definitions, and evaluate the symbolic expression using a python-derived syntax.
+During pre-processing, geosx_xml_tools will substitute the parameter definitions, and evaluate the symbolic expression using a python-derived syntax.
 
-A number of the input parameters include optional unit definitions, which are denoted by the square brackets follwing a value.
+A number of the input parameters include optional unit definitions, which are denoted by the square brackets following a value.
 For example, the parameter ``t_max`` is used to set the maximum time for the simulation to 20 minutes.
 
 
@@ -111,7 +111,7 @@ Geometry: defining a fracture nodeset
 --------------------------------------------------------------
 
 For this example, we want to propagate a single hydraulic fracture along the y=0 plane.
-To acheive this, we need to define three nodesets:
+To achieve this, we need to define three nodesets:
 
 - source_a: The location where we want to inject fluid.  Typically, we want this to be a single face in the x-z plane.
 - perf_a: This is the initial fracture for the simulation.  This nodeset needs to be at least two-faces wide in the x-z plane (to represent the fracture at least one internal node needs to be open).
@@ -130,7 +130,7 @@ The boundary conditions for this problem are defined in the case-specific and th
 The case specific block includes four instructions:
 
 - frac: this marks the initial perforation.
-- separableFace: this marks the set of faces that are allowed to break during the simualtion.
+- separableFace: this marks the set of faces that are allowed to break during the simulation.
 - waterDensity: this initializes the fluid in the perforation.
 - sourceTerm: this instructs the code to inject fluid into the source_a nodeset.  Note the usage of the symbolic expression and parameters in the scale.  This boundary condition is also driven by a function, which we will define later. 
 
@@ -143,7 +143,7 @@ The case specific block includes four instructions:
 The base block includes instructions to set the initial in-situ properties and stresses.
 It is also used to specify the external mechanical boundaries on the system.
 In this example, we are using roller-boundary conditions (zero normal-displacement).
-Depending upon how close they are to the fracture, they can significantly effect its growth.
+Depending upon how close they are to the fracture, they can significantly affect its growth.
 Therefore, it is important to test whether the size of the model is large enough to avoid this.
 
 .. literalinclude:: ../../../../../examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_base.xml
@@ -161,7 +161,7 @@ Note that the ``gravityVector`` attribute indicates that we are applying gravity
 Similar to other coupled physics solver, the Hydrofracture solver is specified in three parts:
 
 - Hydrofracture: this is the primary solver, which will be called by the event manager.  Two of its key attributes are the names of the dependent solid and fluid solvers.
-- SolidMechanicsLagrangianSSLE: this is the solid mechancis solver.
+- SolidMechanicsLagrangianSSLE: this is the solid mechanics solver.
 - SinglePhaseFVM: this is the fluid solver.
 
 The final solver present in this example is the SurfaceGenerator, which manages how faces in the model break.
@@ -187,7 +187,7 @@ Other key events in this problem include:
 
 - preFracture: this calls the surface generator at the beginning of the problem and helps to initialize the fracture.
 - outputs: this produces output silo files.
-- restarts: this is a HaltEvent, which tracks the external clock.  When the runtime exceeds the spefified value (here $t_allocation$=28 minutes), the code will call the target (which writes a restart file) and instruct the code to exit.
+- restarts: this is a HaltEvent, which tracks the external clock.  When the runtime exceeds the specified value (here $t_allocation$=28 minutes), the code will call the target (which writes a restart file) and instruct the code to exit.
 
 
 .. literalinclude:: ../../../../../examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_base.xml
@@ -215,7 +215,7 @@ And a single voxelFile:
 .. literalinclude:: ../../../../../examples/hydraulicFracturing/heterogeneousInSituProperties/tables/flowRate.csv
   :language: none
 
-Given the specified linear interpoation method, these values define a simple trapezoidal-function.
+Given the specified linear interpolation method, these values define a simple trapezoidal function.
 Note: since this is a 1D table, these values could alternately be given within the xml file using the ``coordinates`` and ``values`` attributes.
 
 
@@ -295,6 +295,6 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
   - More on advanced xml features, please see :ref:`advanced_xml_features`.
   - More on functions, please see :ref:`FunctionManager`.
-  - More on biased meshes, plase see :ref:`Mesh_bias`.
+  - More on biased meshes, please see :ref:`Mesh_bias`.
 
 

@@ -1,7 +1,8 @@
 #include "ProjectionEDFMHelper.hpp"
 #include <limits>  // numeric_limits
 
-namespace geosx {
+namespace geosx
+{
 
 using std::ref;
 

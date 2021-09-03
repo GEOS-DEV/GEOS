@@ -99,7 +99,7 @@ public:
    */
   constexpr localIndex stencilSize( localIndex const index ) const
   {
-    GEOSX_UNUSED_VAR( index )
+    GEOSX_UNUSED_VAR( index );
     return MAX_STENCIL_SIZE;
   }
 

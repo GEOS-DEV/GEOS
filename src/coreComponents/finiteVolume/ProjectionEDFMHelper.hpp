@@ -4,10 +4,13 @@
 #include "finiteVolume/FluxApproximationBase.hpp"  // FIXME: include appropriate explicitly
 #include <list>                                  // provides std::vector
 
-namespace geosx {
+namespace geosx
+{
 
-class ProjectionEDFMHelper {
+class ProjectionEDFMHelper
+{
  public:
+
   ProjectionEDFMHelper( MeshLevel const & mesh,
                         GeometricObjectManager const & geometricObjManager,
                         std::string const & coeffName,
@@ -19,6 +22,7 @@ class ProjectionEDFMHelper {
   virtual ~ProjectionEDFMHelper() = default;
 
  private:
+
   // select cell faces that will host non-neighboring fracture-matrix connections
   std::list<localIndex> selectFaces(FixedOneToManyRelation const & subRegionFaces,
                                       CellDescriptor const & hostCellID,
@@ -86,6 +90,7 @@ class ProjectionEDFMHelper {
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_cellCenters;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_permTensor;
   CellElementStencilTPFA & m_stencil;
+
 };
 
 }  // end namespace geosx
