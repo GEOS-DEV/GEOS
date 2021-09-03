@@ -91,7 +91,6 @@ public:
   using BASE::m_dDens_dPres;
   using BASE::m_viscosity;
   using BASE::m_dVisc_dPres;
-  using BASE::m_transTMultiplier;
 
   /**
    * @brief main constructor for Group Objects

@@ -16,12 +16,12 @@
  * @file ProppantTransportKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORTKERNELS_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORTKERNELS_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORTKERNELS_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORTKERNELS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "physicsSolvers/fluidFlow/ProppantTransport.hpp"
+#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransport.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -156,7 +156,7 @@ struct AccumulationKernel
           arrayView3d< real64 const > const & dCompDens_dPres,
           arrayView4d< real64 const > const & dCompDens_dCompConc,
           arrayView1d< real64 const > const & volume,
-          arrayView1d< real64 const > const & proppantPackVf,
+          arrayView1d< real64 const > const & proppantPackVolFrac,
           arrayView1d< real64 const > const & proppantLiftFlux,
           real64 const dt,
           real64 const maxProppantConcentration,
@@ -181,17 +181,11 @@ struct FluxKernel
   template< typename VIEWTYPE >
   using ElementView = typename ElementRegionManager::ElementView< VIEWTYPE >;
 
-  /**
-   * @brief launches the kernel to assemble the flux contributions to the linear system.
-   * @tparam STENCIL_TYPE The type of the stencil that is being used.
-   */
-  template< typename STENCIL_TYPE >
   static void
-  launch( STENCIL_TYPE const & stencil,
+  launch( SurfaceElementStencilWrapper const & stencilWrapper,
           localIndex const numDofPerCell,
           real64 const dt,
           globalIndex const rankOffset,
-          ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
           integer const updateProppantPacking,
           R1Tensor const & unitGravityVector,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
@@ -222,23 +216,22 @@ struct FluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & collisionFactor,
           ElementViewConst< arrayView1d< real64 const > > const & dCollisionFactor_dProppantConc,
           ElementViewConst< arrayView1d< integer const > > const & isProppantMobile,
-          ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf,
+          ElementViewConst< arrayView3d< real64 const > > const & permeability,
+          ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
           ElementViewConst< arrayView1d< real64 const > > const & aperture,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
-
-  template< typename STENCIL_TYPE >
   static void
-  launchCellBasedFluxCalculation( STENCIL_TYPE const & stencil,
-                                  ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
+  launchCellBasedFluxCalculation( SurfaceElementStencilWrapper const & stencilWrapper,
                                   R1Tensor const & unitGravityVector,
                                   ElementViewConst< arrayView1d< real64 const > > const & pres,
                                   ElementViewConst< arrayView1d< real64 const > > const & gravDepth,
                                   ElementViewConst< arrayView2d< real64 const > > const & dens,
                                   ElementViewConst< arrayView2d< real64 const > > const & visc,
+                                  ElementViewConst< arrayView3d< real64 const > > const & permeability,
+                                  ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
                                   ElementViewConst< arrayView1d< real64 const > > const & aperture,
-                                  ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf,
                                   ElementView< arrayView2d< real64 > > const & cellBasedFlux );
 
   /**
@@ -247,14 +240,13 @@ struct FluxKernel
    * This is a specialized version that flux in a single region, and uses
    * element pairing instead of a proper junction.
    */
+  template< localIndex MAX_NUM_FLUX_ELEMS >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
   computeJunction( localIndex const numElems,
                    localIndex const numDofPerCell,
                    arraySlice1d< localIndex const > const & stencilElementIndices,
-                   arraySlice1d< real64 const > const & stencilWeights,
-                   arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
                    arrayView1d< real64 const > const & pres,
                    arrayView1d< real64 const > const & dPres,
                    arrayView1d< real64 const > const & proppantConc,
@@ -281,29 +273,28 @@ struct FluxKernel
                    arrayView1d< real64 const > const & collisionFactor,
                    arrayView1d< real64 const > const & dCollisionFactor_dProppantConc,
                    arrayView1d< integer const > const & isProppantMobile,
-                   arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
-                   arrayView1d< real64 const > const & aperture,
-                   R1Tensor const & unitGravityVector,
-                   arrayView2d< real64 const > const & transTMultiplier,
+                   real64 const (&transmissibility)[MAX_NUM_FLUX_ELEMS],
+                   real64 const (&apertureWeight)[MAX_NUM_FLUX_ELEMS],
+                   real64 const (&geometricWeight)[MAX_NUM_FLUX_ELEMS],
                    real64 const dt,
                    arraySlice1d< real64 > const & localFlux,
                    arraySlice2d< real64 > const & localFluxJacobian );
 
+
+  template< localIndex MAX_NUM_FLUX_ELEMS >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
   computeCellBasedFlux( localIndex const numElems,
                         arraySlice1d< localIndex const > const & stencilElementIndices,
-                        arraySlice1d< real64 const > const & stencilWeights,
-                        arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
-                        arrayView2d< real64 const > const & transMultiplier,
-                        R1Tensor const & unitGravityVector,
                         arrayView1d< real64 const > const & pres,
                         arrayView1d< real64 const > const & gravDepth,
                         arrayView2d< real64 const > const & dens,
                         arrayView2d< real64 const > const & visc,
-                        arrayView1d< real64 const > const & aperture,
-                        arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
+                        arraySlice1d< R1Tensor const > const & cellCenterToEdgeCenters,
+                        real64 const (&transmissibility)[MAX_NUM_FLUX_ELEMS],
+                        real64 const (&apertureWeight)[MAX_NUM_FLUX_ELEMS],
+                        real64 const (&geometricWeight)[MAX_NUM_FLUX_ELEMS],
                         arrayView2d< real64 > const & cellBasedFlux );
 };
 
@@ -316,9 +307,8 @@ struct ProppantPackVolumeKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< typename STENCIL_TYPE >
   static void
-  launchProppantPackVolumeCalculation( STENCIL_TYPE const & stencil,
+  launchProppantPackVolumeCalculation( SurfaceElementStencil const & stencil,
                                        real64 const dt,
                                        real64 const proppantDensity,
                                        real64 const proppantDiameter,
@@ -337,19 +327,18 @@ struct ProppantPackVolumeKernel
                                        ElementView< arrayView1d< integer const > > const & elemGhostRank,
                                        ElementView< arrayView2d< real64 const > > const & cellBasedFlux,
                                        ElementView< arrayView1d< real64 > > const & conc,
-                                       ElementView< arrayView1d< real64 > > const & proppantPackVf,
-                                       ElementView< arrayView1d< real64 > > const & proppantExcessPackV,
+                                       ElementView< arrayView1d< real64 > > const & proppantPackVolFrac,
+                                       ElementView< arrayView1d< real64 > > const & proppantExcessPackVolume,
                                        ElementView< arrayView1d< real64 > > const & proppantLiftFlux );
 
-  template< typename STENCIL_TYPE >
   static void
-  launchProppantPackVolumeUpdate( STENCIL_TYPE const & stencil,
+  launchProppantPackVolumeUpdate( SurfaceElementStencil const & stencil,
                                   R1Tensor const & unitGravityVector,
                                   real64 const maxProppantConcentration,
                                   ElementView< arrayView1d< integer const > > const & isProppantMobile,
-                                  ElementView< arrayView1d< real64 const > > const & proppantExcessPackV,
+                                  ElementView< arrayView1d< real64 const > > const & proppantExcessPackVolume,
                                   ElementView< arrayView1d< real64 > > const & conc,
-                                  ElementView< arrayView1d< real64 > > const & proppantPackVf );
+                                  ElementView< arrayView1d< real64 > > const & proppantPackVolFrac );
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -376,8 +365,8 @@ struct ProppantPackVolumeKernel
                              arrayView1d< integer const > const & isProppantMobile,
                              arrayView2d< real64 const > const & cellBasedFlux,
                              arrayView1d< real64 > const & conc,
-                             arrayView1d< real64 > const & proppantPackVf,
-                             arrayView1d< real64 > const & proppantExcessPackV,
+                             arrayView1d< real64 > const & proppantPackVolFrac,
+                             arrayView1d< real64 > const & proppantExcessPackVolume,
                              arrayView1d< real64 > const & proppantLiftFlux );
 
   GEOSX_HOST_DEVICE
@@ -390,13 +379,13 @@ struct ProppantPackVolumeKernel
                             R1Tensor const & unitGravityVector,
                             real64 const maxProppantConcentration,
                             arrayView1d< integer const > const & isProppantMobile,
-                            arrayView1d< real64 const > const & proppantExcessPackV,
+                            arrayView1d< real64 const > const & proppantExcessPackVolume,
                             arrayView1d< real64 > const & conc,
-                            arrayView1d< real64 > const & proppantPackVf );
+                            arrayView1d< real64 > const & proppantPackVolFrac );
 };
 
 } // namespace ProppantTransportKernels
 
 } // namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORTKERNELS_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORTKERNELS_HPP_

@@ -596,11 +596,32 @@ Element: Problem
 .. include:: ../../coreComponents/schema/docs/Problem.rst
 
 
+.. _XML_ProppantPermeability:
+
+Element: ProppantPermeability
+=============================
+.. include:: ../../coreComponents/schema/docs/ProppantPermeability.rst
+
+
+.. _XML_ProppantPorosity:
+
+Element: ProppantPorosity
+=========================
+.. include:: ../../coreComponents/schema/docs/ProppantPorosity.rst
+
+
 .. _XML_ProppantSlurryFluid:
 
 Element: ProppantSlurryFluid
 ============================
 .. include:: ../../coreComponents/schema/docs/ProppantSlurryFluid.rst
+
+
+.. _XML_ProppantSolidProppantPermeability:
+
+Element: ProppantSolidProppantPermeability
+==========================================
+.. include:: ../../coreComponents/schema/docs/ProppantSolidProppantPermeability.rst
 
 
 .. _XML_ProppantTransport:
@@ -1482,11 +1503,32 @@ Datastructure: Problem
 .. include:: ../../coreComponents/schema/docs/Problem_other.rst
 
 
+.. _DATASTRUCTURE_ProppantPermeability:
+
+Datastructure: ProppantPermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/ProppantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ProppantPorosity:
+
+Datastructure: ProppantPorosity
+===============================
+.. include:: ../../coreComponents/schema/docs/ProppantPorosity_other.rst
+
+
 .. _DATASTRUCTURE_ProppantSlurryFluid:
 
 Datastructure: ProppantSlurryFluid
 ==================================
 .. include:: ../../coreComponents/schema/docs/ProppantSlurryFluid_other.rst
+
+
+.. _DATASTRUCTURE_ProppantSolidProppantPermeability:
+
+Datastructure: ProppantSolidProppantPermeability
+================================================
+.. include:: ../../coreComponents/schema/docs/ProppantSolidProppantPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ProppantTransport:

@@ -37,6 +37,9 @@
 #include "permeability/CarmanKozenyPermeability.hpp"
 #include "permeability/ParallelPlatesPermeability.hpp"
 
+#include "solid/ProppantSolid.hpp"
+#include "solid/porosity/ProppantPorosity.hpp"
+#include "permeability/ProppantPermeability.hpp"
 
 namespace geosx
 {
@@ -166,6 +169,29 @@ struct ConstitutivePassThru< CompressibleSolidBase >
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
                                                                                                                std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
+ * Specialization for the ProppantModel.
+ */
+template<>
+struct ConstitutivePassThru< ProppantSolid< ProppantPorosity, ProppantPermeability > >
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    if( auto * const ptr = dynamic_cast< ProppantSolid< ProppantPorosity, ProppantPermeability > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr );
+    }
+    else
+    {
+      GEOSX_ERROR( "ConstitutivePassThru< ProppantSolid >::execute failed. The constitutive relation is named "
+                   << constitutiveRelation.getName() << " with type "
+                   << LvArray::system::demangleType( constitutiveRelation ) );
+    }
   }
 };
 

@@ -16,11 +16,11 @@
  * @file ProppantTransport.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
 
-#include <constitutive/fluid/ParticleFluidBase.hpp>
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "constitutive/fluid/ParticleFluidBase.hpp"
 #include "constitutive/fluid/SlurryFluidBase.hpp"
 
 namespace geosx
@@ -80,12 +80,6 @@ public:
   virtual void initializePreSubGroups() override;
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
-
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              integer const cycleNumber,
-              DomainPartition & domain ) override;
 
   void preStepUpdate( real64 const & time_n,
                       real64 const & dt,
@@ -211,8 +205,6 @@ public:
     static constexpr char const * proppantExcessPackVolumeString() { return "proppantExcessPackVolume"; }
     static constexpr char const * proppantLiftFluxString() { return "proppantLiftFlux"; }
 
-    static constexpr char const * poroMultiplierString() { return "poroMultiplier"; }
-    static constexpr char const * transTMultiplierString() { return "transTMultiplier"; }
     static constexpr char const * bridgingFactorString() { return "bridgingFactor"; }
 
     static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
@@ -281,7 +273,6 @@ private:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_proppantPackVolumeFraction;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_proppantExcessPackVolume;
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_isProppantBoundaryElement;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_transTMultiplier;
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_isProppantMobile;
 
   /// views into material fields
@@ -314,12 +305,14 @@ private:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_collisionFactor;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dCollisionFactor_dProppantConcentration;
 
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_permeability;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_permeabilityMultiplier;
+
   array1d< string > m_proppantModelNames;
 
   integer m_numComponents;
 
   integer m_updateProppantPacking;
-  real64 m_proppantPackPermeability;
   real64 m_bridgingFactor;
   real64 m_minAperture;
   real64 m_maxProppantConcentration;
@@ -332,4 +325,4 @@ private:
 
 } /* namespace geosx */
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_
