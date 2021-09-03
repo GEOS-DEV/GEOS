@@ -43,7 +43,7 @@ Solvers: setup the mechanics solver
 
 As fluid flow is not considered, only the solid mechanics ``SolidMechanicsLagrangianSSLE`` solver is required for solving this linear elastic problem. In this solver, the three regions and three materials associated to casing, cement sheath and rock are respectively defined by ``targetRegions`` and ``solidMaterialNames``.  
 
-.. literalinclude:: src/coreComponents/physicsSolvers/solidMechanics/benchmarks/CasedElasticWellbore.xml
+.. literalinclude:: ../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/CasedElasticWellbore.xml
   :language: xml
   :start-after: <!-- SPHINX_SolidMechanicsSolver -->
   :end-before: <!-- SPHINX_SolidMechanicsSolverEnd -->
