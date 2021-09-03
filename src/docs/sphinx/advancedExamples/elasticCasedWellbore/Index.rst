@@ -17,7 +17,7 @@ Analytical results of the radial and hoop stresses, :math:`\sigma_{rr}` and :mat
    \sigma_{rr} = ( 2.0 * \lambda + 2.0 * G ) * A - \frac{2.0 * G * B}{r^2}
    \sigma_{\theta\theta} = ( 2.0 * \lambda + 2.0 * G ) * A + \frac{2.0 * G * B}{r^2}
 
-where :math:`\lambda` and :math:`G` are the Lamé moduli, :math:`r` is the radial coordinate, :math:`A` and :math:`B` are piecewise constants that can be obtained by solving the boundary and interface conditions as detailed in the benchmark script.
+where :math:`\lambda` and :math:`G` are the Lamé moduli, :math:`r` is the radial coordinate, :math:`A` and :math:`B` are piecewise constants that are obtained by solving the boundary and interface conditions, as detailed in the postprocessing script.
 
 
 **Input file**
