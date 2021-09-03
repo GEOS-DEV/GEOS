@@ -21,7 +21,6 @@
 #include "DamageVolDev.hpp"
 
 #include "ElasticIsotropic.hpp"
-#include "ElasticTransverseIsotropic.hpp"
 
 namespace geosx
 {

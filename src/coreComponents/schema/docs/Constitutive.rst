@@ -26,6 +26,7 @@ DamageVolDevElasticIsotropic                            node         :ref:`XML_D
 DeadOilFluid                                            node         :ref:`XML_DeadOilFluid`                                            
 DruckerPrager                                           node         :ref:`XML_DruckerPrager`                                           
 ElasticIsotropic                                        node         :ref:`XML_ElasticIsotropic`                                        
+ElasticOrthotropic                                      node         :ref:`XML_ElasticOrthotropic`                                      
 ElasticTransverseIsotropic                              node         :ref:`XML_ElasticTransverseIsotropic`                              
 ExtendedDruckerPrager                                   node         :ref:`XML_ExtendedDruckerPrager`                                   
 NullModel                                               node         :ref:`XML_NullModel`                                               
@@ -34,6 +35,7 @@ ParticleFluid                                           node         :ref:`XML_P
 PermeabilityBase                                        node         :ref:`XML_PermeabilityBase`                                        
 PorousDruckerPrager                                     node         :ref:`XML_PorousDruckerPrager`                                     
 PorousElasticIsotropic                                  node         :ref:`XML_PorousElasticIsotropic`                                  
+PorousElasticOrthotropic                                node         :ref:`XML_PorousElasticOrthotropic`                                
 PorousElasticTransverseIsotropic                        node         :ref:`XML_PorousElasticTransverseIsotropic`                        
 PorousExtendedDruckerPrager                             node         :ref:`XML_PorousExtendedDruckerPrager`                             
 PressurePorosity                                        node         :ref:`XML_PressurePorosity`                                        
