@@ -24,6 +24,7 @@ DamageVolDevElasticIsotropic                node :ref:`DATASTRUCTURE_DamageVolDe
 DeadOilFluid                                node :ref:`DATASTRUCTURE_DeadOilFluid`                                
 DruckerPrager                               node :ref:`DATASTRUCTURE_DruckerPrager`                               
 ElasticIsotropic                            node :ref:`DATASTRUCTURE_ElasticIsotropic`                            
+ElasticOrthotropic                          node :ref:`DATASTRUCTURE_ElasticOrthotropic`                          
 ElasticTransverseIsotropic                  node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`                  
 ExtendedDruckerPrager                       node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                       
 NullModel                                   node :ref:`DATASTRUCTURE_NullModel`                                   
@@ -32,6 +33,7 @@ ParticleFluid                               node :ref:`DATASTRUCTURE_ParticleFlu
 PermeabilityBase                            node :ref:`DATASTRUCTURE_PermeabilityBase`                            
 PorousDruckerPrager                         node :ref:`DATASTRUCTURE_PorousDruckerPrager`                         
 PorousElasticIsotropic                      node :ref:`DATASTRUCTURE_PorousElasticIsotropic`                      
+PorousElasticOrthotropic                    node :ref:`DATASTRUCTURE_PorousElasticOrthotropic`                    
 PorousElasticTransverseIsotropic            node :ref:`DATASTRUCTURE_PorousElasticTransverseIsotropic`            
 PorousExtendedDruckerPrager                 node :ref:`DATASTRUCTURE_PorousExtendedDruckerPrager`                 
 PressurePorosity                            node :ref:`DATASTRUCTURE_PressurePorosity`                            

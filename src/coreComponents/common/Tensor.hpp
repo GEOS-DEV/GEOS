@@ -117,7 +117,7 @@ public:
   GEOSX_FORCE_INLINE
   constexpr int size( int junk ) const
   {
-    GEOSX_UNUSED_VAR( junk )
+    GEOSX_UNUSED_VAR( junk );
     return SIZE;
   }
 

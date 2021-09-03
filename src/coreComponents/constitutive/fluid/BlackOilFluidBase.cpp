@@ -29,23 +29,23 @@ namespace constitutive
 namespace
 {
 
-static std::unordered_map< string, integer > const phaseDict =
+integer toPhaseType( string const & lookup, string const & groupName )
 {
-  { "gas", BlackOilFluidBase::PhaseType::GAS   },
-  { "oil", BlackOilFluidBase::PhaseType::OIL   },
-  { "water", BlackOilFluidBase::PhaseType::WATER }
-};
-
+  static unordered_map< string, integer > const phaseDict =
+  {
+    { "gas", BlackOilFluidBase::PhaseType::GAS },
+    { "oil", BlackOilFluidBase::PhaseType::OIL },
+    { "water", BlackOilFluidBase::PhaseType::WATER }
+  };
+  return findOption( phaseDict, lookup, BlackOilFluidBase::viewKeyStruct::phaseNamesString(), groupName );
 }
+
+} // namespace
 
 BlackOilFluidBase::BlackOilFluidBase( string const & name,
                                       Group * const parent )
   :
-  MultiFluidBase( name, parent ),
-  m_waterRefPressure( 0.0 ),
-  m_waterFormationVolFactor( 0.0 ),
-  m_waterCompressibility( 0.0 ),
-  m_waterViscosity( 0.0 )
+  MultiFluidBase( name, parent )
 {
   getWrapperBase( viewKeyStruct::componentMolarWeightString() ).setInputFlag( InputFlags::REQUIRED );
   getWrapperBase( viewKeyStruct::phaseNamesString() ).setInputFlag( InputFlags::REQUIRED );
@@ -74,97 +74,96 @@ BlackOilFluidBase::BlackOilFluidBase( string const & name,
     setDescription( "List of viscosity TableFunction names from the Functions block. \n"
                     "The user must provide one TableFunction per hydrocarbon phase, in the order provided in \"phaseNames\". \n"
                     "For instance, if \"oil\" is before \"gas\" in \"phaseNames\", the table order should be: oilTableName, gasTableName" );
-  registerWrapper( viewKeyStruct::waterRefPressureString(), &m_waterRefPressure ).
+  registerWrapper( viewKeyStruct::waterRefPressureString(), &m_waterParams.referencePressure ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Water reference pressure" );
-  registerWrapper( viewKeyStruct::waterFormationVolumeFactorString(), &m_waterFormationVolFactor ).
+  registerWrapper( viewKeyStruct::waterFormationVolumeFactorString(), &m_waterParams.formationVolFactor ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Water formation volume factor" );
-  registerWrapper( viewKeyStruct::waterCompressibilityString(), &m_waterCompressibility ).
+  registerWrapper( viewKeyStruct::waterCompressibilityString(), &m_waterParams.compressibility ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Water compressibility" );
-  registerWrapper( viewKeyStruct::waterViscosityString(), &m_waterViscosity ).
+  registerWrapper( viewKeyStruct::waterViscosityString(), &m_waterParams.viscosity ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Water viscosity" );
+
+  // Register extra wrappers to enable auto-cloning
+  registerWrapper( "phaseTypes", &m_phaseTypes )
+    .setSizedFromParent( 0 )
+    .setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( "phaseOrder", &m_phaseOrder )
+    .setSizedFromParent( 0 )
+    .setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( "hydrocarbonPhaseOrder", &m_hydrocarbonPhaseOrder )
+    .setSizedFromParent( 0 )
+    .setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( "formationVolFactorTableWrappers", &m_formationVolFactorTables )
+    .setSizedFromParent( 0 )
+    .setRestartFlags( RestartFlags::NO_WRITE );
+  registerWrapper( "viscosityTableWrappers", &m_viscosityTables )
+    .setSizedFromParent( 0 )
+    .setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 void BlackOilFluidBase::fillWaterData( array1d< array1d< real64 > > const & tableValues )
 {
-  GEOSX_THROW_IF( tableValues.size() != 1,
-                  "In the Black/DeadOilFluid model named " << getName() << ": the water table must contain one line and only one",
-                  InputError );
-  GEOSX_THROW_IF( tableValues[0].size() != 4,
-                  "In the Black/DeadOilFluid model named " << getName() << ": four columns (pressure, formation volume factor, compressibility, and viscosity) are expected for water",
+  GEOSX_THROW_IF_NE_MSG( tableValues.size(), 1,
+                         getFullName() << ": the water table must contain one line and only one",
+                         InputError );
+  GEOSX_THROW_IF_NE_MSG( tableValues[0].size(), 4,
+                         getFullName() << ": four columns (pressure, formation volume factor, compressibility, and viscosity) are expected for water",
+                         InputError );
+
+  GEOSX_THROW_IF( m_waterParams.referencePressure > 0.0 || m_waterParams.formationVolFactor > 0.0 ||
+                  m_waterParams.compressibility > 0.0 || m_waterParams.viscosity > 0.0,
+                  getFullName() << ": input is redundant (user provided both water data and a water pvt file)",
                   InputError );
 
-  GEOSX_THROW_IF( m_waterRefPressure > 0.0 || m_waterFormationVolFactor > 0.0
-                  || m_waterCompressibility > 0.0 || m_waterViscosity > 0.0,
-                  "In the Black/DeadOilFluid model named " << getName() << ": input is redundant (user provided both water data and a water pvt file)",
-                  InputError );
+  m_waterParams.referencePressure = tableValues[0][0];
+  m_waterParams.formationVolFactor = tableValues[0][1];
+  m_waterParams.compressibility = tableValues[0][2];
+  m_waterParams.viscosity = tableValues[0][3];
 
-  m_waterRefPressure = tableValues[0][0];
-  m_waterFormationVolFactor = tableValues[0][1];
-  m_waterCompressibility = tableValues[0][2];
-  m_waterViscosity = tableValues[0][3];
-
-  GEOSX_THROW_IF( m_waterRefPressure <= 0.0,
-                  "In the Black/DeadOilFluid model named " << getName() << ": a strictly positive value must be provided for: "
-                                                           << viewKeyStruct::waterRefPressureString(),
-                  InputError );
-  GEOSX_THROW_IF( m_waterFormationVolFactor <= 0.0,
-                  "In the Black/DeadOilFluid model named " << getName() << ": a strictly positive value must be provided for: "
-                                                           << viewKeyStruct::waterFormationVolumeFactorString(),
-                  InputError );
-  GEOSX_THROW_IF( m_waterCompressibility <= 0.0,
-                  "In the Black/DeadOilFluid model named " << getName() << ": a strictly positive value must be provided for: "
-                                                           << viewKeyStruct::waterCompressibilityString(),
-                  InputError );
-  GEOSX_THROW_IF( m_waterViscosity <= 0.0,
-                  "In the Black/DeadOilFluid model named " << getName() << ": a strictly positive value must be provided for: "
-                                                           << viewKeyStruct::waterViscosityString(),
-                  InputError );
+  validateWaterParams();
 }
 
-void BlackOilFluidBase::fillHydrocarbonData( localIndex const ip,
+void BlackOilFluidBase::fillHydrocarbonData( integer const ip,
                                              array1d< array1d< real64 > > const & tableValues )
 {
-  array1d< array1d< real64 > > pressureCoords;
-  pressureCoords.resize( 1 );
+  array1d< array1d< real64 > > pressureCoords( 1 );
   pressureCoords[0].resize( tableValues.size() );
-  array1d< real64 > formationVolFactor;
-  formationVolFactor.resize( tableValues.size() );
-  array1d< real64 > viscosity;
-  viscosity.resize( tableValues.size() );
+  array1d< real64 > formationVolFactor( tableValues.size() );
+  array1d< real64 > viscosity( tableValues.size() );
 
   for( localIndex i = 0; i < tableValues.size(); ++i )
   {
-    GEOSX_THROW_IF( tableValues[i].size() != 3,
-                    "In the Black/DeadOilFluid model named " << getName() << ": three columns (pressure, formation volume factor, and viscosity) are expected for oil and gas",
-                    InputError );
+    GEOSX_THROW_IF_NE_MSG( tableValues[i].size(), 3,
+                           getFullName() << ": three columns (pressure, formation volume factor, and viscosity) are expected for oil and gas",
+                           InputError );
 
     pressureCoords[0][i] = tableValues[i][0];
     formationVolFactor[i] = tableValues[i][1];
     viscosity[i] = tableValues[i][2];
   }
 
-  m_hydrocarbonPhaseOrder.emplace_back( LvArray::integerConversion< integer >( ip ) );
-  string const formationVolFactorTableName = (m_phaseTypes[ip] == PhaseType::OIL) ? "PVDO_Bo" : "PVDG_Bg";
-  string const viscosityTableName = (m_phaseTypes[ip] == PhaseType::OIL) ? "PVDO_visco" : "PVDG_viscg";
+  m_hydrocarbonPhaseOrder.emplace_back( ip );
+  string const formationVolFactorTableName = getName() + (m_phaseTypes[ip] == PhaseType::OIL ? "_PVDO_Bo" : "_PVDG_Bg");
+  string const viscosityTableName = getName() +  (m_phaseTypes[ip] == PhaseType::OIL ? "_PVDO_visco" : "_PVDG_viscg");
   m_formationVolFactorTableNames.emplace_back( formationVolFactorTableName );
   m_viscosityTableNames.emplace_back( viscosityTableName );
 
   FunctionManager & functionManager = FunctionManager::getInstance();
+
   TableFunction & tablePVDX_B =
     dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", formationVolFactorTableName ) );
   tablePVDX_B.setTableCoordinates( pressureCoords );
   tablePVDX_B.setTableValues( formationVolFactor );
-  tablePVDX_B.reInitializeFunction();
   tablePVDX_B.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
   TableFunction & tablePVDX_visc =
     dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", viscosityTableName ) );
   tablePVDX_visc.setTableCoordinates( pressureCoords );
   tablePVDX_visc.setTableValues( viscosity );
-  tablePVDX_visc.reInitializeFunction();
   tablePVDX_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 }
 
@@ -175,30 +174,20 @@ void BlackOilFluidBase::postProcessInput()
   MultiFluidBase::postProcessInput();
 
   m_phaseTypes.resize( numFluidPhases() );
-  m_phaseOrder.resize( MAX_NUM_PHASES );
-  m_phaseOrder.setValues< serialPolicy >( -1 );
+  m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );
 
-  for( localIndex ip = 0; ip < numFluidPhases(); ++ip )
+  for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
-    auto it = phaseDict.find( m_phaseNames[ip] );
-    GEOSX_THROW_IF( it == phaseDict.end(),
-                    "In the Black/DeadOilFluid model named " << getName() << ": phase not supported: " << m_phaseNames[ip],
-                    InputError );
-    integer const phaseIndex = it->second;
-    GEOSX_THROW_IF( phaseIndex >= MAX_NUM_PHASES,
-                    "In the Black/DeadOilFluid model named " << getName() << ": invalid phase index " << phaseIndex,
-                    InputError );
-
-    m_phaseTypes[ip] = phaseIndex;
-    m_phaseOrder[phaseIndex] = LvArray::integerConversion< integer >( ip );
+    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip], getCatalogName() + ' ' + getName() );
+    m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
 
-  GEOSX_THROW_IF( m_surfacePhaseMassDensity.size() != m_phaseNames.size(),
-                  "In the Black/DeadOilFluid model named " << getName() << ": the number of surfacePhaseMassDensities is inconsistent with the phase names",
-                  InputError );
-  GEOSX_THROW_IF( m_componentMolarWeight.size() != m_phaseNames.size(),
-                  "In the Black/DeadOilFluid model named " << getName() << ": the number of componentMolarWeights is inconsistent with the phase names",
-                  InputError );
+  GEOSX_THROW_IF_NE_MSG( m_surfacePhaseMassDensity.size(), m_phaseNames.size(),
+                         getFullName() << ": the number of surfacePhaseMassDensities is inconsistent with the phase names",
+                         InputError );
+  GEOSX_THROW_IF_NE_MSG( m_componentMolarWeight.size(), m_phaseNames.size(),
+                         getFullName() << ": the number of componentMolarWeights is inconsistent with the phase names",
+                         InputError );
 
   // we make the distinction between the two input options
   if( m_tableFiles.empty() )
@@ -223,23 +212,23 @@ void BlackOilFluidBase::createAllKernelWrappers()
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
   GEOSX_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
-                  "In the Black/DeadOilFluid model named " << getName() << ": the number of hydrocarbon phases should be equal to 1 (oil) or 2 (oil+gas)",
+                  getFullName() << ": the number of hydrocarbon phases should be equal to 1 (oil) or 2 (oil+gas)",
                   InputError );
 
-  if( m_formationVolFactorTables.size() == 0 && m_viscosityTables.size() == 0 )
+  if( m_formationVolFactorTables.empty() && m_viscosityTables.empty() )
   {
 
     // loop over the hydrocarbon phases
-    for( localIndex iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
+    for( integer iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
     {
       // grab the tables by name from the function manager
-      TableFunction const & FVFTable = functionManager.getGroup< TableFunction const >( m_formationVolFactorTableNames[iph] );
+      TableFunction const & fvfTable = functionManager.getGroup< TableFunction const >( m_formationVolFactorTableNames[iph] );
       TableFunction const & viscosityTable = functionManager.getGroup< TableFunction const >( m_viscosityTableNames[iph] );
-      validateTable( FVFTable );
+      validateTable( fvfTable );
       validateTable( viscosityTable );
 
       // create the table wrapper for the oil and (if present) the gas phases
-      m_formationVolFactorTables.emplace_back( FVFTable.createKernelWrapper() );
+      m_formationVolFactorTables.emplace_back( fvfTable.createKernelWrapper() );
       m_viscosityTables.emplace_back( viscosityTable.createKernelWrapper() );
     }
   }
@@ -247,22 +236,71 @@ void BlackOilFluidBase::createAllKernelWrappers()
 
 void BlackOilFluidBase::validateTable( TableFunction const & table ) const
 {
-  array1d< real64 > const & property = table.getValues();
+  arrayView1d< real64 const > const property = table.getValues();
 
-  GEOSX_THROW_IF( table.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                  "In the Black/DeadOilFluid model named " << getName() << ": the interpolation method in the table named " << table.getName() << " must be linear",
-                  InputError );
+  GEOSX_THROW_IF_NE_MSG( table.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
+                         getFullName() << ": the interpolation method in the table " << table.getName() << " must be linear",
+                         InputError );
   GEOSX_THROW_IF( property.size() <= 1,
-                  "In the Black/DeadOilFluid model named " << getName() << ": the table named " << table.getName() << " must contain at least 2 values",
+                  getFullName() << ": the table " << table.getName() << " must contain at least 2 values",
                   InputError );
 
   for( localIndex i = 2; i < property.size(); ++i )
   {
     GEOSX_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
-                    "In the Black/DeadOilFluid model named " << getName() << ": the values in the table named " << table.getName() << " must monotone",
+                    getFullName() << ": the values in the table " << table.getName() << " must be monotone",
                     InputError );
   }
 }
+
+void BlackOilFluidBase::validateWaterParams() const
+{
+  GEOSX_THROW_IF( m_waterParams.referencePressure <= 0.0,
+                  getFullName() << ": a strictly positive value must be provided for " << viewKeyStruct::waterRefPressureString(),
+                  InputError );
+  GEOSX_THROW_IF( m_waterParams.formationVolFactor <= 0.0,
+                  getFullName() << ": a strictly positive value must be provided for: " << viewKeyStruct::waterFormationVolumeFactorString(),
+                  InputError );
+  GEOSX_THROW_IF( m_waterParams.compressibility <= 0.0,
+                  getFullName() << ": a strictly positive value must be provided for: " << viewKeyStruct::waterCompressibilityString(),
+                  InputError );
+  GEOSX_THROW_IF( m_waterParams.viscosity <= 0.0,
+                  getFullName() << ": a strictly positive value must be provided for: " << viewKeyStruct::waterViscosityString(),
+                  InputError );
+}
+
+BlackOilFluidBase::KernelWrapper::
+  KernelWrapper( arrayView1d< integer const > phaseTypes,
+                 arrayView1d< integer const > phaseOrder,
+                 arrayView1d< integer const > hydrocarbonPhaseOrder,
+                 arrayView1d< real64 const > surfacePhaseMassDensity,
+                 arrayView1d< TableFunction::KernelWrapper const > formationVolFactorTables,
+                 arrayView1d< TableFunction::KernelWrapper const > viscosityTables,
+                 BlackOilFluidBase::WaterParams const waterParams,
+                 arrayView1d< real64 const > componentMolarWeight,
+                 bool const useMass,
+                 PhaseProp::ViewType phaseFraction,
+                 PhaseProp::ViewType phaseDensity,
+                 PhaseProp::ViewType phaseMassDensity,
+                 PhaseProp::ViewType phaseViscosity,
+                 PhaseComp::ViewType phaseCompFraction,
+                 FluidProp::ViewType totalDensity )
+  : MultiFluidBase::KernelWrapper( std::move( componentMolarWeight ),
+                                   useMass,
+                                   std::move( phaseFraction ),
+                                   std::move( phaseDensity ),
+                                   std::move( phaseMassDensity ),
+                                   std::move( phaseViscosity ),
+                                   std::move( phaseCompFraction ),
+                                   std::move( totalDensity ) ),
+  m_phaseTypes( std::move( phaseTypes ) ),
+  m_phaseOrder( std::move( phaseOrder ) ),
+  m_hydrocarbonPhaseOrder( std::move( hydrocarbonPhaseOrder ) ),
+  m_surfacePhaseMassDensity( std::move( surfacePhaseMassDensity ) ),
+  m_formationVolFactorTables( std::move( formationVolFactorTables ) ),
+  m_viscosityTables( std::move( viscosityTables ) ),
+  m_waterParams( waterParams )
+{}
 
 } // namespace constitutive
 
