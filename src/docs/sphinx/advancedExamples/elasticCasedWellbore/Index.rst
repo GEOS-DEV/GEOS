@@ -38,7 +38,7 @@ Preparing the input file
 All inputs for this case are contained inside a single XML file.
 In this example, we would focus our attention on the ``Solvers``, ``Mesh`` and ``Constitutive`` tags.
 
-Solvers: setup the quasi-static elastic solver
+Solvers: setup the mechanics solver
 -----------------------------------------------------------
 
 Only the solid mechanic ``SolidMechanicsLagrangianSSLE`` solver is required for solving this linear elastic problem. In this solver, the three regions and three materials associated to casing, cement sheath and rock are defined by ``targetRegions`` and ``solidMaterialNames``.  
