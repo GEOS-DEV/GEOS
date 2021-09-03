@@ -54,7 +54,7 @@ Mesh: define a cased wellbore
 
 The internal wellbore mesh generator ``InternalWellbore`` is employed to define a cased wellbore. The radii of the casing cylinder, the cement sheath cylinder and the far-field boundary of the surrounding rock formation are defined by a vector ``radius``. In the tangent direction, we define a ``theta`` angle from 0 to 360 degree for a full geometry. Note that a half and a quarter of the geometry can be defined by a ``theta`` angle from 0 to 180 or 90 degree, respectively. The trajectory of the well is defined by ``trajectory``. In this example, we consider a vertical wellbore with a single element in the vertical direction. The ``autoSpaceRadialElems`` parameters allows optimally increasing the element size from local zone around the wellbore to the far-field zone. In this examle we activate the auto spacing option only for the rock formation. The ``useCartesianOuterBoundary`` is to transform the far-field boundary to a squared shape that eases the imposition of the boundary conditions. The ``cellBlockNames`` and ``elementTypes`` defines the regions and related element types associated to casing, cement sheath and rock. 
  
-.. literalinclude:: src/coreComponents/physicsSolvers/solidMechanics/benchmarks/CasedElasticWellbore.xml
+.. literalinclude:: ../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/CasedElasticWellbore.xml
   :language: xml
   :start-after: <!-- SPHINX_WellboreMesh -->
   :end-before: <!-- SPHINX_WellboreMeshEnd -->
