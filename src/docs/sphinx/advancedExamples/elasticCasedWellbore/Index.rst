@@ -70,7 +70,7 @@ Constitutives: define steel, cement and rock properties
 
 Isotropic linear elastic constitutive behavior is considered for all the three materials. Note that the default density is useless for this case.
 
-.. literalinclude:: src/coreComponents/physicsSolvers/solidMechanics/benchmarks/CasedElasticWellbore.xml
+.. literalinclude:: ../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/CasedElasticWellbore.xml
   :language: xml
   :start-after: <!-- SPHINX_Material -->
   :end-before: <!-- SPHINX_MaterialEnd -->
