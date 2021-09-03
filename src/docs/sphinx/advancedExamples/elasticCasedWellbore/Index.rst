@@ -9,7 +9,7 @@ Cased Elastic Wellbore Problem without Fluid Flow
 Problem description
 ------------------------------------------------------------------
 
-This example uses the solid mechanic solver for solving a cased wellbore problem subjected to a pressure test. The problem geometry is composed a steel casing, a cement sheath and rock formation. Isotropic linear elastic behavior is assumed for all the three materials. The casing-cement and cement-rock contact interfaces are supposed to be perfect.
+This example uses the solid mechanics solver to handle a cased wellbore problem subjected to a pressure test. The completed wellbore is composed of a steel casing, a cement sheath and rock formation. Isotropic linear elastic behavior is assumed for all the three materials. No separation is allowed for the casing-cement and cement-rock contact interfaces.
 
 Analytical results of radial and hoop stresses, :math:`\sigma_{rr}` and :math:`\sigma_{\theta\theta}`, in casing, cement sheath and rock can be expressed as:
 
