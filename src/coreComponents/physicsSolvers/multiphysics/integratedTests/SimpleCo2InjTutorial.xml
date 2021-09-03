@@ -68,7 +68,7 @@
       nx="{ 50 }"
       ny="{ 1 }"
       nz="{ 150 }"
-      cellBlockNames="{ cb1 }"/>
+      cellBlockNames="{ cellBlock }"/>
 
     <InternalWell
       name="wellInjector1"
@@ -91,8 +91,8 @@
   <ElementRegions>
     <CellElementRegion
       name="reservoir"
-      cellBlocks="{ cb1 }"
-      materialList="{ fluid, rock, relperm, rockPerm }"/>
+      cellBlocks="{ cellBlock }"
+      materialList="{ fluid, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
 
     <WellElementRegion
       name="wellRegion"
@@ -124,13 +124,13 @@
     
     <PeriodicEvent
       name="timeHistoryOutput"
-      timeFrequency="2.5e8"
+      timeFrequency="2e8"
       targetExactTimestep="1"
       target="/Outputs/timeHistoryOutput" />
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="5e6"        
+      maxEventDt="5e5"        
       target="/Solvers/coupledFlowAndWells"/>
 
   </Events>
@@ -159,9 +159,19 @@
       phasePVTParaFiles="{ pvt_tables/pvtgas.txt, pvt_tables/pvtliquid.txt }"
       flashModelParaFile="pvt_tables/co2flash.txt"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="1e7"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="1.0e7"
       compressibility="4.5e-10"/>
 
     <BrooksCoreyRelativePermeability
@@ -209,14 +219,6 @@
       fieldName="rockPerm_permeability"
       scale="3e-15"
       functionName="permzFunc"/>
-
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/reservoir"
-      fieldName="referencePorosity"
-      scale="0.1"/>
 
     <FieldSpecification
       name="initialPressure"

@@ -35,7 +35,7 @@
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="297.15"
-      maxCompFractionChange="0.5"
+      maxCompFractionChange="0.3"
       logLevel="1"
       useMass="1"/>
 
@@ -620,8 +620,7 @@
       <TwoPointFluxApproximation
         name="fluidTPFA"
         fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -631,7 +630,7 @@
     <CellElementRegion
       name="reservoir"
       cellBlocks="{ DEFAULT_HEX }"
-      materialList="{ fluid, rock, relperm, rockPerm }"/>
+      materialList="{ fluid, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
 
     <WellElementRegion
       name="wellRegion1"
@@ -700,10 +699,20 @@
       phaseRelPermExponent="{ 4.0, 3.0 }"
       phaseRelPermMaxValue="{ 0.8, 0.75 }"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="0"
-      compressibility="1e-13"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="0.0"
+      compressibility="1.0e-13"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -713,13 +722,13 @@
   <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE_END -->
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS -->
   <FieldSpecifications>
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
-      fieldName="referencePorosity"
-      scale="0.2"/>
+    <!-- <FieldSpecification -->
+    <!--   name="referencePorosity" -->
+    <!--   initialCondition="1" -->
+    <!--   setNames="{ all }" -->
+    <!--   objectPath="ElementRegions/reservoir/DEFAULT_HEX" -->
+    <!--   fieldName="rockPorosity_referencePorosity" -->
+    <!--   scale="0.2"/> -->
 
     <FieldSpecification
       name="initialPressure"

@@ -201,13 +201,14 @@ real64 spanWagnerCO2DensityFunction( real64 const & tolerance,
   }
 
   GEOSX_THROW_IF( count == maxIter,
-                  "CO2Solubility NR convergence fails! " << "dre = " << dre << ", tolerance = " << tolerance,
+                  "SpanWagnerCO2Density: Newton convergence fails in CO2 solubility computation: " << "dre = " << dre << ", tolerance = " << tolerance,
                   InputError );
   return rho;
 }
 
 
 TableFunction const * makeDensityTable( string_array const & inputParams,
+                                        string const & functionName,
                                         FunctionManager & functionManager )
 {
   PTTableCoordinates tableCoords;
@@ -223,20 +224,25 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "Invalid property argument:" + string( e.what()),
-                 InputError );
+    GEOSX_THROW( functionName << ": invalid property argument: " << e.what(), InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
   SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, densities );
 
-  TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", "CO2DensityTable" ) );
-  densityTable->setTableCoordinates( tableCoords.getCoords() );
-  densityTable->setTableValues( densities );
-  densityTable->reInitializeFunction();
-  densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  return densityTable;
+  string const & tableName = functionName + "_table";
+  if( functionManager.hasGroup< TableFunction >( tableName ) )
+  {
+    return functionManager.getGroupPointer< TableFunction >( tableName );
+  }
+  else
+  {
+    TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
+    densityTable->setTableCoordinates( tableCoords.getCoords() );
+    densityTable->setTableValues( densities );
+    densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return densityTable;
+  }
 }
 
 } // namespace
@@ -262,27 +268,28 @@ void SpanWagnerCO2Density::calculateCO2Density( real64 const & tolerance,
   }
 }
 
-SpanWagnerCO2Density::SpanWagnerCO2Density( string_array const & inputParams,
+SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
+                                            string_array const & inputParams,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight ):
-  PVTFunctionBase( inputParams[1],
+  PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
 {
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
 
-  m_CO2DensityTable = makeDensityTable( inputParams, FunctionManager::getInstance() );
+  m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
-SpanWagnerCO2Density::KernelWrapper SpanWagnerCO2Density::createKernelWrapper()
+SpanWagnerCO2Density::KernelWrapper SpanWagnerCO2Density::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         *m_CO2DensityTable,
                         m_CO2Index );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, SpanWagnerCO2Density, string const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // namespace PVTProps
 

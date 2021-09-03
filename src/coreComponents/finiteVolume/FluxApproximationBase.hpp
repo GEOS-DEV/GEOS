@@ -23,7 +23,10 @@
 #include "dataRepository/Group.hpp"
 #include "finiteVolume/FluxStencil.hpp"
 #include "CellElementStencilTPFA.hpp"
-#include "FaceElementStencil.hpp"
+#include "SurfaceElementStencil.hpp"
+#include "FaceElementToCellStencil.hpp"
+#include "EmbeddedSurfaceToCellStencil.hpp"
+#include "SurfaceElementStencil.hpp"
 #include "mesh/DomainPartition.hpp"
 
 namespace geosx
@@ -177,11 +180,11 @@ public:
     /// @return The key for coefficientName
     static constexpr char const * coeffNameString() { return "coefficientName"; }
 
-    /// @return The key for coefficientName
-    static constexpr char const * coefficientModelNamesString() { return "coefficientModelNames"; }
-
     /// @return The key for targetRegions
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
+
+    /// @return The key for coefficientModelNames
+    static constexpr char const * coefficientModelNamesString() { return "coefficientModelNames"; }
 
     /// @return The key for areaRelTol
     static constexpr char const * areaRelativeToleranceString() { return "areaRelTol"; }
@@ -309,8 +312,11 @@ TYPE & FluxApproximationBase::getStencil( MeshLevel & mesh, string const & name 
 template< typename LAMBDA >
 void FluxApproximationBase::forAllStencils( MeshLevel const & mesh, LAMBDA && lambda ) const
 {
-  //TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
-  forStencils< CellElementStencilTPFA, FaceElementStencil >( mesh, std::forward< LAMBDA >( lambda ) );
+  //TODO remove dependence on CellElementStencilTPFA and SurfaceElementStencil
+  forStencils< CellElementStencilTPFA,
+               SurfaceElementStencil,
+               EmbeddedSurfaceToCellStencil,
+               FaceElementToCellStencil >( mesh, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename TYPE, typename ... TYPES, typename LAMBDA >

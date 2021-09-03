@@ -75,7 +75,7 @@ GEOSX_HOST_DEVICE inline constexpr
 void i_g_n_o_r_e( ARGS const & ... ) {}
 
 /// Mark an unused variable and silence compiler warnings.
-#define GEOSX_UNUSED_VAR( ... ) i_g_n_o_r_e( __VA_ARGS__ );
+#define GEOSX_UNUSED_VAR( ... ) i_g_n_o_r_e( __VA_ARGS__ )
 
 /// Mark a debug variable and silence compiler warnings.
 #define GEOSX_DEBUG_VAR( ... ) GEOSX_UNUSED_VAR( __VA_ARGS__ )
