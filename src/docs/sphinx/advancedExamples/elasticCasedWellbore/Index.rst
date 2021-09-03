@@ -22,7 +22,7 @@ where :math:`\lambda` and :math:`G` are the Lamé moduli, :math:`r` is the radia
 
 **Input file**
 
-This tutorial uses no external input files and everything required is
+This benchmark example uses no external input files and everything required is
 contained within a single GEOSX input file.
 The xml input file for this test case is located at:
 
