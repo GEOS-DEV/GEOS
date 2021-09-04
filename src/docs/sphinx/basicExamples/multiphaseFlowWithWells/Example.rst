@@ -242,7 +242,7 @@ models listed in the **Constitutive** XML block:
 - a fluid model describing the thermodynamics behavior of the fluid mixture,
 - a relative permeability model,
 - a rock permeability model,
-- a rock compressibility model.
+- a rock porosity model.
 
 All the parameters must be provided using the SI unit system.
 

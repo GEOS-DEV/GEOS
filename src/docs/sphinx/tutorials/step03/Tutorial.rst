@@ -172,7 +172,7 @@ There are two methods to achieve this regional solve.
                 <ElementRegion>
                 <CellElementRegion name="ReservoirLayer"
                                    cellBlocks="{Reservoir_TETRA}"
-                                   materialList="{water, rock}">
+                                   materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }">
                 </ElementRegion>
 
 - The second solution is to define all the ``CellElementRegions`` as they are in the GMSH file, but defining the solvers only on the reservoir layer. In this case, the **ElementRegion** tag is :
@@ -194,7 +194,7 @@ We opt for the latest as it allows to visualize over- and underburdens and to ch
 Constitutive models
 --------------------
 
-We simulate a single-phase flow in the reservoir layer, hence with two types of materials, a fluid (water) and solid (rock).
+We simulate a single-phase flow in the reservoir layer, hence with multiple types of materials, a fluid (water) and solid (rock permeability and porosity).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml

@@ -174,7 +174,7 @@ and assign it to the single-phase flow solver.
 We also need to provide material properties to the regions.
 This is done by specifying ``ElementRegions``.
 Here, the entire field is one region called ``Domain``,
-and contains ``water`` and ``rock`` only.
+and contains multiple constitutive models, including ``water``, ``rockPorosity``, and ``rockPerm``.
 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml

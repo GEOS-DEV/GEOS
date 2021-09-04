@@ -182,7 +182,7 @@ to the hexahedral mesh defined internally.
 
 The **CellElementRegion** must also point to the constitutive models that are used to update
 the dynamic rock and fluid properties in the cells of the reservoir mesh.
-The names ``fluid``, ``rock``, ``rockPerm`` and ``relperm`` used for this in the ``materialList``
+The names ``fluid``, ``rockPorosity``, ``rockPerm`` and ``relperm`` used for this in the ``materialList``
 correspond to the attribute ``name`` of the **Constitutive** block.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
@@ -204,7 +204,7 @@ at least four types of constitutive models must be specified in the **Constituti
 - a fluid model describing the thermodynamics behavior of the fluid mixture,
 - a relative permeability model,
 - a rock permeability model,
-- a rock compressibility model.
+- a rock porosity model.
 
 All these models use SI units exclusively.
 A capillary pressure model can also be specified in this block but is omitted here for simplicity.

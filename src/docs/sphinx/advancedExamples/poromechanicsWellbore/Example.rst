@@ -55,17 +55,14 @@ We simulate the wellbore problem subjected to anisotropic horizontal stress (:ma
    Sketch of the wellbore problem 
 
 
-------------------------------------------------------------------
-Preparing the input files
-------------------------------------------------------------------
-
 All inputs for this case are contained inside a single XML file.
 In this example, we focus our attention on the ``Mesh`` tags, the ``Solver`` tags, the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
 
-Mesh: discretizing computational domain
---------------------------------------------------------------------
+---------
+Mesh: 
+---------
 
-Following figure shows the generated mesh that is used for solving this wellbore problem
+The following figure shows the generated mesh that is used for solving this wellbore problem
 
 .. _problemSketchFig:
 .. figure:: PoroDP_WellMesh.png
@@ -93,9 +90,9 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
     :start-after: <!-- SPHINX_WELLBORE_MESH -->
     :end-before: <!-- SPHINX_WELLBORE_MESH_END -->
 
-
-Solver: setting up the solid mechanics solver
------------------------------------------------------------
+--------------------------
+Solid mechanics solver
+--------------------------
 
 GEOSX is a multi-physics platform. Different combinations of
 physics solvers available in the code can be applied
@@ -144,9 +141,9 @@ For instance, we must point this solver to the designated fluid solver (here: ``
 These solvers are forced to interact through the ``porousMaterialNames="{porousRock}"`` with all the constitutive models. We specify the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Omega``).
 More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics solvers will be simultaneously called and executed for solving the wellbore problem here.
 
-
-Numerical methods: specifying discretization methods for multiphysics solvers
----------------------------------
+------------------------------------------------
+Discretization methods for multiphysics solvers
+------------------------------------------------
 
 Numerical methods in multiphysics settings are similar to single physics numerical methods. In this problem, we use finite volume for flow and finite elements for solid mechanics. All necessary parameters for these methods are defined in the ``NumericalMethods`` section.
 
@@ -164,9 +161,9 @@ Here, we use a two-point flux approximation scheme (``singlePhaseTPFA``), as des
   :start-after: <!-- SPHINX_WELLBORE_NUMERICAL -->
   :end-before: <!-- SPHINX_WELLBORE_NUMERICAL_END -->
 
-
-Constitutive model: defining material properties with constitutive laws
------------------------------------------------------------
+--------------------
+Constitutive laws
+--------------------
 
 For this test problem, the solid and fluid materials are named as ``rock`` and ``water`` respectively, whose mechanical properties are specified in the ``Constitutive`` section. In this example, different material models, linear elastic isotropic model (see :ref:`LinearElasticIsotropic`) and Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`), are used to solve the mechanical deformation, which is the only difference between the poroelastic and poroplastic cases in this example.
 
@@ -196,9 +193,9 @@ If using an incompressible fluid, the user can lower the fluid compressibility `
 The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units. A stress-dependent porosity model ``rockPorosity`` and constant permeability ``rockPerm`` model are defined in this section.
 
 
-
-Initial and Boundary Conditions: defining properties with the FieldSpecifications
------------------------------------------------------------
+-----------------------------------
+Initial and boundary conditions
+-----------------------------------
 
 The next step is to specify fields, including:
 
@@ -280,9 +277,9 @@ The parameters used in the simulation are summarized in the following table, whi
 | :math:`\phi`     | Porosity                | [-]              | 0.3                |
 +------------------+-------------------------+------------------+--------------------+
 
-
+---------------------
 Inspecting results
----------------------------------
+---------------------
 
 As defined in the ``Events`` section, we run this simulation for 497640 seconds. In the above examples, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Please note that a non-dimensional time is used in the analytical solution, and the end time here leads to a non-dimensional end time of t* = 4.62. 
 

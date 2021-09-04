@@ -45,15 +45,13 @@ where
 - :math:`p_f` is the fracture pressure
 - :math:`s` is the local fracture coordinate in :math:`[-\frac{L_f}{2}, \frac{L_f}{2}]`
 
-------------------------------------------------------------------
-Preparing the input files
-------------------------------------------------------------------
 
 All inputs for this case are contained inside a single XML file.
 In this example, we focus our attention on the ``Solvers`` tags,
 the ``ElementRegions`` tags and the Geometry tags.
 
-Solvers: setting up the embedded fractures mechanics solver
+-----------------------------------------------------------
+Embedded fractures mechanics solver
 -----------------------------------------------------------
 To define a mechanics solver capable of including embedded fractures, we will
 define two solvers:
@@ -79,19 +77,21 @@ which is used to discretize the fracture planes.
   :start-after: <!-- SPHINX_SNEDDON_SOLVER -->
   :end-before: <!-- SPHINX_SNEDDON_SOLVER_END -->
 
+-------------------------------------------------------------------
 Events
 -------------------------------------------------------------------
 For this problem we will add two events defining solver applications:
 
 - an event specifying the execution of the ``EmbeddedSurfaceGenerator`` to generate the fracture elements.
-- a periodic even specifying the exectution of the embeeded fractures solver.
+- a periodic even specifying the execution of the embedded fractures solver.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
   :language: xml
   :start-after: <!-- SPHINX_SNEDDON_EVENTS -->
   :end-before: <!-- SPHINX_SNEDDON_EVENTS_END -->
 
-Setting up mesh, material properties and boundary conditions
+--------------------------------------------------------------------
+Mesh, material properties, and boundary conditions
 --------------------------------------------------------------------
 
 Last, let us take a closer look at the geometry of this simple problem.
@@ -123,6 +123,7 @@ The parameters used in the simulation are summarized in the following table.
 Material properties and boundary conditions are specified in the
 ``Constitutive`` and ``FieldSpecifications`` sections.
 
+---------------------------------
 Adding an embedded fracture
 ---------------------------------
 
@@ -132,17 +133,15 @@ Adding an embedded fracture
   :start-after: <!-- SPHINX_SNEDDON_GEOMETRY -->
   :end-before: <!-- SPHINX_SNEDDON_GEOMETRY_END -->
 
-------------------------------------------------------------------
-Running the case and inspecting the results
-------------------------------------------------------------------
-
-Running the case
+---------------------------------
+Running GEOSX
 ---------------------------------
 
 To run the case, use the following command:
 
 ``path/to/geosx -i src/coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml``
 
+---------------------------------
 Inspecting results
 ---------------------------------
 

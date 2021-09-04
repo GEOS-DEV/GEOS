@@ -144,7 +144,7 @@ Constitutive laws
 Under the **Constitutive** tag, four items can be found:
 
 - **CO2BrineFluid** : this tag defines phase names, component molar weights, and fluid behaviors such as CO :sub:`2` solubility in brine and viscosity/density dependencies on pressure and temperature. 
-- **PoreVolumeCompressibleSolid** : this tag contains all the data needed to model rock compressibility.
+- **PressurePorosity** : this tag contains all the data needed to model rock compressibility.
 - **BrooksCoreyRelativePermeability** : this tag defines the relative permeability model for each phase, its end-point values, residual volume fractions (saturations), and Corey exponents.
 - **ConstantPermeability** : this tag defines the permeability model that is set to a simple constant diagonal tensor, whose values are defined in ``permeabilityComponent``. Note that these values will be overwritten by the permeability field imported in **FieldSpecifications**.
 

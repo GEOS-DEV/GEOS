@@ -2,7 +2,7 @@
 
 
 ####################################################
-Elasto-Plastic Model for Wellbore Problems without Fluid Flow
+Elasto-Plastic Near-Well Deformation
 ####################################################
 
 
@@ -49,16 +49,14 @@ We simulate a drained wellbore problem subjected to isotropic horizontal stress 
 To simulate this phenomenon, the strain hardening Extended Drucker-Prager model with an associated plastic flow rule in GEOSX is used in this tutorial. Displacement and stress fields around the wellbore are numerically calculated. These numerical predictions are then compared with the corresponding analytical solutions `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__ from the literature. 
 
 
-------------------------------------------------------------------
-Preparing the input files
-------------------------------------------------------------------
 
 All inputs for this case are contained inside a single XML file.
 In this tutorial, we focus our attention on the ``Mesh`` tags,
 the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
 
-Mesh: discretizing computational domain
---------------------------------------------------------------------
+------
+Mesh
+------
 
 Following figure shows the generated mesh that is used for solving this 3D wellbore problem
 
@@ -88,9 +86,9 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
     :start-after: <!-- SPHINX_DP_WELLBORE_MESH -->
     :end-before: <!-- SPHINX_DP_WELLBORE_MESH_END -->
 
-
-Solver: setting up the solid mechanics solver
------------------------------------------------------------
+------------------------
+Solid mechanics solver
+------------------------
 
 For the drained wellbore problem, the pore pressure variation is omitted and can be subtracted from the analysis. Therefore, we just need to define a solid mechanics solver, which is called ``mechanicsSolver``. 
 This solid mechanics solver (see :ref:`SolidMechanicsLagrangianFEM`) is based on the Lagrangian finite element formulation. 
@@ -103,9 +101,9 @@ The material is named as ``rock``, whose mechanical properties are specified in 
   :start-after: <!-- SPHINX_DP_WELLBORE_SOLVER -->
   :end-before: <!-- SPHINX_DP_WELLBORE_SOLVER_END -->
 
-
-Constitutive model: defining material properties with constitutive laws
------------------------------------------------------------
+------------------------------
+Constitutive laws
+------------------------------
 
 For this drained wellbore problem, we simulate the elastoplastic deformation caused by wellbore contraction.
 A homogeneous domain with one solid material is assumed, whose mechanical properties are specified in the ``Constitutive`` section: 
@@ -126,7 +124,8 @@ Setting ``defaultDilationRatio="1.0"`` corresponds to an associated flow rule.
 The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units.
 
 
-Initial and Boundary Conditions: defining properties with the FieldSpecifications
+-----------------------------------------------------------
+Initial and boundary conditions
 -----------------------------------------------------------
 
 The next step is to specify fields, including:
@@ -194,7 +193,7 @@ The parameters used in the simulation are summarized in the following table.
 | :math:`P_w`      | Mud Pressure            | [MPa]            | -2.0          |
 +------------------+-------------------------+------------------+---------------+
 
-
+---------------------------------
 Inspecting results
 ---------------------------------
 

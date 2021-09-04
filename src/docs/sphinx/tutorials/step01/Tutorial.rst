@@ -275,7 +275,7 @@ Regions are important in GEOSX to specify the material properties of elements.
 The **ElementRegions** element is used here to list all the regions used in the simulation.
 Here we use only a single region to represent the entire domain (named ``mainRegion``),
 with a collection of elements containing only the ``cb1`` blocks defined in the mesh section.
-We must also specify the material contained in that region (here, two materials are used: ``water`` and ``rock``; their properties will be defined next).
+We must also specify the material contained in that region (here, multiple materials are used, including ``water``, ``rockPorosity``, and ``rockPerm``; their properties will be defined next).
 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
@@ -297,21 +297,21 @@ and assigns physical properties to them: density, viscosity, compressibility...
 
 
 In this tutorial, the physical properties of the materials
-defined as ``water``, ``rock`` and ``rockPerm`` are provided here,
+defined as ``water``, ``rockPorosity``,  and ``rockPerm`` are provided here,
 each material being derived from a different material type:
 ``CompressibleSinglePhaseFluid``
-for the water, ``PoreVolumeCompressibleSolid`` for the rock, and
+for the water, ``PressurePorosity`` for the rock porosity, and
 ``ConstantPermeability`` for rock permeability.
 The list of attributes differs between these constitutive materials.
 
 
-The names ``water``, ``rock`` and ``rockPerm`` are defined by the user
+The names ``water``, ``rockPorosity`` and ``rockPerm`` are defined by the user
 as handles to specific instances of physical materials.
 GEOSX uses S.I. units throughout, not field units.
 Pressures, for instance, are in Pascal, not psia.
 
 
-Note that we had used the handles ``water``, ``rock`` and ``rockPerm`` in the input file
+Note that we had used the handles ``water``, ``rockPorosity`` and ``rockPerm`` in the input file
 in the ElementRegions section of the XML file,
 before the registration of these materials took place here, in Constitutive element.
 This highlights an important aspect of using XML in GEOSX:
