@@ -567,12 +567,10 @@ FluxKernel::
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
   constexpr localIndex MAX_NUM_ELEMS = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
-  constexpr localIndex MAX_STENCIL_SIZE  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
-  constexpr localIndex MAX_NUM_OF_CONNECTIONS  = STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS;
+  constexpr localIndex MAX_STENCIL_SIZE = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
-
     localIndex const stencilSize = meshMapUtilities::size1( sei, iconn );
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
     constexpr localIndex NDOF = NC + 1;
@@ -583,7 +581,9 @@ FluxKernel::
     stackArray2d< real64, MAX_NUM_ELEMS * NC * MAX_STENCIL_SIZE * NDOF > localFluxJacobian( numFluxElems * NC, stencilSize * NDOF );
 
     // compute transmissibility
-    real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2];
+    real64 transmissibility[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+    real64 dTrans_dPres[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+
     stencilWrapper.computeWeights( iconn,
                                    permeability,
                                    dPerm_dPres,
@@ -837,13 +837,12 @@ CFLFluxKernel::
 
   localIndex constexpr NUM_ELEMS   = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
   localIndex constexpr MAX_STENCIL_SIZE   = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
-  localIndex constexpr MAX_NUM_OF_CONNECTIONS  = STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS;
-
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
     // compute transmissibility
-    real64 transmissiblity[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2];
+    real64 transmissiblity[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+    real64 dTrans_dPres[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
 
     stencilWrapper.computeWeights( iconn,
                                    permeability,
