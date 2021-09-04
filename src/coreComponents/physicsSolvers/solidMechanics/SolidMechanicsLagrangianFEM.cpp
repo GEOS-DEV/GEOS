@@ -1251,9 +1251,7 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( domain )
-  GEOSX_UNUSED_VAR( dofManager )
-  GEOSX_UNUSED_VAR( localSolution )
+  GEOSX_UNUSED_VAR( domain, dofManager, localSolution );
 
   return 1.0;
 }

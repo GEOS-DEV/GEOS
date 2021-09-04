@@ -123,8 +123,6 @@ public:
 
   RelativePermeabilityBase( string const & name, dataRepository::Group * const parent );
 
-  virtual ~RelativePermeabilityBase() override = default;
-
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
