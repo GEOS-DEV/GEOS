@@ -36,6 +36,7 @@ WellSolverBase::WellSolverBase( string const & name,
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
   m_numDofPerResElement( 0 ),
+  m_currentTime( 0 ),
   m_currentDt( 0 )
 {
   this->registerWrapper( viewKeyStruct::fluidNamesString(), &m_fluidModelNames ).
@@ -115,13 +116,16 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
 }
 
 void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                        real64 const & dt,
                                         DomainPartition & domain )
 {
   // bind the stored reservoir views to the current domain
   resetViews( domain );
 
+  // saved time and current dt for residual normalization and time-dependent tables
+  m_currentDt = dt;
   m_currentTime = time_n;
+
   // Initialize the primary and secondary variables for the first time step
   if( time_n <= 0.0 )
   {

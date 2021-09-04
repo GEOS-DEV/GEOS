@@ -127,6 +127,11 @@ public:
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
+  implicitStepSetup( real64 const & time,
+                     real64 const & dt,
+                     DomainPartition & domain ) override;
+
+  virtual void
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;

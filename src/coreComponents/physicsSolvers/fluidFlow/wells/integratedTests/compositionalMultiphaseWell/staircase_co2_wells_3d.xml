@@ -219,12 +219,12 @@
                    inputVarNames="{time}"
                    coordinates="{0, 2.01e4, 5e4}"
                    values="{1e-7, 2e-7, 2e-7}" 
-                   interpolation = "lower"/>
+                   interpolation="lower"/>
     <TableFunction name="totalRateTable"
                    inputVarNames="{time}"
                    coordinates="{0, 2.01e4, 5e4}"
                    values="{5e-8, 0, 0}" 
-                   interpolation = "lower"/>
+                   interpolation="lower"/>
   </Functions>
 
 

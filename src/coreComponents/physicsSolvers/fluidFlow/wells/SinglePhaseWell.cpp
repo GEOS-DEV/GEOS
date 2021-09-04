@@ -107,16 +107,19 @@ void SinglePhaseWell::validateWellConstraints( MeshLevel const & meshLevel ) con
                                                                WellElementSubRegion const & subRegion )
   {
     WellControls const & wellControls = getWellControls( subRegion );
+    WellControls::Type const wellType = wellControls.getType();
     WellControls::Control const currentControl = wellControls.getControl();
-    real64 const targetTotalRate = wellControls.getTargetTotalRate( m_currentTime ); // validation done at t = 0
-    real64 const targetPhaseRate = wellControls.getTargetPhaseRate( m_currentTime ); // validation done at t = 0
+    real64 const targetTotalRate = wellControls.getTargetTotalRate( m_currentTime + m_currentDt );
+    real64 const targetPhaseRate = wellControls.getTargetPhaseRate( m_currentTime + m_currentDt );
     GEOSX_THROW_IF( currentControl == WellControls::Control::PHASEVOLRATE,
                     "WellControls named " << wellControls.getName() <<
                     ": Phase rate control is not available for SinglePhaseWell",
                     InputError );
-    GEOSX_THROW_IF( isZero( targetTotalRate ),
+    // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
+    GEOSX_THROW_IF( ( (wellType == WellControls::Type::INJECTOR && targetTotalRate < 0.0) ||
+                      (wellType == WellControls::Type::PRODUCER && targetTotalRate > 0.0) ),
                     "WellControls named " << wellControls.getName() <<
-                    ": Target total rate cannot be equal to zero",
+                    ": Target total rate cannot be negative",
                     InputError );
     GEOSX_THROW_IF( !isZero( targetPhaseRate ),
                     "WellControls named " << wellControls.getName() <<
@@ -337,7 +340,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
                                       subRegion.size(),
                                       perforationData.getNumPerforationsGlobal(),
                                       wellControls,
-                                      m_currentTime, // initialization done at t = 0
+                                      0.0, // initialization done at t = 0
                                       m_resPressure.toNestedViewConst(),
                                       m_resDensity.toNestedViewConst(),
                                       resElementRegion,
@@ -357,7 +360,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
     // 5) Estimate the well rates
     RateInitializationKernel::launch( subRegion.size(),
                                       wellControls,
-                                      m_currentTime, // initialization done at t = 0
+                                      0.0, // initialization done at t = 0
                                       wellElemDens,
                                       connRate );
   } );
@@ -371,9 +374,6 @@ void SinglePhaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n
                                          arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-
-  // saved current dt for residual normalization
-  m_currentDt = dt;
 
   MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
@@ -818,8 +818,19 @@ void SinglePhaseWell::resetViews( DomainPartition & domain )
   }
 }
 
+void SinglePhaseWell::implicitStepSetup( real64 const & time,
+                                         real64 const & dt,
+                                         DomainPartition & domain )
+{
+  WellSolverBase::implicitStepSetup( time, dt, domain );
+
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  validateWellConstraints( meshLevel );
+}
+
+
 void SinglePhaseWell::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
-                                            real64 const & GEOSX_UNUSED_PARAM( real64 const & dt ),
+                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
                                             DomainPartition & domain )
 {
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );

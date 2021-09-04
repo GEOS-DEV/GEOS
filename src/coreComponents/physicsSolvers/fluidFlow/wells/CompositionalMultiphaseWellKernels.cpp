@@ -185,10 +185,7 @@ ControlEquationHelper::
   }
   else
   {
-    GEOSX_ERROR_IF( ( currentControl != WellControls::Control::BHP )
-                    && ( currentControl != WellControls::Control::PHASEVOLRATE )
-                    && ( currentControl != WellControls::Control::TOTALVOLRATE ),
-                    "This constraint is not supported in CompositionalMultiphaseWell" );
+    GEOSX_ERROR( "This constraint is not supported in CompositionalMultiphaseWell" );
   }
   localRhs[eqnRowIndex] += controlEqn;
   localMatrix.addToRow< serialAtomic >( eqnRowIndex,

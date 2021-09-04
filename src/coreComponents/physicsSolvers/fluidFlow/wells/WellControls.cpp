@@ -34,13 +34,9 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetBHP( 0.0 ),
   m_targetTotalRate( 0.0 ),
   m_targetPhaseRate( 0.0 ),
-  m_targetPhaseName( "" ),
   m_useSurfaceConditions( 0 ),
   m_surfacePres( 0.0 ),
   m_surfaceTemp( 0.0 ),
-  m_targetTotalRateTableName( "" ),
-  m_targetPhaseRateTableName( "" ),
-  m_targetBHPTableName( "" ),
   m_targetTotalRateTable( nullptr ),
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr )

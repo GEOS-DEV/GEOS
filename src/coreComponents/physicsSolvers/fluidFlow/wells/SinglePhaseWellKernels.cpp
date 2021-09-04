@@ -127,9 +127,7 @@ ControlEquationHelper::
   }
   else
   {
-    GEOSX_ERROR_IF( ( currentControl != WellControls::Control::BHP )
-                    && ( currentControl != WellControls::Control::TOTALVOLRATE ),
-                    "This constraint is not supported in SinglePhaseWell" );
+    GEOSX_ERROR( "This constraint is not supported in SinglePhaseWell" );
   }
 
   localRhs[eqnRowIndex] += controlEqn;

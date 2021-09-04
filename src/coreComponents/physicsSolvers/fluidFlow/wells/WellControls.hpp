@@ -341,13 +341,13 @@ private:
   string m_targetBHPTableName;
 
   /// Total rate table
-  TableFunction * m_targetTotalRateTable;
+  TableFunction const * m_targetTotalRateTable;
 
   /// Phase rate table
-  TableFunction * m_targetPhaseRateTable;
+  TableFunction const * m_targetPhaseRateTable;
 
   /// BHP table
-  TableFunction * m_targetBHPTable;
+  TableFunction const * m_targetBHPTable;
 };
 
 ENUM_STRINGS( WellControls::Type,

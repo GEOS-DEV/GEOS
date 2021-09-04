@@ -349,8 +349,8 @@ void CompositionalMultiphaseWell::validateWellConstraints( MeshLevel const & mes
     WellControls const & wellControls = getWellControls( subRegion );
     WellControls::Type const wellType = wellControls.getType();
     WellControls::Control const currentControl = wellControls.getControl();
-    real64 const & targetTotalRate = wellControls.getTargetTotalRate( m_currentTime ); // validation done at t = 0
-    real64 const & targetPhaseRate = wellControls.getTargetPhaseRate( m_currentTime ); // validation done at t = 0
+    real64 const & targetTotalRate = wellControls.getTargetTotalRate( m_currentTime + m_currentDt );
+    real64 const & targetPhaseRate = wellControls.getTargetPhaseRate( m_currentTime + m_currentDt );
     integer const useSurfaceConditions = wellControls.useSurfaceConditions();
     real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
 
@@ -363,18 +363,19 @@ void CompositionalMultiphaseWell::validateWellConstraints( MeshLevel const & mes
                     ": Phase rate control is not available for producers",
                     InputError );
 
-    GEOSX_THROW_IF( wellType == WellControls::Type::INJECTOR && isZero( targetTotalRate ),
+    GEOSX_THROW_IF( wellType == WellControls::Type::INJECTOR && targetTotalRate < 0.0,
                     "WellControls named " << wellControls.getName() <<
-                    ": Target total rate cannot be equal to zero for injectors",
+                    ": Target total rate cannot be negative for injectors",
                     InputError );
     GEOSX_THROW_IF( wellType == WellControls::Type::INJECTOR && !isZero( targetPhaseRate ),
                     "WellControls named " << wellControls.getName() <<
                     ": Target phase rate cannot be used for injectors",
                     InputError );
 
-    GEOSX_THROW_IF( wellType == WellControls::Type::PRODUCER && isZero( targetPhaseRate ),
+    // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
+    GEOSX_THROW_IF( wellType == WellControls::Type::PRODUCER && targetPhaseRate > 0.0,
                     "WellControls named " << wellControls.getName() <<
-                    ": Target phase rate cannot be equal to zero for producers",
+                    ": Target phase rate cannot be negative for producers",
                     InputError );
     GEOSX_THROW_IF( wellType == WellControls::Type::PRODUCER && !isZero( targetTotalRate ),
                     "WellControls named " << wellControls.getName() <<
@@ -913,7 +914,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
                                               numPhase,
                                               perforationData.getNumPerforationsGlobal(),
                                               wellControls,
-                                              m_currentTime, // initialization done at t = 0
+                                              0.0, // initialization done at t = 0
                                               m_resPres.toNestedViewConst(),
                                               m_resCompDens.toNestedViewConst(),
                                               m_resPhaseVolFrac.toNestedViewConst(),
@@ -958,7 +959,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
     CompositionalMultiphaseWellKernels::RateInitializationKernel::launch( subRegion.size(),
                                                                           m_targetPhaseIndex,
                                                                           wellControls,
-                                                                          m_currentTime, // initialization done at t = 0
+                                                                          0.0, // initialization done at t = 0
                                                                           wellElemPhaseDens,
                                                                           wellElemTotalDens,
                                                                           connRate );
@@ -973,9 +974,6 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_P
                                                      arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-
-  // saved current dt for residual normalization
-  m_currentDt = dt;
 
   MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
@@ -1812,6 +1810,18 @@ void CompositionalMultiphaseWell::assemblePressureRelations( DomainPartition con
       }
     }
   } );
+}
+
+void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
+                                                     real64 const & dt,
+                                                     DomainPartition & domain )
+{
+  WellSolverBase::implicitStepSetup( time_n, dt, domain );
+
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+  validateWellConstraints( meshLevel, fluid0 );
 }
 
 
