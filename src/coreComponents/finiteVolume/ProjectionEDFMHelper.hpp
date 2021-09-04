@@ -2,6 +2,8 @@
 #define __PROJECTIONEDFMHELPER_H_
 
 #include "finiteVolume/FluxApproximationBase.hpp"  // FIXME: include appropriate explicitly
+#include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
+
 #include <list>                                  // provides std::vector
 
 namespace geosx
@@ -13,8 +15,8 @@ class ProjectionEDFMHelper
 
   ProjectionEDFMHelper( MeshLevel const & mesh,
                         GeometricObjectManager const & geometricObjManager,
-                        std::string const & coeffName,
-                        CellElementStencilTPFA & stencil );
+                        CellElementStencilTPFA & stencil,
+                        EmbeddedSurfaceToCellStencil & edfmStencil );
 
   // add Fracture-matrix connections to the cell stencil
   void addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion) const;
@@ -88,8 +90,8 @@ class ProjectionEDFMHelper
   ArrayOfArraysView< localIndex const > const m_facesToNodes;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > m_nodeReferencePosition;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_cellCenters;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_permTensor;
-  CellElementStencilTPFA & m_stencil;
+  CellElementStencilTPFA & m_cellStencil;
+  EmbeddedSurfaceToCellStencil & m_edfmStencil;
 
 };
 

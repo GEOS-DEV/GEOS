@@ -88,13 +88,11 @@ protected:
                                            string const & embeddedSurfaceRegionName ) const override;
 
   void addFractureFractureConnections( MeshLevel & mesh,
-                                       EmbeddedSurfaceSubRegion const & fractureSubRegion,
-                                       localIndex const fractureRegionIndex ) const;
+                                       string const & faceElementRegionName ) const;
 
 
   void addFractureMatrixConnections( MeshLevel & mesh,
-                                     EmbeddedSurfaceSubRegion const & fractureSubRegion,
-                                     localIndex const fractureRegionIndex ) const;
+                                     string const & faceElementRegionName ) const;
 private:
 
   /// mean permeability coefficient

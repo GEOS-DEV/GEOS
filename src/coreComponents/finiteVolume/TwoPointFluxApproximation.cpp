@@ -84,9 +84,6 @@ void TwoPointFluxApproximation::initializePreSubGroups()
     m_pedfmHelper = std::make_unique<ProjectionEDFMHelper>( std::cref(meshLevel), std::cref(geometricObjManager),
                                                             std::cref(m_coeffName), std::ref(cellStencil) );
   }
-
-
-
 }
 
 

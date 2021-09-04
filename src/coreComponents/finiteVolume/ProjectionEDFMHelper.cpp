@@ -8,8 +8,8 @@ using std::ref;
 
 ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
                                             GeometricObjectManager const & geometricObjManager,
-                                            std::string const & coeffName,
-                                            CellElementStencilTPFA & stencil )
+                                            CellElementStencilTPFA & cellStencil,
+                                            EmbeddedSurfaceToCellStencil & edfmStencil )
     : m_mesh( mesh ), m_geometricObjManager( geometricObjManager ),
       m_elementManager( mesh.getElemManager() ), m_faceManager( mesh.getFaceManager() ),
       m_nodeManager( mesh.getNodeManager() ), m_edgeManager( mesh.getEdgeManager() ),
@@ -21,8 +21,8 @@ ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
       m_facesToNodes( m_faceManager.nodeList().toViewConst() ),
       m_nodeReferencePosition( m_nodeManager.referencePosition() ),
       m_cellCenters( m_elementManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() ) ),
-      m_permTensor( m_elementManager.constructArrayViewAccessor< real64, 2 >( coeffName ) ),
-      m_stencil( stencil )
+      m_cellStencil( cellStencil ),
+      m_edfmStencil( edfmStencil )
 {}
 
 void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion) const
@@ -56,7 +56,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
 
         // zero out matrix-matrix connections that are replaced by fracture-matrix connections
         // I assume that the m-m connection index is equal to the face id
-        m_stencil.zero( faceIdx );
+        m_cellStencil.zero( faceIdx );
       }
     }
   }
@@ -221,20 +221,18 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex fracElement,
   stencilCellsIndex[0] = cell.index;
   stencilWeights[0] =  transmissibility;
 
-  // frac data
-  // subregion->parent is elementSubRegions (mind s in the end)
-  // subregion->parent->parent is Fracture
+  // fracture data
   stencilCellsRegionIndex[1] = fractureSubRegion.getParent().getParent().getIndexInParent();
   stencilCellsSubRegionIndex[1] = fractureSubRegion.getIndexInParent();
   stencilCellsIndex[1] = fracElement;
   stencilWeights[1] = -transmissibility;
 
-  m_stencil.add(  numElems,
-                  stencilCellsRegionIndex.data(),
-                  stencilCellsSubRegionIndex.data(),
-                  stencilCellsIndex.data(),
-                  stencilWeights.data(),
-                  m_stencil.size() );
+  m_edfmStencil.add(  numElems,
+                      stencilCellsRegionIndex.data(),
+                      stencilCellsSubRegionIndex.data(),
+                      stencilCellsIndex.data(),
+                      stencilWeights.data(),
+                      m_edfmStencil.size() );
 }
 
 real64 ProjectionEDFMHelper::
