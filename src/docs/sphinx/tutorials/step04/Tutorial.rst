@@ -160,9 +160,6 @@ To go further
 This concludes the solid mechanics for small-strain linear elasticity tutorial.
 For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
-**Next tutorial**
-
-In the next tutorial :ref:`TutorialPoroelasticity`, we learn how to solve a simple poroelastic problem.
 
 **For more details**
 

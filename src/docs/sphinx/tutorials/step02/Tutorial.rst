@@ -469,11 +469,6 @@ To go further
 This concludes the single-phase external mesh tutorial.
 For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
-**Next tutorial**
-
-In the next tutorial :ref:`TutorialFieldCase`, we learn how to run a
-simple field case with more complex unstructured meshes containing different regions and properties.
-
 **For more details**
 
   - A complete description of the Internal Mesh generator is found here :ref:`Meshes`.

@@ -42,11 +42,6 @@ The in-situ properties and initial conditions are based upon a randomly generate
 .. image:: hf_example.png
 
 
-
-------------------------------------------------------------------
-Preparing the input files
-------------------------------------------------------------------
-
 The inputs for this case are contained inside a case-specific (``heterogeneousInSitu_singleFracture.xml``) and base (``heterogeneousInSitu_base.xml``) XML file.
 The ``tables`` directory contains the pre-constructed geologic model.
 This example will first focus on the case-specific input file, which contains the key parameter definitions, then consider the base-file.
@@ -54,7 +49,7 @@ This example will first focus on the case-specific input file, which contains th
 
 
 
-
+---------------------------------------------
 Included: including external xml files
 ---------------------------------------------
 
@@ -68,7 +63,7 @@ In our case, this points to the base hydraulic fracturing input file.
 
 
 
-
+--------------------------------------------------------------
 Parameters: defining variables to be used throughout the file
 --------------------------------------------------------------
 
@@ -92,7 +87,7 @@ For example, the parameter ``t_max`` is used to set the maximum time for the sim
   :start-after: <!-- SPHINX_HYDROFRACTURE_PARAMETERS -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_PARAMETERS_END -->
 
-
+--------------------------------------------------------------
 Mesh: building a mesh with biased boundaries
 --------------------------------------------------------------
 
@@ -106,9 +101,9 @@ The other dimensions of the mesh follow a similar pattern.
   :start-after: <!-- SPHINX_HYDROFRACTURE_MESH -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_MESH_END -->
 
-
+----------------------------------------------
 Geometry: defining a fracture nodeset
---------------------------------------------------------------
+----------------------------------------------
 
 For this example, we want to propagate a single hydraulic fracture along the y=0 plane.
 To achieve this, we need to define three nodesets:
@@ -123,8 +118,9 @@ To achieve this, we need to define three nodesets:
   :end-before: <!-- SPHINX_HYDROFRACTURE_GEOMETRY_END -->
 
 
-Boundary Conditions: defining boundary conditions
------------------------------------------------------------------
+--------------------	       
+Boundary conditions
+--------------------
 
 The boundary conditions for this problem are defined in the case-specific and the base xml files.
 The case specific block includes four instructions:
@@ -151,14 +147,14 @@ Therefore, it is important to test whether the size of the model is large enough
   :start-after: <!-- SPHINX_HYDROFRACTURE_BC_BASE -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_BC_BASE_END -->
 
-
+-----------------------------------------------------------------
 Solvers: setting up the coupled hydraulic fracturing solver
 -----------------------------------------------------------------
 
 The Solvers block is located in the base xml file.
 Note that the ``gravityVector`` attribute indicates that we are applying gravity in the -z direction in this problem.
 
-Similar to other coupled physics solver, the Hydrofracture solver is specified in three parts:
+Similar to other coupled physics solvers, the Hydrofracture solver is specified in three parts:
 
 - Hydrofracture: this is the primary solver, which will be called by the event manager.  Two of its key attributes are the names of the dependent solid and fluid solvers.
 - SolidMechanicsLagrangianSSLE: this is the solid mechanics solver.
@@ -171,9 +167,9 @@ The final solver present in this example is the SurfaceGenerator, which manages 
   :start-after: <!-- SPHINX_HYDROFRACTURE_SOLVERS -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_SOLVERS_END -->
 
-
-Events: setting up flexible events
------------------------------------------------------------------
+---------
+Events: 
+---------
 
 Rather than explicitly specify the desired timestep behavior, this example uses a flexible approach for timestepping.
 The hydrofracture solver is applied in three segments, where ``maxEventDt`` indicates the maximum allowable timestep:
@@ -195,7 +191,7 @@ Other key events in this problem include:
   :start-after: <!-- SPHINX_HYDROFRACTURE_EVENTS -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_EVENTS_END -->
 
-
+-----------------------------------------------------------------
 Functions: building functions to set in-situ properties
 -----------------------------------------------------------------
 
@@ -232,13 +228,7 @@ The interpolation method used here is upper, so the values in the table indicate
   :start-after: <!-- SPHINX_HYDROFRACTURE_FUNCTIONS -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_FUNCTIONS_END -->
 
-
-
-
-------------------------------------------------------------------
-Running the case and inspecting the results
-------------------------------------------------------------------
-
+---------------------------------
 Preprocessing the input file
 ---------------------------------
 
@@ -247,8 +237,8 @@ To build the final input file ``hydrofracture_processed.xml``, run the following
 
 ``geosx_bin_dir/preprocess_xml examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml -o hydrofracture_processed.xml``
 
-
-Running the case
+---------------------------------
+Running GEOSX
 ---------------------------------
 
 This is a moderate-sized example, so it is recommended to run this problem in parallel.
@@ -257,7 +247,7 @@ For example, this will run the code on the debug partition using a total of 36 c
 ``srun -n 36 -ppdebug geosx_bin_dir/geosx -i hydrofracture_processed.xml -x 6 -y 2 -z 3``
 
 
-
+---------------------------------
 Inspecting results
 ---------------------------------
 

@@ -1,7 +1,7 @@
 .. _BasicExamples:
 
 
-Basic examples
+Basic Examples
 =================================
 
 .. toctree::

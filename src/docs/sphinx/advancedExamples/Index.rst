@@ -1,7 +1,7 @@
 .. _AdvancedExamples:
 
 
-Advanced examples
+Advanced Examples
 =================================
 
 .. toctree::

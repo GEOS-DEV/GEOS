@@ -67,7 +67,7 @@ solution obtained with GEOSX, namely
 where :math:`p_0 = \frac{b}{K_vS_{\epsilon} + b^2} |w|` is the initial pressure, constant throughout the column, and :math:`c_c = \frac{\kappa}{\mu} \frac{K_v}{K_v S_{\epsilon} + b^2}` is the consolidation coefficient (or diffusion coefficient), with
 
 - :math:`b` Biot's coefficient
-- :math:`K_v = \frac{E(1-\nu)}{(1+\nu)(1-2\nu)}` the uniaxial bulk modulus, :math:`E` Young's modulus, and :math:`\nu` Poisson'r ratio
+- :math:`K_v = \frac{E(1-\nu)}{(1+\nu)(1-2\nu)}` the uniaxial bulk modulus, :math:`E` Young's modulus, and :math:`\nu` Poisson's ratio
 - :math:`S_{\epsilon}=\frac{(b - \phi)(1 - b)}{K} + \phi c_f` the constrained specific storage coefficient, :math:`\phi` porosity, :math:`K = \frac{E}{3(1-2\nu)}` the bulk modulus, and :math:`c_f` the fluid compressibility
 - :math:`\kappa` the isotropic permeability
 - :math:`\mu` the fluid viscosity
@@ -75,15 +75,10 @@ where :math:`p_0 = \frac{b}{K_vS_{\epsilon} + b^2} |w|` is the initial pressure,
 The characteristic consolidation time of the system is defined as :math:`t_c = \frac{L^2}{c_c}`.
 Knowledge of :math:`t_c` is useful for choosing appropriately the  timestep sizes that are used in the discrete model.
 
-------------------------------------------------------------------
-Preparing the input files
-------------------------------------------------------------------
 
-and field specification tags.
-
-
-Solvers: setting up a multiphysics coupling
----------------------------------------------
+----------------
+Coupled solvers 
+----------------
 
 GEOSX is a multi-physics tool. Different combinations of
 physics solvers available in the code can be applied
@@ -128,7 +123,7 @@ and the target regions (here, we only have one, ``Domain``).
   :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
   :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->
 
-
+---------------------------------
 Multiphysics numerical methods
 ---------------------------------
 
@@ -151,8 +146,9 @@ Here, we use a two-point flux approximation as described in the dedicated docume
   :end-before: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS_END -->
 
 
-Setting up mesh, material properties and boundary conditions
---------------------------------------------------------------------
+--------------------------------------------------
+Mesh, material properties, and boundary conditions
+--------------------------------------------------
 
 Last, let us take a closer look at the geometry of this simple problem.
 We use the internal mesh generator to create a beam-like mesh,
@@ -171,7 +167,7 @@ The parameters used in the simulation are summarized in the following table.
 +================+=======================+==================+===================+
 | :math:`E`      | Young's modulus       | [Pa]             | 1.0*10\ :sup:`4`  |
 +----------------+-----------------------+------------------+-------------------+
-| :math:`\nu`    | Poisson's ration      | [-]              | 0.2               |
+| :math:`\nu`    | Poisson's ratio       | [-]              | 0.2               |
 +----------------+-----------------------+------------------+-------------------+
 | :math:`b`      | Biot's coefficient    | [-]              | 1.0               |
 +----------------+-----------------------+------------------+-------------------+
@@ -196,20 +192,13 @@ For such set of parameters we have :math:`p_0` = 1.0 Pa, :math:`c_c` = 1.111 m\ 
 Therefore, as shown in the ``Events`` section, we run this simulation for 90 seconds.
 
 
-------------------------------------------------------------------
-Running the case and inspecting the results
-------------------------------------------------------------------
-
-Running the case
----------------------------------
+--------------
+Running GEOSX 
+--------------
 
 To run the case, use the following command:
 
 ``path/to/geosx -i src/coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml``
-
-
-Inspecting the console output
----------------------------------
 
 Here, we see for instance the ``RSolid`` and ``RFluid`` at a representative timestep
 (residual values for solid and fluid mechanics solvers, respectively)
@@ -225,12 +214,12 @@ Here, we see for instance the ``RSolid`` and ``RFluid`` at a representative time
    
 
 As expected, since we are dealing with a linear problem,
-the fully implicit solver coverges in a single iteration.
+the fully implicit solver converges in a single iteration.
 
 
-
+--------------------
 Inspecting results
----------------------------------
+--------------------
 
 This plot compares the analytical pressure solution (continuous lines) at selected
 times with the numerical solution (markers).
@@ -390,7 +379,6 @@ To go further
 
 This concludes the poroelastic example.
 For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
-
 
 
 **For more details**

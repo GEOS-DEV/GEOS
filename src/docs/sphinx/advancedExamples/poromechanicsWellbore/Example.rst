@@ -2,18 +2,18 @@
 
 
 ####################################################
-PoroMechanical Models for Wellbore Problems
+Poromechanical Wellbore Problem
 ####################################################
 
 
 **Context**
 
-The main objective of this tutorial is to demonstrate how to use the internal wellbore mesh generator and poromechanical solvers in GEOSX to tackle wellbore problems in porous media. In this tutorial, a poroplastic model is applied to find the solution of rock deformation within the vicinity of a vertical wellbore, considering elastoplastic deformation, fluid diffusion and poromechanical coupling effect. To do so, a single phase flow solver is fully coupled with a Lagrangian mechanics solver and the Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is chosen as the material model for the solid domain. We first solve this problem with a poroelastic model and verify the modeling results with the corresponding analytical solutions. Then, the verified case is modified to test a poroplastic version, whose results are compared with the ones obtained from the poroelastic case to highlight the impact of plasticity in this specific problem.
+The main objective of this example is to demonstrate how to use the internal wellbore mesh generator and poromechanical solvers in GEOSX to tackle wellbore problems in porous media. In this example, a poroplastic model is applied to find the solution of rock deformation within the vicinity of a vertical wellbore, considering elastoplastic deformation, fluid diffusion and poromechanical coupling effect. To do so, a single phase flow solver is fully coupled with a Lagrangian mechanics solver and the Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`) is chosen as the material model for the solid domain. We first solve this problem with a poroelastic model and verify the modeling results with the corresponding analytical solutions. Then, the verified case is modified to test a poroplastic version, whose results are compared with the ones obtained from the poroelastic case to highlight the impact of plasticity in this specific problem.
  
 
 **Objectives**
 
-At the end of this tutorial you will know:
+At the end of this example you will know:
 
   - how to construct meshes for wellbore problems with the internal wellbore mesh generator,
   - how to specify initial and boundary conditions, such as reservoir properties, in-situ stresses, mixed loading (mechanical and fluid) at wellbore wall and far-field constraints,
@@ -22,7 +22,7 @@ At the end of this tutorial you will know:
 
 **Input file**
 
-This tutorial uses no external input files and everything required is
+This example uses no external input files and everything required is
 contained within a single GEOSX input file. 
 
 The xml input file for the test case with poroelasticity is located at:
@@ -60,7 +60,7 @@ Preparing the input files
 ------------------------------------------------------------------
 
 All inputs for this case are contained inside a single XML file.
-In this tutorial, we focus our attention on the ``Mesh`` tags, the ``Solver`` tags, the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
+In this example, we focus our attention on the ``Mesh`` tags, the ``Solver`` tags, the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
 
 Mesh: discretizing computational domain
 --------------------------------------------------------------------
@@ -80,7 +80,7 @@ Let us take a closer look at the geometry of this wellbore problem.
 We use the internal mesh generator ``InternalWellbore`` to create a rock domain
 (:math:`10\, m \, \times 5 \,  m \, \times 2 \, m`), with a wellbore of
 initial radius equal to :math:`0.1` m.
-Coordinates of ``trajectory`` defines the wellbore trajectory, which represents a perfect vertical well in this tutorial. 
+Coordinates of ``trajectory`` defines the wellbore trajectory, which represents a perfect vertical well in this example. 
 By turning on ``autoSpaceRadialElems="{ 1 }"``, the internal mesh generator automatically sets number and spacing of elements in the radial direction, which overrides the values of ``nr``. 
 With ``useCartesianOuterBoundary="0"``, a Cartesian aligned outer boundary on the outer block is enforced.
 In this way, a structured three-dimensional mesh is created with 100 x 80 x 2 elements in the radial, tangential and z directions, respectively. All the elements are eight-node hexahedral elements (``C3D8``) and refinement is performed
@@ -109,7 +109,7 @@ This approach allows for generality and flexibility in constructing multi-physic
 The order of specifying these solvers is not restricted in GEOSX.
 Note that end-users should give each single-physics solver a meaningful and distinct name, as GEOSX will recognize these single-physics solvers based on their customized names and create user-expected coupling.
 
-As demonstrated in this tutorial, to setup a poromechanical coupling, we need to define three different solvers in the XML file:
+As demonstrated in this example, to setup a poromechanical coupling, we need to define three different solvers in the XML file:
 
 - the mechanics solver, a solver of type ``SolidMechanics_LagrangianFEM`` called here ``mechanicsSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
 
@@ -138,7 +138,7 @@ As demonstrated in this tutorial, to setup a poromechanical coupling, we need to
 The two single-physics solvers are parameterized as explained
 in their corresponding documents. 
 
-In this tutorial, let us focus on the coupling solver.
+In this example, let us focus on the coupling solver.
 This solver (``PoromechanicsSolver``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``SinglePhaseFlowSolver``) and solid solver (here: ``mechanicsSolver``).
 These solvers are forced to interact through the ``porousMaterialNames="{porousRock}"`` with all the constitutive models. We specify the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Omega``).
@@ -168,7 +168,7 @@ Here, we use a two-point flux approximation scheme (``singlePhaseTPFA``), as des
 Constitutive model: defining material properties with constitutive laws
 -----------------------------------------------------------
 
-For this test problem, the solid and fluid materials are named as ``rock`` and ``water`` respectively, whose mechanical properties are specified in the ``Constitutive`` section. In this tutorial, different material models, linear elastic isotropic model (see :ref:`LinearElasticIsotropic`) and Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`), are used to solve the mechanical deformation, which is the only difference between the poroelastic and poroplastic cases in this tutorial.
+For this test problem, the solid and fluid materials are named as ``rock`` and ``water`` respectively, whose mechanical properties are specified in the ``Constitutive`` section. In this example, different material models, linear elastic isotropic model (see :ref:`LinearElasticIsotropic`) and Extended Drucker-Prager model (see :ref:`TwoInvariantPlasticity`), are used to solve the mechanical deformation, which is the only difference between the poroelastic and poroplastic cases in this example.
 
 
 For the poroelastic case, ``PorousElasticIsotropic`` model is used to describe the linear elastic isotropic response of ``rock`` to loading. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the flow of ``water`` upon injection:
@@ -205,7 +205,7 @@ The next step is to specify fields, including:
   - The initial value (the in-situ stresses and pore pressure have to be initialized)
   - The boundary conditions (traction and fluid loading at the wellbore wall and constraints of the outer boundaries have to be set)
 
-In this tutorial, we need to specify anisotropic horizontal stress (:math:`\sigma_h` = -9.0 MPa and :math:`\sigma_H` = -11.0 MPa) and vertical stress (:math:`\sigma_v` = -12.0 MPa). 
+In this example, we need to specify anisotropic horizontal stress (:math:`\sigma_h` = -9.0 MPa and :math:`\sigma_H` = -11.0 MPa) and vertical stress (:math:`\sigma_v` = -12.0 MPa). 
 A compressive traction (``InnerMechanicalLoad``) :math:`P_w` = -10 MPa and fluid loading (``InnerFluidLoad``) :math:`P_f` = 10 MPa are applied at the wellbore wall ``rneg``.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
@@ -340,10 +340,10 @@ To go further
 ------------------------------------------------------------------
 
 
-**Feedback on this tutorial**
+**Feedback on this example**
 
-This concludes the tutorial on PoroPlasticity Model for Wellbore Problems.
-For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+This concludes the example on PoroPlasticity Model for Wellbore Problems.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
 
 

@@ -34,12 +34,8 @@ The xml input file for this test case is located at:
 **Validation tools**
 
 If you have not already done so, please use or enable an xml validation tool (see **User Guide/Input Files/Input Validation**).
-This will help you identify common issues that may occur when workign with input file.
+This will help you identify common issues that may occur when working with input file.
 
-
-------------------------------------
-GEOSX input files
-------------------------------------
 
 GEOSX runs by reading user input information from one or more XML files.
 For instance, if everything we need to run is contained in a file called ``my_input.xml``,
@@ -70,8 +66,9 @@ A typical GEOSX input file contains the following XML tags:
 
 .. _Solver_tag_single_phase_internal_mesh:
 
-Defining a solver
------------------
+-------------------
+Single-phase solver 
+-------------------
 
 GEOSX is a multi-physics tool. To find the solution to different physical problems
 (diffusion, deformation, etc.), GEOSX uses one or more physics solvers.
@@ -129,8 +126,9 @@ and for the maximum number of iterations allowed to reach convergence.
 
 .. _Mesh_tag_single_phase_internal_mesh:
 
-Specifying a computational mesh
-----------------------------------
+------
+Mesh
+------
 
 We need to define a mesh (or grid) to perform numerical calculations on.
 The **Mesh** element allows users to specify this grid.
@@ -181,8 +179,9 @@ We therefore have a cube of 10x10x10 elements with a bounding box defined by cor
 
 .. _Geometry_tag_single_phase_internal_mesh:
 
-Geometry tag
------------------
+---------
+Geometry 
+---------
 
 The **Geometry** tag is useful to define specific parts of a mesh and assign properties to them.
 Here, for instance, we use two **Box** elements to specify where our source and sink pressure terms are located.
@@ -209,8 +208,9 @@ We can refer to their handle later in the input file when assigning property val
 
 .. _Events_tag_single_phase_internal_mesh:
 
-Specifying events
-------------------------
+--------
+Events
+--------
 
 In GEOSX, we call **Events** anything that happens at a set time, or a set frequency (**PeriodicEvents**).
 Events are a central element in GEOSX,
@@ -240,8 +240,9 @@ If we focus on the two periodic events, we see :
 
 .. _NumericalMethods_tag_single_phase_internal_mesh:
 
-Defining Numerical Methods
-----------------------------------
+------------------
+Numerical methods
+------------------
 
 GEOSX comes with a number of useful numerical methods.
 Here, for instance, in the Solvers elements, we have specified that we use a two-point flux approximation
@@ -266,8 +267,9 @@ multiple solvers using the same numerical scheme, but with different tolerances,
 
 .. _ElementRegions_tag_single_phase_internal_mesh:
 
-Defining regions in the mesh
------------------------------------
+--------
+Regions
+--------
 
 Regions are important in GEOSX to specify the material properties of elements.
 The **ElementRegions** element is used here to list all the regions used in the simulation.
@@ -285,8 +287,9 @@ We must also specify the material contained in that region (here, two materials 
 
 .. _Constitutive_tag_single_phase_internal_mesh:
 
-Defining material properties with constitutive laws
----------------------------------------------------------------------
+---------------------
+Constitutive models
+---------------------
 
 The **Constitutive** element lists all materials
 contained in the simulated domain,
@@ -326,8 +329,9 @@ the order in which objects are registered and used in the XML file is not import
 
 .. _FieldSpecifications_tag_single_phase_internal_mesh:
 
-Defining properties with the FieldSpecifications
----------------------------------------------------------------------
+--------------------
+Defining properties 
+--------------------
 
 In the **FieldSpecifications** section, properties such as porosity,
 permeability, source and sink pressures are set. GEOSX offers
@@ -383,8 +387,9 @@ It is important to notice that the permeability is anisotropic, and z-permeabili
 
 .. _Outputs_tag_single_phase_internal_mesh:
 
-Specifying the output formats
-----------------------------------
+-------
+Output
+-------
 
 In order to get the results from simulation written to visualization and post-processing files,
 we need to instantiate an output object that will serve as our container for output information.
@@ -478,7 +483,7 @@ Congratulations on completing this first run!
 
 
 ------------------------------------
-Visualization of results
+Visualization
 ------------------------------------
 
 
@@ -506,10 +511,6 @@ To go further
 
 This concludes the single-phase internal mesh tutorial.
 For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
-
-**Next tutorial**
-
-In the next tutorial :ref:`TutorialSinglePhaseFlowExternalMesh`, we learn how to run exactly the same single-phase case, but on **externally imported** meshes.
 
 **For more details**
 

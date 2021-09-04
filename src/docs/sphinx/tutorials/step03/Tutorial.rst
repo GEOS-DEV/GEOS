@@ -41,10 +41,6 @@ This mesh contains three continuous regions:
 The mesh is defined using the GMSH file format (see :ref:`Meshes` for more information on
 the supported mesh file format). Each tetrahedron is associated to a unique tag.
 
-------------------------------------
-GEOSX input files
-------------------------------------
-
 The XML file considered here follows the typical structure of the GEOSX input files:
 
  #. :ref:`Solver <Solver_tag_field_case>`
@@ -87,12 +83,13 @@ numerical solver parameters such as the linear and nonlinear tolerances, the pre
 
 .. _Mesh_tag_field_case:
 
-Specifying a computational mesh
-----------------------------------
+-------
+Mesh
+-------
 
 Here, we use the ``PAMELAMeshGenerator`` to load the mesh (see :ref:`ImportingExternalMesh`).
 The syntax to import external meshes is simple : in the XML file,
-the mesh ``file`` is included with its relative or absolute path to the location of the geosx XML file and a user-specified ``name`` label for the mesh object.
+the mesh ``file`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified ``name`` label for the mesh object.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
@@ -102,8 +99,9 @@ the mesh ``file`` is included with its relative or absolute path to the location
 
 .. _Geometry_tag_field_case:
 
-Geometry tag
------------------
+----------
+Geometry 
+---------
 
         Here, we are using definition of ``source`` and ``sink`` boxes in addition to the ``all`` box in order to flag sets of nodes or cells which will act as injection or production.
 
@@ -116,8 +114,9 @@ In order to define a box, the user defines ``xMax`` and ``xMin``, two diagonally
 
 .. _Events_tag_field_case:
 
-Specifying events
-------------------------
+-------
+Events 
+-------
 
 The events are used here to guide the simulation through time,
 and specify when outputs must be triggered.
@@ -137,8 +136,9 @@ Two ``PeriodicEvent`` are defined.
 
 .. _NumericalMethods_tag_field_case:
 
-Defining Numerical Methods
-----------------------------------
+------------------
+Numerical methods 
+------------------
 
 Defining the numerical method used in the solver, we will provide information on how to discretize our equations. Here a classical two-point flux approximation (TPFA) scheme is used to discretize water fluxes over faces.
 
@@ -155,8 +155,9 @@ The field under ``coefficientName`` is used during TPFA transmissibilities const
 
 .. _ElementRegions_tag_field_case:
 
-Defining regions in the mesh
------------------------------------
+--------
+Regions 
+--------
 
 Assuming that the overburden and the underburden are impermeable,
 and flow only takes place in the reservoir, we need to define regions.
@@ -180,7 +181,7 @@ There are two methods to achieve this regional solve.
                 :start-after: <!-- SPHINX_FIELD_CASE_REGION -->
                 :end-before: <!-- SPHINX_FIELD_CASE_REGION_END -->
 
-We opt for the latest as it allows to visualize over- and underburdens and to change regions handling in ther tag without needing to amend the **ElementRegion** tag.
+We opt for the latest as it allows to visualize over- and underburdens and to change regions handling in their tag without needing to amend the **ElementRegion** tag.
 
 .. note::
   The material list here was set for a single-phase flow problem. This list is subject
@@ -188,8 +189,9 @@ We opt for the latest as it allows to visualize over- and underburdens and to ch
 
 .. _Constitutive_tag_field_case:
 
-Defining material properties with constitutive laws
--------------------------------------------------------
+--------------------
+Constitutive models
+--------------------
 
 We simulate a single-phase flow in the reservoir layer, hence with two types of materials, a fluid (water) and solid (rock).
 
@@ -205,8 +207,9 @@ The constitutive parameters such as the density, the viscosity, and the compress
 
 .. _FieldSpecifications_tag_field_case:
 
-Defining properties with the FieldSpecifications
----------------------------------------------------------------------
+--------------------
+Defining properties
+--------------------
 
 The next step is to specify fields, including:
 
@@ -231,8 +234,9 @@ You may note :
 
 .. _Outputs_tag_field_case:
 
-Specifying the output formats
-----------------------------------
+-------
+Output 
+-------
 
 The **Outputs** XML tag is used to trigger the writing of visualization files.
 Here, we write files in a format natively readable by Paraview under the tar *VTK*
@@ -247,9 +251,9 @@ Here, we write files in a format natively readable by Paraview under the tar *VT
 
 .. _Functions_tag_field_case:
 
-------------------------------------------------
-Using Functions to specify dependent properties
-------------------------------------------------
+---------------------------------------
+Using functions to specify properties
+---------------------------------------
 
 Eventually, one can define varying properties using ``TableFunction`` (:ref:`FunctionManager`) under the **Functions** tag:
 
@@ -330,11 +334,6 @@ To go further
 
 This concludes this tutorial. For any feedback, please submit a `GitHub issue on
 the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
-
-**Next tutorial**
-
-In the next tutorial :ref:`TutorialDeadOilBottomLayersSPE10`, we will learn how
-to run a multiphase flow case on a SPE10 channelized layer.
 
 **For more details**
 

@@ -2,12 +2,12 @@
 
 
 #######################################################
-Tutorial 10: Pressurized fracture in an infinite medium
+Sneddon's Problem
 #######################################################
 
 **Objectives**
 
-At the end of this tutorial you will know:
+At the end of this example you will know:
 
   - how to define embedded fractures in the porous domain,
   - how to use the SolidMechanicsEmbeddedFractures solver to solve mechanics problems with embedded fractures.
@@ -15,7 +15,7 @@ At the end of this tutorial you will know:
 
 **Input file**
 
-This tutorial uses no external input files and everything required is
+This example uses no external input files and everything required is
 contained within a single GEOSX input file.
 The xml input file for this test case is located at:
 
@@ -50,7 +50,7 @@ Preparing the input files
 ------------------------------------------------------------------
 
 All inputs for this case are contained inside a single XML file.
-In this tutorial, we focus our attention on the ``Solvers`` tags,
+In this example, we focus our attention on the ``Solvers`` tags,
 the ``ElementRegions`` tags and the Geometry tags.
 
 Solvers: setting up the embedded fractures mechanics solver
@@ -113,11 +113,11 @@ The parameters used in the simulation are summarized in the following table.
   +================+=======================+==================+===================+
   | :math:`E`      | Young's modulus       | [Pa]             | 1.0*10\ :sup:`4`  |
   +----------------+-----------------------+------------------+-------------------+
-  | :math:`\nu`    | Poisson's ration      | [-]              | 0.2               |
+  | :math:`\nu`    | Poisson's ratio       | [-]              | 0.2               |
   +----------------+-----------------------+------------------+-------------------+
   | :math:`L_f`    | Fracture length       | [m]              | 20                |
   +----------------+-----------------------+------------------+-------------------+
-  | :math:`p_f`    | fracture pressure     | [Pa]             | 1.0*10\ :sup:`5`  |
+  | :math:`p_f`    | Fracture pressure     | [Pa]             | 1.0*10\ :sup:`5`  |
   +----------------+-----------------------+------------------+-------------------+
 
 Material properties and boundary conditions are specified in the
@@ -280,7 +280,7 @@ times with the numerical solution (markers).
 To go further
 ------------------------------------------------------------------
 
-**Feedback on this tutorial**
+**Feedback on this example**
 
-This concludes the Sneddon tutorial.
-For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+This concludes the Sneddon example.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
