@@ -88,7 +88,7 @@ For example, the parameter ``t_max`` is used to set the maximum time for the sim
   :end-before: <!-- SPHINX_HYDROFRACTURE_PARAMETERS_END -->
 
 --------------------------------------------------------------
-Mesh: building a mesh with biased boundaries
+Mesh with biased boundaries
 --------------------------------------------------------------
 
 The mesh block for this example uses a biased mesh along the simulation boundaries to reduce the size of the problem, while maintaining the desired spatial extents.
@@ -102,7 +102,7 @@ The other dimensions of the mesh follow a similar pattern.
   :end-before: <!-- SPHINX_HYDROFRACTURE_MESH_END -->
 
 ----------------------------------------------
-Geometry: defining a fracture nodeset
+Defining a fracture nodeset
 ----------------------------------------------
 
 For this example, we want to propagate a single hydraulic fracture along the y=0 plane.
@@ -148,7 +148,7 @@ Therefore, it is important to test whether the size of the model is large enough
   :end-before: <!-- SPHINX_HYDROFRACTURE_BC_BASE_END -->
 
 -----------------------------------------------------------------
-Solvers: setting up the coupled hydraulic fracturing solver
+Coupled hydraulic fracturing solver
 -----------------------------------------------------------------
 
 The Solvers block is located in the base xml file.
@@ -168,7 +168,7 @@ The final solver present in this example is the SurfaceGenerator, which manages 
   :end-before: <!-- SPHINX_HYDROFRACTURE_SOLVERS_END -->
 
 ---------
-Events: 
+Events 
 ---------
 
 Rather than explicitly specify the desired timestep behavior, this example uses a flexible approach for timestepping.
@@ -192,7 +192,7 @@ Other key events in this problem include:
   :end-before: <!-- SPHINX_HYDROFRACTURE_EVENTS_END -->
 
 -----------------------------------------------------------------
-Functions: building functions to set in-situ properties
+Functions to set in-situ properties
 -----------------------------------------------------------------
 
 The function definitions are in the base xml file, and rely upon the files in the tables directory.

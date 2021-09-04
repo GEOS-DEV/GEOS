@@ -57,8 +57,9 @@ The XML file considered here follows the typical structure of the GEOSX input fi
 
 .. _Solver_tag_field_case:
 
-Defining a solver
------------------
+--------------------
+Single-phase solver
+--------------------
 
 Let us inspect the **Solver** XML tags.
 
@@ -101,7 +102,7 @@ the mesh ``file`` is included with its relative or absolute path to the location
 
 ----------
 Geometry 
----------
+----------
 
         Here, we are using definition of ``source`` and ``sink`` boxes in addition to the ``all`` box in order to flag sets of nodes or cells which will act as injection or production.
 
