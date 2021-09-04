@@ -148,7 +148,6 @@ void EmbeddedSurfaceFluxKernel::
 {
   constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
   constexpr localIndex MAX_STENCIL_SIZE = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
-  constexpr localIndex MAX_NUM_OF_CONNECTIONS  = SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS;
 
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
@@ -167,7 +166,10 @@ void EmbeddedSurfaceFluxKernel::
     stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, numDofs );
 
     // compute transmissibility
-    real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2], dTrans_dAper[MAX_NUM_OF_CONNECTIONS][2];
+    real64 transmissibility[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
+    real64 dTrans_dPres[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
+    real64 dTrans_dAper[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
+
     stencilWrapper.computeWeights( iconn,
                                    permeability,
                                    dPerm_dPres,
@@ -409,7 +411,6 @@ void FaceElementFluxKernel::
 {
   constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
   constexpr localIndex MAX_STENCIL_SIZE  = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
-  constexpr localIndex MAX_NUM_OF_CONNECTIONS  = SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS;
 
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
@@ -436,7 +437,10 @@ void FaceElementFluxKernel::
     stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > dFlux_dAper( numFluxElems, stencilSize );
 
     // compute transmissibility
-    real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2], dTrans_dAper[MAX_NUM_OF_CONNECTIONS][2];
+    real64 transmissibility[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
+    real64 dTrans_dPres[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
+    real64 dTrans_dAper[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
+
     stencilWrapper.computeWeights( iconn,
                                    permeability,
                                    dPerm_dPres,
