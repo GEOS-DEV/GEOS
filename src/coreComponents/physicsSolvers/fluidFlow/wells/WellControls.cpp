@@ -150,7 +150,6 @@ TableFunction * createWellTable( string const & tableName,
   TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ));
   table->setTableCoordinates( timeCoord );
   table->setTableValues( constantValueArray );
-  table->reInitializeFunction();
   table->setInterpolationMethod( TableFunction::InterpolationType::Lower );
   return table;
 }
@@ -275,19 +274,30 @@ void WellControls::postProcessInput()
   // Therefore, we multiply it by -1 before the simulation starts to have the correct sign in the equations
   if( getType() == Type::PRODUCER )
   {
-    array1d< real64 > const & phaseRatetableValues = m_targetPhaseRateTable->getValues();
+    array1d< real64 > & phaseRatetableValues = m_targetPhaseRateTable->getValues();
     for( localIndex i = 0; i < phaseRatetableValues.size(); ++i )
     {
       phaseRatetableValues( i ) *= -1;
     }
 
-    array1d< real64 > const & totalRatetableValues = m_targetTotalRateTable->getValues();
+    array1d< real64 > & totalRatetableValues = m_targetTotalRateTable->getValues();
     for( localIndex i = 0; i < totalRatetableValues.size(); ++i )
     {
       totalRatetableValues( i ) *= -1;
     }
   }
-
 }
+
+bool WellControls::wellIsOpen( real64 const & currentTime ) const
+{
+  bool isOpen = true;
+  if( ( m_currentControl == Control::TOTALVOLRATE && isZero( getTargetTotalRate( currentTime ) ) ) ||
+      ( m_currentControl == Control::PHASEVOLRATE && isZero( getTargetPhaseRate( currentTime ) ) ) )
+  {
+    isOpen = false;
+  }
+  return isOpen;
+}
+
 
 } //namespace geosx

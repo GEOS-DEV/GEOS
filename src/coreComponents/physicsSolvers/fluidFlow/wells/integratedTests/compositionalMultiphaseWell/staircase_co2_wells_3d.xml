@@ -57,6 +57,8 @@
     </CompositionalMultiphaseWell>
   </Solvers>
 
+
+  
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -217,12 +219,12 @@
   <Functions>
     <TableFunction name="phaseRateTable"
                    inputVarNames="{time}"
-                   coordinates="{0, 2.01e4, 5e4}"
+                   coordinates="{0, 5.01e4, 5e5}"
                    values="{1e-7, 2e-7, 2e-7}" 
                    interpolation="lower"/>
     <TableFunction name="totalRateTable"
                    inputVarNames="{time}"
-                   coordinates="{0, 2.01e4, 5e4}"
+                   coordinates="{0, 5.01e4, 5e5}"
                    values="{5e-8, 0, 0}" 
                    interpolation="lower"/>
   </Functions>

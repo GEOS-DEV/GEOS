@@ -495,6 +495,14 @@ void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
                                                                WellElementSubRegion const & subRegion )
   {
+
+    // for now, we do not want to model storage effects in the wells (unless the well is shut)
+    WellControls const & wellControls = getWellControls( subRegion );
+    if( wellControls.wellIsOpen( m_currentTime + m_currentDt ) )
+    {
+      return;
+    }
+
     // get a reference to the degree-of-freedom numbers
     string const wellElemDofKey = dofManager.getKey( wellElementDofName() );
     arrayView1d< globalIndex const > const wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellElemDofKey );

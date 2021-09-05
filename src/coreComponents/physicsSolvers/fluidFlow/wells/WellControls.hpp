@@ -220,6 +220,12 @@ public:
    */
   const real64 & getSurfaceTemperature() const { return m_surfaceTemp; }
 
+  /**
+   * @brief Getter for the status of the well (open or shut)
+   * @param[in] currentTime the current time
+   * @return a flag equal to true if the well is open, and false otherwise
+   */
+  bool wellIsOpen( real64 const & currentTime ) const;
 
   ///@}
 
@@ -341,13 +347,13 @@ private:
   string m_targetBHPTableName;
 
   /// Total rate table
-  TableFunction const * m_targetTotalRateTable;
+  TableFunction * m_targetTotalRateTable;
 
   /// Phase rate table
-  TableFunction const * m_targetPhaseRateTable;
+  TableFunction * m_targetPhaseRateTable;
 
   /// BHP table
-  TableFunction const * m_targetBHPTable;
+  TableFunction * m_targetBHPTable;
 };
 
 ENUM_STRINGS( WellControls::Type,
