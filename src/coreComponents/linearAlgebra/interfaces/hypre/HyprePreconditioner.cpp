@@ -471,7 +471,7 @@ void HyprePreconditioner::setup( Matrix const & mat )
     // Perform setup of the MGR mechanics F-solver with SDC matrix, if used
     if( m_mgrData && m_mgrData->mechSolver.ptr )
     {
-      GEOSX_LAI_CHECK_ERROR( m_mgrData->mechSolver.setup( m_mgrData->mechSolver.ptr, m_precondMatrix.unwrapped(), nullptr, nullptr ) );
+      //GEOSX_LAI_CHECK_ERROR( m_mgrData->mechSolver.setup( m_mgrData->mechSolver.ptr, m_precondMatrix.unwrapped(), nullptr, nullptr ) );
     }
 
     // Perform setup of the main solver
