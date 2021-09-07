@@ -62,7 +62,7 @@ public:
   static constexpr localIndex getFaceMapOverallocation()
   { return 8; }
 
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > const & getNodesPositions() const override;
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodesPositions() const override;
 
   /**
    * @brief Returns a mutable reference to vector holding the nodes coordinates
@@ -78,13 +78,13 @@ public:
 
   ArrayOfArrays< localIndex > getNodeToElements() const override;
 
-  array2d< geosx::localIndex > const & getEdgeToNodes() const override;
+  array2d< geosx::localIndex > getEdgeToNodes() const override;
 
-  ArrayOfSets< geosx::localIndex > const & getEdgeToFaces() const override;
+  ArrayOfSets< geosx::localIndex > getEdgeToFaces() const override;
 
   ArrayOfArrays< localIndex > getFaceToNodes() const override;
 
-  ArrayOfArrays< geosx::localIndex > const & getFaceToEdges() const override;
+  ArrayOfArrays< geosx::localIndex > getFaceToEdges() const override;
 
   array2d< localIndex > getFaceToElements() const override;
 

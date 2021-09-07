@@ -104,19 +104,19 @@ public:
    * @brief Total number of edges across all the cell blocks.
    * @return The total number of edges.
    */
-  virtual localIndex numEdges() const = 0; // TODO Improve doc
+  virtual localIndex numEdges() const = 0;
 
   /**
    * @brief Total number of faces across all the cell blocks.
    * @return The total number of faces.
    */
-  virtual localIndex numFaces() const = 0; // TODO Improve doc
+  virtual localIndex numFaces() const = 0;
 
   /**
    * @brief Returns the node coordinates in a (numNodes, 3) 2d array.
    * @return A const view to the array.
    */
-  virtual array2d< real64, nodes::REFERENCE_POSITION_PERM > const & getNodesPositions() const = 0;
+  virtual array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodesPositions() const = 0;
 
   /**
    * @brief Returns the node to edges mapping.
@@ -142,13 +142,13 @@ public:
    * @brief Returns the edge to nodes mapping.
    * @return A 1 to 2 relationship. The result is meant to have size (numEdges, 2).
    */
-  virtual array2d< geosx::localIndex > const & getEdgeToNodes() const = 0;
+  virtual array2d< geosx::localIndex > getEdgeToNodes() const = 0;
 
   /**
    * @brief Returns the edge to faces mapping.
    * @return A one to many relationship.
    */
-  virtual ArrayOfSets< geosx::localIndex > const & getEdgeToFaces() const = 0;
+  virtual ArrayOfSets< geosx::localIndex > getEdgeToFaces() const = 0;
 
   /**
    * @brief Returns the face to nodes mapping.
@@ -160,7 +160,7 @@ public:
    * @brief Returns the face to edges mapping.
    * @return A one to many relationship.
    */
-  virtual ArrayOfArrays< geosx::localIndex > const & getFaceToEdges() const = 0;
+  virtual ArrayOfArrays< geosx::localIndex > getFaceToEdges() const = 0;
 
   /**
    * @brief Returns the face to elements mappings.

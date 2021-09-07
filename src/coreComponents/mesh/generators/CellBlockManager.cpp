@@ -667,17 +667,17 @@ localIndex CellBlockManager::numFaces() const
   return m_numFaces;
 }
 
-ArrayOfSets< geosx::localIndex > const & CellBlockManager::getEdgeToFaces() const
+ArrayOfSets< geosx::localIndex > CellBlockManager::getEdgeToFaces() const
 {
   return m_edgeToFaces;
 }
 
-array2d< geosx::localIndex > const & CellBlockManager::getEdgeToNodes() const
+array2d< geosx::localIndex > CellBlockManager::getEdgeToNodes() const
 {
   return m_edgeToNodes;
 }
 
-ArrayOfArrays< geosx::localIndex > const & CellBlockManager::getFaceToEdges() const
+ArrayOfArrays< geosx::localIndex > CellBlockManager::getFaceToEdges() const
 {
   return m_faceToEdges;
 }
@@ -697,7 +697,7 @@ CellBlock & CellBlockManager::registerCellBlock( string name )
   return this->getCellBlocks().registerGroup< CellBlock >( name );
 }
 
-array2d< real64, nodes::REFERENCE_POSITION_PERM > const & CellBlockManager::getNodesPositions() const
+array2d< real64, nodes::REFERENCE_POSITION_PERM > CellBlockManager::getNodesPositions() const
 {
   return m_nodesPositions;
 }
