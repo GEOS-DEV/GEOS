@@ -631,7 +631,6 @@ ArrayOfSets< localIndex > CellBlockManager::getNodeToFaces() const
   return result;
 }
 
-// TODO return views
 array2d< localIndex > CellBlockManager::getFaceToElements() const
 {
   return m_faceToElements;
@@ -702,9 +701,9 @@ array2d< real64, nodes::REFERENCE_POSITION_PERM > CellBlockManager::getNodesPosi
   return m_nodesPositions;
 }
 
-array2d< real64, nodes::REFERENCE_POSITION_PERM > & CellBlockManager::getNodesPositions()
+arrayView2d< real64, nodes::REFERENCE_POSITION_USD > CellBlockManager::getNodesPositions()
 {
-  return m_nodesPositions;
+  return m_nodesPositions.toView();
 }
 
 void CellBlockManager::setNumNodes( localIndex numNodes )
@@ -722,7 +721,7 @@ array1d< globalIndex > CellBlockManager::getNodeLocalToGlobal() const
 
 arrayView1d< globalIndex > CellBlockManager::getNodeLocalToGlobal()
 {
-  return m_nodeLocalToGlobal;
+  return m_nodeLocalToGlobal.toView();
 }
 
 std::map< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const

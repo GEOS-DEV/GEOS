@@ -65,12 +65,12 @@ public:
   array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodesPositions() const override;
 
   /**
-   * @brief Returns a mutable reference to vector holding the nodes coordinates
+   * @brief Returns a view to the vector holding the nodes coordinates
    * @return The reference
    *
-   * @note This is meant to be used as a setter. Do not resize the vector yourself.
+   * @note This is meant to be used as a values setter.
    */
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > & getNodesPositions();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodesPositions();
 
   ArrayOfSets< localIndex > getNodeToEdges() const override;
 
@@ -91,14 +91,14 @@ public:
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 
   /**
-   * @brief Returns a mutable reference to vector holding the node to global mapping.
+   * @brief Returns a view to the vector holding the node to global mapping.
    * @return The reference
    *
-   * @note This is meant to be used as a setter. Do not resize the vector yourself.
+   * @note This is meant to be used as a values setter.
    */
   arrayView1d< globalIndex > getNodeLocalToGlobal();
 
-  const std::map< string, SortedArray< localIndex > > & getNodeSets() const override;
+  std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
 
   /**
    * @brief Returns a mutable reference to the node sets.
