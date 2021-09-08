@@ -43,7 +43,7 @@ using namespace dataRepository;
 
 TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
                                                       Group * const parent )
-  : FluxApproximationBase( name, parent ), m_pedfmHelper(nullptr)
+  : FluxApproximationBase( name, parent )
 {
 
   registerWrapper( viewKeyStruct::meanPermCoefficientString(), &m_meanPermCoefficient ).
@@ -61,7 +61,7 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
     setRestartFlags( RestartFlags::NO_WRITE );
 
   registerWrapper< FaceElementToCellStencil >( viewKeyStruct::faceToCellStencilString() ).
-      setRestartFlags( RestartFlags::NO_WRITE );
+    setRestartFlags( RestartFlags::NO_WRITE );
 
   registerWrapper< integer >( viewKeyStruct::usePEDFMString(),
                               &m_useProjectionEmbeddedFractureMethod ).
@@ -69,26 +69,6 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
     setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
 }
-
-void TwoPointFluxApproximation::initializePreSubGroups()
-{
-  if ( m_useProjectionEmbeddedFractureMethod )  // initialize Projection Embedded Fracture Helper if necessary
-  {
-    ProblemManager & problemManager = getGlobalState().getProblemManager();
-    DomainPartition & domain = problemManager.getGroup<DomainPartition>( dataRepository::keys::domain );
-    MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-    GeometricObjectManager const & geometricObjManager = problemManager.getGeometricObjectManager();
-    CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( meshLevel,
-                                                                                 viewKeyStruct::cellStencilString() );
-    EmbeddedSurfaceToCellStencil & edfmStencil = getStencil< EmbeddedSurfaceToCellStencil >( meshLevel,
-                                                                                             viewKeyStruct::edfmStencilString() );
-
-
-    m_pedfmHelper = std::make_unique<ProjectionEDFMHelper>( std::cref(meshLevel), std::ref(cellStencil), std::ref ( edfmStencil ) );
-  }
-}
-
 
 void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
 {
@@ -662,7 +642,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
                                                               string const & embeddedSurfaceRegionName ) const
 {
   // Add connections EmbeddedSurface to/from CellElements.
-  ElementRegionManager & elemManager = mesh.getElemManager() ;
+  ElementRegionManager & elemManager = mesh.getElemManager();
 
   EmbeddedSurfaceToCellStencil & edfmStencil = getStencil< EmbeddedSurfaceToCellStencil >( mesh, viewKeyStruct::edfmStencilString() );
   edfmStencil.move( LvArray::MemorySpace::host );
@@ -818,27 +798,24 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
   }
 }
 
-void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
-                                                            string const & embeddedSurfaceRegionName ) const
+void TwoPointFluxApproximation::addEmbeddedFracturesToStencils( MeshLevel & mesh,
+                                                                string const & embeddedSurfaceRegionName ) const
 {
 
   addFractureFractureConnections( mesh, embeddedSurfaceRegionName );
 
-
   addFractureMatrixConnections( mesh, embeddedSurfaceRegionName );
 
-  // start from last connectorIndex from cell-To-cell connections
-//  connectorIndex = edfmStencil.size();
-
-  if ( m_useProjectionEmbeddedFractureMethod )
+  if( m_useProjectionEmbeddedFractureMethod )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-    SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( embeddedSurfaceRegionName );
-    localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
+    EmbeddedSurfaceToCellStencil & edfmStencil = getStencil< EmbeddedSurfaceToCellStencil >( mesh, viewKeyStruct::edfmStencilString() );
+    edfmStencil.move( LvArray::MemorySpace::host );
 
-    EmbeddedSurfaceSubRegion & fractureSubRegion = fractureRegion.getSubRegion< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+    CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString() );
+    cellStencil.move( LvArray::MemorySpace::host );
 
-    m_pedfmHelper->addNonNeighboringConnections(std::cref(fractureSubRegion));
+    ProjectionEDFMHelper pedfmHelper( mesh, cellStencil, edfmStencil, embeddedSurfaceRegionName );
+    pedfmHelper.addNonNeighboringConnections();
   }
 }
 

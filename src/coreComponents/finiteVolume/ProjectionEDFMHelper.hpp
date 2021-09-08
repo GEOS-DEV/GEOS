@@ -1,46 +1,89 @@
 #ifndef __PROJECTIONEDFMHELPER_H_
 #define __PROJECTIONEDFMHELPER_H_
 
-#include "finiteVolume/FluxApproximationBase.hpp"  // FIXME: include appropriate explicitly
-#include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
-
 #include <list>                                  // provides std::vector
+#include "common/DataTypes.hpp"
+#include "mesh/ElementRegionManager.hpp"
 
 namespace geosx
 {
 
+class MeshLevel;
+class CellElementStencilTPFA;
+class EmbeddedSurfaceToCellStencil;
+
+/**
+ * @struct CellDescriptor
+ * @brief A structure containing a single cell (element) identifier triplet.
+ */
+struct CellDescriptor
+{
+  /// region index
+  localIndex region;
+  /// subregion index
+  localIndex subRegion;
+  /// cell index
+  localIndex index;
+
+  /**
+   * @brief Constructor for the CellDescriptor struct
+   * @param[r] region index
+   * @param[sr] subregion index
+   * @param[i] cell index
+   */
+  CellDescriptor( localIndex r, localIndex sr, localIndex i )
+    : region( r ), subRegion( sr ), index( i )
+  {}
+
+  /**
+   * @brief Comparison operator between two CellDescriptors.
+   * @param[in] other the CellDescriptor to compare with
+   * @return true if they represent the same mesh element
+   */
+  bool operator==( CellDescriptor const & other )
+  {
+    return( region==other.region && subRegion==other.subRegion && index==other.index );
+  }
+};
+
+
 class ProjectionEDFMHelper
 {
- public:
-
-  ProjectionEDFMHelper( MeshLevel const & mesh,
-                        CellElementStencilTPFA & stencil,
-                        EmbeddedSurfaceToCellStencil & edfmStencil );
+public:
 
   /*
-   * @brief add Fracture-matrix connections to the cell stencil
+   * @brief Constructor
    */
-  void addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion) const;
+  ProjectionEDFMHelper( MeshLevel const & mesh,
+                        CellElementStencilTPFA & stencil,
+                        EmbeddedSurfaceToCellStencil & edfmStencil,
+                        string const & embeddedSurfaceRegionName );
+
+  /*
+   * @brief add Fracture-matrix connections to the edfmStencil
+   * and remove the appropriate connections from the cellStencil
+   */
+  void addNonNeighboringConnections() const;
 
   virtual ~ProjectionEDFMHelper() = default;
 
- private:
+private:
 
   /*
    * @brief select cell faces that will host non-neighboring fracture-matrix connections
    */
-  std::list<localIndex> selectFaces(FixedOneToManyRelation const & subRegionFaces,
-                                      CellDescriptor const & hostCellID,
-                                      localIndex const fracElement,
-                                      EmbeddedSurfaceSubRegion const & fractureSubRegion) const;
+  std::list< localIndex > selectFaces( FixedOneToManyRelation const & subRegionFaces,
+                                       CellDescriptor const & hostCellID,
+                                       localIndex const fracElement,
+                                       EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
 
   /*
-     * @brief check the intersection  a fracture element and an edge
-     */
-  bool intersection( real64 (&fracOrigin)[3],
+   * @brief check the intersection  a fracture element and an edge
+   */
+  bool intersection( real64 ( &fracOrigin )[3],
                      arraySlice1d< real64 const > const & fracNormal,
                      localIndex edgeIdx,
-                     real64 (&tmp)[3] ) const noexcept;
+                     real64 ( &tmp )[3] ) const noexcept;
 
   /*
    *
@@ -51,7 +94,7 @@ class ProjectionEDFMHelper
   // check if the center of a face is on the same side of the fracture as cell center
   bool onLargerSide( localIndex faceIdx,
                      real64 signedDistanceCellCenterToFrac,
-                     real64 (&fracOrigin)[3],
+                     real64 ( &fracOrigin )[3],
                      arraySlice1d< real64 const > const & fracNormal ) const noexcept;
 
   /*
@@ -60,10 +103,11 @@ class ProjectionEDFMHelper
   real64 getSignedDistanceCellCenterToFracPlane( CellDescriptor const & hostCellID,
                                                  arraySlice1d< real64 const > const & fracNormal,
                                                  real64 const (&fracOrigin)[3],
-                                                 real64 (&tmp)[3] ) const noexcept;
+                                                 real64 ( &tmp )[3] ) const noexcept;
 
   /*
-   * @brief returns true if the signed distance from the neighbor center to the frac is of the same sign as signedDistanceCellCenterToFrac (computed in the host cell)
+   * @brief returns true if the signed distance from the neighbor center to the frac is of the same sign as signedDistanceCellCenterToFrac
+   *(computed in the host cell)
    */
   bool neighborOnSameSide( localIndex faceIdx,
                            real64 signedDistanceCellCenterToFrac,
@@ -93,7 +137,6 @@ class ProjectionEDFMHelper
 
   // Private variables
   ElementRegionManager const & m_elementManager;
-  // ArrayOfArraysView< localIndex const > const & m_faceToEdges;
   ///
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodesCoord;
   ///
@@ -107,13 +150,13 @@ class ProjectionEDFMHelper
   ///
   ArrayOfArraysView< localIndex const > const m_facesToNodes;
   ///
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > m_nodeReferencePosition;
-  ///
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_cellCenters;
   ///
   CellElementStencilTPFA & m_cellStencil;
   ///
   EmbeddedSurfaceToCellStencil & m_edfmStencil;
+  ///
+  string const m_embeddedSurfaceRegionName;
 
 };
 

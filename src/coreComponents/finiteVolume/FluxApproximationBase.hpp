@@ -32,69 +32,36 @@
 namespace geosx
 {
 
-/**
- * @struct CellDescriptor
- * @brief A structure containing a single cell (element) identifier triplet.
- */
-struct CellDescriptor
-{
-  /// region index
-  localIndex region;
-  /// subregion index
-  localIndex subRegion;
-  /// cell index
-  localIndex index;
-
-  /**
-   * @brief Constructor for the CellDescriptor struct
-   * @param[r] region index
-   * @param[sr] subregion index
-   * @param[i] cell index
-   */
-  CellDescriptor(localIndex r, localIndex sr, localIndex i)
-      : region(r), subRegion(sr), index(i)
-  {}
-
-  /**
-   * @brief Comparison operator between two CellDescriptors.
-   * @param[in] other the CellDescriptor to compare with
-   * @return true if they represent the same mesh element
-   */
-  bool operator==( CellDescriptor const & other )
-  {
-    return( region==other.region && subRegion==other.subRegion && index==other.index );
-  }
-};
-
-/**
- * @struct PointDescriptor
- * @brief A structure describing an arbitrary point participating in a stencil.
- *
- * Nodal and face center points are identified by local mesh index.
- * Cell center points are identified by a triplet <region,subregion,index>.
- *
- * The sad reality is, a boundary flux MPFA stencil may be comprised of a mix of
- * cell and face centroids, so we have to discriminate between them at runtime
- */
-struct PointDescriptor
-{
-  /// Enum to classify the variable location
-  enum class Tag { CELL, FACE, NODE };
-
-  /// The tag
-  Tag tag;
-
-  /// union to characterize a PointDescriptor
-  union
-  {
-    /// node index
-    localIndex nodeIndex;
-    /// face index
-    localIndex faceIndex;
-    /// CellDescriptor index
-    CellDescriptor cellIndex;
-  };
-};
+// TODO seems to be unused + I would move it somewhere else.
+///**
+// * @struct PointDescriptor
+// * @brief A structure describing an arbitrary point participating in a stencil.
+// *
+// * Nodal and face center points are identified by local mesh index.
+// * Cell center points are identified by a triplet <region,subregion,index>.
+// *
+// * The sad reality is, a boundary flux MPFA stencil may be comprised of a mix of
+// * cell and face centroids, so we have to discriminate between them at runtime
+// */
+//struct PointDescriptor
+//{
+//  /// Enum to classify the variable location
+//  enum class Tag { CELL, FACE, NODE };
+//
+//  /// The tag
+//  Tag tag;
+//
+//  /// union to characterize a PointDescriptor
+//  union
+//  {
+//    /// node index
+//    localIndex nodeIndex;
+//    /// face index
+//    localIndex faceIndex;
+//    /// CellDescriptor index
+//    CellDescriptor cellIndex;
+//  };
+//};
 
 /**
  * @class FluxApproximationBase
@@ -177,8 +144,8 @@ public:
    * @param[in] embeddedSurfaceRegionName the embedded surface element region name
    * @param[in] geometricObjManager the geometric object manager that contains the geometric shapes of embedded fractures
    */
-  virtual void addEDFracToFractureStencil( MeshLevel & mesh,
-                                           string const & embeddedSurfaceRegionName ) const = 0;
+  virtual void addEmbeddedFracturesToStencils( MeshLevel & mesh,
+                                               string const & embeddedSurfaceRegionName ) const = 0;
 
   /**
    * @brief View keys.

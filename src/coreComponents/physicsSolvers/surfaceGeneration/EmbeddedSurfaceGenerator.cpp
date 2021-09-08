@@ -316,7 +316,7 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
       FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
-        fluxApprox->addEDFracToFractureStencil( meshLevel, this->m_fractureRegionName );
+        fluxApprox->addEmbeddedFracturesToStencils( meshLevel, this->m_fractureRegionName );
       }
     }
   }
