@@ -689,6 +689,31 @@ void CompositionalMultiphaseHybridFVM::applyBoundaryConditions( real64 const tim
   // TODO: implement face boundary conditions here
 }
 
+void CompositionalMultiphaseHybridFVM::applyAquiferBC( real64 const time,
+                                                       real64 const dt,
+                                                       DofManager const & dofManager,
+                                                       DomainPartition & domain,
+                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                       arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
+
+  GEOSX_ERROR( "In progress" );
+}
+
+void CompositionalMultiphaseHybridFVM::saveAquiferConvergedState( real64 const & time,
+                                                                  real64 const & dt,
+                                                                  DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt, domain );
+
+  GEOSX_ERROR( "In progress" );
+}
+
 real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition const & domain,
                                                                 DofManager const & dofManager,
                                                                 arrayView1d< real64 const > const & localRhs )

@@ -1,0 +1,31 @@
+
+
+================================== ============ ======== ================================================================================== 
+Name                               Type         Default  Description                                                                        
+================================== ============ ======== ================================================================================== 
+aquiferAngle                       real64       required Angle subtended by the aquifer boundary from the center of the reservoir [degress] 
+aquiferElevation                   real64       required Aquifer elevation (positive going upward) [m]                                      
+aquiferInitialPressure             real64       required Aquifer initial pressure [Pa]                                                      
+aquiferInnerRadius                 real64       required Aquifer inner radius [m]                                                           
+aquiferPermeability                real64       required Aquifer permeability [m^2]                                                         
+aquiferPorosity                    real64       required Aquifer porosity                                                                   
+aquiferThickness                   real64       required Aquifer thickness [m]                                                              
+aquiferTotalCompressibility        real64       required Aquifer total compressibility (rock and fluid) [Pa^-1]                             
+aquiferWaterDensity                real64       required Aquifer water density [kg.m^-3]                                                    
+aquiferWaterPhaseComponentFraction real64_array {0}      Aquifer water phase component fraction                                             
+aquiferWaterPhaseComponentNames    string_array {}       Aquifer water phase component names                                                
+aquiferWaterViscosity              real64       required Aquifer water viscosity [Pa.s]                                                     
+bcApplicationTableName             string                Name of table that specifies the on/off application of the bc.                     
+beginTime                          real64       -1e+99   time at which BC will start being applied.                                         
+direction                          R1Tensor     {0,0,0}  Direction to apply boundary condition to                                           
+endTime                            real64       1e+99    time at which bc will stop being applied                                           
+functionName                       string                Name of function that specifies variation of the BC                                
+initialCondition                   integer      0        BC is applied as an initial condition.                                             
+name                               string       required A name is required for any non-unique nodes                                        
+objectPath                         string                Path to the target field                                                           
+pressureInfluenceFunctionName      string       required Name of the table describing the pressure influence function                       
+scale                              real64       0        Scale factor for value of BC.                                                      
+setNames                           string_array required Name of sets that boundary condition is applied to.                                
+================================== ============ ======== ================================================================================== 
+
+

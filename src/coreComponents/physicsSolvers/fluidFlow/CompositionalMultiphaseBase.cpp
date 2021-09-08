@@ -25,6 +25,7 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -285,6 +286,31 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( constitutive::Cons
   }
 }
 
+void CompositionalMultiphaseBase::validateAquiferBC( ConstitutiveManager const & cm ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition & bc )
+  {
+    // note: while we are at it, we also set the gravity vector (needed later for the potential diff calculations)
+    bc.setGravityVector( gravityVector() );
+
+    arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
+    arrayView1d< string const > const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
+
+    GEOSX_ERROR_IF_NE_MSG( fluid0.numFluidComponents(), aquiferWaterPhaseCompFrac.size(),
+                           "Mismatch in number of components between constitutive model "
+                           << fluid0.getName() << " and the water phase composition in aquifer " << bc.getName() );
+
+    for( localIndex ic = 0; ic < fluid0.numFluidComponents(); ++ic )
+    {
+      GEOSX_ERROR_IF_NE_MSG( fluid0.componentNames()[ic], aquiferWaterPhaseCompNames[ic],
+                             "Mismatch in component names between constitutive model "
+                             << fluid0.getName() << " and the water phase components in aquifer " << bc.getName() );
+    }
+  } );
+}
 
 void CompositionalMultiphaseBase::initializePreSubGroups()
 {
@@ -308,6 +334,9 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
       validateModelMapping< CapillaryPressureBase >( meshLevel.getElemManager(), m_capPressureModelNames );
     }
   }
+
+  // 3. Validate the aquifer boundary condition
+  validateAquiferBC( cm );
 }
 
 void CompositionalMultiphaseBase::updateComponentFraction( Group & dataGroup ) const
@@ -823,6 +852,9 @@ void CompositionalMultiphaseBase::applyBoundaryConditions( real64 const time_n,
 
   // apply flux boundary conditions
   applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+
+  // apply aquifer boundary conditions
+  applyAquiferBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 }
 
 void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
@@ -1122,8 +1154,8 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
   } );
 }
 
-void CompositionalMultiphaseBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
-                                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
+void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
+                                                        real64 const & dt,
                                                         DomainPartition & domain )
 {
   integer const numComp = m_numComponents;
@@ -1154,6 +1186,8 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & GEOSX_UNU
     CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
     porousMaterial.saveConvergedState();
   } );
+
+  saveAquiferConvergedState( time, dt, domain );
 }
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
@@ -1325,4 +1359,4 @@ void CompositionalMultiphaseBase::resetViews( MeshLevel & mesh )
   }
 }
 
-}// namespace geosx
+} // namespace geosx
