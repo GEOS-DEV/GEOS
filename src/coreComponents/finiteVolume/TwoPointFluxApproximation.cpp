@@ -63,7 +63,7 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
   registerWrapper< FaceElementToCellStencil >( viewKeyStruct::faceToCellStencilString() ).
       setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerWrapper< integer >( viewKeyStruct::useProjectionEmbeddedFractureMethodString(),
+  registerWrapper< integer >( viewKeyStruct::usePEDFMString(),
                               &m_useProjectionEmbeddedFractureMethod ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
@@ -79,10 +79,13 @@ void TwoPointFluxApproximation::initializePreSubGroups()
     MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
     GeometricObjectManager const & geometricObjManager = problemManager.getGeometricObjectManager();
-    CellElementStencilTPFA &cellStencil = getStencil<CellElementStencilTPFA>( meshLevel, viewKeyStruct::cellStencilString() );
+    CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( meshLevel,
+                                                                                 viewKeyStruct::cellStencilString() );
+    EmbeddedSurfaceToCellStencil & edfmStencil = getStencil< EmbeddedSurfaceToCellStencil >( meshLevel,
+                                                                                             viewKeyStruct::edfmStencilString() );
 
-    m_pedfmHelper = std::make_unique<ProjectionEDFMHelper>( std::cref(meshLevel), std::cref(geometricObjManager),
-                                                            std::cref(m_coeffName), std::ref(cellStencil) );
+
+    m_pedfmHelper = std::make_unique<ProjectionEDFMHelper>( std::cref(meshLevel), std::ref(cellStencil), std::ref ( edfmStencil ) );
   }
 }
 
@@ -655,7 +658,8 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   }
 }
 
-void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh ) const
+void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
+                                                              string const & embeddedSurfaceRegionName ) const
 {
   // Add connections EmbeddedSurface to/from CellElements.
   ElementRegionManager & elemManager = mesh.getElemManager() ;
@@ -703,12 +707,12 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh )
       stencilCellsRegionIndex[0] = er;
       stencilCellsSubRegionIndex[0] = esr;
       stencilCellsIndex[0] = ei;
-      stencilWeights[0] =  ht;
+      stencilWeights[0] = ht;
 
       stencilCellsRegionIndex[1] = fractureRegionIndex;
       stencilCellsSubRegionIndex[1] = 0;
       stencilCellsIndex[1] = kes;
-      stencilWeights[1] = -ht;
+      stencilWeights[1] = ht;
 
       edfmStencil.add( 2,
                        stencilCellsRegionIndex.data(),
@@ -824,7 +828,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   addFractureMatrixConnections( mesh, embeddedSurfaceRegionName );
 
   // start from last connectorIndex from cell-To-cell connections
-  connectorIndex = edfmStencil.size();
+//  connectorIndex = edfmStencil.size();
 
   if ( m_useProjectionEmbeddedFractureMethod )
   {

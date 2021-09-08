@@ -7,28 +7,27 @@ namespace geosx
 using std::ref;
 
 ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
-                                            GeometricObjectManager const & geometricObjManager,
                                             CellElementStencilTPFA & cellStencil,
                                             EmbeddedSurfaceToCellStencil & edfmStencil )
-    : m_mesh( mesh ), m_geometricObjManager( geometricObjManager ),
-      m_elementManager( mesh.getElemManager() ), m_faceManager( mesh.getFaceManager() ),
-      m_nodeManager( mesh.getNodeManager() ), m_edgeManager( mesh.getEdgeManager() ),
-      m_nodesCoord( m_nodeManager.referencePosition() ),
-      m_edgeToNodes( m_edgeManager.nodeList() ),
-      m_facesToCells( m_faceManager.elementList() ),
-      m_facesToRegions( m_faceManager.elementRegionList() ),
-      m_facesToSubRegions( m_faceManager.elementSubRegionList() ),
-      m_facesToNodes( m_faceManager.nodeList().toViewConst() ),
-      m_nodeReferencePosition( m_nodeManager.referencePosition() ),
+    : m_elementManager( mesh.getElemManager() ),
+      m_nodesCoord(  mesh.getNodeManager().referencePosition() ),
+      m_edgeToNodes( mesh.getEdgeManager().nodeList() ),
+      m_facesToCells( mesh.getFaceManager().elementList() ),
+      m_facesToRegions( mesh.getFaceManager().elementRegionList() ),
+      m_facesToSubRegions( mesh.getFaceManager().elementSubRegionList() ),
+      m_facesToNodes( mesh.getFaceManager().nodeList().toViewConst() ),
+      m_nodeReferencePosition( mesh.getNodeManager().referencePosition() ),
       m_cellCenters( m_elementManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() ) ),
       m_cellStencil( cellStencil ),
       m_edfmStencil( edfmStencil )
 {}
 
-void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion) const
+void ProjectionEDFMHelper::addNonNeighboringConnections( EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
 {
   arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
   FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
+
+  std::cout << "I m in here" << std::endl;
 
   for( localIndex fracElement = 0; fracElement < fractureSubRegion.size(); fracElement++ )
   {
@@ -56,16 +55,19 @@ void ProjectionEDFMHelper::addNonNeighboringConnections(EmbeddedSurfaceSubRegion
 
         // zero out matrix-matrix connections that are replaced by fracture-matrix connections
         // I assume that the m-m connection index is equal to the face id
+        std::cout << "zeroing connection" << std::endl;
+        std::cout << "faceIdx" << faceIdx << std::endl;
+
         m_cellStencil.zero( faceIdx );
       }
     }
   }
 }
 
-std::list<localIndex> ProjectionEDFMHelper::selectFaces(FixedOneToManyRelation const & subRegionFaces,
-                                                        CellDescriptor const & hostCellID,
-                                                        localIndex fracElement,
-                                                        EmbeddedSurfaceSubRegion const & fractureSubRegion) const
+std::list<localIndex> ProjectionEDFMHelper::selectFaces( FixedOneToManyRelation const & subRegionFaces,
+                                                         CellDescriptor const & hostCellID,
+                                                         localIndex fracElement,
+                                                         EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
 {
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector(fracElement);
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
@@ -207,7 +209,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex fracElement,
                                                         real64 transmissibility,
                                                         EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
 {
-  localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
+  localIndex constexpr maxElems = SurfaceElementStencil::MAX_STENCIL_SIZE;
   localIndex constexpr numElems = 2;   // tpfa
 
   stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( numElems );
@@ -219,13 +221,13 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex fracElement,
   stencilCellsRegionIndex[0] = cell.region;
   stencilCellsSubRegionIndex[0] = cell.subRegion;
   stencilCellsIndex[0] = cell.index;
-  stencilWeights[0] =  transmissibility;
+  stencilWeights[0] =  1.0; //transmissibility;
 
   // fracture data
   stencilCellsRegionIndex[1] = fractureSubRegion.getParent().getParent().getIndexInParent();
   stencilCellsSubRegionIndex[1] = fractureSubRegion.getIndexInParent();
   stencilCellsIndex[1] = fracElement;
-  stencilWeights[1] = -transmissibility;
+  stencilWeights[1] = 1.0; //transmissibility;
 
   m_edfmStencil.add(  numElems,
                       stencilCellsRegionIndex.data(),
@@ -283,17 +285,15 @@ fractureMatrixTransmissilibility( CellDescriptor const & neighborCell,
 
   // get directional permeabilities
   // I use these constants in order to preserve the equation sequence
-  real64 const directionalPermFracutre = 0.f;
-  real64 const directionalPermCell = 1.f;
 
   // part trasmissibilities
   LvArray::tensorOps::copy< 3 >( tmp, fracCenter );
   LvArray::tensorOps::subtract< 3 >( tmp, projectionPoint );
-  real64 const t1 = faceArea * directionalPermFracutre * LvArray::tensorOps::l2Norm< 3 >( tmp );
+  real64 const t1 = faceArea  * LvArray::tensorOps::l2Norm< 3 >( tmp );
 
   LvArray::tensorOps::copy< 3 >( tmp, cellCenter );
   LvArray::tensorOps::subtract< 3 >( tmp, projectionPoint );
-  real64 const t2 = faceArea * directionalPermCell * LvArray::tensorOps::l2Norm< 3 >( tmp );
+  real64 const t2 = faceArea * LvArray::tensorOps::l2Norm< 3 >( tmp );
 
   // finally compute absolute transmissibility
   real64 trans = 0.f;

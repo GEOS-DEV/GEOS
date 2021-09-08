@@ -60,8 +60,8 @@ public:
     static constexpr char const * faceToCellStencilString() { return "faceElementToCellStencil"; }
     /// @return The key for the meanPermCoefficient
     static constexpr char const * meanPermCoefficientString() { return "meanPermCoefficient"; }
-    // constexpr static auto useProjectionEmbeddedFractureMethodString = "useProjectionEmbeddedFractureMethod";
-    static constexpr char const * useProjectionEmbeddedFractureMethodString() { return "useProjectionEmbeddedFractureMethod"; }
+    // @return The key for the usePEDFM flag
+    static constexpr char const * usePEDFMString() { return "usePEDFM"; }
   };
 
 protected:
@@ -88,11 +88,11 @@ protected:
                                            string const & embeddedSurfaceRegionName ) const override;
 
   void addFractureFractureConnections( MeshLevel & mesh,
-                                       string const & faceElementRegionName ) const;
+                                       string const & embeddedSurfaceRegionName ) const;
 
 
   void addFractureMatrixConnections( MeshLevel & mesh,
-                                     string const & faceElementRegionName ) const;
+                                     string const & embeddedSurfaceRegionName ) const;
 private:
 
   /// mean permeability coefficient

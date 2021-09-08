@@ -14,30 +14,38 @@ class ProjectionEDFMHelper
  public:
 
   ProjectionEDFMHelper( MeshLevel const & mesh,
-                        GeometricObjectManager const & geometricObjManager,
                         CellElementStencilTPFA & stencil,
                         EmbeddedSurfaceToCellStencil & edfmStencil );
 
-  // add Fracture-matrix connections to the cell stencil
+  /*
+   * @brief add Fracture-matrix connections to the cell stencil
+   */
   void addNonNeighboringConnections(EmbeddedSurfaceSubRegion const & fractureSubRegion) const;
 
   virtual ~ProjectionEDFMHelper() = default;
 
  private:
 
-  // select cell faces that will host non-neighboring fracture-matrix connections
+  /*
+   * @brief select cell faces that will host non-neighboring fracture-matrix connections
+   */
   std::list<localIndex> selectFaces(FixedOneToManyRelation const & subRegionFaces,
                                       CellDescriptor const & hostCellID,
                                       localIndex const fracElement,
                                       EmbeddedSurfaceSubRegion const & fractureSubRegion) const;
 
-  // check the intersection  a fracture element and an edge
+  /*
+     * @brief check the intersection  a fracture element and an edge
+     */
   bool intersection( real64 (&fracOrigin)[3],
                      arraySlice1d< real64 const > const & fracNormal,
                      localIndex edgeIdx,
                      real64 (&tmp)[3] ) const noexcept;
 
-  // returns true is the face has only one neighbor
+  /*
+   *
+   * @brief returns true is the face has only one neighbor
+   */
   bool isBoundaryFace( localIndex faceIdx ) const noexcept;
 
   // check if the center of a face is on the same side of the fracture as cell center
@@ -46,51 +54,65 @@ class ProjectionEDFMHelper
                      real64 (&fracOrigin)[3],
                      arraySlice1d< real64 const > const & fracNormal ) const noexcept;
 
-  // compute the signed distance between the fracture and as cell center
+  /*
+   * @brief compute the signed distance between the fracture and as cell center
+   */
   real64 getSignedDistanceCellCenterToFracPlane( CellDescriptor const & hostCellID,
                                                  arraySlice1d< real64 const > const & fracNormal,
                                                  real64 const (&fracOrigin)[3],
                                                  real64 (&tmp)[3] ) const noexcept;
 
-  // returns true if the signed distance from the neighbor center to the frac is of the same
-  // sign as signedDistanceCellCenterToFrac (computed in the host cell)
+  /*
+   * @brief returns true if the signed distance from the neighbor center to the frac is of the same sign as signedDistanceCellCenterToFrac (computed in the host cell)
+   */
   bool neighborOnSameSide( localIndex faceIdx,
                            real64 signedDistanceCellCenterToFrac,
                            CellDescriptor const & hostCellID,
                            EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
 
-  // given a face and its neighboring cell, return the id of the other cell
+  /*
+   * @brief given a face and its neighboring cell, return the id of the other cell
+   */
   CellDescriptor otherCell( localIndex faceIdx, CellDescriptor const & hostCellID ) const;
 
-  // compute the absolute transmissibility for non-neighboring F-M connection
+  /*
+   * @brief compute the absolute transmissibility for non-neighboring F-M connection
+   */
   real64 fractureMatrixTransmissilibility( CellDescriptor const & neighborCell,
                                            localIndex fracElement,
                                            EmbeddedSurfaceSubRegion const & fractureSubRegion,
                                            localIndex faceIdx ) const;
 
-  // add non-neighboring F-M connection with given transmissibility tothe cell stencil
+  /*
+   * @brief add non-neighboring F-M connection with given transmissibility tothe cell stencil
+   */
   void addNonNeighboringConnection( localIndex fracElement,
                                     CellDescriptor const & cell,
                                     real64 transmissibility,
                                     EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
 
   // Private variables
-  MeshLevel const & m_mesh;
-  GeometricObjectManager const & m_geometricObjManager;
   ElementRegionManager const & m_elementManager;
-  FaceManager const & m_faceManager;
-  NodeManager const & m_nodeManager;
-  EdgeManager const & m_edgeManager;
   // ArrayOfArraysView< localIndex const > const & m_faceToEdges;
+  ///
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodesCoord;
+  ///
   arrayView2d< localIndex const > const m_edgeToNodes;
+  ///
   arrayView2d< localIndex const > const m_facesToCells;
+  ///
   arrayView2d< localIndex const > const m_facesToRegions;
+  ///
   arrayView2d< localIndex const > const m_facesToSubRegions;
+  ///
   ArrayOfArraysView< localIndex const > const m_facesToNodes;
+  ///
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > m_nodeReferencePosition;
+  ///
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_cellCenters;
+  ///
   CellElementStencilTPFA & m_cellStencil;
+  ///
   EmbeddedSurfaceToCellStencil & m_edfmStencil;
 
 };

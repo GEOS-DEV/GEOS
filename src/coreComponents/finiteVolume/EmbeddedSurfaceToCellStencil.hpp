@@ -241,14 +241,26 @@ inline void EmbeddedSurfaceToCellStencilWrapper::computeWeights( localIndex icon
                                                                  real64 ( & dWeight_dVar )[1][2] ) const
 {
   // TODO: here we need a proper computation once we move to impermeable fractures.
+  std::cout<< "connection: " << iconn <<" I am trying to compute something here." << std::endl;
 
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];
 
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
+  localIndex const er1  =  m_elementRegionIndices[iconn][1];
+  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+  localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 const harmonicWeight = t0;
+  std::cout << "er0 " << er0 << " - esr0: " << esr0 << " - ei0: " << ei0 << " - weight: " << m_weights[iconn][0] << std::endl;
+  std::cout << "er1 " << er1 << " - esr1: " << esr1 << " - ei1: " << ei1 << " - weight: " << m_weights[iconn][1] << std::endl;
+
+
+  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
+  real64 const t1 = m_weights[iconn][1] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er1][esr1][ei1][0] );
+
+  real64 const harmonicWeight = t0*t1/(t0+t1);
+
+  std::cout << " transmissibility edfm " << harmonicWeight << std::endl;
 
   real64 const value =  harmonicWeight;
 
@@ -256,7 +268,7 @@ inline void EmbeddedSurfaceToCellStencilWrapper::computeWeights( localIndex icon
   weight[0][1] = -value;
 
   dWeight_dVar[0][0] = 0.0 * dCoeff_dVar[er0][esr0][ei0][0][0];
-  dWeight_dVar[0][1] = 0.0;
+  dWeight_dVar[0][1] = 0.0 * dCoeff_dVar[er1][esr1][ei1][0][0];
 }
 
 GEOSX_HOST_DEVICE
