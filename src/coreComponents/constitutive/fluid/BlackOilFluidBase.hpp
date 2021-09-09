@@ -73,6 +73,16 @@ protected:
 
   class KernelWrapper : public MultiFluidBase::KernelWrapper
   {
+public:
+
+    /// @cond DO_NOT_DOCUMENT
+    /// We need these SMFs to avoid host-device errors with CUDA.
+    KernelWrapper() = default;
+    KernelWrapper( KernelWrapper const & ) = default;
+    KernelWrapper & operator=( KernelWrapper const & ) = default;
+    KernelWrapper & operator=( KernelWrapper && ) = default;
+    /// @endcond
+
 protected:
 
     KernelWrapper( arrayView1d< integer const > phaseTypes,
