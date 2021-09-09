@@ -37,7 +37,7 @@ CommandLineOptions g_commandLineOptions;
 
 char const * xmlInput =
   "<Problem>\n"
-  "  <Solvers gravityVector=\"0.0, 0.0, -9.81\">\n"
+  "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
   "    <CompositionalMultiphaseReservoir name=\"reservoirSystem\"\n"
   "               flowSolverName=\"compositionalMultiphaseFlow\"\n"
   "               wellSolverName=\"compositionalMultiphaseWell\"\n"

@@ -134,11 +134,12 @@ private:
    */
   friend inline std::ostream & operator<<( std::ostream & os, Tensor< T, SIZE > const & t )
   {
-    os << t.data[0];
+    os << '{' << t.data[0];
     for( int i = 1; i < SIZE; ++i )
     {
       os << ',' << t.data[i];
     }
+    os << '}';
     return os;
   }
 };

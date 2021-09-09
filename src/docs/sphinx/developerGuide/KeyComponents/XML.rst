@@ -161,7 +161,7 @@ This is how the XML block would look like.
 
     <Problem>
       <Solvers
-        gravityVector="0.0, 0.0, -9.81">
+        gravityVector="{ 0.0, 0.0, -9.81 }">
         <XmlNameOfMySolver name="nameOfThisSolverInstance"
                                  verboseLevel="1"
                                  gravityFlag="1"
