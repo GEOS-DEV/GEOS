@@ -91,15 +91,13 @@ string_array tokenize( const string & str, const string & delimiters )
 string trim( string const & str,
              string const & charsToRemove )
 {
-  string newStr = "";
-
   std::size_t const first = str.find_first_not_of( charsToRemove );
-  std::size_t const last = str.find_last_not_of( charsToRemove );
   if( first != string::npos )
   {
-    newStr = str.substr( first, ( last - first + 1 ) );
+    std::size_t const last = str.find_last_not_of( charsToRemove );
+    return str.substr( first, ( last - first + 1 ) );
   }
-  return newStr;
+  return {};
 }
 
 

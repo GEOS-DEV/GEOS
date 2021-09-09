@@ -138,6 +138,43 @@ TEST( testXmlWrapper, array3d )
   }
 }
 
+template< typename T, int N >
+void testTensorWellFormed( string const & input, Tensor< T, N > const expected )
+{
+  Tensor< T, N > output;
+  xmlWrapper::stringToInputVariable( output, input );
+  EXPECT_EQ( output, expected );
+}
+
+template< typename T, int N >
+void testTensorIllFormed( string const & input )
+{
+  Tensor< T, N > output;
+  EXPECT_THROW( xmlWrapper::stringToInputVariable( output, input ), InputError );
+}
+
+TEST( testXmlWrapper, TensorWellFormed )
+{
+  testTensorWellFormed< real64, 3 >( "{1.0,2.0,3.0}", { 1.0, 2.0, 3.0 } );
+  testTensorWellFormed< real64, 3 >( "{ 1.0, 2.0, 3.0 }", { 1.0, 2.0, 3.0 } );
+  testTensorWellFormed< real64, 3 >( "  {  1.0  , 2.0,3.0  }    ", { 1.0, 2.0, 3.0 } );
+  testTensorWellFormed< real64, 6 >( "{1.0,2.0,3.0,4.0,5.0,6.0}", { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 } );
+  testTensorWellFormed< real64, 6 >( "{ 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 }", { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 } );
+  testTensorWellFormed< real64, 6 >( "  { 1.0 ,  2.0 ,3.0 , 4.0,   5.0,6.0}  ", { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 } );
+}
+
+TEST( testXmlWrapper, TensorIllFormed )
+{
+  testTensorIllFormed< real64, 3 >( "1.0, 2.0, 3.0 }" ); // missing opening brance
+  testTensorIllFormed< real64, 3 >( "{ 1.0, 2.0, 3.0" ); // missing closing brace
+  testTensorIllFormed< real64, 3 >( "{1.0 2.0, 3.0 }" ); // missing a comma
+  testTensorIllFormed< real64, 3 >( "{ 1.0, 2.0 }" ); // too few values
+  testTensorIllFormed< real64, 3 >( "{ 1.0, 2.0, 3.0, 4.0 }" ); // too many values
+  testTensorIllFormed< real64, 3 >( "{ 1.0, 2.0, 3.0 }  ,4.0" ); // extra characters
+  testTensorIllFormed< real64, 3 >( "{ 1.0, O.1, 3.0 }" ); // invalid floating point value
+  testTensorIllFormed< real64, 3 >( "{ 1.0, 2.O, 3.0 }" ); // invalid floating point value
+}
+
 int main( int argc, char * argv[] )
 {
   logger::InitializeLogger();
