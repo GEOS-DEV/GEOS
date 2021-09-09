@@ -16,11 +16,11 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -2, 2 }"
-      yCoords="{ 0, 2 }"
+      xCoords="{ -4, 4 }"
+      yCoords="{ 0, 4 }"
       zCoords="{ 0, 1 }"
-      nx="{ 4 }"
-      ny="{ 2 }"
+      nx="{ 8 }"
+      ny="{ 4 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
 
@@ -62,7 +62,7 @@
   </Geometry>
 
   <Events
-    maxTime="0.2">
+    maxTime="50.0">
     <!-- SoloEvent 
       name="initialPlot"
       target="/Outputs/siloOutput"
