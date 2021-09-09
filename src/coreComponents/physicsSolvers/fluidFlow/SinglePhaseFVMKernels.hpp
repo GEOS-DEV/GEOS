@@ -93,7 +93,6 @@ struct FluxKernel
 
     constexpr localIndex MAX_NUM_ELEMS     = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
     constexpr localIndex MAX_STENCIL_SIZE  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
-    constexpr localIndex MAX_NUM_OF_CONNECTIONS  = STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS;
 
     forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [stencilWrapper, dt, rankOffset, dofNumber, ghostRank,
                                                               pres, dPres, gravCoef, dens, dDens_dPres, mob,
@@ -110,7 +109,9 @@ struct FluxKernel
 
 
       // compute transmissibility
-      real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2];
+      real64 transmissibility[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+      real64 dTrans_dPres[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+
       stencilWrapper.computeWeights( iconn,
                                      permeability,
                                      dPerm_dPres,
