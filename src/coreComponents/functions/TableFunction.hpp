@@ -60,11 +60,22 @@ public:
     /// @cond DO_NOT_DOCUMENT
     /// We need these SMFs to enable array1d< KernelWrapper > and avoid
     /// host-device errors with CUDA. Otherwise rule of 0 would be fine.
-    /// Note: move assignment suppressed but not deleted, on purpose!
+
     KernelWrapper() = default;
     KernelWrapper( KernelWrapper const & ) = default;
     KernelWrapper( KernelWrapper && ) = default;
     KernelWrapper & operator=( KernelWrapper const & ) = default;
+
+    /// Note: move assignment not deleted, not defaulted on purpose!
+    /// This is needed to avoid a compilation warning with CUDA
+    KernelWrapper & operator=( KernelWrapper && other )
+    {
+      m_coordinates = std::move( other.m_coordinates );
+      m_values = std::move( other.m_values );
+      m_interpolationMethod = other.m_interpolationMethod;
+      return *this;
+    }
+
     /// @endcond
 
     /**
