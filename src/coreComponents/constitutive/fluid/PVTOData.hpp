@@ -35,6 +35,14 @@ public:
   {
 public:
 
+    /// @cond DO_NOT_DOCUMENT
+    /// We need these SMFs to avoid host-device errors with CUDA.
+    KernelWrapper() = default;
+    KernelWrapper( KernelWrapper const & ) = default;
+    KernelWrapper & operator=( KernelWrapper const & ) = default;
+    KernelWrapper & operator=( KernelWrapper && ) = default;
+    /// @endcond
+
     /**
      * @brief The constructor of the kernel wrapper
      */

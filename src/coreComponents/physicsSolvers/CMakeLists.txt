@@ -91,7 +91,9 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseHybridFVM.cpp     
      fluidFlow/SinglePhaseProppantBase.cpp     
      fluidFlow/wells/CompositionalMultiphaseWell.cpp
-     fluidFlow/wells/SinglePhaseWell.cpp          
+     fluidFlow/wells/CompositionalMultiphaseWellKernels.cpp     
+     fluidFlow/wells/SinglePhaseWell.cpp
+     fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
      fluidFlow/wells/WellSolverBase.cpp
      multiphysics/CompositionalMultiphaseReservoir.cpp
