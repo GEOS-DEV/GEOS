@@ -74,11 +74,15 @@ with the multigrid reduction (MGR) preconditioner (``preconditionerType="mgr"``)
 .. note::
         For non-trivial simulations, we recommend setting the ``initialDt`` attribute to a small value (relative to the time scale of the problem) in seconds. If the simulation appears to be slow, use ``logLevel="1"`` in **CompositionalMultiphaseFVM** to detect potential Newton convergence problems. If the Newton solver struggles, please set ``lineSearchAction="Attempt"`` in **NonlinearSolverParameters**. If the Newton convergence is good, please add ``logLevel="1"`` in the **LinearSolverParameters** block to detect linear solver problems, especially if an iterative linear solver is used.
 
+.. note::
+   To use the linear solver options of this example, you need to ensure that GEOSX is configured to use the Hypre linear solver package.
+	
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->
 
+	       
 .. _Mesh_tag_dead_oil_bottom_layers_spe10:
 
 -------

@@ -8,12 +8,12 @@ Elasto-Plastic Near-Well Deformation
 
 **Context**
 
-The main goal of this tutorial is to learn how to use the internal wellbore mesh generator and an elasto-plastic model to handle wellbore problems in GEOSX. The Extended Drucker-Prager model (see :ref:`DruckerPragerExtended`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical results. The resulting model can be used as a base for more complex analysis (e.g., wellbore drilling, fluid injection and storage scenarios). 
+The main goal of this example is to learn how to use the internal wellbore mesh generator and an elasto-plastic model to handle wellbore problems in GEOSX. The Extended Drucker-Prager model (see :ref:`DruckerPragerExtended`) is applied to solve for elastoplastic deformation within the vicinity of a vertical wellbore. For the presented example, an analytical solution is employed to verify the accuracy of the numerical results. The resulting model can be used as a base for more complex analysis (e.g., wellbore drilling, fluid injection and storage scenarios). 
 
 
 **Objectives**
 
-At the end of this tutorial you will know:
+At the end of this example you will know:
 
   - how to construct meshes for wellbore problems with the internal mesh generator,
   - how to specify initial and boundary conditions, such as in-situ stresses and variation of traction at the wellbore wall,
@@ -22,7 +22,7 @@ At the end of this tutorial you will know:
 
 **Input file**
 
-This tutorial uses no external input files and everything required is
+This example uses no external input files and everything required is
 contained within a single xml file that is located at:
 
 .. code-block:: console
@@ -46,12 +46,12 @@ We simulate a drained wellbore problem subjected to isotropic horizontal stress 
    Sketch of the wellbore problem `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__
 
 
-To simulate this phenomenon, the strain hardening Extended Drucker-Prager model with an associated plastic flow rule in GEOSX is used in this tutorial. Displacement and stress fields around the wellbore are numerically calculated. These numerical predictions are then compared with the corresponding analytical solutions `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__ from the literature. 
+To simulate this phenomenon, the strain hardening Extended Drucker-Prager model with an associated plastic flow rule in GEOSX is used in this example. Displacement and stress fields around the wellbore are numerically calculated. These numerical predictions are then compared with the corresponding analytical solutions `(Chen and Abousleiman, 2017)  <https://www.sciencedirect.com/science/article/pii/S1365160917301090>`__ from the literature. 
 
 
 
 All inputs for this case are contained inside a single XML file.
-In this tutorial, we focus our attention on the ``Mesh`` tags,
+In this example, we focus our attention on the ``Mesh`` tags,
 the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
 
 ------
@@ -73,7 +73,7 @@ Let us take a closer look at the geometry of this wellbore problem.
 We use the internal mesh generator ``InternalWellbore`` to create a rock domain
 (:math:`10\, m \, \times 5 \,  m \, \times 2 \, m`), with a wellbore of
 initial radius equal to :math:`0.1` m.
-Coordinates of ``trajectory`` defines the wellbore trajectory, which represents a vertical well in this tutorial. 
+Coordinates of ``trajectory`` defines the wellbore trajectory, which represents a vertical well in this example. 
 By turning on ``autoSpaceRadialElems="{ 1 }"``, the internal mesh generator automatically sets number and spacing of elements in the radial direction, which overrides the values of ``nr``. 
 With ``useCartesianOuterBoundary="0"``, a Cartesian aligned outer boundary on the outer block is enforced.
 In this way, a structured three-dimensional mesh is created with 100 x 80 x 2 elements in the radial, tangential and z directions, respectively. All the elements are eight-node hexahedral elements (``C3D8``) and refinement is performed
@@ -81,7 +81,7 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
 ``cb1``.
 
 
-.. literalinclude:: ../../../../../examples/plasticity/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../examples/plasticity/DruckerPrager_Verification.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_MESH -->
     :end-before: <!-- SPHINX_DP_WELLBORE_MESH_END -->
@@ -96,7 +96,7 @@ The problem is run as ``QuasiStatic`` without considering inertial effects.
 The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. 
 The material is named as ``rock``, whose mechanical properties are specified in the ``Constitutive`` section.
 
-.. literalinclude:: ../../../../../examples/plasticity/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../examples/plasticity/DruckerPrager_Verification.xml
   :language: xml
   :start-after: <!-- SPHINX_DP_WELLBORE_SOLVER -->
   :end-before: <!-- SPHINX_DP_WELLBORE_SOLVER_END -->
@@ -108,7 +108,7 @@ Constitutive laws
 For this drained wellbore problem, we simulate the elastoplastic deformation caused by wellbore contraction.
 A homogeneous domain with one solid material is assumed, whose mechanical properties are specified in the ``Constitutive`` section: 
 
-.. literalinclude:: ../../../../../examples/plasticity/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../examples/plasticity/DruckerPrager_Verification.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_MATERIAL -->
     :end-before: <!-- SPHINX_DP_WELLBORE_MATERIAL_END -->
@@ -133,13 +133,13 @@ The next step is to specify fields, including:
   - The initial value (the in-situ stresses and traction at the wellbore wall have to be initialized)
   - The boundary conditions (the reduction of wellbore pressure and constraints of the outer boundaries have to be set)
 
-In this tutorial, we need to specify isotropic horizontal stress (:math:`\sigma_h` = -11.25 MPa) and vertical stress (:math:`\sigma_v` = -15.0 MPa). 
+In this example, we need to specify isotropic horizontal stress (:math:`\sigma_h` = -11.25 MPa) and vertical stress (:math:`\sigma_v` = -15.0 MPa). 
 To reach equilibrium, a compressive traction :math:`P_w` = -11.25 MPa is instantaneously applied at the wellbore wall ``rneg`` at time :math:`t` = 0 s, which will then be gradually reduced to a lower value (-2.0 MPa) to let wellbore contract.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../examples/plasticity/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../examples/plasticity/DruckerPrager_Verification.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_BC -->
     :end-before: <!-- SPHINX_DP_WELLBORE_BC_END -->
@@ -150,7 +150,7 @@ A table function ``timeFunction`` is used to define the time-dependent traction 
 The ``coordinates`` and ``values`` form a time-magnitude
 pair for the loading time history. In this case, the loading magnitude decreases linearly as the time evolves. 
 
-.. literalinclude:: ../../../../../examples/plasticity/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../examples/plasticity/DruckerPrager_Verification.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_TABLE -->
     :end-before: <!-- SPHINX_DP_WELLBORE_TABLE_END -->
@@ -217,10 +217,10 @@ To go further
 ------------------------------------------------------------------
 
 
-**Feedback on this tutorial**
+**Feedback on this example**
 
-This concludes the tutorial on Plasticity Model for Wellbore Problems.
-For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+This concludes the example on Plasticity Model for Wellbore Problems.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
 
 

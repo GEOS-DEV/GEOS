@@ -40,9 +40,7 @@ implies zero dilatancy.
 Parameters
 ~~~~~~~~~~~~~~~~~~~~
 
-The following attributes are supported:
-
-.. include:: /coreComponents/schema/docs/DruckerPragerExtended.rst
+The supported attributes will be documented soon.
 
 Example
 ~~~~~~~~~~~~~~~

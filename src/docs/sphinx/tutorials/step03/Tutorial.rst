@@ -1,8 +1,8 @@
 .. _TutorialFieldCase:
 
-#########################################
-Regions and Property Specifications
-#########################################
+###############################################
+Tutorial 3: Regions and Property Specifications
+###############################################
 
 **Context**
 

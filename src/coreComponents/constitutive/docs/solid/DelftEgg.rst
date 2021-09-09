@@ -18,9 +18,8 @@ Because Delft-Egg is frequently used for hard rocks, GEOSX uses a linear model f
 Parameters
 ~~~~~~~~~~~~~~~~~~~~
 
-The following attributes are supported:
+The supported attributes will be documented soon.
 
-.. include:: /coreComponents/schema/docs/DelftEgg.rst
 
 Example
 ~~~~~~~~~~~~~~~~~~~

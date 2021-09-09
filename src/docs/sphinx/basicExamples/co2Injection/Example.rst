@@ -15,6 +15,7 @@ At the end of this example you will know:
  - how to set up a CO :sub:`2` injection scenario with a well,
  - how to run a case using MPI-parallelism.
 
+   
 **Input file**
 
 The XML file for this test case is located at :
@@ -59,6 +60,10 @@ The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consis
 This sub-tag specifies the CO :sub:`2` injector control mode: the well is initially rate-controlled, with a rate specified in ``targetRate`` and a maximum pressure specified in ``targetBHP``. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture (here, pure CO :sub:`2`).
 
 The **CompositionalMultiphaseReservoir** coupling section describes the binding between those two previous elements (see :ref:`TutorialPoroelasticity` for detailed example on coupling physics in GEOSX). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solver attributes). 
+
+.. note::
+   To use the linear solver options of this example, you need to ensure that GEOSX is configured to use the Hypre linear solver package.
+   
 
 .. _Mesh_tag_co2_field_case:
 

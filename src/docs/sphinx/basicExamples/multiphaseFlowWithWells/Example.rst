@@ -99,11 +99,16 @@ Note that a backtracking line search can be activated by setting the attribute `
 If ``lineSearchAction = "Attempt"``, we accept the nonlinear iteration even if the line search does not reduce the residual norm.
 If ``lineSearchAction = "Require"``, we cut the time step if the line search does not reduce the residual norm. 
 
+.. note::
+   To use the linear solver options of this example, you need to ensure that GEOSX is configured to use the Hypre linear solver package.
+
+
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
 
+	       
 
 .. _Mesh_tag_dead_oil_egg_model:
 

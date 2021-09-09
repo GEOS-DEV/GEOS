@@ -5,14 +5,12 @@ Advanced Examples
 =================================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   sneddon/Example	      
+   validationStudies/Index
 
-   edpWellbore/Example
+   performanceBenchmarks/Index
 
-   poromechanicsWellbore/Example
-
-
+   applicationStudies/Index
 
 

@@ -1,8 +1,8 @@
 .. _TutorialElasticity:
 
-#################################################
-Boundary Conditions and Time-Dependent Functions
-#################################################
+############################################################
+Tutorial 4: Boundary Conditions and Time-Dependent Functions
+############################################################
 
 **Context**
 
