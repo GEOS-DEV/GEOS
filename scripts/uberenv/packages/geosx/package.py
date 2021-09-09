@@ -123,7 +123,8 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('pugixml@1.8: +shared')
 
-    depends_on('fmt@8.0: cxxstd=14 +pic')
+    depends_on('fmt@8.0: +cxxstd=14 +pic')
+    depends_on('vtk@9.0.0')
 
     #
     # Math
@@ -375,7 +376,8 @@ class Geosx(CMakePackage, CudaPackage):
             io_tpls = (('hdf5', 'HDF5', True), ('conduit', 'CONDUIT', True), ('silo', 'SILO', True),
                        ('adiak', 'ADIAK', '+caliper'
                         in spec), ('caliper', 'CALIPER', '+caliper'
-                                   in spec), ('pugixml', 'PUGIXML', True), ('vtk', 'VTK', False)('fmt', 'FMT', True))
+                                   in spec), ('pugixml', 'PUGIXML', True), ('vtk', 'VTK', True)('fmt', 'FMT', True))
+
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# IO TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
