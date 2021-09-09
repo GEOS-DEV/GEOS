@@ -339,14 +339,10 @@ void ProppantTransport::preStepUpdate( real64 const & time,
 
   FlowSolverBase::precomputeData( mesh );
 
-  NodeManager const & nodeManager = mesh.getNodeManager();
-  FaceManager const & faceManager = mesh.getFaceManager();
-
   if( time <= 0 )
   {
     forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
-      subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
       updateProppantMobility( subRegion );
     } );
   }
