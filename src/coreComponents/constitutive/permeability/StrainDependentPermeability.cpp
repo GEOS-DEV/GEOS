@@ -29,7 +29,21 @@ namespace constitutive
 
 StrainDependentPermeability::StrainDependentPermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
-{}
+{
+  registerWrapper( viewKeyStruct::strainThresholdString(), &m_strainThreshold ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Threshold of shear strain." );
+
+  registerWrapper( viewKeyStruct::maxPermMultiplierString(), &m_maxPermMultiplier ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Maximum permeability multiplier." );
+
+  registerWrapper( viewKeyStruct::iniPermeabilityString(), &m_permeabilityComponents ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Initial permeability tensor of the fault." );
+
+  registerWrapper( viewKeyStruct::dPerm_dStrainString(), &m_dPerm_dStrain );
+}
 
 std::unique_ptr< ConstitutiveBase >
 StrainDependentPermeability::deliverClone( string const & name,
@@ -41,6 +55,9 @@ StrainDependentPermeability::deliverClone( string const & name,
 void StrainDependentPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                             localIndex const numConstitutivePointsPerParentIndex )
 {
+// NOTE: enforcing 1 quadrature point
+  m_dPerm_dStrain.resize( 0, 1, 3 );
+
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 

@@ -56,12 +56,11 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  virtual void updateFromPressureStrain( localIndex const k,
-                                         localIndex const q,
-                                         real64 const & pressure,
-                                         real64 const & volStrain ) const
+  virtual void updateFromStrain( localIndex const k,
+                                 localIndex const q,
+                                 real64 const ( &totalStrain )[6] ) const
   {
-    GEOSX_UNUSED_VAR( k, q, pressure, volStrain );
+    GEOSX_UNUSED_VAR( k, q, totalStrain );
   }
 
   GEOSX_HOST_DEVICE
