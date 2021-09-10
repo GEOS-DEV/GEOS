@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -18,6 +18,8 @@
 
 #include "xmlWrapper.hpp"
 
+#include "codingUtilities/StringUtilities.hpp"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -26,22 +28,40 @@ template< typename T, int SIZE >
 void xmlWrapper::stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue )
 {
   std::istringstream ss( inputValue );
+  auto const errorMsg = [&]( auto const & msg )
+  {
+    std::ostringstream oss;
+    oss << msg << " for Tensor<" << SIZE << "> at position " << ss.tellg() << " in input: " << inputValue;
+    return oss.str();
+  };
 
-  real64 value;
+  // Read the head
+  ss >> std::ws;
+  GEOSX_THROW_IF_NE_MSG( ss.peek(), '{', errorMsg( "Missing opening brace" ), InputError );
+  ss.ignore(); // skip the opening brace
+
+  // Read the values
+  T value;
   int count = 0;
-  while( ss.peek() == '{' || ss.peek() == ' ' )
+  while( ss >> value )
   {
-    ss.ignore();
-  }
-  while( !((ss>>value).fail()) )
-  {
+    GEOSX_THROW_IF_GE_MSG( count, SIZE, errorMsg( "Too many values" ), InputError );
     target[count++] = value;
-    while( ss.peek() == ',' || ss.peek() == ' ' || ss.peek() == '}' )
+    ss >> std::ws;
+    if( count < SIZE )
     {
-      ss.ignore();
+      GEOSX_THROW_IF_NE_MSG( ss.peek(), ',', errorMsg( ss.peek() == '}' ? "Not enough values" : "Missing comma separator" ), InputError );
+      ss.ignore(); // skip the comma
     }
   }
-  GEOSX_ERROR_IF( count!=SIZE, "incorrect number of components specified for Tensor" );
+  GEOSX_THROW_IF_LT_MSG( count, SIZE, errorMsg( "Not enough values" ), InputError );
+  ss.clear();
+
+  // Read the tail
+  GEOSX_THROW_IF_NE_MSG( ss.peek(), '}', errorMsg( "Missing closing brace" ), InputError );
+  ss.ignore(); // skip the closing brace
+  ss >> std::ws;
+  GEOSX_THROW_IF( ss.peek() != std::char_traits< char >::eof(), errorMsg( "Unparsed characters" ), InputError );
 }
 
 
