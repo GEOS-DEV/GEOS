@@ -722,14 +722,6 @@
   <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE_END -->
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS -->
   <FieldSpecifications>
-    <!-- <FieldSpecification -->
-    <!--   name="referencePorosity" -->
-    <!--   initialCondition="1" -->
-    <!--   setNames="{ all }" -->
-    <!--   objectPath="ElementRegions/reservoir/DEFAULT_HEX" -->
-    <!--   fieldName="rockPorosity_referencePorosity" -->
-    <!--   scale="0.2"/> -->
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"

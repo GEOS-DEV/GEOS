@@ -1,7 +1,7 @@
 .. _PerformanceBenchmarks:
 
 ########################
-Performance benchmarks
+Performance Benchmarks
 ########################
 
 
