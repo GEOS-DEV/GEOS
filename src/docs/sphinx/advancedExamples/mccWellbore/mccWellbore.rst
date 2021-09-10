@@ -2,7 +2,7 @@
 
 
 ####################################################
-Modified Cam-Clay Model for Wellbore Problems without Fluid Flow
+Modified Cam-Clay Model for Wellbore Problems
 ####################################################
 
 
@@ -41,7 +41,7 @@ To simulate this phenomenon, the Modified Cam-Clay model with an associated plas
 
 
 ------------------------------------------------------------------
-Preparing the input files
+Mesh
 ------------------------------------------------------------------
 
 In this example, we focus our attention on the ``Mesh`` tags,
@@ -79,7 +79,7 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
     :end-before: <!-- SPHINX_WELLBORE_MESH_END -->
 
 
-Solver: setting up the solid mechanics solver
+Solid mechanics solver
 -----------------------------------------------------------
 
 For the drained wellbore problem, the pore pressure variation is omitted and can be subtracted from the analysis. Therefore, we just need to define a solid mechanics solver, which is called ``mechanicsSolver``. 
@@ -94,7 +94,7 @@ The material is named as ``rock``, whose mechanical properties are specified in 
   :end-before: <!-- SPHINX_WELLBORE_SOLVER_END -->
 
 
-Constitutive model: defining material properties with constitutive laws
+Constitutive laws
 -----------------------------------------------------------
 
 For this drained wellbore problem, we simulate the elastoplastic deformation caused by wellbore expansion.
@@ -118,7 +118,7 @@ The following material parameters should be defined properly to reproduce the an
 The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units.
 
 
-Initial and Boundary Conditions: defining properties with the FieldSpecifications
+Initial and Boundary Conditions
 -----------------------------------------------------------
 
 The next step is to specify fields, including:
