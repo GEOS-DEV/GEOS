@@ -1,19 +1,19 @@
 Intellectual Property Notice
 ----------------------------
-GEOSX is licensed under the GNU Lesser General Public License, Version 2.1. 
+GEOSX is licensed under the GNU Lesser General Public License, Version 2.1.
 See the toplevel LICENSE file for details.
 
-Copyrights and patents in the GEOSX project are retained by individual 
+Copyrights and patents in the GEOSX project are retained by individual
 contributors. The following copyright applies to each file in the GEOSX
 distribution, unless otherwise stated in the file:
 
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
 
-No copyright assignment is required to contribute to GEOSX.  See the 
+No copyright assignment is required to contribute to GEOSX.  See the
 toplevel CONTRIBUTORS file for a list of contributors.
 
 
