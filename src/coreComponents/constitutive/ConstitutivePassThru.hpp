@@ -35,6 +35,7 @@
 #include "permeability/ConstantPermeability.hpp"
 #include "permeability/CarmanKozenyPermeability.hpp"
 #include "permeability/ParallelPlatesPermeability.hpp"
+#include "permeability/StrainDependentPermeability.hpp"
 
 namespace geosx
 {
