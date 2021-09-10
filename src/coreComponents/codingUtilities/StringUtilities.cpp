@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -91,15 +91,13 @@ string_array tokenize( const string & str, const string & delimiters )
 string trim( string const & str,
              string const & charsToRemove )
 {
-  string newStr = "";
-
   std::size_t const first = str.find_first_not_of( charsToRemove );
-  std::size_t const last = str.find_last_not_of( charsToRemove );
   if( first != string::npos )
   {
-    newStr = str.substr( first, ( last - first + 1 ) );
+    std::size_t const last = str.find_last_not_of( charsToRemove );
+    return str.substr( first, ( last - first + 1 ) );
   }
-  return newStr;
+  return {};
 }
 
 
