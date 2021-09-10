@@ -37,12 +37,12 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 11 }"
-      yCoords="{ 0, 11 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 11 }"
-      ny="{ 11 }"
-      nz="{ 1 }"
+      xCoords="{ 0, 21 }"
+      yCoords="{ 0, 21 }"
+      zCoords="{ 0, 11 }"
+      nx="{ 21 }"
+      ny="{ 21 }"
+      nz="{ 11 }"
       cellBlockNames="{ block1 }"/>
   </Mesh>
 
@@ -54,35 +54,38 @@
 
     <Box
       name="sink"
-      xMin="{ 9.99, 9.99, -0.01 }"
-      xMax="{ 11.01, 11.01, 1.01 }"/>
+      xMin="{ 19.99, 19.99, 9.99 }"
+      xMax="{ 21.01, 21.01, 11.01 }"/>
 
     <BoundedPlane
       name="FracturePlane"
       normal="{ 0, 1, 0 }"
-      origin="{ 1.5, 5.5, 0.5 }"
+      origin="{ 3.5, 3.5, 5.5 }"
       lengthVector="{ 1, 0, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 6, 1 }"/>
+      dimensions="{ 12, 11 }"/>
+     
+     <BoundedPlane
+      name="FracturePlane2"
+      normal="{ 0, 1, 0 }"
+      origin="{ 17.5, 9.5, 5.5 }"
+      lengthVector="{ 1, 0, 0 }"
+      widthVector="{ 0, 0, 1 }"
+      dimensions="{ 12, 11 }"/> 
+      
   </Geometry>
 
   <Events
-    maxTime="5e4">
+    maxTime="1e6">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="5e3"
+      timeFrequency="1e4"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="1.5e7"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
@@ -306,11 +309,8 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="deadoil_fractured2dReservoir"
+      plotFileRoot="deadoil_fractured3dReservoir"
       plotLevel="1"/>
-    
-    <Restart
-      name="restartOutput"/>
 
   </Outputs>
 </Problem>

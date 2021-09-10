@@ -660,7 +660,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
 
   // start from last connectorIndex from surface-To-cell connections
   localIndex connectorIndex = edfmStencil.size();
-  localIndex constexpr maxElems = SurfaceElementStencil::MAX_STENCIL_SIZE;
+  localIndex constexpr maxElems = EmbeddedSurfaceToCellStencil::MAX_STENCIL_SIZE;
 
   // loop over the embedded surfaces and add connections to cellStencil
   for( localIndex kes = 0; kes < fractureSubRegion.size(); kes++ )

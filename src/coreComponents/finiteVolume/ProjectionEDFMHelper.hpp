@@ -80,22 +80,22 @@ private:
   /*
    * @brief check the intersection  a fracture element and an edge
    */
-  bool intersection( real64 ( &fracOrigin )[3],
+  bool intersection( real64 const ( &fracOrigin )[3],
                      arraySlice1d< real64 const > const & fracNormal,
-                     localIndex edgeIdx,
-                     real64 ( &tmp )[3] ) const noexcept;
+                     localIndex const edgeIdx,
+                     real64 ( &tmp )[3] ) const;
 
   /*
    *
    * @brief returns true is the face has only one neighbor
    */
-  bool isBoundaryFace( localIndex faceIdx ) const noexcept;
+  bool isBoundaryFace( localIndex const faceIdx ) const;
 
   // check if the center of a face is on the same side of the fracture as cell center
-  bool onLargerSide( localIndex faceIdx,
-                     real64 signedDistanceCellCenterToFrac,
-                     real64 ( &fracOrigin )[3],
-                     arraySlice1d< real64 const > const & fracNormal ) const noexcept;
+  bool onLargerSide( localIndex const faceIdx,
+                     real64 const signedDistanceCellCenterToFrac,
+                     real64 const ( &fracOrigin )[3],
+                     arraySlice1d< real64 const > const & fracNormal ) const;
 
   /*
    * @brief compute the signed distance between the fracture and as cell center
@@ -103,36 +103,37 @@ private:
   real64 getSignedDistanceCellCenterToFracPlane( CellDescriptor const & hostCellID,
                                                  arraySlice1d< real64 const > const & fracNormal,
                                                  real64 const (&fracOrigin)[3],
-                                                 real64 ( &tmp )[3] ) const noexcept;
+                                                 real64 ( &tmp )[3] ) const;
 
   /*
    * @brief returns true if the signed distance from the neighbor center to the frac is of the same sign as signedDistanceCellCenterToFrac
    *(computed in the host cell)
    */
-  bool neighborOnSameSide( localIndex faceIdx,
-                           real64 signedDistanceCellCenterToFrac,
+  bool neighborOnSameSide( localIndex const faceIdx,
+                           real64 const signedDistanceCellCenterToFrac,
                            CellDescriptor const & hostCellID,
                            EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
 
   /*
    * @brief given a face and its neighboring cell, return the id of the other cell
    */
-  CellDescriptor otherCell( localIndex faceIdx, CellDescriptor const & hostCellID ) const;
+  CellDescriptor otherCell( localIndex const faceIdx, CellDescriptor const & hostCellID ) const;
 
   /*
    * @brief compute the absolute transmissibility for non-neighboring F-M connection
    */
-  real64 fractureMatrixTransmissilibility( CellDescriptor const & neighborCell,
-                                           localIndex fracElement,
-                                           EmbeddedSurfaceSubRegion const & fractureSubRegion,
-                                           localIndex faceIdx ) const;
+  void fractureMatrixTransmissilibility( CellDescriptor const & neighborCell,
+                                         localIndex const fracElement,
+                                         EmbeddedSurfaceSubRegion const & fractureSubRegion,
+                                         localIndex const faceIdx,
+                                         real64 (& trans)[2] ) const;
 
   /*
    * @brief add non-neighboring F-M connection with given transmissibility tothe cell stencil
    */
-  void addNonNeighboringConnection( localIndex fracElement,
+  void addNonNeighboringConnection( localIndex const fracElement,
                                     CellDescriptor const & cell,
-                                    real64 transmissibility,
+                                    real64 const (& transmissibility)[2],
                                     EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
 
   // Private variables
