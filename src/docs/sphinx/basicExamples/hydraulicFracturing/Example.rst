@@ -42,9 +42,9 @@ The in-situ properties and initial conditions are based upon a randomly generate
 .. image:: hf_example.png
 
 
-The inputs for this case are contained inside a case-specific (``heterogeneousInSitu_singleFracture.xml``) and base (``heterogeneousInSitu_base.xml``) XML file.
+The inputs for this case are contained inside a case-specific (``heterogeneousInSitu_singleFracture.xml``) and base (``heterogeneousInSitu_base.xml``) XML files.
 The ``tables`` directory contains the pre-constructed geologic model.
-This example will first focus on the case-specific input file, which contains the key parameter definitions, then consider the base-file.
+This example will first focus on the case-specific input file, which contains the key parameter definitions, then consider the base xml file.
 
 
 
@@ -105,12 +105,12 @@ The other dimensions of the mesh follow a similar pattern.
 Defining a fracture nodeset
 ----------------------------------------------
 
-For this example, we want to propagate a single hydraulic fracture along the y=0 plane.
+For this example, we want to propagate a single hydraulic fracture along the plane defined by y = 0.
 To achieve this, we need to define three nodesets:
 
 - source_a: The location where we want to inject fluid.  Typically, we want this to be a single face in the x-z plane.
 - perf_a: This is the initial fracture for the simulation.  This nodeset needs to be at least two-faces wide in the x-z plane (to represent the fracture at least one internal node needs to be open).
-- fracturable_a: This is the set of faces where we will allow the fracture to grow. For a problem where we expect the fracture to curve out of the y=0 plane, this could be replaced.
+- fracturable_a: This is the set of faces where we will allow the fracture to grow. For a problem where we expect the fracture to curve out of the plane defined by y = 0 , this could be replaced.
 
 .. literalinclude:: ../../../../../examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml
   :language: xml
@@ -152,7 +152,7 @@ Coupled hydraulic fracturing solver
 -----------------------------------------------------------------
 
 The Solvers block is located in the base xml file.
-Note that the ``gravityVector`` attribute indicates that we are applying gravity in the -z direction in this problem.
+Note that the ``gravityVector`` attribute indicates that we are applying gravity in the z-direction in this problem.
 
 Similar to other coupled physics solvers, the Hydrofracture solver is specified in three parts:
 

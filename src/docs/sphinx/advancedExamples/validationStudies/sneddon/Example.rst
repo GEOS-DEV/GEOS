@@ -111,13 +111,13 @@ The parameters used in the simulation are summarized in the following table.
   +----------------+-----------------------+------------------+-------------------+
   | Symbol         | Parameter             | Units            | Value             |
   +================+=======================+==================+===================+
-  | :math:`E`      | Young's modulus       | [Pa]             | 1.0*10\ :sup:`4`  |
+  | :math:`E`      | Young's modulus       | [Pa]             | 10\ :sup:`4`      |
   +----------------+-----------------------+------------------+-------------------+
   | :math:`\nu`    | Poisson's ratio       | [-]              | 0.2               |
   +----------------+-----------------------+------------------+-------------------+
   | :math:`L_f`    | Fracture length       | [m]              | 20                |
   +----------------+-----------------------+------------------+-------------------+
-  | :math:`p_f`    | Fracture pressure     | [Pa]             | 1.0*10\ :sup:`5`  |
+  | :math:`p_f`    | Fracture pressure     | [Pa]             | 10\ :sup:`5`      |
   +----------------+-----------------------+------------------+-------------------+
 
 Material properties and boundary conditions are specified in the

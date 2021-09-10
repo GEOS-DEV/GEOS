@@ -262,7 +262,7 @@ This part is identical to that of :ref:`TutorialDeadOilBottomLayersSPE10`.
 .. _FieldSpecifications_tag_dead_oil_egg_model:
 
 -----------------------
-Initial condition
+Initial conditions
 -----------------------
 
 We are ready to specify the reservoir initial conditions of the problem in the **FieldSpecifications**
