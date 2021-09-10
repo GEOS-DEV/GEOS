@@ -62,9 +62,6 @@ void ProjectionEDFMHelper::addNonNeighboringConnections() const
 
         // zero out matrix-matrix connections that are replaced by fracture-matrix connections
         // I assume that the m-m connection index is equal to the face id
-        std::cout << "zeroing connection" << std::endl;
-        std::cout << "faceIdx" << faceIdx << std::endl;
-
         m_cellStencil.zero( faceIdx );
       }
     }
@@ -82,7 +79,7 @@ std::list< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelatio
   LvArray::tensorOps::copy< 3 >( origin, centers[ fracElement ] );
 
   real64 tmp[ 3 ];
-  real64 const distToFrac = getSignedDistanceCellCenterToFracPlane( hostCellID, n, origin, tmp );
+  real64 distToFrac = getSignedDistanceCellCenterToFracPlane( hostCellID, n, origin, tmp );
 
   // pick faces that intersect the fracture
   std::list< localIndex > faces;
@@ -91,15 +88,17 @@ std::list< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelatio
     if( isBoundaryFace( iface ))
       continue;
     // face intersected by frac and non-branching
-    if( intersection( ref( origin ), ref( n ), iface, ref( tmp ) ) && neighborOnSameSide( iface, distToFrac,
-                                                                                          ref( hostCellID ),
-                                                                                          ref( fractureSubRegion )) )
+    if( intersection(origin,  n, iface, tmp) && !neighborOnSameSide(iface, distToFrac, hostCellID, fractureSubRegion) )
     {
       faces.push_back( iface );
       continue;
     }
 
-    if( onLargerSide( iface, distToFrac, ref( origin ), ref( n ) ) )
+    // if the frac is horizontal this can be 0 so we just pick one side.
+    if (distToFrac < std::numeric_limits< real64 >::epsilon() )
+      distToFrac = 1.0;
+
+    if( onLargerSide(iface, distToFrac, origin, n) )
     {
       faces.push_back( iface );
       continue;
@@ -229,13 +228,13 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex fracElement,
   stencilCellsRegionIndex[0] = cell.region;
   stencilCellsSubRegionIndex[0] = cell.subRegion;
   stencilCellsIndex[0] = cell.index;
-  stencilWeights[0] =  transmissibility;
+  stencilWeights[0] =  1.0;
 
   // fracture data
   stencilCellsRegionIndex[1] = fractureSubRegion.getParent().getParent().getIndexInParent();
   stencilCellsSubRegionIndex[1] = fractureSubRegion.getIndexInParent();
   stencilCellsIndex[1] = fracElement;
-  stencilWeights[1] = transmissibility;
+  stencilWeights[1] = 1.0;
 
   m_edfmStencil.add( numElems,
                      stencilCellsRegionIndex.data(),
