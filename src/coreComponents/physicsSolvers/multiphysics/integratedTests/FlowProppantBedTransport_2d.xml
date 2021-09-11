@@ -126,7 +126,7 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region2"
+      name="region"
       cellBlocks="{ cb1 }"
       materialList="{ water, sand }"/>
 
