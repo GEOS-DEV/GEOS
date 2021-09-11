@@ -56,16 +56,10 @@
   <!-- SPHINX_TUT_INT_HEX_EVENTS -->
   <Events
     maxTime="5000.0">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
     <PeriodicEvent
       name="solverApplications"
       forceDt="20.0"
       target="/Solvers/SinglePhaseFlow"/>
-
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
       timeFrequency="100.0"
