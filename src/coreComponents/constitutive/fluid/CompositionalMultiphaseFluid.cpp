@@ -33,23 +33,6 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-namespace
-{
-
-pvt::EOS_TYPE getCompositionalEosType( string const & name )
-{
-  static std::map< string, pvt::EOS_TYPE > const eosTypes =
-  {
-    { "PR", pvt::EOS_TYPE::PENG_ROBINSON },
-    { "SRK", pvt::EOS_TYPE::REDLICH_KWONG_SOAVE }
-  };
-  auto const it = eosTypes.find( name );
-  GEOSX_ERROR_IF( it == eosTypes.end(), "Compositional EOS type not supported by PVTPackage: " << name );
-  return it->second;
-}
-
-} // namespace
-
 CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name, Group * const parent )
   : MultiFluidBase( name, parent )
 {
@@ -89,9 +72,19 @@ template< typename ARRAY >
 void checkInputSize( ARRAY const & array, integer const expected, string const & attr, string const & name )
 {
   GEOSX_THROW_IF_NE_MSG( array.size(), expected,
-                         name << ": invalid number of entries in " << attr << " attribute",
+                         GEOSX_FMT( "{}: invalid number of entries in attribute '{}'", name, attr ),
                          InputError );
 
+}
+
+pvt::EOS_TYPE getCompositionalEosType( string const & name, string const & groupName )
+{
+  static map< string, pvt::EOS_TYPE > const eosTypes =
+  {
+    { "PR", pvt::EOS_TYPE::PENG_ROBINSON },
+    { "SRK", pvt::EOS_TYPE::REDLICH_KWONG_SOAVE }
+  };
+  return findOption( eosTypes, name, MultiFluidBase::viewKeyStruct::phaseNamesString(), groupName );
 }
 
 pvt::PHASE_TYPE getPVTPackagePhaseType( string const & name, string const & groupName )
@@ -148,7 +141,8 @@ void CompositionalMultiphaseFluid::initializePostSubGroups()
 void CompositionalMultiphaseFluid::createFluid()
 {
   std::vector< pvt::EOS_TYPE > eos( numFluidPhases() );
-  std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), eos.begin(), getCompositionalEosType );
+  std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), eos.begin(),
+                  [&]( string const & s ){ return getCompositionalEosType( s, getFullName() ); } );
 
   std::vector< pvt::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
   std::vector< string > const components( m_componentNames.begin(), m_componentNames.end() );

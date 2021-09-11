@@ -23,12 +23,31 @@
 #include "common/GeosxConfig.hpp"
 #include "LvArray/src/Macros.hpp"
 
+// TPL includes
+#include <fmt/core.h>
+#include <fmt/chrono.h>
+
 // System includes
 #include <stdexcept>
 
 #if defined(GEOSX_USE_MPI)
   #include <mpi.h>
 #endif
+
+/**
+ * @brief Interpolate arguments into a message format string.
+ * @param msg the message format string, must be a constant expression
+ */
+#define GEOSX_FMT( msg, ... ) ::fmt::format( msg, __VA_ARGS__ )
+
+/**
+ * @brief Interpolate arguments into a message format string and write into an output iterator.
+ * @param iter the output iterator to write to
+ * @param size maximum number of characters to write
+ * @param msg the message format string, must be a constant expression
+ * @note Ensures the output buffer is zero-terminated (std::format_to_n doesn't)
+ */
+#define GEOSX_FMT_TO( iter, size, msg, ... ) *::fmt::format_to_n( iter, size - 1, msg, __VA_ARGS__ ).out = '\0'
 
 /**
  * @brief Log a message on screen.
