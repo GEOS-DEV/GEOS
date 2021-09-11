@@ -21,7 +21,7 @@ At the end of this tutorial you will know:
 
 **Input file**
 
-The xml input file for this test case is located at:
+The XML input file for this test case is located at:
 
 .. code-block:: console
 
@@ -29,7 +29,7 @@ The xml input file for this test case is located at:
 
 We consider the following mesh as a numerical support to the simulations in this tutorial:
 
-.. image:: mesh.png
+.. image:: full_mesh.png
    :width: 600px
 
 This mesh contains three continuous regions:
@@ -37,6 +37,9 @@ This mesh contains three continuous regions:
   - a Top region (overburden, elementary tag = `Overburden`)
   - a Middle region (reservoir layer, elementary tag = `Reservoir`)
   - a Bottom region (underburden, elementary tag = `Underburden`)
+
+  .. image:: reservoir_transparent.png
+     :width: 600px
 
 The mesh is defined using the GMSH file format (see :ref:`Meshes` for more information on
 the supported mesh file format). Each tetrahedron is associated to a unique tag.
@@ -101,7 +104,7 @@ the mesh ``file`` is included with its relative or absolute path to the location
 .. _Geometry_tag_field_case:
 
 ----------
-Geometry 
+Geometry
 ----------
 
         Here, we are using definition of ``source`` and ``sink`` boxes in addition to the ``all`` box in order to flag sets of nodes or cells which will act as injection or production.
@@ -115,8 +118,13 @@ In order to define a box, the user defines ``xMax`` and ``xMin``, two diagonally
 
 .. _Events_tag_field_case:
 
+
+.. image:: reservoir_structure.png
+   :width: 600px
+
+
 -------
-Events 
+Events
 -------
 
 The events are used here to guide the simulation through time,
@@ -138,7 +146,7 @@ Two ``PeriodicEvent`` are defined.
 .. _NumericalMethods_tag_field_case:
 
 ------------------
-Numerical methods 
+Numerical methods
 ------------------
 
 Defining the numerical method used in the solver, we will provide information on how to discretize our equations. Here a classical two-point flux approximation (TPFA) scheme is used to discretize water fluxes over faces.
@@ -157,7 +165,7 @@ The field under ``coefficientName`` is used during TPFA transmissibilities const
 .. _ElementRegions_tag_field_case:
 
 --------
-Regions 
+Regions
 --------
 
 Assuming that the overburden and the underburden are impermeable,
@@ -236,7 +244,7 @@ You may note :
 .. _Outputs_tag_field_case:
 
 -------
-Output 
+Output
 -------
 
 The **Outputs** XML tag is used to trigger the writing of visualization files.
@@ -315,17 +323,15 @@ Visualization of results
 We can open the file `syntheticReservoirVizFile.pvd` with Paraview to visualize the simulation
 results. The initial pressure field in the reservoir region is provided below as an example.
 
-.. image:: pressureField_initial.png
+.. image:: pressure_initial.png
    :width: 600px
 
 Since, in the event block, we have asked for the output to be generated at regular
 intervals throughout the simulation, we can also visualize the pressure
 distribution at different simulation times, showing the variation in the injection control.
 
-.. image:: pressureField_2e8.png
-   :width: 600px
 
-.. image:: pressureField_5e8.png
+.. image:: pressure_5e8.png
    :width: 600px
 
 -----------------------------------
