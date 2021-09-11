@@ -6,7 +6,7 @@ Tutorial 4: Boundary Conditions and Time-Dependent Functions
 
 **Context**
 
-In this tutorial, we use a small strain linear elastic based solid mechanics solver 
+In this tutorial, we use a small strain linear elastic based solid mechanics solver
 (see :ref:`SolidMechanicsLagrangianFEM`) from GEOSX to solve for the bending problem of
 a three-dimensional cantilever beam. The beam is fixed at one end, and subjects to a traction force pointing to the y-positive direction on the other end. The beam is deformed in the x-y plane.
 
@@ -35,12 +35,12 @@ Discretized computational domain
 
 The following mesh is used in this tutorial:
 
-.. image:: beamBendingMesh.png
-   :width: 600px
+.. image:: initial_beam_bending.png
+   :width: 400px
 
 This mesh contains 80 x 8 x 4 eight-node brick elements in the x, y and z directions, respectively.
 Here, the ``InternalMesh``
-is used to generate a structured three-dimensional mesh with ``C3D8`` as 
+is used to generate a structured three-dimensional mesh with ``C3D8`` as
 the ``elementTypes``. This mesh is defined as a cell block with the name
 ``cb1``.
 
@@ -62,11 +62,11 @@ The gravity is turned off explicitly at the beginning of the input file:
 ------------------------------------
 Solid mechanics solver
 ------------------------------------
-The solid mechanics solver is based on the small strain Lagrangian finite element formulation. 
+The solid mechanics solver is based on the small strain Lagrangian finite element formulation.
 The problem is run as ``QuasiStatic`` without considering the beam inertial. The computational
-domain is discretized by ``FE1``, 
-which is defined in the ``NumericalMethods`` block. The material is designated as 
-``shale``, whose properties are defined in the 
+domain is discretized by ``FE1``,
+which is defined in the ``NumericalMethods`` block. The material is designated as
+``shale``, whose properties are defined in the
 ``Constitutive`` block.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
@@ -89,35 +89,35 @@ compatible with the first order interpolation functions.
 ------------------------------------
 Constitutive model
 ------------------------------------
-Recall that in the ``SolidMechanicsLagrangianSSLE`` block, 
-``shale`` is designated as the material in the computational domain. Here, the material 
+Recall that in the ``SolidMechanicsLagrangianSSLE`` block,
+``shale`` is designated as the material in the computational domain. Here, the material
 is defined as linear isotropic.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
   :language: xml
   :start-after: <!-- SPHINX_Material -->
-  :end-before:  <!-- SPHINX_MaterialEnd --> 
+  :end-before:  <!-- SPHINX_MaterialEnd -->
 
 ------------------------------------
 Boundary conditions
 ------------------------------------
 As aforementioned, the beam is fixed on one end, and subjects to surface traction on
 the other end. These boundary conditions are set up through the ``FieldSpecifications`` block.
-Here, ``nodeManager`` and 
-``faceManager`` 
+Here, ``nodeManager`` and
+``faceManager``
 in the ``objectPath`` indicate that the boundary conditions are applied to the element nodes and faces, respectively.
 Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively. And the non-zero values given by
-``Scale`` indicate the magnitude of the loading. Some shorthands, such as 
+``Scale`` indicate the magnitude of the loading. Some shorthands, such as
 ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain.
 For instance, ``xneg`` means the portion of the computational domain located at the left-most in the x-axis, while
 ``xpos`` refers to the portion located at the right-most area in the x-axis. Similar shorthands include ``ypos``, ``yneg``,
-``zpos``, and ``zneg``. Particularly, the time-dependent loading applied at the beam tip is defined through a function with 
+``zpos``, and ``zneg``. Particularly, the time-dependent loading applied at the beam tip is defined through a function with
 the name ``timeFunction``.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
   :language: xml
   :start-after: <!-- SPHINX_BoundaryConditions -->
-  :end-before:  <!-- SPHINX_BoundaryConditionsEnd --> 
+  :end-before:  <!-- SPHINX_BoundaryConditionsEnd -->
 
 ------------------------------------
 Table function
@@ -128,7 +128,7 @@ pair for the loading time history. In this case, the loading magnitude increases
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
   :language: xml
   :start-after: <!-- SPHINX_TableFunction -->
-  :end-before:  <!-- SPHINX_TableFunctionEnd --> 
+  :end-before:  <!-- SPHINX_TableFunctionEnd -->
 
 ------------------------------------
 Execution
@@ -140,14 +140,14 @@ the time increment ``forceDt`` is set as 1.0s.
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
   :language: xml
   :start-after: <!-- SPHINX_Execution -->
-  :end-before:  <!-- SPHINX_ExecutionEnd -->  
+  :end-before:  <!-- SPHINX_ExecutionEnd -->
 
 ------------------------------------
 Result
 ------------------------------------
 The deformed beam is shown as following (notice that the displacement is visually magnified):
 
-.. image:: deformationBendingBeam.png
+.. image:: final_beam_bending.png
    :width: 600px
 
 
@@ -165,4 +165,3 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
   - More on meshes, please see :ref:`Meshes`.
   - More on events, please see :ref:`EventManager`.
-
