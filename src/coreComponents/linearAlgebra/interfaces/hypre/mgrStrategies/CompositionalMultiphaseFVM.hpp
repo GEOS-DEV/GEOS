@@ -80,7 +80,7 @@ public:
     m_levelCoarseGridMethod[2] = 0; // standard Galerkin
 
     m_globalSmoothType = 16; // ILU(0)
-    m_numGlobalSmoothSweeps = 0; // No global smoother
+    m_numGlobalSmoothSweeps = 1; // With global smoother
   }
 
   /**

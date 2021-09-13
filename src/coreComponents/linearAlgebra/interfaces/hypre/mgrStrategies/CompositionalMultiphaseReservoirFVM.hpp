@@ -99,7 +99,8 @@ public:
     m_levelInterpType[2] = 2;
     m_levelInterpType[3] = 2;
 
-    m_numGlobalSmoothSweeps = 0;
+    m_globalSmoothType = 16; // ILU(0)
+    m_numGlobalSmoothSweeps = 1; // With global smoother
   }
 
   /**
@@ -122,6 +123,8 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 15 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, m_levelInterpType ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, m_levelCoarseGridMethod ) );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( precond.ptr, m_globalSmoothType ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRDirectSolverCreate( &mgrData.coarseSolver.ptr ) );
