@@ -16,6 +16,7 @@ DamageElasticIsotropic                node         :ref:`XML_DamageElasticIsotro
 DamageSpectralElasticIsotropic        node         :ref:`XML_DamageSpectralElasticIsotropic`        
 DamageVolDevElasticIsotropic          node         :ref:`XML_DamageVolDevElasticIsotropic`          
 DeadOilFluid                          node         :ref:`XML_DeadOilFluid`                          
+DelftEgg                              node         :ref:`XML_DelftEgg`                              
 DruckerPrager                         node         :ref:`XML_DruckerPrager`                         
 ElasticIsotropic                      node         :ref:`XML_ElasticIsotropic`                      
 ElasticIsotropicPressureDependent     node         :ref:`XML_ElasticIsotropicPressureDependent`     

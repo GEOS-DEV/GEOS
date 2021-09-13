@@ -16,6 +16,7 @@ DamageElasticIsotropic                node :ref:`DATASTRUCTURE_DamageElasticIsot
 DamageSpectralElasticIsotropic        node :ref:`DATASTRUCTURE_DamageSpectralElasticIsotropic`        
 DamageVolDevElasticIsotropic          node :ref:`DATASTRUCTURE_DamageVolDevElasticIsotropic`          
 DeadOilFluid                          node :ref:`DATASTRUCTURE_DeadOilFluid`                          
+DelftEgg                              node :ref:`DATASTRUCTURE_DelftEgg`                              
 DruckerPrager                         node :ref:`DATASTRUCTURE_DruckerPrager`                         
 ElasticIsotropic                      node :ref:`DATASTRUCTURE_ElasticIsotropic`                      
 ElasticIsotropicPressureDependent     node :ref:`DATASTRUCTURE_ElasticIsotropicPressureDependent`     

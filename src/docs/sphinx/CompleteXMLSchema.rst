@@ -197,6 +197,13 @@ Element: DeadOilFluid
 .. include:: ../../coreComponents/schema/docs/DeadOilFluid.rst
 
 
+.. _XML_DelftEgg:
+
+Element: DelftEgg
+=================
+.. include:: ../../coreComponents/schema/docs/DelftEgg.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -1018,6 +1025,13 @@ Datastructure: DamageVolDevElasticIsotropic
 Datastructure: DeadOilFluid
 ===========================
 .. include:: ../../coreComponents/schema/docs/DeadOilFluid_other.rst
+
+
+.. _DATASTRUCTURE_DelftEgg:
+
+Datastructure: DelftEgg
+=======================
+.. include:: ../../coreComponents/schema/docs/DelftEgg_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:

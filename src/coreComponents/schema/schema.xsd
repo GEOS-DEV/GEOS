@@ -1798,6 +1798,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
 			<xsd:element name="DamageVolDevElasticIsotropic" type="DamageVolDevElasticIsotropicType" />
 			<xsd:element name="DeadOilFluid" type="DeadOilFluidType" />
+			<xsd:element name="DelftEgg" type="DelftEggType" />
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
 			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
@@ -2065,6 +2066,30 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="DelftEggType">
+		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultCslSlope => Slope of the critical state line-->
+		<xsd:attribute name="defaultCslSlope" type="real64" default="1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPoissonRatio => Poisson's ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultPreConsolidationPressure => Initial preconsolidation pressure-->
+		<xsd:attribute name="defaultPreConsolidationPressure" type="real64" default="-1.5" />
+		<!--defaultRecompressionIndex => Recompresion Index-->
+		<xsd:attribute name="defaultRecompressionIndex" type="real64" default="0.002" />
+		<!--defaultShapeParameter => Shape parameter for the yield surface-->
+		<xsd:attribute name="defaultShapeParameter" type="real64" default="1" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultVirginCompressionIndex => Virgin compression index-->
+		<xsd:attribute name="defaultVirginCompressionIndex" type="real64" default="0.005" />
+		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
+		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
 		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
@@ -2112,8 +2137,6 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="defaultRefStrainVol" type="real64" default="0" />
 		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--useLinear => Flag to use linear elasticity-->
-		<xsd:attribute name="useLinear" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2170,14 +2193,10 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="defaultRefPressure" type="real64" default="-1" />
 		<!--defaultRefStrainVol => Reference Volumetric Strain-->
 		<xsd:attribute name="defaultRefStrainVol" type="real64" default="0" />
-		<!--defaultShapeParameter => Shape parameter for the yield surface-->
-		<xsd:attribute name="defaultShapeParameter" type="real64" default="1" />
 		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultVirginCompressionIndex => Virgin compression index-->
 		<xsd:attribute name="defaultVirginCompressionIndex" type="real64" default="0.005" />
-		<!--useLinear => Flag to use linear elasticity-->
-		<xsd:attribute name="useLinear" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2344,16 +2363,12 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="defaultRefPressure" type="real64" default="-1" />
 		<!--defaultRefStrainVol => Reference Volumetric Strain-->
 		<xsd:attribute name="defaultRefStrainVol" type="real64" default="0" />
-		<!--defaultShapeParameter => Shape parameter for the yield surface-->
-		<xsd:attribute name="defaultShapeParameter" type="real64" default="1" />
 		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultVirginCompressionIndex => Virgin compression index-->
 		<xsd:attribute name="defaultVirginCompressionIndex" type="real64" default="0.005" />
 		<!--referencePressure => ReferencePressure-->
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
-		<!--useLinear => Flag to use linear elasticity-->
-		<xsd:attribute name="useLinear" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
