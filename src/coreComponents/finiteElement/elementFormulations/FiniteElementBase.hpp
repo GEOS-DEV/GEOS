@@ -153,17 +153,6 @@ public:
   virtual localIndex getNumQuadraturePoints() const = 0;
 
   /**
-   * @brief Virtual getter for the number of quadrature points per element.
-   * @return The number of quadrature points per element.
-   */
-  template< typename LEAF >
-  GEOSX_HOST_DEVICE
-  localIndex numQuadraturePoints( typename LEAF::StackVariables const & stack ) const
-  {
-    return LEAF::getNumQuadraturePoints( stack );
-  }
-
-  /**
    * @brief Virtual getter for the number of support points per element.
    * @return The number of support points per element.
    */

@@ -54,7 +54,7 @@ checkIntegralMeanDerivativesConsistency( VEM const & virtualElement,
 {
   real64 const dummy[VEM::getMaxSupportPoints()][3] { { 0.0 } };
   localIndex const k = 0;
-  for( localIndex q = 0; q < virtualElement.getNumQuadraturePoints(); ++q )
+  for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
     real64 basisDerivativesIntegralMean[VEM::getMaxSupportPoints()][3];
     virtualElement.template getGradN< VEM >( k, q, dummy, stack, basisDerivativesIntegralMean );
@@ -117,6 +117,8 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
   }
 
   array1d< real64 > stabTimeMonomialDofs( numCellPoints );
+  real64 stabilizationMatrix[VEM::maxSupportPoints][VEM::maxSupportPoints] { { 0.0 } };
+  VEM::addStabilization( stack, stabilizationMatrix );
   real64 stabTimeMonomialDofsNorm = 0;
   for( localIndex i = 0; i < numCellPoints; ++i )
   {
@@ -124,7 +126,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
     stabTimeMonomialDofsNorm = 0;
     for( localIndex j = 0; j < numCellPoints; ++j )
     {
-      stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j, stack );
+      stabTimeMonomialDofs( i ) += stabilizationMatrix[ i ][ j ];
     }
     stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
   }
@@ -139,8 +141,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
       stabTimeMonomialDofs( i ) = 0;
       for( localIndex j = 0; j < numCellPoints; ++j )
       {
-        stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j, stack ) *
-                                     monomialVemDofs( monomInd, j );
+        stabTimeMonomialDofs( i ) += stabilizationMatrix[ i ][ j ] * monomialVemDofs( monomInd, j );
       }
       stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
     }
@@ -158,10 +159,10 @@ static void checkSumOfQuadratureWeights( real64 const & cellVolume,
 {
   real64 sum = 0.0;
   real64 const dummy[VEM::maxSupportPoints][3] { { 0.0 } };
-  for( localIndex q = 0; q < virtualElement.template numQuadraturePoints< VEM >( stack ); ++q )
+  for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
     real64 weight =
-      virtualElement.transformedQuadratureWeight( q, dummy, stack );
+      VEM::transformedQuadratureWeight( q, dummy, stack );
     sum += weight;
   }
   EXPECT_TRUE( LvArray::math::abs( sum - cellVolume ) < 1e-15 )

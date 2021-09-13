@@ -118,12 +118,6 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  static localIndex getNumQuadraturePoints( StackVariables const & GEOSX_UNUSED_PARAM( stack ) )
-  {
-    return numQuadraturePoints;
-  }
-
-  GEOSX_HOST_DEVICE
   localIndex getNumSupportPoints() const override
   {
     return m_numSupportPoints;
@@ -274,6 +268,21 @@ public:
                                  localIndex const jBasisFunction ) const
   {
     return m_stabilizationMatrix[iBasisFunction][jBasisFunction];
+  }
+
+  template< typename MATRIXTYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addStabilization( StackVariables const & stack,
+                                MATRIXTYPE & matrix )
+  {
+    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
+    {
+      for( localIndex j = 0; j < stack.numSupportPoints; ++j )
+      {
+        matrix[i][j] += stack.stabilizationMatrix[i][j];
+      }
+    }
   }
 
   GEOSX_HOST_DEVICE
