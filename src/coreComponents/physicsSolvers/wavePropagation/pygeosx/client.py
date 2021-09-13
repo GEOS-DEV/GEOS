@@ -122,7 +122,6 @@ class Client:
     def submit(self,
                func,
                parameters,
-              # xml=None,
                cores=None,
                x_partition=1,
                y_partition=1,
@@ -138,7 +137,6 @@ class Client:
                 raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
             else:
                 self.cluster._add_job_to_script(cores)
-               # self.cluster._add_xml_to_cmd(xml)
                 if x_partition*y_partition*z_partition != cores:
                     raise ValueError("Partition x y z must match x*y*z=cores")
                 else:
@@ -166,7 +164,6 @@ class Client:
                 ind,
                 func,
                 parameters,
-                #xml=None,
                 cores=None,
                 x_partition=1,
                 y_partition=1,
@@ -182,7 +179,6 @@ class Client:
                 raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
             else:
                 self.cluster[ind]._add_job_to_script(cores)
-                #self.cluster[ind]._add_xml_to_cmd(xml)
                 if x_partition*y_partition*z_partition != cores:
                     raise ValueError("Partition x y z must match x*y*z=cores")
                 else:
@@ -218,7 +214,6 @@ class Client:
     def map(self,
             func,
             parameters,
-            #xml=None,
             cores=None,
             x_partition=1,
             y_partition=1,
@@ -235,7 +230,6 @@ class Client:
                     futures.append(self._submit(ind, 
                                                 func, 
                                                 parameters[i], 
-                                                #xml,
                                                 cores,
                                                 x_partition,
                                                 y_partition,
@@ -260,9 +254,15 @@ class Client:
 
     
     def gather(self, futures):
-        results = []
-        for future in futures:
-            results.append(future.result())
+        i = 0
+        n = len(futures)
+        results = [0]*n
+        while any([future.state in ["RUNNING", "PENDING"] for future in futures]):
+            if futures[i].state in ["RUNNING", "PENDING"]:
+                results[i] = futures[i]._result()
+            i+=1
+            if i == n:
+                i = 0
 
         return results
 
@@ -285,39 +285,59 @@ class Future:
 
 
     def result(self):
-        while True:
-            job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).decode().split()
-            if self.job_id in job_list:
-                status = subprocess.check_output("squeue -j %s -h -o %%t" %self.job_id, shell=True).decode().strip()
-                if status == "PD":
-                    sleep(1)
-                elif status == "R":
-                    self.state = "RUNNING"
-                    sleep(1)
-                elif status in ["CG","CD"]:
-                    self.state = "COMPLETED"
-                    result = self.getResult()
-                    return result
-                else:
-                    self.state = "ERROR"
-                    return 1
-            else:
-                with open(self.err) as err:
-                    if os.stat(self.err).st_size == 0:
-                        self.state="COMPLETED"
-                        result = self.getResult()
-                    elif (np.array([firstChar[0] for firstChar in err.readlines()]) == "[").all() != True:
-                        self.state="COMPLETED"
-                        result = self.getResult()
-                    else:
-                        self.state="ERROR"
-                        result = 1
-                err.close()
+        while self.state in ["RUNNING", "PENDING"]: 
+            result = self._result()
+        return result
+
+
+    def _result(self):
+        job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).decode().split()
+        if self.job_id in job_list:
+            status = subprocess.check_output("squeue -j %s -h -o %%t" %self.job_id, shell=True).decode().strip()
+            if status == "PD":
+                sleep(1)
+                return 0
+            elif status == "R":
+                self.state = "RUNNING"
+                sleep(1)
+                return 0
+            elif status in ["CG","CD"]:
+                self.state = "COMPLETED"
+                result = self.getResult()
+                print("Job " + self.job_id + " has been completed\n")
                 return result
+            else:
+                self.state = "ERROR"
+                print("Error in job " + self.job_id +" :\n")
+                with open(self.err) as err:
+                    for line in err:
+                        if line[0] != "[":
+                            print(line)
+                return "err"
+        else:
+            with open(self.err) as err:
+                if os.stat(self.err).st_size == 0:
+                    self.state="COMPLETED"
+                    result = self.getResult()
+                elif (all([firstChar[0] for firstChar in err.readlines()]) == "[") == True:
+                    self.state="COMPLETED"
+                    result = self.getResult()
+                    print("Job " + self.job_id + " has been completed\n")
+                else:
+                    self.state="ERROR"
+                    err.seek(0)
+                    print("Error in job " + self.job_id +" :\n")
+                    for line in err.readlines():
+                        if line[0] != "[":
+                            print(line)
+                        
+                    result = "err"
+            err.close()
+            return result
 
 
     
-    def check_state(self):
+    def check_cluster_state(self):
         job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).decode().split()
         if self.job_id not in job_list:
             self.cluster.state = "Free"
@@ -330,4 +350,6 @@ class Future:
             result = f.readlines()
         
         return result
+
+
         

@@ -328,7 +328,7 @@ EXTRINSIC_MESH_DATA_TRAIT( MediumVelocity,
                            "mediumVelocity",
                            array1d< real64 >,
                            0,
-                           NOPLOT,
+                           LEVEL_0,
                            WRITE_AND_READ,
                            "Medium velocity of the cell" );
 

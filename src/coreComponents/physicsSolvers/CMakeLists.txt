@@ -65,7 +65,7 @@ set( physicsSolvers_headers
      surfaceGeneration/ParallelTopologyChange.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
-     wavePropagation/ElasticWaveEquationSEM.hpp
+#     wavePropagation/ElasticWaveEquationSEM.hpp
      )
 
 #
@@ -88,7 +88,6 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseBase.cpp
      fluidFlow/SinglePhaseBaseKernels.cpp
      fluidFlow/SinglePhaseFVM.cpp
-     fluidFlow/SinglePhaseFVMKernels.cpp
      fluidFlow/SinglePhaseHybridFVM.cpp
      fluidFlow/SinglePhaseProppantBase.cpp
      fluidFlow/wells/CompositionalMultiphaseWell.cpp
@@ -118,7 +117,7 @@ set( physicsSolvers_sources
      surfaceGeneration/ParallelTopologyChange.cpp
      surfaceGeneration/SurfaceGenerator.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
-     wavePropagation/ElasticWaveEquationSEM.cpp
+#     wavePropagation/ElasticWaveEquationSEM.cpp
      )
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )

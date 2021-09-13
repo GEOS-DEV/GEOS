@@ -122,7 +122,7 @@ class Acquisition:
         
 
 
-    def limitedAperture(self, aperture_dist, aperture_depth):
+    def limitedAperture(self, aperture_dist):
         self.limited_aperture=True
 
         tree = ET.parse(self.xml)
@@ -130,6 +130,8 @@ class Acquisition:
 
         internal_mesh = [elem.attrib for elem in root.iter('InternalMesh')][0]
         box = [elem.attrib for elem in root.iter('Box')][0]
+        vtk = [elem.attrib for elem in root.iter('VTK')][0]
+        events = [elem.attrib for elem in root.iter('PeriodicEvent')][2]
 
         xCoords_str_list = internal_mesh['xCoords'].strip('').replace(',', ' ').split()
         yCoords_str_list = internal_mesh['yCoords'].strip('').replace(',', ' ').split()
@@ -147,8 +149,7 @@ class Acquisition:
         y_cells_boundary = np.append(np.arange(yCoords[0], yCoords[1], (yCoords[1]-yCoords[0])/y_nb_cells), yCoords[1])
         z_cells_boundary = np.append(np.arange(zCoords[0], zCoords[1], (zCoords[1]-zCoords[0])/z_nb_cells), zCoords[1])
         
-        self.set_limited_aperture_boundaries(aperture_dist, 
-                                             aperture_depth, 
+        self.set_limited_aperture_boundaries(aperture_dist,
                                              x_cells_boundary, 
                                              y_cells_boundary, 
                                              z_cells_boundary)
@@ -186,6 +187,7 @@ class Acquisition:
 
 
         xml = []
+        velocity_model = []
         shot_ind = 0
         for boundary in self.aperture_boundary:
             nx = int(x_nb_cells*(boundary[0][1]-boundary[0][0])/(xCoords[1]-xCoords[0]))
@@ -200,8 +202,8 @@ class Acquisition:
             internal_mesh['ny'] = "{"+str(ny)+"}"
             internal_mesh['nz'] = "{"+str(nz)+"}"
             
-            box['xMin'] = str(boundary[0][0]-0.01)+","+str(boundary[1][0]-0.01)+","+str(boundary[2][1]-0.01)
-            box['xMax'] = str(boundary[0][1]+0.01)+","+str(boundary[1][1]+0.01)+","+str(boundary[2][1]+0.01)
+            box['xMin'] = "{"+str(boundary[0][0]-0.01)+","+str(boundary[1][0]-0.01)+","+str(boundary[2][1]-0.01)+"}"
+            box['xMax'] = "{"+str(boundary[0][1]+0.01)+","+str(boundary[1][1]+0.01)+","+str(boundary[2][1]+0.01)+"}"
 
             if isinstance(self.velocity_model, str):
                 xlocal=[]
@@ -254,7 +256,9 @@ class Acquisition:
                 tablefunction['coordinateFiles']="{"+xlin_file+","+ylin_file+","+zlin_file+"}"
                 tablefunction['voxelFile'] = velocity_file
                 velocity_model.append(velocity_file)
-                    
+                
+            vtk['name'] = 'vtkOutput'+str(self.shots[shot_ind].id)
+            events['target'] = '/Outputs/vtkOutput'+str(self.shots[shot_ind].id)
 
             xmlfile = os.path.join("limitedAperture/", "limited_aperture_Shot"+str(self.shots[shot_ind].id)+".xml")
             tree.write(xmlfile)
@@ -269,7 +273,6 @@ class Acquisition:
             
     def set_limited_aperture_boundaries(self, 
                                         distance, 
-                                        depth, 
                                         x_cells_boundary, 
                                         y_cells_boundary, 
                                         z_cells_boundary):
@@ -299,10 +302,6 @@ class Acquisition:
             nz = z_cells_boundary.size
             zmin = z_cells_boundary[0]
             zmax = z_cells_boundary[nz-1]
-            
-            for i in range(nz):
-                if shot.source.z() - depth >= z_cells_boundary[i]:
-                    zmin = z_cells_boundary[nz-1-i]
             
             limited_aperture = [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
             self.aperture_boundary.append(deepcopy(limited_aperture))
