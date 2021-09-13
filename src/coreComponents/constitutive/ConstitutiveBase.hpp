@@ -83,6 +83,12 @@ public:
    */
   virtual string getCatalogName() const = 0;
 
+  /**
+   * @brief Get full name of the model.
+   * @return full name, consisting of XML (catalog) name and actual model name
+   */
+  string getFullName() const { return getCatalogName() + " " + getName(); }
+
   ///@}
 
   /**

@@ -81,7 +81,7 @@ with a certain permeability can be defined as
 
      <ElasticIsotropic name="rockSkeleton"
                        defaultDensity="0"
-                       defaultYoungsModulus="1.0e4"
+                       defaultYoungModulus="1.0e4"
                        defaultPoissonRatio="0.2"/>
 
      <BiotPorosity name="rockPorosity"

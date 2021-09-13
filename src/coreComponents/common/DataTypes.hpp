@@ -355,11 +355,15 @@ class mapBase
 /// @cond DO_NOT_DOCUMENT
 template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::map< TKEY, TVAL >
-{};
+{
+  using std::map< TKEY, TVAL >::map; // enable list initialization
+};
 
 template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
-{};
+{
+  using std::unordered_map< TKEY, TVAL >::unordered_map; // enable list initialization
+};
 /// @endcond
 
 /**

@@ -48,7 +48,7 @@ def generate_test_xml_files(root_dir):
   # Base segments
   xml_base_a = """
 <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
 
     <SinglePhaseFlow name="SinglePhaseFlow"
                      logLevel="0"

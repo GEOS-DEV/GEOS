@@ -117,7 +117,7 @@ public:
   GEOSX_FORCE_INLINE
   constexpr int size( int junk ) const
   {
-    GEOSX_UNUSED_VAR( junk )
+    GEOSX_UNUSED_VAR( junk );
     return SIZE;
   }
 
@@ -134,11 +134,12 @@ private:
    */
   friend inline std::ostream & operator<<( std::ostream & os, Tensor< T, SIZE > const & t )
   {
-    os << t.data[0];
+    os << '{' << t.data[0];
     for( int i = 1; i < SIZE; ++i )
     {
       os << ',' << t.data[i];
     }
+    os << '}';
     return os;
   }
 };
