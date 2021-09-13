@@ -118,7 +118,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
 
   array1d< real64 > stabTimeMonomialDofs( numCellPoints );
   real64 stabilizationMatrix[VEM::maxSupportPoints][VEM::maxSupportPoints] { { 0.0 } };
-  VEM::addStabilization( stack, stabilizationMatrix );
+  virtualElement.template addGradGradStabilizationMatrix< VEM >( stack, stabilizationMatrix );
   real64 stabTimeMonomialDofsNorm = 0;
   for( localIndex i = 0; i < numCellPoints; ++i )
   {

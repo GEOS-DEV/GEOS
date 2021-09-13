@@ -273,8 +273,7 @@ public:
   template< typename MATRIXTYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void addStabilization( StackVariables const & stack,
-                                MATRIXTYPE & matrix )
+  static void addGradGradStabilization( StackVariables const & stack, MATRIXTYPE & matrix )
   {
     for( localIndex i = 0; i < stack.numSupportPoints; ++i )
     {

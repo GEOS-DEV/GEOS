@@ -150,6 +150,12 @@ public:
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
 
+  template< typename MATRIXTYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addGradGradStabilization( StackVariables const & stack, MATRIXTYPE & matrix )
+  {}
+
 private:
   /// The area of the element in the parent configuration.
   constexpr static real64 parentArea = 4.0;

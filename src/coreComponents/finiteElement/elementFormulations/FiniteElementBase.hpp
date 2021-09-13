@@ -194,7 +194,7 @@ public:
    * @param k The element index.
    * @param q The quadrature point index.
    * @param X Array of coordinates as the reference for the gradients.
-   * @param stack Stack variables relative to the element @param k created by a call to @ref setup
+   * @param stack Stack variables relative to the element @param k created by a call to @ref setup.
    * @param gradN Return array of the shape function gradients.
    * @return The determinant of the Jacobian transformation matrix.
    *
@@ -225,6 +225,19 @@ public:
                    localIndex const q,
                    int const X,
                    real64 ( &gradN )[LEAF::numNodes][3] ) const;
+
+  /**
+   * @brief Add stabilization of grad-grad bilinear form to input matrix.
+   * @param stack Stack variables created by a call to @ref setup.
+   * @param matrix The input matrix to which values have to be added.
+   */
+  template< typename LEAF, typename MATRIXTYPE >
+  GEOSX_HOST_DEVICE
+  void addGradGradStabilizationMatrix( typename LEAF::StackVariables const & stack,
+                                       MATRIXTYPE & matrix ) const
+  {
+    LEAF::addGradGradStabilization( stack, matrix );
+  }
 
   /**
    * @name Value Operator Functions
