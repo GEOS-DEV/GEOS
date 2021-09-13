@@ -35,7 +35,7 @@
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="297.15"
-      maxCompFractionChange="0.5"
+      maxCompFractionChange="0.3"
       logLevel="1"
       useMass="1"/>
 
@@ -63,7 +63,10 @@
         referenceElevation="28"
         targetBHP="3.9e7"
         targetPhaseRate="1e6"
-        targetPhaseName="oil"/>
+        targetPhaseName="oil"/>   
+
+      <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
+
       <WellControls
         name="wellControls3"
         type="producer"
@@ -147,7 +150,7 @@
     </CompositionalMultiphaseWell>
   </Solvers>
 
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH -->
   <Mesh>
     <PAMELAMeshGenerator
@@ -220,7 +223,9 @@
       <Perforation
         name="producer2_perf7"
         distanceFromHead="26"/>
-    </InternalWell>
+    </InternalWell>   
+
+    <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
 
     <InternalWell
       name="wellProducer3"
@@ -553,7 +558,7 @@
     </InternalWell>
   </Mesh>
 
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
+
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS -->
   <Events
     maxTime="1.5e7">
@@ -633,7 +638,9 @@
 
     <WellElementRegion
       name="wellRegion2"
-      materialList="{ fluid, relperm }"/>
+      materialList="{ fluid, relperm }"/>   
+
+    <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS_END -->
 
     <WellElementRegion
       name="wellRegion3"
@@ -676,7 +683,6 @@
       materialList="{ fluid, relperm }"/>
   </ElementRegions>
 
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS_END -->
   <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE -->
   <Constitutive>
     <DeadOilFluid
@@ -704,7 +710,7 @@
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.05"
+      defaultReferencePorosity="0.2"
       referencePressure="0.0"
       compressibility="1.0e-13"/>
 
@@ -716,14 +722,6 @@
   <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE_END -->
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS -->
   <FieldSpecifications>
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/reservoir/DEFAULT_HEX"
-      fieldName="rockPorosity_referencePorosity"
-      scale="0.2"/>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -752,7 +750,7 @@
   </FieldSpecifications>
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS_END -->
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT -->
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS -->
   <Outputs>
     <VTK
       name="vtkOutput"/>
@@ -778,7 +776,7 @@
       filename="wellRateHistory4"/>
   </Outputs>
 
-  <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT_END -->
+  <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS_END -->
   <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS -->
   <Tasks>
     <PackCollection
