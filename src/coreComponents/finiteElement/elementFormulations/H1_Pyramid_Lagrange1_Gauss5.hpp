@@ -58,6 +58,7 @@ class H1_Pyramid_Lagrange1_Gauss5 final : public FiniteElementBase
 public:
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 5;
+  constexpr static localIndex maxSupportPoints = numNodes;
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 5;

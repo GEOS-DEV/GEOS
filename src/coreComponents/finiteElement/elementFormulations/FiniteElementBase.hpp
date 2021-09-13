@@ -160,7 +160,8 @@ public:
   virtual localIndex getNumSupportPoints() const = 0;
 
   /**
-   * @brief Virtual getter for the number of support points per element.
+   * @brief Getter for the number of support points per element.
+   * @param stack Stack variables created by a call to @ref setup.
    * @return The number of support points per element.
    */
   template< typename LEAF >
@@ -168,6 +169,18 @@ public:
   localIndex numSupportPoints( typename LEAF::StackVariables const & stack ) const
   {
     return LEAF::getNumSupportPoints( stack );
+  }
+
+  /**
+   * @brief Get the maximum number of support points for this element.
+   * @details This should be used to pre-allocate objects whose size depend on the number of support
+   * points.
+   */
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  static constexpr localIndex getMaxSupportPoints()
+  {
+    return LEAF::maxSupportPoints;
   }
 
   /**

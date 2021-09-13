@@ -106,12 +106,6 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  static constexpr localIndex getMaxSupportPoints()
-  {
-    return maxSupportPoints;
-  }
-
-  GEOSX_HOST_DEVICE
   localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;

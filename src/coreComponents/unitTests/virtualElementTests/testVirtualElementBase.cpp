@@ -33,7 +33,9 @@ GEOSX_HOST_DEVICE
 static void checkIntegralMeanConsistency( VEM const & virtualElement,
                                           typename VEM::StackVariables const & stack )
 {
-  real64 basisFunctionsIntegralMean[VEM::getMaxSupportPoints()];
+  static constexpr localIndex
+    maxSupportPoints = virtualElement.template getMaxSupportPoints< VEM >();
+  real64 basisFunctionsIntegralMean[maxSupportPoints];
   VEM::calcN( 0, stack, basisFunctionsIntegralMean );
   real64 sum = 0;
   for( localIndex iBasisFun = 0;
@@ -52,14 +54,18 @@ static void
 checkIntegralMeanDerivativesConsistency( VEM const & virtualElement,
                                          typename VEM::StackVariables const & stack )
 {
-  real64 const dummy[VEM::getMaxSupportPoints()][3] { { 0.0 } };
+  static constexpr localIndex
+    maxSupportPoints = virtualElement.template getMaxSupportPoints< VEM >();
+  real64 const dummy[VEM::numNodes][3] { { 0.0 } };
   localIndex const k = 0;
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
-    real64 basisDerivativesIntegralMean[VEM::getMaxSupportPoints()][3];
+    real64 basisDerivativesIntegralMean[maxSupportPoints][3];
     virtualElement.template getGradN< VEM >( k, q, dummy, stack, basisDerivativesIntegralMean );
     real64 sumX = 0, sumY = 0, sumZ = 0;
-    for( localIndex iBasisFun = 0; iBasisFun < virtualElement.template numSupportPoints< VEM >( stack ); ++iBasisFun )
+    for( localIndex iBasisFun = 0;
+         iBasisFun < virtualElement.template numSupportPoints< VEM >( stack );
+         ++iBasisFun )
     {
       sumX += basisDerivativesIntegralMean[iBasisFun][0];
       sumY += basisDerivativesIntegralMean[iBasisFun][1];
@@ -88,6 +94,8 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                       VEM const & virtualElement,
                                       typename VEM::StackVariables const & stack )
 {
+  static constexpr localIndex
+    maxSupportPoints = virtualElement.template getMaxSupportPoints< VEM >();
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
   real64 cellDiameter = 0;
@@ -117,7 +125,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
   }
 
   array1d< real64 > stabTimeMonomialDofs( numCellPoints );
-  real64 stabilizationMatrix[VEM::maxSupportPoints][VEM::maxSupportPoints] { { 0.0 } };
+  real64 stabilizationMatrix[maxSupportPoints][maxSupportPoints] { { 0.0 } };
   virtualElement.template addGradGradStabilizationMatrix< VEM >( stack, stabilizationMatrix );
   real64 stabTimeMonomialDofsNorm = 0;
   for( localIndex i = 0; i < numCellPoints; ++i )
@@ -157,8 +165,10 @@ static void checkSumOfQuadratureWeights( real64 const & cellVolume,
                                          VEM const & virtualElement,
                                          typename VEM::StackVariables stack )
 {
+  static constexpr localIndex
+    maxSupportPoints = virtualElement.template getMaxSupportPoints< VEM >();
   real64 sum = 0.0;
-  real64 const dummy[VEM::maxSupportPoints][3] { { 0.0 } };
+  real64 const dummy[maxSupportPoints][3] { { 0.0 } };
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
     real64 weight =
@@ -202,7 +212,9 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
   typename VEM::Initialization initialization;
   VEM virtualElement;
-  virtualElement.template initialize< VEM >( nodeManager, edgeManager, faceManager, cellSubRegion, initialization );
+  virtualElement.template initialize< VEM >( nodeManager, edgeManager,
+                                             faceManager, cellSubRegion,
+                                             initialization );
 
   forAll< parallelDevicePolicy< > >( numCells, [=] GEOSX_HOST_DEVICE
                                        ( localIndex const cellIndex )
@@ -273,7 +285,8 @@ TEST( VirtualElementBase, hexagons )
 
   // Open mesh levels
   DomainPartition & domain  = problemManager.getDomainPartition();
-  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys
+                                                                      .meshManager );
   meshManager.generateMeshLevels( domain );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elementManager = mesh.getElemManager();

@@ -50,6 +50,7 @@ class H1_QuadrilateralFace_Lagrange1_GaussLegendre2 final : public FiniteElement
 public:
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 4;
+  constexpr static localIndex maxSupportPoints = numNodes;
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 4;

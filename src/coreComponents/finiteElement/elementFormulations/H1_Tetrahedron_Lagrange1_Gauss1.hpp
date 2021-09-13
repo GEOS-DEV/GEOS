@@ -49,6 +49,7 @@ class H1_Tetrahedron_Lagrange1_Gauss1 final : public FiniteElementBase
 public:
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 4;
+  constexpr static localIndex maxSupportPoints = numNodes;
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 1;
