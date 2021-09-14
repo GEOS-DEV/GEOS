@@ -14,24 +14,24 @@ This example uses the solid mechanics solver to handle a cased wellbore problem 
 Analytical results of the radial and hoop stresses, :math:`\sigma_{rr}` and :math:`\sigma_{\theta\theta}`, in casing, cement sheath and rock are expressed as `(Hervé and Zaoui, 1995) <https://link.springer.com/chapter/10.1007%2F978-94-015-8494-4_55>`__ :
 
 .. math::
-   \sigma_{rr} = ( 2.0 * \lambda + 2.0 * G ) * A - \frac{2.0 * G * B}{r^2}
-   \sigma_{\theta\theta} = ( 2.0 * \lambda + 2.0 * G ) * A + \frac{2.0 * G * B}{r^2}
+   \sigma_{rr} = (2\lambda + 2G)A - \frac{2GB}{r^2}
 
-where :math:`\lambda` and :math:`G` are the Lamé moduli, :math:`r` is the radial coordinate, :math:`A` and :math:`B` are piecewise constants that are obtained by solving the boundary and interface conditions, as detailed in the postprocessing script.
+.. math::
+   \sigma_{\theta\theta} = (2\lambda + 2G)A + \frac{2GB}{r^2}
+
+where :math:`\lambda` and :math:`G` are the Lamé moduli, :math:`r` is the radial coordinate, :math:`A` and :math:`B` are piecewise constants that are obtained by solving the boundary and interface conditions, as detailed in the post-processing script.
 
 
 **Input file**
 
 This benchmark example uses no external input files and everything required is
-contained within a single GEOSX input file.
-The xml input file for this test case is located at:
+contained within a single GEOSX input file that is located at:
 
 .. code-block:: console
 
   src/coreComponents/physicsSolvers/solidMechanics/benchmarks/CasedElasticWellbore.xml
 
 
-All inputs for this case are contained inside a single XML file.
 In this example, we would focus our attention on the ``Solvers``, ``Mesh`` and ``Constitutive`` tags.
 
 -----------------------------------------------------------
@@ -61,7 +61,6 @@ The internal wellbore mesh generator ``InternalWellbore`` is employed to create 
    :align: center
    :figclass: align-center
 
-   Mesh for simulating a cased wellbore
 
 --------------------------------------------------------------------   
 Steel, cement, and rock constitutive laws
@@ -90,14 +89,7 @@ Far-field boundary are subjected to roller constraints. The normal traction on t
 Results and benchmark
 ---------------------------------
 
-A good agreement between the GEOSX results and analytical results is shown in the figure below
-
-.. figure:: validation.png
-   :align: center
-   :width: 1000
-   :figclass: align-center
-
-   Comparing GEOSX results with analytical solution
+A good agreement between the GEOSX results and analytical results is shown in the figure below:
 
 
 .. plot::
