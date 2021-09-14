@@ -1,5 +1,7 @@
+.. _constitutiveModels:
+
 ################################################################################
-Constitutive models
+Constitutive models in GEOSX
 ################################################################################
 
 In GEOSX, all constitituive models (e.g, those defining fluid and rock properties)
@@ -30,7 +32,7 @@ added to properties defined for each phase and/or component.
 Thus, for example, a single phase fluid model in which density and viscosity are
 functions of the fluid pressure will have the following members
 
-.. literalinclude:: ../fluid/SingleFluidBase.hpp
+.. literalinclude:: /coreComponents/constitutive/fluid/SingleFluidBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: //END_SPHINX_INCLUDE_00
@@ -42,7 +44,7 @@ Additionally, it also resizes all fields based on the size of the subregion and 
 points on it, by calling ``CONSTITUTIVE_MODEL::allocateConstitutiveData``. For the
 single phase fluid example used before this call is
 
-.. literalinclude:: ../fluid/SingleFluidBase.cpp
+.. literalinclude:: /coreComponents/constitutive/fluid/SingleFluidBase.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: //END_SPHINX_INCLUDE_00
@@ -55,7 +57,7 @@ for each constitutive model class, a corresponding `nameOfTheModelUpdates` which
 ``LvArray::arrayView`` containers to the data, can be capture by value inside compuational kernels.
 For example, for the single phase fluid model the 
 
-.. literalinclude:: ../fluid/SingleFluidBase.hpp
+.. literalinclude:: /coreComponents/constitutive/fluid/SingleFluidBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: //END_SPHINX_INCLUDE_01

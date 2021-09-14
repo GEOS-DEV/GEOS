@@ -1,1 +1,1 @@
-.. include::  ../../../../coreComponents/constitutive/docs/constitutiveDeveloperGuide.rst
+.. include:: ../../../../coreComponents/constitutive/docs/constitutiveDeveloperGuide.rst
