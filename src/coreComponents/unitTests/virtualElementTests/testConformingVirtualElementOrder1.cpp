@@ -30,16 +30,16 @@ CommandLineOptions g_commandLineOptions;
 
 template< typename VEM >
 GEOSX_HOST_DEVICE
-static void checkIntegralMeanConsistency( VEM const & virtualElement,
+static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
                                           typename VEM::StackVariables const & stack )
 {
   static constexpr localIndex
-    maxSupportPoints = virtualElement.template getMaxSupportPoints< VEM >();
+    maxSupportPoints = feBase.template getMaxSupportPoints< VEM >();
   real64 basisFunctionsIntegralMean[maxSupportPoints];
   VEM::calcN( 0, stack, basisFunctionsIntegralMean );
   real64 sum = 0;
   for( localIndex iBasisFun = 0;
-       iBasisFun < virtualElement.template numSupportPoints< VEM >( stack ); ++iBasisFun )
+       iBasisFun < feBase.template numSupportPoints< VEM >( stack ); ++iBasisFun )
   {
     sum += basisFunctionsIntegralMean[iBasisFun];
   }
@@ -51,20 +51,20 @@ static void checkIntegralMeanConsistency( VEM const & virtualElement,
 template< typename VEM >
 GEOSX_HOST_DEVICE
 static void
-checkIntegralMeanDerivativesConsistency( VEM const & virtualElement,
+checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
                                          typename VEM::StackVariables const & stack )
 {
   static constexpr localIndex
-    maxSupportPoints = virtualElement.template getMaxSupportPoints< VEM >();
+    maxSupportPoints = feBase.template getMaxSupportPoints< VEM >();
   real64 const dummy[VEM::numNodes][3] { { 0.0 } };
   localIndex const k = 0;
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
     real64 basisDerivativesIntegralMean[maxSupportPoints][3];
-    virtualElement.template getGradN< VEM >( k, q, dummy, stack, basisDerivativesIntegralMean );
+    feBase.template getGradN< VEM >( k, q, dummy, stack, basisDerivativesIntegralMean );
     real64 sumX = 0, sumY = 0, sumZ = 0;
     for( localIndex iBasisFun = 0;
-         iBasisFun < virtualElement.template numSupportPoints< VEM >( stack );
+         iBasisFun < feBase.template numSupportPoints< VEM >( stack );
          ++iBasisFun )
     {
       sumX += basisDerivativesIntegralMean[iBasisFun][0];
@@ -91,11 +91,11 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                       localIndex const & cellIndex,
                                       CellElementSubRegion::NodeMapType const & cellToNodes,
                                       arrayView2d< real64 const > const & cellCenters,
-                                      VEM const & virtualElement,
+                                      FiniteElementBase const & feBase,
                                       typename VEM::StackVariables const & stack )
 {
   static constexpr localIndex
-    maxSupportPoints = virtualElement.template getMaxSupportPoints< VEM >();
+    maxSupportPoints = feBase.template getMaxSupportPoints< VEM >();
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
   real64 cellDiameter = 0;
@@ -126,7 +126,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
 
   array1d< real64 > stabTimeMonomialDofs( numCellPoints );
   real64 stabilizationMatrix[maxSupportPoints][maxSupportPoints] { { 0.0 } };
-  virtualElement.template addGradGradStabilizationMatrix< VEM >( stack, stabilizationMatrix );
+  feBase.template addGradGradStabilizationMatrix< VEM >( stack, stabilizationMatrix );
   real64 stabTimeMonomialDofsNorm = 0;
   for( localIndex i = 0; i < numCellPoints; ++i )
   {
@@ -162,17 +162,16 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
 template< typename VEM >
 GEOSX_HOST_DEVICE
 static void checkSumOfQuadratureWeights( real64 const & cellVolume,
-                                         VEM const & virtualElement,
+                                         FiniteElementBase const & feBase,
                                          typename VEM::StackVariables stack )
 {
   static constexpr localIndex
-    maxSupportPoints = virtualElement.template getMaxSupportPoints< VEM >();
+    maxSupportPoints = feBase.template getMaxSupportPoints< VEM >();
   real64 sum = 0.0;
   real64 const dummy[maxSupportPoints][3] { { 0.0 } };
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
-    real64 weight =
-      VEM::transformedQuadratureWeight( q, dummy, stack );
+    real64 weight = VEM::transformedQuadratureWeight( q, dummy, stack );
     sum += weight;
   }
   EXPECT_TRUE( LvArray::math::abs( sum - cellVolume ) < 1e-15 )
@@ -197,13 +196,6 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
   CellBlock::NodeMapType const & cellToNodeMap = cellSubRegion.nodeList();
-  // arrayView2d< localIndex const > const & elementToFaceMap = cellSubRegion.faceList().toViewConst();
-  // ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
-  // ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
-  // arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList().toViewConst();
-  // arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
-  // arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
-  // arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
   // Loop over cells.
@@ -219,23 +211,8 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   forAll< parallelDevicePolicy< > >( numCells, [=] GEOSX_HOST_DEVICE
                                        ( localIndex const cellIndex )
   {
-    // real64 const cellCenter[3] { cellCenters( cellIndex, 0 ),
-    //                              cellCenters( cellIndex, 1 ),
-    //                              cellCenters( cellIndex, 2 ) };
     typename VEM::StackVariables stack;
     virtualElement.template setup< VEM >( cellIndex, initialization, stack );
-    // virtualElement.processLocalGeometry( cellIndex,
-    //                                      nodesCoords,
-    //                                      cellToNodeMap,
-    //                                      elementToFaceMap,
-    //                                      faceToNodeMap,
-    //                                      faceToEdgeMap,
-    //                                      edgeToNodeMap,
-    //                                      faceCenters,
-    //                                      faceNormals,
-    //                                      faceAreas,
-    //                                      cellCenter,
-    //                                      cellVolumes[cellIndex] );
 
     checkIntegralMeanConsistency< VEM >( virtualElement, stack );
     checkIntegralMeanDerivativesConsistency< VEM >( virtualElement, stack );
@@ -245,7 +222,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   } );
 }
 
-TEST( VirtualElementBase, hexagons )
+TEST( ConformingVirtualElementOrder1, hexagons )
 {
   string const inputStream=
     "<Problem>"
@@ -286,7 +263,7 @@ TEST( VirtualElementBase, hexagons )
   // Open mesh levels
   DomainPartition & domain  = problemManager.getDomainPartition();
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys
-                                                                      .meshManager );
+                                                                        .meshManager );
   meshManager.generateMeshLevels( domain );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elementManager = mesh.getElemManager();
@@ -299,7 +276,7 @@ TEST( VirtualElementBase, hexagons )
   testCellsInMeshLevel< 10, 6 >( mesh );
 }
 
-TEST( VirtualElementBase, wedges )
+TEST( ConformingVirtualElementOrder1, wedges )
 {
   string const inputStream=
     "<Problem>"
