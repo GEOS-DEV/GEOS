@@ -56,6 +56,7 @@ void SingleFluidBase::postProcessInput()
 
 }
 
+//START_SPHINX_INCLUDE_00
 void SingleFluidBase::allocateConstitutiveData( Group & parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
@@ -69,6 +70,7 @@ void SingleFluidBase::allocateConstitutiveData( Group & parent,
   m_viscosity.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dViscosity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
 }
+//END_SPHINX_INCLUDE_00
 
 } //namespace constitutive
 

@@ -8,7 +8,7 @@ are implemented in the namespace ``constitutive`` and derive from a common base 
 
 Standalone models
 ======================================================
-Standalone models are use to implement constitutive laws such as
+Standalone constitutive models implement constitutive laws such as
 
   - mechanical material models (i.e.g, linear elasticity, plasticity, etc.)
   - PVT fluid behaviors
@@ -22,18 +22,37 @@ Each constitutive model owns, as member variables, ``LvArray::Array`` containers
 that hold the properties (or fields) handled and, their derivatives w.r.t to the
 fields needed to update each property. Each property is stored as an array in which the
 first dimension represents the elementIndex and the second dimension the index of the
-integration point. Obviously these dimensions are determined by the size of the grid
-and by the type of of discretization method chosen. Vectorial and tensorial will
-also have an additional dimension to identify their components. Similarly, for multiphase
-fluid models an additional dimension will be added to properties defined for each phase
-and or component.
-As such, for example, a single phase fluid model in which density and viscosity are functions of the fluid pressure will have
-the following members
+integration point. These dimensions are determined by the number of elemetns of the
+subregion on which each constitutive model is registered, and by the type of discretization
+method chosen. Additionally, vectorial and tensorial will also have an additional dimension to identify
+their components. Similarly, for multiphase fluid models an additional dimension will be
+added to properties defined for each phase and/or component.
+Thus, for example, a single phase fluid model in which density and viscosity are
+functions of the fluid pressure will have the following members
 
-.. literalinclude:: ../SingleFluidBase.hpp
+.. literalinclude:: ../fluid/SingleFluidBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: //END_SPHINX_INCLUDE_00
 
-Compound constitutive models
+Resizing of all fields of the constitutive models is performed during the initialization phase by
+the ``ConstitutiveManger`` through the call ``hangConstitutiveRelation()`` which sets
+the appropriate subRegion as the parent Group of each constitutive model object. Additionally,
+it also resizes all fields based on the size of the subregion and on the number of quadrature
+points on it, by calling ``CONSTITUTIVE_MODEL::allocateConstitutiveData``. For the
+single phase fluid example used before this call is
+
+.. literalinclude:: ../fluid/SingleFluidBase.cpp
+   :language: c++
+   :start-after: //START_SPHINX_INCLUDE_00
+   :end-before: //END_SPHINX_INCLUDE_00
+
+Properties update, however, can only be performed
+
+.. literalinclude:: ../fluid/SingleFluidBase.hpp
+    :language: c++
+    :start-after: //START_SPHINX_INCLUDE_01
+    :end-before: //END_SPHINX_INCLUDE_01
+
+Compound models
 ========================================================
