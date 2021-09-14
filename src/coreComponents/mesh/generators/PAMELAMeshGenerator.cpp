@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -351,7 +351,8 @@ namespace
 
 void importRegularField( PAMELA::VariableDouble & source,
                          std::vector< int > const & indexMap,
-                         WrapperBase & wrapper )
+                         WrapperBase & wrapper,
+                         string const & objectName )
 {
   // Scalar material fields are stored as 1D arrays, vector/tensor are 2D
   using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >;
@@ -364,11 +365,11 @@ void importRegularField( PAMELA::VariableDouble & source,
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( source.offset );
     localIndex const numComponentsDst = wrapperT.numArrayComp();
     GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                           "PAMELA mesh import: mismatch in number of components for field " << source.Label );
+                           objectName << ": mismatch in number of components for field " << source.Label );
 
     // Sanity check, shouldn't happen
     GEOSX_ERROR_IF_NE_MSG( view.size( 0 ), LvArray::integerConversion< localIndex >( indexMap.size() ),
-                           "PAMELA mesh import: mismatch in size for field " << source.Label );
+                           objectName << ": mismatch in size for field " << source.Label );
 
     for( int i = 0; i < view.size( 0 ); ++i )
     {
@@ -386,7 +387,8 @@ void importRegularField( PAMELA::VariableDouble & source,
 
 void importMaterialField( PAMELA::VariableDouble & source,
                           std::vector< int > const & indexMap,
-                          WrapperBase & wrapper )
+                          WrapperBase & wrapper,
+                          string const & objectName )
 {
   // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
   using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > >;
@@ -399,11 +401,11 @@ void importMaterialField( PAMELA::VariableDouble & source,
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( source.offset );
     localIndex const numComponentsDst = view.size() / ( view.size( 0 ) * view.size( 1 ) );
     GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                           "PAMELA mesh import: mismatch in number of components for field " << source.Label );
+                           objectName << ": mismatch in number of components for field " << source.Label );
 
     // Sanity check, shouldn't happen
     GEOSX_ERROR_IF_NE_MSG( view.size( 0 ), LvArray::integerConversion< localIndex >( indexMap.size() ),
-                           "PAMELA mesh import: mismatch in size for field " << source.Label );
+                           objectName << ": mismatch in size for field " << source.Label );
 
     for( int i = 0; i < view.size( 0 ); ++i )
     {
@@ -445,7 +447,7 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
 
 void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
 {
-  GEOSX_LOG_RANK_0( "Importing field data from mesh dataset" );
+  GEOSX_LOG_RANK_0( catalogName() << " " << getName() << ": importing field data from mesh dataset" );
   GEOSX_ASSERT_MSG( m_pamelaMesh, "Must call generateMesh() before importFields()" );
 
   ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( 0 ).getElemManager();
@@ -475,23 +477,24 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
 
       // Find source
       PAMELA::VariableDouble * const meshProperty = regionPtr->FindVariableByName( sourceName );
-      GEOSX_ASSERT( meshProperty != nullptr );
+      GEOSX_THROW_IF( meshProperty == nullptr,
+                      catalogName() << " " << getName() << ": field not found in source dataset: " << sourceName,
+                      InputError );
 
       // Find destination
       GEOSX_THROW_IF( !subRegion.hasWrapper( wrapperName ),
-                      "PAMELA mesh import: target field not found: " << wrapperName << ".\n" <<
-                      "Please check the spelling in " << viewKeyStruct::fieldNamesInGEOSXString() << " attribute.",
+                      catalogName() << " " << getName() << ": target field not found: " << wrapperName,
                       InputError );
       WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );
 
       // Decide if field is constitutive or not
-      if( materialWrapperNames.count( wrapperName ) > 0 )
+      if( materialWrapperNames.count( wrapperName ) > 0 && wrapper.numArrayDims() > 1 )
       {
-        importMaterialField( *meshProperty, cellBlockPtr->IndexMapping, wrapper );
+        importMaterialField( *meshProperty, cellBlockPtr->IndexMapping, wrapper, catalogName() + " " + getName() );
       }
       else
       {
-        importRegularField( *meshProperty, cellBlockPtr->IndexMapping, wrapper );
+        importRegularField( *meshProperty, cellBlockPtr->IndexMapping, wrapper, catalogName() + " " + getName() );
       }
     }
   } );

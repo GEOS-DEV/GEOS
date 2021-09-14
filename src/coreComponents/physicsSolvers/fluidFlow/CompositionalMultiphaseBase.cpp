@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -1190,6 +1190,11 @@ void CompositionalMultiphaseBase::resetViews( MeshLevel & mesh )
     m_dCompFrac_dCompDens =
       elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_COMP_DC >( keys::dGlobalCompFraction_dGlobalCompDensityString() );
     m_dCompFrac_dCompDens.setName( getName() + "/accessors/" + keys::dGlobalCompFraction_dGlobalCompDensityString() );
+
+    m_phaseVolFrac.clear();
+    m_phaseVolFrac =
+      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( keys::phaseVolumeFractionString() );
+    m_phaseVolFrac.setName( getName() + "/accessors/" + keys::phaseVolumeFractionString() );
 
     m_dPhaseVolFrac_dPres.clear();
     m_dPhaseVolFrac_dPres =
