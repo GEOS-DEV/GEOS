@@ -26,7 +26,7 @@ namespace geosx
 
 namespace constitutive
 {
-
+//START_SPHINX_INCLUDE_01
 /**
  * @brief Base class for single-phase fluid model kernel wrappers.
  */
@@ -89,7 +89,7 @@ protected:
    */
   SingleFluidBaseUpdate & operator=( SingleFluidBaseUpdate && ) = delete;
 
-  //START_SPHINX_INCLUDE_01
+
   /// Fluid density
   arrayView2d< real64 > m_density;
 
@@ -101,7 +101,7 @@ protected:
 
   /// Derivative of viscosity w.r.t. pressure
   arrayView2d< real64 > m_dVisc_dPres;
-  //END_SPHINX_INCLUDE_01
+//END_SPHINX_INCLUDE_01
 private:
 
   /**

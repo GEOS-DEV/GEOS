@@ -30,7 +30,6 @@ added to properties defined for each phase and/or component.
 Thus, for example, a single phase fluid model in which density and viscosity are
 functions of the fluid pressure will have the following members
 
-
 .. literalinclude:: ../fluid/SingleFluidBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
@@ -49,13 +48,17 @@ single phase fluid example used before this call is
    :end-before: //END_SPHINX_INCLUDE_00
 
 Any property (or field) stored on a constitutive model must be updated within a computational
-kernel to ensure that
+kernel to ensure that, in GPU runs, `host` and `device` memory are properly synced and to ensure that the
+updates are performed on `device`. Additionally, some properties are may be updated
+within finite element kernels of specific physics (e.g., stress in a mechanics kernel). Consequently,
+for each constitutive model class, a corresponding `nameOfTheModelUpdates` which, since it only contains
+``LvArray::arrayView`` containers to the data, can be capture by value inside compuational kernels.
+For example, for the single phase fluid model the 
 
 .. literalinclude:: ../fluid/SingleFluidBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: //END_SPHINX_INCLUDE_01
-
 
 Compound models
 ========================================================
