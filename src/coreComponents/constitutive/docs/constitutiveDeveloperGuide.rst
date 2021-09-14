@@ -30,15 +30,16 @@ added to properties defined for each phase and/or component.
 Thus, for example, a single phase fluid model in which density and viscosity are
 functions of the fluid pressure will have the following members
 
+
 .. literalinclude:: ../fluid/SingleFluidBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: //END_SPHINX_INCLUDE_00
 
 Resizing of all fields of the constitutive models is performed during the initialization phase by
-the ``ConstitutiveManger`` through the call ``hangConstitutiveRelation()`` which sets
-the appropriate subRegion as the parent Group of each constitutive model object. Additionally,
-it also resizes all fields based on the size of the subregion and on the number of quadrature
+the ``ConstitutiveManger`` through the call ``ConstitutiveManger::hangConstitutiveRelation``
+which sets the appropriate subRegion as the parent Group of each constitutive model object.
+Additionally, it also resizes all fields based on the size of the subregion and on the number of quadrature
 points on it, by calling ``CONSTITUTIVE_MODEL::allocateConstitutiveData``. For the
 single phase fluid example used before this call is
 
@@ -47,12 +48,14 @@ single phase fluid example used before this call is
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: //END_SPHINX_INCLUDE_00
 
-Properties update, however, can only be performed
+Any property (or field) stored on a constitutive model must be updated within a computational
+kernel to ensure that
 
 .. literalinclude:: ../fluid/SingleFluidBase.hpp
-    :language: c++
-    :start-after: //START_SPHINX_INCLUDE_01
-    :end-before: //END_SPHINX_INCLUDE_01
+   :language: c++
+   :start-after: //START_SPHINX_INCLUDE_01
+   :end-before: //END_SPHINX_INCLUDE_01
+
 
 Compound models
 ========================================================
