@@ -562,11 +562,36 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       m_rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
       m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
 
+
       // Output the linear system matrix/rhs for debugging purposes
       debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
+      int const myRank = MpiWrapper::commRank();
+
+      if( cycleNumber==14 && newtonIter >= 4 )
+      {
+        if( myRank==0 ) std::cout<<"printing m_rhs:"<<std::endl;
+        m_rhs.print(std::cout);
+        MpiWrapper::barrier();
+        if( myRank==0 ) std::cout<<"done printing m_rhs:"<<std::endl;
+
+        if( myRank==0 ) std::cout<<"printing m_matrix:"<<std::endl;
+        m_matrix.print(std::cout);
+        MpiWrapper::barrier();
+        if( myRank==0 ) std::cout<<"done printing m_matrix:"<<std::endl;
+
+      }
+
 
       // Solve the linear system
       solveSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+
+      if( cycleNumber==14 && newtonIter >= 4 )
+      {
+        if( myRank==0 ) std::cout<<"printing m_solution:"<<std::endl;
+        m_solution.print(std::cout);
+        MpiWrapper::barrier();
+        if( myRank==0 ) std::cout<<"done printing m_solution:"<<std::endl;
+      }
 
       // Output the linear system solution for debugging purposes
       debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
@@ -576,6 +601,21 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       m_solution.extract( m_localSolution );
 
       scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_localSolution );
+
+//      if( cycleNumber==14 && newtonIter >= 4 )
+//      {
+//        std::cout<<"printing m_localSolution:"<<std::endl;
+//        for( int rank=0 ; rank<MpiWrapper::commSize(); ++rank )
+//        {
+//          if( rank==myRank )
+//          {
+//            std::cout<<"rank "<<rank<<std::endl;
+//            std::cout<<m_localSolution<<std::endl;;
+//          }
+//          MpiWrapper::barrier();
+//        }
+//        std::cout<<"done printing m_localSolution:"<<std::endl;
+//      }
 
       if( !checkSystemSolution( domain, m_dofManager, m_localSolution, scaleFactor ) )
       {
