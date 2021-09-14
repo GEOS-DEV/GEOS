@@ -123,7 +123,6 @@ public:
     return stack.numSupportPoints;
   }
 
-  GEOSX_HOST_DEVICE
   static void fillInitialization( NodeManager const & nodeManager,
                                   EdgeManager const & edgeManager,
                                   FaceManager const & faceManager,

@@ -118,13 +118,12 @@ public:
    * @param subRegion The cell sub-region for which the element has to be initialized.
    */
   template< typename LEAF >
-  GEOSX_HOST_DEVICE
-  void initialize( NodeManager const & nodeManager,
-                   EdgeManager const & edgeManager,
-                   FaceManager const & faceManager,
-                   CellElementSubRegion const & cellSubRegion,
-                   typename LEAF::Initialization & initialization
-                   ) const
+  static void initialize( NodeManager const & nodeManager,
+                          EdgeManager const & edgeManager,
+                          FaceManager const & faceManager,
+                          CellElementSubRegion const & cellSubRegion,
+                          typename LEAF::Initialization & initialization
+                          )
   {
     LEAF::fillInitialization( nodeManager, edgeManager, faceManager, cellSubRegion,
                               initialization );

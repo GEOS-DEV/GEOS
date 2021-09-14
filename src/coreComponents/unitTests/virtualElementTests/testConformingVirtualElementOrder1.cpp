@@ -34,7 +34,7 @@ static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
                                           typename VEM::StackVariables const & stack )
 {
   static constexpr localIndex
-    maxSupportPoints = feBase.template getMaxSupportPoints< VEM >();
+    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
   real64 basisFunctionsIntegralMean[maxSupportPoints];
   VEM::calcN( 0, stack, basisFunctionsIntegralMean );
   real64 sum = 0;
@@ -55,7 +55,7 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
                                          typename VEM::StackVariables const & stack )
 {
   static constexpr localIndex
-    maxSupportPoints = feBase.template getMaxSupportPoints< VEM >();
+    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
   real64 const dummy[VEM::numNodes][3] { { 0.0 } };
   localIndex const k = 0;
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
@@ -95,7 +95,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                       typename VEM::StackVariables const & stack )
 {
   static constexpr localIndex
-    maxSupportPoints = feBase.template getMaxSupportPoints< VEM >();
+    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
   real64 cellDiameter = 0;
@@ -166,7 +166,7 @@ static void checkSumOfQuadratureWeights( real64 const & cellVolume,
                                          typename VEM::StackVariables stack )
 {
   static constexpr localIndex
-    maxSupportPoints = feBase.template getMaxSupportPoints< VEM >();
+    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
   real64 sum = 0.0;
   real64 const dummy[maxSupportPoints][3] { { 0.0 } };
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
@@ -203,15 +203,15 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
 
   using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
   typename VEM::Initialization initialization;
-  VEM virtualElement;
-  virtualElement.template initialize< VEM >( nodeManager, edgeManager,
-                                             faceManager, cellSubRegion,
-                                             initialization );
+  FiniteElementBase::initialize< VEM >( nodeManager, edgeManager,
+                                        faceManager, cellSubRegion,
+                                        initialization );
 
   forAll< parallelDevicePolicy< > >( numCells, [=] GEOSX_HOST_DEVICE
                                        ( localIndex const cellIndex )
   {
     typename VEM::StackVariables stack;
+    VEM virtualElement;
     virtualElement.template setup< VEM >( cellIndex, initialization, stack );
 
     checkIntegralMeanConsistency< VEM >( virtualElement, stack );
