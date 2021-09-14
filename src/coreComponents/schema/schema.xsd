@@ -327,8 +327,9 @@
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
-		<!--pressureInfluenceFunctionName => Name of the table describing the pressure influence function-->
-		<xsd:attribute name="pressureInfluenceFunctionName" type="string" use="required" />
+		<!--pressureInfluenceFunctionName => Name of the table describing the pressure influence function
+. If not provided, we use a default pressure influence function-->
+		<xsd:attribute name="pressureInfluenceFunctionName" type="string" default="" />
 		<!--scale => Scale factor for value of BC.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->

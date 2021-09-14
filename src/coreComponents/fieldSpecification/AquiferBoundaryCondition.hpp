@@ -249,6 +249,11 @@ protected:
 private:
 
   /**
+   * @brief Sets up the default pressure influence function from the Carter-Tracy model
+   */
+  void setupDefaultPressureInfluenceFunction();
+
+  /**
    * @brief Compute the aquifer time constant as a function of water properties, and aquifer geology / geometry
    */
   void computeTimeConstant();

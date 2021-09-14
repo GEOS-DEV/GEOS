@@ -80,8 +80,9 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
     setDescription( "Angle subtended by the aquifer boundary from the center of the reservoir [degress]" );
 
   registerWrapper( viewKeyStruct::pressureInfluenceFunctionNameString(), &m_pressureInfluenceFunctionName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the table describing the pressure influence function" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the table describing the pressure influence function\n. "
+                    "If not provided, we use a default pressure influence function" );
 
   registerWrapper( viewKeyStruct::cumulativeFluxString(), &m_cumulativeFlux ).
     setInputFlag( InputFlags::FALSE );
@@ -101,14 +102,23 @@ void AquiferBoundaryCondition::postProcessInput()
                   getCatalogName() << " " << getName() << ": the aquifer permeability cannot be equal to zero or negative",
                   InputError );
 
-  GEOSX_THROW_IF( m_pressureInfluenceFunctionName.empty(),
-                  getCatalogName() << " " << getName() << ": the pressure influence table name must be specified using the keyword " << viewKeyStruct::pressureInfluenceFunctionNameString(),
-                  InputError );
+  if( m_pressureInfluenceFunctionName.empty() )
+  {
+    setupDefaultPressureInfluenceFunction();
+  }
+  else
+  {
+    FunctionManager const & functionManager = FunctionManager::getInstance();
+    GEOSX_THROW_IF( !functionManager.hasGroup( m_pressureInfluenceFunctionName ),
+                    getCatalogName() << " " << getName() << ": the pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
+                    InputError );
 
-  FunctionManager const & functionManager = FunctionManager::getInstance();
-  GEOSX_THROW_IF( !functionManager.hasGroup( m_pressureInfluenceFunctionName ),
-                  getCatalogName() << " " << getName() << ": the pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
-                  InputError );
+    TableFunction const & pressureInfluenceFunction = functionManager.getGroup< TableFunction >( m_pressureInfluenceFunctionName );
+    GEOSX_THROW_IF( pressureInfluenceFunction.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
+                    getCatalogName() << " " << getName() << ": The interpolation method for the pressure influence function table "
+                                     << pressureInfluenceFunction.getName() << " should be TableFunction::InterpolationType::Linear",
+                    InputError );
+  }
 
   computeTimeConstant();
   computeInfluxConstant();
@@ -129,6 +139,110 @@ void AquiferBoundaryCondition::postProcessInput()
 
 }
 
+void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
+{
+  // default table; see Eclipse or Intersect documentation
+
+  array1d< array1d< real64 > > dimensionlessTime;
+  dimensionlessTime.resize( 1 );
+  dimensionlessTime[0].resize( 42 );
+  dimensionlessTime[0][0] = 0.01;
+  dimensionlessTime[0][1] = 0.05;
+  dimensionlessTime[0][2] = 0.1;
+  dimensionlessTime[0][3] = 0.15;
+  dimensionlessTime[0][4] = 0.2;
+  dimensionlessTime[0][5] = 0.25;
+  dimensionlessTime[0][6] = 0.3;
+  dimensionlessTime[0][7] = 0.4;
+  dimensionlessTime[0][8] = 0.5;
+  dimensionlessTime[0][9] = 0.6;
+  dimensionlessTime[0][10] = 0.7;
+  dimensionlessTime[0][11] = 0.8;
+  dimensionlessTime[0][12] = 0.9;
+  dimensionlessTime[0][13] = 1.0;
+  dimensionlessTime[0][14] = 1.5;
+  dimensionlessTime[0][15] = 2.0;
+  dimensionlessTime[0][16] = 2.5;
+  dimensionlessTime[0][17] = 3.0;
+  dimensionlessTime[0][18] = 4.0;
+  dimensionlessTime[0][19] = 5.0;
+  dimensionlessTime[0][20] = 6.0;
+  dimensionlessTime[0][21] = 7.0;
+  dimensionlessTime[0][22] = 8.0;
+  dimensionlessTime[0][23] = 9.0;
+  dimensionlessTime[0][24] = 10.0;
+  dimensionlessTime[0][25] = 15.0;
+  dimensionlessTime[0][26] = 20.0;
+  dimensionlessTime[0][27] = 25.0;
+  dimensionlessTime[0][28] = 30.0;
+  dimensionlessTime[0][29] = 40.0;
+  dimensionlessTime[0][30] = 50.0;
+  dimensionlessTime[0][31] = 60.0;
+  dimensionlessTime[0][32] = 70.0;
+  dimensionlessTime[0][33] = 80.0;
+  dimensionlessTime[0][34] = 90.0;
+  dimensionlessTime[0][35] = 100.0;
+  dimensionlessTime[0][36] = 200.0;
+  dimensionlessTime[0][37] = 800.0;
+  dimensionlessTime[0][38] = 1600.0;
+  dimensionlessTime[0][39] = 3200.0;
+  dimensionlessTime[0][40] = 6400.0;
+  dimensionlessTime[0][41] = 12800.0;
+
+  array1d< real64 > pressureInfluence;
+  pressureInfluence.resize( 42 );
+  pressureInfluence[0] = 0.112;
+  pressureInfluence[1] = 0.229;
+  pressureInfluence[2] = 0.315;
+  pressureInfluence[3] = 0.376;
+  pressureInfluence[4] = 0.424;
+  pressureInfluence[5] = 0.469;
+  pressureInfluence[6] = 0.503;
+  pressureInfluence[7] = 0.564;
+  pressureInfluence[8] = 0.616;
+  pressureInfluence[9] = 0.659;
+  pressureInfluence[10] = 0.702;
+  pressureInfluence[11] = 0.735;
+  pressureInfluence[12] = 0.772;
+  pressureInfluence[13] = 0.802;
+  pressureInfluence[14] = 0.927;
+  pressureInfluence[15] = 1.02;
+  pressureInfluence[16] = 1.101;
+  pressureInfluence[17] = 1.169;
+  pressureInfluence[18] = 1.275;
+  pressureInfluence[19] = 1.362;
+  pressureInfluence[20] = 1.436;
+  pressureInfluence[21] = 1.5;
+  pressureInfluence[22] = 1.556;
+  pressureInfluence[23] = 1.604;
+  pressureInfluence[24] = 1.651;
+  pressureInfluence[25] = 1.829;
+  pressureInfluence[26] = 1.96;
+  pressureInfluence[27] = 2.067;
+  pressureInfluence[28] = 2.147;
+  pressureInfluence[29] = 2.282;
+  pressureInfluence[30] = 2.388;
+  pressureInfluence[31] = 2.476;
+  pressureInfluence[32] = 2.55;
+  pressureInfluence[33] = 2.615;
+  pressureInfluence[34] = 2.672;
+  pressureInfluence[35] = 2.723;
+  pressureInfluence[36] = 3.0537;
+  pressureInfluence[37] = 3.7468;
+  pressureInfluence[38] = 4.0934;
+  pressureInfluence[39] = 4.44;
+  pressureInfluence[40] = 4.7866;
+  pressureInfluence[41] = 5.1331;
+
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  m_pressureInfluenceFunctionName = getName() + "_pressureInfluence_table";
+  TableFunction * const pressureInfluenceTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", m_pressureInfluenceFunctionName ) );
+  pressureInfluenceTable->setTableCoordinates( dimensionlessTime );
+  pressureInfluenceTable->setTableValues( pressureInfluence );
+  pressureInfluenceTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+}
+
 void AquiferBoundaryCondition::initializePreSubGroups()
 {}
 
@@ -142,7 +256,7 @@ void AquiferBoundaryCondition::computeTimeConstant()
 void AquiferBoundaryCondition::computeInfluxConstant()
 {
   // equation 5.4 of the Eclipse TD
-  m_influxConstant = m_thickness * m_angle * m_porosity * m_totalCompressibility * m_innerRadius * m_innerRadius;
+  m_influxConstant = m_thickness * ( m_angle / 360 ) * m_porosity * m_totalCompressibility * m_innerRadius * m_innerRadius;
 }
 
 AquiferBoundaryCondition::KernelWrapper AquiferBoundaryCondition::createKernelWrapper() const
