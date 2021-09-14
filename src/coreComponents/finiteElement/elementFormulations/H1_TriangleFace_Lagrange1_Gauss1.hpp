@@ -153,7 +153,8 @@ public:
   template< typename MATRIXTYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & stack, MATRIXTYPE & matrix )
+  static void addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+                                        MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
   {}
 
 private:
