@@ -203,12 +203,13 @@ protected:
   real64 m_defaultDensity;
   real64 m_defaultViscosity;
 
+  //START_SPHINX_INCLUDE_00
   array2d< real64 > m_density;
   array2d< real64 > m_dDensity_dPressure;
 
   array2d< real64 > m_viscosity;
   array2d< real64 > m_dViscosity_dPressure;
-
+  //END_SPHINX_INCLUDE_00
 };
 
 } //namespace constitutive

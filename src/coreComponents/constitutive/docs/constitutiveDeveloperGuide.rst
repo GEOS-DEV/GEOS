@@ -2,31 +2,32 @@
 Constitutive models
 ################################################################################
 
-In GEOSX,
+In GEOSX, all constitituive models (e.g, those defining fluid and rock properties)
+are implemented in the namespace ``constitutive``and derive from a common base class,
+``ConstitutiveBase``. All objects are owned and handled by the ``ConstitutiveManager``.
 
-.. _diagFig:
-.. figure:: /coreComponents/mesh/docs/MeshObjectInstantiationHierarchy.png
-    :align: center
-    :figclass: align-center
-    :name: MeshObjectInstantiationHierarchy
+Standalone models
+======================================================
+Standalone models are use to implement constitutive laws such as
+- mechanical material models (i.e.g, linear elasticity, plasticity, etc.)
+- PVT fluid behaviors
+- relative permeability relationships
+- porosity and permeability dependencies on state variables
+- contact laws.
 
-    Object Instantiation Hierarchy for the Mesh Objects.
+Storage, allocation and update of properties
+-----------------------------------------------------
+Each constitutive model owns, as member variables, ``LvArray::Array`` containers
+that hold the properties (or fields) handled and, their derivatives w.r.t to the
+fields needed to update each property. As such, for example, a single phase fluid
+model in which density and viscosity are functions of the fluid pressure will have
+the following members
 
-Constitutive model classes in GEOSX
-=======================================================
-
-ConstitutiveModel
--------------------------------------------------------
-
-ConstitutiveModelUpdates
--------------------------------------------------------
+.. literalinclude:: ../SingleFluidBase.hpp
+   :language: c++
+   :start-after: //START_SPHINX_INCLUDE_00
+   :end-before: //END_SPHINX_INCLUDE_00
 
 
 Compound constitutive models
 ========================================================
-
-.. _diagFig:
-.. figure:: /coreComponents/mesh/docs/MeshObjectInstantiationHierarchy.png
-    :align: center
-    :figclass: align-center
-    :name: MeshObjectInstantiationHierarchy
