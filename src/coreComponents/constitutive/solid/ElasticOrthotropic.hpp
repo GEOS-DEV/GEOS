@@ -191,7 +191,7 @@ void ElasticOrthotropicUpdates::getElasticStiffness( localIndex const k,
                                                      localIndex const q,
                                                      real64 ( & stiffness )[6][6] ) const
 {
- GEOSX_UNUSED_VAR( q );
+  GEOSX_UNUSED_VAR( q );
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
   stiffness[0][0] = m_c11[k];
