@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -57,11 +57,6 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
            slurryFluid.dViscosity_dPressure(),
            slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::densityString() ).getDefaultValue(),
            slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::viscosityString() ).getDefaultValue() };
-}
-
-arrayView1d< real64 const > SinglePhaseProppantBase::getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const
-{
-  return subRegion.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::poroMultiplierString() );
 }
 
 void SinglePhaseProppantBase::updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const

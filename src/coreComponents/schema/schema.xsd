@@ -831,6 +831,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="coefficientName" type="string" use="required" />
 		<!--fieldName => Name of primary solution field-->
 		<xsd:attribute name="fieldName" type="string" use="required" />
+		<!--meanPermCoefficient => (no description available)-->
+		<xsd:attribute name="meanPermCoefficient" type="real64" default="1" />
 		<!--targetRegions => List of regions to build the stencil for-->
 		<xsd:attribute name="targetRegions" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1028,8 +1030,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
-		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
-		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
 		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
 		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--relPermNames => Name of the relative permeability constitutive model to use-->
@@ -1072,8 +1072,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--maxRelativePressureChange => Maximum (relative) change in (face) pressure between two Newton iterations-->
 		<xsd:attribute name="maxRelativePressureChange" type="real64" default="1" />
-		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
-		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
 		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
 		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--relPermNames => Name of the relative permeability constitutive model to use-->
@@ -1155,13 +1153,19 @@ the relative residual norm satisfies:
 		<!--surfaceTemperature => Surface temperature used to compute volumetric rates when surface conditions are used-->
 		<xsd:attribute name="surfaceTemperature" type="real64" default="0" />
 		<!--targetBHP => Target bottom-hole pressure-->
-		<xsd:attribute name="targetBHP" type="real64" use="required" />
+		<xsd:attribute name="targetBHP" type="real64" default="-1" />
+		<!--targetBHPTableName => Name of the BHP table when the rate is a time dependent function-->
+		<xsd:attribute name="targetBHPTableName" type="string" default="" />
 		<!--targetPhaseName => Name of the target phase-->
 		<xsd:attribute name="targetPhaseName" type="string" default="" />
 		<!--targetPhaseRate => Target phase volumetric rate-->
 		<xsd:attribute name="targetPhaseRate" type="real64" default="0" />
+		<!--targetPhaseRateTableName => Name of the phase rate table when the rate is a time dependent function-->
+		<xsd:attribute name="targetPhaseRateTableName" type="string" default="" />
 		<!--targetTotalRate => Target total volumetric rate-->
 		<xsd:attribute name="targetTotalRate" type="real64" default="0" />
+		<!--targetTotalRateTableName => Name of the total rate table when the rate is a time dependent function-->
+		<xsd:attribute name="targetTotalRateTableName" type="string" default="" />
 		<!--type => Well type. Valid options:
 * producer
 * injector-->
@@ -1239,7 +1243,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="couplingTypeOption" type="geosx_HydrofractureSolver_CouplingTypeOption" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
-		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
+		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poromechanics solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
@@ -1247,8 +1251,12 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
-		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
+		<!--porousMaterialNames => The name of the material that should be used in the constitutive updates-->
+		<xsd:attribute name="porousMaterialNames" type="string_array" use="required" />
+		<!--solidSolverName => Name of the solid mechanics solver to use in the poromechanics solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--surfaceGeneratorName => Name of the surface generator to use in the hydrofracture solver-->
+		<xsd:attribute name="surfaceGeneratorName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1444,8 +1452,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxProppantConcentration => Maximum proppant concentration-->
 		<xsd:attribute name="maxProppantConcentration" type="real64" default="0.6" />
-		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
-		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
 		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
 		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--proppantDensity => Proppant density-->
@@ -1480,8 +1486,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
-		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
 		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
 		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
@@ -1508,8 +1512,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
-		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
 		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
 		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
@@ -1584,8 +1586,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
-		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
 		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
 		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
@@ -1822,8 +1822,9 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
-			<xsd:element name="CompressibleSolidPressurePorosityCarmanKozenyPermeability" type="CompressibleSolidPressurePorosityCarmanKozenyPermeabilityType" />
-			<xsd:element name="CompressibleSolidPressurePorosityConstantPermeability" type="CompressibleSolidPressurePorosityConstantPermeabilityType" />
+			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
+			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
+			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
@@ -1833,19 +1834,16 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="DeadOilFluid" type="DeadOilFluidType" />
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
+			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
-			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
-			<xsd:element name="PoroDruckerPrager" type="PoroDruckerPragerType" />
-			<xsd:element name="PoroElasticIsotropic" type="PoroElasticIsotropicType" />
-			<xsd:element name="PoroElasticTransverseIsotropic" type="PoroElasticTransverseIsotropicType" />
-			<xsd:element name="PoroExtendedDruckerPrager" type="PoroExtendedDruckerPragerType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
+			<xsd:element name="PorousElasticOrthotropic" type="PorousElasticOrthotropicType" />
 			<xsd:element name="PorousElasticTransverseIsotropic" type="PorousElasticTransverseIsotropicType" />
 			<xsd:element name="PorousExtendedDruckerPrager" type="PorousExtendedDruckerPragerType" />
 			<xsd:element name="PressurePorosity" type="PressurePorosityType" />
@@ -1869,12 +1867,28 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--hydrocarbonFormationVolFactorTableNames => List of formation volume factor TableFunction names from the Functions block. 
+The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
+For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
+		<xsd:attribute name="hydrocarbonFormationVolFactorTableNames" type="string_array" default="{}" />
+		<!--hydrocarbonViscosityTableNames => List of viscosity TableFunction names from the Functions block. 
+The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
+For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
+		<xsd:attribute name="hydrocarbonViscosityTableNames" type="string_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
-		<!--surfaceDensities => List of surface densities for each phase-->
+		<!--surfaceDensities => List of surface mass densities for each phase-->
 		<xsd:attribute name="surfaceDensities" type="real64_array" use="required" />
-		<!--tableFiles => List of filenames with input PVT tables-->
-		<xsd:attribute name="tableFiles" type="path_array" use="required" />
+		<!--tableFiles => List of filenames with input PVT tables (one per phase)-->
+		<xsd:attribute name="tableFiles" type="path_array" default="{}" />
+		<!--waterCompressibility => Water compressibility-->
+		<xsd:attribute name="waterCompressibility" type="real64" default="0" />
+		<!--waterFormationVolumeFactor => Water formation volume factor-->
+		<xsd:attribute name="waterFormationVolumeFactor" type="real64" default="0" />
+		<!--waterReferencePressure => Water reference pressure-->
+		<xsd:attribute name="waterReferencePressure" type="real64" default="0" />
+		<!--waterViscosity => Water viscosity-->
+		<xsd:attribute name="waterViscosity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2001,7 +2015,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 			<xsd:pattern value=".*[\[\]`$].*|exponential|linear|quadratic" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="CompressibleSolidPressurePorosityCarmanKozenyPermeabilityType">
+	<xsd:complexType name="CompressibleSolidCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -2011,7 +2025,17 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="CompressibleSolidPressurePorosityConstantPermeabilityType">
+	<xsd:complexType name="CompressibleSolidConstantPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompressibleSolidParallelPlatesPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -2060,16 +2084,16 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
 		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
-		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultPoissonRatio => Poisson's ratio-->
+		<!--defaultPoissonRatio => Default Poisson's Ratio-->
 		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
-		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<!--defaultShearModulus => Default Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
-		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--defaultYoungModulus => Default Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2080,16 +2104,16 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
 		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
-		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultPoissonRatio => Poisson's ratio-->
+		<!--defaultPoissonRatio => Default Poisson's Ratio-->
 		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
-		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<!--defaultShearModulus => Default Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
-		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--defaultYoungModulus => Default Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2100,16 +2124,16 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="criticalFractureEnergy" type="real64" use="required" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
 		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
-		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultPoissonRatio => Poisson's ratio-->
+		<!--defaultPoissonRatio => Default Poisson's Ratio-->
 		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
-		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<!--defaultShearModulus => Default Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
-		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--defaultYoungModulus => Default Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--lengthScale => Length scale l in the phase-field equation-->
 		<xsd:attribute name="lengthScale" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2146,7 +2170,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
-		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultCohesion => Initial cohesion-->
 		<xsd:attribute name="defaultCohesion" type="real64" default="0" />
@@ -2158,47 +2182,99 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="defaultFrictionAngle" type="real64" default="30" />
 		<!--defaultHardeningRate => Cohesion hardening/softening rate-->
 		<xsd:attribute name="defaultHardeningRate" type="real64" default="0" />
-		<!--defaultPoissonRatio => Poisson's ratio-->
+		<!--defaultPoissonRatio => Default Poisson's Ratio-->
 		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
-		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<!--defaultShearModulus => Default Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
-		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--defaultYoungModulus => Default Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicType">
-		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultPoissonRatio => Poisson's ratio-->
+		<!--defaultPoissonRatio => Default Poisson's Ratio-->
 		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
-		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<!--defaultShearModulus => Default Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
-		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--defaultYoungModulus => Default Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ElasticOrthotropicType">
+		<!--defaultC11 => Default C11 Component of Voigt Stiffness Tensor-->
+		<xsd:attribute name="defaultC11" type="real64" default="-1" />
+		<!--defaultC12 => Default C12 Component of Voigt Stiffness Tensor-->
+		<xsd:attribute name="defaultC12" type="real64" default="-1" />
+		<!--defaultC13 => Default C13 Component of Voigt Stiffness Tensor-->
+		<xsd:attribute name="defaultC13" type="real64" default="-1" />
+		<!--defaultC22 => Default C22 Component of Voigt Stiffness Tensor-->
+		<xsd:attribute name="defaultC22" type="real64" default="-1" />
+		<!--defaultC23 => Default C23 Component of Voigt Stiffness Tensor-->
+		<xsd:attribute name="defaultC23" type="real64" default="-1" />
+		<!--defaultC33 => Default C33 Component of Voigt Stiffness Tensor-->
+		<xsd:attribute name="defaultC33" type="real64" default="-1" />
+		<!--defaultC44 => Default C44 Component of Voigt Stiffness Tensor-->
+		<xsd:attribute name="defaultC44" type="real64" default="-1" />
+		<!--defaultC55 => Default C55 Component of Voigt Stiffness Tensor-->
+		<xsd:attribute name="defaultC55" type="real64" default="-1" />
+		<!--defaultC66 => Default C66 Component of Voigt Stiffness Tensor-->
+		<xsd:attribute name="defaultC66" type="real64" default="-1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultE1 => Default Young's Modulus E1-->
+		<xsd:attribute name="defaultE1" type="real64" default="-1" />
+		<!--defaultE2 => Default Young's Modulus E2-->
+		<xsd:attribute name="defaultE2" type="real64" default="-1" />
+		<!--defaultE3 => Default Young's Modulus E3-->
+		<xsd:attribute name="defaultE3" type="real64" default="-1" />
+		<!--defaultG12 => Default Shear Modulus G12-->
+		<xsd:attribute name="defaultG12" type="real64" default="-1" />
+		<!--defaultG13 => Default Shear Modulus G13-->
+		<xsd:attribute name="defaultG13" type="real64" default="-1" />
+		<!--defaultG23 => Default Shear Modulus G23-->
+		<xsd:attribute name="defaultG23" type="real64" default="-1" />
+		<!--defaultNu12 => Default Poission's Ratio Nu12-->
+		<xsd:attribute name="defaultNu12" type="real64" default="-1" />
+		<!--defaultNu13 => Default Poission's Ratio Nu13-->
+		<xsd:attribute name="defaultNu13" type="real64" default="-1" />
+		<!--defaultNu23 => Default Poission's Ratio Nu23-->
+		<xsd:attribute name="defaultNu23" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticTransverseIsotropicType">
+		<!--defaultC11 => Default Stiffness Parameter C11-->
+		<xsd:attribute name="defaultC11" type="real64" default="-1" />
+		<!--defaultC13 => Default Stiffness Parameter C13-->
+		<xsd:attribute name="defaultC13" type="real64" default="-1" />
+		<!--defaultC33 => Default Stiffness Parameter C33-->
+		<xsd:attribute name="defaultC33" type="real64" default="-1" />
+		<!--defaultC44 => Default Stiffness Parameter C44-->
+		<xsd:attribute name="defaultC44" type="real64" default="-1" />
+		<!--defaultC66 => Default Stiffness Parameter C66-->
+		<xsd:attribute name="defaultC66" type="real64" default="-1" />
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultPoissonRatioAxialTransverse => Elastic Shear Modulus Parameter-->
+		<!--defaultPoissonRatioAxialTransverse => Default Axial-Transverse Poisson's Ratio-->
 		<xsd:attribute name="defaultPoissonRatioAxialTransverse" type="real64" default="-1" />
-		<!--defaultPoissonRatioTransverse => Elastic Shear Modulus Parameter-->
+		<!--defaultPoissonRatioTransverse => Default Transverse Poisson's Ratio-->
 		<xsd:attribute name="defaultPoissonRatioTransverse" type="real64" default="-1" />
-		<!--defaultShearModulusAxialTransverse => Elastic Shear Modulus Parameter-->
+		<!--defaultShearModulusAxialTransverse => Default Axial-Transverse Shear Modulus-->
 		<xsd:attribute name="defaultShearModulusAxialTransverse" type="real64" default="-1" />
-		<!--defaultYoungsModulusAxial => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultYoungsModulusAxial" type="real64" default="-1" />
-		<!--defaultYoungsModulusTransverse => Elastic Bulk Modulus Parameter-->
-		<xsd:attribute name="defaultYoungsModulusTransverse" type="real64" default="-1" />
+		<!--defaultYoungModulusAxial => Default Axial Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulusAxial" type="real64" default="-1" />
+		<!--defaultYoungModulusTransverse => Default Transverse Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulusTransverse" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ExtendedDruckerPragerType">
-		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
+		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
 		<!--defaultCohesion => Initial cohesion-->
 		<xsd:attribute name="defaultCohesion" type="real64" default="0" />
@@ -2210,14 +2286,14 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="defaultHardening" type="real64" default="0" />
 		<!--defaultInitialFrictionAngle => Initial friction angle (degrees)-->
 		<xsd:attribute name="defaultInitialFrictionAngle" type="real64" default="30" />
-		<!--defaultPoissonRatio => Poisson's ratio-->
+		<!--defaultPoissonRatio => Default Poisson's Ratio-->
 		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
 		<!--defaultResidualFrictionAngle => Residual friction angle (degrees)-->
 		<xsd:attribute name="defaultResidualFrictionAngle" type="real64" default="30" />
-		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<!--defaultShearModulus => Default Shear Modulus Parameter-->
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
-		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
+		<!--defaultYoungModulus => Default Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2267,114 +2343,6 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="PoreVolumeCompressibleSolidType">
-		<!--compressibility => Solid compressibility-->
-		<xsd:attribute name="compressibility" type="real64" use="required" />
-		<!--referencePressure => Reference pressure for fluid compressibility-->
-		<xsd:attribute name="referencePressure" type="real64" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="PoroDruckerPragerType">
-		<!--BiotCoefficient => Biot's coefficient-->
-		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
-		<!--compressibility => Pore volume compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="0" />
-		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
-		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
-		<!--defaultCohesion => Initial cohesion-->
-		<xsd:attribute name="defaultCohesion" type="real64" default="0" />
-		<!--defaultDensity => Default Material Density-->
-		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultDilationAngle => Dilation angle (degrees)-->
-		<xsd:attribute name="defaultDilationAngle" type="real64" default="30" />
-		<!--defaultFrictionAngle => Friction angle (degrees)-->
-		<xsd:attribute name="defaultFrictionAngle" type="real64" default="30" />
-		<!--defaultHardeningRate => Cohesion hardening/softening rate-->
-		<xsd:attribute name="defaultHardeningRate" type="real64" default="0" />
-		<!--defaultPoissonRatio => Poisson's ratio-->
-		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
-		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
-		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
-		<!--referencePressure => ReferencePressure-->
-		<xsd:attribute name="referencePressure" type="real64" default="0" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="PoroElasticIsotropicType">
-		<!--BiotCoefficient => Biot's coefficient-->
-		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
-		<!--compressibility => Pore volume compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="0" />
-		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
-		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
-		<!--defaultDensity => Default Material Density-->
-		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultPoissonRatio => Poisson's ratio-->
-		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
-		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
-		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
-		<!--referencePressure => ReferencePressure-->
-		<xsd:attribute name="referencePressure" type="real64" default="0" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="PoroElasticTransverseIsotropicType">
-		<!--BiotCoefficient => Biot's coefficient-->
-		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
-		<!--compressibility => Pore volume compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="0" />
-		<!--defaultDensity => Default Material Density-->
-		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultPoissonRatioAxialTransverse => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultPoissonRatioAxialTransverse" type="real64" default="-1" />
-		<!--defaultPoissonRatioTransverse => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultPoissonRatioTransverse" type="real64" default="-1" />
-		<!--defaultShearModulusAxialTransverse => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultShearModulusAxialTransverse" type="real64" default="-1" />
-		<!--defaultYoungsModulusAxial => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultYoungsModulusAxial" type="real64" default="-1" />
-		<!--defaultYoungsModulusTransverse => Elastic Bulk Modulus Parameter-->
-		<xsd:attribute name="defaultYoungsModulusTransverse" type="real64" default="-1" />
-		<!--referencePressure => ReferencePressure-->
-		<xsd:attribute name="referencePressure" type="real64" default="0" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="PoroExtendedDruckerPragerType">
-		<!--BiotCoefficient => Biot's coefficient-->
-		<xsd:attribute name="BiotCoefficient" type="real64" default="1" />
-		<!--compressibility => Pore volume compressibilty-->
-		<xsd:attribute name="compressibility" type="real64" default="0" />
-		<!--defaultBulkModulus => Elastic Bulk Modulus Parameter-->
-		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
-		<!--defaultCohesion => Initial cohesion-->
-		<xsd:attribute name="defaultCohesion" type="real64" default="0" />
-		<!--defaultDensity => Default Material Density-->
-		<xsd:attribute name="defaultDensity" type="real64" use="required" />
-		<!--defaultDilationRatio => Dilation ratio [0,1] (ratio = tan dilationAngle / tan frictionAngle)-->
-		<xsd:attribute name="defaultDilationRatio" type="real64" default="1" />
-		<!--defaultHardening => Hardening parameter (hardening rate is faster for smaller values)-->
-		<xsd:attribute name="defaultHardening" type="real64" default="0" />
-		<!--defaultInitialFrictionAngle => Initial friction angle (degrees)-->
-		<xsd:attribute name="defaultInitialFrictionAngle" type="real64" default="30" />
-		<!--defaultPoissonRatio => Poisson's ratio-->
-		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
-		<!--defaultResidualFrictionAngle => Residual friction angle (degrees)-->
-		<xsd:attribute name="defaultResidualFrictionAngle" type="real64" default="30" />
-		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
-		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
-		<!--defaultYoungsModulus => Elastic Young's Modulus.-->
-		<xsd:attribute name="defaultYoungsModulus" type="real64" default="-1" />
-		<!--referencePressure => ReferencePressure-->
-		<xsd:attribute name="referencePressure" type="real64" default="0" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
 	<xsd:complexType name="PorousDruckerPragerType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
@@ -2386,6 +2354,16 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousElasticIsotropicType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousElasticOrthotropicType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->

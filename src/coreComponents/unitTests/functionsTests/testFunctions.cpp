@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -57,7 +57,7 @@ void checkDirectionalDerivative( real64 const (&input)[4],
   LvArray::tensorOps::copy< 4 >( perturbedInput, input );
   real64 const dInput = perturb * ( input[direction] + perturb );
   perturbedInput[direction] += dInput;
-  kernelWrapper.compute( perturbedInput, perturbedVal, perturbedDerivatives );
+  perturbedVal = kernelWrapper.compute( perturbedInput, perturbedDerivatives );
 
   geosx::testing::checkRelativeError( derivatives[direction], (perturbedVal-val)/dInput, relTol, geosx::testing::DEFAULT_ABS_TOL );
 }
@@ -474,7 +474,7 @@ TEST( FunctionTests, 4DTable_derivatives )
         for( localIndex ii=0; ii<nSamples; ++ii, input[0] += delta )
         {
           // evaluate once to get the analytical derivatives
-          kernelWrapper.compute( input, val, derivatives );
+          val = kernelWrapper.compute( input, derivatives );
 
           // check derivatives
 

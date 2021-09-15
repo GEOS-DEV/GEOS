@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -297,92 +297,6 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   return rval;
 }
 
-
-void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * const domain )
-{
-  GEOSX_MARK_FUNCTION;
-
-  MeshLevel & mesh = domain->getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager & nodes = mesh.getNodeManager();
-
-  ElementRegionManager const & elementRegionManager = mesh.getElemManager();
-
-  arrayView1d< real64 > & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
-  mass.zero();
-
-  arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
-
-  // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
-  // the nodes one-by-one in the following std::sets. Then, when all the nodes
-  // have been collected, we do a batch insertion into m_sendOrReceiveNodes and
-  // m_nonSendOrReceiveNodes
-  std::set< localIndex > tmpSendOrReceiveNodes;
-  std::set< localIndex > tmpNonSendOrReceiveNodes;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
-  rho = elementRegionManager.constructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
-                                                                                                              targetRegionNames(),
-                                                                                                              solidMaterialNames() );
-
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const er,
-                                       ElementRegionBase const & elemRegion )
-  {
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
-                                                                       CellElementSubRegion const & elementSubRegion )
-    {
-      arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName() );
-      finiteElement::dispatch3D( fe,
-                                 [&] ( auto const finiteElement )
-      {
-        using FE_TYPE = TYPEOFREF( finiteElement );
-
-        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-        real64 N[numNodesPerElem];
-        for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
-        {
-          real64 elemMass = 0;
-          for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-          {
-            elemMass += rho[er][esr][k][q] * detJ[k][q];
-            FE_TYPE::calcN( q, N );
-
-            for( localIndex a=0; a< numNodesPerElem; ++a )
-            {
-              mass[elemsToNodes[k][a]] += rho[er][esr][k][q] * detJ[k][q] * N[a];
-            }
-          }
-
-
-          for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
-          {
-            if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
-            {
-              tmpSendOrReceiveNodes.insert( elemsToNodes[k][a] );
-            }
-            else
-            {
-              tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
-            }
-          }
-        }
-      } );
-    } );
-  } );
-  m_sendOrReceiveNodes.insert( tmpSendOrReceiveNodes.begin(),
-                               tmpSendOrReceiveNodes.end() );
-  m_nonSendOrReceiveNodes.insert( tmpNonSendOrReceiveNodes.begin(),
-                                  tmpNonSendOrReceiveNodes.end() );
-  m_targetNodes = m_sendOrReceiveNodes;
-  m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
-                        m_nonSendOrReceiveNodes.end() );
-}
 
 void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 {
@@ -1337,9 +1251,7 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( domain )
-  GEOSX_UNUSED_VAR( dofManager )
-  GEOSX_UNUSED_VAR( localSolution )
+  GEOSX_UNUSED_VAR( domain, dofManager, localSolution );
 
   return 1.0;
 }

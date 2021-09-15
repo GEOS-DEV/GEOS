@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -126,18 +126,7 @@ public:
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
 
-  void updateState( DomainPartition & domain );
-
-
-  void assembleTractionBalanceResidualWrtPressure( DomainPartition const & domain,
-                                                   DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
-
-  void assembleFractureFlowResidualWrtJump( DomainPartition const & domain,
-                                            DofManager const & dofManager,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            arrayView1d< real64 > const & localRhs );
+  virtual void updateState( DomainPartition & domain ) override final;
 
 
   struct viewKeyStruct : SinglePhasePoromechanicsSolver::viewKeyStruct

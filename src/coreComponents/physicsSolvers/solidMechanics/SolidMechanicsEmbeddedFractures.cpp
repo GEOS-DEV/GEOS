@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -22,7 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
-#include "constitutive/solid/PoroElastic.hpp"
+#include "constitutive/solid/ElasticIsotropic.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -600,8 +600,6 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                                        domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                        domain.getNeighbors(),
                                                        true );
-
-  updateState( domain );
 }
 
 void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
@@ -625,7 +623,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
     arrayView3d< real64 > const & dTraction_dJump =
       subRegion.getReference< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() );
 
-    forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const k )
+    forAll< serialPolicy >( subRegion.size(), [=, &contactRelation] ( localIndex const k )
     {
       contactRelation.computeTraction( jump[k], fractureTraction[k] );
 

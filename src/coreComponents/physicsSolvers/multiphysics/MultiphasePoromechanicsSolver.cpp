@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -214,7 +214,6 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                             kernelFactory );
 
 
-
   // Face-based contributions
   m_flowSolver->assembleFluxTerms( dt,
                                    domain,
@@ -283,6 +282,17 @@ void MultiphasePoromechanicsSolver::applySystemSolution( DofManager const & dofM
   m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
   // update pressure field
   m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
+}
+
+void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
+{
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
+                                                                          auto & subRegion )
+  {
+    m_flowSolver->updateFluidState( subRegion, targetIndex );
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanicsSolver, string const &, Group * const )

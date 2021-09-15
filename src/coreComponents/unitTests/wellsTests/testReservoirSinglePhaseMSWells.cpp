@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -37,7 +37,7 @@ CommandLineOptions g_commandLineOptions;
 
 char const * xmlInput =
   "<Problem>\n"
-  "  <Solvers gravityVector=\"0.0, 0.0, -9.81\">\n"
+  "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
   "    <SinglePhaseReservoir name=\"reservoirSystem\"\n"
   "               flowSolverName=\"singlePhaseFlow\"\n"
   "               wellSolverName=\"singlePhaseWell\"\n"
@@ -112,14 +112,13 @@ char const * xmlInput =
   "    <FiniteVolume>\n"
   "      <TwoPointFluxApproximation name=\"singlePhaseTPFA\"\n"
   "                                 fieldName=\"pressure\"\n"
-  "                                 coefficientName=\"permeability\"\n"
-  "                                 coefficientModelNames=\"{rockPerm}\"/>\n"
+  "                                 coefficientName=\"permeability\"/>\n"
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
   "    <CellElementRegion name=\"Region1\"\n"
   "                       cellBlocks=\"{cb1}\"\n"
-  "                       materialList=\"{water, rock, rockPerm}\"/>\n"
+  "                       materialList=\"{water, rock,  rockPerm, rockPorosity, nullSolid}\"/>\n"
   "    <WellElementRegion name=\"wellRegion1\"\n"
   "                       materialList=\"{water}\"/> \n"
   "    <WellElementRegion name=\"wellRegion2\"\n"
@@ -134,19 +133,19 @@ char const * xmlInput =
   "                                  compressibility=\"5e-10\"\n"
   "                                  referenceViscosity=\"0.001\"\n"
   "                                  viscosibility=\"0.0\"/>\n"
-  "    <PoreVolumeCompressibleSolid name=\"rock\"\n"
-  "                                 referencePressure=\"0.0\"\n"
-  "                                 compressibility=\"1e-9\"/>\n"
+  "    <CompressibleSolidConstantPermeability name=\"rock\"\n"
+  "        solidModelName=\"nullSolid\"\n"
+  "        porosityModelName=\"rockPorosity\"\n"
+  "        permeabilityModelName=\"rockPerm\"/>\n"
+  "   <NullModel name=\"nullSolid\"/> \n"
+  "   <PressurePorosity name=\"rockPorosity\"\n"
+  "                     defaultReferencePorosity=\"0.05\"\n"
+  "                     referencePressure = \"0.0\"\n"
+  "                     compressibility=\"1.0e-9\"/>\n"
   "  <ConstantPermeability name=\"rockPerm\"\n"
   "                        permeabilityComponents=\"{2.0e-16, 2.0e-16, 2.0e-16}\"/> \n"
   "  </Constitutive>\n"
   "  <FieldSpecifications>\n"
-  "    <FieldSpecification name=\"referencePorosity\"\n"
-  "                        initialCondition=\"1\"\n"
-  "                        setNames=\"{all}\"\n"
-  "                        objectPath=\"ElementRegions/Region1/cb1\"\n"
-  "                        fieldName=\"referencePorosity\"\n"
-  "                        scale=\"0.05\"/>\n"
   "    <FieldSpecification name=\"initialPressure\"\n"
   "                        initialCondition=\"1\"\n"
   "                        setNames=\"{all}\"\n"
@@ -230,12 +229,12 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
           flowSolver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                      ElementSubRegionBase & subRegion2 )
           {
-            flowSolver.updateState( subRegion2, targetIndex2 );
+            flowSolver.updateFluidState( subRegion2, targetIndex2 );
           } );
           wellSolver.forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const targetIndex3,
                                                                              WellElementSubRegion & subRegion3 )
           {
-            wellSolver.updateState( subRegion3, targetIndex3 );
+            wellSolver.updateSubRegionState( subRegion3, targetIndex3 );
           } );
 
           residual.zero();
@@ -289,7 +288,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         dWellElemPressure[iwelem] = dP;
 
         // after perturbing, update the pressure-dependent quantities in the well
-        wellSolver.updateState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();
@@ -317,7 +316,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         dConnRate[iwelem] = dRate;
 
         // after perturbing, update the rate-dependent quantities in the well (well controls)
-        wellSolver.updateState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();
@@ -423,9 +422,25 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_PressureRel )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->formPressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->getWellSolver()->assemblePressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
+
+TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Accum )
+{
+  real64 const perturb = std::sqrt( eps );
+  real64 const tol = 1e-1; // 10% error margin
+
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+  testNumericalJacobian( *solver, domain, perturb, tol,
+                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs )
+  {
+    solver->getWellSolver()->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );
+  } );
+}
+
 
 int main( int argc, char * * argv )
 {

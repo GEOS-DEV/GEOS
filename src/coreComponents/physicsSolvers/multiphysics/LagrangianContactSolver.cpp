@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -883,7 +883,7 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
     }
     else
     {
-      localScaleFactor = ParabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
+      localScaleFactor = parabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
     }
 
     // Update x; keep the books on lambda
@@ -1743,9 +1743,9 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
 
   arrayView1d< globalIndex const > const & tracDofNumber = fractureSubRegion.getReference< globalIndex_array >( tracDofKey );
 
-  stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
+  stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
-    typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+    typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
     forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
     {

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -91,6 +91,23 @@ public:
     m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
   }
 
+  /**
+   * @brief Return the stiffness at a given element (small-strain interface)
+   *
+   * @note If the material model has a strain-dependent material stiffness (e.g.
+   * any plasticity, damage, or nonlinear elastic model) then this interface will
+   * not work.  Users should instead use one of the interfaces where a strain
+   * tensor is provided as input.
+   *
+   * @param k the element number
+   * @param stiffness the stiffness array
+   */
+  GEOSX_HOST_DEVICE
+  void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
+  {
+    m_solidUpdate.getElasticStiffness( k, stiffness );
+  }
+
 private:
 
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_solidUpdate;
@@ -102,7 +119,7 @@ private:
 /**
  * @brief PorousSolidBase class used for dispatch of all Porous solids.
  */
-class PorousSolidBase : public SolidBase
+class PorousSolidBase
 {};
 
 /**

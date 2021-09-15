@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -43,8 +43,7 @@ struct ConstitutivePassThruHandler<>
   template< typename BASE, typename LAMBDA >
   static void execute( BASE & relation, LAMBDA lambda )
   {
-    GEOSX_UNUSED_VAR( relation )
-    GEOSX_UNUSED_VAR( lambda )
+    GEOSX_UNUSED_VAR( relation, lambda );
     GEOSX_ERROR( "The constitutive model " << relation.getName() << " was not dispatched." <<
                  "The model type does not match the list of supported types." );
   }

@@ -6,7 +6,7 @@ GEOSX was developed with supporting funds from a number of organizations, includ
 
 - Lawrence Livermore National Laboratory
 - U.S. Department of Energy, Office of Science
-- Total, S.A.
+- TotalEnergies.
 
 This support is gratefully acknowledged.
 
