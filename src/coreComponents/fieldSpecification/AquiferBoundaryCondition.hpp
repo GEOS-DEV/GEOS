@@ -333,7 +333,7 @@ AquiferBoundaryCondition::KernelWrapper::
 
   // compute the pressure influence and its derivative wrt to dimensionless time
   real64 dPresInfluence_dTime = 0;
-  real64 const presInfluence = m_pressureInfluenceFunction.compute( &timeAtEndOfStep, &dPresInfluence_dTime );
+  real64 const presInfluence = m_pressureInfluenceFunction.compute( &dimensionlessTime, &dPresInfluence_dTime );
 
   // compute the potential difference between the reservoir and the aquifer
   real64 const potDiff = m_initialPressure - reservoirPressure - m_density * ( m_gravCoef - reservoirGravCoef );
