@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -70,7 +70,7 @@ public:
 
   arrayView1d< string const > fluidModelNames() const { return m_fluidModelNames; }
 
-  arrayView1d< string const > solidModelNames() const { return m_solidModelNames; }
+  arrayView1d< string const > permeabilityModelNames() const { return m_permeabilityModelNames; }
 
   virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
 
@@ -89,39 +89,26 @@ public:
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
+    static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * pressureString() { return "pressure"; }
     static constexpr char const * deltaPressureString() { return "deltaPressure"; }
     static constexpr char const * deltaVolumeString() { return "deltaVolume"; }
     static constexpr char const * aperture0String() { return "aperture_n"; }
     static constexpr char const * effectiveApertureString() { return "effectiveAperture"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
-    static constexpr char const * meanPermCoeffString() { return "meanPermCoeff"; }
   };
+
+  void updatePorosityAndPermeability( CellElementSubRegion & subRegion,
+                                      localIndex const targetIndex ) const;
+
+  void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
+                                      localIndex const targetIndex ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step
    */
   virtual void resetViews( MeshLevel & mesh );
 
-  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                           DofManager const & dofManager,
-                                           CRSMatrix< real64, globalIndex > & localMatrix );
-
-
-  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
-  {
-    return m_derivativeFluxResidual_dAperture;
-  }
-
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
-  {
-    return m_derivativeFluxResidual_dAperture->toViewConstSizes();
-  }
-
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
-  {
-    return m_derivativeFluxResidual_dAperture->toViewConst();
-  }
 
 private:
 
@@ -147,6 +134,9 @@ protected:
   /// name of the solid constitutive model
   array1d< string > m_solidModelNames;
 
+  /// name of the permeability constituive model
+  array1d< string > m_permeabilityModelNames;
+
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
 
@@ -156,22 +146,15 @@ protected:
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
-
   real64 m_fluxEstimate;
-
-  real64 m_meanPermCoeff;
 
   /// views into constant data fields
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_volume;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_gravCoef;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_porosityRef;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementArea;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementAperture0;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementAperture;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_effectiveAperture;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_permeability;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_dPerm_dPressure;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementSeparationCoefficient;
@@ -179,6 +162,7 @@ protected:
 #endif
 
 };
+
 
 }
 

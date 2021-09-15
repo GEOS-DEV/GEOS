@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -117,6 +117,21 @@ public:
    * are most useful for implicit finite element formulations.
    */
   ///@{
+
+  /**
+   * @brief Get bulkModulus
+   * @param[in] k Element index.
+   * @return the bulkModulus of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
+
+    return 0;
+  }
+
 
   /**
    * @brief Small strain update.
@@ -597,7 +612,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
-  virtual void saveConvergedState() const;
+  virtual void saveConvergedState() const override;
 
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct

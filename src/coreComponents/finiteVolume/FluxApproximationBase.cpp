@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -44,6 +44,10 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
   registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegions ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of regions to build the stencil for" );
+
+  registerWrapper( viewKeyStruct::coefficientModelNamesString(), &m_coefficientModelNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "List of constitutive models that contain the coefficient used to build the stencil" );
 
   registerWrapper( viewKeyStruct::areaRelativeToleranceString(), &m_areaRelTol ).
     setInputFlag( InputFlags::OPTIONAL ).

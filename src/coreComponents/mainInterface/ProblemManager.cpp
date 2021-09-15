@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -164,6 +164,8 @@ void ProblemManager::problemSetup()
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   initialize();
+
+  importFields();
 }
 
 
@@ -183,7 +185,7 @@ void ProblemManager::parseCommandLineInput()
   commandLine.getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
 
   string & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
-  inputFileName = opts.inputFileName;
+  xmlWrapper::buildMultipleInputXML( opts.inputFileNames, inputFileName );
 
   string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
   schemaName = opts.schemaName;
@@ -558,6 +560,19 @@ void ProblemManager::generateMesh()
 }
 
 
+void ProblemManager::importFields()
+{
+  GEOSX_MARK_FUNCTION;
+  DomainPartition & domain = getDomainPartition();
+  MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
+
+  meshManager.forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & generator )
+  {
+    generator.importFields( domain );
+    generator.freeResources();
+  } );
+}
+
 void ProblemManager::applyNumericalMethods()
 {
 
@@ -569,6 +584,7 @@ void ProblemManager::applyNumericalMethods()
 
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
+
 
 map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
 {
@@ -611,9 +627,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
             {
               elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
               {
-                string const elementTypeString = subRegion.getElementTypeString();
-
-                std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( elementTypeString );
+                std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 
                 finiteElement::FiniteElementBase &
                 fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
@@ -693,7 +707,6 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     }
   }
 }
-
 
 bool ProblemManager::runSimulation()
 {

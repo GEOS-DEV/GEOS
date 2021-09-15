@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -33,13 +33,14 @@ CommandLineOptions g_commandLineOptions;
 
 char const * xmlInput =
   "<Problem>\n"
-  "  <Solvers gravityVector=\"0.0, 0.0, -9.81\">\n"
+  "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
   "    <CompositionalMultiphaseFVM name=\"compflow\"\n"
   "                                 logLevel=\"0\"\n"
   "                                 discretization=\"fluidTPFA\"\n"
   "                                 targetRegions=\"{Region2}\"\n"
   "                                 fluidNames=\"{fluid1}\"\n"
   "                                 solidNames=\"{rock}\"\n"
+  "                                 permeabilityNames=\"{rockPerm}\"\n"
   "                                 relPermNames=\"{relperm}\"\n"
   "                                 capPressureNames=\"{cappressure}\"\n"
   "                                 temperature=\"297.15\"\n"
@@ -63,18 +64,19 @@ char const * xmlInput =
   "                  cellBlockNames=\"{cb1}\"/>\n"
   "  </Mesh>\n"
   "  <Geometry>\n"
-  "    <Box name=\"source\" xMin=\"-0.01, -0.01, -0.01\" xMax=\"1.01, 1.01, 1.01\"/>\n"
-  "    <Box name=\"sink\"   xMin=\"1.99, -0.01, -0.01\" xMax=\"3.01, 1.01, 1.01\"/>\n"
+  "    <Box name=\"source\" xMin=\"{ -0.01, -0.01, -0.01 }\" xMax=\"{ 1.01, 1.01, 1.01 }\"/>\n"
+  "    <Box name=\"sink\"   xMin=\"{ 1.99, -0.01, -0.01 }\" xMax=\"{ 3.01, 1.01, 1.01 }\"/>\n"
   "  </Geometry>\n"
   "  <NumericalMethods>\n"
   "    <FiniteVolume>\n"
   "      <TwoPointFluxApproximation name=\"fluidTPFA\"\n"
   "                                 fieldName=\"pressure\"\n"
-  "                                 coefficientName=\"permeability\"/>\n"
+  "                                 coefficientName=\"permeability\"\n"
+  "                                 coefficientModelNames=\"{rockPerm}\"/>\n"
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
-  "    <CellElementRegion name=\"Region2\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, cappressure}\" />\n"
+  "    <CellElementRegion name=\"Region2\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, cappressure, rockPerm, rockPorosity, nullSolid}\" />\n"
   "  </ElementRegions>\n"
   "  <Constitutive>\n"
   "    <CompositionalMultiphaseFluid name=\"fluid1\"\n"
@@ -90,9 +92,15 @@ char const * xmlInput =
   "                                                          {0, 0, 0, 0},\n"
   "                                                          {0, 0, 0, 0},\n"
   "                                                          {0, 0, 0, 0} }\"/>\n"
-  "    <PoreVolumeCompressibleSolid name=\"rock\"\n"
-  "                                 referencePressure=\"0.0\"\n"
-  "                                 compressibility=\"1e-9\"/>\n"
+  "    <CompressibleSolidConstantPermeability name=\"rock\"\n"
+  "        solidModelName=\"nullSolid\"\n"
+  "        porosityModelName=\"rockPorosity\"\n"
+  "        permeabilityModelName=\"rockPerm\"/>\n"
+  "   <NullModel name=\"nullSolid\"/> \n"
+  "   <PressurePorosity name=\"rockPorosity\"\n"
+  "                     defaultReferencePorosity=\"0.05\"\n"
+  "                     referencePressure = \"0.0\"\n"
+  "                     compressibility=\"1.0e-9\"/>\n"
   "    <BrooksCoreyRelativePermeability name=\"relperm\"\n"
   "                                     phaseNames=\"{oil, gas}\"\n"
   "                                     phaseMinVolumeFraction=\"{0.1, 0.15}\"\n"
@@ -104,35 +112,10 @@ char const * xmlInput =
   "                                  phaseCapPressureExponentInv=\"{4.25, 3.5}\"\n"
   "                                  phaseEntryPressure=\"{0., 1e8}\"\n"
   "                                  capPressureEpsilon=\"0.0\"/> \n"
+  "  <ConstantPermeability name=\"rockPerm\"\n"
+  "                        permeabilityComponents=\"{2.0e-16, 2.0e-16, 2.0e-16}\"/> \n"
   "  </Constitutive>\n"
   "  <FieldSpecifications>\n"
-  "    <FieldSpecification name=\"permx\"\n"
-  "               component=\"0\"\n"
-  "               initialCondition=\"1\"  \n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region2/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"permy\"\n"
-  "               component=\"1\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region2/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"permz\"\n"
-  "               component=\"2\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region2/cb1\"\n"
-  "               fieldName=\"permeability\"\n"
-  "               scale=\"2.0e-16\"/>\n"
-  "    <FieldSpecification name=\"referencePorosity\"\n"
-  "               initialCondition=\"1\"\n"
-  "               setNames=\"{all}\"\n"
-  "               objectPath=\"ElementRegions/Region2/cb1\"\n"
-  "               fieldName=\"referencePorosity\"\n"
-  "               scale=\"0.05\"/>\n"
   "    <FieldSpecification name=\"initialPressure\"\n"
   "               initialCondition=\"1\"\n"
   "               setNames=\"{all}\"\n"
@@ -312,7 +295,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -344,7 +327,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -425,7 +408,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -457,7 +440,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       } );
 
       // recompute component fractions
-      solver.updateState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion, targetIndex );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -559,7 +542,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateState( subRegion2, targetIndex2 );
+          solver.updateFluidState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();
@@ -584,7 +567,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
-          solver.updateState( subRegion2, targetIndex2 );
+          solver.updateFluidState( subRegion2, targetIndex2 );
         } );
 
         residual.zero();

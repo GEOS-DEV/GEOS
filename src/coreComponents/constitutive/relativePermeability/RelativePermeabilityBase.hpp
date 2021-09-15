@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -52,7 +52,7 @@ public:
    * @return number of phases
    */
   GEOSX_HOST_DEVICE
-  localIndex numPhases() const { return m_phaseTypes.size(); }
+  integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseTypes.size() ); }
 
 protected:
 
@@ -89,36 +89,44 @@ class RelativePermeabilityBase : public ConstitutiveBase
 {
 public:
 
+  static constexpr integer MAX_NUM_PHASES = 3;
+
   struct PhaseType
   {
-    static constexpr integer OIL            = 0;
-    static constexpr integer GAS            = 1;
-    static constexpr integer WATER          = 2;
-    static constexpr integer MAX_NUM_PHASES = 3;
+    enum : integer
+    {
+      OIL = 0,
+      GAS = 1,
+      WATER = 2,
+    };
   };
 
-  // order of the phase properties in the water-oil data
+  /// order of the phase properties in the water-oil data
   struct WaterOilPairPhaseType
   {
-    static constexpr integer WATER = 0; // first water phase property
-    static constexpr integer OIL   = 1; // second oil phase property
+    enum : integer
+    {
+      WATER = 0, ///< first water phase property
+      OIL = 1,   ///< second oil phase property
+    };
   };
 
-  // order of the phase properties in the gas-oil data
+  /// order of the phase properties in the gas-oil data
   struct GasOilPairPhaseType
   {
-    static constexpr integer GAS   = 0; // first gas phase property
-    static constexpr integer OIL   = 1; // second oil phase property
+    enum : integer
+    {
+      GAS = 0, ///< first gas phase property
+      OIL = 1, ///< second oil phase property
+    };
   };
 
   RelativePermeabilityBase( string const & name, dataRepository::Group * const parent );
 
-  virtual ~RelativePermeabilityBase() override;
-
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  localIndex numFluidPhases() const { return m_phaseNames.size(); }
+  integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
 
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
@@ -135,9 +143,7 @@ public:
     static constexpr char const * dPhaseRelPerm_dPhaseVolFractionString() { return "dPhaseRelPerm_dPhaseVolFraction"; } // dKr_p/dS_p
   };
 
-protected:
-
-  virtual void postProcessInput() override;
+private:
 
   /**
    * @brief Function called internally to resize member arrays
@@ -145,6 +151,15 @@ protected:
    * @param numPts secondary dimension (e.g. number of gauss points per cell)
    */
   void resizeFields( localIndex const size, localIndex const numPts );
+
+  /**
+   * @brief Called internally to set array dim labels.
+   */
+  void setLabels();
+
+protected:
+
+  virtual void postProcessInput() override;
 
   // phase names read from input
   string_array m_phaseNames;

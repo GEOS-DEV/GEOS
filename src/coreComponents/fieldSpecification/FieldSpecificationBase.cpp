@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -43,7 +43,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setDescription( "Name of field that boundary condition is applied to." );
 
   registerWrapper( viewKeyStruct::componentString(), &m_component ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Component of field (if tensor) to apply boundary condition to" );
 

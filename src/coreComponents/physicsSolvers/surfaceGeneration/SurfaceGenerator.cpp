@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -17,6 +17,8 @@
  */
 
 #include "SurfaceGenerator.hpp"
+#include "ParallelTopologyChange.hpp"
+
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
@@ -30,10 +32,6 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-
-#ifdef USE_GEOSX_PTP
-#include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
-#endif
 
 namespace geosx
 {
@@ -484,8 +482,25 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
           fractureRegion.getSubRegion< FaceElementSubRegion >( 0 ).m_newFaceElements.clear();
         }
       }
+
+      // Create set "all" on the faceElementSubregion
+      FaceElementSubRegion & fractureSubRegion  = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
+
+      dataRepository::Group & setGroup =
+        fractureSubRegion.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+
+      SortedArray< localIndex > & targetSet =
+        setGroup.getWrapper< SortedArray< localIndex > >( "all" ).reference();
+
+      forAll< serialPolicy >( fractureSubRegion.size(), [&] ( localIndex const ei )
+
+      {
+        targetSet.insert( ei );
+      } );
     }
   }
+
+
 
   return rval;
 }
@@ -593,7 +608,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       }
     }
 
-#ifdef USE_GEOSX_PTP
+#ifdef GEOSX_USE_MPI
 
     modifiedObjects.clearNewFromModified();
 
@@ -1618,7 +1633,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
   array1d< integer > const & edgeIsExternal = edgeManager.isExternal();
   array1d< integer > const & nodeIsExternal = nodeManager.isExternal();
 
-  SurfaceElementRegion & fractureElementRegion = elementManager.getRegion< SurfaceElementRegion >( "Fracture" );
+  SurfaceElementRegion & fractureElementRegion = elementManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
   array1d< integer > const & isFaceSeparable = faceManager.getExtrinsicData< extrinsicMeshData::IsFaceSeparable >();
 
   array2d< real64 > const & faceNormals = faceManager.faceNormal();
@@ -2894,7 +2909,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
             arrayView2d< real64 const > const & elementCenter = elementSubRegion.getElementCenter().toViewConst();
             real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
             real64 G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
-            real64 youngsModulus = 9 * K * G / ( 3 * K + G );
+            real64 YoungModulus = 9 * K * G / ( 3 * K + G );
             real64 poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
             localIndex const numQuadraturePoints = detJ[er][esr].size( 1 );
@@ -2916,7 +2931,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
                                              temp );
 
                 //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-                LvArray::tensorOps::scale< 3 >( temp, youngsModulus );
+                LvArray::tensorOps::scale< 3 >( temp, YoungModulus );
                 LvArray::tensorOps::scale< 3 >( temp, 1.0 / (1 - poissonRatio * poissonRatio) );
 
                 LvArray::tensorOps::subtract< 3 >( xEle, nodePosition );
@@ -3004,7 +3019,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
           real64 fExternal[2][3];
           for( localIndex i=0; i<2; ++i )
           {
-            real64 averageYoungsModulus( 0 ), averagePoissonRatio( 0 );
+            real64 averageYoungModulus( 0 ), averagePoissonRatio( 0 );
             localIndex nodeID = i == 0 ? tralingNodeID : theOtherTrailingNodeID;
             for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeID ); ++k )
             {
@@ -3014,15 +3029,15 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
               real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
               real64 G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
-              averageYoungsModulus += 9 * K * G / ( 3 * K + G );
+              averageYoungModulus += 9 * K * G / ( 3 * K + G );
               averagePoissonRatio += ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
             }
 
-            averageYoungsModulus /= nodeToRegionMap.sizeOfArray( nodeID );
+            averageYoungModulus /= nodeToRegionMap.sizeOfArray( nodeID );
             averagePoissonRatio /= nodeToRegionMap.sizeOfArray( nodeID );
 
             LvArray::tensorOps::copy< 3 >( fExternal[i], fext[nodeID] );
-            LvArray::tensorOps::scale< 3 >( fExternal[i], averageYoungsModulus / (1 - averagePoissonRatio * averagePoissonRatio) );
+            LvArray::tensorOps::scale< 3 >( fExternal[i], averageYoungModulus / (1 - averagePoissonRatio * averagePoissonRatio) );
           }
 
           //TODO: The sign of fext here is opposite to the sign of fFaceA in function "CalculateEdgeSIF".
@@ -3043,6 +3058,12 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
           tipNodeSIF = pow( (fabs( tipNodeForce[0] * trailingNodeDisp[0] / 2.0 / tipArea ) + fabs( tipNodeForce[1] * trailingNodeDisp[1] / 2.0 / tipArea )
                              + fabs( tipNodeForce[2] * trailingNodeDisp[2] / 2.0 / tipArea )), 0.5 );
+
+          if( LvArray::tensorOps::AiBi< 3 >( trailingNodeDisp, faceNormalVector ) < 0.0 )  //In case the aperture is negative with the
+                                                                                           // presence of confining stress.
+          {
+            tipNodeSIF *= -1;
+          }
 
           SIFNode_All[nodeIndex].emplace_back( tipNodeSIF );
 
@@ -3709,7 +3730,7 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
       {
         real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
         real64 G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
-        real64 youngsModulus = 9 * K * G / ( 3 * K + G );
+        real64 YoungModulus = 9 * K * G / ( 3 * K + G );
         real64 poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementsToNodes = elementSubRegion.nodeList();
@@ -3732,7 +3753,7 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
                                          stress[er][esr][m_solidMaterialFullIndex],
                                          temp );
 
-            LvArray::tensorOps::scale< 3 >( temp, youngsModulus );
+            LvArray::tensorOps::scale< 3 >( temp, YoungModulus );
             LvArray::tensorOps::scale< 3 >( temp, 1.0 / (1 - poissonRatio * poissonRatio) );
 
             if( !calculatef_u )

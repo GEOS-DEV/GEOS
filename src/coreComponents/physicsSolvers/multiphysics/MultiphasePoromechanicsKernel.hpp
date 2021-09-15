@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -113,8 +113,7 @@ public:
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_numComponents( numComponents ),
-    m_numPhases( numPhases ),
-    m_biotCoefficient( m_constitutiveUpdate.getBiotCoefficient() )
+    m_numPhases( numPhases )
   {
     GEOSX_ERROR_IF_GT_MSG( m_numComponents, numMaxComponents,
                            "MultiphasePoroelastic solver allows at most " << numMaxComponents << " components at the moment" );
@@ -143,7 +142,6 @@ public:
 
       m_fluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::pressureString() );
       m_deltaFluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::deltaPressureString() );
-      m_poroRef = elementSubRegion.template getReference< array1d< real64 > >( keys::referencePorosityString() );
     }
 
     // extract views into multiphase solver data
@@ -194,6 +192,8 @@ public:
       localDispFlowJacobian{ {0.0} },
       localFlowDispJacobian{ {0.0} },
       localFlowFlowJacobian{ {0.0} },
+      localVolBalanceResidual{ 0.0 },
+      localVolBalanceJacobian{ {0.0} },
       localFlowDofIndex{ 0 }
     {}
 
@@ -215,6 +215,8 @@ public:
     real64 localDispFlowJacobian[numDispDofPerElem][numMaxComponents + 1];
     real64 localFlowDispJacobian[numMaxComponents][numDispDofPerElem];
     real64 localFlowFlowJacobian[numMaxComponents][numMaxComponents + 1];
+    real64 localVolBalanceResidual[1];
+    real64 localVolBalanceJacobian[1][numMaxComponents + 1];
 
     /// C-array storage for the element local row degrees of freedom.
     globalIndex localFlowDofIndex[numMaxComponents + 1];
@@ -278,34 +280,31 @@ public:
     // Evaluate total stress tensor
     real64 strainIncrement[6] = {0};
     real64 totalStress[6];
+    real64 dPorosity_dPressure;
+    real64 dPorosity_dVolStrainIncrement;
+    real64 dTotalStress_dPressure;
+
 
     // --- Update effective stress tensor (stored in totalStress)
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
-    m_constitutiveUpdate.smallStrainUpdate( k, q, strainIncrement, totalStress, stiffness );
 
-    // --- Subtract pressure term
-    real64 const biotTimesPressure = m_biotCoefficient * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
-    totalStress[0] -= biotTimesPressure;
-    totalStress[1] -= biotTimesPressure;
-    totalStress[2] -= biotTimesPressure;
+    m_constitutiveUpdate.smallStrainUpdate( k,
+                                            q,
+                                            m_deltaFluidPressure[k],
+                                            strainIncrement,
+                                            totalStress,
+                                            dPorosity_dPressure,
+                                            dPorosity_dVolStrainIncrement,
+                                            dTotalStress_dPressure,
+                                            stiffness );
 
-    // Evaluate fluid phase mass content
-    // --- TODO: temporary solution -----------------------------------------------------------------------------------//
-    //           see SinglePhasePoromechanicsKernel                                                                    //
-    real64 const biotSkeletonModulusInverse = 0.0; //TODO: 1/N = 0 correct only for biotCoefficient = 1                //
-    real64 const volumetricStrainNew = FE_TYPE::symmetricGradientTrace( dNdX, stack.u_local );                         //
-    real64 const volumetricStrainOld = volumetricStrainNew - FE_TYPE::symmetricGradientTrace( dNdX, stack.uhat_local );//
-    real64 const porosityOld = m_poroRef( k ) + m_biotCoefficient * volumetricStrainOld;// +  DeltaPoro                //
-    real64 const dPorosity_dPressure = biotSkeletonModulusInverse;                                                     //
-    real64 const dPorosity_dVolStrainIncrement =  m_biotCoefficient;                                                   //
-    GEOSX_ERROR_IF_GT_MSG( fabs( m_biotCoefficient - 1.0 ),                                                            //
-                           1e-10,                                                                                      //
-                           "Correct only for Biot's coefficient equal to 1" );                                         //
-    // --------------------------------------------------------------------------------------------------------------- //
-    real64 const porosityNew = porosityOld
-                               + m_biotCoefficient * (strainIncrement[0] + strainIncrement[1] + strainIncrement[2] )
-                               + biotSkeletonModulusInverse * m_deltaFluidPressure[k];
+    real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
+    real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
+
+    real64 const pressureStressTerm = -dTotalStress_dPressure * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
+
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, pressureStressTerm );
 
     // Evaluate body force vector
     real64 bodyForce[3] = { m_gravityVector[0],
@@ -345,9 +344,9 @@ public:
 
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][0] * m_biotCoefficient * detJxW;
-      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][1] * m_biotCoefficient * detJxW;
-      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][2] * m_biotCoefficient * detJxW;
+      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][0] * dTotalStress_dPressure * detJxW;
+      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][1] * dTotalStress_dPressure * detJxW;
+      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][2] * dTotalStress_dPressure * detJxW;
     }
 
     if( m_gravityAcceleration > 0.0 )
@@ -429,6 +428,21 @@ public:
         stack.localFlowDispJacobian[ic][a*3+2] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][2] * detJxW;
       }
     }
+
+    // --- Volume balance equation
+    // sum contributions to component accumulation from each phase
+    stack.localVolBalanceResidual[0] += porosityNew * detJxW;
+    for( localIndex ip = 0; ip < NP; ++ip )
+    {
+      stack.localVolBalanceResidual[0] -= m_fluidPhaseSaturation( k, ip ) * porosityNew * detJxW;
+      stack.localVolBalanceJacobian[0][0] -=
+        ( m_dFluidPhaseSaturation_dPressure( k, ip ) * porosityNew + dPorosity_dPressure * m_fluidPhaseSaturation( k, ip ) ) * detJxW;
+
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        stack.localVolBalanceJacobian[0][jc+1] -= m_dFluidPhaseSaturation_dGlobalCompDensity( k, ip, jc )  * porosityNew * detJxW;
+      }
+    }
   }
 
   /**
@@ -440,6 +454,7 @@ public:
                    StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
+
     real64 maxForce = 0;
 
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
@@ -470,7 +485,7 @@ public:
       }
     }
 
-    localIndex const dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[0] - m_dofRankOffset );
+    localIndex dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[0] - m_dofRankOffset );
     if( 0 <= dof && dof < m_matrix.numRows() )
     {
       for( localIndex i = 0; i < m_numComponents; ++i )
@@ -486,6 +501,18 @@ public:
 
         RAJA::atomicAdd< serialAtomic >( &m_rhs[dof+i], stack.localFlowResidual[i] );
       }
+    }
+
+    dof = dof + m_numComponents;
+    if( 0 <= dof && dof < m_matrix.numRows() )
+    {
+
+      m_matrix.template addToRow< serialAtomic >( dof,
+                                                  stack.localFlowDofIndex,
+                                                  stack.localVolBalanceJacobian[0],
+                                                  m_numComponents + 1 );
+
+      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localVolBalanceResidual[0] );
     }
 
     return maxForce;
@@ -540,17 +567,12 @@ protected:
   /// The rank-global delta-fluid pressure array.
   arrayView1d< real64 const > m_deltaFluidPressure;
 
-  /// The rank-global reference porosity array
-  arrayView1d< real64 const > m_poroRef;
-
   /// Number of components
   localIndex const m_numComponents;
 
   /// Number of phases
   localIndex const m_numPhases;
 
-  /// Biot's coefficient
-  real64 const m_biotCoefficient;
 };
 
 using MultiphaseKernelFactory = finiteElement::KernelFactory< Multiphase,

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -286,7 +286,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
         real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
 
         arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-        std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
+        std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.getElementType() );
         localIndex const n_q_points = finiteElement->n_quadrature_points();
 
         //real64 ell = m_lengthScale;                       //phase-field length scale
@@ -433,6 +433,11 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
                                                        mesh,
                                                        domain.getNeighbors(),
                                                        false );
+}
+
+void PhaseFieldDamageFEM::updateState( DomainPartition & domain )
+{
+  GEOSX_UNUSED_VAR( domain );
 }
 
 void PhaseFieldDamageFEM::applyBoundaryConditions(

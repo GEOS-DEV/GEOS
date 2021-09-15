@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -180,7 +180,7 @@ public:
                                     arraySlice1d< real64 const > const & componentConcentration,
                                     real64 const shearRate ) const override
   {
-    GEOSX_UNUSED_VAR( shearRate )
+    GEOSX_UNUSED_VAR( shearRate );
     computeFluidDensity( pressure,
                          componentConcentration,
                          m_componentDensity[k][q],

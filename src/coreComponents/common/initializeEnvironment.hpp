@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -38,8 +38,8 @@ namespace geosx
  */
 struct CommandLineOptions
 {
-  /// The path to the input xml.
-  string inputFileName;
+  /// The paths to the input xml files.
+  string_array inputFileNames;
 
   /// True iff restarting from the middle of an existing run.
   bool beginFromRestart = false;

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -193,7 +193,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                                                                        CellElementSubRegion & elementSubRegion )
     {
 
-      GEOSX_THROW_IF( elementSubRegion.getElementTypeString() != "C3D8",
+      GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                       "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
                       InputError );
 

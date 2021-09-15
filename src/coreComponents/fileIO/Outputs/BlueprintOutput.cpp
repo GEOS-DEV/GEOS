@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -38,17 +38,36 @@ namespace internal
  * @brief @return The Blueprint shape from the GEOSX element type string.
  * @param elementType the elementType to look up.
  */
-string toBlueprintShape( string const & elementType )
+string toBlueprintShape( ElementType const elementType )
 {
-  static std::unordered_map< string, string > const map =
+  switch( elementType )
   {
-    { "C3D8", "hex" },
-    { "C3D4", "tet" }
-  };
+    case ElementType::Tetrahedron: return "tet";
+    case ElementType::Hexahedron: return "hex";
+    default:
+    {
+      GEOSX_ERROR( "No Blueprint type for element type: " << elementType );
+      return {};
+    }
+  }
+}
 
-  auto const iter = map.find( elementType );
-  GEOSX_ERROR_IF( iter == map.end(), "No Blueprint type for " << elementType );
-  return iter->second;
+static std::vector< int > getBlueprintNodeOrdering( ElementType const elementType )
+{
+  // Same as VTK, but kept separate for flexibility
+  switch( elementType )
+  {
+    case ElementType::Line:          return { 0, 1 };
+    case ElementType::Triangle:      return { 0, 1, 2 };
+    case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
+    case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
+    case ElementType::Tetrahedron:    return { 1, 0, 2, 3 };
+    case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
+    case ElementType::Prism:         return { 0, 4, 2, 1, 5, 3, 0, 0 };
+    case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
+  }
+  return {};
 }
 
 /**
@@ -64,7 +83,7 @@ void reorderElementToNodeMap( CellElementSubRegion const & subRegion, conduit::N
   localIndex const numElems = elemToNodeMap.size( 0 );
   localIndex const numNodesPerElem = elemToNodeMap.size( 1 );
 
-  std::vector< int > const vtkOrdering = subRegion.getVTKNodeOrdering();
+  std::vector< int > const vtkOrdering = getBlueprintNodeOrdering( subRegion.getElementType() );
   GEOSX_ERROR_IF_NE( localIndex( vtkOrdering.size() ), numNodesPerElem );
 
   constexpr int conduitTypeID = dataRepository::conduitTypeInfo< localIndex >::id;
@@ -214,7 +233,7 @@ void BlueprintOutput::addElementData( ElementRegionManager const & elemRegionMan
     conduit::Node & topology = topologies[ topologyName ];
     topology[ "coordset" ] = coordset.name();
     topology[ "type" ] = "unstructured";
-    topology[ "elements/shape" ] = internal::toBlueprintShape( subRegion.getElementTypeString() );
+    topology[ "elements/shape" ] = internal::toBlueprintShape( subRegion.getElementType() );
     internal::reorderElementToNodeMap( subRegion, topology[ "elements/connectivity" ] );
 
     /// Write out the fields.

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -26,21 +26,21 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-constexpr integer CapillaryPressureBase::PhaseType::GAS;
-constexpr integer CapillaryPressureBase::PhaseType::OIL;
-constexpr integer CapillaryPressureBase::PhaseType::WATER;
-
 namespace
 {
 
-std::unordered_map< string, integer > const phaseDict =
+integer toPhaseType( string const & lookup, string const & groupName )
 {
-  { "gas", CapillaryPressureBase::PhaseType::GAS   },
-  { "oil", CapillaryPressureBase::PhaseType::OIL   },
-  { "water", CapillaryPressureBase::PhaseType::WATER }
-};
-
+  static unordered_map< string, integer > const phaseDict =
+  {
+    { "gas", CapillaryPressureBase::PhaseType::GAS },
+    { "oil", CapillaryPressureBase::PhaseType::OIL },
+    { "water", CapillaryPressureBase::PhaseType::WATER }
+  };
+  return findOption( phaseDict, lookup, CapillaryPressureBase::viewKeyStruct::phaseNamesString(), groupName );
 }
+
+} // namespace
 
 CapillaryPressureBase::CapillaryPressureBase( string const & name,
                                               Group * const parent )
@@ -63,59 +63,53 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
   registerWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString(), &m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
-CapillaryPressureBase::~CapillaryPressureBase()
-{}
-
-
 void CapillaryPressureBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
 
-  localIndex const NP = numFluidPhases();
-
-  GEOSX_THROW_IF( NP < 2, "CapillaryPressureBase: number of fluid phases should be at least 2", InputError );
-
-  GEOSX_THROW_IF( NP > PhaseType::MAX_NUM_PHASES,
-                  "CapillaryPressureBase: number of fluid phases exceeds the maximum of " << PhaseType::MAX_NUM_PHASES,
+  integer const numPhases = numFluidPhases();
+  GEOSX_THROW_IF( numPhases< 2 || numPhases > MAX_NUM_PHASES,
+                  getFullName() << ": number of fluid phases must be between 2 and " << MAX_NUM_PHASES << ", got " << numPhases,
                   InputError );
 
-  m_phaseTypes.resize( NP );
-  m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
-  m_phaseOrder.setValues< serialPolicy >( -1 );
+  m_phaseTypes.resize( numPhases );
+  m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );
 
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( integer ip = 0; ip < numPhases; ++ip )
   {
-    auto it = phaseDict.find( m_phaseNames[ip] );
-    GEOSX_THROW_IF( it == phaseDict.end(), "CapillaryPressureBase: phase not supported: " << m_phaseNames[ip], InputError );
-    integer const phaseIndex = it->second;
-    GEOSX_THROW_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "CapillaryPressureBase: invalid phase index " << phaseIndex, InputError );
-
-    m_phaseTypes[ip] = phaseIndex;
-    m_phaseOrder[phaseIndex] = LvArray::integerConversion< integer >( ip );
-
+    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip], getFullName() );
+    m_phaseOrder[m_phaseTypes[ip]] = LvArray::integerConversion< integer >( ip );
   }
 
   GEOSX_THROW_IF( m_phaseOrder[CapillaryPressureBase::REFERENCE_PHASE] < 0,
-                  "CapillaryPressureBase: reference oil phase has not been defined and should be included in model", InputError );
+                  getFullName() << ": reference oil phase has not been defined and should be included in model", InputError );
 
   // call to correctly set member array tertiary sizes on the 'main' material object
   resizeFields( 0, 0 );
+
+  // set labels on array wrappers for plottable fields
+  setLabels();
 }
 
 void CapillaryPressureBase::resizeFields( localIndex const size,
                                           localIndex const numPts )
 {
-  localIndex const NP = numFluidPhases();
+  integer const NP = numFluidPhases();
 
   m_phaseCapPressure.resize( size, numPts, NP );
   m_dPhaseCapPressure_dPhaseVolFrac.resize( size, numPts, NP, NP );
 }
 
+void CapillaryPressureBase::setLabels()
+{
+  getWrapper< array3d< real64, cappres::LAYOUT_CAPPRES > >( viewKeyStruct::phaseCapPressureString() ).
+    setDimLabels( 2, m_phaseNames );
+}
 
 void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                       localIndex const numConstitutivePointsPerParentIndex )
 {
-  resizeFields( 0, numConstitutivePointsPerParentIndex );
+  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 

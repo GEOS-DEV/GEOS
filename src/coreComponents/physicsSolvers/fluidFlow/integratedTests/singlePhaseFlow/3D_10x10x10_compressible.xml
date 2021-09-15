@@ -12,6 +12,7 @@
       discretization="singlePhaseTPFA"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       targetRegions="{ mainRegion }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -26,7 +27,7 @@
   <!-- SPHINX_TUT_INT_HEX_MESH -->
   <Mesh>
     <InternalMesh
-      name="mesh1"
+      name="mesh"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 10 }"
@@ -34,7 +35,7 @@
       nx="{ 10 }"
       ny="{ 10 }"
       nz="{ 10 }"
-      cellBlockNames="{ cb1 }"/>
+      cellBlockNames="{ cellBlock }"/>
   </Mesh>
 
   <!-- SPHINX_TUT_INT_HEX_MESH_END -->
@@ -42,33 +43,26 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{1.01, 1.01, 1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin="{8.99, 8.99, 8.99}"
-      xMax="{10.01, 10.01, 10.01}"/>
+      xMin="{ 8.99, 8.99, 8.99 }"
+      xMax="{ 10.01, 10.01, 10.01 }"/>
   </Geometry>
 
   <!-- SPHINX_TUT_INT_HEX_GEOMETRY_END -->
   <!-- SPHINX_TUT_INT_HEX_EVENTS -->
   <Events
     maxTime="5000.0">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
     <PeriodicEvent
       name="solverApplications"
       forceDt="20.0"
       target="/Solvers/SinglePhaseFlow"/>
-
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
       timeFrequency="100.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
   </Events>
 
@@ -79,7 +73,8 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -88,8 +83,8 @@
   <ElementRegions>
     <CellElementRegion
       name="mainRegion"
-      cellBlocks="{ cb1 }"
-      materialList="{ water, rock }"/>
+      cellBlocks="{ cellBlock }"
+      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
   </ElementRegions>
 
   <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS_END -->
@@ -100,73 +95,50 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
       referencePressure="0.0"
-      compressibility="1e-9"/>
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-15 }"/>
   </Constitutive>
 
   <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE_END -->
   <!-- SPHINX_TUT_INT_HEX_FIELDS -->
   <FieldSpecifications>
     <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
-      fieldName="permeability"
-      scale="1.0e-12"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
-      fieldName="permeability"
-      scale="1.0e-12"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
-      fieldName="permeability"
-      scale="1.0e-15"/>
-
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
-      fieldName="referencePorosity"
-      scale="0.05"/>
-
-    <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
+      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
       fieldName="pressure"
       scale="5e6"/>
 
     <FieldSpecification
       name="sourceTerm"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
+      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
       fieldName="pressure"
       scale="1e7"
       setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
+      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
       fieldName="pressure"
       scale="0.0"
       setNames="{ sink }"/>
@@ -174,8 +146,6 @@
 
   <!-- SPHINX_TUT_INT_HEX_FIELDS_END -->
   <!-- SPHINX_TUT_INT_HEX_BLANKS -->
-  <Functions/>
-
   <!-- SPHINX_TUT_INT_HEX_BLANKS_END -->
   <!-- SPHINX_TUT_INT_HEX_OUTPUTS -->
   <Outputs>

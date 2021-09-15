@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -111,6 +111,11 @@ public:
    * @brief Generates numerical meshes used throughout the code
    */
   void generateMesh();
+
+  /**
+   * @brief Import field data from external sources (e.g. mesh generator).
+   */
+  void importFields();
 
   /**
    * @brief Allocates constitutive relations according to the discretizations

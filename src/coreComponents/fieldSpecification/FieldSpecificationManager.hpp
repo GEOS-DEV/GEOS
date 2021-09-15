@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -18,8 +18,6 @@
 
 #ifndef GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
 #define GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
-
-#include "FieldSpecificationManager.hpp"
 
 #include "FieldSpecificationBase.hpp"
 
@@ -247,7 +245,7 @@ public:
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
         {
-          dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );;
+          dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
           for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
           {

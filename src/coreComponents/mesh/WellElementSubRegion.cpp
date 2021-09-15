@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -33,6 +33,7 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   m_topRank( -1 ),
   m_searchDepth( 10 )
 {
+  m_elementType = ElementType::Line;
 
   registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName );
   registerWrapper( viewKeyStruct::wellNodeListString(), &m_toNodesRelation );
@@ -47,7 +48,6 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   this->setNumNodesPerElement( 2 );
   this->setNumFacesPerElement( 0 );
   m_toNodesRelation.resizeDimension< 1 >( this->numNodesPerElement() );
-  m_elementTypeString = "BEAM";
 }
 
 

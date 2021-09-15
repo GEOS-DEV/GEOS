@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -32,10 +32,13 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   m_oldStress( 0, 0, 6 ),
   m_density()
 {
+  string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
+
   registerWrapper( viewKeyStruct::stressString(), &m_newStress ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setApplyDefaultValue( 0 ). // default to zero initial stress
-    setDescription( "Current Material Stress" );
+    setDescription( "Current Material Stress" ).
+    setDimLabels( 1, voightLabels );
 
   registerWrapper( viewKeyStruct::oldStressString(), &m_oldStress ).
     setApplyDefaultValue( 0 ). // default to zero initial stress

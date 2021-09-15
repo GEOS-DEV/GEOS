@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -100,6 +100,16 @@ public:
    * the targetNode.
    */
   static void addIncludedXML( xmlNode & targetNode );
+
+  /**
+   * @brief Function to handle multiple input xml files.
+   * @param inputFileList the list of input xml files
+   * @param inputFileName the input xml file name
+   *
+   * This function checks for multiple xml files, and will build
+   * a new input xml file with an included block if neccesary
+   */
+  static void buildMultipleInputXML( string_array const & inputFileList, string & inputFileName );
 
   /**
    * @name String to variable parsing.

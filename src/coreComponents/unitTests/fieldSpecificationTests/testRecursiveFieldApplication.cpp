@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -72,25 +72,25 @@ TEST( FieldSpecification, Recursive )
   CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
 
   CellBlock & reg0Hex = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg0hex" );
-  reg0Hex.setElementType( "C3D8" );
+  reg0Hex.setElementType( geosx::ElementType::Hexahedron );
   reg0Hex.resize( nbHexReg0 );
   auto & cellToVertexreg0Hex = reg0Hex.nodeList();
   cellToVertexreg0Hex.resize( nbHexReg0, 8 );
 
   CellBlock & reg0Tet= cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg0tet" );
-  reg0Tet.setElementType( "C3D4" );
+  reg0Tet.setElementType( geosx::ElementType::Tetrahedron );
   reg0Tet.resize( nbTetReg0 );
   auto & cellToVertexreg0Tet = reg0Tet.nodeList();
   cellToVertexreg0Tet.resize( nbTetReg0, 4 );
 
   CellBlock & reg1Hex = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg1hex" );
-  reg1Hex.setElementType( "C3D8" );
+  reg1Hex.setElementType( geosx::ElementType::Hexahedron );
   reg1Hex.resize( nbHexReg1 );
   auto & cellToVertexreg1Hex = reg1Hex.nodeList();
   cellToVertexreg1Hex.resize( nbHexReg1, 8 );
 
   CellBlock & reg1Tet = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( "reg1tet" );
-  reg1Tet.setElementType( "C3D4" );
+  reg1Tet.setElementType( geosx::ElementType::Tetrahedron );
   reg1Tet.resize( nbTetReg1 );
   auto & cellToVertexreg1Tet = reg1Tet.nodeList();
   cellToVertexreg1Tet.resize( nbTetReg1, 4 );

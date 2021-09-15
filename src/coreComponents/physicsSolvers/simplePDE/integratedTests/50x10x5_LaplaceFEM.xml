@@ -7,12 +7,9 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Temperature"
-      logLevel="0"
       targetRegions="{ Region1 }">
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-	logLevel="0"/>
+        directParallel="0"/>
     </LaplaceFEM>
   </Solvers>
 
@@ -44,7 +41,6 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -66,21 +62,12 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ cb1 }"
-      materialList="{ shale }"/>
+      materialList="{ nullModel }"/>
   </ElementRegions>
 
   <Constitutive>
-    <ElasticIsotropic
-      name="granite"
-      defaultDensity="2700"
-      defaultBulkModulus="5.5556e9"
-      defaultShearModulus="4.16667e9"/>
-
-    <ElasticIsotropic
-      name="shale"
-      defaultDensity="2700"
-      defaultBulkModulus="5.5556e9"
-      defaultShearModulus="4.16667e9"/>
+    <NullModel
+      name="nullModel"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -103,8 +90,7 @@
   <Outputs>
     <Silo
       name="siloOutput"
-      parallelThreads="32"
-      plotFileRoot="plot"/>
+      parallelThreads="32"/>
 
     <Restart
       name="restartOutput"/>
@@ -113,13 +99,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ +0.01, +1.01, +1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ +0.01, +1.01, +1.01 }"/>
 
     <Box
       name="sink"
-      xMin="{+0.99, -0.01, -0.01}"
-      xMax="{ +1.01, +1.01, +1.01}"/>
+      xMin="{ +0.99, -0.01, -0.01 }"
+      xMax="{ +1.01, +1.01, +1.01 }"/>
   </Geometry>
 
   <Functions>

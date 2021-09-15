@@ -2,21 +2,20 @@
 
 <Problem>
   <Solvers
-    gravityVector="{0.0, 0.0, -9.81}">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ Region2, Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }">
+      solidNames="{ rock, fractureFilling }"
+      permeabilityNames="{ rockPerm, fracturePerm }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
+        newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="0"
-        logLevel="0"/>
+        directParallel="0"/>
     </SinglePhaseFVM>
 
     <EmbeddedSurfaceGenerator
@@ -44,20 +43,20 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{-0.01, -0.01, -0.01}"
-      xMax="{ 1.1, 0.1, 1.01}"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.1, 0.1, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin="{ -0.01, 0.9, -0.01}"
-      xMax="{ 1.01, 1.01, 1.01}"/>
+      xMin="{ -0.01, 0.9, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
 
     <BoundedPlane
       name="FracturePlane"
-      normal="{1, 0, 0}"
-      origin="{0.5, 0.5, 0.5}"
-      lengthVector="{0, 1, 0}"
-      widthVector="{0, 0, 1}"
+      normal="{ 1, 0, 0 }"
+      origin="{ 0.5, 0.5, 0.5 }"
+      lengthVector="{ 0, 1, 0 }"
+      widthVector="{ 0, 0, 1 }"
       dimensions="{ 0.5, 1 }"/>
   </Geometry>
 
@@ -75,14 +74,11 @@
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
-      targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
       timeFrequency="1e3"
-      targetExactTimestep="1"
       target="/Outputs/sidreRestart"/>
   </Events>
 
@@ -99,12 +95,12 @@
     <CellElementRegion
       name="Region2"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture = "1e-3"
-      materialList="{ water, rock }"
+      defaultAperture="1e-3"
+      materialList="{ water, fractureFilling, fracturePerm, fracturePorosity, nullSolid }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
 
@@ -114,52 +110,68 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <CompressibleSolidConstantPermeability
       name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.01"
       referencePressure="0.0"
-      compressibility="1e-9"/>
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
   </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification
-      name="permx"
-      component="0"
+      name="frac"
       initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="permeability"
-      scale="1.0e-12"/>
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
 
     <FieldSpecification
-      name="permy"
-      component="1"
+      name="Porosity"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
-      fieldName="permeability"
-      scale="1.0e-12"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="permeability"
-      scale="1.0e-12"/>
-
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="referencePorosity"
+      fieldName="rockPorosity_referencePorosity"
       scale="0.01"/>
+
+    <FieldSpecification
+      name="fracPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="fracturePorosity_porosity"
+      scale="1.00"/>
 
     <FieldSpecification
       name="initialPressure"
@@ -183,8 +195,6 @@
       scale="0.0"
       setNames="{ sink }"/>
   </FieldSpecifications>
-
-  <Functions/>
 
   <Outputs>
     <VTK

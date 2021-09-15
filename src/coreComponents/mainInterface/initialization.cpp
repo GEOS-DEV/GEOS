@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -176,7 +176,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       break;
       case INPUT:
       {
-        commandLineOptions->inputFileName = opt.arg;
+        commandLineOptions->inputFileNames.emplace_back( opt.arg );
       }
       break;
       case RESTART:
@@ -241,9 +241,9 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     }
   }
 
-  if( commandLineOptions->problemName == "" )
+  if( commandLineOptions->problemName == "" && options[INPUT].count() > 0 )
   {
-    string & inputFileName = commandLineOptions->inputFileName;
+    string & inputFileName = commandLineOptions->inputFileNames[0];
     if( inputFileName.length() > 4 && inputFileName.substr( inputFileName.length() - 4, 4 ) == ".xml" )
     {
       string::size_type start = inputFileName.find_last_of( '/' ) + 1;

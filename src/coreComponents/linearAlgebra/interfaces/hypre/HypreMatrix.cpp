@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -1334,7 +1334,7 @@ real64 HypreMatrix::normFrobenius() const
 
 void HypreMatrix::rightScale( HypreVector const & vec )
 {
-  GEOSX_UNUSED_VAR( vec )
+  GEOSX_UNUSED_VAR( vec );
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_ERROR( "Not implemented" );
 }

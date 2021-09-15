@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -59,16 +59,9 @@ public:
                                                             Group * const parent ) const;
 
 
-  virtual void stateUpdatePointPressure( real64 const & GEOSX_UNUSED_PARAM( pres ),
-                                         localIndex const GEOSX_UNUSED_PARAM( k ),
-                                         localIndex const GEOSX_UNUSED_PARAM( q ) ) {}
-
-  virtual void stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
-                                         arrayView1d< real64 const > const & dPres )
-  {
-    GEOSX_UNUSED_VAR( pres )
-    GEOSX_UNUSED_VAR( dPres )
-  }
+  /// Save state data in preparation for next timestep
+  virtual void saveConvergedState() const
+  {}
 
   /**
    * @name Static Factory Catalog members and functions
@@ -89,6 +82,12 @@ public:
    * @return a string that contains the catalog name of the derived class
    */
   virtual string getCatalogName() const = 0;
+
+  /**
+   * @brief Get full name of the model.
+   * @return full name, consisting of XML (catalog) name and actual model name
+   */
+  string getFullName() const { return getCatalogName() + " " + getName(); }
 
   ///@}
 

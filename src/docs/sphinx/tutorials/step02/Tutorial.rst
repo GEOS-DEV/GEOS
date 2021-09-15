@@ -1,7 +1,7 @@
 .. _TutorialSinglePhaseFlowExternalMesh:
 
 #########################################
-Tutorial 2: Using an external mesh
+Tutorial 2: External Meshes
 #########################################
 
 
@@ -133,9 +133,8 @@ We use GEOSX to compute the pressure inside each grid block over a period of tim
 of 100 seconds.
 
 
-.. image:: HexCube.png
-   :width: 250px
-
+.. image:: hex_mesh.png
+  :width: 400px
 
 To see how to import such a mesh,
 we inspect the following XML file:
@@ -174,7 +173,7 @@ and assign it to the single-phase flow solver.
 We also need to provide material properties to the regions.
 This is done by specifying ``ElementRegions``.
 Here, the entire field is one region called ``Domain``,
-and contains ``water`` and ``rock`` only.
+and contains multiple constitutive models, including ``water``, ``rockPorosity``, and ``rockPerm``.
 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
@@ -218,7 +217,7 @@ The mesh preprocessing tool PAMELA is launched next,
 with console messages as follows.
 
   .. code-block:: console
-  
+
 
     0 >>> **********************************************************************
     0 >>>                          PAMELA Library Import tool
@@ -273,7 +272,7 @@ All results are written in a format compatible with `VisIt
 <https://wci.llnl.gov/simulation/computer-codes/visit/>`_.
 To load the results, point VisIt to the ``database`` file written in the Silo output folder.
 
-.. image:: ExtHexResults.png
+.. image:: hex_final.png
     :width: 400px
 
 We see that the face x=0 shown here in the back of the illustration applies a constant
@@ -340,7 +339,7 @@ representing a different discretization of the exact same 10x10x10 cubic domain.
 
 The mesh now looks like this:
 
-.. image:: TetCube.png
+.. image:: tetra_mesh.png
   :width: 400px
 
 
@@ -376,9 +375,8 @@ In our case, the first lines are:
 
 .. code-block:: console
 
-  Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
+  Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
   Adding Mesh: PAMELAMeshGenerator, CubeTetra
-  Adding Geometric Object: Box, all
   Adding Geometric Object: Box, left
   Adding Event: PeriodicEvent, solverApplications
   Adding Event: PeriodicEvent, outputs
@@ -386,6 +384,8 @@ In our case, the first lines are:
   Adding Output: Silo, siloWellPump
   Adding Output: Restart, restartOutput
   Adding Object CellElementRegion named Domain from ObjectManager::Catalog.
+  Reading external mesh from /Users/j0529096/Documents/code/GEOSX/src/coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/cube_10x10x10_tet.msh
+
 
 Followed by:
 
@@ -418,30 +418,38 @@ Followed by:
   0 >>> Clean Adjacency...
   0 >>> *** Done...
   Writing into the GEOSX mesh data structure
+    Domain/DEFAULT_TETRA/water is allocated with 1 quadrature points.
+    Domain/DEFAULT_TETRA/rock is allocated with 1 quadrature points.
+    Domain/DEFAULT_TETRA/rockPerm is allocated with 1 quadrature points.
+    Domain/DEFAULT_TETRA/rockPorosity is allocated with 1 quadrature points.
+    Domain/DEFAULT_TETRA/nullSolid is allocated with 1 quadrature points.
+  PAMELAMeshGenerator CubeTetra: importing field data from mesh dataset
+
 
 We see that we have now 366 nodes and 1153 tetrahedral elements.
 And finally, when the simulation is successfully done we see:
 
 .. code-block:: console
 
-  Running simulation
+
   Time: 0s, dt:1s, Cycle: 0
   Time: 1s, dt:1s, Cycle: 1
   Time: 2s, dt:1s, Cycle: 2
   Time: 3s, dt:1s, Cycle: 3
   Time: 4s, dt:1s, Cycle: 4
   Time: 5s, dt:1s, Cycle: 5
-  Time: 6s, dt:1s, Cycle: 6
   ...
+  Time: 95s, dt:1s, Cycle: 95
   Time: 96s, dt:1s, Cycle: 96
   Time: 97s, dt:1s, Cycle: 97
   Time: 98s, dt:1s, Cycle: 98
   Time: 99s, dt:1s, Cycle: 99
   Cleaning up events
-  Writing out restart file at 3D_10x10x10_compressible_pamela_tetra_gravity_restart_000000100/rank_0000000.hdf5
-
-  init time = 0.074377s, run time = 5.4331s
-
+  Umpire            HOST sum across ranks:    4.9 MB
+  Umpire            HOST         rank max:    4.9 MB
+  total time                         3.164s
+  initialization time                0.178s
+  run time                           2.659s
 
 
 Visualization of results in VisIt
@@ -452,7 +460,7 @@ All results are written in a format compatible with `VisIt
 <https://wci.llnl.gov/simulation/computer-codes/visit/>`_ by default.
 If we load into VisIt the `.database` file found in the Silo folder, we observe the following results:
 
-.. image:: ExtTetResults.png
+.. image:: tetra_final.png
   :width: 400px
 
 Here, we can see that despite the different mesh sizes and shapes,
@@ -468,11 +476,6 @@ To go further
 
 This concludes the single-phase external mesh tutorial.
 For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
-
-**Next tutorial**
-
-In the next tutorial :ref:`TutorialFieldCase`, we learn how to run a
-simple field case with more complex unstructured meshes containing different regions and properties.
 
 **For more details**
 
