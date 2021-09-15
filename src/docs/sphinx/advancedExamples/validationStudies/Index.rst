@@ -11,7 +11,9 @@ Validation and Verification Studies
 
    edpWellbore/Example
 
-   elasticCasedWellbore/Example
+   casedElasticWellbore/Example
+
+   deviatedElasticWellbore/Example
 
    poromechanicsWellbore/Example
 
