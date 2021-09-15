@@ -27,7 +27,7 @@
   <!-- SPHINX_TUT_INT_HEX_MESH -->
   <Mesh>
     <InternalMesh
-      name="mesh1"
+      name="mesh"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 10 }"
@@ -35,7 +35,7 @@
       nx="{ 10 }"
       ny="{ 10 }"
       nz="{ 10 }"
-      cellBlockNames="{ cb1 }"/>
+      cellBlockNames="{ cellBlock }"/>
   </Mesh>
 
   <!-- SPHINX_TUT_INT_HEX_MESH_END -->
@@ -56,16 +56,10 @@
   <!-- SPHINX_TUT_INT_HEX_EVENTS -->
   <Events
     maxTime="5000.0">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
     <PeriodicEvent
       name="solverApplications"
       forceDt="20.0"
       target="/Solvers/SinglePhaseFlow"/>
-
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
       timeFrequency="100.0"
@@ -89,7 +83,7 @@
   <ElementRegions>
     <CellElementRegion
       name="mainRegion"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ cellBlock }"
       materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
   </ElementRegions>
 
@@ -128,31 +122,23 @@
   <!-- SPHINX_TUT_INT_HEX_FIELDS -->
   <FieldSpecifications>
     <FieldSpecification
-      name="Porosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="rockPorosity_referencePorosity"
-      scale="0.05"/>
-
-    <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
+      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
       fieldName="pressure"
       scale="5e6"/>
 
     <FieldSpecification
       name="sourceTerm"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
+      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
       fieldName="pressure"
       scale="1e7"
       setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
-      objectPath="ElementRegions/mainRegion/elementSubRegions/cb1"
+      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
       fieldName="pressure"
       scale="0.0"
       setNames="{ sink }"/>

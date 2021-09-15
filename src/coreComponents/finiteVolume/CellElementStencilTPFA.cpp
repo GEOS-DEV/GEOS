@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -30,6 +30,14 @@ CellElementStencilTPFA::CellElementStencilTPFA():
   m_cellToFaceVec.resize( 0, 2, 3 );
 }
 
+void CellElementStencilTPFA::reserve( localIndex const size )
+{
+  StencilBase::reserve( size );
+
+  m_faceNormal.reserve( 3 * size );
+  m_cellToFaceVec.reserve( 6 * size );
+  m_transMultiplier.reserve( size );
+}
 
 void CellElementStencilTPFA::add( localIndex const numPts,
                                   localIndex const * const elementRegionIndices,
