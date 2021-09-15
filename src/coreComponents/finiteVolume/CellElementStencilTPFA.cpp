@@ -30,6 +30,14 @@ CellElementStencilTPFA::CellElementStencilTPFA():
   m_cellToFaceVec.resize( 0, 2, 3 );
 }
 
+void CellElementStencilTPFA::reserve( localIndex const size )
+{
+  StencilBase::reserve( size );
+
+  m_faceNormal.reserve( 3 * size );
+  m_cellToFaceVec.reserve( 6 * size );
+  m_transMultiplier.reserve( size );
+}
 
 void CellElementStencilTPFA::add( localIndex const numPts,
                                   localIndex const * const elementRegionIndices,
