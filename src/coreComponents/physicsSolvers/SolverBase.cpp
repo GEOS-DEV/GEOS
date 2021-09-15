@@ -179,7 +179,7 @@ bool SolverBase::execute( real64 const time_n,
 
     if( getLogLevel() >= 1 && dtRemaining > 0.0 )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: sub-step = {}, accepted dt = {}, remaining dt = {}", subStep, dtAccepted, dtRemaining ) );
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: sub-step = {}, accepted dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, dtRemaining ) );
     }
   }
 
@@ -204,18 +204,19 @@ void SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt,
   integer const iterCutLimit = m_nonlinearSolverParameters.dtCutIterLimit();
   integer const iterIncLimit = m_nonlinearSolverParameters.dtIncIterLimit();
 
-  constexpr char const msg[] = "{}: Newton solver converged in less than {} iterations, time-step required will be {}.";
   if( newtonIter < iterIncLimit )
   {
     // Easy convergence, let's double the time-step.
-    nextDt = 2*currentDt;
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( msg, getName(), iterIncLimit, "doubled" ) );
+    nextDt = currentDt * 2;
+    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be doubled.",
+                                          getName(), iterIncLimit ) );
   }
   else if( newtonIter > iterCutLimit )
   {
     // Tough convergence let us make the time-step smaller!
-    nextDt = currentDt/2;
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( msg, getName(), iterCutLimit, "halved" ) );
+    nextDt = currentDt / 2;
+    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be halved.",
+                                          getName(), iterCutLimit ) );
   }
   else
   {

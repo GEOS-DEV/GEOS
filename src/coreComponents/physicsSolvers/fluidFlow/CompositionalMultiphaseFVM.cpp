@@ -343,7 +343,10 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
   // compute global residual norm
   real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ;", residual ) );
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ;", residual );
+  }
 
   return residual;
 }
