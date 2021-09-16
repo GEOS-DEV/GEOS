@@ -122,13 +122,13 @@ void EmbeddedSurfaceSubRegion::computeConnectivityIndex( localIndex const k,
   localIndex const cellIndex = m_surfaceElementsToCells.m_toElementIndex[k][0];
   localIndex const numOfNodes = cellToNodes.size(1);
 
-  real64 distance[3];
+  real64 nodeToFracCenter[3];
   for( localIndex a=0; a < numOfNodes; a++ )
   {
     localIndex const nodeIndex = cellToNodes[cellIndex][a];
-    LvArray::tensorOps::copy<3>( distance, nodesCoord[nodeIndex]);
-    LvArray::tensorOps::subtract<3>( distance, m_elementCenter[k] );
-    real64 distance = LvArray::tensorOps::AiBi<3>( distance, m_normalVector[k] );
+    LvArray::tensorOps::copy<3>( nodeToFracCenter, nodesCoord[nodeIndex]);
+    LvArray::tensorOps::subtract<3>( nodeToFracCenter, m_elementCenter[k] );
+    real64 distance = LvArray::tensorOps::AiBi<3>( nodeToFracCenter, m_normalVector[k] );
     averageDistance += std::sqrt( distance * distance );
   }
   averageDistance /= numOfNodes ;
