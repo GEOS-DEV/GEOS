@@ -162,6 +162,40 @@ class Vtk(CMakePackage):
             # Disable wrappers for other languages.
             '-DVTK_WRAP_JAVA=OFF',
             '-DVTK_WRAP_TCL=OFF',
+
+            # GEOSX added arguments
+            '-DVTK_GROUP_ENABLE_Imaging=NO',
+            '-DVTK_GROUP_ENABLE_MPI=NO',
+            '-DVTK_GROUP_ENABLE_Qt=NO',
+            '-DVTK_GROUP_ENABLE_Rendering=NO',
+            '-DVTK_GROUP_ENABLE_StandAlone=NO',
+            '-DVTK_GROUP_ENABLE_Views=NO',
+            '-DVTK_GROUP_ENABLE_Web=NO',
+            '-DVTK_BUILD_ALL_MODULES=OFF',
+            '-DVTK_WRAP_PYTHON=OFF',
+            #'-DVTK_WRAP_JAVA=OFF',
+            '-DVTK_MODULE_ENABLE_VTK_vtkm=NO',
+            '-DVTK_MODULE_ENABLE_VTK_CommonDataModel=YES',
+            '-DVTK_MODULE_ENABLE_VTK_CommonCore=YES',
+            '-DVTK_MODULE_ENABLE_VTK_CommonExecutionModel=YES',
+            '-DVTK_MODULE_ENABLE_VTK_CommonMath=YES',
+            '-DVTK_MODULE_ENABLE_VTK_CommonMisc=YES',
+            '-DVTK_MODULE_ENABLE_VTK_CommonSystem=YES',
+            '-DVTK_MODULE_ENABLE_VTK_CommonTransforms=YES',
+            '-DVTK_MODULE_ENABLE_VTK_IOXML=YES',
+            '-DVTK_MODULE_ENABLE_VTK_IOXMLParser=YES',
+            '-DVTK_MODULE_ENABLE_VTK_IOCore=YES',
+            '-DVTK_MODULE_ENABLE_VTK_IONetCDF=YES',
+            '-DVTK_MODULE_ENABLE_VTK_IOGeometry=YES',
+            '-DVTK_MODULE_ENABLE_VTK_IOParallel=YES',
+            '-DVTK_MODULE_ENABLE_VTK_IOImage=YES',
+            '-DVTK_MODULE_ENABLE_VTK_IOLegacy=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersCore=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersExtraction=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersParallel=YES',
+            '-DVTK_MODULE_ENABLE_VTK_ParallelCore=YES',
+            '-DVTK_BUILD_TESTING=OFF',
+            '-DVTK_LEGACY_REMOVE=ON'
         ]
 
         # Some variable names have changed

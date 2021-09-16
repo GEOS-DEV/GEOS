@@ -7,7 +7,7 @@ packages:
       blas: [intel-mkl]
       lapack: [intel-mkl]
       #Somehting here for mesa3d (gl/opengl/ opengl2????)
-      #gl: [mesa]
+      gl: [mesa]
 
   mvapich2:
     buildable: False
@@ -72,8 +72,8 @@ packages:
       prefix: /collab/usr/gapps/python/build/spack-toss3.2/opt/spack/linux-rhel7-x86_64/gcc-4.9.3/python-2.7.14-7rci3jkmuht2uiwp433afigveuf4ocnu/
 
   # Something here for mesa3d?
-  #mesa:
-  #  buildable: False
-  #  externals:
-  #  - spec: mesa@19.0.1
-  #    prefix: /usr/tce/packages/mesa3d/mesa-19.0.1/
+  mesa:
+    buildable: False
+    externals:
+    - spec: mesa@19.0.1
+      prefix: /usr/tce/packages/mesa3d/mesa-19.0.1/
