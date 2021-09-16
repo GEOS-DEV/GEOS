@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
+<!-- SPHINX_PROPPANT_SOLVER -->
   <Solvers>
     <ProppantTransport
       name="ProppantTransport"
@@ -58,6 +59,7 @@
       solidMaterialNames="{ granite }"
       rockToughness="1e6"/>
   </Solvers>
+<!-- SPHINX_PROPPANT_SOLVER_END -->
 
   <Mesh>
     <InternalMesh
@@ -148,6 +150,7 @@
       materialList="{ water, fractureFilling, sand, fracturePerm, fracturePorosity, nullSolid }"/>
   </ElementRegions>
 
+<!-- SPHINX_PROPPANT_MATERIAL -->
   <Constitutive>
     <ProppantSlurryFluid
       name="water"
@@ -183,6 +186,7 @@
       proppantDiameter="4.5e-4"
       maxProppantConcentration="0.62"/>
   </Constitutive>
+<!-- SPHINX_PROPPANT_MATERIAL_END -->
 
   <FieldSpecifications>
     <FieldSpecification
