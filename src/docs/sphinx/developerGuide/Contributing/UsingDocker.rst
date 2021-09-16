@@ -29,14 +29,14 @@ You'll have to add extra tools.
 The following `example` is for our ``ubuntu`` flavors.
 You'll notice the arguments ``IMG``, ``VERSION``, ``ORG``.
 While surely overkill for most cases, if you develop in GEOSX on a regular basis you'll appreciate being able to switch containers easily.
-For example, simply create the image ``clion-ubuntu18.04-gcc8:156-642`` by running
+For example, simply create the image ``remote-dev-ubuntu18.04-gcc8:156-642`` by running
 
 .. code-block:: console
 
     export VERSION=156-642
     export IMG=ubuntu18.04-gcc8
-    export CLION_IMG=clion-${IMG}
-    docker build --build-arg ORG=geosx --build-arg IMG=${IMG} --build-arg VERSION=${VERSION} -t ${CLION_IMG}:${VERSION} -f /path/to/Dockerfile .
+    export REMOTE_DEV_IMG=remote-dev-${IMG}
+    docker build --build-arg ORG=geosx --build-arg IMG=${IMG} --build-arg VERSION=${VERSION} -t ${REMOTE_DEV_IMG}:${VERSION} -f /path/to/Dockerfile .
 
 And the ``Dockerfile`` is the following (comments are embedded)
 
@@ -100,9 +100,9 @@ I like to do
 
 .. code-block:: console
 
-    docker run --cap-add=ALL -d --name ${CLION_IMG}-${VERSION} -p 64000:22 ${CLION_IMG}:${VERSION}
+    docker run --cap-add=ALL -d --name ${REMOTE_DEV_IMG}-${VERSION} -p 64000:22 ${REMOTE_DEV_IMG}:${VERSION}
 
-that creates the container ``clion-ubuntu18.04-gcc8-156-642``, running instance of ``clion-ubuntu18.04-gcc8:156-642``.
+that creates the container ``remote-dev-ubuntu18.04-gcc8-156-642``, running instance of ``remote-dev-ubuntu18.04-gcc8:156-642``.
 
 - Note that you'll have to access your remote development instance though port ``64000`` (forwarded to standard port ``22`` by docker).
 - Please be aware of how to retrieve your code back: you may want to bind mount volumes and store you code there (``-v``/``--volume=`` options of `docker run <https://docs.docker.com/engine/reference/run/>`_).
@@ -112,7 +112,7 @@ You can stop and restart your container with
 
 .. code-block:: console
 
-    docker stop ${CLION_IMG}-${VERSION}
-    docker start ${CLION_IMG}-${VERSION}
+    docker stop ${REMOTE_DEV_IMG}-${VERSION}
+    docker start ${REMOTE_DEV_IMG}-${VERSION}
 
 Now hack.
