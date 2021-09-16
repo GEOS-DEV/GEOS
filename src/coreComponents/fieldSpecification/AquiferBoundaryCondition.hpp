@@ -73,8 +73,10 @@ public:
 
     /**
      * @brief Compute the aquifer-reservoir volumetric flux
-     * @param[in] timeAtEndOfStep the time at the end of the step
-     * @param[in] reservoirPressure the current reservoir pressure
+     * @param[in] timeAtBeginningOfStep the time at the beginning of the step
+     * @param[in] dt the time step size
+     * @param[in] reservoirPressure the reservoir pressure at the beginning of the time step
+     * @param[in] reservoirDeltaPressure the accumulated pressure updates
      * @param[in] reservoirGravCoef the elevation * gravVector in the aquifer
      * @param[in] areaFraction the area fraction for the face
      * @param[out] dAquiferVolFlux_dPres the derivative of the aquifer-reservoir volumetric flux
@@ -82,8 +84,10 @@ public:
      */
     GEOSX_HOST_DEVICE
     inline real64
-    compute( real64 const & timeAtEndOfStep,
+    compute( real64 const & timeAtBeginningOfStep,
+             real64 const & dt,
              real64 const & reservoirPressure,
+             real64 const & reservoirDeltaPressure,
              real64 const & reservoirGravCoef,
              real64 const & areaFraction,
              real64 & dAquiferVolFlux_dPres ) const;
@@ -322,28 +326,36 @@ private:
 GEOSX_HOST_DEVICE
 real64
 AquiferBoundaryCondition::KernelWrapper::
-  compute( real64 const & timeAtEndOfStep,
+  compute( real64 const & timeAtBeginningOfStep,
+           real64 const & dt,
            real64 const & reservoirPressure,
+           real64 const & reservoirDeltaPressure,
            real64 const & reservoirGravCoef,
            real64 const & areaFraction,
            real64 & dAquiferVolFlux_dPres ) const
 {
   // compute the dimensionless time (equation 5.5 of the Eclipse TD)
-  real64 const dimensionlessTime = timeAtEndOfStep / m_timeConstant;
+  real64 const dimensionlessTimeAtBeginningOfStep = timeAtBeginningOfStep / m_timeConstant;
+  real64 const dimensionlessTimeAtEndOfStep = ( timeAtBeginningOfStep + dt ) / m_timeConstant;
 
   // compute the pressure influence and its derivative wrt to dimensionless time
   real64 dPresInfluence_dTime = 0;
-  real64 const presInfluence = m_pressureInfluenceFunction.compute( &dimensionlessTime, &dPresInfluence_dTime );
+  real64 const presInfluence = m_pressureInfluenceFunction.compute( &dimensionlessTimeAtEndOfStep, &dPresInfluence_dTime );
 
-  // compute the potential difference between the reservoir and the aquifer
+  // compute the potential difference between the reservoir (old pressure) and the aquifer
   real64 const potDiff = m_initialPressure - reservoirPressure - m_density * ( m_gravCoef - reservoirGravCoef );
-  real64 const dPotDiff_dPres = -1;
 
-  // compute the average inflow rate (equation 2.266 of the Intersect TD)
-  real64 const coef = areaFraction / m_timeConstant;
-  real64 const denom = presInfluence - dimensionlessTime * dPresInfluence_dTime;
-  real64 const aquiferVolFlux = coef * ( m_influxConstant * potDiff - m_cumulativeFlux * dPresInfluence_dTime ) / denom;
-  dAquiferVolFlux_dPres = coef * m_influxConstant * dPotDiff_dPres / denom;
+  // compute the a (equation 5.8 of the Eclipse TD)
+  real64 const timeConstantInv = 1.0 / m_timeConstant;
+  real64 const denom = presInfluence - dimensionlessTimeAtBeginningOfStep * dPresInfluence_dTime;
+  real64 const a = timeConstantInv * ( m_influxConstant * potDiff - m_cumulativeFlux * dPresInfluence_dTime ) / denom;
+
+  // compute the b (equation 5.9 of the Eclipse TD)
+  real64 const b = timeConstantInv * m_influxConstant / denom;
+
+  // compute the average inflow rate Q (equation 5.7 of the Eclipse TD)
+  real64 const aquiferVolFlux =  areaFraction * ( a - b * reservoirDeltaPressure );
+  dAquiferVolFlux_dPres = -areaFraction * b;
 
   return aquiferVolFlux;
 }

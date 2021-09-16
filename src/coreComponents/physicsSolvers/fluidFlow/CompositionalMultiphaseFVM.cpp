@@ -615,8 +615,6 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       return;
     }
 
-    real64 const timeAtEndOfStep = time + dt;
-
     AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
     real64 const & aquiferWaterPhaseDens = bc.getWaterPhaseDensity();
     arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
@@ -640,7 +638,8 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                               m_dPhaseCompFrac_dPres.toNestedViewConst(),
                                               m_dPhaseCompFrac_dComp.toNestedViewConst(),
                                               m_dCompFrac_dCompDens.toNestedViewConst(),
-                                              timeAtEndOfStep,
+                                              time,
+                                              dt,
                                               localMatrix.toViewConstSizes(),
                                               localRhs.toView() );
 
@@ -702,7 +701,6 @@ void CompositionalMultiphaseFVM::saveAquiferConvergedState( real64 const & time,
       return;
     }
 
-    real64 const timeAtEndOfStep = time + dt;
     AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
 
     real64 const targetSetSumFluxes =
@@ -711,7 +709,8 @@ void CompositionalMultiphaseFVM::saveAquiferConvergedState( real64 const & time,
                                   m_pressure.toNestedViewConst(),
                                   m_deltaPressure.toNestedViewConst(),
                                   m_gravCoef.toNestedViewConst(),
-                                  timeAtEndOfStep );
+                                  time,
+                                  dt );
 
     localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
     localSumFluxes[aquiferIndex] += targetSetSumFluxes;

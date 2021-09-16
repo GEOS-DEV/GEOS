@@ -1135,13 +1135,12 @@ AquiferBCKernel::
            arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > dPhaseCompFrac_dPres,
            arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac_dCompFrac,
            arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens,
+           real64 const & dt,
            real64 (& localFlux)[NC],
            real64 (& localFluxJacobian)[NC][NC+1] )
 {
   real64 dProp_dC[NC]{};
   real64 dPhaseFlux_dCompDens[NC]{};
-
-  // TODO: my understanding is that the flux does not need to be multiplied by the time step, but this needs to be confirmed
 
   if( aquiferVolFlux > 0 ) // aquifer is upstream
   {
@@ -1152,8 +1151,8 @@ AquiferBCKernel::
     for( integer ic = 0; ic < NC; ++ic )
     {
       real64 const phaseFlux = aquiferVolFlux * aquiferWaterPhaseDens;
-      localFlux[ic] += phaseFlux * aquiferWaterPhaseCompFrac[ic];
-      localFluxJacobian[ic][0] += dAquiferVolFlux_dPres * aquiferWaterPhaseCompFrac[ic];
+      localFlux[ic] += dt * phaseFlux * aquiferWaterPhaseCompFrac[ic];
+      localFluxJacobian[ic][0] += dt * dAquiferVolFlux_dPres * aquiferWaterPhaseCompFrac[ic];
     }
   }
   else // reservoir is upstream
@@ -1171,13 +1170,13 @@ AquiferBCKernel::
 
       for( integer ic = 0; ic < NC; ++ic )
       {
-        localFlux[ic] += phaseFlux * phaseCompFrac[ip][ic];
-        localFluxJacobian[ic][0] += dPhaseFlux_dPres * phaseCompFrac[ip][ic] + phaseFlux * dPhaseCompFrac_dPres[ip][ic];
+        localFlux[ic] += dt * phaseFlux * phaseCompFrac[ip][ic];
+        localFluxJacobian[ic][0] += dt * ( dPhaseFlux_dPres * phaseCompFrac[ip][ic] + phaseFlux * dPhaseCompFrac_dPres[ip][ic] );
 
         applyChainRule( NC, dCompFrac_dCompDens, dPhaseCompFrac_dCompFrac[ic][ip], dProp_dC );
         for( integer jc = 0; jc < NC; ++jc )
         {
-          localFluxJacobian[ic][jc+1] += dPhaseFlux_dCompDens[ic] * phaseCompFrac[ip][ic] + phaseFlux * dProp_dC[jc];
+          localFluxJacobian[ic][jc+1] += dt * ( dPhaseFlux_dCompDens[ic] * phaseCompFrac[ip][ic] + phaseFlux * dProp_dC[jc] );
         }
       }
     }
@@ -1205,7 +1204,8 @@ AquiferBCKernel::
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-          real64 const timeAtEndOfStep,
+          real64 const & timeAtBeginningOfStep,
+          real64 const & dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
@@ -1231,12 +1231,12 @@ AquiferBCKernel::
     real64 const areaFraction = weight( iconn, Order::ELEM );
 
     // compute the aquifer influx rate using the pressure influence function and the aquifer props
-    real64 const resPres = pres[er][esr][ei] + dPres[er][esr][ei];
-    real64 const resGravCoef = gravCoef[er][esr][ei];
     real64 dAquiferVolFlux_dPres = 0.0;
-    real64 const aquiferVolFlux = aquiferBCWrapper.compute( timeAtEndOfStep,
-                                                            resPres,
-                                                            resGravCoef,
+    real64 const aquiferVolFlux = aquiferBCWrapper.compute( timeAtBeginningOfStep,
+                                                            dt,
+                                                            pres[er][esr][ei],
+                                                            dPres[er][esr][ei],
+                                                            gravCoef[er][esr][ei],
                                                             areaFraction,
                                                             dAquiferVolFlux_dPres );
 
@@ -1253,6 +1253,7 @@ AquiferBCKernel::
                                     dPhaseCompFrac_dPres[er][esr][ei][0],
                                     dPhaseCompFrac_dCompFrac[er][esr][ei][0],
                                     dCompFrac_dCompDens[er][esr][ei],
+                                    dt,
                                     localFlux,
                                     localFluxJacobian );
 
@@ -1290,7 +1291,8 @@ AquiferBCKernel::
              ElementViewConst< arrayView1d< real64 const > > const & pres,
              ElementViewConst< arrayView1d< real64 const > > const & dPres,
              ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-             real64 const & timeAtEndOfStep )
+             real64 const & timeAtBeginningOfStep,
+             real64 const & dt )
 {
   // TODO: move this so it can be used by single-phase flow
 
@@ -1311,12 +1313,12 @@ AquiferBCKernel::
     real64 const areaFraction = weight( iconn, Order::ELEM );
 
     // compute the aquifer influx rate using the pressure influence function and the aquifer props
-    real64 const resPres = pres[er][esr][ei] + dPres[er][esr][ei];
-    real64 const resGravCoef = gravCoef[er][esr][ei];
     real64 dAquiferVolFlux_dPres = 0.0;
-    real64 const aquiferVolFlux = aquiferBCWrapper.compute( timeAtEndOfStep,
-                                                            resPres,
-                                                            resGravCoef,
+    real64 const aquiferVolFlux = aquiferBCWrapper.compute( timeAtBeginningOfStep,
+                                                            dt,
+                                                            pres[er][esr][ei],
+                                                            dPres[er][esr][ei],
+                                                            gravCoef[er][esr][ei],
                                                             areaFraction,
                                                             dAquiferVolFlux_dPres );
     targetSetSumFluxes += aquiferVolFlux;
@@ -1347,7 +1349,8 @@ AquiferBCKernel::
                   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres, \
                   ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac, \
                   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens, \
-                  real64 const timeAtEndOfStep, \
+                  real64 const & timeAtBeginningOfStep, \
+                  real64 const & dt, \
                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                   arrayView1d< real64 > const & localRhs )
 
