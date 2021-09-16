@@ -54,7 +54,7 @@ kernel to ensure that `host` and `device` memory in GPUs are properly synced, an
 updates are performed on `device`. Some properties are updated
 within finite element kernels of specific physics (such as stress in a mechanics kernel). Consequently,
 for each constitutive model class, a corresponding `nameOfTheModelUpdates` which, since it only contains
-``LvArray::arrayView`` containers to the data, can be capture by value inside computational kernels.
+``LvArray::arrayView`` containers to the data, can be captured by value inside computational kernels.
 For example, for the single phase fluid model `Updates` are:
 
 .. literalinclude:: /coreComponents/constitutive/fluid/SingleFluidBase.hpp
@@ -74,8 +74,8 @@ Compound models
 ========================================================
 
 Compound constitutive models are employed to mimic the behavior of a material that
-requires a combination of constitutive models linked together.  These compound models do not hold any data.
-They serve only as an interface with the individual models that
+requires a combination of constitutive models linked together.  These compound models
+do not hold any data. They serve only as an interface with the individual models that
 they couple.
 
 Coupled Solids
@@ -93,7 +93,7 @@ and is used to access a generic ``CoupledSolid`` in a physics solver:
    :start-after: //START_SPHINX_INCLUDE_COUPLEDSOLID
    :end-before: //END_SPHINX_INCLUDE_COUPLEDSOLID
 
-Additionally, a `template class` defines a base ``CoupledSolid`` model 
+Additionally, a `template class` defines a base ``CoupledSolid`` model
 templated on the types of solid, porosity, and permeability models:
 
 .. literalinclude:: /coreComponents/constitutive/solid/CoupledSolid.hpp
