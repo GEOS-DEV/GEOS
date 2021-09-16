@@ -81,19 +81,19 @@ they couple.
 Coupled Solids
 ---------------------------------------------------------
 
-`CoupledSolid` models are employed to represent porous materials which require
+``CoupledSolid`` models are employed to represent porous materials which require
 to define both a mechanical behavior and constitutive laws that describe the
 dependency of porosity and permeability on the primary unknowns.
 
-The base class `CoupledSolidBase` implements some basic behaviors
-and can be used to access a generic `CoupledSolid` in a physics solver, e.g.
+The base class ``CoupledSolidBase`` implements some basic behaviors
+and can be used to access a generic ``CoupledSolid`` in a physics solver, e.g.
 
 .. literalinclude:: /coreComponents/physicsSolver/fluidFlow/SinglePhaseBase.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_COUPLEDSOLID
    :end-before: //END_SPHINX_INCLUDE_COUPLEDSOLID
 
-Additionally, the a `template class` defines a base `CoupledSolid` model which
+Additionally, the a `template class` defines a base ``CoupledSolid`` model which
 is templated on the types of solid, porosity and permeability models, i.e.
 
 .. literalinclude:: /coreComponents/constitutive/solid/CoupledSolid.hpp
@@ -109,12 +109,12 @@ this has access to the standalone models needed, i.e.
     :start-after: //START_SPHINX_INCLUDE_00
     :end-before: //END_SPHINX_INCLUDE_00
 
-There exist two specialization of a `CoupledSolid`:
+There exist two specialization of a ``CoupledSolid``:
 
-- `CompressibleSolid`: this model is used whenever there is no need to define a full mechanical model
+- ``CompressibleSolid``: this model is used whenever there is no need to define a full mechanical model
 but only simple correlation to compute material properties like porosity and permeability.
 As such, this model assumes that the solid model is of type `NullModel` and it's only templated on
 the types of the porosity and permeability models.
 
-- `PorousSolid`: this model is used to represent a full porous material in which the porosity and
-permeability models need to be aware of the mechanical response of the material. 
+- ``PorousSolid``: this model is used to represent a full porous material in which the porosity and
+permeability models need to be aware of the mechanical response of the material.
