@@ -20,3 +20,5 @@ Contributing
    Benchmarks.rst
 
    Caliper.rst
+
+   UsingDocker.rst

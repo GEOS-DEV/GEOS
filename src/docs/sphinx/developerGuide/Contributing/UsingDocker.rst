@@ -1,5 +1,5 @@
-Building GEOSX using Docker with precompiled TPL binaries (unsupported)
-=======================================================================
+[Unsupported] Developing inside Docker with precompiled TPL binaries
+====================================================================
 
 For development purposes, you may want to use the publicly available docker images or the OSX tarball instead of compiling them yourself.
 While this is possible and this page will help you in through this journey, please note that *this is not officially supported by the GEOSX team that reserves the right to modify its workflow or delete elements on which you may have build your own workflow*.
@@ -31,7 +31,7 @@ You'll notice the arguments ``IMG``, ``VERSION``, ``ORG``.
 While surely overkill for most cases, if you develop in GEOSX on a regular basis you'll appreciate being able to switch containers easily.
 For example, simply create the image ``clion-ubuntu18.04-gcc8:156-642`` by running
 
-.. code-block::
+.. code-block:: console
 
     export VERSION=156-642
     export IMG=ubuntu18.04-gcc8
@@ -40,7 +40,7 @@ For example, simply create the image ``clion-ubuntu18.04-gcc8:156-642`` by runni
 
 And the ``Dockerfile`` is the following (comments are embedded)
 
-.. code-block::
+.. code-block:: console
 
     # Define you base image for build arguments
     ARG IMG
@@ -98,7 +98,7 @@ And the ``Dockerfile`` is the following (comments are embedded)
 Now that you've created the image, you must instantiate it as a container.
 I like to do
 
-.. code-block::
+.. code-block:: console
 
     docker run --cap-add=ALL -d --name ${CLION_IMG}-${VERSION} -p 64000:22 ${CLION_IMG}:${VERSION}
 
@@ -110,7 +110,7 @@ that creates the container ``clion-ubuntu18.04-gcc8-156-642``, running instance 
 
 You can stop and restart your container with
 
-.. code-block::
+.. code-block:: console
 
     docker stop ${CLION_IMG}-${VERSION}
     docker start ${CLION_IMG}-${VERSION}
