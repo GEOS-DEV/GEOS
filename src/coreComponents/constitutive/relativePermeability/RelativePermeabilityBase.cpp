@@ -31,22 +31,13 @@ namespace
 
 integer toPhaseType( string const & lookup, string const & groupName )
 {
-  static std::unordered_map< string, integer > const phaseDict =
+  static unordered_map< string, integer > const phaseDict =
   {
     { "gas", RelativePermeabilityBase::PhaseType::GAS },
     { "oil", RelativePermeabilityBase::PhaseType::OIL },
     { "water", RelativePermeabilityBase::PhaseType::WATER }
   };
-  auto const it = phaseDict.find( lookup );
-  if( it == phaseDict.end() )
-  {
-    std::vector< string > phaseNames;
-    std::transform( phaseDict.begin(), phaseDict.end(), std::back_inserter( phaseNames ), []( auto const & p ){ return p.first; } );
-    GEOSX_THROW( groupName << ": phase '" << lookup << "' not supported.\n" <<
-                 "Please use one of the following: " << stringutilities::join( phaseNames.begin(), phaseNames.end(), ", " ),
-                 InputError );
-  }
-  return it->second;
+  return findOption( phaseDict, lookup, RelativePermeabilityBase::viewKeyStruct::phaseNamesString(), groupName );
 }
 
 } // namespace
@@ -75,7 +66,7 @@ void RelativePermeabilityBase::postProcessInput()
 
   integer const numPhases = numFluidPhases();
   GEOSX_THROW_IF( numPhases< 2 || numPhases > MAX_NUM_PHASES,
-                  getName() << ": number of fluid phases must be between 2 and " << MAX_NUM_PHASES << ", got " << numPhases,
+                  getFullName() << ": number of fluid phases must be between 2 and " << MAX_NUM_PHASES << ", got " << numPhases,
                   InputError );
 
   m_phaseTypes.resize( numPhases );
@@ -83,7 +74,7 @@ void RelativePermeabilityBase::postProcessInput()
 
   for( integer ip = 0; ip < numPhases; ++ip )
   {
-    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip], getName() );
+    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip], getFullName() );
     m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
 

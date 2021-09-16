@@ -357,6 +357,7 @@ void testCompositionalUpwindDensMult( CellElementStencilTPFA const & stencil,
       UHelpers::mdensMultiply( ip,
                                ke,
                                MAX_STENCIL,
+                               NUM_ELEMS,
                                seri[0],
                                sesri[0],
                                sei[0],
@@ -598,15 +599,23 @@ void testCompositionalUpwindFormPotential( CellElementStencilTPFA const & stenci
     real64 dProp_dC[NC]{};
 
     real64 totFlux = 0.0;
+    real64 transmissibility[CellElementStencilTPFA::MAX_NUM_OF_CONNECTIONS][2];
+    real64 dTrans_dPres[CellElementStencilTPFA::MAX_NUM_OF_CONNECTIONS][2] = {{0.0, 0.0}};
+    transmissibility[0][0] = weights[0][0];
+    transmissibility[0][1] = weights[0][1];
+
 
     UHelpers::formPotential< NC, T, NUM_ELEMS, MAX_STENCIL >::compute(
       NP,
       ip,
       MAX_STENCIL,
+      NUM_ELEMS,
       seri[0],
       sesri[0],
       sei[0],
-      weights[0],
+//      weights[0],
+      transmissibility[0],
+      dTrans_dPres[0],
       totFlux,
       gravCoefView.toNestedViewConst(),
       dCompFrac_dCompDensView.toNestedViewConst(),

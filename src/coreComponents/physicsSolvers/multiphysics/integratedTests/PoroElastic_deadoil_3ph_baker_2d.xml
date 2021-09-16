@@ -33,7 +33,7 @@
       discretization="fluidTPFA"
       targetRegions="{ Domain }"
       fluidNames="{ fluid1 }"
-      solidNames="{ skeleton }"
+      solidNames="{ porousRock }"
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="300"/>
@@ -134,7 +134,7 @@
     <ElasticIsotropic
       name="skeleton"
       defaultDensity="1.0"
-      defaultYoungsModulus="1.e9"
+      defaultYoungModulus="1.e9"
       defaultPoissonRatio="0.2"/>
 
     <BrooksCoreyBakerRelativePermeability
@@ -158,21 +158,13 @@
 
   <FieldSpecifications>
     <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions"
-      fieldName="referencePorosity"
-      scale="0.05"/>
-
-    <FieldSpecification
       name="Porosity"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain/block1"
-      fieldName="rockPorosity_newPorosity"
+      fieldName="rockPorosity_porosity"
       scale="0.05"/>
-
+  
     <!-- Initial pressure: ~5 bar -->
     <FieldSpecification
       name="initialPressure"

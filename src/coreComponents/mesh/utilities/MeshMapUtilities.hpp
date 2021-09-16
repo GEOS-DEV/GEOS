@@ -99,7 +99,7 @@ template< typename T, int USD >
 GEOSX_HOST_DEVICE
 inline localIndex size1( arrayView2d< T, USD > const & map, localIndex const i0 )
 {
-  GEOSX_UNUSED_VAR( i0 )
+  GEOSX_UNUSED_VAR( i0 );
   return map.size( 1 );
 }
 

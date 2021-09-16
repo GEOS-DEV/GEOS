@@ -123,6 +123,11 @@ public:
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
+  implicitStepSetup( real64 const & time,
+                     real64 const & dt,
+                     DomainPartition & domain ) override;
+
+  virtual void
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
@@ -166,7 +171,7 @@ public:
    * @param subRegion the well subRegion containing the well elements and their associated fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
+  virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -185,17 +190,25 @@ public:
                           arrayView1d< real64 > const & localRhs ) override;
 
   /**
-   * @brief assembles the volume balance terms for all well elements
-   * @param time_n previous time value
-   * @param dt time step
+   * @brief assembles the accumulation term for all the well elements
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleVolumeBalanceTerms( real64 const time_n,
-                                           real64 const dt,
-                                           DomainPartition const & domain,
+  void assembleAccumulationTerms( DomainPartition const & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs ) override;
+
+  /**
+   * @brief assembles the volume balance terms for all well elements
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleVolumeBalanceTerms( DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs ) override;
@@ -207,10 +220,16 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void formPressureRelations( DomainPartition const & domain,
-                                      DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs ) override;
+  virtual void assemblePressureRelations( DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) override;
+
+  /**
+   * @brief Backup current values of all constitutive fields that participate in the accumulation term
+   * @param mesh reference to the mesh
+   */
+  void backupFields( MeshLevel & mesh ) const override;
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
@@ -221,6 +240,9 @@ public:
     static constexpr char const * deltaPressureString() { return SinglePhaseBase::viewKeyStruct::deltaPressureString(); }
     static constexpr char const * connRateString() { return "connectionRate"; }
     static constexpr char const * deltaConnRateString() { return "deltaConnectionRate"; }
+
+    // backup field for the accumulation term
+    static constexpr char const * densityOldString() { return SinglePhaseBase::viewKeyStruct::densityOldString(); }
 
     // perforation rates
     static constexpr char const * perforationRateString() { return "perforationRate"; }

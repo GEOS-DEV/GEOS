@@ -20,8 +20,11 @@
 #include "CompositionalMultiphaseFlowUpwindHelperKernels.hpp"
 
 #include "finiteVolume/CellElementStencilTPFA.hpp"
-#include "finiteVolume/FaceElementStencil.hpp"
+#include "finiteVolume/SurfaceElementStencil.hpp"
+#include "finiteVolume/EmbeddedSurfaceToCellStencil.hpp"
+#include "finiteVolume/FaceElementToCellStencil.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
+
 
 namespace geosx
 {
@@ -44,6 +47,7 @@ PhaseMobilityKernel::
            arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseVisc_dComp,
            arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dComp,
            arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseMob,
@@ -55,6 +59,20 @@ PhaseMobilityKernel::
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
+
+    // compute the phase mobility only if the phase is present
+    bool const phaseExists = (phaseVolFrac[ip] > 0);
+    if( !phaseExists )
+    {
+      phaseMob[ip] = 0.;
+      dPhaseMob_dPres[ip] = 0.;
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dPhaseMob_dComp[ip][jc] = 0.;
+      }
+      continue;
+    }
+
     real64 const viscosity = phaseVisc[ip];
     real64 const dVisc_dP = dPhaseVisc_dPres[ip];
     applyChainRule( NC, dCompFrac_dCompDens, dPhaseVisc_dComp[ip], dVisc_dC );
@@ -104,6 +122,7 @@ void PhaseMobilityKernel::
           arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp,
           arrayView2d< real64, compflow::USD_PHASE > const & phaseMob,
@@ -111,22 +130,23 @@ void PhaseMobilityKernel::
           arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseMob_dComp )
 {
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
-      {
-        compute< NC, NP >( dCompFrac_dCompDens[a],
-                           phaseDens[a][0],
-                           dPhaseDens_dPres[a][0],
-                           dPhaseDens_dComp[a][0],
-                           phaseVisc[a][0],
-                           dPhaseVisc_dPres[a][0],
-                           dPhaseVisc_dComp[a][0],
-                           phaseRelPerm[a][0],
-                           dPhaseRelPerm_dPhaseVolFrac[a][0],
-                           dPhaseVolFrac_dPres[a],
-                           dPhaseVolFrac_dComp[a],
-                           phaseMob[a],
-                           dPhaseMob_dPres[a],
-                           dPhaseMob_dComp[a] );
-      } );
+  {
+    compute< NC, NP >( dCompFrac_dCompDens[a],
+                       phaseDens[a][0],
+                       dPhaseDens_dPres[a][0],
+                       dPhaseDens_dComp[a][0],
+                       phaseVisc[a][0],
+                       dPhaseVisc_dPres[a][0],
+                       dPhaseVisc_dComp[a][0],
+                       phaseRelPerm[a][0],
+                       dPhaseRelPerm_dPhaseVolFrac[a][0],
+                       phaseVolFrac[a],
+                       dPhaseVolFrac_dPres[a],
+                       dPhaseVolFrac_dComp[a],
+                       phaseMob[a],
+                       dPhaseMob_dPres[a],
+                       dPhaseMob_dComp[a] );
+  } );
 }
 
 template< localIndex NC, localIndex NP >
@@ -141,6 +161,7 @@ void PhaseMobilityKernel::
           arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp,
           arrayView2d< real64, compflow::USD_PHASE > const & phaseMob,
@@ -148,23 +169,24 @@ void PhaseMobilityKernel::
           arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseMob_dComp )
 {
   forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-      {
-        localIndex const a = targetSet[ i ];
-        compute< NC, NP >( dCompFrac_dCompDens[a],
-                           phaseDens[a][0],
-                           dPhaseDens_dPres[a][0],
-                           dPhaseDens_dComp[a][0],
-                           phaseVisc[a][0],
-                           dPhaseVisc_dPres[a][0],
-                           dPhaseVisc_dComp[a][0],
-                           phaseRelPerm[a][0],
-                           dPhaseRelPerm_dPhaseVolFrac[a][0],
-                           dPhaseVolFrac_dPres[a],
-                           dPhaseVolFrac_dComp[a],
-                           phaseMob[a],
-                           dPhaseMob_dPres[a],
-                           dPhaseMob_dComp[a] );
-      } );
+  {
+    localIndex const a = targetSet[ i ];
+    compute< NC, NP >( dCompFrac_dCompDens[a],
+                       phaseDens[a][0],
+                       dPhaseDens_dPres[a][0],
+                       dPhaseDens_dComp[a][0],
+                       phaseVisc[a][0],
+                       dPhaseVisc_dPres[a][0],
+                       dPhaseVisc_dComp[a][0],
+                       phaseRelPerm[a][0],
+                       dPhaseRelPerm_dPhaseVolFrac[a][0],
+                       phaseVolFrac[a],
+                       dPhaseVolFrac_dPres[a],
+                       dPhaseVolFrac_dComp[a],
+                       phaseMob[a],
+                       dPhaseMob_dPres[a],
+                       dPhaseMob_dComp[a] );
+  } );
 }
 
 #define INST_PhaseMobilityKernel( NC, NP ) \
@@ -181,6 +203,7 @@ void PhaseMobilityKernel::
                       arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp, \
                       arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm, \
                       arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac, \
+                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac, \
                       arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres, \
                       arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp, \
                       arrayView2d< real64, compflow::USD_PHASE > const & phaseMob, \
@@ -199,6 +222,7 @@ void PhaseMobilityKernel::
                       arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp, \
                       arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm, \
                       arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac, \
+                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac, \
                       arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres, \
                       arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp, \
                       arrayView2d< real64, compflow::USD_PHASE > const & phaseMob, \
@@ -225,22 +249,25 @@ INST_PhaseMobilityKernel( 5, 3 );
 
 #undef INST_PhaseMobilityKernel
 
+
 /******************************** FluxKernel ********************************/
 
 template< CompositionalMultiphaseFlowUpwindHelperKernels::term T >
 using UpwindSchemeType = CompositionalMultiphaseFlowUpwindHelperKernels::HybridUpwind< T >;
 //using UpwindSchemeType = CompositionalMultiphaseFlowUpwindHelperKernels::PhasePotentialUpwind<T>;
 
-template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL, bool IS_UT_FORM >
+template< localIndex NC, localIndex MAX_NUM_ELEMS, localIndex MAX_STENCIL_SIZE, bool IS_UT_FORM >
 GEOSX_HOST_DEVICE
 void
 FluxKernel::
   compute( localIndex const numPhases,
            localIndex const stencilSize,
+           localIndex const numFluxElems,
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
-           arraySlice1d< real64 const > const stencilWeights,
+           real64 const (&transmissibility)[2],
+           real64 const (&dTrans_dPres)[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -267,58 +294,61 @@ FluxKernel::
            arraySlice2d< real64 > const localFluxJacobian )
 {
   localIndex constexpr NDOF = NC + 1;
-  localIndex const NP = numPhases;
+
+//  stackArray1d< real64, NC > compFlux( NC );
+//  stackArray2d< real64, MAX_STENCIL_SIZE * NC > dCompFlux_dP( stencilSize, NC );
+//  stackArray3d< real64, MAX_STENCIL_SIZE * NC * NC > dCompFlux_dC( stencilSize, NC, NC );
 
   real64 compFlux[NC]{};
-  real64 dCompFlux_dP[MAX_STENCIL][NC]{};
-  real64 dCompFlux_dC[MAX_STENCIL][NC][NC]{};
+  real64 dCompFlux_dP[MAX_STENCIL_SIZE][NC]{};
+  real64 dCompFlux_dC[MAX_STENCIL_SIZE][NC][NC]{};
 
   real64 totFlux_unw{};
-  real64 dTotFlux_dP[MAX_STENCIL]{};
-  real64 dTotFlux_dC[MAX_STENCIL][NC]{};
+  real64 dTotFlux_dP[MAX_STENCIL_SIZE]{};
+  real64 dTotFlux_dC[MAX_STENCIL_SIZE][NC]{};
 
 
   using UpwindHelpers = geosx::CompositionalMultiphaseFlowUpwindHelperKernels::UpwindHelpers;
 
   // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < numPhases; ++ip )
   {
 
     // create local work arrays
     real64 phaseFlux{};
-    real64 dPhaseFlux_dP[MAX_STENCIL]{};
-    real64 dPhaseFlux_dC[MAX_STENCIL][NC]{};
+    real64 dPhaseFlux_dP[MAX_STENCIL_SIZE]{};
+    real64 dPhaseFlux_dC[MAX_STENCIL_SIZE][NC]{};
 
     localIndex k_up = -1;
 
-    UpwindHelpers::formPPUVelocity< NC, NUM_ELEMS, MAX_STENCIL >(
-      NP,
-      ip,
-      stencilSize,
-      seri,
-      sesri,
-      sei,
-      stencilWeights,
-      pres,
-      dPres,
-      gravCoef,
-      phaseMob,
-      dPhaseMob_dPres,
-      dPhaseMob_dComp,
-      dPhaseVolFrac_dPres,
-      dPhaseVolFrac_dComp,
-      dCompFrac_dCompDens,
-      phaseMassDens,
-      dPhaseMassDens_dPres,
-      dPhaseMassDens_dComp,
-      phaseCapPressure,
-      dPhaseCapPressure_dPhaseVolFrac,
-      capPressureFlag,
-      k_up,
-      phaseFlux,
-      dPhaseFlux_dP,
-      dPhaseFlux_dC
-      );
+    UpwindHelpers::formPPUVelocity< NC, MAX_NUM_ELEMS, MAX_STENCIL_SIZE >( numPhases,
+                                                                           ip,
+                                                                           stencilSize,
+                                                                           seri,
+                                                                           sesri,
+                                                                           sei,
+//      stencilWeights,
+                                                                           transmissibility,
+                                                                           dTrans_dPres,
+                                                                           pres,
+                                                                           dPres,
+                                                                           gravCoef,
+                                                                           phaseMob,
+                                                                           dPhaseMob_dPres,
+                                                                           dPhaseMob_dComp,
+                                                                           dPhaseVolFrac_dPres,
+                                                                           dPhaseVolFrac_dComp,
+                                                                           dCompFrac_dCompDens,
+                                                                           phaseMassDens,
+                                                                           dPhaseMassDens_dPres,
+                                                                           dPhaseMassDens_dComp,
+                                                                           phaseCapPressure,
+                                                                           dPhaseCapPressure_dPhaseVolFrac,
+                                                                           capPressureFlag,
+                                                                           k_up,
+                                                                           phaseFlux,
+                                                                           dPhaseFlux_dP,
+                                                                           dPhaseFlux_dC );
 
     // updateing phase Flux
     totFlux_unw += phaseFlux;
@@ -334,20 +364,20 @@ FluxKernel::
     }
 
 //    mdensmultiply
-    UpwindHelpers::mdensMultiply(
-      ip,
-      k_up,
-      stencilSize,
-      seri,
-      sesri,
-      sei,
-      dCompFrac_dCompDens,
-      phaseDens,
-      dPhaseDens_dPres,
-      dPhaseDens_dComp,
-      phaseFlux,
-      dPhaseFlux_dP,
-      dPhaseFlux_dC );
+    UpwindHelpers::mdensMultiply( ip,
+                                  k_up,
+                                  stencilSize,
+                                  numFluxElems,
+                                  seri,
+                                  sesri,
+                                  sei,
+                                  dCompFrac_dCompDens,
+                                  phaseDens,
+                                  dPhaseDens_dPres,
+                                  dPhaseDens_dComp,
+                                  phaseFlux,
+                                  dPhaseFlux_dP,
+                                  dPhaseFlux_dC );
 
     if( !IS_UT_FORM ) // skip  if you intend to use fixed total velocity formulation
     {
@@ -375,35 +405,38 @@ FluxKernel::
   //if total flux formulation
   if( IS_UT_FORM )
   {
-    for( localIndex ip = 0; ip < NP; ++ip )
+    for( localIndex ip = 0; ip < numPhases; ++ip )
     {
       // choose upstream cell
       // create local work arrays
       real64 phaseFlux{};
-      real64 dPhaseFlux_dP[MAX_STENCIL]{};
-      real64 dPhaseFlux_dC[MAX_STENCIL][NC]{};
+      real64 dPhaseFlux_dP[MAX_STENCIL_SIZE]{};
+      real64 dPhaseFlux_dC[MAX_STENCIL_SIZE][NC]{};
 
       real64 phaseFluxV{};
-      real64 dPhaseFluxV_dP[MAX_STENCIL]{};
-      real64 dPhaseFluxV_dC[MAX_STENCIL][NC]{};
+      real64 dPhaseFluxV_dP[MAX_STENCIL_SIZE]{};
+      real64 dPhaseFluxV_dC[MAX_STENCIL_SIZE][NC]{};
 
       real64 fflow{};
-      real64 dFflow_dP[MAX_STENCIL]{};
-      real64 dFflow_dC[MAX_STENCIL][NC]{};
+      real64 dFflow_dP[MAX_STENCIL_SIZE]{};
+      real64 dFflow_dC[MAX_STENCIL_SIZE][NC]{};
 
 
       // and the fractional flow for viscous part as \lambda_i^{up}/\sum_{NP}(\lambda_j^{up}) with up decided upon
       // the Upwind strategy
       localIndex k_up = -1;
-      UpwindHelpers::formFracFlow< NC, NUM_ELEMS, MAX_STENCIL,
+      UpwindHelpers::formFracFlow< NC, MAX_NUM_ELEMS, MAX_STENCIL_SIZE,
         CompositionalMultiphaseFlowUpwindHelperKernels::term::Viscous,
-        UpwindSchemeType >( NP,
+        UpwindSchemeType >( numPhases,
                             ip,
                             stencilSize,
+                            numFluxElems,
                             seri,
                             sesri,
                             sei,
-                            stencilWeights,
+//                            stencilWeights,
+                            transmissibility,
+                            dTrans_dPres,
                             totFlux_unw,
                             pres,
                             dPres,
@@ -426,20 +459,20 @@ FluxKernel::
                             dFflow_dC );
 
       //mdensmultiply
-      UpwindHelpers::mdensMultiply(
-        ip,
-        k_up,
-        stencilSize,
-        seri,
-        sesri,
-        sei,
-        dCompFrac_dCompDens,
-        phaseDens,
-        dPhaseDens_dPres,
-        dPhaseDens_dComp,
-        fflow,
-        dFflow_dP,
-        dFflow_dC );
+      UpwindHelpers::mdensMultiply( ip,
+                                    k_up,
+                                    stencilSize,
+                                    numFluxElems,
+                                    seri,
+                                    sesri,
+                                    sei,
+                                    dCompFrac_dCompDens,
+                                    phaseDens,
+                                    dPhaseDens_dPres,
+                                    dPhaseDens_dComp,
+                                    fflow,
+                                    dFflow_dP,
+                                    dFflow_dC );
 
       // Assembling the viscous flux (and derivatives) from fractional flow and total velocity as \phi_{\mu} = f_i^{up,\mu} uT
       phaseFluxV = fflow * totFlux_unw;
@@ -492,48 +525,50 @@ FluxKernel::
                                     dCompFlux_dC );
 
       /***           GRAVITY TERM                ***/
+      // upwind flag for main phase and other phases
       localIndex k_up_g = -1;
       localIndex k_up_og = -1;
 
       real64 phaseFluxG{};
-      real64 dPhaseFluxG_dP[MAX_STENCIL]{};
-      real64 dPhaseFluxG_dC[MAX_STENCIL][NC]{};
+      real64 dPhaseFluxG_dP[MAX_STENCIL_SIZE]{};
+      real64 dPhaseFluxG_dC[MAX_STENCIL_SIZE][NC]{};
 
       UpwindHelpers::formPotFluxes< NC,
         CompositionalMultiphaseFlowUpwindHelperKernels::term::Gravity,
-        NUM_ELEMS, MAX_STENCIL, NUM_ELEMS, UpwindSchemeType >(
-        NP,
-        ip,
-        stencilSize,
-        seri,
-        sesri,
-        sei,
-        stencilWeights,
-        totFlux_unw,
-        pres,
-        dPres,
-        gravCoef,
-        phaseMob,
-        dPhaseMob_dPres,
-        dPhaseMob_dComp,
-        dPhaseVolFrac_dPres,
-        dPhaseVolFrac_dComp,
-        dCompFrac_dCompDens,
-        phaseDens,
-        dPhaseDens_dPres,
-        dPhaseDens_dComp,
-        phaseMassDens,
-        dPhaseMassDens_dPres,
-        dPhaseMassDens_dComp,
-        phaseCapPressure,
-        dPhaseCapPressure_dPhaseVolFrac,
-        capPressureFlag,
-        k_up_g,
-        k_up_og,
-        phaseFlux,
-        dPhaseFlux_dP,
-        dPhaseFlux_dC
-      );
+        MAX_NUM_ELEMS, MAX_STENCIL_SIZE, MAX_NUM_ELEMS, UpwindSchemeType >( numPhases,
+                                                                            ip,
+                                                                            stencilSize,
+                                                                            numFluxElems,
+                                                                            seri,
+                                                                            sesri,
+                                                                            sei,
+//        stencilWeights,
+                                                                            transmissibility,
+                                                                            dTrans_dPres,
+                                                                            totFlux_unw,
+                                                                            pres,
+                                                                            dPres,
+                                                                            gravCoef,
+                                                                            phaseMob,
+                                                                            dPhaseMob_dPres,
+                                                                            dPhaseMob_dComp,
+                                                                            dPhaseVolFrac_dPres,
+                                                                            dPhaseVolFrac_dComp,
+                                                                            dCompFrac_dCompDens,
+                                                                            phaseDens,
+                                                                            dPhaseDens_dPres,
+                                                                            dPhaseDens_dComp,
+                                                                            phaseMassDens,
+                                                                            dPhaseMassDens_dPres,
+                                                                            dPhaseMassDens_dComp,
+                                                                            phaseCapPressure,
+                                                                            dPhaseCapPressure_dPhaseVolFrac,
+                                                                            capPressureFlag,
+                                                                            k_up_g,
+                                                                            k_up_og,
+                                                                            phaseFlux,
+                                                                            dPhaseFlux_dP,
+                                                                            dPhaseFlux_dC );
 
       // Distributing the gravitational flux of phase i onto component
       UpwindHelpers::formPhaseComp( ip,
@@ -572,44 +607,45 @@ FluxKernel::
         localIndex k_up_opc = -1;
 
         real64 phaseFluxCap{};
-        real64 dPhaseFluxCap_dP[MAX_STENCIL]{};
-        real64 dPhaseFluxCap_dC[MAX_STENCIL][NC]{};
+        real64 dPhaseFluxCap_dP[MAX_STENCIL_SIZE]{};
+        real64 dPhaseFluxCap_dC[MAX_STENCIL_SIZE][NC]{};
 
         UpwindHelpers::formPotFluxes< NC,
           CompositionalMultiphaseFlowUpwindHelperKernels::term::Capillary,
-          NUM_ELEMS, MAX_STENCIL, MAX_STENCIL, UpwindSchemeType >(
-          NP,
-          ip,
-          stencilSize,
-          seri,
-          sesri,
-          sei,
-          stencilWeights,
-          totFlux_unw,
-          pres,
-          dPres,
-          gravCoef,
-          phaseMob,
-          dPhaseMob_dPres,
-          dPhaseMob_dComp,
-          dPhaseVolFrac_dPres,
-          dPhaseVolFrac_dComp,
-          dCompFrac_dCompDens,
-          phaseDens,
-          dPhaseDens_dPres,
-          dPhaseDens_dComp,
-          phaseMassDens,
-          dPhaseMassDens_dPres,
-          dPhaseMassDens_dComp,
-          phaseCapPressure,
-          dPhaseCapPressure_dPhaseVolFrac,
-          capPressureFlag,
-          k_up_pc,
-          k_up_opc,
-          phaseFluxCap,
-          dPhaseFluxCap_dP,
-          dPhaseFluxCap_dC
-        );
+          MAX_NUM_ELEMS, MAX_STENCIL_SIZE, MAX_STENCIL_SIZE, UpwindSchemeType >( numPhases,
+                                                                                 ip,
+                                                                                 stencilSize,
+                                                                                 numFluxElems,
+                                                                                 seri,
+                                                                                 sesri,
+                                                                                 sei,
+//          stencilWeights,
+                                                                                 transmissibility,
+                                                                                 dTrans_dPres,
+                                                                                 totFlux_unw,
+                                                                                 pres,
+                                                                                 dPres,
+                                                                                 gravCoef,
+                                                                                 phaseMob,
+                                                                                 dPhaseMob_dPres,
+                                                                                 dPhaseMob_dComp,
+                                                                                 dPhaseVolFrac_dPres,
+                                                                                 dPhaseVolFrac_dComp,
+                                                                                 dCompFrac_dCompDens,
+                                                                                 phaseDens,
+                                                                                 dPhaseDens_dPres,
+                                                                                 dPhaseDens_dComp,
+                                                                                 phaseMassDens,
+                                                                                 dPhaseMassDens_dPres,
+                                                                                 dPhaseMassDens_dComp,
+                                                                                 phaseCapPressure,
+                                                                                 dPhaseCapPressure_dPhaseVolFrac,
+                                                                                 capPressureFlag,
+                                                                                 k_up_pc,
+                                                                                 k_up_opc,
+                                                                                 phaseFluxCap,
+                                                                                 dPhaseFluxCap_dP,
+                                                                                 dPhaseFluxCap_dC );
 
         // Distributing the gravitational flux of phase i onto component
         UpwindHelpers::formPhaseComp( ip,
@@ -645,25 +681,27 @@ FluxKernel::
     }
   }//end if UT_FORM
 
-  UpwindHelpers::fillLocalJacobi< NC, MAX_STENCIL, NDOF >( compFlux,
-                                                           dCompFlux_dP,
-                                                           dCompFlux_dC,
-                                                           stencilSize,
-                                                           dt,
-                                                           localFlux,
-                                                           localFluxJacobian );
+  UpwindHelpers::fillLocalJacobi< NC, MAX_STENCIL_SIZE, NDOF >( compFlux,
+                                                                dCompFlux_dP,
+                                                                dCompFlux_dC,
+                                                                stencilSize,
+                                                                dt,
+                                                                localFlux,
+                                                                localFluxJacobian );
 }
 
-template< localIndex NC, typename STENCIL_TYPE, bool IS_UT_FORM >
+template< localIndex NC, typename STENCILWRAPPER_TYPE, bool IS_UT_FORM >
 void
 FluxKernel::
   launch( localIndex const numPhases,
-          STENCIL_TYPE const & stencil,
+          STENCILWRAPPER_TYPE const & stencilWrapper,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & permeability,
+          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
@@ -687,29 +725,43 @@ FluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-  typename STENCIL_TYPE::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-  typename STENCIL_TYPE::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-  typename STENCIL_TYPE::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-  typename STENCIL_TYPE::WeightContainerViewConstType const & weights = stencil.getWeights();
+  typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
+  typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
+  typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  localIndex constexpr NUM_ELEMS   = STENCIL_TYPE::NUM_POINT_IN_FLUX;
-  localIndex constexpr MAX_STENCIL = STENCIL_TYPE::MAX_STENCIL_SIZE;
+  constexpr localIndex MAX_NUM_ELEMS = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
+  constexpr localIndex MAX_STENCIL_SIZE = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
 
-  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
       {
 
         localIndex const stencilSize = meshMapUtilities::size1( sei, iconn );
-        localIndex constexpr NDOF = NC + 1;
+        localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
+        constexpr localIndex NDOF = NC + 1;
 
-        stackArray1d< real64, NUM_ELEMS * NC >                      localFlux( NUM_ELEMS * NC );
-        stackArray2d< real64, NUM_ELEMS * NC * MAX_STENCIL * NDOF > localFluxJacobian( NUM_ELEMS * NC, stencilSize * NDOF );
+        // working arrays
+        stackArray1d< globalIndex, MAX_NUM_ELEMS * NDOF > dofColIndices( stencilSize * NDOF );
+        stackArray1d< real64, MAX_NUM_ELEMS * NC >                      localFlux( numFluxElems * NC );
+        stackArray2d< real64, MAX_NUM_ELEMS * NC * MAX_STENCIL_SIZE * NDOF > localFluxJacobian( numFluxElems * NC, stencilSize * NDOF );
 
-        FluxKernel::compute< NC, NUM_ELEMS, MAX_STENCIL, IS_UT_FORM >( numPhases,
+        // compute transmissibility
+        real64 transmissibility[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+        real64 dTrans_dPres[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+
+        stencilWrapper.computeWeights( iconn,
+                                       permeability,
+                                       dPerm_dPres,
+                                       transmissibility,
+                                       dTrans_dPres );
+
+        FluxKernel::compute< NC, MAX_NUM_ELEMS, MAX_STENCIL_SIZE, IS_UT_FORM >( numPhases,
                                                                        stencilSize,
+                                                                       numFluxElems,
                                                                        seri[iconn],
                                                                        sesri[iconn],
                                                                        sei[iconn],
-                                                                       weights[iconn],
+                                                                       transmissibility[0],
+                                                                       dTrans_dPres[0],
                                                                        pres,
                                                                        dPres,
                                                                        gravCoef,
@@ -736,21 +788,21 @@ FluxKernel::
                                                                        localFluxJacobian );
 
         // populate dof indices
-        globalIndex dofColIndices[ MAX_STENCIL * NDOF ];
-        for( localIndex i = 0; i < stencilSize; ++i )
-        {
-          globalIndex const offset = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
 
-          for( localIndex jdof = 0; jdof < NDOF; ++jdof )
-          {
-            dofColIndices[i * NDOF + jdof] = offset + jdof;
-          }
-        }
+    for( localIndex i = 0; i < stencilSize; ++i )
+    {
+      globalIndex const offset = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
 
-        // TODO: apply equation/variable change transformation(s)
+      for( localIndex jdof = 0; jdof < NDOF; ++jdof )
+      {
+        dofColIndices[i * NDOF + jdof] = offset + jdof;
+      }
+    }
+
+    // TODO: apply equation/variable change transformation(s)
 
         // Add to residual/jacobian
-        for( localIndex i = 0; i < NUM_ELEMS; ++i )
+        for( localIndex i = 0; i < numFluxElems; ++i )
         {
           if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
           {
@@ -763,7 +815,7 @@ FluxKernel::
             {
               RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow + ic], localFlux[i * NC + ic] );
               localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
-                                                                                dofColIndices,
+                                                                                dofColIndices.data(),
                                                                                 localFluxJacobian[i * NC + ic].dataIfContiguous(),
                                                                                 stencilSize * NDOF );
             }
@@ -772,69 +824,98 @@ FluxKernel::
       } );
 }
 
-#define INST_FluxKernel( NC, STENCIL_TYPE, IS_UT_FORM ) \
+#define INST_FluxKernel( NC, STENCILWRAPPER_TYPE, IS_UT_FORM ) \
   template \
   void FluxKernel:: \
-    launch< NC, STENCIL_TYPE, IS_UT_FORM >( localIndex const numPhases, \
-                                            STENCIL_TYPE const & stencil, \
-                                            globalIndex const rankOffset, \
-                                            ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber, \
-                                            ElementViewConst< arrayView1d< integer const > > const & ghostRank, \
-                                            ElementViewConst< arrayView1d< real64 const > > const & pres, \
-                                            ElementViewConst< arrayView1d< real64 const > > const & dPres, \
-                                            ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
-                                            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob, \
-                                            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres, \
-                                            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dComp, \
-                                            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres, \
-                                            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp, \
-                                            ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens, \
-                                            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
-                                            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres, \
-                                            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dComp, \
-                                            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens, \
-                                            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres, \
-                                            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp, \
-                                            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
-                                            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres, \
-                                            ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dComp, \
-                                            ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure, \
-                                            ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac, \
-                                            integer const capPressureFlag, \
-                                            real64 const dt, \
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix, \
-                                            arrayView1d< real64 > const & localRhs )
+    launch< NC, STENCILWRAPPER_TYPE, IS_UT_FORM >( localIndex const numPhases, \
+                                                  STENCILWRAPPER_TYPE const & stencilWrapper, \
+                                                  globalIndex const rankOffset, \
+                                                  ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber, \
+                                                  ElementViewConst< arrayView1d< integer const > > const & ghostRank, \
+                                                  ElementViewConst< arrayView1d< real64 const > > const & pres, \
+                                                  ElementViewConst< arrayView1d< real64 const > > const & dPres, \
+                                                  ElementViewConst< arrayView3d< real64 const > > const & permeability, \
+                                                  ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres, \
+                                                  ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
+                                                  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob, \
+                                                  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres, \
+                                                  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dComp, \
+                                                  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres, \
+                                                  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dComp, \
+                                                  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens, \
+                                                  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
+                                                  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres, \
+                                                  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dComp, \
+                                                  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens, \
+                                                  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres, \
+                                                  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dComp, \
+                                                  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
+                                                  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres, \
+                                                  ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dComp, \
+                                                  ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const & phaseCapPressure, \
+                                                  ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac, \
+                                                  integer const capPressureFlag, \
+                                                  real64 const dt, \
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix, \
+                                                  arrayView1d< real64 > const & localRhs )
 
-INST_FluxKernel( 1, CellElementStencilTPFA, false );
-INST_FluxKernel( 2, CellElementStencilTPFA, false );
-INST_FluxKernel( 3, CellElementStencilTPFA, false );
-INST_FluxKernel( 4, CellElementStencilTPFA, false );
-INST_FluxKernel( 5, CellElementStencilTPFA, false );
 
-INST_FluxKernel( 1, CellElementStencilTPFA, true );
-INST_FluxKernel( 2, CellElementStencilTPFA, true );
-INST_FluxKernel( 3, CellElementStencilTPFA, true );
-INST_FluxKernel( 4, CellElementStencilTPFA, true );
-INST_FluxKernel( 5, CellElementStencilTPFA, true );
+INST_FluxKernel( 1, CellElementStencilTPFAWrapper, true );
+INST_FluxKernel( 2, CellElementStencilTPFAWrapper, true );
+INST_FluxKernel( 3, CellElementStencilTPFAWrapper, true  );
+INST_FluxKernel( 4, CellElementStencilTPFAWrapper, true  );
+INST_FluxKernel( 5, CellElementStencilTPFAWrapper, true  );
 
-INST_FluxKernel( 1, FaceElementStencil, false );
-INST_FluxKernel( 2, FaceElementStencil, false );
-INST_FluxKernel( 3, FaceElementStencil, false );
-INST_FluxKernel( 4, FaceElementStencil, false );
-INST_FluxKernel( 5, FaceElementStencil, false );
+INST_FluxKernel( 1, SurfaceElementStencilWrapper, true  );
+INST_FluxKernel( 2, SurfaceElementStencilWrapper, true  );
+INST_FluxKernel( 3, SurfaceElementStencilWrapper, true  );
+INST_FluxKernel( 4, SurfaceElementStencilWrapper, true  );
+INST_FluxKernel( 5, SurfaceElementStencilWrapper, true  );
 
-INST_FluxKernel( 1, FaceElementStencil, true );
-INST_FluxKernel( 2, FaceElementStencil, true );
-INST_FluxKernel( 3, FaceElementStencil, true );
-INST_FluxKernel( 4, FaceElementStencil, true );
-INST_FluxKernel( 5, FaceElementStencil, true );
+INST_FluxKernel( 1, EmbeddedSurfaceToCellStencilWrapper, true  );
+INST_FluxKernel( 2, EmbeddedSurfaceToCellStencilWrapper, true  );
+INST_FluxKernel( 3, EmbeddedSurfaceToCellStencilWrapper, true  );
+INST_FluxKernel( 4, EmbeddedSurfaceToCellStencilWrapper, true  );
+INST_FluxKernel( 5, EmbeddedSurfaceToCellStencilWrapper, true  );
+
+INST_FluxKernel( 1, FaceElementToCellStencilWrapper, true );
+INST_FluxKernel( 2, FaceElementToCellStencilWrapper, true  );
+INST_FluxKernel( 3, FaceElementToCellStencilWrapper, true  );
+INST_FluxKernel( 4, FaceElementToCellStencilWrapper, true  );
+INST_FluxKernel( 5, FaceElementToCellStencilWrapper, true  );
+
+INST_FluxKernel( 1, CellElementStencilTPFAWrapper, false  );
+INST_FluxKernel( 2, CellElementStencilTPFAWrapper, false  );
+INST_FluxKernel( 3, CellElementStencilTPFAWrapper, false  );
+INST_FluxKernel( 4, CellElementStencilTPFAWrapper, false  );
+INST_FluxKernel( 5, CellElementStencilTPFAWrapper, false  );
+
+INST_FluxKernel( 1, SurfaceElementStencilWrapper, false  );
+INST_FluxKernel( 2, SurfaceElementStencilWrapper, false  );
+INST_FluxKernel( 3, SurfaceElementStencilWrapper, false  );
+INST_FluxKernel( 4, SurfaceElementStencilWrapper, false  );
+INST_FluxKernel( 5, SurfaceElementStencilWrapper, false  );
+
+INST_FluxKernel( 1, EmbeddedSurfaceToCellStencilWrapper, false  );
+INST_FluxKernel( 2, EmbeddedSurfaceToCellStencilWrapper, false  );
+INST_FluxKernel( 3, EmbeddedSurfaceToCellStencilWrapper, false  );
+INST_FluxKernel( 4, EmbeddedSurfaceToCellStencilWrapper, false  );
+INST_FluxKernel( 5, EmbeddedSurfaceToCellStencilWrapper, false  );
+
+INST_FluxKernel( 1, FaceElementToCellStencilWrapper, false );
+INST_FluxKernel( 2, FaceElementToCellStencilWrapper, false  );
+INST_FluxKernel( 3, FaceElementToCellStencilWrapper, false  );
+INST_FluxKernel( 4, FaceElementToCellStencilWrapper, false  );
+INST_FluxKernel( 5, FaceElementToCellStencilWrapper, false  );
+
+
 
 #undef INST_FluxKernel
 
 
 /******************************** CFLFluxKernel ********************************/
 
-template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
+template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
 GEOSX_HOST_DEVICE
 void
 CFLFluxKernel::
@@ -844,9 +925,10 @@ CFLFluxKernel::
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
-           arraySlice1d< real64 const > const stencilWeights,
+           real64 const (&transmissibility)[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
@@ -858,6 +940,7 @@ CFLFluxKernel::
   // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
   for( localIndex ip = 0; ip < numPhases; ++ip )
   {
+
     // clear working arrays
     real64 densMean{};
 
@@ -884,10 +967,9 @@ CFLFluxKernel::
       localIndex const er  = seri[i];
       localIndex const esr = sesri[i];
       localIndex const ei  = sei[i];
-      real64 const weight  = stencilWeights[i];
 
-      presGrad += weight * pres[er][esr][ei];
-      gravHead += weight * densMean * gravCoef[er][esr][ei];
+      presGrad += transmissibility[i] * pres[er][esr][ei];
+      gravHead += transmissibility[i] * densMean * gravCoef[er][esr][ei];
     }
 
     // *** upwinding ***
@@ -901,6 +983,13 @@ CFLFluxKernel::
     localIndex const er_up  = seri[k_up];
     localIndex const esr_up = sesri[k_up];
     localIndex const ei_up  = sei[k_up];
+
+    // compute the phase flux only if the phase is present
+    bool const phaseExists = (phaseVolFrac[er_up][esr_up][ei_up][ip] > 0);
+    if( !phaseExists )
+    {
+      continue;
+    }
 
     real64 const mobility = phaseRelPerm[er_up][esr_up][ei_up][0][ip] / phaseVisc[er_up][esr_up][ei_up][0][ip];
 
@@ -919,14 +1008,17 @@ CFLFluxKernel::
   }
 }
 
-template< localIndex NC, typename STENCIL_TYPE >
+template< localIndex NC, typename STENCILWRAPPER_TYPE >
 void
 CFLFluxKernel::
   launch( localIndex const numPhases,
           real64 const & dt,
-          STENCIL_TYPE const & stencil,
+          STENCILWRAPPER_TYPE const & stencilWrapper,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView3d< real64 const > > const & permeability,
+          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
@@ -935,62 +1027,89 @@ CFLFluxKernel::
           ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux,
           ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux )
 {
-  typename STENCIL_TYPE::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-  typename STENCIL_TYPE::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-  typename STENCIL_TYPE::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-  typename STENCIL_TYPE::WeightContainerViewConstType const & weights = stencil.getWeights();
+  typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
+  typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
+  typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  localIndex constexpr NUM_ELEMS   = STENCIL_TYPE::NUM_POINT_IN_FLUX;
-  localIndex constexpr MAX_STENCIL = STENCIL_TYPE::MAX_STENCIL_SIZE;
+  localIndex constexpr NUM_ELEMS   = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
+  localIndex constexpr MAX_STENCIL_SIZE   = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
 
-  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
-    CFLFluxKernel::compute< NC, NUM_ELEMS, MAX_STENCIL >( numPhases,
-                                                          MAX_STENCIL,
-                                                          dt,
-                                                          seri[iconn],
-                                                          sesri[iconn],
-                                                          sei[iconn],
-                                                          weights[iconn],
-                                                          pres,
-                                                          gravCoef,
-                                                          phaseRelPerm,
-                                                          phaseVisc,
-                                                          phaseDens,
-                                                          phaseMassDens,
-                                                          phaseCompFrac,
-                                                          phaseOutflux,
-                                                          compOutflux );
+    // compute transmissibility
+    real64 transmissiblity[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+    real64 dTrans_dPres[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+
+    stencilWrapper.computeWeights( iconn,
+                                   permeability,
+                                   dPerm_dPres,
+                                   transmissiblity,
+                                   dTrans_dPres );
+
+    localIndex const stencilSize = meshMapUtilities::size1( sei, iconn );
+
+    CFLFluxKernel::compute< NC, NUM_ELEMS, MAX_STENCIL_SIZE >( numPhases,
+                                                               stencilSize,
+                                                               dt,
+                                                               seri[iconn],
+                                                               sesri[iconn],
+                                                               sei[iconn],
+                                                               transmissiblity[0],
+                                                               pres,
+                                                               gravCoef,
+                                                               phaseVolFrac,
+                                                               phaseRelPerm,
+                                                               phaseVisc,
+                                                               phaseDens,
+                                                               phaseMassDens,
+                                                               phaseCompFrac,
+                                                               phaseOutflux,
+                                                               compOutflux );
   } );
 }
 
-#define INST_CFLFluxKernel( NC, STENCIL_TYPE ) \
+#define INST_CFLFluxKernel( NC, STENCILWRAPPER_TYPE ) \
   template \
   void CFLFluxKernel:: \
-    launch< NC, STENCIL_TYPE >( localIndex const numPhases, \
-                                real64 const & dt, \
-                                STENCIL_TYPE const & stencil, \
-                                ElementViewConst< arrayView1d< real64 const > > const & pres, \
-                                ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
-                                ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm, \
-                                ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc, \
-                                ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
-                                ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens, \
-                                ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
-                                ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux, \
-                                ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux )
+    launch< NC, STENCILWRAPPER_TYPE >( localIndex const numPhases, \
+                                       real64 const & dt, \
+                                       STENCILWRAPPER_TYPE const & stencil, \
+                                       ElementViewConst< arrayView1d< real64 const > > const & pres, \
+                                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
+                                       ElementViewConst< arrayView3d< real64 const > > const & permeability, \
+                                       ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres, \
+                                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac, \
+                                       ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm, \
+                                       ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc, \
+                                       ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
+                                       ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens, \
+                                       ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
+                                       ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux, \
+                                       ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux )
 
-INST_CFLFluxKernel( 1, CellElementStencilTPFA );
-INST_CFLFluxKernel( 2, CellElementStencilTPFA );
-INST_CFLFluxKernel( 3, CellElementStencilTPFA );
-INST_CFLFluxKernel( 4, CellElementStencilTPFA );
-INST_CFLFluxKernel( 5, CellElementStencilTPFA );
+INST_CFLFluxKernel( 1, CellElementStencilTPFAWrapper );
+INST_CFLFluxKernel( 2, CellElementStencilTPFAWrapper );
+INST_CFLFluxKernel( 3, CellElementStencilTPFAWrapper );
+INST_CFLFluxKernel( 4, CellElementStencilTPFAWrapper );
+INST_CFLFluxKernel( 5, CellElementStencilTPFAWrapper );
 
-INST_CFLFluxKernel( 1, FaceElementStencil );
-INST_CFLFluxKernel( 2, FaceElementStencil );
-INST_CFLFluxKernel( 3, FaceElementStencil );
-INST_CFLFluxKernel( 4, FaceElementStencil );
-INST_CFLFluxKernel( 5, FaceElementStencil );
+INST_CFLFluxKernel( 1, SurfaceElementStencilWrapper );
+INST_CFLFluxKernel( 2, SurfaceElementStencilWrapper );
+INST_CFLFluxKernel( 3, SurfaceElementStencilWrapper );
+INST_CFLFluxKernel( 4, SurfaceElementStencilWrapper );
+INST_CFLFluxKernel( 5, SurfaceElementStencilWrapper );
+
+INST_CFLFluxKernel( 1, EmbeddedSurfaceToCellStencilWrapper );
+INST_CFLFluxKernel( 2, EmbeddedSurfaceToCellStencilWrapper );
+INST_CFLFluxKernel( 3, EmbeddedSurfaceToCellStencilWrapper );
+INST_CFLFluxKernel( 4, EmbeddedSurfaceToCellStencilWrapper );
+INST_CFLFluxKernel( 5, EmbeddedSurfaceToCellStencilWrapper );
+
+INST_CFLFluxKernel( 1, FaceElementToCellStencilWrapper );
+INST_CFLFluxKernel( 2, FaceElementToCellStencilWrapper );
+INST_CFLFluxKernel( 3, FaceElementToCellStencilWrapper );
+INST_CFLFluxKernel( 4, FaceElementToCellStencilWrapper );
+INST_CFLFluxKernel( 5, FaceElementToCellStencilWrapper );
 
 #undef INST_CFLFluxKernel
 
@@ -1002,10 +1121,11 @@ GEOSX_FORCE_INLINE
 void
 CFLKernel::
   computePhaseCFL( real64 const & poreVol,
+                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
                    arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > phaseRelPerm,
                    arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > dPhaseRelPerm_dPhaseVolFrac,
                    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseVisc,
-                   arraySlice1d< real64 const, compflow::USD_PHASE- 1 > phaseOutflux,
+                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseOutflux,
                    real64 & phaseCFLNumber )
 {
   // first, check which phases are mobile in the cell
@@ -1014,11 +1134,14 @@ CFLKernel::
   localIndex numMobilePhases = 0;
   for( localIndex ip = 0; ip < NP; ++ip )
   {
-    mob[ip] = phaseRelPerm[ip] / phaseVisc[ip];
-    if( mob[ip] > minPhaseMobility )
+    if( phaseVolFrac[ip] > 0 )
     {
-      mobilePhases[numMobilePhases] = ip;
-      numMobilePhases++;
+      mob[ip] = phaseRelPerm[ip] / phaseVisc[ip];
+      if( mob[ip] > minPhaseMobility )
+      {
+        mobilePhases[numMobilePhases] = ip;
+        numMobilePhases++;
+      }
     }
   }
 
@@ -1110,10 +1233,10 @@ void
 CFLKernel::
   launch( localIndex const size,
           arrayView1d< real64 const > const & volume,
-          arrayView1d< real64 const > const & porosityRef,
-          arrayView2d< real64 const > const & pvMult,
+          arrayView2d< real64 const > const & porosity,
           arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc,
@@ -1129,11 +1252,12 @@ CFLKernel::
 
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {
-    real64 const poreVol = volume[ei] * porosityRef[ei] * pvMult[ei][0];
+    real64 const poreVol = volume[ei] * porosity[ei][0];
 
     // phase CFL number
     real64 cellPhaseCFLNumber = 0.0;
     computePhaseCFL< NP >( poreVol,
+                           phaseVolFrac[ei],
                            phaseRelPerm[ei][0],
                            dPhaseRelPerm_dPhaseVolFrac[ei][0],
                            phaseVisc[ei][0],
@@ -1162,10 +1286,10 @@ CFLKernel::
   void CFLKernel:: \
     launch< NC, NP >( localIndex const size, \
                       arrayView1d< real64 const > const & volume, \
-                      arrayView1d< real64 const > const & porosityRef, \
-                      arrayView2d< real64 const > const & pvMult, \
+                      arrayView2d< real64 const > const & porosity, \
                       arrayView2d< real64 const, compflow::USD_COMP > const & compDens, \
                       arrayView2d< real64 const, compflow::USD_COMP > const & compFrac, \
+                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac, \
                       arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm, \
                       arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac, \
                       arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc, \
