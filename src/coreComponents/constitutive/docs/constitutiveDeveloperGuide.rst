@@ -46,8 +46,8 @@ single phase fluid example used before, this call is:
 
 .. literalinclude:: /coreComponents/constitutive/fluid/SingleFluidBase.cpp
    :language: c++
-   :start-after: //START_SPHINX_INCLUDE_COUPLEDSOLID
-   :end-before: //END_SPHINX_INCLUDE_COUPLEDSOLID
+   :start-after: //START_SPHINX_INCLUDE_00
+   :end-before: //END_SPHINX_INCLUDE_00
 
 Any property or field stored on a constitutive model must be updated within a computational
 kernel to ensure that `host` and `device` memory in GPUs are properly synced, and that any
@@ -88,7 +88,7 @@ dependency of porosity and permeability on the primary unknowns.
 The base class ``CoupledSolidBase`` implements some basic behaviors
 and is used to access a generic ``CoupledSolid`` in a physics solver:
 
-.. literalinclude:: /coreComponents/physicsSolver/fluidFlow/SinglePhaseBase.cpp
+.. literalinclude:: /coreComponents/physicsSolvers/fluidFlow/SinglePhaseBase.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_COUPLEDSOLID
    :end-before: //END_SPHINX_INCLUDE_COUPLEDSOLID
