@@ -414,11 +414,14 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const density = fluidProps.dens;
   arrayView2d< real64 const > const dDens_dPres = fluidProps.dDens_dPres;
 
+  //START_SPHINX_INCLUDE_COUPLEDSOLID
   CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
   arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
   arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
   arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
+  //END_SPHINX_INCLUDE_COUPLEDSOLID
+
 
   AccumulationKernel::template launch< POLICY >( subRegion.size(),
                                                  rankOffset,
