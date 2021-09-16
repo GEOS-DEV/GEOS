@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -127,6 +127,11 @@ public:
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
+  implicitStepSetup( real64 const & time,
+                     real64 const & dt,
+                     DomainPartition & domain ) override;
+
+  virtual void
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition & domain ) override;
@@ -208,17 +213,25 @@ public:
                                   arrayView1d< real64 > const & localRhs ) override;
 
   /**
-   * @brief assembles the volume balance terms for all well elements
-   * @param time_n previous time value
-   * @param dt time step
+   * @brief assembles the accumulation term for all the well elements
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleVolumeBalanceTerms( real64 const time_n,
-                                           real64 const dt,
-                                           DomainPartition const & domain,
+  virtual void assembleAccumulationTerms( DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) override;
+
+  /**
+   * @brief assembles the volume balance terms for all well elements
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleVolumeBalanceTerms( DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs ) override;
@@ -230,10 +243,10 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void formPressureRelations( DomainPartition const & domain,
-                                      DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs ) override;
+  virtual void assemblePressureRelations( DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) override;
 
 
   /**
@@ -241,6 +254,13 @@ public:
    * @param domain the physical domain object
    */
   void chopNegativeDensities( DomainPartition & domain );
+
+  /**
+   * @brief Backup current values of all constitutive fields that participate in the accumulation term
+   * @param mesh reference to the mesh
+   */
+  void backupFields( MeshLevel & mesh ) const override;
+
 
   arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
 
@@ -250,54 +270,87 @@ public:
 
     // inputs
     static constexpr char const * temperatureString() { return "wellTemperature"; }
+
     static constexpr char const * useMassFlagString() { return CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(); }
 
     static constexpr char const * relPermNamesString() { return CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString(); }
 
     static constexpr char const * maxCompFracChangeString() { return CompositionalMultiphaseBase::viewKeyStruct::maxCompFracChangeString(); }
+
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
+
     static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
     // primary solution field
     static constexpr char const * pressureString() { return CompositionalMultiphaseBase::viewKeyStruct::pressureString(); }
+
     static constexpr char const * deltaPressureString() { return CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString(); }
+
     static constexpr char const * globalCompDensityString() { return CompositionalMultiphaseBase::viewKeyStruct::globalCompDensityString(); }
+
     static constexpr char const * deltaGlobalCompDensityString() { return CompositionalMultiphaseBase::viewKeyStruct::deltaGlobalCompDensityString(); }
+
     static constexpr char const * mixtureConnRateString() { return "wellElementMixtureConnectionRate"; }
+
     static constexpr char const * deltaMixtureConnRateString() { return "deltaWellElementMixtureConnectionRate"; }
 
     // saturations
     static constexpr char const * phaseVolumeFractionString() { return CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionString(); }
+
     static constexpr char const * dPhaseVolumeFraction_dPressureString() { return CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString(); }
+
     static constexpr char const * dPhaseVolumeFraction_dGlobalCompDensityString() { return CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString(); }
 
     // global component fractions
     static constexpr char const * globalCompFractionString() { return CompositionalMultiphaseBase::viewKeyStruct::globalCompFractionString(); }
+
     static constexpr char const * dGlobalCompFraction_dGlobalCompDensityString() { return CompositionalMultiphaseBase::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString(); }
 
     // total mass densities
     static constexpr char const * totalMassDensityString() { return "totalMassDensity"; }
+
     static constexpr char const * dTotalMassDensity_dPressureString() { return "dTotalMassDensity_dPressure"; }
+
     static constexpr char const * dTotalMassDensity_dGlobalCompDensityString() { return "dTotalMassDensity_dComp"; }
+
+    // these are used to store last converged time step values
+    static constexpr char const * phaseVolumeFractionOldString() { return CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionOldString(); }
+
+    static constexpr char const * phaseDensityOldString() { return CompositionalMultiphaseBase::viewKeyStruct::phaseDensityOldString(); }
+
+    static constexpr char const * totalDensityOldString() { return CompositionalMultiphaseBase::viewKeyStruct::totalDensityOldString(); }
+
+    static constexpr char const * phaseComponentFractionOldString() { return CompositionalMultiphaseBase::viewKeyStruct::phaseComponentFractionOldString(); }
+
 
     // perforation rates and derivatives
     static constexpr char const * compPerforationRateString() { return "compPerforationRate"; }
+
     static constexpr char const * dCompPerforationRate_dPresString() { return "dCompPerforationRate_dPres"; }
+
     static constexpr char const * dCompPerforationRate_dCompString() { return "dCompPerforationRate_dComp"; }
 
     // control data
     static constexpr char const * currentBHPString() { return "currentBHP"; }
+
     static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
+
     static constexpr char const * dCurrentBHP_dCompDensString() { return "dCurrentBHP_dCompDens"; }
 
     static constexpr char const * currentPhaseVolRateString() { return "currentPhaseVolumetricRate"; }
+
     static constexpr char const * dCurrentPhaseVolRate_dPresString() { return "dCurrentPhaseVolumetricRate_dPres"; }
+
     static constexpr char const * dCurrentPhaseVolRate_dCompDensString() { return "dCurrentPhaseVolumetricRate_dCompDens"; }
+
     static constexpr char const * dCurrentPhaseVolRate_dRateString() { return "dCurrentPhaseVolumetricRate_dRate"; }
 
     static constexpr char const * currentTotalVolRateString() { return "currentTotalVolumetricRate"; }
+
     static constexpr char const * dCurrentTotalVolRate_dPresString() { return "dCurrentTotalVolumetricRate_dPres"; }
+
     static constexpr char const * dCurrentTotalVolRate_dCompDensString() { return "dCurrentTotalVolumetricRate_dCompDens"; }
+
     static constexpr char const * dCurrentTotalVolRate_dRateString() { return "dCurrentTotalVolumetricRate_dRate"; }
 
   } viewKeysCompMultiphaseWell;

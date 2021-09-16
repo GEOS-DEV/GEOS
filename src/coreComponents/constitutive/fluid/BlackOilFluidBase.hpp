@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -73,6 +73,16 @@ protected:
 
   class KernelWrapper : public MultiFluidBase::KernelWrapper
   {
+public:
+
+    /// @cond DO_NOT_DOCUMENT
+    /// We need these SMFs to avoid host-device errors with CUDA.
+    KernelWrapper() = default;
+    KernelWrapper( KernelWrapper const & ) = default;
+    KernelWrapper & operator=( KernelWrapper const & ) = default;
+    KernelWrapper & operator=( KernelWrapper && ) = default;
+    /// @endcond
+
 protected:
 
     KernelWrapper( arrayView1d< integer const > phaseTypes,

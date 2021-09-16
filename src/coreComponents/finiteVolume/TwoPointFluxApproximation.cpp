@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -316,6 +316,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   SortedArrayView< localIndex const > const
   recalculateFractureConnectorEdges = edgeManager.m_recalculateFractureConnectorEdges.toViewConst();
 
+  // reserve memory for the connections of this fracture
+  fractureStencil.reserve( fractureStencil.size() + recalculateFractureConnectorEdges.size() );
+
   // add new connectors/connections between face elements to the fracture stencil
   forAll< serialPolicy >( recalculateFractureConnectorEdges.size(),
                           [ &allNewElems,
@@ -552,6 +555,11 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
     arrayView2d< localIndex const > elemSubRegionList = faceElementsToCells.m_toElementSubRegion;
     arrayView2d< localIndex const > elemList = faceElementsToCells.m_toElementIndex;
 
+    // reserve memory for the connections of this region
+    if( cellStencil.size() != 0 )
+    {
+      faceToCellStencil.reserve( faceToCellStencil.size() + faceElementsToCells.size() );
+    }
 
     forAll< serialPolicy >( newFaceElements.size(),
                             [ newFaceElements,
@@ -662,6 +670,9 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
   localIndex connectorIndex = edfmStencil.size();
   localIndex constexpr maxElems = EmbeddedSurfaceToCellStencil::MAX_STENCIL_SIZE;
 
+  // reserve memory for the connections of this fracture
+  edfmStencil.reserve( edfmStencil.size() + fractureSubRegion.size() );
+
   // loop over the embedded surfaces and add connections to cellStencil
   for( localIndex kes = 0; kes < fractureSubRegion.size(); kes++ )
   {
@@ -734,6 +745,9 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
   localIndex constexpr maxElems = SurfaceElementStencil::MAX_STENCIL_SIZE;
 
   localIndex connectorIndex = 0;
+
+  // reserve memory for the connections of this fracture
+  fractureStencil.reserve( fractureStencil.size() + embSurfEdgeManager.size() );
 
   // add new connectors/connections between embedded elements to the fracture stencil
   for( localIndex ke = 0; ke <  embSurfEdgeManager.size(); ke++ )

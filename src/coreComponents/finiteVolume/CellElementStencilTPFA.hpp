@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -195,6 +195,12 @@ public:
    */
   virtual localIndex size() const override final
   { return m_elementRegionIndices.size( 0 ); }
+
+  /**
+   * @brief Reserve the size of the stencil
+   * @param[in] size the size of the stencil to reserve
+   */
+  virtual void reserve( localIndex const size ) override final;
 
   /**
    * @brief Give the number of points in a stencil entry.

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,7 +20,6 @@
 #ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 #define GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
-
 #include "ConstitutivePassThruHandler.hpp"
 #include "NullModel.hpp"
 #include "solid/DamageVolDev.hpp"
@@ -29,14 +28,13 @@
 #include "solid/DruckerPragerExtended.hpp"
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
-
+#include "solid/ElasticOrthotropic.hpp"
 #include "solid/PorousSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
 #include "solid/porosity/PressurePorosity.hpp"
 #include "permeability/ConstantPermeability.hpp"
 #include "permeability/CarmanKozenyPermeability.hpp"
 #include "permeability/ParallelPlatesPermeability.hpp"
-
 
 namespace geosx
 {
@@ -78,8 +76,9 @@ struct ConstitutivePassThru< SolidBase >
                                  DruckerPragerExtended,
                                  DruckerPrager,
                                  ElasticIsotropic,
-                                 ElasticTransverseIsotropic >::execute( constitutiveRelation,
-                                                                        std::forward< LAMBDA >( lambda ) );
+                                 ElasticTransverseIsotropic,
+                                 ElasticOrthotropic >::execute( constitutiveRelation,
+                                                                std::forward< LAMBDA >( lambda ) );
   }
 };
 
@@ -137,6 +136,7 @@ struct ConstitutivePassThru< PorousSolidBase >
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
@@ -186,6 +186,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
@@ -202,6 +203,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
@@ -209,8 +211,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
   }
 };
 
+} /* namespace constitutive */
 
-}
-}
+} /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_ */
