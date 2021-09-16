@@ -253,8 +253,6 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex const fracEle
 {
 
   // TODO: should I really compute the real projection, or assuming the whole face is occupied by the projection?
-  // std::string const & fractureName = fractureSubRegion.getFractureName(fracElement);
-  // const BoundedPlane & plane = m_geometricObjManager->getReference< BoundedPlane >( fractureName );
 
   // compute face center and normal
   real64 const areaTolerance = 10.f * std::numeric_limits< real64 >::epsilon();

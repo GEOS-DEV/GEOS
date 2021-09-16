@@ -93,7 +93,7 @@ void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager 
   } );
 }
 
-void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
+void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                                                     localIndex const k )
 {
   for( localIndex p = 0; p < intersectionPoints.size( 0 ); p++ )
@@ -108,6 +108,33 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( arrayView2d<
 
   // update volume
   m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
+}
+
+void EmbeddedSurfaceSubRegion::computeConnectivityIndex( localIndex const k,
+                                                         arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes,
+                                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodesCoord )
+{
+  // 1. Compute average distance
+  // TODO: This is a pretty bad approximation of the average distance and proper numerical integration should
+  // be implemented.
+  real64 averageDistance = 0.0;
+
+  localIndex const cellIndex = m_surfaceElementsToCells.m_toElementIndex[k][0];
+  localIndex const numOfNodes = cellToNodes.size(1);
+
+  real64 distance[3];
+  for( localIndex a=0; a < numOfNodes; a++ )
+  {
+    localIndex const nodeIndex = cellToNodes[cellIndex][a];
+    LvArray::tensorOps::copy<3>( distance, nodesCoord[nodeIndex]);
+    LvArray::tensorOps::subtract<3>( distance, m_elementCenter[k] );
+    real64 distance = LvArray::tensorOps::AiBi<3>( distance, m_normalVector[k] );
+    averageDistance += std::sqrt( distance * distance );
+  }
+  averageDistance /= numOfNodes ;
+
+  //2. Compute connectivity index
+  m_connectivityIndex[k] = m_elementArea[ k ] / averageDistance ;
 }
 
 bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellIndex,
@@ -280,7 +307,7 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
     LvArray::tensorOps::copy< 3 >( m_normalVector[ surfaceIndex ], normalVector );
     LvArray::tensorOps::copy< 3 >( m_tangentVector1[ surfaceIndex ], fracture->getWidthVector());
     LvArray::tensorOps::copy< 3 >( m_tangentVector2[ surfaceIndex ], fracture->getLengthVector());
-    this->CalculateElementGeometricQuantities( intersectionPoints.toViewConst(), this->size()-1 );
+    this->calculateElementGeometricQuantities( intersectionPoints.toViewConst(), this->size()-1 );
   }
   return addEmbeddedElem;
 }

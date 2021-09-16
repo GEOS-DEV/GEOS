@@ -117,15 +117,24 @@ public:
   ///@{
 
   virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & facemanager ) override;
+                                                    FaceManager const & facemanager ) override final;
 
   /**
    * @brief Function to compute the geometric quantities of a specific embedded surface element.
    * @param intersectionPoints array containing the nodes defining the embedded surface elements
-   * @param k index of the face element
+   * @param k index of the embedded surface element
    */
-  void CalculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
+  void calculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                             localIndex k );
+  /*
+   * @brief computes the connectivityIndex of the embedded surface element.
+   * @param
+   * @param
+   * @param
+   */
+  void computeConnectivityIndex( localIndex const k,
+                                 arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes,
+                                 arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodesCoord );
 
   /**
    * @brief Function to add a new embedded surface element.

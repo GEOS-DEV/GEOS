@@ -152,7 +152,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
       FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
 
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       forAll< serialPolicy >( subRegion.size(), [ &, ghostRank,
                                                   cellToNodes,
@@ -194,6 +194,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
               // Add the information to the CellElementSubRegion
               subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
+
+              embeddedSurfaceSubRegion.computeConnectivityIndex( localNumberOfSurfaceElems, cellToNodes, nodesCoord );
 
               newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
 
