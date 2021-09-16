@@ -1,10 +1,10 @@
 .. _constitutiveModels:
 
 ################################################################################
-Constitutive models in GEOSX
+Constitutive models
 ################################################################################
 
-In GEOSX, all constitituive models (e.g, those defining fluid and rock properties)
+In GEOSX, all constitutive models (e.g, those defining fluid and rock properties)
 are implemented in the namespace ``constitutive`` and derive from a common base class,
 ``ConstitutiveBase``. All objects are owned and handled by the ``ConstitutiveManager``.
 
@@ -24,7 +24,7 @@ Each constitutive model owns, as member variables, ``LvArray::Array`` containers
 that hold the properties (or fields) handled and, their derivatives w.r.t to the
 fields needed to update each property. Each property is stored as an array in which the
 first dimension represents the elementIndex and the second dimension the index of the
-integration point. These dimensions are determined by the number of elemetns of the
+integration point. These dimensions are determined by the number of elements of the
 subregion on which each constitutive model is registered, and by the type of discretization
 method chosen. Additionally, vectorial and tensorial will also have an additional dimension to identify
 their components. Similarly, for multiphase fluid models an additional dimension will be
@@ -112,9 +112,9 @@ this has access to the standalone models needed, i.e.
 There exist two specialization of a ``CoupledSolid``:
 
 - ``CompressibleSolid``: this model is used whenever there is no need to define a full mechanical model
-but only simple correlation to compute material properties like porosity and permeability.
-As such, this model assumes that the solid model is of type `NullModel` and it's only templated on
-the types of the porosity and permeability models.
+  but only simple correlation to compute material properties like porosity and permeability.
+  As such, this model assumes that the solid model is of type `NullModel` and it's only templated on
+  the types of the porosity and permeability models.
 
-- ``PorousSolid``: this model is used to represent a full porous material in which the porosity and
-permeability models need to be aware of the mechanical response of the material.
+- ``PorousSolid``: this model is used to represent a full porous material in which
+  the porosity and permeability models need to be aware of the mechanical response of the material.
