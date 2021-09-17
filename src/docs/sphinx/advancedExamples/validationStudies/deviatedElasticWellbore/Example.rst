@@ -9,7 +9,7 @@ Deviated Elastic Wellbore Problem
 Problem description
 ------------------------------------------------------------------
 
-This example uses the solid mechanics solver to handle a deviated open wellbore problem subjected to a mud pressure. Rock is assumed to be isotropic linear elastic. The undrained condition is also assumed, i.e. no fluid flow in the rock formation. The main goal of this example is to validate the internal wellbore mesh generator for the case of an inclined wellbore.
+This example uses the solid mechanics solver to handle a deviated wellbore problem with open hole completion. This wellbore is subjected to a mud pressure at wellbore wall and undrained condition is assumed (no fluid flow in the rock formation). A segment of the wellbore with isotropic linear elastic deformation is simulated in this case. Far field stresses and gravity effect are excluded. The main goal of this example is to validate the internal wellbore mesh generator and mechanics solver for the case of an inclined wellbore.
 
 Analytical results of the radial and hoop stresses, :math:`\sigma_{rr}` and :math:`\sigma_{\theta\theta}`, around the wellbore are expressed as `(Detournay and Cheng, 1988) <https://www.sciencedirect.com/science/article/abs/pii/0148906288922991>`__ :
 
