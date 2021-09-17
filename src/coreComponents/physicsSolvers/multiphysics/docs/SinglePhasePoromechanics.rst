@@ -1,13 +1,16 @@
-.. _PoroelasticSolver:
+.. _SinglePhasePoroelasticSolver:
 
-##########################
-Poromechanics Solver
-##########################
+#################################
+Single-Phase Poromechanics Solver
+#################################
 
 Introduction
 ===========================================
 
-This section describes the use of the poroelasticity models implemented in GEOSX.
+This section describes the single-phase poromechanics model, which is used to simulate fully coupled processes of three-dimensional deformation and single-phase fluid flow through the void space in a porous medium.
+This single-phase poromechanics solver is an example of multiphysics solver obtained coupling a quasi-static solid mechanics solver with a single-phase flow solvers.
+The governing equations are solved using a fully-implicit time-marching scheme (backward Euler).
+The spatial discretization relies on a mixed formulation combing continuous Galerkin finite elements with either a two-point flux approximation finite volume methor or a hybrid mimetic finite difference method.
 
 Theory
 =========================

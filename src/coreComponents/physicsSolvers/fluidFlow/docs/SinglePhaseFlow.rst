@@ -1,7 +1,7 @@
 .. _SinglePhaseFlow:
 
 #####################################
-Singlephase Flow Solver
+Single-Phase Flow Solver
 #####################################
 
 Introduction

@@ -19,7 +19,7 @@ physics solvers to be included in the simulation.
 
    fluidFlow/wells/docs/CompositionalMultiphaseWell
 
-   multiphysics/docs/Poromechanics
+   multiphysics/docs/SinglePhasePoromechanics
 
    fluidFlow/docs/ProppantTransport
 
