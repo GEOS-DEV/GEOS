@@ -479,6 +479,12 @@ void ProblemManager::initializationOrder( string_array & order )
 
 void ProblemManager::generateMesh()
 {
+
+  // Just a flag to put around any changes needed for MPM to load multiple mesh bodies, one for the background gird,
+  // generated using the internal mesh generator, and one for the particles, which will eventually be generated
+  // from an external particle file or through some other method.
+  bool isMPM = true;
+
   GEOSX_MARK_FUNCTION;
   DomainPartition & domain = getDomainPartition();
 
@@ -534,7 +540,12 @@ void ProblemManager::generateMesh()
     }
   }
 
-  GEOSX_THROW_IF_NE( meshBodies.numSubGroups(), 1, InputError );
+  if(!isMPM)
+  {
+	  // MPM will have multiple mesh objects
+	  GEOSX_THROW_IF_NE( meshBodies.numSubGroups(), 1, InputError );
+  }
+
   MeshBody & meshBody = meshBodies.getGroup< MeshBody >( 0 );
 
   GEOSX_THROW_IF_NE( meshBody.numSubGroups(), 1, InputError );
