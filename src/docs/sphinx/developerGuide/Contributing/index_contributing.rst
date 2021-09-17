@@ -9,8 +9,6 @@ Contributing
 
    GitWorkflow.rst
 
-   developingOnDocker.rst
-
    Sphinx.rst
 
    Doxygen.rst
@@ -22,3 +20,5 @@ Contributing
    Benchmarks.rst
 
    Caliper.rst
+
+   UsingDocker.rst

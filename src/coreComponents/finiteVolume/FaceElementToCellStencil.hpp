@@ -236,6 +236,12 @@ public:
   { return m_elementRegionIndices.size( 0 ); }
 
   /**
+   * @brief Reserve the size of the stencil
+   * @param[in] size the size of the stencil to reserve
+   */
+  virtual void reserve( localIndex const size ) override final;
+
+  /**
    * @brief Give the number of points in a stencil entry.
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry

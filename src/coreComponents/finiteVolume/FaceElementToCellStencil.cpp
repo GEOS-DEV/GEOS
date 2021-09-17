@@ -28,6 +28,15 @@ FaceElementToCellStencil::FaceElementToCellStencil():
   m_cellToFaceVec.resize( 0, 3 );
 }
 
+void FaceElementToCellStencil::reserve( localIndex const size )
+{
+  StencilBase::reserve( size );
+
+  m_faceNormal.reserve( 3 * size );
+  m_cellToFaceVec.reserve( 3 * size );
+  m_transMultiplier.reserve( size );
+}
+
 void FaceElementToCellStencil::move( LvArray::MemorySpace const space )
 {
   StencilBase< FaceElementToCellStencil_Traits, FaceElementToCellStencil >::move( space );
