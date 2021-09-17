@@ -89,7 +89,7 @@ Far-field boundaries are subjected to roller constraints and in-situ stresses ar
 Results and benchmark
 ---------------------------------
 
-A good agreement between the GEOSX results and analytical results is shown in the figure below:
+A good agreement between the GEOSX results and the corresponding analytical solutions is shown in the figure below:
 
 
 .. plot::
