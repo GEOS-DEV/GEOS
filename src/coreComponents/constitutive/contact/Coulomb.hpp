@@ -28,6 +28,58 @@ namespace constitutive
 {
 
 /**
+ * @class CoulombUpdates
+ *
+ * This class is used for in-kernel contact relation updates
+ */
+class CoulombUpdates : public ContactBaseUpdates
+{
+public:
+
+  CoulombUpdates( real64 const & cohesion,
+                  real64 const & frictionCoefficient )
+    : m_cohesion( cohesion ),
+    m_frictionCoefficient( frictionCoefficient )
+  {}
+
+  /// Default copy constructor
+  CoulombUpdates( CoulombUpdates const & ) = default;
+
+  /// Default move constructor
+  CoulombUpdates( CoulombUpdates && ) = default;
+
+  /// Deleted default constructor
+  CoulombUpdates() = delete;
+
+  /// Deleted copy assignment operator
+  CoulombUpdates & operator=( CoulombUpdates const & ) = delete;
+
+  /// Deleted move assignment operator
+  CoulombUpdates & operator=( CoulombUpdates && ) =  delete;
+
+  /**
+   * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
+   * @param[in] normalTraction the normal traction
+   * @param[out] dLimitTangentialTractionNorm_dTraction the derivative of the limit tangential traction norm wrt normal traction
+   * @return the limit tangential traction norm
+   */
+  GEOSX_HOST_DEVICE
+  inline
+  virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
+                                                     real64 & dLimitTangentialTractionNorm_dTraction ) const override;
+
+private:
+
+  /// The cohesion for each upper level dimension (i.e. cell) of *this
+  real64 m_cohesion;
+
+  /// The friction coefficient for each upper level dimension (i.e. cell) of *this
+  real64 m_frictionCoefficient;
+
+};
+
+
+/**
  * @class Coulomb
  *
  * Class to provide a Coulomb friction model.
@@ -35,57 +87,6 @@ namespace constitutive
 class Coulomb : public ContactBase
 {
 public:
-
-  /**
-   * @class KernelWrapper
-   *
-   * This class is used for in-kernel contact relation updates
-   */
-  class KernelWrapper : public ContactBase::KernelWrapper
-  {
-public:
-
-    KernelWrapper( real64 const & cohesion,
-                   real64 const & frictionCoefficient )
-      : m_cohesion( cohesion ),
-      m_frictionCoefficient( frictionCoefficient )
-    {}
-
-    /// Default copy constructor
-    KernelWrapper( KernelWrapper const & ) = default;
-
-    /// Default move constructor
-    KernelWrapper( KernelWrapper && ) = default;
-
-    /// Deleted default constructor
-    KernelWrapper() = delete;
-
-    /// Deleted copy assignment operator
-    KernelWrapper & operator=( KernelWrapper const & ) = delete;
-
-    /// Deleted move assignment operator
-    KernelWrapper & operator=( KernelWrapper && ) =  delete;
-
-    /**
-     * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
-     * @param[in] normalTraction the normal traction
-     * @param[out] dLimitTangentialTractionNorm_dTraction the derivative of the limit tangential traction norm wrt normal traction
-     * @return the limit tangential traction norm
-     */
-    GEOSX_HOST_DEVICE
-    inline
-    virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
-                                                       real64 & dLimitTangentialTractionNorm_dTraction ) const override;
-
-private:
-
-    /// The cohesion for each upper level dimension (i.e. cell) of *this
-    real64 m_cohesion;
-
-    /// The friction coefficient for each upper level dimension (i.e. cell) of *this
-    real64 m_frictionCoefficient;
-
-  };
 
   /**
    * constructor
@@ -142,6 +143,9 @@ private:
    */
   real64 const & frictionCoefficient() const { return m_frictionCoefficient; }
 
+  /// Type of kernel wrapper for in-kernel update
+  using KernelWrapper = CoulombUpdates;
+
   /**
    * @brief Create an update kernel wrapper.
    * @return the wrapper
@@ -166,8 +170,8 @@ private:
 
 
 GEOSX_HOST_DEVICE
-real64 Coulomb::KernelWrapper::computeLimitTangentialTractionNorm( real64 const & normalTraction,
-                                                                   real64 & dLimitTangentialTractionNorm_dTraction ) const
+real64 CoulombUpdates::computeLimitTangentialTractionNorm( real64 const & normalTraction,
+                                                           real64 & dLimitTangentialTractionNorm_dTraction ) const
 {
   dLimitTangentialTractionNorm_dTraction = m_frictionCoefficient;
   return ( m_cohesion - normalTraction * m_frictionCoefficient );

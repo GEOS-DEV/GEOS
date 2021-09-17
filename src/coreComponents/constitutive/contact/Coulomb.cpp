@@ -84,10 +84,10 @@ void Coulomb::postProcessInput()
 
 }
 
-Coulomb::KernelWrapper Coulomb::createKernelWrapper() const
+CoulombUpdates Coulomb::createKernelWrapper() const
 {
-  return Coulomb::KernelWrapper( m_cohesion,
-                                 m_frictionCoefficient );
+  return CoulombUpdates( m_cohesion,
+                         m_frictionCoefficient );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, Coulomb, string const &, Group * const )

@@ -29,69 +29,70 @@ namespace constitutive
 {
 
 /**
+ * @class ApertureTableContactUpdates
+ *
+ * This class is used for in-kernel contact relation updates
+ */
+class ApertureTableContactUpdates : public ContactBaseUpdates
+{
+public:
+
+  ApertureTableContactUpdates( real64 const & penaltyStiffness,
+                               TableFunction const & apertureTable )
+    : m_penaltyStiffness( penaltyStiffness ),
+    m_apertureTable( apertureTable.createKernelWrapper() )
+  {}
+
+  /// Default copy constructor
+  ApertureTableContactUpdates( ApertureTableContactUpdates const & ) = default;
+
+  /// Default move constructor
+  ApertureTableContactUpdates( ApertureTableContactUpdates && ) = default;
+
+  /// Deleted default constructor
+  ApertureTableContactUpdates() = delete;
+
+  /// Deleted copy assignment operator
+  ApertureTableContactUpdates & operator=( ApertureTableContactUpdates const & ) = delete;
+
+  /// Deleted move assignment operator
+  ApertureTableContactUpdates & operator=( ApertureTableContactUpdates && ) =  delete;
+
+  GEOSX_HOST_DEVICE
+  inline
+  virtual real64 computeEffectiveAperture( real64 const aperture,
+                                           real64 & dEffectiveAperture_dAperture ) const;
+
+  GEOSX_HOST_DEVICE
+  inline
+  virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
+                                arraySlice1d< real64 > const & tractionVector,
+                                arraySlice2d< real64 > const & dTractionVector_dJump ) const;
+
+  GEOSX_HOST_DEVICE
+  inline
+  void addPressureToTraction( real64 const & pressure,
+                              bool const isOpen,
+                              arraySlice1d< real64 >const & tractionVector,
+                              real64 & dTraction_dPressure ) const;
+
+private:
+
+  /// The penalty stiffness
+  real64 m_penaltyStiffness;
+
+  /// The aperture table function wrapper
+  TableFunction::KernelWrapper m_apertureTable;
+
+};
+
+
+/**
  * @class ApertureTableContact
  */
 class ApertureTableContact : public ContactBase
 {
 public:
-
-/**
- * @class KernelWrapper
- *
- * This class is used for in-kernel contact relation updates
- */
-  class KernelWrapper : public ContactBase::KernelWrapper
-  {
-public:
-
-    KernelWrapper( real64 const & penaltyStiffness,
-                   TableFunction const & apertureTable )
-      : m_penaltyStiffness( penaltyStiffness ),
-      m_apertureTable( apertureTable.createKernelWrapper() )
-    {}
-
-    /// Default copy constructor
-    KernelWrapper( KernelWrapper const & ) = default;
-
-    /// Default move constructor
-    KernelWrapper( KernelWrapper && ) = default;
-
-    /// Deleted default constructor
-    KernelWrapper() = delete;
-
-    /// Deleted copy assignment operator
-    KernelWrapper & operator=( KernelWrapper const & ) = delete;
-
-    /// Deleted move assignment operator
-    KernelWrapper & operator=( KernelWrapper && ) =  delete;
-
-    GEOSX_HOST_DEVICE
-    inline
-    virtual real64 computeEffectiveAperture( real64 const aperture,
-                                             real64 & dEffectiveAperture_dAperture ) const;
-
-    GEOSX_HOST_DEVICE
-    inline
-    virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
-                                  arraySlice1d< real64 > const & tractionVector,
-                                  arraySlice2d< real64 > const & dTractionVector_dJump ) const;
-
-    GEOSX_HOST_DEVICE
-    inline
-    void addPressureToTraction( real64 const & pressure,
-                                bool const isOpen,
-                                arraySlice1d< real64 >const & tractionVector,
-                                real64 & dTraction_dPressure ) const;
-
-private:
-
-    /// The penalty stiffness
-    real64 m_penaltyStiffness;
-
-    /// The aperture table function wrapper
-    TableFunction::KernelWrapper m_apertureTable;
-
-  };
 
   /**
    * @brief The standard data repository constructor
@@ -119,6 +120,9 @@ private:
    * @return the aperture tolerance
    */
   real64 apertureTolerance() const { return m_apertureTolerance; }
+
+  /// Type of kernel wrapper for in-kernel update
+  using KernelWrapper = ApertureTableContactUpdates;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -162,16 +166,16 @@ protected:
 };
 
 GEOSX_HOST_DEVICE
-real64 ApertureTableContact::KernelWrapper::computeEffectiveAperture( real64 const aperture,
-                                                                      real64 & dEffectiveAperture_dAperture ) const
+real64 ApertureTableContactUpdates::computeEffectiveAperture( real64 const aperture,
+                                                              real64 & dEffectiveAperture_dAperture ) const
 {
   return m_apertureTable.compute( &aperture, &dEffectiveAperture_dAperture );
 }
 
 GEOSX_HOST_DEVICE
-void ApertureTableContact::KernelWrapper::computeTraction( arraySlice1d< real64 const > const & dispJump,
-                                                           arraySlice1d< real64 > const & tractionVector,
-                                                           arraySlice2d< real64 > const & dTractionVector_dJump ) const
+void ApertureTableContactUpdates::computeTraction( arraySlice1d< real64 const > const & dispJump,
+                                                   arraySlice1d< real64 > const & tractionVector,
+                                                   arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
   tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
   tractionVector[1] = 0.0;
@@ -182,10 +186,10 @@ void ApertureTableContact::KernelWrapper::computeTraction( arraySlice1d< real64 
 }
 
 GEOSX_HOST_DEVICE
-void ApertureTableContact::KernelWrapper::addPressureToTraction( real64 const & pressure,
-                                                                 bool const isOpen,
-                                                                 arraySlice1d< real64 > const & tractionVector,
-                                                                 real64 & dTraction_dPressure ) const
+void ApertureTableContactUpdates::addPressureToTraction( real64 const & pressure,
+                                                         bool const isOpen,
+                                                         arraySlice1d< real64 > const & tractionVector,
+                                                         real64 & dTraction_dPressure ) const
 {
   tractionVector[0] -= pressure;
   dTraction_dPressure = isOpen ? -1.0 : 0.0;

@@ -116,10 +116,10 @@ void ApertureTableContact::validateApertureTable( TableFunction const & aperture
                   InputError );
 }
 
-ApertureTableContact::KernelWrapper ApertureTableContact::createKernelWrapper() const
+ApertureTableContactUpdates ApertureTableContact::createKernelWrapper() const
 {
-  return ApertureTableContact::KernelWrapper( m_penaltyStiffness,
-                                              *m_apertureTable );
+  return ApertureTableContactUpdates( m_penaltyStiffness,
+                                      *m_apertureTable );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ApertureTableContact, string const &, Group * const )
