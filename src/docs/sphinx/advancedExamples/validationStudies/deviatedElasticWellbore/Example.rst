@@ -38,7 +38,7 @@ In this example, we would focus our attention on the ``Mesh`` tag.
 Solid mechanics solver
 -----------------------------------------------------------
 
-As fluid flow is not considered, only the solid mechanics ``SolidMechanicsLagrangianSSLE`` solver is required for solving this linear elastic problem.  
+As fluid flow is not considered, only the solid mechanics solver ``SolidMechanicsLagrangianSSLE`` is required for solving this wellbore problem.  
 
 .. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DeviatedElasticWellbore.xml
   :language: xml
