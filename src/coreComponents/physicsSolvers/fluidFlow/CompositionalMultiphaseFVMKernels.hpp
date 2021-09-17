@@ -319,6 +319,8 @@ struct AquiferBCKernel
   GEOSX_HOST_DEVICE
   static void
     compute( localIndex const numPhases,
+             localIndex const ipWater,
+             bool const allowAllPhasesIntoAquifer,
              real64 const & aquiferVolFlux,
              real64 const & dAquiferVolFlux_dPres,
              real64 const & aquiferWaterPhaseDens,
@@ -326,6 +328,9 @@ struct AquiferBCKernel
              arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens,
              arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > dPhaseDens_dPres,
              arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens_dCompFrac,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres,
+             arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens,
              arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac,
              arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > dPhaseCompFrac_dPres,
              arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac_dCompFrac,
@@ -337,6 +342,8 @@ struct AquiferBCKernel
   template< localIndex NC >
   static void
   launch( localIndex const numPhases,
+          localIndex const ipWater,
+          bool const allowAllPhasesIntoAquifer,
           BoundaryStencil const & stencil,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
@@ -350,6 +357,9 @@ struct AquiferBCKernel
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dCompDens,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,

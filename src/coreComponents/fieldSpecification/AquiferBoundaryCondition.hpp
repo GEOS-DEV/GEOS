@@ -165,6 +165,18 @@ private:
   void saveConvergedState( real64 const fluxIncrement ) { m_cumulativeFlux += fluxIncrement; }
 
   /**
+   * @brief Setter for the water phase index
+   * @param[in] waterPhaseIndex the value of the water phase index
+   */
+  void setWaterPhaseIndex( localIndex const waterPhaseIndex ) { m_waterPhaseIndex = waterPhaseIndex; }
+
+  /**
+   * @brief Getter for the water phase index
+   * @return the value of the water phase index
+   */
+  integer getWaterPhaseIndex() const { return m_waterPhaseIndex; }
+
+  /**
    * @brief Getter for the aquifer water phase density
    * @return the value of the water phase density
    */
@@ -182,6 +194,11 @@ private:
    */
   arrayView1d< string const > getWaterPhaseComponentNames() const { return m_phaseComponentNames.toViewConst(); }
 
+  /**
+   * @brief Flag to allow all phases to flow into the aquifer
+   * @return true if we allow all phases to flow into the aquifer, false otherwise
+   */
+  bool allowAllPhasesIntoAquifer() const { return m_allowAllPhasesIntoAquifer; }
 
   /**
    * @brief View keys
@@ -216,6 +233,9 @@ private:
 
     /// @return The key for total compressibility
     constexpr static char const * aquiferTotalCompressibilityString() { return "aquiferTotalCompressibility"; }
+
+    /// @return The key for the flag deciding whether we allow all phases into aquifer or not
+    constexpr static char const * allowAllPhasesIntoAquiferString() { return "allowAllPhasesIntoAquifer"; }
 
     // aquifer geometry
 
@@ -281,6 +301,12 @@ private:
 
   /// Initial pressure
   real64 m_initialPressure;
+
+  /// Flag to allow all phases to flow into the aquifer
+  integer m_allowAllPhasesIntoAquifer;
+
+  /// Water phase index
+  integer m_waterPhaseIndex;
 
   /// Water viscosity
   real64 m_viscosity;

@@ -1123,7 +1123,9 @@ template< localIndex NC >
 GEOSX_HOST_DEVICE
 void
 AquiferBCKernel::
-  compute( localIndex numPhases,
+  compute( localIndex const numPhases,
+           localIndex const ipWater,
+           bool const allowAllPhasesIntoAquifer,
            real64 const & aquiferVolFlux,
            real64 const & dAquiferVolFlux_dPres,
            real64 const & aquiferWaterPhaseDens,
@@ -1131,6 +1133,9 @@ AquiferBCKernel::
            arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens,
            arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > dPhaseDens_dPres,
            arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens_dCompFrac,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres,
+           arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens,
            arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac,
            arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > dPhaseCompFrac_dPres,
            arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac_dCompFrac,
@@ -1151,32 +1156,44 @@ AquiferBCKernel::
     for( integer ic = 0; ic < NC; ++ic )
     {
       real64 const phaseFlux = aquiferVolFlux * aquiferWaterPhaseDens;
-      localFlux[ic] += dt * phaseFlux * aquiferWaterPhaseCompFrac[ic];
-      localFluxJacobian[ic][0] += dt * dAquiferVolFlux_dPres * aquiferWaterPhaseCompFrac[ic];
+      localFlux[ic] -= dt * phaseFlux * aquiferWaterPhaseCompFrac[ic];
+      localFluxJacobian[ic][0] -= dt * dAquiferVolFlux_dPres * aquiferWaterPhaseCompFrac[ic];
     }
   }
   else // reservoir is upstream
   {
     for( integer ip = 0; ip < numPhases; ++ip )
     {
-      real64 const phaseFlux = aquiferVolFlux * phaseDens[ip];
-      real64 const dPhaseFlux_dPres = dAquiferVolFlux_dPres * phaseDens[ip] + aquiferVolFlux * dPhaseDens_dPres[ip];
 
-      applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dCompFrac[ip], dProp_dC );
-      for( integer ic = 0; ic < NC; ++ic )
+      // Why two options below:
+      //   - The aquifer model assumes single-phase water flow, so ideally, we should only allow water phase flow from the reservoir to the
+      // aquifer
+      //   - But, if/when the CO2 plume reaches the reservoir cell connected to the aquifer and saturates it, the aquifer flux becomes zero
+      //     if we don't let some CO2 go into the aquifer
+
+      if( ip == ipWater || allowAllPhasesIntoAquifer )
       {
-        dPhaseFlux_dCompDens[ic] = aquiferVolFlux * dProp_dC[ic];
-      }
+        real64 const phaseDensVolFrac = phaseDens[ip] * phaseVolFrac[ip];
+        real64 const phaseFlux = aquiferVolFlux * phaseDensVolFrac;
+        real64 const dPhaseFlux_dPres = dAquiferVolFlux_dPres * phaseDensVolFrac
+                                        + aquiferVolFlux * ( dPhaseDens_dPres[ip] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac_dPres[ip] );
 
-      for( integer ic = 0; ic < NC; ++ic )
-      {
-        localFlux[ic] += dt * phaseFlux * phaseCompFrac[ip][ic];
-        localFluxJacobian[ic][0] += dt * ( dPhaseFlux_dPres * phaseCompFrac[ip][ic] + phaseFlux * dPhaseCompFrac_dPres[ip][ic] );
-
-        applyChainRule( NC, dCompFrac_dCompDens, dPhaseCompFrac_dCompFrac[ic][ip], dProp_dC );
-        for( integer jc = 0; jc < NC; ++jc )
+        applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dCompFrac[ip], dProp_dC );
+        for( integer ic = 0; ic < NC; ++ic )
         {
-          localFluxJacobian[ic][jc+1] += dt * ( dPhaseFlux_dCompDens[ic] * phaseCompFrac[ip][ic] + phaseFlux * dProp_dC[jc] );
+          dPhaseFlux_dCompDens[ic] = aquiferVolFlux * ( dProp_dC[ic] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][ic] );
+        }
+
+        for( integer ic = 0; ic < NC; ++ic )
+        {
+          localFlux[ic] -= dt * phaseFlux * phaseCompFrac[ip][ic];
+          localFluxJacobian[ic][0] -= dt * ( dPhaseFlux_dPres * phaseCompFrac[ip][ic] + phaseFlux * dPhaseCompFrac_dPres[ip][ic] );
+
+          applyChainRule( NC, dCompFrac_dCompDens, dPhaseCompFrac_dCompFrac[ip][ic], dProp_dC );
+          for( integer jc = 0; jc < NC; ++jc )
+          {
+            localFluxJacobian[ic][jc+1] -= dt * ( dPhaseFlux_dCompDens[jc] * phaseCompFrac[ip][ic] + phaseFlux * dProp_dC[jc] );
+          }
         }
       }
     }
@@ -1187,6 +1204,8 @@ template< localIndex NC >
 void
 AquiferBCKernel::
   launch( localIndex const numPhases,
+          localIndex const ipWater,
+          bool const allowAllPhasesIntoAquifer,
           BoundaryStencil const & stencil,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
@@ -1200,6 +1219,9 @@ AquiferBCKernel::
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dCompDens,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,
@@ -1242,6 +1264,8 @@ AquiferBCKernel::
 
     // compute the phase/component aquifer flux
     AquiferBCKernel::compute< NC >( numPhases,
+                                    ipWater,
+                                    allowAllPhasesIntoAquifer,
                                     aquiferVolFlux,
                                     dAquiferVolFlux_dPres,
                                     aquiferWaterPhaseDens,
@@ -1249,6 +1273,9 @@ AquiferBCKernel::
                                     phaseDens[er][esr][ei][0],
                                     dPhaseDens_dPres[er][esr][ei][0],
                                     dPhaseDens_dCompFrac[er][esr][ei][0],
+                                    phaseVolFrac[er][esr][ei],
+                                    dPhaseVolFrac_dPres[er][esr][ei],
+                                    dPhaseVolFrac_dCompDens[er][esr][ei],
                                     phaseCompFrac[er][esr][ei][0],
                                     dPhaseCompFrac_dPres[er][esr][ei][0],
                                     dPhaseCompFrac_dCompFrac[er][esr][ei][0],
@@ -1332,6 +1359,8 @@ AquiferBCKernel::
   template \
   void AquiferBCKernel:: \
     launch< NC >( localIndex const numPhases, \
+                  localIndex const ipWater, \
+                  bool const allowAllPhasesIntoAquifer, \
                   BoundaryStencil const & stencil, \
                   globalIndex const rankOffset, \
                   ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber, \
@@ -1345,6 +1374,9 @@ AquiferBCKernel::
                   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
                   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres, \
                   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac, \
+                  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac, \
+                  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres, \
+                  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dCompDens, \
                   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
                   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres, \
                   ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac, \

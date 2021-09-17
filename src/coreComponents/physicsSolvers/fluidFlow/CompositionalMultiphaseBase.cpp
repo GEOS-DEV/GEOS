@@ -296,6 +296,17 @@ void CompositionalMultiphaseBase::validateAquiferBC( ConstitutiveManager const &
     // note: while we are at it, we also set the gravity vector (needed later for the potential diff calculations)
     bc.setGravityVector( gravityVector() );
 
+    // TODO BEFORE MERGING: implement a mechanism in the fluid models to return the water phase index
+    for( localIndex ip = 0; ip < fluid0.numFluidPhases(); ++ip )
+    {
+      if( fluid0.phaseNames()[ip] == "Water" || fluid0.phaseNames()[ip] == "water" ||
+          fluid0.phaseNames()[ip] == "Brine" || fluid0.phaseNames()[ip] == "brine" )
+      {
+        bc.setWaterPhaseIndex( ip );
+        break;
+      }
+    }
+
     arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
     arrayView1d< string const > const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
 

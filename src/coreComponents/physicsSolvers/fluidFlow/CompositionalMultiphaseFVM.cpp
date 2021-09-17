@@ -616,11 +616,15 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
     }
 
     AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
+    bool const allowAllPhasesIntoAquifer = bc.allowAllPhasesIntoAquifer();
+    localIndex const waterPhaseIndex = bc.getWaterPhaseIndex();
     real64 const & aquiferWaterPhaseDens = bc.getWaterPhaseDensity();
     arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
 
     KernelLaunchSelector1< AquiferBCKernel >( m_numComponents,
                                               m_numPhases,
+                                              waterPhaseIndex,
+                                              allowAllPhasesIntoAquifer,
                                               stencil,
                                               dofManager.rankOffset(),
                                               elemDofNumber.toNestedViewConst(),
@@ -634,6 +638,9 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                               m_phaseDens.toNestedViewConst(),
                                               m_dPhaseDens_dPres.toNestedViewConst(),
                                               m_dPhaseDens_dComp.toNestedViewConst(),
+                                              m_phaseVolFrac.toNestedViewConst(),
+                                              m_dPhaseVolFrac_dPres.toNestedViewConst(),
+                                              m_dPhaseVolFrac_dCompDens.toNestedViewConst(),
                                               m_phaseCompFrac.toNestedViewConst(),
                                               m_dPhaseCompFrac_dPres.toNestedViewConst(),
                                               m_dPhaseCompFrac_dComp.toNestedViewConst(),

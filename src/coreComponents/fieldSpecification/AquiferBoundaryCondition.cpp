@@ -27,6 +27,7 @@ using namespace dataRepository;
 
 AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group * parent )
   : FieldSpecificationBase( name, parent ),
+  m_waterPhaseIndex( -1 ),
   m_cumulativeFlux( 0.0 )
 {
   registerWrapper( viewKeyStruct::aquiferPorosityString(), &m_porosity ).
@@ -53,15 +54,26 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Aquifer total compressibility (rock and fluid) [Pa^-1]" );
 
+  registerWrapper( viewKeyStruct::allowAllPhasesIntoAquiferString(), &m_allowAllPhasesIntoAquifer ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to allow all phases to flow into the aquifer. \n"
+                    "This flag only matters for the configuration in which flow is from reservoir to aquifer. \n"
+                    "    - If the flag is equal to 1, then all phases, including non-aqueous phases, are allowed to flow into the aquifer. \n "
+                    "    - If the flag is equal to 0, then only the water phase is allowed to flow into the aquifer. \n"
+                    "If you are in a configuration in which flow is from reservoir to aquifer "
+                    "and you expect non-aqueous phases to saturate the reservoir cells next to the aquifer, set this flag to 1. \n"
+                    "This keyword is ignored for single-phase flow simulations" );
+
   registerWrapper( viewKeyStruct::aquiferWaterPhaseComponentFractionString(), &m_phaseComponentFraction ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
-    setDescription( "Aquifer water phase component fraction" );
+    setDescription( "Aquifer water phase component fraction. This keyword is ignored for single-phase flow simulations." );
 
   registerWrapper( viewKeyStruct::aquiferWaterPhaseComponentNamesString(), &m_phaseComponentNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
-    setDescription( "Aquifer water phase component names" );
+    setDescription( "Aquifer water phase component names. This keyword is ignored for single-phase flow simulations." );
 
   registerWrapper( viewKeyStruct::aquiferElevationString(), &m_elevation ).
     setInputFlag( InputFlags::REQUIRED ).

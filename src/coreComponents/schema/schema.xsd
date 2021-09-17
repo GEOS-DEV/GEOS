@@ -289,6 +289,13 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="AquiferType">
+		<!--allowAllPhasesIntoAquifer => Flag to allow all phases to flow into the aquifer. 
+This flag only matters for the configuration in which flow is from reservoir to aquifer. 
+    - If the flag is equal to 1, then all phases, including non-aqueous phases, are allowed to flow into the aquifer. 
+     - If the flag is equal to 0, then only the water phase is allowed to flow into the aquifer. 
+If you are in a configuration in which flow is from reservoir to aquifer and you expect non-aqueous phases to saturate the reservoir cells next to the aquifer, set this flag to 1. 
+This keyword is ignored for single-phase flow simulations-->
+		<xsd:attribute name="allowAllPhasesIntoAquifer" type="integer" default="0" />
 		<!--aquiferAngle => Angle subtended by the aquifer boundary from the center of the reservoir [degress]-->
 		<xsd:attribute name="aquiferAngle" type="real64" use="required" />
 		<!--aquiferElevation => Aquifer elevation (positive going upward) [m]-->
@@ -307,9 +314,9 @@
 		<xsd:attribute name="aquiferTotalCompressibility" type="real64" use="required" />
 		<!--aquiferWaterDensity => Aquifer water density [kg.m^-3]-->
 		<xsd:attribute name="aquiferWaterDensity" type="real64" use="required" />
-		<!--aquiferWaterPhaseComponentFraction => Aquifer water phase component fraction-->
+		<!--aquiferWaterPhaseComponentFraction => Aquifer water phase component fraction. This keyword is ignored for single-phase flow simulations.-->
 		<xsd:attribute name="aquiferWaterPhaseComponentFraction" type="real64_array" default="{0}" />
-		<!--aquiferWaterPhaseComponentNames => Aquifer water phase component names-->
+		<!--aquiferWaterPhaseComponentNames => Aquifer water phase component names. This keyword is ignored for single-phase flow simulations.-->
 		<xsd:attribute name="aquiferWaterPhaseComponentNames" type="string_array" default="{}" />
 		<!--aquiferWaterViscosity => Aquifer water viscosity [Pa.s]-->
 		<xsd:attribute name="aquiferWaterViscosity" type="real64" use="required" />
