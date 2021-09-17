@@ -66,7 +66,7 @@ The internal wellbore mesh generator ``InternalWellbore`` is employed to create 
 Constitutive law
 --------------------------------------------------------------------
 
-Isotropic linear elastic constitutive behavior is considered for the rock around the wellbore. Note that the default density is useless for this case.
+Isotropic linear elastic constitutive behavior is considered for the rock around the wellbore. Note that the default density is useless in this specific example, as gravity effect is neglected.
 
 .. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DeviatedElasticWellbore.xml
   :language: xml
