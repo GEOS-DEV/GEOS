@@ -43,9 +43,11 @@ static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
   {
     sum += basisFunctionsIntegralMean[iBasisFun];
   }
+#ifndef GEOSX_USE_CUDA
   EXPECT_TRUE( LvArray::math::abs( sum-1 ) < 1e-15 )
     << "Sum of basis functions integral mean is not 1, but " << sum << ". "
     << "The computed integral means are " << basisFunctionsIntegralMean;
+#endif
 }
 
 template< typename VEM >
@@ -71,6 +73,7 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
       sumY += basisDerivativesIntegralMean[iBasisFun][1];
       sumZ += basisDerivativesIntegralMean[iBasisFun][2];
     }
+#ifndef GEOSX_USE_CUDA
     EXPECT_TRUE( LvArray::math::abs( sumX ) < 1e-15 )
       << "Sum of the x-derivatives of basis functions integral mean is not 0, but " << sumX << ". "
       << "The computed integral means are " << basisDerivativesIntegralMean;
@@ -80,6 +83,7 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
     EXPECT_TRUE( LvArray::math::abs( sumZ ) < 1e-15 )
       << "Sum of the z-derivatives of basis functions integral mean is not 0, but " << sumZ << ". "
       << "The computed integral means are " << basisDerivativesIntegralMean;
+#endif
   }
 }
 
@@ -138,9 +142,11 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
     }
     stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
   }
+#ifndef GEOSX_USE_CUDA
   EXPECT_TRUE( LvArray::math::abs( stabTimeMonomialDofsNorm ) < 1e-15 )
     << "Product of stabilization matrix and monomial degrees of freedom is not zero for "
     << "monomial number 0. The computed product is " << stabTimeMonomialDofs;
+#endif
   for( localIndex monomInd = 0; monomInd < 3; ++monomInd )
   {
     stabTimeMonomialDofsNorm = 0;
@@ -153,9 +159,11 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
       }
       stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
     }
+#ifndef GEOSX_USE_CUDA
     EXPECT_TRUE( LvArray::math::abs( stabTimeMonomialDofsNorm ) < 1e-15 )
       << "Product of stabilization matrix and monomial degrees of freedom is not zero for "
       << "monomial number " << monomInd+1 << ". The computed product is " << stabTimeMonomialDofs;
+#endif
   }
 }
 
@@ -173,9 +181,11 @@ static void checkSumOfQuadratureWeights( real64 const & cellVolume,
     real64 weight = VEM::transformedQuadratureWeight( q, dummy, stack );
     sum += weight;
   }
+#ifndef GEOSX_USE_CUDA
   EXPECT_TRUE( LvArray::math::abs( sum - cellVolume ) < 1e-15 )
     << "Sum of quadrature weights does not equal the cell volume. Sum is " << sum
     << ". Cell volume is " << cellVolume;
+#endif
 }
 
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
