@@ -40,21 +40,19 @@ We simulate a drained wellbore problem subjected to isotropic horizontal stress 
 To simulate this phenomenon, the Modified Cam-Clay model with an associated plastic flow rule in GEOSX is used in this example. Displacement and stress fields around the wellbore are numerically calculated. These numerical predictions are then compared with the corresponding analytical solutions `(Chen and Abousleiman, 2013)  <https://www.icevirtuallibrary.com/doi/10.1680/geot.11.P.088>`__ from the literature. 
 
 
-------------------------------------------------------------------
-Mesh
-------------------------------------------------------------------
 
 In this example, we focus our attention on the ``Mesh`` tags,
 the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
 
-Mesh: discretizing computational domain
---------------------------------------------------------------------
+------------------------------------------------------------------
+Mesh
+------------------------------------------------------------------
 
 Following figure shows the generated mesh that is used for solving this wellbore problem.
 
 
 .. _problemSketchFig:
-.. figure::MCC_wellMesh.png
+.. figure:: MCC_wellMesh.png
    :align: center
    :width: 500
    :figclass: align-center
@@ -80,8 +78,9 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
     :end-before: <!-- SPHINX_WELLBORE_MESH_END -->
 
 
+------------------------
 Solid mechanics solver
------------------------------------------------------------
+------------------------
 
 For the drained wellbore problem, the pore pressure variation is omitted and can be subtracted from the analysis. Therefore, we just need to define a solid mechanics solver, which is called ``mechanicsSolver``. 
 This solid mechanics solver (see :ref:`SolidMechanicsLagrangianFEM`) is based on the Lagrangian finite element formulation. 
@@ -95,8 +94,9 @@ The material is named as ``rock``, whose mechanical properties are specified in 
   :end-before: <!-- SPHINX_WELLBORE_SOLVER_END -->
 
 
+------------------------------
 Constitutive laws
------------------------------------------------------------
+------------------------------
 
 For this drained wellbore problem, we simulate the elastoplastic deformation caused by wellbore expansion.
 A homogeneous domain with one solid material is assumed, whose mechanical properties are specified in the ``Constitutive`` section: 
@@ -119,7 +119,8 @@ The following material parameters should be defined properly to reproduce the an
 The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units.
 
 
-Initial and Boundary Conditions
+-----------------------------------------------------------
+Initial and boundary conditions
 -----------------------------------------------------------
 
 The next step is to specify fields, including:
@@ -188,6 +189,7 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+---------------------------+------------------+---------------+
 
 
+---------------------------------
 Inspecting results
 ---------------------------------
 
