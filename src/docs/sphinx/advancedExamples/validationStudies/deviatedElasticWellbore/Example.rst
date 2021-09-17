@@ -17,7 +17,7 @@ Analytical results of the radial and hoop stresses, :math:`\sigma_{rr}` and :mat
    \sigma_{rr} = p_0 \frac{a^2}{r^2}
 
 .. math::
-   \sigma_{\theta\theta} = -p_0\frac{a^2}{r^2}
+   \sigma_{\theta\theta} = -p_0 \frac{a^2}{r^2}
 
 where :math:`p_0` is the applied mud pressure, :math:`a` the wellbore radius and :math:`r` the radial coordinate.
 
