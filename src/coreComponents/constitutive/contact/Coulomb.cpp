@@ -20,13 +20,14 @@
 
 namespace geosx
 {
+
 using namespace dataRepository;
+
 namespace constitutive
 {
 
 Coulomb::Coulomb( string const & name, Group * const parent ):
-  ContactRelationBase( name, parent ),
-  m_postProcessed( false ),
+  ContactBase( name, parent ),
   m_cohesion(),
   m_frictionAngle(),
   m_frictionCoefficient()
@@ -40,71 +41,57 @@ Coulomb::Coulomb( string const & name, Group * const parent ):
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Friction Angle (in radians)" );
+    setDescription( "Friction angle (in radians)" );
 
   registerWrapper( viewKeyStruct::frictionCoefficientString(), &m_frictionCoefficient ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Friction Coefficient" );
+    setDescription( "Friction coefficient" );
 }
-
 
 Coulomb::~Coulomb()
 {}
 
-real64 Coulomb::limitTangentialTractionNorm( real64 const normalTraction ) const
-{
-  return ( m_cohesion - normalTraction * m_frictionCoefficient );
-}
-
-real64 Coulomb::dLimitTangentialTractionNorm_dNormalTraction( real64 const GEOSX_UNUSED_PARAM( normalTraction ) ) const
-{
-  return ( m_frictionCoefficient );
-}
-
-static real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
-
 void Coulomb::postProcessInput()
 {
-  if( !m_postProcessed )
+  GEOSX_THROW_IF( m_frictionCoefficient < 0.0 && m_frictionAngle < 0,
+                  getCatalogName() << " " << getName() << ": Both friction angle and friction coefficient are less than zero. Values: "
+                                   << m_frictionAngle << ", " << m_frictionCoefficient << ". Invalid input.",
+                  InputError );
+
+  // Step 1: compute a tentative tangent of the friction angle
+  real64 const frictionCoefficient = ( m_frictionAngle >= 0.0 ) ? std::tan( m_frictionAngle ) : -1.0;
+
+  // Step 2: check that inputs are consistent, and if so, set the definitive friction coefficient
+  if( m_frictionCoefficient >= 0.0 )
   {
-    GEOSX_ERROR_IF( m_frictionCoefficient < 0.0 && m_frictionAngle < 0,
-                    "Both friction angle and friction coefficient are less than zero. Values: "
-                    << m_frictionAngle
-                    << ", "
-                    << m_frictionCoefficient
-                    << ". Invalid input." );
-    real64 frictionCoefficient = -1.0;
-    if( m_frictionAngle >= 0.0 )
+    if( frictionCoefficient >= 0.0 )
     {
-      // Compute the tangent of the friction angle just once
-      frictionCoefficient = std::tan( m_frictionAngle );
+      GEOSX_THROW_IF( LvArray::math::abs( m_frictionCoefficient - frictionCoefficient ) > 1e1*std::numeric_limits< real64 >::epsilon(),
+                      getCatalogName() << " " << getName() << ": Provided friction angle and friction coefficient do not match: "
+                                       << m_frictionCoefficient << ", " << frictionCoefficient << ". Invalid input.",
+                      InputError );
     }
-
-    if( m_frictionCoefficient >= 0.0 )
-    {
-      if( frictionCoefficient >= 0.0 )
-      {
-        GEOSX_ERROR_IF( std::fabs( m_frictionCoefficient - frictionCoefficient ) > 1.e+1*machinePrecision,
-                        "Provided friction angle and friction coefficient do not match: "
-                        << m_frictionCoefficient
-                        << ", "
-                        << frictionCoefficient
-                        << ". Invalid input." );
-      }
-    }
-    else
-    {
-      m_frictionCoefficient = frictionCoefficient;
-    }
-
-    GEOSX_ERROR_IF( m_frictionCoefficient < 0.0,
-                    "The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient );
+  }
+  else
+  {
+    m_frictionCoefficient = frictionCoefficient;
   }
 
-  m_postProcessed = true;
+  GEOSX_THROW_IF( m_frictionCoefficient < 0.0,
+                  getCatalogName() << " " << getName() << ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
+                  InputError );
+
+}
+
+Coulomb::KernelWrapper Coulomb::createKernelWrapper() const
+{
+  return Coulomb::KernelWrapper( m_cohesion,
+                                 m_frictionCoefficient );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, Coulomb, string const &, Group * const )
-}
-} /* namespace geosx */
+
+} /* end namespace constutive */
+
+} /* end namespace geosx */

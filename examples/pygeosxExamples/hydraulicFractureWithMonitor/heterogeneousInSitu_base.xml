@@ -165,12 +165,8 @@
 
     <Contact
       penaltyStiffness="0.0e8"
-      name="fractureContact">
-      <TableFunction
-        values="{ 1.0e-6, 1.0e-4 }"
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"/>
-    </Contact>
+      name="fractureContact"
+      apertureTableName="apertureTable"/>
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>
@@ -242,6 +238,12 @@
       coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
       name="shear_modulus"
       interpolation="nearest"/>
+
+    <TableFunction
+      name="apertureTable"	  
+      values="{ 1.0e-6, 1.0e-4 }"
+      coordinates="{ -1.0e-3, 0.0 }"/>
+    
   </Functions>
 
   <FieldSpecifications>

@@ -16,9 +16,10 @@
  *  @file Coulomb.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONTACTRELATIONS_COULOMB_HPP_
-#define GEOSX_CONSTITUTIVE_CONTACTRELATIONS_COULOMB_HPP_
-#include "ContactRelationBase.hpp"
+#ifndef GEOSX_CONSTITUTIVE_CONTACT_COULOMB_HPP_
+#define GEOSX_CONSTITUTIVE_CONTACT_COULOMB_HPP_
+
+#include "ContactBase.hpp"
 
 namespace geosx
 {
@@ -27,13 +28,64 @@ namespace constitutive
 {
 
 /**
- * @class MohrCoulomb
+ * @class Coulomb
  *
  * Class to provide a Coulomb friction model.
  */
-class Coulomb : public ContactRelationBase
+class Coulomb : public ContactBase
 {
 public:
+
+  /**
+   * @class KernelWrapper
+   *
+   * This class is used for in-kernel contact relation updates
+   */
+  class KernelWrapper : public ContactBase::KernelWrapper
+  {
+public:
+
+    KernelWrapper( real64 const & cohesion,
+                   real64 const & frictionCoefficient )
+      : m_cohesion( cohesion ),
+      m_frictionCoefficient( frictionCoefficient )
+    {}
+
+    /// Default copy constructor
+    KernelWrapper( KernelWrapper const & ) = default;
+
+    /// Default move constructor
+    KernelWrapper( KernelWrapper && ) = default;
+
+    /// Deleted default constructor
+    KernelWrapper() = delete;
+
+    /// Deleted copy assignment operator
+    KernelWrapper & operator=( KernelWrapper const & ) = delete;
+
+    /// Deleted move assignment operator
+    KernelWrapper & operator=( KernelWrapper && ) =  delete;
+
+    /**
+     * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
+     * @param[in] normalTraction the normal traction
+     * @param[out] dLimitTangentialTractionNorm_dTraction the derivative of the limit tangential traction norm wrt normal traction
+     * @return the limit tangential traction norm
+     */
+    GEOSX_HOST_DEVICE
+    inline
+    virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
+                                                       real64 & dLimitTangentialTractionNorm_dTraction ) const override;
+
+private:
+
+    /// The cohesion for each upper level dimension (i.e. cell) of *this
+    real64 m_cohesion;
+
+    /// The friction coefficient for each upper level dimension (i.e. cell) of *this
+    real64 m_frictionCoefficient;
+
+  };
 
   /**
    * constructor
@@ -47,40 +99,25 @@ public:
    */
   virtual ~Coulomb() override;
 
-  virtual real64 limitTangentialTractionNorm( real64 const normalTraction ) const override final;
-
-  virtual real64 dLimitTangentialTractionNorm_dNormalTraction( real64 const normalTraction ) const override final;
-
   /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "Coulomb";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "Coulomb"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
 
-  bool m_postProcessed = false;
-
   /**
    * @struct Set of "char const *" and keys for data specified in this class.
    */
-  struct viewKeyStruct : public ContactRelationBase::viewKeyStruct
+  struct viewKeyStruct : public ContactBase::viewKeyStruct
   {
-    /// string/key for default cohesion
-    static constexpr char const * defaultCohesionString() { return "defaultCohesion"; }
-
-    /// string/key for default friction angle
-    static constexpr char const * defaultFrictionAngleString() { return "defaultFrictionAngle"; }
-
     /// string/key for cohesion
     static constexpr char const * cohesionString() { return "cohesion"; }
 
@@ -92,25 +129,11 @@ public:
   };
 
   /**
-   * @brief Accessor for cohesion
-   * @return A const reference to arrayView1d<real64> containing the cohesions
-   *         (at every element).
-   */
-  real64 const & cohesion() { return m_cohesion; }
-
-  /**
    * @brief Const accessor for cohesion
    * @return A const reference to arrayView1d<real64 const> containing the
    *         cohesions (at every element).
    */
   real64 const & cohesion() const { return m_cohesion; }
-
-  /**
-   * @brief Accessor for friction angle
-   * @return A const reference to arrayView1d<real64> containing the friction
-   *         coefficient (at every element).
-   */
-  real64 const & frictionCoefficient() { return m_frictionCoefficient; }
 
   /**
    * @brief Const accessor for friction angle
@@ -119,7 +142,14 @@ public:
    */
   real64 const & frictionCoefficient() const { return m_frictionCoefficient; }
 
+  /**
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
+   */
+  KernelWrapper createKernelWrapper() const;
+
 protected:
+
   virtual void postProcessInput() override;
 
 private:
@@ -134,8 +164,17 @@ private:
   real64 m_frictionCoefficient;
 };
 
+
+GEOSX_HOST_DEVICE
+real64 Coulomb::KernelWrapper::computeLimitTangentialTractionNorm( real64 const & normalTraction,
+                                                                   real64 & dLimitTangentialTractionNorm_dTraction ) const
+{
+  dLimitTangentialTractionNorm_dTraction = m_frictionCoefficient;
+  return ( m_cohesion - normalTraction * m_frictionCoefficient );
 }
 
-} /* namespace geosx */
+} /* end namespace constitutive */
 
-#endif /* GEOSX_CONSTITUTIVE_CONTACTRELATIONS_COULOMB_HPP_ */
+} /* end namespace geosx */
+
+#endif /* GEOSX_CONSTITUTIVE_CONTACT_COULOMB_HPP_ */
