@@ -56,11 +56,11 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  virtual void updateFromStrain( localIndex const k,
-                                 localIndex const q,
-                                 real64 const ( &totalStrain )[6] ) const
+  virtual void updateFromShearDisplacement( localIndex const k,
+                                            localIndex const q,
+                                            real64 const ( &displacementJump )[3] ) const
   {
-    GEOSX_UNUSED_VAR( k, q, totalStrain );
+    GEOSX_UNUSED_VAR( k, q, displacementJump );
   }
 
   GEOSX_HOST_DEVICE

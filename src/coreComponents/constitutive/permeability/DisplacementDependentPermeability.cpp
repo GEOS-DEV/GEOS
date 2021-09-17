@@ -13,10 +13,10 @@
  */
 
 /**
- * @file StrainDependentPermeability.cpp
+ * @file DisplacementDependentPermeability.cpp
  */
 
-#include "StrainDependentPermeability.hpp"
+#include "DisplacementDependentPermeability.hpp"
 
 namespace geosx
 {
@@ -27,12 +27,12 @@ namespace constitutive
 {
 
 
-StrainDependentPermeability::StrainDependentPermeability( string const & name, Group * const parent ):
+DisplacementDependentPermeability::DisplacementDependentPermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::strainThresholdString(), &m_strainThreshold ).
+  registerWrapper( viewKeyStruct::shearDispThresholdString(), &m_shearDispThreshold ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Threshold of shear strain." );
+    setDescription( "Threshold of shear displacement." );
 
   registerWrapper( viewKeyStruct::maxPermMultiplierString(), &m_maxPermMultiplier ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -42,26 +42,26 @@ StrainDependentPermeability::StrainDependentPermeability( string const & name, G
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Initial permeability tensor of the fault." );
 
-  registerWrapper( viewKeyStruct::dPerm_dStrainString(), &m_dPerm_dStrain );
+  registerWrapper( viewKeyStruct::dPerm_dDisplacementString(), &m_dPerm_dDisplacement );
 }
 
 std::unique_ptr< ConstitutiveBase >
-StrainDependentPermeability::deliverClone( string const & name,
+DisplacementDependentPermeability::deliverClone( string const & name,
                                            Group * const parent ) const
 {
   return ConstitutiveBase::deliverClone( name, parent );
 }
 
-void StrainDependentPermeability::allocateConstitutiveData( dataRepository::Group & parent,
+void DisplacementDependentPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                             localIndex const numConstitutivePointsPerParentIndex )
 {
 // NOTE: enforcing 1 quadrature point
-  m_dPerm_dStrain.resize( 0, 1, 3 );
+  m_dPerm_dDisplacement.resize( 0, 1, 3 );
 
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, StrainDependentPermeability, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DisplacementDependentPermeability, string const &, Group * const )
 
 }
 } /* namespace geosx */

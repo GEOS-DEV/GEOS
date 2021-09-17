@@ -45,7 +45,7 @@ set( constitutive_headers
      permeability/ConstantPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
-     permeability/StrainDependentPermeability.hpp
+     permeability/DisplacementDependentPermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp
@@ -114,7 +114,7 @@ set( constitutive_sources
      permeability/ConstantPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
-     permeability/StrainDependentPermeability.cpp
+     permeability/DisplacementDependentPermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
