@@ -14,7 +14,7 @@ This example uses the solid mechanics solver to handle a deviated wellbore probl
 Analytical results of the radial and hoop stresses, :math:`\sigma_{rr}` and :math:`\sigma_{\theta\theta}`, around the wellbore are expressed as `(Detournay and Cheng, 1988) <https://www.sciencedirect.com/science/article/abs/pii/0148906288922991>`__ :
 
 .. math::
-   \sigma_{rr} = p_0\frac{a^2}{r^2}
+   \sigma_{rr} = p_0 \frac{a^2}{r^2}
 
 .. math::
    \sigma_{\theta\theta} = -p_0\frac{a^2}{r^2}
