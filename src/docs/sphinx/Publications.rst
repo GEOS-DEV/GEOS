@@ -22,7 +22,7 @@ Preprints and Early-Views
        | `arXiv:2105.14663 <https://arxiv.org/abs/2105.14663>`_
 
    * - | **Enhanced Relaxed Physical Factorization preconditioner for coupled poromechanics**
-       | M Frigo, N Castelletto, M Ferronato, JA White
+       | M Frigo, N Castelletto, M Ferronato
        | arXiv preprint
        | `arXiv:2007.14591 <https://arxiv.org/abs/2007.14591>`_
 
