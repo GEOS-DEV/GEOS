@@ -106,7 +106,7 @@ that creates the container ``remote-dev-ubuntu18.04-gcc8-156-642``, running inst
 
 - Note that you'll have to access your remote development instance though port ``64000`` (forwarded to standard port ``22`` by docker).
 - Please be aware of how to retrieve your code back: you may want to bind mount volumes and store you code there (``-v``/``--volume=`` options of `docker run <https://docs.docker.com/engine/reference/run/>`_).
-- Change `docker` to `nvidia-docker` and add the `--gpus=...` option for GPUs.
+- Change ``docker`` to ``nvidia-docker`` and add the ``--gpus=...`` option for GPUs.
 
 You can stop and restart your container with
 
