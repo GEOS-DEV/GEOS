@@ -75,11 +75,10 @@ std::list< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelatio
 {
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector( fracElement );
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
-  real64 origin[3];
-  LvArray::tensorOps::copy< 3 >( origin, centers[ fracElement ] );
 
-  real64 tmp[ 3 ];
-  real64 distToFrac = getSignedDistanceCellCenterToFracPlane( hostCellID, n, origin, tmp );
+  real64 fracCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(centers[ fracElement ]);
+  real64 cellCenterToFracCenter[ 3 ];
+  real64 distToFrac = getSignedDistanceCellCenterToFracPlane( hostCellID, n, fracCenter, cellCenterToFracCenter );
 
   // pick faces that intersect the fracture
   std::list< localIndex > faces;
@@ -88,17 +87,17 @@ std::list< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelatio
     if( isBoundaryFace( iface ))
       continue;
     // face intersected by frac and non-branching
-    if( intersection(origin,  n, iface, tmp) && !neighborOnSameSide(iface, distToFrac, hostCellID, fractureSubRegion) )
+    if( intersection(fracCenter,  n, iface) && !neighborOnSameSide(iface, distToFrac, hostCellID, fractureSubRegion) )
     {
       faces.push_back( iface );
       continue;
     }
 
     // if the frac is horizontal this can be 0 so we just pick one side.
-    if (distToFrac < std::numeric_limits< real64 >::epsilon() )
+    if ( distToFrac < std::numeric_limits< real64 >::epsilon() )
       distToFrac = 1.0;
 
-    if( onLargerSide(iface, distToFrac, origin, n) )
+    if( onLargerSide(iface, distToFrac, fracCenter, n) )
     {
       faces.push_back( iface );
       continue;
@@ -108,17 +107,16 @@ std::list< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelatio
   return faces;
 }
 
-bool ProjectionEDFMHelper::intersection( real64 const (& fracOrigin)[3],
+bool ProjectionEDFMHelper::intersection( real64 const (& fracCenter)[3],
                                          arraySlice1d< real64 const > const & fracNormal,
-                                         localIndex const edgeIdx,
-                                         real64 (& tmp)[3] ) const
+                                         localIndex const edgeIdx ) const
 {
   real64 signedDistanceProduct = 1.f;
   int const nEdgeVertices = 2;
   for( int ivertex = 0; ivertex < nEdgeVertices; ivertex++ )
   {
-    LvArray::tensorOps::copy< 3 >( tmp, m_nodesCoord[m_edgeToNodes[edgeIdx][ivertex]] );
-    LvArray::tensorOps::subtract< 3 >( tmp, fracOrigin );
+    real64 tmp[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_nodesCoord[m_edgeToNodes[edgeIdx][ivertex]] ); //why edgeIndex if looking for intersection with the face?
+    LvArray::tensorOps::subtract< 3 >( tmp, fracCenter );
     signedDistanceProduct *= LvArray::tensorOps::AiBi< 3 >( tmp, fracNormal );
   }
 
@@ -134,7 +132,7 @@ bool ProjectionEDFMHelper::isBoundaryFace( localIndex const faceIdx ) const
 
 bool ProjectionEDFMHelper::onLargerSide( localIndex const faceIdx,
                                          real64 const signedDistanceCellCenterToFrac,
-                                         real64 const (& fracOrigin)[3],
+                                         real64 const (& fracCenter)[3],
                                          arraySlice1d< real64 const > const & fracNormal ) const
 {
   /* Check If face is on the same side of the fracture as the mass center of the cell. */
@@ -143,24 +141,25 @@ bool ProjectionEDFMHelper::onLargerSide( localIndex const faceIdx,
   // compute face center
   computationalGeometry::Centroid_3DPolygon( m_facesToNodes[faceIdx], m_nodesCoord,
                                              faceCenter, faceNormal, areaTolerance );
-  LvArray::tensorOps::subtract< 3 >( faceCenter, fracOrigin );
+  LvArray::tensorOps::subtract< 3 >( faceCenter, fracCenter );
   return LvArray::tensorOps::AiBi< 3 >( faceCenter, fracNormal ) * signedDistanceCellCenterToFrac > 0;
 }
 
 real64 ProjectionEDFMHelper::getSignedDistanceCellCenterToFracPlane( CellDescriptor const & hostCellID,
                                                                      arraySlice1d< real64 const > const & fracNormal,
-                                                                     real64 const (&fracOrigin)[3],
-                                                                     real64 (& tmp)[3] ) const
+                                                                     real64 const (&fracCenter)[3],
+                                                                     real64 (& cellCenterToFracOrigin)[3] ) const
 {
   auto const & cellCenter = m_cellCenters[ hostCellID.region ][ hostCellID.subRegion ][ hostCellID.index ];
-  LvArray::tensorOps::copy< 3 >( tmp, cellCenter );
-  LvArray::tensorOps::subtract< 3 >( tmp, fracOrigin );
-  return LvArray::tensorOps::AiBi< 3 >( tmp, fracNormal );
+  LvArray::tensorOps::copy< 3 >( cellCenterToFracOrigin, cellCenter );
+  LvArray::tensorOps::subtract< 3 >( cellCenterToFracOrigin, fracCenter );
+
+  return LvArray::tensorOps::AiBi< 3 >( cellCenterToFracOrigin, fracNormal );
 }
 
 CellDescriptor ProjectionEDFMHelper::otherCell( localIndex const faceIdx, CellDescriptor const & hostCellID ) const
 {
-  const auto & neighbors = m_facesToCells[faceIdx];
+  auto const & neighbors = m_facesToCells[faceIdx];
   localIndex const ineighbor = (neighbors[0] == hostCellID.index) ? 1 : 0;
   return CellDescriptor ( m_facesToRegions[faceIdx][ineighbor],
                           m_facesToSubRegions[faceIdx][ineighbor],
@@ -175,12 +174,6 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex const faceIdx,
   // find the identification of the neighbor cell
   CellDescriptor neighborCellID = otherCell( faceIdx, hostCellID );
 
-  // get cell center
-  real64 cellCenter[ 3 ];
-  LvArray::tensorOps::copy< 3 >( cellCenter,
-                                 m_cellCenters[ neighborCellID.region ]
-                                 [ neighborCellID.subRegion ][ neighborCellID.index ] );
-
   // get fracture normal and origin in the neighbor cells:
   // they might be different than those in the host cell
   CellElementRegion const & neighborRegion =
@@ -191,7 +184,7 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex const faceIdx,
 
   // embedded fracture elements hosted in the neighbor cell
   // (there could be more than one)
-  auto const & efracElements = efracSurfaces[neighborCellID.index];
+  auto const & efracElements = efracSurfaces[ neighborCellID.index ];
   if( efracElements.size() == 0 )
     return false;
   if( efracElements.size() > 1 )
@@ -200,13 +193,12 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex const faceIdx,
   localIndex const fracElement = efracElements[0];
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector( fracElement );
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
-  real64 origin[3];
-  LvArray::tensorOps::copy< 3 >( origin, centers[ fracElement ] );
 
-  // const auto o = [fracElement];
-  real64 tmp[ 3 ];
+
+  real64 fracCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centers[ fracElement ] );
+  real64 cellCenterToFracOrigin[ 3 ];
   real64 const signedDistanceNeighborlCenterToFrac =
-    getSignedDistanceCellCenterToFracPlane( neighborCellID, n, origin, tmp );
+    getSignedDistanceCellCenterToFracPlane( neighborCellID, n, fracCenter, cellCenterToFracOrigin );
 
   return signedDistanceCellCenterToFrac * signedDistanceNeighborlCenterToFrac > 0;
 }
@@ -216,13 +208,10 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex const fracEle
                                                         real64 const (& transmissibility)[2],
                                                         EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
 {
-  localIndex constexpr maxElems = EmbeddedSurfaceToCellStencil::MAX_STENCIL_SIZE;
-  localIndex const numElems = 2;
-
-  stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( 2 );
-  stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( 2 );
-  stackArray1d< localIndex, maxElems > stencilCellsIndex( 2 );
-  stackArray1d< real64, maxElems > stencilWeights( 2 );
+  array1d< localIndex > stencilCellsRegionIndex( 2 );
+  array1d< localIndex > stencilCellsSubRegionIndex( 2 );
+  array1d< localIndex > stencilCellsIndex( 2 );
+  array1d< real64 > stencilWeights( 2 );
 
   // cell data
   stencilCellsRegionIndex[0] = cell.region;
@@ -236,7 +225,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex const fracEle
   stencilCellsIndex[1] = fracElement;
   stencilWeights[1] = transmissibility[1];
 
-  m_edfmStencil.add( numElems,
+  m_edfmStencil.add( 2,
                      stencilCellsRegionIndex.data(),
                      stencilCellsSubRegionIndex.data(),
                      stencilCellsIndex.data(),
@@ -261,11 +250,9 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex const fracEle
                                                                faceCenter, faceNormal, areaTolerance );
 
   // get cell center
-  real64 cellCenter[ 3 ];
-  LvArray::tensorOps::copy< 3 >( cellCenter,
-                                 m_cellCenters[ neighborCell.region ]
-                                 [ neighborCell.subRegion ]
-                                 [ neighborCell.index ] );
+  real64 cellCenter[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_cellCenters[ neighborCell.region ]
+                                                                        [ neighborCell.subRegion ]
+                                                                        [ neighborCell.index ] );
 
   // get frac  center
   real64 fracCenter[ 3 ];
@@ -274,30 +261,26 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex const fracEle
 
   // Compute projection point: a point  on the face that resides  on a  line
   // connecting edfm element and a neighbor cell
-  real64 tmp[3];
-  LvArray::tensorOps::copy< 3 >( tmp, faceCenter );
-  LvArray::tensorOps::subtract< 3 >( tmp, fracCenter );
-  real64 const numerator = LvArray::tensorOps::AiBi< 3 >( tmp, faceNormal );
-  LvArray::tensorOps::copy< 3 >( tmp, cellCenter );
-  LvArray::tensorOps::subtract< 3 >( tmp, fracCenter );
-  real64 const denom = LvArray::tensorOps::AiBi< 3 >( tmp, faceNormal );
-  real64 t = numerator / denom;
+  real64 faceToFracVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 (faceCenter);
+  real64 cellToFracVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 (cellCenter);
+  LvArray::tensorOps::subtract< 3 >( faceToFracVector, fracCenter );
+  LvArray::tensorOps::subtract< 3 >( cellToFracVector, fracCenter );
 
-  LvArray::tensorOps::copy< 3 >( tmp, cellCenter );
-  LvArray::tensorOps::subtract< 3 >( tmp, fracCenter );
-  real64 projectionPoint[3];
-  LvArray::tensorOps::copy< 3 >( tmp, fracCenter );
-  LvArray::tensorOps::scaledAdd< 3 >( projectionPoint, fracCenter, t );
+  real64 const numerator = LvArray::tensorOps::AiBi< 3 >( faceToFracVector, faceNormal );
+  real64 const denom = LvArray::tensorOps::AiBi< 3 >( cellToFracVector, faceNormal );
+  real64 const t = numerator / denom;
 
-  // part geometric trasmissibilities
-  LvArray::tensorOps::copy< 3 >( tmp, cellCenter );
-  LvArray::tensorOps::subtract< 3 >( tmp, projectionPoint );
-  trans[0] = faceArea * LvArray::tensorOps::l2Norm< 3 >( tmp );
+  real64 projectionPoint[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracCenter );
+  LvArray::tensorOps::scaledAdd< 3 >( projectionPoint, cellToFracVector, t );
 
-  LvArray::tensorOps::copy< 3 >( tmp, fracCenter );
-  LvArray::tensorOps::subtract< 3 >( tmp, projectionPoint );
-  trans[1] = faceArea * LvArray::tensorOps::l2Norm< 3 >( tmp );
+  // Compute half geometric transmissibilities
+  real64 projectionPointToCellCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(cellCenter);
+  LvArray::tensorOps::subtract< 3 >( projectionPointToCellCenter, projectionPoint );
+  trans[0] = faceArea * LvArray::tensorOps::l2Norm< 3 >( projectionPointToCellCenter );
 
+  real64 projectionPointToFracCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3(fracCenter);
+  LvArray::tensorOps::subtract< 3 >( projectionPointToFracCenter, projectionPoint );
+  trans[1] = faceArea * LvArray::tensorOps::l2Norm< 3 >( projectionPointToFracCenter );
 }
 
 }  // end namespace geosx

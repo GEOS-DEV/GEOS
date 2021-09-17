@@ -370,9 +370,8 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
     localIndex const ei  =  m_elementIndices[iconn][k];
 
-    sumOfTrans += coefficient[er][esr][ei][0][0] * m_weights[iconn][0];
+    sumOfTrans += coefficient[er][esr][ei][0][0] * m_weights[iconn][k];
   }
-
 
   localIndex k[2];
   localIndex connectionIndex = 0;
