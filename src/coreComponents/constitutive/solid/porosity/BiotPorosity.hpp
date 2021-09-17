@@ -104,11 +104,6 @@ class BiotPorosity : public PorosityBase
 public:
   BiotPorosity( string const & name, Group * const parent );
 
-  virtual ~BiotPorosity() override;
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -120,8 +115,6 @@ public:
   {
     static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
     static constexpr char const * grainBulkModulusString() { return "grainBulkModulus"; }
-
-
   } viewKeys;
 
   using KernelWrapper = BiotPorosityUpdates;

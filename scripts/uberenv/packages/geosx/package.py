@@ -379,7 +379,8 @@ class Geosx(CMakePackage, CudaPackage):
                        ('adiak', 'ADIAK', '+caliper' in spec),
                        ('caliper', 'CALIPER', '+caliper' in spec),
                        ('pugixml', 'PUGIXML', True),
-                       ('vtk', 'VTK', False))
+                       ('vtk', 'VTK', False)
+                       ('fmt', 'FMT', True))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# IO TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
