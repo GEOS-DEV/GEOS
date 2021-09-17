@@ -373,28 +373,45 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 void ProblemManager::parseInputFile()
 {
-  DomainPartition & domain = getDomainPartition();
-
   Group & commandLine = getGroup< Group >( groupKeys.commandLine );
   string const & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
 
-  // Load preprocessed xml file and check for errors
-  xmlResult = xmlDocument.load_file( inputFileName.c_str() );
-  if( !xmlResult )
-  {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
-  }
+  // Load preprocessed xml file
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlWrapper::xmlResult xmlResult = xmlDocument.load_file( inputFileName.c_str() );
+  GEOSX_THROW_IF(!xmlResult, "Errors found during XML file parsing!\nDescription: " << xmlResult.description() << "\nOffset: " << xmlResult.offset, InputError);
 
+  // Add path information to the file
   string::size_type const pos=inputFileName.find_last_of( '/' );
   string path = inputFileName.substr( 0, pos + 1 );
   xmlDocument.append_child( xmlWrapper::filePathString ).append_attribute( xmlWrapper::filePathString ) = path.c_str();
-  xmlProblemNode = xmlDocument.child( this->getName().c_str());
+
+  // Parse the results
+  parseXMLDocument(xmlDocument);
+}
+
+
+void ProblemManager::parseInputString(string xmlString)
+{
+  // Load preprocessed xml file
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlString.c_str(), strlen( xmlString.c_str() ) );
+  GEOSX_THROW_IF(!xmlResult, "Errors found during XML string parsing!\nDescription: " << xmlResult.description() << "\nOffset: " << xmlResult.offset, InputError);
+
+  // Parse the results
+  parseXMLDocument(xmlDocument);
+}
+
+
+void ProblemManager::parseXMLDocument(xmlWrapper::xmlDocument & xmlDocument)
+{
+  // Extract the problem node and begin processing the user inputs
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( this->getName().c_str());
   processInputFileRecursive( xmlProblemNode );
 
   // The objects in domain are handled separately for now
   {
+    DomainPartition & domain = getDomainPartition();
     ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
     constitutiveManager.processInputFileRecursive( topLevelNode );
