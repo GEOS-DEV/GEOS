@@ -740,8 +740,6 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
 
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager.faceList();
 
-  arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
-
   localIndex constexpr maxElems = SurfaceElementStencil::MAX_STENCIL_SIZE;
 
   localIndex connectorIndex = 0;
