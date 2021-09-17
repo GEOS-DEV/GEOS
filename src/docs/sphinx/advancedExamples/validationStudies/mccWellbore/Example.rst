@@ -50,7 +50,8 @@ the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
 Mesh: discretizing computational domain
 --------------------------------------------------------------------
 
-Following figure shows the generated mesh that is used for solving this wellbore problem
+Following figure shows the generated mesh that is used for solving this wellbore problem.
+
 
 .. _problemSketchFig:
 .. figure::MCC_wellMesh.png
