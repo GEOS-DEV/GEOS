@@ -95,7 +95,7 @@ private:
   /// mean permeability coefficient
   real64 m_meanPermCoefficient;
 
-  int m_useProjectionEmbeddedFractureMethod;  // whether or not to do projection EDFM
+  integer m_useProjectionEmbeddedFractureMethod;  // whether or not to do projection EDFM
 };
 
 }

@@ -28,7 +28,7 @@
 #include "finiteVolume/FaceElementToCellStencil.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "ProjectionEDFMHelper.hpp"
+#include "finiteVolume/ProjectionEDFMHelper.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -63,7 +63,7 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
   registerWrapper< FaceElementToCellStencil >( viewKeyStruct::faceToCellStencilString() ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerWrapper< integer >( viewKeyStruct::usePEDFMString(),
+  registerWrapper( viewKeyStruct::usePEDFMString(),
                               &m_useProjectionEmbeddedFractureMethod ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
@@ -668,7 +668,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
 
   // start from last connectorIndex from surface-To-cell connections
   localIndex connectorIndex = edfmStencil.size();
-  localIndex constexpr maxElems = EmbeddedSurfaceToCellStencil::MAX_STENCIL_SIZE;
+  localIndex constexpr MAX_NUM_ELEMS = EmbeddedSurfaceToCellStencil::MAX_STENCIL_SIZE;
 
   // reserve memory for the connections of this fracture
   edfmStencil.reserve( edfmStencil.size() + fractureSubRegion.size() );

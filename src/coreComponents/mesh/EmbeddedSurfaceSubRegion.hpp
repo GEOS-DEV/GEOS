@@ -290,7 +290,7 @@ public:
    * @param k the index of the embedded surface element
    * @return the name of the bounded plane, the element was generated from
    */
-  std::string const & getFractureName( localIndex k ) const { return m_parentPlaneName[k]; }
+  string const & getFractureName( localIndex k ) const { return m_parentPlaneName[k]; }
 
   /**
    * @brief Get an array of the first tangent vector of the embedded surface elements.
@@ -467,7 +467,7 @@ private:
   array1d< real64 > m_connectivityIndex;
 
   // Indices of geometric objects the element belongs to
-  array1d< std::string > m_parentPlaneName;
+  array1d< string > m_parentPlaneName;
 
   /// Surfaces with ghost nodes
   std::vector< struct surfaceWithGhostNodes > m_surfaceWithGhostNodes;

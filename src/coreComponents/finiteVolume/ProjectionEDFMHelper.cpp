@@ -85,7 +85,9 @@ std::list< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelatio
   for( localIndex const iface : subRegionFaces[hostCellID.index] )
   {
     if( isBoundaryFace( iface ))
+    {
       continue;
+    }
     // face intersected by frac and non-branching
     if( intersection(fracCenter,  n, iface) && !neighborOnSameSide(iface, distToFrac, hostCellID, fractureSubRegion) )
     {
@@ -125,9 +127,7 @@ bool ProjectionEDFMHelper::intersection( real64 const (& fracCenter)[3],
 
 bool ProjectionEDFMHelper::isBoundaryFace( localIndex const faceIdx ) const
 {
-  if( m_facesToCells[faceIdx][0] < 0 || m_facesToCells[faceIdx][1] < 0 )
-    return true;
-  return false;
+  return ( m_facesToCells[faceIdx][0] < 0 || m_facesToCells[faceIdx][1] < 0 );
 }
 
 bool ProjectionEDFMHelper::onLargerSide( localIndex const faceIdx,
@@ -172,7 +172,7 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex const faceIdx,
                                                EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
 {
   // find the identification of the neighbor cell
-  CellDescriptor neighborCellID = otherCell( faceIdx, hostCellID );
+  CellDescriptor const neighborCellID = otherCell( faceIdx, hostCellID );
 
   // get fracture normal and origin in the neighbor cells:
   // they might be different than those in the host cell
@@ -185,10 +185,11 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex const faceIdx,
   // embedded fracture elements hosted in the neighbor cell
   // (there could be more than one)
   auto const & efracElements = efracSurfaces[ neighborCellID.index ];
-  if( efracElements.size() == 0 )
-    return false;
-  if( efracElements.size() > 1 )
-    GEOSX_ERROR( "pEDFM with fracture intersections is not supported yet." );
+if( efracElements.size() == 0 )
+{
+  return false;
+}
+GEOSX_ERROR_IF( efracElements.size() > 1, "pEDFM with fracture intersections is not supported yet." );
 
   localIndex const fracElement = efracElements[0];
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector( fracElement );

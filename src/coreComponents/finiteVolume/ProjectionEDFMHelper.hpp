@@ -1,7 +1,6 @@
-#ifndef __PROJECTIONEDFMHELPER_H_
-#define __PROJECTIONEDFMHELPER_H_
+#ifndef GEOSX_FINITEVOLUME_PROJECTIONEDFMHELPER_HPP_
+#define GEOSX_FINITEVOLUME_PROJECTIONEDFMHELPER_HPP_
 
-#include <list>                                  // provides std::vector
 #include "common/DataTypes.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
@@ -40,7 +39,7 @@ struct CellDescriptor
    * @param[in] other the CellDescriptor to compare with
    * @return true if they represent the same mesh element
    */
-  bool operator==( CellDescriptor const & other )
+  bool operator==( CellDescriptor const & other ) const
   {
     return( region==other.region && subRegion==other.subRegion && index==other.index );
   }
