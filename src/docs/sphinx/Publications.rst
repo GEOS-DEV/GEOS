@@ -52,7 +52,7 @@ Preprints and Early-Views
    * - | **Enhanced multiscale restriction-smoothed basis (MsRSB) preconditioning with applications to porous media flow and geomechanics**
        | SBM Bosma, S Klevtsov, O Møyner, N Castelletto
        | Journal of Computational Physics 
-       | `doi.org:10.1016/j.jcp.2020.109934 <https://doi.org/10.1016/j.jcp.2020.109934>`_
+       | `doi:10.1016/j.jcp.2020.109934 <https://doi.org/10.1016/j.jcp.2020.109934>`_
 
    * - | **Multigrid reduction preconditioning framework for coupled processes in porous and fractured media**
        | QM Bui, FP Hamon, N Castelletto, D Osei-Kuffuor, RR Settgast, JA White
@@ -67,12 +67,12 @@ Preprints and Early-Views
    * - | **Preconditioners for multiphase poromechanics with strong capillarity**
        | JT Camargo, JA White, N Castelletto, RI Borja
        | International Journal for Numerical and Analytical Methods in Geomechanics 
-       | `doi.org:10.1002/nag.3192 <https://doi.org/10.1002/nag.3192>`_
+       | `doi:10.1002/nag.3192 <https://doi.org/10.1002/nag.3192>`_
 
    * - | **An anisotropic viscoplasticity model for shale based on layered microstructure homogenization**
        | J Choo, SJ Semnani, JA White
        | International Journal for Numerical and Analytical Methods in Geomechanics 
-       | `doi.org:10.1002/nag.3167 <https://doi.org/10.1002/nag.3167>`_
+       | `doi:10.1002/nag.3167 <https://doi.org/10.1002/nag.3167>`_
 
    * - | **Simulation of coupled multiphase flow and geomechanics in porous media with embedded discrete fractures**
        | M Cusini, JA White, N Castelletto, RR Settgast
@@ -87,7 +87,7 @@ Preprints and Early-Views
    * - | **Efficient solvers for hybridized three-field mixed finite element coupled poromechanics**
        | M Frigo, N Castelletto, M Ferronato, JA White
        | Computers and Mathematics with Applications 
-       | `doi.org:10.1016/j.camwa.2020.07.010 <https://doi.org/10.1016/j.camwa.2020.07.010>`_
+       | `doi:10.1016/j.camwa.2020.07.010 <https://doi.org/10.1016/j.camwa.2020.07.010>`_
 
 
 2020
