@@ -215,5 +215,5 @@ To go further
 
 **Feedback on this example**
 
-This concludes the deviated wellbore example.
+This concludes the deviated elastic wellbore example.
 For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
