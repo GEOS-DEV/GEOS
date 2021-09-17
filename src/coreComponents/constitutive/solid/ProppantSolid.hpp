@@ -119,7 +119,7 @@ public:
 
 
   /**
-   * @brief Create a instantiation of the ProppantSolidUpdates class
+   * @brief Create an instantiation of the ProppantSolidUpdates class
    *        that refers to the data in this.
    * @return An instantiation of ProppantSolidUpdates.
    */
@@ -137,7 +137,8 @@ private:
 
 };
 
-}
+} /* namespace constitutive */
+
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_ */

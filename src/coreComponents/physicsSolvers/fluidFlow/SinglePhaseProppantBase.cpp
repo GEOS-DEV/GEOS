@@ -60,9 +60,7 @@ SinglePhaseProppantBase::SinglePhaseProppantBase( const string & name,
 {}
 
 SinglePhaseProppantBase::~SinglePhaseProppantBase()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 void SinglePhaseProppantBase::validateFluidModels( DomainPartition const & domain ) const
 {
@@ -135,7 +133,7 @@ void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRe
   arrayView1d< real64 const > const proppantPackVolumeFraction = subRegion.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::proppantPackVolumeFractionString() );
 
   arrayView1d< real64 const > const newHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
-  arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct:: viewKeyStruct::aperture0String() );
+  arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::aperture0String() );
 
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
 

@@ -76,5 +76,6 @@ void ProppantPermeability::allocateConstitutiveData( dataRepository::Group & par
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantPermeability, string const &, Group * const )
 
-}
+} /* namespace constitutive */
+
 } /* namespace geosx */

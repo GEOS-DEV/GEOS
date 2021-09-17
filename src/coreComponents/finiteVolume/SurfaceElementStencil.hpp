@@ -89,6 +89,9 @@ class SurfaceElementStencilWrapper : public StencilWrapperBase< SurfaceElementSt
 {
 public:
 
+  /// Threshold for the application of the permeability multiplier
+  static constexpr real64 MULTIPLIER_THRESHOLD = 1e-10;
+
   /// Coefficient view accessory type
   template< typename VIEWTYPE >
   using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
@@ -485,7 +488,7 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
     localIndex const ei  =  m_elementIndices[iconn][k];
 
-    real64 const mult = ( LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( m_cellCenterToEdgeCenters[iconn][k], gravityVector ) ) > 1e-10 )
+    real64 const mult = ( LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( m_cellCenterToEdgeCenters[iconn][k], gravityVector ) ) > MULTIPLIER_THRESHOLD )
       ? coefficientMultiplier[er][esr][ei][0][1] : coefficientMultiplier[er][esr][ei][0][0];
 
     sumOfTrans += mult * coefficient[er][esr][ei][0][0] * m_weights[iconn][k];
@@ -506,9 +509,9 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
       localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
       localIndex const ei1  =  m_elementIndices[iconn][k[1]];
 
-      real64 const mult0 = ( LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( m_cellCenterToEdgeCenters[iconn][k[0]], gravityVector ) ) > 1e-10 )
+      real64 const mult0 = ( LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( m_cellCenterToEdgeCenters[iconn][k[0]], gravityVector ) ) > MULTIPLIER_THRESHOLD )
   ? coefficientMultiplier[er0][esr0][ei0][0][1] : coefficientMultiplier[er0][esr0][ei0][0][0];
-      real64 const mult1 = ( LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( m_cellCenterToEdgeCenters[iconn][k[1]], gravityVector ) ) > 1e-10 )
+      real64 const mult1 = ( LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( m_cellCenterToEdgeCenters[iconn][k[1]], gravityVector ) ) > MULTIPLIER_THRESHOLD )
   ? coefficientMultiplier[er1][esr1][ei1][0][1] : coefficientMultiplier[er1][esr1][ei1][0][0];
 
       real64 const t0 = mult0 * m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0];
@@ -550,7 +553,7 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
     real64 const edgeToFaceDownDistance = -LvArray::tensorOps::AiBi< 3 >( m_cellCenterToEdgeCenters[iconn][k], unitGravityVector )
                                           * edgeLength / cellToEdgeDistance;
 
-    real64 const mult = ( LvArray::math::abs( edgeToFaceDownDistance ) > 1e-10 )
+    real64 const mult = ( LvArray::math::abs( edgeToFaceDownDistance ) > MULTIPLIER_THRESHOLD )
       ? coefficient1Multiplier[er][esr][ei][0][1] : coefficient1Multiplier[er][esr][ei][0][0];
 
     weight1[k] = mult * coefficient1[er][esr][ei][0][0] * m_weights[iconn][k];

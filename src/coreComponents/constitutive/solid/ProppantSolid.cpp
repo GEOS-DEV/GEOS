@@ -43,5 +43,6 @@ typedef ProppantSolid< ProppantPorosity, ProppantPermeability > ProppantSolidMod
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantSolidModel, string const &, Group * const )
 
-}
+} /* namespace constitutive */
+
 } /* namespace geosx */
