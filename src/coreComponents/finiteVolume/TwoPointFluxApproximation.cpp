@@ -306,6 +306,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   SortedArrayView< localIndex const > const
   recalculateFractureConnectorEdges = edgeManager.m_recalculateFractureConnectorEdges.toViewConst();
 
+  // reserve memory for the connections of this fracture
+  fractureStencil.reserve( fractureStencil.size() + recalculateFractureConnectorEdges.size() );
+
   // add new connectors/connections between face elements to the fracture stencil
   forAll< serialPolicy >( recalculateFractureConnectorEdges.size(),
                           [ &allNewElems,
@@ -545,6 +548,11 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
     arrayView2d< localIndex const > elemSubRegionList = faceElementsToCells.m_toElementSubRegion;
     arrayView2d< localIndex const > elemList = faceElementsToCells.m_toElementIndex;
 
+    // reserve memory for the connections of this region
+    if( cellStencil.size() != 0 )
+    {
+      faceToCellStencil.reserve( faceToCellStencil.size() + faceElementsToCells.size() );
+    }
 
     forAll< serialPolicy >( newFaceElements.size(),
                             [ newFaceElements,
@@ -662,6 +670,9 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
 
   localIndex connectorIndex = 0;
 
+  // reserve memory for the connections of this fracture
+  fractureStencil.reserve( fractureStencil.size() + embSurfEdgeManager.size() );
+
   // add new connectors/connections between embedded elements to the fracture stencil
   for( localIndex ke = 0; ke <  embSurfEdgeManager.size(); ke++ )
   {
@@ -728,6 +739,9 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
 
   arrayView1d< real64 const > const connectivityIndex = fractureSubRegion.getConnectivityIndex();
+
+  // reserve memory for the connections of this fracture
+  edfmStencil.reserve( edfmStencil.size() + fractureSubRegion.size() );
 
   // start from last connectorIndex from cell-To-cell connections
   connectorIndex = edfmStencil.size();
