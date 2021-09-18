@@ -32,37 +32,6 @@
 namespace geosx
 {
 
-// TODO seems to be unused + I would move it somewhere else.
-///**
-// * @struct PointDescriptor
-// * @brief A structure describing an arbitrary point participating in a stencil.
-// *
-// * Nodal and face center points are identified by local mesh index.
-// * Cell center points are identified by a triplet <region,subregion,index>.
-// *
-// * The sad reality is, a boundary flux MPFA stencil may be comprised of a mix of
-// * cell and face centroids, so we have to discriminate between them at runtime
-// */
-//struct PointDescriptor
-//{
-//  /// Enum to classify the variable location
-//  enum class Tag { CELL, FACE, NODE };
-//
-//  /// The tag
-//  Tag tag;
-//
-//  /// union to characterize a PointDescriptor
-//  union
-//  {
-//    /// node index
-//    localIndex nodeIndex;
-//    /// face index
-//    localIndex faceIndex;
-//    /// CellDescriptor index
-//    CellDescriptor cellIndex;
-//  };
-//};
-
 /**
  * @class FluxApproximationBase
  *

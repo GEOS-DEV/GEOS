@@ -64,7 +64,7 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
     setRestartFlags( RestartFlags::NO_WRITE );
 
   registerWrapper( viewKeyStruct::usePEDFMString(),
-                              &m_useProjectionEmbeddedFractureMethod ).
+                   &m_useProjectionEmbeddedFractureMethod ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
@@ -680,12 +680,12 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
     {
       localIndex const numElems = 2;   // there is a 1 to 1 relation
 
-      GEOSX_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kes );
+      GEOSX_ERROR_IF( numElems > MAX_NUM_ELEMS, "Max stencil size exceeded by fracture-cell connector " << kes );
 
-      stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( numElems );
-      stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
-      stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
-      stackArray1d< real64, maxElems > stencilWeights( numElems );
+      stackArray1d< localIndex, MAX_NUM_ELEMS > stencilCellsRegionIndex( numElems );
+      stackArray1d< localIndex, MAX_NUM_ELEMS > stencilCellsSubRegionIndex( numElems );
+      stackArray1d< localIndex, MAX_NUM_ELEMS > stencilCellsIndex( numElems );
+      stackArray1d< real64, MAX_NUM_ELEMS > stencilWeights( numElems );
 
       localIndex const er  = surfaceElementsToCells.m_toElementRegion[kes][0];
       localIndex const esr = surfaceElementsToCells.m_toElementSubRegion[kes][0];

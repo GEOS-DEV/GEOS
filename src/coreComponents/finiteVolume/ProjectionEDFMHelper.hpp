@@ -74,10 +74,10 @@ private:
    * @param[in] fractureSubRegion the embeddedSurfaceSubRegion
    * @return a list of the faces that need to be disconnected.
    */
-  std::list< localIndex > selectFaces( FixedOneToManyRelation const & subRegionFaces,
-                                       CellDescriptor const & hostCellID,
-                                       localIndex const fracElement,
-                                       EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
+  std::vector< localIndex > selectFaces( FixedOneToManyRelation const & subRegionFaces,
+                                         CellDescriptor const & hostCellID,
+                                         localIndex const fracElement,
+                                         EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
 
   /*
    * @brief check the intersection a fracture element and an edge
@@ -151,7 +151,7 @@ private:
                                          localIndex const fracElement,
                                          EmbeddedSurfaceSubRegion const & fractureSubRegion,
                                          localIndex const faceIdx,
-                                         real64 (& trans)[2] ) const;
+                                         real64 ( &trans )[2] ) const;
 
   /*
    * @brief add non-neighboring F-M connection with given transmissibility tothe cell stencil
@@ -162,7 +162,7 @@ private:
    */
   void addNonNeighboringConnection( localIndex const fracElement,
                                     CellDescriptor const & cell,
-                                    real64 const (& transmissibility)[2],
+                                    real64 const (&transmissibility)[2],
                                     EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
 
   // Private variables
@@ -172,13 +172,15 @@ private:
   ///
   arrayView2d< localIndex const > const m_edgeToNodes;
   ///
-  arrayView2d< localIndex const > const m_facesToCells;
+  arrayView2d< localIndex const > const m_faceToRegions;
   ///
-  arrayView2d< localIndex const > const m_facesToRegions;
+  arrayView2d< localIndex const > const m_faceToSubRegions;
   ///
-  arrayView2d< localIndex const > const m_facesToSubRegions;
+  arrayView2d< localIndex const > const m_faceToCells;
   ///
-  ArrayOfArraysView< localIndex const > const m_facesToNodes;
+  ArrayOfArraysView< localIndex const > m_faceToEdges;
+  ///
+  ArrayOfArraysView< localIndex const > const m_faceToNodes;
   ///
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_cellCenters;
   ///
