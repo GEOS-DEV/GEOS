@@ -120,10 +120,13 @@ if(DEFINED HDF5_DIR)
     set(HDF5_NO_FIND_PACKAGE_CONFIG_FILE ON)
     include(FindHDF5)
 
+    list(REMOVE_ITEM HDF5_INCLUDE_DIRS /usr/include)
+    message(STATUS "HDF5_INCLUDE_DIRS = ${HDF5_INCLUDE_DIRS}")
+
     blt_import_library(NAME hdf5
-                         INCLUDES ${HDF5_INCLUDE_DIRS}
-                         LIBRARIES ${HDF5_LIBRARIES}
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+                       INCLUDES ${HDF5_INCLUDE_DIRS}
+                       LIBRARIES ${HDF5_LIBRARIES}
+                       TREAT_INCLUDES_AS_SYSTEM ON)
 
     set(ENABLE_HDF5 ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hdf5)
@@ -141,17 +144,26 @@ if(DEFINED CONDUIT_DIR)
                  PATHS ${CONDUIT_DIR}/lib/cmake
                  NO_DEFAULT_PATH)
 
-    set( CONDUIT_TARGETS conduit conduit_relay conduit_blueprint )
-    foreach( targetName ${CONDUIT_TARGETS} )
-        get_target_property( includeDirs 
-                             ${targetName}
-                             INTERFACE_INCLUDE_DIRECTORIES)
+    set(CONDUIT_TARGETS conduit conduit_relay conduit_blueprint)
+    foreach(targetName ${CONDUIT_TARGETS} )
+        get_target_property(includeDirs 
+                            ${targetName}
+                            INTERFACE_INCLUDE_DIRECTORIES)
                              
         set_property(TARGET ${targetName} 
                      APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                      ${includeDirs})
     endforeach()
-    set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit )
+
+    get_target_property(CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES conduit_relay INTERFACE_INCLUDE_DIRECTORIES)
+    list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES /usr/include)
+    set_target_properties(conduit_relay PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES})
+
+    get_target_property(CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES conduit_relay INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+    list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES /usr/include)
+    set_target_properties(conduit_relay PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES})
+
+    set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit)
 else()
     message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
 endif()

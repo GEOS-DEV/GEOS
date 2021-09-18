@@ -1306,7 +1306,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
         // check if the field actually exists / plotted on the current subregion
         if( viewPointers[esr].count( fieldName ) > 0 )
         {
-          Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( *( viewPointers[esr].at( fieldName ) ) );
+          auto const & sourceWrapper = Wrapper< std::remove_reference_t< decltype( targetArray ) > >::cast( *( viewPointers[esr].at( fieldName ) ) );
           auto const sourceArray = sourceWrapper.reference().toViewConst();
 
           localIndex const offset = counter * targetArray.strides()[0];
