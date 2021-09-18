@@ -25,16 +25,17 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/contactSelector.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -277,42 +278,26 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
       using ContactType = TYPEOFREF( castedContact );
       typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
-      {
-        localIndex const kf0 = elemsToFaces[kfe][0];
-        localIndex const kf1 = elemsToFaces[kfe][1];
-        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
-        real64 temp[ 3 ] = { 0 };
-        for( localIndex a=0; a<numNodesPerFace; ++a )
-        {
-          LvArray::tensorOps::add< 3 >( temp, u[ faceToNodeMap( kf0, a ) ] );
-          LvArray::tensorOps::subtract< 3 >( temp, u[ faceToNodeMap( kf1, a ) ] );
-        }
-
-        // TODO this needs a proper contact based strategy for aperture
-        aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
-
-        real64 dEffectiveAperture_dAperture = 0;
-        effectiveAperture[kfe] = contactWrapper.computeEffectiveAperture( aperture[kfe], dEffectiveAperture_dAperture );
-
+      HydrofractureSolverKernels::DeformationUpdateKernel
+        ::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                            contactWrapper,
+                                            u,
+                                            faceNormal,
+                                            faceToNodeMap,
+                                            elemsToFaces,
+                                            area,
+                                            volume,
+                                            deltaVolume,
+                                            aperture,
+                                            effectiveAperture
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-        real64 const s = aperture[kfe] / apertureF[kfe];
-        if( separationCoeff0[kfe]<1.0 && s>separationCoeff0[kfe] )
-        {
-          if( s >= 1.0 )
-          {
-            separationCoeff[kfe] = 1.0;
-            dSeparationCoeff_dAper[kfe] = 0.0;
-          }
-          else
-          {
-            separationCoeff[kfe] = s;
-            dSeparationCoeff_dAper[kfe] = 1.0/apertureF[kfe];
-          }
-        }
+                                            ,
+                                            apertureF,
+                                            separationCoeff,
+                                            dSeparationCoeff_dAper,
+                                            separationCoeff0
 #endif
-        deltaVolume[kfe] = effectiveAperture[kfe] * area[kfe] - volume[kfe];
-      } );
+                                            );
 
     } );
 
@@ -699,9 +684,7 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                             localRhs,
                                             getDerivativeFluxResidual_dAperture() );
 
-
   assembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
-
   assembleFluidMassResidualDerivativeWrtDisplacement( domain, localMatrix );
 
   this->getRefDerivativeFluxResidual_dAperture()->zero();
@@ -885,90 +868,21 @@ HydrofractureSolver::
       using ContactType = TYPEOFREF( castedContact );
       typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-      forAll< serialPolicy >( subRegion.size(), [=]( localIndex ei )
-      {
-        constexpr int kfSign[2] = { -1, 1 };
+      HydrofractureSolverKernels::FluidMassResidualDerivativeAssemblyKernel::
+        launch< parallelDevicePolicy<> >( subRegion.size(),
+                                          rankOffset,
+                                          contactWrapper,
+                                          elemsToFaces,
+                                          faceToNodeMap,
+                                          faceNormal,
+                                          area,
+                                          aperture,
+                                          presDofNumber,
+                                          dispDofNumber,
+                                          dens,
+                                          dFluxResidual_dAperture,
+                                          localMatrix );
 
-        globalIndex const elemDOF = presDofNumber[ei];
-        // row number associated to the pressure dof
-        globalIndex rowNumber = elemDOF - rankOffset;
-        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[ei][0] );
-        real64 const dAccumulationResidualdAperture = dens[ei][0] * area[ei];
-
-        globalIndex nodeDOF[8 * 3];
-
-        real64 Nbar[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[elemsToFaces[ei][0]] );
-        LvArray::tensorOps::subtract< 3 >( Nbar, faceNormal[elemsToFaces[ei][1]] );
-        LvArray::tensorOps::normalize< 3 >( Nbar );
-
-        stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
-
-        // Accumulation derivative
-        for( localIndex kf = 0; kf < 2; ++kf )
-        {
-          for( localIndex a = 0; a < numNodesPerFace; ++a )
-          {
-            for( int i = 0; i < 3; ++i )
-            {
-              nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
-              real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
-
-              real64 dEffectiveAperture_dAperture = 0;
-              real64 const effectiveAperture = contactWrapper.computeEffectiveAperture( aperture[ei], dEffectiveAperture_dAperture );
-              GEOSX_UNUSED_VAR( effectiveAperture );
-              real64 const dAper_dU = dEffectiveAperture_dAperture * dGap_dU;
-
-              dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU;
-            }
-          }
-        }
-
-        if( rowNumber >= 0  && rowNumber < localMatrix.numRows() )
-        {
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                            nodeDOF,
-                                                                            dRdU.data(),
-                                                                            2 * numNodesPerFace * 3 );
-        }
-
-        // flux derivative
-        localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
-        arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
-        arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );
-
-        for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
-        {
-          real64 dRdAper = values[kfe2];
-          localIndex const ei2 = columns[kfe2];
-
-          for( localIndex kf = 0; kf < 2; ++kf )
-          {
-            for( localIndex a = 0; a < numNodesPerFace; ++a )
-            {
-              for( int i = 0; i < 3; ++i )
-              {
-                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
-                  dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
-                real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
-
-                real64 dEffectiveAperture_dAperture = 0.0;
-                real64 const effectiveAperture = contactWrapper.computeEffectiveAperture( aperture[ei2], dEffectiveAperture_dAperture );
-                GEOSX_UNUSED_VAR( effectiveAperture );
-                real64 const dAper_dU = dEffectiveAperture_dAperture * dGap_dU;
-                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
-              }
-            }
-          }
-
-          if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
-          {
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                              nodeDOF,
-                                                                              dRdU.data(),
-                                                                              2 * numNodesPerFace * 3 );
-          }
-        }
-      } );
     } );
   } );
 }
