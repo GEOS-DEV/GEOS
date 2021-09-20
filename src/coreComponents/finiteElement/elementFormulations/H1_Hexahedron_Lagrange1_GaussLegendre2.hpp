@@ -94,7 +94,6 @@ public:
     return numQuadraturePoints;
   }
 
-
   /**
    * @brief Get the number of quadrature points.
    * @param stack Stack variables as filled by @ref setupStack.
@@ -182,9 +181,10 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void calcN( localIndex const q,
-                     StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+                     StackVariables const & stack,
                      real64 ( & N )[numNodes] )
   {
+    GEOSX_UNUSED_VAR( stack );
     return calcN( q, N );
   }
 

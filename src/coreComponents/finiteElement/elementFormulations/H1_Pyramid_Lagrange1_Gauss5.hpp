@@ -139,11 +139,8 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void calcN( localIndex const q,
-                     StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                     real64 ( & N )[numNodes] )
-  {
-    return calcN( q, N );
-  }
+                     StackVariables const & stack,
+                     real64 ( & N )[numNodes] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -501,6 +498,16 @@ H1_Pyramid_Lagrange1_Gauss5::
   N[2] = 0.125*( 1.0 - xi[0] ) * ( 1.0 + xi[1] ) * ( 1.0 - xi[2] );
   N[3] = 0.125*( 1.0 + xi[0] ) * ( 1.0 + xi[1] ) * ( 1.0 - xi[2] );
   N[4] = 0.5*( 1.0 + xi[2] );
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Pyramid_Lagrange1_Gauss5::
+calcN( localIndex const q,
+       StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+       real64 ( & N )[numNodes] )
+{
+  return calcN( q, N );
 }
 
 //*************************************************************************************************

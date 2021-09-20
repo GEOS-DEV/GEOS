@@ -131,11 +131,8 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void calcN( localIndex const q,
-                     StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                     real64 ( & N )[numNodes] )
-  {
-    return calcN( q, N );
-  }
+                     StackVariables const & stack,
+                     real64 ( & N )[numNodes] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -203,6 +200,16 @@ H1_TriangleFace_Lagrange1_Gauss1::
   N[0] = 1.0 / 3.0; // N0 = 1 - r - s
   N[1] = N[0];      // N1 = r
   N[2] = N[0];      // N2 = s
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_TriangleFace_Lagrange1_Gauss1::
+calcN( localIndex const q,
+       StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+       real64 ( & N )[numNodes] )
+{
+  return calcN( q, N );
 }
 
 //*************************************************************************************************

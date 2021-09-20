@@ -131,11 +131,8 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void calcN( localIndex const q,
-                     StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                     real64 ( & N )[numNodes] )
-  {
-    return calcN( q, N );
-  }
+                     StackVariables const & stack,
+                     real64 ( & N )[numNodes] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -274,6 +271,16 @@ H1_Tetrahedron_Lagrange1_Gauss1::
   N[1] = 0.25; // N1 = r
   N[2] = 0.25; // N2 = s
   N[3] = 0.25; // N3 = t
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Tetrahedron_Lagrange1_Gauss1::
+calcN( localIndex const q,
+       StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+       real64 ( & N )[numNodes] )
+{
+  return calcN( q, N );
 }
 
 //*************************************************************************************************
