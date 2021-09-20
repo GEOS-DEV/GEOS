@@ -16,8 +16,10 @@
 #define GEOSX_VERSION_PATCH @GEOSX_VERSION_PATCH@
 /// GEOSX full version number string
 #define GEOSX_VERSION_FULL  "@GEOSX_VERSION_FULL@"
+/// GEOSX development version string
+#cmakedefine GEOSX_VERSION_DEV "@GEOSX_VERSION_DEV@"
 
-/// Enables floating point execptions
+/// Enables floating point exceptions
 #cmakedefine GEOSX_USE_FPE
 
 /// Enables bounds check in LvArray classes (CMake option ARRAY_BOUNDS_CHECK)
