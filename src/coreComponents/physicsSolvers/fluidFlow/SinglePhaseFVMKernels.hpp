@@ -49,6 +49,7 @@ struct FluxKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
+
   /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.
    * @tparam STENCIL_TYPE The type of the stencil that is being used.
@@ -64,8 +65,6 @@ struct FluxKernel
    * @param[in] dMob_dPres The derivative of mobility wrt pressure in each element
    * @param[in] permeability
    * @param[in] dPerm_dPres The derivative of permeability wrt pressure in each element
-   * @param[in] transTMultiplier
-   * @param[in] gravityVector
    * @param[out] localMatrix The linear system matrix
    * @param[out] localRhs The linear system residual
    */
@@ -85,8 +84,6 @@ struct FluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-          ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
-          R1Tensor const & GEOSX_UNUSED_PARAM ( gravityVector ),
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
@@ -109,6 +106,7 @@ struct FluxKernel
       stackArray1d< globalIndex, MAX_NUM_ELEMS > dofColIndices( stencilSize );
       stackArray1d< real64, MAX_NUM_ELEMS > localFlux( numFluxElems );
       stackArray2d< real64, MAX_NUM_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, stencilSize );
+
 
       // compute transmissibility
       real64 transmissibility[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
