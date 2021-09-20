@@ -1039,7 +1039,7 @@ ProppantPackVolumeKernel::
   real64 constexpr TINY = 1e-10;
 
   real64 const stencilCellToEdgeDistance0 = LvArray::tensorOps::l2Norm< 3 >( stencilCellCenterToEdgeCenters[0] );
-  real64 const edgeLength = 12.0 * stencilWeights[0] / 12.0 * stencilCellToEdgeDistance0;
+  real64 const edgeLength = stencilWeights[0] * stencilCellToEdgeDistance0;
 
   if( numElems == 1 )
   {
@@ -1230,7 +1230,7 @@ ProppantPackVolumeKernel::
   real64 constexpr TINY = 1e-10;
 
   real64 const stencilCellToEdgeDistance0 = LvArray::tensorOps::l2Norm< 3 >( stencilCellCenterToEdgeCenters[0] );
-  real64 const edgeLength = 12.0 * stencilWeights[0] / 12.0 * stencilCellToEdgeDistance0;
+  real64 const edgeLength = stencilWeights[0] * stencilCellToEdgeDistance0;
 
   if( numElems == 2 )
   {

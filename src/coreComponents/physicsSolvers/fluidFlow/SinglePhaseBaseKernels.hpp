@@ -220,12 +220,7 @@ struct AccumulationKernel
         real64 localAccum, localAccumJacobian;
 
         real64 const poreVolNew = ( volume[ei] + deltaVolume[ei] ) * porosityNew[ei][0];
-
-        ////////////////////// TODO FRANCOIS: REMOVE THIS, JUST TO MATCH OLD IMPLEMENTATION /////////////////
-        //real64 const poreVolOld = volume[ei] * porosityOld[ei][0];
-        real64 const poreVolOld = volume[ei] * porosityNew[ei][0];
-        GEOSX_UNUSED_VAR( porosityOld );
-        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        real64 const poreVolOld = volume[ei] * porosityOld[ei][0];
 
         real64 const dPoreVol_dPres = ( volume[ei] + deltaVolume[ei] ) * dPoro_dPres[ei][0];
 

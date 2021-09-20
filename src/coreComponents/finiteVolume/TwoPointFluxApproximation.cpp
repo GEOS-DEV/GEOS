@@ -338,9 +338,11 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
     // only do this if there are more than one element attached to the connector
     localIndex const edgeIndex = fractureConnectorsToEdges[fci];
 
-    ///////////////////////// TODO FRANCOIS: THIS IS JUST TO MATCH PREVIOUS PROPPANT BASELINES ///////////////////
-    //if( numElems > 1 )  // if there is only one element it does not need to be in the stencil.
-    //{
+    // For now, we do not filter out connections for which numElems == 1 in this function. Instead, the filter takes place in the
+    // single-phase FluxKernels
+    // specialized for the SurfaceElementStencil (see physicsSolvers/multiphysics/SinglePhasePoromechanicsFluxKernels.cpp). The reason for
+    // doing the filtering
+    // there and not here is that the ProppantTransport solver needs the connections numElems == 1 to produce correct results.
 
     localIndex const connectorIndex = fractureStencil.size();
 
@@ -400,72 +402,71 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
         newElems.insert( fractureElementIndex );
         allNewElems.insert( fractureElementIndex );
       }
-      //}
+    }
 
-      if( !containsLocalElement )
-      {
-        return;
-      }
+    if( !containsLocalElement )
+    {
+      return;
+    }
 
-      // loop over new face elements attached to this connector
-      for( localIndex const newElemIndex : newElems )
-      {
-        // set the aperture/fluid pressure for the new face element to be the minimum
-        // of the existing value, smallest aperture/pressure from a connected face element.
-//        aperture[newElemIndex] = std::min(aperture[newElemIndex], initialAperture);
+    // loop over new face elements attached to this connector
+    for( localIndex const newElemIndex : newElems )
+    {
+      // set the aperture/fluid pressure for the new face element to be the minimum
+      // of the existing value, smallest aperture/pressure from a connected face element.
+      //        aperture[newElemIndex] = std::min(aperture[newElemIndex], initialAperture);
 #if !defined(SET_CREATION_PRESSURE)
-        static_assert( true, "must have SET_CREATION_PRESSURE defined" );
+      static_assert( true, "must have SET_CREATION_PRESSURE defined" );
 #endif
 #if SET_CREATION_PRESSURE==1
-        if( initFlag )
-        {
-          fluidPressure[newElemIndex] = std::min( fluidPressure[newElemIndex], initialPressure );
-        }
+      if( initFlag )
+      {
+        fluidPressure[newElemIndex] = std::min( fluidPressure[newElemIndex], initialPressure );
+      }
 #endif
 
 #if !defined(SET_CREATION_DISPLACEMENT)
-        static_assert( true, "must have SET_CREATION_DISPLACEMENT defined" );
+      static_assert( true, "must have SET_CREATION_DISPLACEMENT defined" );
 #endif
 #if SET_CREATION_DISPLACEMENT==1
-        if( initFlag )
+      if( initFlag )
+      {
+        localIndex const faceIndex0 = faceMap( newElemIndex, 0 );
+        localIndex const faceIndex1 = faceMap( newElemIndex, 1 );
+
+        localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray( faceIndex0 );
+
+        bool zeroDisp = true;
+
+        for( localIndex a=0; a<numNodesPerFace; ++a )
         {
-          localIndex const faceIndex0 = faceMap( newElemIndex, 0 );
-          localIndex const faceIndex1 = faceMap( newElemIndex, 1 );
-
-          localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray( faceIndex0 );
-
-          bool zeroDisp = true;
-
-          for( localIndex a=0; a<numNodesPerFace; ++a )
+          localIndex const node0 = faceToNodesMap( faceIndex0, a );
+          localIndex const node1 = faceToNodesMap( faceIndex1, a==0 ? a : numNodesPerFace-a );
+          if( LvArray::math::abs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node0] ) ) > 1.0e-99 &&
+              LvArray::math::abs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node1] ) ) > 1.0e-99 )
           {
-            localIndex const node0 = faceToNodesMap( faceIndex0, a );
-            localIndex const node1 = faceToNodesMap( faceIndex1, a==0 ? a : numNodesPerFace-a );
-            if( fabs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node0] ) ) > 1.0e-99 &&
-                fabs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node1] ) ) > 1.0e-99 )
-            {
-              zeroDisp = false;
-            }
-          }
-          if( zeroDisp )
-          {
-            aperture[newElemIndex] = 0;
+            zeroDisp = false;
           }
         }
-#endif
+        if( zeroDisp )
+        {
+          aperture[newElemIndex] = 0;
+        }
       }
-
-      // add/overwrite the stencil for index fci
-      fractureStencil.add( numElems,
-                           stencilCellsRegionIndex.data(),
-                           stencilCellsSubRegionIndex.data(),
-                           stencilCellsIndex.data(),
-                           stencilWeights.data(),
-                           connectorIndex );
-
-      fractureStencil.add( numElems,
-                           stencilCellCenterToEdgeCenters.data(),
-                           connectorIndex );
+#endif
     }
+
+    // add/overwrite the stencil for index fci
+    fractureStencil.add( numElems,
+                         stencilCellsRegionIndex.data(),
+                         stencilCellsSubRegionIndex.data(),
+                         stencilCellsIndex.data(),
+                         stencilWeights.data(),
+                         connectorIndex );
+
+    fractureStencil.add( numElems,
+                         stencilCellCenterToEdgeCenters.data(),
+                         connectorIndex );
   } );
 
   if( initFlag )

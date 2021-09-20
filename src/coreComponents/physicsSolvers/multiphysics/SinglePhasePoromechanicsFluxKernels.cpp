@@ -402,74 +402,81 @@ void FaceElementFluxKernel::
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
     localIndex const numDofs = stencilSize; // pressures
 
-    // working arrays
-    stackArray1d< globalIndex, MAX_NUM_FLUX_ELEMS > dofColIndices( numDofs );
-    stackArray1d< localIndex, MAX_NUM_FLUX_ELEMS > localColIndices( numFluxElems );
-
-    stackArray1d< real64, MAX_NUM_FLUX_ELEMS > localFlux( numFluxElems );
-    stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, numDofs );
-
-    // need to store this for later use in determining the dFlux_dU terms when using better permeabilty approximations.
-    stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > dFlux_dAper( numFluxElems, stencilSize );
-
-    // compute transmissibility
-    real64 transmissibility[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
-    real64 dTrans_dPres[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
-    real64 dTrans_dAper[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
-
-    stencilWrapper.computeWeights( iconn,
-                                   permeability,
-                                   dPerm_dPres,
-                                   dPerm_dAper,
-                                   transmissibility,
-                                   dTrans_dPres,
-                                   dTrans_dAper );
-
-    compute( stencilSize,
-             seri[iconn],
-             sesri[iconn],
-             sei[iconn],
-             transmissibility,
-             dTrans_dPres,
-             dTrans_dAper,
-             pres,
-             dPres,
-             gravCoef,
-             dens,
-             dDens_dPres,
-             mob,
-             dMob_dPres,
-             dt,
-             localFlux,
-             localFluxJacobian,
-             dFlux_dAper );
-
-    // extract DOF numbers
-    for( localIndex i = 0; i < numDofs; ++i )
+    // For now, we have to filter out connections for which numElems == 1 in this function and not early on in
+    // TwoPointFluxApproximation.cpp.
+    // The reason for keeping the connections numElems == 1 is that the ProppantTransport solver needs these connections to produce correct
+    // results.
+    if( numFluxElems > 1 )
     {
-      dofColIndices[i] = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-      localColIndices[i] = sei( iconn, i );
-    }
+      // working arrays
+      stackArray1d< globalIndex, MAX_NUM_FLUX_ELEMS > dofColIndices( numDofs );
+      stackArray1d< localIndex, MAX_NUM_FLUX_ELEMS > localColIndices( numFluxElems );
 
-    for( localIndex i = 0; i < numFluxElems; ++i )
-    {
-      if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
+      stackArray1d< real64, MAX_NUM_FLUX_ELEMS > localFlux( numFluxElems );
+      stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, numDofs );
+
+      // need to store this for later use in determining the dFlux_dU terms when using better permeabilty approximations.
+      stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > dFlux_dAper( numFluxElems, stencilSize );
+
+      // compute transmissibility
+      real64 transmissibility[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
+      real64 dTrans_dPres[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
+      real64 dTrans_dAper[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
+
+      stencilWrapper.computeWeights( iconn,
+                                     permeability,
+                                     dPerm_dPres,
+                                     dPerm_dAper,
+                                     transmissibility,
+                                     dTrans_dPres,
+                                     dTrans_dAper );
+
+      compute( stencilSize,
+               seri[iconn],
+               sesri[iconn],
+               sei[iconn],
+               transmissibility,
+               dTrans_dPres,
+               dTrans_dAper,
+               pres,
+               dPres,
+               gravCoef,
+               dens,
+               dDens_dPres,
+               mob,
+               dMob_dPres,
+               dt,
+               localFlux,
+               localFluxJacobian,
+               dFlux_dAper );
+
+      // extract DOF numbers
+      for( localIndex i = 0; i < numDofs; ++i )
       {
-        globalIndex const globalRow = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-        localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+        dofColIndices[i] = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+        localColIndices[i] = sei( iconn, i );
+      }
 
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
-        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                          dofColIndices.data(),
-                                                                          localFluxJacobian[i].dataIfContiguous(),
-                                                                          stencilSize );
+      for( localIndex i = 0; i < numFluxElems; ++i )
+      {
+        if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
+        {
+          globalIndex const globalRow = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+          localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
+          GEOSX_ASSERT_GE( localRow, 0 );
+          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
 
-        dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( sei( iconn, i ),
-                                                               localColIndices.data(),
-                                                               dFlux_dAper[i].dataIfContiguous(),
-                                                               stencilSize );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
+                                                                            dofColIndices.data(),
+                                                                            localFluxJacobian[i].dataIfContiguous(),
+                                                                            stencilSize );
+
+          dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( sei( iconn, i ),
+                                                                 localColIndices.data(),
+                                                                 dFlux_dAper[i].dataIfContiguous(),
+                                                                 stencilSize );
+        }
       }
     }
   } );
@@ -511,6 +518,10 @@ void FaceElementFluxKernel::
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
     localIndex const numDofs = stencilSize; // pressures
 
+    // For now, we have to filter out connections for which numElems == 1 in this function and not early on in
+    // TwoPointFluxApproximation.cpp.
+    // The reason for keeping the connections numElems == 1 is that the ProppantTransport solver needs these connections to produce correct
+    // results.
     if( numFluxElems > 1 )
     {
 
