@@ -379,7 +379,7 @@ void ProblemManager::parseInputFile()
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_file( inputFileName.c_str() );
-  GEOSX_THROW_IF(!xmlResult, "Errors found during XML file parsing!\nDescription: " << xmlResult.description() << "\nOffset: " << xmlResult.offset, InputError);
+  GEOSX_THROW_IF( !xmlResult, "Errors found during XML file parsing!\nDescription: " << xmlResult.description() << "\nOffset: " << xmlResult.offset, InputError );
 
   // Add path information to the file
   string::size_type const pos=inputFileName.find_last_of( '/' );
@@ -387,23 +387,23 @@ void ProblemManager::parseInputFile()
   xmlDocument.append_child( xmlWrapper::filePathString ).append_attribute( xmlWrapper::filePathString ) = path.c_str();
 
   // Parse the results
-  parseXMLDocument(xmlDocument);
+  parseXMLDocument( xmlDocument );
 }
 
 
-void ProblemManager::parseInputString(string xmlString)
+void ProblemManager::parseInputString( string xmlString )
 {
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlString.c_str(), strlen( xmlString.c_str() ) );
-  GEOSX_THROW_IF(!xmlResult, "Errors found during XML string parsing!\nDescription: " << xmlResult.description() << "\nOffset: " << xmlResult.offset, InputError);
+  GEOSX_THROW_IF( !xmlResult, "Errors found during XML string parsing!\nDescription: " << xmlResult.description() << "\nOffset: " << xmlResult.offset, InputError );
 
   // Parse the results
-  parseXMLDocument(xmlDocument);
+  parseXMLDocument( xmlDocument );
 }
 
 
-void ProblemManager::parseXMLDocument(xmlWrapper::xmlDocument & xmlDocument)
+void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
 {
   // Extract the problem node and begin processing the user inputs
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( this->getName().c_str());
