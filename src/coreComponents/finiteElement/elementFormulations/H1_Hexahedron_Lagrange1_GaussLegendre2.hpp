@@ -75,6 +75,7 @@ class H1_Hexahedron_Lagrange1_GaussLegendre2 final : public FiniteElementBase
 public:
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = LagrangeBasis1::TensorProduct3D::numSupportPoints;
+  /// The maximum number of support points per element.
   constexpr static localIndex maxSupportPoints = numNodes;
 
   /// The number of quadrature points per element.
@@ -93,6 +94,12 @@ public:
     return numQuadraturePoints;
   }
 
+
+  /**
+   * @brief Get the number of quadrature points.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @return The number of quadrature points.
+   */
   GEOSX_HOST_DEVICE
   static localIndex getNumQuadraturePoints( StackVariables const & GEOSX_UNUSED_PARAM( stack ) )
   {
@@ -105,6 +112,11 @@ public:
     return numNodes;
   }
 
+  /**
+   * @brief Get the number of support points.
+   * @param stack Object that holds stack variables.
+   * @return The number of support points.
+   */
   GEOSX_HOST_DEVICE
   static localIndex getNumSupportPoints( StackVariables const & GEOSX_UNUSED_PARAM( stack ) )
   {
@@ -120,13 +132,11 @@ public:
    * @param initialization Object that holds initialization properties.
    */
   GEOSX_HOST_DEVICE
-  static void fillInitialization( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                                  EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                                  FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                                  CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                                  Initialization & GEOSX_UNUSED_PARAM( initialization )
-                                  )
-  {}
+  static void fillInitialization( NodeManager const & nodeManager,
+                                  EdgeManager const & edgeManager,
+                                  FaceManager const & faceManager,
+                                  CellElementSubRegion const & cellSubRegion,
+                                  Initialization & initialization );
 
   /**
    * @brief Empty setup method.
@@ -224,6 +234,13 @@ public:
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
 
+  /**
+   * @brief If required by the method, add stabilization to the \f$L^2\f$ product of gradients of basis
+   * functions.
+   * @tparam MATRIXTYPE The type of @p matrix.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @param matrix The matrix that needs to be stabilized.
+   */
   template< typename MATRIXTYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -409,6 +426,16 @@ private:
 //}
 
 /// @cond Doxygen_Suppress
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::
+  fillInitialization( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                      EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
+                      FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
+                      CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                      Initialization & GEOSX_UNUSED_PARAM( initialization ) )
+{}
 
 template< typename FUNC, typename ... PARAMS >
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void

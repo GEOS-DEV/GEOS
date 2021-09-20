@@ -99,6 +99,10 @@ public:
     {}
   };
 
+  /**
+   * @struct Initialization
+   * @brief Variables used to initialize the class.
+   */
   struct Initialization
   {
     /**
@@ -112,10 +116,12 @@ public:
   /**
    * @brief Abstract initialization method.
    * @details It calls the fillInitialization method of the specific element implementation.
+   * @tparam LEAF Type of the derived finite element implementation.
    * @param nodeManager The node manager.
    * @param edgeManager The edge manager.
    * @param faceManager The face manager.
-   * @param subRegion The cell sub-region for which the element has to be initialized.
+   * @param cellSubRegion The cell sub-region for which the element has to be initialized.
+   * @param initialization The struct to be filled according to the @p LEAF class needs.
    */
   template< typename LEAF >
   static void initialize( NodeManager const & nodeManager,
@@ -131,8 +137,10 @@ public:
 
   /**
    * @brief Abstract setup method, possibly computing cell-dependent properties.
-   * @param cellIndex The index of the cell with respect to the cell sub region to which the element has been initialized previously (see
-   * @ref initialize).
+   * @tparam LEAF Type of the derived finite element implementation.
+   * @param cellIndex The index of the cell with respect to the cell sub region to which the element
+   * has been initialized previously (see @ref initialize).
+   * @param initialization An initialization object previously filled.
    * @param stack Object that holds stack variables.
    */
   template< typename LEAF >
@@ -160,6 +168,7 @@ public:
 
   /**
    * @brief Getter for the number of support points per element.
+   * @tparam LEAF Type of the derived finite element implementation.
    * @param stack Stack variables created by a call to @ref setup.
    * @return The number of support points per element.
    */
@@ -174,6 +183,8 @@ public:
    * @brief Get the maximum number of support points for this element.
    * @details This should be used to pre-allocate objects whose size depend on the number of support
    * points.
+   * @tparam LEAF Type of the derived finite element implementation.
+   * @return A constant expression of the number of maximum support points for this element.
    */
   template< typename LEAF >
   GEOSX_HOST_DEVICE
@@ -206,7 +217,7 @@ public:
    * @param k The element index.
    * @param q The quadrature point index.
    * @param X Array of coordinates as the reference for the gradients.
-   * @param stack Stack variables relative to the element @param k created by a call to @ref setup.
+   * @param stack Stack variables relative to the element @p k created by a call to @ref setup.
    * @param gradN Return array of the shape function gradients.
    * @return The determinant of the Jacobian transformation matrix.
    *
@@ -240,6 +251,8 @@ public:
 
   /**
    * @brief Add stabilization of grad-grad bilinear form to input matrix.
+   * @tparam LEAF Type of the derived finite element implementation.
+   * @tparam MATRIXTYPE Type of the matrix to be filled.
    * @param stack Stack variables created by a call to @ref setup.
    * @param matrix The input matrix to which values have to be added.
    */

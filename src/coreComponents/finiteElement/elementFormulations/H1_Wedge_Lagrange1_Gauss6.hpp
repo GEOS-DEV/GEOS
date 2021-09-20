@@ -96,13 +96,11 @@ public:
    * @param initialization Object that holds initialization properties.
    */
   GEOSX_HOST_DEVICE
-  static void fillInitialization( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                                  EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                                  FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                                  CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                                  Initialization & GEOSX_UNUSED_PARAM( initialization )
-                                  )
-  {}
+  static void fillInitialization( NodeManager const & nodeManager,
+                                  EdgeManager const & edgeManager,
+                                  FaceManager const & faceManager,
+                                  CellElementSubRegion const & cellSubRegion,
+                                  Initialization & initialization );
 
   /**
    * @brief Empty setup method.
@@ -350,6 +348,16 @@ private:
                                                             real64 ( &gradN )[numNodes][3] );
 
 };
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Wedge_Lagrange1_Gauss6::
+  fillInitialization( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                      EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
+                      FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
+                      CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                      Initialization & GEOSX_UNUSED_PARAM( initialization ) )
+{}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE

@@ -91,13 +91,11 @@ public:
    * @param initialization Object that holds initialization properties.
    */
   GEOSX_HOST_DEVICE
-  static void fillInitialization( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                                  EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                                  FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                                  CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                                  Initialization & GEOSX_UNUSED_PARAM( initialization )
-                                  )
-  {}
+  static void fillInitialization( NodeManager const & nodeManager,
+                                  EdgeManager const & edgeManager,
+                                  FaceManager const & faceManager,
+                                  CellElementSubRegion const & cellSubRegion,
+                                  Initialization & initialization );
 
   /**
    * @brief Empty setup method.
@@ -226,6 +224,16 @@ private:
   static real64 determinantJacobianTransformation( real64 const (&X)[numNodes][3] );
 
 };
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Tetrahedron_Lagrange1_Gauss1::
+  fillInitialization( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                      EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
+                      FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
+                      CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                      Initialization & GEOSX_UNUSED_PARAM( initialization ) )
+{}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
