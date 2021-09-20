@@ -50,6 +50,7 @@ class H1_QuadrilateralFace_Lagrange1_GaussLegendre2 final : public FiniteElement
 public:
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 4;
+  /// The maximum number of support points per element.
   constexpr static localIndex maxSupportPoints = numNodes;
 
   /// The number of quadrature points per element.
@@ -65,9 +66,15 @@ public:
     return numQuadraturePoints;
   }
 
+  /**
+   * @brief Get the number of quadrature points.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @return The number of quadrature points.
+   */
   GEOSX_HOST_DEVICE
-  static localIndex getNumQuadraturePoints( StackVariables const & GEOSX_UNUSED_PARAM( stack ) )
+  static localIndex getNumQuadraturePoints( StackVariables const & stack )
   {
+    GEOSX_UNUSED_VAR( stack );
     return numQuadraturePoints;
   }
 
@@ -77,9 +84,15 @@ public:
     return numNodes;
   }
 
+  /**
+   * @brief Get the number of support points.
+   * @param stack Object that holds stack variables.
+   * @return The number of support points.
+   */
   GEOSX_HOST_DEVICE
-  static localIndex getNumSupportPoints( StackVariables const & GEOSX_UNUSED_PARAM( stack ) )
+  static localIndex getNumSupportPoints( StackVariables const & stack )
   {
+    GEOSX_UNUSED_VAR( stack );
     return numNodes;
   }
 
@@ -133,7 +146,7 @@ public:
   GEOSX_FORCE_INLINE
   static void calcN( localIndex const q,
                      StackVariables const & stack,
-                     real64 ( & N )[numNodes] );
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -230,8 +243,8 @@ template< typename MATRIXTYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
-addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                          MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
+  addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+                            MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
 {}
 
 GEOSX_HOST_DEVICE
@@ -251,13 +264,12 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
-calcGradN( localIndex const q,
-           real64 const (&X)[numNodes][3],
-           StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-           real64 ( & gradN )[numNodes][3] )
+void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+  calcN( localIndex const q,
+         StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+         real64 ( & N )[numNodes] )
 {
-  return calcGradN( q, X, gradN );
+  return calcN( q, N );
 }
 
 //*************************************************************************************************

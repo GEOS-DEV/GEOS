@@ -100,8 +100,9 @@ public:
    * @return The number of quadrature points.
    */
   GEOSX_HOST_DEVICE
-  static localIndex getNumQuadraturePoints( StackVariables const & GEOSX_UNUSED_PARAM( stack ) )
+  static localIndex getNumQuadraturePoints( StackVariables const & stack )
   {
+    GEOSX_UNUSED_VAR( stack );
     return numQuadraturePoints;
   }
 
@@ -117,8 +118,9 @@ public:
    * @return The number of support points.
    */
   GEOSX_HOST_DEVICE
-  static localIndex getNumSupportPoints( StackVariables const & GEOSX_UNUSED_PARAM( stack ) )
+  static localIndex getNumSupportPoints( StackVariables const & stack )
   {
+    GEOSX_UNUSED_VAR( stack );
     return numNodes;
   }
 
@@ -217,7 +219,7 @@ public:
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
-                           real64 ( & gradN )[numNodes][3] );
+                           real64 ( &gradN )[numNodes][3] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -436,8 +438,8 @@ template< typename MATRIXTYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Hexahedron_Lagrange1_GaussLegendre2::
-addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                          MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
+  addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+                            MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
 {}
 
 template< typename FUNC, typename ... PARAMS >
@@ -559,10 +561,10 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 H1_Hexahedron_Lagrange1_GaussLegendre2::
-calcGradN( localIndex const q,
-           real64 const (&X)[numNodes][3],
-           StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-           real64 ( & gradN )[numNodes][3] )
+  calcGradN( localIndex const q,
+             real64 const (&X)[numNodes][3],
+             StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+             real64 ( & gradN )[numNodes][3] )
 {
   return calcGradN( q, X, gradN );
 }
