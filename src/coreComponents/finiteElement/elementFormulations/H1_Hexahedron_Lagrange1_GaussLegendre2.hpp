@@ -216,11 +216,8 @@ public:
   GEOSX_FORCE_INLINE
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
-                           StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                           real64 ( & gradN )[numNodes][3] )
-  {
-    return calcGradN( q, X, gradN );
-  }
+                           StackVariables const & stack,
+                           real64 ( & gradN )[numNodes][3] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -557,6 +554,17 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
   applyTransformationToParentGradients( qa, qb, qc, J, gradN );
 
   return detJ * weight;
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 H1_Hexahedron_Lagrange1_GaussLegendre2::
+calcGradN( localIndex const q,
+           real64 const (&X)[numNodes][3],
+           StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+           real64 ( & gradN )[numNodes][3] )
+{
+  return calcGradN( q, X, gradN );
 }
 
 //*************************************************************************************************
