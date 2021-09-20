@@ -143,7 +143,7 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region2"
+      name="region"
       cellBlocks="{ cb1 }"
       materialList="{ water, sand }"/>
 
@@ -165,7 +165,7 @@
       particleSettlingModel="Stokes"
       proppantDensity="1200.0"/>
 
-    <CompressibleSolidParallelPlatesPermeability
+    <ProppantSolidProppantPermeability
       name="fractureFilling"
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
@@ -174,14 +174,15 @@
     <NullModel
       name="nullSolid"/>
 
-    <PressurePorosity
+    <ProppantPorosity
       name="fracturePorosity"
       defaultReferencePorosity="1.00"
-      referencePressure="0.0"
-      compressibility="0.0"/>
+      maxProppantConcentration="0.6"/>
 
-    <ParallelPlatesPermeability
-      name="fracturePerm"/>
+    <ProppantPermeability
+      name="fracturePerm"
+      proppantDiameter="4.0e-4"
+      maxProppantConcentration="0.6"/>
   </Constitutive>
 
   <FieldSpecifications>
