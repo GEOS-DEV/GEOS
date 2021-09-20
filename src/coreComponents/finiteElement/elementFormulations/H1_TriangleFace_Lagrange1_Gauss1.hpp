@@ -112,15 +112,15 @@ public:
 
   /**
    * @brief Empty setup method.
-   * @param cellIndex The index of the cell with respect to the cell sub region to which the element
-   * has been initialized previously (see @ref initialize).
+   * @param cellIndex The index of the cell with respect to the cell sub region.
+   * @param initialization Initialization struct filled by @ref fillInitialization.
    * @param stack Object that holds stack variables.
    */
   GEOSX_HOST_DEVICE
-  static void setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-                          Initialization const & GEOSX_UNUSED_PARAM( initialization ),
-                          StackVariables & GEOSX_UNUSED_PARAM( stack ) )
-  {}
+  GEOSX_FORCE_INLINE
+  static void setupStack( localIndex const & cellIndex,
+                          Initialization const & initialization,
+                          StackVariables & stack );
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -191,6 +191,15 @@ void H1_TriangleFace_Lagrange1_Gauss1::
                       CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
                       Initialization & GEOSX_UNUSED_PARAM( initialization ) )
 {}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_TriangleFace_Lagrange1_Gauss1::
+  setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
+              Initialization const & GEOSX_UNUSED_PARAM( initialization ),
+              StackVariables & GEOSX_UNUSED_PARAM( stack ) )
+{}
+
 
 template< typename MATRIXTYPE >
 GEOSX_HOST_DEVICE
