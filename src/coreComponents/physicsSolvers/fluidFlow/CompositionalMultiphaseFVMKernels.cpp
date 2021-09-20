@@ -1157,7 +1157,7 @@ AquiferBCKernel::
     {
       real64 const phaseFlux = aquiferVolFlux * aquiferWaterPhaseDens;
       localFlux[ic] -= dt * phaseFlux * aquiferWaterPhaseCompFrac[ic];
-      localFluxJacobian[ic][0] -= dt * dAquiferVolFlux_dPres * aquiferWaterPhaseCompFrac[ic];
+      localFluxJacobian[ic][0] -= dt * dAquiferVolFlux_dPres * aquiferWaterPhaseDens * aquiferWaterPhaseCompFrac[ic];
     }
   }
   else // reservoir is upstream
