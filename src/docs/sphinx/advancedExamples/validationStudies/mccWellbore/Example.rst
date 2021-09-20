@@ -13,7 +13,7 @@ In this benchmark example, the Modified Cam-Clay model (see :ref:`ModifiedCamCla
 
 **Input file**
 
-This example uses no external input files and everything required is contained within two GEOSX input files that are located at:
+Everything required is contained within two GEOSX input files located at:
 
 .. code-block:: console
 
@@ -37,7 +37,7 @@ We simulate a drained wellbore problem subjected to isotropic horizontal stress 
    Sketch of the wellbore problem 
 
 
-To simulate this phenomenon, the Modified Cam-Clay model with an associated plastic flow rule in GEOSX is used in this example. Displacement and stress fields around the wellbore are numerically calculated. These numerical predictions are then compared with the corresponding analytical solutions `(Chen and Abousleiman, 2013)  <https://www.icevirtuallibrary.com/doi/10.1680/geot.11.P.088>`__ from the literature. 
+To simulate this phenomenon, the Modified Cam-Clay model is used in this example. Displacement and stress fields around the wellbore are numerically calculated. These numerical predictions are then compared with the corresponding analytical solutions `(Chen and Abousleiman, 2013)  <https://www.icevirtuallibrary.com/doi/10.1680/geot.11.P.088>`__ from the literature. 
 
 
 
@@ -82,7 +82,7 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
 Solid mechanics solver
 ------------------------
 
-For the drained wellbore problem, the pore pressure variation is omitted and can be subtracted from the analysis. Therefore, we just need to define a solid mechanics solver, which is called ``mechanicsSolver``. 
+For the drained wellbore problem, the pore pressure variation is omitted. Therefore, we just need to define a solid mechanics solver, which is called ``mechanicsSolver``. 
 This solid mechanics solver (see :ref:`SolidMechanicsLagrangianFEM`) is based on the Lagrangian finite element formulation. 
 The problem is run as ``QuasiStatic`` without considering inertial effects. 
 The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. 
@@ -153,12 +153,12 @@ pair for the loading time history. In this case, the loading magnitude increases
 You may note :
 
  - All initial value fields must have ``initialCondition`` field set to ``1``;
- - The ``setName`` field points to the previously defined box to apply the fields;
+ - The ``setName`` field points to the previously defined set to apply the fields;
  - ``nodeManager`` and ``faceManager`` in the ``objectPath`` indicate that the boundary conditions are applied to the element nodes and faces, respectively;
  - ``fieldName`` is the name of the field registered in GEOSX;
  - Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively;
- - And the non-zero values given by ``Scale`` indicate the magnitude of the loading; 
- - Some shorthand, such as ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain. For instance, ``xneg`` means the portion of the computational domain located at the left-most in the x-axis, while ``xpos`` refers to the portion located at the right-most area in the x-axis. Similar shorthand include ``ypos``, ``yneg``, ``zpos``, and ``zneg``;
+ - And the non-zero values given by ``scale`` indicate the magnitude of the loading; 
+ - Some shorthand, such as ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain. For instance, ``xneg`` means the portion of the computational domain located at the left-most extent in the x-axis, while ``xpos`` refers to the portion located at the right-most extent in the x-axis. Similar shorthands include ``ypos``, ``yneg``, ``zpos``, and ``zneg``;
  - The mud pressure loading has a negative value due to the negative sign convention for compressive stress in GEOSX. 
 
  
@@ -193,7 +193,7 @@ The parameters used in the simulation are summarized in the following table.
 Inspecting results
 ---------------------------------
 
-In the above example, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. Following figure shows the distribution of :math:`\sigma_{\theta\theta}` in the near wellbore region.
+In the above example, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. The following figure shows the distribution of :math:`\sigma_{\theta\theta}` in the near wellbore region.
 
 .. _problemVerificationFig1:
 .. figure:: MCC_Stress.png
@@ -205,7 +205,7 @@ In the above example, we requested silo-format output files. We can therefore im
 
 
 
-Below figure shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of normal stress components, stress path, the supporting wellbore pressure and wellbore size. It is evident that the GEOSX predictions well match the analytical results.  
+The figure below shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of normal stress components, stress path, the supporting wellbore pressure and wellbore size. It is evident that the predictions well match the analytical results.  
 
 
 .. _problemVerificationFig:
