@@ -27,7 +27,7 @@ contained within a single xml file that is located at:
 
 .. code-block:: console
 
-  examples/plasticity/DruckerPrager_Verification.xml
+  src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
 
 
 ------------------------------------------------------------------
@@ -81,7 +81,7 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
 ``cb1``.
 
 
-.. literalinclude:: ../../../../../../examples/plasticity/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_MESH -->
     :end-before: <!-- SPHINX_DP_WELLBORE_MESH_END -->
@@ -96,7 +96,7 @@ The problem is run as ``QuasiStatic`` without considering inertial effects.
 The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. 
 The material is named as ``rock``, whose mechanical properties are specified in the ``Constitutive`` section.
 
-.. literalinclude:: ../../../../../../examples/plasticity/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
   :language: xml
   :start-after: <!-- SPHINX_DP_WELLBORE_SOLVER -->
   :end-before: <!-- SPHINX_DP_WELLBORE_SOLVER_END -->
@@ -108,7 +108,7 @@ Constitutive laws
 For this drained wellbore problem, we simulate the elastoplastic deformation caused by wellbore contraction.
 A homogeneous domain with one solid material is assumed, whose mechanical properties are specified in the ``Constitutive`` section: 
 
-.. literalinclude:: ../../../../../../examples/plasticity/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_MATERIAL -->
     :end-before: <!-- SPHINX_DP_WELLBORE_MATERIAL_END -->
@@ -139,7 +139,7 @@ The remaining parts of the outer boundaries are subjected to roller constraints.
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../../examples/plasticity/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_BC -->
     :end-before: <!-- SPHINX_DP_WELLBORE_BC_END -->
@@ -150,7 +150,7 @@ A table function ``timeFunction`` is used to define the time-dependent traction 
 The ``coordinates`` and ``values`` form a time-magnitude
 pair for the loading time history. In this case, the loading magnitude decreases linearly as the time evolves. 
 
-.. literalinclude:: ../../../../../../examples/plasticity/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_TABLE -->
     :end-before: <!-- SPHINX_DP_WELLBORE_TABLE_END -->
