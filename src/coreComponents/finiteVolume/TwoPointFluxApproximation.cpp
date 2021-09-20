@@ -18,8 +18,6 @@
  */
 #include "TwoPointFluxApproximation.hpp"
 
-#include "mainInterface/ProblemManager.hpp"
-
 #include "codingUtilities/Utilities.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"

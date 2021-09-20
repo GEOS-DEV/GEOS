@@ -9,8 +9,6 @@
 namespace geosx
 {
 
-using std::ref;
-
 ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
                                             CellElementStencilTPFA & cellStencil,
                                             EmbeddedSurfaceToCellStencil & edfmStencil,
