@@ -24,9 +24,10 @@
         newtonMaxIter="20"
         lineSearchMaxCuts="3"/>
       <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="mgr"
-        logLevel="1"/>
+              directParallel="0"/>
+        <!-- solverType="gmres"
+        preconditionerType="amg"
+        logLevel="0"/-->
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
