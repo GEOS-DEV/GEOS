@@ -206,7 +206,6 @@ In the above example, we requested silo-format output files. We can therefore im
 
 
 The figure below shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of normal stress components, stress path, the supporting wellbore pressure and wellbore size. It is evident that the predictions well match the analytical results.  
-<<<<<<< HEAD
 
 
 
@@ -475,8 +474,6 @@ The figure below shows the comparisons between the numerical predictions (marks)
 
    if __name__ == "__main__":
                 main()
-=======
->>>>>>> 6f32164a0b65ec6a9cc5bc9c435f97d9f27ef55a
 
 
 
