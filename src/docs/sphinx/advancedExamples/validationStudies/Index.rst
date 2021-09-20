@@ -13,7 +13,9 @@ Validation and Verification Studies
    
    mccWellbore/Example
 
-   elasticCasedWellbore/Example
+   casedElasticWellbore/Example
+
+   deviatedElasticWellbore/Example
 
    poromechanicsWellbore/Example
 
