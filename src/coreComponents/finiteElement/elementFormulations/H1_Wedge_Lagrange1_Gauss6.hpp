@@ -187,12 +187,18 @@ public:
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
 
+  /**
+   * @brief Empty method, here for compatibility with methods that require a stabilization of the
+   * grad-grad bilinear form.
+   * @tparam MATRIXTYPE The type of @p matrix.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @param matrix The matrix that needs to be stabilized.
+   */
   template< typename MATRIXTYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                                        MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
-  {}
+  static void addGradGradStabilization( StackVariables const & stack,
+                                        MATRIXTYPE & matrix );
 
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
@@ -349,6 +355,8 @@ private:
 
 };
 
+/// @cond Doxygen_Suppress
+
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Wedge_Lagrange1_Gauss6::
@@ -357,6 +365,14 @@ void H1_Wedge_Lagrange1_Gauss6::
                       FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
                       CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
                       Initialization & GEOSX_UNUSED_PARAM( initialization ) )
+{}
+
+template< typename MATRIXTYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Wedge_Lagrange1_Gauss6::
+addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+                          MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
 {}
 
 GEOSX_HOST_DEVICE
@@ -491,6 +507,8 @@ H1_Wedge_Lagrange1_Gauss6::
 
   return LvArray::tensorOps::determinant< 3 >( J ) * weight;
 }
+
+/// @endcond
 
 }
 }

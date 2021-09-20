@@ -222,7 +222,6 @@ public:
     return calcGradN( q, X, gradN );
   }
 
-
   /**
    * @brief Calculate the integration weights for a quadrature point.
    * @param q Index of the quadrature point.
@@ -235,8 +234,8 @@ public:
                                              real64 const (&X)[numNodes][3] );
 
   /**
-   * @brief If required by the method, add stabilization to the \f$L^2\f$ product of gradients of basis
-   * functions.
+   * @brief Empty method, here for compatibility with methods that require a stabilization of the
+   * grad-grad bilinear form.
    * @tparam MATRIXTYPE The type of @p matrix.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
@@ -244,9 +243,8 @@ public:
   template< typename MATRIXTYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                                        MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
-  {}
+  static void addGradGradStabilization( StackVariables const & stack,
+                                        MATRIXTYPE & matrix );
 
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
@@ -435,6 +433,14 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::
                       FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
                       CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
                       Initialization & GEOSX_UNUSED_PARAM( initialization ) )
+{}
+
+template< typename MATRIXTYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_Hexahedron_Lagrange1_GaussLegendre2::
+addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+                          MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
 {}
 
 template< typename FUNC, typename ... PARAMS >

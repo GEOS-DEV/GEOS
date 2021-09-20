@@ -148,12 +148,18 @@ public:
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
 
+  /**
+   * @brief Empty method, here for compatibility with methods that require a stabilization of the
+   * grad-grad bilinear form.
+   * @tparam MATRIXTYPE The type of @p matrix.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @param matrix The matrix that needs to be stabilized.
+   */
   template< typename MATRIXTYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                                        MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
-  {}
+  static void addGradGradStabilization( StackVariables const & stack,
+                                        MATRIXTYPE & matrix );
 
 private:
   /// The area of the element in the parent configuration.
@@ -164,6 +170,8 @@ private:
 
 };
 
+/// @cond Doxygen_Suppress
+
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_TriangleFace_Lagrange1_Gauss1::
@@ -172,6 +180,14 @@ void H1_TriangleFace_Lagrange1_Gauss1::
                       FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
                       CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
                       Initialization & GEOSX_UNUSED_PARAM( initialization ) )
+{}
+
+template< typename MATRIXTYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_TriangleFace_Lagrange1_Gauss1::
+addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+                          MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
 {}
 
 GEOSX_HOST_DEVICE
@@ -204,6 +220,8 @@ H1_TriangleFace_Lagrange1_Gauss1::
                   ( X[1][0] - X[0][0] ) * ( X[2][1] - X[0][1] ) - ( X[2][0] - X[0][0] ) * ( X[1][1] - X[0][1] )};
   return sqrt( n[0] * n[0] + n[1] * n[1] + n[2] * n[2] ) * weight;
 }
+
+/// @endcond
 
 }
 }
