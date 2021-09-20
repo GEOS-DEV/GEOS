@@ -116,14 +116,6 @@ void SinglePhasePoromechanicsSolver::implicitStepComplete( real64 const & time_n
 {
   m_solidSolver->implicitStepComplete( time_n, dt, domain );
   m_flowSolver->implicitStepComplete( time_n, dt, domain );
-
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
-  {
-    CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, porousMaterialNames()[targetIndex] );
-    porousMaterial.saveConvergedState();
-  } );
 }
 
 void SinglePhasePoromechanicsSolver::postProcessInput()
