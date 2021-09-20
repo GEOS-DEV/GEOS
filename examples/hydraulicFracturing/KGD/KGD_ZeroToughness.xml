@@ -18,7 +18,7 @@
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
+      targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
       <NonlinearSolverParameters
@@ -26,10 +26,9 @@
         newtonMaxIter="20"
         lineSearchMaxCuts="3"/>
       <LinearSolverParameters
-              directParallel="0"/>
-        <!-- solverType="gmres"
-        preconditionerType="amg"
-        logLevel="0"/-->
+        solverType="gmres"
+        preconditionerType="mgr"
+        logLevel="0"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE

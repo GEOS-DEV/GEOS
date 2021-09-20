@@ -16,11 +16,11 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -40, 40 }"
-      yCoords="{ 0, 40 }"
+      xCoords="{ -20, 20 }"
+      yCoords="{ 0, 20 }"
       zCoords="{ 0, 1 }"
-      nx="{ 80 }"
-      ny="{ 40 }"
+      nx="{ 40 }"
+      ny="{ 20 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
 
