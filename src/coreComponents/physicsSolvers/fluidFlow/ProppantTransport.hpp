@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -235,6 +235,14 @@ public:
    */
   void updateProppantPackVolume( real64 const time_n, real64 const dt, DomainPartition & domain );
 
+  virtual void updateState ( DomainPartition & domain ) override final { GEOSX_UNUSED_VAR( domain ); };
+
+  /**
+   * @brief Function to update fluid and proppant properties
+   * @param domain the domain
+   */
+  void updateState( Group & dataGroup, localIndex const targetIndex );
+
 protected:
 
   virtual void postProcessInput() override;
@@ -261,12 +269,6 @@ private:
    */
   void updateCellBasedFlux( real64 const time_n,
                             DomainPartition & domain );
-
-  /**
-   * @brief Function to update fluid and proppant properties
-   * @param domain the domain
-   */
-  void updateState( Group & dataGroup, localIndex const targetIndex );
 
   /// views into primary variable fields
 

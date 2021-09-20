@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -63,13 +63,6 @@ void SinglePhaseReservoir::setupSystem( DomainPartition & domain,
                                     localRhs,
                                     localSolution,
                                     setSparsity );
-
-  // we need to set the dR_dAper CRS matrix in SinglePhaseFVM to handle the presence of fractures
-  if( dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( m_flowSolver ) )
-  {
-    SinglePhaseFVM< SinglePhaseBase > * fvmSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > * >( m_flowSolver );
-    fvmSolver->setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
-  }
 }
 
 

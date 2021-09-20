@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -104,12 +104,11 @@ class CO2Solubility : public FlashModelBase
 {
 public:
 
-  CO2Solubility( string_array const & inputParams,
+  CO2Solubility( string const & name,
+                 string_array const & inputParams,
                  string_array const & phaseNames,
                  string_array const & componentNames,
                  array1d< real64 > const & componentMolarWeight );
-
-  ~CO2Solubility() override = default;
 
   static string catalogName() { return "CO2Solubility"; }
 
@@ -153,10 +152,7 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 {
   // solubility mol/kg(water)  X = Csat/W
   real64 const input[2] = { pressure, temperature };
-  real64 solubility;
-  real64 solubilityDeriv[2];
-
-  m_CO2SolubilityTable.compute( input, solubility, solubilityDeriv );
+  real64 solubility = m_CO2SolubilityTable.compute( input );
   solubility *= m_componentMolarWeight[m_waterIndex];
 
   // Y = C/W = z/(1-z)
@@ -233,9 +229,8 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 {
   // solubility mol/kg(water)  X = Csat/W
   real64 const input[2] = { pressure, temperature };
-  real64 solubility;
   real64 solubilityDeriv[2];
-  m_CO2SolubilityTable.compute( input, solubility, solubilityDeriv );
+  real64 solubility = m_CO2SolubilityTable.compute( input, solubilityDeriv );
 
   solubility *= m_componentMolarWeight[m_waterIndex];
   for( integer ic = 0; ic < 2; ++ic )

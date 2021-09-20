@@ -9,9 +9,11 @@
       logLevel="1"
       contactRelationName="fractureContact"
       fluidSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       discretization="FE1"
-      targetRegions="{ Region2, Fracture }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="50"
         lineSearchMaxCuts="10"
@@ -27,7 +29,7 @@
       name="lagsolve"
       contactRelationName="fractureContact"
       solidMaterialNames="{ rock }"
-      targetRegions="{ Region2, Fracture }">
+      targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
@@ -39,9 +41,8 @@
       discretization="singlePhaseTPFA"
       name="SinglePhaseFlow"
       solidNames="{ rock }"
-      permeabilityNames="{ fracPerm }"
+      permeabilityNames="{ fracturePerm }"
       fluidNames="{ water }"
-      meanPermCoeff="0.8"
       targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="10"
@@ -53,7 +54,7 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Domain }"
       solidMaterialNames="{ rock }"
       rockToughness="$K_upscaled$"
       nodeBasedSIF="1"
@@ -123,12 +124,12 @@
     <CellElementRegion
       materialList="{ water, rock }"
       cellBlocks="{ cb1 }"
-      name="Region2"/>
+      name="Domain"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fracPerm }"/>
+      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -141,13 +142,26 @@
       compressibility="5e-10"
       defaultDensity="1000"/>
 
-    <PoroElasticIsotropic
+    <ElasticIsotropic
       name="rock"
-      compressibility="1.6155088853e-18"
-      defaultShearModulus="1.0e9"
       defaultDensity="2700"
       defaultBulkModulus="1.0e9"
-      referencePressure="2.125e6"/>
+      defaultShearModulus="1.0e9"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
 
     <Contact
       penaltyStiffness="0.0e8"
@@ -159,7 +173,7 @@
     </Contact>
 
     <ParallelPlatesPermeability
-      name="fracPerm"/>
+      name="fracturePerm"/>
   </Constitutive>
 
   <NumericalMethods>
@@ -174,7 +188,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{ fracPerm }"/>
+        meanPermCoefficient="0.8"/>
     </FiniteVolume>
   </NumericalMethods>
 

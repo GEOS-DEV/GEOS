@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -23,6 +23,7 @@
 #include "pvt/pvt.hpp"
 
 #include <map>
+#include <utility>
 
 namespace geosx
 {
@@ -50,7 +51,7 @@ pvt::EOS_TYPE getCompositionalEosType( string const & name )
 } // namespace
 
 CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name, Group * const parent )
-  : MultiFluidPVTPackageWrapper( name, parent )
+  : MultiFluidBase( name, parent )
 {
   getWrapperBase( viewKeyStruct::componentNamesString() ).setInputFlag( InputFlags::REQUIRED );
   getWrapperBase( viewKeyStruct::componentMolarWeightString() ).setInputFlag( InputFlags::REQUIRED );
@@ -81,59 +82,67 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name,
     setDescription( "Table of binary interaction coefficients" );
 }
 
-CompositionalMultiphaseFluid::~CompositionalMultiphaseFluid() = default;
-
-std::unique_ptr< ConstitutiveBase >
-CompositionalMultiphaseFluid::deliverClone( string const & name,
-                                            Group * const parent ) const
-{
-  std::unique_ptr< ConstitutiveBase > clone = MultiFluidPVTPackageWrapper::deliverClone( name, parent );
-  CompositionalMultiphaseFluid & fluid = dynamicCast< CompositionalMultiphaseFluid & >( *clone );
-
-  fluid.createFluid();
-  return clone;
-}
-
 namespace
 {
 
 template< typename ARRAY >
-void checkInputSize( ARRAY const & array, localIndex const expected, string const & attr )
+void checkInputSize( ARRAY const & array, integer const expected, string const & attr, string const & name )
 {
   GEOSX_THROW_IF_NE_MSG( array.size(), expected,
-                         "CompositionalMultiphaseFluid: invalid number of entries in " << attr << " attribute",
+                         name << ": invalid number of entries in " << attr << " attribute",
                          InputError );
 
+}
+
+pvt::PHASE_TYPE getPVTPackagePhaseType( string const & name, string const & groupName )
+{
+  static map< string, pvt::PHASE_TYPE > const phaseTypes
+  {
+    { "gas", pvt::PHASE_TYPE::GAS },
+    { "oil", pvt::PHASE_TYPE::OIL },
+    { "water", pvt::PHASE_TYPE::LIQUID_WATER_RICH }
+  };
+  return findOption( phaseTypes, name, MultiFluidBase::viewKeyStruct::phaseNamesString(), groupName );
 }
 
 }
 
 void CompositionalMultiphaseFluid::postProcessInput()
 {
-  MultiFluidPVTPackageWrapper::postProcessInput();
+  MultiFluidBase::postProcessInput();
 
-  localIndex const NC = numFluidComponents();
-  localIndex const NP = numFluidPhases();
+  m_phaseTypes.resize( numFluidPhases() );
+  std::transform( m_phaseNames.begin(), m_phaseNames.end(), m_phaseTypes.begin(),
+                  [&]( string const & name ){ return getPVTPackagePhaseType( name, getFullName() ); } );
 
-  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
-  checkInputSize( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
-  checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
-  checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
-  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
+  integer const NC = numFluidComponents();
+  integer const NP = numFluidPhases();
+
+  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString(), getFullName() );
+  checkInputSize( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString(), getFullName() );
+  checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString(), getFullName() );
+  checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString(), getFullName() );
+  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString(), getFullName() );
 
   if( m_componentVolumeShift.empty() )
   {
     m_componentVolumeShift.resize( NC );
     m_componentVolumeShift.zero();
   }
-  checkInputSize( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString() );
+  checkInputSize( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString(), getFullName() );
 
   if( m_componentBinaryCoeff.empty() )
   {
     m_componentBinaryCoeff.resize( NC, NC );
     m_componentBinaryCoeff.zero();
   }
-  checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
+  checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString(), getFullName() );
+}
+
+void CompositionalMultiphaseFluid::initializePostSubGroups()
+{
+  MultiFluidBase::initializePostSubGroups();
+  createFluid();
 }
 
 void CompositionalMultiphaseFluid::createFluid()
@@ -150,7 +159,55 @@ void CompositionalMultiphaseFluid::createFluid()
 
   m_fluid = pvt::MultiphaseSystemBuilder::buildCompositional( pvt::COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS, phases, eos,
                                                               components, Mw, Tc, Pc, Omega );
+}
 
+std::unique_ptr< ConstitutiveBase >
+CompositionalMultiphaseFluid::deliverClone( string const & name,
+                                            Group * const parent ) const
+{
+  std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
+  CompositionalMultiphaseFluid & fluid = dynamicCast< CompositionalMultiphaseFluid & >( *clone );
+  fluid.m_phaseTypes = m_phaseTypes;
+  fluid.createFluid();
+  return clone;
+}
+
+CompositionalMultiphaseFluid::KernelWrapper::
+  KernelWrapper( pvt::MultiphaseSystem & fluid,
+                 arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
+                 arrayView1d< geosx::real64 const > const & componentMolarWeight,
+                 bool useMass,
+                 PhaseProp::ViewType phaseFraction,
+                 PhaseProp::ViewType phaseDensity,
+                 PhaseProp::ViewType phaseMassDensity,
+                 PhaseProp::ViewType phaseViscosity,
+                 PhaseComp::ViewType phaseCompFraction,
+                 FluidProp::ViewType totalDensity )
+  : MultiFluidBase::KernelWrapper( componentMolarWeight,
+                                   useMass,
+                                   std::move( phaseFraction ),
+                                   std::move( phaseDensity ),
+                                   std::move( phaseMassDensity ),
+                                   std::move( phaseViscosity ),
+                                   std::move( phaseCompFraction ),
+                                   std::move( totalDensity ) ),
+  m_fluid( fluid ),
+  m_phaseTypes( phaseTypes )
+{}
+
+CompositionalMultiphaseFluid::KernelWrapper
+CompositionalMultiphaseFluid::createKernelWrapper()
+{
+  return KernelWrapper( *m_fluid,
+                        m_phaseTypes,
+                        m_componentMolarWeight,
+                        m_useMass,
+                        m_phaseFraction.toView(),
+                        m_phaseDensity.toView(),
+                        m_phaseMassDensity.toView(),
+                        m_phaseViscosity.toView(),
+                        m_phaseCompFraction.toView(),
+                        m_totalDensity.toView() );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, string const &, Group * const )

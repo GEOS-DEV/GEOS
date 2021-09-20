@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -86,7 +86,7 @@ void TriaxialDriver::postProcessInput()
 
   // determine time increment
 
-  ArrayOfArraysView< real64 > coordinates = strainFunction.getCoordinates();
+  ArrayOfArraysView< real64 const > coordinates = strainFunction.getCoordinates().toViewConst();
   real64 const minTime = coordinates[0][0];
   real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
   real64 const dt = (maxTime-minTime) / m_numSteps;

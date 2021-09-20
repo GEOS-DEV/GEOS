@@ -52,7 +52,7 @@
 
   <Events
     maxTime="10.0">
-    <!-- SoloEvent 
+    <!-- SoloEvent
       name="initialPlot"
       target="/Outputs/siloOutput"
       /-->
@@ -60,7 +60,7 @@
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
-    <!-- SoloEvent 
+    <!-- SoloEvent
       name="preFracturePlot"
       target="/Outputs/siloOutput"
       /-->
@@ -80,7 +80,7 @@
       forceDt="0.5"
       target="/Solvers/hydrofracture"/>
 
-    <!--PeriodicEvent 
+    <!--PeriodicEvent
       name="solverApplications2"
       beginTime="20.0"
       endTime="100.0"
@@ -114,7 +114,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{ fracPerm }"/>
+        meanPermCoefficient="0.8"/>
     </FiniteVolume>
   </NumericalMethods>
 

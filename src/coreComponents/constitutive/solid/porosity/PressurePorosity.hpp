@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -51,14 +51,18 @@ public:
                         real64 const & referencePorosity ) const
   {
 
-    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
-    dPorosity_dPressure =  m_compressibility * porosity;
+    // TODO use full exponential.
+//    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
+//    dPorosity_dPressure =  m_compressibility * porosity;
+    porosity = referencePorosity * ( m_compressibility * (pressure - m_referencePressure) + 1 );
+    dPorosity_dPressure = m_compressibility * referencePorosity;
+
   }
 
   GEOSX_HOST_DEVICE
-  virtual void updatePorosity( localIndex const k,
-                               localIndex const q,
-                               real64 const & pressure ) const
+  virtual void updateFromPressure( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & pressure ) const override final
   {
     computePorosity( pressure,
                      m_newPorosity[k][q],
@@ -71,7 +75,6 @@ private:
   real64 m_referencePressure;
 
   real64 m_compressibility;
-
 };
 
 

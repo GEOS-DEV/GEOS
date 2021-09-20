@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -91,6 +91,15 @@ public:
     return m_oldPorosity[k][q];
   }
 
+  GEOSX_HOST_DEVICE
+  virtual void updateFromPressure( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & pressure ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, pressure );
+    GEOSX_ERROR( "updateFromPressure is not implemented for porosityBase." );
+  }
+
 protected:
   arrayView2d< real64 > m_newPorosity;
 
@@ -121,10 +130,10 @@ public:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr char const * newPorosityString() { return "newPorosity"; }
+    static constexpr char const * newPorosityString() { return "porosity"; }
     static constexpr char const * oldPorosityString() { return "oldPorosity"; }
     static constexpr char const * dPorosity_dPressureString() { return "dPorosity_dPressure"; }
-    static constexpr char const * referencePorosityString() { return "refPorosity"; }
+    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
     static constexpr char const * defaultRefererencePorosityString() { return "defaultReferencePorosity"; }
   } viewKeys;
 
@@ -168,6 +177,13 @@ public:
 
 
   /**
+   * @brief Const/non-mutable accessor for referencePorosity.
+   * @return Accessor
+   */
+  arrayView1d< real64 const > const  getReferencePorosity() const { return m_referencePorosity; }
+
+
+  /**
    * @brief Const/non-mutable accessor for dPorosity_dPressure
    * @return Accessor
    */
@@ -190,8 +206,6 @@ public:
                           m_referencePorosity );
   }
 
-
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
 protected:
   virtual void postProcessInput() override;

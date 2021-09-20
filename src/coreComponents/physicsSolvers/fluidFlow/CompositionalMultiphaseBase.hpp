@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -137,12 +137,6 @@ public:
   void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
-   * @brief Update all relevant solid models using current values of pressure
-   * @param dataGroup the group storing the required fields
-   */
-  void updateSolidModel( Group & dataGroup, localIndex const targetIndex ) const;
-
-  /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param castedRelPerm the group storing the required fields
    */
@@ -160,11 +154,9 @@ public:
    */
   virtual void updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const = 0;
 
-  /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param domain the domain containing the mesh and fields
-   */
-  void updateState( Group & dataGroup, localIndex const targetIndex ) const;
+  void updateFluidState( Group & dataGroup, localIndex const targetIndex ) const;
+
+  virtual void updateState( DomainPartition & domain ) override final;
 
   /**
    * @brief Get the number of fluid components (species)
@@ -184,8 +176,8 @@ public:
    * @param dt time step
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
    */
   void assembleAccumulationTerms( DomainPartition & domain,
                                   DofManager const & dofManager,
@@ -294,10 +286,6 @@ public:
 
     static constexpr char const * phaseMobilityOldString() { return "phaseMobilityOld"; }
 
-    static constexpr char const * porosityString() { return "porosity"; }
-
-    static constexpr char const * porosityOldString() { return "porosityOld"; }
-
     // these are allocated on faces for BC application until we can get constitutive models on faces
     static constexpr char const * phaseViscosityString() { return "phaseViscosity"; }
 
@@ -353,6 +341,7 @@ public:
                           DomainPartition & domain,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) const;
+
 
   /**
    * @brief Sets all the negative component densities (if any) to zero.
@@ -417,6 +406,7 @@ protected:
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dCompFrac_dCompDens;
 
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseVolFrac;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseVolFrac_dPres;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseVolFrac_dCompDens;
 
