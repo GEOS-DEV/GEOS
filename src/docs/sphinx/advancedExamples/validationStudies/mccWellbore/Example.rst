@@ -57,11 +57,11 @@ Following figure shows the generated mesh that is used for solving this wellbore
    :width: 500
    :figclass: align-center
 
-   Generated mesh for the wellbore problem
+   Generated mesh for a vertical wellbore problem
 
 
 Let us take a closer look at the geometry of this wellbore problem.
-We use the internal mesh generator ``InternalWellbore`` to create a rock domain
+We use the internal wellbore mesh generator ``InternalWellbore`` to create a rock domain
 (:math:`10\, m \, \times 5 \,  m \, \times 2 \, m`), with a wellbore of
 initial radius equal to :math:`0.1` m.
 Coordinates of ``trajectory`` defines the wellbore trajectory, which represents a vertical well in this example. 
@@ -158,7 +158,7 @@ You may note :
  - ``fieldName`` is the name of the field registered in GEOSX;
  - Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively;
  - And the non-zero values given by ``scale`` indicate the magnitude of the loading; 
- - Some shorthand, such as ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain. For instance, ``xneg`` means the portion of the computational domain located at the left-most extent in the x-axis, while ``xpos`` refers to the portion located at the right-most extent in the x-axis. Similar shorthands include ``ypos``, ``yneg``, ``zpos``, and ``zneg``;
+ - Some shorthand, such as ``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain. For instance, ``xneg`` means the face of the computational domain located at the left-most extent in the x-axis, while ``xpos`` refers to the face located at the right-most extent in the x-axis. Similar shorthands include ``ypos``, ``yneg``, ``zpos``, and ``zneg``;
  - The mud pressure loading has a negative value due to the negative sign convention for compressive stress in GEOSX. 
 
  
