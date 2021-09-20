@@ -267,8 +267,8 @@ void AquiferBoundaryCondition::computeTimeConstant()
 
 void AquiferBoundaryCondition::computeInfluxConstant()
 {
-  // equation 5.4 of the Eclipse TD, including the constant 1.1191 of the Carter-Tracy model
-  m_influxConstant = 1.1191 * m_thickness * ( m_angle / 360.0 ) * m_porosity * m_totalCompressibility * m_innerRadius * m_innerRadius;
+  // equation 5.4 of the Eclipse TD, including the constant 6.283 of the Carter-Tracy model
+  m_influxConstant = 6.283 * m_thickness * ( m_angle / 360.0 ) * m_porosity * m_totalCompressibility * m_innerRadius * m_innerRadius;
 }
 
 AquiferBoundaryCondition::KernelWrapper AquiferBoundaryCondition::createKernelWrapper() const
