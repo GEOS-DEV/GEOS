@@ -1173,6 +1173,10 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
+  // note: we have to save the aquifer state **before** updating the pressure,
+  // otherwise the aquifer flux is saved with the wrong pressure time level
+  saveAquiferConvergedState( time, dt, domain );
+
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 const > const dPres =
@@ -1197,8 +1201,6 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
     CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
     porousMaterial.saveConvergedState();
   } );
-
-  saveAquiferConvergedState( time, dt, domain );
 }
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
