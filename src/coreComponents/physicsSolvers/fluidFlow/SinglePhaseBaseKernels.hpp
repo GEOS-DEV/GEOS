@@ -221,6 +221,7 @@ struct AccumulationKernel
 
         real64 const poreVolNew = ( volume[ei] + deltaVolume[ei] ) * porosityNew[ei][0];
         real64 const poreVolOld = volume[ei] * porosityOld[ei][0];
+
         real64 const dPoreVol_dPres = ( volume[ei] + deltaVolume[ei] ) * dPoro_dPres[ei][0];
 
         compute( dens[ei][0],

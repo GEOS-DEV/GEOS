@@ -262,7 +262,6 @@ public:
 
     // backup fields
     static constexpr char const * densityOldString() { return "densityOld"; }
-    static constexpr char const * transTMultString() { return "transTMult"; }
   };
 
   /**
@@ -322,8 +321,6 @@ protected:
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_transTMultiplier;
 
 private:
 
