@@ -214,7 +214,7 @@ public:
     /// @return Mass creation string.
     constexpr static char const * creationMassString() { return "creationMass"; }
 
-    /// elbedded surface element to parent plane
+    /// @return embedded surface element to parent plane string.
     constexpr static char const * surfaceElementToParentPlaneString() { return "surfaceElementToParentPlane"; }
   };
 

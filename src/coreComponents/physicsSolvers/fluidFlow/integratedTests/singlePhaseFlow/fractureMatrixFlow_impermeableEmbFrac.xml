@@ -7,7 +7,7 @@
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Region2, Fracture }"
+      targetRegions="{ Domain, Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock, fractureFilling }"
       permeabilityNames="{ rockPerm, fracturePerm }">
@@ -22,7 +22,7 @@
       name="SurfaceGenerator"
       logLevel="1"
       solidMaterialNames="{ rock }"
-      targetRegions="{ Region2, Fracture }"
+      targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       mpiCommOrder="1"/>
   </Solvers>
@@ -94,7 +94,7 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region2"
+      name="Domain"
       cellBlocks="{ cb1 }"
       materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
 
@@ -162,7 +162,7 @@
       name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="rockPorosity_referencePorosity"
       scale="0.1"/>
 
@@ -178,20 +178,20 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
       scale="0.0"/>
 
     <FieldSpecification
       name="sourceTerm"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
       scale="1e7"
       setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
       scale="0.0"
       setNames="{ sink }"/>

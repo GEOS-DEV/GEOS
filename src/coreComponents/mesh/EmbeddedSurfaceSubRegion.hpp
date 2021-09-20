@@ -126,11 +126,11 @@ public:
    */
   void calculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                             localIndex k );
-  /*
+  /**
    * @brief computes the connectivityIndex of the embedded surface element.
-   * @param
-   * @param
-   * @param
+   * @param k element index
+   * @param cellToNodes cell to nodes map
+   * @param nodesCoord cordinates of the nodes
    */
   void computeConnectivityIndex( localIndex const k,
                                  arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes,
