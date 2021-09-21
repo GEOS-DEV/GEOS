@@ -194,6 +194,13 @@ class Vtk(CMakePackage):
             '-DVTK_MODULE_ENABLE_VTK_FiltersExtraction=YES',
             '-DVTK_MODULE_ENABLE_VTK_FiltersParallel=YES',
             '-DVTK_MODULE_ENABLE_VTK_ParallelCore=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersGeneral=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersHybrid=YES',
+            '-DVTK_MODULE_ENABLE_VTK_ImagingCore=YES',
+            '-DVTK_MODULE_ENABLE_VTK_RenderingCore=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersParallelVerdict=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersVerdict=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersGeometry=YES',
             '-DVTK_BUILD_TESTING=OFF',
             '-DVTK_LEGACY_REMOVE=ON'
         ]
