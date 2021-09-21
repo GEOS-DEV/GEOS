@@ -54,10 +54,10 @@ void ProjectionEDFMHelper::addNonNeighboringConnections() const
       for( localIndex const faceIdx : faces )
       {
         CellDescriptor neighborCell = otherCell( faceIdx, cellID );
-        real64 transFM[2];
-        fractureMatrixTransmissilibility( neighborCell, fracElement, fractureSubRegion, faceIdx, transFM );
+        real64 fractureMatrixWeights[2];
+        computeFractureMatrixWeights( neighborCell, fracElement, fractureSubRegion, faceIdx, fractureMatrixWeights );
 
-        addNonNeighboringConnection( fracElement, neighborCell, transFM, fractureSubRegion );
+        addNonNeighboringConnection( fracElement, neighborCell, fractureMatrixWeights, fractureSubRegion );
 
         // zero out matrix-matrix connections that are replaced by fracture-matrix connections
         // I assume that the m-m connection index is equal to the face id
@@ -215,7 +215,7 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex const faceIdx,
 
 void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex const fracElement,
                                                         CellDescriptor const & cell,
-                                                        real64 const (&transmissibility)[2],
+                                                        real64 const (&weights)[2],
                                                         EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
 {
   array1d< localIndex > stencilCellsRegionIndex( 2 );
@@ -227,13 +227,13 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex const fracEle
   stencilCellsRegionIndex[0] = cell.region;
   stencilCellsSubRegionIndex[0] = cell.subRegion;
   stencilCellsIndex[0] = cell.index;
-  stencilWeights[0] =  transmissibility[0];
+  stencilWeights[0] =  weights[0];
 
   // fracture data
   stencilCellsRegionIndex[1] = fractureSubRegion.getParent().getParent().getIndexInParent();
   stencilCellsSubRegionIndex[1] = fractureSubRegion.getIndexInParent();
   stencilCellsIndex[1] = fracElement;
-  stencilWeights[1] = transmissibility[1];
+  stencilWeights[1] = weights[1];
 
   m_edfmStencil.add( 2,
                      stencilCellsRegionIndex.data(),
@@ -244,11 +244,11 @@ void ProjectionEDFMHelper::addNonNeighboringConnection( localIndex const fracEle
 }
 
 void ProjectionEDFMHelper::
-  fractureMatrixTransmissilibility( CellDescriptor const & neighborCell,
-                                    localIndex const fracElement,
-                                    EmbeddedSurfaceSubRegion const & fractureSubRegion,
-                                    localIndex const faceIdx,
-                                    real64 (& trans)[2] ) const
+  computeFractureMatrixWeights( CellDescriptor const & neighborCell,
+                                localIndex const fracElement,
+                                EmbeddedSurfaceSubRegion const & fractureSubRegion,
+                                localIndex const faceIdx,
+                                real64 (& weights)[2] ) const
 {
 
   // TODO: should I really compute the real projection, or assuming the whole face is occupied by the projection?
@@ -285,11 +285,11 @@ void ProjectionEDFMHelper::
   // Compute half geometric transmissibilities
   real64 projectionPointToCellCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( cellCenter );
   LvArray::tensorOps::subtract< 3 >( projectionPointToCellCenter, projectionPoint );
-  trans[0] = faceArea * LvArray::tensorOps::l2Norm< 3 >( projectionPointToCellCenter );
+  weights[0] = faceArea * LvArray::tensorOps::l2Norm< 3 >( projectionPointToCellCenter );
 
   real64 projectionPointToFracCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fracCenter );
   LvArray::tensorOps::subtract< 3 >( projectionPointToFracCenter, projectionPoint );
-  trans[1] = faceArea * LvArray::tensorOps::l2Norm< 3 >( projectionPointToFracCenter );
+  weights[1] = faceArea * LvArray::tensorOps::l2Norm< 3 >( projectionPointToFracCenter );
 }
 
 }  // end namespace geosx

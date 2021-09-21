@@ -164,12 +164,6 @@ public:
   DomainPartition const & getDomainPartition() const;
 
   /**
-   * @brief Returns a pointer to the GeometricObjectManager
-   * @return Const reference to the GeometricObjectManager
-   */
-  GeometricObjectManager const & getGeometricObjectManager() const;
-
-  /**
    * @brief Returns the problem name
    * @return The problem name
    */

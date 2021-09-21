@@ -160,11 +160,11 @@ private:
    * @param[in] faceIdx the face index
    * @param[out] trans The geometric transmissibility between fracture and matrix cells.
    */
-  void fractureMatrixTransmissilibility( CellDescriptor const & neighborCell,
-                                         localIndex const fracElement,
-                                         EmbeddedSurfaceSubRegion const & fractureSubRegion,
-                                         localIndex const faceIdx,
-                                         real64 ( &trans )[2] ) const;
+  void computeFractureMatrixWeights( CellDescriptor const & neighborCell,
+                                     localIndex const fracElement,
+                                     EmbeddedSurfaceSubRegion const & fractureSubRegion,
+                                     localIndex const faceIdx,
+                                     real64 ( &weights )[2] ) const;
 
   /**
    * @brief add non-neighboring F-M connection with given transmissibility tothe cell stencil
@@ -175,7 +175,7 @@ private:
    */
   void addNonNeighboringConnection( localIndex const fracElement,
                                     CellDescriptor const & cell,
-                                    real64 const (&transmissibility)[2],
+                                    real64 const (&weights)[2],
                                     EmbeddedSurfaceSubRegion const & fractureSubRegion ) const;
 
   // Private variables
