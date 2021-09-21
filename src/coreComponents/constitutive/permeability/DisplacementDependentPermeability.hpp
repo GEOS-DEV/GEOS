@@ -33,36 +33,36 @@ public:
 
   DisplacementDependentPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                            arrayView3d< real64 > const & dPerm_dPressure,
-                                           arrayView3d< real64 > const & dPerm_dDisplacement,
+                                           arrayView3d< real64 > const & dPerm_dDispJump,
                                            real64 const shearDispThreshold,
                                            real64 const maxPermMultiplier,
                                            arrayView3d< real64 > const & iniPermeability )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
-    m_dPerm_dStrain( dPerm_dDisplacement ),
+    m_dPerm_dDispJump( dPerm_dDispJump ),
     m_shearDispThreshold( shearDispThreshold ),
     m_maxPermMultiplier( maxPermMultiplier ),
     m_iniPermeability( iniPermeability )
   {}
 
   GEOSX_HOST_DEVICE
-  void compute( real64 const ( &displacementJump )[3],
+  void compute( real64 const ( &dispJump )[3],
                 arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dDisplacement ) const;
+                arraySlice1d< real64 > const & dPerm_dDispJump ) const;
 
   GEOSX_HOST_DEVICE
   virtual void updateFromShearDisplacement( localIndex const k,
                                             localIndex const q,
-                                            real64 const ( &displacementJump )[3] ) const override
+                                            real64 const ( &dispJump )[3] ) const override
   {
-    compute( displacementJump,
+    compute( dispJump,
              m_permeability[k][q],
-             m_dPerm_dDisplacement[k][q] );
+             m_dPerm_dDispJump[k][q] );
   }
 
 private:
 
-  /// dPermeability_dDisplacement
-  arrayView3d< real64 > m_dPerm_dDisplacement;
+  /// dPermeability_dDispJump
+  arrayView3d< real64 > m_dPerm_dDispJump;
 
   /// Threshold of shear displacement
   real64 m_shearDispThreshold;
@@ -103,7 +103,7 @@ public:
   {
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
-                          m_dPerm_dDisplacement,
+                          m_dPerm_dDispJump,
                           m_shearDispThreshold,
                           m_maxPermMultiplier,
                           m_iniPermeability );
@@ -111,7 +111,7 @@ public:
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
-    static constexpr char const * dPerm_dDisplacementString() { return "dPerm_dDisplacement"; }
+    static constexpr char const * dPerm_dDispJumpString() { return "dPerm_dDispJump"; }
     static constexpr char const * shearDispThresholdString() { return "shearDispThreshold"; }
     static constexpr char const * maxPermMultiplierString() { return "maxPermMultiplier"; }
     static constexpr char const * iniPermeabilityString() { return "iniPermeability"; }
@@ -119,10 +119,10 @@ public:
 
 private:
 
-  /// dPermeability_dStrain
-  arrayView3d< real64 > m_dPerm_dDisplacement;
+  /// dPermeability_dDisplacement
+  arrayView3d< real64 > m_dPerm_dDispJump;
 
-  /// Threshold of shear strain
+  /// Threshold of shear displacement
   real64 m_shearDispThreshold;
 
   /// Maximum permeability multiplier
@@ -136,30 +136,22 @@ private:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void DisplacementDependentPermeabilityUpdate::compute( real64 const ( &displacementJump )[3],
+void DisplacementDependentPermeabilityUpdate::compute( real64 const ( &dispJump )[3],
                                                        arraySlice1d< real64 > const & permeability,
-                                                       arraySlice1d< real64 > const & dPerm_dDisplacement  ) const
+                                                       arraySlice1d< real64 > const & dPerm_dDispJump  ) const
 { 
-  real64 const shearDisp = std::max( abs(displacementJump[1]), abs(displacementJump[2]) )
-   
-  if (  shearDisp < m_shearDispThreshold )
-    {
-        real64 const permMultiplier = (m_maxPermMultiplier - 1) * shearDisp/m_shearDispThreshold + 1;
-
-        real64 const dPerm_dDisplacementValue = (m_maxPermMultiplier - 1)/m_shearDispThreshold;
-    }
-    else
-    {
-        real64 const permMultiplier = m_maxPermMultiplier;
-
-        real64 const dPerm_dDisplacement = 0;
-    }
-
+  real64 const shearMag = std::sqrt( dispJump[1]*dispJump[1] + dispJump[2]*dispJump[2] )
   
+  real64 const permMultiplier = (m_maxPermMultiplier - 1.0) * std::tanh (3.0 * shearMag/m_shearDispThreshold ) + 1.0;
+
+  real64 const dpermMultiplier_dshearMag = (m_maxPermMultiplier - 1.0) * ( 1.0 - std::tanh (3.0 * shearMag/m_shearDispThreshold ) * std::tanh (3.0 * shearMag/m_shearDispThreshold )) * 3.0/m_shearDispThreshold;  
+ 
   for( localIndex i=0; i < permeability.size(); i++ )
   {
     permeability[i] = permMultiplier * m_iniPermeability[i];
-    dPerm_dDisplacement[i] = dPerm_dDisplacementValue * m_iniPermeability[i];
+    dPerm_dDispJump[i][0] = 0.0
+    dPerm_dDispJump[i][1] = m_iniPermeability[i] * dpermMultiplier_dshearMag /shearMag * dispJump[1];
+    dPerm_dDispJump[i][2] = m_iniPermeability[i] * dpermMultiplier_dshearMag /shearMag * dispJump[2];
   }
 }
 
