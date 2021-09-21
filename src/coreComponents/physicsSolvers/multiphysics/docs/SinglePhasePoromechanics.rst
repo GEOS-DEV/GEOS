@@ -18,41 +18,30 @@ Theory
 Governing Equations
 --------------------------
 
-In our model, the geomechanics (elasticity) equation is expressed in terms of the total stress :math:`\mathbf{\sigma}^{\prime}`:
+Let :math:`\Omega` denote the three-dimensional domain occupied bu the porous mediu. 
+Let :math:`t` denote time, which belongs to the time interval of interest :math:`\mathcal{I} = (0, t_{\max}]`.
+The requisite set of governing equations consists of two conservation laws, one for the linear momentum balance and one for the mass balance of the fluid phase.
+Assuming quasi-static mechanical behavior, the strong form of the single-phase poromechanical initial/boundary value problem (IBVP) consists of finding the solid displacement vector :math:`\boldsymbol{u}` and the fluid pore pressure :math:`p` such that
 
 .. math::
-     & -\nabla \cdot \boldsymbol{\sigma} = \rho \boldsymbol{g}
+     & -\nabla \cdot \boldsymbol{\sigma} = \rho \boldsymbol{g} 
+     && \text{in } \Omega \times \mathcal{I}
+     && \text{(quasi-static linear momentum balance)}
 
-     & \dot{m}_f + \nabla \cdot \boldsymbol{w}_f = f
+     & \dot{m}_f + \nabla \cdot \boldsymbol{w} = q
+     && \text{in } \Omega \times \mathcal{I}
+     && \text{(fluid phase mass balance)}
 
 where 
 
-- :math:`\boldsymbol{\sigma}` is the total stress tensor;
-- :math:`\rho = (1 - \phi) \rho_s + \phi \rho_f` is the bulk density, with :math:`\phi` the porosity, :math:`\rho_s` the density of the solid phase, and :math:`rho_f` the density of the fluid phase;
-- :math:`\dot{m}_f` is  the fluid mass content, namely the fluid mass per unit reference volume, increment
+- :math:`\boldsymbol{\sigma}  = ( \boldsymbol{\sigma}^{\prime} - b p \boldsymbol{1})` is the total Cauchy stress tensor, with :math:`\boldsymbol{\sigma}^{\prime} = \mathbb{C} : \nabla^s \boldsymbol{u}` the effective stress, :math:`\mathbb{C}` the rank-4 drained tensor of tangent moduli, :math:`b` the Biot coefficient, and :math:`\boldsymbol{1}` the rank-2 identity tensor;
+- :math:`\rho \boldsymbol{g}` is a body force due to self-weigth of the mixture, with :math:`\rho = [(1 - \phi) \rho_s + \phi \rho_f]` the density of the mixture, :math:`\phi` the porosity, :math:`\rho_s` the density of the solid phase, :math:`\rho_f` the density of the fluid phase, and :math:`\boldsymbol{g}` the gravity vector;
+- :math:`m_f = (\phi \rho_f)` is the fluid mass content, namely the fluid mass per unit reference volume;
+- :math:`\boldsymbol{w} = - \rho_f \frac{1}{\mu} \boldsymbol{\kappa} \cdot \nabla \Phi_f` is th fluid phase mass flux, with :math:`\mu` the fluid viscosity, :math:`\boldsymbol{\kappa}` the absolute permeability tensor, and :math:`\Phi_f = ( p - \rho_f \boldsymbol{g} \cdot \boldsymbol{x})` the fluid phase potential, and :math:`\boldsymbol{x}` the position vector in :math:`\mathbb{R}^3`;
+- :math:`q` is a mass source/sink per unit volum term for the fluid phase;
+- :math:`\nabla`, :math:`\nabla^s`, and :math:`\nabla \cdot` are the gradient, symmetric gradient, and divergence operator, respectively;
+- the superposed dot, :math:`\dot{(\bullet)}`, indicates the derivative of quantitiy :math:`(\bullet)` with respect to time.
 
-
-where it relates to effective stress :math:`\mathbf{\sigma\prime}` and pore pressure :math:`p` through Biot's coefficient :math:`b`:
-
-
-
-
-.. math::
-    \mathbf{\sigma} = \mathbf{\sigma^{\prime}} - b p\mathbf{I}
-
-The fluid mass conservation equation is expressed in terms of pore pressure and volumetric (mean) total stress:
-
-.. math::
-    \left( \frac{1}{M} + \frac{b^2}{K_{dr}} \right) \frac{\partial p}{\partial t} + \frac{b}{K_{dr}} \frac{\partial \sigma_v}{\partial t} + \nabla \cdot \mathbf{v}_f = f
-
-where :math:`M` is the Biot's modulus and :math:`K_{dr}` is the drained bulk modulus.
-
-Unlike the conventional reservoir model that uses Lagrange’s porosity, in the coupled geomechanics and flow model, Euler’s porosity :math:`\phi` is adopted so the porosity variation is derived as:
-
-.. math::
-    \partial \phi = \left( \frac{b-\phi}{K_s}\right) \partial p + \left( b-\phi \right) \partial \epsilon_v
-
-where :math:`K_{s}` is the bulk modulus of the solid grain and :math:`\epsilon_v` is the volumetric strain.
 
 Parameters
 ===========================================
