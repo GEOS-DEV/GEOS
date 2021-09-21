@@ -120,8 +120,9 @@ if(DEFINED HDF5_DIR)
     set(HDF5_NO_FIND_PACKAGE_CONFIG_FILE ON)
     include(FindHDF5)
 
+    # On some platforms (Summit) HDF5 lists /usr/include in it's list of include directories.
+    # When this happens you can get really opaque include errors. 
     list(REMOVE_ITEM HDF5_INCLUDE_DIRS /usr/include)
-    message(STATUS "HDF5_INCLUDE_DIRS = ${HDF5_INCLUDE_DIRS}")
 
     blt_import_library(NAME hdf5
                        INCLUDES ${HDF5_INCLUDE_DIRS}
@@ -155,6 +156,7 @@ if(DEFINED CONDUIT_DIR)
                      ${includeDirs})
     endforeach()
 
+    # Conduit uses our HDF5 and we need to propagate the above fix.
     get_target_property(CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES conduit_relay INTERFACE_INCLUDE_DIRECTORIES)
     list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES /usr/include)
     set_target_properties(conduit_relay PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES})
