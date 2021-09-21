@@ -102,8 +102,8 @@ public:
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion,
                                       localIndex const targetIndex ) const;
 
-  void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
-                                      localIndex const targetIndex ) const;
+  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
+                                              localIndex const targetIndex ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step
