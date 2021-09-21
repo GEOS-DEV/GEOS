@@ -37,7 +37,7 @@ Description of the case
    Configuration of the slot for proppant transport experiment (after `Chun et al., 2020 <https://www.sciencedirect.com/science/article/pii/S0920410519309441>`__)
 
 
-To simulate proppant transport phenomenon, a proppant solver based on the assumption of multi-component single phase flow is used in this example. Proppant concentration and distribution within the slot are numerically calculated by solving the equations of proppant transport in hydraulic fractures. These numerical predictions are then compared with the corresponding testing results `(Chun et al., 2020)  <ttps://www.sciencedirect.com/science/article/pii/S0920410519309441>`__ to check the accuracy of modelling results.
+To simulate proppant transport phenomenon, a proppant solver based on the assumption of multi-component single phase flow is used in this example. Proppant concentration and distribution within the slot are numerically calculated by solving the equations of proppant transport in hydraulic fractures. These numerical predictions are then compared with the corresponding testing results `(Chun et al., 2020)  <https://www.sciencedirect.com/science/article/pii/S0920410519309441>`__ to check the accuracy of modelling results.
 
 
 In this example, we focus our attention on the ``Solver`` tags, the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
@@ -171,7 +171,7 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+----------------------------------+------------------+---------------+
 | :math:`\rho_p`   | Proppant Density                 | [kg/m^3]         | 2550          |
 +------------------+----------------------------------+------------------+---------------+
-| :math:`\lamda_s` | Hindered settling coefficient    | [-]              | 4.5           |
+| :math:`\lamda_s` | Hindered Settling Coefficient    | [-]              | 4.5           |
 +------------------+----------------------------------+------------------+---------------+
 | :math:`c_p`      | Proppant Concentration in Slurry | [ppa]            | 1.5           |
 +------------------+----------------------------------+------------------+---------------+
@@ -188,7 +188,7 @@ The parameters used in the simulation are summarized in the following table.
 Inspecting results
 ---------------------------------
 
-The following figure shows the modelling prediction of proppant distribution at t=10s and t=30s, which are compared with the experiments in `(Chun et al., 2020)  <ttps://www.sciencedirect.com/science/article/pii/S0920410519309441>`__. Due to proppant settling in low viscosity fluid, a heterogeneous proppant distribution is obtained, which evolves with injection time. Three different zones (immobile proppant bed, suspended proppant and clean fluid) are visually identified for both the presented experiment and simulation. 
+The following figure shows the modelling prediction of proppant distribution at t=10s and t=30s, which are compared with the experiments in `(Chun et al., 2020)  <https://www.sciencedirect.com/science/article/pii/S0920410519309441>`__. Due to proppant settling in low viscosity fluid, a heterogeneous proppant distribution is obtained, which evolves with injection time. Three different zones (immobile proppant bed, suspended proppant and clean fluid) are visually identified for both the presented experiment and simulation. 
 
 
 .. _problemVerificationFig:
