@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
 
 <Problem>
-<!-- SPHINX_PROPPANT_SOLVER -->
   <Solvers>
+<!-- SPHINX_PROPPANT_PROPPANTSOLVER -->
     <ProppantTransport
       name="ProppantTransport"
       logLevel="1"
@@ -26,14 +26,19 @@
         solverType="gmres"
         krylovTol="1.0e-7"/>
     </ProppantTransport>
+<!-- SPHINX_PROPPANT_PROPPANTSOLVER_END -->
 
+<!-- SPHINX_PROPPANT_COUPLEDSOLVER -->
     <FlowProppantTransport
       name="FlowProppantTransport"
       proppantSolverName="ProppantTransport"
       flowSolverName="SinglePhaseFVM"
       targetRegions="{ Fracture }"
       logLevel="1"/>
+<!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->
 
+
+<!-- SPHINX_PROPPANT_FLOWSOLVER -->
     <SinglePhaseProppantFVM
       name="SinglePhaseFVM"
       logLevel="1"
@@ -52,6 +57,7 @@
 	preconditionerType="amg"  
         krylovTol="1.0e-7"/>
     </SinglePhaseProppantFVM>
+<!-- SPHINX_PROPPANT_FLOWSOLVER -->
 
     <SurfaceGenerator
       name="SurfaceGen"
@@ -59,8 +65,9 @@
       solidMaterialNames="{ granite }"
       rockToughness="1e6"/>
   </Solvers>
-<!-- SPHINX_PROPPANT_SOLVER_END -->
 
+
+<!-- SPHINX_PROPPANT_MESH -->
   <Mesh>
     <InternalMesh
       name="mesh"
@@ -73,6 +80,7 @@
       nz="{ 24 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
+<!-- SPHINX_PROPPANT_MESH_END -->
 
   <Geometry>
     <!-- An additional column of grid cells is added to the left of the domain to mimic proppant injection boundary conditions -->
@@ -155,8 +163,10 @@
     <ProppantSlurryFluid
       name="water"
       referencePressure="1e5"
+      referenceDensity="1000"
       compressibility="0.0"
       maxProppantConcentration="0.62"
+      referenceViscosity="0.001"
       referenceProppantDensity="2550.0"/>
 
     <ParticleFluid
@@ -188,6 +198,7 @@
   </Constitutive>
 <!-- SPHINX_PROPPANT_MATERIAL_END -->
 
+<!-- SPHINX_PROPPANT_BC -->
   <FieldSpecifications>
     <FieldSpecification
       name="frac"
@@ -231,7 +242,6 @@
       component="0"
       setNames="{ fracture }"/>
 
-    <!-- We specify the proppant boundary to approximate proppant injection boundary conditions -->
     <FieldSpecification
       name="frac4"
       initialCondition="1"
@@ -305,6 +315,8 @@
       component="0"
       setNames="{ right }"/>
   </FieldSpecifications>
+<!-- SPHINX_PROPPANT_BC_END -->
+
 
   <Outputs>
     <Silo
