@@ -1,26 +1,3 @@
-#
-# Get GEOSX Version
-#
-file ( STRINGS "VERSION" GEOSX_VERSION_FULL )
-string( REGEX REPLACE "VERSION_ID = v" "" GEOSX_VERSION_FULL "${GEOSX_VERSION_FULL}" )
-string( REPLACE "." ";" GEOSX_VERSION_LIST ${GEOSX_VERSION_FULL} )
-
-list( GET GEOSX_VERSION_LIST  0 GEOSX_VERSION_MAJOR )
-list( GET GEOSX_VERSION_LIST  1 GEOSX_VERSION_MINOR )
-list( GET GEOSX_VERSION_LIST  2 GEOSX_VERSION_PATCH )
-
-if( GIT_FOUND )
-    blt_is_git_repo( OUTPUT_STATE is_git_repo )
-    if( is_git_repo )
-        # the other option is to use blt_git_tag() but we want branch info too
-        blt_git_branch( BRANCH_NAME git_branch RETURN_CODE git_branch_rc )
-        blt_git_hashcode( HASHCODE git_hash RETURN_CODE git_hash_rc )
-        set( GEOSX_VERSION_DEV "${git_branch}-${git_hash}" )
-    endif()
-endif()
-
-message( STATUS "Configuring GEOSX version ${GEOSX_VERSION_FULL} ${GEOSX_VERSION_DEV}" )
-
 set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CALIPER
                           CHAI
@@ -82,7 +59,6 @@ function( make_full_config_file
     set( GEOSX_LA_INTERFACE_HYPRE ON )
     set( GEOSX_LA_INTERFACE_TRILINOS OFF )
     set( GEOSX_LA_INTERFACE_PETSC OFF )
-    unset( GEOSX_VERSION_DEV )
 
     configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
                     ${CMAKE_SOURCE_DIR}/docs/doxygen/GeosxConfig.hpp )
