@@ -18,15 +18,27 @@ Theory
 Governing Equations
 --------------------------
 
-In our model, the geomechanics (elasticity) equation is expressed in terms of the total stress :math:`\mathbf{\sigma}`:
+In our model, the geomechanics (elasticity) equation is expressed in terms of the total stress :math:`\mathbf{\sigma}^{\prime}`:
 
 .. math::
-    \nabla \mathbf{\sigma} + \rho_b \mathbf{g} = 0
+     & -\nabla \cdot \boldsymbol{\sigma} = \rho \boldsymbol{g}
+
+     & \dot{m}_f + \nabla \cdot \boldsymbol{w}_f = f
+
+where 
+
+- :math:`\boldsymbol{\sigma}` is the total stress tensor;
+- :math:`\rho = (1 - \phi) \rho_s + \phi \rho_f` is the bulk density, with :math:`\phi` the porosity, :math:`\rho_s` the density of the solid phase, and :math:`rho_f` the density of the fluid phase;
+- :math:`\dot{m}_f` is  the fluid mass content, namely the fluid mass per unit reference volume, increment
+
 
 where it relates to effective stress :math:`\mathbf{\sigma\prime}` and pore pressure :math:`p` through Biot's coefficient :math:`b`:
 
+
+
+
 .. math::
-    \mathbf{\sigma} = \mathbf{\sigma\prime} - b p\mathbf{I}
+    \mathbf{\sigma} = \mathbf{\sigma^{\prime}} - b p\mathbf{I}
 
 The fluid mass conservation equation is expressed in terms of pore pressure and volumetric (mean) total stress:
 
