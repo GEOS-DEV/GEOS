@@ -110,7 +110,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
-      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ water, rock }"/>
 
     <CellElementRegion
       name="Barrier"

@@ -118,7 +118,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ DEFAULT_TETRA }"
-      materialList="{ fluid1, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ fluid1, rock, relperm }"/>
 
     <WellElementRegion
       name="wellRegion1"

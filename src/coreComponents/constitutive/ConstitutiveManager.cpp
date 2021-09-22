@@ -86,9 +86,9 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
                                                  numConstitutivePointsPerParentIndex );
 
     ConstitutiveBase &
-      wrapper = constitutiveGroup->registerGroup< ConstitutiveBase >( subRelationName, std::move( constitutiveModel ) );
-      wrapper.setSizedFromParent( 1 );
-      wrapper.resize( constitutiveGroup->size() );
+      group = constitutiveGroup->registerGroup< ConstitutiveBase >( subRelationName, std::move( constitutiveModel ) );
+      group.setSizedFromParent( 1 );
+      group.resize( constitutiveGroup->size() );
   }
 
   ConstitutiveBase &
