@@ -848,11 +848,11 @@ void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale, bool 
   GEOSX_UNUSED_VAR( samePattern );
 
   HYPRE_ParCSRMatrix parCSRMatrix;
-  GEOSX_LAI_CHECK_ERROR( hypre_ParcsrAdd( 1.0,
-                                          unwrapped(),
-                                          scale,
-                                          src.unwrapped(),
-                                          &parCSRMatrix ) );
+  GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixAdd( 1.0, //GEOSX_LAI_CHECK_ERROR( hypre_ParcsrAdd( 1.0, //GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixAdd( 1.0,
+						unwrapped(),
+						scale,
+						src.unwrapped(),
+						&parCSRMatrix ) );
 
   parCSRtoIJ( parCSRMatrix );
 }

@@ -73,11 +73,11 @@ public:
     m_levelFRelaxMethod[2] = 0; // Jacobi
 
     m_levelInterpType[0] = 2;       // diagonal scaling (Jacobi)
-    m_levelCoarseGridMethod[0] = 1; // standard Galerkin
+    m_levelCoarseGridMethod[0] = 0; // standard Galerkin
     m_levelInterpType[1] = 2;       // diagonal scaling (Jacobi)
-    m_levelCoarseGridMethod[1] = 1; // standard Galerkin
+    m_levelCoarseGridMethod[1] = 0; // standard Galerkin
     m_levelInterpType[2] = 2;       // diagonal scaling (Jacobi)
-    m_levelCoarseGridMethod[2] = 1; // standard Galerkin
+    m_levelCoarseGridMethod[2] = 0; // standard Galerkin
 
     m_globalSmoothType = 16; // ILU(0)
     m_numGlobalSmoothSweeps = 1; // With global smoother
@@ -98,7 +98,7 @@ public:
                                                                   mgrData.pointMarkers.data() ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, m_levelFRelaxMethod ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 30 ));    
+    //GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 30 ));    
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( precond.ptr, m_globalSmoothType ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
 #ifdef GEOSX_USE_HYPRE_CUDA

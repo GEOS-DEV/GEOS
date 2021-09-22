@@ -89,9 +89,9 @@ public:
     m_levelFRelaxMethod[2] = 0; // Jacobi
     m_levelFRelaxMethod[3] = 2; // AMG V-cycle
 
-    m_levelCoarseGridMethod[0] = 1;
-    m_levelCoarseGridMethod[1] = 1;
-    m_levelCoarseGridMethod[2] = 1;
+    m_levelCoarseGridMethod[0] = 0;
+    m_levelCoarseGridMethod[1] = 0;
+    m_levelCoarseGridMethod[2] = 0;
     m_levelCoarseGridMethod[3] = 0;
 
     m_levelInterpType[0] = 2;
@@ -119,7 +119,7 @@ public:
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, m_levelFRelaxMethod ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
-    //GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 30 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, m_levelInterpType ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, m_levelCoarseGridMethod ) );
