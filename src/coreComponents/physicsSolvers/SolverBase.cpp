@@ -603,6 +603,11 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         break;
       }
 
+      GEOSX_LOG_RANK( "cycleNumber, dtAttempt, newtonIter, :" <<cycleNumber<<", "<<dtAttempt<<", "<<newtonIter );
+      if( cycleNumber==5 && newtonIter==0 )
+      {
+        std::cout<<"breakpoint"<<std::endl;
+      }
       // apply the system solution to the fields/variables
       applySystemSolution( m_dofManager, m_localSolution, scaleFactor, domain );
 
