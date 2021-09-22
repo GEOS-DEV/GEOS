@@ -129,7 +129,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"
+      materialList="{ water, rock, fractureFilling }"
       defaultAperture="1e-4"/>
   </ElementRegions>
 

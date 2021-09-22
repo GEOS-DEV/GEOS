@@ -67,6 +67,19 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
   material->allocateConstitutiveData( *parent,
                                       numConstitutivePointsPerParentIndex );
 
+
+  std::vector<string> const subRelationNames = material->getSubRelationNames();
+
+  for( string const & subRelationName : subRelationNames )
+  {
+    ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
+
+    std::unique_ptr< ConstitutiveBase > constitutiveModel = subRelation.deliverClone( subRelationName, parent );
+
+    constitutiveModel->allocateConstitutiveData( *parent,
+                                                 numConstitutivePointsPerParentIndex );
+  }
+
   dataRepository::Group * constitutiveGroup = parent->getGroupPointer( groupKeyStruct::constitutiveModelsString() );
   if( constitutiveGroup == nullptr )
   {
