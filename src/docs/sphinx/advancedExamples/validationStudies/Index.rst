@@ -15,6 +15,8 @@ Validation and Verification Studies
 
    deviatedElasticWellbore/Example
 
-   poromechanicsWellbore/Example
+   deviatedPoroElasticWellbore/Example
+
+   verticalPoroElastoPlasticWellbore/Example
 
 
