@@ -148,7 +148,8 @@ At a constant injection rate, the slurry is equally flowing into the open channe
     :start-after: <!-- SPHINX_PROPANT_BC -->
     :end-before: <!-- SPHINX_PROPPANT_BC_END -->
 
-Note: For static (non-propagating) fracture problems, the fields ``ruptureState`` and ``elementAperture`` should be provided in the initial conditions.
+Note: For static (non-propagating) fracture problems, the fields ``ruptureState`` and ``elementAperture`` should be provided in the initial conditions. 
+``FieldName="pressure"`` here means that the source flux term is added to the mass balance equation for pressure.
 
 
 
