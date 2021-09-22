@@ -173,7 +173,7 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+----------------------------------+------------------+---------------+
 | :math:`\lambda_s`| Hindered Settling Coefficient    | [-]              | 4.5           |
 +------------------+----------------------------------+------------------+---------------+
-| :math:`c_p`      | Proppant Concentration in Slurry | [ppa]            | 1.5           |
+| :math:`c_p`      | Proppant Concentration in Slurry | [m^3/m^3]        | 0.07          |
 +------------------+----------------------------------+------------------+---------------+
 | :math:`L`        | Fracture Length                  | [m]              | 1.219         |
 +------------------+----------------------------------+------------------+---------------+
