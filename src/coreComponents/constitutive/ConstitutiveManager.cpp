@@ -95,7 +95,7 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
   rval = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
   rval.setSizedFromParent( 1 );
   rval.resize( constitutiveGroup->size() );
-  // looking at the way this function is used I am also not sure why we want to return this wrapper.
+  // Why do we need to return this here? Couldn't this be just void?
   return rval;
 }
 
