@@ -2,18 +2,18 @@
 
 
 ####################################################
-Simulate Proppant Slot Test
+Proppant Slot Test
 ####################################################
 
 
 **Context**
 
-In this example, a simulation is built up to model proppant slot test. In this way, the implemented proppant model is validated by comparing numerical results with the corresponding experimental data. Furthermore, this calibrated proppant model can allow field engineers to customize stimulation design and optimize field operations in multiple engineering aspects `(Huang et al., 2021) <https://onepetro.org/ARMAUSRMS/proceedings/ARMA21/All-ARMA21/ARMA-2021-1248/467980>`__.
+In this example, a simulation is built up to model a proppant slot test. In this way, the implemented proppant model is validated by comparing numerical results with the corresponding experimental data. Furthermore, this calibrated proppant model can allow field engineers to customize stimulation design and optimize field operations in multiple engineering aspects `(Huang et al., 2021) <https://onepetro.org/ARMAUSRMS/proceedings/ARMA21/All-ARMA21/ARMA-2021-1248/467980>`__.
 
 
 **Input file**
 
-This example uses no external input files and everything required is
+This example uses no external input files and everything is
 contained within a single xml file that is located at:
 
 .. code-block:: console
@@ -46,7 +46,7 @@ In this example, we focus our attention on the ``Solver`` tags, the ``Constituti
 Mesh
 ------------------------------
 
-Following figure shows the generated mesh that is used for solving this problem.
+The following figure shows the mesh used for solving this problem.
 
 
 .. _problemSketchFig:
@@ -58,7 +58,7 @@ Following figure shows the generated mesh that is used for solving this problem.
    Generated mesh
 
 
-We use the internal mesh generator ``InternalWellbore`` to create a computational domain. 
+We use the internal mesh generator ``InternalMesh`` to create a computational domain. 
 This mesh contains 2 x 97 x 24 eight-node brick elements in the x, y and z directions, respectively. 
 Here, a structured three-dimensional mesh is generated with ``C3D8`` as the elementTypes (eight-node hexahedral elements). 
 This mesh is defined as a cell block with the name ``cb1``.
@@ -71,7 +71,7 @@ This mesh is defined as a cell block with the name ``cb1``.
 
 
 ---------------------------
-Proppant Transport solver
+Proppant transport solver
 ---------------------------
 
 GEOSX is a multi-physics platform. Different combinations of physics solvers available in the code can be applied in different regions of the domain and be functional at different stages of the simulation. The ``Solvers`` tag in the XML file is used to list and parameterize these solvers.
@@ -101,7 +101,7 @@ As demonstrated in this example, to setup a coupled proppant transport solver, w
   :end-before: <!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
 
 
-- the coupling solver (``FlowProppantTransport``) that will bind the two single-physics solvers above, which is named as ``FlowProppantTransport``
+- the coupling solver (``FlowProppantTransport``) that binds the two single-physics solvers above, which is named as ``FlowProppantTransport``
 
 .. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/multiphysics/benchmarks/Proppant-transport-validation-case.xml
   :language: xml
@@ -110,15 +110,15 @@ As demonstrated in this example, to setup a coupled proppant transport solver, w
 
 
 In this example, let us focus on the coupling solver.
-This solver (``FlowProppantTransport``) describe the coupling process between proppant and flow transport within the ``Fracture`` region. In this way, the two single-physics solvers (``ProppantTransport`` and ``SinglePhaseFVM``) will be simultaneously called and executed for solving this proppant transport problem.
+This solver (``FlowProppantTransport``) describes the coupling process between proppant and flow transport within the ``Fracture`` region. In this way, the two single-physics solvers (``ProppantTransport`` and ``SinglePhaseFVM``) are sequentially called to solve the sub-problems (proppant transport and pressure problem, respectively) involved in this test case.
 
 
 ------------------------------
 Constitutive laws
 ------------------------------
 
-For this slot test, 30/50 mesh proppant was injected via the three inlets and flowing through the slot for 30 seconds. 
-The viscosity of carrying fluid was 1 cp to resemble slickwater fracturing. In this example, the solid and fluid materials are named as ``sand`` and ``water`` respectively. 
+For this slot test, 30/50 mesh proppant is injected via the three inlets and flowing through the slot for 30 seconds. 
+The viscosity of carrying fluid is 0.001 Pa.s to resemble slickwater fracturing. In this example, the solid and fluid materials are named as ``sand`` and ``water`` respectively. 
 Proppant characterization and fluid rheology are specified in the ``Constitutive`` section: 
 
 .. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/multiphysics/benchmarks/Proppant-transport-validation-case.xml
@@ -140,7 +140,7 @@ The next step is to specify fields, including:
   - The boundary conditions (fluid pressure and proppant concentration at fluid inlets and outlets)
  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
-At a constant injection rate, the slurry was equally flowing into the open channel through three inlets.
+At a constant injection rate, the slurry is equally flowing into the open channel through three inlets.
 
 
 .. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/multiphysics/benchmarks/Proppant-transport-validation-case.xml
@@ -157,7 +157,7 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+----------------------------------+------------------+---------------+
 | Symbol           | Parameter                        | Unit             | Value         |
 +==================+==================================+==================+===============+
-| :math:`d_p`      | Proppant Diameter                | [mm]             | 0.45          |
+| :math:`d_p`      | Proppant Diameter                | [m]             | 0.00045          |
 +------------------+----------------------------------+------------------+---------------+
 | :math:`f`        | Darcy Friction Coefficient       | [-]              | 0.04          |
 +------------------+----------------------------------+------------------+---------------+
@@ -171,7 +171,7 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+----------------------------------+------------------+---------------+
 | :math:`\rho_p`   | Proppant Density                 | [kg/m^3]         | 2550          |
 +------------------+----------------------------------+------------------+---------------+
-| :math:`\lamda_s` | Hindered Settling Coefficient    | [-]              | 4.5           |
+| :math:`\lambda_s` | Hindered Settling Coefficient    | [-]              | 4.5           |
 +------------------+----------------------------------+------------------+---------------+
 | :math:`c_p`      | Proppant Concentration in Slurry | [ppa]            | 1.5           |
 +------------------+----------------------------------+------------------+---------------+
@@ -282,7 +282,7 @@ To go further
 
 **Feedback on this example**
 
-This concludes the example on simulating proppant slot test.
+This concludes the example on simulating a proppant slot test.
 For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
 
