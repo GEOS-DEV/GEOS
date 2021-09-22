@@ -213,6 +213,9 @@ public:
 
     /// @return Mass creation string.
     constexpr static char const * creationMassString() { return "creationMass"; }
+
+    /// @return embedded surface element to parent plane string.
+    constexpr static char const * surfaceElementToParentPlaneString() { return "surfaceElementToParentPlane"; }
   };
 
   /// Map between the surface elements and the cells
