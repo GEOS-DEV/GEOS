@@ -60,13 +60,19 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
                                                dataRepository::Group * const parent,
                                                localIndex const numConstitutivePointsPerParentIndex ) const
 {
+  dataRepository::Group * constitutiveGroup = parent->getGroupPointer( groupKeyStruct::constitutiveModelsString() );
+  if( constitutiveGroup == nullptr )   // Why do we need to do this check? shouldn't it always be there?
+  {
+    constitutiveGroup = &parent->registerGroup( groupKeyStruct::constitutiveModelsString() ).setSizedFromParent( 1 );
+    constitutiveGroup->resize( parent->size() );
+  }
+
   ConstitutiveBase const & constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
 
   std::unique_ptr< ConstitutiveBase > material = constitutiveRelation.deliverClone( constitutiveRelationInstanceName, parent );
 
   material->allocateConstitutiveData( *parent,
                                       numConstitutivePointsPerParentIndex );
-
 
   std::vector<string> const subRelationNames = material->getSubRelationNames();
 
@@ -78,20 +84,18 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
 
     constitutiveModel->allocateConstitutiveData( *parent,
                                                  numConstitutivePointsPerParentIndex );
-  }
 
-  dataRepository::Group * constitutiveGroup = parent->getGroupPointer( groupKeyStruct::constitutiveModelsString() );
-  if( constitutiveGroup == nullptr )
-  {
-    constitutiveGroup = &parent->registerGroup( groupKeyStruct::constitutiveModelsString() ).setSizedFromParent( 1 );
-    constitutiveGroup->resize( parent->size() );
+    ConstitutiveBase &
+      wrapper = constitutiveGroup->registerGroup< ConstitutiveBase >( subRelationName, std::move( constitutiveModel ) );
+      wrapper.setSizedFromParent( 1 );
+      wrapper.resize( constitutiveGroup->size() );
   }
-
 
   ConstitutiveBase &
   rval = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
   rval.setSizedFromParent( 1 );
   rval.resize( constitutiveGroup->size() );
+  // looking at the way this function is used I am also not sure why we want to return this wrapper.
   return rval;
 }
 
