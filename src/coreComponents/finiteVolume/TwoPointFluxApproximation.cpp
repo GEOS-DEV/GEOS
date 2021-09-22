@@ -306,6 +306,9 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   SortedArrayView< localIndex const > const
   recalculateFractureConnectorEdges = edgeManager.m_recalculateFractureConnectorEdges.toViewConst();
 
+  // reserve memory for the connections of this fracture
+  fractureStencil.reserve( fractureStencil.size() + recalculateFractureConnectorEdges.size() );
+
   // add new connectors/connections between face elements to the fracture stencil
   forAll< serialPolicy >( recalculateFractureConnectorEdges.size(),
                           [ &allNewElems,
@@ -334,132 +337,136 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
     localIndex const numElems = fractureConnectorsToFaceElements.sizeOfArray( fci );
     // only do this if there are more than one element attached to the connector
     localIndex const edgeIndex = fractureConnectorsToEdges[fci];
-    if( numElems > 1 )  // if there is only one element it does not need to be in the stencil.
+
+    // For now, we do not filter out connections for which numElems == 1 in this function. Instead, the filter takes place in the
+    // single-phase FluxKernels
+    // specialized for the SurfaceElementStencil (see physicsSolvers/multiphysics/SinglePhasePoromechanicsFluxKernels.cpp). The reason for
+    // doing the filtering
+    // there and not here is that the ProppantTransport solver needs the connections numElems == 1 to produce correct results.
+
+    localIndex const connectorIndex = fractureStencil.size();
+
+    GEOSX_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci );
+
+    stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( numElems );
+    stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
+    stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
+    stackArray1d< real64, maxElems > stencilWeights( numElems );
+    stackArray1d< R1Tensor, maxElems > stencilCellCenterToEdgeCenters( numElems );
+    stackArray1d< integer, maxElems > isGhostConnectors( numElems );
+
+    // get edge geometry
+    real64 edgeCenter[3], edgeSegment[3];
+    edgeManager.calculateCenter( edgeIndex, X, edgeCenter );
+    edgeManager.calculateLength( edgeIndex, X, edgeSegment );
+    real64 const edgeLength = LvArray::tensorOps::l2Norm< 3 >( edgeSegment );
+
+    real64 initialPressure = 1.0e99;
+#if SET_CREATION_DISPLACEMENT==1
+    real64 initialAperture = 1.0e99;
+#endif
+    SortedArray< localIndex > newElems;
+    bool containsLocalElement = false;
+
+    // loop over all face elements attached to the connector and add them to the stencil
+    for( localIndex kfe=0; kfe<numElems; ++kfe )
     {
-      localIndex const connectorIndex = fractureStencil.size();
+      localIndex const fractureElementIndex = fractureConnectorsToFaceElements[fci][kfe];
 
-      GEOSX_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci );
+      // use straight difference between the edge center and face center for gradient length...
+      // TODO: maybe do something better here??
+      real64 cellCenterToEdgeCenter[ 3 ];
+      LvArray::tensorOps::copy< 3 >( cellCenterToEdgeCenter, edgeCenter );
+      LvArray::tensorOps::subtract< 3 >( cellCenterToEdgeCenter, faceCenter[ faceMap[fractureElementIndex][0] ] );
 
-      stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( numElems );
-      stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
-      stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
-      stackArray1d< real64, maxElems > stencilWeights( numElems );
-      stackArray1d< R1Tensor, maxElems > stencilCellCenterToEdgeCenters( numElems );
-      stackArray1d< integer, maxElems > isGhostConnectors( numElems );
+      // form the CellStencil entry
+      stencilCellsRegionIndex[kfe] = fractureRegionIndex;
+      stencilCellsSubRegionIndex[kfe] = 0;
+      stencilCellsIndex[kfe] = fractureElementIndex;
+      containsLocalElement = containsLocalElement || elemGhostRank[fractureRegionIndex][0][fractureElementIndex] < 0;
 
-      // get edge geometry
-      real64 edgeCenter[3], edgeSegment[3];
-      edgeManager.calculateCenter( edgeIndex, X, edgeCenter );
-      edgeManager.calculateLength( edgeIndex, X, edgeSegment );
-      real64 const edgeLength = LvArray::tensorOps::l2Norm< 3 >( edgeSegment );
+      stencilWeights[kfe] = edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
 
-      real64 initialPressure = 1.0e99;
+      LvArray::tensorOps::copy< 3 >( stencilCellCenterToEdgeCenters[kfe], cellCenterToEdgeCenter );
+
+      // code to initialize new face elements with pressures from neighbors
+      if( fractureSubRegion.m_newFaceElements.count( fractureElementIndex )==0 )
+      {
+        initialPressure = std::min( initialPressure, fluidPressure[fractureElementIndex] );
 #if SET_CREATION_DISPLACEMENT==1
-      real64 initialAperture = 1.0e99;
+        initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
 #endif
-      SortedArray< localIndex > newElems;
-      bool containsLocalElement = false;
-
-      // loop over all face elements attached to the connector and add them to the stencil
-      for( localIndex kfe=0; kfe<numElems; ++kfe )
-      {
-        localIndex const fractureElementIndex = fractureConnectorsToFaceElements[fci][kfe];
-
-        // use straight difference between the edge center and face center for gradient length...
-        // TODO: maybe do something better here??
-        real64 cellCenterToEdgeCenter[ 3 ];
-        LvArray::tensorOps::copy< 3 >( cellCenterToEdgeCenter, edgeCenter );
-        LvArray::tensorOps::subtract< 3 >( cellCenterToEdgeCenter, faceCenter[ faceMap[fractureElementIndex][0] ] );
-
-        // form the CellStencil entry
-        stencilCellsRegionIndex[kfe] = fractureRegionIndex;
-        stencilCellsSubRegionIndex[kfe] = 0;
-        stencilCellsIndex[kfe] = fractureElementIndex;
-        containsLocalElement = containsLocalElement || elemGhostRank[fractureRegionIndex][0][fractureElementIndex] < 0;
-
-        stencilWeights[kfe] = edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
-
-        LvArray::tensorOps::copy< 3 >( stencilCellCenterToEdgeCenters[kfe], cellCenterToEdgeCenter );
-
-        // code to initialize new face elements with pressures from neighbors
-        if( fractureSubRegion.m_newFaceElements.count( fractureElementIndex )==0 )
-        {
-          initialPressure = std::min( initialPressure, fluidPressure[fractureElementIndex] );
-#if SET_CREATION_DISPLACEMENT==1
-          initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
-#endif
-        }
-        else
-        {
-          newElems.insert( fractureElementIndex );
-          allNewElems.insert( fractureElementIndex );
-        }
       }
-
-      if( !containsLocalElement )
+      else
       {
-        return;
+        newElems.insert( fractureElementIndex );
+        allNewElems.insert( fractureElementIndex );
       }
+    }
 
-      // loop over new face elements attached to this connector
-      for( localIndex const newElemIndex : newElems )
-      {
-        // set the aperture/fluid pressure for the new face element to be the minimum
-        // of the existing value, smallest aperture/pressure from a connected face element.
-//        aperture[newElemIndex] = std::min(aperture[newElemIndex], initialAperture);
+    if( !containsLocalElement )
+    {
+      return;
+    }
+
+    // loop over new face elements attached to this connector
+    for( localIndex const newElemIndex : newElems )
+    {
+      // set the aperture/fluid pressure for the new face element to be the minimum
+      // of the existing value, smallest aperture/pressure from a connected face element.
+      //        aperture[newElemIndex] = std::min(aperture[newElemIndex], initialAperture);
 #if !defined(SET_CREATION_PRESSURE)
-        static_assert( true, "must have SET_CREATION_PRESSURE defined" );
+      static_assert( true, "must have SET_CREATION_PRESSURE defined" );
 #endif
 #if SET_CREATION_PRESSURE==1
-        if( initFlag )
-        {
-          fluidPressure[newElemIndex] = std::min( fluidPressure[newElemIndex], initialPressure );
-        }
+      if( initFlag )
+      {
+        fluidPressure[newElemIndex] = std::min( fluidPressure[newElemIndex], initialPressure );
+      }
 #endif
 
 #if !defined(SET_CREATION_DISPLACEMENT)
-        static_assert( true, "must have SET_CREATION_DISPLACEMENT defined" );
+      static_assert( true, "must have SET_CREATION_DISPLACEMENT defined" );
 #endif
 #if SET_CREATION_DISPLACEMENT==1
-        if( initFlag )
+      if( initFlag )
+      {
+        localIndex const faceIndex0 = faceMap( newElemIndex, 0 );
+        localIndex const faceIndex1 = faceMap( newElemIndex, 1 );
+
+        localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray( faceIndex0 );
+
+        bool zeroDisp = true;
+
+        for( localIndex a=0; a<numNodesPerFace; ++a )
         {
-          localIndex const faceIndex0 = faceMap( newElemIndex, 0 );
-          localIndex const faceIndex1 = faceMap( newElemIndex, 1 );
-
-          localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray( faceIndex0 );
-
-          bool zeroDisp = true;
-
-          for( localIndex a=0; a<numNodesPerFace; ++a )
+          localIndex const node0 = faceToNodesMap( faceIndex0, a );
+          localIndex const node1 = faceToNodesMap( faceIndex1, a==0 ? a : numNodesPerFace-a );
+          if( LvArray::math::abs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node0] ) ) > 1.0e-99 &&
+              LvArray::math::abs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node1] ) ) > 1.0e-99 )
           {
-            localIndex const node0 = faceToNodesMap( faceIndex0, a );
-            localIndex const node1 = faceToNodesMap( faceIndex1, a==0 ? a : numNodesPerFace-a );
-            if( fabs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node0] ) ) > 1.0e-99 &&
-                fabs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node1] ) ) > 1.0e-99 )
-            {
-              zeroDisp = false;
-            }
-          }
-          if( zeroDisp )
-          {
-            aperture[newElemIndex] = 0;
+            zeroDisp = false;
           }
         }
-#endif
+        if( zeroDisp )
+        {
+          aperture[newElemIndex] = 0;
+        }
       }
-
-      // add/overwrite the stencil for index fci
-      fractureStencil.add( numElems,
-                           stencilCellsRegionIndex.data(),
-                           stencilCellsSubRegionIndex.data(),
-                           stencilCellsIndex.data(),
-                           stencilWeights.data(),
-                           connectorIndex );
-
-      fractureStencil.add( numElems,
-                           stencilCellCenterToEdgeCenters.data(),
-                           connectorIndex );
+#endif
     }
+
+    // add/overwrite the stencil for index fci
+    fractureStencil.add( numElems,
+                         stencilCellsRegionIndex.data(),
+                         stencilCellsSubRegionIndex.data(),
+                         stencilCellsIndex.data(),
+                         stencilWeights.data(),
+                         connectorIndex );
+
+    fractureStencil.add( numElems,
+                         stencilCellCenterToEdgeCenters.data(),
+                         connectorIndex );
   } );
 
   if( initFlag )
@@ -542,6 +549,11 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
     arrayView2d< localIndex const > elemSubRegionList = faceElementsToCells.m_toElementSubRegion;
     arrayView2d< localIndex const > elemList = faceElementsToCells.m_toElementIndex;
 
+    // reserve memory for the connections of this region
+    if( cellStencil.size() != 0 )
+    {
+      faceToCellStencil.reserve( faceToCellStencil.size() + faceElementsToCells.size() );
+    }
 
     forAll< serialPolicy >( newFaceElements.size(),
                             [ newFaceElements,
@@ -659,6 +671,9 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
 
   localIndex connectorIndex = 0;
 
+  // reserve memory for the connections of this fracture
+  fractureStencil.reserve( fractureStencil.size() + embSurfEdgeManager.size() );
+
   // add new connectors/connections between embedded elements to the fracture stencil
   for( localIndex ke = 0; ke <  embSurfEdgeManager.size(); ke++ )
   {
@@ -725,6 +740,9 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
 
   arrayView1d< real64 const > const connectivityIndex = fractureSubRegion.getConnectivityIndex();
+
+  // reserve memory for the connections of this fracture
+  edfmStencil.reserve( edfmStencil.size() + fractureSubRegion.size() );
 
   // start from last connectorIndex from cell-To-cell connections
   connectorIndex = edfmStencil.size();

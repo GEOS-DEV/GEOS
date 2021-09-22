@@ -91,10 +91,6 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
-
-      subRegion.template registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultString() ).
-        setDefaultValue( 1.0 ).
-        reference().template resizeDimension< 1 >( 3 );
     } );
 
     FaceManager & faceManager = meshLevel.getFaceManager();
@@ -749,9 +745,6 @@ void SinglePhaseBase::resetViewsPrivate( ElementRegionManager const & elemManage
                                                                                fluidModelNames() );
   m_dVisc_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dVisc_dPresString() );
 
-  m_transTMultiplier.clear();
-  m_transTMultiplier = elemManager.constructArrayViewAccessor< real64, 2 >( viewKeyStruct::transTMultString() );
-  m_transTMultiplier.setName( getName() + "/accessors/" + viewKeyStruct::transTMultString() );
 }
 
 } /* namespace geosx */
