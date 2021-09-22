@@ -43,6 +43,8 @@ class Vtk(CMakePackage):
     variant('ffmpeg', default=False, description='Build with FFMPEG support')
     variant('mpi', default=True, description='Enable MPI support')
 
+    patch('VTK-9.0.3-disable_traits.patch', when='@9.0.3')
+
     patch('gcc.patch', when='@6.1.0')
     # patch to fix some missing stl includes
     # which lead to build errors on newer compilers
@@ -201,6 +203,15 @@ class Vtk(CMakePackage):
             '-DVTK_MODULE_ENABLE_VTK_FiltersParallelVerdict=YES',
             '-DVTK_MODULE_ENABLE_VTK_FiltersVerdict=YES',
             '-DVTK_MODULE_ENABLE_VTK_FiltersGeometry=YES',
+            '-DVTK_MODULE_ENABLE_VTK_DomainsChemistry=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersModeling=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersSources=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersTexture=YES',
+            '-DVTK_MODULE_ENABLE_VTK_ImagingSources=YES',
+            '-DVTK_MODULE_ENABLE_VTK_FiltersStatistics=YES',
+            '-DVTK_MODULE_ENABLE_VTK_ParallelDIY=YES',
+            '-DVTK_MODULE_ENABLE_VTK_ImagingFourier=YES',
+            '-DVTK_MODULE_ENABLE_VTK_CommonComputationalGeometry=YES',
             '-DVTK_BUILD_TESTING=OFF',
             '-DVTK_LEGACY_REMOVE=ON'
         ]
