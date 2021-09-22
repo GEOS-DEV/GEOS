@@ -18,6 +18,7 @@
 #include "common/Path.hpp"
 #include "LvArray/src/system.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "mainInterface/GeosxVersion.hpp"
 
 // TPL includes
 #include <optionparser.h>
@@ -268,8 +269,8 @@ void basicCleanup()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 string getVersion()
 {
-#ifdef GEOSX_VERSION_DEV
-  return GEOSX_VERSION_FULL " (" GEOSX_VERSION_DEV ")";
+#if defined(GEOSX_GIT_BRANCH) && defined(GEOSX_GIT_HASH)
+  return GEOSX_VERSION_FULL " (" GEOSX_GIT_BRANCH ", sha1: " GEOSX_GIT_HASH ")";
 #else
   return GEOSX_VERSION_FULL;
 #endif
