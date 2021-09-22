@@ -8,17 +8,6 @@
 #ifndef GEOSX_COMMON_CONFIG_HPP
 #define GEOSX_COMMON_CONFIG_HPP
 
-/// GEOSX major version number
-#define GEOSX_VERSION_MAJOR 0
-/// GEOSX minor version number
-#define GEOSX_VERSION_MINOR 2
-/// GEOSX patch version number
-#define GEOSX_VERSION_PATCH 0
-/// GEOSX full version number string
-#define GEOSX_VERSION_FULL  "0.2.0"
-/// GEOSX development version string
-/* #undef GEOSX_VERSION_DEV */
-
 /// Enables floating point exceptions
 #define GEOSX_USE_FPE
 
