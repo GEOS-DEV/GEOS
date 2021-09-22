@@ -39,14 +39,14 @@ MeshUtilities::~MeshUtilities()
 
 
 
-void MeshUtilities::generateNodesets( dataRepository::Group const & geometries,
+void MeshUtilities::generateNodeSets( dataRepository::Group const & geometry,
                                       NodeManager & nodeManager )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
   localIndex const numNodes = nodeManager.size();
   Group & sets = nodeManager.sets();
 
-  geometries.forSubGroups< SimpleGeometricObjectBase >( [&] ( SimpleGeometricObjectBase const & object )
+  geometry.forSubGroups< SimpleGeometricObjectBase >( [&] ( SimpleGeometricObjectBase const & object )
   {
     string const & name = object.getName();
     SortedArray< localIndex > & targetSet = sets.registerWrapper< SortedArray< localIndex > >( name ).reference();

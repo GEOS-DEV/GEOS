@@ -513,7 +513,7 @@ void ProblemManager::generateMesh()
 
       // Nodes
       nodeManager.setNodesInformation( cellBlockManager );
-      MeshUtilities::generateNodesets( geometricObjects, nodeManager );
+      MeshUtilities::generateNodeSets( geometricObjects, nodeManager );
       nodeManager.constructGlobalToLocalMap();
 
       // Elements
