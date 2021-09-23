@@ -80,12 +80,6 @@
   </ElementRegions>
 
   <Constitutive>
-    <ElasticIsotropic
-      name="granite"
-      defaultDensity="2700"
-      defaultBulkModulus="5.5556e9"
-      defaultShearModulus="4.16667e9"/>
-
     <!-- SPHINX_Material -->
     <ElasticIsotropic
       name="shale"
