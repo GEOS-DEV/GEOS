@@ -124,6 +124,15 @@
     scale="10e6"
     functionName="timeFunction"   
   />
+
+  <FieldSpecification 
+    name="initialPorosity"
+    initialCondition="1"
+    setNames="{all}"
+    objectPath="ElementRegions/Omega/cb1"
+    fieldName="rockPorosity_porosity"
+    scale="0.3"
+  />
 </FieldSpecifications>
 <!-- SPHINX_WELLBORE_BC_END -->
 
