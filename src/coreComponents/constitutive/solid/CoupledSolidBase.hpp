@@ -70,6 +70,16 @@ public:
   arrayView2d< real64 const > const  getDporosity_dPressure() const
   { return getBasePorosityModel().dPorosity_dPressure(); }
 
+
+  void initializeState() const
+  {
+    getBasePorosityModel().initializeState();
+  }
+
+  virtual void saveConvergedState() const override final
+  {
+    getBasePorosityModel().saveConvergedState();
+  }
 protected:
 
   // the name of the porosity model
