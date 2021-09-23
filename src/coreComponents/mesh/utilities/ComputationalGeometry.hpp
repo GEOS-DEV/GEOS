@@ -433,7 +433,7 @@ void getBoundingBox( localIndex const elemIndex,
  */
 GEOSX_HOST_DEVICE
 inline
-real64 HexVolume( real64 const X[][3] )
+real64 hexVolume( real64 const X[][3] )
 {
   real64 X7_X1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
   LvArray::tensorOps::subtract< 3 >( X7_X1, X[1] );
@@ -483,7 +483,7 @@ real64 HexVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 TetVolume( real64 const X[][3] )
+real64 tetVolume( real64 const X[][3] )
 {
   real64 X1_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] );
   LvArray::tensorOps::subtract< 3 >( X1_X0, X[0] );
@@ -497,7 +497,7 @@ real64 TetVolume( real64 const X[][3] )
   real64 X2_X0crossX3_X0[ 3 ];
   LvArray::tensorOps::crossProduct( X2_X0crossX3_X0, X2_X0, X3_X0 );
 
-  return std::fabs( LvArray::tensorOps::AiBi< 3 >( X1_X0, X2_X0crossX3_X0 ) / 6.0 );
+  return LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( X1_X0, X2_X0crossX3_X0 ) / 6.0 );
 }
 
 /**
@@ -507,7 +507,7 @@ real64 TetVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 WedgeVolume( real64 const X[][3] )
+real64 wedgeVolume( real64 const X[][3] )
 {
   real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
                               LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
@@ -524,7 +524,7 @@ real64 WedgeVolume( real64 const X[][3] )
                               LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ),
                               LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] ) };
 
-  return TetVolume( tet1 ) + TetVolume( tet2 ) + TetVolume( tet3 );
+  return tetVolume( tet1 ) + tetVolume( tet2 ) + tetVolume( tet3 );
 }
 
 /**
@@ -534,7 +534,7 @@ real64 WedgeVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 PyramidVolume( real64 const X[][3] )
+real64 pyramidVolume( real64 const X[][3] )
 {
   real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
                               LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
@@ -546,7 +546,7 @@ real64 PyramidVolume( real64 const X[][3] )
                               LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] ),
                               LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
 
-  return TetVolume( tet1 ) + TetVolume( tet2 );
+  return tetVolume( tet1 ) + tetVolume( tet2 );
 }
 
 } /* namespace computationalGeometry */
