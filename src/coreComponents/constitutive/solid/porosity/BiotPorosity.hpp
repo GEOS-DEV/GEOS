@@ -59,15 +59,17 @@ public:
     m_grainBulkModulus( grainBulkModulus )
   {}
 
+  GEOSX_HOST_DEVICE
+  real64 getBiotCoefficient( localIndex const k ) const { return m_biotCoefficient[k]; }
 
   GEOSX_HOST_DEVICE
   void updatePorosity( localIndex const k,
                        localIndex const q,
+                       real64 const & pressure,
                        real64 const & deltaPressure,
                        real64 const ( &strainIncrement )[6],
                        real64 & dPorosity_dPressure,
-                       real64 & dPorosity_dVolStrain,
-                       real64 & dTotalStress_dPressure ) const
+                       real64 & dPorosity_dVolStrain ) const
   {
     real64 const biotSkeletonModulusInverse = ( m_biotCoefficient[k] - m_referencePorosity[k] ) / m_grainBulkModulus;
 
@@ -80,8 +82,6 @@ public:
     dPorosity_dVolStrain = m_biotCoefficient[k];
 
     savePorosity( k, q, porosity, biotSkeletonModulusInverse );
-
-    dTotalStress_dPressure = m_biotCoefficient[k];
   }
 
 
