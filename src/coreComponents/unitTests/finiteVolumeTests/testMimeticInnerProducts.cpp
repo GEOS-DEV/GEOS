@@ -79,11 +79,11 @@ void computeVolumeAndCenter( array2d< real64, nodes::REFERENCE_POSITION_PERM > c
 
   if( numNodes == 8 )
   {
-    elemVolume = computationalGeometry::HexVolume( Xlocal );
+    elemVolume = computationalGeometry::hexVolume( Xlocal );
   }
   else if( numNodes == 4 )
   {
-    elemVolume = computationalGeometry::TetVolume( Xlocal );
+    elemVolume = computationalGeometry::tetVolume( Xlocal );
   }
 }
 
