@@ -98,5 +98,10 @@ void PorosityBase::saveConvergedState() const
   } );
 }
 
+void PorosityBase::initializeState() const
+{
+  saveConvergedState();
+}
+
 }
 } /* namespace geosx */

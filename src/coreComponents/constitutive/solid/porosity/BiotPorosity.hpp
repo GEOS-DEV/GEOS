@@ -124,6 +124,9 @@ public:
 
   } viewKeys;
 
+
+  virtual void initializeState() const override final;
+
   using KernelWrapper = BiotPorosityUpdates;
 
   /**

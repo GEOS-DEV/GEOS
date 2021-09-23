@@ -60,6 +60,26 @@ void BiotPorosity::postProcessInput()
   PorosityBase::postProcessInput();
 }
 
+void BiotPorosity::initializeState() const
+{
+  localIndex const numE = numElem();
+  localIndex const numQ = numQuad();
+
+  arrayView1d< real64 const > referencePorosity = m_referencePorosity;
+  arrayView2d< real64 > newPorosity = m_newPorosity;
+  arrayView2d< real64 >       oldPorosity = m_oldPorosity;
+
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < numQ; ++q )
+    {
+      newPorosity[k][q] = referencePorosity[k];
+      oldPorosity[k][q] = referencePorosity[k];
+    }
+  } );
+}
+
+
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BiotPorosity, string const &, Group * const )
 }
 } /* namespace geosx */
