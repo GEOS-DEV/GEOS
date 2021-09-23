@@ -72,10 +72,6 @@ The internal wellbore mesh generator ``InternalWellbore`` is employed to create 
   :start-after: <!-- SPHINX_WellboreMesh -->
   :end-before: <!-- SPHINX_WellboreMeshEnd -->
 
-.. figure:: mesh.png
-   :align: center
-   :figclass: align-center
-
 
 --------------------------------------------------------------------   
 Constitutive law
@@ -103,6 +99,14 @@ Far-field boundaries are subjected to roller constraints and impermeable conditi
 ---------------------------------
 Results and benchmark
 ---------------------------------
+
+Result of the fluid pressure distribution at an injection time of 78 (s) is shown in the figure below:
+
+.. figure:: pressure.png
+   :align: center
+   :width: 800
+   :figclass: align-center
+
 
 A good agreement between the GEOSX results and the corresponding analytical solutions is shown in the figure below:
 
