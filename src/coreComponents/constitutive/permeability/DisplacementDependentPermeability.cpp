@@ -63,5 +63,5 @@ void DisplacementDependentPermeability::allocateConstitutiveData( dataRepository
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DisplacementDependentPermeability, string const &, Group * const )
 
-}
+} /* namespace constitutive */
 } /* namespace geosx */

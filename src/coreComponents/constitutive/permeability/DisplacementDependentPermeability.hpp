@@ -61,7 +61,7 @@ public:
 
 private:
 
-  /// dPermeability_dDispJump
+  /// Derivative of fracture permeability to shear displacement jump between fracture surfaces
   arrayView3d< real64 > m_dPerm_dDispJump;
 
   /// Threshold of shear displacement
@@ -115,11 +115,11 @@ public:
     static constexpr char const * shearDispThresholdString() { return "shearDispThreshold"; }
     static constexpr char const * maxPermMultiplierString() { return "maxPermMultiplier"; }
     static constexpr char const * iniPermeabilityString() { return "iniPermeability"; }
-  } viewKeys;
+  } ;
 
 private:
 
-  /// dPermeability_dDisplacement
+  /// Derivative of fracture permeability to shear displacement jump between fracture surfaces
   arrayView3d< real64 > m_dPerm_dDispJump;
 
   /// Threshold of shear displacement
@@ -142,24 +142,26 @@ void DisplacementDependentPermeabilityUpdate::compute( real64 const ( &dispJump 
 { 
   real64 const shearMag = std::sqrt( dispJump[1]*dispJump[1] + dispJump[2]*dispJump[2] )
   
-  real64 const permMultiplier = (m_maxPermMultiplier - 1.0) * std::tanh (3.0 * shearMag/m_shearDispThreshold ) + 1.0;
+  real64 const tmpTanh = std::tanh ( 3.0 * shearMag/m_shearDispThreshold );
+  
+  real64 const permMultiplier = ( m_maxPermMultiplier - 1.0 ) * tmpTanh + 1.0;
 
-  real64 const dpermMultiplier_dshearMag = (m_maxPermMultiplier - 1.0) * ( 1.0 - std::tanh (3.0 * shearMag/m_shearDispThreshold ) * std::tanh (3.0 * shearMag/m_shearDispThreshold )) * 3.0/m_shearDispThreshold;  
+  real64 const dpermMultiplier_dshearMag = ( m_maxPermMultiplier - 1.0 ) * ( 1.0 - tmpTanh * tmpTanh ) * 3.0/m_shearDispThreshold;  
  
   for( localIndex i=0; i < permeability.size(); i++ )
   {
     permeability[i] = permMultiplier * m_iniPermeability[i];
     dPerm_dDispJump[i][0] = 0.0
-    dPerm_dDispJump[i][1] = m_iniPermeability[i] * dpermMultiplier_dshearMag /shearMag * dispJump[1];
-    dPerm_dDispJump[i][2] = m_iniPermeability[i] * dpermMultiplier_dshearMag /shearMag * dispJump[2];
+    real64 const tmpValue = m_iniPermeability[i] * dpermMultiplier_dshearMag /shearMag;
+    dPerm_dDispJump[i][1] = tmpValue * dispJump[1];
+    dPerm_dDispJump[i][2] = tmpValue * dispJump[2];
   }
 }
 
 
 
-}/* namespace constitutive */
+} /* namespace constitutive */
 
 } /* namespace geosx */
-
 
 #endif //GEOSX_CONSTITUTIVE_PERMEABILITY_FRACTUREPERMEABILITY_HPP_
