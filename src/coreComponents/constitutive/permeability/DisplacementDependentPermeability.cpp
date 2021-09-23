@@ -47,13 +47,13 @@ DisplacementDependentPermeability::DisplacementDependentPermeability( string con
 
 std::unique_ptr< ConstitutiveBase >
 DisplacementDependentPermeability::deliverClone( string const & name,
-                                           Group * const parent ) const
+                                                 Group * const parent ) const
 {
   return ConstitutiveBase::deliverClone( name, parent );
 }
 
 void DisplacementDependentPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                            localIndex const numConstitutivePointsPerParentIndex )
+                                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
 // NOTE: enforcing 1 quadrature point
   m_dPerm_dDisplacement.resize( 0, 1, 3 );

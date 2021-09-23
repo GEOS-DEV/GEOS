@@ -34,8 +34,9 @@
 #include "solid/porosity/PressurePorosity.hpp"
 #include "permeability/ConstantPermeability.hpp"
 #include "permeability/CarmanKozenyPermeability.hpp"
-#include "permeability/ParallelPlatesPermeability.hpp"
 #include "permeability/DisplacementDependentPermeability.hpp"
+#include "permeability/ParallelPlatesPermeability.hpp"
+
 
 namespace geosx
 {

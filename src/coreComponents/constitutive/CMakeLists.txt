@@ -43,9 +43,9 @@ set( constitutive_headers
      fluid/slurryFluidSelector.hpp
      permeability/CarmanKozenyPermeability.hpp
      permeability/ConstantPermeability.hpp
+     permeability/DisplacementDependentPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
-     permeability/DisplacementDependentPermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp
@@ -112,9 +112,9 @@ set( constitutive_sources
      fluid/SlurryFluidBase.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
+     permeability/DisplacementDependentPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
-     permeability/DisplacementDependentPermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
