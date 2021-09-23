@@ -577,7 +577,9 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       }
 
       // Compose parallel LA matrix/rhs out of local LA matrix/rhs
+      GEOSX_MARK_BEGIN( copyJacobian );
       m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
+      GEOSX_MARK_END( copyJacobian );
       m_rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
       m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
 

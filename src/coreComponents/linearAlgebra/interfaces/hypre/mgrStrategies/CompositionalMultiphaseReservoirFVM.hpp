@@ -89,9 +89,9 @@ public:
     m_levelFRelaxMethod[2] = 0; // Jacobi
     m_levelFRelaxMethod[3] = 2; // AMG V-cycle
 
-    m_levelCoarseGridMethod[0] = 0;
-    m_levelCoarseGridMethod[1] = 0;
-    m_levelCoarseGridMethod[2] = 0;
+    m_levelCoarseGridMethod[0] = 1;
+    m_levelCoarseGridMethod[1] = 1;
+    m_levelCoarseGridMethod[2] = 1;
     m_levelCoarseGridMethod[3] = 0;
 
     m_levelInterpType[0] = 2;
