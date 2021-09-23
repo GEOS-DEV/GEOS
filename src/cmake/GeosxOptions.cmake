@@ -78,6 +78,18 @@ option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" 
 
 option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
 
+set( GEOSX_PARALLEL_COMPILE_JOBS "" CACHE STRING "Maximum number of concurrent compilation jobs" )
+if( GEOSX_PARALLEL_COMPILE_JOBS )
+    set_property( GLOBAL APPEND PROPERTY JOB_POOLS compile_job_pool=${GEOSX_PARALLEL_COMPILE_JOBS} )
+    set( CMAKE_JOB_POOL_COMPILE compile_job_pool )
+endif()
+
+set( GEOSX_PARALLEL_LINK_JOBS "" CACHE STRING "Maximum number of concurrent link jobs" )
+if( GEOSX_PARALLEL_LINK_JOBS )
+    set_property( GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=${GEOSX_PARALLEL_LINK_JOBS} )
+    set( CMAKE_JOB_POOL_LINK link_job_pool )
+endif()
+
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
 #set(CMAKE_EXE_LINKER_FLAGS "-rdynamic")
