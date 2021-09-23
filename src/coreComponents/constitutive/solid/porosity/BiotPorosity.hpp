@@ -65,7 +65,6 @@ public:
   GEOSX_HOST_DEVICE
   void updatePorosity( localIndex const k,
                        localIndex const q,
-                       real64 const & pressure,
                        real64 const & deltaPressure,
                        real64 const ( &strainIncrement )[6],
                        real64 & dPorosity_dPressure,

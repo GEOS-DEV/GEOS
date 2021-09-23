@@ -61,7 +61,7 @@ public:
                           real64 ( & totalStress )[6],
                           real64 & dPorosity_dPressure,
                           real64 & dPorosity_dVolStrain,
-                          real64 ( &dTotalStress_dPressure )[6],
+                          real64 ( & dTotalStress_dPressure )[6],
                           DiscretizationOps & stiffness ) const
   {
     // Compute effective stress and store in totalStress
@@ -69,24 +69,23 @@ public:
 
     updateBiotCoefficient( k );
 
-   // Compute  total stress
-   real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-   LvArray::tensorOps::symAddIdentity< 3 >( totalStress, - biotCoefficient * ( pressure + deltaPressure ) );
+    // Compute  total stress
+    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * ( pressure + deltaPressure ) );
 
-   dTotalStress_dPressure[0] = biotCoefficient;
-   dTotalStress_dPressure[1] = biotCoefficient;
-   dTotalStress_dPressure[2] = biotCoefficient;
-   dTotalStress_dPressure[3] = 0;
-   dTotalStress_dPressure[4] = 0;
-   dTotalStress_dPressure[5] = 0;
+    dTotalStress_dPressure[0] = biotCoefficient;
+    dTotalStress_dPressure[1] = biotCoefficient;
+    dTotalStress_dPressure[2] = biotCoefficient;
+    dTotalStress_dPressure[3] = 0;
+    dTotalStress_dPressure[4] = 0;
+    dTotalStress_dPressure[5] = 0;
 
-   m_porosityUpdate.updatePorosity( k,
-                                    q,
-				    pressure,
-                                    deltaPressure,
-                                    strainIncrement,
-                                    dPorosity_dPressure,
-                                    dPorosity_dVolStrain );
+    m_porosityUpdate.updatePorosity( k,
+                                     q,
+                                     deltaPressure,
+                                     strainIncrement,
+                                     dPorosity_dPressure,
+                                     dPorosity_dVolStrain );
 
 // TODO uncomment once we start using permeability model in flow.
 //    m_permUpdate.updateFromPressureStrain( k,
