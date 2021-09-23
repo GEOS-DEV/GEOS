@@ -51,26 +51,43 @@ public:
     static constexpr char const * permeabilityModelNameString() { return "permeabilityModelName"; }
   };
 
+  /**
+   * @brief get the old porosity.
+   * return a constant arrayView2d to the old porosity
+   */
   arrayView2d< real64 const > const getOldPorosity() const
   {
     return getBasePorosityModel().getOldPorosity();
   }
 
+  /*
+   * @brief iget the new porosity.
+   * return a constant arrayView2d to the new porosity
+   */
   arrayView2d< real64 const > const getPorosity() const
   {
     return getBasePorosityModel().getPorosity();
   }
 
+  /**
+   * @brief get the reference porosity.
+   * return a constant arrayView1d to the referencePorosity
+   */
   arrayView1d< real64 const > const getReferencePorosity() const
   {
     return getBasePorosityModel().getReferencePorosity();
   }
 
-
+  /**
+   * @brief get the dPorosity_dPressure.
+   * return a constant arrayView2d to dPorosity_dPressure
+   */
   arrayView2d< real64 const > const  getDporosity_dPressure() const
   { return getBasePorosityModel().dPorosity_dPressure(); }
 
-
+  /**
+   * @brief initialize the constitutive models fields.
+   */
   void initializeState() const
   {
     getBasePorosityModel().initializeState();
@@ -93,9 +110,16 @@ protected:
 
 private:
 
+  /**
+   * @brief get a PorosityBase constant reference to the porosity model
+   * return a constant PorosityBase reference to the porosity model
+   */
   PorosityBase const & getBasePorosityModel() const
   { return this->getParent().template getGroup< PorosityBase >( m_porosityModelName ); }
-
+  /**
+   * @brief get a Permeability base constant reference to the permeability model
+   * return a constant PermeabilityBase reference to the permeability model
+   */
   PermeabilityBase const & getBasePermModel() const
   { return this->getParent().template getGroup< PermeabilityBase >( m_permeabilityModelName ); }
 
