@@ -107,7 +107,7 @@
       name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/DEFAULT_HEX"
+      objectPath="ElementRegions/Domain/DEFAULT_PYRAMID"
       fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
