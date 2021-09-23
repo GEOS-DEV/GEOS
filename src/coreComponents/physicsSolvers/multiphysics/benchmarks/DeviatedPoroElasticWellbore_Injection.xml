@@ -69,10 +69,10 @@
       theta="{ 0, 180 }"
       zCoords="{ -1, 1 }"
       nr="{ 30 }"
-      nt="{ 160 }"
-      nz="{ 1 }"
-      trajectory="{ { -0.0, 0.0, -1.0 },
-                    {  0.0, 0.0,  1.0 } }"
+      nt="{ 80 }"
+      nz="{ 10 }"
+      trajectory="{ { -1.0, 0.0, -1.0 },
+                    {  1.0, 0.0,  1.0 } }"
       autoSpaceRadialElems="{ 1 }"
       useCartesianOuterBoundary="0"
       cellBlockNames="{ cb1 }"/>
@@ -81,8 +81,6 @@
   <!-- SPHINX_WellboreMeshEnd -->
   <Events
     maxTime="78.0">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
     <!-- SPHINX_Execution -->
     <PeriodicEvent
       name="solverApplications"
@@ -90,9 +88,6 @@
       target="/Solvers/poroSolve"/>
 
     <!-- SPHINX_ExecutionEnd -->
-    <!-- The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
       timeFrequency="7.8"
@@ -167,6 +162,14 @@
 
   <!-- SPHINX_BoundaryConditions -->
   <FieldSpecifications>
+    <FieldSpecification 
+      name="initialPorosity"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Omega/cb1"
+      fieldName="rockPorosity_porosity"
+      scale="0.3"/>
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -198,13 +201,6 @@
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
-
-    <!--Traction
-      name="innerPressure"
-      objectPath="faceManager"
-      tractionType="normal"
-      scale="-1.0e6"
-      setNames="{ rneg }"/-->
 
     <FieldSpecification
       name="innerPorePressure"
