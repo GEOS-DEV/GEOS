@@ -253,7 +253,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   solution[0] = eps_v_trial; // initial guess for elastic volumetric strain
   solution[1] = eps_s_trial; // initial guess for elastic deviatoric strain
-  solution[2] = 1e-10;     // initial guess for plastic multiplier
+  solution[2] = 1e-10;       // initial guess for plastic multiplier
 
   real64 norm, normZero = 1e30;
   integer cuts = 0;
