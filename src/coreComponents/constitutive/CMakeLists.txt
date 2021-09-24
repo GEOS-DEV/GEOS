@@ -56,6 +56,7 @@ set( constitutive_headers
      relativePermeability/layouts.hpp
      relativePermeability/relativePermeabilitySelector.hpp
      solid/CompressibleSolid.hpp
+     solid/ProppantSolid.hpp
      solid/CoupledSolidBase.hpp
      solid/CoupledSolid.hpp
      solid/Damage.hpp
@@ -124,7 +125,8 @@ set( constitutive_sources
      relativePermeability/TableRelativePermeability.cpp        
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
      solid/CompressibleSolid.cpp
-     solid/CoupledSolidBase.cpp   
+     solid/CoupledSolidBase.cpp
+     solid/ProppantSolid.cpp
      solid/Damage.cpp
      solid/DamageSpectral.cpp
      solid/DamageVolDev.cpp
