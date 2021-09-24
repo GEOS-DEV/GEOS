@@ -257,7 +257,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   real64 norm, normZero = 1e30;
   integer cuts = 0;
-  integer maxCuts = 100;
+  integer const maxCuts = 5;
   real64 normOld = normZero;
 
   // begin Newton loop
