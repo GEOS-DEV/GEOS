@@ -50,7 +50,8 @@
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
       solidMaterialNames="{ rock }"
-      rockToughness="0.3e6"/>
+      rockToughness="0.3e6"
+      mpiCommOrder="1"/>
   </Solvers>
 
   <ElementRegions>
