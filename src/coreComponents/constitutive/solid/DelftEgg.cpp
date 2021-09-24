@@ -98,7 +98,7 @@ DelftEgg::~DelftEgg()
 {}
 
 
-void DelftEgg::allocateConstitutiveData( dataRepository::Group & parent,
+void DelftEgg::allocateConstitutiveData( Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex )
 {
   m_newPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
@@ -158,6 +158,6 @@ void DelftEgg::saveConvergedState() const
   } );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DelftEgg, std::string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DelftEgg, string const &, Group * const )
 }
 } /* namespace geosx */

@@ -43,9 +43,18 @@ public:
 
   /**
    * @brief Constructor
-   * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
-   * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
-   * @param[in] stress The ArrayView holding the stress data for each quadrature point.
+   * @param[in] refPressure                 The value of the reference pressure data.
+   * @param[in] refStrainVol                The value of the reference volumetric strain data for each element.
+   * @param[in] recompressionIndex          The ArrayView holding the recompression index data for each element.
+   * @param[in] virginCompressionIndex      The ArrayView holding the virgin compression index data for each element.
+   * @param[in] cslSlope                    The ArrayView holding the slope of the critical state line data for each element.
+   * @param[in] newPreConsolidationPressure The ArrayView holding the new preconsolidation pressure data for each quadrature point.
+   * @param[in] oldPreConsolidationPressure The ArrayView holding the old preconsolidation pressure data from the previous converged state
+   * for each quadrature point.
+   * @param[in] shearModulus                The ArrayView holding the shear modulus data for each element.
+   * @param[in] newstress                   The ArrayView holding the new stress data for each quadrature point.
+   * @param[in] oldstress                   The ArrayView holding the old stress data from the previous converged state for each quadrature
+   * point.
    */
   ModifiedCamClayUpdates( real64 const & refPressure,
                           real64 const & refStrainVol,
@@ -215,7 +224,6 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse;
   evaluateYield( trialP, trialQ, pc, M, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
 
-
   if( yield < 1e-9 ) // elasticity
   {
     return;
@@ -224,7 +232,6 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 // else, plasticity (trial stress point lies outside yield surface)
 
   eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
-
   eps_s_trial = trialQ/3.0/mu;
 
   real64 solution[3], residual[3], delta[3];
@@ -236,18 +243,15 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
   real64 norm, normZero = 1e30;
   integer cuts = 0;
-  integer maxCuts = 10; //Max backtracking cuts in line search algorithm
+  integer maxCuts = 5; //Max backtracking cuts in line search algorithm
   real64 normOld = normZero;
 
   // begin Newton loop
 
   for( localIndex iter=0; iter<20; ++iter )
   {
-
     trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
     bulkModulus = -trialP/Cr;
-
-
     trialQ = 3. * mu * solution[1];
 
     pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
@@ -260,7 +264,6 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
     residual[0] = solution[0] - eps_v_trial + solution[2]*df_dp;   // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
     residual[1] = solution[1] - eps_s_trial + solution[2]*df_dq;         // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
     residual[2] = yield * scale;      // F = 0
-
 
     // check for convergence
 
@@ -275,15 +278,12 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
     if( norm < 1e-12*(normZero+1.0))
     {
       break;
-
     }
     else if( iter > 0 && norm>normOld && cuts<maxCuts ) //linesearch
     {
       cuts++;
       iter--;
-      delta[0] *= 0.5;
-      delta[1] *= 0.5;
-      delta[2] *= 0.5;
+      LvArray::tensorOps::scale< 3 >( delta, 0.5 );
       solution[0] += delta[0];
       solution[1] += delta[1];
       solution[2] += delta[2];
@@ -293,7 +293,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
     {
       // solve Newton system
       normOld = norm;
-      cuts=0;
+      cuts = 0;
       real64 dp_dve = bulkModulus;
       real64 dq_dse = 3. *mu;
 
@@ -335,17 +335,15 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   df_dpc = -trialP;
   df_dp_depsv = dpc_dve;
 
-
-
-  real64 a1= 1. + solution[2]*df_dp_depsv;
+  real64 a1 = 1. + solution[2]*df_dp_depsv;
   real64 a2 = -df_dpc * dpc_dve;
 
   bulkModulus = -trialP/Cr;
 
   real64 scale = 1./(mu*mu); //add scaling factor to improve convergence
   BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]*scale);
-  BB[0][1] =bulkModulus*jacobianInv[0][1];
-  BB[1][0] =3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]*scale);
+  BB[0][1] = bulkModulus*jacobianInv[0][1];
+  BB[1][0] = 3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]*scale);
   BB[1][1] = 3. * mu*jacobianInv[1][1];
 
   real64 c1;
@@ -412,8 +410,6 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 {
   smallStrainUpdate( k, q, strainIncrement, stress, stiffness.m_c );
 }
-
-
 
 /**
  * @class ModifiedCamClay

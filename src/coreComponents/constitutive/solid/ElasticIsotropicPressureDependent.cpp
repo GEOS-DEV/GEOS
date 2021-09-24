@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -55,17 +55,6 @@ ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string con
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Elastic Shear Modulus Parameter" );
 
-
-//  registerWrapper< real64 >( viewKeyStruct::defaultYoungsModulusString() ).
-//    setApplyDefaultValue( -1 ).
-//    setInputFlag( InputFlags::OPTIONAL ).
-//    setDescription( "Elastic Young's Modulus." );
-//
-//  registerWrapper< real64 >( viewKeyStruct::defaultPoissonRatioString() ).
-//    setApplyDefaultValue( -1 ).
-//    setInputFlag( InputFlags::OPTIONAL ).
-//    setDescription( "Poisson's ratio" );
-
   registerWrapper( viewKeyStruct::refPressureString(), &m_refPressure ).
     setApplyDefaultValue( -1 ).
     setDescription( "Reference Pressure Field" );
@@ -94,29 +83,12 @@ void ElasticIsotropicPressureDependent::postProcessInput()
 
   SolidBase::postProcessInput();
 
-  //real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString() );
-  //real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString() );
-  //real64 & K  = m_defaultBulkModulus;
   real64 & G  = m_defaultShearModulus;
   real64 & Cr  = m_defaultRecompressionIndex;
 
   string errorCheck( "( " );
   int numConstantsSpecified = 0;
-//  if( nu >= 0.0 )
-//  {
-//    ++numConstantsSpecified;
-//    errorCheck += "nu, ";
-//  }
-//  if( E >= 0.0 )
-//  {
-//    ++numConstantsSpecified;
-//    errorCheck += "E, ";
-//  }
-//  if( K >= 0.0 )
-//  {
-//    ++numConstantsSpecified;
-//    errorCheck += "K, ";
-//  }
+
   if( Cr >= 0.0 )
   {
     ++numConstantsSpecified;
@@ -136,42 +108,6 @@ void ElasticIsotropicPressureDependent::postProcessInput()
   GEOSX_THROW_IF( poisson < 0,
                   "Elastic parameters lead to negative Poisson ratio at reference pressure ", InputError );
 
-
-//  if( nu >= 0.0 && E >= 0.0 )
-//  {
-//    K = conversions::YoungsModAndPoissonRatio::toBulkMod( E, nu );
-//    G = conversions::YoungsModAndPoissonRatio::toShearMod( E, nu );
-//  }
-//  else if( nu >= 0.0 && G >= 0.0 )
-//  {
-//    E = conversions::ShearModAndPoissonRatio::toYoungsMod( G, nu );
-//    K = conversions::ShearModAndPoissonRatio::toBulkMod( G, nu );
-//  }
-//  else if( nu >= 0 && K >= 0.0 )
-//  {
-//    E = conversions::BulkModAndPoissonRatio::toYoungsMod( K, nu );
-//    G = conversions::BulkModAndPoissonRatio::toShearMod( K, nu );
-//  }
-//  else if( E >= 0.0 && K >=0 )
-//  {
-//    nu = conversions::BulkModAndYoungsMod::toPoissonRatio( K, E );
-//    G  = conversions::BulkModAndYoungsMod::toShearMod( K, E );
-//  }
-//  else if( E >= 0.0 && G >= 0 )
-//  {
-//    nu = conversions::ShearModAndYoungsMod::toPoissonRatio( G, E );
-//    K  = conversions::ShearModAndYoungsMod::toBulkMod( G, E );
-//  }
-//  else if( K >= 0.0 && G >= 0.0 )
-//  {
-//    E  = conversions::BulkModAndShearMod::toYoungsMod( K, G );
-//    nu = conversions::BulkModAndShearMod::toPoissonRatio( K, G );
-//  }
-//  else
-//  {
-//    GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
-//
-//  }
 
   // set results as array default values
   this->getWrapper< real64 >( viewKeyStruct::refPressureString() ).

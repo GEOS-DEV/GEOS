@@ -43,10 +43,12 @@ class ElasticIsotropicPressureDependentUpdates : public SolidBaseUpdates
 public:
   /**
    * @brief Constructor
-   * @param[in] bulkModulus  The ArrayView holding the bulk modulus data for each element.
-   * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
-   * @param[in] newStress    The ArrayView holding the new stress data for each quadrature point.
-   * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
+   * @param[in] refPressure         The value of the reference pressure data for each element.
+   * @param[in] refStrainVol        The value of the volumetric strain data for each element.
+   * @param[in] recompressionIndex  The ArrayView holding the recompression index data for each element.
+   * @param[in] shearModulus        The ArrayView holding the shear modulus data for each element.
+   * @param[in] newStress           The ArrayView holding the new stress data for each quadrature point.
+   * @param[in] oldStress           The ArrayView holding the old stress data from the previous converged step for each quadrature point.
    */
   ElasticIsotropicPressureDependentUpdates( real64 const & refPressure,
                                             real64 const & refStrainVol,
@@ -151,11 +153,7 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex c
 
   bulkModulus = -P/Cr;
 
-
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
-
-
-
   real64 const lambda = bulkModulus - 2./3. * mu;
 
   stiffness[0][0] = lambda + 2*mu;
@@ -204,8 +202,6 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex cons
                                      deviator );
 
   elasticStrainVol = std::log( P/p0 ) * Cr * (-1.0) + eps_v0;
-
-
   elasticStrainDev = Q/3./mu;
 
   twoInvariant::strainRecomposition( elasticStrainVol,
@@ -214,7 +210,6 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex cons
                                      elasticStrain );
 
 }
-
 
 
 GEOSX_HOST_DEVICE
@@ -248,7 +243,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   real64 oldElasticStrainVol;
   real64 oldElasticStrainDev;
 
-
   for( localIndex i=0; i<6; ++i )
   {
     stress[i] = m_oldStress[k][q][i];
@@ -263,9 +257,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
   oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
-
-
-
   oldElasticStrainDev = oldQ/3./mu;
 
   // Now recover the old strain tensor from the strain invariants.
@@ -292,8 +283,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // Calculate trial mean and deviatoric stress
 
   P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
-
-
   Q = 3. * mu * eps_s_elastic;
 
   twoInvariant::stressRecomposition( P,
@@ -335,7 +324,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   real64 eps_v_elastic;
   real64 oldElasticStrainVol;
   real64 oldElasticStrainDev;
-
   real64 bulkModulus = -p0/Cr;
 
   for( localIndex i=0; i<6; ++i )
@@ -352,8 +340,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
   oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
-
-
   oldElasticStrainDev = oldQ/3./mu;
 
   // Now recover the old strain tensor from the strain invariants.
@@ -380,8 +366,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // Calculate mean and deviatoric stress
 
   P = p0 * std::exp( -1./Cr* (eps_v_elastic-eps_v0));
-
-
   Q = 3. * mu * eps_s_elastic;
 
   twoInvariant::stressRecomposition( P,
@@ -390,7 +374,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
                                      stress );
 
   bulkModulus = -P/Cr;
-
 
   saveStress( k, q, stress );
   stiffness.m_bulkModulus = bulkModulus;
@@ -448,14 +431,9 @@ public:
   /// Keys for data specified in this class.
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-//    /// string/key for default poisson ratio
-//    static constexpr char const * defaultPoissonRatioString() { return "defaultPoissonRatio"; }
 
     /// string/key for default shear modulus
     static constexpr char const * defaultShearModulusString() { return "defaultShearModulus"; }
-
-//    /// string/key for default Young's modulus
-//    static constexpr char const * defaultYoungsModulusString() { return "defaultYoungsModulus"; }
 
     /// string/key for default reference pressure
     static constexpr char const * defaultRefPressureString() { return "defaultRefPressure"; }

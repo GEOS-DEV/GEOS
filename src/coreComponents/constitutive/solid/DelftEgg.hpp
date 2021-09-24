@@ -43,9 +43,18 @@ public:
 
   /**
    * @brief Constructor
-   * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
-   * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
-   * @param[in] stress The ArrayView holding the stress data for each quadrature point.
+   * @param[in] recompressionIndex          The ArrayView holding the recompression index data for each element.
+   * @param[in] virginCompressionIndex      The ArrayView holding the virgin compression index data for each element.
+   * @param[in] cslSlope                    The ArrayView holding the slope of the critical state line data for each element.
+   * @param[in] shapeParameter              The ArrayView holding the shape parameter of yield surface data for each element.
+   * @param[in] newPreConsolidationPressure The ArrayView holding the new preconsolidation pressure data for each qudrature point.
+   * @param[in] oldPreConsolidationPressure The ArrayView holding old preconsolidation pressure data from the previous converged state for
+   * each quadrature point.
+   * @param[in] bulkModulus                 The ArrayView holding the bulk modulus data for each element.
+   * @param[in] shearModulus                The ArrayView holding the shear modulus data for each element.
+   * @param[in] newStress                   The ArrayView holding the new stress data for each quadrature point.
+   * @param[in] oldStress                   The ArrayView holding the old stress data from the previous converged state for each quadrature
+   * point.
    */
   DelftEggUpdates( arrayView1d< real64 const > const & recompressionIndex,
                    arrayView1d< real64 const > const & virginCompressionIndex,
@@ -170,7 +179,7 @@ void DelftEggUpdates::evaluateYield( real64 const p,
                                      real64 & df_dp_dve,
                                      real64 & df_dq_dse ) const
 {
-  real64 const c = alpha/(alpha+1.)*pc;
+  real64 const c = alpha / (alpha+1.0) * pc;
   real64 a = alpha;
   real64 pa = pc;
   real64 factor = 1.0;
@@ -178,18 +187,18 @@ void DelftEggUpdates::evaluateYield( real64 const p,
   if( p >= c ) // Use MCC
   {
     a = 1.0;
-    factor = 2.*alpha/ (alpha+1.);
+    factor = 2.0 * alpha / (alpha+1.0);
     pa = factor * pc;
   }
-  real64 alphaTerm = 2. * a*a*a / (a+1.);
-  df_dp = -alphaTerm * pa + 2. * a * a * p;
-  df_dq = 2. * q /(M*M);
-  df_dpc = 2. * a*a*(a-1.) /(a+1.) * pc - alphaTerm * p * factor;
-  real64 dpc_dve = -1./(Cc-Cr) * pc;
-  df_dp_dve = 2. * a * a * bulkModulus + alphaTerm * dpc_dve * factor;
-  df_dq_dse = 2. /(M*M) * 3. * mu;
+  real64 alphaTerm = 2.0 * a * a * a / (a+1.0);
+  df_dp = -alphaTerm * pa + 2.0 * a * a * p;
+  df_dq = 2.0 * q / (M * M);
+  df_dpc = 2.0 * a * a * (a-1.0) / (a+1.0) * pc - alphaTerm * p * factor;
+  real64 dpc_dve = -1.0 / (Cc-Cr) * pc;
+  df_dp_dve = 2.0 * a * a * bulkModulus + alphaTerm * dpc_dve * factor;
+  df_dq_dse = 2.0 / (M * M) * 3.0 * mu;
 
-  f = q*q/(M*M)- a*a*p *(2.*a/(a+1.)*pa-p)+a*a*(a-1.)/(a+1.)* pc*pc;
+  f = q * q / (M * M)- a * a * p *(2.0 * a / (a+1.0) * pa - p) + a * a * (a-1.0) / (a+1.0) * pc * pc;
 
 }
 
@@ -264,19 +273,14 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   for( localIndex iter=0; iter<20; ++iter )
   {
-
     trialP = solution[0] * bulkModulus;
-
-    trialQ = 3. * mu * solution[1];
-
-    // real64 h = 1.0 / (Cc-Cr); //Linear hardening version
-    pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
-    // pc = oldPc + h *(eps_v_trial-solution[0]); //Linear hardening version
+    trialQ = 3.0 * mu * solution[1];
+    pc = oldPc * std::exp( -1.0 / (Cc-Cr) * (eps_v_trial-solution[0]));
 
     evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
-    real64 dpc_dve = -1./(Cc-Cr) * pc;
+    real64 dpc_dve = -1.0 / (Cc-Cr) * pc;
 
-    real64 scale = 1./(mu*mu);
+    real64 scale = 1.0 / (mu*mu);
     // assemble residual system
     residual[0] = solution[0] - eps_v_trial + solution[2]*df_dp;   // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
     residual[1] = solution[1] - eps_s_trial + solution[2]*df_dq;         // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
@@ -295,15 +299,12 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
     if( norm < 1e-12*(normZero+1.0))
     {
       break;
-
     }
     else if( iter > 0 && norm>normOld && cuts<maxCuts ) //linesearch
     {
       cuts++;
       iter--;
-      delta[0] *= 0.5;
-      delta[1] *= 0.5;
-      delta[2] *= 0.5;
+      LvArray::tensorOps::scale< 3 >( delta, 0.5 );
       solution[0] += delta[0];
       solution[1] += delta[1];
       solution[2] += delta[2];
@@ -315,16 +316,15 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
       normOld = norm;
       cuts=0;
       real64 dp_dve = bulkModulus;
-      real64 dq_dse = 3. *mu;
+      real64 dq_dse = 3.0 * mu;
 
-      jacobian[0][0] = 1. + solution[2] * df_dp_dve;
+      jacobian[0][0] = 1.0 + solution[2] * df_dp_dve;
       jacobian[0][2] = df_dp;
-      jacobian[1][1] = 1. + solution[2]*df_dq_dse;
+      jacobian[1][1] = 1.0 + solution[2] * df_dq_dse;
       jacobian[1][2] = df_dq;
-      jacobian[2][0] = (dp_dve * df_dp - dpc_dve * df_dpc)*scale;
-      jacobian[2][1] = (dq_dse * df_dq)*scale;
+      jacobian[2][0] = (dp_dve * df_dp - dpc_dve * df_dpc) * scale;
+      jacobian[2][1] = (dq_dse * df_dq) * scale;
       jacobian[2][2] = 0.0;
-
 
       LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
       LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
@@ -349,48 +349,43 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0.0 );
   real64 BB[2][2] = {{}};
 
-  //  real64 dpc_dve = 1./(Cc-Cr);//-1./(Cc-Cr) * pc; //linear hardening version
   real64 const c = alpha/(alpha+1.)*pc;
   real64 dpc_dve = -1./(Cc-Cr) * pc;
   real64 df_dp_depsv;
   real64 factor;
   if( trialP >= c )   // Use MCC
   {
-
-    factor = 2.*alpha/ (alpha+1.);
+    factor = 2.0 * alpha / (alpha+1.0);
     df_dpc = -factor * trialP;
     df_dp_depsv = factor * dpc_dve;
   }
   else
   {
-    factor = 2. * alpha*alpha*alpha / (alpha+1.);
-    df_dpc = 2. * alpha*alpha*(alpha-1.) /(alpha+1.) * pc - factor * trialP;
+    factor = 2.0 * alpha * alpha * alpha / (alpha+1.0);
+    df_dpc = 2.0 * alpha * alpha * (alpha-1.0) /(alpha+1.0) * pc - factor * trialP;
     df_dp_depsv = factor * dpc_dve;
   }
 
-
-  real64 a1= 1. + solution[2]*df_dp_depsv;
+  real64 a1 = 1.0 + solution[2] * df_dp_depsv;
   real64 a2 = -df_dpc * dpc_dve;
-
-
-  real64 scale = 1./(mu*mu); //add scaling factor to improve convergence
-  BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]*scale);
-  BB[0][1] =bulkModulus*jacobianInv[0][1];
-  BB[1][0] =3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]*scale);
-  BB[1][1] = 3. * mu*jacobianInv[1][1];
+  real64 scale = 1.0 / (mu * mu); //add scaling factor to improve convergence
+  BB[0][0] = bulkModulus * (a1*jacobianInv[0][0] + a2 * jacobianInv[0][2] * scale);
+  BB[0][1] = bulkModulus * jacobianInv[0][1];
+  BB[1][0] = 3.0 * mu * (a1 * jacobianInv[1][0] + a2 * jacobianInv[1][2] * scale);
+  BB[1][1] = 3.0 * mu * jacobianInv[1][1];
 
   real64 c1;
 
   if( eps_s_trial<1e-15 ) // confirm eps_s_trial != 0
   {
-    c1 = 2. * mu;
+    c1 = 2.0 * mu;
   }
   else
   {
-    c1 = 2. * trialQ/(3. * eps_s_trial);
+    c1 = 2.0 * trialQ/(3.0 * eps_s_trial);
   }
 
-  real64 c2 = BB[0][0] - c1/3.;
+  real64 c2 = BB[0][0] - c1 / 3.0;
   real64 c3 = std::sqrt( 2./3. ) * BB[0][1];
   real64 c4 = std::sqrt( 2./3. ) * BB[1][0];
   real64 c5 = 2./3. * BB[1][1] - c1;
@@ -601,7 +596,7 @@ protected:
   /// Material parameter: The slope of the critical state line for each element
   array1d< real64 > m_cslSlope;
 
-  /// Material parameter: Thehape parameter of the yield surface for each element
+  /// Material parameter: The shape parameter of the yield surface for each element
   array1d< real64 > m_shapeParameter;
 
   /// State variable: The current preconsolidation pressure for each quadrature point
