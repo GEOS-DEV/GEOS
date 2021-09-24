@@ -55,7 +55,7 @@ void ConstitutiveManager::expandObjectCatalogs()
 }
 
 
-ConstitutiveBase &
+void
 ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelationInstanceName,
                                                dataRepository::Group * const parent,
                                                localIndex const numConstitutivePointsPerParentIndex ) const
@@ -84,33 +84,30 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
     rval = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
     rval.setSizedFromParent( 1 );
     rval.resize( constitutiveGroup->size() );
-  }
 
-  // 2. Allocate subrelations (for compound models)
-  std::vector< string > const subRelationNames = material->getSubRelationNames();
-  for( string const & subRelationName : subRelationNames )
-  {
-    ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
-
-    std::unique_ptr< ConstitutiveBase > constitutiveModel = subRelation.deliverClone( subRelationName, parent );
-
-    constitutiveModel->allocateConstitutiveData( *parent,
-                                                 numConstitutivePointsPerParentIndex );
-
-    // we only register the group if the instance has not been registered yet.
-    if( !constitutiveGroup->hasGroup( subRelationName ) )
+    // 2. Allocate subrelations (for compound models)
+    std::vector< string > const subRelationNames = material->getSubRelationNames();
+    for( string const & subRelationName : subRelationNames )
     {
-      ConstitutiveBase &
-      group = constitutiveGroup->registerGroup< ConstitutiveBase >( subRelationName, std::move( constitutiveModel ) );
-      group.setSizedFromParent( 1 );
-      group.resize( constitutiveGroup->size() );
+      ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
+
+      std::unique_ptr< ConstitutiveBase > constitutiveModel = subRelation.deliverClone( subRelationName, parent );
+
+      constitutiveModel->allocateConstitutiveData( *parent,
+                                                   numConstitutivePointsPerParentIndex );
+
+      // we only register the group if the instance has not been registered yet.
+      if( !constitutiveGroup->hasGroup( subRelationName ) )
+      {
+        ConstitutiveBase &
+        group = constitutiveGroup->registerGroup< ConstitutiveBase >( subRelationName, std::move( constitutiveModel ) );
+        group.setSizedFromParent( 1 );
+        group.resize( constitutiveGroup->size() );
+      }
     }
   }
-
-  // Why do we need to return this here? Couldn't this be just void?
-  return rval;
 }
 
-}
+} /* namespace constitutive */
 
 } /* namespace geosx */
