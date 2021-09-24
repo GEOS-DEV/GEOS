@@ -46,6 +46,7 @@ set( constitutive_headers
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
      permeability/StrainDependentPermeability.hpp
+     permeability/ProppantPermeability.hpp     
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp
@@ -55,6 +56,7 @@ set( constitutive_headers
      relativePermeability/layouts.hpp
      relativePermeability/relativePermeabilitySelector.hpp
      solid/CompressibleSolid.hpp
+     solid/ProppantSolid.hpp
      solid/CoupledSolidBase.hpp
      solid/CoupledSolid.hpp
      solid/Damage.hpp
@@ -82,6 +84,7 @@ set( constitutive_headers
      solid/porosity/BiotPorosity.hpp
      solid/porosity/PorosityBase.hpp
      solid/porosity/PressurePorosity.hpp
+     solid/porosity/ProppantPorosity.hpp
    )
 #
 # Specify all sources
@@ -118,13 +121,15 @@ set( constitutive_sources
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
      permeability/StrainDependentPermeability.cpp
+     permeability/ProppantPermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/TableRelativePermeability.cpp        
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
      solid/CompressibleSolid.cpp
-     solid/CoupledSolidBase.cpp   
+     solid/CoupledSolidBase.cpp
+     solid/ProppantSolid.cpp
      solid/Damage.cpp
      solid/DamageSpectral.cpp
      solid/DamageVolDev.cpp
@@ -142,6 +147,7 @@ set( constitutive_sources
      solid/porosity/BiotPorosity.cpp
      solid/porosity/PorosityBase.cpp
      solid/porosity/PressurePorosity.cpp
+     solid/porosity/ProppantPorosity.cpp
    )
 
 set( dependencyList events dataRepository functions )

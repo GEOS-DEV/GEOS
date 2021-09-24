@@ -40,7 +40,10 @@ PorousElasticOrthotropic                    node :ref:`DATASTRUCTURE_PorousElast
 PorousElasticTransverseIsotropic            node :ref:`DATASTRUCTURE_PorousElasticTransverseIsotropic`            
 PorousExtendedDruckerPrager                 node :ref:`DATASTRUCTURE_PorousExtendedDruckerPrager`                 
 PressurePorosity                            node :ref:`DATASTRUCTURE_PressurePorosity`                            
+ProppantPermeability                        node :ref:`DATASTRUCTURE_ProppantPermeability`                        
+ProppantPorosity                            node :ref:`DATASTRUCTURE_ProppantPorosity`                            
 ProppantSlurryFluid                         node :ref:`DATASTRUCTURE_ProppantSlurryFluid`                         
+ProppantSolidProppantPermeability           node :ref:`DATASTRUCTURE_ProppantSolidProppantPermeability`           
 StrainDependentPermeability                 node :ref:`DATASTRUCTURE_StrainDependentPermeability`                 
 TableRelativePermeability                   node :ref:`DATASTRUCTURE_TableRelativePermeability`                   
 VanGenuchtenBakerRelativePermeability       node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`       

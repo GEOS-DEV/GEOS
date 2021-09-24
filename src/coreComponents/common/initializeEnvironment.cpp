@@ -41,7 +41,7 @@
 #include <cuda.h>
 #endif
 
-#include <fenv.h>
+#include <cfenv>
 
 namespace geosx
 {

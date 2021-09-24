@@ -40,7 +40,10 @@ PorousElasticOrthotropic                    node         :ref:`XML_PorousElastic
 PorousElasticTransverseIsotropic            node         :ref:`XML_PorousElasticTransverseIsotropic`            
 PorousExtendedDruckerPrager                 node         :ref:`XML_PorousExtendedDruckerPrager`                 
 PressurePorosity                            node         :ref:`XML_PressurePorosity`                            
+ProppantPermeability                        node         :ref:`XML_ProppantPermeability`                        
+ProppantPorosity                            node         :ref:`XML_ProppantPorosity`                            
 ProppantSlurryFluid                         node         :ref:`XML_ProppantSlurryFluid`                         
+ProppantSolidProppantPermeability           node         :ref:`XML_ProppantSolidProppantPermeability`           
 StrainDependentPermeability                 node         :ref:`XML_StrainDependentPermeability`                 
 TableRelativePermeability                   node         :ref:`XML_TableRelativePermeability`                   
 VanGenuchtenBakerRelativePermeability       node         :ref:`XML_VanGenuchtenBakerRelativePermeability`       

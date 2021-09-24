@@ -240,23 +240,28 @@ inline void EmbeddedSurfaceToCellStencilWrapper::computeWeights( localIndex icon
                                                                  real64 ( & weight )[1][2],
                                                                  real64 ( & dWeight_dVar )[1][2] ) const
 {
-  // TODO: here we need a proper computation once we move to impermeable fractures.
-
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];
 
+  localIndex const er1  =  m_elementRegionIndices[iconn][1];
+  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+  localIndex const ei1  =  m_elementIndices[iconn][1];
+
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
+  real64 const t1 = m_weights[iconn][1] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er1][esr1][ei1][0] );
 
-  real64 const harmonicWeight = t0;
-
-  real64 const value =  harmonicWeight;
+  real64 const sumOfTrans = t0+t1;
+  real64 const value = t0*t1/sumOfTrans;
 
   weight[0][0] = value;
   weight[0][1] = -value;
 
-  dWeight_dVar[0][0] = 0.0 * dCoeff_dVar[er0][esr0][ei0][0][0];
-  dWeight_dVar[0][1] = 0.0;
+  real64 const dt0 = m_weights[iconn][0] * dCoeff_dVar[er0][esr0][ei0][0][0];
+  real64 const dt1 = m_weights[iconn][1] * dCoeff_dVar[er1][esr1][ei1][0][0];
+
+  dWeight_dVar[0][0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar[0][1] = ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 }
 
 GEOSX_HOST_DEVICE
@@ -268,26 +273,33 @@ inline void EmbeddedSurfaceToCellStencilWrapper::computeWeights( localIndex icon
                                                                  real64 (& dWeight_dVar1 )[1][2],
                                                                  real64 (& dWeight_dVar2 )[1][2] ) const
 {
-  // TODO: here we need a proper computation once we move to impermeable fractures.
-
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];
 
+  localIndex const er1  =  m_elementRegionIndices[iconn][1];
+  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+  localIndex const ei1  =  m_elementIndices[iconn][1];
+
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er0][esr0][ei0][0] );
+  real64 const t1 = m_weights[iconn][1] * LvArray::tensorOps::l2Norm< 3 >( coefficient[er1][esr1][ei1][0] );
 
-  real64 const harmonicWeight = t0;
-
-  real64 const value =  harmonicWeight;
+  real64 const sumOfTrans = t0+t1;
+  real64 const value = t0*t1/sumOfTrans;
 
   weight[0][0] = value;
   weight[0][1] = -value;
 
-  dWeight_dVar1[0][0] = 0.0 * dCoeff_dVar1[er0][esr0][ei0][0][0];
-  dWeight_dVar1[0][1] = 0.0;
+  real64 const dt0_dVar1 = m_weights[iconn][0] * dCoeff_dVar1[er0][esr0][ei0][0][0];
+  real64 const dt1_dVar1 = m_weights[iconn][1] * dCoeff_dVar1[er1][esr1][ei1][0][0];
+  real64 const dt0_dVar2 = m_weights[iconn][0] * dCoeff_dVar2[er0][esr0][ei0][0][0];
+  real64 const dt1_dVar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][0];
 
-  dWeight_dVar2[0][0] = 0.0 * dCoeff_dVar2[er0][esr0][ei0][0][0];
-  dWeight_dVar2[0][1] = 0.0;
+  dWeight_dVar1[0][0] = ( dt0_dVar1 * t1 * sumOfTrans - dt0_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar1[0][1] = ( t0 * dt1_dVar1 * sumOfTrans - dt1_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+
+  dWeight_dVar2[0][0] = ( dt0_dVar2 * t1 * sumOfTrans - dt0_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar2[0][1] = ( t0 * dt1_dVar2 * sumOfTrans - dt1_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 }
 } /* namespace geosx */
 
