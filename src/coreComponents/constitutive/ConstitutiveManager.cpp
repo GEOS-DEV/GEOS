@@ -87,7 +87,6 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
     std::vector< string > const subRelationNames = constitutiveRelation.getSubRelationNames();
     for( string const & subRelationName : subRelationNames )
     {
-      std::cout << "nothing to do" << std::endl;
       ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
 
       std::unique_ptr< ConstitutiveBase > constitutiveModel = subRelation.deliverClone( subRelationName, parent );
@@ -104,7 +103,6 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
         group.resize( constitutiveGroup->size() );
       }
     }
-    std::cout << "done" << std::endl;
   }
 }
 
