@@ -131,7 +131,7 @@ public:
 
 private:
 
-  /// A reference to the ArrayView holding the  recompression index for each element.
+  /// A reference to the ArrayView holding the recompression index for each element.
   arrayView1d< real64 const > const m_recompressionIndex;
 
   /// A reference to the ArrayView holding the virgin compression index for each element.
