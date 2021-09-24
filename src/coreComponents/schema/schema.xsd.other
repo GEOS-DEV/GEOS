@@ -382,7 +382,7 @@
 		<!--edfmStencil => (no description available)-->
 		<xsd:attribute name="edfmStencil" type="geosx_EmbeddedSurfaceToCellStencil" />
 		<!--faceElementToCellStencil => (no description available)-->
-		<xsd:attribute name="faceElementToCellStencil" type="geosx_EmbeddedSurfaceToCellStencil" />
+		<xsd:attribute name="faceElementToCellStencil" type="geosx_FaceElementToCellStencil" />
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geosx_SurfaceElementStencil" />
 	</xsd:complexType>
