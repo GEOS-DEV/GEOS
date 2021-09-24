@@ -79,9 +79,9 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
                                         numConstitutivePointsPerParentIndex );
 
     ConstitutiveBase &
-    rval = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
-    rval.setSizedFromParent( 1 );
-    rval.resize( constitutiveGroup->size() );
+    materialGroup = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
+    materialGroup.setSizedFromParent( 1 );
+    materialGroup.resize( constitutiveGroup->size() );
 
     // 2. Allocate subrelations (for compound models)
     std::vector< string > const subRelationNames = constitutiveRelation.getSubRelationNames();
