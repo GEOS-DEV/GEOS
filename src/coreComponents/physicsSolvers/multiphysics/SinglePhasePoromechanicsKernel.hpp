@@ -223,11 +223,11 @@ public:
     real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     // Evaluate total stress tensor
-    real64 strainIncrement[6] = {0};
+    real64 strainIncrement[6] = {0.0};
     real64 totalStress[6];
     real64 dPorosity_dPressure;
     real64 dPorosity_dVolStrainIncrement;
-    real64 dTotalStress_dPressure;
+    real64 dTotalStress_dPressure[6] = {0.0};
 
     // --- Update total stress tensor
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
@@ -235,6 +235,7 @@ public:
 
     m_constitutiveUpdate.smallStrainUpdate( k,
                                             q,
+                                            m_fluidPressure[k],
                                             m_deltaFluidPressure[k],
                                             strainIncrement,
                                             totalStress,
@@ -245,10 +246,6 @@ public:
 
     real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
     real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
-
-    real64 const pressureStressTerm = -dTotalStress_dPressure * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
-
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, pressureStressTerm );
 
     // Evaluate body force vector
     real64 bodyForce[3] = { m_gravityVector[0],
@@ -281,9 +278,17 @@ public:
 
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][0] * dTotalStress_dPressure * detJxW;
-      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][1] * dTotalStress_dPressure * detJxW;
-      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][2] * dTotalStress_dPressure * detJxW;
+      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][0] * dTotalStress_dPressure[0] * detJxW;
+      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][2] * dTotalStress_dPressure[4] * detJxW;
+      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][1] * dTotalStress_dPressure[5] * detJxW;
+
+      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][1] * dTotalStress_dPressure[1] * detJxW;
+      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][2] * dTotalStress_dPressure[3] * detJxW;
+      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][0] * dTotalStress_dPressure[5] * detJxW;
+
+      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][2] * dTotalStress_dPressure[2] * detJxW;
+      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][1] * dTotalStress_dPressure[3] * detJxW;
+      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][0] * dTotalStress_dPressure[4] * detJxW;
     }
 
     if( m_gravityAcceleration > 0.0 )
