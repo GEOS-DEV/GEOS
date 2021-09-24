@@ -30,7 +30,8 @@
       logLevel="1"
       solidMaterialNames="{ rock }"
       targetRegions="{ Domain, Fracture }"
-      fractureRegion="Fracture"/>
+      fractureRegion="Fracture"
+      mpiCommOrder="1"/>
   </Solvers>
 
   <Mesh>
