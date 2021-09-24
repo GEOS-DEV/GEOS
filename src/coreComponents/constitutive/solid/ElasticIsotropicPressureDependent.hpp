@@ -130,7 +130,7 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStiffness( localIndex c
                                                                     real64 ( & stiffness )[6][6] ) const
 {
   real64 const mu     = m_shearModulus[k];
-  real64 const Cr     = m_recompressionIndex[k];
+  real64 const Cr = m_recompressionIndex[k];
 
   real64 bulkModulus;
 
