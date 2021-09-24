@@ -214,7 +214,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
   real64 const Cc     = m_virginCompressionIndex[k];
   real64 const alpha  = m_shapeParameter[k];
 
-  real64 pc    = oldPc;
+  real64 pc = oldPc;
 
   // elastic predictor (assume strainIncrement is all elastic)
 
