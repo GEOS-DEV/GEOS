@@ -73,9 +73,9 @@ public:
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * ( pressure + deltaPressure ) );
 
-    dTotalStress_dPressure[0] = biotCoefficient;
-    dTotalStress_dPressure[1] = biotCoefficient;
-    dTotalStress_dPressure[2] = biotCoefficient;
+    dTotalStress_dPressure[0] = -biotCoefficient;
+    dTotalStress_dPressure[1] = -biotCoefficient;
+    dTotalStress_dPressure[2] = -biotCoefficient;
     dTotalStress_dPressure[3] = 0;
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;
