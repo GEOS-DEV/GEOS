@@ -63,12 +63,12 @@ public:
   real64 getBiotCoefficient( localIndex const k ) const { return m_biotCoefficient[k]; }
 
   GEOSX_HOST_DEVICE
-  void updatePorosity( localIndex const k,
-                       localIndex const q,
-                       real64 const & deltaPressure,
-                       real64 const ( &strainIncrement )[6],
-                       real64 & dPorosity_dPressure,
-                       real64 & dPorosity_dVolStrain ) const
+  void updateFromPressureAndStrain( localIndex const k,
+                                    localIndex const q,
+                                    real64 const & deltaPressure,
+                                    real64 const ( &strainIncrement )[6],
+                                    real64 & dPorosity_dPressure,
+                                    real64 & dPorosity_dVolStrain ) const
   {
     real64 const biotSkeletonModulusInverse = ( m_biotCoefficient[k] - m_referencePorosity[k] ) / m_grainBulkModulus;
 

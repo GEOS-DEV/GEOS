@@ -80,12 +80,12 @@ public:
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;
 
-    m_porosityUpdate.updatePorosity( k,
-                                     q,
-                                     deltaPressure,
-                                     strainIncrement,
-                                     dPorosity_dPressure,
-                                     dPorosity_dVolStrain );
+    m_porosityUpdate.updateFromPressureAndStrain( k,
+                                                  q,
+                                                  deltaPressure,
+                                                  strainIncrement,
+                                                  dPorosity_dPressure,
+                                                  dPorosity_dVolStrain );
 
 // TODO uncomment once we start using permeability model in flow.
 //    m_permUpdate.updateFromPressureStrain( k,
