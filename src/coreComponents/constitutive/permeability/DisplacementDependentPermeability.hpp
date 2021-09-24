@@ -140,7 +140,7 @@ void DisplacementDependentPermeabilityUpdate::compute( real64 const ( &dispJump 
                                                        arraySlice1d< real64 > const & permeability,
                                                        arraySlice1d< real64 > const & dPerm_dDispJump  ) const
 { 
-  real64 const shearMag = std::sqrt( dispJump[1]*dispJump[1] + dispJump[2]*dispJump[2] )
+  real64 const shearMag = std::sqrt( dispJump[1]*dispJump[1] + dispJump[2]*dispJump[2] );
   
   real64 const tmpTanh = std::tanh ( 3.0 * shearMag/m_shearDispThreshold );
   
@@ -151,7 +151,7 @@ void DisplacementDependentPermeabilityUpdate::compute( real64 const ( &dispJump 
   for( localIndex i=0; i < permeability.size(); i++ )
   {
     permeability[i] = permMultiplier * m_iniPermeability[i];
-    dPerm_dDispJump[i][0] = 0.0
+    dPerm_dDispJump[i][0] = 0.0;
     real64 const tmpValue = m_iniPermeability[i] * dpermMultiplier_dshearMag /shearMag;
     dPerm_dDispJump[i][1] = tmpValue * dispJump[1];
     dPerm_dDispJump[i][2] = tmpValue * dispJump[2];
