@@ -67,15 +67,27 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
     constitutiveGroup->resize( parent->size() );
   }
 
-  ConstitutiveBase const & constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
+  // 1. Allocate constitutive relation
+  // we only register the group if the instance has not been registered yet.
+  if( !constitutiveGroup->hasGroup( constitutiveRelationInstanceName ) )
+  {
+    ConstitutiveBase const & constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
 
-  std::unique_ptr< ConstitutiveBase > material = constitutiveRelation.deliverClone( constitutiveRelationInstanceName, parent );
+    std::unique_ptr< ConstitutiveBase > material = constitutiveRelation.deliverClone( constitutiveRelationInstanceName, parent );
 
-  material->allocateConstitutiveData( *parent,
-                                      numConstitutivePointsPerParentIndex );
+    material->allocateConstitutiveData( *parent,
+                                        numConstitutivePointsPerParentIndex );
 
-  std::vector<string> const subRelationNames = material->getSubRelationNames();
 
+
+    ConstitutiveBase &
+    rval = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
+    rval.setSizedFromParent( 1 );
+    rval.resize( constitutiveGroup->size() );
+  }
+
+  // 2. Allocate subrelations (for compound models)
+  std::vector< string > const subRelationNames = material->getSubRelationNames();
   for( string const & subRelationName : subRelationNames )
   {
     ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
@@ -85,16 +97,16 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
     constitutiveModel->allocateConstitutiveData( *parent,
                                                  numConstitutivePointsPerParentIndex );
 
-    ConstitutiveBase &
+    // we only register the group if the instance has not been registered yet.
+    if( !constitutiveGroup->hasGroup( subRelationName ) )
+    {
+      ConstitutiveBase &
       group = constitutiveGroup->registerGroup< ConstitutiveBase >( subRelationName, std::move( constitutiveModel ) );
       group.setSizedFromParent( 1 );
       group.resize( constitutiveGroup->size() );
+    }
   }
 
-  ConstitutiveBase &
-  rval = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
-  rval.setSizedFromParent( 1 );
-  rval.resize( constitutiveGroup->size() );
   // Why do we need to return this here? Couldn't this be just void?
   return rval;
 }
