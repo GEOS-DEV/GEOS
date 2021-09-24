@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -131,7 +131,7 @@ public:
 
 private:
 
-  /// A reference to the ArrayView holding the  recompression index for each element.
+  /// A reference to the ArrayView holding the recompression index for each element.
   arrayView1d< real64 const > const m_recompressionIndex;
 
   /// A reference to the ArrayView holding the virgin compression index for each element.
@@ -214,7 +214,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
   real64 const Cc     = m_virginCompressionIndex[k];
   real64 const alpha  = m_shapeParameter[k];
 
-  real64 pc    = oldPc;
+  real64 pc = oldPc;
 
   // elastic predictor (assume strainIncrement is all elastic)
 
@@ -253,11 +253,11 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   solution[0] = eps_v_trial; // initial guess for elastic volumetric strain
   solution[1] = eps_s_trial; // initial guess for elastic deviatoric strain
-  solution[2] = 1e-10;     // initial guess for plastic multiplier
+  solution[2] = 1e-10;       // initial guess for plastic multiplier
 
   real64 norm, normZero = 1e30;
   integer cuts = 0;
-  integer maxCuts = 100;
+  integer const maxCuts = 5;
   real64 normOld = normZero;
 
   // begin Newton loop
