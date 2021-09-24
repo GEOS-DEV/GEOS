@@ -68,7 +68,7 @@ public:
    * @brief Evaluate the traction vector and its derivatives wrt to pressure and jump
    * @param[in] dispJump the displacement jump
    * @param[in] tractionVector the traction vector
-   * @param[out] dTractionVector_dJump the derivative of the traction vector wrt jump
+   * @param[out] dTractionVector_dJump the derivative of the traction vector wrt displacement jump
    */
   GEOSX_HOST_DEVICE
   inline
@@ -154,8 +154,8 @@ protected:
 
 };
 
-} /* end namespace constitutive */
+} /* namespace constitutive */
 
-} /* end namespace geosx */
+} /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_CONTACT_CONTACTBASE_HPP_ */

@@ -177,8 +177,8 @@ real64 CoulombUpdates::computeLimitTangentialTractionNorm( real64 const & normal
   return ( m_cohesion - normalTraction * m_frictionCoefficient );
 }
 
-} /* end namespace constitutive */
+} /* namespace constitutive */
 
-} /* end namespace geosx */
+} /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_CONTACT_COULOMB_HPP_ */

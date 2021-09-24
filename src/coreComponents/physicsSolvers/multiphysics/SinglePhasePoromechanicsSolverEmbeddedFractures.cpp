@@ -22,7 +22,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/contactSelector.hpp"
+#include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteElement/Kinematics.h"
 #include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"

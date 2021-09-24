@@ -21,7 +21,7 @@
 #include "SolidMechanicsEFEMKernels.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/contactSelector.hpp"
+#include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"

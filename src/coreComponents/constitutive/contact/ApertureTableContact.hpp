@@ -196,8 +196,8 @@ void ApertureTableContactUpdates::addPressureToTraction( real64 const & pressure
 }
 
 
-} /* end namespace constitutive */
+} /* namespace constitutive */
 
-} /* end namespace geosx */
+} /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_CONTACT_APERTURETABLECONTACT_HPP_ */

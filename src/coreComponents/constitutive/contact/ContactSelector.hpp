@@ -13,8 +13,9 @@
  */
 
 /**
- * @file contactSelector.hpp
+ * @file ContactSelector.hpp
  */
+
 #ifndef GEOSX_CONSTITUTIVE_CONTACT_CONTACTSELECTOR_HPP_
 #define GEOSX_CONSTITUTIVE_CONTACT_CONTACTSELECTOR_HPP_
 
@@ -44,8 +45,8 @@ void constitutiveUpdatePassThru( ContactBase & contact,
                                ApertureTableContact >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 
-} // namespace constitutive
+} /* namespace constitutive */
 
-} // namespace geosx
+} /* namespace geosx */
 
 #endif // GEOSX_CONSTITUTIVE_CONTACT_CONTACTSELECTOR_HPP_

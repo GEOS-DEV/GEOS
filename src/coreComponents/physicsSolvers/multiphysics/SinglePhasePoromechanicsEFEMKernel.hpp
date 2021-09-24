@@ -641,9 +641,9 @@ struct StateUpdateKernel
   }
 };
 
-} // namespace PoromechanicsEFEMKernels
+} /* namespace PoromechanicsEFEMKernels */
 
-} // namespace geosx
+} /* namespace geosx */
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 

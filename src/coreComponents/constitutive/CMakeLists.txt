@@ -16,7 +16,7 @@ set( constitutive_headers
      contact/ContactBase.hpp
      contact/ApertureTableContact.hpp
      contact/Coulomb.hpp
-     contact/contactSelector.hpp
+     contact/ContactSelector.hpp
      fluid/BlackOilFluidBase.hpp	
      fluid/BlackOilFluid.hpp
      fluid/CompressibleSinglePhaseFluid.hpp

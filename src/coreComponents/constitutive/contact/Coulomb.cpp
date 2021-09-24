@@ -92,6 +92,6 @@ CoulombUpdates Coulomb::createKernelWrapper() const
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, Coulomb, string const &, Group * const )
 
-} /* end namespace constutive */
+} /* namespace constutive */
 
-} /* end namespace geosx */
+} /* namespace geosx */

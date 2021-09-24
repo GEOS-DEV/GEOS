@@ -23,7 +23,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/contactSelector.hpp"
+#include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"

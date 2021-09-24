@@ -39,7 +39,7 @@ ApertureTableContact::ApertureTableContact( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value to be used to avoid floating point errors in expressions involving aperture. "
                     "For example in the case of dividing by the actual aperture (not the effective aperture "
-                    "that results from the aperture function) this value may be used to avoid 1/0 errors. "
+                    "that results from the aperture function) this value may be used to avoid the 1/0 error. "
                     "Note that this value may have some physical significance in its usage, as it may be used "
                     "to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the "
                     "1/0 error." );
@@ -124,5 +124,6 @@ ApertureTableContactUpdates ApertureTableContact::createKernelWrapper() const
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ApertureTableContact, string const &, Group * const )
 
-}
+} /* namespace constitutive */
+
 } /* namespace geosx */
