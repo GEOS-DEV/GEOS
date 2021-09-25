@@ -29,6 +29,8 @@ blt_add_library( NAME       mainInterface
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
 
+add_dependencies( mainInterface generate_version )
+
 target_include_directories( mainInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks( PREFIX mainInterface )
