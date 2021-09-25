@@ -84,8 +84,10 @@ struct ConstitutivePassThru< SolidBase >
                                  DelftEgg,
                                  DruckerPrager,
                                  ElasticIsotropic,
-                                 ElasticTransverseIsotropic>::execute( constitutiveRelation,
-                                                                std::forward< LAMBDA >( lambda ) );
+                                 ElasticTransverseIsotropic,
+                                 ElasticIsotropicPressureDependent,
+                                 ElasticOrthotropic>::execute( constitutiveRelation,
+                                                               std::forward< LAMBDA >( lambda ) );
   }
 };
 
@@ -145,8 +147,8 @@ struct ConstitutivePassThru< PorousSolidBase >
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
- //                                PorousSolid< ElasticIsotropicPressureDependent >,
- //                                PorousSolid< ElasticOrthotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
+                                 PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
@@ -221,8 +223,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
-                               //  PorousSolid< ElasticIsotropicPressureDependent >,
-                               //  PorousSolid< ElasticOrthotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
+                                 PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
@@ -241,8 +243,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
-                             //    PorousSolid< ElasticIsotropicPressureDependent >,
-                             //    PorousSolid< ElasticOrthotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
+                                 PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
