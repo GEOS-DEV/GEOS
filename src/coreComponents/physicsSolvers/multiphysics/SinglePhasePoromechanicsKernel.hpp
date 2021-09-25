@@ -276,29 +276,16 @@ public:
 
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 
-    for( integer a = 0; a < numNodesPerElem; ++a )
-    {
-      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][0] * dTotalStress_dPressure[0];
-      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][2] * dTotalStress_dPressure[4];
-      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][1] * dTotalStress_dPressure[5];
+    FE_TYPE::plusGradNajAij( dNdX,
+                             dTotalStress_dPressure,
+                             reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localDispFlowJacobian) );
 
-      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][1] * dTotalStress_dPressure[1];
-      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][2] * dTotalStress_dPressure[3];
-      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][0] * dTotalStress_dPressure[5];
-
-      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][2] * dTotalStress_dPressure[2];
-      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][1] * dTotalStress_dPressure[3];
-      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][0] * dTotalStress_dPressure[4];
-    }
 
     if( m_gravityAcceleration > 0.0 )
     {
-      for( integer a = 0; a < numNodesPerElem; ++a )
-      {
-        stack.localDispFlowJacobian[a*3+0][0] += N[a] * dBodyForce_dPressure[0];
-        stack.localDispFlowJacobian[a*3+1][0] += N[a] * dBodyForce_dPressure[1];
-        stack.localDispFlowJacobian[a*3+2][0] += N[a] * dBodyForce_dPressure[2];
-      }
+      FE_TYPE::plusNaFi( N,
+                         dBodyForce_dPressure,
+                         reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localDispFlowJacobian) );
     }
 
     // --- Mass balance accumulation
