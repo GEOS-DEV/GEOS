@@ -225,48 +225,48 @@ public:
     // Evaluate total stress tensor
     real64 strainIncrement[6] = {0.0};
     real64 totalStress[6];
-    real64 dPorosity_dPressure;
-    real64 dPorosity_dVolStrainIncrement;
+    real64 bodyForce[3] = {0.0};
     real64 dTotalStress_dPressure[6] = {0.0};
+    real64 dBodyForce_dVolStrainIncrement[3] = {0.0};
+    real64 dBodyForce_dPressure[3] = {0.0};
+    real64 fluidMassContent; 
+    real64 fluidMassContentOld;
+    real64 dFluidMassContent_dPressure;
+    real64 dFluidMassContent_dVolStrainIncrement;
 
     // --- Update total stress tensor
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
 
-    m_constitutiveUpdate.smallStrainUpdate( k,
-                                            q,
-                                            m_fluidPressure[k],
-                                            m_deltaFluidPressure[k],
-                                            strainIncrement,
-                                            totalStress,
-                                            dPorosity_dPressure,
-                                            dPorosity_dVolStrainIncrement,
-                                            dTotalStress_dPressure,
-                                            stiffness );
-
-    real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
-    real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
-
-    // Evaluate body force vector
-    real64 bodyForce[3] = { m_gravityVector[0],
-                            m_gravityVector[1],
-                            m_gravityVector[2]};
-    if( m_gravityAcceleration > 0.0 )
-    {
-      real64 mixtureDensity = ( 1.0 - porosityNew ) * m_solidDensity( k, q ) + porosityNew * m_fluidDensity( k, q );
-      mixtureDensity *= detJxW;
-      bodyForce[0] *= mixtureDensity;
-      bodyForce[1] *= mixtureDensity;
-      bodyForce[2] *= mixtureDensity;
-    }
+    m_constitutiveUpdate.smallStrainUpdateSinglePhase( k,
+                                                       q,
+                                                       m_fluidPressure[k],
+                                                       m_deltaFluidPressure[k],
+                                                       strainIncrement,
+						       m_gravityAcceleration,
+						       m_gravityVector,
+						       m_solidDensity( k, q ),
+                                                       m_fluidDensity( k, q ),
+						       m_fluidDensityOld( k ),
+						       m_dFluidDensity_dPressure( k, q ),
+                                                       totalStress,
+                                                       dTotalStress_dPressure,
+						       bodyForce,
+                                                       dBodyForce_dVolStrainIncrement,
+                                                       dBodyForce_dPressure,
+						       fluidMassContent,
+						       fluidMassContentOld,
+						       dFluidMassContent_dPressure,
+						       dFluidMassContent_dVolStrainIncrement,
+                                                       stiffness );
 
     // Assemble local jacobian and residual
 
     // --- Momentum balance
-    for( localIndex i=0; i<6; ++i )
-    {
-      totalStress[i] *= -detJxW;
-    }
+    LvArray::tensorOps::scale< 6 >( totalStress, -detJxW );
+    LvArray::tensorOps::scale< 3 >( bodyForce, detJxW );
+    LvArray::tensorOps::scale< 6 >( dTotalStress_dPressure, -detJxW );
+    LvArray::tensorOps::scale< 3 >( dBodyForce_dPressure, detJxW );
 
     FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
                                      totalStress,
@@ -278,44 +278,40 @@ public:
 
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][0] * dTotalStress_dPressure[0] * detJxW;
-      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][2] * dTotalStress_dPressure[4] * detJxW;
-      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][1] * dTotalStress_dPressure[5] * detJxW;
+      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][0] * dTotalStress_dPressure[0];
+      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][2] * dTotalStress_dPressure[4];
+      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][1] * dTotalStress_dPressure[5];
 
-      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][1] * dTotalStress_dPressure[1] * detJxW;
-      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][2] * dTotalStress_dPressure[3] * detJxW;
-      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][0] * dTotalStress_dPressure[5] * detJxW;
+      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][1] * dTotalStress_dPressure[1];
+      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][2] * dTotalStress_dPressure[3];
+      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][0] * dTotalStress_dPressure[5];
 
-      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][2] * dTotalStress_dPressure[2] * detJxW;
-      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][1] * dTotalStress_dPressure[3] * detJxW;
-      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][0] * dTotalStress_dPressure[4] * detJxW;
+      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][2] * dTotalStress_dPressure[2];
+      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][1] * dTotalStress_dPressure[3];
+      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][0] * dTotalStress_dPressure[4];
     }
 
     if( m_gravityAcceleration > 0.0 )
     {
-      // Assumptions: ( i) dMixtureDens_dVolStrain contribution is neglected
-      //              (ii) grains are assumed incompressible
-
-      real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -m_solidDensity( k, q ) + m_fluidDensity( k, q ) )
-                                            + porosityNew * m_dFluidDensity_dPressure( k, q );
       for( integer a = 0; a < numNodesPerElem; ++a )
       {
-        stack.localDispFlowJacobian[a*3+0][0] += N[a] * dMixtureDens_dPressure * m_gravityVector[0] * detJxW;
-        stack.localDispFlowJacobian[a*3+1][0] += N[a] * dMixtureDens_dPressure * m_gravityVector[1] * detJxW;
-        stack.localDispFlowJacobian[a*3+2][0] += N[a] * dMixtureDens_dPressure * m_gravityVector[2] * detJxW;
+        stack.localDispFlowJacobian[a*3+0][0] += N[a] * dBodyForce_dPressure[0];
+        stack.localDispFlowJacobian[a*3+1][0] += N[a] * dBodyForce_dPressure[1];
+        stack.localDispFlowJacobian[a*3+2][0] += N[a] * dBodyForce_dPressure[2];
       }
     }
 
     // --- Mass balance accumulation
+
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localFlowDispJacobian[0][a*3+0] += dPorosity_dVolStrainIncrement * m_fluidDensity( k, q ) * dNdX[a][0] * detJxW;
-      stack.localFlowDispJacobian[0][a*3+1] += dPorosity_dVolStrainIncrement * m_fluidDensity( k, q ) * dNdX[a][1] * detJxW;
-      stack.localFlowDispJacobian[0][a*3+2] += dPorosity_dVolStrainIncrement * m_fluidDensity( k, q ) * dNdX[a][2] * detJxW;
+      stack.localFlowDispJacobian[0][a*3+0] += dFluidMassContent_dVolStrainIncrement * dNdX[a][0] * detJxW;
+      stack.localFlowDispJacobian[0][a*3+1] += dFluidMassContent_dVolStrainIncrement * dNdX[a][1] * detJxW;
+      stack.localFlowDispJacobian[0][a*3+2] += dFluidMassContent_dVolStrainIncrement * dNdX[a][2] * detJxW;
     }
 
-    stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - porosityOld * m_fluidDensityOld( k ) ) * detJxW;
-    stack.localFlowFlowJacobian[0][0] += ( dPorosity_dPressure * m_fluidDensity( k, q ) + porosityNew * m_dFluidDensity_dPressure( k, q ) ) * detJxW;
+    stack.localFlowResidual[0] += ( fluidMassContent - fluidMassContentOld ) * detJxW;
+    stack.localFlowFlowJacobian[0][0] += dFluidMassContent_dPressure * detJxW;
 
   }
 
