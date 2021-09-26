@@ -214,73 +214,117 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    // Get displacement: (i) basis functions (N), (ii) basis function
-    // derivatives (dNdX), and (iii) determinant of the Jacobian transformation
-    // matrix times the quadrature weight (detJxW)
+    // Governing equations (strong form)
+    // ---------------------------------
+    //
+    //   divergence( totalStress ) + bodyForce = 0                       (quasi-static linear momentum balance)
+    //   dFluidMassContent_dTime + divergence( fluidMassFlux ) = source  (fluid phase mass balance)
+    //
+    // with currently the following dependencies on the strainIncrement tensor and pressure
+    //
+    //   totalStress      = totalStress( strainIncrement, pressure)
+    //   bodyForce        = bodyForce( strainIncrement, pressure)
+    //   fluidMassContent = fluidMassContent( strainIncrement, pressure)
+    //   fluidMassFlux    = fludiMassFlux( pressure)
+    //
+    // Note that the fluidMassFlux will dependend on the straiIncrement if a stress-dependent constitutive
+    // model is assumed. A dependency on pressure can also occur in the source term of the mass
+    // balance equation, e.g. if a Peaceman well model is used.
+    //
+    // In this kernel cell-based contributions to Jacobian matrix and residual
+    // vector are computed. The face-based contributions, namely associated with the fluid
+    // mass flux term are computed in a different kernel. The source term in the mass balance
+    // equation is also treated elsewhere.
+    //
+    // Integration in time is performed using a backward Euler scheme (in the mass balance
+    // equation LHS and RHS are multiplied by the timestep).
+    //
+    // Using a weak formulation of the governing equation the following terms are assembled in this kernel
+    //
+    //   Rmom = - \int symmetricGradient( \eta ) : totalStress + \int \eta \cdot bodyForce = 0
+    //   Rmas = \int \chi ( fluidMassContent - fluidMassContentOld) = 0
+    //
+    //   dRmom_dVolStrain = - \int_Omega symmetricGradient( \eta ) : dTotalStress_dVolStrain
+    //                      + \int \eta \cdot dBodyForce_dVolStrain
+    //   dRmom_dPressure  = - \int_Omega symmetricGradient( \eta ) : dTotalStress_dPressure
+    //                      + \int \eta \cdot dBodyForce_dPressure
+    //   dRmas_dVolStrain = \int \chi dFluidMassContent_dVolStrain
+    //   dRmas_dPressure  = \int \chi dFluidMassContent_dPressure
+    //
+    // with \eta and \chi test basis functions for the displacement and pressure field, respectively.
+    // A continuous interpolation is used for the displacement, with \eta continous finite element
+    // basis functions. A piecewise-constant approximation is used for the pressure.
+
+    real64 strainIncrement[6] = {0.0};
+    real64 totalStress[6];
+    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness; // Could this be called dTotalStress_dStrainIncrement?
+    real64 dTotalStress_dPressure[6] = {0.0};
+    real64 bodyForce[3] = {0.0};
+    real64 dBodyForce_dVolStrainIncrement[3] = {0.0};
+    real64 dBodyForce_dPressure[3] = {0.0};
+    real64 fluidMassContent;
+    real64 fluidMassContentOld;
+    real64 dFluidMassContent_dPressure;
+    real64 dFluidMassContent_dVolStrainIncrement;
+
+    // Displacement finite element basis functions (N), basis function derivatives (dNdX), and
+    // determinant of the Jacobian transformation matrix times the quadrature weight (detJxW)
     real64 N[numNodesPerElem];
     real64 dNdX[numNodesPerElem][3];
     FE_TYPE::calcN( q, N );
     real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
-    // Evaluate total stress tensor
-    real64 strainIncrement[6] = {0.0};
-    real64 totalStress[6];
-    real64 bodyForce[3] = {0.0};
-    real64 dTotalStress_dPressure[6] = {0.0};
-    real64 dBodyForce_dVolStrainIncrement[3] = {0.0};
-    real64 dBodyForce_dPressure[3] = {0.0};
-    real64 fluidMassContent; 
-    real64 fluidMassContentOld;
-    real64 dFluidMassContent_dPressure;
-    real64 dFluidMassContent_dVolStrainIncrement;
-
-    // --- Update total stress tensor
-    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
+    // Compute strain increment
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
 
+    // Evaluate conserved quantities (total stress and fluid mass content) and their derivatives
     m_constitutiveUpdate.smallStrainUpdateSinglePhase( k,
                                                        q,
                                                        m_fluidPressure[k],
                                                        m_deltaFluidPressure[k],
                                                        strainIncrement,
-						       m_gravityAcceleration,
-						       m_gravityVector,
-						       m_solidDensity( k, q ),
+                                                       m_gravityAcceleration,
+                                                       m_gravityVector,
+                                                       m_solidDensity( k, q ),
                                                        m_fluidDensity( k, q ),
-						       m_fluidDensityOld( k ),
-						       m_dFluidDensity_dPressure( k, q ),
+                                                       m_fluidDensityOld( k ),
+                                                       m_dFluidDensity_dPressure( k, q ),
                                                        totalStress,
                                                        dTotalStress_dPressure,
-						       bodyForce,
+                                                       bodyForce,
                                                        dBodyForce_dVolStrainIncrement,
                                                        dBodyForce_dPressure,
-						       fluidMassContent,
-						       fluidMassContentOld,
-						       dFluidMassContent_dPressure,
-						       dFluidMassContent_dVolStrainIncrement,
+                                                       fluidMassContent,
+                                                       fluidMassContentOld,
+                                                       dFluidMassContent_dPressure,
+                                                       dFluidMassContent_dVolStrainIncrement,
                                                        stiffness );
 
-    // Assemble local jacobian and residual
-
-    // --- Momentum balance
-    LvArray::tensorOps::scale< 6 >( totalStress, -detJxW );
+    // Perform scalign needed for numerical integration
+    LvArray::tensorOps::scale< 6 >( totalStress, -detJxW );  // (s.p.d. vs s.n.d striffness matrix)
     LvArray::tensorOps::scale< 3 >( bodyForce, detJxW );
     LvArray::tensorOps::scale< 6 >( dTotalStress_dPressure, -detJxW );
     LvArray::tensorOps::scale< 3 >( dBodyForce_dPressure, detJxW );
+    fluidMassContent *= detJxW;
+    fluidMassContentOld *= detJxW;
+    dFluidMassContent_dPressure *= detJxW;
+    dFluidMassContent_dVolStrainIncrement *= detJxW;
 
+    // Compute Rmom
     FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
                                      totalStress,
                                      N,
                                      bodyForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 
+    // Compute dRmom_dVolStrain
     stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+    // --- dBodyForce_dVoldStrain derivative neglected
 
+    // Compute dRmom_dPressure
     FE_TYPE::plusGradNajAij( dNdX,
                              dTotalStress_dPressure,
                              reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localDispFlowJacobian) );
-
-
     if( m_gravityAcceleration > 0.0 )
     {
       FE_TYPE::plusNaFi( N,
@@ -288,17 +332,20 @@ public:
                          reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localDispFlowJacobian) );
     }
 
-    // --- Mass balance accumulation
 
+    // Compute Rmas
+    stack.localFlowResidual[0] += ( fluidMassContent - fluidMassContentOld );
+
+    // Compute dRmas_dVolStrain
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localFlowDispJacobian[0][a*3+0] += dFluidMassContent_dVolStrainIncrement * dNdX[a][0] * detJxW;
-      stack.localFlowDispJacobian[0][a*3+1] += dFluidMassContent_dVolStrainIncrement * dNdX[a][1] * detJxW;
-      stack.localFlowDispJacobian[0][a*3+2] += dFluidMassContent_dVolStrainIncrement * dNdX[a][2] * detJxW;
+      stack.localFlowDispJacobian[0][a*3+0] += dFluidMassContent_dVolStrainIncrement * dNdX[a][0];
+      stack.localFlowDispJacobian[0][a*3+1] += dFluidMassContent_dVolStrainIncrement * dNdX[a][1];
+      stack.localFlowDispJacobian[0][a*3+2] += dFluidMassContent_dVolStrainIncrement * dNdX[a][2];
     }
 
-    stack.localFlowResidual[0] += ( fluidMassContent - fluidMassContentOld ) * detJxW;
-    stack.localFlowFlowJacobian[0][0] += dFluidMassContent_dPressure * detJxW;
+    // Compute dRmas_dPressure
+    stack.localFlowFlowJacobian[0][0] += dFluidMassContent_dPressure;
 
   }
 
@@ -313,7 +360,6 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-//    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
