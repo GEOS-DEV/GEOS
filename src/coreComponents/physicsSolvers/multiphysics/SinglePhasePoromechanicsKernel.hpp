@@ -318,7 +318,7 @@ public:
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 
     // Compute dRmom_dVolStrain
-    stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+    stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
     // --- dBodyForce_dVoldStrain derivative neglected
 
     // Compute dRmom_dPressure
@@ -359,8 +359,6 @@ public:
   {
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
-
-    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
 

@@ -31,6 +31,13 @@ struct SolidModelDiscretizationOpsOrthotropic : public SolidModelDiscretizationO
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
+  void BTDB( BASIS_GRADIENT const & gradN,
+             real64 const & detJxW,
+             real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
+
+  template< int NUM_SUPPORT_POINTS,
+            typename BASIS_GRADIENT >
+  GEOSX_HOST_DEVICE
   void upperBTDB( BASIS_GRADIENT const & gradN,
                   real64 const & detJxW,
                   real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
@@ -80,6 +87,54 @@ struct SolidModelDiscretizationOpsOrthotropic : public SolidModelDiscretizationO
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
 #endif
+
+template< int NUM_SUPPORT_POINTS,
+          typename BASIS_GRADIENT >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void SolidModelDiscretizationOpsOrthotropic::
+  BTDB( BASIS_GRADIENT const & gradN,
+        real64 const & detJxW,
+        real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
+{
+  real64 const c11 = this->m_c11 * detJxW;
+  real64 const c12 = this->m_c12 * detJxW;
+  real64 const c13 = this->m_c13 * detJxW;
+  real64 const c22 = this->m_c22 * detJxW;
+  real64 const c23 = this->m_c23 * detJxW;
+  real64 const c33 = this->m_c33 * detJxW;
+  real64 const c44 = this->m_c44 * detJxW;
+  real64 const c55 = this->m_c55 * detJxW;
+  real64 const c66 = this->m_c66 * detJxW;
+
+  SolidModelDiscretizationOps::BTDB< NUM_SUPPORT_POINTS >( gradN,
+                                                           elementStiffness,
+                                                           [ c11,
+                                                             c12,
+                                                             c13,
+                                                             c22,
+                                                             c23,
+                                                             c33,
+                                                             c44,
+                                                             c55,
+                                                             c66 ] GEOSX_HOST_DEVICE
+                                                             ( int const a,
+                                                             int const b,
+                                                             real64 const (&gradNa_gradNb)[3][3],
+                                                             real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
+  {
+    elementStiffness[a*3+0][b*3+0] += c11 * gradNa_gradNb[0][0] + c66 * gradNa_gradNb[1][1] + c55 * gradNa_gradNb[2][2];
+    elementStiffness[a*3+0][b*3+1] += c12 * gradNa_gradNb[0][1] + c66 * gradNa_gradNb[1][0];
+    elementStiffness[a*3+0][b*3+2] += c13 * gradNa_gradNb[0][2] + c55 * gradNa_gradNb[2][0];
+    elementStiffness[a*3+1][b*3+0] += c66 * gradNa_gradNb[0][1] + c12 * gradNa_gradNb[1][0];
+    elementStiffness[a*3+1][b*3+1] += c66 * gradNa_gradNb[0][0] + c22 * gradNa_gradNb[1][1] + c44 * gradNa_gradNb[2][2];
+    elementStiffness[a*3+1][b*3+2] += c23 * gradNa_gradNb[1][2] + c44 * gradNa_gradNb[2][1];
+    elementStiffness[a*3+2][b*3+0] += c55 * gradNa_gradNb[0][2] + c13 * gradNa_gradNb[2][0];
+    elementStiffness[a*3+2][b*3+1] += c44 * gradNa_gradNb[1][2] + c23 * gradNa_gradNb[2][1];
+    elementStiffness[a*3+2][b*3+2] += c55 * gradNa_gradNb[0][0] + c44 * gradNa_gradNb[1][1] + c33 * gradNa_gradNb[2][2];
+  } );
+}
+
 
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
