@@ -115,7 +115,7 @@ public:
     m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
+    m_fluidPressureOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) )
   {}
 
@@ -280,7 +280,7 @@ public:
     // Evaluate conserved quantities (total stress and fluid mass content) and their derivatives
     m_constitutiveUpdate.smallStrainUpdateSinglePhase( k,
                                                        q,
-                                                       m_fluidPressure[k],
+                                                       m_fluidPressureOld[k],
                                                        m_deltaFluidPressure[k],
                                                        strainIncrement,
                                                        m_gravityAcceleration,
@@ -428,7 +428,7 @@ protected:
   arrayView1d< globalIndex const > const m_flowDofNumber;
 
   /// The rank-global fluid pressure array.
-  arrayView1d< real64 const > const m_fluidPressure;
+  arrayView1d< real64 const > const m_fluidPressureOld;
 
   /// The rank-global delta-fluid pressure array.
   arrayView1d< real64 const > const m_deltaFluidPressure;

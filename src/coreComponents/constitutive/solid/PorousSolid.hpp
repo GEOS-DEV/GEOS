@@ -97,7 +97,7 @@ public:
   GEOSX_HOST_DEVICE
   void smallStrainUpdateSinglePhase( localIndex const k,
                                      localIndex const q,
-                                     real64 const & fluidPressure,
+                                     real64 const & fluidPressureOld,
                                      real64 const & deltaFluidPressure,
                                      real64 const ( &strainIncrement )[6],
                                      real64 const & gravityAcceleration,
@@ -127,7 +127,7 @@ public:
     updateBiotCoefficient( k );
 
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * ( fluidPressure + deltaFluidPressure ) );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * ( fluidPressureOld + deltaFluidPressure ) );
 
     dTotalStress_dPressure[0] = -biotCoefficient;
     dTotalStress_dPressure[1] = -biotCoefficient;
