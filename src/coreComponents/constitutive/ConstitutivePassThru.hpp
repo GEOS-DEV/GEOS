@@ -86,8 +86,8 @@ struct ConstitutivePassThru< SolidBase >
                                  ElasticIsotropic,
                                  ElasticTransverseIsotropic,
                                  ElasticIsotropicPressureDependent,
-                                 ElasticOrthotropic>::execute( constitutiveRelation,
-                                                               std::forward< LAMBDA >( lambda ) );
+                                 ElasticOrthotropic >::execute( constitutiveRelation,
+                                                                std::forward< LAMBDA >( lambda ) );
   }
 };
 
