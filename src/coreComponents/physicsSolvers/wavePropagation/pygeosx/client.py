@@ -1,9 +1,12 @@
-import asyncio
+
+from threading import Thread
+from queue import Queue
 import uuid
 import copy
 import subprocess
 import numpy as np
-from time import sleep
+import importlib
+from time import sleep, time, gmtime
 import inspect
 from utils import *
 
@@ -35,6 +38,7 @@ class SLURMCluster:
         self.err=None
         self.out=None
         self.state="Free"
+        self.work=None
 
         header_lines=["#!/usr/bin/bash"]
         if job_name is not None:
@@ -89,9 +93,9 @@ class SLURMCluster:
 
     def _add_job_to_script(self, cores):
         if cores > 1:
-            self.run = "mpirun -np %d --map-by node %s startJob.py " %(cores, self.python)
+            self.run = "mpirun -np %d --map-by node %s wrapper.py " %(cores, self.python)
         else:
-            self.run = "%s startJob.py " %self.python
+            self.run = "%s wrapper.py " %self.python
 
 
     def _add_xml_to_cmd(self, xml):
@@ -111,6 +115,20 @@ class SLURMCluster:
         self.header.append(self.run)
 
 
+    def free(self):
+        if self.work is not None:
+            job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).decode().split()
+            if self.work.job_id not in job_list:
+                self.cluster.state = "Free"
+                self.cluster.header = self.cluster.header[:-1]
+                self.run =  ""
+                return True
+            else:
+                return False
+        else:
+            return True
+
+
 class Client:
     def __init__(self,
                  cluster=None):
@@ -119,37 +137,154 @@ class Client:
         self.output = self.create_output()
 
 
+
     def submit(self,
                func,
-               parameters,
+               arg,
                cores=None,
                x_partition=1,
                y_partition=1,
                z_partition=1):
 
-        key = func.__name__ + "-" + str(uuid.uuid4())
-        module   = inspect.getmodule(func).__name__
-        jsonfile = obj_to_json(parameters)
-        args     = [module, func.__name__, jsonfile, self.output, key]
+        future = "In queue"
 
+        thread = Thread(target = self._map,
+                        args = (func,
+                                args,
+                                cores,
+                                x_partition,
+                                y_partition,
+                                z_partition,
+                                future,),
+                        )
+        thread.start()
+        return futures
+
+
+
+    def map(self,
+            func,
+            args,
+            cores=None,
+            x_partition=1,
+            y_partition=1,
+            z_partition=1):
+
+        futures = ["In queue"]*len(args)
+
+        thread = Thread(target = self._map,
+                        args = (func,
+                                args,
+                                cores,
+                                x_partition,
+                                y_partition,
+                                z_partition,
+                                futures,),
+                    )
+        thread.start()
+        return futures
+
+
+
+    def _submit(self,
+                func,
+                args,
+                cores=None,
+                x_partition=1,
+                y_partition=1,
+                z_partition=1,
+                future=None):
+
+        while True:
+            for cluster in self.cluster:
+                if cluster.free():
+                    future = self.start(func,
+                                        args,
+                                        cores,
+                                        x_partition,
+                                        y_partition,
+                                        z_partition,
+                                        cluster = cluster)
+                    break
+            else:
+                sleep(1)
+                continue
+            break
+
+        return future
+
+
+        
+    def _map(self,
+             func,
+             args,
+             cores=None,
+             x_partition=1,
+             y_partition=1,
+             z_partition=1,
+             futures=None):
+
+        work_queue = Queue()
+
+        for arg in args:
+            work_queue.put(arg)
+
+            i=0
+        while not work_queue.empty():
+            work = work_queue.get()
+            while True:
+            for cluster in self.cluster:
+                    if cluster.free():
+                        futures[i] = self.start(func,
+                                                work,
+                                                cores,
+                                                x_partition,
+                                                y_partition,
+                                                z_partition,
+                                                queue = work_queue,
+                                                cluster = cluster)
+                        i+=1
+                        break
+                else:
+                    sleep(1)
+                    continue
+                break
+
+        
+
+    def start(self,
+              func,
+              args,
+              cores=None,
+              x_partition=1,
+              y_partition=1,
+              z_partition=1,
+              queue=None,
+              cluster=None):
+        
+        module   = inspect.getmodule(func).__name__
+        key      = module + "-" + func.__name__ + "-" +str(x_partition) + "-" + str(y_partition) + "-" + str(z_partition) + "-" + str(uuid.uuid4())
+        jsonfile = obj_to_json(args)
+        args     = [module, func.__name__, jsonfile, self.output, key]
+        
         if cores is not None:
-            if cores > self.cluster.cores:
+            if cores > cluster.cores:
                 raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
             else:
-                self.cluster._add_job_to_script(cores)
+                cluster._add_job_to_script(cores)
                 if x_partition*y_partition*z_partition != cores:
                     raise ValueError("Partition x y z must match x*y*z=cores")
                 else:
-                    self.cluster._add_partition_to_cmd(x_partition, y_partition, z_partition)
+                    cluster._add_partition_to_cmd(x_partition, y_partition, z_partition)
         else:
             raise ValueError("You must specify the number of cores you want to use")
 
-        self.cluster._add_args_to_cmd(args)
-        self.cluster.finalize_script()
-        
-        bashfile = self.cluster.job_file()
+        cluster._add_args_to_cmd(args)
+        cluster.finalize_script()
 
-        if isinstance(self.cluster, SLURMCluster):
+        bashfile = cluster.job_file()
+
+        if isinstance(cluster, SLURMCluster):
             output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
 
         job_id = output.split()[-1].decode()
@@ -157,52 +292,17 @@ class Client:
         print("Job : " + job_id+ " has been submited")
         os.remove(bashfile)
 
-        return Future(key, output=self.output, cluster=self.cluster, job_id=job_id)
-
-
-    def _submit(self,
-                ind,
-                func,
-                parameters,
-                cores=None,
-                x_partition=1,
-                y_partition=1,
-                z_partition=1):
-
-        key = func.__name__ + "-" + str(uuid.uuid4())
-        module   = inspect.getmodule(func).__name__
-        jsonfile = obj_to_json(parameters)
-        args     = [module, func.__name__, jsonfile, self.output, key]
-
-        if cores is not None:
-            if cores > self.cluster[ind].cores:
-                raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
-            else:
-                self.cluster[ind]._add_job_to_script(cores)
-                if x_partition*y_partition*z_partition != cores:
-                    raise ValueError("Partition x y z must match x*y*z=cores")
-                else:
-                    self.cluster[ind]._add_partition_to_cmd(x_partition, y_partition, z_partition)
-        else:
-            raise ValueError("You must specify the number of cores you want to use")
-
-        self.cluster[ind]._add_args_to_cmd(args)
-        self.cluster[ind].finalize_script()
+        future = Future(key, output=self.output, cluster=cluster, arg=parameters, job_id=job_id)
+        cluster.work = future
+        cluster.state = "Working"
         
-        bashfile = self.cluster[ind].job_file()
-        output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
-        job_id = output.split()[-1].decode()
-        
-        print("Job : " + job_id + " has been submited")
-        os.remove(bashfile)
-        
-        return Future(key, output=self.output, cluster=self.cluster[ind], job_id=job_id)
+        return future
 
 
 
     def scale(self, n=None):
         cluster_list = [self.cluster]
-        
+
         if n is not None:
             for i in range(n-1):
                 cluster_list.append(copy.deepcopy(self.cluster))
@@ -211,38 +311,6 @@ class Client:
 
 
 
-    def map(self,
-            func,
-            parameters,
-            cores=None,
-            x_partition=1,
-            y_partition=1,
-            z_partition=1):
-        
-        futures = []
-        nb_param = len(parameters)
-        nb_cluster = len(self.cluster)
-
-        for i in range(nb_param):
-            ind = i % nb_cluster
-            while True:
-                if self.cluster[ind].state == "Free":
-                    futures.append(self._submit(ind, 
-                                                func, 
-                                                parameters[i], 
-                                                cores,
-                                                x_partition,
-                                                y_partition,
-                                                z_partition))
-                    self.cluster[ind].state = "Working"
-                    break
-                else:
-                    sleep(1)
-                    futures[ind].check_state()
-            
-        return futures
-
-        
     def create_output(self):
         output = os.path.join(os.getcwd(),"output")
         if os.path.exists(output):
@@ -252,19 +320,43 @@ class Client:
         
         return output
 
+
     
-    def gather(self, futures):
-        i = 0
+    def gather(self, futures, retry=False):
         n = len(futures)
         results = [0]*n
-        while any([future.state in ["RUNNING", "PENDING"] for future in futures]):
-            if futures[i].state in ["RUNNING", "PENDING"]:
-                results[i] = futures[i]._result()
-            i+=1
-            if i == n:
-                i = 0
+        while any([result == 0] for result in results):
+            for i in range(n):
+                if future[i].state in ["RUNNING", "PENDING"]:
+                    results[i] = custom_future._result()
+                elif future[i].state == "ERROR" and retry == True:
+                    futures[i] = self.retry(custom_future)
+                    print("Job", custom_future.job_id, "has failed, relaunch...")
+                elif future[i].state == "ERROR" and retry == False:
+                    results[i] = custom_future._result()
 
         return results
+
+    
+    """
+    def retry(future):
+        key = future.key.split("-")
+
+        module = importlib.import_module(key[0])
+        func = getattr(module, key[1])
+        x_partition = int(key[2])
+        y_partition = int(key[3])
+        z_partition = int(key[4])
+        core = x_partition * y_partition * z_partition
+
+        future = self.submit(func,
+                             param,
+                             cores,
+                             x_partition,
+                             y_partition,
+                             z_partition)
+        return future
+    """
 
 
 
@@ -273,9 +365,11 @@ class Future:
                  key,
                  output=None,
                  cluster=None,
+                 arg=None,
                  job_id=None):
 
         self.key=key
+        self.arg=arg
         self.output=os.path.join(output, key+".txt")
         self.cluster=cluster
         self.state="PENDING"
@@ -334,15 +428,6 @@ class Future:
                     result = "err"
             err.close()
             return result
-
-
-    
-    def check_cluster_state(self):
-        job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).decode().split()
-        if self.job_id not in job_list:
-            self.cluster.state = "Free"
-            self.cluster.header = self.cluster.header[:-1]
-            self.run =  ""
 
     
     def getResult(self):

@@ -18,7 +18,8 @@ class Acquisition:
                  receivers_depth=None,
                  output=None,
                  **kwargs):
-
+        
+        self.xml=None
         self.limited_aperture=False
         self.boundary=boundary
 
@@ -33,12 +34,10 @@ class Acquisition:
         
         self.velocity_model=velocity_model
         self.aperture_boundary=boundary
+        
         if dt is not None:
-            self.dt=dt
-        else:
-            self.dt=dt
-            #self.dt=calculDt(velocity_model,
-                #boundary)
+            for shot in self.shots:
+                shot.dt = dt
 
         if output is not None:
             self.output=output
@@ -95,15 +94,6 @@ class Acquisition:
             acqs.append(deepcopy(self))
             acqs[i].shots = acqs[i].shots[ind:ind + nb_shot]
             
-            if isinstance(acqs[i].xml, list):
-                acqs[i].xml = acqs[i].xml[ind:ind + nb_shot]
-
-            if isinstance(acqs[i].velocity_model, list):
-                acqs[i].velocity_model = acqs[i].velocity_model[ind:ind + nb_shot]
-
-            if isinstance(acqs[i].dt, list):
-                acqs[i].dt = acqs[i].dt[ind:ind + nb_shot]
-
             ind = ind + nb_shot
             nb_shot_m1 = nb_shot_m1 - nb_shot
 
@@ -112,14 +102,49 @@ class Acquisition:
 
 
     def setDt(self, dt):
-        self.dt=dt
+        for shot in self.shots:
+            shot.dt=dt
 
 
-
+    #Can't use it for now
     def calculDt(self):
         if self.xml is None:
             raise ValueError("You must link the seismic acquisition with xml file to be able to calculte the simulation time step dt")
-        
+        else:
+            for shot in self.shots:
+                tree = ET.parse(shot.xml)
+                root = tree.getroot()
+
+                internal_mesh = [elem.attrib for elem in root.iter('InternalMesh')][0]
+
+                xCoords_str_list = internal_mesh['xCoords'].strip('').replace(',', ' ').replace('{','').replace('}','').split()
+                yCoords_str_list = internal_mesh['yCoords'].strip('').replace(',', ' ').replace('{','').replace('}','').split()
+                zCoords_str_list = internal_mesh['zCoords'].strip('').replace(',', ' ').replace('{','').replace('}','').split()
+
+                xCoords = [float(xCoords_str_list[0]), float(xCoords_str_list[1])]
+                yCoords = [float(yCoords_str_list[0]), float(yCoords_str_list[1])]
+                zCoords = [float(zCoords_str_list[0]), float(zCoords_str_list[1])]
+
+                x_nb_cells = int(internal_mesh['nx'].replace('{','').replace('}',''))
+                y_nb_cells = int(internal_mesh['ny'].replace('{','').replace('}',''))
+                z_nb_cells = int(internal_mesh['nz'].replace('{','').replace('}',''))
+
+                x = (xCoords[1] - xCoords[0])/x_nb_cells
+                y = (yCoords[1] - yCoords[0])/y_nb_cells
+                z = (zCoords[1] - zCoords[0])/z_nb_cells
+
+                minRadius = min(x/2, y/2, z/2)
+            
+                with open(shot.velocity_model,'r') as vf:
+                    minVelocity = float(vf.readline())
+                    for velocity in vf.readlines():
+                        if float(velocity) < minVelocity:
+                            minVelocity = float(velocity)
+                vf.close()
+
+                #Suppose space discretization is order 1
+                shot.dt = minRadius/minVelocity
+            
 
 
     def limitedAperture(self, aperture_dist):
@@ -133,17 +158,17 @@ class Acquisition:
         vtk = [elem.attrib for elem in root.iter('VTK')][0]
         events = [elem.attrib for elem in root.iter('PeriodicEvent')][2]
 
-        xCoords_str_list = internal_mesh['xCoords'].strip('').replace(',', ' ').split()
-        yCoords_str_list = internal_mesh['yCoords'].strip('').replace(',', ' ').split()
-        zCoords_str_list = internal_mesh['zCoords'].strip('').replace(',', ' ').split()
-        
-        xCoords = [float(xCoords_str_list[1]), float(xCoords_str_list[2])]
-        yCoords = [float(yCoords_str_list[1]), float(yCoords_str_list[2])]
-        zCoords = [float(zCoords_str_list[1]), float(zCoords_str_list[2])]
+        xCoords_str_list = internal_mesh['xCoords'].strip('').replace(',', ' ').replace('{','').replace('}','').split()
+        yCoords_str_list = internal_mesh['yCoords'].strip('').replace(',', ' ').replace('{','').replace('}','').split()
+        zCoords_str_list = internal_mesh['zCoords'].strip('').replace(',', ' ').replace('{','').replace('}','').split()
 
-        x_nb_cells = int(internal_mesh['nx'].split()[1])
-        y_nb_cells = int(internal_mesh['ny'].split()[1])
-        z_nb_cells = int(internal_mesh['nz'].split()[1])
+        xCoords = [float(xCoords_str_list[0]), float(xCoords_str_list[1])]
+        yCoords = [float(yCoords_str_list[0]), float(yCoords_str_list[1])]
+        zCoords = [float(zCoords_str_list[0]), float(zCoords_str_list[1])]
+
+        x_nb_cells = int(internal_mesh['nx'].replace('{','').replace('}',''))
+        y_nb_cells = int(internal_mesh['ny'].replace('{','').replace('}',''))
+        z_nb_cells = int(internal_mesh['nz'].replace('{','').replace('}',''))
         
         x_cells_boundary = np.append(np.arange(xCoords[0], xCoords[1], (xCoords[1]-xCoords[0])/x_nb_cells), xCoords[1])
         y_cells_boundary = np.append(np.arange(yCoords[0], yCoords[1], (yCoords[1]-yCoords[0])/y_nb_cells), yCoords[1])
@@ -153,9 +178,6 @@ class Acquisition:
                                              x_cells_boundary, 
                                              y_cells_boundary, 
                                              z_cells_boundary)
-        
-        for i in range(len(self.shots)):
-            self.shots[i].receivers.keep_inside_domain(self.aperture_boundary[i])
         
         if os.path.exists("limitedAperture") == False:
             os.mkdir("limitedAperture")
@@ -186,24 +208,21 @@ class Acquisition:
             vf.close()
 
 
-        xml = []
-        velocity_model = []
-        shot_ind = 0
-        for boundary in self.aperture_boundary:
-            nx = int(x_nb_cells*(boundary[0][1]-boundary[0][0])/(xCoords[1]-xCoords[0]))
-            ny = int(y_nb_cells*(boundary[1][1]-boundary[1][0])/(yCoords[1]-yCoords[0]))
-            nz = int(z_nb_cells*(boundary[2][1]-boundary[2][0])/(zCoords[1]-zCoords[0]))
+        for shot in self.shots:
+            nx = int(x_nb_cells*(shot.boundary[0][1]-shot.boundary[0][0])/(xCoords[1]-xCoords[0]))
+            ny = int(y_nb_cells*(shot.boundary[1][1]-shot.boundary[1][0])/(yCoords[1]-yCoords[0]))
+            nz = int(z_nb_cells*(shot.boundary[2][1]-shot.boundary[2][0])/(zCoords[1]-zCoords[0]))
             
-            internal_mesh['xCoords'] = "{"+str(boundary[0][0])+","+str(boundary[0][1])+"}"
-            internal_mesh['yCoords'] = "{"+str(boundary[1][0])+","+str(boundary[1][1])+"}"
-            internal_mesh['zCoords'] = "{"+str(boundary[2][0])+","+str(boundary[2][1])+"}"
+            internal_mesh['xCoords'] = "{"+str(shot.boundary[0][0])+","+str(shot.boundary[0][1])+"}"
+            internal_mesh['yCoords'] = "{"+str(shot.boundary[1][0])+","+str(shot.boundary[1][1])+"}"
+            internal_mesh['zCoords'] = "{"+str(shot.boundary[2][0])+","+str(shot.boundary[2][1])+"}"
 
             internal_mesh['nx'] = "{"+str(nx)+"}"
             internal_mesh['ny'] = "{"+str(ny)+"}"
             internal_mesh['nz'] = "{"+str(nz)+"}"
             
-            box['xMin'] = "{"+str(boundary[0][0]-0.01)+","+str(boundary[1][0]-0.01)+","+str(boundary[2][1]-0.01)+"}"
-            box['xMax'] = "{"+str(boundary[0][1]+0.01)+","+str(boundary[1][1]+0.01)+","+str(boundary[2][1]+0.01)+"}"
+            box['xMin'] = "{"+str(shot.boundary[0][0]-0.01)+","+str(shot.boundary[1][0]-0.01)+","+str(shot.boundary[2][1]-0.01)+"}"
+            box['xMax'] = "{"+str(shot.boundary[0][1]+0.01)+","+str(shot.boundary[1][1]+0.01)+","+str(shot.boundary[2][1]+0.01)+"}"
 
             if isinstance(self.velocity_model, str):
                 xlocal=[]
@@ -213,22 +232,22 @@ class Acquisition:
                 keep_line=[]
                 localToGlobal=[]
                 for i in range(lx):
-                    if float(xlin[i])>boundary[0][0] or float(xlin[i])<boundary[0][1]:
+                    if float(xlin[i])>shot.boundary[0][0] or float(xlin[i])<shot.boundary[0][1]:
                         xlocal.append(xlin[i])
                         for j in range(ly):
-                            if float(ylin[j])>boundary[1][0] or float(ylin[j])<boundary[1][1]:
+                            if float(ylin[j])>shot.boundary[1][0] or float(ylin[j])<shot.boundary[1][1]:
                                 if ylin[j] not in ylocal:
                                     ylocal.append(ylin[j])
                                 for k in range(lz):
-                                    if float(zlin[k])>boundary[2][0] or float(zlin[k])<boundary[2][1]:
+                                    if float(zlin[k])>shot.boundary[2][0] or float(zlin[k])<shot.boundary[2][1]:
                                         if zlin[k] not in zlocal:
                                             zlocal.append(zlin[k])
                                         keep_line.append(velocity_model_value[i*ly*lz+j*lz+k])
                                         localToGlobal.append(i*ly*lz+j*lz+k)
                 
-                xlin_file = self.velocity_model.split("_velModel")[0]+"_xlin"+self.shots[shot_ind].id+".geos"
-                ylin_file = self.velocity_model.split("_velModel")[0]+"_ylin"+self.shots[shot_ind].id+".geos"
-                zlin_file = self.velocity_model.split("_velModel")[0]+"_zlin"+self.shots[shot_ind].id+".geos"
+                xlin_file = self.velocity_model.split("_velModel")[0]+"_xlin"+shot.id+".geos"
+                ylin_file = self.velocity_model.split("_velModel")[0]+"_ylin"+shot.id+".geos"
+                zlin_file = self.velocity_model.split("_velModel")[0]+"_zlin"+shot.id+".geos"
 
                 with open(xlin_file,'w') as xfla:
                     for x in xlocal:
@@ -243,7 +262,7 @@ class Acquisition:
                         zfla.write(z)
                 zfla.close()
 
-                velocity_file = self.velocity_model.split('.')[0] + self.shots[shot_ind].id+ ".geos"
+                velocity_file = self.velocity_model.split('.')[0] + shot.id+ ".geos"
 
                 max_vel=0
                 with open(velocity_file, 'w') as vfla:
@@ -255,19 +274,15 @@ class Acquisition:
 
                 tablefunction['coordinateFiles']="{"+xlin_file+","+ylin_file+","+zlin_file+"}"
                 tablefunction['voxelFile'] = velocity_file
-                velocity_model.append(velocity_file)
+                shot.velocity_model = velocity_file
                 
-            vtk['name'] = 'vtkOutput'+str(self.shots[shot_ind].id)
-            events['target'] = '/Outputs/vtkOutput'+str(self.shots[shot_ind].id)
+            vtk['name'] = 'vtkOutput'+str(shot.id)
+            events['target'] = '/Outputs/vtkOutput'+str(shot.id)
 
-            xmlfile = os.path.join("limitedAperture/", "limited_aperture_Shot"+str(self.shots[shot_ind].id)+".xml")
+            xmlfile = os.path.join("limitedAperture/", "limited_aperture_Shot"+str(shot.id)+".xml")
             tree.write(xmlfile)
             
-            xml.append(xmlfile)
-            shot_ind+=1
-        
-        self.xml = xml
-        self.velocity_model = velocity_model
+            shot.xml = xmlfile
 
 
             
@@ -276,7 +291,6 @@ class Acquisition:
                                         x_cells_boundary, 
                                         y_cells_boundary, 
                                         z_cells_boundary):
-        self.aperture_boundary=[]
 
         for shot in self.shots:
             nx = x_cells_boundary.size
@@ -304,12 +318,15 @@ class Acquisition:
             zmax = z_cells_boundary[nz-1]
             
             limited_aperture = [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
-            self.aperture_boundary.append(deepcopy(limited_aperture))
-
+            
+            shot.boundary = deepcopy(limited_aperture)
+            shot.receivers.keep_inside_domain(limited_aperture)
 
             
     def add_xml(self, xmlfile):
         self.xml = xmlfile
+        for shot in self.shots:
+            shot.xml = xmlfile
 
                 
 
@@ -430,12 +447,6 @@ class EQUISPACEDAcquisition(Acquisition):
                  source_depth=None,
                  receivers_depth=None):
 
-        super().__init__(limited_aperture=limited_aperture,
-                         boundary=boundary,
-                         source=source,
-                         velocity_model=velocity_model,
-                         dt=dt)
-
         if start_source_pos is not None and start_receivers_pos is not None:
             self.acquisition(wavelet=source,
                              start_source_pos=start_source_pos,
@@ -446,6 +457,13 @@ class EQUISPACEDAcquisition(Acquisition):
                              number_of_receivers=number_of_receivers,
                              source_depth=source_depth,
                              receivers_depth=receivers_depth)
+
+
+        super().__init__(limited_aperture=limited_aperture,
+                         boundary=boundary,
+                         source=source,
+                         velocity_model=velocity_model,
+                         dt=dt)
 
 
     def acquisition(self,
@@ -838,6 +856,10 @@ class Shot:
         self.source = source
         self.receivers = receivers
         self.flag = "Undone"
+        self.dt = None
+        self.xml = None
+        self.velocity_model = None
+        self.boundary = None
 
         if shot_id is not None:
             self.id = shot_id

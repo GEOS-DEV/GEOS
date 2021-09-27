@@ -15,10 +15,7 @@ json.close()
 
 acquisition = Acquisition().construct_from_dict(**dict)
 
-if isinstance(acquisition.xml, list):
-    xml = acquisition.xml[0]
-else:
-    xml = acquisition.xml
+xml = acquisition.shots[0].xml
 
 if rank==0:
     time.sleep(1)
@@ -30,7 +27,7 @@ if rank==0:
 
 
 module_str = sys.argv[7]
-func_str = sys.argv[31]
+func_str = sys.argv[8]
 
 module = importlib.import_module(module_str)
 func = getattr(module, func_str)

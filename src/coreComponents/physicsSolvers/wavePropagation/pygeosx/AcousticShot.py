@@ -67,10 +67,9 @@ def acoustic_shots(rank, problem, acquisition):
     maxT       = problem.get_wrapper("Events/maxTime").value()
     cycle_freq = problem.get_wrapper("Events/python/cycleFrequency").value()
     cycle      = problem.get_wrapper("Events/python/lastCycle").value()
-    cycle2     = problem.get_wrapper("Events/cycle").value()
     curr_time  = problem.get_wrapper("Events/time").value()
 
-    dt            = acquisition.dt
+    dt            = acquisition.shots[0].dt
     dt_geosx[0]   = dt
     maxCycle      = int(ceil(maxT[0]/dt))
     cycle_freq[0] = maxCycle
@@ -107,7 +106,6 @@ def acoustic_shots(rank, problem, acquisition):
         #Save pressure
         if cycle[0] !=0 :
             pressure_at_receivers[:, :] = pressure_geosx.to_numpy().transpose()
-            print(pressure_at_receivers)
             #Segy export and flag update
             if outputSismoTrace == 1 :
                 segyFile = os.path.join(acquisition.output, "pressure_Shot"+ acquisition.shots[ishot].id + ".sgy")
@@ -118,20 +116,27 @@ def acoustic_shots(rank, problem, acquisition):
 
             acquisition.shots[ishot].flag = "Done"
 
-            #Reset time to -dt and pressure to 0
-            curr_time[0]               = -dt
-            cycle_freq[0]              = maxCycle + 1
-            #cycle2[0]                  = 0
+            
+            #Reset pressure values to 0
             pressure_nm1.to_numpy()[:] = 0.0
             pressure_n.to_numpy()[:]   = 0.0
             pressure_np1.to_numpy()[:] = 0.0
             indexSismoTrace[0]         = 0
 
-            #Increment shot
-            ishot += 1
+            #Increment shot, update dt and reset current time to -dt 
             if ishot < nb_shot:
                 if rank==0:
                     print_shot_config(acquisition.shots, ishot)
+                    
+                dt            = acquisition.shots[ishot].dt
+                dt_geosx[0]   = dt
+                maxCycle      = int(ceil(maxT[0]/dt))
+                cycle_freq[0] = maxCycle
+                maxT[0]       = (maxCycle+1)*dt
+                nsamples[0]   = int(maxT[0]/dt_sismo)
+                curr_time[0]  = -dt
+
+                pressure_at_receivers = np.zeros((nsamples[0], acquisition.shots[ishot].receivers.n))
 
                 #Set new receivers and source positions in GEOSX
                 src_pos          = acquisition.shots[ishot].source.coords
