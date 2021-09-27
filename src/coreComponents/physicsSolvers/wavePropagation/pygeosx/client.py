@@ -119,8 +119,8 @@ class SLURMCluster:
         if self.work is not None:
             job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).decode().split()
             if self.work.job_id not in job_list:
-                self.cluster.state = "Free"
-                self.cluster.header = self.cluster.header[:-1]
+                self.state = "Free"
+                self.header = self.header[:-1]
                 self.run =  ""
                 return True
             else:
@@ -233,7 +233,7 @@ class Client:
         while not work_queue.empty():
             work = work_queue.get()
             while True:
-            for cluster in self.cluster:
+                for cluster in self.cluster:
                     if cluster.free():
                         futures[i] = self.start(func,
                                                 work,
@@ -264,8 +264,8 @@ class Client:
         
         module   = inspect.getmodule(func).__name__
         key      = module + "-" + func.__name__ + "-" +str(x_partition) + "-" + str(y_partition) + "-" + str(z_partition) + "-" + str(uuid.uuid4())
-        jsonfile = obj_to_json(args)
-        args     = [module, func.__name__, jsonfile, self.output, key]
+        jsonfile = args_to_json(args)
+        cmd_args = [module, func.__name__, jsonfile, self.output, key]
         
         if cores is not None:
             if cores > cluster.cores:
@@ -279,7 +279,7 @@ class Client:
         else:
             raise ValueError("You must specify the number of cores you want to use")
 
-        cluster._add_args_to_cmd(args)
+        cluster._add_args_to_cmd(cmd_args)
         cluster.finalize_script()
 
         bashfile = cluster.job_file()
@@ -292,7 +292,7 @@ class Client:
         print("Job : " + job_id+ " has been submited")
         os.remove(bashfile)
 
-        future = Future(key, output=self.output, cluster=cluster, arg=parameters, job_id=job_id)
+        future = Future(key, output=self.output, cluster=cluster, args=args, job_id=job_id)
         cluster.work = future
         cluster.state = "Working"
         
@@ -365,11 +365,11 @@ class Future:
                  key,
                  output=None,
                  cluster=None,
-                 arg=None,
+                 args=None,
                  job_id=None):
 
         self.key=key
-        self.arg=arg
+        self.args=args
         self.output=os.path.join(output, key+".txt")
         self.cluster=cluster
         self.state="PENDING"

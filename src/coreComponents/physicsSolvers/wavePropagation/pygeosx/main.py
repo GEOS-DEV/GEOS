@@ -30,8 +30,8 @@ def main():
     #acq.limitedAperture(2000)
 
     acqs = acq.split(3)
-
-    cluster = SLURMCluster(job_name="seismicAcquisition", nodes=1, cores=4, 
+    
+    cluster = SLURMCluster(job_name="seismicAcquisition", nodes=1, cores=16, 
                            env_extra=["physics/geosx_deps","physics/pygeosx"], python="$Python3_EXECUTABLE",
                            node_name="bora", walltime="03:00:00")
 

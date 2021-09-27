@@ -1,4 +1,4 @@
-import json as j
+import json
 import argparse
 from munch import munchify
 import os
@@ -21,6 +21,23 @@ def parse_args():
 
     return args
 
+
+def args_to_json(args):
+    tempfile = str(uuid.uuid4()) + ".json"
+    dict = {}
+    i=0
+    if isinstance(args,(list,tuple)):
+        for arg in args:
+            dict["arg"+str(i)] = obj_to_dict(arg)
+            i+=1
+    else:
+        dict["arg0"] = obj_to_dict(args)
+
+    with open(tempfile, 'w+') as f:
+        json.dump(dict,f)
+        f.close()
+
+    return tempfile
 
 
 def obj_to_dict(obj):
@@ -80,11 +97,11 @@ def obj_to_json(obj):
     tempfile = str(uuid.uuid4()) + ".json"
     dic = obj_to_dict(obj)
     with open(tempfile, 'a') as jfile:
-        j.dump(dic, jfile)
+        json.dump(dic, jfile)
 
     return tempfile
 
 
 def json_to_dict(jfile):
-    dic = j.load(jfile)
+    dic = json.load(jfile)
     return dic

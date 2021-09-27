@@ -9,13 +9,27 @@ from acquisition import Acquisition
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
+
+with open(sys.argv[9], 'r') as f:
+    dict_args = json.load(f)
+f.close()
+args = []
+
+for k, v in dict_args.items():
+    if not isinstance(v, dict):
+        args.append(v)
+    else:
+        args.append(munchify(v))
+
+"""
 json = open(sys.argv[9])
 dict = json_to_dict(json)
 json.close()
 
 acquisition = Acquisition().construct_from_dict(**dict)
+"""
 
-xml = acquisition.shots[0].xml
+xml = args[0].shots[0].xml
 
 if rank==0:
     time.sleep(1)
@@ -38,7 +52,7 @@ for arg in sys.argv[1:7]:
 
 problem = pygeosx.initialize(rank, geosx_argv)
 pygeosx.apply_initial_conditions()
-result = func(rank, problem, acquisition)
+result = func(*args)
 
 if rank == 0:
     with open(outputFile, 'w') as f:
