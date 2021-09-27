@@ -27,6 +27,7 @@ namespace geosx
 
 class PhysicsSolverManager;
 class DomainPartition;
+class GeometricObjectManager;
 namespace constitutive
 {
 class ConstitutiveManager;
