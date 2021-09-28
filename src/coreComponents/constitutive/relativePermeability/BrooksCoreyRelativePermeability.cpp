@@ -56,54 +56,54 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
 
 }
 
-BrooksCoreyRelativePermeability::~BrooksCoreyRelativePermeability()
-{}
-
-namespace
-{
-
-template< typename ARRAY >
-void checkInputSize( ARRAY const & array, localIndex const expected, string const & attr )
-{
-  GEOSX_THROW_IF_NE_MSG( array.size(), expected,
-                         "BrooksCoreyRelativePermeability: invalid number of entries in " << attr << " attribute",
-                         InputError );
-
-}
-
-}
-
 void BrooksCoreyRelativePermeability::postProcessInput()
 {
   RelativePermeabilityBase::postProcessInput();
 
-  localIndex const numPhases = numFluidPhases();
-
-  checkInputSize( m_phaseMinVolumeFraction, numPhases, viewKeyStruct::phaseMinVolumeFractionString() );
-  checkInputSize( m_phaseRelPermExponent, numPhases, viewKeyStruct::phaseRelPermExponentString() );
-  checkInputSize( m_phaseRelPermMaxValue, numPhases, viewKeyStruct::phaseRelPermMaxValueString() );
+  auto const checkInputSize = [&]( auto const & array, auto const & attribute )
+  {
+    GEOSX_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
+                           GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                           InputError );
+  };
+  checkInputSize( m_phaseMinVolumeFraction, viewKeyStruct::phaseMinVolumeFractionString() );
+  checkInputSize( m_phaseRelPermExponent, viewKeyStruct::phaseRelPermExponentString() );
+  checkInputSize( m_phaseRelPermMaxValue, viewKeyStruct::phaseRelPermMaxValueString() );
 
   m_volFracScale = 1.0;
-  for( localIndex ip = 0; ip < numPhases; ++ip )
+  for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
-    GEOSX_THROW_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
-                    "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip],
-                    InputError );
+    auto const errorMsg = [&]( auto const & attribute )
+    {
+      return GEOSX_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
+    };
+
+    GEOSX_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
+                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
+                           InputError );
+    GEOSX_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
+                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
+                           InputError );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
-    GEOSX_THROW_IF( m_phaseRelPermExponent[ip] < 0.0,
-                    "BrooksCoreyRelativePermeability: invalid exponent value: " << m_phaseRelPermExponent[ip],
-                    InputError );
-
-    GEOSX_THROW_IF( m_phaseRelPermMaxValue[ip] < 0.0 || m_phaseRelPermMaxValue[ip] > 1.0,
-                    "BrooksCoreyRelativePermeability: invalid maximum value: " << m_phaseRelPermMaxValue[ip],
-                    InputError );
+    GEOSX_THROW_IF_LT_MSG( m_phaseRelPermExponent[ip], 0.0,
+                           errorMsg( viewKeyStruct::phaseRelPermExponentString() ),
+                           InputError );
+    GEOSX_THROW_IF_LT_MSG( m_phaseRelPermMaxValue[ip], 0.0,
+                           errorMsg( viewKeyStruct::phaseRelPermMaxValueString() ),
+                           InputError );
+    GEOSX_THROW_IF_GT_MSG( m_phaseRelPermMaxValue[ip], 1.0,
+                           errorMsg( viewKeyStruct::phaseRelPermMaxValueString() ),
+                           InputError );
   }
 
-  GEOSX_THROW_IF( m_volFracScale < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0", InputError );
+  GEOSX_THROW_IF_LT_MSG( m_volFracScale, 0.0,
+                         GEOSX_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
+                         InputError );
 }
 
-BrooksCoreyRelativePermeability::KernelWrapper BrooksCoreyRelativePermeability::createKernelWrapper()
+BrooksCoreyRelativePermeability::KernelWrapper
+BrooksCoreyRelativePermeability::createKernelWrapper()
 {
   return KernelWrapper( m_phaseMinVolumeFraction,
                         m_phaseRelPermExponent,
