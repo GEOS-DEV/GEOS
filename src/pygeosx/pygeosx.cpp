@@ -32,6 +32,10 @@
 #pragma GCC diagnostic pop
 #include <chrono>
 
+// Acoustic Solver
+//#include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.cpp"
+
+
 namespace geosx
 {
 
@@ -309,6 +313,40 @@ static bool addExitHandler( PyObject * module )
   return returnval != nullptr;
 }
 
+/*
+PyObject * sismo(PyObject * self, PyObject * args ) noexcept
+{
+  GEOSX_UNUSED_VAR( self);
+  PyObject * p_rcvs;
+  if( !PyArg_ParseTuple( args, "O", &p_rcvs ) )
+  {
+    return nullptr;
+  }
+  geosx::saveSismo( p_rcvs );
+  Py_RETURN_NONE;
+}
+*/
+
+PyObject * dummy(PyObject * self, PyObject * args) noexcept
+{
+  GEOSX_UNUSED_VAR(self);
+  //geosx::arrayView2d<geosx::real64> const  p_rcvs;
+  PyObject * lvarray;
+  if(!PyArg_ParseTuple( args, "O", &lvarray ) )
+  {
+    GEOSX_LOG("error");
+  }
+  /*
+  for (int i=0 ; i < p_rcvs.size() ; i++)
+    {
+      for (int j=0 ; j < p_rcvs[i].size() ; j++)
+	{
+	  std::cout<<p_rcvs[i][j];
+	}
+    }
+  */
+  Py_RETURN_NONE;
+}
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 /**
@@ -320,6 +358,8 @@ static PyMethodDef pygeosxFuncs[] = {
   { "apply_initial_conditions", geosx::applyInitialConditions, METH_NOARGS, geosx::applyInitialConditionsDocString },
   { "run", geosx::run, METH_NOARGS, geosx::runDocString },
   { "_finalize", geosx::finalize, METH_NOARGS, geosx::finalizeDocString },
+  //  { "saveSismo", sismo, METH_VARARGS, "save pressure at receivers" },
+  {"dummy", dummy, METH_VARARGS, "print lvArray object" },
   { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };
 
@@ -385,3 +425,10 @@ PyInit_pygeosx()
   // Since we return module we don't want to decrease the reference count.
   return module.release();
 }
+
+
+
+
+
+
+//=====================================================================================================================================
