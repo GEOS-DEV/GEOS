@@ -4,15 +4,15 @@
   <Tasks>
     <TriaxialDriver
       name="triaxialDriver"
-      material="drucker"
-      mode="mixedControl" 
+      material="elasticIPD"
+      mode="strainControl" 
       axialControl="strainFunction"
-      radialControl="stressFunction"
+      radialControl="strainFunction"
       initialStress="-1.0"
-      steps="40" 
-      output="none" 
-      baseline="testTriaxial_druckerPragerExtended.txt" 
-      logLevel="0" />
+      steps="20"
+      logLevel="0"
+      output="none"
+      baseline="testTriaxial_elasticIsotropicPressureDependent.txt" />
   </Tasks>
 
   <Events
@@ -23,30 +23,23 @@
   </Events>
 
   <Constitutive>
-    <ExtendedDruckerPrager
-      name="drucker"
+
+    <ElasticIsotropicPressureDependent
+      name="elasticIPD"
       defaultDensity="2700"
-      defaultBulkModulus="500"
-      defaultShearModulus="300"
-      defaultCohesion="0.0"
-      defaultInitialFrictionAngle="15.27"
-      defaultResidualFrictionAngle="23.05"
-      defaultDilationRatio="1.0"
-      defaultHardening="0.001"/>
+      defaultRefPressure="-1.0"
+      defaultRefStrainVol="0"
+      defaultRecompressionIndex="0.003"
+      defaultShearModulus="200"/>
+
   </Constitutive>
 
   <Functions>
     <TableFunction
       name="strainFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 3.0, 4.0, 7.0, 8.0 }"
-      values="{ 0, -0.003, -0.002, -0.005, -0.004 }"/>
-
-    <TableFunction
-      name="stressFunction"
-      inputVarNames="{ time }"
-      coordinates="{ 0.0, 8.0 }"
-      values="{ -1.0, -1.0 }"/>
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0, -0.02}"/>
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
@@ -62,4 +55,5 @@
       nz="{ 1 }"
       cellBlockNames="{ cellBlock01 }"/>
   </Mesh>
+
 </Problem>
