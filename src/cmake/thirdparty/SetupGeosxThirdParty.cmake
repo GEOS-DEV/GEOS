@@ -547,6 +547,22 @@ else()
 endif()
 
 ################################
+# FMT
+################################
+if(DEFINED FMT_DIR)
+    message(STATUS "FMT_DIR = ${FMT_DIR}")
+
+    find_package(fmt REQUIRED
+                 PATHS ${FMT_DIR}
+                 NO_DEFAULT_PATH)
+
+    set(ENABLE_FMT ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt)
+else()
+    message(FATAL_ERROR "GEOSX requires {fmt}, set FMT_DIR to the {fmt} installation directory.")
+endif()
+
+################################
 # uncrustify
 ################################
 if(UNCRUSTIFY_FOUND)

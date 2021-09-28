@@ -610,13 +610,7 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
       bool computeResidual = true;
       for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
       {
-        if( getLogLevel() >= 1 && logger::internal::rank==0 )
-        {
-          char output[55] = {0};
-          sprintf( output, "    Attempt: %2d, ActiveSetIter: %2d ; NewtonIter: %2d ; ",
-                   dtAttempt, activeSetIter, newtonIter );
-          std::cout<<output<<std::endl;
-        }
+        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Attempt: {:2}, ActiveSetIter: {:2} ; NewtonIter: {:2} ; ", dtAttempt, activeSetIter, newtonIter ) );
 
         // zero out matrix/rhs before assembly
         m_localMatrix.zero();
@@ -656,14 +650,11 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
         {
           if( newtonIter!=0 )
           {
-            char output[46] = {0};
-            sprintf( output,
-                     "Last LinSolve(iter,tol) = (%4d, %4.2e) ; ",
-                     m_linearSolverResult.numIterations,
-                     m_linearSolverResult.residualReduction );
-            std::cout<<output;
+            std::cout << GEOSX_FMT( "Last LinSolve(iter,tol) = ({:4}, {:4.2e}) ; ",
+                                    m_linearSolverResult.numIterations,
+                                    m_linearSolverResult.residualReduction );
           }
-          std::cout<<std::endl;
+          std::cout << std::endl;
         }
 
         // if the residual norm is less than the Newton tolerance we denote that we have
@@ -912,9 +903,7 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
-      char output[100];
-      sprintf( output, "        Line search @ %0.3f:      ", cumulativeScale );
-      std::cout<<output;
+      std::cout << GEOSX_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
 
     // get residual norm
@@ -1108,13 +1097,10 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
     globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
   }
 
-  char output[94] = {0};
-  sprintf( output,
-           "( Rdisplacement, Rtraction, Rtotal ) = ( %15.6e, %15.6e, %15.6e );",
-           globalResidualNorm[0],
-           globalResidualNorm[1],
-           globalResidualNorm[2] );
-  GEOSX_LOG_LEVEL_RANK_0( 1, output );
+  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} );",
+                                        globalResidualNorm[0],
+                                        globalResidualNorm[1],
+                                        globalResidualNorm[2] ) );
 
   return globalResidualNorm[2];
 }
@@ -2371,18 +2357,9 @@ void LagrangianContactSolver::computeFractureStateStatistics( DomainPartition co
   numSlip  = totalCounter[1];
   numOpen  = totalCounter[2];
 
-  char output[108] = {0};
-  sprintf( output,
-           " Number of element for each fracture state:"
-#if defined(GEOSX_USE_HYPRE_CUDA) && defined(GEOSX_LA_INTERFACE_HYPRE)
-           " stick: %12i | slip:  %12i | open:  %12i",
-#else
-           " stick: %12lli | slip:  %12lli | open:  %12lli",
-#endif
-           numStick,
-           numSlip,
-           numOpen );
-  GEOSX_LOG_RANK_0( output );
+  GEOSX_LOG_RANK_0( GEOSX_FMT( " Number of element for each fracture state:"
+                               " stick: {:12} | slip:  {:12} | open:  {:12}",
+                               numStick, numSlip, numOpen ) );
 }
 
 void LagrangianContactSolver::solveSystem( DofManager const & dofManager,

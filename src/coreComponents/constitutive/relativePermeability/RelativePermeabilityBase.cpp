@@ -26,23 +26,6 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-namespace
-{
-
-integer toPhaseType( string const & lookup, string const & groupName )
-{
-  static unordered_map< string, integer > const phaseDict =
-  {
-    { "gas", RelativePermeabilityBase::PhaseType::GAS },
-    { "oil", RelativePermeabilityBase::PhaseType::OIL },
-    { "water", RelativePermeabilityBase::PhaseType::WATER }
-  };
-  return findOption( phaseDict, lookup, RelativePermeabilityBase::viewKeyStruct::phaseNamesString(), groupName );
-}
-
-} // namespace
-
-
 RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
@@ -65,16 +48,30 @@ void RelativePermeabilityBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   integer const numPhases = numFluidPhases();
-  GEOSX_THROW_IF( numPhases< 2 || numPhases > MAX_NUM_PHASES,
-                  getFullName() << ": number of fluid phases must be between 2 and " << MAX_NUM_PHASES << ", got " << numPhases,
-                  InputError );
+  GEOSX_THROW_IF_LT_MSG( numPhases, 2,
+                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
+                         InputError );
+  GEOSX_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
+                         InputError );
 
   m_phaseTypes.resize( numPhases );
   m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );
 
+  auto const toPhaseType = [&]( string const & lookup )
+  {
+    static unordered_map< string, integer > const phaseDict =
+    {
+      { "gas", PhaseType::GAS },
+      { "oil", PhaseType::OIL },
+      { "water", PhaseType::WATER }
+    };
+    return findOption( phaseDict, lookup, viewKeyStruct::phaseNamesString(), getFullName() );
+  };
+
   for( integer ip = 0; ip < numPhases; ++ip )
   {
-    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip], getFullName() );
+    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip] );
     m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
 

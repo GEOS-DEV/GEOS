@@ -77,8 +77,6 @@ public:
 
   BrooksCoreyRelativePermeability( string const & name, dataRepository::Group * const parent );
 
-  virtual ~BrooksCoreyRelativePermeability() override;
-
 //START_SPHINX_INCLUDE_00
   static string catalogName() { return "BrooksCoreyRelativePermeability"; }
 
@@ -100,10 +98,6 @@ public:
     static constexpr char const * phaseRelPermExponentString() { return "phaseRelPermExponent"; }
     static constexpr char const * phaseRelPermMaxValueString() { return "phaseRelPermMaxValue"; }
     static constexpr char const * volFracScaleString() { return "volFracScale"; }
-
-    dataRepository::ViewKey phaseMinVolumeFraction = { phaseMinVolumeFractionString() };
-    dataRepository::ViewKey phaseRelPermExponent   = { phaseRelPermExponentString() };
-    dataRepository::ViewKey phaseRelPermMaxValue   = { phaseRelPermMaxValueString() };
   } vieKeysBrooksCoreyRelativePermeability;
 //END_SPHINX_INCLUDE_01
 

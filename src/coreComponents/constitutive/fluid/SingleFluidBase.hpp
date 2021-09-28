@@ -156,11 +156,6 @@ public:
    */
   SingleFluidBase( string const & name, Group * const parent );
 
-  /**
-   * @brief Destructor.
-   */
-  virtual ~SingleFluidBase() override;
-
   // *** ConstitutiveBase interface
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,

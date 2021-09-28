@@ -1146,19 +1146,23 @@ void HypreMatrix::print( std::ostream & os ) const
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  int const this_mpi_process = MpiWrapper::commRank( getComm() );
-  int const n_mpi_process = MpiWrapper::commSize( getComm() );
+  int const myRank = MpiWrapper::commRank( getComm() );
+  int const numProcs = MpiWrapper::commSize( getComm() );
   char str[77];
 
-  if( this_mpi_process == 0 )
+  constexpr char const lineFormat[] = "{:>11}{:>18}{:>18}{:>28.16e}\n";
+  constexpr char const headFormat[] = "{:>11}{:>18}{:>18}{:>28}\n";
+
+  if( myRank == 0 )
   {
-    os << "MPI_Process         GlobalRowID         GlobalColID                   Value" << std::endl;
+    GEOSX_FMT_TO( str, sizeof( str ), headFormat, "MPI_Process", "GlobalRowID", "GlobalColID", "Value" );
+    os << str;
   }
 
-  for( int iRank = 0; iRank < n_mpi_process; iRank++ )
+  for( int rank = 0; rank < numProcs; ++rank )
   {
     MpiWrapper::barrier( getComm() );
-    if( iRank == this_mpi_process )
+    if( rank == myRank )
     {
       globalIndex const firstRowID = ilower();
       globalIndex const firstDiagColID = jlower();
@@ -1178,31 +1182,20 @@ void HypreMatrix::print( std::ostream & os ) const
       {
         for( HYPRE_Int j = diag_IA[i]; j < diag_IA[i + 1]; ++j )
         {
-
-          sprintf( str,
-#ifdef GEOSX_USE_HYPRE_CUDA
-                   "%i%20i%20i%24.10e\n",
-#else
-                   "%i%20lli%20lli%24.10e\n",
-#endif
-                   iRank,
-                   firstRowID + LvArray::integerConversion< globalIndex >( i ),
-                   firstDiagColID + LvArray::integerConversion< globalIndex >( diag_JA[j] ),
-                   ptr_diag_data[j] );
+          GEOSX_FMT_TO( str, sizeof( str ), lineFormat,
+                        rank,
+                        firstRowID + i,
+                        firstDiagColID + diag_JA[j],
+                        ptr_diag_data[j] );
           os << str;
         }
         for( HYPRE_Int j = offdiag_IA[i]; j < offdiag_IA[i + 1]; ++j )
         {
-          sprintf( str,
-#ifdef GEOSX_USE_HYPRE_CUDA
-                   "%i%20i%20i%24.10e\n",
-#else
-                   "%i%20lli%20lli%24.10e\n",
-#endif
-                   iRank,
-                   firstRowID + LvArray::integerConversion< globalIndex >( i ),
-                   col_map_offdiag[ offdiag_JA[j] ],
-                   ptr_offdiag_data[j] );
+          GEOSX_FMT_TO( str, sizeof( str ), lineFormat,
+                        rank,
+                        firstRowID + i,
+                        col_map_offdiag[offdiag_JA[j]],
+                        ptr_offdiag_data[j] );
           os << str;
         }
       }

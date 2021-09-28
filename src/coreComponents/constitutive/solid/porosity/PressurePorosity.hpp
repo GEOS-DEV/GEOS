@@ -83,11 +83,6 @@ class PressurePorosity : public PorosityBase
 public:
   PressurePorosity( string const & name, Group * const parent );
 
-  virtual ~PressurePorosity() override;
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 

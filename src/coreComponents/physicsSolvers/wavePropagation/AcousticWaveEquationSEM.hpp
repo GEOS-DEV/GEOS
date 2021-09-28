@@ -165,7 +165,7 @@ private:
    * @param val_pressure value of the pressure for isismo
    * @param filename name of the output file
    */
-  void saveSismo( localIndex isismo, real64 val_pressure, char *filename );
+  void saveSismo( localIndex isismo, real64 val_pressure, string const & filename );
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;

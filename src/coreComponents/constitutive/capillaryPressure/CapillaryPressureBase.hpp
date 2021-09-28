@@ -108,8 +108,6 @@ public:
   CapillaryPressureBase( string const & name,
                          dataRepository::Group * const parent );
 
-  virtual ~CapillaryPressureBase() override = default;
-
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 

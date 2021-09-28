@@ -50,23 +50,26 @@ void BrineViscosity::makeCoefficients( string_array const & inputPara )
   constexpr real64 k = -0.7;
   constexpr real64 waterVisc = 8.9e-4; //at 25C
 
-  GEOSX_THROW_IF( inputPara.size() < 3, m_functionName << ": invalid number of values", InputError );
+  GEOSX_THROW_IF_LT_MSG( inputPara.size(), 3,
+                         GEOSX_FMT( "{}: insufficient number of model parameters", m_functionName ),
+                         InputError );
 
   real64 m;
   try
   {
     m = stod( inputPara[2] );
   }
-  catch( const std::invalid_argument & e )
+  catch( std::invalid_argument const & e )
   {
-    GEOSX_THROW( m_functionName << ": invalid argument:" << e.what(), InputError );
+    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
   }
 
   m_coef0 = (1.0 + a * m + b * m * m + c * m * m * m) * waterVisc;
   m_coef1 =  d * (1.0 - exp( k * m )) * waterVisc;
 }
 
-BrineViscosity::KernelWrapper BrineViscosity::createKernelWrapper() const
+BrineViscosity::KernelWrapper
+BrineViscosity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         m_coef0,
