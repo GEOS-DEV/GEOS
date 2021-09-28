@@ -29,16 +29,10 @@ namespace constitutive
 ConstitutiveBase::ConstitutiveBase( string const & name,
                                     Group * const parent ):
   Group( name, parent ),
-  m_numQuadraturePoints( 1 ),
-  m_constitutiveDataGroup( nullptr )
+  m_numQuadraturePoints( 1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }
-
-ConstitutiveBase::~ConstitutiveBase()
-{}
-
-
 
 ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::getCatalog()
 {
@@ -50,7 +44,6 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
-  m_constitutiveDataGroup = &parent;
 
   for( auto & group : this->getSubGroups() )
   {

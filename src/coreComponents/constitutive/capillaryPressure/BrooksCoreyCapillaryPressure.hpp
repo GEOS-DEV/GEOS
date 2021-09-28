@@ -94,8 +94,6 @@ public:
   BrooksCoreyCapillaryPressure( string const & name,
                                 dataRepository::Group * const parent );
 
-  virtual ~BrooksCoreyCapillaryPressure() override;
-
   static string catalogName() { return "BrooksCoreyCapillaryPressure"; }
 
   virtual string getCatalogName() const override { return catalogName(); }

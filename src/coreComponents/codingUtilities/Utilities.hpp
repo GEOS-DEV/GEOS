@@ -131,14 +131,13 @@ T_VALUE softMapLookup( mapBase< T_KEY, T_VALUE, SORTED > const & theMap,
 template< typename KEY, typename VAL, typename SORTED >
 VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
                 KEY const & option,
-                string const & optionName = {},
-                string const & contextName = {} )
+                string const & optionName,
+                string const & contextName )
 {
   auto const iter = map.find( option );
   GEOSX_THROW_IF( iter == map.end(),
-                  ( contextName.empty() ? "" : contextName + ":\n" ) <<
-                  "Unsupported option" << ( optionName.empty() ? "" : " for " + optionName ) << ": " << option << ".\n" <<
-                  "Supported options are: " << stringutilities::join( mapKeys( map ), ", " ) << ".",
+                  GEOSX_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
+                             contextName, option, optionName, stringutilities::join( mapKeys( map ), ", " ) ),
                   InputError );
   return iter->second;
 }

@@ -330,17 +330,15 @@ void AcousticWaveEquationSEM::computeSismoTrace( localIndex const isismo, arrayV
       {
         // Note: this "manual" output to file is temporary
         //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-        // TODO: remove the (sprintf+saveSismo) and replace with TimeHistory
-        char filename[50];
-        sprintf( filename, "sismoTraceReceiver%0d.txt", static_cast< int >( ircv ) );
-        this->saveSismo( isismo, p_rcvs[ircv], filename );
+        // TODO: remove saveSismo and replace with TimeHistory
+        this->saveSismo( isismo, p_rcvs[ircv], GEOSX_FMT( "sismoTraceReceiver{:03}.txt", ircv ) );
       }
     }
   } );
 }
 
 /// Use for now until we get the same functionality in TimeHistory
-void AcousticWaveEquationSEM::saveSismo( localIndex isismo, real64 val_pressure, char *filename )
+void AcousticWaveEquationSEM::saveSismo( localIndex isismo, real64 val_pressure, string const & filename )
 {
   std::ofstream f( filename, std::ios::app );
   f<< isismo << " " << val_pressure << std::endl;

@@ -74,12 +74,10 @@ private:
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 string durationToString( std::chrono::system_clock::duration const duration )
 {
+  // If we want to print HH::MM::SS (maybe in addition to seconds-only):
+  // return GEOSX_FMT( "{:%T}", duration );
   double const seconds = std::chrono::duration_cast< std::chrono::milliseconds >( duration ).count() / 1000.0;
-
-  char buffer[ 32 ];
-  std::snprintf( buffer, 32, "%20.3fs", seconds );
-
-  return buffer;
+  return GEOSX_FMT( "{:>20.3f}s", seconds );
 }
 
 std::ostream & operator<<( std::ostream & os, State const state )

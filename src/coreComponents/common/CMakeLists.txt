@@ -7,6 +7,7 @@ set( common_headers
      DataLayouts.hpp
      DataTypes.hpp
      FieldSpecificationOps.hpp
+     Format.hpp
      GEOS_RAJA_Interface.hpp
      GeosxMacros.hpp
      Logger.hpp
@@ -32,7 +33,7 @@ set( common_sources
      initializeEnvironment.cpp
    )
 
-set( dependencyList lvarray pugixml RAJA chai conduit::conduit )
+set( dependencyList lvarray pugixml RAJA chai conduit::conduit fmt::fmt )
 
 if ( ENABLE_MKL )
   set( dependencyList ${dependencyList} mkl )
