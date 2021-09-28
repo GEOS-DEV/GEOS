@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -122,12 +122,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp]
                                       GEOSX_HOST_DEVICE ( localIndex const )
     {
-      GEOSX_UNUSED_VAR( phaseCompFrac )
-      GEOSX_UNUSED_VAR( dPhaseCompFrac_dPres )
-      GEOSX_UNUSED_VAR( dPhaseCompFrac_dComp )
-      GEOSX_UNUSED_VAR( phaseMassDens )
-      GEOSX_UNUSED_VAR( dPhaseMassDens_dPres )
-      GEOSX_UNUSED_VAR( dPhaseMassDens_dComp )
+      GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
+                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp );
     } );
   } );
 
@@ -230,6 +226,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
                                             m_gravCoef.toNestedViewConst(),
                                             m_permeability.toNestedViewConst(),
                                             m_dPerm_dPressure.toNestedViewConst(),
+                                            m_phaseVolFrac.toNestedViewConst(),
                                             m_phaseRelPerm.toNestedViewConst(),
                                             m_phaseVisc.toNestedViewConst(),
                                             m_phaseDens.toNestedViewConst(),
@@ -259,6 +256,8 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
     arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() );
+    arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
 
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
@@ -280,6 +279,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
                                         porosity,
                                         compDens,
                                         compFrac,
+                                        phaseVolFrac,
                                         phaseRelPerm,
                                         dPhaseRelPerm_dPhaseVolFrac,
                                         phaseVisc,
@@ -343,11 +343,9 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
   // compute global residual norm
   real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    char output[200] = {0};
-    sprintf( output, "    ( Rfluid ) = (%4.2e) ; ", residual );
-    std::cout<<output;
+    std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ;", residual );
   }
 
   return residual;
@@ -529,6 +527,9 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIn
 
   // inputs
 
+  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
+
   arrayView2d< real64 const, compflow::USD_PHASE > const dPhaseVolFrac_dPres =
     dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
 
@@ -564,6 +565,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIn
                                                 dPhaseVisc_dComp,
                                                 phaseRelPerm,
                                                 dPhaseRelPerm_dPhaseVolFrac,
+                                                phaseVolFrac,
                                                 dPhaseVolFrac_dPres,
                                                 dPhaseVolFrac_dComp,
                                                 phaseMob,

@@ -40,7 +40,7 @@ The user can parameterize the construction of the table by specifying the salini
 | FlashModel | CO2Solubility | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
 +------------+---------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
 
-Note that the pressures are in Pascal, and the temperatures are in Kelvin.
+Note that the pressures are in Pascal, temperatures are in Kelvin, and the salinity is a molality (moles of NaCl per kg of brine). 
 The temperature must be between 283.15 and 623.15 Kelvin.
 The table is populated using the model of Duan and Sun (2003).
 Specifically, we solve the following nonlinear CO2 equation of state (equation (A1) in Duan and Sun, 2003) for each pair :math:`(p,T)` to obtain the reduced volume, :math:`V_r`.
@@ -135,6 +135,7 @@ The user specifies the (constant) salinity and defines the pressure and temperat
 
 The pressure must be in Pascal and must be less than :math:`5 \times 10^7` Pascal.
 The temperature must be in Kelvin and must be between 283.15 and 623.15 Kelvin.
+The salinity is a molality (moles of NaCl per kg of brine).
 Using these parameters, GEOSX performs a preprocessing step to construct a two-dimensional table storing the brine density, :math:`\rho_{\ell,table}` for the specified salinity as a function of pressure and temperature using the expression:
 
 .. math::
@@ -184,7 +185,7 @@ where the coefficients :math:`a` and :math:`b` are defined as:
    a &= 0.00089 \times 0.000629 (1.0 - \exp( -0.7 m ) ) \\
    b &= 0.00089 (1.0 + 0.0816 m + 0.0122 m^2 + 0.000128 m^3) 
    
-where :math:`m` is the user-defined salinity.
+where :math:`m` is the user-defined salinity (in moles of NaCl per kg of brine).
    
 Parameters
 =========================

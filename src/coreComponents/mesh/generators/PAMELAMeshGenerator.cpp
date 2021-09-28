@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -157,7 +157,8 @@ PAMELA::ELEMENTS::TYPE toPamelaElementType( ElementType const type )
   }
 }
 
-std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type )
+std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type,
+                                       bool const isZReverse )
 {
   switch( type )
   {
@@ -167,7 +168,19 @@ std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type )
     case PAMELA::ELEMENTS::TYPE::VTK_TETRA: return { 0, 1, 2, 3 };
     case PAMELA::ELEMENTS::TYPE::VTK_PYRAMID: return { 0, 1, 2, 3, 4 };
     case PAMELA::ELEMENTS::TYPE::VTK_WEDGE: return { 0, 3, 1, 4, 2, 5 };
-    case PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON: return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON:
+    {
+      // if the reverseZ option is on, we have to switch the node ordering
+      // (top nodes become bottom nodes) to make sure that the hex volume is positive
+      if( isZReverse )
+      {
+        return { 4, 5, 7, 6, 0, 1, 3, 2 };
+      }
+      else
+      {
+        return { 0, 1, 3, 2, 4, 5, 7, 6 };
+      }
+    }
     default:
     {
       GEOSX_THROW( "Unsupported PAMELA element type", std::runtime_error );
@@ -216,6 +229,7 @@ real64 importNodes( PAMELA::Mesh & srcMesh, // PAMELA is not const-correct,
 
 void importCellBlock( PAMELA::SubPart< PAMELA::Polyhedron * > * const cellBlockPtr,
                       string const & cellBlockName,
+                      bool const isZReverse,
                       CellBlockManager & cellBlockManager )
 {
   GEOSX_ASSERT( cellBlockPtr != nullptr );
@@ -226,7 +240,8 @@ void importCellBlock( PAMELA::SubPart< PAMELA::Polyhedron * > * const cellBlockP
   localIndex const nbCells = LvArray::integerConversion< localIndex >( cellBlockPtr->SubCollection.size_owned() );
   cellBlock.resize( nbCells );
 
-  std::vector< int > const nodeOrder = getPamelaNodeOrder( cellBlockPtr->ElementType );
+  std::vector< int > const nodeOrder = getPamelaNodeOrder( cellBlockPtr->ElementType,
+                                                           isZReverse );
   arrayView2d< localIndex, cells::NODE_MAP_USD > const cellToVertex = cellBlock.nodeList().toView();
   arrayView1d< globalIndex > const & localToGlobal = cellBlock.localToGlobalMap();
 
@@ -324,7 +339,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       if( elementFamily == PAMELA::ELEMENTS::FAMILY::POLYHEDRON )
       {
         string cellBlockName = makeRegionLabel( regionName, getElementLabel( subPart.second->ElementType ) );
-        importCellBlock( subPart.second, cellBlockName, cellBlockManager );
+        importCellBlock( subPart.second, cellBlockName, m_isZReverse, cellBlockManager );
         m_cellBlockRegions.emplace( std::move( cellBlockName ), polyhedronPart.first );
       }
     }
@@ -351,7 +366,8 @@ namespace
 
 void importRegularField( PAMELA::VariableDouble & source,
                          std::vector< int > const & indexMap,
-                         WrapperBase & wrapper )
+                         WrapperBase & wrapper,
+                         string const & objectName )
 {
   // Scalar material fields are stored as 1D arrays, vector/tensor are 2D
   using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >;
@@ -364,11 +380,11 @@ void importRegularField( PAMELA::VariableDouble & source,
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( source.offset );
     localIndex const numComponentsDst = wrapperT.numArrayComp();
     GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                           "PAMELA mesh import: mismatch in number of components for field " << source.Label );
+                           objectName << ": mismatch in number of components for field " << source.Label );
 
     // Sanity check, shouldn't happen
     GEOSX_ERROR_IF_NE_MSG( view.size( 0 ), LvArray::integerConversion< localIndex >( indexMap.size() ),
-                           "PAMELA mesh import: mismatch in size for field " << source.Label );
+                           objectName << ": mismatch in size for field " << source.Label );
 
     for( int i = 0; i < view.size( 0 ); ++i )
     {
@@ -386,7 +402,8 @@ void importRegularField( PAMELA::VariableDouble & source,
 
 void importMaterialField( PAMELA::VariableDouble & source,
                           std::vector< int > const & indexMap,
-                          WrapperBase & wrapper )
+                          WrapperBase & wrapper,
+                          string const & objectName )
 {
   // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
   using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > >;
@@ -399,11 +416,11 @@ void importMaterialField( PAMELA::VariableDouble & source,
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( source.offset );
     localIndex const numComponentsDst = view.size() / ( view.size( 0 ) * view.size( 1 ) );
     GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                           "PAMELA mesh import: mismatch in number of components for field " << source.Label );
+                           objectName << ": mismatch in number of components for field " << source.Label );
 
     // Sanity check, shouldn't happen
     GEOSX_ERROR_IF_NE_MSG( view.size( 0 ), LvArray::integerConversion< localIndex >( indexMap.size() ),
-                           "PAMELA mesh import: mismatch in size for field " << source.Label );
+                           objectName << ": mismatch in size for field " << source.Label );
 
     for( int i = 0; i < view.size( 0 ); ++i )
     {
@@ -445,7 +462,7 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
 
 void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
 {
-  GEOSX_LOG_RANK_0( "Importing field data from mesh dataset" );
+  GEOSX_LOG_RANK_0( catalogName() << " " << getName() << ": importing field data from mesh dataset" );
   GEOSX_ASSERT_MSG( m_pamelaMesh, "Must call generateMesh() before importFields()" );
 
   ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( 0 ).getElemManager();
@@ -475,23 +492,24 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
 
       // Find source
       PAMELA::VariableDouble * const meshProperty = regionPtr->FindVariableByName( sourceName );
-      GEOSX_ASSERT( meshProperty != nullptr );
+      GEOSX_THROW_IF( meshProperty == nullptr,
+                      catalogName() << " " << getName() << ": field not found in source dataset: " << sourceName,
+                      InputError );
 
       // Find destination
       GEOSX_THROW_IF( !subRegion.hasWrapper( wrapperName ),
-                      "PAMELA mesh import: target field not found: " << wrapperName << ".\n" <<
-                      "Please check the spelling in " << viewKeyStruct::fieldNamesInGEOSXString() << " attribute.",
+                      catalogName() << " " << getName() << ": target field not found: " << wrapperName,
                       InputError );
       WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );
 
       // Decide if field is constitutive or not
-      if( materialWrapperNames.count( wrapperName ) > 0 )
+      if( materialWrapperNames.count( wrapperName ) > 0 && wrapper.numArrayDims() > 1 )
       {
-        importMaterialField( *meshProperty, cellBlockPtr->IndexMapping, wrapper );
+        importMaterialField( *meshProperty, cellBlockPtr->IndexMapping, wrapper, catalogName() + " " + getName() );
       }
       else
       {
-        importRegularField( *meshProperty, cellBlockPtr->IndexMapping, wrapper );
+        importRegularField( *meshProperty, cellBlockPtr->IndexMapping, wrapper, catalogName() + " " + getName() );
       }
     }
   } );

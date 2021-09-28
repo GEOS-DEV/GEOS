@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -262,7 +262,6 @@ public:
 
     // backup fields
     static constexpr char const * densityOldString() { return "densityOld"; }
-    static constexpr char const * transTMultString() { return "transTMult"; }
   };
 
   /**
@@ -322,8 +321,6 @@ protected:
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_transTMultiplier;
 
 private:
 

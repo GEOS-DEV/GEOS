@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -165,7 +165,7 @@ private:
    * @param val_pressure value of the pressure for isismo
    * @param filename name of the output file
    */
-  void saveSismo( localIndex isismo, real64 val_pressure, char *filename );
+  void saveSismo( localIndex isismo, real64 val_pressure, string const & filename );
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;

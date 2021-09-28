@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -147,6 +147,20 @@ PhaseVolumeFractionKernel::
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
+
+    // set the saturation to zero if the phase is absent
+    bool const phaseExists = (phaseFrac[ip] > 0);
+    if( !phaseExists )
+    {
+      phaseVolFrac[ip] = 0.;
+      dPhaseVolFrac_dPres[ip] = 0.;
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dPhaseVolFrac_dComp[ip][jc] = 0.;
+      }
+      continue;
+    }
+
     // Expression for volume fractions: S_p = (nu_p / rho_p) * rho_t
     real64 const phaseDensInv = 1.0 / phaseDens[ip];
 

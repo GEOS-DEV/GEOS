@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -213,6 +213,9 @@ public:
 
     /// @return Mass creation string.
     constexpr static char const * creationMassString() { return "creationMass"; }
+
+    /// @return embedded surface element to parent plane string.
+    constexpr static char const * surfaceElementToParentPlaneString() { return "surfaceElementToParentPlane"; }
   };
 
   /// Map between the surface elements and the cells

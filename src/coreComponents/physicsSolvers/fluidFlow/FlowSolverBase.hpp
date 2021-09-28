@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -101,8 +101,8 @@ public:
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion,
                                       localIndex const targetIndex ) const;
 
-  void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
-                                      localIndex const targetIndex ) const;
+  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
+                                              localIndex const targetIndex ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step

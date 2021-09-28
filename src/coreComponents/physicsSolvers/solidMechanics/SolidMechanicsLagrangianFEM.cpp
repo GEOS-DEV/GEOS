@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -1061,13 +1061,8 @@ SolidMechanicsLagrangianFEM::
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    char output[200] = {0};
-    sprintf( output,
-             "( RSolid ) = (%4.2e) ; ",
-             residual );
-    std::cout<<output;
+    std::cout << GEOSX_FMT( "( RSolid ) = ( {:4.2e} ) ; ", residual );
   }
-
 
   return residual;
 }
@@ -1251,9 +1246,7 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( domain )
-  GEOSX_UNUSED_VAR( dofManager )
-  GEOSX_UNUSED_VAR( localSolution )
+  GEOSX_UNUSED_VAR( domain, dofManager, localSolution );
 
   return 1.0;
 }

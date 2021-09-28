@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -38,17 +38,6 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setDescription( "Biot coefficient." );
 }
 
-BiotPorosity::~BiotPorosity() = default;
-
-std::unique_ptr< ConstitutiveBase >
-BiotPorosity::deliverClone( string const & name,
-                            Group * const parent ) const
-{
-  std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
-
-  return clone;
-}
-
 void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
                                              localIndex const numConstitutivePointsPerParentIndex )
 {
@@ -58,6 +47,7 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 void BiotPorosity::postProcessInput()
 {
   PorosityBase::postProcessInput();
+  // TODO valdate input
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BiotPorosity, string const &, Group * const )

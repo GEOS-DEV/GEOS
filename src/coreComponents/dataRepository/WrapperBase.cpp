@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -69,23 +69,15 @@ string WrapperBase::getPath() const
 string WrapperBase::dumpInputOptions( bool const outputHeader ) const
 {
   string rval;
-  char temp[1000] = {0};
   if( outputHeader )
   {
-    sprintf( temp, "  |         name         |  opt/req  | Description \n" );
-    rval.append( temp );
-    sprintf( temp, "  |----------------------|-----------|-----------------------------------------\n" );
-    rval.append( temp );
+    rval.append( "  |         name         |  opt/req  | Description \n" );
+    rval.append( "  |----------------------|-----------|-----------------------------------------\n" );
   }
 
-  if( getInputFlag() == InputFlags::OPTIONAL ||
-      getInputFlag() == InputFlags::REQUIRED )
+  if( getInputFlag() == InputFlags::OPTIONAL || getInputFlag() == InputFlags::REQUIRED )
   {
-    sprintf( temp, "  | %20s | %9s | %s \n",
-             getName().c_str(),
-             InputFlagToString( getInputFlag()).c_str(),
-             getDescription().c_str() );
-    rval.append( temp );
+    rval.append( GEOSX_FMT( "  | {:20} | {:9} | {} \n", getName(), InputFlagToString( getInputFlag() ), getDescription() ) );
   }
 
   return rval;

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,6 +21,7 @@
 
 // Source incldes
 #include "common/GeosxConfig.hpp"
+#include "common/Format.hpp"
 #include "LvArray/src/Macros.hpp"
 
 // System includes
@@ -177,8 +178,25 @@
  * @brief Raise a hard error if two values are equal.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param msg a message to log (any expression that can be stream inserted)
+ * @param TYPE the type of exception to throw
+ */
+#define GEOSX_THROW_IF_EQ_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_EQ_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg, TYPE )
+
+/**
+ * @brief Raise a hard error if two values are equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
 #define GEOSX_ERROR_IF_EQ( lhs, rhs ) GEOSX_ERROR_IF_EQ_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Raise a hard error if two values are equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param TYPE the type of exception to throw
+ */
+#define GEOSX_THROW_IF_EQ( lhs, rhs, TYPE ) GEOSX_THROW_IF_EQ_MSG( lhs, rhs, "", TYPE )
 
 /**
  * @brief Raise a hard error if two values are not equal.
@@ -221,11 +239,28 @@
 #define GEOSX_ERROR_IF_GT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GT_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
+ * @brief Throw an exception if one value compares greater than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param msg a message to log (any expression that can be stream inserted)
+ * @param TYPE the type of exception to throw
+ */
+#define GEOSX_THROW_IF_GT_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_GT_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg, TYPE )
+
+/**
  * @brief Raise a hard error if one value compares greater than the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
 #define GEOSX_ERROR_IF_GT( lhs, rhs ) GEOSX_ERROR_IF_GT_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Throw an exception if one value compares greater than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param TYPE the type of exception to throw
+ */
+#define GEOSX_THROW_IF_GT( lhs, rhs, TYPE ) GEOSX_ERROR_IF_GT_MSG( lhs, rhs, "", TYPE )
 
 /**
  * @brief Raise a hard error if one value compares greater than or equal to the other.
@@ -236,11 +271,28 @@
 #define GEOSX_ERROR_IF_GE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_GE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
+ * @brief Throw an exception if one value compares greater than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param msg a message to log (any expression that can be stream inserted)
+ * @param TYPE the type of exception to throw
+ */
+#define GEOSX_THROW_IF_GE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_GE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg, TYPE )
+
+/**
  * @brief Raise a hard error if one value compares greater than or equal to the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
 #define GEOSX_ERROR_IF_GE( lhs, rhs ) GEOSX_ERROR_IF_GE_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Throw an exception if one value compares greater than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param TYPE the type of exception to throw
+ */
+#define GEOSX_THROW_IF_GE( lhs, rhs, TYPE ) GEOSX_ERROR_IF_GE_MSG( lhs, rhs, "", TYPE )
 
 /**
  * @brief Raise a hard error if one value compares less than the other.
@@ -251,11 +303,28 @@
 #define GEOSX_ERROR_IF_LT_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LT_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
+ * @brief Throw an exception if one value compares less than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param msg a message to log (any expression that can be stream inserted)
+ * @param TYPE the type of exception to throw
+ */
+#define GEOSX_THROW_IF_LT_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_LT_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg, TYPE )
+
+/**
  * @brief Raise a hard error if one value compares less than the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
 #define GEOSX_ERROR_IF_LT( lhs, rhs ) GEOSX_ERROR_IF_LT_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Throw an exception if one value compares less than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param TYPE the type of exception to throw
+ */
+#define GEOSX_THROW_IF_LT( lhs, rhs, TYPE ) GEOSX_ERROR_IF_LT_MSG( lhs, rhs, "", TYPE )
 
 /**
  * @brief Raise a hard error if one value compares less than or equal to the other.
@@ -266,11 +335,28 @@
 #define GEOSX_ERROR_IF_LE_MSG( lhs, rhs, msg ) LVARRAY_ERROR_IF_LE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg )
 
 /**
+ * @brief Throw an exception if one value compares less than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param msg a message to log (any expression that can be stream inserted)
+ * @param TYPE the type of exception to throw
+ */
+#define GEOSX_THROW_IF_LE_MSG( lhs, rhs, msg, TYPE ) LVARRAY_THROW_IF_LE_MSG( lhs, rhs, "***** Rank " << ::geosx::logger::internal::rankString << ": " << msg, TYPE )
+
+/**
  * @brief Raise a hard error if one value compares less than or equal to the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
 #define GEOSX_ERROR_IF_LE( lhs, rhs ) GEOSX_ERROR_IF_LE_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Throw an exception if one value compares less than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param TYPE the type of exception to throw
+ */
+#define GEOSX_THROW_IF_LE( lhs, rhs, TYPE ) GEOSX_ERROR_IF_LE_MSG( lhs, rhs, "", TYPE )
 
 /**
  * @brief Assert that two values compare equal in debug builds.

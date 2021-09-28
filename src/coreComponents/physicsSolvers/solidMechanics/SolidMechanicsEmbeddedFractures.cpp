@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -622,11 +622,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
-      char output[200] = {0};
-      sprintf( output,
-               "( RFracture ) = (%4.2e) ; ",
-               fractureResidualNorm );
-      std::cout<<output;
+      std::cout << GEOSX_FMT( "( RFracture ) = ( {:4.2e} ) ; ", fractureResidualNorm );
     }
 
     return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
