@@ -4,13 +4,15 @@
   <Tasks>
     <TriaxialDriver
       name="triaxialDriver"
-      material="elastic"
-      mode="triaxial"
-      strainFunction="strainFunction"
-      stressFunction="stressFunction"
+      material="DE"
+      mode="mixedControl" 
+      axialControl="strainFunction"
+      radialControl="stressFunction"
+      initialStress="-1.0"
       steps="50"
-      output="output.txt"
-      logLevel="1"/>
+      logLevel="0"
+      baseline ="testTriaxial_delftEggLoadPathWetUseLinear.txt"
+      output="none" />
   </Tasks>
 
   <Events
@@ -21,28 +23,34 @@
   </Events>
 
   <Constitutive>
-    <ElasticIsotropic
-      name="elastic"
+
+    <DelftEgg
+      name="DE"
       defaultDensity="2700"
-      defaultBulkModulus="500"
-      defaultShearModulus="300"/>
+      defaultBulkModulus="500.0"
+      defaultShearModulus="200.0"
+      defaultPreConsolidationPressure="-2.0"
+      defaultShapeParameter="1.8"
+      defaultCslSlope="1.2"
+      defaultVirginCompressionIndex="0.003"
+      defaultRecompressionIndex="0.002"/>
+
   </Constitutive>
 
   <Functions>
     <TableFunction
       name="strainFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 3.0, 4.0, 7.0, 8.0 }"
-      values="{ 0, -0.003, -0.002, -0.005, -0.004 }"/>
-
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0, -0.008}"/>
     <TableFunction
       name="stressFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 8.0 }"
+      coordinates="{ 0.0, 1.0 }"
       values="{ -1.0, -1.0 }"/>
   </Functions>
 
-  <!-- Mesh is not actually used, but GEOSX will throw an error without one.  Will resolve soon-->
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -55,4 +63,5 @@
       nz="{ 1 }"
       cellBlockNames="{ cellBlock01 }"/>
   </Mesh>
+
 </Problem>
