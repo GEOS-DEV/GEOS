@@ -1769,22 +1769,24 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TriaxialDriverType">
+		<!--axialControl => Function controlling axial stress or strain (depending on test mode)-->
+		<xsd:attribute name="axialControl" type="string" use="required" />
 		<!--baseline => Baseline file-->
 		<xsd:attribute name="baseline" type="path" default="none" />
+		<!--initialStress => Initial stress (scalar used to set an isotropic stress state)-->
+		<xsd:attribute name="initialStress" type="real64" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--material => Solid material to test-->
 		<xsd:attribute name="material" type="string" use="required" />
-		<!--mode => Test mode [triaxial, volumetric, oedometer]-->
+		<!--mode => Test mode [stressControl, strainControl, mixedControl]-->
 		<xsd:attribute name="mode" type="string" use="required" />
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="none" />
+		<!--radialControl => Function controlling radial stress or strain (depending on test mode)-->
+		<xsd:attribute name="radialControl" type="string" use="required" />
 		<!--steps => Number of load steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
-		<!--strainFunction => Function controlling strain loading (role depends on test mode)-->
-		<xsd:attribute name="strainFunction" type="string" use="required" />
-		<!--stressFunction => Function controlling stress loading (role depends on test mode)-->
-		<xsd:attribute name="stressFunction" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1809,11 +1811,14 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
 			<xsd:element name="DamageVolDevElasticIsotropic" type="DamageVolDevElasticIsotropicType" />
 			<xsd:element name="DeadOilFluid" type="DeadOilFluidType" />
+			<xsd:element name="DelftEgg" type="DelftEggType" />
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
+			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
+			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
@@ -2149,6 +2154,30 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="DelftEggType">
+		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultCslSlope => Slope of the critical state line-->
+		<xsd:attribute name="defaultCslSlope" type="real64" default="1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPoissonRatio => Default Poisson's Ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultPreConsolidationPressure => Initial preconsolidation pressure-->
+		<xsd:attribute name="defaultPreConsolidationPressure" type="real64" default="-1.5" />
+		<!--defaultRecompressionIndex => Recompresion Index-->
+		<xsd:attribute name="defaultRecompressionIndex" type="real64" default="0.002" />
+		<!--defaultShapeParameter => Shape parameter for the yield surface-->
+		<xsd:attribute name="defaultShapeParameter" type="real64" default="1" />
+		<!--defaultShearModulus => Default Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultVirginCompressionIndex => Virgin compression index-->
+		<xsd:attribute name="defaultVirginCompressionIndex" type="real64" default="0.005" />
+		<!--defaultYoungModulus => Default Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
 		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
@@ -2182,6 +2211,20 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ElasticIsotropicPressureDependentType">
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultRecompressionIndex => Recompresion Index-->
+		<xsd:attribute name="defaultRecompressionIndex" type="real64" default="0.002" />
+		<!--defaultRefPressure => Reference Pressure-->
+		<xsd:attribute name="defaultRefPressure" type="real64" default="-1" />
+		<!--defaultRefStrainVol => Reference Volumetric Strain-->
+		<xsd:attribute name="defaultRefStrainVol" type="real64" default="0" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2274,6 +2317,26 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ModifiedCamClayType">
+		<!--defaultCslSlope => Slope of the critical state line-->
+		<xsd:attribute name="defaultCslSlope" type="real64" default="1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultPreConsolidationPressure => Initial preconsolidation pressure-->
+		<xsd:attribute name="defaultPreConsolidationPressure" type="real64" default="-1.5" />
+		<!--defaultRecompressionIndex => Recompresion Index-->
+		<xsd:attribute name="defaultRecompressionIndex" type="real64" default="0.002" />
+		<!--defaultRefPressure => Reference Pressure-->
+		<xsd:attribute name="defaultRefPressure" type="real64" default="-1" />
+		<!--defaultRefStrainVol => Reference Volumetric Strain-->
+		<xsd:attribute name="defaultRefStrainVol" type="real64" default="0" />
+		<!--defaultShearModulus => Elastic Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultVirginCompressionIndex => Virgin compression index-->
+		<xsd:attribute name="defaultVirginCompressionIndex" type="real64" default="0.005" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
