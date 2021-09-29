@@ -2,14 +2,15 @@
 
 
 #########################################################################################
-Drilling a deviated Poro-Elastic Wellbore
+A Deviated Poro-Elastic Wellbore Subjected to In-situ Stresses and Pore Pressure
 #########################################################################################
 
 ------------------------------------------------------------------
 Problem description
 ------------------------------------------------------------------
 
-This example deal with the problem of drilling a deviated poro-elastic wellbore. This can be regarded as an extension of the poroelastic wellbore example :ref:`AdvancedExampleDeviatedPoroElasticWellbore` with consideration of in-situ stresses and pore pressure effects. Both pore pressure and mud pressure are supposed to be nil at the borehole wall. The in-situ horizontal stress is anisotropic. The wellbore trajectory is deviated from the direction of the main in-situ stresses. Analytical solutions of the pore pressure, the radial and hoop stresses in the near wellbore region are expressed in the Laplace space as `(Abousleiman and Cui, 1998) <https://www.sciencedirect.com/science/article/pii/S0020768398001012>`__.
+
+This example deals with the problem of drilling a deviated poro-elastic wellbore. This is an extension of the poroelastic wellbore example :ref:`AdvancedExampleDeviatedPoroElasticWellbore` with the consideration of in-situ stresses and in-situ pore pressure. Both pore pressure and mud pressure are supposed to be nil at the borehole wall following the consideration of `(Abousleiman and Cui, 1998) <https://www.sciencedirect.com/science/article/pii/S0020768398001012>`__. Also, the in-situ horizontal stresses are anisotropic, i.e. :math:`\sigma_hmax` > :math:`\sigma_hmin`. The wellbore trajectory is deviated from the directions of the in-situ stresses. Analytical solutions of the pore pressure, the radial and hoop stresses in the near wellbore region are given by `(Abousleiman and Cui, 1998) <https://www.sciencedirect.com/science/article/pii/S0020768398001012>`__. They are hereby used to verify the modeling predictions.
 
 **Input file**
 
@@ -26,7 +27,7 @@ contained within two GEOSX xml files that are located at:
   inputFiles/multiphysics/DeviatedPoroElasticWellbore_Drilling_Example.xml
 
 
-They are almost idential to those of the example :ref:`AdvancedExampleDeviatedPoroElasticWellbore` except the ``FieldSpecifications`` tag. Indeed, for the boundary conditions, we need consider following additional field specifications to defined the in-situ stresses and pore pressure as well as the zero pore pressure at the borehole wall.
+This case is nearly identical to another example :ref:`AdvancedExampleDeviatedPoroElasticWellbore`, except for the ``FieldSpecifications`` tag. For this specific case, we need to consider following additional field specifications to define the in-situ stresses, in-situ pore pressure, as well as the zero pore pressure at the borehole wall.
 
 .. literalinclude:: ../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Drilling_Base.xml
   :language: xml
@@ -37,7 +38,7 @@ They are almost idential to those of the example :ref:`AdvancedExampleDeviatedPo
 Results and benchmark
 ---------------------------------
 
-Example of the pore pressure distribution after 78 s injection is shown in the figure below:
+Pore pressure distribution after 78 s injection is shown in the figure below:
 
 .. figure:: pressure_drilling.png
    :align: center
@@ -45,8 +46,7 @@ Example of the pore pressure distribution after 78 s injection is shown in the f
    :figclass: align-center
 
 
-A good agreement between the GEOSX results and the corresponding analytical solutions is shown in the figure below:
-
+A good agreement between the GEOSX results and the corresponding analytical solutions `(Abousleiman and Cui, 1998) <https://www.sciencedirect.com/science/article/pii/S0020768398001012>`__ is shown in the figure below:
 
 .. plot::
 
