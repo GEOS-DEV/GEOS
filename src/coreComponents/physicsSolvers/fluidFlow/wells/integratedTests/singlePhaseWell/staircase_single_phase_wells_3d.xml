@@ -167,21 +167,21 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="initialPressure_channel"
-      initialCondition="1"
+    <Equilibrium
+      name="equil"
       setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="pressure"
-      scale="1e6"/>
+      objectPath="ElementRegions/Channel"      
+      datumElevation="10"
+      datumPressure="1e6"/>
   </FieldSpecifications>
 
   <Functions>
-    <TableFunction name="rateTable"
-                   inputVarNames="{time}"
-                   coordinates="{0, 2.51e4, 3.01e4,  5e4}"
-                   values="{1e-6, 1.2e-6, 0, 0}" 
-                   interpolation="lower"/>
+    <TableFunction
+      name="rateTable"
+      inputVarNames="{time}"
+      coordinates="{0, 2.51e4, 3.01e4,  5e4}"
+      values="{1e-6, 1.2e-6, 0, 0}" 
+      interpolation="lower"/>
   </Functions>
 
   <Outputs>

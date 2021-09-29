@@ -288,6 +288,13 @@ Element: EmbeddedSurfaceGenerator
 .. include:: ../../coreComponents/schema/docs/EmbeddedSurfaceGenerator.rst
 
 
+.. _XML_Equilibrium:
+
+Element: Equilibrium
+====================
+.. include:: ../../coreComponents/schema/docs/Equilibrium.rst
+
+
 .. _XML_Events:
 
 Element: Events
@@ -1186,6 +1193,13 @@ Datastructure: ElementRegions
 Datastructure: EmbeddedSurfaceGenerator
 =======================================
 .. include:: ../../coreComponents/schema/docs/EmbeddedSurfaceGenerator_other.rst
+
+
+.. _DATASTRUCTURE_Equilibrium:
+
+Datastructure: Equilibrium
+==========================
+.. include:: ../../coreComponents/schema/docs/Equilibrium_other.rst
 
 
 .. _DATASTRUCTURE_Events:

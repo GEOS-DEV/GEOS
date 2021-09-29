@@ -42,7 +42,6 @@
       targetRegions="{ wellRegion }"
       fluidNames="{ fluid }"
       relPermNames="{ relperm }"
-      wellTemperature="368.15"
       logLevel="1"
       useMass="1">
       <WellControls
@@ -52,6 +51,7 @@
         referenceElevation="7500"
         targetBHP="1e8"
         targetTotalRate="5e-2"
+	injectionTemperature="368.15"
         injectionStream="{ 0.995, 0.005 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>

@@ -255,12 +255,21 @@
 	<xsd:complexType name="FieldSpecificationsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Dirichlet" type="DirichletType" />
+			<xsd:element name="Equilibrium" type="EquilibriumType" />
 			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
 			<xsd:element name="SourceFlux" type="SourceFluxType" />
 			<xsd:element name="Traction" type="TractionType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="DirichletType" />
+	<xsd:complexType name="EquilibriumType">
+		<!--component => Component of field (if tensor) to apply boundary condition to-->
+		<xsd:attribute name="component" type="integer" />
+		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<xsd:attribute name="fieldName" type="string" />
+		<!--initialCondition => BC is applied as an initial condition.-->
+		<xsd:attribute name="initialCondition" type="integer" />
+	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationType" />
 	<xsd:complexType name="SourceFluxType" />
 	<xsd:complexType name="TractionType">

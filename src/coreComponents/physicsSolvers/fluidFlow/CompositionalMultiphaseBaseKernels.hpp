@@ -21,9 +21,12 @@
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
-#include "constitutive/fluid/layouts.hpp"
-#include "mesh/ElementRegionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "constitutive/fluid/layouts.hpp"
+#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "functions/TableFunction.hpp"
+#include "mesh/ElementRegionManager.hpp"
+
 
 namespace geosx
 {
@@ -133,14 +136,14 @@ struct FluidUpdateKernel
   launch( localIndex const size,
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
-          real64 const temp,
+          arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.update( k, q, pres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k], temp[k], compFrac[k] );
       }
     } );
   }
@@ -151,14 +154,14 @@ struct FluidUpdateKernel
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & dPres,
-          real64 const temp,
+          arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k] + dPres[k], temp[k], compFrac[k] );
       }
     } );
   }
@@ -169,7 +172,7 @@ struct FluidUpdateKernel
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & dPres,
-          real64 const temp,
+          arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -177,7 +180,7 @@ struct FluidUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.update( k, q, pres[k] + dPres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k] + dPres[k], temp[k], compFrac[k] );
       }
     } );
   }
@@ -187,7 +190,7 @@ struct FluidUpdateKernel
   launch( SortedArrayView< localIndex const > const & targetSet,
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
-          real64 const temp,
+          arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -195,7 +198,7 @@ struct FluidUpdateKernel
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.update( k, q, pres[k], temp, compFrac[k] );
+        fluidWrapper.update( k, q, pres[k], temp[k], compFrac[k] );
       }
     } );
   }
@@ -462,6 +465,153 @@ struct SolutionCheckKernel
     return check.get();
   }
 
+};
+
+/******************************** HydrostaticPressureKernel ********************************/
+
+struct HydrostaticPressureKernel
+{
+  template< typename FLUID_WRAPPER >
+  static integer
+  launch( localIndex const size,
+          localIndex const numComps,
+          localIndex const numPhases,
+          localIndex const maxNumEquilIterations,
+          real64 const equilTolerance,
+          real64 const (&gravVector)[ 3 ],
+          real64 const & minElevation,
+          real64 const & dElevation,
+          real64 const & datumElevation,
+          real64 const & datumPres,
+          FLUID_WRAPPER fluidWrapper,
+          arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappers,
+          TableFunction::KernelWrapper tempTableWrapper,
+          arrayView1d< arrayView1d< real64 > const > elevationValues,
+          arrayView1d< arrayView1d< real64 > const > pressureValues )
+  {
+    localIndex constexpr MAX_NUM_COMP = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
+    localIndex constexpr MAX_NUM_PHASE = constitutive::MultiFluidBase::MAX_NUM_PHASES;
+
+    // Step 1: compute the mass density at the datum elevation
+    real64 const datumTemp = tempTableWrapper.compute( &datumElevation );
+    stackArray1d< real64, MAX_NUM_COMP > datumCompFrac( numComps );
+    stackArray1d< real64, MAX_NUM_PHASE > datumPhaseFrac( numPhases );
+    stackArray1d< real64, MAX_NUM_PHASE > datumPhaseDens( numPhases );
+    stackArray1d< real64, MAX_NUM_PHASE > datumPhaseMassDens( numPhases );
+    stackArray1d< real64, MAX_NUM_PHASE > datumPhaseVisc( numPhases );
+    stackArray2d< real64, MAX_NUM_COMP *MAX_NUM_PHASE > datumPhaseCompFrac( numPhases, numComps );
+    real64 datumTotalDens = 0.0;
+    for( localIndex ic = 0; ic < numComps; ++ic )
+    {
+      datumCompFrac[ic] = compFracTableWrappers[ic].compute( &datumElevation );
+    }
+
+    // TODO: find a way to make this compile on GPU despite the change in permutation
+    fluidWrapper.compute( datumPres,
+                          datumTemp,
+                          datumCompFrac,
+                          datumPhaseFrac,
+                          datumPhaseDens,
+                          datumPhaseMassDens,
+                          datumPhaseVisc,
+                          datumPhaseCompFrac,
+                          datumTotalDens );
+
+    RAJA::ReduceMin< parallelHostReduce, integer > equilHasConverged( 1 );
+
+    forAll< parallelHostPolicy >( size, [=] ( localIndex const i )
+    {
+
+      // Step 2: compute the hydrostatic pressure at the following elevation
+      real64 const elevation = minElevation + i * dElevation;
+      real64 const gravCoef = gravVector[2] * ( datumElevation - elevation );
+      real64 const temp = tempTableWrapper.compute( &elevation );
+      stackArray1d< real64, MAX_NUM_COMP > compFrac( numComps );
+      stackArray1d< real64, MAX_NUM_PHASE > phaseFrac( numPhases );
+      stackArray1d< real64, MAX_NUM_PHASE > phaseDens( numPhases );
+      stackArray1d< real64, MAX_NUM_PHASE > phaseMassDens( numPhases );
+      stackArray1d< real64, MAX_NUM_PHASE > phaseVisc( numPhases );
+      stackArray2d< real64, MAX_NUM_COMP *MAX_NUM_PHASE > phaseCompFrac( numPhases, numComps );
+      real64 totalDens = 0.0;
+      for( localIndex ic = 0; ic < numComps; ++ic )
+      {
+        compFrac[ic] = compFracTableWrappers[ic].compute( &elevation );
+      }
+
+      // Step 2.1: guess the pressure with the datumPhaseMassDensity
+      stackArray1d< real64, MAX_NUM_PHASE > pres0( numPhases );
+      stackArray1d< real64, MAX_NUM_COMP > pres1( numPhases );
+      for( localIndex ip = 0; ip < numPhases; ++ip )
+      {
+        pres0[ip] = datumPres - datumPhaseMassDens[ip] * gravCoef;
+      }
+
+      // Step 2.2: compute the mass density at this elevation using the guess, and update pressure
+      for( localIndex ip = 0; ip < numPhases; ++ip )
+      {
+        fluidWrapper.compute( pres0[ip],
+                              temp,
+                              compFrac,
+                              phaseFrac,
+                              phaseDens,
+                              phaseMassDens,
+                              phaseVisc,
+                              phaseCompFrac,
+                              totalDens );
+        pres1[ip] = datumPres - 0.5 * ( datumPhaseMassDens[ip] + phaseMassDens[ip] ) * gravCoef;
+      }
+
+      // Step 2.3: fixed-point iteration until convergence
+      bool converged = true;
+      for( localIndex nEqIter = 0; nEqIter < maxNumEquilIterations; ++nEqIter )
+      {
+
+        // check convergence
+        converged = true;
+        for( localIndex ip = 0; ip < numPhases; ++ip )
+        {
+          if( LvArray::math::abs( pres0[ip] - pres1[ip] ) > equilTolerance )
+          {
+            converged = false;
+          }
+          pres0[ip] = pres1[ip];
+        }
+        if( converged )
+        {
+          break;
+        }
+
+        for( localIndex ip = 0; ip < numPhases; ++ip )
+        {
+          fluidWrapper.compute( pres0[ip],
+                                temp,
+                                compFrac,
+                                phaseFrac,
+                                phaseDens,
+                                phaseMassDens,
+                                phaseVisc,
+                                phaseCompFrac,
+                                totalDens );
+          pres1[ip] = datumPres - 0.5 * ( datumPhaseMassDens[ip] + phaseMassDens[ip] ) * gravCoef;
+        }
+      }
+
+      if( !converged )
+      {
+        equilHasConverged.min( 0 );
+      }
+
+
+      // Step 3: save the elevation and hydrostatic pressure
+      elevationValues[0][i] = elevation;
+      for( localIndex ip = 0; ip < numPhases; ++ip )
+      {
+        pressureValues[ip][i] = pres1[ip];
+      }
+
+    } );
+    return equilHasConverged.get();
+  }
 };
 
 

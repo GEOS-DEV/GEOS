@@ -7,6 +7,7 @@ set( fieldSpecification_headers
      FieldSpecificationManager.hpp
      SourceFluxBoundaryCondition.hpp
      TractionBoundaryCondition.hpp
+     EquilibriumInitialCondition.hpp
    )
 
 #
@@ -18,6 +19,7 @@ set( fieldSpecification_sources
      FieldSpecificationManager.cpp
      SourceFluxBoundaryCondition.cpp
      TractionBoundaryCondition.cpp
+     EquilibriumInitialCondition.cpp     
    )
 
 set( dependencyList functions linearAlgebra )

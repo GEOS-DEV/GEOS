@@ -340,6 +340,81 @@ struct SolutionCheckKernel
 
 };
 
+/******************************** HydrostaticPressureKernel ********************************/
+
+struct HydrostaticPressureKernel
+{
+  template< typename FLUID_WRAPPER >
+  static integer
+  launch( localIndex const size,
+          localIndex const maxNumEquilIterations,
+          real64 const equilTolerance,
+          real64 const (&gravVector)[ 3 ],
+          real64 const & minElevation,
+          real64 const & dElevation,
+          real64 const & datumElevation,
+          real64 const & datumPres,
+          FLUID_WRAPPER fluidWrapper,
+          arrayView1d< arrayView1d< real64 > const > elevationValues,
+          arrayView1d< real64 > pressureValues )
+  {
+    // Step 1: compute the mass density at the datum elevation
+    real64 datumDens = 0.0;
+    real64 datumVisc = 0.0;
+    fluidWrapper.compute( datumPres,
+                          datumDens,
+                          datumVisc );
+
+    RAJA::ReduceMin< parallelHostReduce, integer > equilHasConverged( 1 );
+
+    forAll< parallelHostPolicy >( size, [=] ( localIndex const i )
+    {
+
+      // Step 2: compute the hydrostatic pressure at the following elevation
+      real64 const elevation = minElevation + i * dElevation;
+      real64 const gravCoef = gravVector[2] * ( datumElevation - elevation );
+      real64 dens = 0.0;
+      real64 visc = 0.0;
+
+      // Step 2.1: guess the pressure with the datumDensity
+      real64 pres0 = datumPres - datumDens * gravCoef;
+      real64 pres1 = 0;
+
+      // Step 2.2: compute the mass density at this elevation using the guess, and update pressure
+      fluidWrapper.compute( pres0, dens, visc );
+      pres1 = datumPres - 0.5 * ( datumDens + dens ) * gravCoef;
+
+      // Step 2.3: fixed-point iteration until convergence
+      bool converged = true;
+      for( localIndex nEqIter = 0; nEqIter < maxNumEquilIterations; ++nEqIter )
+      {
+
+        // check convergence
+        converged = ( LvArray::math::abs( pres0 - pres1 ) <= equilTolerance );
+        pres0 = pres1;
+        if( converged )
+        {
+          break;
+        }
+
+        fluidWrapper.compute( pres0, dens, visc );
+        pres1 = datumPres - 0.5 * ( datumDens + dens ) * gravCoef;
+      }
+
+      if( !converged )
+      {
+        equilHasConverged.min( 0 );
+      }
+
+
+      // Step 3: save the elevation and hydrostatic pressure
+      elevationValues[0][i] = elevation;
+      pressureValues[i] = pres1;
+
+    } );
+    return equilHasConverged.get();
+  }
+};
 
 
 } // namespace SinglePhaseBaseKernels

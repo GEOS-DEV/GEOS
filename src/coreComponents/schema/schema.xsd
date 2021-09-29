@@ -282,6 +282,7 @@
 	<xsd:complexType name="FieldSpecificationsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Dirichlet" type="DirichletType" />
+			<xsd:element name="Equilibrium" type="EquilibriumType" />
 			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
 			<xsd:element name="SourceFlux" type="SourceFluxType" />
 			<xsd:element name="Traction" type="TractionType" />
@@ -310,6 +311,44 @@
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="EquilibriumType">
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<!--beginTime => time at which BC will start being applied.-->
+		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
+		<!--componentFractionVsElevationTableNames => Names of the tables specifying the relationship (component fraction vs elevation) for each component-->
+		<xsd:attribute name="componentFractionVsElevationTableNames" type="string_array" default="{}" />
+		<!--componentNames => Names of the fluid components-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--datumElevation => Datum elevation [m]-->
+		<xsd:attribute name="datumElevation" type="real64" use="required" />
+		<!--datumPressure => Datum pressure [Pa]-->
+		<xsd:attribute name="datumPressure" type="real64" use="required" />
+		<!--direction => Direction to apply boundary condition to-->
+		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
+		<!--endTime => time at which bc will stop being applied-->
+		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--equilibrationTolerance => Tolerance in the fixed-point iteration scheme used for hydrostatic initialization-->
+		<xsd:attribute name="equilibrationTolerance" type="real64" default="0.001" />
+		<!--functionName => Name of function that specifies variation of the BC-->
+		<xsd:attribute name="functionName" type="string" default="" />
+		<!--initialPhaseName => Name of the phase initially saturating the reservoir-->
+		<xsd:attribute name="initialPhaseName" type="string" default="" />
+		<!--maxNumberOfEquilibrationIterations => Maximum number of equilibration iterations-->
+		<xsd:attribute name="maxNumberOfEquilibrationIterations" type="localIndex" default="5" />
+		<!--numberOfPointsInHydrostaticPressureTable => Number of points in the hydrostatic pressure table constructed internally-->
+		<xsd:attribute name="numberOfPointsInHydrostaticPressureTable" type="localIndex" default="100" />
+		<!--objectPath => Path to the target field-->
+		<xsd:attribute name="objectPath" type="string" default="" />
+		<!--scale => Scale factor for value of BC.-->
+		<xsd:attribute name="scale" type="real64" default="0" />
+		<!--setNames => Name of sets that boundary condition is applied to.-->
+		<xsd:attribute name="setNames" type="string_array" use="required" />
+		<!--temperatureVsElevationTableName => Name of the table specifying the relationship (temperature [K] vs elevation)-->
+		<xsd:attribute name="temperatureVsElevationTableName" type="string" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1110,8 +1149,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
-		<!--wellTemperature => Temperature-->
-		<xsd:attribute name="wellTemperature" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1121,8 +1158,10 @@ the relative residual norm satisfies:
 * phaseVolRate
 * totalVolRate-->
 		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
-		<!--injectionStream => Global component densities for the injection stream-->
+		<!--injectionStream => Global component densities of the injection stream-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
+		<!--injectionTemperature => Temperature of the injection stream-->
+		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
 		<!--referenceElevation => Reference elevation where BHP control is enforced-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used-->

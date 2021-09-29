@@ -225,7 +225,11 @@ public:
     static constexpr char const * elemDofFieldString() { return "compositionalVariables"; }
 
     // inputs
-    static constexpr char const * temperatureString() { return "temperature"; }
+
+    // TODO: when GEOSX becomes thermal, remove "temperatureField" and only keep "temperature"
+    //       for now, let's avoid another change in the xml file
+    static constexpr char const * temperatureString() { return "temperatureField"; }
+    static constexpr char const * inputTemperatureString() { return "temperature"; }
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 
@@ -302,7 +306,12 @@ public:
    * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
-  void initializeFluidState( MeshLevel & mesh ) const;
+  void initializeFluidState( MeshLevel & mesh );
+
+  /**
+   * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
+   */
+  void computeHydrostaticEquilibrium();
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
@@ -374,8 +383,8 @@ protected:
   /// the number of fluid components
   integer m_numComponents;
 
-  /// the (uniform) temperature
-  real64 m_temperature;
+  /// the input temperature
+  real64 m_inputTemperature;
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;

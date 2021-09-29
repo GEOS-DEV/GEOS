@@ -80,7 +80,12 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( -1 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Global component densities for the injection stream" );
+    setDescription( "Global component densities of the injection stream" );
+
+  registerWrapper( viewKeyStruct::injectionTemperatureString(), &m_injectionTemperature ).
+    setDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Temperature of the injection stream" );
 
   registerWrapper( viewKeyStruct::useSurfaceConditionsString(), &m_useSurfaceConditions ).
     setDefaultValue( 0 ).
@@ -172,6 +177,13 @@ void WellControls::postProcessInput()
                   "WellControls named " << getName() << ": Target oil rate is negative",
                   InputError );
 
+  GEOSX_THROW_IF( (m_injectionStream.empty()  && m_injectionTemperature >= 0) ||
+                  (!m_injectionStream.empty() && m_injectionTemperature < 0),
+                  "WellControls named " << getName() << ": Both "
+                                        << viewKeyStruct::injectionStreamString() << " and " << viewKeyStruct::injectionTemperatureString()
+                                        << " must be specified for multiphase simulations",
+                  InputError );
+
   // 4) check injection stream
   if( !m_injectionStream.empty())
   {
@@ -182,8 +194,9 @@ void WellControls::postProcessInput()
                       "WellControls named " << getName() << ": Invalid injection stream" );
       sum += m_injectionStream[ic];
     }
-    GEOSX_ERROR_IF( LvArray::math::abs( 1.0 - sum ) > std::numeric_limits< real64 >::epsilon(),
-                    "WellControls named " << getName() << ": Invalid injection stream" );
+    GEOSX_THROW_IF( LvArray::math::abs( 1.0 - sum ) > std::numeric_limits< real64 >::epsilon(),
+                    "WellControls named " << getName() << ": Invalid injection stream",
+                    InputError );
   }
 
   // 5) check the flag for surface / reservoir conditions

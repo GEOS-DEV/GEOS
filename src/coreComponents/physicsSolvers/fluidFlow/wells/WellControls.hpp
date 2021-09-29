@@ -197,10 +197,16 @@ public:
   const string & getTargetPhaseName() const { return m_targetPhaseName; }
 
   /**
-   * @brief Const accessor for the composition of the injection rate
+   * @brief Const accessor for the composition of the injection stream
    * @return a global component fraction vector
    */
   arrayView1d< real64 const > getInjectionStream() const { return m_injectionStream; }
+
+  /**
+   * @brief Const accessor for the temperature of the injection stream
+   * @return the temperature of the injection stream
+   */
+  real64 getInjectionTemperature() const { return m_injectionTemperature; }
 
   /**
    * @brief Getter for the flag specifying whether we check rates at surface or reservoir conditions
@@ -251,6 +257,8 @@ public:
     static constexpr char const * targetPhaseNameString() { return "targetPhaseName"; }
     /// String key for the well injection stream
     static constexpr char const * injectionStreamString() { return "injectionStream"; }
+    /// String key for the well injection temperature
+    static constexpr char const * injectionTemperatureString() { return "injectionTemperature"; }
     /// String key for checking the rates at surface conditions
     static constexpr char const * useSurfaceConditionsString() { return "useSurfaceConditions"; }
     /// String key for the surface pressure
@@ -263,34 +271,6 @@ public:
     static constexpr char const * targetPhaseRateTableNameString() { return "targetPhaseRateTableName"; }
     /// string key for BHP table name
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
-    /// ViewKey for the reference elevation
-    dataRepository::ViewKey referenceElevation   = { refElevString() };
-    /// ViewKey for the well type
-    dataRepository::ViewKey type                 = { typeString() };
-    /// ViewKey for the well control
-    dataRepository::ViewKey control              = { controlString() };
-    /// ViewKey for the well target BHP
-    dataRepository::ViewKey targetBHP            = { targetBHPString() };
-    /// ViewKey for the well target rate
-    dataRepository::ViewKey targetTotalRate      = { targetTotalRateString() };
-    /// ViewKey for the well target phase rate
-    dataRepository::ViewKey targetPhaseRate      = { targetPhaseRateString() };
-    /// ViewKey for the well target phase name
-    dataRepository::ViewKey targetPhaseName      = { targetPhaseNameString() };
-    /// ViewKey for the well injection stream
-    dataRepository::ViewKey injectionStream      = { injectionStreamString() };
-    /// ViewKey for the surface conditions flag
-    dataRepository::ViewKey useSurfaceConditions = { useSurfaceConditionsString() };
-    /// ViewKey for the surface pressure
-    dataRepository::ViewKey surfacePressure      = { surfacePressureString() };
-    /// ViewKey for the surface temperature
-    dataRepository::ViewKey surfaceTemperature   = { surfaceTemperatureString() };
-    /// ViewKey for the total rate table name
-    dataRepository::ViewKey targetTotalRateTableName = { targetTotalRateTableNameString() };
-    /// ViewKey for the phase rate table name
-    dataRepository::ViewKey targetPhaseRateTableName = { targetPhaseRateTableNameString() };
-    /// ViewKey for the BHP table name
-    dataRepository::ViewKey targetBHPTableName       = { targetBHPTableNameString() };
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -326,7 +306,10 @@ private:
   string m_targetPhaseName;
 
   /// Vector with global component fractions at the injector
-  array1d< real64 >  m_injectionStream;
+  array1d< real64 > m_injectionStream;
+
+  /// Temperature at the injector
+  real64 m_injectionTemperature;
 
   /// Flag to decide whether rates are controlled at rates or surface conditions
   integer m_useSurfaceConditions;

@@ -18,16 +18,19 @@
 
 #include "SinglePhaseBase.hpp"
 
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
-#include "finiteVolume/FiniteVolumeManager.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "finiteVolume/FiniteVolumeManager.hpp"
+#include "functions/TableFunction.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
 namespace geosx
@@ -188,6 +191,9 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
   resetViews( mesh );
 
+  // Compute hydrostatic equilibrium in the regions for which corresponding field specification tag has been specified
+  computeHydrostaticEquilibrium();
+
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
   // They will be updated in applySystemSolution and ImplicitStepComplete, respectively
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
@@ -226,6 +232,175 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
   backupFields( mesh );
 }
+
+void SinglePhaseBase::computeHydrostaticEquilibrium()
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+  // Step 1: count individual equilibriums (there may be multiple ones)
+
+  std::map< string, localIndex > equilNameToEquilId;
+  localIndex equilCounter = 0;
+
+  fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
+  {
+    if( equilNameToEquilId.count( bc.getName() ) == 0 )
+    {
+      equilNameToEquilId[bc.getName()] = equilCounter;
+      equilCounter++;
+    }
+  } );
+
+  // Step 2: find the min elevation and the max elevation in the targetSets
+
+  // TODO: move to base
+
+  array1d< real64 > globalMaxElevation( equilNameToEquilId.size() );
+  array1d< real64 > globalMinElevation( equilNameToEquilId.size() );
+  array1d< real64 > localMaxElevation( equilNameToEquilId.size() );
+  array1d< real64 > localMinElevation( equilNameToEquilId.size() );
+  localMaxElevation.setValues< parallelHostPolicy >( -1e99 );
+  localMinElevation.setValues< parallelHostPolicy >( 1e99 );
+
+  fsManager.apply< EquilibriumInitialCondition >( 0.0,
+                                                  domain,
+                                                  "ElementRegions",
+                                                  EquilibriumInitialCondition::catalogName(),
+                                                  [&] ( EquilibriumInitialCondition const & fs,
+                                                        string const &,
+                                                        SortedArrayView< localIndex const > const & targetSet,
+                                                        Group & subRegion,
+                                                        string const & )
+  {
+    RAJA::ReduceMax< parallelHostReduce, real64 > targetSetMaxElevation( -1e99 );
+    RAJA::ReduceMin< parallelHostReduce, real64 > targetSetMinElevation( 1e99 );
+
+    arrayView2d< real64 const > const elemCenter =
+      subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
+    forAll< parallelHostPolicy >( targetSet.size(), [=] ( localIndex const i )
+    {
+      localIndex const k = targetSet[i];
+      targetSetMaxElevation.max( elemCenter[k][2] );
+      targetSetMinElevation.min( elemCenter[k][2] );
+    } );
+
+    localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
+    localMaxElevation[equilIndex] = LvArray::math::max( targetSetMaxElevation.get(), localMaxElevation[equilIndex] );
+    localMinElevation[equilIndex] = LvArray::math::min( targetSetMinElevation.get(), localMinElevation[equilIndex] );
+
+  } );
+
+  MpiWrapper::allReduce( localMaxElevation.data(),
+                         globalMaxElevation.data(),
+                         localMaxElevation.size(),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
+                         MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( localMinElevation.data(),
+                         globalMinElevation.data(),
+                         localMinElevation.size(),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Min ),
+                         MPI_COMM_GEOSX );
+
+  // Step 3: for each equil, compute a fine table with hydrostatic pressure vs elevation
+
+  fsManager.apply< EquilibriumInitialCondition >( 0.0,
+                                                  domain,
+                                                  "ElementRegions",
+                                                  EquilibriumInitialCondition::catalogName(),
+                                                  [&] ( EquilibriumInitialCondition const & fs,
+                                                        string const &,
+                                                        SortedArrayView< localIndex const > const & targetSet,
+                                                        Group & subRegion,
+                                                        string const & )
+  {
+    // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
+
+    localIndex const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
+    localIndex const numPointsInTable = fs.getNumPointsInHydrostaticPressureTable();
+    real64 const equilTolerance = fs.getEquilibrationTolerance();
+    real64 const datumElevation = fs.getDatumElevation();
+    real64 const datumPressure = fs.getDatumPressure();
+
+    localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
+    real64 const minElevation = globalMinElevation[equilIndex];
+    real64 const maxElevation = globalMaxElevation[equilIndex];
+    real64 const dElevation = ( maxElevation - minElevation ) / ( numPointsInTable - 1 );
+
+    array1d< array1d< real64 > > elevationValues;
+    array1d< real64 > pressureValues;
+    elevationValues.resize( 1 );
+    elevationValues[0].resize( numPointsInTable );
+    pressureValues.resize( numPointsInTable );
+
+    // Step 3.2: retrieve the fluid model to compute densities
+    // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
+
+    Group const & region = subRegion.getParent().getParent();
+    string const & fluidName = m_fluidModelNames[ targetRegionIndex( region.getName() ) ];
+    SingleFluidBase & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
+
+    // Step 3.3: compute the hydrostatic pressure values
+
+    constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+    {
+      using FluidType = TYPEOFREF( castedFluid );
+      typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+      integer const equilHasConverged =
+        HydrostaticPressureKernel::launch( numPointsInTable,
+                                           maxNumEquilIterations,
+                                           equilTolerance,
+                                           gravVector,
+                                           minElevation,
+                                           dElevation,
+                                           datumElevation,
+                                           datumPressure,
+                                           fluidWrapper,
+                                           elevationValues.toNestedView(),
+                                           pressureValues.toView() );
+
+      GEOSX_WARNING_IF( !equilHasConverged,
+                        SinglePhaseBase::catalogName() << " " << getName()
+                                                       << ": hydrostatic pressure initialization failed to converge!" );
+    } );
+
+    // Step 3.4: create hydrostatic pressure table
+
+    FunctionManager & functionManager = FunctionManager::getInstance();
+
+    string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
+    GEOSX_THROW_IF( functionManager.hasGroup< TableFunction >( tableName ),
+                    SinglePhaseBase::catalogName() << " " << getName()
+                                                   << ": table function named " << tableName << " already exists!",
+                    std::runtime_error );
+
+    TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
+    presTable->setTableCoordinates( elevationValues );
+    presTable->setTableValues( pressureValues );
+    presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
+
+    // Step 4: assign pressure as a function of elevation
+    // TODO: this last step should probably be delayed to wait for the creation of FaceElements
+    arrayView2d< real64 const > const elemCenter =
+      subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
+    arrayView1d< real64 > const pres =
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+
+    forAll< parallelHostPolicy >( targetSet.size(), [=] ( localIndex const i )
+    {
+      localIndex const k = targetSet[i];
+      real64 const elevation = elemCenter[k][2];
+      pres[k] = presTableWrapper.compute( &elevation );
+    } );
+  } );
+}
+
 
 real64 SinglePhaseBase::solverStep( real64 const & time_n,
                                     real64 const & dt,

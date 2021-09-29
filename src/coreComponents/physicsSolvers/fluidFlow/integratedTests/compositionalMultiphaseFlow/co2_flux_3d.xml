@@ -139,33 +139,18 @@
       fieldName="permeabilityTransMultiplier"
       scale="0.0"/>
 
-    <FieldSpecification
-      name="initialPressure"
-      initialCondition="1"
+    <Equilibrium
+      name="equil"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="pressure"
-      scale="9e6"/>
-
-    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
-    <FieldSpecification
-      name="initialComposition_co2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="globalCompFraction"
-      component="0"
-      scale="0.005"/>
-
-    <FieldSpecification
-      name="initialComposition_water"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
-      fieldName="globalCompFraction"
-      component="1"
-      scale="0.995"/>
-
+      objectPath="ElementRegions"      
+      datumElevation="28.5"
+      datumPressure="1.1e7"
+      initialPhaseName="water"
+      componentNames="{ co2, water }"
+      componentFractionVsElevationTableNames="{ initCO2CompFracTable,
+                                                initWaterCompFracTable }"
+      temperatureVsElevationTableName="initTempTable"/>
+    
     <!-- Injection rate: 0.03 kg/s -->
     <SourceFlux
       name="sourceTerm"
@@ -223,6 +208,25 @@
       scale="0.995"/>
   </FieldSpecifications>
 
+  <Functions>
+
+    <TableFunction
+      name="initCO2CompFracTable"
+      coordinateFiles="{ elevation.txt }"
+      voxelFile="initCO2CompFrac.txt"/>
+
+    <TableFunction
+      name="initWaterCompFracTable"
+      coordinateFiles="{ elevation.txt }"
+      voxelFile="initWaterCompFrac.txt"/>       
+    
+    <TableFunction
+      name="initTempTable"
+      coordinateFiles="{ elevation.txt }"
+      voxelFile="initTemp.txt"/>        
+    
+  </Functions>
+  
   <Outputs>
     <VTK
       name="vtkOutput"/>
