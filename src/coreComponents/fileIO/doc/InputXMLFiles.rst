@@ -1,3 +1,5 @@
+.. _InputFiles:
+
 ###############################################################################
 Input Files
 ###############################################################################
@@ -170,6 +172,7 @@ To do this, GEOSX does the following:
   4) Define any expected deviations from the schema via ``ManagedGroup::SetSchemaDeviations()``.
 
 
+.. _AdvancedXMLFeatures:
 
 Advanced XML Features
 =================================
@@ -182,7 +185,9 @@ Setup
 
 The package can be installed in the GEOSX build directory via the following command:
 
-`make geosx_xml_tools` 
+.. code-block:: bash
+
+    make geosx_xml_tools
 
 During the installation step, multiple scripts will be created in the `bin` directory alongside `geosx`: `preprocess_xml`, `format_xml`, and `geosx_preprocessed`.
 The build process creates a new virtual python environment, which is derived from the version of python used to configure GEOSX or a version indicated via the `PYTHON_POST_EXECUTABLE` variable in the cmake host configuration.
