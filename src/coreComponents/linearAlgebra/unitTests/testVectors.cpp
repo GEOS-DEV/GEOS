@@ -65,6 +65,8 @@ struct multiply
 
 auto const reciprocal = []( real64 const x ){ return 1.0 / x; };
 
+auto const square = []( real64 const x ){ return x * x; };
+
 }
 
 template< typename OP_X = decltype( ops::identity ), typename OP_Y = decltype( ops::identity ) >
@@ -428,6 +430,25 @@ TYPED_TEST_P( VectorTest, scaleValues )
   compareValues( valuesExtracted, valuesCopy, true, ops::identity, ops::multiply{factor} );
 }
 
+TYPED_TEST_P( VectorTest, pointwiseScaleValues )
+{
+  using Vector = typename TypeParam::ParallelVector;
+
+  localIndex const localSize = 3;
+  array1d< real64 > const valuesInitial = makeLocalValuesUniform( 3 );
+  array1d< real64 > const valuesCopy = valuesInitial;
+
+  Vector x;
+  x.create( valuesInitial, MPI_COMM_GEOSX );
+
+  x.pointwiseScale( x );
+
+  array1d< real64 > const valuesExtracted( localSize );
+  x.extract( valuesExtracted );
+
+  compareValues( valuesExtracted, valuesCopy, true, ops::identity, ops::square );
+}
+
 TYPED_TEST_P( VectorTest, reciprocal )
 {
   using Vector = typename TypeParam::ParallelVector;
@@ -567,6 +588,7 @@ REGISTER_TYPED_TEST_SUITE_P( VectorTest,
                              setAllValues,
                              zeroAllValues,
                              scaleValues,
+                             pointwiseScaleValues,
                              reciprocal,
                              dotProduct,
                              axpy,
