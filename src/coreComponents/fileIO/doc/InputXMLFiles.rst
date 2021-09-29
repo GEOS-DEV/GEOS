@@ -212,7 +212,7 @@ There are three ways to apply the preprocessor:
 .. code-block:: bash
 
     # The -o argument is used to manually specify the compiled name
-    preprocess_xml input.xml -o input.xml.processed
+    preprocess_xml -i input.xml -o input.xml.processed
     geosx -i input.xml.processed
 
     # Otherwise, a random name will be chosen by the tool
@@ -221,6 +221,10 @@ There are three ways to apply the preprocessor:
 
 
 3) Python / pygeosx: The preprocessor can also be applied directly in python or in pygeosx simulations.  An example of this is method is provided here: `GEOSX/examples/pygeosxExamples/hydraulicFractureWithMonitor/`.
+
+
+Each of these options support specifying multiple input files via the command line (e.g. `geosx_preprocessed -i input_a.xml -i input_b.xml`).
+They also support any number of command-line parameter overrides (e.g. `geosx_preprocessed -i input_a.xml -p parameter_a alpha -p parameter_b beta`).
 
 
 Included Files
@@ -290,6 +294,8 @@ The following example uses parameters to set the root path for a table function,
       interpolation="linear"/>
   </Functions>
 
+Any number of parameter overrides can be issued from the command line using the `-p name value` argument in the preprocessor script.
+Note that if the override value contains any spaces, it may need to be surrounded by quotation marks (`-p name "paramter with spaces"`).
 
 
 Units

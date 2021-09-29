@@ -159,13 +159,14 @@ def generate_random_name(prefix='', suffix='.xml'):
   return '%s%s%s' % (prefix, md5(tmp.encode('utf-8')).hexdigest(), suffix)
 
 
-def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True, keep_includes=True):
+def process(inputFiles, outputFile='', schema='', verbose=0, parameter_override=[], keep_parameters=True, keep_includes=True):
   """Process an xml file
 
-     @param inputFile Input file name.
+     @param inputFiles Input file names.
      @param outputFile Output file name (if not specified, then generate randomly).
      @param schema Schema file name to validate the final xml (if not specified, then do not validate).
      @param verbose Verbosity level.
+     @param parameter_override Parameter value overrides
      @param keep_parameters If True, then keep parameters in the compiled file (default = True)
      @param keep_includes If True, then keep includes in the compiled file (default = True)
   """
@@ -174,18 +175,35 @@ def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True
 
   # Expand the input path
   pwd = os.getcwd()
-  rootPath, inputFile = os.path.split(os.path.abspath(os.path.expanduser(inputFile)))
-  os.chdir(rootPath)
+  expanded_files = [os.path.abspath(os.path.expanduser(f)) for f in inputFiles]
+  single_path, single_input = os.path.split(expanded_files[0])
+  os.chdir(single_path)
 
-  # Load the xml files and merge includes
-  try:
-    parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
-    tree = ElementTree.parse(inputFile, parser=parser)
-    root = tree.getroot()
-  except XMLSyntaxError as err:
-    print('\nCould not load input file: %s' % (inputFile))
-    print(err.msg)
-    raise Exception('\nCheck input file!')
+  # Handle single vs. multiple command line inputs
+  root = ''
+  tree = ''
+  if (len(expanded_files) == 1):
+    # Load single files directly
+    try:
+      parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
+      tree = ElementTree.parse(single_input, parser=parser)
+      root = tree.getroot()
+    except XMLSyntaxError as err:
+      print('\nCould not load input file: %s' % (single_input))
+      print(err.msg)
+      raise Exception('\nCheck input file!')
+
+  else:
+    # For multiple inputs, create a simple xml structure to hold
+    # the included files.  These will be saved as comments in the compiled file
+    root = ElementTree.Element('Problem')
+    tree = ElementTree.ElementTree(root)
+    included_node = ElementTree.Element("Included")
+    root.append(included_node)
+    for f in expanded_files:
+      included_file = ElementTree.Element("File")
+      included_file.set('name', f)
+      included_node.append(included_file)
 
   # Add the included files to the xml structure
   # Note: doing this first assumes that parameters aren't used in Included block
@@ -200,6 +218,22 @@ def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True
   for parameters in root.findall('Parameters'):
     for p in parameters.findall('Parameter'):
       Pmap[p.get('name')] = p.get('value')
+
+  # Apply any parameter overrides
+  if len(parameter_override):
+    # Save overriden values to a new xml element
+    command_override_node = ElementTree.Element("CommandLineOverride")
+    root.append(command_override_node)
+    for ii in range(len(parameter_override)):
+      pname = parameter_override[ii][0]
+      pval = ' '.join(parameter_override[ii][1:])
+      Pmap[pname] = pval
+      override_parameter = ElementTree.Element("Parameter")
+      override_parameter.set('name', pname)
+      override_parameter.set('value', pval)
+      command_override_node.append(override_parameter)
+
+  # Add the parameter map to the handler
   parameterHandler.target = Pmap
 
   # Process any parameters, units, and symbolic math in the xml
@@ -214,6 +248,10 @@ def process(inputFile, outputFile='', schema='', verbose=0, keep_parameters=True
     if keep_parameters:
       root.insert(-1, ElementTree.Comment(ElementTree.tostring(parameterNode)))
     root.remove(parameterNode)
+  for overrideNode in root.findall('CommandLineOverride'):
+    if keep_parameters:
+      root.insert(-1, ElementTree.Comment(ElementTree.tostring(overrideNode)))
+    root.remove(overrideNode)
 
   # Generate a random output name if not specified
   if not outputFile:
