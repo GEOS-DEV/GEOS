@@ -489,61 +489,64 @@ struct HydrostaticPressureKernel
           arrayView1d< arrayView1d< real64 > const > elevationValues,
           arrayView1d< arrayView1d< real64 > const > pressureValues )
   {
-    localIndex constexpr MAX_NUM_COMP = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
     localIndex constexpr MAX_NUM_PHASE = constitutive::MultiFluidBase::MAX_NUM_PHASES;
+    localIndex constexpr MAX_NUM_COMP = constitutive::MultiFluidBase::MAX_NUM_PHASES;
+
+    // datum fluid properties
+    array2d< real64, compflow::LAYOUT_COMP > datumCompFrac( 1, numComps );
+    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseFrac( 1, 1, numPhases );
+    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseDens( 1, 1, numPhases );
+    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseMassDens( 1, 1, numPhases );
+    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseVisc( 1, 1, numPhases );
+    array4d< real64, multifluid::LAYOUT_PHASE_COMP > datumPhaseCompFrac( 1, 1, numPhases, numComps );
+    real64 datumTotalDens = 0.0;
 
     // Step 1: compute the mass density at the datum elevation
     real64 const datumTemp = tempTableWrapper.compute( &datumElevation );
-    stackArray1d< real64, MAX_NUM_COMP > datumCompFrac( numComps );
-    stackArray1d< real64, MAX_NUM_PHASE > datumPhaseFrac( numPhases );
-    stackArray1d< real64, MAX_NUM_PHASE > datumPhaseDens( numPhases );
-    stackArray1d< real64, MAX_NUM_PHASE > datumPhaseMassDens( numPhases );
-    stackArray1d< real64, MAX_NUM_PHASE > datumPhaseVisc( numPhases );
-    stackArray2d< real64, MAX_NUM_COMP *MAX_NUM_PHASE > datumPhaseCompFrac( numPhases, numComps );
-    real64 datumTotalDens = 0.0;
     for( localIndex ic = 0; ic < numComps; ++ic )
     {
-      datumCompFrac[ic] = compFracTableWrappers[ic].compute( &datumElevation );
+      datumCompFrac[0][ic] = compFracTableWrappers[ic].compute( &datumElevation );
     }
-
-    // TODO: find a way to make this compile on GPU despite the change in permutation
     fluidWrapper.compute( datumPres,
                           datumTemp,
-                          datumCompFrac,
-                          datumPhaseFrac,
-                          datumPhaseDens,
-                          datumPhaseMassDens,
-                          datumPhaseVisc,
-                          datumPhaseCompFrac,
+                          datumCompFrac[0],
+                          datumPhaseFrac[0][0],
+                          datumPhaseDens[0][0],
+                          datumPhaseMassDens[0][0],
+                          datumPhaseVisc[0][0],
+                          datumPhaseCompFrac[0][0],
                           datumTotalDens );
 
     RAJA::ReduceMin< parallelHostReduce, integer > equilHasConverged( 1 );
 
-    forAll< parallelHostPolicy >( size, [=] ( localIndex const i )
+    forAll< parallelHostPolicy >( size, [=,
+                                         datumPhaseMassDensViewConst = datumPhaseMassDens.toViewConst()] ( localIndex const i )
     {
+      // TODO: add this to common/Datatypes.hpp
+      // fluid properties at this elevation
+      StackArray< real64, 2, MAX_NUM_COMP, compflow::LAYOUT_COMP > compFrac( 1, numComps );
+      StackArray< real64, 3, MAX_NUM_PHASE, multifluid::LAYOUT_PHASE > phaseFrac( 1, 1, numPhases );
+      StackArray< real64, 3, MAX_NUM_PHASE, multifluid::LAYOUT_PHASE > phaseDens( 1, 1, numPhases );
+      StackArray< real64, 3, MAX_NUM_PHASE, multifluid::LAYOUT_PHASE > phaseMassDens( 1, 1, numPhases );
+      StackArray< real64, 3, MAX_NUM_PHASE, multifluid::LAYOUT_PHASE > phaseVisc( 1, 1, numPhases );
+      StackArray< real64, 4, MAX_NUM_PHASE *MAX_NUM_COMP, multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhases, numComps );
+      real64 totalDens = 0.0;
 
       // Step 2: compute the hydrostatic pressure at the following elevation
       real64 const elevation = minElevation + i * dElevation;
       real64 const gravCoef = gravVector[2] * ( datumElevation - elevation );
       real64 const temp = tempTableWrapper.compute( &elevation );
-      stackArray1d< real64, MAX_NUM_COMP > compFrac( numComps );
-      stackArray1d< real64, MAX_NUM_PHASE > phaseFrac( numPhases );
-      stackArray1d< real64, MAX_NUM_PHASE > phaseDens( numPhases );
-      stackArray1d< real64, MAX_NUM_PHASE > phaseMassDens( numPhases );
-      stackArray1d< real64, MAX_NUM_PHASE > phaseVisc( numPhases );
-      stackArray2d< real64, MAX_NUM_COMP *MAX_NUM_PHASE > phaseCompFrac( numPhases, numComps );
-      real64 totalDens = 0.0;
       for( localIndex ic = 0; ic < numComps; ++ic )
       {
-        compFrac[ic] = compFracTableWrappers[ic].compute( &elevation );
+        compFrac[0][ic] = compFracTableWrappers[ic].compute( &elevation );
       }
 
       // Step 2.1: guess the pressure with the datumPhaseMassDensity
       stackArray1d< real64, MAX_NUM_PHASE > pres0( numPhases );
-      stackArray1d< real64, MAX_NUM_COMP > pres1( numPhases );
+      stackArray1d< real64, MAX_NUM_PHASE > pres1( numPhases );
       for( localIndex ip = 0; ip < numPhases; ++ip )
       {
-        pres0[ip] = datumPres - datumPhaseMassDens[ip] * gravCoef;
+        pres0[ip] = datumPres - datumPhaseMassDensViewConst[0][0][ip] * gravCoef;
       }
 
       // Step 2.2: compute the mass density at this elevation using the guess, and update pressure
@@ -551,14 +554,14 @@ struct HydrostaticPressureKernel
       {
         fluidWrapper.compute( pres0[ip],
                               temp,
-                              compFrac,
-                              phaseFrac,
-                              phaseDens,
-                              phaseMassDens,
-                              phaseVisc,
-                              phaseCompFrac,
+                              compFrac[0],
+                              phaseFrac[0][0],
+                              phaseDens[0][0],
+                              phaseMassDens[0][0],
+                              phaseVisc[0][0],
+                              phaseCompFrac[0][0],
                               totalDens );
-        pres1[ip] = datumPres - 0.5 * ( datumPhaseMassDens[ip] + phaseMassDens[ip] ) * gravCoef;
+        pres1[ip] = datumPres - 0.5 * ( datumPhaseMassDensViewConst[0][0][ip] + phaseMassDens[0][0][ip] ) * gravCoef;
       }
 
       // Step 2.3: fixed-point iteration until convergence
@@ -585,14 +588,14 @@ struct HydrostaticPressureKernel
         {
           fluidWrapper.compute( pres0[ip],
                                 temp,
-                                compFrac,
-                                phaseFrac,
-                                phaseDens,
-                                phaseMassDens,
-                                phaseVisc,
-                                phaseCompFrac,
+                                compFrac[0],
+                                phaseFrac[0][0],
+                                phaseDens[0][0],
+                                phaseMassDens[0][0],
+                                phaseVisc[0][0],
+                                phaseCompFrac[0][0],
                                 totalDens );
-          pres1[ip] = datumPres - 0.5 * ( datumPhaseMassDens[ip] + phaseMassDens[ip] ) * gravCoef;
+          pres1[ip] = datumPres - 0.5 * ( datumPhaseMassDensViewConst[0][0][ip] + phaseMassDens[0][0][ip] ) * gravCoef;
         }
       }
 

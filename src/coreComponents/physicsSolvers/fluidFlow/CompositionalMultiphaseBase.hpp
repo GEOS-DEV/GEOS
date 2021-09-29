@@ -226,9 +226,8 @@ public:
 
     // inputs
 
-    // TODO: when GEOSX becomes thermal, remove "temperatureField" and only keep "temperature"
-    //       for now, let's avoid another change in the xml file
-    static constexpr char const * temperatureString() { return "temperatureField"; }
+    // TODO: when GEOSX becomes thermal, remove inputTemperatureString
+    static constexpr char const * temperatureString() { return "temperature"; }
     static constexpr char const * inputTemperatureString() { return "temperature"; }
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
