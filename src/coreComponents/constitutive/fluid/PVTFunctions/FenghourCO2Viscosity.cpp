@@ -105,7 +105,7 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( functionName << ": invalid property argument: " << e.what(), InputError );
+    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   localIndex const nP = tableCoords.nPressures();
@@ -143,7 +143,8 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
   m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
-FenghourCO2Viscosity::KernelWrapper FenghourCO2Viscosity::createKernelWrapper() const
+FenghourCO2Viscosity::KernelWrapper
+FenghourCO2Viscosity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         *m_CO2ViscosityTable );

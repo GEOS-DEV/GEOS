@@ -111,8 +111,6 @@ public:
 
   VanGenuchtenBakerRelativePermeability( string const & name, dataRepository::Group * const parent );
 
-  virtual ~VanGenuchtenBakerRelativePermeability() override;
-
   static string catalogName() { return "VanGenuchtenBakerRelativePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
