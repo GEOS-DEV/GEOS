@@ -69,11 +69,14 @@ DamageElasticIsotropic                      node :ref:`DATASTRUCTURE_DamageElast
 DamageSpectralElasticIsotropic              node :ref:`DATASTRUCTURE_DamageSpectralElasticIsotropic`              
 DamageVolDevElasticIsotropic                node :ref:`DATASTRUCTURE_DamageVolDevElasticIsotropic`                
 DeadOilFluid                                node :ref:`DATASTRUCTURE_DeadOilFluid`                                
+DelftEgg                                    node :ref:`DATASTRUCTURE_DelftEgg`                                    
 DruckerPrager                               node :ref:`DATASTRUCTURE_DruckerPrager`                               
 ElasticIsotropic                            node :ref:`DATASTRUCTURE_ElasticIsotropic`                            
+ElasticIsotropicPressureDependent           node :ref:`DATASTRUCTURE_ElasticIsotropicPressureDependent`           
 ElasticOrthotropic                          node :ref:`DATASTRUCTURE_ElasticOrthotropic`                          
 ElasticTransverseIsotropic                  node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`                  
 ExtendedDruckerPrager                       node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                       
+ModifiedCamClay                             node :ref:`DATASTRUCTURE_ModifiedCamClay`                             
 NullModel                                   node :ref:`DATASTRUCTURE_NullModel`                                   
 ParallelPlatesPermeability                  node :ref:`DATASTRUCTURE_ParallelPlatesPermeability`                  
 ParticleFluid                               node :ref:`DATASTRUCTURE_ParticleFluid`                               

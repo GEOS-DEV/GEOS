@@ -66,7 +66,10 @@ set( constitutive_headers
      solid/DamageVolDev.hpp
      solid/DruckerPrager.hpp
      solid/DruckerPragerExtended.hpp
+     solid/ModifiedCamClay.hpp
+     solid/DelftEgg.hpp
      solid/ElasticIsotropic.hpp
+     solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
@@ -134,7 +137,10 @@ set( constitutive_sources
      solid/DamageVolDev.cpp
      solid/DruckerPrager.cpp
      solid/DruckerPragerExtended.cpp
+     solid/ModifiedCamClay.cpp
+     solid/DelftEgg.cpp
      solid/ElasticIsotropic.cpp
+     solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/ElasticOrthotropic.cpp
      solid/PorousSolid.cpp

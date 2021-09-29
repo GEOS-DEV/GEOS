@@ -253,6 +253,13 @@ Element: DeadOilFluid
 .. include:: ../../coreComponents/schema/docs/DeadOilFluid.rst
 
 
+.. _XML_DelftEgg:
+
+Element: DelftEgg
+=================
+.. include:: ../../coreComponents/schema/docs/DelftEgg.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -272,6 +279,13 @@ Element: DruckerPrager
 Element: ElasticIsotropic
 =========================
 .. include:: ../../coreComponents/schema/docs/ElasticIsotropic.rst
+
+
+.. _XML_ElasticIsotropicPressureDependent:
+
+Element: ElasticIsotropicPressureDependent
+==========================================
+.. include:: ../../coreComponents/schema/docs/ElasticIsotropicPressureDependent.rst
 
 
 .. _XML_ElasticOrthotropic:
@@ -468,6 +482,13 @@ Element: LinearSolverParameters
 Element: Mesh
 =============
 .. include:: ../../coreComponents/schema/docs/Mesh.rst
+
+
+.. _XML_ModifiedCamClay:
+
+Element: ModifiedCamClay
+========================
+.. include:: ../../coreComponents/schema/docs/ModifiedCamClay.rst
 
 
 .. _XML_MultiphasePoromechanics:
@@ -1174,6 +1195,13 @@ Datastructure: DeadOilFluid
 .. include:: ../../coreComponents/schema/docs/DeadOilFluid_other.rst
 
 
+.. _DATASTRUCTURE_DelftEgg:
+
+Datastructure: DelftEgg
+=======================
+.. include:: ../../coreComponents/schema/docs/DelftEgg_other.rst
+
+
 .. _DATASTRUCTURE_Dirichlet:
 
 Datastructure: Dirichlet
@@ -1193,6 +1221,13 @@ Datastructure: DruckerPrager
 Datastructure: ElasticIsotropic
 ===============================
 .. include:: ../../coreComponents/schema/docs/ElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticIsotropicPressureDependent:
+
+Datastructure: ElasticIsotropicPressureDependent
+================================================
+.. include:: ../../coreComponents/schema/docs/ElasticIsotropicPressureDependent_other.rst
 
 
 .. _DATASTRUCTURE_ElasticOrthotropic:
@@ -1410,6 +1445,13 @@ Datastructure: Mesh
 Datastructure: MeshBodies
 =========================
 .. include:: ../../coreComponents/schema/docs/MeshBodies_other.rst
+
+
+.. _DATASTRUCTURE_ModifiedCamClay:
+
+Datastructure: ModifiedCamClay
+==============================
+.. include:: ../../coreComponents/schema/docs/ModifiedCamClay_other.rst
 
 
 .. _DATASTRUCTURE_MultiphasePoromechanics:
