@@ -331,9 +331,21 @@ Again, the ``config-build.py`` sets up cmake for you, so the process is very sim
    make -j4
    make install
 
-Here, the parallel ``make -j 4`` will use four processes for compilation, which can substantially speed up the build if you have a multi-processor machine.
+The host-config file is the place to set all relevant configuration options.  
+Note that the path to the previously installed third party libraries is typically specified within this file.  
+An alternative is to set the path ``GEOSX_TPL_DIR`` via a cmake command line option, e.g. 
+
+.. code-block:: sh
+
+   python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release -D GEOSX_TPL_DIR=/full/path/to/thirdPartyLibs
+
+We highly recommend using full paths, rather than relative paths, whenever possible.
+The parallel ``make -j 4`` will use four processes for compilation, which can substantially speed up the build if you have a multi-processor machine.
 You can adjust this value to match the number of processors available on your machine.
 The ``make install`` command then installs GEOSX to a default location unless otherwise specified.
+
+
+
 If all goes well, a ``geosx`` executable should now be available:
 
 .. code-block:: sh
