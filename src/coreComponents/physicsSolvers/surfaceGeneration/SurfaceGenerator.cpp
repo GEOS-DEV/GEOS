@@ -2840,7 +2840,9 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
 
   nodeManager.totalDisplacement().move( LvArray::MemorySpace::host, false );
-  elementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+  elementManager.forElementSubRegions< CellElementSubRegion >( targetRegionNames(),
+                                                               [&]( localIndex const,
+                                                                    CellElementSubRegion const & subRegion )
   {
     for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
     {

@@ -122,7 +122,21 @@ void ContactRelationBase::initializePreSubGroups()
     GEOSX_ERROR_IF( xvals.size() < 2,
                     "Invalid aperture limiter table. Must have more than two points specified" );
 
+
     localIndex n=xvals.size()-1;
+
+    for( localIndex a=1; a<=n; ++a )
+    {
+      real64 const slope = (yvals[a]-yvals[a-1]) / (xvals[a]-xvals[a-1]);
+      GEOSX_ERROR_IF( slope <= 0,
+                      "Invalid aperture limiter table. "
+                      "Slope of any segment can never be less than 0. "
+                      "Slope of segment "<<a<<" is: "
+                      "( "<<yvals[a]<<" - "<<yvals[a-1]<<" ) / ( "<<xvals[a]<<" - "<<xvals[a-1]<<") = "<<slope );
+
+    }
+
+
     real64 const slope = (yvals[n]-yvals[n-1]) / (xvals[n]-xvals[n-1]);
 
     GEOSX_ERROR_IF( slope >= 1.0,
