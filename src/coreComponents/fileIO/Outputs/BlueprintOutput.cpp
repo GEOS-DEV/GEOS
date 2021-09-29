@@ -163,10 +163,7 @@ bool BlueprintOutput::execute( real64 const time,
   GEOSX_ASSERT_MSG( conduit::blueprint::mesh::index::verify( index, info ), info.to_json() );
 
   /// Write out the root index file, then write out the mesh.
-  char buffer[ 128 ];
-  GEOSX_ERROR_IF_GE( snprintf( buffer, 128, "blueprintFiles/cycle_%07d", cycle ), 128 );
-
-  string const completePath = joinPath( OutputBase::getOutputDirectory(), buffer );
+  string const completePath = GEOSX_FMT( "{}/blueprintFiles/cycle_{:07}", OutputBase::getOutputDirectory(), cycle );
   string const filePathForRank = dataRepository::writeRootFile( fileRoot, completePath );
   conduit::relay::io::save( meshRoot, filePathForRank, "hdf5" );
 

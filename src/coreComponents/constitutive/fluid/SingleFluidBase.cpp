@@ -29,7 +29,6 @@ namespace constitutive
 SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default value for density." );
@@ -39,21 +38,17 @@ SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
     setDescription( "Default value for viscosity." );
 
   registerWrapper( viewKeyStruct::densityString(), &m_density ).setPlotLevel( PlotLevel::LEVEL_0 );
-
   registerWrapper( viewKeyStruct::dDens_dPresString(), &m_dDensity_dPressure );
 
   registerWrapper( viewKeyStruct::viscosityString(), &m_viscosity ).setPlotLevel( PlotLevel::LEVEL_0 );
   registerWrapper( viewKeyStruct::dVisc_dPresString(), &m_dViscosity_dPressure );
 }
 
-SingleFluidBase::~SingleFluidBase() = default;
-
 void SingleFluidBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).setApplyDefaultValue( m_defaultDensity );
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::viscosityString() ).setApplyDefaultValue( m_defaultViscosity );
-
+  getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).setApplyDefaultValue( m_defaultDensity );
+  getWrapper< array2d< real64 > >( viewKeyStruct::viscosityString() ).setApplyDefaultValue( m_defaultViscosity );
 }
 
 void SingleFluidBase::allocateConstitutiveData( Group & parent,
@@ -61,7 +56,7 @@ void SingleFluidBase::allocateConstitutiveData( Group & parent,
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  this->resize( parent.size() );
+  resize( parent.size() );
 
   m_density.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dDensity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );

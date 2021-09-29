@@ -766,11 +766,14 @@
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
 			<xsd:element name="DamageVolDevElasticIsotropic" type="DamageVolDevElasticIsotropicType" />
 			<xsd:element name="DeadOilFluid" type="DeadOilFluidType" />
+			<xsd:element name="DelftEgg" type="DelftEggType" />
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
+			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
+			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
@@ -1146,6 +1149,30 @@
 		<!--viscosityTableWrappers => (no description available)-->
 		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
+	<xsd:complexType name="DelftEggType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--cslSlope => Slope of the critical state line-->
+		<xsd:attribute name="cslSlope" type="real64_array" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldPreConsolidationPressure => Old preconsolidation pressure-->
+		<xsd:attribute name="oldPreConsolidationPressure" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--preConsolidationPressure => New preconsolidation pressure-->
+		<xsd:attribute name="preConsolidationPressure" type="real64_array2d" />
+		<!--recompressionIndex =>  Recompression index-->
+		<xsd:attribute name="recompressionIndex" type="real64_array" />
+		<!--shapeParameter => Shape parameter for the yield surface-->
+		<xsd:attribute name="shapeParameter" type="real64_array" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--virginCompressionIndex => Virgin compression index-->
+		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
+	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
@@ -1176,6 +1203,22 @@
 		<!--oldStress => Previous Material Stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
 		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="ElasticIsotropicPressureDependentType">
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--recompressionIndex => Recompression Index Field-->
+		<xsd:attribute name="recompressionIndex" type="real64_array" />
+		<!--refPressure => Reference Pressure Field-->
+		<xsd:attribute name="refPressure" type="real64" />
+		<!--refStrainVol => Reference Volumetric Strain-->
+		<xsd:attribute name="refStrainVol" type="real64" />
+		<!--shearModulus => Elastic Shear Modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
@@ -1249,6 +1292,30 @@
 		<xsd:attribute name="stateVariable" type="real64_array2d" />
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="ModifiedCamClayType">
+		<!--cslSlope => Slope of the critical state line-->
+		<xsd:attribute name="cslSlope" type="real64_array" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldPreConsolidationPressure => Old preconsolidation pressure-->
+		<xsd:attribute name="oldPreConsolidationPressure" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--preConsolidationPressure => New preconsolidation pressure-->
+		<xsd:attribute name="preConsolidationPressure" type="real64_array2d" />
+		<!--recompressionIndex => Recompression Index Field-->
+		<xsd:attribute name="recompressionIndex" type="real64_array" />
+		<!--refPressure => Reference Pressure Field-->
+		<xsd:attribute name="refPressure" type="real64" />
+		<!--refStrainVol => Reference Volumetric Strain-->
+		<xsd:attribute name="refStrainVol" type="real64" />
+		<!--shearModulus => Elastic Shear Modulus-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--virginCompressionIndex => Virgin compression index-->
+		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="NullModelType" />
 	<xsd:complexType name="ParallelPlatesPermeabilityType">
