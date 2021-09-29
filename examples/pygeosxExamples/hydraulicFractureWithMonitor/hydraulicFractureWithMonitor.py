@@ -1,4 +1,5 @@
 
+# PYGEOSX_SETUP
 import sys
 from mpi4py import MPI
 import pygeosx
@@ -9,27 +10,33 @@ import matplotlib.pyplot as plt
 # Get the MPI rank
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
+# PYGEOSX_SETUP_END
 
 
 def run_problem():
     """
     Run the GEOSX problem
     """
+    # PYGEOSX_INITIALIZATION
     # Initialize the code and set initial conditions
     xml.apply_xml_preprocessor()
     problem = pygeosx.initialize(rank, sys.argv)
     pygeosx.apply_initial_conditions()
+    # PYGEOSX_INITIALIZATION_END
 
+    # PYGEOSX_KEY_SEARCH
     # Rather than specifying the wrapper paths explicitly,
     # search for them using a set of filters
     fracture_location_key = wrapper.get_matching_wrapper_path(problem, ['Fracture', 'elementCenter'])
     fracture_aperture_key = wrapper.get_matching_wrapper_path(problem, ['Fracture', 'effectiveAperture'])
+    # PYGEOSX_KEY_SEARCH_END
 
     # Note: we will be plotting our results.
     # This will modify the fonts so that they a bit easier to read
     plot_font = {'weight': 'normal', 'size': 8}
     plt.rc('font', **plot_font)
 
+    # PYGEOSX_QUERY_SETUP
     # Setup values to record
     records = {fracture_location_key: {'label': 'Fracture Extents (m)',
                                        'scale': 1.0,
@@ -42,11 +49,18 @@ def run_problem():
                'time': {'label': 'Time (min)',
                         'scale': 1.0 / 60.0,
                         'history': []}}
+    # PYGEOSX_QUERY_SETUP_END
 
+    # PYGEOSX_MAIN_LOOP
     # Run the code
+    query_count = 0
+    plot_frequency = 4
     while pygeosx.run() != pygeosx.COMPLETED:
         wrapper.run_queries(problem, records)
-        wrapper.plot_history(records)
+        query_count += 1
+        if (query_count % plot_frequency == 0):
+            wrapper.plot_history(records)
+    # PYGEOSX_MAIN_LOOP_END
 
 
 if __name__ == '__main__':
