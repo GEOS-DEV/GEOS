@@ -124,12 +124,12 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
   :end-before: <!-- SPHINX_WELLBORE_SINGLEPHASEFVM_END -->
 
 
-- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``PoromechanicsSolver`` (more information at :ref:`SinglePhasePoromechanics`).
+- the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``PoromechanicsSolver`` (more information at :ref:`PoroelasticSolver`).
 
 .. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/multiphysics/benchmarks/WellboreProblem_Base.xml
   :language: xml
-  :start-after: <!-- SPHINX_WELLBORE_POROELASTICSOLVER -->
-  :end-before: <!-- SPHINX_WELLBORE_POROELASTICSOLVER_END -->
+  :start-after: <!-- SPHINX_WELLBORE_POROMECHANICSSOLVER -->
+  :end-before: <!-- SPHINX_WELLBORE_POROMECHANICSSOLVER_END -->
 
 
 The two single-physics solvers are parameterized as explained
