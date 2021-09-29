@@ -6,6 +6,7 @@ packages:
       mpi: [spectrum-mpi]
       blas: [essl]
       lapack: [essl]
+      gl: [mesa]
 
   spectrum-mpi:
     buildable: False
@@ -65,3 +66,9 @@ packages:
     externals:
     - spec: python@3.8.2
       prefix: /usr/tce/packages/python/python-3.8.2/
+
+  mesa:
+    buildable: False
+    externals:
+    - spec: mesa@19.0.1
+      prefix: /usr/tce/packages/mesa3d/mesa-19.0.1/

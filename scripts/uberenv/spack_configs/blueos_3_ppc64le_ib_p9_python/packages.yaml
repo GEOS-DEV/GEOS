@@ -6,6 +6,7 @@ packages:
       mpi: [spectrum-mpi]
       blas: [essl]
       lapack: [essl]
+      gl: [mesa]
 
   spectrum-mpi:
     buildable: False
@@ -130,3 +131,8 @@ packages:
     - spec: pkg-config@0.27.1
       prefix: /usr/bin/
 
+  mesa:
+    buildable: False
+    externals:
+    - spec: mesa@19.0.1
+      prefix: /usr/tce/packages/mesa3d/mesa-19.0.1/

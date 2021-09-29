@@ -71,7 +71,6 @@ packages:
     - spec: py-sphinx@1.6.3
       prefix: /collab/usr/gapps/python/build/spack-toss3.2/opt/spack/linux-rhel7-x86_64/gcc-4.9.3/python-2.7.14-7rci3jkmuht2uiwp433afigveuf4ocnu/
 
-  # Something here for mesa3d?
   mesa:
     buildable: False
     externals:
