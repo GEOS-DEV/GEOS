@@ -115,9 +115,9 @@ public:
    * @param stiffness the stiffness array
    */
   GEOSX_HOST_DEVICE
-  void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
+  void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
   {
-    m_solidUpdate.getElasticStiffness( k, stiffness );
+    m_solidUpdate.getElasticStiffness( k, q, stiffness );
   }
 
 private:
