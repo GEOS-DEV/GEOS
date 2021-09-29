@@ -10,11 +10,14 @@ Validation and Verification Studies
    sneddon/Example	      
 
    edpWellbore/Example
+   
+   mccWellbore/Example
 
    casedElasticWellbore/Example
 
    deviatedElasticWellbore/Example
 
    poromechanicsWellbore/Example
+
 
 
