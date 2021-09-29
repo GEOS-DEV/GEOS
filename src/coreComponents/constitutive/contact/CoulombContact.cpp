@@ -13,10 +13,10 @@
  */
 
 /**
- *  @file Coulomb.cpp
+ *  @file CoulombContact.cpp
  */
 
-#include "Coulomb.hpp"
+#include "CoulombContact.hpp"
 
 namespace geosx
 {
@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-Coulomb::Coulomb( string const & name, Group * const parent ):
+CoulombContact::CoulombContact( string const & name, Group * const parent ):
   ContactBase( name, parent ),
   m_cohesion(),
   m_frictionAngle(),
@@ -49,10 +49,10 @@ Coulomb::Coulomb( string const & name, Group * const parent ):
     setDescription( "Friction coefficient" );
 }
 
-Coulomb::~Coulomb()
+CoulombContact::~CoulombContact()
 {}
 
-void Coulomb::postProcessInput()
+void CoulombContact::postProcessInput()
 {
   GEOSX_THROW_IF( m_frictionCoefficient < 0.0 && m_frictionAngle < 0,
                   getCatalogName() << " " << getName() << ": Both friction angle and friction coefficient are less than zero. Values: "
@@ -84,14 +84,14 @@ void Coulomb::postProcessInput()
 
 }
 
-CoulombUpdates Coulomb::createKernelWrapper() const
+CoulombContactUpdates CoulombContact::createKernelWrapper() const
 {
-  return CoulombUpdates( m_cohesion,
-                         m_frictionCoefficient );
+  return CoulombContactUpdates( m_cohesion,
+                                m_frictionCoefficient );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, Coulomb, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CoulombContact, string const &, Group * const )
 
-} /* namespace constutive */
+} /* namespace constitutive */
 
 } /* namespace geosx */

@@ -13,11 +13,11 @@
  */
 
 /**
- *  @file Coulomb.hpp
+ *  @file CoulombContact.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONTACT_COULOMB_HPP_
-#define GEOSX_CONSTITUTIVE_CONTACT_COULOMB_HPP_
+#ifndef GEOSX_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_
+#define GEOSX_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_
 
 #include "ContactBase.hpp"
 
@@ -28,34 +28,34 @@ namespace constitutive
 {
 
 /**
- * @class CoulombUpdates
+ * @class CoulombContactUpdates
  *
  * This class is used for in-kernel contact relation updates
  */
-class CoulombUpdates : public ContactBaseUpdates
+class CoulombContactUpdates : public ContactBaseUpdates
 {
 public:
 
-  CoulombUpdates( real64 const & cohesion,
-                  real64 const & frictionCoefficient )
+  CoulombContactUpdates( real64 const & cohesion,
+                         real64 const & frictionCoefficient )
     : m_cohesion( cohesion ),
     m_frictionCoefficient( frictionCoefficient )
   {}
 
   /// Default copy constructor
-  CoulombUpdates( CoulombUpdates const & ) = default;
+  CoulombContactUpdates( CoulombContactUpdates const & ) = default;
 
   /// Default move constructor
-  CoulombUpdates( CoulombUpdates && ) = default;
+  CoulombContactUpdates( CoulombContactUpdates && ) = default;
 
   /// Deleted default constructor
-  CoulombUpdates() = delete;
+  CoulombContactUpdates() = delete;
 
   /// Deleted copy assignment operator
-  CoulombUpdates & operator=( CoulombUpdates const & ) = delete;
+  CoulombContactUpdates & operator=( CoulombContactUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-  CoulombUpdates & operator=( CoulombUpdates && ) =  delete;
+  CoulombContactUpdates & operator=( CoulombContactUpdates && ) =  delete;
 
   /**
    * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
@@ -66,7 +66,7 @@ public:
   GEOSX_HOST_DEVICE
   inline
   virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
-                                                     real64 & dLimitTangentialTractionNorm_dTraction ) const override;
+                                                     real64 & dLimitTangentialTractionNorm_dTraction ) const override final;
 
 private:
 
@@ -80,11 +80,11 @@ private:
 
 
 /**
- * @class Coulomb
+ * @class CoulombContact
  *
- * Class to provide a Coulomb friction model.
+ * Class to provide a CoulombContact friction model.
  */
-class Coulomb : public ContactBase
+class CoulombContact : public ContactBase
 {
 public:
 
@@ -93,12 +93,12 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  Coulomb( string const & name, Group * const parent );
+  CoulombContact( string const & name, Group * const parent );
 
   /**
    * Default Destructor
    */
-  virtual ~Coulomb() override;
+  virtual ~CoulombContact() override;
 
   /**
    * @name Static Factory Catalog members and functions
@@ -144,7 +144,7 @@ public:
   real64 const & frictionCoefficient() const { return m_frictionCoefficient; }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = CoulombUpdates;
+  using KernelWrapper = CoulombContactUpdates;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -170,8 +170,8 @@ private:
 
 
 GEOSX_HOST_DEVICE
-real64 CoulombUpdates::computeLimitTangentialTractionNorm( real64 const & normalTraction,
-                                                           real64 & dLimitTangentialTractionNorm_dTraction ) const
+real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const & normalTraction,
+                                                                  real64 & dLimitTangentialTractionNorm_dTraction ) const
 {
   dLimitTangentialTractionNorm_dTraction = m_frictionCoefficient;
   return ( m_cohesion - normalTraction * m_frictionCoefficient );
@@ -181,4 +181,4 @@ real64 CoulombUpdates::computeLimitTangentialTractionNorm( real64 const & normal
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_CONTACT_COULOMB_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_ */
