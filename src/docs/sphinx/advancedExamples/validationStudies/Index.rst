@@ -19,5 +19,7 @@ Validation and Verification Studies
 
    poromechanicsWellbore/Example
 
+   proppantSlotTest/Example
+
 
 
