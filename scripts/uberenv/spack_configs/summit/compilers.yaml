@@ -1,6 +1,15 @@
 compilers:
 - compiler:
-    spec: gcc@10.2.0
+  spec: gcc@9.1.0
+    paths:
+      cc: /sw/summit/gcc/9.1.0-alpha+20190716/bin/gcc
+      cxx: /sw/summit/gcc/9.1.0-alpha+20190716/bin/g++
+      f77: /sw/summit/gcc/9.1.0-alpha+20190716/bin/gfortran
+      fc: /sw/summit/gcc/9.1.0-alpha+20190716/bin/gfortran
+    flags:
+      cflags: -mcpu=native -mtune=native
+      cxxflags: -mcpu=native -mtune=native
+  spec: gcc@10.2.0
     paths:
       cc: /sw/summit/gcc/10.2.0-2/bin/gcc
       cxx: /sw/summit/gcc/10.2.0-2/bin/g++
