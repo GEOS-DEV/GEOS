@@ -11,4 +11,5 @@ setup(name='geosx_xml_tools',
                                         'test_geosx_xml_tools = geosx_xml_tools.tests.test_manager:main',
                                         'test_attribute_coverage = geosx_xml_tools.attribute_coverage:main',
                                         'test_xml_redundancy = geosx_xml_tools.xml_redundancy_check:main']},
-      install_requires=['lxml>=4.5.0'])
+      install_requires=['lxml>=4.5.0',
+                        'parameterized'])
