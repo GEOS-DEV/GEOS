@@ -471,8 +471,19 @@ struct SolutionCheckKernel
 
 struct HydrostaticPressureKernel
 {
+
+  // TODO FRANCOIS: high time this type of constants is centralized somewhere or provided by fluid model
+  static real64 constexpr MIN_FOR_PHASE_PRESENCE = 1e-12;
+
+  enum class ReturnType : integer
+  {
+    FAILED_TO_CONVERGE = 0,
+    DETECTED_MULTIPHASE_FLOW = 1,
+    SUCCESS = 2
+  };
+
   template< typename FLUID_WRAPPER >
-  static integer
+  static ReturnType
   launch( localIndex const size,
           localIndex const numComps,
           localIndex const numPhases,
@@ -480,7 +491,7 @@ struct HydrostaticPressureKernel
           real64 const equilTolerance,
           real64 const (&gravVector)[ 3 ],
           real64 const & minElevation,
-          real64 const & dElevation,
+          real64 const & elevationIncrement,
           real64 const & datumElevation,
           real64 const & datumPres,
           FLUID_WRAPPER fluidWrapper,
@@ -490,7 +501,7 @@ struct HydrostaticPressureKernel
           arrayView1d< arrayView1d< real64 > const > pressureValues )
   {
     localIndex constexpr MAX_NUM_PHASE = constitutive::MultiFluidBase::MAX_NUM_PHASES;
-    localIndex constexpr MAX_NUM_COMP = constitutive::MultiFluidBase::MAX_NUM_PHASES;
+    localIndex constexpr MAX_NUM_COMP = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
     // datum fluid properties
     array2d< real64, compflow::LAYOUT_COMP > datumCompFrac( 1, numComps );
@@ -518,6 +529,7 @@ struct HydrostaticPressureKernel
                           datumTotalDens );
 
     RAJA::ReduceMin< parallelHostReduce, integer > equilHasConverged( 1 );
+    RAJA::ReduceMin< parallelHostReduce, integer > isSinglePhaseFlow( 1 );
 
     forAll< parallelHostPolicy >( size, [=,
                                          datumPhaseMassDensViewConst = datumPhaseMassDens.toViewConst()] ( localIndex const i )
@@ -533,7 +545,7 @@ struct HydrostaticPressureKernel
       real64 totalDens = 0.0;
 
       // Step 2: compute the hydrostatic pressure at the following elevation
-      real64 const elevation = minElevation + i * dElevation;
+      real64 const elevation = minElevation + i * elevationIncrement;
       real64 const gravCoef = gravVector[2] * ( datumElevation - elevation );
       real64 const temp = tempTableWrapper.compute( &elevation );
       for( localIndex ic = 0; ic < numComps; ++ic )
@@ -579,11 +591,29 @@ struct HydrostaticPressureKernel
           }
           pres0[ip] = pres1[ip];
         }
+
+        // if converged, check number of phases and move on
         if( converged )
         {
+
+          // make sure that the fluid is single-phase, other we have to issue a warning (for now)
+          localIndex numberOfPhases = 0;
+          for( localIndex ip = 0; ip < numPhases; ++ip )
+          {
+            if( phaseFrac[0][0][ip] > MIN_FOR_PHASE_PRESENCE )
+            {
+              numberOfPhases++;
+            }
+          }
+          if( numberOfPhases > 1 )
+          {
+            isSinglePhaseFlow.min( 0 );
+          }
+
           break;
         }
 
+        // compute the mass density at this elevation using the previous pressure, and compute the new pressure
         for( localIndex ip = 0; ip < numPhases; ++ip )
         {
           fluidWrapper.compute( pres0[ip],
@@ -604,7 +634,6 @@ struct HydrostaticPressureKernel
         equilHasConverged.min( 0 );
       }
 
-
       // Step 3: save the elevation and hydrostatic pressure
       elevationValues[0][i] = elevation;
       for( localIndex ip = 0; ip < numPhases; ++ip )
@@ -613,7 +642,18 @@ struct HydrostaticPressureKernel
       }
 
     } );
-    return equilHasConverged.get();
+
+    ReturnType returnValue = ReturnType::SUCCESS;
+    if( isSinglePhaseFlow.get() == 0 )
+    {
+      returnValue = ReturnType::DETECTED_MULTIPHASE_FLOW;
+    }
+    if( equilHasConverged.get() == 0 )
+    {
+      // must be fixed first before worrying about multiphase flow
+      returnValue = ReturnType::FAILED_TO_CONVERGE;
+    }
+    return returnValue;
   }
 };
 

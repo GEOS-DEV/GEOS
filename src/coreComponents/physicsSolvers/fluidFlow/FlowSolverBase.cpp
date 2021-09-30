@@ -18,13 +18,14 @@
 
 #include "FlowSolverBase.hpp"
 
+#include "constitutive/ConstitutivePassThru.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "constitutive/ConstitutivePassThru.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
-
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
@@ -343,6 +344,60 @@ std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & r
   std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
 
   return rval;
+}
+
+void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
+                                                             std::map< string, localIndex > const & equilNameToEquilId,
+                                                             arrayView1d< real64 > const & maxElevation,
+                                                             arrayView1d< real64 > const & minElevation ) const
+{
+  array1d< real64 > localMaxElevation( equilNameToEquilId.size() );
+  array1d< real64 > localMinElevation( equilNameToEquilId.size() );
+  localMaxElevation.setValues< parallelDevicePolicy<> >( -1e99 );
+  localMinElevation.setValues< parallelDevicePolicy<> >( 1e99 );
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  fsManager.apply< EquilibriumInitialCondition >( 0.0,
+                                                  domain,
+                                                  "ElementRegions",
+                                                  EquilibriumInitialCondition::catalogName(),
+                                                  [&] ( EquilibriumInitialCondition const & fs,
+                                                        string const &,
+                                                        SortedArrayView< localIndex const > const & targetSet,
+                                                        Group & subRegion,
+                                                        string const & )
+  {
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > targetSetMaxElevation( -1e99 );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > targetSetMinElevation( 1e99 );
+
+    arrayView2d< real64 const > const elemCenter =
+      subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    {
+      localIndex const k = targetSet[i];
+      targetSetMaxElevation.max( elemCenter[k][2] );
+      targetSetMinElevation.min( elemCenter[k][2] );
+    } );
+
+    localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
+    localMaxElevation[equilIndex] = LvArray::math::max( targetSetMaxElevation.get(), localMaxElevation[equilIndex] );
+    localMinElevation[equilIndex] = LvArray::math::min( targetSetMinElevation.get(), localMinElevation[equilIndex] );
+
+  } );
+
+  MpiWrapper::allReduce( localMaxElevation.data(),
+                         maxElevation.data(),
+                         localMaxElevation.size(),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
+                         MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( localMinElevation.data(),
+                         minElevation.data(),
+                         localMinElevation.size(),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Min ),
+                         MPI_COMM_GEOSX );
+
 }
 
 

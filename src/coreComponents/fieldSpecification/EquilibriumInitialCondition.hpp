@@ -73,10 +73,10 @@ public:
   real64 getEquilibrationTolerance() const { return m_equilibrationTolerance; }
 
   /**
-   * @brief Getter for the number of points in the hydrostatic pressure table
-   * @return the number of points in the hydrostatic pressure table
+   * @brief Getter for the elevation increment in the hydrostatic pressure table
+   * @return the elevation increment in the hydrostatic pressure table
    */
-  localIndex getNumPointsInHydrostaticPressureTable() const { return m_numPointsInHydrostaticPressureTable; }
+  real64 getElevationIncrement() const { return m_elevationIncrement; }
 
   /**
    * @brief Getter for the datum pressure
@@ -125,8 +125,8 @@ public:
     /// @return String key for the maximum number of equilibration iterations
     constexpr static char const * maxNumEquilibrationIterationsString() { return "maxNumberOfEquilibrationIterations"; }
 
-    /// @return String key for the number of points in the hydrostatic pressure table
-    constexpr static char const * numPointsInHydrostaticPressureTableString() { return "numberOfPointsInHydrostaticPressureTable"; }
+    /// @return String key for the elevation increment in the hydrostatic pressure table
+    constexpr static char const * elevationIncrementString() { return "elevationIncrementInHydrostaticPressureTable"; }
 
     /// @return String key for the equilibrium tolerance
     constexpr static char const * equilibrationToleranceString() { return "equilibrationTolerance"; }
@@ -171,28 +171,28 @@ private:
   /// Maximum number of equilibration iterations
   localIndex m_maxNumEquilibrationIterations;
 
-  /// Number of points in hydrostatic pressure table
-  localIndex m_numPointsInHydrostaticPressureTable;
+  /// Elevation increment in the hydrostatic pressure table
+  real64 m_elevationIncrement;
 
   /// Tolerance used in the equilibration calculations
   real64 m_equilibrationTolerance;
 
-  /// datum (reference) elevation
+  /// Datum (reference) elevation
   real64 m_datumElevation;
 
-  /// value of pressure at the datum elevation
+  /// Value of pressure at the datum elevation
   real64 m_datumPressure;
 
-  /// name of the phase initially saturating the reservoir
+  /// Name of the phase initially saturating the reservoir
   string m_initPhaseName;
 
-  /// array of component names
+  /// Array of component names
   array1d< string > m_componentNames;
 
-  /// array of table names for component fraction vs elevation
+  /// Array of table names for component fraction vs elevation
   array1d< string > m_componentFractionVsElevationTableNames;
 
-  /// table name for temperature vs elevation
+  /// Table name for temperature vs elevation
   string m_temperatureVsElevationTableName;
 
 };

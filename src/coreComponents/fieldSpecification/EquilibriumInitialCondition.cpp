@@ -46,10 +46,10 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
     setApplyDefaultValue( 1e-3 ).
     setDescription( "Tolerance in the fixed-point iteration scheme used for hydrostatic initialization" );
 
-  registerWrapper( viewKeyStruct::numPointsInHydrostaticPressureTableString(), &m_numPointsInHydrostaticPressureTable ).
+  registerWrapper( viewKeyStruct::elevationIncrementString(), &m_elevationIncrement ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 100 ).
-    setDescription( "Number of points in the hydrostatic pressure table constructed internally" );
+    setApplyDefaultValue( 0.6096 ). // 2 feet
+    setDescription( "Elevation increment [m] in the hydrostatic pressure table constructed internally" );
 
   registerWrapper( viewKeyStruct::initPhaseNameString(), &m_initPhaseName ).
     setInputFlag( InputFlags::OPTIONAL ).

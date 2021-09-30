@@ -329,6 +329,8 @@
 		<xsd:attribute name="datumPressure" type="real64" use="required" />
 		<!--direction => Direction to apply boundary condition to-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
+		<!--elevationIncrementInHydrostaticPressureTable => Elevation increment [m] in the hydrostatic pressure table constructed internally-->
+		<xsd:attribute name="elevationIncrementInHydrostaticPressureTable" type="real64" default="0.6096" />
 		<!--endTime => time at which bc will stop being applied-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--equilibrationTolerance => Tolerance in the fixed-point iteration scheme used for hydrostatic initialization-->
@@ -339,8 +341,6 @@
 		<xsd:attribute name="initialPhaseName" type="string" default="" />
 		<!--maxNumberOfEquilibrationIterations => Maximum number of equilibration iterations-->
 		<xsd:attribute name="maxNumberOfEquilibrationIterations" type="localIndex" default="5" />
-		<!--numberOfPointsInHydrostaticPressureTable => Number of points in the hydrostatic pressure table constructed internally-->
-		<xsd:attribute name="numberOfPointsInHydrostaticPressureTable" type="localIndex" default="100" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
 		<!--scale => Scale factor for value of BC.-->

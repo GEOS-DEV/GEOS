@@ -61,6 +61,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString() ).setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::initialPressureString() );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
@@ -194,6 +195,18 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
   // Compute hydrostatic equilibrium in the regions for which corresponding field specification tag has been specified
   computeHydrostaticEquilibrium();
 
+  forTargetSubRegions( mesh, [&]( localIndex const,
+                                  ElementSubRegionBase & subRegion )
+  {
+    // copy pressure in initial pressure (needed by the poromechanics solvers)
+    arrayView1d< real64 const > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+    arrayView1d< real64 > const initPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialPressureString() );
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      initPres[ei] = pres[ei];
+    } );
+  } );
+
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
   // They will be updated in applySystemSolution and ImplicitStepComplete, respectively
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
@@ -211,6 +224,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
     // saves porosity in oldPorosity
     porousSolid.saveConvergedState();
+
   } );
 
   mesh.getElemManager().forElementRegions< SurfaceElementRegion >( targetRegionNames(),
@@ -260,50 +274,10 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
   array1d< real64 > globalMaxElevation( equilNameToEquilId.size() );
   array1d< real64 > globalMinElevation( equilNameToEquilId.size() );
-  array1d< real64 > localMaxElevation( equilNameToEquilId.size() );
-  array1d< real64 > localMinElevation( equilNameToEquilId.size() );
-  localMaxElevation.setValues< parallelHostPolicy >( -1e99 );
-  localMinElevation.setValues< parallelHostPolicy >( 1e99 );
-
-  fsManager.apply< EquilibriumInitialCondition >( 0.0,
-                                                  domain,
-                                                  "ElementRegions",
-                                                  EquilibriumInitialCondition::catalogName(),
-                                                  [&] ( EquilibriumInitialCondition const & fs,
-                                                        string const &,
-                                                        SortedArrayView< localIndex const > const & targetSet,
-                                                        Group & subRegion,
-                                                        string const & )
-  {
-    RAJA::ReduceMax< parallelHostReduce, real64 > targetSetMaxElevation( -1e99 );
-    RAJA::ReduceMin< parallelHostReduce, real64 > targetSetMinElevation( 1e99 );
-
-    arrayView2d< real64 const > const elemCenter =
-      subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
-
-    forAll< parallelHostPolicy >( targetSet.size(), [=] ( localIndex const i )
-    {
-      localIndex const k = targetSet[i];
-      targetSetMaxElevation.max( elemCenter[k][2] );
-      targetSetMinElevation.min( elemCenter[k][2] );
-    } );
-
-    localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
-    localMaxElevation[equilIndex] = LvArray::math::max( targetSetMaxElevation.get(), localMaxElevation[equilIndex] );
-    localMinElevation[equilIndex] = LvArray::math::min( targetSetMinElevation.get(), localMinElevation[equilIndex] );
-
-  } );
-
-  MpiWrapper::allReduce( localMaxElevation.data(),
-                         globalMaxElevation.data(),
-                         localMaxElevation.size(),
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
-                         MPI_COMM_GEOSX );
-  MpiWrapper::allReduce( localMinElevation.data(),
-                         globalMinElevation.data(),
-                         localMinElevation.size(),
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Min ),
-                         MPI_COMM_GEOSX );
+  findMinMaxElevationInEquilibriumTarget( domain,
+                                          equilNameToEquilId,
+                                          globalMaxElevation,
+                                          globalMinElevation );
 
   // Step 3: for each equil, compute a fine table with hydrostatic pressure vs elevation
 
@@ -320,7 +294,6 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
 
     localIndex const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
-    localIndex const numPointsInTable = fs.getNumPointsInHydrostaticPressureTable();
     real64 const equilTolerance = fs.getEquilibrationTolerance();
     real64 const datumElevation = fs.getDatumElevation();
     real64 const datumPressure = fs.getDatumPressure();
@@ -328,7 +301,8 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
     real64 const minElevation = globalMinElevation[equilIndex];
     real64 const maxElevation = globalMaxElevation[equilIndex];
-    real64 const dElevation = ( maxElevation - minElevation ) / ( numPointsInTable - 1 );
+    real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
+    localIndex const numPointsInTable = std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1;
 
     array1d< array1d< real64 > > elevationValues;
     array1d< real64 > pressureValues;
@@ -350,13 +324,14 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
       using FluidType = TYPEOFREF( castedFluid );
       typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
+      // note: inside this kernel, parallelHostPolicy is used, and elevation/pressure values don't go to the GPU
       integer const equilHasConverged =
         HydrostaticPressureKernel::launch( numPointsInTable,
                                            maxNumEquilIterations,
                                            equilTolerance,
                                            gravVector,
                                            minElevation,
-                                           dElevation,
+                                           elevationIncrement,
                                            datumElevation,
                                            datumPressure,
                                            fluidWrapper,
@@ -365,7 +340,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
       GEOSX_WARNING_IF( !equilHasConverged,
                         SinglePhaseBase::catalogName() << " " << getName()
-                                                       << ": hydrostatic pressure initialization failed to converge!" );
+                                                       << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!" );
     } );
 
     // Step 3.4: create hydrostatic pressure table
@@ -392,7 +367,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     arrayView1d< real64 > const pres =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
 
-    forAll< parallelHostPolicy >( targetSet.size(), [=] ( localIndex const i )
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];

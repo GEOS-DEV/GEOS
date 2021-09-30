@@ -351,7 +351,7 @@ struct HydrostaticPressureKernel
           real64 const equilTolerance,
           real64 const (&gravVector)[ 3 ],
           real64 const & minElevation,
-          real64 const & dElevation,
+          real64 const & elevationIncrement,
           real64 const & datumElevation,
           real64 const & datumPres,
           FLUID_WRAPPER fluidWrapper,
@@ -371,7 +371,7 @@ struct HydrostaticPressureKernel
     {
 
       // Step 2: compute the hydrostatic pressure at the following elevation
-      real64 const elevation = minElevation + i * dElevation;
+      real64 const elevation = minElevation + i * elevationIncrement;
       real64 const gravCoef = gravVector[2] * ( datumElevation - elevation );
       real64 dens = 0.0;
       real64 visc = 0.0;
