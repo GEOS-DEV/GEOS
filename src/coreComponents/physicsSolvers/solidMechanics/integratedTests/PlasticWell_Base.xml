@@ -62,6 +62,8 @@
       parallelThreads="1"
       plotFileRoot="plot"
     />
+    <Restart
+      name="restartOutput"/>
   </Outputs>
   <!-- SPHINX_WELLBORE_OUTPUT_END -->
 
@@ -104,6 +106,12 @@
     <PeriodicEvent
       name="outputs"
       target="/Outputs/siloOutput"/>
+
+   <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
   </Events>
   <!-- SPHINX_WELLBORE_EXECUTION_END -->
 
