@@ -75,7 +75,7 @@ Let us inspect the **Solver** XML tags.
 This node gathers all the information previously defined.
 We use a classical ``SinglePhaseFVM`` Finite Volume Method,
 with the two-point flux approximation
-as will be defined in the **NumericalMethod** tag.
+as will be defined in the **NumericalMethods** tag.
 The ``targetRegions`` refers only
 to the Reservoir region because we only solve for flow in this region.
 The ``fluidNames`` and ``solidNames`` refer the materials defined
@@ -140,7 +140,7 @@ If this time is ever reached or exceeded, the simulation ends.
 
 Two ``PeriodicEvent`` are defined.
 - The first one, ``solverApplications``, is associated with the solver. The  ``forceDt`` keyword means that there will always be time-steps of 23 days (2 000 000 seconds).
-- The second, ``outputs``, is associated with the output. The ``timeFrequency`` keyword means that it will be executed every 116 days (10 000 000 seconds). The ``targetExactTimestep`` is set to 1, meaning that the Event Manager will impose this event will be triggered exactly every 116 days, constraining schedule decided by application to match this date.
+- The second, ``outputs``, is associated with the output. The ``timeFrequency`` keyword means that it will be executed every 116 days (10 000 000 seconds).
 
 
 .. _NumericalMethods_tag_field_case:
@@ -177,13 +177,14 @@ There are two methods to achieve this regional solve.
 
         .. code-block:: xml
 
-                <ElementRegion>
-                <CellElementRegion name="ReservoirLayer"
-                                   cellBlocks="{Reservoir_TETRA}"
-                                   materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }">
-                </ElementRegion>
+                <ElementRegions>
+                  <CellElementRegion 
+                    name="Reservoir"
+                    cellBlocks="{Reservoir_TETRA}"
+                    materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
+                </ElementRegions>
 
-- The second solution is to define all the ``CellElementRegions`` as they are in the GMSH file, but defining the solvers only on the reservoir layer. In this case, the **ElementRegion** tag is :
+- The second solution is to define all the ``CellElementRegions`` as they are in the GMSH file, but defining the solvers only on the reservoir layer. In this case, the **ElementRegions** tag is :
 
         .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
                 :language: xml
@@ -214,6 +215,10 @@ The constitutive parameters such as the density, the viscosity, and the compress
 .. note::
   To consider an incompressible fluid, the user has to set the compressibility to 0.
 
+.. note::
+  GEOSX handles permeability as a diagonal matrix, so the three values of the permeability tensor are set individually using the ``component`` field.
+
+
 .. _FieldSpecifications_tag_field_case:
 
 --------------------
@@ -238,9 +243,6 @@ You may note :
  - The ``setName`` field points to the box previously defined to apply the fields,
  - ``name`` and ``fieldName`` have a different meaning: ``name`` is used to give a name to the XML block. This ``name`` must be unique. ``fieldName`` is the name of the field registered in GEOSX. This value has to be set according to the expected input fields of each solver.
 
-.. note::
-  GEOSX handles permeability as a diagonal matrix, so the three values of the permeability tensor are set individually using the ``component`` field,
-
 .. _Outputs_tag_field_case:
 
 -------
@@ -248,7 +250,7 @@ Output
 -------
 
 The **Outputs** XML tag is used to trigger the writing of visualization files.
-Here, we write files in a format natively readable by Paraview under the tar *VTK*
+Here, we write files in a format natively readable by Paraview under the tag *VTK*:
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
