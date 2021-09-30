@@ -500,9 +500,6 @@ struct HydrostaticPressureKernel
           arrayView1d< arrayView1d< real64 > const > elevationValues,
           arrayView1d< arrayView1d< real64 > const > pressureValues )
   {
-    localIndex constexpr MAX_NUM_PHASE = constitutive::MultiFluidBase::MAX_NUM_PHASES;
-    localIndex constexpr MAX_NUM_COMP = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-
     // datum fluid properties
     array2d< real64, compflow::LAYOUT_COMP > datumCompFrac( 1, numComps );
     array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseFrac( 1, 1, numPhases );
@@ -536,12 +533,13 @@ struct HydrostaticPressureKernel
     {
       // TODO: add this to common/Datatypes.hpp
       // fluid properties at this elevation
-      StackArray< real64, 2, MAX_NUM_COMP, compflow::LAYOUT_COMP > compFrac( 1, numComps );
-      StackArray< real64, 3, MAX_NUM_PHASE, multifluid::LAYOUT_PHASE > phaseFrac( 1, 1, numPhases );
-      StackArray< real64, 3, MAX_NUM_PHASE, multifluid::LAYOUT_PHASE > phaseDens( 1, 1, numPhases );
-      StackArray< real64, 3, MAX_NUM_PHASE, multifluid::LAYOUT_PHASE > phaseMassDens( 1, 1, numPhases );
-      StackArray< real64, 3, MAX_NUM_PHASE, multifluid::LAYOUT_PHASE > phaseVisc( 1, 1, numPhases );
-      StackArray< real64, 4, MAX_NUM_PHASE *MAX_NUM_COMP, multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhases, numComps );
+      StackArray< real64, 2, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS, compflow::LAYOUT_COMP > compFrac( 1, numComps );
+      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseFrac( 1, 1, numPhases );
+      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseDens( 1, 1, numPhases );
+      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseMassDens( 1, 1, numPhases );
+      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseVisc( 1, 1, numPhases );
+      StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS,
+                  multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhases, numComps );
       real64 totalDens = 0.0;
 
       // Step 2: compute the hydrostatic pressure at the following elevation
@@ -554,8 +552,8 @@ struct HydrostaticPressureKernel
       }
 
       // Step 2.1: guess the pressure with the datumPhaseMassDensity
-      stackArray1d< real64, MAX_NUM_PHASE > pres0( numPhases );
-      stackArray1d< real64, MAX_NUM_PHASE > pres1( numPhases );
+      stackArray1d< real64, constitutive::MultiFluidBase::MAX_NUM_PHASES > pres0( numPhases );
+      stackArray1d< real64, constitutive::MultiFluidBase::MAX_NUM_PHASES > pres1( numPhases );
       for( localIndex ip = 0; ip < numPhases; ++ip )
       {
         pres0[ip] = datumPres - datumPhaseMassDensViewConst[0][0][ip] * gravCoef;
