@@ -87,4 +87,6 @@ class Fmt(CMakePackage):
         # and call to build "doc" target
         args.append("-DFMT_DOC=OFF")
 
+        # Do not build tests (is_trivially_copyable related error)
+        args.append("-DFMT_TEST=OFF")
         return args
