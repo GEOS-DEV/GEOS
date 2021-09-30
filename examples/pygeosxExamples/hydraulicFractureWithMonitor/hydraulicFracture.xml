@@ -16,7 +16,7 @@
 
   <!-- SPHINX_HYDROFRACTURE_EVENTS_OUTPUTS -->
   <Outputs>
-    <pythonOutput
+    <Python
       name="pythonOutput"/>
   </Outputs>
 
