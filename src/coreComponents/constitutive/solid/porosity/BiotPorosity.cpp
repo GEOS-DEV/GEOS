@@ -81,5 +81,5 @@ void BiotPorosity::initializeState() const
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BiotPorosity, string const &, Group * const )
-}
+} /* namespace constitutive */
 } /* namespace geosx */

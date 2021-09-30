@@ -61,7 +61,7 @@ public:
   }
 
   /*
-   * @brief iget the new porosity.
+   * @brief get the new porosity.
    * return a constant arrayView2d to the new porosity
    */
   arrayView2d< real64 const > const getPorosity() const
@@ -71,7 +71,7 @@ public:
 
   /**
    * @brief get the reference porosity.
-   * return a constant arrayView1d to the referencePorosity
+   * return a constant arrayView1d to the reference porosity
    */
   arrayView1d< real64 const > const getReferencePorosity() const
   {
