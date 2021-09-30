@@ -8,17 +8,6 @@
 #ifndef GEOSX_COMMON_CONFIG_HPP
 #define GEOSX_COMMON_CONFIG_HPP
 
-/// GEOSX major version number
-#define GEOSX_VERSION_MAJOR @GEOSX_VERSION_MAJOR@
-/// GEOSX minor version number
-#define GEOSX_VERSION_MINOR @GEOSX_VERSION_MINOR@
-/// GEOSX patch version number
-#define GEOSX_VERSION_PATCH @GEOSX_VERSION_PATCH@
-/// GEOSX full version number string
-#define GEOSX_VERSION_FULL  "@GEOSX_VERSION_FULL@"
-/// GEOSX development version string
-#cmakedefine GEOSX_VERSION_DEV "@GEOSX_VERSION_DEV@"
-
 /// Enables floating point exceptions
 #cmakedefine GEOSX_USE_FPE
 
