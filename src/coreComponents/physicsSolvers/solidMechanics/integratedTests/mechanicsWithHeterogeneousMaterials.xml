@@ -123,7 +123,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="rock_BulkModulus"
+      fieldName="rock_bulkModulus"
       functionName="bulkModulus"
       scale="1.0"/>
 
@@ -132,7 +132,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="rock_ShearModulus"
+      fieldName="rock_shearModulus"
       functionName="shearModulus"
       scale="1.0"/>
 
