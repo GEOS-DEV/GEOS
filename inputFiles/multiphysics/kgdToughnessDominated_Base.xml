@@ -3,6 +3,7 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, -0.0 }">
+	<!-- Sphinx_Solvers_Hydrofracture -->
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
@@ -15,6 +16,8 @@
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
+	  <!-- Sphinx_Solvers_Hydrofracture_End -->
+
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="20"
@@ -23,6 +26,7 @@
         directParallel="0"/>
     </Hydrofracture>
 
+	<!-- Sphinx_Solvers_SolidMechanicsLagrangianSSLE -->
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
@@ -30,7 +34,9 @@
       targetRegions="{ Domain, Fracture }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact"/>
+	<!-- Sphinx_Solvers_SolidMechanicsLagrangianSSLE_End -->
 
+    <!-- Sphinx_Solvers_SinglePhaseFVM -->
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
@@ -38,13 +44,17 @@
       fluidNames="{ water }"
       solidNames="{ fractureFilling }"
       permeabilityNames="{ fracturePerm }"/>
+    <!-- Sphinx_Solvers_SinglePhaseFVM_End -->
 
+    <!-- Sphinx_Solvers_SurfaceGenerator -->
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
       solidMaterialNames="{ rock }"
       rockToughness="1e6"/>
+    <!-- Sphinx_Solvers_SurfaceGenerator_End -->
+
   </Solvers>
 
   <NumericalMethods>
@@ -112,11 +122,13 @@
     <Contact
       name="fractureContact"
       penaltyStiffness="1.0e0">
+
       <TableFunction
         name="aperTable"
         coordinates="{ -1.0e-3, 0.0 }"
         values="{ 0.002e-3, 0.02e-3 }"/>
     </Contact>
+
   </Constitutive>
 
   <FieldSpecifications>
