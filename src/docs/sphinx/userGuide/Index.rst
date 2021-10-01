@@ -29,6 +29,4 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/fileIO/doc/Outputs.rst
 
-   /coreComponents/python/modules/geosx_xml_tools_package/geosx_xml_tools/geosx_xml_tools_documentation
-
    /pygeosx/pygeosx_documentation.rst

@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <!-- SPHINX_HYDROFRACTURE_INCLUDED_PARAMETERS -->
+  <Included>
+    <File
+      name="../../hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml"/>
+  </Included>
+
+  <Parameters>
+    <Parameter
+      name="table_root"
+      value="../../hydraulicFracturing/heterogeneousInSituProperties/tables"/>
+  </Parameters>
+  <!-- SPHINX_HYDROFRACTURE_INCLUDED_PARAMETERS_END -->
+
+  <!-- SPHINX_HYDROFRACTURE_EVENTS_OUTPUTS -->
+  <Outputs>
+    <Python
+      name="pythonOutput"/>
+  </Outputs>
+
+  <Events>
+    <PeriodicEvent
+      name="python"
+      cycleFrequency="10"
+      target="/Outputs/pythonOutput"/>
+  </Events>
+  <!-- SPHINX_HYDROFRACTURE_EVENTS_OUTPUTS_END -->
+
+</Problem>

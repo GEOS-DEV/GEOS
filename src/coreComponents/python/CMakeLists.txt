@@ -33,6 +33,7 @@ add_custom_command( OUTPUT ${GEOSX_XML_TOOLS_BINS}
                     COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/preprocess_xml ${CMAKE_BINARY_DIR}/bin/preprocess_xml
                     COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/format_xml ${CMAKE_BINARY_DIR}/bin/format_xml
                     COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/python ${CMAKE_BINARY_DIR}/bin/python
+                    COMMAND ln -s ${CMAKE_SOURCE_DIR}/../scripts/automatic_xml_preprocess.sh ${CMAKE_BINARY_DIR}/bin/geosx_preprocessed
                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                   )
 
