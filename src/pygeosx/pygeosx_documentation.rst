@@ -1,3 +1,5 @@
+.. _pygeosxInterface:
+
 :mod:`pygeosx` --- GEOSX in Python
 ==================================
 GEOSX can be manipulated and executed through a Python script.
