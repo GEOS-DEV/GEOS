@@ -1,8 +1,8 @@
-.. _ExamplePoroMechanicsWellbore:
+.. _ExampleVerticalPoroElastoPlasticWellbore:
 
 
 ####################################################
-Poromechanical Wellbore Problem
+Vertical PoroElasto-Plastic Wellbore Problem
 ####################################################
 
 

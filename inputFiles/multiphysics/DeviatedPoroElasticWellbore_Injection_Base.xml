@@ -5,6 +5,7 @@
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <!-- SPHINX_GravityEnd -->
+
     <!-- SPHINX_PoroelasticSolver -->
     <SinglePhasePoromechanics
       name="poroSolve"
@@ -16,11 +17,9 @@
       targetRegions="{ Omega }">
       <!-- SPHINX_PoroelasticSolverEnd -->
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"/>
+        newtonMaxIter="40"/>
       <LinearSolverParameters
-        directParallel="0"
-        logLevel="1"/>
+        logLevel="2"/>
     </SinglePhasePoromechanics>
 
     <!-- SPHINX_SolidMechanicsSolver -->
@@ -28,9 +27,17 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
+      logLevel="0"
       targetRegions="{ Omega }"
       solidMaterialNames="{ rock }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        directParallel="0"
+        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <!-- SPHINX_SinglePhaseFVM -->
@@ -40,35 +47,21 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Omega }"
       fluidNames="{ water }"
-      solidNames="{ rock }"
+      solidNames="{ porousRock }"
       permeabilityNames="{ rockPerm }">
       <!-- SPHINX_SinglePhaseFVMEnd -->
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-8"
+        logLevel="2"/>
     </SinglePhaseFVM>
   </Solvers>
 
-  <!-- SPHINX_WellboreMesh -->
-  <Mesh>
-    <InternalWellbore
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      radius="{ 0.1, 2 }"
-      theta="{ 0, 90 }"
-      zCoords="{ 0, 1 }"
-      nr="{ 30 }"
-      nt="{ 40 }"
-      nz="{ 1 }"
-      trajectory="{ { 0.0, 0.0, 0.0 },
-                    { 0.0, 0.0, 1.0 } }"
-      autoSpaceRadialElems="{ 1 }"
-      useCartesianOuterBoundary="0"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh>
-
-  <!-- SPHINX_WellboreMeshEnd -->
   <Events
     maxTime="78.0">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
     <!-- SPHINX_Execution -->
     <PeriodicEvent
       name="solverApplications"
@@ -76,19 +69,16 @@
       target="/Solvers/poroSolve"/>
 
     <!-- SPHINX_ExecutionEnd -->
-    <!-- The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
       timeFrequency="7.8"
       target="/Outputs/siloOutput"/>
 
-    <PeriodicEvent
+    <!--PeriodicEvent
       name="restarts"
-      timeFrequency="1"
+      timeFrequency="1e99"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/-->
   </Events>
 
   <!-- SPHINX_FEDiscretization -->
@@ -129,7 +119,8 @@
       defaultBulkModulus="11039657020.4"
       defaultShearModulus="8662741799.83"/>
 
-    <!--  BiotCoefficient="0.771"-->
+    <!--  BiotCoefficient="0.771"
+          BiotModulus=15.8e9 -->
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
@@ -140,7 +131,7 @@
 
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="1.0e27"
+      grainBulkModulus="48208109259"
       defaultReferencePorosity="0.3"/>
 
     <ConstantPermeability
@@ -152,6 +143,14 @@
 
   <!-- SPHINX_BoundaryConditions -->
   <FieldSpecifications>
+    <FieldSpecification 
+      name="initialPorosity"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Omega/cb1"
+      fieldName="rockPorosity_porosity"
+      scale="0.3"/>
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -166,7 +165,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ tpos, xpos }"/>
+      setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
       name="yConstraint"
@@ -174,7 +173,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ tneg, ypos }"/>
+      setNames="{ tneg, tpos, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -184,12 +183,6 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
 
-    <!--Traction
-      name="innerPressure"
-      objectPath="faceManager"
-      tractionType="normal"
-      scale="-1.0e6"
-      setNames="{ rneg }"/-->
     <FieldSpecification
       name="innerPorePressure"
       objectPath="faceManager"
@@ -199,7 +192,18 @@
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->
-  <!-- SPHINX_TableFunctionEnd -->
+
+  <!-- SPHINX_Function -->
+  <!--Functions>
+    <TableFunction 
+      name="timeFunction"
+      inputVarNames="{time}"
+      coordinates="{0.0, 0.1, 1e6}"
+      values="{0.0, 1.0, 1.0}" 
+    />
+  </Functions-->
+  <!-- SPHINX_FunctionEnd -->
+
   <Outputs>
     <Silo
       name="siloOutput"
