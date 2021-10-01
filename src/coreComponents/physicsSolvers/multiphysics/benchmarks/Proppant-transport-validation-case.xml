@@ -57,7 +57,7 @@
 	preconditionerType="amg"  
         krylovTol="1.0e-7"/>
     </SinglePhaseProppantFVM>
-<!-- SPHINX_PROPPANT_FLOWSOLVER -->
+<!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
 
     <SurfaceGenerator
       name="SurfaceGen"
