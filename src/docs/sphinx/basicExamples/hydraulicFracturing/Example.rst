@@ -28,8 +28,8 @@ This example uses a set of input files and table files located at:
 
   examples/hydraulicFracturing/heterogeneousInSituProperties
 
-Note: because these files use the advanced xml features, they must be preprocessed using the geosx_xml_tools package.
-To install geosx_xml_tools, see :ref:`advanced_xml_features`
+Because the input files use the advanced xml features, they must be preprocessed using the geosx_xml_tools package.
+If you have not already done so, setup these features by following the instructions here: :ref:`AdvancedXMLFeatures` .
 
 ------------------------------------------------------------------
 Description of the case
@@ -229,22 +229,26 @@ The interpolation method used here is upper, so the values in the table indicate
   :end-before: <!-- SPHINX_HYDROFRACTURE_FUNCTIONS_END -->
 
 ---------------------------------
-Preprocessing the input file
----------------------------------
-
-Because we are using advanced xml features in this example, the input file must be pre-processed using geosx_xml_tools.
-To build the final input file ``hydrofracture_processed.xml``, run the following:
-
-``geosx_bin_dir/preprocess_xml examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml -o hydrofracture_processed.xml``
-
----------------------------------
 Running GEOSX
 ---------------------------------
 
-This is a moderate-sized example, so it is recommended to run this problem in parallel.
-For example, this will run the code on the debug partition using a total of 36 cores:
+Assuming that the preprocessing tools have been correctly installed (see :ref:`AdvancedXMLFeatures` ), there will be a script in the GEOSX build/bin directory called `geosx_preprocessed`.
+Replacing `geosx` with `geosx_preprocessed` in an input command will automatically apply the preprocessor and send the results to GEOSX.
 
-``srun -n 36 -ppdebug geosx_bin_dir/geosx -i hydrofracture_processed.xml -x 6 -y 2 -z 3``
+Before beginning, we reccomend that you make a local copy of the example and its tables.
+Because we are using advanced xml features in this example, the input file must be pre-processed before running.
+For example, this will run the code on a debug partition using a total of 36 cores.
+
+
+.. code-block:: bash
+
+  cp -r examples/hydraulicFracturing/heterogeneousInSituProperties ./hf_example
+  cd hf_example
+  srun -n 36 -ppdebug geosx_preprocessed -i heterogeneousInSitu_singleFracture.xml -x 6 -y 2 -z 3 -o hf_results
+
+
+Note that as part of the automatic preprocessing step a compiled xml file is written to the disk (by default '[input_name].preprocessed').
+When developing an xml with advanced features, we reccomend that you check this file to ensure its accuracy.
 
 
 ---------------------------------
@@ -268,6 +272,19 @@ The following figures show the aperture and pressure of the hydraulic fracture (
 
 
 
+-------------------------------------------
+Modifying Parameters Via the Command-Line
+-------------------------------------------
+
+The advanced xml feature preprocessor allows parameters to be set or overriden by specifying any number of `-p name value` arguments on the command-line.
+Note that if the parameter value has spaces, it needs to be enclosed by quotation marks.
+
+To illustrate this feature, we can re-run the previous analysis with viscosity lowered from 5 cP to 1 cP:
+
+.. code-block:: bash
+
+  srun -n 36 -ppdebug geosx_preprocessed -i heterogeneousInSitu_singleFracture.xml -p mu 0.001 -x 6 -y 2 -z 3 -o hf_results_lower_mu
+
 
 ------------------------------------------------------------------
 To go further
@@ -283,7 +300,7 @@ For any feedback on this example, please submit a `GitHub issue on the project's
 
 **For more details**
 
-  - More on advanced xml features, please see :ref:`advanced_xml_features`.
+  - More on advanced xml features, please see :ref:`AdvancedXMLFeatures`.
   - More on functions, please see :ref:`FunctionManager`.
   - More on biased meshes, please see :ref:`Mesh_bias`.
 
