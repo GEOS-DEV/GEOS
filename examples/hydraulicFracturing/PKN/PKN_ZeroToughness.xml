@@ -52,7 +52,7 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerme }"
+      permeabilityNames="{ fracturePerm }"
       inputFluxEstimate="1.0">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
