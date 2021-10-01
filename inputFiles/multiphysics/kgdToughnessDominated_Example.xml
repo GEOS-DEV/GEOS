@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Include>
+  <Included>
     <File name="./kgdToughnessDominated_Base.xml"/>
-  </Include>
+  </Included>
   <Mesh>
     <InternalMesh 
       name="mesh1"
