@@ -566,11 +566,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    char output[200] = {0};
-    sprintf( output,
-             "( RFracture ) = (%4.2e) ; ",
-             fractureResidualNorm );
-    std::cout<<output;
+    std::cout << GEOSX_FMT( "( RFracture ) = ( {:4.2e} ) ; ", fractureResidualNorm );
   }
 
   return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
