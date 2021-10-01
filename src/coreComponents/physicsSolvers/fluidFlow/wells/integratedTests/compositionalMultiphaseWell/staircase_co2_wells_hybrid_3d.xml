@@ -211,11 +211,12 @@
   </FieldSpecifications>
 
   <Functions>
-    <TableFunction name="totalRateTable"
-                   inputVarNames="{time}"
-                   coordinates="{0, 5.01e2, 5e6}"
-                   values="{0, 5e-7, 5e-7}" 
-                   interpolation="lower"/>
+    <TableFunction
+      name="totalRateTable"
+      inputVarNames="{time}"
+      coordinates="{0, 1.001e3, 3.5001e3, 5.001e3, 2.041e5, 1e6}"
+      values="{5e-7, 1e-7, 2e-7, 5e-7, 0, 0}" 
+      interpolation="lower"/>
   </Functions>
   
   <Outputs>
