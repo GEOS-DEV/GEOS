@@ -113,6 +113,7 @@ public:
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
     m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
+    m_initialFluidDensity( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::initialDensityString() ) ),
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_initialFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::initialPressureString() ) ),
@@ -230,7 +231,7 @@ public:
     real64 dPorosity_dVolStrainIncrement;
     real64 dTotalStress_dPressure[6] = {0.0};
 
-    // --- Update total stress tensor
+    // --- Update total stress tensor  (incremental form wrt initial equilibrium state)
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
 
@@ -248,18 +249,22 @@ public:
 
     real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
     real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
+    real64 const porosityInit = m_constitutiveUpdate.getInitialPorosity( k );
 
-    // Evaluate body force vector
+    // Evaluate body force vector (incremental form wrt initial equilibrium state)
     real64 bodyForce[3] = { m_gravityVector[0],
                             m_gravityVector[1],
                             m_gravityVector[2]};
     if( m_gravityAcceleration > 0.0 )
     {
-      real64 mixtureDensity = ( 1.0 - porosityNew ) * m_solidDensity( k, q ) + porosityNew * m_fluidDensity( k, q );
-      mixtureDensity *= detJxW;
-      bodyForce[0] *= mixtureDensity;
-      bodyForce[1] *= mixtureDensity;
-      bodyForce[2] *= mixtureDensity;
+      real64 mixtureDensityNew = ( 1.0 - porosityNew ) * m_solidDensity( k, q ) + porosityNew * m_fluidDensity( k, q );
+      real64 mixtureDensityInit = ( 1.0 - porosityInit ) * m_solidDensity( k, q ) + porosityInit * m_initialFluidDensity( k );
+      mixtureDensityNew *= detJxW;
+      mixtureDensityInit *= detJxW;
+      real64 const mixtureDensityIncrement = mixtureDensityNew - mixtureDensityInit;
+      bodyForce[0] *= mixtureDensityIncrement;
+      bodyForce[1] *= mixtureDensityIncrement;
+      bodyForce[2] *= mixtureDensityIncrement;
     }
 
     // Assemble local jacobian and residual
@@ -397,6 +402,7 @@ protected:
   arrayView2d< real64 const > const m_solidDensity;
   arrayView2d< real64 const > const m_fluidDensity;
   arrayView1d< real64 const > const m_fluidDensityOld;
+  arrayView1d< real64 const > const m_initialFluidDensity;
   arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 
   /// The global degree of freedom number
@@ -410,6 +416,7 @@ protected:
 
   /// The rank-global delta-fluid pressure array.
   arrayView1d< real64 const > const m_deltaFluidPressure;
+
 };
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,

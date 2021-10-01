@@ -171,7 +171,7 @@
       name="equil"
       setNames="{ all }"
       objectPath="ElementRegions/Channel"      
-      datumElevation="10"
+      datumElevation="5"
       datumPressure="1e6"/>
   </FieldSpecifications>
 

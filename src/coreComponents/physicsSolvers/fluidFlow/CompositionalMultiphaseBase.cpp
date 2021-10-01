@@ -200,6 +200,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
           setRestartFlags( RestartFlags::NO_WRITE );
       }
 
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::initialTotalMassDensityString() );
       subRegion.registerWrapper< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionOldString() ).
         reference().resizeDimension< 1 >( m_numPhases );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
@@ -491,6 +492,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
   GEOSX_MARK_FUNCTION;
 
   integer const numComp = m_numComponents;
+  integer const numPhase = m_numPhases;
 
   // 1. Compute hydrostatic equilibrium in the regions for which corresponding field specification tag has been specified
   computeHydrostaticEquilibrium();
@@ -519,14 +521,6 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
       }
     } );
 
-    // copy pressure in initial pressure (needed by the poromechanics solvers)
-    arrayView1d< real64 const > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-    arrayView1d< real64 > const initPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialPressureString() );
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      initPres[ei] = pres[ei];
-    } );
-
   } );
 
   // for some reason CUDA does not want the host_device lambda to be defined inside the generic lambda
@@ -546,6 +540,29 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
     // saves porosity in oldPorosity
     porousSolid.saveConvergedState();
 
+  } );
+
+  // 5. Save initial pressure and total mass density (needed by the poromechanics solvers)
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
+  {
+    arrayView1d< real64 const > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+    arrayView1d< real64 > const initPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialPressureString() );
+
+    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
+    arrayView3d< real64 const, multifluid::USD_PHASE > const phaseMassDens = fluid.phaseMassDensity();
+    arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
+    arrayView1d< real64 > const initTotalMassDens =
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialTotalMassDensityString() );
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      initPres[ei] = pres[ei];
+      initTotalMassDens[ei] = 0.0;
+      for( localIndex ip = 0; ip < numPhase; ++ip )
+      {
+        initTotalMassDens[ei] += phaseVolFrac[ei][ip] * phaseMassDens[ei][0][ip];
+      }
+    } );
   } );
 }
 
@@ -603,21 +620,23 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
     string const initPhaseName = fs.getInitPhaseName(); // will go away when GOC/WOC are implemented
 
     localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
-    real64 const minElevation = globalMinElevation[equilIndex];
-    real64 const maxElevation = globalMaxElevation[equilIndex];
+    real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
+    real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
     real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
     localIndex const numPointsInTable = std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1;
 
+    GEOSX_WARNING_IF( (datumElevation > globalMaxElevation[equilIndex])  || (datumElevation < globalMinElevation[equilIndex]),
+                      CompositionalMultiphaseBase::catalogName() << " " << getName()
+                                                                 << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
+                                                                 << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] << "\n"
+                                                                 << "But, a datum elevation of " << datumElevation << " was specified in the intput file to equilibrate the model.\n "
+                                                                 << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
+
     array1d< array1d< real64 > > elevationValues;
-    array1d< array1d< real64 > > pressureValues;
+    array1d< real64 > pressureValues;
     elevationValues.resize( 1 );
     elevationValues[0].resize( numPointsInTable );
-    pressureValues.resize( numPhases );
-    for( localIndex ip = 0; ip < numPhases; ++ip )
-    {
-      pressureValues[ip].resize( numPointsInTable );
-    }
-
+    pressureValues.resize( numPointsInTable );
 
     // Step 3.2: retrieve the user-defined tables (temperature and comp fraction)
 
@@ -655,6 +674,15 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                       InputError );
     }
 
+    // Note: for now, we assume that the reservoir is in a single-phase state at initialization
+    arrayView1d< string const > phaseNames = fluid.phaseNames();
+    auto const it = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
+    GEOSX_THROW_IF( it == std::end( phaseNames ),
+                    CompositionalMultiphaseBase::catalogName() << " " << getName() << ": phase name " << initPhaseName
+                                                               << " not found in the phases of " << fluid.getName(),
+                    InputError );
+    localIndex const ipInit = std::distance( std::begin( phaseNames ), it );
+
     // Step 3.4: compute the hydrostatic pressure values
 
     constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
@@ -662,11 +690,12 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       using FluidType = TYPEOFREF( castedFluid );
       typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-      // note: inside this kernel, parallelHostPolicy is used, and elevation/pressure values don't go to the GPU
+      // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
       HydrostaticPressureKernel::ReturnType const returnValue =
         HydrostaticPressureKernel::launch( numPointsInTable,
                                            numComps,
                                            numPhases,
+                                           ipInit,
                                            maxNumEquilIterations,
                                            equilTolerance,
                                            gravVector,
@@ -678,11 +707,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                                            compFracTableWrappers.toViewConst(),
                                            tempTableWrapper,
                                            elevationValues.toNestedView(),
-                                           pressureValues.toNestedView() );
+                                           pressureValues.toView() );
 
-      GEOSX_WARNING_IF( returnValue == HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
-                        CompositionalMultiphaseBase::catalogName() << " " << getName()
-                                                                   << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!" );
+      GEOSX_THROW_IF( returnValue == HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
+                      CompositionalMultiphaseBase::catalogName() << " " << getName()
+                                                                 << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n"
+                                                                 << "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n"
+                                                                 << "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
+                      std::runtime_error );
 
       GEOSX_WARNING_IF( returnValue == HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
                         CompositionalMultiphaseBase::catalogName() << " " << getName()
@@ -693,14 +725,6 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
     } );
 
     // Step 3.5: create hydrostatic pressure table
-    // Note: for now, we assume that the reservoir is in a single-phase state at initialization
-    arrayView1d< string const > phaseNames = fluid.phaseNames();
-    auto const it = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
-    GEOSX_THROW_IF( it == std::end( phaseNames ),
-                    CompositionalMultiphaseBase::catalogName() << " " << getName() << ": phase name " << initPhaseName
-                                                               << " not found in the phases of " << fluid.getName(),
-                    InputError );
-    localIndex const ipInit = std::distance( std::begin( phaseNames ), it );
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ipInit] + "_table";
     GEOSX_THROW_IF( functionManager.hasGroup< TableFunction >( tableName ),
@@ -710,7 +734,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
     TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     presTable->setTableCoordinates( elevationValues );
-    presTable->setTableValues( pressureValues[ipInit] );
+    presTable->setTableValues( pressureValues );
     presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
 

@@ -260,7 +260,8 @@ public:
     static constexpr char const * mobilityString() { return "mobility"; }
     static constexpr char const * dMobility_dPressureString() { return "dMobility_dPressure"; }
 
-    // backup fields
+    // initial and backup fields
+    static constexpr char const * initialDensityString() { return "initialDensity"; }
     static constexpr char const * densityOldString() { return "densityOld"; }
   };
 

@@ -92,6 +92,14 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 getInitialPorosity( localIndex const k ) const
+  {
+    return m_referencePorosity[k];
+  }
+
+
+  GEOSX_HOST_DEVICE
   virtual void updateFromPressure( localIndex const k,
                                    localIndex const q,
                                    real64 const & pressure ) const

@@ -278,6 +278,9 @@ public:
 
     static constexpr char const * componentCFLNumberString() { return "componentCFLNumber"; }
 
+    // these are used to store the initial total mass density
+    static constexpr char const * initialTotalMassDensityString() { return "initialTotalMassDensity"; }
+
     // these are used to store last converged time step values
     static constexpr char const * phaseVolumeFractionOldString() { return "phaseVolumeFractionOld"; }
 
