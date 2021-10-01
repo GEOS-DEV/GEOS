@@ -2,51 +2,40 @@
 
 from lxml import etree as ElementTree
 import os
-
-
-def pretty_print_xml(init, final):
-  """Format the xml files to enable comparison
-
-     @param init The input file name.
-     @param final The output file name.
-  """
-  parser = ElementTree.XMLParser(remove_comments=True, remove_blank_text=True)
-  tree = ElementTree.parse(init, parser)
-  tree.write(final, pretty_print=True)
-  os.remove(init)
+from geosx_xml_tools import xml_formatter
 
 
 def generate_test_xml_files(root_dir):
-  """Build example input/output xml files, which can be used to test the parser.
+    """Build example input/output xml files, which can be used to test the parser.
      These are derived from a GEOSX integrated test xml.
 
      @param root_dir The folder to write the example xml files.
-  """
+    """
 
-  # Build segments of an xml file that can be compiled to form a test
-  # File header/footer
-  xml_header = """<Problem>"""
+    # Build segments of an xml file that can be compiled to form a test
+    # File header/footer
+    xml_header = """<Problem>"""
 
-  xml_footer = """</Problem>"""
+    xml_footer = """</Problem>"""
 
-  # Parameters
-  xml_parameters = """
+    # Parameters
+    xml_parameters = """
 <Parameters>
     <Parameter name="permeability" value="2.0e-16" />
     <Parameter name="porosity" value="0.05" />
     <Parameter name="pressure" value="5 [MPa]" />
   </Parameters>"""
 
-  # Includes
-  xml_includes = """
+    # Includes
+    xml_includes = """
 <Included>
     <File name="./included/included_a.xml"/>
     <File name="./included/included_b.xml"/>
     <File name="./included/included_c.xml"/>
 </Included>"""
 
-  # Base segments
-  xml_base_a = """
+    # Base segments
+    xml_base_a = """
 <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
 
@@ -65,7 +54,7 @@ def generate_test_xml_files(root_dir):
 
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}" 
+                  elementTypes="{C3D8}"
                   xCoords="{0, 10}"
                   yCoords="{0, 1}"
                   zCoords="{0, 1}"
@@ -76,12 +65,12 @@ def generate_test_xml_files(root_dir):
   </Mesh>
 
   <Geometry>
-    <Box name="source" xMin="-0.01, -0.01, -0.01" xMax=" 1.01, 1.01, 1.01"/>
-    <Box name="sink"   xMin=" 8.99, -0.01, -0.01" xMax="10.01, 1.01, 1.01"/>
+    <Box name="source" xMin="{-0.01, -0.01, -0.01}" xMax="{ 1.01, 1.01, 1.01}"/>
+    <Box name="sink"   xMin="{ 8.99, -0.01, -0.01}" xMax="{10.01, 1.01, 1.01}"/>
   </Geometry>
 """
 
-  xml_base_b = """
+    xml_base_b = """
 <Events maxTime="2e4">
 
     <PeriodicEvent name="outputs"
@@ -128,15 +117,15 @@ def generate_test_xml_files(root_dir):
                                  referencePressure="0.0"
                                  compressibility="1e-9"/>
   </Constitutive>
-  
+
   <Outputs>
     <Silo name="siloOutput"/>
     <Restart name="restartOutput"/>
   </Outputs>
 """
 
-  # Field specifications with parameters, symbolic math, and their compiled equivalents
-  field_string_with_parameters = """
+    # Field specifications with parameters, symbolic math, and their compiled equivalents
+    field_string_with_parameters = """
 <FieldSpecifications>
     <FieldSpecification name="permx"
                         component="0"
@@ -189,7 +178,7 @@ def generate_test_xml_files(root_dir):
   </FieldSpecifications>
 """
 
-  field_string_with_symbolic = """
+    field_string_with_symbolic = """
 <FieldSpecifications>
     <FieldSpecification name="permx"
                         component="0"
@@ -242,7 +231,7 @@ def generate_test_xml_files(root_dir):
   </FieldSpecifications>
 """
 
-  field_string_base = """
+    field_string_base = """
 <FieldSpecifications>
     <FieldSpecification name="permx"
                         component="0"
@@ -295,7 +284,7 @@ def generate_test_xml_files(root_dir):
   </FieldSpecifications>
 """
 
-  field_string_alt = """
+    field_string_alt = """
 <FieldSpecifications>
     <FieldSpecification name="permx"
                         component="0"
@@ -348,41 +337,38 @@ def generate_test_xml_files(root_dir):
   </FieldSpecifications>
 """
 
-  # Write the files, and apply pretty_print to targets for easy matches
-  # No advanced features case
-  with open('%s/no_advanced_features_input.xml' % (root_dir), 'w') as f:
-    f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
-  with open('%s/no_advanced_features_target.tmp' % (root_dir), 'w') as f:
-    f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
-  pretty_print_xml('%s/no_advanced_features_target.tmp' % (root_dir), '%s/no_advanced_features_target.xml' % (root_dir))
+    # Write the files, and apply pretty_print to targets for easy matches
+    # No advanced features case
+    with open('%s/no_advanced_features_input.xml' % (root_dir), 'w') as f:
+        f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
+    with open('%s/no_advanced_features_target.xml' % (root_dir), 'w') as f:
+        f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
+    xml_formatter.format_file('%s/no_advanced_features_target.xml' % (root_dir))
 
-  # Parameters case
-  with open('%s/parameters_input.xml' % (root_dir), 'w') as f:
-    f.write(xml_header+xml_parameters+xml_base_a+xml_base_b+field_string_with_parameters+xml_footer)
-  with open('%s/parameters_target.tmp' % (root_dir), 'w') as f:
-    f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
-  pretty_print_xml('%s/parameters_target.tmp' % (root_dir), '%s/parameters_target.xml' % (root_dir))
+    # Parameters case
+    with open('%s/parameters_input.xml' % (root_dir), 'w') as f:
+        f.write(xml_header+xml_parameters+xml_base_a+xml_base_b+field_string_with_parameters+xml_footer)
+    with open('%s/parameters_target.xml' % (root_dir), 'w') as f:
+        f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
+    xml_formatter.format_file('%s/parameters_target.xml' % (root_dir))
 
-  # Symbolic + parameters case
-  with open('%s/symbolic_parameters_input.xml' % (root_dir), 'w') as f:
-    f.write(xml_header+xml_parameters+xml_base_a+xml_base_b+field_string_with_symbolic+xml_footer)
-  with open('%s/symbolic_parameters_target.tmp' % (root_dir), 'w') as f:
-    f.write(xml_header+xml_base_a+xml_base_b+field_string_alt+xml_footer)
-  pretty_print_xml('%s/symbolic_parameters_target.tmp' % (root_dir), '%s/symbolic_parameters_target.xml' % (root_dir))
+    # Symbolic + parameters case
+    with open('%s/symbolic_parameters_input.xml' % (root_dir), 'w') as f:
+        f.write(xml_header+xml_parameters+xml_base_a+xml_base_b+field_string_with_symbolic+xml_footer)
+    with open('%s/symbolic_parameters_target.xml' % (root_dir), 'w') as f:
+        f.write(xml_header+xml_base_a+xml_base_b+field_string_alt+xml_footer)
+    xml_formatter.format_file('%s/symbolic_parameters_target.xml' % (root_dir))
 
-  # Included case
-  with open('%s/included_input.xml' % (root_dir), 'w') as f:
-    f.write(xml_header+xml_includes+xml_footer)
-  with open('%s/included/included_a.xml' % (root_dir), 'w') as f:
-    f.write(xml_header+xml_base_a+xml_footer)
-  with open('%s/included/included_b.xml' % (root_dir), 'w') as f:
-    f.write(xml_header+xml_base_b+xml_footer)
-  with open('%s/included/included_c.xml' % (root_dir), 'w') as f:
-    f.write(xml_header+field_string_base+xml_footer)
-  with open('%s/included_target.tmp' % (root_dir), 'w') as f:
-    f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
-  pretty_print_xml('%s/included_target.tmp' % (root_dir), '%s/included_target.xml' % (root_dir))
-
-
-
-
+    # Included case
+    os.makedirs('%s/included' % (root_dir), exist_ok=True)
+    with open('%s/included_input.xml' % (root_dir), 'w') as f:
+        f.write(xml_header+xml_includes+xml_footer)
+    with open('%s/included/included_a.xml' % (root_dir), 'w') as f:
+        f.write(xml_header+xml_base_a+xml_footer)
+    with open('%s/included/included_b.xml' % (root_dir), 'w') as f:
+        f.write(xml_header+xml_base_b+xml_footer)
+    with open('%s/included/included_c.xml' % (root_dir), 'w') as f:
+        f.write(xml_header+field_string_base+xml_footer)
+    with open('%s/included_target.xml' % (root_dir), 'w') as f:
+        f.write(xml_header+xml_base_a+xml_base_b+field_string_base+xml_footer)
+    xml_formatter.format_file('%s/included_target.xml' % (root_dir))
