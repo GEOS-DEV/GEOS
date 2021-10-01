@@ -29,7 +29,7 @@ do
         shift
         shift
         ;;
-        -?|--help)
+        -h|--help)
         echo ""
         echo "Preprocessor options:"
         echo "-i/--input          Input xml file name"
@@ -63,13 +63,12 @@ if [ -f $SCRIPT_DIR/preprocess_xml ]; then
    fi
 
    # Preprocess the file
-   echo "Preprocessing xml:"
+   echo "Preprocessing xml: $INPUT_ARGS"
    $SCRIPT_DIR/preprocess_xml $INPUT_ARGS $PARAMETER_ARGS -o $COMPILED_XML_NAME -s $SCRIPT_DIR/../../src/coreComponents/schema/schema.xsd
 
    # Continue by running GEOSX
-   echo "Running command:"
-   echo "$SCRIPT_DIR/geosx $NEW_ARGS -i $COMPILED_XML_NAME"
-   $SCRIPT_DIR/geosx $NEW_ARGS -i $COMPILED_XML_NAME
+   echo "Running command: $SCRIPT_DIR/geosx -i $COMPILED_XML_NAME $NEW_ARGS"
+   $SCRIPT_DIR/geosx -i $COMPILED_XML_NAME $NEW_ARGS
 else
    echo "Error: XML preprocessor not found"
    echo "To build it, run \"make geosx_xml_tools\""

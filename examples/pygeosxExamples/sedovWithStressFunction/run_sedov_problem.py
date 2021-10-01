@@ -27,13 +27,13 @@ def run_problem():
     Run the GEOSX problem
     """
     # PYGEOSX_INITIALIZATION
-    # Initialize the code
+    # Get the MPI rank
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
+
+    # Initialize the code and set initial conditions
     xml.apply_xml_preprocessor()
     problem = pygeosx.initialize(rank, sys.argv)
-
-    # Apply initial conditions
     pygeosx.apply_initial_conditions()
 
     # Rather than specifying the wrapper paths explicitly,

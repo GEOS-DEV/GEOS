@@ -5,19 +5,18 @@ from mpi4py import MPI
 import pygeosx
 from pygeosx_tools import wrapper, xml
 import matplotlib.pyplot as plt
-
-
-# Get the MPI rank
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
 # PYGEOSX_SETUP_END
 
 
-def run_problem():
+def run_problem(plot_frequency=1):
     """
     Run the GEOSX problem
     """
     # PYGEOSX_INITIALIZATION
+    # Get the MPI rank
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
     # Initialize the code and set initial conditions
     xml.apply_xml_preprocessor()
     problem = pygeosx.initialize(rank, sys.argv)
@@ -54,7 +53,6 @@ def run_problem():
     # PYGEOSX_MAIN_LOOP
     # Run the code
     query_count = 0
-    plot_frequency = 4
     while pygeosx.run() != pygeosx.COMPLETED:
         wrapper.run_queries(problem, records)
         query_count += 1
@@ -64,6 +62,6 @@ def run_problem():
 
 
 if __name__ == '__main__':
-    run_problem()
+    run_problem(plot_frequency=4)
 
 

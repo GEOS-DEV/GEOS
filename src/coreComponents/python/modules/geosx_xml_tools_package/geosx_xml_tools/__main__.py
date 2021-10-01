@@ -28,7 +28,6 @@ def main():
                                         schema=args.schema,
                                         verbose=args.verbose,
                                         parameter_override=args.parameters)
-
     print(output_name)
 
 
