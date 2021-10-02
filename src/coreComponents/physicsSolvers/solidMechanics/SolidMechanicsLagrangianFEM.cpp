@@ -25,7 +25,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/contact/ContactBase.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "LvArray/src/output.hpp"
@@ -1144,10 +1144,8 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
     ConstitutiveManager const &
     constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
-    ContactRelationBase const &
-    contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
-
-    real64 const contactStiffness = contactRelation.stiffness();
+    ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
+    real64 const contactStiffness = contact.stiffness();
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager.totalDisplacement();
     arrayView2d< real64 > const fc = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::contactForceString() );
