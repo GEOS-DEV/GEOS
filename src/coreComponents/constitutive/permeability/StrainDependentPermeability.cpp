@@ -35,7 +35,7 @@ std::unique_ptr< ConstitutiveBase >
 StrainDependentPermeability::deliverClone( string const & name,
                                            Group * const parent ) const
 {
-  return ConstitutiveBase::deliverClone( name, parent );
+  return PermeabilityBase::deliverClone( name, parent );
 }
 
 void StrainDependentPermeability::allocateConstitutiveData( dataRepository::Group & parent,
