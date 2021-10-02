@@ -21,7 +21,6 @@
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -54,6 +53,7 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
   SinglePhasePoromechanicsSolver( name, parent ),
   m_contactSolverName(),
   m_flowSolverName(),
+  m_fractureRegionName(),
   m_contactSolver( nullptr ),
   m_flowSolver( nullptr ),
   m_stabilizationName( "" )
@@ -61,6 +61,10 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
   registerWrapper( viewKeyStruct::contactSolverNameString(), &m_contactSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the contact solid mechanics solver to use in the contact with flow solver" );
+
+  registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the fracture region." );
 
   registerWrapper( viewKeyStruct::flowSolverNameString(), &m_flowSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -1061,6 +1065,8 @@ void LagrangianContactFlowSolver::
 {
   GEOSX_MARK_FUNCTION;
 
+  std::cout << "in LagrangianContactFlowSolver::addTransmissibilityCouplingNNZ\n";
+
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1692,7 +1698,7 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
 
         // Add nodal area contribution
         stackArray1d< real64, 1 > totalInvStiffApproxDiag( 1 );
-        totalInvStiffApproxDiag( 0 ) = -rotatedInvStiffApprox * areafac;
+        totalInvStiffApproxDiag( 0 ) = rotatedInvStiffApprox * areafac;
 
         // Get DOF numbering
         localIndex fractureIndex[2];
