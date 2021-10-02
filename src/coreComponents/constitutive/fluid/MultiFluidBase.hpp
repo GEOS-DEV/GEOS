@@ -214,8 +214,6 @@ protected:
   {
 public:
 
-public:
-
     /// @cond DO_NOT_DOCUMENT
     /// We need these SMFs to avoid host-device errors with CUDA.
     KernelWrapper() = default;

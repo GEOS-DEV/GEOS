@@ -121,12 +121,8 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="1.0e0">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 0.002e-3, 0.02e-3 }"/>
-    </Contact>
+      penaltyStiffness="1.0e0"
+      apertureTableName="apertureTable"/>
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>
@@ -163,6 +159,13 @@
       origin="{ 0, 0, 0 }"
       thickness="0.1"/>
   </Geometry>
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>
+  </Functions>
 
   <Events
     maxTime="200.0">

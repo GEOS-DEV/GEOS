@@ -1037,16 +1037,8 @@
 		<!--permeability =>  permeability of the rock.-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
-	<xsd:complexType name="ContactType">
-		<xsd:choice minOccurs="0" maxOccurs="1">
-			<xsd:element name="TableFunction" type="TableFunctionType" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="CoulombType">
-		<xsd:choice minOccurs="0" maxOccurs="1">
-			<xsd:element name="TableFunction" type="TableFunctionType" />
-		</xsd:choice>
-	</xsd:complexType>
+	<xsd:complexType name="ContactType" />
+	<xsd:complexType name="CoulombType" />
 	<xsd:complexType name="DamageElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />

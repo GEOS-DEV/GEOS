@@ -44,7 +44,6 @@ ControlEquationHelper::
   // are treated as lower limits in production wells and upper limits in injectors.
   // The well changes its mode of control whenever the existing control mode would
   // violate one of these limits.
-
   // BHP control
   if( currentControl == WellControls::Control::BHP )
   {

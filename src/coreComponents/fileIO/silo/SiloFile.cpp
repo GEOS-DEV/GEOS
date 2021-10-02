@@ -28,7 +28,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/contact/ContactBase.hpp"
 #include "constitutive/NullModel.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
@@ -1444,7 +1444,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     localIndex const numFluids = regionFluidMaterialList.size();
 
     string_array
-      fractureContactMaterialList = elementRegion.getConstitutiveNames< constitutive::ContactRelationBase >();
+      fractureContactMaterialList = elementRegion.getConstitutiveNames< constitutive::ContactBase >();
 
     localIndex const numContacts = fractureContactMaterialList.size();
 
