@@ -323,7 +323,7 @@ public:
       mixtureDensityNew *= porosityNew;
       mixtureDensityNew += ( 1.0 - porosityNew ) * m_solidDensity( k, q );
 
-      real64 mixtureDensityInit = m_initialFluidTotalMassDensity( k ) * porosityNew;
+      real64 mixtureDensityInit = m_initialFluidTotalMassDensity( k ) * porosityInit;
       mixtureDensityInit += ( 1.0 - porosityInit ) * m_solidDensity( k, q );
 
       mixtureDensityNew *= detJxW;

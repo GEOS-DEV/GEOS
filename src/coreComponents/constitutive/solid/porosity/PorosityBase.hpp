@@ -95,7 +95,7 @@ public:
   GEOSX_FORCE_INLINE
   real64 getInitialPorosity( localIndex const k ) const
   {
-    return m_referencePorosity[k];
+    return m_referencePorosity[k]; // revisit later after the porosity initialization work is completed
   }
 
 

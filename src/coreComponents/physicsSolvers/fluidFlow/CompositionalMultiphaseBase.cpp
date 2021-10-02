@@ -599,7 +599,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                                           globalMaxElevation,
                                           globalMinElevation );
 
-  // Step 3: for each equil, compute a fine table with hydrostatic pressure vs elevation
+  // Step 3: for each equil, compute a fine table with hydrostatic pressure vs elevation if the region is a target region
+
+  // first compute the region filter
+  std::set< string > regionFilter;
+  for( string const & regionName : targetRegionNames() )
+  {
+    regionFilter.insert( regionName );
+  }
 
   fsManager.apply< EquilibriumInitialCondition >( 0.0,
                                                   domain,
@@ -629,7 +636,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                       CompositionalMultiphaseBase::catalogName() << " " << getName()
                                                                  << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
                                                                  << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] << "\n"
-                                                                 << "But, a datum elevation of " << datumElevation << " was specified in the intput file to equilibrate the model.\n "
+                                                                 << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
                                                                  << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
 
     array1d< array1d< real64 > > elevationValues;
@@ -658,6 +665,11 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
     // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
 
     Group const & region = subRegion.getParent().getParent();
+    auto itRegionFilter = regionFilter.find( region.getName() );
+    if( itRegionFilter == regionFilter.end() )
+    {
+      return; // the region is not in target, there is nothing to do
+    }
     string const & fluidName = m_fluidModelNames[ targetRegionIndex( region.getName() ) ];
     MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
@@ -676,12 +688,12 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
     // Note: for now, we assume that the reservoir is in a single-phase state at initialization
     arrayView1d< string const > phaseNames = fluid.phaseNames();
-    auto const it = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
-    GEOSX_THROW_IF( it == std::end( phaseNames ),
+    auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
+    GEOSX_THROW_IF( itPhaseNames == std::end( phaseNames ),
                     CompositionalMultiphaseBase::catalogName() << " " << getName() << ": phase name " << initPhaseName
                                                                << " not found in the phases of " << fluid.getName(),
                     InputError );
-    localIndex const ipInit = std::distance( std::begin( phaseNames ), it );
+    localIndex const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
 
     // Step 3.4: compute the hydrostatic pressure values
 

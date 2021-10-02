@@ -243,7 +243,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
     FluidPropViews const fluidProps = getFluidProperties( fluid );
     arrayView2d< real64 const > const dens = fluidProps.dens;
-    arrayView1d< real64 > const initDens = subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialPressureString() );
+    arrayView1d< real64 > const initDens = subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialDensityString() );
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
@@ -285,8 +285,16 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
                                           globalMaxElevation,
                                           globalMinElevation );
 
-  // Step 3: for each equil, compute a fine table with hydrostatic pressure vs elevation
+  // Step 3: for each equil, compute a fine table with hydrostatic pressure vs elevation if the region is a target region
 
+  // first compute the region filter
+  std::set< string > regionFilter;
+  for( string const & regionName : targetRegionNames() )
+  {
+    regionFilter.insert( regionName );
+  }
+
+  // then start the actual table construction
   fsManager.apply< EquilibriumInitialCondition >( 0.0,
                                                   domain,
                                                   "ElementRegions",
@@ -314,7 +322,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
                       SinglePhaseBase::catalogName() << " " << getName()
                                                      << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
                                                      << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] << "\n"
-                                                     << "But, a datum elevation of " << datumElevation << " was specified in the intput file to equilibrate the model.\n "
+                                                     << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
                                                      << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
 
     array1d< array1d< real64 > > elevationValues;
@@ -327,6 +335,11 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
 
     Group const & region = subRegion.getParent().getParent();
+    auto it = regionFilter.find( region.getName() );
+    if( it == regionFilter.end() )
+    {
+      return; // the region is not in target, there is nothing to do
+    }
     string const & fluidName = m_fluidModelNames[ targetRegionIndex( region.getName() ) ];
     SingleFluidBase & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
