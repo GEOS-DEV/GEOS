@@ -13,8 +13,10 @@ set( constitutive_headers
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/layouts.hpp
-     contact/ContactRelationBase.hpp
-     contact/Coulomb.hpp
+     contact/ContactBase.hpp
+     contact/ApertureTableContact.hpp
+     contact/CoulombContact.hpp
+     contact/ContactSelector.hpp
      fluid/BlackOilFluidBase.hpp	
      fluid/BlackOilFluid.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
@@ -97,8 +99,9 @@ set( constitutive_sources
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
-     contact/ContactRelationBase.cpp
-     contact/Coulomb.cpp
+     contact/ContactBase.cpp
+     contact/ApertureTableContact.cpp     
+     contact/CoulombContact.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/BlackOilFluidBase.cpp
      fluid/BlackOilFluid.cpp

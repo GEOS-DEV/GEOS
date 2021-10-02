@@ -34,6 +34,7 @@ set( physicsSolvers_headers
      multiphysics/CompositionalMultiphaseReservoir.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
+     multiphysics/HydrofractureSolverKernels.hpp
      multiphysics/LagrangianContactSolver.hpp
      multiphysics/LagrangianContactFlowSolver.hpp
      multiphysics/MultiphasePoromechanicsKernel.hpp
