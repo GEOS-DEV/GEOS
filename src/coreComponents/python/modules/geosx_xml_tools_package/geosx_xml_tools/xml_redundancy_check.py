@@ -10,8 +10,8 @@ import argparse
 def check_redundancy_level(local_schema, node, whitelist=['component']):
     """Check xml redundancy at the current level
 
-      @arg local_schema dict containing schema definitions
-      @arg node current xml node
+    @arg local_schema dict containing schema definitions
+    @arg node current xml node
     """
     node_is_required = 0
     for ka in node.attrib.keys():
@@ -52,42 +52,39 @@ def check_xml_redundancy(schema, fname):
 
 
 def process_xml_files(geosx_root):
-  """Test for xml redundancy
+    """Test for xml redundancy
 
-  @arg geosx_root GEOSX root directory
-  """
+    @arg geosx_root GEOSX root directory
+    """
 
-  # Parse the schema
-  geosx_root = os.path.expanduser(geosx_root)
-  schema_fname = '%ssrc/coreComponents/schema/schema.xsd' % (geosx_root)
-  schema = parse_schema(schema_fname)
+    # Parse the schema
+    geosx_root = os.path.expanduser(geosx_root)
+    schema_fname = '%ssrc/coreComponents/schema/schema.xsd' % (geosx_root)
+    schema = parse_schema(schema_fname)
 
-  # Find all xml files, collect their attributes
-  for folder in ['src', 'examples']:
-    print(folder)
-    xml_files = Path(os.path.join(geosx_root, folder)).rglob('*.xml')
-    for f in xml_files:
-      print('  %s' % (str(f)))
-      check_xml_redundancy(schema, str(f))
+    # Find all xml files, collect their attributes
+    for folder in ['src', 'examples']:
+        print(folder)
+        xml_files = Path(os.path.join(geosx_root, folder)).rglob('*.xml')
+        for f in xml_files:
+            print('  %s' % (str(f)))
+            check_xml_redundancy(schema, str(f))
 
 
 def main():
-  """Entry point for the xml attribute usage test script
+    """Entry point for the xml attribute usage test script
 
-  @arg -r/--root GEOSX root directory
-  """
+    @arg -r/--root GEOSX root directory
+    """
 
-  # Parse the user arguments
-  parser = argparse.ArgumentParser()
-  parser.add_argument('-r', '--root', type=str, help='GEOSX root', default='')
-  args = parser.parse_args()
+    # Parse the user arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-r', '--root', type=str, help='GEOSX root', default='')
+    args = parser.parse_args()
 
-  # Parse the xml files
-  process_xml_files(args.root)
+    # Parse the xml files
+    process_xml_files(args.root)
 
 
 if __name__ == "__main__":
-  main()
-
-
-
+    main()

@@ -21,7 +21,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -1428,7 +1428,7 @@ void LagrangianContactSolver::
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-  ContactRelationBase const & contactRelation = constitutiveManager.getGroup< ContactRelationBase const >( m_contactRelationName );
+  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
@@ -1457,101 +1457,44 @@ void LagrangianContactSolver::
       arrayView2d< real64 const > const & previousLocalJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::previousLocalJumpString() );
       arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
-      forAll< parallelHostPolicy >( subRegion.size(), [=, &contactRelation] ( localIndex const kfe )
+      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
-        if( ghostRank[kfe] < 0 )
+        using ContactType = TYPEOFREF( castedContact );
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+
+        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
-          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-          globalIndex nodeDOF[24];
-          globalIndex elemDOF[3];
-          for( localIndex i = 0; i < 3; ++i )
+          if( ghostRank[kfe] < 0 )
           {
-            elemDOF[i] = tracDofNumber[kfe] + i;
-          }
+            localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+            globalIndex nodeDOF[24];
+            globalIndex elemDOF[3];
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              elemDOF[i] = tracDofNumber[kfe] + i;
+            }
 
-          real64 elemRHS[3] = {0.0, 0.0, 0.0};
-          real64 const Ja = area[kfe];
+            real64 elemRHS[3] = {0.0, 0.0, 0.0};
+            real64 const Ja = area[kfe];
 
-          stackArray2d< real64, 2 * 3 * 4 * 3 > dRdU( 3, 2 * 3 * numNodesPerFace );
-          stackArray2d< real64, 3 * 3 > dRdT( 3, 3 );
+            stackArray2d< real64, 2 * 3 * 4 * 3 > dRdU( 3, 2 * 3 * numNodesPerFace );
+            stackArray2d< real64, 3 * 3 > dRdT( 3, 3 );
 
-          switch( fractureState[kfe] )
-          {
-            case FractureState::STICK:
-              {
-                for( localIndex i = 0; i < 3; ++i )
+            switch( fractureState[kfe] )
+            {
+              case FractureState::STICK:
                 {
-                  if( i == 0 )
+                  for( localIndex i = 0; i < 3; ++i )
                   {
-                    elemRHS[i] = +Ja * localJump[kfe][i];
-                  }
-                  else
-                  {
-                    elemRHS[i] = +Ja * ( localJump[kfe][i] - previousLocalJump[kfe][i] );
-                  }
-                }
-
-                for( localIndex kf = 0; kf < 2; ++kf )
-                {
-                  // Compute local area contribution for each node
-                  array1d< real64 > nodalArea;
-                  computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
-
-                  for( localIndex a = 0; a < numNodesPerFace; ++a )
-                  {
-                    for( localIndex i = 0; i < 3; ++i )
+                    if( i == 0 )
                     {
-                      nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] + i;
-
-                      dRdU( 0, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
-                      dRdU( 1, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 1 ) * pow( -1, kf );
-                      dRdU( 2, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 2 ) * pow( -1, kf );
+                      elemRHS[i] = +Ja * localJump[kfe][i];
+                    }
+                    else
+                    {
+                      elemRHS[i] = +Ja * ( localJump[kfe][i] - previousLocalJump[kfe][i] );
                     }
                   }
-                }
-                break;
-              }
-            case FractureState::SLIP:
-            case FractureState::NEW_SLIP:
-              {
-                elemRHS[0] = +Ja * localJump[kfe][0];
-
-                for( localIndex kf = 0; kf < 2; ++kf )
-                {
-                  // Compute local area contribution for each node
-                  array1d< real64 > nodalArea;
-                  computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
-
-                  for( localIndex a = 0; a < numNodesPerFace; ++a )
-                  {
-                    for( localIndex i = 0; i < 3; ++i )
-                    {
-                      nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] +
-                                                                      LvArray::integerConversion< globalIndex >( i );
-                      dRdU( 0, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
-                    }
-                  }
-                }
-
-                real64 const limitTau = contactRelation.limitTangentialTractionNorm( traction[kfe][0] );
-                real64 sliding[ 2 ] = { localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] };
-                real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
-
-//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding[0] << " " << sliding[1] );
-
-                if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == FractureState::NEW_SLIP ) )
-                    && slidingNorm > slidingTolerance[kfe] )
-                {
-                  for( localIndex i = 1; i < 3; ++i )
-                  {
-                    elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding[ i-1 ] / slidingNorm );
-                  }
-
-                  // A symmetric 2x2 matrix.
-                  real64 dUdgT[ 3 ];
-                  dUdgT[ 0 ] = (slidingNorm * slidingNorm - sliding[ 0 ] * sliding[ 0 ]) * limitTau / std::pow( slidingNorm, 3 );
-                  dUdgT[ 1 ] = (slidingNorm * slidingNorm - sliding[ 1 ] * sliding[ 1 ]) * limitTau / std::pow( slidingNorm, 3 );
-                  dUdgT[ 2 ] = -sliding[ 0 ] * sliding[ 1 ] * limitTau / std::pow( slidingNorm, 3 );
 
                   for( localIndex kf = 0; kf < 2; ++kf )
                   {
@@ -1563,90 +1506,156 @@ void LagrangianContactSolver::
                     {
                       for( localIndex i = 0; i < 3; ++i )
                       {
-                        real64 const localRowB[ 2 ] = { rotationMatrix( kfe, i, 1 ), rotationMatrix( kfe, i, 2 ) };
-                        real64 localRowE[ 2 ];
-                        LvArray::tensorOps::Ri_eq_symAijBj< 2 >( localRowE, dUdgT, localRowB );
+                        nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] + i;
 
-                        dRdU( 1, kf * 3 * numNodesPerFace + 3 * a + i ) = nodalArea[a] * localRowE[ 0 ] * pow( -1, kf );
-                        dRdU( 2, kf * 3 * numNodesPerFace + 3 * a + i ) = nodalArea[a] * localRowE[ 1 ] * pow( -1, kf );
+                        dRdU( 0, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
+                        dRdU( 1, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 1 ) * pow( -1, kf );
+                        dRdU( 2, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 2 ) * pow( -1, kf );
                       }
                     }
                   }
-                  for( localIndex i = 1; i < 3; ++i )
-                  {
-                    dRdT( i, 0 ) = Ja * contactRelation.dLimitTangentialTractionNorm_dNormalTraction( traction[kfe][0] ) * sliding[ i-1 ] / slidingNorm;
-                    dRdT( i, i ) = Ja;
-                  }
+                  break;
                 }
-                else
+              case FractureState::SLIP:
+              case FractureState::NEW_SLIP:
                 {
-                  real64 vaux[ 2 ] = { traction[kfe][1], traction[kfe][2] };
-                  real64 vauxNorm = sqrt( vaux[ 0 ]*vaux[ 0 ] + vaux[ 1 ]*vaux[ 1 ] );
-                  if( vauxNorm > 0.0 )
+                  elemRHS[0] = +Ja * localJump[kfe][0];
+
+                  for( localIndex kf = 0; kf < 2; ++kf )
+                  {
+                    // Compute local area contribution for each node
+                    array1d< real64 > nodalArea;
+                    computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+
+                    for( localIndex a = 0; a < numNodesPerFace; ++a )
+                    {
+                      for( localIndex i = 0; i < 3; ++i )
+                      {
+                        nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] +
+                                                                        LvArray::integerConversion< globalIndex >( i );
+                        dRdU( 0, kf * 3 * numNodesPerFace + 3 * a + i ) = -nodalArea[a] * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
+                      }
+                    }
+                  }
+
+                  real64 dLimitTau_dNormalTraction = 0;
+                  real64 const limitTau = contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                                                                                             dLimitTau_dNormalTraction );
+
+                  real64 sliding[ 2 ] = { localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] };
+                  real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
+
+//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding[0] << " " << sliding[1] );
+
+                  if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == FractureState::NEW_SLIP ) )
+                      && slidingNorm > slidingTolerance[kfe] )
                   {
                     for( localIndex i = 1; i < 3; ++i )
                     {
-                      elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux[ i-1 ] / vauxNorm );
+                      elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding[ i-1 ] / slidingNorm );
+                    }
+
+                    // A symmetric 2x2 matrix.
+                    real64 dUdgT[ 3 ];
+                    dUdgT[ 0 ] = (slidingNorm * slidingNorm - sliding[ 0 ] * sliding[ 0 ]) * limitTau / std::pow( slidingNorm, 3 );
+                    dUdgT[ 1 ] = (slidingNorm * slidingNorm - sliding[ 1 ] * sliding[ 1 ]) * limitTau / std::pow( slidingNorm, 3 );
+                    dUdgT[ 2 ] = -sliding[ 0 ] * sliding[ 1 ] * limitTau / std::pow( slidingNorm, 3 );
+
+                    for( localIndex kf = 0; kf < 2; ++kf )
+                    {
+                      // Compute local area contribution for each node
+                      array1d< real64 > nodalArea;
+                      computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+
+                      for( localIndex a = 0; a < numNodesPerFace; ++a )
+                      {
+                        for( localIndex i = 0; i < 3; ++i )
+                        {
+                          real64 const localRowB[ 2 ] = { rotationMatrix( kfe, i, 1 ), rotationMatrix( kfe, i, 2 ) };
+                          real64 localRowE[ 2 ];
+                          LvArray::tensorOps::Ri_eq_symAijBj< 2 >( localRowE, dUdgT, localRowB );
+
+                          dRdU( 1, kf * 3 * numNodesPerFace + 3 * a + i ) = nodalArea[a] * localRowE[ 0 ] * pow( -1, kf );
+                          dRdU( 2, kf * 3 * numNodesPerFace + 3 * a + i ) = nodalArea[a] * localRowE[ 1 ] * pow( -1, kf );
+                        }
+                      }
                     }
                     for( localIndex i = 1; i < 3; ++i )
                     {
+                      dRdT( i, 0 ) = Ja * dLimitTau_dNormalTraction * sliding[ i-1 ] / slidingNorm;
                       dRdT( i, i ) = Ja;
                     }
                   }
                   else
                   {
-                    for( localIndex i = 1; i < 3; ++i )
+                    real64 vaux[ 2 ] = { traction[kfe][1], traction[kfe][2] };
+                    real64 vauxNorm = sqrt( vaux[ 0 ]*vaux[ 0 ] + vaux[ 1 ]*vaux[ 1 ] );
+                    if( vauxNorm > 0.0 )
                     {
-                      elemRHS[i] = 0.0;
+                      for( localIndex i = 1; i < 3; ++i )
+                      {
+                        elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux[ i-1 ] / vauxNorm );
+                      }
+                      for( localIndex i = 1; i < 3; ++i )
+                      {
+                        dRdT( i, i ) = Ja;
+                      }
                     }
-                    for( localIndex i = 1; i < 3; ++i )
+                    else
                     {
-                      dRdT( i, i ) = Ja;
+                      for( localIndex i = 1; i < 3; ++i )
+                      {
+                        elemRHS[i] = 0.0;
+                      }
+                      for( localIndex i = 1; i < 3; ++i )
+                      {
+                        dRdT( i, i ) = Ja;
+                      }
                     }
                   }
+                  break;
                 }
-                break;
-              }
-            case FractureState::OPEN:
-              {
+              case FractureState::OPEN:
+                {
 //                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " opening: " << localJump[kfe][0] );
 
-                for( localIndex i = 0; i < 3; ++i )
-                {
-                  elemRHS[i] = +Ja * traction[kfe][i];
-                }
+                  for( localIndex i = 0; i < 3; ++i )
+                  {
+                    elemRHS[i] = +Ja * traction[kfe][i];
+                  }
 
-                for( localIndex i = 0; i < 3; ++i )
-                {
-                  dRdT( i, i ) = Ja;
+                  for( localIndex i = 0; i < 3; ++i )
+                  {
+                    dRdT( i, i ) = Ja;
+                  }
+                  break;
                 }
-                break;
+            }
+
+            localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
+
+            for( localIndex idof = 0; idof < 3; ++idof )
+            {
+              localRhs[localRow + idof] += elemRHS[idof];
+
+              if( fractureState[kfe] != FractureState::OPEN )
+              {
+                localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow + idof,
+                                                                          nodeDOF,
+                                                                          dRdU[idof].dataIfContiguous(),
+                                                                          2 * 3 * numNodesPerFace );
               }
-          }
 
-          localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
-
-          for( localIndex idof = 0; idof < 3; ++idof )
-          {
-            localRhs[localRow + idof] += elemRHS[idof];
-
-            if( fractureState[kfe] != FractureState::OPEN )
-            {
-              localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow + idof,
-                                                                        nodeDOF,
-                                                                        dRdU[idof].dataIfContiguous(),
-                                                                        2 * 3 * numNodesPerFace );
-            }
-
-            if( fractureState[kfe] != FractureState::STICK )
-            {
-              localMatrix.addToRow< serialAtomic >( localRow + idof,
-                                                    elemDOF,
-                                                    dRdT[idof].dataIfContiguous(),
-                                                    3 );
+              if( fractureState[kfe] != FractureState::STICK )
+              {
+                localMatrix.addToRow< serialAtomic >( localRow + idof,
+                                                      elemDOF,
+                                                      dRdT[idof].dataIfContiguous(),
+                                                      3 );
+              }
             }
           }
-        }
+        } );
       } );
     }
   } );
@@ -2147,7 +2156,7 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
   ElementRegionManager & elemManager = mesh.getElemManager();
 
   ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-  ContactRelationBase const & contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
+  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
 
   bool checkActiveSet = true;
 
@@ -2167,66 +2176,77 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
 
       RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
 
-      forAll< parallelHostPolicy >( subRegion.size(), [=, &contactRelation] ( localIndex const kfe )
+      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
-        if( ghostRank[kfe] < 0 )
+        using ContactType = TYPEOFREF( castedContact );
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+
+        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
-          integer const originalFractureState = fractureState[kfe];
-          if( originalFractureState == FractureState::OPEN )
+          if( ghostRank[kfe] < 0 )
           {
-            if( localJump[kfe][0] > -normalDisplacementTolerance[kfe] )
+            integer const originalFractureState = fractureState[kfe];
+            if( originalFractureState == FractureState::OPEN )
+            {
+              if( localJump[kfe][0] > -normalDisplacementTolerance[kfe] )
+              {
+                fractureState[kfe] = FractureState::OPEN;
+              }
+              else
+              {
+                fractureState[kfe] = FractureState::STICK;
+              }
+            }
+            else if( traction[kfe][0] > normalTractionTolerance[kfe] )
             {
               fractureState[kfe] = FractureState::OPEN;
             }
             else
             {
-              fractureState[kfe] = FractureState::STICK;
-            }
-          }
-          else if( traction[kfe][0] > normalTractionTolerance[kfe] )
-          {
-            fractureState[kfe] = FractureState::OPEN;
-          }
-          else
-          {
-            real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
-            real64 const limitTau = contactRelation.limitTangentialTractionNorm( traction[kfe][0] );
-            if( originalFractureState == FractureState::STICK && currentTau >= limitTau )
-            {
-              currentTau *= (1.0 - m_slidingCheckTolerance);
-            }
-            else if( originalFractureState != FractureState::STICK && currentTau <= limitTau )
-            {
-              currentTau *= (1.0 + m_slidingCheckTolerance);
-            }
-            if( currentTau > limitTau )
-            {
-              if( originalFractureState == FractureState::STICK )
+              real64 currentTau = sqrt( traction[kfe][1]*traction[kfe][1] + traction[kfe][2]*traction[kfe][2] );
+
+              real64 dLimitTangentialTractionNorm_dTraction = 0.0;
+              real64 const limitTau =
+                contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                                                                   dLimitTangentialTractionNorm_dTraction );
+
+              if( originalFractureState == FractureState::STICK && currentTau >= limitTau )
               {
-                fractureState[kfe] = FractureState::NEW_SLIP;
+                currentTau *= (1.0 - m_slidingCheckTolerance);
+              }
+              else if( originalFractureState != FractureState::STICK && currentTau <= limitTau )
+              {
+                currentTau *= (1.0 + m_slidingCheckTolerance);
+              }
+              if( currentTau > limitTau )
+              {
+                if( originalFractureState == FractureState::STICK )
+                {
+                  fractureState[kfe] = FractureState::NEW_SLIP;
+                }
+                else
+                {
+                  fractureState[kfe] = FractureState::SLIP;
+                }
               }
               else
               {
-                fractureState[kfe] = FractureState::SLIP;
+                fractureState[kfe] = FractureState::STICK;
               }
             }
-            else
-            {
-              fractureState[kfe] = FractureState::STICK;
-            }
-          }
 
-          if( originalFractureState != fractureState[kfe] )
-          {
-//            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
-//                                                   << " previous state <"
-//                                                   << FractureStateToString( originalFractureState )
-//                                                   << "> current state <"
-//                                                   << FractureStateToString( fractureState[kfe] )
-//                                                   << ">" );
+            if( originalFractureState != fractureState[kfe] )
+            {
+              //            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
+              //                                                   << " previous state <"
+              //                                                   << FractureStateToString( originalFractureState )
+              //                                                   << "> current state <"
+              //                                                   << FractureStateToString( fractureState[kfe] )
+              //                                                   << ">" );
+            }
+            checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
           }
-          checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
-        }
+        } );
       } );
 
       checkActiveSet &= checkActiveSetSub.get();

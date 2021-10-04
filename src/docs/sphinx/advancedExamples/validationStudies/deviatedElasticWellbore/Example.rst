@@ -59,6 +59,7 @@ The internal wellbore mesh generator ``InternalWellbore`` is employed to create 
 
 .. figure:: mesh.png
    :align: center
+   :width: 800
    :figclass: align-center
 
 
