@@ -21,12 +21,6 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-TEST( testXML, testXML )
-{
-  geosx::getGlobalState().getProblemManager().parseCommandLineInput();
-  geosx::getGlobalState().getProblemManager().parseInputFile();
-}
-
 TEST( testXML, testXMLString )
 {
   char const *  xmlInput =
@@ -100,7 +94,7 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv, true ) );
+  geosx::GeosxState state( geosx::basicSetup( argc, argv, false ) );
 
   int const result = RUN_ALL_TESTS();
 
