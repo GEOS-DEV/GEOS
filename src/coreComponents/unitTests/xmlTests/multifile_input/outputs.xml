@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Events>
+    <PeriodicEvent
+      name="outputs"
+      target="/Outputs/siloOutput"/>
+  </Events>
+
+  <Outputs>
+    <Silo
+      name="siloOutput"
+      childDirectory="sub"/>
+  </Outputs>
+
+</Problem>

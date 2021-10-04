@@ -113,13 +113,13 @@ public:
    * @param xmlString the contents of the xml file as a string
    * @details This is used primarily for testing purposes
    */
-  void parseInputString( string xmlString );
+  void parseInputString( string const & xmlString );
 
   /**
    * @brief Parses the input xml document
    * @param xmlDocument The parsed xml document handle
    */
-  void parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument );
+  void parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocument );
 
   /**
    * @brief Generates numerical meshes used throughout the code
