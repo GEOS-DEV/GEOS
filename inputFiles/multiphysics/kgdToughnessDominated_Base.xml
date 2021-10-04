@@ -101,7 +101,7 @@
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
-      defaultYoungModulus="20.0e9"
+      defaultYoungModulus="30.0e9"
       defaultPoissonRatio="0.25"/>
 	<!-- Sphinx_Constitutive_ElasticIsotropic_End -->
 
