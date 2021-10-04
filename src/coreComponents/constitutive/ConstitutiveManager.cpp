@@ -61,14 +61,14 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
                                                localIndex const numConstitutivePointsPerParentIndex ) const
 {
   dataRepository::Group * constitutiveGroup = parent->getGroupPointer( groupKeyStruct::constitutiveModelsString() );
-  if( constitutiveGroup == nullptr )   // Why do we need to do this check? shouldn't it always be there?
+  if( constitutiveGroup == nullptr )
   {
     constitutiveGroup = &parent->registerGroup( groupKeyStruct::constitutiveModelsString() ).setSizedFromParent( 1 );
     constitutiveGroup->resize( parent->size() );
   }
 
   // 1. Allocate constitutive relation
-  // we only register the group if the instance has not been registered yet.
+  // we only register the constitutive relation if it has not been registered yet.
   if( !constitutiveGroup->hasGroup( constitutiveRelationInstanceName ) )
   {
     ConstitutiveBase const & constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
@@ -87,16 +87,17 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
     std::vector< string > const subRelationNames = constitutiveRelation.getSubRelationNames();
     for( string const & subRelationName : subRelationNames )
     {
-      ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
-
-      std::unique_ptr< ConstitutiveBase > constitutiveModel = subRelation.deliverClone( subRelationName, parent );
-
-      constitutiveModel->allocateConstitutiveData( *parent,
-                                                   numConstitutivePointsPerParentIndex );
-
-      // we only register the group if the instance has not been registered yet.
+      // we only want to register the subRelation if it has not been registered yet.
       if( !constitutiveGroup->hasGroup( subRelationName ) )
       {
+        ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
+
+        std::unique_ptr< ConstitutiveBase > constitutiveModel = subRelation.deliverClone( subRelationName, parent );
+
+        constitutiveModel->allocateConstitutiveData( *parent,
+                                                     numConstitutivePointsPerParentIndex );
+
+
         ConstitutiveBase &
         group = constitutiveGroup->registerGroup< ConstitutiveBase >( subRelationName, std::move( constitutiveModel ) );
         group.setSizedFromParent( 1 );
