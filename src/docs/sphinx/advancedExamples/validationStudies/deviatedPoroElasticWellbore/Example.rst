@@ -1,9 +1,9 @@
 .. _AdvancedExampleDeviatedPoroElasticWellbore:
 
 
-####################################################
-Deviated Poro-Elastic Wellbore Problem
-####################################################
+#################################################################
+Deviated Poro-Elastic Wellbore Subjected to an Injection Pressure
+#################################################################
 
 ------------------------------------------------------------------
 Problem description
@@ -360,25 +360,26 @@ A good agreement between the GEOSX results and the corresponding analytical solu
 		fig = plt.figure(figsize=[13,10])
 
 		plt.subplot(221)
-		plt.plot(r, pPore, 'ko', label='GEOSX result')
-		plt.plot(listr,listp, 'k', linewidth=2, label='Analytic')
-		plt.ylabel('Pore pressure (MPa)')
-		plt.xlim(a, 10*a)
-		plt.legend()
-
-		plt.subplot(223)
 		plt.plot(r, sig_rr, 'ko', label='GEOSX result')
 		plt.plot(listr, listSigrr,  'k', linewidth=2, label='Analytic')
 		plt.ylabel('Effectve radial stress (MPa)')
 		plt.xlabel('r (m)')
 		plt.xlim(a, 10*a)
 
-		plt.subplot(224)
+		plt.subplot(222)
 		plt.plot(r, sig_tt, 'ko', label='GEOSX result')
 		plt.plot(listr, listSigtt,  'k', linewidth=2, label='Analytic')
 		plt.ylabel('Effectve tangent stress (MPa)')
 		plt.xlabel('r (m)')
 		plt.xlim(a, 10*a)
+
+		plt.subplot(223)
+		plt.plot(r, pPore, 'ko', label='GEOSX result')
+		plt.plot(listr,listp, 'k', linewidth=2, label='Analytic')
+		plt.ylabel('Pore pressure (MPa)')
+		plt.xlim(a, 10*a)
+		plt.legend()
+
 		plt.show()
 
 	if __name__ == "__main__":

@@ -190,14 +190,14 @@ A good agreement between the GEOSX results and the corresponding analytical solu
 			sig_tt.append(stressLocal[1][1])
 
 
-		plt.subplot(221)
+		plt.subplot(121)
 		plt.plot(r, sig_rr, 'ko', label='GEOSX result')
 		plt.plot(r_anal, sig_rr_anal,  'k', linewidth=2, label='Analytic')
 		plt.ylabel('Radial stress (MPa)')
 		plt.xlabel('r (m)')
 		plt.xlim(a,3*a)
 
-		plt.subplot(222)
+		plt.subplot(122)
 		plt.plot(r, sig_tt, 'ko', label='GEOSX result')
 		plt.plot(r_anal, sig_tt_anal,  'k', linewidth=2, label='Analytic')
 		plt.ylabel('Hoop stress (MPa)')
