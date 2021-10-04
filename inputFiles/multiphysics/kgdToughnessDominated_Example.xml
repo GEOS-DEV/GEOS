@@ -5,6 +5,7 @@
     <File name="./kgdToughnessDominated_Base.xml"/>
   </Included>
   <Mesh>
+	<!-- Sphinx_Mesh_InternalMesh -->
     <InternalMesh 
       name="mesh1"
       elementTypes="{C3D8}"
@@ -16,23 +17,31 @@
       nz="{ 2 }"
 	  xBias="{ 0.5, -0.5 }"
       cellBlockNames="{cb1}"/>
+	<!-- Sphinx_Mesh_InternalMesh_End -->
   </Mesh>
 
   <Geometry>
+
+	<!-- Sphinx_Geometry_InitFracture -->
     <Box
       name="fracture"
       xMin="{ -0.01, -0.01, -0.01 }"
       xMax="{  0.01,  1.01,  1.01 }"/>
+	<!-- Sphinx_Geometry_InitFracture_End -->
 
+	<!-- Sphinx_Geometry_InjSource -->
     <Box
       name="source"
       xMin="{ -0.01, -0.01, -0.01 }"
       xMax="{  0.01,  1.01,  1.01 }"/>
+	<!-- Sphinx_Geometry_InjSource_End -->
 
+    <!-- Sphinx_Geometry_FracturePlane -->
     <Box
       name="core"
       xMin="{ -0.01, -0.01, -0.01 }"
       xMax="{  0.01, 50.01,  1.01 }"/>
+	<!-- Sphinx_Geometry_FracturePlane_End -->
   </Geometry>
 
   <Events

@@ -86,6 +86,7 @@
   </ElementRegions>
 
   <Constitutive>
+	<!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid -->
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
@@ -94,12 +95,15 @@
       compressibility="5e-10"
       referenceViscosity="1.0e-6"
       viscosibility="0.0"/>
+	<!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid_End -->
 
+	<!-- Sphinx_Constitutive_ElasticIsotropic -->
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
-      defaultBulkModulus="20.0e9"
-      defaultShearModulus="12.0e9"/>
+      defaultYoungModulus="20.0e9"
+      defaultPoissonRatio="0.25"/>
+	<!-- Sphinx_Constitutive_ElasticIsotropic_End -->
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -149,6 +153,7 @@
       fieldName="water_density"
       scale="1000"/>
 
+	<!-- Sphinx_FieldSpecifications_FracturePlane -->
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
@@ -156,7 +161,9 @@
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
+	<!-- Sphinx_FieldSpecifications_FracturePlane_End -->
 
+	<!-- Sphinx_FieldSpecifications_InitFracture -->
     <FieldSpecification
       name="frac"
       initialCondition="1"
@@ -164,6 +171,7 @@
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
+	<!-- Sphinx_FieldSpecifications_InitFracture_End -->
 
     <!-- FieldSpecification 
       name="aperture"
@@ -205,23 +213,24 @@
       scale="0.0"
       setNames="{all}"/-->
 
+	<!-- Sphinx_SourceFlux_InjSource -->
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
-      scale="1.0"
-      setNames="{ source }"
-      functionName="injTable"/>
+      scale="-5e-2"
+      setNames="{ source }"/>
+	<!-- Sphinx_SourceFlux_InjSource_End -->
   </FieldSpecifications>
 
-  <!-- SPHINX_Function -->
-  <Functions>
+  
+  <!--Functions>
     <TableFunction 
       name="injTable"
       inputVarNames="{time}"
       coordinates="{0.0, 100}"
       values="{-5e-2, -5e-2}"/>
-  </Functions>
-  <!-- SPHINX_FunctionEnd -->
+  </Functions-->
+ 
 
   <Outputs>
     <Silo

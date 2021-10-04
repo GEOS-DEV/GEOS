@@ -11,7 +11,7 @@ Description of the case
 
 We consider a plane-strain hydraulic fracture propagating in an infinite homogeneous medium due to the injection of a fluid into the fracture with a rate :math:`Q_0` in a period from 0 to :math:`t_{max}`. The injected fluid flows in the fracture with respect to the lubrication equation resulting from the mass conservation and the Poiseuille law. It relates the fracture aperture to the fluid pressure via the fluid viscosity :math:`\mu`. On the other side, the fluid pressure is linked to the fracture aperture through the mechanical deformation of the solid matrix that is characterized by rock elastic properties: the Young modulus :math:`E` and Poisson ratio :math:`\nu` or the anisotropic elastic stiffnesses. The fracture growth is controlled by comparing the stress intensity factor and rock toughness :math:`K_{Ic}`.
 
-Analytical results exist for some cases. We consider for example the toughness dominated regime and isotropic homogeneous impermeable rock, the exact analytical result of the fracture length :math:`\ell`, the net pressure :math:`p_0` and the fracture aperture :math:`w_0` at the injection point can be obtained by following closed-form solutions: 
+Analytical results exist for some cases. We consider for example the toughness dominated regime and isotropic homogeneous impermeable rock, the exact analytical result of the fracture length :math:`\ell`, the net pressure :math:`p_0` and the fracture aperture :math:`w_0` at the injection point can be obtained by following closed-form solutions `(Bunger et al., 2005) <https://link.springer.com/article/10.1007%2Fs10704-005-0154-0>`__: 
 
 .. math::
    \ell = 0.9324 X^{ -1/6 } (\frac{ E_p Q_0^3 }{ 12\mu })^{ 1/6 } t^{ 2/3 }
@@ -20,13 +20,13 @@ Analytical results exist for some cases. We consider for example the toughness d
 
    w_0 p_0 = 0.125 X^{ 1/2 } (12\mu Q_0 E_p)^{ 1/2 }
 
-where the plane modulus `E_p` is defined by
+where the plane modulus :math:`E_p` is defined by
 
-.. math:: E_p = frac{ E }{ 1-\nu^2 }
+.. math:: E_p = \frac{ E }{ 1-\nu^2 }
 
 We noted also:
 
-.. math:: X = frac{ 256 }{ 3 \pi^2 } \frac{ K_{Ic}^4 }{ \mu Q_0 {E_p}^3 }
+.. math:: X = \frac{ 256 }{ 3 \pi^2 } \frac{ K_{Ic}^4 }{ \mu Q_0 {E_p}^3 }
 
 
 **Input file**
@@ -50,7 +50,7 @@ the corresponding integrated test with coarser mesh and smaller injection time i
   inputFiles/multiphysics/kgdToughnessDominated_Smoke.xml
 
 -----------------------------------------------------------
-The solvers
+The physic solvers
 -----------------------------------------------------------
 
 The solver ``SurfaceGenerator`` define rock toughness :math:`K_{Ic}` as: 
@@ -81,38 +81,118 @@ All these elementary solvers are wrapped up in the solver ``Hydrofracture`` to m
   :start-after: <!-- Sphinx_Solvers_Hydrofracture -->
   :end-before:  <!-- Sphinx_Solvers_Hydrofracture_End -->
 
+-----------------------------------------------------------
+The constitutive laws
+-----------------------------------------------------------
 
+The constitutive law ``CompressibleSinglePhaseFluid`` defines default and reference fluid's viscosity, compressibility and density. For this toughness dominated example, a negligible fluid viscosity is defined:
+ 
+.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdToughnessDominated_Base.xml
+  :language: xml
+  :start-after: <!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid -->
+  :end-before:  <!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid_End -->
 
-The parameters used in the simulation are summarized in the following table.
+The isotropic elastic Young modulus and Poisson ratio are defined by the ``ElasticIsotropic`` block. We note that the density of rock defined in this block is useless because gravity effect is ignored in this example.
 
-  +----------------+-----------------------+------------------+-------------------+
-  | Symbol         | Parameter             | Units            | Value             |
-  +================+=======================+==================+===================+
-  | :math:`E`      | Young's modulus       | [Pa]             | 10\ :sup:`9`      |
-  +----------------+-----------------------+------------------+-------------------+
+.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdToughnessDominated_Base.xml
+  :language: xml
+  :start-after: <!-- Sphinx_Constitutive_ElasticIsotropic -->
+  :end-before:  <!-- Sphinx_Constitutive_ElasticIsotropic_End -->
 
----------------------------------
-Inspecting results
----------------------------------
+-----------------------------------------------------------
+Mesh
+-----------------------------------------------------------
 
-This plot .
+Internal mesh generator is used to generate the geometry of this example. The domain size is large enough comparing to the final size of the fracture. A sensitivity analysis has shown that the domain size in the direction perpendicular to the fracture plane, i.e. x-axis, must be at least ten times of the final fracture half-legnth to minimize the numerical error. However, smaller size along the fracture plane, i.e. y-axis, of only two times the fracture half-length is good enough for the numerical convergence. It is also important to note that at least to layer is required in z-axis to ensure a good match between the numerical results and analytical solutions. This is because of the consideration of the node based fracture propagation criterion. Also in x-axis, bias parameter ``xBias`` is added for optimizing the mesh by reducing the size of the element nearby the fracture plane.
+
+.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdToughnessDominated_Base.xml
+  :language: xml
+  :start-after: <!-- Sphinx_Mesh_InternalMesh -->
+  :end-before:  <!-- Sphinx_Mesh_InternalMesh_End -->
 
 .. figure:: mesh.png
    :align: center
    :width: 1000
    :figclass: align-center
 
+-----------------------------------------------------------
+Defining the initial fracture
+-----------------------------------------------------------
+
+The initial fracture is defined by a nodeset occupying a small area where the KGD fracture starts to propagate as:
+
+.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdToughnessDominated_Example.xml
+  :language: xml
+  :start-after: <!-- Sphinx_Geometry_InitFracture -->
+  :end-before:  <!-- Sphinx_Geometry_InitFracture_End -->
+ 
+This initial ``ruptureState`` condition is defined for this area by the following ``FieldSpecification`` block:
+
+.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdToughnessDominated_Base.xml
+  :language: xml
+  :start-after: <!-- Sphinx_FieldSpecifications_InitFracture -->
+  :end-before:  <!-- Sphinx_FieldSpecifications_InitFracture_End -->
+
+-----------------------------------------------------------
+Defining the fracture plane
+-----------------------------------------------------------
+
+The plane within it the KGD fracture propagate is known, so it is convenient to verify the fracture propagation criterion only on that given plane to reduce the computational cost. The fracture plane is defined by a separable nodeset by the following initial ``FieldSpecification`` condition: 
+
+.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdToughnessDominated_Example.xml
+  :language: xml
+  :start-after: <!-- Sphinx_Geometry_FracturePlane -->
+  :end-before:  <!-- Sphinx_Geometry_FracturePlane_End -->
+
+.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdToughnessDominated_Base.xml
+  :language: xml
+  :start-after: <!-- Sphinx_FieldSpecifications_FracturePlane -->
+  :end-before:  <!-- Sphinx_FieldSpecifications_FracturePlane_End -->
+
+-----------------------------------------------------------
+Defining the injection rate
+-----------------------------------------------------------
+
+Fluid is injected into a sub-area of the initial fracture. It should be remarked that only half of the injection rate is defined in this boundary condition because only half-wing of the KGD fracture is modeled regarding its symmetry. It is important to note also that the mass injection rate is actually defined, not the volume injection rate. More precisely, the value given for ``scale`` is :math:`Q_0 \rho_f/2` not :math:`Q_0 /2`.
+
+.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdToughnessDominated_Base.xml
+  :language: xml
+  :start-after: <!-- Sphinx_FieldSpecifications_InjSource -->
+  :end-before:  <!-- Sphinx_FieldSpecifications_InjSource_End -->
+	
+
+The parameters used in the simulation are summarized in the following table.
+
+  +----------------+-----------------------+------------------+-------------------+
+  | Symbol         | Parameter             | Units            | Value             |
+  +================+=======================+==================+===================+
+  | :math:`Q_0`    | Injection rate        | [m:sup:`3`/s]    | 10:sup:`-4`       |
+  +----------------+-----------------------+------------------+-------------------+
+  | :math:`E`      | Young's modulus       | [GPa]            | 30                |
+  +----------------+-----------------------+------------------+-------------------+
+  | :math:`\nu`    | Poisson's ratio       | [ - ]            | 0.25              |
+  +----------------+-----------------------+------------------+-------------------+
+  | :math:`\mu`    | Fluid viscosity       | [Pa.s]           | 10:sup:`-6`       |
+  +----------------+-----------------------+------------------+-------------------+
+  | :math:`K_{Ic}` | Rock toughness        | [MPa.m:sup:`1/2`]| 1                 |
+  +----------------+-----------------------+------------------+-------------------+
+
+
+---------------------------------
+Inspecting results
+---------------------------------
+
+Fracture propagation during time is shown in the figure below. 
 
 .. figure:: propagation.gif
    :align: center
    :width: 1000
    :figclass: align-center
 
-
+A good agreement between GEOSX results and analytical solutions is shown in the comparison below:
 
 .. plot::
 
-  
 
 ------------------------------------------------------------------
 To go further
