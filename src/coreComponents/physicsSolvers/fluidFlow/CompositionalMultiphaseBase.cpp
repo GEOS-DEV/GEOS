@@ -286,27 +286,30 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( constitutive::Cons
   }
 }
 
-void CompositionalMultiphaseBase::validateAquiferBC( ConstitutiveManager const & cm ) const
+void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const & cm ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition & bc )
   {
-    // note: while we are at it, we also set the gravity vector (needed later for the potential diff calculations)
+    // set the gravity vector (needed later for the potential diff calculations)
     bc.setGravityVector( gravityVector() );
 
-    // TODO BEFORE MERGING: implement a mechanism in the fluid models to return the water phase index
-    for( localIndex ip = 0; ip < fluid0.numFluidPhases(); ++ip )
-    {
-      if( fluid0.phaseNames()[ip] == "Water" || fluid0.phaseNames()[ip] == "water" ||
-          fluid0.phaseNames()[ip] == "Brine" || fluid0.phaseNames()[ip] == "brine" )
-      {
-        bc.setWaterPhaseIndex( ip );
-        break;
-      }
-    }
+    // set the water phase index in the Aquifer boundary condition
+    // note: if the water phase is not found, the fluid model is going to throw an error
+    localIndex const waterPhaseIndex = fluid0.getWaterPhaseIndex();
+    bc.setWaterPhaseIndex( waterPhaseIndex );
+  } );
+}
 
+void CompositionalMultiphaseBase::validateAquiferBC( ConstitutiveManager const & cm ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
+  {
     arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
     arrayView1d< string const > const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
 
@@ -346,7 +349,8 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
     }
   }
 
-  // 3. Validate the aquifer boundary condition
+  // 3. Initialize and validate the aquifer boundary condition
+  initializeAquiferBC( cm );
   validateAquiferBC( cm );
 }
 
@@ -1295,14 +1299,6 @@ void CompositionalMultiphaseBase::resetViews( MeshLevel & mesh )
   {
     using keys = viewKeyStruct;
     using namespace compflow;
-
-    m_pressure.clear();
-    m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( keys::pressureString() );
-    m_pressure.setName( getName() + "/accessors/" + keys::pressureString() );
-
-    m_deltaPressure.clear();
-    m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( keys::deltaPressureString() );
-    m_deltaPressure.setName( getName() + "/accessors/" + keys::deltaPressureString() );
 
     m_dCompFrac_dCompDens.clear();
     m_dCompFrac_dCompDens =

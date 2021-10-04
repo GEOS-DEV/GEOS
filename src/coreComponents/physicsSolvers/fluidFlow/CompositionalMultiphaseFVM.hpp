@@ -133,11 +133,6 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
-  virtual void
-  saveAquiferConvergedState( real64 const & time,
-                             real64 const & dt,
-                             DomainPartition & domain ) override;
-
 
   /**
    * @brief Compute the largest CFL number in the domain

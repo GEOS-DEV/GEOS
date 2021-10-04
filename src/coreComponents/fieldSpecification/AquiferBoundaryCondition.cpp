@@ -255,9 +255,6 @@ void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
 
 }
 
-void AquiferBoundaryCondition::initializePreSubGroups()
-{}
-
 void AquiferBoundaryCondition::computeTimeConstant()
 {
   // equation 5.3 of the Eclipse TD

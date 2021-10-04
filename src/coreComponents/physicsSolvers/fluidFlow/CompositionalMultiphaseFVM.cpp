@@ -619,123 +619,37 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
     real64 const & aquiferWaterPhaseDens = bc.getWaterPhaseDensity();
     arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
 
-    KernelLaunchSelector1< AquiferBCKernel >( m_numComponents,
-                                              m_numPhases,
-                                              waterPhaseIndex,
-                                              allowAllPhasesIntoAquifer,
-                                              stencil,
-                                              dofManager.rankOffset(),
-                                              elemDofNumber.toNestedViewConst(),
-                                              m_elemGhostRank.toNestedViewConst(),
-                                              aquiferBCWrapper,
-                                              aquiferWaterPhaseDens,
-                                              aquiferWaterPhaseCompFrac,
-                                              m_pressure.toNestedViewConst(),
-                                              m_deltaPressure.toNestedViewConst(),
-                                              m_gravCoef.toNestedViewConst(),
-                                              m_phaseDens.toNestedViewConst(),
-                                              m_dPhaseDens_dPres.toNestedViewConst(),
-                                              m_dPhaseDens_dComp.toNestedViewConst(),
-                                              m_phaseVolFrac.toNestedViewConst(),
-                                              m_dPhaseVolFrac_dPres.toNestedViewConst(),
-                                              m_dPhaseVolFrac_dCompDens.toNestedViewConst(),
-                                              m_phaseCompFrac.toNestedViewConst(),
-                                              m_dPhaseCompFrac_dPres.toNestedViewConst(),
-                                              m_dPhaseCompFrac_dComp.toNestedViewConst(),
-                                              m_dCompFrac_dCompDens.toNestedViewConst(),
-                                              time,
-                                              dt,
-                                              localMatrix.toViewConstSizes(),
-                                              localRhs.toView() );
-
+    KernelLaunchSelector1< CompositionalMultiphaseFVMKernels::AquiferBCKernel >
+      ( m_numComponents,
+      m_numPhases,
+      waterPhaseIndex,
+      allowAllPhasesIntoAquifer,
+      stencil,
+      dofManager.rankOffset(),
+      elemDofNumber.toNestedViewConst(),
+      m_elemGhostRank.toNestedViewConst(),
+      aquiferBCWrapper,
+      aquiferWaterPhaseDens,
+      aquiferWaterPhaseCompFrac,
+      m_pressure.toNestedViewConst(),
+      m_deltaPressure.toNestedViewConst(),
+      m_gravCoef.toNestedViewConst(),
+      m_phaseDens.toNestedViewConst(),
+      m_dPhaseDens_dPres.toNestedViewConst(),
+      m_dPhaseDens_dComp.toNestedViewConst(),
+      m_phaseVolFrac.toNestedViewConst(),
+      m_dPhaseVolFrac_dPres.toNestedViewConst(),
+      m_dPhaseVolFrac_dCompDens.toNestedViewConst(),
+      m_phaseCompFrac.toNestedViewConst(),
+      m_dPhaseCompFrac_dPres.toNestedViewConst(),
+      m_dPhaseCompFrac_dComp.toNestedViewConst(),
+      m_dCompFrac_dCompDens.toNestedViewConst(),
+      time,
+      dt,
+      localMatrix.toViewConstSizes(),
+      localRhs.toView() );
   } );
 }
-
-void CompositionalMultiphaseFVM::saveAquiferConvergedState( real64 const & time,
-                                                            real64 const & dt,
-                                                            DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-
-  // This step requires three passes:
-  //    - First we count the number of individual aquifers
-  //    - Second we loop over all the stencil entries to compute the sum of aquifer influxes
-  //    - Third we loop over the aquifers to save the sums of each individual aquifer
-
-  // Step 1: count individual aquifers
-
-  // TODO: precompute and save the map to avoid this first step
-
-  std::map< string, localIndex > aquiferNameToAquiferId;
-  localIndex aquiferCounter = 0;
-
-  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
-  {
-    if( aquiferNameToAquiferId.count( bc.getName() ) == 0 )
-    {
-      aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
-      aquiferCounter++;
-    }
-  } );
-
-  // Step 2: sum the aquifer fluxes for each individual aquifer
-
-  array1d< real64 > globalSumFluxes( aquiferNameToAquiferId.size() );
-  array1d< real64 > localSumFluxes( aquiferNameToAquiferId.size() );
-
-  fsManager.apply< AquiferBoundaryCondition >( time + dt,
-                                               domain,
-                                               "faceManager",
-                                               AquiferBoundaryCondition::catalogName(),
-                                               [&] ( AquiferBoundaryCondition const & bc,
-                                                     string const & setName,
-                                                     SortedArrayView< localIndex const > const &,
-                                                     Group &,
-                                                     string const & )
-  {
-    BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-    if( stencil.size() == 0 )
-    {
-      return;
-    }
-
-    AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
-
-    real64 const targetSetSumFluxes =
-      AquiferBCKernel::sumFluxes( stencil,
-                                  aquiferBCWrapper,
-                                  m_pressure.toNestedViewConst(),
-                                  m_deltaPressure.toNestedViewConst(),
-                                  m_gravCoef.toNestedViewConst(),
-                                  time,
-                                  dt );
-
-    localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
-    localSumFluxes[aquiferIndex] += targetSetSumFluxes;
-  } );
-
-  MpiWrapper::allReduce( localSumFluxes.data(),
-                         globalSumFluxes.data(),
-                         localSumFluxes.size(),
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                         MPI_COMM_GEOSX );
-
-  // Step 3: we are ready to save the summed fluxes for each individual aquifer
-
-  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition & bc )
-  {
-    localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
-    bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
-  } );
-}
-
 
 //START_SPHINX_INCLUDE_01
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFVM, string const &, Group * const )

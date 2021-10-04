@@ -385,14 +385,10 @@ protected:
   void validateAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
-   * @brief Increment the cumulative flux from each aquifer
-   * @param[in] time the time at the beginning of the time step
-   * @param[in] dt the time step size
-   * @param[in] domain the domain partition
+   * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
+   * @param[in] cm reference to the global constitutive model manager
    */
-  virtual void saveAquiferConvergedState( real64 const & time,
-                                          real64 const & dt,
-                                          DomainPartition & domain ) = 0;
+  void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -431,9 +427,6 @@ protected:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dCompFrac_dCompDens;
 

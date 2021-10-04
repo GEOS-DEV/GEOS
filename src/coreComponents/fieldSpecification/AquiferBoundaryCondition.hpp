@@ -21,9 +21,7 @@
 #define GEOSX_FIELDSPECIFICATION_AQUIFERBOUNDARYCONDITION_HPP
 
 #include "FieldSpecificationBase.hpp"
-#include "finiteVolume/BoundaryStencil.hpp"
 #include "functions/TableFunction.hpp"
-#include "mesh/FaceManager.hpp"
 
 namespace geosx
 {
@@ -267,8 +265,6 @@ private:
 protected:
 
   virtual void postProcessInput() override final;
-
-  virtual void initializePreSubGroups() override final;
 
 private:
 

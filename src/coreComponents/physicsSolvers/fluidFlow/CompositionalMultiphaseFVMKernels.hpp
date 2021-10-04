@@ -369,15 +369,6 @@ struct AquiferBCKernel
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
-  static real64
-  sumFluxes( BoundaryStencil const & stencil,
-             AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
-             ElementViewConst< arrayView1d< real64 const > > const & pres,
-             ElementViewConst< arrayView1d< real64 const > > const & dPres,
-             ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-             real64 const & timeAtBeginningOfStep,
-             real64 const & dt );
-
 };
 
 } // namespace CompositionalMultiphaseFVMKernels

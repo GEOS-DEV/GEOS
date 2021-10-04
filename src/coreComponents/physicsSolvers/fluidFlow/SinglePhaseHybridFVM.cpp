@@ -357,6 +357,20 @@ void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
   SinglePhaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 
+void SinglePhaseHybridFVM::applyAquiferBC( real64 const time,
+                                           real64 const dt,
+                                           DomainPartition & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
+
+  GEOSX_ERROR( catalogName() << " " << getName() <<
+               "The Aquifer boundary condition is not implemented for SinglePhaseHybridFVM yet" );
+}
 
 real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & domain,
                                                     DofManager const & dofManager,

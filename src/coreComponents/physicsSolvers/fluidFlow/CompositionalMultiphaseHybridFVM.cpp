@@ -19,6 +19,7 @@
 #include "CompositionalMultiphaseHybridFVM.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
@@ -27,8 +28,6 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
-#include "constitutive/ConstitutivePassThru.hpp"
-
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -149,8 +148,10 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     minVal.min( transMultiplier[iface] );
   } );
 
-  GEOSX_ERROR_IF_LE_MSG( minVal.get(), 0.0,
-                         "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0" );
+  GEOSX_THROW_IF( minVal.get() <= 0.0,
+                  catalogName() << " " << getName()
+                                << ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                  std::runtime_error );
 
 }
 
@@ -700,18 +701,8 @@ void CompositionalMultiphaseHybridFVM::applyAquiferBC( real64 const time,
 
   GEOSX_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
 
-  GEOSX_ERROR( "In progress" );
-}
-
-void CompositionalMultiphaseHybridFVM::saveAquiferConvergedState( real64 const & time,
-                                                                  real64 const & dt,
-                                                                  DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-
-  GEOSX_UNUSED_VAR( time, dt, domain );
-
-  GEOSX_ERROR( "In progress" );
+  GEOSX_ERROR( catalogName() << " " << getName() <<
+               "The Aquifer boundary condition is not implemented for CompositionalMultiphaseHybridFVM yet" );
 }
 
 real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition const & domain,
