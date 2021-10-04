@@ -561,7 +561,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh ) const
     CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
     // saves porosity in oldPorosity
-    porousSolid.saveConvergedState();
+    porousSolid.initializeState();
 
   } );
 

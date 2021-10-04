@@ -218,8 +218,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
     CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
-    // saves porosity in oldPorosity
-    porousSolid.saveConvergedState();
+    porousSolid.initializeState();
   } );
 
   mesh.getElemManager().forElementRegions< SurfaceElementRegion >( targetRegionNames(),
