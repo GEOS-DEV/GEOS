@@ -116,6 +116,9 @@ public:
     static constexpr char const * grainBulkModulusString() { return "grainBulkModulus"; }
   } viewKeys;
 
+
+  virtual void initializeState() const override final;
+
   using KernelWrapper = BiotPorosityUpdates;
 
   /**
