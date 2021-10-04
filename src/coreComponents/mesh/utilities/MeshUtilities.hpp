@@ -39,10 +39,10 @@ namespace MeshUtilities
 {
 /**
  * @brief Build all the node sets from a geometric object in the DomainPartition.
- * @param[in] geometry a pointer to the group in the data repository
+ * @param[in] geometries a pointer to the group in the data repository
  * @param[in] nodeManager pointer to the NodeManager object in the DomainPartition
  */
-void generateNodeSets( dataRepository::Group const & geometry,
+void generateNodeSets( dataRepository::Group const & geometries,
                        NodeManager & nodeManager );
 
 } // namespace MeshUtilities
