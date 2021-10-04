@@ -19,7 +19,11 @@ Validation and Verification Studies
 
    deviatedElasticWellbore/Example
 
-   poromechanicsWellbore/Example
+   deviatedPoroElasticWellbore/Example
+
+   deviatedPoroElasticWellbore/Example2
+
+   verticalPoroElastoPlasticWellbore/Example
 
    proppantSlotTest/Example
 

@@ -145,7 +145,7 @@ At a constant injection rate, the slurry is equally flowing into the open channe
 
 .. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/multiphysics/benchmarks/Proppant-transport-validation-case.xml
     :language: xml
-    :start-after: <!-- SPHINX_PROPANT_BC -->
+    :start-after: <!-- SPHINX_PROPPANT_BC -->
     :end-before: <!-- SPHINX_PROPPANT_BC_END -->
 
 Note: For static (non-propagating) fracture problems, the fields ``ruptureState`` and ``elementAperture`` should be provided in the initial conditions. 
