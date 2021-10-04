@@ -45,7 +45,7 @@ std::unique_ptr< ConstitutiveBase >
 CarmanKozenyPermeability::deliverClone( string const & name,
                                         Group * const parent ) const
 {
-  return ConstitutiveBase::deliverClone( name, parent );
+  return PermeabilityBase::deliverClone( name, parent );
 }
 
 void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group & parent,

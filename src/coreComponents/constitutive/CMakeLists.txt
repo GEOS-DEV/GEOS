@@ -13,8 +13,10 @@ set( constitutive_headers
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/layouts.hpp
-     contact/ContactRelationBase.hpp
-     contact/Coulomb.hpp
+     contact/ContactBase.hpp
+     contact/ApertureTableContact.hpp
+     contact/CoulombContact.hpp
+     contact/ContactSelector.hpp
      fluid/BlackOilFluidBase.hpp	
      fluid/BlackOilFluid.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
@@ -65,7 +67,10 @@ set( constitutive_headers
      solid/DamageVolDev.hpp
      solid/DruckerPrager.hpp
      solid/DruckerPragerExtended.hpp
+     solid/ModifiedCamClay.hpp
+     solid/DelftEgg.hpp
      solid/ElasticIsotropic.hpp
+     solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
@@ -93,8 +98,9 @@ set( constitutive_sources
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
-     contact/ContactRelationBase.cpp
-     contact/Coulomb.cpp
+     contact/ContactBase.cpp
+     contact/ApertureTableContact.cpp     
+     contact/CoulombContact.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/BlackOilFluidBase.cpp
      fluid/BlackOilFluid.cpp
@@ -132,7 +138,10 @@ set( constitutive_sources
      solid/DamageVolDev.cpp
      solid/DruckerPrager.cpp
      solid/DruckerPragerExtended.cpp
+     solid/ModifiedCamClay.cpp
+     solid/DelftEgg.cpp
      solid/ElasticIsotropic.cpp
+     solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/ElasticOrthotropic.cpp
      solid/PorousSolid.cpp

@@ -110,12 +110,9 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="0.0e8">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 1.0e-6, 1.0e-4 }"/>
-    </Contact>
+      penaltyStiffness="0.0e8"
+      apertureTableName="apertureTable"/>
+
   </Constitutive>
 
   <FieldSpecifications>
@@ -143,13 +140,6 @@
       scale="-0.0"
       setNames="{ yneg }"/>
 
-    <!--FieldSpecification
-      name="zconstraint"
-      objectPath="nodeManager"
-      fieldName="TotalDisplacement"
-      component="2"
-      scale="0.0"
-      setNames="{ zneg, zpos }"/-->
     <FieldSpecification
       name="Traction"
       setNames="{ all }"
@@ -159,6 +149,13 @@
       scale="-1.00e5"/>
   </FieldSpecifications>
 
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-4 }"/>
+  </Functions>
+      
   <Outputs>
     <VTK
       name="vtkOutput"

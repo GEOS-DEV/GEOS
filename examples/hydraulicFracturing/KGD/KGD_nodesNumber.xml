@@ -191,12 +191,9 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="1.0e0">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 0.01e-3, 0.1e-3 }"/>
-    </Contact>
+      penaltyStiffness="1.0e0"
+      apertureTableName="apertureTable"/>
+
   </Constitutive>
 
   <FieldSpecifications>
@@ -224,13 +221,6 @@
       fieldName="ruptureState"
       scale="1"/>
 
-    <!-- FieldSpecification name="aperture"
-               component="0"
-               initialCondition="1"
-               setNames="{all}"
-               objectPath="ElementRegions/Fracture/fracture"
-               fieldName="elementAperture"
-               scale="1.0e-4"/-->
     <FieldSpecification
       name="ypos"
       objectPath="nodeManager"
@@ -271,11 +261,6 @@
       scale="-0.0"
       setNames="{ xpos }"/>
 
-    <!-- FieldSpecification name="source"
-               objectPath="ElementRegions/Fracture"
-               fieldName="pressure"
-               scale="0.0"
-               setNames="{all}"/-->
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
@@ -283,6 +268,13 @@
       setNames="{ source }"/>
   </FieldSpecifications>
 
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.01e-3, 0.1e-3 }"/>
+  </Functions>
+    
   <Outputs>
     <Silo
       name="siloOutput"

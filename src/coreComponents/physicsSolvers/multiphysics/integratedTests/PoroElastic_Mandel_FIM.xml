@@ -182,13 +182,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="Porosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="shalePorosity_porosity"
-      scale="0.00"/>
 
     <FieldSpecification
       name="initialPressure"

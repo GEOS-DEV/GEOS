@@ -59,62 +59,65 @@ VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( string const & nam
 
 }
 
-VanGenuchtenCapillaryPressure::~VanGenuchtenCapillaryPressure()
-{}
-
-namespace
-{
-
-template< typename ARRAY >
-void checkInputSize( ARRAY const & array, localIndex const expected, string const & attr )
-{
-  GEOSX_THROW_IF_NE_MSG( array.size(), expected,
-                         "VanGenuchtenCapillaryPressure: invalid number of entries in " << attr << " attribute",
-                         InputError );
-
-}
-
-}
-
 void VanGenuchtenCapillaryPressure::postProcessInput()
 {
   CapillaryPressureBase::postProcessInput();
 
   localIndex const NP = numFluidPhases();
 
-  checkInputSize( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString() );
-  checkInputSize( m_phaseCapPressureExponentInv, NP, viewKeyStruct::phaseCapPressureExponentInvString() );
-  checkInputSize( m_phaseCapPressureMultiplier, NP, viewKeyStruct::phaseCapPressureMultiplierString() );
+  auto const checkInputSize = [&]( auto const & array, auto const & attribute )
+  {
+    GEOSX_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
+                           GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                           InputError );
+  };
+  checkInputSize( m_phaseMinVolumeFraction, viewKeyStruct::phaseMinVolumeFractionString() );
+  checkInputSize( m_phaseCapPressureExponentInv, viewKeyStruct::phaseCapPressureExponentInvString() );
+  checkInputSize( m_phaseCapPressureMultiplier, viewKeyStruct::phaseCapPressureMultiplierString() );
 
   m_volFracScale = 1.0;
   for( localIndex ip = 0; ip < NP; ++ip )
   {
-    GEOSX_THROW_IF( (m_phaseMinVolumeFraction[ip] < 0.0) || (m_phaseMinVolumeFraction[ip] > 1.0),
-                    "VanGenuchtenCapillaryPressure: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip],
-                    InputError );
+    auto const errorMsg = [&]( auto const & attribute )
+    {
+      return GEOSX_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
+    };
+
+    GEOSX_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
+                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
+                           InputError );
+    GEOSX_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
+                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
+                           InputError );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
-    GEOSX_THROW_IF( ((m_phaseCapPressureExponentInv[ip] < 0.0) || (m_phaseCapPressureExponentInv[ip] > 1.0))
-                    && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
-                    "VanGenuchtenCapillaryPressure: invalid exponent inverse value: " << m_phaseCapPressureExponentInv[ip],
-                    InputError );
-
-    GEOSX_THROW_IF( (m_phaseCapPressureMultiplier[ip] < 0.0)
-                    && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
-                    "VanGenuchtenCapillaryPressure: invalid entry pressure: " << m_phaseCapPressureMultiplier[ip],
-                    InputError );
-
-    GEOSX_THROW_IF( (m_capPressureEpsilon< 0.0 || m_capPressureEpsilon > 0.2)
-                    && (m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE),
-                    "VanGenuchtenCapillaryPressure: invalid epsilon: " << m_capPressureEpsilon,
-                    InputError );
-
+    if( m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE )
+    {
+      GEOSX_THROW_IF_LT_MSG( m_phaseCapPressureExponentInv[ip], 0.0,
+                             errorMsg( viewKeyStruct::phaseCapPressureExponentInvString() ),
+                             InputError );
+      GEOSX_THROW_IF_GT_MSG( m_phaseCapPressureExponentInv[ip], 1.0,
+                             errorMsg( viewKeyStruct::phaseCapPressureExponentInvString() ),
+                             InputError );
+      GEOSX_THROW_IF_LT_MSG( m_phaseCapPressureMultiplier[ip], 0.0,
+                             errorMsg( viewKeyStruct::phaseCapPressureMultiplierString() ),
+                             InputError );
+      GEOSX_THROW_IF_LT_MSG( m_capPressureEpsilon, 0.0,
+                             errorMsg( viewKeyStruct::capPressureEpsilonString() ),
+                             InputError );
+      GEOSX_THROW_IF_GT_MSG( m_capPressureEpsilon, 0.2,
+                             errorMsg( viewKeyStruct::capPressureEpsilonString() ),
+                             InputError );
+    }
   }
 
-  GEOSX_THROW_IF( m_volFracScale < 0.0, "VanGenuchtenCapillaryPressure: sum of min volume fractions exceeds 1.0", InputError );
+  GEOSX_THROW_IF_LT_MSG( m_volFracScale, 0.0,
+                         GEOSX_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
+                         InputError );
 }
 
-VanGenuchtenCapillaryPressure::KernelWrapper VanGenuchtenCapillaryPressure::createKernelWrapper()
+VanGenuchtenCapillaryPressure::KernelWrapper
+VanGenuchtenCapillaryPressure::createKernelWrapper()
 {
   return KernelWrapper( m_phaseMinVolumeFraction,
                         m_phaseCapPressureExponentInv,
