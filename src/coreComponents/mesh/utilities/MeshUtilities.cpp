@@ -26,27 +26,17 @@ namespace geosx
 {
 using namespace dataRepository;
 
-MeshUtilities::MeshUtilities()
+namespace MeshUtilities
 {
-  // TODO Auto-generated constructor stub
 
-}
-
-MeshUtilities::~MeshUtilities()
-{
-  // TODO Auto-generated destructor stub
-}
-
-
-
-void MeshUtilities::generateNodeSets( dataRepository::Group const & geometry,
-                                      NodeManager & nodeManager )
+void generateNodeSets( dataRepository::Group const & geometries,
+                       NodeManager & nodeManager )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
   localIndex const numNodes = nodeManager.size();
   Group & sets = nodeManager.sets();
 
-  geometry.forSubGroups< SimpleGeometricObjectBase >( [&] ( SimpleGeometricObjectBase const & object )
+  geometries.forSubGroups< SimpleGeometricObjectBase >( [&] ( SimpleGeometricObjectBase const & object )
   {
     string const & name = object.getName();
     SortedArray< localIndex > & targetSet = sets.registerWrapper< SortedArray< localIndex > >( name ).reference();
@@ -59,6 +49,8 @@ void MeshUtilities::generateNodeSets( dataRepository::Group const & geometry,
       }
     }
   } );
+}
+
 }
 
 } /// namespace geosx
