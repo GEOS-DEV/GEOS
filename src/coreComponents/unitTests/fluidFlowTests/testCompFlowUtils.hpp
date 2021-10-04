@@ -192,7 +192,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   commandLine.registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() ).
     setApplyDefaultValue( mpiSize );
 
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   DomainPartition & domain = problemManager.getDomainPartition();
