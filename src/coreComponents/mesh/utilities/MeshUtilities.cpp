@@ -28,21 +28,11 @@ namespace geosx
 {
 using namespace dataRepository;
 
-MeshUtilities::MeshUtilities()
+namespace MeshUtilities
 {
-  // TODO Auto-generated constructor stub
 
-}
-
-MeshUtilities::~MeshUtilities()
-{
-  // TODO Auto-generated destructor stub
-}
-
-
-
-void MeshUtilities::generateNodesets( dataRepository::Group const & geometries,
-                                      NodeManager & nodeManager )
+void generateNodesets( dataRepository::Group const & geometries,
+                       NodeManager & nodeManager )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
   localIndex const numNodes = nodeManager.size();
@@ -61,6 +51,8 @@ void MeshUtilities::generateNodesets( dataRepository::Group const & geometries,
       }
     }
   } );
+}
+
 }
 
 } /// namespace geosx
