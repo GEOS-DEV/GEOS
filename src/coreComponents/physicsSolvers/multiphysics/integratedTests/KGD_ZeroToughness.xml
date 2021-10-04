@@ -101,14 +101,18 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="1.0e0">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -0.01, -1.0e-3, 0.0 }"
-        values="{ 0.005, 0.01e-3, 0.02e-3 }"/>
-    </Contact>
+      penaltyStiffness="1.0"
+      apertureTableName="apertureTable" />
+
   </Constitutive>
 
+  <Functions>
+    <TableFunction
+        name="apertureTable"
+        coordinates="{ -0.01, -1.0e-3, 0.0 }"
+        values="{ 0.005, 0.01e-3, 0.02e-3 }"/>
+  </Functions>
+  
   <Outputs>
     <Silo
       name="siloOutput"

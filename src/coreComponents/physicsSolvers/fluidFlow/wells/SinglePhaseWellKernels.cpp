@@ -44,12 +44,11 @@ ControlEquationHelper::
   // are treated as lower limits in production wells and upper limits in injectors.
   // The well changes its mode of control whenever the existing control mode would
   // violate one of these limits.
-
   // BHP control
   if( currentControl == WellControls::Control::BHP )
   {
     // the control is viable if the reference rate is below the max rate
-    controlIsViable = ( LvArray::math::abs( currentVolRate ) <= LvArray::math::abs( targetRate ) );
+    controlIsViable = ( LvArray::math::abs( currentVolRate ) <= LvArray::math::abs( targetRate ) + EPS );
   }
   else // rate control
   {
@@ -57,12 +56,12 @@ ControlEquationHelper::
     if( wellType == WellControls::Type::PRODUCER )
     {
       // targetBHP specifies a min pressure here
-      controlIsViable = ( currentBHP >= targetBHP );
+      controlIsViable = ( currentBHP >= targetBHP - EPS );
     }
     else
     {
       // targetBHP specifies a max pressure here
-      controlIsViable = ( currentBHP <= targetBHP );
+      controlIsViable = ( currentBHP <= targetBHP + EPS );
     }
   }
 

@@ -155,6 +155,12 @@
       name="fractureMaterial"
       cohesion="0.0"
       frictionCoefficient="0.577350269"/>
+
+    <Coulomb
+      name="new_fractureMaterial"
+      cohesion="0.0"
+      frictionCoefficient="0.577350269"/>
+    
   </Constitutive>
 
   <FieldSpecifications>
