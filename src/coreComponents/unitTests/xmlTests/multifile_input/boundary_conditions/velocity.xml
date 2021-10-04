@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="v0"
+      component="0"
+      fieldName="Velocity"
+      functionName="timeFunction"
+      objectPath="nodeManager"
+      scale="1.0"
+      setNames="{ xneg }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0e-6, 2.0e-6, 1.0e9 }"
+      values="{ 0.0, 1.0, 1.0, 1.0 }"/>
+  </Functions>
+
+</Problem>
