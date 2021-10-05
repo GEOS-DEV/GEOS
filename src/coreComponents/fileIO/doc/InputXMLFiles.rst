@@ -239,7 +239,7 @@ Both the XML preprocessor and GEOSX executable itself provide the capability to 
 multi-file input decks by including XML files into other XML files.
 
 The files to be included are listed via the `<Included>` block. There maybe any number of such blocks.
-Each block contains a list of `<File name="...">` tags, each indicating a file to include.
+Each block contains a list of `<File name="..."/>` tags, each indicating a file to include.
 The `name` attribute must contain either an absolute or a relative path to the included file.
 If the path is relative, it is treated as relative to the location of the referring file.
 Included files may also contain includes of their own, i.e. it is possible to have `a.xml` include `b.xml`
@@ -248,7 +248,7 @@ which in turn includes `c.xml`.
 .. note::
    When creating multi-file input decks, it is considered best practice to use relative file paths.
    This applies both to XML includes, and to other types of file references (for example, table file names).
-   Relative paths keep the input deck both relocatable within the file system and sharable between users.
+   Relative paths keep input decks both relocatable within the file system and sharable between users.
 
 XML preprocessor's merging capabilities are more advanced than GEOSX built-in ones.
 Both are are outlined below.
@@ -276,7 +276,7 @@ such as multiple `<FieldSpecifications>` or `<Events>` sections, but more comple
 the use of preprocessor.
 
 .. note::
-   While GEOSX's XML processing is capable of handling any number of `<Include>` block at any level,
+   While GEOSX's XML processing is capable of handling any number of `<Included>` block at any level,
    the XML schema currently produced by GEOSX only allows a single such block, and only directly
    within the `<Problem>` tag. Inputs that use multiple blocks or nest them deeper may run but will
    fail to validate against the schema. This is a known discrepancy that may be fixed in the future.
