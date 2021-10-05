@@ -75,12 +75,8 @@ then
 fi
 
 
-# Check for pip
-
-
 # If a virtual environment is not explicitly requested,
 # try installing packages directly
-echo $PYTHON_TARGET
 if ! $INSTALL_VIRTUAL
 then
     INSTALL_VIRTUAL=false
@@ -147,7 +143,6 @@ if [ -n "${BIN_DIR}" ]
 then
     echo "Linking key scripts to bin directory..."
     MOD_PATH="$(dirname $PYTHON_TARGET)"
-    echo $MOD_PATH
 
     for p in "${LINK_SCRIPTS[@]}"
     do
