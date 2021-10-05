@@ -17,7 +17,7 @@ Analytical solutions of the pore pressure, the radial and hoop stresses in the n
     p = p_0 \frac{k_0(R \sqrt{s})}{s k_0(\sqrt{s})}
 
 .. math::
-    \sigma_{rr} = -b \frac{1-2\nu}{1-\nu} p_0 \frac{-R * k_1(R \sqrt{s}) + k_1(\sqrt{s})}{R^2 \sqrt{s^3} k_0(\sqrt{s})}
+    \sigma_{rr} = -b \frac{1-2\nu}{1-\nu} p_0 \frac{-R k_1(R \sqrt{s}) + k_1(\sqrt{s})}{R^2 \sqrt{s^3} k_0(\sqrt{s})}
 
 .. math::
     \sigma_{\theta\theta} = -b \frac{1-2\nu}{1-\nu} p - \sigma_{rr}
