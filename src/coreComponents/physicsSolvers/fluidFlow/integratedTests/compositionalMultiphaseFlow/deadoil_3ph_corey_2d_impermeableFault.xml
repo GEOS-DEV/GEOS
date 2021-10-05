@@ -105,12 +105,12 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ block1 }"
-      materialList="{ fluid1, rock, rockPerm, relperm, rockPorosity, nullSolid }"/>
+      materialList="{ fluid1, rock, relperm }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-7"
-      materialList="{ fluid1, fractureFilling, relperm, fracturePerm, fracturePorosity, nullSolid }"
+      materialList="{ fluid1, fractureFilling, relperm }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
 
