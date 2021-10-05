@@ -40,6 +40,9 @@ struct ControlEquationHelper
   using ROFFSET = SinglePhaseWell::RowOffset;
   using COFFSET = SinglePhaseWell::ColOffset;
 
+  // add an epsilon to the checks to avoid control changes due to tiny pressure/rate updates
+  static constexpr real64 EPS = 1e-15;
+
   GEOSX_HOST_DEVICE
   static void
   switchControl( WellControls::Type const & wellType,

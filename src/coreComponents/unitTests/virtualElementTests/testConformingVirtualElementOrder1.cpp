@@ -262,7 +262,7 @@ TEST( ConformingVirtualElementOrder1, hexagons )
     GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
     GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
-  xmlWrapper::xmlNode xmlProblemNode = inputFile.child( "Problem" );
+  xmlWrapper::xmlNode xmlProblemNode = inputFile.child( dataRepository::keys::ProblemManager );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
 
@@ -315,7 +315,7 @@ TEST( ConformingVirtualElementOrder1, wedges )
     GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
     GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
-  xmlWrapper::xmlNode xmlProblemNode = inputFile.child( "Problem" );
+  xmlWrapper::xmlNode xmlProblemNode = inputFile.child( dataRepository::keys::ProblemManager );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
 

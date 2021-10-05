@@ -44,7 +44,7 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracPerm }">
+      permeabilityNames="{ fracturePerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>
@@ -160,12 +160,8 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="0.0e8">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 1.0e-6, 1.0e-4 }"/>
-    </Contact>
+      penaltyStiffness="0.0e8"
+      apertureTableName="apertureTable"/>
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>
@@ -238,6 +234,12 @@
       coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
       voxelFile="$table_root$/shearModulus.csv"
       interpolation="upper"/>
+
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-4 }"/>
+    
   </Functions>
 
   <!-- SPHINX_HYDROFRACTURE_FUNCTIONS_END -->
@@ -248,7 +250,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="rock_BulkModulus"
+      fieldName="rock_bulkModulus"
       functionName="bulk_modulus"
       scale="1.0"/>
 
@@ -257,7 +259,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions"
-      fieldName="rock_ShearModulus"
+      fieldName="rock_shearModulus"
       functionName="shear_modulus"
       scale="1.0"/>
 

@@ -498,7 +498,8 @@ Each time iteration at every 20s interval is logged to console, until the end of
   run time                           3.289s
 
 
-Note that by default a direct linear solver is used, so the ``LinSolve`` information is not so meaningful.
+All newton iterations are logged along with corresponding nonlinear residuals for each time iteration.
+In turn, for each newton iteration, ``LinSolve`` provides the number of linear iterations and the final residual reached by the linear solver.
 Information on run times, initialization times, and maximum amounts of
 memory (high water mark) are given at the end of the simulation, if successful.
 
