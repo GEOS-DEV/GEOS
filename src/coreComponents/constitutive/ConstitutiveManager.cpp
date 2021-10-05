@@ -69,41 +69,47 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
 
   // 1. Allocate constitutive relation
   // we only register the constitutive relation if it has not been registered yet.
-  if( !constitutiveGroup->hasGroup( constitutiveRelationInstanceName ) )
+  GEOSX_ERROR_IF( constitutiveGroup->hasGroup( constitutiveRelationInstanceName ),
+                  GEOSX_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
+                             "Make sure that the same constitutive model is not listed as a material on a"
+                             " region both as a stand-alone one and as part of a compound constitutive model.",
+                             constitutiveRelationInstanceName, parent->getName() ) );
+
+  ConstitutiveBase const & constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
+
+  std::unique_ptr< ConstitutiveBase > material = constitutiveRelation.deliverClone( constitutiveRelationInstanceName, parent );
+
+  material->allocateConstitutiveData( *parent,
+                                      numConstitutivePointsPerParentIndex );
+
+  ConstitutiveBase &
+  materialGroup = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
+  materialGroup.setSizedFromParent( 1 );
+  materialGroup.resize( constitutiveGroup->size() );
+
+  // 2. Allocate subrelations (for compound models)
+  std::vector< string > const subRelationNames = constitutiveRelation.getSubRelationNames();
+  for( string const & subRelationName : subRelationNames )
   {
-    ConstitutiveBase const & constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
+    // we only want to register the subRelation if it has not been registered yet.
+    GEOSX_ERROR_IF( constitutiveGroup->hasGroup( subRelationName ),
+                    GEOSX_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
+                               "Make sure that the same constitutive model is not listed as a material on a"
+                               " region both as a stand-alone one and as part of a compound constitutive model.",
+                               subRelationName, parent->getName() ) );
 
-    std::unique_ptr< ConstitutiveBase > material = constitutiveRelation.deliverClone( constitutiveRelationInstanceName, parent );
+    ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
 
-    material->allocateConstitutiveData( *parent,
-                                        numConstitutivePointsPerParentIndex );
+    std::unique_ptr< ConstitutiveBase > constitutiveModel = subRelation.deliverClone( subRelationName, parent );
+
+    constitutiveModel->allocateConstitutiveData( *parent,
+                                                 numConstitutivePointsPerParentIndex );
+
 
     ConstitutiveBase &
-    materialGroup = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
-    materialGroup.setSizedFromParent( 1 );
-    materialGroup.resize( constitutiveGroup->size() );
-
-    // 2. Allocate subrelations (for compound models)
-    std::vector< string > const subRelationNames = constitutiveRelation.getSubRelationNames();
-    for( string const & subRelationName : subRelationNames )
-    {
-      // we only want to register the subRelation if it has not been registered yet.
-      if( !constitutiveGroup->hasGroup( subRelationName ) )
-      {
-        ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
-
-        std::unique_ptr< ConstitutiveBase > constitutiveModel = subRelation.deliverClone( subRelationName, parent );
-
-        constitutiveModel->allocateConstitutiveData( *parent,
-                                                     numConstitutivePointsPerParentIndex );
-
-
-        ConstitutiveBase &
-        group = constitutiveGroup->registerGroup< ConstitutiveBase >( subRelationName, std::move( constitutiveModel ) );
-        group.setSizedFromParent( 1 );
-        group.resize( constitutiveGroup->size() );
-      }
-    }
+    group = constitutiveGroup->registerGroup< ConstitutiveBase >( subRelationName, std::move( constitutiveModel ) );
+    group.setSizedFromParent( 1 );
+    group.resize( constitutiveGroup->size() );
   }
 }
 
