@@ -68,7 +68,7 @@ char const * xmlInput =
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
-  "    <CellElementRegion name=\"Region\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, rockPerm, rockPorosity, nullSolid}\" />\n"
+  "    <CellElementRegion name=\"Region\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm}\" />\n"
   "  </ElementRegions>\n"
   "  <Constitutive>\n"
   "    <CompositionalMultiphaseFluid name=\"fluid1\"\n"

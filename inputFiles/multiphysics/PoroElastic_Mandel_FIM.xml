@@ -145,7 +145,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ shale, water, shaleSolid, shalePorosity, shalePerm }"/>
+      materialList="{ shale, water }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -182,13 +182,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="Porosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="shalePorosity_porosity"
-      scale="0.00"/>
 
     <FieldSpecification
       name="initialPressure"

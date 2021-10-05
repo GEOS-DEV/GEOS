@@ -19,6 +19,7 @@
 #include "xmlWrapper.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
+#include "dataRepository/KeyNames.hpp"
 
 namespace geosx
 {
@@ -30,9 +31,7 @@ void xmlWrapper::stringToInputVariable( Tensor< T, SIZE > & target, string const
   std::istringstream ss( inputValue );
   auto const errorMsg = [&]( auto const & msg )
   {
-    std::ostringstream oss;
-    oss << msg << " for Tensor<" << SIZE << "> at position " << ss.tellg() << " in input: " << inputValue;
-    return oss.str();
+    return GEOSX_FMT( "{} for Tensor<{}> at position {} in input: {}", msg, SIZE, ss.tellg(), inputValue );
   };
 
   // Read the head
@@ -71,58 +70,78 @@ template void xmlWrapper::stringToInputVariable( Tensor< real64, 6 > & target, s
 void xmlWrapper::addIncludedXML( xmlNode & targetNode )
 {
 
-  xmlNode rootNode = targetNode.root();
-  string path = rootNode.child( filePathString ).attribute( filePathString ).value();
+  xmlNode const rootNode = targetNode.root();
+  string const currentFilePath = rootNode.child( filePathString ).attribute( filePathString ).value();
 
-  xmlNode includedNode = targetNode.child( "Included" );
-
-  for( xmlWrapper::xmlNode childNode=includedNode.first_child(); childNode; childNode=childNode.next_sibling())
+  // Schema currently allows a single unique <Included>, but a non-validating file may include multiple
+  for( xmlNode includedNode : targetNode.children( includedListTag ) )
   {
-    // Get the child tag and name
-    string childName = childNode.name();
-    GEOSX_ERROR_IF( childName!="File", "Child nodes of \"Included\" should be named \"File\" " );
-
-    string filePathName = childNode.attribute( "name" ).value();
-    if( filePathName[0] != '/' )
+    for( xmlNode fileNode : includedNode.children() )
     {
-      filePathName = path + filePathName;
-    }
-    xmlDocument includedXmlDocument;
-    xmlResult result;
-    result = includedXmlDocument.load_file( filePathName.c_str());
-    GEOSX_ERROR_IF( !result, "Attempt to include file ("<<filePathName.c_str()<<") failed\n" );
+      // Extract the file name and construct full includedDirPath
+      string const includedFilePath = [&]()
+      {
+        GEOSX_THROW_IF_NE_MSG( string( fileNode.name() ), includedFileTag,
+                               GEOSX_FMT( "Child nodes of <{}> should be named <{}>", includedListTag, includedFileTag ),
+                               InputError );
+        xmlAttribute const nameAttr = fileNode.attribute( "name" );
+        GEOSX_THROW_IF( !nameAttr, GEOSX_FMT( "<{}> nodes must have a 'name' attribute", includedFileTag ), InputError );
+        string const fileName = nameAttr.value();
+        return isAbsolutePath( fileName ) ? fileName : joinPath( splitPath( currentFilePath ).first, fileName );
+      }();
 
-    // To validate correctly, included files should contain the root Problem node
-    xmlNode includedRootNode = includedXmlDocument.child( "Problem" );
-    for( xmlNode importNode=includedRootNode.first_child(); importNode; importNode=importNode.next_sibling())
-    {
-      targetNode.append_copy( importNode );
+      xmlDocument includedXmlDocument;
+      xmlResult const result = includedXmlDocument.load_file( includedFilePath.c_str() );
+      GEOSX_THROW_IF( !result, GEOSX_FMT( "Errors found while parsing included XML file {}\nDescription: {}\nOffset: {}",
+                                          includedFilePath, result.description(), result.offset ), InputError );
+
+      // All included files must contain a root node that must match the target node.
+      // Currently, schema only allows <Included> tags at the top level (inside <Problem>).
+      // We then proceed to merge each nested node from included file with the one in main.
+
+      xmlNode includedRootNode = includedXmlDocument.first_child();
+      GEOSX_THROW_IF_NE_MSG( string( includedRootNode.name() ), string( targetNode.name() ),
+                             "Included document root does not match the including XML node", InputError );
+
+      // Process potential includes in the included file to allow nesting
+      includedXmlDocument.append_child( filePathString ).append_attribute( filePathString ).set_value( includedFilePath.c_str() );
+      addIncludedXML( includedRootNode );
+
+      // Add each top level tag of imported document to current
+      // This may result in repeated XML blocks, which will be implicitly merged when processed
+      for( xmlNode importedNode : includedRootNode.children() )
+      {
+        targetNode.append_copy( importedNode );
+      }
     }
   }
+
+  // Just in case, remove <Included> tags that have been processed
+  while( targetNode.remove_child( includedListTag ) )
+  {}
 }
 
-void xmlWrapper::buildMultipleInputXML( string_array const & inputFileList, string & inputFileName )
+string xmlWrapper::buildMultipleInputXML( string_array const & inputFileList )
 {
   if( inputFileList.size() == 1 )
   {
-    inputFileName = inputFileList[0];
+    return inputFileList[0];
   }
-  else
+
+  // Write the composite xml file
+  constexpr char const inputFileName[] = "composite_input.xml";
+  xmlWrapper::xmlDocument compositeTree;
+  xmlWrapper::xmlNode compositeRoot = compositeTree.append_child( dataRepository::keys::ProblemManager );
+  xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( includedListTag );
+
+  for( auto & fileName: inputFileList )
   {
-    // Write the composite xml file
-    inputFileName = "composite_input.xml";
-    xmlWrapper::xmlDocument compositeTree;
-    xmlWrapper::xmlNode compositeRoot = compositeTree.append_child( "Problem" );
-    xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( "Included" );
-
-    for( auto & fileName: inputFileList )
-    {
-      xmlWrapper::xmlNode fileNode = includedRoot.append_child( "File" );
-      fileNode.append_attribute( "name" ) = fileName.c_str();
-    }
-
-    compositeTree.save_file( inputFileName.c_str() );
+    xmlWrapper::xmlNode fileNode = includedRoot.append_child( includedFileTag );
+    fileNode.append_attribute( "name" ) = fileName.c_str();
   }
+
+  compositeTree.save_file( inputFileName );
+  return inputFileName;
 }
 
 

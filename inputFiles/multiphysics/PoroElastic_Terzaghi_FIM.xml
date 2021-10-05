@@ -119,7 +119,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ skeleton, fluid, porousRock, skeletonPerm, skeletonPorosity }"/>
+      materialList="{ fluid, porousRock }"/>
   </ElementRegions>
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
@@ -158,13 +158,6 @@
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
   <FieldSpecifications>
-    <FieldSpecification
-      name="Porosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="skeletonPorosity_porosity"
-      scale="0.3"/>
 
     <FieldSpecification
       name="initialPressure"
