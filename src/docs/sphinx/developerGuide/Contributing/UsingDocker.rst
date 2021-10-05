@@ -1,3 +1,5 @@
+.. _UsingDocker:
+
 [Unsupported] Developing inside Docker with precompiled TPL binaries
 ====================================================================
 
@@ -78,7 +80,7 @@ And the ``Dockerfile`` is the following (comments are embedded)
     # You need to explicitly tell sshd to forward them.
     # Using these variables and not paths will let you adapt to different installation locations in different containers.
     # Feel free to adapt to your own convenience.
-    RUN touch /root/.ssh/environment &&/
+    RUN touch /root/.ssh/environment &&\
         echo "CC=${CC}" >> /root/.ssh/environment &&\
         echo "CXX=${CXX}" >> /root/.ssh/environment &&\
         echo "MPICC=${MPICC}" >> /root/.ssh/environment &&\
