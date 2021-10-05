@@ -215,9 +215,9 @@ A possible workaround is to create a new user account and a run folder from this
 
     root@b105f9ead860:~# adduser runner
     root@b105f9ead860:~# su runner
-    runner@b105f9ead860:~# mkdir -p /tmp/geosx && cd /tmp/geosx/
-    runner@b105f9ead860:/tmp/geosx# cp [path-to-case]/[geosx-case].xml .
-    runner@b105f9ead860:/tmp/geosx# ${MPIEXEC} -np 4 /app/code/GEOSX/build-environment-debug/bin/geosx -i [geosx-case].xml -x 4 -y 1 -z 1
+    runner@b105f9ead860:/root$ mkdir -p /tmp/geosx && cd /tmp/geosx/
+    runner@b105f9ead860:/tmp/geosx$ cp [path-to-case]/[geosx-case].xml .
+    runner@b105f9ead860:/tmp/geosx$ ${MPIEXEC} -np 4 /app/code/GEOSX/build-environment-debug/bin/geosx -i [geosx-case].xml -x 4 -y 1 -z 1
 
 
 .. GPU ?? https://docs.docker.com/desktop/windows/wsl/#gpu-support
