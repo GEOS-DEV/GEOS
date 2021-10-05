@@ -51,6 +51,14 @@ public:
     static constexpr char const * permeabilityModelNameString() { return "permeabilityModelName"; }
   };
 
+  virtual std::vector< string > getSubRelationNames() const override final
+  {
+    return { m_solidModelName,
+             m_porosityModelName,
+             m_permeabilityModelName };
+
+  }
+
   /**
    * @brief get the old porosity.
    * return a constant arrayView2d to the old porosity
@@ -99,13 +107,13 @@ public:
   }
 protected:
 
-  // the name of the porosity model
+  /// the name of the solid model
   string m_solidModelName;
 
-  // the name of the porosity model
+  /// the name of the porosity model
   string m_porosityModelName;
 
-  // the name of the porosity model
+  /// the name of the permeability model
   string m_permeabilityModelName;
 
 private:

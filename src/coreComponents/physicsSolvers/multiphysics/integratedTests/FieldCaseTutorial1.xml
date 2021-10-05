@@ -14,12 +14,12 @@
     <CellElementRegion
       name="Reservoir"
       cellBlocks="{ Reservoir_TETRA }"
-      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ water, rock }"/>
 
     <CellElementRegion
       name="Burden"
       cellBlocks="{ Overburden_TETRA, Underburden_TETRA }"
-      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <!-- SPHINX_FIELD_CASE_REGION_END -->

@@ -50,7 +50,8 @@
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
       solidMaterialNames="{ rock }"
-      rockToughness="0.3e6"/>
+      rockToughness="0.3e6"
+      mpiCommOrder="1"/>
   </Solvers>
 
   <ElementRegions>
@@ -62,7 +63,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
+      materialList="{ water, rock, fractureFilling }"/>
   </ElementRegions>
 
   <Constitutive>

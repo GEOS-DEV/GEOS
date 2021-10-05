@@ -91,7 +91,7 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ cb1 }"
-      materialList="{ fluid1, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ fluid1, rock, relperm }"/>
   </ElementRegions>
 
   <Constitutive>

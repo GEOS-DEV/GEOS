@@ -168,7 +168,7 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
     }
   }
 
-  for( xmlWrapper::xmlAttribute const attribute : targetNode.attributes() )
+  for( xmlWrapper::xmlAttribute attribute : targetNode.attributes() )
   {
     string const attributeName = attribute.name();
     if( attributeName != "name" && attributeName != "xmlns:xsi" && attributeName != "xsi:noNamespaceSchemaLocation" )

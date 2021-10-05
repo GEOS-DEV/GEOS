@@ -84,7 +84,7 @@
     <CellElementRegion
       name="mainRegion"
       cellBlocks="{ cellBlock }"
-      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS_END -->
