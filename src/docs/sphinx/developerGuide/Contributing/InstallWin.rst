@@ -1,21 +1,19 @@
 .. _InstallWin:
 
-Installing GEOSX on Windows machines using Docker
-===================================================
+[Unsupported] Installing GEOSX on Windows machines using Docker
+=================================================================
 
-In this section, we will install GEOSX on a Windows machine using a _docker_ container with a precompiled version of
+In this section, we will install GEOSX on a Windows machine using a ``Docker`` container with a precompiled version of
 GEOSX's third party libraries (TPL). These steps are an adaptation of `ref:UsingDocker` for the Windows environment.
+In the following sections, we will be using *Ubuntu* based image as an example.
 
-The different versions of the container can be found on `docker hub <https://hub.docker.com/r/geosx/ubuntu18.04-gcc8/tags?page=1&ordering=last_updated>`_.
-Note that to work on the latest version of the code, you'll need to use the most recently pushed container.
-
-
-1. Install Docker Desktop
--------------------------
+1. Install *Docker Desktop*
+----------------------------
 
 On your Windows machine, follow these `steps <https://docs.docker.com/desktop/windows/install/>`_.
-Download the most recent installer for Docker Desktop. Before installation please check the current status of Windows
-Subsystem Linux (WSL) on your machine as Docker will use *WSL2* as a backend. To do that, open a *PowerShell(Admin)*
+Download the most recent installer for *Docker Desktop*. Before installation please check the current status of Windows
+Subsystem for Linux ( ``WSL`` ) on your machine as ``Docker`` will use ``WSL2`` as a `backend <https://docs.docker.com/desktop/windows/wsl/>`_.
+To do that, open a ``PowerShell(Admin)``
 
 .. PS admin
 
@@ -26,29 +24,40 @@ Subsystem Linux (WSL) on your machine as Docker will use *WSL2* as a backend. To
         PS > wsl --set-default-version 2
         PS > wsl --status
 
-The first command should install *WSL2*, download an Ubuntu distribution for it and ask for a restart.
-The following commands are used to check the status, and if the *WSL* is still the default one, change it to *WSL2*.
+The first command should install *WSL2*, download an *Ubuntu* distribution for it and ask for a restart.
+The following commands are used to check the status, and if the ``WSL`` is still the default one, change it to ``WSL2``.
 More details on the installation procedure can be found `here <https://docs.microsoft.com/en-us/windows/wsl/install>`_.
 
-Once the *WSL2* is set as default, proceed with the *Docker Desktop* installation.
+Once the ``WSL2`` is set as default, proceed with the *Docker Desktop* installation.
 
-2. Start Docker Desktop
--------------------------
+2. Start *Docker Desktop*
+----------------------------
 
-When launching Docker Desktop for the first time, you should be prompted with a message informing you that it uses *WSL2*.
-Using *PowerShell*, you can check that *Docker* and *WSL2* are actually running in the background:
+When launching Docker Desktop for the first time, you should be prompted with a message informing you that it uses ``WSL2``.
+Using ``PowerShell``, you can check that ``Docker`` and ``WSL2`` are actually running in the background:
 
 .. code:: shell
 
     PS > Get-Process docker
+    Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+    -------  ------    -----      -----     ------     --  -- -----------
+        123      11    26084      25608       0.42  13960   1 docker
+
     PS > Get-Process wsl
+    Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+    -------  ------    -----      -----     ------     --  -- -----------
+        146       8     1412       6848       0.05  14816   1 wsl
+        146       7     1356       6696       0.02  15048   1 wsl
+        145       7     1368       6704       0.02  15100   1 wsl
+        145       7     1352       6716       0.14  15244   1 wsl
+        146       7     1396       6876       0.02  16156   1 wsl
 
 You should be able to see one docker process and several *wsl* processes.
 
 3. Preparing *DockerFile*
 --------------------------
 
-Let us now prepare the installation, picking a destination folder and editing our *Dockerfile*:
+Let us now prepare the installation, picking a destination folder and editing our ``Dockerfile``:
 
 .. code:: shell
 
@@ -57,89 +66,36 @@ Let us now prepare the installation, picking a destination folder and editing ou
     PS > cd install-geosx-docker/
     PS > notepad.exe Dockerfile
 
-Let us edit the *Dockerfile*, which is the declarative file for out container:
+Let us edit the ``Dockerfile``, which is the declarative file for out container:
 
-.. code-block:: console
-        
-        # Define you base image for build arguments
-        ARG IMG
-        ARG VERSION
-        ARG ORG
-        FROM ${ORG}/${IMG}:${VERSION}
+.. literalinclude:: Dockerfile-remote-dev.example
+   :linenos:
 
-        # Uninstall some packages, install others.
-        # I use those for clion, but VS code would have different requirements.
-        # Use yum's equivalent commands for centos/red-hat images.
-        # Feel free to adapt.
-        RUN apt-get update
-        RUN apt-get remove --purge -y texlive graphviz
-        RUN apt-get install --no-install-recommends -y openssh-server gdb rsync gdbserver ninja-build
-
-        # You will need cmake to build GEOSX.
-        ARG CMAKE_VERSION=3.16.8
-        RUN apt-get install -y --no-install-recommends curl ca-certificates && \
-            curl -fsSL https://cmake.org/files/v${CMAKE_VERSION%.[0-9]*}/cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz | tar --directory=/usr/local --strip-components=1 -xzf - && \
-            apt-get purge --auto-remove -y curl ca-certificates
-        RUN apt-get autoremove -y
-
-        # You'll most likely need ssh/sshd too (e.g. CLion and VSCode allow remote dev through ssh).
-        # This is the part where I configure sshd.
-
-        # I'm developing in a version of docker that requires root.
-        # So by default I use root. Feel free to adapt.
-        RUN echo "PermitRootLogin prohibit-password" >> /etc/ssh/sshd_config
-        RUN echo "PermitUserEnvironment yes" >> /etc/ssh/sshd_config
-        RUN mkdir -p -m 700 /root/.ssh
-        # Put your own public key here!
-        RUN echo "ssh-rsa [#a public ssh key]" > /root/.ssh/authorized_keys
-
-        # Some important variables are provided through the environment.
-        # You need to explicitly tell sshd to forward them.
-        # Using these variables and not paths will let you adapt to different installation locations in different containers.
-        # Feel free to adapt to your own convenience.
-        RUN touch /root/.ssh/environment &&\
-            echo "CC=${CC}" >> /root/.ssh/environment &&\
-            echo "CXX=${CXX}" >> /root/.ssh/environment &&\
-            echo "MPICC=${MPICC}" >> /root/.ssh/environment &&\
-            echo "MPICXX=${MPICXX}" >> /root/.ssh/environment &&\
-            echo "MPIEXEC=${MPIEXEC}" >> /root/.ssh/environment &&\
-            echo "OMPI_CC=${CC}" >> /root/.ssh/environment &&\
-            echo "OMPI_CXX=${CXX}" >> /root/.ssh/environment &&\
-            echo "GEOSX_TPL_DIR=${GEOSX_TPL_DIR}" >> /root/.ssh/environment
-
-        # This is the default ssh port that we do not need to modify.
-        EXPOSE 22
-        # sshd's option -D prevents it from detaching and becoming a daemon.
-        # Otherwise, sshd would not block the process and `docker run` would quit.
-        RUN mkdir -p /run/sshd
-        ENTRYPOINT ["/usr/sbin/sshd", "-D"]
-
-This file is pulling a docker image containing GEOSX's TPL as well as extra utils, such as *CMAKE* and preparing for ssh connexion.
+This file enriches a base image already containing the GEOSX's TPL as well as extra utils, such as ``cmake`` and preparing for ssh connexion.
 In the end, we will be able to run it in a detached mode, and connect to it to run and develop in GEOSX.
 
-There are two things you may have noticed reading through the *Dockerfile*:
+There are two things you may have noticed reading through the ``Dockerfile`` :
 
-- It has environment variables to be passed to it to select the proper image to pull, namely `${ORG}`, `${IMG}` and `${VERSION}`, we'll then have to declare them
-
-
-    .. code:: shell
-
-        PS> $env:VERSION='164-677'
-        PS> $env:IMG='ubuntu18.04-gcc8'
-        PS> $env:REMOTE_DEV_IMG="remote-dev-${env:IMG}"
+- It has environment variables to be passed to it to select the proper image to pull, namely ``${ORG}``, ``${IMG}`` and ``${VERSION}``, we'll then have to declare them
 
 
-Please note the preposition of ``env:`` in the windows formalisme. The ``${ORG}`` variable will be hard-coded as ``geosx``. The last variable will be used as
-an informative image name. Note also that the version above might not be the most recent version of the image at the time you are reading these lines and
-should be changed for the closest to the *TPL* commit associated with the GEOSX commit you work from.
+.. code:: shell
+
+    PS> $env:VERSION='164-677'
+    PS> $env:IMG='ubuntu18.04-gcc8'
+    PS> $env:REMOTE_DEV_IMG="remote-dev-${env:IMG}"
+
+
+Please note the preposition of ``env:`` in the windows formalisme. The ``${ORG}`` variable will be hard-coded as ``geosx``. The last variable will be use
+as the image name. ``164-677`` refers to a specific version of the TPLs which may not be up to date. Please refer to :ref:`Continuous_Integration_process` for further info.
 
 - You'll need to generate a ssh-key to be able to access the container without the need for defining a password. This can be done from the *PowerShell*,
 
 
-    .. code:: shell
+.. code:: shell
 
-        PS > ssh-keygen.exe
-        PS > cat [path-to-gen-key]/[your-key].pub
+    PS > ssh-keygen.exe
+    PS > cat [path-to-gen-key]/[your-key].pub
 
 
 The first command will prompt you with a message asking you to complete the desired path for the key as well as a passphrase, with confirmation.
@@ -157,7 +113,7 @@ The preliminary tasks are now done. Let us build the image that will be containe
     PS > docker build --build-arg ORG=geosx --build-arg IMG=${env:IMG} --build-arg VERSION=${env:VERSION} -t ${env:REMOTE_DEV_IMG}:${env:VERSION} -f Dockerfile
 
 As described above, we are passing our environment variables in the building stage, which offer the flexibility of changing the version or image by a simple redefinition.
-A log updating or pulling the different layers should be displayed afterwards and on the last line the *image id*. We can check that the image is created using *PowerShell* CLI:
+A log updating or pulling the different layers should be displayed afterwards and on the last line the *image id*. We can check that the image is created using ``PowerShell`` CLI:
 
 .. code:: shell
 
@@ -174,24 +130,25 @@ Now that we have the image build, let us run a container from,
 
     PS > docker run --cap-add=ALL  -d --name ${env:REMOTE_DEV_IMG}-${env:VERSION} -p 64000:22 --mount 'type=bind,source=D:/install_geosx_docker/,target=/app' ${env:REMOTE_DEV_IMG}:${env:VERSION}
 
-Note that in addition to the detached flag (*-d*) and the name tage (*--name*), we provide *Docker* with the port the container should be associated to
+Note that in addition to the detached flag (*-d*) and the name tage (*--name*), we provide ``Docker`` with the port the container should be associated to
 communicate with ssh port 22, as well as a binding between a host mount point (*D:/install_geosx_docker/*) and a container mount point (*/app*) to have a peristent storage
 for our development/geosx builds. More details on the `--mount options <https://docs.docker.com/storage/bind-mounts/>`_
 
-The exact same steps can be achieved using the *Docker Desktop* GUI in the image tabs, clicking on the *run* button and filling the same information in the interface,
+A similar step can be achieved using the *Docker Desktop* GUI in the image tabs, clicking on the *run* button and filling the same information in the interface,
 
 .. image:: win_install/win_docker_container.png
    :width: 45%
 
-Coming back to our *PowerShell* terminal, we can check that our container is running and trying to ssh to it.
+Coming back to our ``PowerShell`` terminal, we can check that our container is running and trying to ssh to it.
 
 .. code:: shell
 
     PS > docker ps -a
     CONTAINER ID   IMAGE                                 COMMAND               CREATED                  STATUS          PORTS                                     NAMES
     1efffac66c4c   remote-dev-ubuntu18.04-gcc8:156-642   "/usr/sbin/sshd -D"   Less than a second ago   Up 18 seconds   0.0.0.0:64000->22/tcp, :::64000->22/tcp   remote-dev-ubuntu18.04-gcc8-156-642
+
     PS > ssh root@localhost -p 64000
-    Enter passphrase for key 'C:\************.ssh/id_rsa':
+    Enter passphrase for key 'C:\***********/.ssh/id_rsa':
     Welcome to Ubuntu 18.04.5 LTS (GNU/Linux 5.10.16.3-microsoft-standard-WSL2 x86_64)
 
      * Documentation:  https://help.ubuntu.com
@@ -214,14 +171,15 @@ Coming back to our *PowerShell* terminal, we can check that our container is run
 We are now logged into our container and can start :ref:`QuickStart`.
 
 .. note::
-    You might be prompted that you miss certificates to clone, this can be resolved by installing *ca-certificates* and updating them
+    Note that :
 
-        PS > apt install ca-certificates && update-ca-certificates
+        #. You might be prompted that you miss certificates to clone, this can be resolved by installing *ca-certificates* and updating them
+        #. It might occur that *git-lfs* is missing then install it
 
-.. note::
-    It might occur that *git-lfs* is missing then install it,
+        .. code:: shell
 
-        PS > apt install git-lfs
+                PS > apt install ca-certificates && update-ca-certificates
+                PS > apt install git-lfs
 
 From there you should be able to develop in your container or access it from an IDE, e.g. `VSCode <https://code.visualstudio.com/docs/remote/ssh>`_
 or `MSVC19 <https://docs.microsoft.com/en-us/cpp/linux/connect-to-your-remote-linux-computer?view=msvc-160>`_.
@@ -229,7 +187,7 @@ or `MSVC19 <https://docs.microsoft.com/en-us/cpp/linux/connect-to-your-remote-li
 5. Running a case
 -------------------
 
-    Once the code is configured and compiled, let us check the status of the build,
+Once the code is configured and compiled, let us check the status of the build,
 
 .. code:: shell
 
@@ -257,9 +215,9 @@ A possible workaround is to create a new user account and a run folder from this
 
     root@b105f9ead860:~# adduser runner
     root@b105f9ead860:~# su runner
-    runner@b105f9ead860:~# mkdir run && cd run/
-    runner@b105f9ead860:~# cp [geosx-case].xml .
-    runner@b105f9ead860:/tmp# mpirun -np 4 /app/code/GEOSX/build-environment-debug/bin/geosx -i [geosx-case].xml -x 4 -y 1 -z 1
+    runner@b105f9ead860:~# mkdir -p /tmp/geosx && cd /tmp/geosx/
+    runner@b105f9ead860:/tmp/geosx# cp [path-to-case]/[geosx-case].xml .
+    runner@b105f9ead860:/tmp/geosx# ${MPIEXEC} -np 4 /app/code/GEOSX/build-environment-debug/bin/geosx -i [geosx-case].xml -x 4 -y 1 -z 1
 
 
 .. GPU ?? https://docs.docker.com/desktop/windows/wsl/#gpu-support
