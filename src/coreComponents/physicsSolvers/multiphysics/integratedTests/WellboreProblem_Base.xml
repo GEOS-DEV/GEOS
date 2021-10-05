@@ -34,8 +34,7 @@
   <CellElementRegion 
     name="Omega" 
     cellBlocks="{cb1}" 
-    materialList="{ rock, water, porousRock, rockPerm, rockPorosity}"
-  />
+    materialList="{ water, porousRock }"/>
 </ElementRegions>
 <!-- SPHINX_WELLBORE_ELEMENTREGIONS_END -->
 
