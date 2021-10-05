@@ -452,7 +452,6 @@ struct SolutionCheckKernel
           real64 totalDens = 0.0;
           for( localIndex ic = 0; ic < numComponents; ++ic )
           {
-//            printf("ei, ic, dCompDens, scalingFactor, localSolution = %ld, %ld, %f, %f, %f, %f \n",ei, ic, compDens[ei][ic], dCompDens[ei][ic], scalingFactor, localSolution[localRow + ic + 1] );
             real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
             totalDens += (newDens > 0.0) ? newDens : 0.0;
           }
