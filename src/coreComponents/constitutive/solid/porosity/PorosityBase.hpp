@@ -187,6 +187,11 @@ public:
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
 
+  /**
+   * @brief Initialize newPorosity and oldPorosity.
+   */
+  virtual void initializeState() const;
+
   using KernelWrapper = PorosityBaseUpdates;
 
   /**

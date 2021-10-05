@@ -180,13 +180,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="Porosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="rockPorosity_porosity"
-      scale="0.2"/>
 
     <FieldSpecification
       name="fracPorosity"
