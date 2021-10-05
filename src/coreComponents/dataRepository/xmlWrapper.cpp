@@ -74,9 +74,9 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
   string const currentFilePath = rootNode.child( filePathString ).attribute( filePathString ).value();
 
   // Schema currently allows a single unique <Included>, but a non-validating file may include multiple
-  for( xmlNode const includedNode : targetNode.children( includedListTag ) )
+  for( xmlNode includedNode : targetNode.children( includedListTag ) )
   {
-    for( xmlNode const fileNode : includedNode.children() )
+    for( xmlNode fileNode : includedNode.children() )
     {
       // Extract the file name and construct full includedDirPath
       string const includedFilePath = [&]()

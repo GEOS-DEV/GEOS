@@ -145,7 +145,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ shale, water, shaleSolid, shalePorosity, shalePerm }"/>
+      materialList="{ shale, water }"/>
   </ElementRegions>
 
   <Constitutive>

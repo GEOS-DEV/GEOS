@@ -105,8 +105,7 @@
       <TwoPointFluxApproximation
         name="fluidTPFA"
         fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -114,7 +113,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ block1 }"
-      materialList="{ fluid1, skeleton, relperm, rockPerm, porousRock, rockPorosity }"/>
+      materialList="{ fluid1, relperm, porousRock }"/>
   </ElementRegions>
 
   <Constitutive>

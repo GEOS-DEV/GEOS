@@ -106,7 +106,7 @@
     <CellElementRegion
       name="Omega"
       cellBlocks="{ cb1 }"
-      materialList="{ rock, water, porousRock, rockPerm, rockPorosity }"/>
+      materialList="{ porousRock, water }"/>
   </ElementRegions>
 
   <Constitutive>

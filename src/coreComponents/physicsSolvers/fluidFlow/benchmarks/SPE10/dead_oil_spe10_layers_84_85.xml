@@ -111,7 +111,7 @@
     <CellElementRegion
       name="reservoir"
       cellBlocks="{ block }"
-      materialList="{ fluid, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ fluid, rock, relperm }"/>
   </ElementRegions>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS_END -->
 
