@@ -92,7 +92,7 @@
     <CellElementRegion
       name="reservoir"
       cellBlocks="{ cellBlock }"
-      materialList="{ fluid, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ fluid, rock, relperm }"/>
 
     <WellElementRegion
       name="wellRegion"
