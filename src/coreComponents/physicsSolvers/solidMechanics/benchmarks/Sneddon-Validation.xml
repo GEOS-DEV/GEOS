@@ -126,12 +126,9 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="0.0e8">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 1.0e-6, 1.0e-4 }"/>
-    </Contact>
+      penaltyStiffness="0.0e8"
+      apertureTableName="apertureTable"/>
+
   </Constitutive>
 
   <!-- SPHINX_SNEDDON_BC -->
@@ -177,6 +174,13 @@
       fieldName="displacementJump"/>
   </Tasks>
 
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-4 }"/>
+  </Functions>
+  
   <Outputs>
     <VTK
       name="vtkOutput"

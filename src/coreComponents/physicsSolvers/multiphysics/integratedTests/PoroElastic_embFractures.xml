@@ -174,22 +174,12 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="0.0e8">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 1.0e-6, 1.0e-3 }"/>
-    </Contact>
+      penaltyStiffness="0.0e8"
+      apertureTableName="apertureTable"/>
+    
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="Porosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="rockPorosity_porosity"
-      scale="0.2"/>
 
     <FieldSpecification
       name="fracPorosity"
@@ -252,6 +242,13 @@
       setNames="{ xpos }"/>
   </FieldSpecifications>
 
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-3 }"/>
+  </Functions>
+  
   <Outputs>
     <VTK
       name="vtkOutput"

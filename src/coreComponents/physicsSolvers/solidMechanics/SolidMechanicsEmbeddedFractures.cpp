@@ -21,7 +21,7 @@
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -712,8 +712,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
   ElementRegionManager & elemManager = meshLevel.getElemManager();
 
   ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-  ContactRelationBase const &
-  contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
+  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
 
   elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
   {
@@ -723,17 +722,24 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
     arrayView2d< real64 > const & fractureTraction =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::fractureTractionString() );
 
-    arrayView3d< real64 > const & dTraction_dJump =
+    arrayView3d< real64 > const & dFractureTraction_dJump =
       subRegion.getReference< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() );
 
-    forAll< serialPolicy >( subRegion.size(), [=, &contactRelation] ( localIndex const k )
+    constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
     {
-      contactRelation.computeTraction( jump[k], fractureTraction[k] );
+      using ContactType = TYPEOFREF( castedContact );
+      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-      contactRelation.dTraction_dJump( jump[k], dTraction_dJump[k] );
+      SolidMechanicsEFEMKernels::StateUpdateKernel::
+        launch< parallelDevicePolicy<> >( subRegion.size(),
+                                          contactWrapper,
+                                          jump,
+                                          fractureTraction,
+                                          dFractureTraction_dJump );
     } );
   } );
 }
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, string const &, Group * const )
 } /* namespace geosx */
