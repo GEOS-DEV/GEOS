@@ -221,6 +221,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
+  std::cout << "I can set the global index" << std::endl;
+
   // Synchronize embedded Surfaces
   EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
                                                                     domain.getNeighbors(),
@@ -253,6 +255,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   }
 
   MpiWrapper::barrier( MPI_COMM_GEOSX );
+
+  std::cout << "I get here without issues" << std::endl;
 
   // TODO this is kind of brute force to resync everything.
   EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
@@ -336,6 +340,8 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
   localIndex_array numberOfSurfaceElemsPerRank( commSize );
   localIndex_array globalIndexOffset( commSize );
   MpiWrapper::allGather( embeddedSurfaceSubRegion.size(), numberOfSurfaceElemsPerRank );
+
+  GEOSX_LOG_LEVEL_RANK_0( 1, "rank 0: " << numberOfSurfaceElemsPerRank[0] << "rank 1: " << numberOfSurfaceElemsPerRank[1]  );
 
   globalIndexOffset[0] = 0; // offSet for the globalIndex
   localIndex totalNumberOfSurfaceElements = numberOfSurfaceElemsPerRank[ 0 ];  // Sum across all ranks

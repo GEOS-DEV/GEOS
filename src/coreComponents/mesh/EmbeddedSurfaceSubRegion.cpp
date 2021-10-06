@@ -348,8 +348,15 @@ localIndex EmbeddedSurfaceSubRegion::packUpDownMapsPrivate( buffer_unit_type * &
 {
   localIndex packedSize = 0;
 
+  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
   arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
+
+  std::cout<< DOPACK << std::endl;
+  std::cout << "rank " << thisRank << " packList: " << packList << std::endl;
+  std::cout << "rank " << thisRank << " localToGlobal: " << localToGlobal << std::endl;
+  std::cout << "rank " << thisRank << " nodeLocalToGlobal: " << nodeLocalToGlobal << std::endl;
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
@@ -358,7 +365,7 @@ localIndex EmbeddedSurfaceSubRegion::packUpDownMapsPrivate( buffer_unit_type * &
                                            packList,
                                            localToGlobal,
                                            nodeLocalToGlobal );
-
+  std::cout << "rank " << thisRank << " I am not crashing" << std::endl;
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,

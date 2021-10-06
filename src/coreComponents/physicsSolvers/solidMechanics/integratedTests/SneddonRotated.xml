@@ -32,7 +32,8 @@
       solidMaterialNames="{ rock }"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
-      logLevel="1"/>
+      logLevel="1"
+      mpiCommOrder="1"/>
   </Solvers>
 
   <Mesh>
@@ -42,8 +43,8 @@
       xCoords="{ 0, 3 }"
       yCoords="{ 0, 3 }"
       zCoords="{ 0, 1 }"
-      nx="{ 11 }"
-      ny="{ 11 }"
+      nx="{ 5 }"
+      ny="{ 5 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
