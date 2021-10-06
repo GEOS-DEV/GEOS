@@ -79,7 +79,6 @@ fi
 # try installing packages directly
 if ! $INSTALL_VIRTUAL
 then
-    INSTALL_VIRTUAL=false
     echo "Attempting to install packages directly in target python environment..."
     for p in "${TARGET_PACKAGES[@]}"
     do
