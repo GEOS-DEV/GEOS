@@ -630,7 +630,7 @@
     <CellElementRegion
       name="reservoir"
       cellBlocks="{ DEFAULT_HEX }"
-      materialList="{ fluid, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ fluid, rock, relperm }"/>
 
     <WellElementRegion
       name="wellRegion1"
