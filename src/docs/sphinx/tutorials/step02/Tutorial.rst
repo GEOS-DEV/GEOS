@@ -276,7 +276,7 @@ To load the results, point VisIt to the ``database`` file written in the Silo ou
     :width: 400px
 
 We see that the face x=0 shown here in the back of the illustration applies a constant
-pressure boundary condition (colored in green), whereas the face across from it
+pressure boundary condition (colored in red), whereas the face across from it
 displays a pressure field under gravity effect, equilibrated and hydrostatic.
 These results are consistent with what we expect.
 

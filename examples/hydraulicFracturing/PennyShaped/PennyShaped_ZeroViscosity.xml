@@ -79,7 +79,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
+      materialList="{ water, rock, fractureFilling }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -118,14 +118,18 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="1.0e0">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 0.002e-3, 0.02e-3 }"/>
-    </Contact>
+      penaltyStiffness="1.0e0"
+      apertureTableName="apertureTable"/>
+
   </Constitutive>
 
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>
+  </Functions>
+    
   <Outputs>
     <Silo
       name="siloOutput"

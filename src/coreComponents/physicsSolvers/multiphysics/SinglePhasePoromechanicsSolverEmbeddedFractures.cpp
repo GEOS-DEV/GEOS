@@ -22,7 +22,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteElement/Kinematics.h"
 #include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"
@@ -544,12 +544,7 @@ real64 SinglePhasePoromechanicsSolverEmbeddedFractures::calculateResidualNorm( D
   // compute norm of mass balance residual equations
   real64 const massResidualNorm = m_flowSolver->calculateResidualNorm( domain, dofManager, localRhs );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    char output[200] = {0};
-    sprintf( output, "    ( Rsolid, Rfluid ) = ( %4.2e, %4.2e )", momementumResidualNorm, massResidualNorm );
-    std::cout << output << std::endl;
-  }
+  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rsolid, Rfluid ) = ( {:4.2e}, {:4.2e} )", momementumResidualNorm, massResidualNorm ) );
 
   return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
 }
@@ -579,8 +574,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
 
   ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
 
-  ContactRelationBase const &
-  contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
+  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_fracturesSolver->getContactRelationName() );
 
   this->template forTargetSubRegions< EmbeddedSurfaceSubRegion >( meshLevel, [&] ( localIndex const targetIndex,
                                                                                    auto & subRegion )
@@ -611,20 +605,25 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
     arrayView1d< real64 const > const & deltaPressure =
       subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
 
-    forAll< serialPolicy >( subRegion.size(), [=, &contactRelation] ( localIndex const k )
+    constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
     {
-      // update aperture to be equal to the normal displacement jump
-      aperture[k] = dispJump[k][0];   // the first component of the jump is the normal one.
+      using ContactType = TYPEOFREF( castedContact );
+      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-      effectiveAperture[k] = contactRelation.effectiveAperture( aperture[k] );
+      PoromechanicsEFEMKernels::StateUpdateKernel::
+        launch< parallelDevicePolicy<> >( subRegion.size(),
+                                          contactWrapper,
+                                          dispJump,
+                                          pressure,
+                                          deltaPressure,
+                                          area,
+                                          volume,
+                                          deltaVolume,
+                                          aperture,
+                                          effectiveAperture,
+                                          fractureTraction,
+                                          dTdpf );
 
-      deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
-
-      // traction on the fracture to include the pressure contribution
-      contactRelation.addPressureToTraction( pressure[k] + deltaPressure[k], fractureTraction[k] );
-
-      bool open = aperture[k] >= 0 ? true : false;
-      contactRelation.dTraction_dPressure( dTdpf[k], open );
     } );
 
     // update fracture's permeability and porosity
