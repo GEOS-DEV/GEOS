@@ -8,7 +8,7 @@ Table capillary pressure
 Overview
 ======================
 
-The user can specify the capillary pressures using tables describing a piecewise-linear relative permeability function of volume fraction (i.e., saturation) for each phase, except the reference phase for which capillary pressure is assumed to be zero.
+The user can specify the capillary pressures using tables describing a piecewise-linear capillary pressure function of volume fraction (i.e., saturation) for each phase, except the reference phase for which capillary pressure is assumed to be zero.
 Depending on the number of fluid phases, this model is used as follows:
 
 * For two-phase flow, the user must specify one capillary pressure table. During the simulation, the capillary pressure of the non-reference phase is computed by interpolating in the table as a function of the non-reference phase saturation.   
@@ -32,7 +32,7 @@ Parameters
 
 The capillary pressure constitutive model is listed in
 the ``<Constitutive>`` block of the input XML file.
-The relative permeability model must be assigned a unique name via
+The capillary pressure model must be assigned a unique name via
 ``name`` attribute.
 This name is used to assign the model to regions of the physical
 domain via a ``materialList`` attribute of the ``<ElementRegions>``
