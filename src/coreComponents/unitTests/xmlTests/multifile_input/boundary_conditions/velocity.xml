@@ -17,8 +17,8 @@
     <TableFunction
       name="timeFunction"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 1.0e-6, 2.0e-6, 1.0e9 }"
-      values="{ 0.0, 1.0, 1.0, 1.0 }"/>
+      coordinateFiles="{ tables/time.txt }"
+      voxelFile="tables/velocity.txt"/>
   </Functions>
 
 </Problem>

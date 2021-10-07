@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="multifile_input/mesh.xml"/>
+    <File name="multifile_input/fieldspec.xml"/>
+    <File name="multifile_input/outputs.xml"/>
+    <File name="multifile_input/solver.xml"/>
+  </Included>
+
+</Problem>

@@ -82,11 +82,13 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
       string const includedFilePath = [&]()
       {
         GEOSX_THROW_IF_NE_MSG( string( fileNode.name() ), includedFileTag,
-                               GEOSX_FMT( "Child nodes of <{}> should be named <{}>", includedListTag, includedFileTag ),
+                               GEOSX_FMT( "<{}> must only contain <{}> tags", includedListTag, includedFileTag ),
                                InputError );
         xmlAttribute const nameAttr = fileNode.attribute( "name" );
-        GEOSX_THROW_IF( !nameAttr, GEOSX_FMT( "<{}> nodes must have a 'name' attribute", includedFileTag ), InputError );
         string const fileName = nameAttr.value();
+        GEOSX_THROW_IF( !nameAttr || fileName.empty(),
+                        GEOSX_FMT( "<{}> tag must have a non-empty 'name' attribute", includedFileTag ),
+                        InputError );
         return isAbsolutePath( fileName ) ? fileName : joinPath( splitPath( currentFilePath ).first, fileName );
       }();
 
@@ -111,6 +113,11 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
       // This may result in repeated XML blocks, which will be implicitly merged when processed
       for( xmlNode importedNode : includedRootNode.children() )
       {
+        // Save path to current file on the node, in order to handle relative paths later
+        if( !importedNode.attribute( filePathString ) )
+        {
+          importedNode.append_attribute( filePathString ).set_value( includedFilePath.c_str() );
+        }
         targetNode.append_copy( importedNode );
       }
     }
@@ -121,15 +128,19 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
   {}
 }
 
-string xmlWrapper::buildMultipleInputXML( string_array const & inputFileList )
+string xmlWrapper::buildMultipleInputXML( string_array const & inputFileList,
+                                          string const & outputDir )
 {
+  if( inputFileList.empty() )
+  {
+    return {};
+  }
   if( inputFileList.size() == 1 )
   {
     return inputFileList[0];
   }
 
   // Write the composite xml file
-  constexpr char const inputFileName[] = "composite_input.xml";
   xmlWrapper::xmlDocument compositeTree;
   xmlWrapper::xmlNode compositeRoot = compositeTree.append_child( dataRepository::keys::ProblemManager );
   xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( includedListTag );
@@ -140,7 +151,8 @@ string xmlWrapper::buildMultipleInputXML( string_array const & inputFileList )
     fileNode.append_attribute( "name" ) = fileName.c_str();
   }
 
-  compositeTree.save_file( inputFileName );
+  string inputFileName = joinPath( outputDir, "composite_input.xml" );
+  compositeTree.save_file( inputFileName.c_str() );
   return inputFileName;
 }
 
