@@ -154,7 +154,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.1e-3"
-      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
+      materialList="{ water, rock, fractureFilling }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -190,12 +190,8 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="1.0e0">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 1.0e-6, 0.1e-3 }"/>
-    </Contact>
+      penaltyStiffness="1.0e0"
+      apertureTableName="apertureTable"/>
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>
@@ -265,17 +261,19 @@
       scale="-0.0"
       setNames="{ xpos }"/>
 
-    <!-- FieldSpecification name="source"
-               objectPath="ElementRegions/Fracture"
-               fieldName="pressure"
-               scale="0.0"
-               setNames="{all}"/-->
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
       scale="-1.0"
       setNames="{ source }"/>
   </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 0.1e-3 }"/>
+  </Functions>
 
   <Outputs>
     <Silo
