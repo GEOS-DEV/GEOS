@@ -108,7 +108,10 @@ void TableCapillaryPressure::initializePreSubGroups()
                                m_wettingNonWettingCapPresTableName ),
                     InputError );
     TableFunction const & capPresTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingCapPresTableName );
-    validateCapillaryPressureTable( capPresTable, false );
+    bool const capPresMustBeIncreasing = ( m_phaseOrder[PhaseType::WATER] < 0 )
+      ? true   // pc on the gas phase, function must be increasing
+      : false; // pc on the water phase, function must be decreasing
+    validateCapillaryPressureTable( capPresTable, capPresMustBeIncreasing );
   }
   else if( numPhases == 3 )
   {
@@ -154,7 +157,7 @@ void TableCapillaryPressure::createAllTableKernelWrappers()
 }
 
 void TableCapillaryPressure::validateCapillaryPressureTable( TableFunction const & capPresTable,
-                                                             bool const capPresShouldBeIncreasing ) const
+                                                             bool const capPresMustBeIncreasing ) const
 {
   ArrayOfArraysView< real64 const > coords = capPresTable.getCoordinates();
 
@@ -181,7 +184,7 @@ void TableCapillaryPressure::validateCapillaryPressureTable( TableFunction const
     // note that the TableFunction class has already checked that the coordinates are monotone
 
     // check the monotonicity of the capillary pressure table
-    if( capPresShouldBeIncreasing )
+    if( capPresMustBeIncreasing )
     {
       GEOSX_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) < 1e-10,
                       GEOSX_FMT( "{}: in table '{}' values must be strictly increasing", getFullName(), capPresTable.getName() ),

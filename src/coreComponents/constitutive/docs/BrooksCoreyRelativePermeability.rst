@@ -25,12 +25,12 @@ The minimum phase volume fractions :math:`S_{\ell,\textit{min}}` are model param
 Parameters
 ======================
 
-The relative permeability constitutive model is listed in
+The relative permeability constitutive model is listed in the
 ``<Constitutive>`` block of the input XML file.
 The relative permeability model must be assigned a unique name via
 ``name`` attribute.
 This name is used to assign the model to regions of the physical
-domain via a ``materialList`` attribute of the ``<ElementRegion>``
+domain via a ``materialList`` attribute of the ``<ElementRegions>``
 node.
 
 The following attributes are supported:
