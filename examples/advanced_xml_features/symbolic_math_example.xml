@@ -113,7 +113,7 @@ XML Symbolic Math:
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ water, rock, rockPerm }"/>
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>

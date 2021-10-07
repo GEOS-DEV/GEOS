@@ -1,0 +1,197 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhaseHybridFVM
+      name="flowSolver"
+      discretization="singlePhaseHybridMimetic"
+      targetRegions="{ Region1, Region2 }"
+      fluidNames="{ fluid1, fluid2 }"
+      solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseHybridFVM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 5, 10 }"
+      yCoords="{ 0, 3 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 5, 5 }"
+      ny="{ 3 }"
+      nz="{ 1 }"
+      cellBlockNames="{ block1, block2 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{ -0.01, 0.99, -0.01 }"
+      xMax="{ 1.01, 2.01, 1.01 }"/>
+
+    <Box
+      name="sink"
+      xMin="{ 8.99, 0.99, -0.01 }"
+      xMax="{ 10.01, 2.01, 1.01 }"/>
+
+    <Box
+      name="impermeableBarrier1"
+      xMin="{ 1.99, -0.01, -0.01 }"
+      xMax="{ 2.01, 2.01, 1.01 }"/>
+
+    <Box
+      name="impermeableBarrier2"
+      xMin="{ 1.99, 1.99, -0.01 }"
+      xMax="{ 4.01, 2.01, 1.01 }"/>
+
+    <Box
+      name="lowPermBarrier"
+      xMin="{ 3.99, 1.99, -0.01 }"
+      xMax="{ 4.01, 3.01, 1.01 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="2e3">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="100.0"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1e2"
+      target="/Solvers/flowSolver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1e3"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <HybridMimeticDiscretization
+        name="singlePhaseHybridMimetic"
+        innerProductType="quasiTPFA"
+        coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ block1 }"
+      materialList="{ fluid1, rock }"/>
+
+    <CellElementRegion
+      name="Region2"
+      cellBlocks="{ block2 }"
+      materialList="{ fluid2, rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="fluid1"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="5e-10"
+      viscosibility="0.0"/>
+
+    <CompressibleSinglePhaseFluid
+      name="fluid2"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="5e-10"
+      referenceViscosity="0.0001"
+      viscosibility="0.0"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="Porosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.05"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="5e6"/>
+
+    <!-- Note that with the HybridFVM solver, it is not possible to -->
+    <!-- set a transMultiplier to 0, since it makes the system singular -->
+    <!-- This happens because then one of the face constraints becomes 0 = 0...  -->
+    <FieldSpecification
+      name="impermeableBarrierTransMult"
+      initialCondition="1"
+      setNames="{ impermeableBarrier1, impermeableBarrier2 }"
+      objectPath="faceManager"
+      fieldName="permeabilityTransMultiplier"
+      scale="0.1"/>
+
+    <FieldSpecification
+      name="lowPermBarrierTransMult"
+      initialCondition="1"
+      objectPath="faceManager"
+      fieldName="permeabilityTransMultiplier"
+      scale="0.9"
+      setNames="{ lowPermBarrier }"/>
+
+    <FieldSpecification
+      name="sourceTerm"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="5e7"
+      setNames="{ source }"/>
+
+    <FieldSpecification
+      name="sinkTerm"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="5e5"
+      setNames="{ sink }"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <Silo
+      name="siloOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
