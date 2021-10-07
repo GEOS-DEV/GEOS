@@ -2,7 +2,7 @@
 
 
 #################################################################
-Deviated Poro-Elastic Wellbore Subjected to an Injection Pressure
+Deviated Poro-Elastic Wellbore Subjected to Fluid Injection
 #################################################################
 
 ------------------------------------------------------------------
