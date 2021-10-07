@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,8 +20,6 @@
 
 namespace geosx
 {
-
-
 
 /**
  * @brief Parse the command line options and populate @p commandLineOptions with the results.
@@ -45,6 +43,12 @@ std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool 
  * @brief Perform the basic GEOSX cleanup.
  */
 void basicCleanup();
+
+/**
+ * @brief Get GEOSX version.
+ * @return The full version string.
+ */
+string getVersion();
 
 } // namespace geosx
 

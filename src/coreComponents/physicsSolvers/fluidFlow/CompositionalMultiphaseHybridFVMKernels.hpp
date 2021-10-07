@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -681,6 +681,7 @@ struct PhaseMobilityKernel
            arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseVisc_dComp,
            arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dComp,
            arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseMob,
@@ -696,6 +697,7 @@ struct PhaseMobilityKernel
           arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp,
           arrayView2d< real64, compflow::USD_PHASE > const & phaseMob,
@@ -711,6 +713,7 @@ struct PhaseMobilityKernel
           arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp,
           arrayView2d< real64, compflow::USD_PHASE > const & phaseMob,
@@ -832,7 +835,7 @@ struct PrecomputeKernel
           ArrayOfArraysView< localIndex const > const & faceToNodes,
           arrayView2d< real64 const > const & elemCenter,
           arrayView1d< real64 const > const & elemVolume,
-          arrayView2d< real64 const > const & elemPerm,
+          arrayView3d< real64 const > const & elemPerm,
           arrayView1d< real64 const > const & elemGravCoef,
           arrayView2d< localIndex const > const & elemToFaces,
           arrayView1d< real64 const > const & transMultiplier,
@@ -845,7 +848,7 @@ struct PrecomputeKernel
     {
       stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
-      real64 const perm[ 3 ] = { elemPerm[ei][0], elemPerm[ei][1], elemPerm[ei][2] };
+      real64 const perm[ 3 ] = { elemPerm[ei][0][0], elemPerm[ei][0][1], elemPerm[ei][0][2] };
 
       IP_TYPE::template compute< NF >( nodePosition,
                                        transMultiplier,

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,9 +21,82 @@
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "mesh/ElementRegionManager.hpp"
 
 namespace geosx
 {
+/**
+ * @class StencilWrapperBase
+ *
+ * Class to provide access to the computation of stencil weights that may be
+ * called from a kernel function.
+ */
+template< typename LEAFCLASSTRAITS >
+class StencilWrapperBase
+{
+public:
+  /**
+   * @brief Constructor
+   * @param elementRegionIndices The container for the element region indices for each point in each stencil
+   * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
+   * @param elementIndices The container for the element indices for each point in each stencil
+   * @param weights The container for the weights for each point in each stencil
+   */
+  StencilWrapperBase( typename LEAFCLASSTRAITS::IndexContainerType const & elementRegionIndices,
+                      typename LEAFCLASSTRAITS::IndexContainerType const & elementSubRegionIndices,
+                      typename LEAFCLASSTRAITS::IndexContainerType const & elementIndices,
+                      typename LEAFCLASSTRAITS::WeightContainerType const & weights ):
+    m_elementRegionIndices( elementRegionIndices.toViewConst() ),
+    m_elementSubRegionIndices( elementSubRegionIndices.toViewConst() ),
+    m_elementIndices( elementIndices.toViewConst() ),
+    m_weights( weights.toViewConst() )
+  {};
+
+  /**
+   * @brief Const access to the element regions indices.
+   * @return A view to const
+   */
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementRegionIndices() const { return m_elementRegionIndices; }
+
+  /**
+   * @brief Const access to the element subregions indices.
+   * @return A view to const
+   */
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementSubRegionIndices() const { return m_elementSubRegionIndices; }
+
+  /**
+   * @brief Const access to the element indices.
+   * @return A view to const
+   */
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType getElementIndices() const { return m_elementIndices; }
+
+  /**
+   * @brief Const access to the stencil weights.
+   * @return A view to const
+   */
+  typename LEAFCLASSTRAITS::WeightContainerViewConstType getWeights() const { return m_weights; }
+
+  /**
+   * @brief Give the number of stencil entries.
+   * @return The number of stencil entries
+   */
+  virtual localIndex size() const = 0;
+
+protected:
+  /// The container for the element region indices for each point in each stencil
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementRegionIndices;
+
+  /// The container for the element sub region indices for each point in each stencil
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementSubRegionIndices;
+
+  /// The container for the element indices for each point in each stencil
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType m_elementIndices;
+
+  /// The container for the weights for each point in each stencil
+  typename LEAFCLASSTRAITS::WeightContainerViewConstType m_weights;
+
+};
+
 
 /**
  * @class StencilBase
@@ -195,7 +268,6 @@ void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::move( LvArray::MemorySpace const
   m_elementIndices.move( space, true );
   m_weights.move( space, true );
 }
-
 
 } /* namespace geosx */
 

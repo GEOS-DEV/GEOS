@@ -130,9 +130,16 @@ vtkSmartPointer<vtkUnstructuredGrid> loadVTKMesh( Path const & filePath )
     vtkUgReader->SetFileName( filePath.c_str() );
     vtkUgReader->UpdateInformation();
     int numberOfPieces = vtkUgReader->GetNumberOfPieces();
-    if( MpiWrapper::commRank() < numberOfPieces )
+    if( MpiWrapper::commSize() == 1 )
     {
-      vtkUgReader->UpdatePiece(MpiWrapper::commRank(),2,0);
+      vtkUgReader->Update();
+    }
+    else
+    {
+      if( MpiWrapper::commRank() < numberOfPieces )
+      {
+        vtkUgReader->UpdatePiece(MpiWrapper::commRank(),2,0);
+      }
     }
     loadedMesh = vtkUgReader->GetOutput();
   }
@@ -690,6 +697,8 @@ void writeSurfaces( NodeManager & nodeManager, std::vector<int> const & allSurfa
 }
 void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 {
+  int mpiSize = MpiWrapper::commSize();
+  GEOSX_ERROR_IF( (mpiSize & (mpiSize - 1)) != 0, "MPI size is not a power of 2. Can't be used with the VTKMeshGenerator" );
   vtkSmartPointer<vtkMultiProcessController> controller = getVTKController();
   vtkMultiProcessController::SetGlobalController(controller);
 

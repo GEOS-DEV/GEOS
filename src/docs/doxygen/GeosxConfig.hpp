@@ -8,16 +8,7 @@
 #ifndef GEOSX_COMMON_CONFIG_HPP
 #define GEOSX_COMMON_CONFIG_HPP
 
-/// GEOSX major version number
-#define GEOSX_VERSION_MAJOR 0
-/// GEOSX minor version number
-#define GEOSX_VERSION_MINOR 0
-/// GEOSX patch version number
-#define GEOSX_VERSION_PATCH 31
-/// GEOSX full version number string
-#define GEOSX_VERSION_FULL  "0.0.31"
-
-/// Enables floating point execptions
+/// Enables floating point exceptions
 #define GEOSX_USE_FPE
 
 /// Enables bounds check in LvArray classes (CMake option ARRAY_BOUNDS_CHECK)
@@ -40,6 +31,9 @@
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #define GEOSX_USE_CUDA
+
+/// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
+#define GEOSX_USE_PVTPackage
 
 /// Enables use of Python (CMake option ENABLE_PYTHON)
 #define GEOSX_USE_PYGEOSX

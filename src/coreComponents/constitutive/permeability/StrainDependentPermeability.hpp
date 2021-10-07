@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -31,8 +31,8 @@ class StrainDependentPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  StrainDependentPermeabilityUpdate( arrayView2d< real64 > const & permeability,
-                                     arrayView2d< real64 > const & dPerm_dPressure )
+  StrainDependentPermeabilityUpdate( arrayView3d< real64 > const & permeability,
+                                     arrayView3d< real64 > const & dPerm_dPressure )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure )
   {}
 
@@ -56,9 +56,8 @@ private:
 class StrainDependentPermeability : public PermeabilityBase
 {
 public:
-  StrainDependentPermeability( string const & name, Group * const parent );
 
-  virtual ~StrainDependentPermeability() override;
+  StrainDependentPermeability( string const & name, Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                     Group * const parent ) const override;
@@ -82,11 +81,6 @@ public:
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure );
   }
-
-
-
-protected:
-  virtual void postProcessInput() override;
 
 private:
 

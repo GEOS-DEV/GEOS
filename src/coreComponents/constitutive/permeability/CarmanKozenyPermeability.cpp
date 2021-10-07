@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -45,18 +45,16 @@ std::unique_ptr< ConstitutiveBase >
 CarmanKozenyPermeability::deliverClone( string const & name,
                                         Group * const parent ) const
 {
-  return ConstitutiveBase::deliverClone( name, parent );
+  return PermeabilityBase::deliverClone( name, parent );
 }
 
 void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group & parent,
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_dPerm_dPorosity.resize( 0, 3 );
+  // NOTE: enforcing 1 quadrature point
+  m_dPerm_dPorosity.resize( 0, 1, 3 );
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
-
-void CarmanKozenyPermeability::postProcessInput()
-{}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CarmanKozenyPermeability, string const &, Group * const )
 

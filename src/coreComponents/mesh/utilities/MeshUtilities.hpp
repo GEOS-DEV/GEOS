@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -28,9 +28,6 @@ namespace dataRepository
 {
 class Group;
 }
-
-class ObjectManagerBase;
-class xmlWrapper;
 class NodeManager;
 
 
@@ -38,48 +35,18 @@ class NodeManager;
  * @class MeshUtilities
  * @brief This class is used to generate the utilities for the mesh.
  */
-class MeshUtilities
+namespace MeshUtilities
 {
-public:
+/**
+ * @brief Build all the node sets from a geometric object in the DomainPartition.
+ * @param[in] geometry a pointer to the group in the data repository
+ * @param[in] nodeManager pointer to the NodeManager object in the DomainPartition
+ */
+void generateNodesets( dataRepository::Group const & geometry,
+                       NodeManager & nodeManager );
 
-  /**
-   * @name Constructor / Destructor
-   */
+} // namespace MeshUtilities
 
-  ///@{
-
-  /**
-   * @brief Constructor.
-   */
-  MeshUtilities();
-
-  /**
-   * @brief Destructor.
-   */
-  virtual ~MeshUtilities();
-
-  ///@}
-
-  /**
-   * @brief Build all the node sets from a geometric object in the DomainPartition.
-   * @param[in] geometry a pointer to the group in the data repository
-   * @param[in] nodeManager pointer to the NodeManager object in the DomainPartition
-   */
-  static void generateNodesets( dataRepository::Group const & geometry,
-                                NodeManager & nodeManager );
-
-//  static void GenerateFasesetsAndAssociatedNodesets( xmlWrapper const & hdn,
-//                                                     Group&
-// faceManager,
-//                                                     Group&
-// nodeManager);
-//
-//  static void GenerateElementsets ( xmlWrapper const & hdn,
-//                                    const Group& nodeManager,
-//                                    Group& elementManager);
-
-};
-
-}
+} // namespace geosx
 
 #endif /* GEOSX_MESH_UTILITIES_MESHUTILITIES_HPP */

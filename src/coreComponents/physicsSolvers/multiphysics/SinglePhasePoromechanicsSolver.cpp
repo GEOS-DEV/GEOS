@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -35,7 +35,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-
+#include "finiteElement/FiniteElementDispatch.hpp"
 #include "SinglePhasePoromechanicsKernel.hpp"
 
 namespace geosx
@@ -121,7 +121,7 @@ void SinglePhasePoromechanicsSolver::implicitStepComplete( real64 const & time_n
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
-    ConstitutiveBase const & porousMaterial = getConstitutiveModel< ConstitutiveBase >( subRegion, porousMaterialNames()[targetIndex] );
+    CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, porousMaterialNames()[targetIndex] );
     porousMaterial.saveConvergedState();
   } );
 }
@@ -216,140 +216,12 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                             porousMaterialNames(),
                                                             kernelFactory );
 
-  // Face-based contributions
-  m_flowSolver->assembleFluxTerms( time_n, dt,
-                                   domain,
-                                   dofManager,
-                                   localMatrix,
-                                   localRhs );
-
-}
-
-void SinglePhasePoromechanicsSolver::assembleCouplingTerms( DomainPartition const & domain,
-                                                            DofManager const & dofManager,
-                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                            arrayView1d< real64 > const & localRhs )
-{
-  GEOSX_MARK_FUNCTION;
-
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const & nodeManager = mesh.getNodeManager();
-
-  string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & uDofNumber = nodeManager.getReference< globalIndex_array >( uDofKey );
-
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & incr_disp = nodeManager.incrementalDisplacement();
-
-  globalIndex const rankOffset = dofManager.rankOffset();
-  string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
-
-  // begin subregion loop
-  forTargetSubRegionsComplete< CellElementSubRegion >( mesh, [&]( localIndex const,
-                                                                  localIndex const,
-                                                                  localIndex const,
-                                                                  ElementRegionBase const & region,
-                                                                  CellElementSubRegion const & elementSubRegion )
-  {
-    string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
-    SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( elementSubRegion, fluidName );
-
-    string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( region.getName() )];
-    SolidBase const & solid = getConstitutiveModel< SolidBase >( elementSubRegion, solidName );
-
-    arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();
-
-    arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
-
-    arrayView1d< globalIndex const > const & pDofNumber = elementSubRegion.getReference< globalIndex_array >( pDofKey );
-
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-    localIndex const numNodesPerElement = elemsToNodes.size( 1 );
-
-    finiteElement::FiniteElementBase const &
-    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
-    localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
-
-    real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
-
-    arrayView2d< real64 const > const & density = fluid.density();
-
-    int dim = 3;
-    localIndex constexpr maxNumUDof = 24;   // TODO: assuming linear HEX at most for the moment
-    localIndex constexpr maxNumPDof = 1;   // TODO: assuming piecewise constant (P0) only for the moment
-    localIndex const nUDof = dim * numNodesPerElement;
-    localIndex const nPDof = m_flowSolver->numDofPerCell();
-    GEOSX_ERROR_IF_GT( nPDof, maxNumPDof );
-
-    forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      stackArray2d< real64, maxNumUDof * maxNumPDof > dRsdP( nUDof, nPDof );
-      stackArray2d< real64, maxNumUDof * maxNumPDof > dRfdU( nPDof, nUDof );
-      stackArray1d< real64, maxNumPDof > Rf( nPDof );
-
-      for( integer q = 0; q < numQuadraturePoints; ++q )
-      {
-        const real64 detJq = detJ[k][q];
-
-        for( integer a = 0; a < numNodesPerElement; ++a )
-        {
-
-          dRsdP( a * dim + 0, 0 ) += biotCoefficient * dNdX[k][q][a][0] * detJq;
-          dRsdP( a * dim + 1, 0 ) += biotCoefficient * dNdX[k][q][a][1] * detJq;
-          dRsdP( a * dim + 2, 0 ) += biotCoefficient * dNdX[k][q][a][2] * detJq;
-          dRfdU( 0, a * dim + 0 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][0] * detJq;
-          dRfdU( 0, a * dim + 1 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][1] * detJq;
-          dRfdU( 0, a * dim + 2 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][2] * detJq;
-
-          localIndex localNodeIndex = elemsToNodes[k][a];
-
-          real64 Rf_tmp = dNdX[k][q][a][0] * incr_disp[localNodeIndex][0]
-                          + dNdX[k][q][a][1] * incr_disp[localNodeIndex][1]
-                          + dNdX[k][q][a][2] * incr_disp[localNodeIndex][2];
-          Rf_tmp *= density[k][0] * biotCoefficient * detJq;
-          Rf[0] += Rf_tmp;
-        }
-      }
-
-      stackArray1d< globalIndex, maxNumUDof > elementULocalDofIndex( nUDof );
-      stackArray1d< globalIndex, maxNumPDof > elementPLocalDofIndex( nPDof );
-
-      // Get dof local to global mapping
-      for( localIndex a = 0; a < numNodesPerElement; ++a )
-      {
-        for( int i = 0; i < dim; ++i )
-        {
-          elementULocalDofIndex[a * dim + i] = uDofNumber[elemsToNodes[k][a]] + i;
-        }
-      }
-      for( localIndex i = 0; i < nPDof; ++i )
-      {
-        elementPLocalDofIndex[i] = pDofNumber[k] + i;
-      }
-
-      for( localIndex i = 0; i < nUDof; ++i )
-      {
-        localIndex const dof = LvArray::integerConversion< localIndex >( elementULocalDofIndex[ i ] - rankOffset );
-        if( dof < 0 || dof >= localMatrix.numRows() )
-          continue;
-        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                          elementPLocalDofIndex.data(),
-                                                                          dRsdP[i].dataIfContiguous(),
-                                                                          nPDof );
-      }
-      for( localIndex i = 0; i < nPDof; ++i )
-      {
-        localIndex const dof = LvArray::integerConversion< localIndex >( elementPLocalDofIndex[ i ] - rankOffset );
-        if( dof < 0 || dof >= localMatrix.numRows() )
-          continue;
-        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                          elementULocalDofIndex.data(),
-                                                                          dRfdU[i].dataIfContiguous(),
-                                                                          nUDof );
-
-        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[ dof ], Rf[i] );
-      }
-    } );
-  } );
+  m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
+                                              domain,
+                                              dofManager,
+                                              localMatrix,
+                                              localRhs,
+                                              " " );
 }
 
 void SinglePhasePoromechanicsSolver::applyBoundaryConditions( real64 const time_n,
@@ -382,12 +254,7 @@ real64 SinglePhasePoromechanicsSolver::calculateResidualNorm( DomainPartition co
   // compute norm of mass balance residual equations
   real64 const massResidualNorm = m_flowSolver->calculateResidualNorm( domain, dofManager, localRhs );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    char output[200] = {0};
-    sprintf( output, "    ( Rsolid, Rfluid ) = ( %4.2e, %4.2e )", momementumResidualNorm, massResidualNorm );
-    std::cout << output << std::endl;
-  }
+  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rsolid, Rfluid ) = ( {:4.2e}, {:4.2e} )", momementumResidualNorm, massResidualNorm ) );
 
   return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
 }
@@ -437,6 +304,17 @@ void SinglePhasePoromechanicsSolver::applySystemSolution( DofManager const & dof
   m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
   // update pressure field
   m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
+}
+
+void SinglePhasePoromechanicsSolver::updateState( DomainPartition & domain )
+{
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
+                                                                          auto & subRegion )
+  {
+    m_flowSolver->updateFluidState( subRegion, targetIndex );
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsSolver, string const &, Group * const )

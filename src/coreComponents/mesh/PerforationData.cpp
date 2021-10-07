@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -110,7 +110,7 @@ void decideWellDirection( VEC_TYPE const & topToBottomVec,
 
 void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
                                                    WellElementSubRegion const & wellElemSubRegion,
-                                                   array1d< array1d< arrayView2d< real64 const > > > const & perm )
+                                                   array1d< array1d< arrayView3d< real64 const > > > const & perm )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
@@ -126,9 +126,9 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
       GEOSX_LOG_RANK_IF( isZero( m_wellTransmissibility[iperf] ),
-                         "\n \nWarning! A perforation is defined with a zero transmissibility in " << wellRegion.getWellGeneratorName() << "! \n"
-                                                                                                   << "The simulation is going to proceed with this zero transmissibility,\n"
-                                                                                                   << "but a better strategy to shut down a perforation is to remove the <Perforation> block from the XML\n \n" );
+                         "\n \nWarning! A perforation is defined with a zero transmissibility in " << wellRegion.getWellGeneratorName() << "! \n" <<
+                         "The simulation is going to proceed with this zero transmissibility,\n" <<
+                         "but a better strategy to shut down a perforation is to remove the <Perforation> block from the XML\n \n" );
       continue;
     }
 
@@ -173,7 +173,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     // check if this is a vertical well or a horizontal well
     // assign d1, d2, h, k1, and k2 accordingly
     decideWellDirection( topToBottomVec,
-                         dx, dy, dz, perm[er][esr][ei],
+                         dx, dy, dz, perm[er][esr][ei][0],
                          d1, d2, h, k1, k2 );
 
     real64 const k21 = k1 > 0

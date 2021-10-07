@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -58,15 +58,21 @@ public:
 
   /**
    * @brief Generate the meshes of the physical DomainPartition.
-   * @param[in] domain a pointer to the physical DomainPartition
+   * @param[in] domain a reference to the physical domain
    */
   void generateMeshes( DomainPartition & domain );
 
   /**
    * @brief Generate the different mesh levels in a MeshBody of the domain.
-   * @param[in] domain a pointer to the physical DomainPartition
+   * @param[in] domain a reference to the physical domain
    */
   void generateMeshLevels( DomainPartition & domain );
+
+  /**
+   * @brief Import data from external sources (e.g. dataset that comes with a mesh).
+   * @param[in] domain a reference to the physical domain
+   */
+  void importFields( DomainPartition & domain );
 
 private:
 

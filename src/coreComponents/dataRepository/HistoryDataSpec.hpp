@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -214,7 +214,7 @@ typename std::enable_if< ( traits::is_array_type< ARRAY_T >) && (ARRAY_T::NDIM >
 getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex sizeOverride = -1 )
 {
   // Array dim > 1 so this should be valid
-  localIndex const perIndexSize = arr.size( 1 );
+  localIndex const perIndexSize = arr.size( ) / arr.size( 0 );
   localIndex const numIndices = sizeOverride >= 0 ? sizeOverride :  arr.size( ) / perIndexSize;
   localIndex sizes[2] = { numIndices, perIndexSize };
   return HistoryMetadata( name, 2, &sizes[0], std::type_index( typeid(typename ARRAY_T::value_type)));

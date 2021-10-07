@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -27,6 +27,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 
 
 /**
@@ -190,7 +191,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh )
   {
     arrayView2d< real64 const > const & elemCenter =
       subRegion.template getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString() );
-    arrayView2d< real64 const > const & elemPerm =
+    arrayView3d< real64 const > const & elemPerm =
       getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] ).permeability();
     arrayView1d< real64 const > const elemGravCoef =
       subRegion.template getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
@@ -353,15 +354,9 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                        phaseDens, dPhaseDens_dPres, dPhaseDens_dComp]
                                       GEOSX_HOST_DEVICE ( localIndex const )
     {
-      GEOSX_UNUSED_VAR( phaseCompFrac )
-      GEOSX_UNUSED_VAR( dPhaseCompFrac_dPres )
-      GEOSX_UNUSED_VAR( dPhaseCompFrac_dComp )
-      GEOSX_UNUSED_VAR( phaseMassDens )
-      GEOSX_UNUSED_VAR( dPhaseMassDens_dPres )
-      GEOSX_UNUSED_VAR( dPhaseMassDens_dComp )
-      GEOSX_UNUSED_VAR( phaseDens )
-      GEOSX_UNUSED_VAR( dPhaseDens_dPres )
-      GEOSX_UNUSED_VAR( dPhaseDens_dComp )
+      GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
+                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp,
+                        phaseDens, dPhaseDens_dPres, dPhaseDens_dComp );
     } );
   } );
 
@@ -719,7 +714,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
   // 1. Compute the residual for the mass conservation equations
 
   forTargetSubRegionsComplete( mesh,
-                               [&]( localIndex const,
+                               [&]( localIndex const targetIndex,
                                     localIndex const,
                                     localIndex const,
                                     ElementRegionBase const &,
@@ -728,8 +723,11 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
     arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString() );
     arrayView1d< real64 const > const & totalDensOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
+
+    CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+
+    arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
 
     real64 subRegionResidualNorm = 0.0;
     CompositionalMultiphaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
@@ -738,7 +736,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                                                             numFluidComponents(),
                                                                                             elemDofNumber,
                                                                                             elemGhostRank,
-                                                                                            refPoro,
+                                                                                            referencePorosity,
                                                                                             volume,
                                                                                             totalDensOld,
                                                                                             subRegionResidualNorm );
@@ -775,11 +773,9 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
   // compute global residual norm
   real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    char output[200] = {0};
-    sprintf( output, "    ( Rfluid ) = (%4.2e) ; ", residual );
-    std::cout<<output;
+    std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ;", residual );
   }
 
   return residual;
@@ -833,14 +829,6 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
                                                        mesh,
                                                        domain.getNeighbors(),
                                                        true );
-
-  // 4. update secondary variables
-
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                  ElementSubRegionBase & subRegion )
-  {
-    updateState( subRegion, targetIndex );
-  } );
 }
 
 
@@ -883,6 +871,9 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( Group & dataGroup, l
 
   // inputs
 
+  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
+
   arrayView2d< real64 const, compflow::USD_PHASE > const dPhaseVolFrac_dPres =
     dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
 
@@ -911,6 +902,7 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( Group & dataGroup, l
                                                 dPhaseVisc_dComp,
                                                 phaseRelPerm,
                                                 dPhaseRelPerm_dPhaseVolFrac,
+                                                phaseVolFrac,
                                                 dPhaseVolFrac_dPres,
                                                 dPhaseVolFrac_dComp,
                                                 phaseMob,

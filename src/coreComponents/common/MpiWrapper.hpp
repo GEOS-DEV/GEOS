@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2018, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 /**
  * @file MpiWrapper.hpp
@@ -706,15 +702,18 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
 template< typename T >
 int MpiWrapper::allReduce( T const * const sendbuf,
                            T * const recvbuf,
-                           int count,
+                           int const count,
                            MPI_Op MPI_PARAM( op ),
                            MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   MPI_Datatype const MPI_TYPE = getMpiType< T >();
-  return MPI_Allreduce( sendbuf, recvbuf, count, MPI_TYPE, op, comm );
+  return MPI_Allreduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, MPI_TYPE, op, comm );
 #else
-  memcpy( recvbuf, sendbuf, count*sizeof(T) );
+  if( sendbuf != recvbuf )
+  {
+    memcpy( recvbuf, sendbuf, count * sizeof( T ) );
+  }
   return 0;
 #endif
 }

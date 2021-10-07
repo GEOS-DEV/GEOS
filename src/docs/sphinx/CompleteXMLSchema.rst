@@ -155,18 +155,25 @@ Element: CompressibleSinglePhaseFluid
 .. include:: ../../coreComponents/schema/docs/CompressibleSinglePhaseFluid.rst
 
 
-.. _XML_CompressibleSolidPressurePorosityCarmanKozenyPermeability:
+.. _XML_CompressibleSolidCarmanKozenyPermeability:
 
-Element: CompressibleSolidPressurePorosityCarmanKozenyPermeability
-==================================================================
-.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityCarmanKozenyPermeability.rst
+Element: CompressibleSolidCarmanKozenyPermeability
+==================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidCarmanKozenyPermeability.rst
 
 
-.. _XML_CompressibleSolidPressurePorosityConstantPermeability:
+.. _XML_CompressibleSolidConstantPermeability:
 
-Element: CompressibleSolidPressurePorosityConstantPermeability
-==============================================================
-.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityConstantPermeability.rst
+Element: CompressibleSolidConstantPermeability
+==============================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability.rst
+
+
+.. _XML_CompressibleSolidParallelPlatesPermeability:
+
+Element: CompressibleSolidParallelPlatesPermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability.rst
 
 
 .. _XML_ConstantPermeability:
@@ -232,6 +239,13 @@ Element: DeadOilFluid
 .. include:: ../../coreComponents/schema/docs/DeadOilFluid.rst
 
 
+.. _XML_DelftEgg:
+
+Element: DelftEgg
+=================
+.. include:: ../../coreComponents/schema/docs/DelftEgg.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -251,6 +265,20 @@ Element: DruckerPrager
 Element: ElasticIsotropic
 =========================
 .. include:: ../../coreComponents/schema/docs/ElasticIsotropic.rst
+
+
+.. _XML_ElasticIsotropicPressureDependent:
+
+Element: ElasticIsotropicPressureDependent
+==========================================
+.. include:: ../../coreComponents/schema/docs/ElasticIsotropicPressureDependent.rst
+
+
+.. _XML_ElasticOrthotropic:
+
+Element: ElasticOrthotropic
+===========================
+.. include:: ../../coreComponents/schema/docs/ElasticOrthotropic.rst
 
 
 .. _XML_ElasticTransverseIsotropic:
@@ -435,6 +463,13 @@ Element: Mesh
 .. include:: ../../coreComponents/schema/docs/Mesh.rst
 
 
+.. _XML_ModifiedCamClay:
+
+Element: ModifiedCamClay
+========================
+.. include:: ../../coreComponents/schema/docs/ModifiedCamClay.rst
+
+
 .. _XML_MultiphasePoromechanics:
 
 Element: MultiphasePoromechanics
@@ -547,41 +582,6 @@ Element: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
 
 
-.. _XML_PoreVolumeCompressibleSolid:
-
-Element: PoreVolumeCompressibleSolid
-====================================
-.. include:: ../../coreComponents/schema/docs/PoreVolumeCompressibleSolid.rst
-
-
-.. _XML_PoroDruckerPrager:
-
-Element: PoroDruckerPrager
-==========================
-.. include:: ../../coreComponents/schema/docs/PoroDruckerPrager.rst
-
-
-.. _XML_PoroElasticIsotropic:
-
-Element: PoroElasticIsotropic
-=============================
-.. include:: ../../coreComponents/schema/docs/PoroElasticIsotropic.rst
-
-
-.. _XML_PoroElasticTransverseIsotropic:
-
-Element: PoroElasticTransverseIsotropic
-=======================================
-.. include:: ../../coreComponents/schema/docs/PoroElasticTransverseIsotropic.rst
-
-
-.. _XML_PoroExtendedDruckerPrager:
-
-Element: PoroExtendedDruckerPrager
-==================================
-.. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager.rst
-
-
 .. _XML_PorousDruckerPrager:
 
 Element: PorousDruckerPrager
@@ -594,6 +594,13 @@ Element: PorousDruckerPrager
 Element: PorousElasticIsotropic
 ===============================
 .. include:: ../../coreComponents/schema/docs/PorousElasticIsotropic.rst
+
+
+.. _XML_PorousElasticOrthotropic:
+
+Element: PorousElasticOrthotropic
+=================================
+.. include:: ../../coreComponents/schema/docs/PorousElasticOrthotropic.rst
 
 
 .. _XML_PorousElasticTransverseIsotropic:
@@ -624,11 +631,32 @@ Element: Problem
 .. include:: ../../coreComponents/schema/docs/Problem.rst
 
 
+.. _XML_ProppantPermeability:
+
+Element: ProppantPermeability
+=============================
+.. include:: ../../coreComponents/schema/docs/ProppantPermeability.rst
+
+
+.. _XML_ProppantPorosity:
+
+Element: ProppantPorosity
+=========================
+.. include:: ../../coreComponents/schema/docs/ProppantPorosity.rst
+
+
 .. _XML_ProppantSlurryFluid:
 
 Element: ProppantSlurryFluid
 ============================
 .. include:: ../../coreComponents/schema/docs/ProppantSlurryFluid.rst
+
+
+.. _XML_ProppantSolidProppantPermeability:
+
+Element: ProppantSolidProppantPermeability
+==========================================
+.. include:: ../../coreComponents/schema/docs/ProppantSolidProppantPermeability.rst
 
 
 .. _XML_ProppantTransport:
@@ -1048,18 +1076,25 @@ Datastructure: CompressibleSinglePhaseFluid
 .. include:: ../../coreComponents/schema/docs/CompressibleSinglePhaseFluid_other.rst
 
 
-.. _DATASTRUCTURE_CompressibleSolidPressurePorosityCarmanKozenyPermeability:
+.. _DATASTRUCTURE_CompressibleSolidCarmanKozenyPermeability:
 
-Datastructure: CompressibleSolidPressurePorosityCarmanKozenyPermeability
-========================================================================
-.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityCarmanKozenyPermeability_other.rst
+Datastructure: CompressibleSolidCarmanKozenyPermeability
+========================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidCarmanKozenyPermeability_other.rst
 
 
-.. _DATASTRUCTURE_CompressibleSolidPressurePorosityConstantPermeability:
+.. _DATASTRUCTURE_CompressibleSolidConstantPermeability:
 
-Datastructure: CompressibleSolidPressurePorosityConstantPermeability
-====================================================================
-.. include:: ../../coreComponents/schema/docs/CompressibleSolidPressurePorosityConstantPermeability_other.rst
+Datastructure: CompressibleSolidConstantPermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability:
+
+Datastructure: CompressibleSolidParallelPlatesPermeability
+==========================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ConstantPermeability:
@@ -1132,6 +1167,13 @@ Datastructure: DeadOilFluid
 .. include:: ../../coreComponents/schema/docs/DeadOilFluid_other.rst
 
 
+.. _DATASTRUCTURE_DelftEgg:
+
+Datastructure: DelftEgg
+=======================
+.. include:: ../../coreComponents/schema/docs/DelftEgg_other.rst
+
+
 .. _DATASTRUCTURE_Dirichlet:
 
 Datastructure: Dirichlet
@@ -1151,6 +1193,20 @@ Datastructure: DruckerPrager
 Datastructure: ElasticIsotropic
 ===============================
 .. include:: ../../coreComponents/schema/docs/ElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticIsotropicPressureDependent:
+
+Datastructure: ElasticIsotropicPressureDependent
+================================================
+.. include:: ../../coreComponents/schema/docs/ElasticIsotropicPressureDependent_other.rst
+
+
+.. _DATASTRUCTURE_ElasticOrthotropic:
+
+Datastructure: ElasticOrthotropic
+=================================
+.. include:: ../../coreComponents/schema/docs/ElasticOrthotropic_other.rst
 
 
 .. _DATASTRUCTURE_ElasticTransverseIsotropic:
@@ -1356,6 +1412,13 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/schema/docs/MeshBodies_other.rst
 
 
+.. _DATASTRUCTURE_ModifiedCamClay:
+
+Datastructure: ModifiedCamClay
+==============================
+.. include:: ../../coreComponents/schema/docs/ModifiedCamClay_other.rst
+
+
 .. _DATASTRUCTURE_MultiphasePoromechanics:
 
 Datastructure: MultiphasePoromechanics
@@ -1468,41 +1531,6 @@ Datastructure: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
 
 
-.. _DATASTRUCTURE_PoreVolumeCompressibleSolid:
-
-Datastructure: PoreVolumeCompressibleSolid
-==========================================
-.. include:: ../../coreComponents/schema/docs/PoreVolumeCompressibleSolid_other.rst
-
-
-.. _DATASTRUCTURE_PoroDruckerPrager:
-
-Datastructure: PoroDruckerPrager
-================================
-.. include:: ../../coreComponents/schema/docs/PoroDruckerPrager_other.rst
-
-
-.. _DATASTRUCTURE_PoroElasticIsotropic:
-
-Datastructure: PoroElasticIsotropic
-===================================
-.. include:: ../../coreComponents/schema/docs/PoroElasticIsotropic_other.rst
-
-
-.. _DATASTRUCTURE_PoroElasticTransverseIsotropic:
-
-Datastructure: PoroElasticTransverseIsotropic
-=============================================
-.. include:: ../../coreComponents/schema/docs/PoroElasticTransverseIsotropic_other.rst
-
-
-.. _DATASTRUCTURE_PoroExtendedDruckerPrager:
-
-Datastructure: PoroExtendedDruckerPrager
-========================================
-.. include:: ../../coreComponents/schema/docs/PoroExtendedDruckerPrager_other.rst
-
-
 .. _DATASTRUCTURE_PorousDruckerPrager:
 
 Datastructure: PorousDruckerPrager
@@ -1515,6 +1543,13 @@ Datastructure: PorousDruckerPrager
 Datastructure: PorousElasticIsotropic
 =====================================
 .. include:: ../../coreComponents/schema/docs/PorousElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PorousElasticOrthotropic:
+
+Datastructure: PorousElasticOrthotropic
+=======================================
+.. include:: ../../coreComponents/schema/docs/PorousElasticOrthotropic_other.rst
 
 
 .. _DATASTRUCTURE_PorousElasticTransverseIsotropic:
@@ -1545,11 +1580,32 @@ Datastructure: Problem
 .. include:: ../../coreComponents/schema/docs/Problem_other.rst
 
 
+.. _DATASTRUCTURE_ProppantPermeability:
+
+Datastructure: ProppantPermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/ProppantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ProppantPorosity:
+
+Datastructure: ProppantPorosity
+===============================
+.. include:: ../../coreComponents/schema/docs/ProppantPorosity_other.rst
+
+
 .. _DATASTRUCTURE_ProppantSlurryFluid:
 
 Datastructure: ProppantSlurryFluid
 ==================================
 .. include:: ../../coreComponents/schema/docs/ProppantSlurryFluid_other.rst
+
+
+.. _DATASTRUCTURE_ProppantSolidProppantPermeability:
+
+Datastructure: ProppantSolidProppantPermeability
+================================================
+.. include:: ../../coreComponents/schema/docs/ProppantSolidProppantPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ProppantTransport:

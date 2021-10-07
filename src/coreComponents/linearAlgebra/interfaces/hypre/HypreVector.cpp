@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -164,6 +164,9 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
   HYPRE_BigInt const jlower = MpiWrapper::prefixSum< HYPRE_BigInt >( localSize, comm );
   HYPRE_BigInt const jupper = jlower + localSize - 1;
 
+  // In case the vector was already created, we reset it to prevent any memory leak...
+  reset();
+  // ... then we can continue with the standard creation process.
   initialize( comm, jlower, jupper, m_ij_vector );
   finalize( m_ij_vector, m_par_vector );
 
@@ -406,33 +409,32 @@ void HypreVector::print( std::ostream & os ) const
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  int const this_mpi_process = MpiWrapper::commRank( getComm() );
-  int const n_mpi_process = MpiWrapper::commSize( getComm() );
+  int const myRank = MpiWrapper::commRank( getComm() );
+  int const numProcs = MpiWrapper::commSize( getComm() );
   char str[77];
 
-  if( this_mpi_process == 0 )
+  constexpr char const lineFormat[] = "{:>11}{:>18}{:>28.16e}\n";
+  constexpr char const headFormat[] = "{:>11}{:>18}{:>28}\n";
+
+  if( myRank == 0 )
   {
-    os << "MPI_Process         GlobalRowID         GlobalColID                   Value" << std::endl;
+    GEOSX_FMT_TO( str, sizeof( str ), headFormat, "MPI_Process", "GlobalRowID", "Value" );
+    os << str;
   }
 
-  for( int iRank = 0; iRank < n_mpi_process; iRank++ )
+  for( int rank = 0; rank < numProcs; ++rank )
   {
     MpiWrapper::barrier( getComm() );
-    if( iRank == this_mpi_process )
+    if( rank == myRank )
     {
       real64 const * const local_data = extractLocalVector();
       globalIndex const firstRowID = ilower();
       for( localIndex i = 0; i < localSize(); ++i )
       {
-        sprintf( str,
-#if defined(GEOSX_USE_HYPRE_CUDA)
-                 "%i%20i%24.10e\n",
-#else
-                 "%i%20lli%24.10e\n",
-#endif
-                 iRank,
-                 firstRowID + LvArray::integerConversion< globalIndex >( i ),
-                 local_data[i] );
+        GEOSX_FMT_TO( str, sizeof( str ), lineFormat,
+                      rank,
+                      firstRowID + i,
+                      local_data[i] );
         os << str;
       }
     }

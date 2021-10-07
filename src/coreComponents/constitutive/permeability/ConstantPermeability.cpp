@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -36,15 +36,11 @@ ConstantPermeability::ConstantPermeability( string const & name, Group * const p
     setDescription( "xx, yy and zz components of a diagonal permeability tensor." );
 }
 
-ConstantPermeability::~ConstantPermeability() = default;
-
 std::unique_ptr< ConstitutiveBase >
 ConstantPermeability::deliverClone( string const & name,
                                     Group * const parent ) const
 {
-  std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
-
-  return clone;
+  return PermeabilityBase::deliverClone( name, parent );
 }
 
 void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & parent,
@@ -52,14 +48,16 @@ void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & par
 {
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  for( localIndex ei=0; ei < parent.size(); ei++ )
+  for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
-//    for( localIndex q=0; q < numConstitutivePointsPerParentIndex; q++ )
-//    {
-    m_permeability[ei][0] =  m_permeabilityComponents[0];
-    m_permeability[ei][1] =  m_permeabilityComponents[1];
-    m_permeability[ei][2] =  m_permeabilityComponents[2];
-//    }
+    // NOTE: enforcing 1 quadrature point
+    //for( localIndex q = 0; q < numConstitutivePointsPerParentIndex; ++q )
+    for( localIndex q = 0; q < 1; ++q )
+    {
+      m_permeability[ei][q][0] =  m_permeabilityComponents[0];
+      m_permeability[ei][q][1] =  m_permeabilityComponents[1];
+      m_permeability[ei][q][2] =  m_permeabilityComponents[2];
+    }
   }
 }
 

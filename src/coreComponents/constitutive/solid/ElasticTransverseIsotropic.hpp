@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -144,8 +144,7 @@ public:
   // miscellaneous getters
 
   GEOSX_HOST_DEVICE
-  virtual void getElasticStiffness( localIndex const k, real64 ( &stiffness )[6][6] ) const override final;
-
+  virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override final;
 
 private:
 
@@ -165,12 +164,13 @@ private:
   arrayView1d< real64 const > const m_c66;
 };
 
-
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::getElasticStiffness( localIndex const k,
+                                                             localIndex const q,
                                                              real64 ( & stiffness )[6][6] ) const
 {
+  GEOSX_UNUSED_VAR( q );
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
   stiffness[0][0] = m_c11[k];
@@ -208,7 +208,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( loc
   stress[5] = m_c66[k]*totalStrain[5];
 }
 
-
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
@@ -218,9 +217,8 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
                                                                   real64 ( & stiffness )[6][6] ) const
 {
   smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
-  getElasticStiffness( k, stiffness );
+  getElasticStiffness( k, q, stiffness );
 }
-
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -238,7 +236,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate( localIndex con
   stiffness.m_c66 = m_c66[k];
 }
 
-
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
@@ -251,7 +248,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   saveStress( k, q, stress );                                           // m_newStress = stress
 }
 
-
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
@@ -261,9 +257,8 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                            real64 ( & stiffness )[6][6] ) const
 {
   smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
-  getElasticStiffness( k, stiffness );
+  getElasticStiffness( k, q, stiffness );
 }
-
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -280,7 +275,6 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate( localIndex const k,
   stiffness.m_c44 = m_c44[k];
   stiffness.m_c66 = m_c66[k];
 }
-
 
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
@@ -299,7 +293,6 @@ void ElasticTransverseIsotropicUpdates::hypoUpdate( localIndex const k,
   GEOSX_UNUSED_VAR( stiffness );
   GEOSX_ERROR( "hypoUpdate() disabled for anisotropic models when using Hughes-Winget integration" );
 }
-
 
 /**
  * @class ElasticTransverseIsotropic
@@ -346,11 +339,11 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    /// string/key for transverse youngs modulus
-    static constexpr char const * defaultYoungsModulusTransverseString() { return "defaultYoungsModulusTransverse"; }
+    /// string/key for transverse Young's modulus
+    static constexpr char const * defaultYoungModulusTransverseString() { return "defaultYoungModulusTransverse"; }
 
     /// string/key for axial Young's modulus
-    static constexpr char const * defaultYoungsModulusAxialString() { return "defaultYoungsModulusAxial"; }
+    static constexpr char const * defaultYoungModulusAxialString() { return "defaultYoungModulusAxial"; }
 
     /// string/key for transverse Poisson's Ratio
     static constexpr char const * defaultPoissonRatioTransverseString() { return "defaultPoissonRatioTransverse"; }
@@ -360,6 +353,21 @@ public:
 
     /// string/key for transverse shear modulus
     static constexpr char const * defaultShearModulusAxialTransverseString() { return "defaultShearModulusAxialTransverse"; }
+
+    /// string/key for default c11 component of Voigt stiffness tensor
+    static constexpr char const * defaultC11String() { return "defaultC11"; };
+
+    /// string/key for default c13 component of Voigt stiffness tensor
+    static constexpr char const * defaultC13String() { return "defaultC13"; };
+
+    /// string/key for default c33 component of Voigt stiffness tensor
+    static constexpr char const * defaultC33String() { return "defaultC33"; };
+
+    /// string/key for default c44 component of Voigt stiffness tensor
+    static constexpr char const * defaultC44String() { return "defaultC44"; };
+
+    /// string/key for default c66 component of Voigt stiffness tensor
+    static constexpr char const * defaultC66String() { return "defaultC66"; };
 
     /// string/key for c11 component of Voigt stiffness tensor
     static constexpr char const * c11String() { return "c11"; }
@@ -381,65 +389,63 @@ public:
    * @brief Getter for default transverse Young's modulus
    * @return The value of the default transverse Young's modulus.
    */
-  real64 getDefaultYoungsModulusTransverse()
+  real64 getDefaultYoungModulusTransverse() const
   {
-    return m_defaultYoungsModulusTransverse;
+    return m_defaultYoungModulusTransverse;
   }
 
   /**
    * @brief Setter for the default transverse Young's modulus.
    * @param[in] input New value for the default transverse Young's modulus
    */
-  void setDefaultYoungsModulusTransverse( real64 const input )
+  void setDefaultYoungModulusTransverse( real64 const input )
   {
-    m_defaultYoungsModulusTransverse = input;
+    m_defaultYoungModulusTransverse = input;
   }
 
   /**
    * @brief Getter for default axial Young's modulus
    * @return The value of the default axial Young's modulus.
    */
-  real64 getDefaultYoungsModulusAxial()
+  real64 getDefaultYoungModulusAxial() const
   {
-    return m_defaultYoungsModulusAxial;
+    return m_defaultYoungModulusAxial;
   }
 
   /**
    * @brief Setter for the default axial Young's modulus.
    * @param[in] input New value for the default axial Young's modulus
    */
-  void setDefaultYoungsModulusAxial( real64 const input )
+  void setDefaultYoungModulusAxial( real64 const input )
   {
-    m_defaultYoungsModulusAxial = input;
+    m_defaultYoungModulusAxial = input;
   }
-
 
   /**
    * @brief Getter for default transverse Poisson's ratio
    * @return The value of the default transverse Poisson's ratio.
    */
-  real64 getDefaultPoissonsRatioTransverse()
+  real64 getDefaultPoissonRatioTransverse() const
   {
-    return m_defaultPoissonTransverse;
+    return m_defaultPoissonRatioTransverse;
   }
 
   /**
    * @brief Setter for the default transverse Poisson's ratio.
    * @param[in] input New value for the default transverse Poisson's ratio
    */
-  void setDefaultPoissonsRatioTransverse( real64 const input )
+  void setDefaultPoissonRatioTransverse( real64 const input )
   {
-    m_defaultPoissonTransverse = input;
+    m_defaultPoissonRatioTransverse = input;
   }
-
 
   /**
    * @brief Getter for default axial Poisson's ratio
    * @return The value of the default axial/transverse Poisson's modulus.
    */
-  real64 getDefaultPoissonsRatioAxialTransverse()
+  real64 getDefaultPoissonRatioAxialTransverse() const
   {
-    return m_defaultPoissonAxialTransverse;
+    return m_defaultPoissonRatioAxialTransverse;
   }
 
   /**
@@ -447,17 +453,16 @@ public:
    * @param[in] input New value for the default axial/transverse Poisson's
    *             modulus
    */
-  void setDefaultPoissonsRatioAxialTransverse( real64 const input )
+  void setDefaultPoissonRatioAxialTransverse( real64 const input )
   {
-    m_defaultPoissonAxialTransverse = input;
+    m_defaultPoissonRatioAxialTransverse = input;
   }
-
 
   /**
    * @brief Getter for default axial/transverse Shear modulus
    * @return The value of the default axial/transverse Shear modulus.
    */
-  real64 getDefaultShearModulusAxialTransverse()
+  real64 getDefaultShearModulusAxialTransverse() const
   {
     return m_defaultShearModulusAxialTransverse;
   }
@@ -482,7 +487,6 @@ public:
    * @return reference to mutable 11 component of Voigt stiffness tensor.
    */
   arrayView1d< real64 > getC11() { return m_c11; }
-
 
   /**
    * @brief Const-Getter for 13 component of Voigt stiffness tensor.
@@ -570,25 +574,24 @@ public:
                           m_oldStress );
   }
 
-
 protected:
   virtual void postProcessInput() override;
 
   /// The default value of the transverse Young's modulus for any new
   /// allocations.
-  real64 m_defaultYoungsModulusTransverse;
+  real64 m_defaultYoungModulusTransverse;
 
   /// The default value of the axial Young's modulus for any new
   /// allocations.
-  real64 m_defaultYoungsModulusAxial;
+  real64 m_defaultYoungModulusAxial;
 
   /// The default value of the transverse Poisson's ratio for any new
   /// allocations.
-  real64 m_defaultPoissonTransverse;
+  real64 m_defaultPoissonRatioTransverse;
 
   /// The default value of the axial/transverse Poisson's ratio for any new
   /// allocations.
-  real64 m_defaultPoissonAxialTransverse;
+  real64 m_defaultPoissonRatioAxialTransverse;
 
   /// The default value of the axial/transverse Shear modulus for any new
   /// allocations.

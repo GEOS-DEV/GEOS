@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -28,8 +28,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/contact/ContactBase.hpp"
 #include "constitutive/NullModel.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
@@ -347,44 +346,27 @@ void SiloFile::waitForBatonWrite( int const domainNumber,
   MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
 #endif
   int const groupRank = PMPIO_GroupRank( m_baton, rank );
-  char fileName[200] = { 0 };
-  char baseFileName[200] = { 0 };
-  char dirName[200] = { 0 };
-
-
 
   if( isRestart )
   {
     // The integrated test repo does not use the eventProgress indicator, so skip it for now
-    sprintf( baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum );
-    sprintf( fileName, "%s%s%s_%06d.%03d",
-             m_siloDataSubDirectory.c_str(), "/", m_restartFileRoot.c_str(), cycleNum, groupRank );
+    m_baseFileName = GEOSX_FMT( "{}_{:06}", m_restartFileRoot, cycleNum );
+    m_fileName = GEOSX_FMT( "{}_{:06}.{:03}", m_restartFileRoot, cycleNum, groupRank );
   }
   else
   {
-    sprintf( baseFileName, "%s_%06d%02d",
-             m_plotFileRoot.c_str(),
-             cycleNum,
-             eventCounter );
-
-    sprintf( fileName,
-             "%s_%06d%02d.%03d",
-             m_plotFileRoot.c_str(),
-             cycleNum,
-             eventCounter,
-             groupRank );
+    m_baseFileName = GEOSX_FMT( "{}_{:06}{:02}", m_plotFileRoot, cycleNum, eventCounter );
+    m_fileName = GEOSX_FMT( "{}_{:06}{:02}.{:03}", m_plotFileRoot.c_str(), cycleNum, eventCounter, groupRank );
   }
-  sprintf( dirName, "domain_%05d", domainNumber );
+  string const dirName = GEOSX_FMT( "domain_{:05}", domainNumber );
 
-  string const dataFilePathAndName = joinPath( m_siloDirectory, m_siloDataSubDirectory, fileName );
-  m_dbFilePtr = static_cast< DBfile * >( PMPIO_WaitForBaton( m_baton, dataFilePathAndName.c_str(), dirName ) );
-
-  m_fileName = fileName;
-  m_baseFileName = baseFileName;
+  string const dataFileFullPath = joinPath( m_siloDirectory, m_siloDataSubDirectory, m_fileName );
+  m_dbFilePtr = static_cast< DBfile * >( PMPIO_WaitForBaton( m_baton, dataFileFullPath.c_str(), dirName.c_str() ) );
 
   if( rank==0 )
   {
-    m_dbBaseFilePtr = DBCreate( (m_siloDirectory + "/"+ m_baseFileName).c_str(), DB_CLOBBER, DB_LOCAL, nullptr, DB_HDF5 );
+    string const baseFileFullPath = joinPath( m_siloDirectory, m_baseFileName );
+    m_dbBaseFilePtr = DBCreate( baseFileFullPath.c_str(), DB_CLOBBER, DB_LOCAL, nullptr, DB_HDF5 );
 //    m_dbBaseFilePtr = DBOpen( m_baseFileName.c_str(), DB_HDF5, DB_APPEND );
   }
 }
@@ -398,33 +380,27 @@ void SiloFile::waitForBaton( int const domainNumber, string const & restartFileN
   MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
 #endif
   int const groupRank = PMPIO_GroupRank( m_baton, rank );
-  char fileName[200] = { 0 };
-  char baseFileName[200] = { 0 };
-  char dirName[200] = { 0 };
 
-
-  sprintf( baseFileName, "%s", restartFileName.c_str());
+  m_baseFileName = restartFileName;
   if( groupRank == 0 )
-    sprintf( fileName, "%s", restartFileName.c_str());
+  {
+    m_fileName = restartFileName;
+  }
   else
   {
-    if( m_siloDirectory.empty())
+    if( m_siloDirectory.empty() )
     {
-      sprintf( fileName, "%s.%03d", restartFileName.c_str(), groupRank );
+      m_fileName = GEOSX_FMT( "{}.{:03}", restartFileName, groupRank );
     }
     else
     {
-      sprintf( fileName, "%s%s%s.%03d", m_siloDirectory.c_str(), "/", restartFileName.c_str(), groupRank );
+      m_fileName = GEOSX_FMT( "{}/{}.{:03}", m_siloDirectory, restartFileName, groupRank );
     }
-
   }
 
-  sprintf( dirName, "domain_%05d", domainNumber );
+  string const dirName = GEOSX_FMT( "domain_{:05}", domainNumber );
 
-  m_dbFilePtr = (DBfile *) PMPIO_WaitForBaton( m_baton, fileName, dirName );
-
-  m_fileName = fileName;
-  m_baseFileName = baseFileName;
+  m_dbFilePtr = (DBfile *) PMPIO_WaitForBaton( m_baton, m_fileName.c_str(), dirName.c_str() );
 }
 /**
  *
@@ -842,7 +818,6 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
 
       array1d< string > vBlockNames( size );
       std::vector< char * > BlockNames( size );
-      char tempBuffer[1024];
       char currentDirectory[256];
 
       DBGetDir( m_dbBaseFilePtr, currentDirectory );
@@ -853,16 +828,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
         int groupRank = PMPIO_GroupRank( m_baton, i );
 
         /* this mesh block is another file */
-        sprintf( tempBuffer,
-                 "%s%s%s.%03d:/domain_%05d/%s",
-                 m_siloDataSubDirectory.c_str(),
-                 "/",
-                 m_baseFileName.c_str(),
-                 groupRank,
-                 i,
-                 name.c_str() );
-
-        vBlockNames[i] = tempBuffer;
+        vBlockNames[i] = GEOSX_FMT( "{}/{}.{:03}:/domain_{:05}/{}", m_siloDataSubDirectory, m_baseFileName, groupRank, i, name );
         BlockNames[i] = const_cast< char * >( vBlockNames[i].c_str() );
       }
 
@@ -1465,13 +1431,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
 
     string_array
       regionSolidMaterialList = elementRegion.getConstitutiveNames< constitutive::SolidBase >();
-    string_array const
-    regionSolidMaterialList2 = elementRegion.getConstitutiveNames< constitutive::PoreVolumeCompressibleSolid >();
 
-    for( string const & entry : regionSolidMaterialList2 )
-    {
-      regionSolidMaterialList.emplace_back( entry );
-    }
     localIndex const numSolids = regionSolidMaterialList.size();
 
     string_array regionFluidMaterialList = elementRegion.getConstitutiveNames< constitutive::SingleFluidBase >();
@@ -1484,7 +1444,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     localIndex const numFluids = regionFluidMaterialList.size();
 
     string_array
-      fractureContactMaterialList = elementRegion.getConstitutiveNames< constitutive::ContactRelationBase >();
+      fractureContactMaterialList = elementRegion.getConstitutiveNames< constitutive::ContactBase >();
 
     localIndex const numContacts = fractureContactMaterialList.size();
 
@@ -2125,7 +2085,6 @@ void SiloFile::writeMultiXXXX( const DBObjectType type,
   string_array vBlockNames( size );
   array1d< char * > BlockNames( size );
   array1d< int > blockTypes( size );
-  char tempBuffer[1024];
   char currentDirectory[256];
 
   DBGetDir( m_dbBaseFilePtr, currentDirectory );
@@ -2140,18 +2099,7 @@ void SiloFile::writeMultiXXXX( const DBObjectType type,
 
   for( int i = 0; i < size; ++i )
   {
-
-    sprintf( tempBuffer,
-             "%s%s%s.%03d:/domain_%05d%s/%s",
-             m_siloDataSubDirectory.c_str(),
-             "/",
-             m_baseFileName.c_str(),
-             groupRank( i ),
-             i,
-             multiRootString.c_str(),
-             name.c_str());
-
-    vBlockNames[i] = tempBuffer;
+    vBlockNames[i] = GEOSX_FMT( "{}/{}.{:03}:/domain_{:05}{}/{}", m_siloDataSubDirectory, m_baseFileName, groupRank( i ), i, multiRootString, name );
     BlockNames[i] = const_cast< char * >( vBlockNames[i].c_str() );
     blockTypes[i] = type;
   }

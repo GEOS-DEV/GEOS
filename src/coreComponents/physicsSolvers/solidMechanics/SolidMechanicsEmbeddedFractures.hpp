@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -94,7 +94,7 @@ public:
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
-  void updateState( DomainPartition & domain );
+  virtual void updateState( DomainPartition & domain ) override;
 
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,

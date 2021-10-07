@@ -6,14 +6,14 @@
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 50, 100 }"
-      yCoords="{ -50, 0, 50}"
+      yCoords="{ -50, 0, 50 }"
       zCoords="{ 0, 50, 100 }"
       nx="{ 25, 10 }"
       ny="{ 10, 10 }"
       nz="{ 25, 10 }"
-      xBias="{0.0, -0.6}"
-      yBias="{0.6, -0.6}"
-      zBias="{0.0, -0.6}"
+      xBias="{ 0.0, -0.6 }"
+      yBias="{ 0.6, -0.6 }"
+      zBias="{ 0.0, -0.6 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -24,15 +24,16 @@
       logLevel="1"
       contactRelationName="fractureContact"
       fluidSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       discretization="FE1"
-      targetRegions="{Region2, Fracture}">
+      targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="50"
         lineSearchMaxCuts="10"
         newtonTol="1.0e-5"/>
       <LinearSolverParameters
-        logLevel="0"
         solverType="gmres"
         preconditionerType="amg"/>
     </Hydrofracture>
@@ -41,15 +42,12 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       name="lagsolve"
-      logLevel="0"
       contactRelationName="fractureContact"
-      solidMaterialNames="{rock}"
-      targetRegions="{Region2, Fracture}">
+      solidMaterialNames="{ rock }"
+      targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
-        newtonMaxIter="5"
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
-        logLevel="0"
         krylovTol="1.0e-10"
         solverType="gmres"/>
     </SolidMechanicsLagrangianSSLE>
@@ -57,26 +55,21 @@
     <SinglePhaseFVM
       discretization="singlePhaseTPFA"
       name="SinglePhaseFlow"
-      solidNames="{rock}"
-      permeabilityNames="{fracPerm}"
-      logLevel="0"
-      fluidNames="{water}"
-      meanPermCoeff="0.8"
-      targetRegions="{Fracture}">
+      solidNames="{ rock }"
+      permeabilityNames="{ fracturePerm }"
+      fluidNames="{ water }"
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="10"
         newtonTol="1.0e-5"/>
       <LinearSolverParameters
-        logLevel="0"
         krylovTol="1.0e-12"
         solverType="gmres"/>
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Domain }"
       solidMaterialNames="{ rock }"
       rockToughness="1e6"
       nodeBasedSIF="1"
@@ -85,14 +78,14 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region2"
+      name="Domain"
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fracPerm }"/>
+      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -101,31 +94,38 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-12"
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
-    <PoroElasticIsotropic
+    <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"
-      defaultShearModulus="12.0e9"
-      BiotCoefficient="1"
-      compressibility="1.6155088853e-18"
-      referencePressure="2.125e6"/>
+      defaultShearModulus="12.0e9"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="1.0e0">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 0.002e-3, 0.02e-3 }"/>
-    </Contact>
-    
+      penaltyStiffness="1.0e0"
+      apertureTableName="apertureTable"/>
+
     <ParallelPlatesPermeability
-      name="fracPerm"/> 
+      name="fracturePerm"/>
   </Constitutive>
 
   <Outputs>
@@ -143,19 +143,29 @@
   </Outputs>
 
   <Geometry>
-    <Box name="source"
-         xMin="{-0.1, -0.1, -0.1}"
-         xMax="{2.1, 0.1, 2.1}"/>
+    <Box
+      name="source"
+      xMin="{ -0.1, -0.1, -0.1 }"
+      xMax="{ 2.1, 0.1, 2.1 }"/>
 
-    <Box name="perf"
-         xMin="{-4.1, -0.1, -4.1}"
-         xMax="{4.1, 0.1, 4.1}"/>
+    <Box
+      name="perf"
+      xMin="{ -4.1, -0.1, -4.1 }"
+      xMax="{ 4.1, 0.1, 4.1 }"/>
 
-    <ThickPlane name="fracturable"
-                normal="{0, 1, 0}"
-                origin="{0, 0, 0}"
-                thickness="0.1"/>
+    <ThickPlane
+      name="fracturable"
+      normal="{ 0, 1, 0 }"
+      origin="{ 0, 0, 0 }"
+      thickness="0.1"/>
   </Geometry>
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>
+  </Functions>
 
   <Events
     maxTime="200.0">
@@ -185,7 +195,7 @@
     <PeriodicEvent
       name="python"
       cycleFrequency="5"
-      target="/Outputs/pythonOutput"/>  
+      target="/Outputs/pythonOutput"/>
   </Events>
 
   <NumericalMethods>
@@ -200,7 +210,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{fracPerm}"/>
+        meanPermCoefficient="0.8"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -213,19 +223,21 @@
       fieldName="water_density"
       scale="1000"/>
 
-    <FieldSpecification name="frac"
-                        fieldName="ruptureState"
-                        initialCondition="1"
-                        objectPath="faceManager"
-                        scale="1"
-                        setNames="{perf}"/>
+    <FieldSpecification
+      name="frac"
+      fieldName="ruptureState"
+      initialCondition="1"
+      objectPath="faceManager"
+      scale="1"
+      setNames="{ perf }"/>
 
-    <FieldSpecification name="separableFace"
-                        fieldName="isFaceSeparable"
-                        initialCondition="1"
-                        objectPath="faceManager"
-                        scale="1"
-                        setNames="{fracturable}"/>
+    <FieldSpecification
+      name="separableFace"
+      fieldName="isFaceSeparable"
+      initialCondition="1"
+      objectPath="faceManager"
+      scale="1"
+      setNames="{ fracturable }"/>
 
     <FieldSpecification
       name="xconstraint"
@@ -257,6 +269,4 @@
       scale="-1.0"
       setNames="{ source }"/>
   </FieldSpecifications>
-
-  <Functions/>
 </Problem>

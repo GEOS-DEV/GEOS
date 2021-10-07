@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,6 +19,7 @@
 #ifndef GEOSX_CODINGUTILITIES_UTILITIES_H_
 #define GEOSX_CODINGUTILITIES_UTILITIES_H_
 
+#include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "LvArray/src/limits.hpp"
 
@@ -117,6 +118,46 @@ T_VALUE softMapLookup( mapBase< T_KEY, T_VALUE, SORTED > const & theMap,
   return rvalue;
 }
 
+/**
+ * @brief Perform lookup in a map of options and throw a user-friendly exception if not found.
+ * @tparam KEY map key type
+ * @tparam VAL map value type
+ * @tparam SORTED whether map is ordered or unordered
+ * @param map the option map
+ * @param option the lookep key
+ * @param optionName name of the option to use in exception error message
+ * @param contextName name of the lookup context (e.g. the data repository group)
+ */
+template< typename KEY, typename VAL, typename SORTED >
+VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
+                KEY const & option,
+                string const & optionName,
+                string const & contextName )
+{
+  auto const iter = map.find( option );
+  GEOSX_THROW_IF( iter == map.end(),
+                  GEOSX_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
+                             contextName, option, optionName, stringutilities::join( mapKeys( map ), ", " ) ),
+                  InputError );
+  return iter->second;
+}
+
+/**
+ * @brief Construct a vector of map keys.
+ * @tparam KEY map key type
+ * @tparam VAL map value type
+ * @tparam SORTED whether map is ordered or unordered
+ * @param map the map
+ * @return a vector of keys
+ */
+template< typename KEY, typename VAL, typename SORTED >
+std::vector< KEY > mapKeys( mapBase< KEY, VAL, SORTED > const & map )
+{
+  std::vector< KEY > keys;
+  std::transform( map.begin(), map.end(), std::back_inserter( keys ), [=]( auto const & p ){ return p.first; } );
+  return keys;
+}
+
 // The code below should work with any subscriptable vector/matrix types
 
 template< typename VEC1, typename VEC2 >
@@ -160,6 +201,7 @@ void applyChainRuleInPlace( localIndex const N,
   applyChainRule( N, dy_dx, df_dxy, work );
   copy( N, work, df_dxy );
 }
+
 
 } // namespace geosx
 

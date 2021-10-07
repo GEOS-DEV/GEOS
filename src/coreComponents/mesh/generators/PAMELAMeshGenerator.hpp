@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,25 +19,22 @@
 #ifndef GEOSX_MESH_GENERATORS_PAMELAMESHGENERATOR_HPP
 #define GEOSX_MESH_GENERATORS_PAMELAMESHGENERATOR_HPP
 
-#include "dataRepository/Group.hpp"
-#include "codingUtilities/Utilities.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "mesh/generators/MeshGeneratorBase.hpp"
 
-//This is an include of PAMELA
-#include "Mesh/Mesh.hpp"
-#include "MeshDataWriters/Writer.hpp"
-
-#include "MeshGeneratorBase.hpp"
+namespace PAMELA
+{
+/// Forward declare Mesh class for unique_ptr member
+class Mesh;
+}
 
 namespace geosx
 {
-
 
 /**
  *  @class PAMELAMeshGenerator
  *  @brief The PAMELAMeshGenerator class provides a class implementation of PAMELA generated meshes.
  */
-class PAMELAMeshGenerator : public MeshGeneratorBase
+class PAMELAMeshGenerator final : public MeshGeneratorBase
 {
 public:
 /**
@@ -47,8 +44,6 @@ public:
  */
   PAMELAMeshGenerator( const string & name,
                        Group * const parent );
-
-  virtual ~PAMELAMeshGenerator() override;
 
 /**
  * @brief Return the name of the PAMELAMeshGenerator in object Catalog.
@@ -77,19 +72,23 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
+  virtual void importFields( DomainPartition & domain ) const override;
+
+  virtual void freeResources() override;
+
 protected:
 
   /**
    * @brief This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  void postProcessInput() override final;
+  void postProcessInput() final;
 
 
 private:
 
   /// Unique Pointer to the Mesh in the data structure of PAMELA.
-  std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
+  std::unique_ptr< PAMELA::Mesh > m_pamelaMesh;
 
   /// Names of the fields to be copied from PAMELA to GEOSX data structure
   string_array m_fieldsToImport;
@@ -100,78 +99,14 @@ private:
   /// Scale factor that will be applied to the point coordinates
   real64 m_scale;
 
-  /// String array of the GEOSX user decalred fields
+  /// String array of the GEOSX user declared fields
   string_array m_fieldNamesInGEOSX;
 
   /// z pointing direction flag, 0 (default) is upward, 1 is downward
-  int m_isZReverse;
+  integer m_isZReverse;
 
-  /// Map from PAMELA enumeration element type to string
-  const std::unordered_map< PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash > ElementToLabel
-    =
-    {
-    { PAMELA::ELEMENTS::TYPE::VTK_VERTEX, "VERTEX"},
-    { PAMELA::ELEMENTS::TYPE::VTK_LINE, "LINE"  },
-    { PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE, "TRIANGLE" },
-    { PAMELA::ELEMENTS::TYPE::VTK_QUAD, "QUAD" },
-    { PAMELA::ELEMENTS::TYPE::VTK_TETRA, "TETRA" },
-    { PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON, "HEX" },
-    { PAMELA::ELEMENTS::TYPE::VTK_WEDGE, "WEDGE" },
-    { PAMELA::ELEMENTS::TYPE::VTK_PYRAMID, "PYRAMID" }
-    };
-
-  class DecodePAMELALabels
-  {
-public:
-    /*!
-     * @brief Make a region label which is composed of the name of the region and the type
-     * @details Some examples :
-     * If the region names are not specified in the input mesh file, there will one region per type of cells
-     * such as DEFAULT_TETRA, DEFAULT_HEX etc. Otherwise, if the region names are set it will be RESERVOIR_TETRA;
-     * RESERVOIR_HEX etc
-     * @param[in] regionName the name of the region
-     * @param[in] regionCellType the type of the cells (TETRA, HEX, WEDGE or PYRAMID)
-     * @return the region label
-     */
-    static string makeRegionLabel( string const & regionName, string const & regionCellType )
-    {
-      return regionName + m_separator + regionCellType;
-    }
-
-    /*!
-     * @brief Knowing the PAMELA Surface or Regionc label, return a simple unique name for GEOSX
-     * @details surface labels in PAMELA are composed of different informations such as the index, the type of cells etc)
-     * @param[in] pamelaLabel the surface or region label within PAMELA
-     * @return the name of the surface or the region
-     */
-    static string retrieveSurfaceOrRegionName( string const & pamelaLabel )
-    {
-      string_array const splitLabel = stringutilities::tokenize( pamelaLabel, m_separator );
-
-      // The PAMELA label looks like: PART00002_POLYGON_POLYGON_GROUP_Ovbd1_Ovbd2_14
-      // But we only want to keep Ovbd1_Ovbd2
-      // So we find the word GROUP, and then we keep what is after, except the last piece
-
-      auto it = std::find( std::begin( splitLabel ), std::end( splitLabel ), "GROUP" );
-
-      GEOSX_THROW_IF( it == std::end( splitLabel ),
-                      "GEOSX assumes that PAMELA places the word GROUP before the region/surface name", InputError );
-
-      localIndex const id = std::distance( std::begin( splitLabel ), it );
-      string name = "";
-      for( localIndex i = id+1; i < splitLabel.size()-1; ++i )
-      {
-        name += ( i == id+1 ) ? splitLabel[i] : "_"+splitLabel[i];
-      }
-
-      GEOSX_THROW_IF( name == "",
-                      "Something unexpected happened when converting the PAMELA label into a GEOSX label", InputError );
-
-      return name;
-    }
-private:
-    static string const m_separator;
-  };
+  /// Map of cell block (subregion) names to PAMELA region names
+  std::unordered_map< string, string > m_cellBlockRegions;
 };
 
 }
