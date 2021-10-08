@@ -263,17 +263,17 @@
 	</xsd:complexType>
 	<xsd:complexType name="DirichletType" />
 	<xsd:complexType name="EquilibriumType">
-		<!--component => Component of field (if tensor) to apply boundary condition to-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.-->
 		<xsd:attribute name="component" type="integer" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="string" />
-		<!--initialCondition => BC is applied as an initial condition.-->
+		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationType" />
 	<xsd:complexType name="SourceFluxType" />
 	<xsd:complexType name="TractionType">
-		<!--component => Component of field (if tensor) to apply boundary condition to-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.-->
 		<xsd:attribute name="component" type="integer" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="string" />
@@ -808,6 +808,8 @@
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
 		<!--dPorosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--initialPorosity => (no description available)-->
+		<xsd:attribute name="initialPorosity" type="real64_array2d" />
 		<!--oldPorosity => (no description available)-->
 		<xsd:attribute name="oldPorosity" type="real64_array2d" />
 		<!--porosity => (no description available)-->
@@ -858,6 +860,8 @@
 		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--hydrocarbonPhaseOrder => (no description available)-->
 		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
+		<!--initialTotalMassDensity => (no description available)-->
+		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => (no description available)-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseDensity => (no description available)-->
@@ -952,6 +956,8 @@
 		<xsd:attribute name="dTotalDensity_dPressure" type="real64_array2d" />
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
+		<!--initialTotalMassDensity => (no description available)-->
+		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => (no description available)-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseDensity => (no description available)-->
@@ -1012,6 +1018,8 @@
 		<xsd:attribute name="dTotalDensity_dPressure" type="real64_array2d" />
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
+		<!--initialTotalMassDensity => (no description available)-->
+		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => (no description available)-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseDensity => (no description available)-->
@@ -1034,6 +1042,8 @@
 		<xsd:attribute name="dViscosity_dPressure" type="real64_array2d" />
 		<!--density => (no description available)-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--initialDensity => (no description available)-->
+		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--viscosity => (no description available)-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
@@ -1137,6 +1147,8 @@
 		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--hydrocarbonPhaseOrder => (no description available)-->
 		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
+		<!--initialTotalMassDensity => (no description available)-->
+		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
 		<!--phaseCompFraction => (no description available)-->
 		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
 		<!--phaseDensity => (no description available)-->
@@ -1365,6 +1377,8 @@
 	<xsd:complexType name="PressurePorosityType">
 		<!--dPorosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--initialPorosity => (no description available)-->
+		<xsd:attribute name="initialPorosity" type="real64_array2d" />
 		<!--oldPorosity => (no description available)-->
 		<xsd:attribute name="oldPorosity" type="real64_array2d" />
 		<!--porosity => (no description available)-->
@@ -1387,6 +1401,8 @@
 	<xsd:complexType name="ProppantPorosityType">
 		<!--dPorosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
+		<!--initialPorosity => (no description available)-->
+		<xsd:attribute name="initialPorosity" type="real64_array2d" />
 		<!--oldPorosity => (no description available)-->
 		<xsd:attribute name="oldPorosity" type="real64_array2d" />
 		<!--porosity => (no description available)-->

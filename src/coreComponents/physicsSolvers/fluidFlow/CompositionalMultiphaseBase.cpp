@@ -200,7 +200,6 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
           setRestartFlags( RestartFlags::NO_WRITE );
       }
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::initialTotalMassDensityString() );
       subRegion.registerWrapper< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionOldString() ).
         reference().resizeDimension< 1 >( m_numPhases );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
@@ -543,24 +542,28 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
   } );
 
   // 5. Save initial pressure and total mass density (needed by the poromechanics solvers)
+  //    Specifically, the initial pressure is used to compute a deltaPressure = currentPres - initPres in the total stress
+  //    And the initial total mass density is used to compute a deltaBodyForce
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 const > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
     arrayView1d< real64 > const initPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialPressureString() );
 
-    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
+    MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
     arrayView3d< real64 const, multifluid::USD_PHASE > const phaseMassDens = fluid.phaseMassDensity();
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
-    arrayView1d< real64 > const initTotalMassDens =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialTotalMassDensityString() );
+
+    arrayView2d< real64, multifluid::USD_FLUID > const initTotalMassDens =
+      fluid.getReference< array2d< real64, multifluid::LAYOUT_FLUID > >( MultiFluidBase::viewKeyStruct::initialTotalMassDensityString() );
+
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       initPres[ei] = pres[ei];
-      initTotalMassDens[ei] = 0.0;
+      initTotalMassDens[ei][0] = 0.0;
       for( localIndex ip = 0; ip < numPhase; ++ip )
       {
-        initTotalMassDens[ei] += phaseVolFrac[ei][ip] * phaseMassDens[ei][0][ip];
+        initTotalMassDens[ei][0] += phaseVolFrac[ei][ip] * phaseMassDens[ei][0][ip];
       }
     } );
   } );
@@ -632,12 +635,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
     real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
     localIndex const numPointsInTable = std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1;
 
-    GEOSX_WARNING_IF( (datumElevation > globalMaxElevation[equilIndex])  || (datumElevation < globalMinElevation[equilIndex]),
-                      CompositionalMultiphaseBase::catalogName() << " " << getName()
-                                                                 << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
-                                                                 << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] << "\n"
-                                                                 << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
-                                                                 << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
+    real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
+    GEOSX_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
+                         CompositionalMultiphaseBase::catalogName() << " " << getName()
+                                                                    << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
+                                                                    << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] <<
+                         "\n"
+                                                                    << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
+                                                                    << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
 
     array1d< array1d< real64 > > elevationValues;
     array1d< real64 > pressureValues;
@@ -728,11 +733,12 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                                                                  << "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
                       std::runtime_error );
 
-      GEOSX_WARNING_IF( returnValue == HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
-                        CompositionalMultiphaseBase::catalogName() << " " << getName()
-                                                                   << ": currently, GEOSX assumes single-phase flow when computing the hydrostatic pressure. \n"
-                                                                   << "But, we detected multiple phases using the provided datum pressure, temperature, and component fractions. \n"
-                                                                   << "As a result, the computation of the hydrostatic pressure may be inaccurate!" );
+      GEOSX_LOG_RANK_0_IF( returnValue == HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
+                           CompositionalMultiphaseBase::catalogName() << " " << getName()
+                                                                      << ": currently, GEOSX assumes that there is only one mobile phase when computing the hydrostatic pressure. \n"
+                                                                      << "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n"
+                                                                      << "Please make sure that only one phase is mobile at the beginning of the simulation. \n"
+                                                                      << "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
 
     } );
 

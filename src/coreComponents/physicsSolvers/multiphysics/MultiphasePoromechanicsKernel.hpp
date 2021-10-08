@@ -134,6 +134,8 @@ public:
       m_dFluidPhaseCompFraction_dGlobalCompFraction = fluid.dPhaseCompFraction_dGlobalCompFraction();
 
       m_fluidPhaseMassDensity = fluid.phaseMassDensity();
+      m_initialFluidTotalMassDensity = fluid.initialTotalMassDensity();
+
     }
 
     // extract views into common flow solver data
@@ -149,8 +151,6 @@ public:
     {
       using keys = CompositionalMultiphaseBase::viewKeyStruct;
 
-      m_initialFluidTotalMassDensity =
-        elementSubRegion.template getReference< array1d< real64 > >( keys::initialTotalMassDensityString() );
       m_fluidPhaseDensityOld =
         elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseDensityOldString() );
       m_fluidPhaseCompFracOld =
@@ -306,7 +306,7 @@ public:
 
     real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
     real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
-    real64 const porosityInit = m_constitutiveUpdate.getInitialPorosity( k );
+    real64 const porosityInit = m_constitutiveUpdate.getInitialPorosity( k, q );
 
     // Evaluate body force vector (incremental form wrt initial equilibrium state)
     real64 bodyForce[3] = { m_gravityVector[0],
@@ -323,7 +323,7 @@ public:
       mixtureDensityNew *= porosityNew;
       mixtureDensityNew += ( 1.0 - porosityNew ) * m_solidDensity( k, q );
 
-      real64 mixtureDensityInit = m_initialFluidTotalMassDensity( k ) * porosityInit;
+      real64 mixtureDensityInit = m_initialFluidTotalMassDensity( k, q ) * porosityInit;
       mixtureDensityInit += ( 1.0 - porosityInit ) * m_solidDensity( k, q );
 
       mixtureDensityNew *= detJxW;
@@ -553,7 +553,6 @@ protected:
   /// The rank global density
   arrayView2d< real64 const > m_solidDensity;
 
-  arrayView1d< real64 const > m_initialFluidTotalMassDensity;
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensity;
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseDensityOld;
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_dFluidPhaseDensity_dPressure;
@@ -565,6 +564,8 @@ protected:
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseMassDensity;
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_dFluidPhaseMassDensity_dPressure;
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseMassDensity_dGlobalCompFraction;
+
+  arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > m_initialFluidTotalMassDensity;
 
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturation;
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturationOld;

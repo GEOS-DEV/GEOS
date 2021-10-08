@@ -553,6 +553,7 @@ struct HydrostaticPressureKernel
       if( equilHasConverged )
       {
         // make sure that the fluid is single-phase, other we have to issue a warning (for now)
+        // if only one phase is mobile, we are in good shape (unfortunately it is hard to access relperm from here)
         localIndex numberOfPhases = 0;
         for( localIndex ip = 0; ip < numPhases; ++ip )
         {

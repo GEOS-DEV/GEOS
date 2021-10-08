@@ -289,25 +289,25 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="DirichletType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
-		<!--beginTime => time at which BC will start being applied.-->
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
-		<!--direction => Direction to apply boundary condition to-->
+		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
-		<!--endTime => time at which bc will stop being applied-->
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="string" default="" />
-		<!--functionName => Name of function that specifies variation of the BC-->
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="string" default="" />
-		<!--initialCondition => BC is applied as an initial condition.-->
+		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
-		<!--scale => Scale factor for value of BC.-->
+		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
@@ -315,11 +315,11 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="EquilibriumType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
-		<!--beginTime => time at which BC will start being applied.-->
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--componentFractionVsElevationTableNames => Names of the tables specifying the relationship (component fraction vs elevation) for each component-->
+		<!--componentFractionVsElevationTableNames => Names of the tables specifying the (component fraction vs elevation) relationship for each component-->
 		<xsd:attribute name="componentFractionVsElevationTableNames" type="string_array" default="{}" />
 		<!--componentNames => Names of the fluid components-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
@@ -327,15 +327,15 @@
 		<xsd:attribute name="datumElevation" type="real64" use="required" />
 		<!--datumPressure => Datum pressure [Pa]-->
 		<xsd:attribute name="datumPressure" type="real64" use="required" />
-		<!--direction => Direction to apply boundary condition to-->
+		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--elevationIncrementInHydrostaticPressureTable => Elevation increment [m] in the hydrostatic pressure table constructed internally-->
 		<xsd:attribute name="elevationIncrementInHydrostaticPressureTable" type="real64" default="0.6096" />
-		<!--endTime => time at which bc will stop being applied-->
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--equilibrationTolerance => Tolerance in the fixed-point iteration scheme used for hydrostatic initialization-->
 		<xsd:attribute name="equilibrationTolerance" type="real64" default="0.001" />
-		<!--functionName => Name of function that specifies variation of the BC-->
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="string" default="" />
 		<!--initialPhaseName => Name of the phase initially saturating the reservoir-->
 		<xsd:attribute name="initialPhaseName" type="string" default="" />
@@ -343,35 +343,35 @@
 		<xsd:attribute name="maxNumberOfEquilibrationIterations" type="localIndex" default="5" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
-		<!--scale => Scale factor for value of BC.-->
+		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
-		<!--temperatureVsElevationTableName => Name of the table specifying the relationship (temperature [K] vs elevation)-->
+		<!--temperatureVsElevationTableName => Name of the table specifying the (temperature [K] vs elevation) relationship-->
 		<xsd:attribute name="temperatureVsElevationTableName" type="string" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
-		<!--beginTime => time at which BC will start being applied.-->
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
-		<!--direction => Direction to apply boundary condition to-->
+		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
-		<!--endTime => time at which bc will stop being applied-->
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="string" default="" />
-		<!--functionName => Name of function that specifies variation of the BC-->
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="string" default="" />
-		<!--initialCondition => BC is applied as an initial condition.-->
+		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
-		<!--scale => Scale factor for value of BC.-->
+		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
@@ -379,25 +379,25 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SourceFluxType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
-		<!--beginTime => time at which BC will start being applied.-->
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
-		<!--direction => Direction to apply boundary condition to-->
+		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
-		<!--endTime => time at which bc will stop being applied-->
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="string" default="" />
-		<!--functionName => Name of function that specifies variation of the BC-->
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="string" default="" />
-		<!--initialCondition => BC is applied as an initial condition.-->
+		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
-		<!--scale => Scale factor for value of BC.-->
+		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
@@ -405,23 +405,23 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TractionType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
-		<!--beginTime => time at which BC will start being applied.-->
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--direction => Direction to apply boundary condition to-->
+		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
-		<!--endTime => time at which bc will stop being applied-->
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
-		<!--functionName => Name of function that specifies variation of the BC-->
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="string" default="" />
-		<!--initialCondition => BC is applied as an initial condition.-->
+		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--inputStress => Input stress for tractionType = stress-->
 		<xsd:attribute name="inputStress" type="R2SymTensor" default="{0,0,0,0,0,0}" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
-		<!--scale => Scale factor for value of BC.-->
+		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />

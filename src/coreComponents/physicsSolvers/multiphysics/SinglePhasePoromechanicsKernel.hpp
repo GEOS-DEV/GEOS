@@ -113,7 +113,7 @@ public:
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
     m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
-    m_initialFluidDensity( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::initialDensityString() ) ),
+    m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).initialDensity() ),
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_initialFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::initialPressureString() ) ),
@@ -249,7 +249,7 @@ public:
 
     real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
     real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
-    real64 const porosityInit = m_constitutiveUpdate.getInitialPorosity( k );
+    real64 const porosityInit = m_constitutiveUpdate.getInitialPorosity( k, q );
 
     // Evaluate body force vector (incremental form wrt initial equilibrium state)
     real64 bodyForce[3] = { m_gravityVector[0],
@@ -258,7 +258,7 @@ public:
     if( m_gravityAcceleration > 0.0 )
     {
       real64 mixtureDensityNew = ( 1.0 - porosityNew ) * m_solidDensity( k, q ) + porosityNew * m_fluidDensity( k, q );
-      real64 mixtureDensityInit = ( 1.0 - porosityInit ) * m_solidDensity( k, q ) + porosityInit * m_initialFluidDensity( k );
+      real64 mixtureDensityInit = ( 1.0 - porosityInit ) * m_solidDensity( k, q ) + porosityInit * m_initialFluidDensity( k, q );
       mixtureDensityNew *= detJxW;
       mixtureDensityInit *= detJxW;
       real64 const mixtureDensityIncrement = mixtureDensityNew - mixtureDensityInit;
@@ -402,7 +402,7 @@ protected:
   arrayView2d< real64 const > const m_solidDensity;
   arrayView2d< real64 const > const m_fluidDensity;
   arrayView1d< real64 const > const m_fluidDensityOld;
-  arrayView1d< real64 const > const m_initialFluidDensity;
+  arrayView2d< real64 const > const m_initialFluidDensity;
   arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 
   /// The global degree of freedom number

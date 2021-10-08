@@ -74,7 +74,6 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::initialDensityString() );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
     } );
@@ -201,13 +200,21 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                                                    auto & subRegion )
   {
-    ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
+    SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
-    real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
+    real64 const defaultDensity = fluid.defaultDensity();
     subRegion.template getWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).setDefaultValue( defaultDensity );
+
+    // 1. update porosity, permeability, and density/viscosity
 
     updatePorosityAndPermeability( subRegion, targetIndex );
     updateFluidState( subRegion, targetIndex );
+
+    // 2. save the initial density (for use in the single-phase poromechanics solver to compute the deltaBodyForce)
+
+    fluid.initializeState();
+
+    // 3. save the initial/old porosity
 
     CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
@@ -231,22 +238,16 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  // Save initial pressure and density fields (needed by the poromechanics solvers)
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+  // Save initial pressure field (needed by the poromechanics solvers to compute the deltaPressure needed by the total stress)
+  forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 const > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
     arrayView1d< real64 > const initPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialPressureString() );
 
-    ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
-    FluidPropViews const fluidProps = getFluidProperties( fluid );
-    arrayView2d< real64 const > const dens = fluidProps.dens;
-    arrayView1d< real64 > const initDens = subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialDensityString() );
-
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       initPres[ei] = pres[ei];
-      initDens[ei] = dens[ei][0];
     } );
   } );
 
@@ -316,12 +317,13 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
     localIndex const numPointsInTable = std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1;
 
-    GEOSX_WARNING_IF( (datumElevation > globalMaxElevation[equilIndex])  || (datumElevation < globalMinElevation[equilIndex]),
-                      SinglePhaseBase::catalogName() << " " << getName()
-                                                     << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
-                                                     << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] << "\n"
-                                                     << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
-                                                     << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
+    real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
+    GEOSX_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
+                         SinglePhaseBase::catalogName() << " " << getName()
+                                                        << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
+                                                        << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] << "\n"
+                                                        << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
+                                                        << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
 
     array1d< array1d< real64 > > elevationValues;
     array1d< real64 > pressureValues;

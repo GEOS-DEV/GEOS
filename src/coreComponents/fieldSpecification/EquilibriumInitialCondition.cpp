@@ -63,11 +63,11 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
   registerWrapper( viewKeyStruct::componentFractionVsElevationTableNamesString(), &m_componentFractionVsElevationTableNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
-    setDescription( "Names of the tables specifying the relationship (component fraction vs elevation) for each component" );
+    setDescription( "Names of the tables specifying the (component fraction vs elevation) relationship for each component" );
 
   registerWrapper( viewKeyStruct::temperatureVsElevationTableNameString(), &m_temperatureVsElevationTableName ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of the table specifying the relationship (temperature [K] vs elevation)" );
+    setDescription( "Name of the table specifying the (temperature [K] vs elevation) relationship" );
 
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
