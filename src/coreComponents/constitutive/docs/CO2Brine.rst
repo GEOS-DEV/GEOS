@@ -130,7 +130,7 @@ The computation of the brine density involves a tabulated correlation presented 
 The user specifies the (constant) salinity and defines the pressure and temperature axis of the brine density table in the form:
 
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
-| DensityFun | BrineCO2Density      | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
+| DensityFun | PhillipsBrineDensity      | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
 
 The pressure must be in Pascal and must be less than :math:`5 \times 10^7` Pascal.
@@ -171,7 +171,7 @@ The apparent molar volume of dissolved CO2 is computed as a function of temperat
 The brine viscosity is controlled by a salinity parameter provided by the user in the form:
 
 +--------------+----------------+----------+
-| ViscosityFun | BrineViscosity | Salinity |
+| ViscosityFun | PhillipsBrineViscosity | Salinity |
 +--------------+----------------+----------+
 
 During the simulation, the brine viscosity is updated as a function of temperature using the analytical relationship of Phillips et al. (1981):

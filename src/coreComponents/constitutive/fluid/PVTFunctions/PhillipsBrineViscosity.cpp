@@ -13,10 +13,10 @@
  */
 
 /**
- * @file BrineViscosity.cpp
+ * @file PhillipsBrineViscosity.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/BrineViscosity.hpp"
+#include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
 
 namespace geosx
 {
@@ -29,10 +29,10 @@ namespace constitutive
 namespace PVTProps
 {
 
-BrineViscosity::BrineViscosity( string const & name,
-                                string_array const & inputPara,
-                                string_array const & componentNames,
-                                array1d< real64 > const & componentMolarWeight ):
+PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
+                                                string_array const & inputPara,
+                                                string_array const & componentNames,
+                                                array1d< real64 > const & componentMolarWeight ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -40,7 +40,7 @@ BrineViscosity::BrineViscosity( string const & name,
   makeCoefficients( inputPara );
 }
 
-void BrineViscosity::makeCoefficients( string_array const & inputPara )
+void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
 {
   // these coefficients come from Phillips et al. (1981), equation (1), pages 5-6
   constexpr real64 a = 0.0816;
@@ -68,15 +68,15 @@ void BrineViscosity::makeCoefficients( string_array const & inputPara )
   m_coef1 =  d * (1.0 - exp( k * m )) * waterVisc;
 }
 
-BrineViscosity::KernelWrapper
-BrineViscosity::createKernelWrapper() const
+PhillipsBrineViscosity::KernelWrapper
+PhillipsBrineViscosity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         m_coef0,
                         m_coef1 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

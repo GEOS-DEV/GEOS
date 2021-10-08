@@ -35,8 +35,8 @@ template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, ty
   TwoPhaseCatalogNames {};
 
 template<> class
-  TwoPhaseCatalogNames< PVTProps::BrineCO2Density,
-                        PVTProps::BrineViscosity,
+  TwoPhaseCatalogNames< PVTProps::PhillipsBrineDensity,
+                        PVTProps::PhillipsBrineViscosity,
                         PVTProps::SpanWagnerCO2Density,
                         PVTProps::FenghourCO2Viscosity,
                         PVTProps::CO2Solubility >
@@ -250,8 +250,8 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
 {}
 
 // explicit instantiation of the model template; unfortunately we can't use CO2BrineFluid alias for this
-template class MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,
-                                              PVTProps::BrineViscosity,
+template class MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
+                                              PVTProps::PhillipsBrineViscosity,
                                               PVTProps::SpanWagnerCO2Density,
                                               PVTProps::FenghourCO2Viscosity,
                                               PVTProps::CO2Solubility >;

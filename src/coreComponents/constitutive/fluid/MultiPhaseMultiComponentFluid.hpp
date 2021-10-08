@@ -21,8 +21,8 @@
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "constitutive/fluid/PVTFunctions/BrineCO2Density.hpp"
-#include "constitutive/fluid/PVTFunctions/BrineViscosity.hpp"
+#include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
+#include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
 #include "constitutive/fluid/PVTFunctions/FenghourCO2Viscosity.hpp"
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
@@ -181,8 +181,8 @@ private:
 };
 
 // this alias will be useful in constitutive dispatch
-using CO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,
-                                                     PVTProps::BrineViscosity,
+using CO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
+                                                     PVTProps::PhillipsBrineViscosity,
                                                      PVTProps::SpanWagnerCO2Density,
                                                      PVTProps::FenghourCO2Viscosity,
                                                      PVTProps::CO2Solubility >;
