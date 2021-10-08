@@ -166,8 +166,8 @@ These boundary conditions are set up through the ``FieldSpecifications`` section
 
 .. literalinclude:: ../../../../../../inputFiles/solidMechanics/kirschProblem_Base.xml
     :language: xml
-    :start-after: <!-- SPHINX_WELLBORE_BC -->
-    :end-before: <!-- SPHINX_WELLBORE_BC_END -->
+    :start-after: <!-- SPHINX_BC -->
+    :end-before: <!-- SPHINX_BC_END -->
 
 
 With ``tractionType="normal"``, traction is applied to the wellbore wall ``rneg`` as a pressure specified from the product of scale ``scale="-2.0e6"`` and the outward face normal. 
