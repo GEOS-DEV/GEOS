@@ -208,7 +208,7 @@
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.005"/>
+      scale="0.04"/>
 
     <FieldSpecification
       name="initialComposition_water"
@@ -217,7 +217,7 @@
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.995"/>
+      scale="0.96"/>
   </FieldSpecifications>
 
 

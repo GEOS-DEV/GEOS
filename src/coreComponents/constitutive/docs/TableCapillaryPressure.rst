@@ -25,7 +25,13 @@ oil, water                   Oil phase
 oil, gas                     Oil phase
 water, gas                   Gas phase
 ============================ ================
-  
+
+In all cases, the user-provided capillary pressure is used in GEOSX to compute the phase pressure using the formula:
+
+.. math::
+    P_c = p_{nw} - p_w.
+
+where :math:`p_{nw}` and :math:`p_w` are respectively the non-wetting-phase and wetting-phase pressures.    
   
 Parameters
 ======================

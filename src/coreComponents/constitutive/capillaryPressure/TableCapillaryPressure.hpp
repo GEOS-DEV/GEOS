@@ -141,6 +141,10 @@ TableCapillaryPressure::KernelWrapper::
       m_capPresKernelWrappers[1].compute( &(phaseVolFraction)[ipGas],
                                           &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
 
+    // when pc is on the gas phase, we need to must multiply user input by -1
+    // because CompositionalMultiphaseFVM does: pres_gas = pres_oil - pc_og, so we need a negative pc_og
+    phaseCapPres[ipGas] *= -1;
+    dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] *= -1;
   }
   else if( ipWater < 0 )
   {
@@ -148,6 +152,11 @@ TableCapillaryPressure::KernelWrapper::
     phaseCapPres[ipGas] =
       m_capPresKernelWrappers[0].compute( &(phaseVolFraction)[ipGas],
                                           &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
+
+    // when pc is on the gas phase, we need to must multiply user input by -1
+    // because CompositionalMultiphaseFVM does: pres_gas = pres_oil - pc_og, so we need a negative pc_og
+    phaseCapPres[ipGas] *= -1;
+    dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] *= -1;
   }
   else if( ipOil < 0 )
   {

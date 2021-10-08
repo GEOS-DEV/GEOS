@@ -186,7 +186,7 @@ void TableCapillaryPressure::validateCapillaryPressureTable( TableFunction const
     // check the monotonicity of the capillary pressure table
     if( capPresMustBeIncreasing )
     {
-      GEOSX_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) < 1e-10,
+      GEOSX_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) < -1e-10,
                       GEOSX_FMT( "{}: in table '{}' values must be strictly increasing", getFullName(), capPresTable.getName() ),
                       InputError );
     }

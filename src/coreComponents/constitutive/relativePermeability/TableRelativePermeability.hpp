@@ -192,6 +192,7 @@ TableRelativePermeability::KernelWrapper::
   phaseRelPerm[ipNonWetting] =
     m_relPermKernelWrappers[TPT::NONWETTING].compute( &(phaseVolFraction)[ipNonWetting],
                                                       &(dPhaseRelPerm_dPhaseVolFrac)[ipNonWetting][ipNonWetting] );
+
 }
 
 

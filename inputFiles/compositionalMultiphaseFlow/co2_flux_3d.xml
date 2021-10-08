@@ -146,7 +146,7 @@
       fieldName="pressure"
       scale="9e6"/>
 
-    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
+    <!-- Initial composition: CO2 phase close to residual saturation  -->
     <FieldSpecification
       name="initialComposition_co2"
       initialCondition="1"
@@ -154,7 +154,7 @@
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.005"/>
+      scale="0.04"/>
 
     <FieldSpecification
       name="initialComposition_water"
@@ -163,7 +163,7 @@
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.995"/>
+      scale="0.96"/>
 
     <!-- Injection rate: 0.03 kg/s -->
     <SourceFlux
@@ -187,7 +187,7 @@
       objectPath="ElementRegions/Region1/elementSubRegions/cb1"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.005"/>
+      scale="0.04"/>
 
     <FieldSpecification
       name="sinkTermComposition1_water"
@@ -195,7 +195,7 @@
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.995"/>
+      scale="0.96"/>
 
     <FieldSpecification
       name="sinkTerm2"
@@ -211,7 +211,7 @@
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.005"/>
+      scale="0.04"/>
 
     <FieldSpecification
       name="sinkTermComposition2_water"
@@ -219,7 +219,7 @@
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.995"/>
+      scale="0.96"/>
   </FieldSpecifications>
 
   <Functions>
