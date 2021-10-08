@@ -132,13 +132,6 @@ public:
                                                                     getPermModel() );
   }
 
-  virtual void saveConvergedState() const override final
-  {
-    // getSolidModel().saveConvergedState();
-
-    getPorosityModel().saveConvergedState();
-  }
-
 protected:
 
   SOLID_TYPE const & getSolidModel() const

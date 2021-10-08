@@ -180,7 +180,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
+      materialList="{ water, rock, fractureFilling }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -219,12 +219,8 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="1.0e0">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 0.01e-3, 0.1e-3 }"/>
-    </Contact>
+      penaltyStiffness="1.0e0"
+      apertureTableName="apertureTable"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -267,13 +263,6 @@
       fieldName="ruptureState"
       scale="1"/>
 
-    <!-- FieldSpecification name="aperture"
-               component="0"
-               initialCondition="1"
-               setNames="{all}"
-               objectPath="ElementRegions/Fracture/fracture"
-               fieldName="elementAperture"
-               scale="1.0e-4"/-->
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
@@ -306,11 +295,6 @@
       scale="-0.0"
       setNames="{ xpos }"/>
 
-    <!-- FieldSpecification name="source"
-               objectPath="ElementRegions/Fracture"
-               fieldName="pressure"
-               scale="0.0"
-               setNames="{all}"/-->
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
@@ -325,6 +309,12 @@
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0, 2.0, 3.0, 100.0 }"
       values="{ 0.0, 1.0, 0.0, 0.0, 0.0 }"/>
+
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.01e-3, 0.1e-3 }"/>
+    
   </Functions>
 
   <Outputs>

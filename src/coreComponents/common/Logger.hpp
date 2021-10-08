@@ -21,6 +21,7 @@
 
 // Source incldes
 #include "common/GeosxConfig.hpp"
+#include "common/Format.hpp"
 #include "LvArray/src/Macros.hpp"
 
 // System includes

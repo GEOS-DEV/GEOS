@@ -243,30 +243,30 @@ namespace
 template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
-  GEOSX_ERROR_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
-                         "Mismatch in number of phases between constitutive models "
-                         << lhs.getName() << " and " << rhs.getName() );
+  GEOSX_THROW_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
+                         GEOSX_FMT( "Mismatch in number of phases between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                         InputError );
 
   for( localIndex ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
-    GEOSX_ERROR_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
-                           "Mismatch in phase names between constitutive models "
-                           << lhs.getName() << " and " << rhs.getName() );
+    GEOSX_THROW_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
+                           GEOSX_FMT( "Mismatch in phase names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                           InputError );
   }
 }
 
 template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
-  GEOSX_ERROR_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
-                         "Mismatch in number of components between constitutive models "
-                         << lhs.getName() << " and " << rhs.getName() );
+  GEOSX_THROW_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
+                         GEOSX_FMT( "Mismatch in number of components between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                         InputError );
 
   for( localIndex ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
-    GEOSX_ERROR_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
-                           "Mismatch in component names between constitutive models "
-                           << lhs.getName() << " and " << rhs.getName() );
+    GEOSX_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
+                           GEOSX_FMT( "Mismatch in component names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                           InputError );
   }
 }
 
@@ -1316,6 +1316,14 @@ void CompositionalMultiphaseWell::computePerforationRates( WellElementSubRegion 
                                                            localIndex const GEOSX_UNUSED_PARAM( targetIndex ) )
 {
   GEOSX_MARK_FUNCTION;
+
+  // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
+  // therefore, we do not want to compute perforation rates and we simply assume they are zero
+  WellControls const & wellControls = getWellControls( subRegion );
+  if( !wellControls.wellIsOpen( m_currentTime + m_currentDt ) )
+  {
+    return;
+  }
 
   PerforationData * const perforationData = subRegion.getPerforationData();
 

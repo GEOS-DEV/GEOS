@@ -13,4 +13,6 @@ Advanced Examples
 
    applicationStudies/Index
 
+   pygeosxExamples/Index
+
 

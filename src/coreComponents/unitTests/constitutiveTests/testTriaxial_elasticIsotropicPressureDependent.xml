@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <TriaxialDriver
+      name="triaxialDriver"
+      material="elasticIPD"
+      mode="strainControl" 
+      axialControl="strainFunction"
+      radialControl="strainFunction"
+      initialStress="-1.0"
+      steps="20"
+      logLevel="0"
+      output="none"
+      baseline="testTriaxial_elasticIsotropicPressureDependent.txt" />
+  </Tasks>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="triaxialDriver"
+      target="/Tasks/triaxialDriver"/>
+  </Events>
+
+  <Constitutive>
+
+    <ElasticIsotropicPressureDependent
+      name="elasticIPD"
+      defaultDensity="2700"
+      defaultRefPressure="-1.0"
+      defaultRefStrainVol="0"
+      defaultRecompressionIndex="0.003"
+      defaultShearModulus="200"/>
+
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="strainFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0, -0.02}"/>
+  </Functions>
+
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+
+</Problem>
