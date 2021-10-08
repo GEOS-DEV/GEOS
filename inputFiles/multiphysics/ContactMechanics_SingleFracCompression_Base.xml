@@ -25,7 +25,7 @@
         logLevel="0"/>
     </LagrangianContact>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanics_LagrangianFEM
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
@@ -38,7 +38,7 @@
       <LinearSolverParameters
         krylovTol="1.0e-10"
         logLevel="0"/>
-    </SolidMechanicsLagrangianSSLE>
+    </SolidMechanics_LagrangianFEM>
 
     <SurfaceGenerator
       name="SurfaceGen"
