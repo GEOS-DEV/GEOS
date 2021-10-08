@@ -25,5 +25,7 @@ Validation and Verification Studies
 
    proppantSlotTest/Example
 
+   singleFracCompression/Example
+
 
 
