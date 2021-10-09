@@ -25,6 +25,7 @@
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
+      capPressureNames="{ cappres }"
       temperature="368.15"
       maxCompFractionChange="0.2"
       useMass="1"/>
@@ -126,7 +127,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
-      materialList="{ fluid1, rock, relperm }"/>
+      materialList="{ fluid1, rock, relperm, cappres }"/>
 
     <CellElementRegion
       name="Barrier"
@@ -175,12 +176,16 @@
       referencePressure="0.0"
       compressibility="1.0e-9"/>
 
-    <BrooksCoreyRelativePermeability
+    <TableRelativePermeability
       name="relperm"
       phaseNames="{ gas, water }"
-      phaseMinVolumeFraction="{ 0.05, 0.05 }"
-      phaseRelPermExponent="{ 2, 1.5 }"
-      phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
+					  gasRelativePermeabilityTable }"/>
+
+    <TableCapillaryPressure
+      name="cappres"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="waterCapillaryPressureTable"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -203,7 +208,7 @@
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.005"/>
+      scale="0.04"/>
 
     <FieldSpecification
       name="initialComposition_water"
@@ -212,11 +217,23 @@
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.995"/>
+      scale="0.96"/>
   </FieldSpecifications>
 
 
   <Functions>
+    <TableFunction
+      name="waterRelativePermeabilityTable"
+      coordinateFiles="{ phaseVolFraction_water.txt }"
+      voxelFile="relPerm_water.txt"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable"
+      coordinateFiles="{ phaseVolFraction_gas.txt }"
+      voxelFile="relPerm_gas.txt"/>       
+    <TableFunction
+      name="waterCapillaryPressureTable"
+      coordinateFiles="{ phaseVolFraction_water.txt }"
+      voxelFile="capPres_water.txt"/>       
     <TableFunction
       name="phaseRateTable"
       inputVarNames="{time}"
