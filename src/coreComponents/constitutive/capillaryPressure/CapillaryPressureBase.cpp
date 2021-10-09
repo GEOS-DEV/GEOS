@@ -79,10 +79,6 @@ void CapillaryPressureBase::postProcessInput()
     m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
 
-  GEOSX_THROW_IF( m_phaseOrder[CapillaryPressureBase::REFERENCE_PHASE] < 0,
-                  GEOSX_FMT( "{}: reference oil phase has not been defined and should be included in model", getFullName() ),
-                  InputError );
-
   // call to correctly set member array tertiary sizes on the 'main' material object
   resizeFields( 0, 0 );
 
