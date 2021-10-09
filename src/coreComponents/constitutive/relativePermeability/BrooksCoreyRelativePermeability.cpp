@@ -42,17 +42,17 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
   registerWrapper( viewKeyStruct::phaseRelPermExponentString(), &m_phaseRelPermExponent ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "MinimumRel perm power law exponent for each phase" );
+    setDescription( "Minimum relative permeability power law exponent for each phase" );
 
 
   registerWrapper( viewKeyStruct::phaseRelPermMaxValueString(), &m_phaseRelPermMaxValue ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum rel perm value for each phase" );
+    setDescription( "Maximum relative permeability value for each phase" );
 
   registerWrapper( viewKeyStruct::volFracScaleString(), &m_volFracScale ).
     setApplyDefaultValue( 1.0 ).
-    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
+    setDescription( "Factor used to scale the phase relative permeability, defined as: one minus the sum of the phase minimum volume fractions." );
 
 }
 

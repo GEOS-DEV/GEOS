@@ -37,12 +37,12 @@ The gas capillary pressure is computed analogously.
 Parameters
 ====================
 
-The capillary pressure constitutive model is listed in
+The capillary pressure constitutive model is listed in the 
 ``<Constitutive>`` block of the input XML file.
 The capillary pressure model must be assigned a unique name via
 ``name`` attribute.
 This name is used to assign the model to regions of the physical
-domain via a ``materialList`` attribute of the ``<ElementRegion>``
+domain via a ``materialList`` attribute of the ``<ElementRegions>``
 node.
 
 The following attributes are supported:
