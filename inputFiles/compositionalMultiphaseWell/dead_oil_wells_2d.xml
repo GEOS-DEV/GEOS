@@ -222,8 +222,8 @@
     <TableRelativePermeability
       name="relperm"
       phaseNames="{ oil, gas, water }"
-      waterOilRelPermTableNames="{ waterRelPermTable, oilRelPermTableForOW }"
-      gasOilRelPermTableNames="{ gasRelPermTable, oilRelPermTableForOG }"/>
+      wettingIntermediateRelPermTableNames="{ waterRelPermTable, oilRelPermTableForOW }"
+      nonWettingIntermediateRelPermTableNames="{ gasRelPermTable, oilRelPermTableForOG }"/>
 
     <ConstantPermeability
       name="rockPerm"
