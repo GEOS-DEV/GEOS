@@ -834,6 +834,13 @@ Element: SymbolicFunction
 .. include:: ../../coreComponents/schema/docs/SymbolicFunction.rst
 
 
+.. _XML_TableCapillaryPressure:
+
+Element: TableCapillaryPressure
+===============================
+.. include:: ../../coreComponents/schema/docs/TableCapillaryPressure.rst
+
+
 .. _XML_TableFunction:
 
 Element: TableFunction
@@ -1795,6 +1802,13 @@ Datastructure: SurfaceGenerator
 Datastructure: SymbolicFunction
 ===============================
 .. include:: ../../coreComponents/schema/docs/SymbolicFunction_other.rst
+
+
+.. _DATASTRUCTURE_TableCapillaryPressure:
+
+Datastructure: TableCapillaryPressure
+=====================================
+.. include:: ../../coreComponents/schema/docs/TableCapillaryPressure_other.rst
 
 
 .. _DATASTRUCTURE_TableFunction:
