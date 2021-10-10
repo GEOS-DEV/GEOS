@@ -251,7 +251,7 @@ which in turn includes `c.xml`.
    Relative paths keep input decks both relocatable within the file system and sharable between users.
 
 XML preprocessor's merging capabilities are more advanced than GEOSX built-in ones.
-Both are are outlined below.
+Both are outlined below.
 
 XML preprocessor
 ^^^^^^^^^^^^^^^^
