@@ -8,7 +8,7 @@ Kirsch Wellbore Problem
 
 **Context**
 
-In this example, a vertical wellbore subjected to in-situ stresses and induced elastic deformation of reservoir rock is simulated. Kirsch solution provides the stress and displacement field developing around a circular cavity, which is hereby employed to verify the accuracy of the numerical results. For the presented example, TimeHistory function and python script are used to output and postprocess multi-dimensional data (e.g., stress and displacement). 
+In this example, a vertical elastic wellbore subjected to in-situ stresses and induced elastic deformation of reservoir rock is simulated. Kirsch's solution provides the stress and displacement field developing around a circular cavity, which is hereby employed to verify the accuracy of the numerical results. For the presented example, ``TimeHistory`` function and python script are used to output and postprocess multi-dimensional data (e.g., stress and displacement). 
 
 
 **Input file**
@@ -28,7 +28,7 @@ Everything required is contained within two GEOSX input files located at:
 Description of the case
 ------------------------------------------------------------------
 
-We solve a drained wellbore problem subjected to anisotropic horizontal stress (:math:`\sigma_h` and :math:`\sigma_H`) and vertical stress (:math:`\sigma_v`), as shown below. This is a vertical wellbore, which is drilled in an infinite, homogeneous, isotropic and elastic medium. Far field in-situ stresses and internal supporting pressure acting at the circular cavity cause the mechanical deformation of the reservoir rock and stress concentration in the near wellbore region. For verification purpose, only plane strain deformation is considered for the presented numerical model. 
+We solve a drained wellbore problem subjected to anisotropic horizontal stress (:math:`\sigma_{xx}` and :math:`\sigma_{yy}`) as shown below. This is a vertical wellbore, which is drilled in an infinite, homogeneous, isotropic and elastic medium. Far field in-situ stresses and internal supporting pressure acting at the circular cavity cause the mechanical deformation of the reservoir rock and stress concentration in the near wellbore region. For verification purpose, plane strain condition is considered for the presented numerical model. 
 
 .. _problemSketchFig:
 .. figure:: wellSketch.png
@@ -59,8 +59,8 @@ In this example, stress (:math:`\sigma_{rr}`, :math:`\sigma_{\theta\theta}`, and
 where :math:`a_0` is the intiial wellbore radius, :math:`r` is the radial coordinate, :math:`\nu` is the Poisson's ratio, :math:`G` is the shear modulus, :math:`P_w` is the normal traction acting on the wellbore wall, the angle :math:`\theta` is measured with respect to x-z plane and defined as positive in counter-clockwise direction. 
 
 
-In this example, we focus our attention on the ``Mesh`` tags,
-the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
+In this example, we focus our attention on the ``Mesh``,
+the ``Constitutive``, and the ``FieldSpecifications`` tags.
 
 ------------------------------------------------------------------
 Mesh
