@@ -158,7 +158,7 @@ The next step is to specify fields, including:
   - The initial value (the in-situ stresses and traction at the wellbore wall have to be initialized)
   - The boundary conditions (constraints of the outer boundaries have to be set)
 
-In this example, we need to specify anisotropic horizontal stress (:math:`\sigma_h` = -9.0 MPa and :math:`\sigma_H` = -11.25 MPa) and vertical stress (:math:`\sigma_v` = -15.0 MPa). :math:`\sigma_H` is horizontal stress along the x-axis.
+In this example, we need to specify anisotropic horizontal stress (:math:`\sigma_yy` = -9.0 MPa and :math:`\sigma_xx` = -11.25 MPa) and vertical stress (:math:`\sigma_zz` = -15.0 MPa). 
 A compressive traction (``WellLoad``) :math:`P_w` = -2.0 MPa is loaded at the wellbore wall ``rneg``.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
