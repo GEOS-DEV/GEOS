@@ -45,6 +45,7 @@ ProppantPorosity                            node         :ref:`XML_ProppantPoros
 ProppantSlurryFluid                         node         :ref:`XML_ProppantSlurryFluid`                         
 ProppantSolidProppantPermeability           node         :ref:`XML_ProppantSolidProppantPermeability`           
 StrainDependentPermeability                 node         :ref:`XML_StrainDependentPermeability`                 
+TableCapillaryPressure                      node         :ref:`XML_TableCapillaryPressure`                      
 TableRelativePermeability                   node         :ref:`XML_TableRelativePermeability`                   
 VanGenuchtenBakerRelativePermeability       node         :ref:`XML_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node         :ref:`XML_VanGenuchtenCapillaryPressure`               

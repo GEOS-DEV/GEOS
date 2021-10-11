@@ -65,8 +65,9 @@ using xmlTypes = pugi::xml_node_type;
  * @brief constexpr variable to hold name for inserting the file path into the xml file.
  *
  * This is used because we would like the option to hold the file path in the xml structure.
+ * The name is uglified with underscores to avoid collisions with real attribute names.
  */
-constexpr char const filePathString[] = "filePath";
+constexpr char const filePathString[] = "__filePath__";
 
 /// XML tag name for included sections
 constexpr char const includedListTag[] = "Included";
@@ -87,12 +88,14 @@ void addIncludedXML( xmlNode & targetNode );
 /**
  * @brief Function to handle multiple input xml files.
  * @param inputFileList the list of input xml files
+ * @param outputDir the output directory to place the composite input file in
  * @return inputFileName the input xml file name
  *
  * This function checks for multiple xml files, and will build
  * a new input xml file with an included block if neccesary
  */
-string buildMultipleInputXML( string_array const & inputFileList );
+string buildMultipleInputXML( string_array const & inputFileList,
+                              string const & outputDir = {} );
 
 /**
  * @name String to variable parsing.
