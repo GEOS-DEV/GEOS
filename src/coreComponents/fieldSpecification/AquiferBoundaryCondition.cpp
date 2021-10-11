@@ -105,7 +105,7 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
 
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::objectPathString() ).
     setInputFlag( InputFlags::FALSE );
-  setFieldName( "faceManager" );
+  setObjectPath( "faceManager" );
 
   getWrapper< int >( FieldSpecificationBase::viewKeyStruct::componentString() ).
     setInputFlag( InputFlags::FALSE );
