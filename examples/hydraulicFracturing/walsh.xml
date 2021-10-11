@@ -191,13 +191,8 @@
       name="fracturePerm"/>
     
     <Contact name="fractureContact"
-      penaltyStiffness="1.0e0" >
-      <TableFunction
-        name="aperTable"
-        coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  0.002e-3, 0.02e-3}"
-        />
-    </Contact>
+      penaltyStiffness="1.0e0"
+      apertureTableName="aperTable" />
 
 
     <NullModel
@@ -340,5 +335,11 @@
   </FieldSpecifications>
 
   <Functions>
+        <TableFunction
+        name="aperTable"
+        coordinates = "{ -1.0e-3, 0.0}"
+        values      = "{  0.002e-3, 0.02e-3}"
+        />
+  
   </Functions>
 </Problem>

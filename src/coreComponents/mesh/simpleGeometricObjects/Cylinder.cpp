@@ -46,7 +46,7 @@ Cylinder::Cylinder( const string & name, Group * const parent ):
     setDescription( "Radius of the cylinder" );
 
   registerWrapper( viewKeyStruct::innerRadiusString(), &m_innerRadius ).
-    setApplyDefaultValue(-1).
+    setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Inner radius of the anulus" );
 

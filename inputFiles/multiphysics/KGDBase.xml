@@ -5,10 +5,10 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -20, 20 }"
+      xCoords="{ -2, 2 }"
       yCoords="{ 0, 40 }"
       zCoords="{ 0, 1 }"
-      nx="{ 40 }"
+      nx="{ 4 }"
       ny="{ 40 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>

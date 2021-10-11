@@ -2,7 +2,7 @@
 
 <Problem>
   <Mesh>
-    <!-- InternalMesh
+    <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ -340, -40, 40, 340 }"
@@ -11,17 +11,6 @@
       nx="{ 150, 80, 150 }"
       ny="{ 100, 80 }"
       nz="{ 2 }"
-      cellBlockNames="{ cb1 }"/-->
-
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ -10, 10 }"
-      yCoords="{ 0, 10 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 20 }"
-      ny="{ 10 }"
-      nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
 
     <!-- InternalMesh name="mesh1"
