@@ -8,7 +8,7 @@ Single Fracture Under Shear Compression
 
 **Context**
 
-In this example, a single fracture in a 2D infinite domain and subjected to a constant uniaxial compressive remote stress is simulated with Lagrange contact model `(Franceschini et al., 2020)  <https://www.sciencedirect.com/science/article/pii/S0045782520303467>`__. An analytical solution `(Phan et al., 2003)  <https://onlinelibrary.wiley.com/doi/10.1002/nme.707>`__ is available for verifying the accuracy of the numerical results, which provides the normal traction and slip on the fracture surface due to frictional contact. For the presented example, TimeHistory function and python script are employed to output and postprocess multi-dimensional data (e.g., traction and displacement on the fracture surface).
+In this example, a single fracture in a 2D infinite domain and subjected to a constant uniaxial compressive remote stress is simulated with Lagrange contact model `(Franceschini et al., 2020)  <https://www.sciencedirect.com/science/article/pii/S0045782520303467>`__. An analytical solution `(Phan et al., 2003)  <https://onlinelibrary.wiley.com/doi/10.1002/nme.707>`__ is available for verifying the accuracy of the numerical results, which provides the normal traction and slip on the fracture surface due to frictional contact. For the presented example, ``TimeHistory`` function and Python script are employed to output and postprocess multi-dimensional data (e.g., traction and displacement on the fracture surface).
 
 
 **Input file**
