@@ -298,7 +298,7 @@ void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const
 
     // set the water phase index in the Aquifer boundary condition
     // note: if the water phase is not found, the fluid model is going to throw an error
-    localIndex const waterPhaseIndex = fluid0.getWaterPhaseIndex();
+    integer const waterPhaseIndex = fluid0.getWaterPhaseIndex();
     bc.setWaterPhaseIndex( waterPhaseIndex );
   } );
 }

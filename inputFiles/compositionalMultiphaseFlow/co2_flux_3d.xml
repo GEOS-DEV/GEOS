@@ -259,7 +259,6 @@
       aquiferInnerRadius="10"
       aquiferAngle="0.1"
       setNames="{ aquifer1Part1, aquifer1Part2 }"
-      objectPath="faceManager"
       pressureInfluenceFunctionName="pressureInfluenceFunction"/>
 
     <Aquifer
@@ -277,7 +276,6 @@
       aquiferInnerRadius="10"
       aquiferAngle="0.1"
       setNames="{ aquifer2Part1, aquifer2Part2 }"
-      objectPath="faceManager"
       pressureInfluenceFunctionName="pressureInfluenceFunction"/>
     
   </FieldSpecifications>

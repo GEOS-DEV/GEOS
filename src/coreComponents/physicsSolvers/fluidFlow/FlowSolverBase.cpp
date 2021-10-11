@@ -380,11 +380,8 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
   {
-    if( aquiferNameToAquiferId.count( bc.getName() ) == 0 )
-    {
-      aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
-      aquiferCounter++;
-    }
+    aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
+    aquiferCounter++;
   } );
 
   // Step 2: sum the aquifer fluxes for each individual aquifer
@@ -434,7 +431,6 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition & bc )
   {
     localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
-    std::cout << "dt * globalSumFluxes = " << dt * globalSumFluxes[aquiferIndex] << std::endl;
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
   } );
 }

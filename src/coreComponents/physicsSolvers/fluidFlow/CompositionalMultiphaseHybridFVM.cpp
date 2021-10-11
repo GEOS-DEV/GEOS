@@ -22,6 +22,8 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -88,15 +90,15 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  if( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ) )
-  {
-    GEOSX_ERROR( "The HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM" );
-  }
+  GEOSX_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
+                  catalogName() << " " << getName() <<
+                  ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
+                  InputError );
 
-  if( m_capPressureFlag )
-  {
-    GEOSX_ERROR( "Capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM" );
-  }
+  GEOSX_THROW_IF( m_capPressureFlag,
+                  catalogName() << " " << getName() <<
+                  ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
+                  InputError );
 }
 
 void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGroups()
@@ -105,7 +107,8 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
   if( m_computeCFLNumbers )
   {
-    GEOSX_LOG_RANK_0( "The computation of CFL numbers in not supported by CompositionalMultiphaseHybridFVM yet" );
+    GEOSX_LOG_RANK_0( catalogName() << " " << getName()
+                                    << ": the computation of CFL numbers in not supported by CompositionalMultiphaseHybridFVM yet" );
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -153,6 +156,13 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
                                 << ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
                   std::runtime_error );
 
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
+  {
+    GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
+                      "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
+                                                                                "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
+  } );
 }
 
 void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh )
@@ -701,9 +711,17 @@ void CompositionalMultiphaseHybridFVM::applyAquiferBC( real64 const time,
 
   GEOSX_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
 
-  GEOSX_ERROR( catalogName() << " " << getName() <<
-               "The Aquifer boundary condition is not implemented for CompositionalMultiphaseHybridFVM yet" );
 }
+
+void CompositionalMultiphaseHybridFVM::saveAquiferConvergedState( real64 const & time,
+                                                                  real64 const & dt,
+                                                                  DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt, domain );
+}
+
 
 real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition const & domain,
                                                                 DofManager const & dofManager,

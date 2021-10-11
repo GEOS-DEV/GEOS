@@ -1003,11 +1003,8 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
   {
-    if( aquiferNameToAquiferId.count( bc.getName() ) == 0 )
-    {
-      aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
-      aquiferCounter++;
-    }
+    aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
+    aquiferCounter++;
   } );
 
   // Step 2: sum the face areas for each individual aquifer

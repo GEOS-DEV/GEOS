@@ -332,8 +332,6 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="functionName" type="string" default="" />
 		<!--initialCondition => BC is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
-		<!--objectPath => Path to the target field-->
-		<xsd:attribute name="objectPath" type="string" default="" />
 		<!--pressureInfluenceFunctionName => Name of the table describing the pressure influence function
 . If not provided, we use a default pressure influence function-->
 		<xsd:attribute name="pressureInfluenceFunctionName" type="string" default="" />

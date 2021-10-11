@@ -1302,10 +1302,10 @@ AquiferBCKernel::
       for( localIndex ic = 0; ic < NC; ++ic )
       {
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow + ic], localFlux[ic] );
-        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
-                                                                          dofColIndices,
-                                                                          localFluxJacobian[ic],
-                                                                          NDOF );
+        localMatrix.addToRow< parallelDeviceAtomic >( localRow + ic,
+                                                      dofColIndices,
+                                                      localFluxJacobian[ic],
+                                                      NDOF );
       }
     }
   } );

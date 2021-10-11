@@ -268,6 +268,8 @@
 		<xsd:attribute name="cumulativeFlux" type="real64" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="string" />
+		<!--objectPath => Path to the target field-->
+		<xsd:attribute name="objectPath" type="string" />
 	</xsd:complexType>
 	<xsd:complexType name="DirichletType" />
 	<xsd:complexType name="FieldSpecificationType" />

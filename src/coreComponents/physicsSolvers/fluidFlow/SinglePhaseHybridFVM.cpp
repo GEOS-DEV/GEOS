@@ -19,12 +19,15 @@
 #include "SinglePhaseHybridFVM.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "constitutive/ConstitutivePassThru.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -77,10 +80,10 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  if( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ) )
-  {
-    GEOSX_ERROR( "The HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM" );
-  }
+  GEOSX_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
+                  catalogName() << " " << getName() <<
+                  ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
+                  InputError );
 }
 
 void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
@@ -116,8 +119,35 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
     minVal.min( transMultiplier[iface] );
   } );
 
-  GEOSX_ERROR_IF_LE_MSG( minVal.get(), 0.0,
-                         "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0" );
+  GEOSX_THROW_IF_LE_MSG( minVal.get(), 0.0,
+                         catalogName() << " " << getName() <<
+                         "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                         std::runtime_error );
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  fsManager.apply( 0.0,
+                   domain,
+                   "faceManager",
+                   FlowSolverBase::viewKeyStruct::pressureString(),
+                   [&] ( FieldSpecificationBase const & bc,
+                         string const &,
+                         SortedArrayView< localIndex const > const &,
+                         Group &,
+                         string const & )
+  {
+    GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
+                      "A face Dirichlet boundary condition named " << bc.getName() << " was requested in the XML file. \n"
+                                                                                      "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
+
+  } );
+
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
+  {
+    GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
+                      "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
+                                                                                "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
+  } );
+
 }
 
 void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
@@ -367,10 +397,17 @@ void SinglePhaseHybridFVM::applyAquiferBC( real64 const time,
   GEOSX_MARK_FUNCTION;
 
   GEOSX_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
-
-  GEOSX_ERROR( catalogName() << " " << getName() <<
-               "The Aquifer boundary condition is not implemented for SinglePhaseHybridFVM yet" );
 }
+
+void SinglePhaseHybridFVM::saveAquiferConvergedState( real64 const & time,
+                                                      real64 const & dt,
+                                                      DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt, domain );
+}
+
 
 real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & domain,
                                                     DofManager const & dofManager,

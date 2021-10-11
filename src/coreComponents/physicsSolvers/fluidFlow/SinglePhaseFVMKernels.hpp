@@ -468,10 +468,10 @@ struct AquiferBCKernel
         GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
 
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux );
-        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                          &dofNumber[er][esr][ei],
-                                                                          &localFluxJacobian,
-                                                                          1 );
+        localMatrix.addToRow< parallelDeviceAtomic >( localRow,
+                                                      &dofNumber[er][esr][ei],
+                                                      &localFluxJacobian,
+                                                      1 );
       }
     } );
   }

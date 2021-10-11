@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -154,7 +154,7 @@ private:
    * @brief Setter for the R1Tensor storing the gravity vector
    * @param[in] gravityVector the gravity vector
    */
-  void setGravityVector( R1Tensor const & gravityVector ) { m_gravityVector = gravityVector; }
+  void setGravityVector( R1Tensor const & gravityVector );
 
   /**
    * @brief Increment the cumulative flux for this aquifer
@@ -166,7 +166,7 @@ private:
    * @brief Setter for the water phase index
    * @param[in] waterPhaseIndex the value of the water phase index
    */
-  void setWaterPhaseIndex( localIndex const waterPhaseIndex ) { m_waterPhaseIndex = waterPhaseIndex; }
+  void setWaterPhaseIndex( integer const waterPhaseIndex ) { m_waterPhaseIndex = waterPhaseIndex; }
 
   /**
    * @brief Getter for the water phase index

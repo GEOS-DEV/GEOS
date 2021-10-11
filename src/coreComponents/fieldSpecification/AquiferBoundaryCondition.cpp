@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -103,6 +103,10 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
 
+  getWrapper< string >( FieldSpecificationBase::viewKeyStruct::objectPathString() ).
+    setInputFlag( InputFlags::FALSE );
+  setFieldName( "faceManager" );
+
   getWrapper< int >( FieldSpecificationBase::viewKeyStruct::componentString() ).
     setInputFlag( InputFlags::FALSE );
 
@@ -110,9 +114,9 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
 
 void AquiferBoundaryCondition::postProcessInput()
 {
-  GEOSX_THROW_IF( m_permeability <= 0.0,
-                  getCatalogName() << " " << getName() << ": the aquifer permeability cannot be equal to zero or negative",
-                  InputError );
+  GEOSX_THROW_IF_LE_MSG( m_permeability, 0.0,
+                         getCatalogName() << " " << getName() << ": the aquifer permeability cannot be equal to zero or negative",
+                         InputError );
 
   if( m_pressureInfluenceFunctionName.empty() )
   {
@@ -135,19 +139,19 @@ void AquiferBoundaryCondition::postProcessInput()
   computeTimeConstant();
   computeInfluxConstant();
 
-  GEOSX_THROW_IF( m_timeConstant <= 0.0,
-                  getCatalogName() << " " << getName() << ": the aquifer time constant is equal to zero or negative, the simulation cannot procede",
-                  InputError );
+  GEOSX_THROW_IF_LE_MSG( m_timeConstant, 0.0,
+                         getCatalogName() << " " << getName() << ": the aquifer time constant is equal to zero or negative, the simulation cannot procede",
+                         InputError );
 
-  GEOSX_THROW_IF( m_influxConstant <= 0.0,
-                  getCatalogName() << " " << getName() << ": the aquifer influx constant is equal to zero or negative, the simulation cannot procede",
-                  InputError );
+  GEOSX_THROW_IF_LE_MSG( m_influxConstant, 0.0,
+                         getCatalogName() << " " << getName() << ": the aquifer influx constant is equal to zero or negative, the simulation cannot procede",
+                         InputError );
 
-  GEOSX_THROW_IF( m_phaseComponentFraction.size() != m_phaseComponentNames.size(),
-                  getCatalogName() << " " << getName() << ": the sizes of "
-                                   << viewKeyStruct::aquiferWaterPhaseComponentFractionString() << " and " << viewKeyStruct::aquiferWaterPhaseComponentNamesString()
-                                   << " are inconsistent",
-                  InputError );
+  GEOSX_THROW_IF_NE_MSG( m_phaseComponentFraction.size(), m_phaseComponentNames.size(),
+                         getCatalogName() << " " << getName() << ": the sizes of "
+                                          << viewKeyStruct::aquiferWaterPhaseComponentFractionString() << " and " << viewKeyStruct::aquiferWaterPhaseComponentNamesString()
+                                          << " are inconsistent",
+                         InputError );
 
 }
 
@@ -248,11 +252,25 @@ void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
 
   FunctionManager & functionManager = FunctionManager::getInstance();
   m_pressureInfluenceFunctionName = getName() + "_pressureInfluence_table";
-  TableFunction * const pressureInfluenceTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", m_pressureInfluenceFunctionName ) );
+  TableFunction * const pressureInfluenceTable =
+    dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), m_pressureInfluenceFunctionName ) );
   pressureInfluenceTable->setTableCoordinates( dimensionlessTime );
   pressureInfluenceTable->setTableValues( pressureInfluence );
   pressureInfluenceTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
+}
+
+void AquiferBoundaryCondition::setGravityVector( R1Tensor const & gravityVector )
+{
+  GEOSX_LOG_RANK_0_IF( ( !isZero( gravityVector[0] ) || !isZero( gravityVector[1] ) ),
+                       catalogName() << " " << getName() <<
+                       "The gravity vector specified in this simulation (" << gravityVector[0] << " " << gravityVector[1] << " " << gravityVector[2] <<
+                       ") is not aligned with the z-axis. \n" <<
+                       "But, the pressure difference between reservoir and aquifer uses " << viewKeyStruct::aquiferElevationString() <<
+                       " and assumes that the gravity vector is aligned with the z-axis. \n" <<
+                       "As a result, aquifer calculations may be inacurrate." );
+
+  m_gravityVector = gravityVector;
 }
 
 void AquiferBoundaryCondition::computeTimeConstant()

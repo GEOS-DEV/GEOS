@@ -20,7 +20,6 @@
 #include "FluxApproximationBase.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/DirichletBoundaryCondition.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
@@ -87,15 +86,15 @@ void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
 
       // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
       // TODO: Apply() should take a MeshLevel directly
-      fsManager.apply< DirichletBoundaryCondition >( 0.0,
-                                                     dynamicCast< DomainPartition & >( meshBodies.getParent() ),
-                                                     "faceManager",
-                                                     m_fieldName,
-                                                     [&] ( DirichletBoundaryCondition const &,
-                                                           string const & setName,
-                                                           SortedArrayView< localIndex const > const &,
-                                                           Group const &,
-                                                           string const & )
+      fsManager.apply( 0.0,
+                       dynamicCast< DomainPartition & >( meshBodies.getParent() ),
+                       "faceManager",
+                       m_fieldName,
+                       [&] ( FieldSpecificationBase const &,
+                             string const & setName,
+                             SortedArrayView< localIndex const > const &,
+                             Group const &,
+                             string const & )
       {
         registerBoundaryStencil( stencilGroup, setName );
       } );
@@ -142,15 +141,15 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
       computeCellStencil( mesh );
 
       // For each face-based boundary condition on target field, compute the boundary stencil weights
-      fsManager.apply< DirichletBoundaryCondition >( 0.0,
-                                                     domain,
-                                                     "faceManager",
-                                                     m_fieldName,
-                                                     [&] ( DirichletBoundaryCondition const &,
-                                                           string const & setName,
-                                                           SortedArrayView< localIndex const > const & faceSet,
-                                                           Group const &,
-                                                           string const & )
+      fsManager.apply( 0.0,
+                       domain,
+                       "faceManager",
+                       m_fieldName,
+                       [&] ( FieldSpecificationBase const &,
+                             string const & setName,
+                             SortedArrayView< localIndex const > const & faceSet,
+                             Group const &,
+                             string const & )
       {
         computeBoundaryStencil( mesh, setName, faceSet );
       } );
