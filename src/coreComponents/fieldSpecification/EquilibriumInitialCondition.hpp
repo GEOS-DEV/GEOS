@@ -58,13 +58,13 @@ public:
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */
-  static string catalogName() { return "Equilibrium"; }
+  static string catalogName() { return "HydrostaticEquilibrium"; }
 
   /**
    * @brief Getter for the max number of equilibration iterations
    * @return the max number of equilibrium iterations
    */
-  localIndex getMaxNumEquilibrationIterations() const { return m_maxNumEquilibrationIterations; }
+  integer getMaxNumEquilibrationIterations() const { return m_maxNumEquilibrationIterations; }
 
   /**
    * @brief Getter for the equilibration tolerance
@@ -169,7 +169,7 @@ protected:
 private:
 
   /// Maximum number of equilibration iterations
-  localIndex m_maxNumEquilibrationIterations;
+  integer m_maxNumEquilibrationIterations;
 
   /// Elevation increment in the hydrostatic pressure table
   real64 m_elevationIncrement;

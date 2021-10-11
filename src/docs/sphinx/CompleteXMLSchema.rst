@@ -302,13 +302,6 @@ Element: EmbeddedSurfaceGenerator
 .. include:: ../../coreComponents/schema/docs/EmbeddedSurfaceGenerator.rst
 
 
-.. _XML_Equilibrium:
-
-Element: Equilibrium
-====================
-.. include:: ../../coreComponents/schema/docs/Equilibrium.rst
-
-
 .. _XML_Events:
 
 Element: Events
@@ -405,6 +398,13 @@ Element: HybridMimeticDiscretization
 Element: Hydrofracture
 ======================
 .. include:: ../../coreComponents/schema/docs/Hydrofracture.rst
+
+
+.. _XML_HydrostaticEquilibrium:
+
+Element: HydrostaticEquilibrium
+===============================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium.rst
 
 
 .. _XML_Included:
@@ -1230,13 +1230,6 @@ Datastructure: EmbeddedSurfaceGenerator
 .. include:: ../../coreComponents/schema/docs/EmbeddedSurfaceGenerator_other.rst
 
 
-.. _DATASTRUCTURE_Equilibrium:
-
-Datastructure: Equilibrium
-==========================
-.. include:: ../../coreComponents/schema/docs/Equilibrium_other.rst
-
-
 .. _DATASTRUCTURE_Events:
 
 Datastructure: Events
@@ -1340,6 +1333,13 @@ Datastructure: HybridMimeticDiscretization
 Datastructure: Hydrofracture
 ============================
 .. include:: ../../coreComponents/schema/docs/Hydrofracture_other.rst
+
+
+.. _DATASTRUCTURE_HydrostaticEquilibrium:
+
+Datastructure: HydrostaticEquilibrium
+=====================================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium_other.rst
 
 
 .. _DATASTRUCTURE_Included:

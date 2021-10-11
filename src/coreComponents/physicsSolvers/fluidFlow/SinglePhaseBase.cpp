@@ -268,11 +268,20 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
-    if( equilNameToEquilId.count( bc.getName() ) == 0 )
-    {
-      equilNameToEquilId[bc.getName()] = equilCounter;
-      equilCounter++;
-    }
+    // collect all the equil name to idx
+    equilNameToEquilId[bc.getName()] = equilCounter;
+    equilCounter++;
+
+    // check that the gravity vector is aligned with the z-axis
+    GEOSX_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
+                    catalogName() << " " << getName() <<
+                    ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
+                    ") is not aligned with the z-axis. \n"
+                    "This is incompatible with the " << EquilibriumInitialCondition::catalogName() << " called " << bc.getName() <<
+                    "used in this simulation. To proceed, you can either: \n" <<
+                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
+                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                    InputError );
   } );
 
   // Step 2: find the min elevation and the max elevation in the targetSets
@@ -306,7 +315,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
   {
     // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
 
-    localIndex const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
+    integer const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
     real64 const equilTolerance = fs.getEquilibrationTolerance();
     real64 const datumElevation = fs.getDatumElevation();
     real64 const datumPressure = fs.getDatumPressure();
@@ -375,12 +384,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     FunctionManager & functionManager = FunctionManager::getInstance();
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
-    GEOSX_THROW_IF( functionManager.hasGroup< TableFunction >( tableName ),
-                    SinglePhaseBase::catalogName() << " " << getName()
-                                                   << ": table function named " << tableName << " already exists!",
-                    std::runtime_error );
-
-    TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
+    TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     presTable->setTableCoordinates( elevationValues );
     presTable->setTableValues( pressureValues );
     presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );

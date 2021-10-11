@@ -139,9 +139,8 @@
       fieldName="permeabilityTransMultiplier"
       scale="0.0"/>
 
-    <Equilibrium
+    <HydrostaticEquilibrium
       name="equil"
-      setNames="{ all }"
       objectPath="ElementRegions"      
       datumElevation="28.5"
       datumPressure="1.1e7"

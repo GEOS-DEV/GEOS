@@ -586,11 +586,22 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
-    if( equilNameToEquilId.count( bc.getName() ) == 0 )
-    {
-      equilNameToEquilId[bc.getName()] = equilCounter;
-      equilCounter++;
-    }
+
+    // collect all the equilibrium names to idx
+    equilNameToEquilId[bc.getName()] = equilCounter;
+    equilCounter++;
+
+    // check that the gravity vector is aligned with the z-axis
+    GEOSX_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
+                    catalogName() << " " << getName() <<
+                    ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
+                    ") is not aligned with the z-axis. \n"
+                    "This is incompatible with the " << EquilibriumInitialCondition::catalogName() << " called " << bc.getName() <<
+                    "used in this simulation. To proceed, you can either: \n" <<
+                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
+                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                    InputError );
+
   } );
 
   // Step 2: find the min elevation and the max elevation in the targetSets
@@ -623,7 +634,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
   {
     // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
 
-    localIndex const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
+    integer const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
     real64 const equilTolerance = fs.getEquilibrationTolerance();
     real64 const datumElevation = fs.getDatumElevation();
     real64 const datumPressure = fs.getDatumPressure();
@@ -698,7 +709,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                     CompositionalMultiphaseBase::catalogName() << " " << getName() << ": phase name " << initPhaseName
                                                                << " not found in the phases of " << fluid.getName(),
                     InputError );
-    localIndex const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
+    integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
 
     // Step 3.4: compute the hydrostatic pressure values
 
@@ -745,12 +756,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
     // Step 3.5: create hydrostatic pressure table
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ipInit] + "_table";
-    GEOSX_THROW_IF( functionManager.hasGroup< TableFunction >( tableName ),
-                    CompositionalMultiphaseBase::catalogName() << " " << getName()
-                                                               << ": table function named " << tableName << " already exists!",
-                    std::runtime_error );
-
-    TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
+    TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     presTable->setTableCoordinates( elevationValues );
     presTable->setTableValues( pressureValues );
     presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );

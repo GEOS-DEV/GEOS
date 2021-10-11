@@ -347,7 +347,7 @@ struct HydrostaticPressureKernel
 
   template< typename FLUID_WRAPPER >
   static bool
-  computeHydrostaticPressure( localIndex const maxNumEquilIterations,
+  computeHydrostaticPressure( integer const maxNumEquilIterations,
                               real64 const & equilTolerance,
                               real64 const (&gravVector)[ 3 ],
                               FLUID_WRAPPER fluidWrapper,
@@ -404,7 +404,7 @@ struct HydrostaticPressureKernel
   template< typename FLUID_WRAPPER >
   static bool
   launch( localIndex const size,
-          localIndex const maxNumEquilIterations,
+          integer const maxNumEquilIterations,
           real64 const equilTolerance,
           real64 const (&gravVector)[ 3 ],
           real64 const & minElevation,

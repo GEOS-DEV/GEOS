@@ -79,15 +79,19 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
   getWrapper< int >( FieldSpecificationBase::viewKeyStruct::initialConditionString() ).
     setInputFlag( InputFlags::FALSE );
   initialCondition( false ); // to make sure this is not called by applyInitialConditions
+
+  getWrapper< string_array >( FieldSpecificationBase::viewKeyStruct::setNamesString() ).
+    setInputFlag( InputFlags::FALSE );
+  addSetName( "all" );
 }
 
 void EquilibriumInitialCondition::postProcessInput()
 {
 
-  GEOSX_THROW_IF( ( !m_temperatureVsElevationTableName.empty() && m_componentFractionVsElevationTableNames.empty() ) ||
-                  ( m_temperatureVsElevationTableName.empty() && !m_componentFractionVsElevationTableNames.empty() ),
+  GEOSX_THROW_IF( ( m_temperatureVsElevationTableName.empty() != m_componentFractionVsElevationTableNames.empty() ),
                   getCatalogName() << " " << getName()
-                                   << ": both " << viewKeyStruct::componentFractionVsElevationTableNamesString() << " and " <<
+                                   << ": both " <<
+                  viewKeyStruct::componentFractionVsElevationTableNamesString() << " and " <<
                   viewKeyStruct::temperatureVsElevationTableNameString() << " must be provided for a multiphase simulation",
                   InputError );
 

@@ -167,9 +167,8 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <Equilibrium
+    <HydrostaticEquilibrium
       name="equil"
-      setNames="{ all }"
       objectPath="ElementRegions/Channel"      
       datumElevation="5"
       datumPressure="1e6"/>
