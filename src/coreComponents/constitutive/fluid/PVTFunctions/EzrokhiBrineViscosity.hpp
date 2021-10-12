@@ -13,11 +13,11 @@
  */
 
 /**
- * @file PhillipsBrineViscosity.hpp
+ * @file EzrokhiBrineViscosity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PHILLIPSBRINEVISCOSITY_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PHILLIPSBRINEVISCOSITY_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_EZROKHIBRINEVISCOSITY_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_EZROKHIBRINEVISCOSITY_HPP_
 
 #include "PVTFunctionBase.hpp"
 
@@ -30,13 +30,13 @@ namespace constitutive
 namespace PVTProps
 {
 
-class PhillipsBrineViscosityUpdate final : public PVTFunctionBaseUpdate
+class EzrokhiBrineViscosityUpdate final : public PVTFunctionBaseUpdate
 {
 public:
 
-  PhillipsBrineViscosityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                                real64 const coef0,
-                                real64 const coef1 )
+  EzrokhiBrineViscosityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
+                               real64 const coef0,
+                               real64 const coef1 )
     : PVTFunctionBaseUpdate( componentMolarWeight ),
     m_coef0( coef0 ),
     m_coef1( coef1 )
@@ -78,18 +78,18 @@ protected:
 };
 
 
-class PhillipsBrineViscosity : public PVTFunctionBase
+class EzrokhiBrineViscosity : public PVTFunctionBase
 {
 public:
 
-  PhillipsBrineViscosity( string const & name,
-                          string_array const & inputPara,
-                          string_array const & componentNames,
-                          array1d< real64 > const & componentMolarWeight );
+  EzrokhiBrineViscosity( string const & name,
+                         string_array const & inputPara,
+                         string_array const & componentNames,
+                         array1d< real64 > const & componentMolarWeight );
 
-  virtual ~PhillipsBrineViscosity() override = default;
+  virtual ~EzrokhiBrineViscosity() override = default;
 
-  static string catalogName() { return "PhillipsBrineViscosity"; }
+  static string catalogName() { return "EzrokhiBrineViscosity"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }
 
@@ -99,7 +99,7 @@ public:
   }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = PhillipsBrineViscosityUpdate;
+  using KernelWrapper = EzrokhiBrineViscosityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -119,11 +119,11 @@ private:
 
 template< int USD1 >
 GEOSX_HOST_DEVICE
-void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
-                                            real64 const & temperature,
-                                            arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                            real64 & value,
-                                            bool useMass ) const
+void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
+                                           real64 const & temperature,
+                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                                           real64 & value,
+                                           bool useMass ) const
 {
   GEOSX_UNUSED_VAR( pressure, phaseComposition, useMass );
   value = m_coef0 + m_coef1 * temperature;
@@ -131,17 +131,17 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
 
 template< int USD1, int USD2, int USD3, int USD4 >
 GEOSX_HOST_DEVICE
-void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
-                                            real64 const & temperature,
-                                            arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                            arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                                            arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                                            arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
-                                            real64 & value,
-                                            real64 & dValue_dPressure,
-                                            real64 & dValue_dTemperature,
-                                            arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
-                                            bool useMass ) const
+void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
+                                           real64 const & temperature,
+                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                                           arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
+                                           arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
+                                           arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                                           real64 & value,
+                                           real64 & dValue_dPressure,
+                                           real64 & dValue_dTemperature,
+                                           arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                                           bool useMass ) const
 {
   GEOSX_UNUSED_VAR( pressure,
                     phaseComposition,
@@ -163,4 +163,4 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
 
 } // end namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PHILLIPSBRINEVISCOSITY_HPP_
+#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_EZROKHIBRINEVISCOSITY_HPP_

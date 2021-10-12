@@ -27,6 +27,7 @@ set( constitutive_headers
      fluid/PVTOData.hpp
      fluid/PVTFunctions/PhillipsBrineDensity.hpp
      fluid/PVTFunctions/PhillipsBrineViscosity.hpp
+     fluid/PVTFunctions/EzrokhiBrineViscosity.hpp
      fluid/PVTFunctions/CO2Solubility.hpp
      fluid/PVTFunctions/FenghourCO2Viscosity.hpp
      fluid/PVTFunctions/FlashModelBase.hpp
@@ -110,6 +111,7 @@ set( constitutive_sources
      fluid/PVTOData.cpp
      fluid/PVTFunctions/PhillipsBrineDensity.cpp
      fluid/PVTFunctions/PhillipsBrineViscosity.cpp
+     fluid/PVTFunctions/EzrokhiBrineViscosity.cpp
      fluid/PVTFunctions/CO2Solubility.cpp
      fluid/PVTFunctions/FenghourCO2Viscosity.cpp
      fluid/PVTFunctions/SpanWagnerCO2Density.cpp

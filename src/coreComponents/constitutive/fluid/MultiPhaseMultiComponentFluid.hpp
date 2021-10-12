@@ -23,6 +23,7 @@
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
 #include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
+#include "constitutive/fluid/PVTFunctions/EzrokhiBrineViscosity.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
 #include "constitutive/fluid/PVTFunctions/FenghourCO2Viscosity.hpp"
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
@@ -186,6 +187,12 @@ using CO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDens
                                                      PVTProps::SpanWagnerCO2Density,
                                                      PVTProps::FenghourCO2Viscosity,
                                                      PVTProps::CO2Solubility >;
+
+using EzrokhiCO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
+                                                            PVTProps::EzrokhiBrineViscosity,
+                                                            PVTProps::SpanWagnerCO2Density,
+                                                            PVTProps::FenghourCO2Viscosity,
+                                                            PVTProps::CO2Solubility >;
 
 template< typename P1DENSWRAPPER, typename P1VISCWRAPPER, typename P2DENSWRAPPER, typename P2VISCWRAPPER, typename FLASHWRAPPER >
 GEOSX_HOST_DEVICE

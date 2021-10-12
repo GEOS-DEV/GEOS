@@ -44,6 +44,16 @@ template<> class
 public:
   static string name() { return "CO2BrineFluid"; }
 };
+template<> class
+  TwoPhaseCatalogNames< PVTProps::PhillipsBrineDensity,
+                        PVTProps::EzrokhiBrineViscosity,
+                        PVTProps::SpanWagnerCO2Density,
+                        PVTProps::FenghourCO2Viscosity,
+                        PVTProps::CO2Solubility >
+{
+public:
+  static string name() { return "EzrokhiCO2BrineFluid"; }
+};
 } // end namespace
 
 // provide a definition for catalogName()
@@ -256,7 +266,14 @@ template class MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
                                               PVTProps::FenghourCO2Viscosity,
                                               PVTProps::CO2Solubility >;
 
+template class MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
+                                              PVTProps::EzrokhiBrineViscosity,
+                                              PVTProps::SpanWagnerCO2Density,
+                                              PVTProps::FenghourCO2Viscosity,
+                                              PVTProps::CO2Solubility >;
+
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrineFluid, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EzrokhiCO2BrineFluid, string const &, Group * const )
 
 } //namespace constitutive
 
