@@ -646,6 +646,12 @@ protected:
                      Vector & y,
                      bool useTranspose = false ) const = 0;
 
+  /**
+   * @brief Apply a separate component approximation (filter) to this matrix.
+   * @tparam MATRIX the type of matrices
+   * @param dst         the target (filtered) matrix
+   * @param dofPerPoint number of degrees-of-freedom per node
+   */
   virtual void separateComponentFilter( MATRIX & dst,
                                         localIndex const dofPerPoint ) = 0;
 

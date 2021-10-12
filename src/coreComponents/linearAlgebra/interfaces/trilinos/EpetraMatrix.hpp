@@ -204,13 +204,7 @@ public:
 
   virtual void insert( arrayView1d< globalIndex const > const & rowIndices,
                        arrayView1d< globalIndex const > const & colIndices,
-                       arrayView1d< real64 const > const & values ) override
-  {
-    GEOSX_UNUSED_VAR( rowIndices, colIndices, values );
-    GEOSX_ERROR( "EpetraMatrix::insert( arrayView1d<globalIndex const> const &,"
-                 " arrayView1d<globalIndex const> const &,"
-                 " arrayView1d<real64 const> const & )" );
-  }
+                       arrayView1d< real64 const > const & values ) override;
 
   virtual void apply( EpetraVector const & src,
                       EpetraVector & dst ) const override;
