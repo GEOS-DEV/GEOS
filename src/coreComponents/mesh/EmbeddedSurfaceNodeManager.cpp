@@ -342,9 +342,6 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
 
           globalIndex const globalIndexOnthisRank = m_localToGlobalMap[ nodeIndexOnThisRank ];
 
-          std::cout << "rank " << rank << " - node " << nodeIndexOnThisRank << " with globalIndex " << globalIndexOnthisRank
-                    << " gets new globalIndex " << globalIndices( a ) << std::endl;
-
           m_localToGlobalMap[ nodeIndexOnThisRank ] = globalIndices( a );
 
           //modify global to local map
