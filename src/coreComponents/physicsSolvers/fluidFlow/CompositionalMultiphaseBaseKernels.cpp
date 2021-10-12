@@ -474,7 +474,30 @@ AccumulationKernel::
       dofIndices[idof] = dofNumber[ei] + idof;
     }
 
-    // TODO: apply equation/variable change transformation(s)
+    // Apply equation/variable change transformation(s)
+    real64 tmp = localAccum[NC-1];
+    real64 tmpRow[NDOF];
+    for( localIndex j = 0; j < NDOF; ++j )
+    {
+      tmpRow[j] = localAccumJacobian[NC-1][j];
+    }
+
+    for(int j = NC - 2; j >= 0; --j)
+    {
+      localAccum[j+1] = localAccum[j];
+      tmp += localAccum[j];
+     
+      for( localIndex k = 0; k < NDOF; ++k )
+      {
+        localAccumJacobian[j+1][k] = localAccumJacobian[j][k];
+        tmpRow[k] += localAccumJacobian[j][k];
+      }
+    }
+    localAccum[0] = tmp;
+    for( localIndex k = 0; k < NDOF; ++k )
+    {
+       localAccumJacobian[0][k] = tmpRow[k];
+    }
 
     // add contribution to residual and jacobian
     for( localIndex i = 0; i < NC; ++i )

@@ -633,7 +633,34 @@ FluxKernel::
       }
     }
 
-    // TODO: apply equation/variable change transformation(s)
+    // Apply equation/variable change transformation(s)
+    real64 tmp;
+    stackArray1d< real64, MAX_STENCIL_SIZE * NDOF > tmpRow( stencilSize * NDOF );
+    for( localIndex i = 0; i < numFluxElems; ++i)
+    {
+      localIndex const ind = ( i +  1) * NC- 1;
+      tmp = localFlux[ind];
+      for( localIndex k = 0; k < stencilSize * NDOF; ++k )
+      {
+        tmpRow[k] = localFluxJacobian[ind][k];
+      }
+      for(int j = ind - 1; j >= i*NC; --j)
+      {
+        localFlux[j+1] = localFlux[j];
+        tmp += localFlux[j];
+       
+        for( localIndex k = 0; k < stencilSize * NDOF; ++k )
+        {
+          localFluxJacobian[j+1][k] = localFluxJacobian[j][k];
+          tmpRow[k] += localFluxJacobian[j][k];
+        }
+      }
+      localFlux[i*NC] = tmp;
+      for( localIndex k = 0; k < stencilSize * NDOF; ++k )
+      {
+         localFluxJacobian[i*NC][k] = tmpRow[k];
+      }
+    }
 
     // Add to residual/jacobian
     for( localIndex i = 0; i < numFluxElems; ++i )
