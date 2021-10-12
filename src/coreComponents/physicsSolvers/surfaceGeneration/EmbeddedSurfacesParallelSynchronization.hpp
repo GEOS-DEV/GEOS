@@ -31,6 +31,11 @@ struct ModifiedObjectLists;
 namespace EmebeddedSurfacesParallelSynchronization
 {
 
+void synchronizeNewNodes( MeshLevel & mesh,
+                          std::vector< NeighborCommunicator > & neighbors,
+                          NewObjectLists & newObjects,
+                          int const mpiCommOrder );
+
 void synchronizeNewSurfaces( MeshLevel & mesh,
                              std::vector< NeighborCommunicator > & neighbors,
                              NewObjectLists & newObjects,

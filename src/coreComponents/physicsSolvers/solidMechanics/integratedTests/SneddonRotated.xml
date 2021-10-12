@@ -48,15 +48,18 @@
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
-
+<!--  normal="{ 0.5547, 0.8321, 0 }"
+      origin="{ 1.5, 1.5, 1.5 }"
+      lengthVector="{ 0.8321, -0.5547, 0 }"
+      -->
   <Geometry>
     <BoundedPlane
       name="FracturePlane"
-      normal="{ 0.5547, 0.8321, 0 }"
+      normal="{1, 0, 0}"
       origin="{ 1.5, 1.5, 1.5 }"
-      lengthVector="{ 0.8321, -0.5547, 0 }"
+      lengthVector="{ 0, 1, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 1.1, 4 }"/>
+      dimensions="{ 2, 4 }"/>
   </Geometry>
 
   <Events
@@ -160,7 +163,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="Sneddon"
+      plotFileRoot="SneddonRotated"
       plotLevel="3"
       writeBinaryData="0"/>
 

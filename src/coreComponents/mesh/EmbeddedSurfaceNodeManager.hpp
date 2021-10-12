@@ -169,48 +169,44 @@ public:
   void appendNode( arraySlice1d< real64 const > const & pointCoord,
                    integer const & pointGhostRank );
 
+  localIndex numberOfOwnedNodes() const
+  {
+    localIndex numOfOwnedNodes = 0;
+
+    for (localIndex in = 0; in < size(); in++ )
+    {
+      if ( m_ghostRank[ in ] < 0 )
+      {
+        numOfOwnedNodes++;
+      }
+    }
+
+    return numOfOwnedNodes;
+  }
+
   /**
    * @name Packing methods
    */
   ///@{
 
 
-  /**
-   * @brief Creates an array listing all excluded local indices values.
-   * @param [in,out] exclusionList Sorted array with excluded local indices
-   */
   virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
+  localIndex packNewNodesGlobalMapsSize( arrayView1d< localIndex const > const & packList ) const ;
 
-  /**
-   * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] packList the list of node indices that we wish to get the size of after packing
-   * @return a localIndex value representing the size of packList if it were packed
-   * @note This function does not perform any packing, it just evaluates and returns the possible packed size.
-   */
+  localIndex packNewNodesGlobalMaps( buffer_unit_type * & buffer,
+                                     arrayView1d< localIndex const > const & packList ) const ;
+
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
 
-  /**
-   * @brief Packs an array of node indices into a buffer.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in,out] buffer buffer to pack the node index data into
-   * @param [in] packList the indices of nodes that should be packed
-   * @return a localIndex value representing the size of the packed data
-   */
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
-  /**
-   * @brief Unpack a buffer to an array of node indices.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] buffer buffer with the packed data
-   * @param [inout] packList an array of localIndex values that we wish to unpack to
-   * @param [in] overwriteUpMaps boolean: true to overwrite the previous Up maps
-   * @param [in] overwriteDownMaps boolean: true to overwrite the previous Down maps
-   * @return a localIndex value representing the size of the unpacked list
-   */
+
+  localIndex unpackNewNodesGlobalMaps( buffer_unit_type const * & buffer,
+                                       localIndex_array & packList );
+
   virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
@@ -386,6 +382,22 @@ private:
   template< bool DOPACK >
   localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
+
+  /**
+   * @brief Packing global maps.
+   * @tparam DOPACK A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param buffer The buffer that will receive the packed data.
+   * @param packList The element we want packed.
+   * @param recursive recursive pack or not.
+   * @return The packed size.
+   */
+  template< bool DOPACK >
+  localIndex packNewNodesGlobalMapsPrivate( buffer_unit_type * & buffer,
+                                    arrayView1d< localIndex const > const & packList ) const;
+
+
+  void nodeExistsOnThisRank( real64 const (& nodeCoord)[3],
+                             localIndex & nodeIndexOnThisRank ) const;
 
   /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;

@@ -261,37 +261,23 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
         globalIndex parentEdgeID = edgeLocalToGlobal[ pointParentIndex[ originalIndices[ j ] ] ];
         nodeIndex = embSurfNodeManager.size();
 
-        if( pointGhostRank[ originalIndices[ j ] ] < 0 )
-        {
-          embSurfNodeManager.appendNode( intersectionPoints[ j ],
-                                         pointGhostRank[ originalIndices[ j ] ] );
+        embSurfNodeManager.appendNode( intersectionPoints[ j ],
+                                       pointGhostRank[ originalIndices[ j ] ] );
 
-          arrayView1d< localIndex > const & parentIndex =
+        arrayView1d< localIndex > const & parentIndex =
             embSurfNodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
 
-          parentIndex[nodeIndex] = pointParentIndex[ originalIndices[ j ] ];
+        parentIndex[nodeIndex] = pointParentIndex[ originalIndices[ j ] ];
 
-          array1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
-          parentEdgeGlobalIndex[nodeIndex] = parentEdgeID;
-        }
-        else
+        array1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
+        parentEdgeGlobalIndex[nodeIndex] = parentEdgeID;
+
+        if( pointGhostRank[ originalIndices[ j ] ] > 0 )
         {
           hasGhostNode = true;
         }
       }
       elemNodes[ j ] =  nodeIndex;
-    }
-
-    if( hasGhostNode )
-    {
-      localIndex surfWithGhostsIndex = m_surfaceWithGhostNodes.size();
-      m_surfaceWithGhostNodes.resize( surfWithGhostsIndex + 1 );
-      m_surfaceWithGhostNodes[ surfWithGhostsIndex ].surfaceIndex = surfaceIndex;
-      for( int ii = 0; ii < elemNodes.size(); ii++ )
-      {
-        globalIndex parentEdgeID = edgeLocalToGlobal[ pointParentIndex[ originalIndices[ ii ] ] ];
-        m_surfaceWithGhostNodes[ surfWithGhostsIndex ].insert( parentEdgeID );
-      }
     }
 
     m_toNodesRelation.resizeArray( surfaceIndex, elemNodes.size() );
@@ -348,15 +334,8 @@ localIndex EmbeddedSurfaceSubRegion::packUpDownMapsPrivate( buffer_unit_type * &
 {
   localIndex packedSize = 0;
 
-  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
   arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
-
-  std::cout<< DOPACK << std::endl;
-  std::cout << "rank " << thisRank << " packList: " << packList << std::endl;
-  std::cout << "rank " << thisRank << " localToGlobal: " << localToGlobal << std::endl;
-  std::cout << "rank " << thisRank << " nodeLocalToGlobal: " << nodeLocalToGlobal << std::endl;
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
@@ -365,7 +344,6 @@ localIndex EmbeddedSurfaceSubRegion::packUpDownMapsPrivate( buffer_unit_type * &
                                            packList,
                                            localToGlobal,
                                            nodeLocalToGlobal );
-  std::cout << "rank " << thisRank << " I am not crashing" << std::endl;
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
