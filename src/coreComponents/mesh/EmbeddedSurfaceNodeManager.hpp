@@ -173,9 +173,9 @@ public:
   {
     localIndex numOfOwnedNodes = 0;
 
-    for (localIndex in = 0; in < size(); in++ )
+    for( localIndex in = 0; in < size(); in++ )
     {
-      if ( m_ghostRank[ in ] < 0 )
+      if( m_ghostRank[ in ] < 0 )
       {
         numOfOwnedNodes++;
       }
@@ -192,10 +192,10 @@ public:
 
   virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
-  localIndex packNewNodesGlobalMapsSize( arrayView1d< localIndex const > const & packList ) const ;
+  localIndex packNewNodesGlobalMapsSize( arrayView1d< localIndex const > const & packList ) const;
 
   localIndex packNewNodesGlobalMaps( buffer_unit_type * & buffer,
-                                     arrayView1d< localIndex const > const & packList ) const ;
+                                     arrayView1d< localIndex const > const & packList ) const;
 
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
@@ -393,10 +393,10 @@ private:
    */
   template< bool DOPACK >
   localIndex packNewNodesGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+                                            arrayView1d< localIndex const > const & packList ) const;
 
 
-  void nodeExistsOnThisRank( real64 const (& nodeCoord)[3],
+  void nodeExistsOnThisRank( real64 const (&nodeCoord)[3],
                              localIndex & nodeIndexOnThisRank ) const;
 
   /// reference position of the nodes

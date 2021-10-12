@@ -209,16 +209,16 @@ public:
     // compute inv(kww)Kwu
     LvArray::tensorOps::Rij_eq_AikBkj< 3, nUdof, 3 >( InvKwwKwu, InvKww, stack.localKwu );
     // add invKww Rw to dw
-    LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( dWlocal, InvKww , stack.localRw );
+    LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( dWlocal, InvKww, stack.localRw );
     // add inv(kww)Kwu * du to dw
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( dWlocal, InvKwwKwu, stack.dUlocal );
-    LvArray::tensorOps::scale< 3 >(dWlocal, -1);
+    LvArray::tensorOps::scale< 3 >( dWlocal, -1 );
 
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
     for( int i=0; i<3; ++i )
     {
-      m_w[ embSurfIndex ][i] = stack.wLocal[ i ] + dWlocal[i] ;
+      m_w[ embSurfIndex ][i] = stack.wLocal[ i ] + dWlocal[i];
     }
 
     return maxForce;
@@ -229,12 +229,12 @@ public:
 
 /// The factory used to construct a QuasiStatic kernel.
 using EFEMJumpUpdateFactory = finiteElement::KernelFactory< EFEMJumpUpdate,
-    EmbeddedSurfaceSubRegion &,
-    arrayView1d< globalIndex const > const &,
-    globalIndex const,
-    CRSMatrixView< real64, globalIndex const > const &,
-    arrayView1d< real64 > const &,
-    real64 const (&) [3] >;
+                                                            EmbeddedSurfaceSubRegion &,
+                                                            arrayView1d< globalIndex const > const &,
+                                                            globalIndex const,
+                                                            CRSMatrixView< real64, globalIndex const > const &,
+                                                            arrayView1d< real64 > const &,
+                                                            real64 const (&) [3] >;
 
 } // namespace SolidMechanicsEFEMKernels
 

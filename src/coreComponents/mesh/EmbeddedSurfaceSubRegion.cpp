@@ -237,7 +237,6 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
     // fill out elemNodes array with the previously found intersection points
     // add new nodes to embSurfNodes
     bool isNew;
-    bool hasGhostNode = false;
     localIndex nodeIndex;
     array1d< localIndex > elemNodes( intersectionPoints.size( 0 ) );
 
@@ -265,17 +264,13 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
                                        pointGhostRank[ originalIndices[ j ] ] );
 
         arrayView1d< localIndex > const & parentIndex =
-            embSurfNodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+          embSurfNodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
 
         parentIndex[nodeIndex] = pointParentIndex[ originalIndices[ j ] ];
 
         array1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
         parentEdgeGlobalIndex[nodeIndex] = parentEdgeID;
 
-        if( pointGhostRank[ originalIndices[ j ] ] > 0 )
-        {
-          hasGhostNode = true;
-        }
       }
       elemNodes[ j ] =  nodeIndex;
     }

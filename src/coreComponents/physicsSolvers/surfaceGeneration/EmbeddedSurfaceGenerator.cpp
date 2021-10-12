@@ -221,15 +221,6 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
-//  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-////
-//  std::cout<< "rank " << thisRank << " - localToGlobalMap: " << embSurfNodeManager.localToGlobalMap() << std::endl;
-//  MpiWrapper::barrier(MPI_COMM_GEOSX);
-//  std::cout<< "rank " << thisRank << " - ghostRank: " << embSurfNodeManager.ghostRank() << std::endl;
-////  std::cout<< "rank " << thisRank << " - globalToLocalMap: " << embSurfNodeManager.globalToLocalMap() << std::endl;
-//
-//  std::cout<< "rank " << thisRank << " - embSurfToNodeMap: " << embeddedSurfaceSubRegion.nodeList() << std::endl;
-
   // Synchronize nodes
   EmebeddedSurfacesParallelSynchronization::synchronizeNewNodes( meshLevel,
                                                                  domain.getNeighbors(),
@@ -249,12 +240,6 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
-
-//  std::cout<< "rank " << thisRank << " - localToGlobalMap: " << embSurfNodeManager.localToGlobalMap() << std::endl;
-//  MpiWrapper::barrier(MPI_COMM_GEOSX);
-////  std::cout<< "rank " << thisRank << " - globalToLocalMap: " << embSurfNodeManager.globalToLocalMap() << std::endl;
-//  std::cout<< "rank " << thisRank << " - embSurfToNodeMap: " << embSurfToNodeMap << std::endl;
-
 
   // Populate EdgeManager for embedded surfaces.
   EdgeManager & embSurfEdgeManager = meshLevel.getEmbSurfEdgeManager();
@@ -327,7 +312,7 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
   localIndex_array globalIndexOffset( commSize );
   MpiWrapper::allGather( embeddedSurfaceSubRegion.size(), numberOfSurfaceElemsPerRank );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, "rank 0: " << numberOfSurfaceElemsPerRank[0] << "rank 1: " << numberOfSurfaceElemsPerRank[1]  );
+  GEOSX_LOG_LEVEL_RANK_0( 1, "rank 0: " << numberOfSurfaceElemsPerRank[0] << "rank 1: " << numberOfSurfaceElemsPerRank[1] );
 
   globalIndexOffset[0] = 0; // offSet for the globalIndex
   localIndex totalNumberOfSurfaceElements = numberOfSurfaceElemsPerRank[ 0 ];  // Sum across all ranks
@@ -353,27 +338,27 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
 
   // Nodes global indices
   localIndex_array numberOfNodesPerRank( commSize );
+  localIndex_array numberOfUniqueNodesPerRank( commSize );
   MpiWrapper::allGather( embSurfNodeManager.size(), numberOfNodesPerRank );
+  MpiWrapper::allGather( embSurfNodeManager.numberOfOwnedNodes(), numberOfUniqueNodesPerRank );
 
   globalIndexOffset[0] = 0; // offSet for the globalIndex
   localIndex totalNumberOfNodes = numberOfNodesPerRank[ 0 ];  // Sum across all ranks
+  localIndex totalNumberOfUniqueNodes = numberOfUniqueNodesPerRank[ 0 ];
   for( int rank = 1; rank < commSize; ++rank )
   {
     globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfNodesPerRank[rank - 1];
     totalNumberOfNodes += numberOfNodesPerRank[rank];
+    totalNumberOfUniqueNodes += numberOfUniqueNodesPerRank[rank];
   }
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface nodes: " << totalNumberOfNodes );
+  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface nodes: " << totalNumberOfUniqueNodes );
 
   arrayView1d< globalIndex > const & nodesLocalToGlobal = embSurfNodeManager.localToGlobalMap();
-  arrayView1d< integer const > const & ghostRank = embSurfNodeManager.ghostRank();
   forAll< serialPolicy >( embSurfNodeManager.size(), [=, &embSurfNodeManager, &globalIndexOffset] ( localIndex const ni )
   {
-    //if ( ghostRank[ni] < 0 )
-    {
-      nodesLocalToGlobal( ni ) = ni + globalIndexOffset[ thisRank ];
-      embSurfNodeManager.updateGlobalToLocalMap( ni );
-    }
+    nodesLocalToGlobal( ni ) = ni + globalIndexOffset[ thisRank ];
+    embSurfNodeManager.updateGlobalToLocalMap( ni );
   } );
 }
 

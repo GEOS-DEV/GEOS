@@ -42,14 +42,14 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 class EFEMStaticCondensation :
   public EFEMKernelsBase< SUBREGION_TYPE,
-                                        CONSTITUTIVE_TYPE,
-                                        FE_TYPE >
+                          CONSTITUTIVE_TYPE,
+                          FE_TYPE >
 {
 public:
   /// Alias for the base class;
   using Base = EFEMKernelsBase< SUBREGION_TYPE,
-                                              CONSTITUTIVE_TYPE,
-                                              FE_TYPE >;
+                                CONSTITUTIVE_TYPE,
+                                FE_TYPE >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.

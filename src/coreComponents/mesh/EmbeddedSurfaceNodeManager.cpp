@@ -205,10 +205,10 @@ void EmbeddedSurfaceNodeManager::compressRelationMaps()
 void EmbeddedSurfaceNodeManager::appendNode( arraySlice1d< real64 const > const & pointCoord,
                                              integer const & pointGhostRank )
 {
-    localIndex nodeIndex =  this->size();
-    this->resize( nodeIndex + 1 );
-    LvArray::tensorOps::copy< 3 >( m_referencePosition[nodeIndex], pointCoord );
-    m_ghostRank[ nodeIndex ] = pointGhostRank;
+  localIndex nodeIndex =  this->size();
+  this->resize( nodeIndex + 1 );
+  LvArray::tensorOps::copy< 3 >( m_referencePosition[nodeIndex], pointCoord );
+  m_ghostRank[ nodeIndex ] = pointGhostRank;
 }
 
 void EmbeddedSurfaceNodeManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
@@ -255,7 +255,7 @@ localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMapsPrivate( buffer_uni
     globalIndex_array globalIndices;
     globalIndices.resize( numPackedIndices );
     // 2. the ghostRank
-    array1d<integer> ghostRanks;
+    array1d< integer > ghostRanks;
     ghostRanks.resize( numPackedIndices );
     for( localIndex a=0; a<numPackedIndices; ++a )
     {
@@ -309,7 +309,7 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
 
     // Unpack referencePosition
     localIndex_array indicesOnBuffer( numUnpackedIndices );
-    for (localIndex i = 0; i < numUnpackedIndices; i++ )
+    for( localIndex i = 0; i < numUnpackedIndices; i++ )
     {
       indicesOnBuffer[i] = i;
     }
@@ -324,7 +324,7 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
     localIndex numNewIndices = 0;
     globalIndex_array newGlobalIndices;
     newGlobalIndices.reserve( numUnpackedIndices );
-    array1d<integer> ghostRank;
+    array1d< integer > ghostRank;
     ghostRank.reserve( numUnpackedIndices );
     localIndex const oldSize = this->size();
     for( localIndex a = 0; a < numUnpackedIndices; ++a )
@@ -335,7 +335,7 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
       nodeExistsOnThisRank( nodeCoord, nodeIndexOnThisRank );
       if( nodeIndexOnThisRank > -1 )
       {
-        if ( m_ghostRank[nodeIndexOnThisRank] == sendingRank )
+        if( m_ghostRank[nodeIndexOnThisRank] == sendingRank )
         {
           // object already exists on this rank and it's a ghost
           unpackedLocalIndices( a ) = nodeIndexOnThisRank;
@@ -343,7 +343,7 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
           globalIndex const globalIndexOnthisRank = m_localToGlobalMap[ nodeIndexOnThisRank ];
 
           std::cout << "rank " << rank << " - node " << nodeIndexOnThisRank << " with globalIndex " << globalIndexOnthisRank
-              << " gets new globalIndex " << globalIndices( a ) << std::endl;
+                    << " gets new globalIndex " << globalIndices( a ) << std::endl;
 
           m_localToGlobalMap[ nodeIndexOnThisRank ] = globalIndices( a );
 
@@ -365,10 +365,11 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
 
         newGlobalIndices.emplace_back( globalIndices[a] );
 
-        if ( ghostRankOnSendingRank[a] == rank )
+        if( ghostRankOnSendingRank[a] == rank )
         {
           ghostRank.emplace_back( -1 );
-        }else
+        }
+        else
         {
           ghostRank.emplace_back( rank );
         }
@@ -452,10 +453,10 @@ localIndex EmbeddedSurfaceNodeManager::unpackUpDownMaps( buffer_unit_type const 
   return unPackedSize;
 }
 
-void EmbeddedSurfaceNodeManager::nodeExistsOnThisRank( real64 const (& nodeCoord)[3],
+void EmbeddedSurfaceNodeManager::nodeExistsOnThisRank( real64 const (&nodeCoord)[3],
                                                        localIndex & nodeIndexOnThisRank ) const
 {
-  for (localIndex a=0; a<size(); a++)
+  for( localIndex a=0; a<size(); a++ )
   {
     real64 const tolerance = 100.0 * std::numeric_limits< real64 >::epsilon();
     real64 distance[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_referencePosition[a] );

@@ -52,22 +52,22 @@ void packNewNodes( NeighborCommunicator * const neighbor,
 
   for( auto const ni : newObjects.newNodes )
   {
-   if ( nodeGhostRank[ni] == neighborRank )
-   {
-     // a node is sent if it is a ghost neighborRank
-     newNodesToSend.emplace_back( ni );
-   }
-   else
-   {
-    forAll< serialPolicy >( edgeGhostsToSend.size(), [=, &newNodesToSend] ( localIndex const a )
+    if( nodeGhostRank[ni] == neighborRank )
     {
-      if( edgeGhostsToSend[a] == parentIndex[ni] )
+      // a node is sent if it is a ghost neighborRank
+      newNodesToSend.emplace_back( ni );
+    }
+    else
+    {
+      forAll< serialPolicy >( edgeGhostsToSend.size(), [=, &newNodesToSend] ( localIndex const a )
       {
-        // a node is sent if the edge on which it was created had to be sent.
-        newNodesToSend.emplace_back( ni );
-      }
-    } );
-   }
+        if( edgeGhostsToSend[a] == parentIndex[ni] )
+        {
+          // a node is sent if the edge on which it was created had to be sent.
+          newNodesToSend.emplace_back( ni );
+        }
+      } );
+    }
   }
 
   int bufferSize = 0;
@@ -84,10 +84,6 @@ void packNewNodes( NeighborCommunicator * const neighbor,
   packedSize += nodeManager.packNewNodesGlobalMaps( sendBufferPtr, newNodesToSend );
 
   GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
-
-
-  GEOSX_UNUSED_VAR( commID );
-//  neighbor->mpiISendReceive( commID, MPI_COMM_GEOSX );
 }
 
 void unpackNewNodes( NeighborCommunicator * const neighbor,
@@ -97,7 +93,6 @@ void unpackNewNodes( NeighborCommunicator * const neighbor,
   int unpackedSize = 0;
 
   EmbeddedSurfaceNodeManager & nodeManager = mesh.getEmbSurfNodeManager();
-  ElementRegionManager & elemManager = mesh.getElemManager();
 
   buffer_type const & receiveBuffer = neighbor->receiveBuffer( commID );
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
@@ -230,21 +225,17 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   packedSize += nodeManager.pack( sendBufferPtr, {}, newNodesToSend, 0, false, packEvents );
   packedSize += elemManager.Pack( sendBufferPtr, {}, newElemsToSend );
 
-  if (MpiWrapper::commRank( MPI_COMM_GEOSX ) == 1 )
-     std::cout << "sentBuffer - size: " <<  bufferSize << std::endl;
-
-  for (std::size_t i = 0; i < sendBuffer.size(); i++ )
-  {
-    if (MpiWrapper::commRank( MPI_COMM_GEOSX ) == 1 )
-      std::cout << sendBuffer[i] << " ";
-  }
-  std::cout << std::endl;
+//  if (MpiWrapper::commRank( MPI_COMM_GEOSX ) == 1 )
+//     std::cout << "sentBuffer - size: " <<  bufferSize << std::endl;
+//
+//  for (std::size_t i = 0; i < sendBuffer.size(); i++ )
+//  {
+//    if (MpiWrapper::commRank( MPI_COMM_GEOSX ) == 1 )
+//      std::cout << sendBuffer[i] << " ";
+//  }
+//  std::cout << std::endl;
 
   GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
-
-
-  GEOSX_UNUSED_VAR( commID );
-//  neighbor->mpiISendReceive( commID, MPI_COMM_GEOSX );
 }
 
 void unpackNewToGhosts( NeighborCommunicator * const neighbor,
@@ -259,15 +250,15 @@ void unpackNewToGhosts( NeighborCommunicator * const neighbor,
   buffer_type const & receiveBuffer = neighbor->receiveBuffer( commID );
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
 
-  if (MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
-    std::cout << "receivedBuffer - size: " << receiveBuffer.size()  << std::endl;
-
-  for (char i: receiveBuffer)
-  {
-    if (MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
-      std::cout << i << " ";
-  }
-  std::cout << std::endl;
+//  if (MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+//    std::cout << "receivedBuffer - size: " << receiveBuffer.size()  << std::endl;
+//
+//  for (char i: receiveBuffer)
+//  {
+//    if (MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+//      std::cout << i << " ";
+//  }
+//  std::cout << std::endl;
 
   localIndex_array newGhostNodes;
   ElementRegionManager::ElementReferenceAccessor< localIndex_array > newGhostElems;

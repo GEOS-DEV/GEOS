@@ -81,11 +81,12 @@ void SolidMechanicsEmbeddedFractures::postProcessInput()
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.dofsPerNode = 3;
 
-  if (m_useStaticCondensation)
+  if( m_useStaticCondensation )
   {
     linParams.isSymmetric = true;
     linParams.amg.separateComponents = true;
-  }else
+  }
+  else
   {
     linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures;
     linParams.mgr.separateComponents = true;
@@ -693,14 +694,14 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
                                                                   gravityVectorData );
 
   real64 maxTraction = finiteElement::
-      regionBasedKernelApplication
-      < parallelDevicePolicy< 32 >,
-      constitutive::SolidBase,
-      CellElementSubRegion >( mesh,
-                              targetRegionNames(),
-                              m_solidSolver->getDiscretizationName(),
-                              m_solidSolver->solidMaterialNames(),
-                              kernelFactory );
+                         regionBasedKernelApplication
+                       < parallelDevicePolicy< 32 >,
+                         constitutive::SolidBase,
+                         CellElementSubRegion >( mesh,
+                                                 targetRegionNames(),
+                                                 m_solidSolver->getDiscretizationName(),
+                                                 m_solidSolver->solidMaterialNames(),
+                                                 kernelFactory );
 
   GEOSX_UNUSED_VAR( maxTraction );
 }
