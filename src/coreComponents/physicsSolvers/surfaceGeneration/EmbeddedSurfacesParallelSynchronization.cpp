@@ -29,9 +29,12 @@
 namespace geosx
 {
 
+namespace  EmbeddedSurfacesParallelSynchronization
+{
+
 using namespace dataRepository;
 
-namespace
+namespace parallelSynchronizationHelpers
 {
 
 void packNewNodes( NeighborCommunicator * const neighbor,
@@ -394,13 +397,10 @@ void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
   waitAllDeviceEvents( events );
 }
 
-
-}
-
-void EmebeddedSurfacesParallelSynchronization::synchronizeNewNodes( MeshLevel & mesh,
-                                                                    std::vector< NeighborCommunicator > & neighbors,
-                                                                    NewObjectLists & newObjects,
-                                                                    int const mpiCommOrder )
+void synchronizeNewNodes( MeshLevel & mesh,
+                          std::vector< NeighborCommunicator > & neighbors,
+                          NewObjectLists & newObjects,
+                          int const mpiCommOrder )
 {
   //************************************************************************************************
   // We need to send over the new embedded surfaces and related objects for those whose parents are ghosts on neighbors.
@@ -463,10 +463,10 @@ void EmebeddedSurfacesParallelSynchronization::synchronizeNewNodes( MeshLevel & 
   }
 }
 
-void EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( MeshLevel & mesh,
-                                                                       std::vector< NeighborCommunicator > & neighbors,
-                                                                       NewObjectLists & newObjects,
-                                                                       int const mpiCommOrder )
+void synchronizeNewSurfaces( MeshLevel & mesh,
+                             std::vector< NeighborCommunicator > & neighbors,
+                             NewObjectLists & newObjects,
+                             int const mpiCommOrder )
 {
   //************************************************************************************************
   // We need to send over the new embedded surfaces and related objects for those whose parents are ghosts on neighbors.
@@ -529,9 +529,9 @@ void EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( MeshLevel
   }
 }
 
-void EmebeddedSurfacesParallelSynchronization::synchronizeFracturedElements( MeshLevel & mesh,
-                                                                             std::vector< NeighborCommunicator > & neighbors,
-                                                                             string const fractureRegionName )
+void synchronizeFracturedElements( MeshLevel & mesh,
+                                   std::vector< NeighborCommunicator > & neighbors,
+                                   string const fractureRegionName )
 {
   MPI_iCommData commData( CommunicationTools::getInstance().getCommID() );
   commData.resize( neighbors.size());
@@ -584,5 +584,36 @@ void EmebeddedSurfacesParallelSynchronization::synchronizeFracturedElements( Mes
   }
 }
 
+
+}  /* parallelSynchronizationHelpers */
+
+using namespace parallelSynchronizationHelpers;
+
+void sychronizeTopology( MeshLevel & mesh,
+                         std::vector< NeighborCommunicator > & neighbors,
+                         NewObjectLists & newObjects,
+                         int const mpiCommOrder,
+                         string const fractureRegionName )
+{
+
+  // Synchronize nodes
+  synchronizeNewNodes( mesh,
+                       neighbors,
+                       newObjects,
+                       mpiCommOrder );
+
+  // Synchronize embedded Surfaces
+  synchronizeNewSurfaces( mesh,
+                          neighbors,
+                          newObjects,
+                          mpiCommOrder );
+
+  synchronizeFracturedElements( mesh,
+                                neighbors,
+                                fractureRegionName );
+
+}
+
+} /* EmbeddedSurfacesParallelSynchronization */
 
 } /* namespace geosx */

@@ -221,21 +221,11 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
-  // Synchronize nodes
-  EmebeddedSurfacesParallelSynchronization::synchronizeNewNodes( meshLevel,
-                                                                 domain.getNeighbors(),
-                                                                 newObjects,
-                                                                 m_mpiCommOrder );
-
-  // Synchronize embedded Surfaces
-  EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
-                                                                    domain.getNeighbors(),
-                                                                    newObjects,
-                                                                    m_mpiCommOrder );
-
-  EmebeddedSurfacesParallelSynchronization::synchronizeFracturedElements( meshLevel,
-                                                                          domain.getNeighbors(),
-                                                                          this->m_fractureRegionName );
+  EmbeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
+                                                               domain.getNeighbors(),
+                                                               newObjects,
+                                                               m_mpiCommOrder,
+                                                               this->m_fractureRegionName );
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
@@ -258,9 +248,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 }
 
 void EmbeddedSurfaceGenerator::initializePostInitialConditionsPreSubGroups()
-{
-  // I don't think there is  much to do here.
-}
+{}
 
 real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
