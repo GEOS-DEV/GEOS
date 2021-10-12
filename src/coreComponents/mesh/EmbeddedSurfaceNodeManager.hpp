@@ -192,8 +192,19 @@ public:
 
   virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
+  /**
+   * @brief Computes the pack size of the global maps elements in the @ packList.
+   * @param packList The element we want packed.
+   * @return The packed size.
+   */
   localIndex packNewNodesGlobalMapsSize( arrayView1d< localIndex const > const & packList ) const;
 
+  /**
+   * @brief Packs the global maps for the nodes in the @ packList.
+   * @param buffer The buffer that will receive the packed data.
+   * @param packList The element we want packed.
+   * @return The packed size.
+   */
   localIndex packNewNodesGlobalMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const;
 
@@ -203,7 +214,12 @@ public:
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
-
+  /**
+   * @brief Unpacks the global maps from @p buffer and cleans them up from duplicated nodes.
+   * @param buffer The buffer containing the packed data.
+   * @param packList The (un)packed element.
+   * @return The unpacked size.
+   */
   localIndex unpackNewNodesGlobalMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList );
 
@@ -388,14 +404,17 @@ private:
    * @tparam DOPACK A template parameter to discriminate between actually packing or only computing the packing size.
    * @param buffer The buffer that will receive the packed data.
    * @param packList The element we want packed.
-   * @param recursive recursive pack or not.
    * @return The packed size.
    */
   template< bool DOPACK >
   localIndex packNewNodesGlobalMapsPrivate( buffer_unit_type * & buffer,
                                             arrayView1d< localIndex const > const & packList ) const;
 
-
+  /**
+   * @brief Checks if a node already exists on this rank and returns its local index.
+   * @param[in] nodeCoord the coordinates of the node.
+   * @param[out] nodeIndexOnThisRank the local index of the node (if it exists).
+   */
   void nodeExistsOnThisRank( real64 const (&nodeCoord)[3],
                              localIndex & nodeIndexOnThisRank ) const;
 
