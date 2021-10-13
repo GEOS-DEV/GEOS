@@ -324,21 +324,15 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
 
   // Nodes global indices
   localIndex_array numberOfNodesPerRank( commSize );
-  localIndex_array numberOfUniqueNodesPerRank( commSize );
   MpiWrapper::allGather( embSurfNodeManager.size(), numberOfNodesPerRank );
-  MpiWrapper::allGather( embSurfNodeManager.numberOfOwnedNodes(), numberOfUniqueNodesPerRank );
 
   globalIndexOffset[0] = 0; // offSet for the globalIndex
   localIndex totalNumberOfNodes = numberOfNodesPerRank[ 0 ];  // Sum across all ranks
-  localIndex totalNumberOfUniqueNodes = numberOfUniqueNodesPerRank[ 0 ];
   for( int rank = 1; rank < commSize; ++rank )
   {
     globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfNodesPerRank[rank - 1];
     totalNumberOfNodes += numberOfNodesPerRank[rank];
-    totalNumberOfUniqueNodes += numberOfUniqueNodesPerRank[rank];
   }
-
-  GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface nodes: " << totalNumberOfUniqueNodes );
 
   arrayView1d< globalIndex > const & nodesLocalToGlobal = embSurfNodeManager.localToGlobalMap();
   forAll< serialPolicy >( embSurfNodeManager.size(), [=, &embSurfNodeManager, &globalIndexOffset] ( localIndex const ni )
