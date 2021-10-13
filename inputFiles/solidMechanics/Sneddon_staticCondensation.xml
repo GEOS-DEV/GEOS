@@ -13,7 +13,7 @@
       logLevel="1"
       useStaticCondensation="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e2"
+        newtonTol="1.0e-6"
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
@@ -36,51 +36,6 @@
       logLevel="1"
       mpiCommOrder="1"/>
   </Solvers>
-
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 3 }"
-      yCoords="{ 0, 3 }"
-      zCoords="{ 0, 3 }"
-      nx="{ 11 }"
-      ny="{ 11 }"
-      nz="{ 11 }"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh>
-
-  <Geometry>
-    <BoundedPlane
-      name="FracturePlane"
-      normal="{ 0, 1, 0 }"
-      origin="{ 1.5, 1.5, 1.5 }"
-      lengthVector="{ 1, 0, 0 }"
-      widthVector="{ 0, 0, 1 }"
-      dimensions="{ 1.1, 4 }"/>
-  </Geometry>
-
-  <Events
-    maxTime="10">
-    <SoloEvent
-      name="preFracture"
-      target="/Solvers/SurfaceGenerator"/>
-
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="10"
-      target="/Solvers/mechSolve"/>
-
-    <PeriodicEvent
-      name="outputs"
-      cycleFrequency="10"
-      target="/Outputs/vtkOutput"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="10"
-      target="/Outputs/restartOutput"/>
-  </Events>
 
   <NumericalMethods>
     <FiniteElements>
@@ -112,12 +67,9 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="0.0e8">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 1.0e-6, 1.0e-4 }"/>
-    </Contact>
+      penaltyStiffness="0.0e8"
+      apertureTableName="apertureTable"/>
+
   </Constitutive>
 
   <FieldSpecifications>
@@ -162,10 +114,17 @@
       scale="-1.00e5"/>
   </FieldSpecifications>
 
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-4 }"/>
+  </Functions>
+  
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="SneddonStCond"
+      plotFileRoot="Sneddon"
       writeBinaryData="0"/>
 
     <Restart
