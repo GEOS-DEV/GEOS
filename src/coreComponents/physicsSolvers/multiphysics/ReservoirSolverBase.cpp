@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -24,10 +20,10 @@
 #include "ReservoirSolverBase.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
 
 namespace geosx
 {
@@ -72,7 +68,7 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   SolverBase::initializePostInitialConditionsPreSubGroups( );
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = meshLevel.getElemManager();
@@ -80,13 +76,16 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
   // loop over the wells
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
-    // get the string to access the permeability
-    string const permeabilityKey = FlowSolverBase::viewKeyStruct::permeabilityString();
+    array1d< array1d< arrayView3d< real64 const > > > const permeability =
+      elemManager.constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::permeabilityString(),
+                                                                   m_flowSolver->targetRegionNames(),
+                                                                   m_flowSolver->permeabilityModelNames() );
+
 
     PerforationData * const perforationData = subRegion.getPerforationData();
 
     // compute the Peaceman index (if not read from XML)
-    perforationData->computeWellTransmissibility( meshLevel, subRegion, permeabilityKey );
+    perforationData->computeWellTransmissibility( meshLevel, subRegion, permeability );
   } );
 
   // bind the stored reservoir views to the current domain
@@ -210,7 +209,7 @@ void ReservoirSolverBase::setupSystem( DomainPartition & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
 
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
@@ -291,7 +290,7 @@ void ReservoirSolverBase::assembleSystem( real64 const time_n,
    * moved to device, the calculation is wrong. the problem should go away when fluid updates
    * are executed on device.
    */
-  m_wellSolver->updateStateAll( domain );
+  m_wellSolver->updateState( domain );
 
   // assemble J_WW (excluding perforation rates)
   m_wellSolver->assembleSystem( time_n, dt,
@@ -369,6 +368,12 @@ void ReservoirSolverBase::applySystemSolution( DofManager const & dofManager,
   m_flowSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
   // update the well variables
   m_wellSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+}
+
+void ReservoirSolverBase::updateState( DomainPartition & domain )
+{
+  m_flowSolver->updateState( domain );
+  m_wellSolver->updateState( domain );
 }
 
 void ReservoirSolverBase::resetStateToBeginningOfStep( DomainPartition & domain )

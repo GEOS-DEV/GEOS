@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -126,9 +126,9 @@ public:
    */
   struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
-    /// String key for the derivatives of the shape functions with respect to the reference configuration
+    /// @return String key for the derivatives of the shape functions with respect to the reference configuration
     static constexpr char const * dNdXString() { return "dNdX"; }
-    /// String key for the derivative of the jacobian.
+    /// @return String key for the derivative of the jacobian.
     static constexpr char const * detJString() { return "detJ"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
@@ -192,9 +192,6 @@ public:
 #endif
 
   ///@}
-
-  /// Unmapped face elements to nodes map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
 
   /// Unmapped face elements to edges map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToEdges;

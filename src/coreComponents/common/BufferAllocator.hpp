@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -16,8 +16,8 @@
  * @file BufferAllocator.hpp
  */
 
-#ifndef GEOSX_BUFFER_ALLOCATOR_HPP
-#define GEOSX_BUFFER_ALLOCATOR_HPP
+#ifndef GEOSX_COMMON_BUFFERALLOCATOR_HPP
+#define GEOSX_COMMON_BUFFERALLOCATOR_HPP
 
 #include "common/GeosxConfig.hpp"
 

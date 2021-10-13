@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 struct stabledt
@@ -106,6 +106,8 @@ public:
                                     arrayView1d< real64 const > const & localSolution,
                                     real64 const scalingFactor,
                                     DomainPartition & domain ) override;
+
+  virtual void updateState( DomainPartition & domain ) override final;
 
   virtual void
   implicitStepSetup( real64 const &,

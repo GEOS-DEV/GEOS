@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -16,13 +16,43 @@
  * @file testLinearAlgebraUtils.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP
-#define GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP
+#ifndef GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_
+#define GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_
 
 #include "common/DataTypes.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/initializeEnvironment.hpp"
+#include "common/MpiWrapper.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/MeshManager.hpp"
 
-using namespace geosx;
+#include <gtest/gtest.h>
+
+namespace geosx
+{
+namespace testing
+{
+
+/**
+ * @brief Simple scope-based manager for initialization/finalization in tests.
+ */
+class LinearAlgebraTestScope
+{
+public:
+
+  LinearAlgebraTestScope( int argc, char * * argv )
+  {
+    ::testing::InitGoogleTest( &argc, argv );
+    geosx::setupEnvironment( argc, argv );
+    setupLAI();
+  }
+
+  ~LinearAlgebraTestScope()
+  {
+    finalizeLAI();
+    geosx::cleanupEnvironment();
+  }
+};
 
 /**
  * @name Utility functions for linear algebra unit tests.
@@ -173,7 +203,7 @@ inline void Q12d_local( real64 const & hx,
                         real64 const & nu,
                         arraySlice2d< real64 > const & Ke )
 {
-  real64 fac = E / ( 1. - 2. * nu ) / (1. + nu );
+  real64 fac = E / ( 1. - 2. * nu ) / ( 1. + nu );
 
   // Populate stiffness matrix
 
@@ -195,7 +225,7 @@ inline void Q12d_local( real64 const & hx,
                + ( fac * hy * ( -1. + nu ) ) / ( 3. * hx );
   Ke( 0, 3 ) = ( fac * ( -1 + 4. * nu ) ) / 8.;
   Ke( 0, 4 ) = ( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
-               + ( fac * hx * (-1. + 2. * nu ) ) / ( 12. * hy );
+               + ( fac * hx * ( -1. + 2. * nu ) ) / ( 12. * hy );
   Ke( 0, 5 ) = -Ke( 0, 1 );
   Ke( 0, 6 ) = -( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
                + ( fac * hx * ( -1. + 2. * nu ) ) / ( 6. * hy );
@@ -203,7 +233,7 @@ inline void Q12d_local( real64 const & hx,
 
   // --- --- Ke( 1, 2:7 )
   Ke( 1, 2 ) = Ke( 0, 7 );
-  Ke( 1, 3 ) = -( fac * ( hy * hy * ( 1. - 2. * nu ) + hx * hx *( -1. + nu ) ) ) / ( 6. * hx * hy );
+  Ke( 1, 3 ) = -( fac * ( hy * hy * ( 1. - 2. * nu ) + hx * hx * ( -1. + nu ) ) ) / ( 6. * hx * hy );
   Ke( 1, 4 ) = Ke( 0, 5 );
   Ke( 1, 5 ) = ( fac * hx * ( -1. + nu ) ) / ( 6. * hy ) + ( fac * hy * ( -1. + 2. * nu ) ) / ( 12. * hx );
   Ke( 1, 6 ) = Ke( 0, 3 );
@@ -211,11 +241,11 @@ inline void Q12d_local( real64 const & hx,
                + ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
 
   // --- --- Ke( 2, 3:7 )
-  Ke( 2, 3 ) =  Ke( 0, 5 );
-  Ke( 2, 4 ) =  Ke( 0, 6 );
-  Ke( 2, 5 ) =  Ke( 1, 6 );
+  Ke( 2, 3 ) = Ke( 0, 5 );
+  Ke( 2, 4 ) = Ke( 0, 6 );
+  Ke( 2, 5 ) = Ke( 1, 6 );
   Ke( 2, 6 ) = ( fac * hy * ( -1 + nu ) ) / ( 6. * hx ) + ( fac * hx * ( -1. + 2. * nu ) ) / ( 12. * hy );
-  Ke( 2, 7 ) =  Ke( 0, 1 );
+  Ke( 2, 7 ) = Ke( 0, 1 );
 
   // --- --- Ke( 3, 4:7 )
   Ke( 3, 4 ) = Ke( 1, 2 );
@@ -274,7 +304,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
                                   real64 const poissonRatio,
                                   MATRIX & elasticity2D )
 {
-  localIndex const rank  = LvArray::integerConversion< localIndex >( MpiWrapper::commRank( comm ) );
+  localIndex const rank = LvArray::integerConversion< localIndex >( MpiWrapper::commRank( comm ) );
   localIndex const nproc = LvArray::integerConversion< localIndex >( MpiWrapper::commSize( comm ) );
 
   GEOSX_ERROR_IF( nCellsY < nproc, "Less than one cell row per processor is not supported" );
@@ -295,7 +325,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   localIndex const nLocalNodes = iNodeUpper - iNodeLower;
 
   // Construct local stiffness matrix (same for all cells)
-  stackArray2d< real64, 8*8 > Ke( 8, 8 );
+  stackArray2d< real64, 8 * 8 > Ke( 8, 8 );
   Q12d_local( hx, hy, youngModulus, poissonRatio, Ke );
 
   // Create a matrix of global size N with at most 18 non-zeros per row
@@ -318,7 +348,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
     cellNodes( 2 ) = cellNodes( 3 ) + 1;
     for( localIndex i = 0; i < 4; ++i )
     {
-      localDofIndex( 2 * i )     = cellNodes( i ) * 2;
+      localDofIndex( 2 * i ) = cellNodes( i ) * 2;
       localDofIndex( 2 * i + 1 ) = localDofIndex( 2 * i ) + 1;
     }
 
@@ -332,4 +362,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
 
 ///@}
 
-#endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP
+} // namespace testing
+} // namespace geosx
+
+#endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_

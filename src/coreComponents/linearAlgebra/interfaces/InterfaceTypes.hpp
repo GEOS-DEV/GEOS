@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -33,41 +33,31 @@
 #include "linearAlgebra/interfaces/petsc/PetscInterface.hpp"
 #endif
 
-/// Macro to concatenate two strings (low level)
-#define CONCAT_( A, B ) A ## B
-
-/// Macro to concatenate two strings (user level)
-#define CONCAT( A, B ) CONCAT_( A, B )
-
 namespace geosx
 {
 
 /// Alias for current interface
-using LAInterface = CONCAT( GEOSX_LA_INTERFACE, Interface );
+using LAInterface = GEOSX_CONCAT( GEOSX_LA_INTERFACE, Interface );
 
 /// Alias for ParallelMatrix
 using ParallelMatrix = LAInterface::ParallelMatrix;
+
 /// Alias for ParallelVector
 using ParallelVector = LAInterface::ParallelVector;
-/// Alias for LinearSolver
-using LinearSolver   = LAInterface::LinearSolver;
 
 /**
  * @brief High level interface to call the proper LAI initialize function.
- *
- * @param[in] argc standard argc as in any C main
- * @param[in] argv standard argv as in any C main
  */
-inline void setupLAI( int & argc, char * * & argv )
+inline void setupLAI()
 {
 #ifdef GEOSX_USE_TRILINOS
-  TrilinosInterface::initialize( argc, argv );
+  TrilinosInterface::initialize();
 #endif
 #ifdef GEOSX_USE_HYPRE
-  HypreInterface::initialize( argc, argv );
+  HypreInterface::initialize();
 #endif
 #ifdef GEOSX_USE_PETSC
-  PetscInterface::initialize( argc, argv );
+  PetscInterface::initialize();
 #endif
 }
 

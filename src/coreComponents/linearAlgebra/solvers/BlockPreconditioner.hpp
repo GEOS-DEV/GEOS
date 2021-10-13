@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,7 +20,7 @@
 #define GEOSX_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER_HPP_
 
 #include "linearAlgebra/DofManager.hpp"
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "linearAlgebra/common/PreconditionerBase.hpp"
 #include "linearAlgebra/utilities/BlockOperator.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
 
@@ -146,15 +146,13 @@ public:
    */
   ///@{
 
-  using PreconditionerBase< LAI >::compute;
+  using PreconditionerBase< LAI >::setup;
 
   /**
    * @brief Compute the preconditioner from a matrix
    * @param mat the matrix to precondition
-   * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
-  virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager ) override;
+  virtual void setup( Matrix const & mat ) override;
 
   /**
    * @brief Apply operator to a vector

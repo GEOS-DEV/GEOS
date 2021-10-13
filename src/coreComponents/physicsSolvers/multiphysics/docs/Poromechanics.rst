@@ -48,7 +48,7 @@ In the main solver, it requires the specification of solidSolverName, fluidSolve
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/Poroelastic.rst
+.. include:: /coreComponents/schema/docs/SinglePhasePoromechanics.rst
 
 * ``couplingTypeOption``: defines the coupling scheme.
 
@@ -56,7 +56,7 @@ The solid constitutive model used here is PoroLinearElasticIsotropic, which deri
 
 An example of a valid XML block for the constitutive model is given here:
 
-.. literalinclude:: ../integratedTests/poroElastic_Terzaghi.xml
+.. literalinclude:: ../integratedTests/PoroElastic_Terzaghi_FIM.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
@@ -64,7 +64,7 @@ An example of a valid XML block for the constitutive model is given here:
 Example
 ===========================================
 
-.. literalinclude:: ../integratedTests/poroElastic_Terzaghi.xml
+.. literalinclude:: ../integratedTests/PoroElastic_Terzaghi_FIM.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
   :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->

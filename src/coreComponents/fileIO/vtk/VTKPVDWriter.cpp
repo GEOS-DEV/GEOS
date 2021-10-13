@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -14,14 +14,14 @@
 
 #include "VTKPVDWriter.hpp"
 
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geosx
 {
 namespace vtk
 {
-VTKPVDWriter::VTKPVDWriter( string const & fileName ):
-  m_fileName( fileName )
+VTKPVDWriter::VTKPVDWriter( string fileName ):
+  m_fileName( std::move( fileName ) )
 {
   // Declaration of XML version
   auto declarationNode = m_pvdFile.append_child( pugi::node_declaration );
@@ -33,6 +33,11 @@ VTKPVDWriter::VTKPVDWriter( string const & fileName ):
   vtkFileNode.append_attribute( "version" ) = "0.1";
 
   vtkFileNode.append_child( "Collection" );
+}
+
+void VTKPVDWriter::setFileName( string fileName )
+{
+  m_fileName = std::move( fileName );
 }
 
 void VTKPVDWriter::save() const

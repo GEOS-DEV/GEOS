@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,8 +20,9 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
-#include "PetscVector.hpp"
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscVector.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscExport.hpp"
+#include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
 /**
@@ -52,6 +53,9 @@ public:
   /// Compatible vector type
   using Vector = PetscVector;
 
+  /// Associated exporter type
+  using Export = PetscExport;
+
   /// Alias for PETSc matrix struct pointer
   using Mat = struct _p_Mat *;
 
@@ -70,6 +74,26 @@ public:
    * @param[in] src the matrix to be copied
    */
   PetscMatrix( PetscMatrix const & src );
+
+  /**
+   * @brief Move constructor.
+   * @param[in] src the matrix to be copied
+   */
+  PetscMatrix( PetscMatrix && src ) noexcept;
+
+  /**
+   * @brief Copy assignment.
+   * @param src matrix to be copied.
+   * @return the new vector.
+   */
+  PetscMatrix & operator=( PetscMatrix const & src );
+
+  /**
+   * @brief Move assignment.
+   * @param src matrix to be moved from.
+   * @return the new matrix.
+   */
+  PetscMatrix & operator=( PetscMatrix && src ) noexcept;
 
   /**
    * @brief Destructor.
@@ -92,6 +116,8 @@ public:
   using MatrixBase::modifiable;
   using MatrixBase::ready;
   using MatrixBase::residual;
+  using MatrixBase::setDofManager;
+  using MatrixBase::dofManager;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -159,27 +185,15 @@ public:
 
   virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+                    arraySlice2d< real64 const > const & values ) override;
 
   virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+                    arraySlice2d< real64 const > const & values ) override;
 
   virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
-
-  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
-
-  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
-
-  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
+                       arraySlice2d< real64 const > const & values ) override;
 
   virtual void add( globalIndex const * rowIndices,
                     globalIndex const * colIndices,
@@ -361,7 +375,7 @@ public:
 private:
 
   /// Underlying Petsc object.
-  Mat m_mat;
+  Mat m_mat{};
 
   /// Indices of rows to be cleared on next close()
   array1d< globalIndex > m_rowsToClear;

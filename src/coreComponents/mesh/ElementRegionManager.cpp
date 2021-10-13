@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -18,12 +18,13 @@
 #include "ElementRegionManager.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "SurfaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
-#include "meshUtilities/MeshManager.hpp"
+#include "mesh/MeshManager.hpp"
+#include "schema/schemaUtilities.hpp"
 
 namespace geosx
 {
@@ -272,6 +273,7 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DOPACK >( buffer, this->getName() );
   packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
 
+  parallelDeviceEvents events;
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
     ElementRegionBase const & elemRegion = getRegion( kReg );
@@ -287,23 +289,18 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
       arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
-        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0 );
+        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0, false, events );
       }
       else
       {
-        packedSize += subRegion.packSize( wrapperNames, elemList, 0 );
+        packedSize += subRegion.packSize( wrapperNames, elemList, 0, false, events );
       }
     } );
   }
 
+  waitAllDeviceEvents( events );
   return packedSize;
 }
-//template int ElementRegionManager::PackPrivate<true>( buffer_unit_type * &,
-//                                                      string_array const &,
-//                                                      ElementViewAccessor<arrayView1d<localIndex>> const & ) const;
-//template int ElementRegionManager::PackPrivate<false>( buffer_unit_type * &,
-//                                                      string_array const &,
-//                                                      ElementViewAccessor<arrayView1d<localIndex>> const & ) const;
 
 
 int ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
@@ -332,6 +329,7 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
 
+  parallelDeviceEvents events;
   for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
   {
     string regionName;
@@ -350,13 +348,13 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
       /// THIS IS WRONG??
       arrayView1d< localIndex > & elemList = packList[kReg][esr];
 
-      unpackedSize += subRegion.unpack( buffer, elemList, 0 );
+      unpackedSize += subRegion.unpack( buffer, elemList, 0, false, events );
     } );
   }
 
+  waitAllDeviceEvents( events );
   return unpackedSize;
 }
-
 
 int ElementRegionManager::PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
@@ -403,7 +401,6 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-
 
 
 int
@@ -543,6 +540,106 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   return unpackedSize;
 }
+
+int ElementRegionManager::packFracturedElementsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                     string const fractureRegionName ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return packFracturedElementsPrivate< false >( junk, packList, fractureRegionName );
+}
+
+int ElementRegionManager::packFracturedElements( buffer_unit_type * & buffer,
+                                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                 string const fractureRegionName ) const
+{
+  return packFracturedElementsPrivate< true >( buffer, packList, fractureRegionName );
+}
+template< bool DOPACK >
+int
+ElementRegionManager::packFracturedElementsPrivate( buffer_unit_type * & buffer,
+                                                    ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                    string const fractureRegionName ) const
+{
+  int packedSize = 0;
+
+  SurfaceElementRegion const & embeddedSurfaceRegion =
+    this->getRegion< SurfaceElementRegion >( fractureRegionName );
+  EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
+    embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+  arrayView1d< globalIndex const > const embeddedSurfacesLocalToGlobal =
+    embeddedSurfaceSubRegion.localToGlobalMap();
+
+  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
+
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
+
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >(
+      [&]( localIndex const esr, CellElementSubRegion const & subRegion )
+    {
+      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
+
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
+      if( DOPACK )
+      {
+        packedSize += subRegion.packFracturedElements( buffer, elemList, embeddedSurfacesLocalToGlobal );
+      }
+      else
+      {
+        packedSize += subRegion.packFracturedElementsSize( elemList, embeddedSurfacesLocalToGlobal );
+      }
+    } );
+  }
+
+  return packedSize;
+}
+
+int
+ElementRegionManager::unpackFracturedElements( buffer_unit_type const * & buffer,
+                                               ElementReferenceAccessor< localIndex_array > & packList,
+                                               string const fractureRegionName )
+{
+  int unpackedSize = 0;
+
+  SurfaceElementRegion & embeddedSurfaceRegion =
+    this->getRegion< SurfaceElementRegion >( fractureRegionName );
+  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion =
+    embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+  unordered_map< globalIndex, localIndex > embeddedSurfacesGlobalToLocal =
+    embeddedSurfaceSubRegion.globalToLocalMap();
+
+  localIndex numRegionsRead;
+  unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
+
+  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  {
+    string regionName;
+    unpackedSize += bufferOps::Unpack( buffer, regionName );
+
+    ElementRegionBase & elemRegion = getRegion( regionName );
+
+    localIndex numSubRegionsRead;
+    unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
+    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >(
+      [&]( localIndex const kSubReg, CellElementSubRegion & subRegion )
+    {
+      string subRegionName;
+      unpackedSize += bufferOps::Unpack( buffer, subRegionName );
+
+      /// THIS IS WRONG
+      localIndex_array & elemList = packList[kReg][kSubReg];
+      unpackedSize += subRegion.unpackFracturedElements( buffer, elemList, embeddedSurfacesGlobalToLocal );
+    } );
+  }
+
+  return unpackedSize;
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, Group * const )
 }

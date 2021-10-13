@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -34,18 +34,6 @@ namespace geosx
 {
 namespace finiteElement
 {
-
-struct ParentElementTypeStrings
-{
-  static constexpr auto Tetrahedon    = "C3D4";
-  static constexpr auto Pyramid       = "C3D5";
-  static constexpr auto Prism         = "C3D6";
-  static constexpr auto Hexahedron    = "C3D8";
-  static constexpr auto Quadralateral = "C2D4";
-  static constexpr auto Triangle      = "C2D3";
-  static constexpr auto Polyhedral    = "POLYHEDRAL";
-  static constexpr auto Polytope      = "POLYTOPE";
-};
 
 template< typename LAMBDA >
 void

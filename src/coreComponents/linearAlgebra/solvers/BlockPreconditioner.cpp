@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -86,7 +86,7 @@ void BlockPreconditioner< LAI >::applyBlockScaling()
   {
     if( m_scalingOption == BlockScalingOption::FrobeniusNorm )
     {
-      real64 norms[2] = { m_matBlocks( 0, 0 ).normFrobenius(), m_matBlocks( 1, 1 ).normFrobenius() };
+      real64 const norms[2] = { m_matBlocks( 0, 0 ).normFrobenius(), m_matBlocks( 1, 1 ).normFrobenius() };
       m_scaling[0] = std::min( norms[1] / norms[0], 1.0 );
       m_scaling[1] = std::min( norms[0] / norms[1], 1.0 );
     }
@@ -149,9 +149,11 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
 }
 
 template< typename LAI >
-void BlockPreconditioner< LAI >::compute( Matrix const & mat,
-                                          DofManager const & dofManager )
+void BlockPreconditioner< LAI >::setup( Matrix const & mat )
 {
+  // Check that DofManager is available
+  GEOSX_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "BlockPreconditioner requires a DofManager" );
+
   // Check that user has set block solvers
   GEOSX_LAI_ASSERT( m_solvers[0] != nullptr );
   GEOSX_LAI_ASSERT( m_solvers[1] != nullptr );
@@ -163,12 +165,12 @@ void BlockPreconditioner< LAI >::compute( Matrix const & mat,
                        mat.numGlobalRows() != this->numGlobalRows() ||
                        mat.numGlobalCols() != this->numGlobalRows();
 
-  Base::compute( mat, dofManager );
+  Base::setup( mat );
 
   // If the matrix size/structure has changed, need to resize internal LA objects and recompute restrictors.
   if( newSize )
   {
-    reinitialize( mat, dofManager );
+    reinitialize( mat, *mat.dofManager() );
   }
 
   // Extract diagonal blocks
@@ -183,9 +185,9 @@ void BlockPreconditioner< LAI >::compute( Matrix const & mat,
   }
 
   applyBlockScaling();
-  m_solvers[0]->compute( m_matBlocks( 0, 0 ), dofManager );
+  m_solvers[0]->setup( m_matBlocks( 0, 0 ) );
   computeSchurComplement();
-  m_solvers[1]->compute( m_matBlocks( 1, 1 ), dofManager );
+  m_solvers[1]->setup( m_matBlocks( 1, 1 ) );
 }
 
 template< typename LAI >

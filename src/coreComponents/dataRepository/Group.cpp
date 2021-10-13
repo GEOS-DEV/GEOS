@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -17,7 +17,6 @@
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
-#include "managers/GeosxState.hpp"
 
 namespace geosx
 {
@@ -123,20 +122,30 @@ string Group::getPath() const
 {
   // In the Conduit node heirarchy everything begins with 'Problem', we should change it so that
   // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
-  string const noProblem = getConduitNode().path().substr( sizeof( "Problem" ) -1 );
-  return noProblem == "" ? "/" : noProblem;
+  string const noProblem = getConduitNode().path().substr( std::strlen( dataRepository::keys::ProblemManager ) - 1 );
+  return noProblem.empty() ? "/" : noProblem;
 }
 
 void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
 {
   xmlWrapper::addIncludedXML( targetNode );
 
-  // loop over the child nodes of the targetNode
-  for( xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  // Handle the case where the node was imported from a different input file
+  // Set the path prefix to make sure all relative Path variables are interpreted correctly
+  string const oldPrefix = Path::pathPrefix();
+  xmlWrapper::xmlAttribute filePath = targetNode.attribute( xmlWrapper::filePathString );
+  if( filePath )
+  {
+    Path::pathPrefix() = splitPath( filePath.value() ).first;
+    targetNode.remove_attribute( filePath );
+  }
+
+  // Loop over the child nodes of the targetNode
+  for( xmlWrapper::xmlNode childNode : targetNode.children() )
   {
     // Get the child tag and name
     string childName = childNode.attribute( "name" ).value();
-    if( childName.empty())
+    if( childName.empty() )
     {
       childName = childNode.name();
     }
@@ -154,32 +163,32 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   }
 
   processInputFile( targetNode );
-//  ProcessInputFile_PostProcess();
+
+  // Restore original prefix once the node is processed
+  Path::pathPrefix() = oldPrefix;
 }
 
 void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
 {
-
-  std::set< string > processedXmlNodes;
+  std::set< string > processedAttributes;
   for( std::pair< string const, WrapperBase * > & pair : m_wrappers )
   {
     if( pair.second->processInputFile( targetNode ) )
     {
-      processedXmlNodes.insert( pair.first );
+      processedAttributes.insert( pair.first );
     }
   }
 
-  for( xmlWrapper::xmlAttribute attribute=targetNode.first_attribute(); attribute; attribute = attribute.next_attribute() )
+  for( xmlWrapper::xmlAttribute attribute : targetNode.attributes() )
   {
-    string const childName = attribute.name();
-    if( childName != "name" && childName != "xmlns:xsi" && childName != "xsi:noNamespaceSchemaLocation" )
+    string const attributeName = attribute.name();
+    if( attributeName != "name" && attributeName != "xmlns:xsi" && attributeName != "xsi:noNamespaceSchemaLocation" )
     {
-      GEOSX_THROW_IF( processedXmlNodes.count( childName )==0,
-                      "XML Node ("<<targetNode.name()<<") with attribute name=("<<
-                      targetNode.attribute( "name" ).value()<<") contains child node named ("<<
-                      childName<<") that is not read. Valid options are: \n" << dumpInputOptions()
-                      + "\nFor more details, please refer to documentation at: \n"
-                      + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n",
+      GEOSX_THROW_IF( processedAttributes.count( attributeName ) == 0,
+                      GEOSX_FMT( "XML Node '{}' with name='{}' contains unused attribute '{}'.\n"
+                                 "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
+                                 "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                                 targetNode.path(), targetNode.attribute( "name" ).value(), attributeName, dumpInputOptions() ),
                       InputError );
     }
   }
@@ -293,7 +302,8 @@ void Group::initializePostInitialConditions()
 localIndex Group::packSize( string_array const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
-                            bool on_device ) const
+                            bool onDevice,
+                            parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::PackSize( getName());
@@ -307,11 +317,11 @@ localIndex Group::packSize( string_array const & wrapperNames,
       packedSize += bufferOps::PackSize( wrapperPair.first );
       if( packList.empty() )
       {
-        packedSize += wrapperPair.second->packSize( true, on_device );
+        packedSize += wrapperPair.second->packSize( true, onDevice, events );
       }
       else
       {
-        packedSize += wrapperPair.second->packByIndexSize( packList, true, on_device );
+        packedSize += wrapperPair.second->packByIndexSize( packList, true, onDevice, events );
       }
     }
   }
@@ -324,11 +334,11 @@ localIndex Group::packSize( string_array const & wrapperNames,
       packedSize += bufferOps::PackSize( wrapperName );
       if( packList.empty() )
       {
-        packedSize += wrapper.packSize( true, on_device );
+        packedSize += wrapper.packSize( true, onDevice, events );
       }
       else
       {
-        packedSize += wrapper.packByIndexSize( packList, true, on_device );
+        packedSize += wrapper.packByIndexSize( packList, true, onDevice, events );
       }
     }
   }
@@ -339,7 +349,7 @@ localIndex Group::packSize( string_array const & wrapperNames,
     for( auto const & keyGroupPair : m_subGroups )
     {
       packedSize += bufferOps::PackSize( keyGroupPair.first );
-      packedSize += keyGroupPair.second->packSize( wrapperNames, packList, recursive, on_device );
+      packedSize += keyGroupPair.second->packSize( wrapperNames, packList, recursive, onDevice, events );
     }
   }
 
@@ -349,10 +359,11 @@ localIndex Group::packSize( string_array const & wrapperNames,
 
 localIndex Group::packSize( string_array const & wrapperNames,
                             integer const recursive,
-                            bool on_device ) const
+                            bool onDevice,
+                            parallelDeviceEvents & events ) const
 {
   arrayView1d< localIndex const > nullArray;
-  return packSize( wrapperNames, nullArray, recursive, on_device );
+  return packSize( wrapperNames, nullArray, recursive, onDevice, events );
 }
 
 
@@ -360,7 +371,8 @@ localIndex Group::pack( buffer_unit_type * & buffer,
                         string_array const & wrapperNames,
                         arrayView1d< localIndex const > const & packList,
                         integer const recursive,
-                        bool on_device ) const
+                        bool onDevice,
+                        parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack< true >( buffer, getName() );
@@ -375,11 +387,11 @@ localIndex Group::pack( buffer_unit_type * & buffer,
       if( packList.empty() )
       {
         // invoke wrapper pack kernel
-        packedSize += wrapperPair.second->pack( buffer, true, on_device );
+        packedSize += wrapperPair.second->pack( buffer, true, onDevice, events );
       }
       else
       {
-        packedSize += wrapperPair.second->packByIndex( buffer, packList, true, on_device );
+        packedSize += wrapperPair.second->packByIndex( buffer, packList, true, onDevice, events );
       }
     }
   }
@@ -392,15 +404,14 @@ localIndex Group::pack( buffer_unit_type * & buffer,
       packedSize += bufferOps::Pack< true >( buffer, wrapperName );
       if( packList.empty() )
       {
-        packedSize += wrapper.pack( buffer, true, on_device );
+        packedSize += wrapper.pack( buffer, true, onDevice, events );
       }
       else
       {
-        packedSize += wrapper.packByIndex( buffer, packList, true, on_device );
+        packedSize += wrapper.packByIndex( buffer, packList, true, onDevice, events );
       }
     }
   }
-
 
   if( recursive > 0 )
   {
@@ -409,7 +420,7 @@ localIndex Group::pack( buffer_unit_type * & buffer,
     for( auto const & keyGroupPair : m_subGroups )
     {
       packedSize += bufferOps::Pack< true >( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->pack( buffer, wrapperNames, packList, recursive, on_device );
+      packedSize += keyGroupPair.second->pack( buffer, wrapperNames, packList, recursive, onDevice, events );
     }
   }
 
@@ -419,16 +430,18 @@ localIndex Group::pack( buffer_unit_type * & buffer,
 localIndex Group::pack( buffer_unit_type * & buffer,
                         string_array const & wrapperNames,
                         integer const recursive,
-                        bool on_device ) const
+                        bool onDevice,
+                        parallelDeviceEvents & events ) const
 {
   arrayView1d< localIndex const > nullArray;
-  return pack( buffer, wrapperNames, nullArray, recursive, on_device );
+  return pack( buffer, wrapperNames, nullArray, recursive, onDevice, events );
 }
 
 localIndex Group::unpack( buffer_unit_type const * & buffer,
                           arrayView1d< localIndex > & packList,
                           integer const recursive,
-                          bool on_device )
+                          bool onDevice,
+                          parallelDeviceEvents & events )
 {
   localIndex unpackedSize = 0;
   string groupName;
@@ -445,7 +458,7 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
   {
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-    getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, on_device );
+    getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
   }
 
 
@@ -464,7 +477,7 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
       GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += getGroup( subGroupName ).unpack( buffer, packList, recursive, on_device );
+      unpackedSize += getGroup( subGroupName ).unpack( buffer, packList, recursive, onDevice, events );
     }
   }
 
@@ -566,8 +579,22 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
 
   if( path[ 0 ] == '/' )
   {
-    currentGroup = &getGlobalState().getProblemManagerAsGroup();
-    previousPosition = 1;
+    bool foundTarget = false;
+    for( int i=0; i<1000; ++i )
+    {
+      if( currentGroup->m_parent != nullptr )
+      {
+        currentGroup = currentGroup->m_parent;
+      }
+      else
+      {
+        foundTarget = true;
+        previousPosition = 1;
+        break;
+      }
+    }
+    GEOSX_ERROR_IF( !foundTarget,
+                    "Could not find the specified path from the starting group." );
   }
 
   string::size_type currentPosition;
@@ -578,7 +605,7 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
 
     previousPosition = currentPosition + 1;
 
-    if( curGroupName == "" || curGroupName == "." )
+    if( curGroupName == "" || curGroupName == "." || curGroupName==currentGroup->m_name )
     {
       continue;
     }

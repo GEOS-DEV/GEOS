@@ -41,19 +41,17 @@ XML Symbolic Math:
   </Parameters>
 
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ rock }"
-      inputFluxEstimate="1">
+      permeabilityNames="{ rockPerm }">
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-12"
-        logLevel="0"/>
+        krylovTol="1.0e-12"/>
     </SinglePhaseFVM>
   </Solvers>
 
@@ -73,13 +71,13 @@ XML Symbolic Math:
   <Geometry>
     <Box
       name="source"
-      xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01, 1.01, 1.01"/>
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin=" 8.99, -0.01, -0.01"
-      xMax="10.01, 1.01, 1.01"/>
+      xMin="{ 8.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
@@ -87,7 +85,6 @@ XML Symbolic Math:
     <PeriodicEvent
       name="outputs"
       timeFrequency="1000.0"
-      targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
@@ -107,7 +104,8 @@ XML Symbolic Math:
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -124,15 +122,27 @@ XML Symbolic Math:
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="5e-10"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
-      referencePressure="0.0"
-      compressibility="1e-9"/>
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="$porosity$"
+      compressibility="1.0e-9"
+      referencePressure="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2*$permeability$, 0.5*$permeability$, 1*$permeability$ }"/>
   </Constitutive>
 
   <Outputs>
@@ -144,41 +154,6 @@ XML Symbolic Math:
   </Outputs>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
-      scale="`2*$permeability$`"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
-      scale="`0.5*$permeability$`"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="permeability"
-      scale="`1*$permeability$`"/>
-
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="referencePorosity"
-      scale="$porosity$"/>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"

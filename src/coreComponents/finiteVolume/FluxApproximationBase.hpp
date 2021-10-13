@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -23,65 +23,14 @@
 #include "dataRepository/Group.hpp"
 #include "finiteVolume/FluxStencil.hpp"
 #include "CellElementStencilTPFA.hpp"
-#include "FaceElementStencil.hpp"
-#include "managers/DomainPartition.hpp"
+#include "SurfaceElementStencil.hpp"
+#include "FaceElementToCellStencil.hpp"
+#include "EmbeddedSurfaceToCellStencil.hpp"
+#include "SurfaceElementStencil.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
-
-/**
- * @struct CellDescriptor
- * @brief A structure containing a single cell (element) identifier triplet.
- */
-struct CellDescriptor
-{
-  /// region index
-  localIndex region;
-  /// subregion index
-  localIndex subRegion;
-  /// cell index
-  localIndex index;
-
-  /**
-   * @brief Comparison operator between two CellDescriptors.
-   * @param[in] other the CellDescriptor to compare with
-   * @return true if they represent the same mesh element
-   */
-  bool operator==( CellDescriptor const & other )
-  {
-    return( region==other.region && subRegion==other.subRegion && index==other.index );
-  }
-};
-
-/**
- * @struct PointDescriptor
- * @brief A structure describing an arbitrary point participating in a stencil.
- *
- * Nodal and face center points are identified by local mesh index.
- * Cell center points are identified by a triplet <region,subregion,index>.
- *
- * The sad reality is, a boundary flux MPFA stencil may be comprised of a mix of
- * cell and face centroids, so we have to discriminate between them at runtime
- */
-struct PointDescriptor
-{
-  /// Enum to classify the variable location
-  enum class Tag { CELL, FACE, NODE };
-
-  /// The tag
-  Tag tag;
-
-  /// union to characterize a PointDescriptor
-  union
-  {
-    /// node index
-    localIndex nodeIndex;
-    /// face index
-    localIndex faceIndex;
-    /// CellDescriptor index
-    CellDescriptor cellIndex;
-  };
-};
 
 /**
  * @class FluxApproximationBase
@@ -163,36 +112,39 @@ public:
    * @param[in,out] mesh the mesh on which to add the fracture stencil
    * @param[in] embeddedSurfaceRegionName the embedded surface element region name
    */
-  virtual void addEDFracToFractureStencil( MeshLevel & mesh,
-                                           string const & embeddedSurfaceRegionName ) const = 0;
+  virtual void addEmbeddedFracturesToStencils( MeshLevel & mesh,
+                                               string const & embeddedSurfaceRegionName ) const = 0;
 
   /**
    * @brief View keys.
    */
   struct viewKeyStruct
   {
-    /// The key for fieldName
+    /// @return The key for fieldName
     static constexpr char const * fieldNameString() { return "fieldName"; }
 
-    /// The key for coefficientName
+    /// @return The key for coefficientName
     static constexpr char const * coeffNameString() { return "coefficientName"; }
 
-    /// The key for targetRegions
+    /// @return The key for targetRegions
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
-    /// The key for areaRelTol
+    /// @return The key for coefficientModelNames
+    static constexpr char const * coefficientModelNamesString() { return "coefficientModelNames"; }
+
+    /// @return The key for areaRelTol
     static constexpr char const * areaRelativeToleranceString() { return "areaRelTol"; }
 
-    /// The key for transMultiplier
+    /// @return The key for transMultiplier
     static constexpr char const * transMultiplierString() { return "TransMultiplier"; }
 
 
     // Keys below are for wrappers registered on MeshLevel, not the current object
 
-    /// The key for cellStencil
+    /// @return The key for cellStencil
     static constexpr char const * cellStencilString() { return "cellStencil"; }
 
-    /// The key for fractureStencil
+    /// @return The key for fractureStencil
     static constexpr char const * fractureStencilString() { return "fractureStencil"; }
   };
 
@@ -201,7 +153,7 @@ public:
    */
   struct groupKeyStruct
   {
-    /// Key under which the top-level group for all FV stencils will be registered on MeshLevel
+    /// @return Key under which the top-level group for all FV stencils will be registered on MeshLevel
     static constexpr auto stencilMeshGroupString() { return "finiteVolumeStencils"; }
   };
 
@@ -215,8 +167,20 @@ public:
    */
   string_array & targetRegions()       { return m_targetRegions; }
 
+  /**
+   * @brief Returns the coeff model name.
+   * @return the coeff model name
+   */
+  string_array const & coefficientModelNames() const { return m_coefficientModelNames; }
+  /**
+   * @copydoc coefficientModelNames() const
+   */
+  string_array & coefficientModelNames()       { return m_coefficientModelNames; }
+
+
 protected:
 
+  /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -263,6 +227,9 @@ protected:
   /// name of the coefficient field
   string m_coeffName;
 
+  /// names of coefficient models to build the stencil for
+  string_array m_coefficientModelNames;
+
   /// names of target regions to build the stencil for
   string_array m_targetRegions;
 
@@ -291,8 +258,11 @@ TYPE & FluxApproximationBase::getStencil( MeshLevel & mesh, string const & name 
 template< typename LAMBDA >
 void FluxApproximationBase::forAllStencils( MeshLevel const & mesh, LAMBDA && lambda ) const
 {
-  //TODO remove dependence on CellElementStencilTPFA and FaceElementStencil
-  forStencils< CellElementStencilTPFA, FaceElementStencil >( mesh, std::forward< LAMBDA >( lambda ) );
+  //TODO remove dependence on CellElementStencilTPFA and SurfaceElementStencil
+  forStencils< CellElementStencilTPFA,
+               SurfaceElementStencil,
+               EmbeddedSurfaceToCellStencil,
+               FaceElementToCellStencil >( mesh, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename TYPE, typename ... TYPES, typename LAMBDA >

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,10 +19,10 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_
 
-#include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "linearAlgebra/common/PreconditionerBase.hpp"
+#include "linearAlgebra/common/LinearSolverBase.hpp"
 
 #include <memory>
 
@@ -36,17 +36,22 @@ namespace geosx
 struct HypreInterface
 {
   /**
-   * @brief Initializes the MPI environment for the Hypre library
-   *
-   * @param[in] argc standard argc as in any C main
-   * @param[in] argv standard argv as in any C main
+   * @brief Initializes the Hypre library.
    */
-  static void initialize( int & argc, char * * & argv );
+  static void initialize();
 
   /**
-   * @brief Finalizes the MPI environment for the Hypre library
+   * @brief Finalizes the Hypre library.
    */
   static void finalize();
+
+  /**
+   * @brief Create a hypre-based solver object.
+   * @param params the preconditioner parameters
+   * @return owning pointer to the newly created solver
+   */
+  static std::unique_ptr< LinearSolverBase< HypreInterface > >
+  createSolver( LinearSolverParameters params );
 
   /**
    * @brief Create a hypre-based preconditioner object.
@@ -68,10 +73,9 @@ struct HypreInterface
 
   /// Alias for HypreMatrix
   using ParallelMatrix = HypreMatrix;
+
   /// Alias for HypreVector
   using ParallelVector = HypreVector;
-  /// Alias for HypreSolver
-  using LinearSolver   = HypreSolver;
 
 };
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -74,6 +74,9 @@ public:
   /// Use the "isotropic" form of inner product compression
   using DiscretizationOps = SolidModelDiscretizationOpsIsotropic;
 
+  /// Use base version of saveConvergedState
+  using SolidBaseUpdates::saveConvergedState;
+
   GEOSX_HOST_DEVICE
   virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                     localIndex const q,
@@ -116,12 +119,20 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
+                                    localIndex const q,
                                     real64 ( &stiffness )[6][6] ) const override;
 
   GEOSX_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,
                                  localIndex const q,
                                  real64 ( &elasticStrain )[6] ) const override final;
+
+  GEOSX_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const override final
+  {
+    return m_bulkModulus[k];
+  }
+
 
   // TODO: confirm hyper stress/strain measures before activatiing
 
@@ -153,8 +164,10 @@ protected:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
+                                                   localIndex const q,
                                                    real64 ( & stiffness )[6][6] ) const
 {
+  GEOSX_UNUSED_VAR( q );
   real64 const G = m_shearModulus[k];
   real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
 
@@ -184,7 +197,7 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
                                                 localIndex const q,
                                                 real64 ( & elasticStrain)[6] ) const
 {
-  real64 const E = conversions::BulkModAndShearMod::toYoungsMod( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const E = conversions::BulkModAndShearMod::toYoungMod( m_bulkModulus[k], m_shearModulus[k] );
   real64 const nu = conversions::BulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
 
   elasticStrain[0] = (    m_newStress[k][q][0] - nu*m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
@@ -229,7 +242,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         real64 ( & stiffness )[6][6] ) const
 {
   smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
-  getElasticStiffness( k, stiffness );
+  getElasticStiffness( k, q, stiffness );
 }
 
 
@@ -269,7 +282,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  real64 ( & stiffness )[6][6] ) const
 {
   smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
-  getElasticStiffness( k, stiffness );
+  getElasticStiffness( k, q, stiffness );
 }
 
 
@@ -398,7 +411,7 @@ public:
     static constexpr char const * defaultShearModulusString() { return "defaultShearModulus"; }
 
     /// string/key for default Young's modulus
-    static constexpr char const * defaultYoungsModulusString() { return "defaultYoungsModulus"; }
+    static constexpr char const * defaultYoungModulusString() { return "defaultYoungModulus"; }
 
     /// string/key for bulk modulus
     static constexpr char const * bulkModulusString() { return "bulkModulus"; }
@@ -468,7 +481,7 @@ public:
    * @return An @p UPDATE_KERNEL object.
    */
   template< typename UPDATE_KERNEL, typename ... PARAMS >
-  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams ) const
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_bulkModulus,
@@ -476,7 +489,6 @@ public:
                           m_newStress,
                           m_oldStress );
   }
-
 
 protected:
 
@@ -497,7 +509,7 @@ protected:
 
 };
 
-}
+} /* namespace constitutive */
 
 } /* namespace geosx */
 

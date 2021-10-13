@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -104,6 +104,15 @@ public:
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void saveConvergedState( localIndex const k,
+                                   localIndex const q ) const override final
+  {
+    ElasticIsotropicUpdates::saveConvergedState( k, q );
+    m_oldCohesion[k][q] = m_newCohesion[k][q];
+  }
 
 private:
   /// A reference to the ArrayView holding the friction angle for each element.

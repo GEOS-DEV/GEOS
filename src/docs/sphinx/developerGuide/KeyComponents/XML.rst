@@ -75,17 +75,17 @@ Internally, this requires adding the derived class information to ``ObjectCatalo
    Below, we illustrate this with the ``CompositionalMultiphaseFlow`` solver.
    The first code listing defines the class name, which in this case is the same as the ``catalogName`` shown in the second listing.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: public:
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: virtual
 
-*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp]*
+*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp]*
 
 
 2. To let GEOSX know where to search in the ``ObjectCatalog``, a macro needs to be added at the end of the .cpp file implementing the class.
@@ -93,12 +93,12 @@ Internally, this requires adding the derived class information to ``ObjectCatalo
    As a result of this construct, the ``ObjectCatalog`` is not a flat list of ``string`` s mapping the C++ classes.
    Instead, the ``ObjectCatalog`` forms a tree that reproduces locally the structure of the class diagram, from the base class to the derived classes.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
-   :end-before: }
+   :end-before: //END_SPHINX_INCLUDE_01
 
-*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp]*
+*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.cpp]*
 
 
 .. highlights::
@@ -136,19 +136,19 @@ Here, this method returns the ``string``  "XmlNameOfMySolver".
 
 We have deliberately distinguished the class name from the catalog/XML name for the sake of clarity in this example.
 It is nevertheless a best practice to use the same name for the class and for the ``catalogName``.
-This is the case below for the existing ``CompositionalMultiphaseFlow`` class.
+This is the case below for the existing ``CompositionalMultiphaseFVM`` class.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
-   :end-before: public:
+   :end-before: //END_SPHINX_INCLUDE_00
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
-   :end-before: virtual
+   :end-before: //END_SPHINX_INCLUDE_01
 
-*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp]*
+*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp]*
 
 
 Parsing XML and searching the ObjectCatalog in scope
@@ -161,7 +161,7 @@ This is how the XML block would look like.
 
     <Problem>
       <Solvers
-        gravityVector="0.0, 0.0, -9.81">
+        gravityVector="{ 0.0, 0.0, -9.81 }">
         <XmlNameOfMySolver name="nameOfThisSolverInstance"
                                  verboseLevel="1"
                                  gravityFlag="1"
@@ -229,12 +229,12 @@ Here, the only data (=wrapper) that is defined at the level of our ``CppNameOfMy
 We register a property of temperature, corresponding to the member class ``m_temperature`` of ``CppNameOfMySolver``.
 The registration also checks if a property is required or optional (here, it is required), and provides a brief description that will be used in the auto-generated code documentation.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: Mass
 
-*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp]*
+*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.cpp]*
 
 This operation is done recursively if XML tags are nested.
 
@@ -294,7 +294,7 @@ In this namespace, we define ``string`` s that correspond to the tags of XML att
 .. literalinclude:: ../../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
-   :end-before: protected
+   :end-before: //END_SPHINX_INCLUDE_01
 
 *[source: src/coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp]*
 
@@ -307,7 +307,7 @@ They will ultimately contain the data read from the XML file (other data members
 .. literalinclude:: ../../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_02
-   :end-before: m_satScale;
+   :end-before: //END_SPHINX_INCLUDE_02
 
 *[source: src/coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp]*
 

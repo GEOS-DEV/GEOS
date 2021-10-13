@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -18,13 +18,12 @@
 
 #include "WellSolverBase.hpp"
 
-#include "managers/DomainPartition.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
-#include "meshUtilities/PerforationData.hpp"
+#include "mesh/PerforationData.hpp"
 
 namespace geosx
 {
@@ -37,6 +36,7 @@ WellSolverBase::WellSolverBase( string const & name,
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
   m_numDofPerResElement( 0 ),
+  m_currentTime( 0 ),
   m_currentDt( 0 )
 {
   this->registerWrapper( viewKeyStruct::fluidNamesString(), &m_fluidModelNames ).
@@ -116,11 +116,15 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
 }
 
 void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                        real64 const & dt,
                                         DomainPartition & domain )
 {
   // bind the stored reservoir views to the current domain
   resetViews( domain );
+
+  // saved time and current dt for residual normalization and time-dependent tables
+  m_currentDt = dt;
+  m_currentTime = time_n;
 
   // Initialize the primary and secondary variables for the first time step
   if( time_n <= 0.0 )
@@ -130,6 +134,10 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
 
   // set deltas to zero and recompute dependent quantities
   resetStateToBeginningOfStep( domain );
+
+  // backup fields used in time derivative approximation
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  backupFields( mesh );
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -139,24 +147,27 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
 {
-  // then assemble the mass balance equations
+  // assemble the accumulation term in the mass balance equations
+  assembleAccumulationTerms( domain, dofManager, localMatrix, localRhs );
+
+  // then assemble the flux terms in the mass balance equations
   assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the volume balance equations
-  assembleVolumeBalanceTerms( time, dt, domain, dofManager, localMatrix, localRhs );
+  assembleVolumeBalanceTerms( domain, dofManager, localMatrix, localRhs );
 
   // then assemble the pressure relations between well elements
-  formPressureRelations( domain, dofManager, localMatrix, localRhs );
+  assemblePressureRelations( domain, dofManager, localMatrix, localRhs );
 }
 
-void WellSolverBase::updateStateAll( DomainPartition & domain )
+void WellSolverBase::updateState( DomainPartition & domain )
 {
 
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
                                                                WellElementSubRegion & subRegion )
   {
-    updateState( subRegion, targetIndex );
+    updateSubRegionState( subRegion, targetIndex );
   } );
 
 }
@@ -165,7 +176,7 @@ void WellSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
@@ -181,7 +192,7 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   // make sure that nextWellElementIndex is up-to-date (will be used in well initialization and assembly)
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );

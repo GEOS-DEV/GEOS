@@ -1,6 +1,8 @@
 #
 # Performance portability
 #
+message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
+
 if(EXISTS ${GEOSX_TPL_DIR}/raja)
   set(RAJA_DIR ${GEOSX_TPL_DIR}/raja CACHE PATH "" FORCE)
 endif()
@@ -41,6 +43,10 @@ if(EXISTS ${GEOSX_TPL_DIR}/vtk)
   set(VTK_DIR ${GEOSX_TPL_DIR}/vtk CACHE PATH "" FORCE)
 endif()
 
+if(EXISTS ${GEOSX_TPL_DIR}/fmt)
+  set(FMT_DIR ${GEOSX_TPL_DIR}/fmt CACHE PATH "" FORCE)
+endif()
+
 #
 # Math TPLs
 #
@@ -77,6 +83,10 @@ endif()
 #
 if(EXISTS ${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify)
   set(UNCRUSTIFY_EXECUTABLE ${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify CACHE PATH "" FORCE)
+endif()
+
+if(EXISTS ${GEOSX_TPL_DIR}/doxygen/bin/doxygen)
+  set(DOXYGEN_EXECUTABLE ${GEOSX_TPL_DIR}/doxygen/bin/doxygen CACHE PATH "" FORCE)
 endif()
 
 #

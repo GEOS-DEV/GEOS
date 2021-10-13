@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -15,7 +15,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 #define GEOSX_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 
 namespace geosx
@@ -161,7 +161,10 @@ public:
 
 };
 
-ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction, "None", "Attempt", "Require" )
+ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
+              "None",
+              "Attempt",
+              "Require" );
 
 } /* namespace geosx */
 

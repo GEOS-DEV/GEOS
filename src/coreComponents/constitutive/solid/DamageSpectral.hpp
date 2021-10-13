@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -54,10 +54,13 @@ public:
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // could maybe optimize, but general for now
 
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
+  using DamageUpdates< UPDATE_BASE >::saveConvergedState;
+
   using DamageUpdates< UPDATE_BASE >::getDegradationValue;
   using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;
   using DamageUpdates< UPDATE_BASE >::getDegradationSecondDerivative;
   using DamageUpdates< UPDATE_BASE >::getEnergyThreshold;
+
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
@@ -276,7 +279,7 @@ public:
   virtual string getCatalogName() const override { return catalogName(); }
 
 
-  KernelWrapper createKernelUpdates()
+  KernelWrapper createKernelUpdates() const
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
                                                                        m_strainEnergyDensity.toView(),

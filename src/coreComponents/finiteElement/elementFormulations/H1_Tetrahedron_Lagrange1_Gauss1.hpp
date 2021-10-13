@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -102,6 +102,23 @@ public:
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
 
+  /**
+   * @brief Calculates the isoparametric "Jacobian" transformation
+   *   matrix/mapping from the parent space to the physical space.
+   * @param q The quadrature point index in 3d space.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to store the Jacobian transformation.
+   * @return The determinant of the Jacobian transformation matrix.
+   */
+  GEOSX_HOST_DEVICE
+  static real64 invJacobianTransformation( int const q,
+                                           real64 const (&X)[numNodes][3],
+                                           real64 ( & J )[3][3] )
+  {
+    GEOSX_UNUSED_VAR( q, X );
+//    jacobianTransformation( q, X, J );
+    return LvArray::tensorOps::invert< 3 >( J );
+  }
 private:
   /// The volume of the element in the parent configuration.
   constexpr static real64 parentVolume = 1.0 / 6.0;

@@ -26,11 +26,11 @@ Configuring Caliper
   
 Caliper configuration is done by specifying a string to initialize Caliper with via the
 `-t` option. A few options are listed below but we refer the reader to
-`Caliper <https://github.com/LLNL/Caliper/blob/releases/v2.3.0/doc/ConfigManagerAPI.md>`_ for the full Caliper tutorial.
+`Caliper Config <https://software.llnl.gov/Caliper/BuiltinConfigurations.html>`_ for the full Caliper tutorial.
 
-* ``-t runtime-report`` Will make Caliper print aggregated timing information to standard out.
-* ``-t runtime-report,aggregate_across_ranks=false`` Will make Caliper write per rank timing information to standard out.
-    This isn't useful when using more than one rank but it does provide more information for single rank runs.
+* ``-t runtime-report,max_column_width=200`` Will make Caliper print aggregated timing information to standard out, with a column width large enought that it doesn't truncate most function names.
+* ``-t runtime-report,max_column_width=200,profile.cuda`` Does the same as the above, but also instruments CUDA API calls. This is only an option when building with CUDA.
+* ``-t runtime-report,aggregate_across_ranks=false`` Will make Caliper write per rank timing information to standard out. This isn't useful when using more than one rank but it does provide more information for single rank runs.
 * ``-t spot()`` Will make Caliper output a `.cali` timing file that can be viewed in the Spot web server.
 
 
@@ -40,7 +40,7 @@ Adiak is a library that allows the addition of meta-data to the Caliper Spot out
 This meta-data allows you to easily slice and dice the timings available in the Spot web server. To export meta-data
 use the `adiak::value` function.
 
-See `Adiak <https://github.com/LLNL/Adiak/blob/f27ba674b88c2435e5e3245acbda9fc0a57bf88f/docs/Adiak%20API.docx>`_
+See `Adiak API <https://github.com/LLNL/Adiak/blob/f27ba674b88c2435e5e3245acbda9fc0a57bf88f/docs/Adiak%20API.docx>`_
 for the full Adiak documentation.
 
 

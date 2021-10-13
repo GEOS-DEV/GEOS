@@ -68,7 +68,7 @@ BrineEnthalpyFunction::BrineEnthalpyFunction( string_array const & inputPara,
 
 
   makeTable( inputPara );
-  
+
   makeTable( inputPara );
 
 }
@@ -151,62 +151,63 @@ void BrineEnthalpyFunction::makeTable( string_array const & inputPara )
   CO2EnthalpyFunction::calculateCO2Enthalpy( pressures, temperatures, CO2Densities, CO2Enthalpies );
 
   m_CO2EnthalpyTable = std::make_shared< XYTable >( "CO2EnthalpyTable", pressures, temperatures, CO2Enthalpies );
-  
+
 }
 
 void BrineEnthalpyFunction::calculateBrineEnthalpy( real64_array const & pressure, real64_array const & temperature, real64 const & m, real64_array2d const & enthalpy )
 {
 
   GEOSX_UNUSED_VAR( pressure );
-  
+
   static real64 a[4][3] = {
     {-9633.6, -4080.0, 286.49},
     {166.58, 68.577, -4.6856},
     {-0.90963, -0.36524, 0.0249667},
     {1.7965e-3, 7.1924e-4, -4.9e-5}
   };
-    
+
   real64 x1, x2, h1, h2, dh, T;
 
   x1 = 1000.0 / (1000.0 + 58.44 * m);
 
-  x2 = 58.44 * m  / (1000.0 + 58.44 * m);  
+  x2 = 58.44 * m  / (1000.0 + 58.44 * m);
 
-  for(localIndex ip = 0; ip < pressure.size(); ++ip)
-  {  
+  for( localIndex ip = 0; ip < pressure.size(); ++ip )
+  {
 
-    for(localIndex it = 0; it < temperature.size(); ++it)
-    {  
+    for( localIndex it = 0; it < temperature.size(); ++it )
+    {
 
       T = temperature[it];
 
       dh = 0.0;
 
-      for(localIndex i = 0; i < 4; ++i)
-        for(localIndex j = 0; j < 3; ++j)
-        {  
+      for( localIndex i = 0; i < 4; ++i )
+        for( localIndex j = 0; j < 3; ++j )
+        {
 
-          dh += a[i][j] * pow(T, real64(i)) * pow(m, real64(j));
+          dh += a[i][j] * pow( T, real64( i )) * pow( m, real64( j ));
 
         }
 
       dh *= 4.184 / (1000.0 + 58.44 * m);
 
-    
-      h1 = 0.12453e-4 * pow(T, 3.0) - 0.45137e-2 * pow(T, 2.0) + 4.81155 * T - 29.578;
 
-      h2 = (-0.83624e-3 * pow(T, 3.0) + 0.16792 * pow(T, 2.0) - 25.9293 * T) * 4.184 / 58.44;
+      h1 = 0.12453e-4 * pow( T, 3.0 ) - 0.45137e-2 * pow( T, 2.0 ) + 4.81155 * T - 29.578;
+
+      h2 = (-0.83624e-3 * pow( T, 3.0 ) + 0.16792 * pow( T, 2.0 ) - 25.9293 * T) * 4.184 / 58.44;
 
       enthalpy[ip][it] = (x1 * h1 + x2 * h2 + m * dh) * 1000.0;
-  
+
     }
   }
 }
-  
-void BrineEnthalpyFunction::evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition, EvalVarArgs & value, bool useMass ) const
+
+void BrineEnthalpyFunction::evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition, EvalVarArgs & value,
+                                        bool useMass ) const
 {
-  localIndex const numComponents = phaseComposition.size();  
-  
+  localIndex const numComponents = phaseComposition.size();
+
   EvalArgs2D P, T, enthalpy, CO2Enthalpy;
   P.m_var = pressure.m_var;
   P.m_der[0] = 1.0;
@@ -218,43 +219,43 @@ void BrineEnthalpyFunction::evaluation( EvalVarArgs const & pressure, EvalVarArg
 
   CO2Enthalpy = m_CO2EnthalpyTable->value( P, T );
 
-  
+
   //assume there are only CO2 and brine here.
-  
+
   EvalVarArgs enth1, enth2;
 
   enth1.m_var = CO2Enthalpy.m_var;
   enth1.m_der[0] = CO2Enthalpy.m_der[0];
-  enth1.m_der[numComponents + 1] = CO2Enthalpy.m_der[1];    
+  enth1.m_der[numComponents + 1] = CO2Enthalpy.m_der[1];
 
   enth2.m_var = enthalpy.m_var;
   enth2.m_der[0] = enthalpy.m_der[0];
-  enth2.m_der[numComponents + 1] = enthalpy.m_der[1];    
+  enth2.m_der[numComponents + 1] = enthalpy.m_der[1];
 
   real64 C = phaseComposition[m_waterIndex].m_var;
 
-  real64 const waterMW = m_componentMolarWeight[m_waterIndex];   
+  real64 const waterMW = m_componentMolarWeight[m_waterIndex];
   real64 const CO2MW = m_componentMolarWeight[m_CO2Index];
 
   if( useMass )
   {
-    
+
     EvalVarArgs X = C * waterMW / (C * waterMW + (1.0 - C) * CO2MW);
     X.m_der[m_waterIndex+1] = 1.0;
 
     value = (1.0 - X ) * enth1 + X * enth2;
 
   }
-  else 
+  else
   {
 
     EvalVarArgs X = C;
     X.m_der[m_waterIndex+1] = 1.0;
 
     value = (1.0 - X ) * enth1 / CO2MW + X * enth2 / waterMW;
-  
-  }  
-    
+
+  }
+
 }
 
 REGISTER_CATALOG_ENTRY( PVTFunction,

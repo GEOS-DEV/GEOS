@@ -1,141 +1,140 @@
 .. _Dependencies:
 
-Dependencies
-============
+Third-party dependencies
+========================
 
-GEOSX relies on multiple dependencies
+GEOSX makes use of multiple third-party libraries (TPLs) and tools, some of which are mandatory and some optional.
+We only test against specific versions, and sometimes even require development snapshots (specific git commits).
+Not all of these guarantee backwards compatibility, so we strongly recommend building with these specific versions.
 
-The build management process it self uses
+List of third-party libraries and tools
+---------------------------------------
 
-- `git <https://git-scm.com/>`_ and its large file extension plugin `git-lfs <https://git-lfs.github.com/>`_ (git 2.20 and git-lfs 2.7.1 are tested and working versions)
-- `cmake <https://cmake.org/>`_ While GEOSX may surely be compiled with version 3.9, some of our third party libraries require a more recent version of cmake (cmake 3.13 is tested and working). We advise you to consider a rather recent version of cmake.
-- C/C++/FORTRAN compilers (GEOSX uses c++14).
-- `python <https://www.python.org/>`_ (version 2.7 tested and validated, only standard modules are used).
+The two tables below lists the dependencies with their specific versions and relevant CMake variables.
+Some of these libraries may have their own system prerequisites.
 
-**It is the developer's responsibility to provide these tools.**
-On Debian flavored distributions, consider the following command line.
+Libraries
+~~~~~~~~~
 
-.. code-block:: console
+The following libraries are linked to by GEOSX:
 
-    apt-get install git git-lfs gcc g++ gfortran python2.7
+============= ========== =========================== ============================= =====================================
+Name          Version    Enable option               Path variable                 Description
+============= ========== =========================== ============================= =====================================
+Adiak_        0.2.0      :code:`ENABLE_CALIPER`      :code:`ADIAK_DIR`             Library for collecting metadata from HPC application runs, and distributing that metadata to subscriber tools.
+Caliper_      2.4.0      :code:`ENABLE_CALIPER`      :code:`CALIPER_DIR`           Instrumentation and performance profiling library.
+conduit_      0.5.0      *mandatory*                 :code:`CONDUIT_DIR`           Simplified Data Exchange for HPC Simulations.
+CHAI_         2.2.2      *mandatory*                 :code:`CHAI_DIR`              Copy-hiding array abstraction to automatically migrate data between memory spaces.
+RAJA_         0.12.1     *mandatory*                 :code:`RAJA_DIR`              Collection of C++ software abstractions that enable architecture portability for HPC applications.
+hdf5_         1.10.5     *mandatory*                 :code:`HDF5_DIR`              High-performance data management and storage suite.
+mathpresso_   2015-12-15 :code:`ENABLE_MATHPRESSO`   :code:`MATHPRESSO_DIR`        Mathematical Expression Parser and JIT Compiler.
+pugixml_      1.8.0      *mandatory*                 :code:`PUGIXML_DIR`           Light-weight, simple and fast XML parser for C++ with XPath support.
+parmetis_     4.0.3      *mandatory* (with MPI)      :code:`PARMETIS_DIR`          Parallel Graph Partitioning library. Should be built with 64-bit :code:`idx_t` type.
+suitesparse_  5.8.1      :code:`ENABLE_SUITESPARSE`  :code:`SUITESPARSE_DIR`       A suite of sparse matrix software.
+superlu_dist_ 0f6efc3    :code:`ENABLE_SUPERLU_DIST` :code:`SUPERLU_DIST_DIR`      General purpose library for the direct solution of large, sparse, nonsymmetric systems of linear equations.
+hypre_        2186a8f    :code:`ENABLE_HYPRE`        :code:`HYPRE_DIR`             Library of high performance preconditioners and solvers for large sparse linear systems on massively parallel computers.
+PETSc_        3.13.0     :code:`ENABLE_PETSC`        :code:`PETSC_DIR`             Suite of data structures and routines for the scalable (parallel) solution of scientific applications.
+Trilinos_     12.18.1    :code:`ENABLE_TRILINOS`     :code:`TRILINOS_DIR`          Collection of reusable scientific software libraries, known in particular for linear solvers.
+silo_         4.10.3     *mandatory*                 :code:`SILO_DIR`              A Mesh and Field I/O Library and Scientific Database.
+VTK_          9.0.0-rc3  :code:`ENABLE_VTK`          :code:`VTK_DIR`               Open source software for manipulating and displaying scientific data.
+============= ========== =========================== ============================= =====================================
 
-The GEOSX software makes use of multiple libraries.
-**Most of them are mirrored in the** `thidPartyLib/tplMirror <https://github.com/GEOSX/thirdPartyLibs/tree/master/tplMirror>`__ **folder and will be configured and build by the GEOSX TPL building process.**
-You may want to check the `CMakeLists.txt <https://github.com/GEOSX/thirdPartyLibs/blob/master/CMakeLists.txt>`_ that contains the versions of the dependencies.
+Tools
+~~~~~~~~~
 
-LLNL HPC libraries and tool boxes...
+The following tools are used as part of the build process to support GEOSX development:
 
-- `axom <https://github.com/LLNL/axom>`_
-- `Adiak <https://github.com/LLNL/Adiak>`_ (Library for collecting metadata from HPC application runs, and distributing that metadata to subscriber tools.)
-- `caliper <https://github.com/LLNL/Caliper>`_ (Performance analysis toolbox.)
-- `conduit <https://github.com/LLNL/conduit>`_ (Simplified data exchange tool for HPC simulations.)
-- `CHAI <https://github.com/LLNL/CHAI>`_ (Library that handles automatic data migration to different memory spaces behind an array-style interface.)
-- `RAJA <https://github.com/LLNL/RAJA>`_ (Collection of C++ software abstractions that enable architecture portability for HPC applications.)
+============= ========== =========================== ============================= =====================================
+Name          Version    Enable option               Path variable                 Description
+============= ========== =========================== ============================= =====================================
+doxygen_      1.8.20     :code:`ENABLE_DOXYGEN`      :code:`DOXYGEN_EXECUTABLE`    De facto standard tool for generating documentation from annotated C++ sources.
+sphinx_       1.8.5      :code:`ENABLE_SPHINX`       :code:`SPHINX_EXECUTABLE`     A tool that makes it easy to create intelligent and beautiful documentation.
+uncrustify_   401a409    :code:`ENABLE_UNCRUSTIFY`   :code:`UNCRUSTIFY_EXECUTABLE` A source code beautifier for C, C++, C#, ObjectiveC, D, Java, Pawn and VALA.
+============= ========== =========================== ============================= =====================================
 
-... and more mainstream C++ stuff.
+.. _Adiak : https://github.com/LLNL/Adiak
+.. _Caliper: https://github.com/LLNL/Caliper
+.. _conduit: https://github.com/LLNL/conduit
+.. _CHAI : https://github.com/LLNL/CHAI
+.. _RAJA : https://github.com/LLNL/RAJA
+.. _hdf5 : https://portal.hdfgroup.org/display/HDF5/HDF5
+.. _mathpresso : https://github.com/kobalicek/mathpresso
+.. _pugixml : https://pugixml.org
+.. _parmetis : http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview
+.. _silo : https://wci.llnl.gov/simulation/computer-codes/silo
+.. _VTK : https://vtk.org/
+.. _suitesparse : https://people.engr.tamu.edu/davis/suitesparse.html
+.. _superlu_dist : https://portal.nersc.gov/project/sparse/superlu
+.. _hypre : https://github.com/hypre-space/hypre
+.. _PETSc : https://www.mcs.anl.gov/petsc
+.. _Trilinos : https://trilinos.github.io
+.. _doxygen : https://www.doxygen.nl/index.html
+.. _sphinx : https://www.sphinx-doc.org/en/master/
+.. _uncrustify : http://uncrustify.sourceforge.net
+.. _GoogleTest : https://github.com/google/googletest
+.. _GoogleBenchmark : https://github.com/google/benchmark
+.. _BLT : https://github.com/LLNL/blt
 
-- `asmjit <https://github.com/asmjit/asmjit>`_ (Lightweight library for machine code just in time generation.)
-- `camp <https://github.com/llnl/camp>`_ (Macros and metaprogramming facilities for C++.)
-- `fparser <http://warp.povusers.org/FunctionParser>`_ (Parse and evaluate a mathematical function from a string.)
-- `mathpresso <https://github.com/kobalicek/mathpresso>`_ (Mathematical expression parser and JIT compiler.)
-- `pugixml <https://pugixml.org>`_ (Light-weight, simple and fast XML parser for C++ with XPath support.)
+Some other dependencies (GoogleTest_, GoogleBenchmark_) are provided through BLT_ build system which is embedded in GEOSX source.
+No actions are needed to build them.
 
-Linear (or more) algebra solvers
+If you would like to create a Docker image with all dependencies, take a look at
+`Dockerfiles <https://github.com/GEOSX/thirdPartyLibs/tree/master/docker>`_
+that are used in our CI process.
 
-- `hypre <https://github.com/hypre-space/hypre>`_ (Library of high performance preconditioners and solvers featuring multigrid methods for the solution of large, sparse linear systems of equations on massively parallel computers.)
-- `petsc <https://www.mcs.anl.gov/petsc>`_ (Suite of data structures and routines for the scalable (parallel) solution of scientific applications modeled by partial differential equations)
-- `suitesparse <https://people.engr.tamu.edu/davis/suitesparse.html>`_ (A suite of sparse matrix software, offering different algorithms)
-- `superlu_dist <https://portal.nersc.gov/project/sparse/superlu>`_ (General purpose library for the direct solution of large, sparse, nonsymmetric systems of linear equations).
-- `trilinos <https://trilinos.github.io>`_ (Collection of reusable scientific software libraries, known in particular for linear solvers, non-linear solvers, transient solvers, optimization solvers, and uncertainty quantification (UQ) solvers.)
+Building bundled dependencies
+-----------------------------
 
-Note that petsc currently downloads `pt-scotch <https://www.labri.fr/perso/pelegrin/scotch/scotch_en.html>`_ from the internet.
-If you do not have access to internet, you should modify the `./configure` step of petsc in the `CMakeLists.txt` file,
-and change the ``--download-ptscotch`` option accordingly. 
+To simplify the process of building TPLs, we provide a git repository `thirdPartyLibs <https://github.com/GEOSX/thirdPartyLibs>`_.
+It contains source copies of exact TPL versions required and is updated periodically.
+It also contains a CMake script for building all TPLs in a single command.
 
-A graph partitioning tool
+The recommended steps to build TPLs are:
 
-- `parmetis <http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview>`_
+- Create a host-config file that sets all system-specific CMake variables (compiler and library paths, configuration flags, etc.)
+  Take a look at `host-config examples <https://github.com/GEOSX/GEOSX/blob/develop/host-configs>`_.
+- Configure via ``config-build.py`` script:
 
-A large and complex data collection library
+  .. code-block:: console
 
-- `hdf5 <https://bitbucket.hdfgroup.org/scm/hdffv/hdf5.git>`_ or its `clone on github <https://github.com/live-clones/hdf5>`_ and `its project page <https://portal.hdfgroup.org/display/knowledge>`_
+     cd thirdPartyLibs
+     python scripts/config-build.py --hostconfig=/path/to/host-config.cmake --buildtype=Release --installpath=/path/to/install/dir -DNUM_PROC=8
 
-Visualisation tools and libraries
+  where
 
-- `silo <https://wci.llnl.gov/simulation/computer-codes/silo>`_
-- `VTK <https://vtk.org/>`_
+  * ``--buildpath`` or ``-bp`` is the build directory (by default, created under current).
+  * ``--installpath`` or ``-ip`` is the installation directory(wraps ``CMAKE_INSTALL_PREFIX``).
+  * ``--buildtype`` or ``-bt`` is a wrapper to the ``CMAKE_BUILD_TYPE`` option.
+  * ``--hostconfig`` or ``-hc`` is a path to host-config file.
+  * all other command-line options are passed to CMake.
 
-Code formatters & linters
+- Run the build:
 
-- `astyle <http://astyle.sourceforge.net>`_
-- `uncrustify <http://uncrustify.sourceforge.net>`_
+  .. code-block:: console
 
-Some of these libraries rely on blas, lapack & MPI implementations.
-As well as the zlib compression library.
-**It is the developer's responsibility to provide them.**
+     cd <buildpath>
+     make
 
-On Debian flavored distribution, consider installing (apt-get install) the following packages:
+  .. warning::
+     Do not provide ``-j`` argument to ``make`` here, since the top-level make only launches sub-project builds.
+     Instead use ``-DNUM_PROC`` option above, which is passed to each sub-project's ``make`` command.
 
-.. code-block:: console
+You may also run the CMake configure step manually instead of relying on ``config-build.py``.
+The full TPL build may take anywhere between 15 minutes and 2 hours, depending on your machine, number of threads and libraries enabled.
 
-    zlib1g-dev libblas-dev liblapack-dev libopenmpi-dev
+.. note::
+   An exception from the above pattern, ``sphinx`` is currently not a part of the TPL bundle and must be installed with your Python or package manager.
 
-Note also that `pt-scotch` relies on `bison` and `flex`.
-The developer should provide these tools too.
+.. note::
+   PETSc build currently downloads `pt-scotch <https://www.labri.fr/perso/pelegrin/scotch/scotch_en.html>`_ from the internet.
+   If you do not have access to internet, modify the `./configure` step of petsc in `CMakeLists.txt` and change the ``--download-ptscotch`` option accordingly.
+   `pt-scotch` also relies on `bison` and `flex`.
 
-GEOSX uses extensively the `BLT <https://github.com/LLNL/blt>`_ (a compilation of ``cmake`` functions for high performance computing) provided as a git submodule.
-This brings also the `googletest <https://github.com/google/googletest>`_ framework which is used by GEOSX.
+Installing dependencies individually
+------------------------------------
 
-If you want further details about building the GEOSX and its TPLs, (which packages to install for example),
-consider having a look at the `Dockerfiles in the third party library repository <https://github.com/GEOSX/thirdPartyLibs/tree/master/docker>`_.
+You may also install each individual TPL separately, either manually or through a package manager.
+This is a more difficult route, since you are responsible for configuring dependencies in a compatible manner.
+Again, we strongly recommend using the exact versions listed above, to avoid possible build problems.
 
-.. _Third_party_libraries_build_management_pattern:
-
-Third party libraries build management pattern
-==============================================
-
-Each dependency of GEOSX has its own build system.
-The `thirdPartyLibs/CMakeLists.txt <https://github.com/GEOSX/thirdPartyLibs/blob/master/CMakeLists.txt>`_ cmake script was written to automate the build of all the external libraries.
-In case the developer is no cmake expert (or simply to save time on a repetitive task),
-it is convenient to use the `thirdPartyLibs/scripts/config-build.py <https://github.com/GEOSX/thirdPartyLibs/blob/master/scripts/config-build.py>`_ script that will manage the main key parameters of the dependency build.
-This python script runs the proper cmake command line; generating the Makefiles accordingly.
-Then running the ``make`` command (possibly with a specific target) will compile (and deploy) the libraries.
-
-These two scripts are also used to build the docker images (see :ref:`Continuous_Integration_process`).
-
-The most crucial parameters of the python script are ``--installpath``, ``--buildtype``, ``--hostconfig``.
-(Other parameters do exist, check the script).
-
-* ``--installpath`` is the installation directory. It wraps ``CMAKE_INSTALL_PREFIX``.
-* ``--buildtype`` is a wrapper to the `CMAKE_BUILD_TYPE <https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html>`_ option.
-* The ``--hostconfig`` option requires a cmake file containing some build parameters (compiler locations and flags, etc.).
-  You may find some examples in the host-configs folders of the `third party library <https://github.com/GEOSX/thirdPartyLibs/tree/master/host-configs>`_ of from `GEOSX <https://github.com/GEOSX/GEOSX/tree/develop/host-configs>`_
-
-To be more practical, you may need to run the following command line
-
-.. code-block:: console
-
-    python scripts/config-build.py --hostconfig=/path/to/your-platform.cmake --buildtype=Release --installpath=/path/to/install/dir
-
-We do recommend using a *host config cmake file* for fine grained control of the build.
-Have a look at some of the `already existing examples <https://github.com/GEOSX/GEOSX/blob/develop/host-configs>`_
-
-Last, note that any extra argument will be transferred directly as a ``cmake`` argument.
-For example, use the ``-DNUM_PROC=2`` to compile the TPL using two threads.
-
-If you want to directly write the `cmake` command line, we advise you to dig into the `config-build.py <https://github.com/GEOSX/GEOSX/blob/develop/scripts/config-build.py>`_ python code.
-
-Building GEOSX
-==============
-
-The same kind of `thirdPartyLibs/scripts/config-build.py <https://github.com/GEOSX/GEOSX/blob/develop/scripts/config-build.py>`_ (with the same main options) is used to build GEOSX.
-In order to further customize your build, you can append any additional variable at the end of your command line.
-
-Here is a non exhaustive list of options you may want to specify.
-
-- ``-DNUM_PROC=4`` will allow you to compile with 4 parallel threads. (In GEOSX: to change this for the third party libraries, please modify in the code).
-- ``-DGEOSX_TPL_DIR=/path/to/TPLs`` in case you did not use the default folder while building GEOSX and its third party libraries, you can use this options so GEOSX can find them.
-- Some of the third party libraries can be activated/deactivated. Generally, the corresponding option looks like ``ENABLE_VTK``, ``ENABLE_CALIPER``...
-- Computational features of GEOSX are activated with the following self-explanatory options: ``ENABLE_CUDA``, ``ENABLE_MPI``, ``ENABLE_OPENMP``.
-- Building the documentation is controlled by the ``ENABLE_DOCS`` option.
-- ``ENABLE_WARNINGS_AS_ERRORS``: GEOSX considers every warning as an error. When developing, you may face warnings however. You can modify this options (at your own risk) directly in the cmake scripts. Please understand that you won't be able to merge your code like this :)
+You may look at `our TPL CMake script <https://github.com/GEOSX/thirdPartyLibs/blob/master/CMakeLists.txt>`_ to see how we configure TPL builds.

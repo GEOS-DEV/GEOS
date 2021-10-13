@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -112,6 +112,10 @@ public:
     /// AMG near null space type key
     static constexpr char const * amgNullSpaceTypeString() { return "amgNullSpaceType"; }
 
+    static constexpr char const * amgCoarseningString()         { return "amgCoarseningType";           } ///< AMG coarsening key
+    static constexpr char const * amgInterpolationString()      { return "amgInterpolationType";        }   ///< AMG interpolation key
+    static constexpr char const * amgNumFunctionsString()       { return "amgNumFunctions";             }   ///< AMG threshold key
+    static constexpr char const * amgAggresiveNumLevelsString() { return "amgAggresiveCoarseningLevels";}             ///< AMG threshold key
     /// ILU fill key
     static constexpr char const * iluFillString() { return "iluFill"; }
     /// ILU threshold key

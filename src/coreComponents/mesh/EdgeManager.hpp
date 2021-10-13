@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,7 +20,7 @@
 #define GEOSX_MESH_EDGEMANAGER_HPP_
 
 #include "InterObjectRelation.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -120,10 +120,10 @@ public:
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.
-   * @param[in] faceManager manager of all faces in the DomainPartition
    * @param[in] nodeManager manager of all nodes in the DomainPartition
+   * @param[in] faceManager manager of all faces in the DomainPartition
    */
-  void buildEdges( FaceManager & faceManager, NodeManager & nodeManager );
+  void buildEdges( NodeManager & nodeManager, FaceManager & faceManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.

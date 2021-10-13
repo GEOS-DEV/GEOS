@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -17,13 +17,13 @@
  */
 
 #include "FaceElementSubRegion.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -33,13 +33,12 @@ using namespace dataRepository;
 FaceElementSubRegion::FaceElementSubRegion( string const & name,
                                             dataRepository::Group * const parent ):
   SurfaceElementSubRegion( name, parent ),
-  m_unmappedGlobalIndicesInToNodes(),
   m_unmappedGlobalIndicesInToEdges(),
   m_unmappedGlobalIndicesInToFaces(),
   m_newFaceElements(),
   m_toFacesRelation()
 {
-  setElementType( "C3D8" );
+  m_elementType = ElementType::Hexahedron;
 
   registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
 
@@ -57,7 +56,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 #endif
 
   m_surfaceElementsToCells.resize( 0, 2 );
-  m_surfaceElementsToCells.setElementRegionManager( dynamicCast< ElementRegionManager & >( getParent().getParent().getParent().getParent() ) );
 
   m_numNodesPerElement = 8;
 }

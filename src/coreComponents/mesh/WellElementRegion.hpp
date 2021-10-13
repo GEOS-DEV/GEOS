@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,7 @@
 #define GEOSX_MESH_WELLELEMENTREGION_HPP_
 
 #include "mesh/ElementRegionBase.hpp"
-#include "meshUtilities/InternalWellGenerator.hpp"
+#include "mesh/generators/InternalWellGenerator.hpp"
 
 namespace geosx
 {
@@ -143,9 +143,9 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    /// String key for the well control name
+    /// @return String key for the well control name
     static constexpr char const * wellControlsString() { return "wellControlsName"; }
-    /// String key for the well generator name
+    /// @return String key for the well generator name
     static constexpr char const * wellGeneratorString() { return "wellGeneratorName"; }
 
     /// ViewKey for the well control name

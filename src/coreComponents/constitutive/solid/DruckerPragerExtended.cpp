@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -117,12 +117,12 @@ void DruckerPragerExtended::postProcessInput()
 {
   ElasticIsotropic::postProcessInput();
 
-  GEOSX_THROW_IF( m_defaultCohesion <= 0, "Negative cohesion value detected", InputError );
-  GEOSX_THROW_IF( m_defaultInitialFrictionAngle <= 0, "Negative initial friction angle detected", InputError );
-  GEOSX_THROW_IF( m_defaultResidualFrictionAngle <= 0, "Negative residual friction angle detected", InputError );
-  GEOSX_THROW_IF( m_defaultDilationRatio <= 0, "Dilation ratio out of [0,1] range detected", InputError );
-  GEOSX_THROW_IF( m_defaultDilationRatio >= 1, "Dilation ratio out of [0,1] range detected", InputError );
-  GEOSX_THROW_IF( m_defaultHardening <= 0, "Negative hardening parameter detected", InputError );
+  GEOSX_THROW_IF( m_defaultCohesion < 0, "Negative cohesion value detected", InputError );
+  GEOSX_THROW_IF( m_defaultInitialFrictionAngle < 0, "Negative initial friction angle detected", InputError );
+  GEOSX_THROW_IF( m_defaultResidualFrictionAngle < 0, "Negative residual friction angle detected", InputError );
+  GEOSX_THROW_IF( m_defaultDilationRatio < 0, "Dilation ratio out of [0,1] range detected", InputError );
+  GEOSX_THROW_IF( m_defaultDilationRatio > 1, "Dilation ratio out of [0,1] range detected", InputError );
+  GEOSX_THROW_IF( m_defaultHardening < 0, "Negative hardening parameter detected", InputError );
 
   // convert from Mohr-Coulomb constants to Drucker-Prager constants, assuming DP
   // passes through the triaxial tension corners of the MC surface.

@@ -765,18 +765,20 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/linearAlgebra \
         @PROJECT_SOURCE_DIR@/coreComponents/LvArray/src \
         @PROJECT_SOURCE_DIR@/coreComponents/mesh \
-        @PROJECT_SOURCE_DIR@/coreComponents/managers \
-        @PROJECT_SOURCE_DIR@/coreComponents/meshUtilities \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteElement/elementFormulations \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteElement/kernelInterface \
         @PROJECT_SOURCE_DIR@/coreComponents/mesh/ExtrinsicMeshData.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp \
-        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteVolume \
+        @PROJECT_SOURCE_DIR@/coreComponents/functions \
+        @PROJECT_SOURCE_DIR@/coreComponents/fieldSpecification \
+        @PROJECT_SOURCE_DIR@/coreComponents/discretizationMethods \
+        @PROJECT_SOURCE_DIR@/coreComponents/events \
+        @PROJECT_SOURCE_DIR@/coreComponents/mainInterface \
         @CMAKE_BINARY_DIR@/include/common 
 
 # This tag can be used to specify the character encoding of the source files
@@ -817,7 +819,11 @@ RECURSIVE              = YES
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                = @PROJECT_SOURCE_DIR@/coreComponents/dataRepository/BufferOps_inline.hpp
+EXCLUDE                = @PROJECT_SOURCE_DIR@/coreComponents/dataRepository/BufferOps_inline.hpp \
+                         @PROJECT_SOURCE_DIR@/coreComponents/common/MpiWrapper.hpp \
+                         @PROJECT_SOURCE_DIR@/coreComponents/common/GEOS_RAJA_Interface.hpp \
+                         @PROJECT_SOURCE_DIR@/coreComponents/mesh/PAMELA \
+                         @PROJECT_SOURCE_DIR@/coreComponents/constitutive/PVTPackage 
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
@@ -833,7 +839,8 @@ EXCLUDE_SYMLINKS       = NO
 # Note that the wildcards are matched against the file with absolute path, so to
 # exclude all test directories for example use the pattern */test/*
 
-EXCLUDE_PATTERNS       = */cmake/*  */unitTests/*
+EXCLUDE_PATTERNS       = */cmake/*  */unitTests/* \
+                         */mpiCommunications/*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the
@@ -2029,7 +2036,8 @@ EXPAND_AS_DEFINED      = LVARRAY_HOST_DEVICE \
                          DISABLE_HD_WARNING \
                          EXTRINSIC_MESH_DATA_TRAIT \
                          GEOSX_FORCE_INLINE \
-                         USING_FINITEELEMENTBASE
+                         USING_FINITEELEMENTBASE \ 
+                         MAKE_PRINT_MATVIEW
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES then doxygen's preprocessor will
 # remove all references to function-like macros that are alone on a line, have

@@ -66,6 +66,7 @@ class Geosx(CMakePackage, CudaPackage):
     variant('suite-sparse', default=True, description='Build SuiteSparse support.')
     variant('trilinos', default=True, description='Build Trilinos support.')
     variant('hypre', default=True, description='Build HYPRE support.')
+    variant('hypre-cuda', default=False, description='Build HYPRE with CUDA support.')
     variant('petsc', default=True, description='Build PETSc support.')
     variant('lai', default='trilinos', description='Linear algebra interface.',
             values=('trilinos', 'hypre', 'petsc'), multi=False)
@@ -109,7 +110,7 @@ class Geosx(CMakePackage, CudaPackage):
     #
     depends_on('hdf5@1.10.5: +shared +pic +mpi', when='~vtk')
 
-    depends_on('conduit@0.5: +shared ~test ~fortran +mpi +hdf5 ~hdf5_compat')
+    depends_on('conduit@0.5.0 +shared ~test ~fortran +mpi +hdf5 ~hdf5_compat')
 
     depends_on('silo@4.10: ~fortran +shared ~silex +pic +mpi ~zlib')
 
@@ -117,6 +118,8 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('caliper@2.4: +shared +adiak +mpi ~callpath ~libpfm ~gotcha ~sampler', when='+caliper')
 
     depends_on('pugixml@1.8: +shared')
+
+    depends_on('fmt@8.0: +cxxstd=14 +pic')
 
     #
     # Math
@@ -136,11 +139,12 @@ class Geosx(CMakePackage, CudaPackage):
     trilinos_build_options = '~fortran +openmp +shared'
     trilinos_tpls = '~boost ~glm ~gtest ~hdf5 ~hypre ~matio ~metis +mpi ~mumps ~netcdf ~suite-sparse'
     trilinos_packages = '+amesos +aztec +epetra +epetraext +ifpack +kokkos +ml +stk +stratimikos +teuchos +tpetra ~amesos2 ~anasazi ~belos ~exodus ~ifpack2 ~muelu ~sacado ~zoltan ~zoltan2'
-    depends_on('trilinos@12.18.1: ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='+trilinos')
+    depends_on('trilinos@12.18.1 ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='+trilinos')
     depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
     # depends_on('trilinos +force-new-lapack', when='+trilinos +essl')
 
-    depends_on('hypre@2.21.0: +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
+    depends_on('hypre@2.20.1 +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
+    depends_on('hypre@2.20.1 +cuda +shared +superlu-dist +mpi +openmp +unified-memory +cusparse', when='+hypre-cuda')
  
     petsc_build_options = '+shared +mpi'
     petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
@@ -175,8 +179,11 @@ class Geosx(CMakePackage, CudaPackage):
     conflicts('+essl ~cuda', msg='Cannot use ESSL without CUDA.')
 
     conflicts('~trilinos lai=trilinos', msg='To use Trilinos as the Linear Algebra Interface you must build it.')
-    conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
+    conflicts('~hypre ~hypre-cuda lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
     conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
+
+    conflicts('+hypre +hypre-cuda', msg='Only one of the two can be used at a time.')
+    conflicts('+hypre-cuda ~cuda', msg='When building hypre-cuda CUDA must be enabled.')
 
     phases = ['hostconfig', 'cmake', 'build', 'install']
 
@@ -289,6 +296,9 @@ class Geosx(CMakePackage, CudaPackage):
             debug_flags = "-O0 -g"
             cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_DEBUG", debug_flags))
 
+            if "%clang arch=linux-rhel7-ppc64le" in spec:
+                cfg.write(cmake_cache_entry("CMAKE_EXE_LINKER_FLAGS", "-Wl,--no-toc-optimize"))
+
             cfg.write("#{0}\n".format("-" * 80))
             cfg.write("# MPI\n")
             cfg.write("#{0}\n\n".format("-" * 80))
@@ -296,6 +306,15 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write(cmake_cache_option('ENABLE_MPI', True))
             cfg.write(cmake_cache_entry('MPI_C_COMPILER', spec['mpi'].mpicc))
             cfg.write(cmake_cache_entry('MPI_CXX_COMPILER', spec['mpi'].mpicxx))
+
+            if sys_type == 'linux-rhel7-ppc64le':
+                cfg.write(cmake_cache_option('ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC', True))
+                if socket.gethostname().rstrip('1234567890') == "lassen":
+                    cfg.write(cmake_cache_entry('MPIEXEC', 'lrun'))
+                    cfg.write(cmake_cache_entry('MPIEXEC_NUMPROC_FLAG', '-n'))
+                else:
+                    cfg.write(cmake_cache_entry('MPIEXEC', 'jsrun'))
+                    cfg.write(cmake_cache_list('MPIEXEC_NUMPROC_FLAG', ['-g1', '--bind', 'rs', '-n']))
 
             cfg.write("#{0}\n".format("-" * 80))
             cfg.write("# OpenMP\n")
@@ -355,11 +374,13 @@ class Geosx(CMakePackage, CudaPackage):
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
             io_tpls = (('hdf5', 'HDF5', True),
-                    ('conduit', 'CONDUIT', True),
-                    ('silo', 'SILO', True),
-                    ('adiak', 'ADIAK', '+caliper' in spec),
-                    ('caliper', 'CALIPER', '+caliper' in spec),
-                    ('pugixml', 'PUGIXML', True))
+                       ('conduit', 'CONDUIT', True),
+                       ('silo', 'SILO', True),
+                       ('adiak', 'ADIAK', '+caliper' in spec),
+                       ('caliper', 'CALIPER', '+caliper' in spec),
+                       ('pugixml', 'PUGIXML', True),
+                       ('vtk', 'VTK', False)
+                       ('fmt', 'FMT', True))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# IO TPLs\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
@@ -391,7 +412,7 @@ class Geosx(CMakePackage, CudaPackage):
                         ('superlu-dist', 'SUPERLU_DIST', True),
                         ('suite-sparse', 'SUITESPARSE', '+suite-sparse' in spec),
                         ('trilinos', 'TRILINOS', '+trilinos' in spec),
-                        ('hypre', 'HYPRE', '+hypre' in spec),
+                        ('hypre', 'HYPRE', '+hypre' in spec or '+hypre-cuda' in spec),
                         ('petsc', 'PETSC', '+petsc' in spec))
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Math TPLs\n')
@@ -399,6 +420,8 @@ class Geosx(CMakePackage, CudaPackage):
             for tpl, cmake_name, enable in math_tpls:
                 if enable:
                     cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
+                    if tpl == 'hypre' and '+hypre-cuda' in spec:
+                        cfg.write(cmake_cache_option('ENABLE_HYPRE_CUDA'.format(cmake_name), True))
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 

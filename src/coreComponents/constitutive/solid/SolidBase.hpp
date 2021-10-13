@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -98,7 +98,6 @@ protected:
     LvArray::tensorOps::copy< 6 >( m_newStress[k][q], stress );
   }
 
-
 public:
 
   /// A reference the current material stress at quadrature points.
@@ -118,6 +117,21 @@ public:
    * are most useful for implicit finite element formulations.
    */
   ///@{
+
+  /**
+   * @brief Get bulkModulus
+   * @param[in] k Element index.
+   * @return the bulkModulus of element k
+   */
+  GEOSX_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const
+  {
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_ERROR( "getBulkModulus() not implemented for this model" );
+
+    return 0;
+  }
+
 
   /**
    * @brief Small strain update.
@@ -355,6 +369,19 @@ public:
 
   ///@}
 
+  /**
+   * @brief Save converged state data at index (k,q)
+   *
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void saveConvergedState( localIndex const k,
+                                   localIndex const q ) const
+  {
+    LvArray::tensorOps::copy< 6 >( m_oldStress[k][q], m_newStress[k][q] );
+  }
 
   /**
    * @brief Return the current elastic strain at a given material point (small-strain interface)
@@ -419,13 +446,13 @@ public:
    * @param stiffness the stiffness array
    */
   GEOSX_HOST_DEVICE
-  virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
+  virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
   {
     GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
     GEOSX_UNUSED_VAR( stiffness );
     GEOSX_ERROR( "getElasticStiffness() not implemented for this model" );
   }
-
 
   /**
    * @brief Perform a finite-difference stiffness computation
@@ -577,7 +604,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
-  virtual void saveConvergedState() const;
+  virtual void saveConvergedState() const override;
 
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
@@ -587,6 +614,7 @@ public:
     static constexpr char const * densityString() { return "density"; }                ///< Density key
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
 
+    // TODO: remove
     static constexpr char const * internalEnergyString() { return "internalEnergy"; }
     static constexpr char const * dInternalEnergy_dTemperatureString() { return "dInternalEnergy_dTemperature"; }
   };
@@ -651,18 +679,13 @@ public:
     return m_density;
   }
 
-  /// Non-const/Mutable accessor for internal energy.
-  arrayView2d< real64 > internalEnergy() { return m_internalEnergy; }
+  // TODO: remove
 
   /// Const/non-mutable accessor for internal energy
-  arrayView2d< real64 const > internalEnergy() const { return m_internalEnergy; }
-
-  /// Non-const/Mutable accessor for internal energy.
-  arrayView2d< real64 > dInternalEnergy_dTemperature() { return m_dInternalEnergy_dTemperature; }
+  arrayView2d< real64 const > getInternalEnergy() const { return m_internalEnergy; }
 
   /// Const/non-mutable accessor for internal energy
-  arrayView2d< real64 const > dInternalEnergy_dTemperature() const { return m_dInternalEnergy_dTemperature; }
-
+  arrayView2d< real64 const > getDinternalEnergy_dTemperature() const { return m_dInternalEnergy_dTemperature; }
 
   ///@}
 
@@ -680,12 +703,11 @@ protected:
   /// The material density at a quadrature point.
   array2d< real64 > m_density;
 
-  /// The material stress at a quadrature point.
-  array3d< real64, solid::STRESS_PERMUTATION > m_stress;
-
+  /// TODO: remove
   /// The material internal energy
   array2d< real64 > m_internalEnergy;
 
+  /// TODO: remove
   /// The material internal Energy as a function of the temperature
   array2d< real64 > m_dInternalEnergy_dTemperature;
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -17,8 +17,7 @@
  */
 
 #include <finiteElement/elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp>
-#include "managers/initialization.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include "gtest/gtest.h"
 
@@ -183,13 +182,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 using namespace geosx;
 int main( int argc, char * argv[] )
 {
-  testing::InitGoogleTest();
-
-  basicSetup( argc, argv, false );
-
+  ::testing::InitGoogleTest( &argc, argv );
   int const result = RUN_ALL_TESTS();
-
-  basicCleanup();
-
   return result;
 }

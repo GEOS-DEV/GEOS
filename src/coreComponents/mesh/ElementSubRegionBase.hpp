@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,14 +19,16 @@
 #ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 #define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ElementType.hpp"
+#include "mesh/ObjectManagerBase.hpp"
+
 namespace geosx
 {
 
 class NodeManager;
 class FaceManager;
 class MeshLevel;
-class DomainPartition;
+
 namespace constitutive
 {
 class ConstitutiveBase;
@@ -222,23 +224,17 @@ public:
 
   /**
    * @brief Get the type of element in this subregion.
-   * @return a string specifying the type of element in this subregion
-   *
-   * See class FiniteElementBase for possible element type.
+   * @return the type of element in this subregion
    */
-  virtual string getElementTypeString() const { return m_elementTypeString; }
+  ElementType getElementType() const
+  { return m_elementType; }
 
   /**
    * @brief Set the type of element in this subregion.
-   * @param[in] elementType a string specifying the element type
+   * @param[in] elementType the element type
    */
-  virtual void setElementType( string const & elementType );
-
-  /**
-   * @brief Get the VTK ordering for this subregion.
-   * @return the VTK node ordering
-   */
-  std::vector< int > getVTKNodeOrdering() const;
+  virtual void setElementType( ElementType const elementType )
+  { m_elementType = elementType; }
 
   ///@}
 
@@ -248,21 +244,21 @@ public:
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    /// String key for the number of nodes per element in this subregion.
+    /// @return String key for the number of nodes per element in this subregion.
     static constexpr char const * numNodesPerElementString() { return "numNodesPerElement"; }
-    /// String key for the element-to-node relation
+    /// @return String key for the element-to-node relation
     static constexpr char const * nodeListString() { return "nodeList"; }
-    /// String key for the number of edges per element in this subregion.
+    /// @return String key for the number of edges per element in this subregion.
     static constexpr char const * numEdgesPerElementString() { return "numEdgesPerElement"; }
-    /// String key for the element-to-edge relation
+    /// @return String key for the element-to-edge relation
     static constexpr char const * edgeListString() { return "edgeList"; }
-    /// String key for the number of faces per element in this subregion.
+    /// @return String key for the number of faces per element in this subregion.
     static constexpr char const * numFacesPerElementString() { return "numFacesPerElement"; }
-    /// String key for the element-to-face relation
+    /// @return String key for the element-to-face relation
     static constexpr char const * faceListString() { return "faceList"; }
-    /// String key for the member level field for the element center.
+    /// @return String key for the member level field for the element center.
     static constexpr char const * elementCenterString() { return "elementCenter"; }
-    /// String key for the member level field for the element volume.
+    /// @return String key for the member level field for the element volume.
     static constexpr char const * elementVolumeString() { return "elementVolume"; }
   };
 
@@ -272,7 +268,7 @@ public:
    */
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    /// String key for the group in which the constitutive models of this subregion are registered.
+    /// @return String key for the group in which the constitutive models of this subregion are registered.
     static constexpr auto constitutiveModelsString() { return "ConstitutiveModels"; }
   };
 
@@ -300,9 +296,7 @@ protected:
   array1d< real64 > m_elementVolume;
 
   /// Type of element in this subregion.
-  string m_elementTypeString;
-
-  /// Type of element in this subregion.
+  ElementType m_elementType;
 };
 
 

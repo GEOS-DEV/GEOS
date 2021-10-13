@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -23,11 +23,39 @@
 #include "InterObjectRelation.hpp"
 #include "ToElementRelation.hpp"
 #include "EdgeManager.hpp"
+#include "EmbeddedSurfaceNodeManager.hpp"
 #include "CellElementSubRegion.hpp"
-#include "meshUtilities/SimpleGeometricObjects/BoundedPlane.hpp"
+#include "simpleGeometricObjects/BoundedPlane.hpp"
 
 namespace geosx
 {
+
+/**
+ * @brief Struct defining an embedded element which has at least on node which is a ghost on this rank
+ * @struct surfaceWithGhostNodes
+ */
+struct surfaceWithGhostNodes
+{
+  /// local index of the surface element
+  localIndex surfaceIndex;
+  /// index of the parent edge of each node
+  std::vector< globalIndex > parentEdgeIndex;
+  ///number of nodes of the element
+  localIndex numOfNodes;
+
+  /**
+   * @brief Constructor
+   */
+  surfaceWithGhostNodes():
+    surfaceIndex(),
+    parentEdgeIndex(),
+    numOfNodes( 0 ){}
+  /**
+   * @brief insert a new node
+   * @param edgeIndex global index of the parent edge
+   */
+  void insert ( globalIndex const & edgeIndex );
+};
 
 /**
  * @class EmbeddedSurfaceSubRegion
@@ -89,15 +117,24 @@ public:
   ///@{
 
   virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & facemanager ) override;
+                                                    FaceManager const & facemanager ) override final;
 
   /**
    * @brief Function to compute the geometric quantities of a specific embedded surface element.
    * @param intersectionPoints array containing the nodes defining the embedded surface elements
-   * @param k index of the face element
+   * @param k index of the embedded surface element
    */
-  void CalculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
+  void calculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                             localIndex k );
+  /**
+   * @brief computes the connectivityIndex of the embedded surface element.
+   * @param k element index
+   * @param cellToNodes cell to nodes map
+   * @param nodesCoord cordinates of the nodes
+   */
+  void computeConnectivityIndex( localIndex const k,
+                                 arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes,
+                                 arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodesCoord );
 
   /**
    * @brief Function to add a new embedded surface element.
@@ -105,6 +142,7 @@ public:
    * @param regionIndex cell element region index
    * @param subRegionIndex cell element subregion index
    * @param nodeManager the nodemanager group
+   * @param embSurfNodeManager the embSurfNodeManager group
    * @param edgeManager the edgemanager group
    * @param cellToEdges cellElement to edges map
    * @param fracture pointer to the bounded plane which is defining the embedded surface element
@@ -113,7 +151,8 @@ public:
   bool addNewEmbeddedSurface( localIndex const cellIndex,
                               localIndex const regionIndex,
                               localIndex const subRegionIndex,
-                              NodeManager & nodeManager,
+                              NodeManager const & nodeManager,
+                              EmbeddedSurfaceNodeManager & embSurfNodeManager,
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
                               BoundedPlane const * fracture );
@@ -134,6 +173,17 @@ public:
                                    localIndex const k ) const;
 
 
+  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
+                                     arrayView1d< localIndex const > const & packList ) const override;
+
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
+                                       array1d< localIndex > & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
   ///@}
 
@@ -143,27 +193,35 @@ public:
    */
   struct viewKeyStruct : SurfaceElementSubRegion::viewKeyStruct
   {
-    /// Embedded surface element normal vector string
+    /// @return Embedded surface element normal vector string
     static constexpr char const * normalVectorString()      { return "normalVector"; }
 
-    /// Tangent vector 1 string
+    /// @return Tangent vector 1 string
     static constexpr char const * t1VectorString()          { return "tangentVector1"; }
 
-    /// Tangent vector 2 string
+    /// @return Tangent vector 2 string
     static constexpr char const * t2VectorString()          { return "tangentVector2"; }
 
-    /// Connectivity index string
+    /// @return Connectivity index string
     static constexpr char const * connectivityIndexString() { return "connectivityIndex"; }
 
-    /// Displacement jump string
+    /// @return Displacement jump string
     static constexpr char const * dispJumpString()          { return "displacementJump"; }
 
-    /// Delta displacement jump string
+    /// @return Delta displacement jump string
     static constexpr char const * deltaDispJumpString()     { return "deltaDisplacementJump"; }
 
+    /// @return Fracture traction string
     static constexpr char const * fractureTractionString()  { return "fractureTraction"; }
 
+    /// @return Fracture traction derivative w.r.t. jump string
     static constexpr char const * dTraction_dJumpString()   { return "dTraction_dJump"; }
+
+    /// @return Fracture traction derivative w.r.t. pressure string
+    static constexpr char const * dTraction_dPressureString()   { return "dTraction_dPressure"; }
+
+    /// @return surfaces with ghost nodes list string
+    static constexpr char const * surfaceWithGhostNodesString() { return "surfaceWithGhostNodes"; }
 
     /// Displacement jump key
     dataRepository::ViewKey dispJump        = { dispJumpString() };
@@ -177,13 +235,14 @@ public:
     /// dTraction_dJump key
     dataRepository::ViewKey dTraction_dJump = { dTraction_dJumpString() };
 
+    /// dTraction_dPressure key
+    dataRepository::ViewKey dTraction_dPressure = { dTraction_dPressureString() };
+
   }
   /// viewKey struct for the EmbeddedSurfaceSubRegion class
   viewKeys;
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
-
-  virtual string getElementTypeString() const override final { return "Embedded"; }
 
   /**
    * @name Properties Getters
@@ -225,6 +284,13 @@ public:
    * @copydoc getNormalVector( localIndex k )
    */
   arraySlice1d< real64 const > getNormalVector( localIndex k ) const { return m_normalVector[k]; }
+
+  /**
+   * @brief Get the name of the bounding plate that was used to generate fracture element k.
+   * @param k the index of the embedded surface element
+   * @return the name of the bounded plane, the element was generated from
+   */
+  string const & getFractureName( localIndex k ) const { return m_parentPlaneName[k]; }
 
   /**
    * @brief Get an array of the first tangent vector of the embedded surface elements.
@@ -271,7 +337,6 @@ public:
    * @copydoc getTangentVector2( localIndex k )
    */
   arraySlice1d< real64 const > getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
-
 
   /**
    * @brief Get the connectivity index of the  embedded surface element.
@@ -349,9 +414,42 @@ public:
   arrayView3d< real64 const > dTraction_dJump() const
   { return getReference< array3d< real64 > >( viewKeys.dTraction_dJump ); }
 
+  /**
+   * @brief Get a mutable dTraction_dPressure array.
+   * @return the dTraction_dJump array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the dTraction_dJump does not exist
+   */
+  array1d< real64 > & dTraction_dPressure()
+  { return getReference< array1d< real64 > >( viewKeys.dTraction_dPressure ); }
+
+  /**
+   * @brief Provide an immutable arrayView to the dTraction_dJump array.
+   * @return immutable arrayView of the dTraction_dJump array if it exists, or an error is thrown if it does not exist
+   * @note An error is thrown if the dTraction_dJump does not exist
+   */
+  arrayView1d< real64 const > dTraction_dPressure() const
+  { return getReference< array1d< real64 > >( viewKeys.dTraction_dPressure ); }
+
+  /**
+   * @brief accessor to the m_surfaceWithGhostNodes list
+   * @return the list of surfaces with at least one ghost node.
+   */
+  std::vector< struct surfaceWithGhostNodes > surfaceWithGhostNodes() { return m_surfaceWithGhostNodes; }
+
   ///@}
 
 private:
+
+  /**
+   * @brief Pack element-to-node and element-to-face maps
+   * @tparam the flag for the bufferOps::Pack function
+   * @param buffer the buffer used in the bufferOps::Pack function
+   * @param packList the packList used in the bufferOps::Pack function
+   * @return the pack size
+   */
+  template< bool DOPACK >
+  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                    arrayView1d< localIndex const > const & packList ) const;
 
   /// normal vector to the embedded surface element
   array2d< real64 > m_normalVector;
@@ -367,6 +465,12 @@ private:
 
   /// The CI of the cells
   array1d< real64 > m_connectivityIndex;
+
+  // Indices of geometric objects the element belongs to
+  array1d< string > m_parentPlaneName;
+
+  /// Surfaces with ghost nodes
+  std::vector< struct surfaceWithGhostNodes > m_surfaceWithGhostNodes;
 };
 
 

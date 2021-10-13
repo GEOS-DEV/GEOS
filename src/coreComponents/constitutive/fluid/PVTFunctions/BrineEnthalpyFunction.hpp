@@ -57,9 +57,9 @@ private:
   void calculateBrineEnthalpy( real64_array const & pressure, real64_array const & temperature, real64 const & m, real64_array2d const & enthalpy );
 
   TableFunctionPtr m_BrineEnthalpyTable;
-  TableFunctionPtr m_CO2EnthalpyTable;  
+  TableFunctionPtr m_CO2EnthalpyTable;
   localIndex m_waterIndex;
-  localIndex m_CO2Index;  
+  localIndex m_CO2Index;
 
 };
 

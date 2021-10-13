@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -25,26 +25,8 @@
 #include <Epetra_Map.h>
 #include <EpetraExt_MultiVectorOut.h>
 
-#ifdef GEOSX_USE_MPI
-#include <Epetra_MpiComm.h>
-#else
-#include <Epetra_SerialComm.h>
-typedef Epetra_SerialComm Epetra_MpiComm;
-#endif
-
 namespace geosx
 {
-
-// Check matching requirements on index/value types between GEOSX and PETSc
-
-static_assert( sizeof( long long ) == sizeof( globalIndex ),
-               "long long and geosx::globalIndex must have the same size" );
-
-static_assert( std::is_signed< long long >::value == std::is_signed< globalIndex >::value,
-               "long long and geosx::globalIndex must both be signed or unsigned" );
-
-static_assert( std::is_same< double, real64 >::value,
-               "double and geosx::real64 must be the same type" );
 
 EpetraVector::EpetraVector()
   : VectorBase(),
@@ -65,24 +47,24 @@ EpetraVector::EpetraVector( EpetraVector && src ) noexcept
 
 EpetraVector & EpetraVector::operator=( EpetraVector const & src )
 {
-  GEOSX_LAI_ASSERT( &src != this );
-  GEOSX_LAI_ASSERT( src.ready() );
-  if( m_vector )
+  if( &src != this )
   {
-    *m_vector = *src.m_vector;
-  }
-  else
-  {
-    m_vector = std::make_unique< Epetra_FEVector >( *src.m_vector );
+    reset();
+    if( src.ready() )
+    {
+      m_vector = std::make_unique< Epetra_FEVector >( *src.m_vector );
+    }
   }
   return *this;
 }
 
 EpetraVector & EpetraVector::operator=( EpetraVector && src ) noexcept
 {
-  GEOSX_LAI_ASSERT( &src != this );
-  GEOSX_LAI_ASSERT( src.ready() );
-  m_vector = std::move( src.m_vector );
+  if( &src != this )
+  {
+    std::swap( m_vector, src.m_vector );
+    std::swap( m_closed, src.m_closed );
+  }
   return *this;
 }
 
@@ -101,7 +83,7 @@ void EpetraVector::createWithLocalSize( localIndex const localSize,
   Epetra_Map const map( LvArray::integerConversion< long long >( -1 ),
                         LvArray::integerConversion< int >( localSize ),
                         0,
-                        Epetra_MpiComm( MPI_PARAM( comm ) ) );
+                        trilinos::EpetraComm( MPI_PARAM( comm ) ) );
   m_vector = std::make_unique< Epetra_FEVector >( map );
 }
 
@@ -112,7 +94,7 @@ void EpetraVector::createWithGlobalSize( globalIndex const globalSize,
   GEOSX_LAI_ASSERT_GE( globalSize, 0 );
   Epetra_Map const map( LvArray::integerConversion< long long >( globalSize ),
                         0,
-                        Epetra_MpiComm( MPI_PARAM( comm ) ) );
+                        trilinos::EpetraComm( MPI_PARAM( comm ) ) );
   m_vector = std::make_unique< Epetra_FEVector >( map );
 }
 
@@ -121,13 +103,13 @@ void EpetraVector::create( arrayView1d< real64 const > const & localValues,
 {
   GEOSX_LAI_ASSERT( closed() );
 
-  localValues.move( LvArray::MemorySpace::CPU, false );
+  localValues.move( LvArray::MemorySpace::host, false );
 
   int const localSize = LvArray::integerConversion< int >( localValues.size() );
   Epetra_Map const map( LvArray::integerConversion< long long >( -1 ),
                         localSize,
                         0,
-                        Epetra_MpiComm( MPI_PARAM( comm ) ) );
+                        trilinos::EpetraComm( MPI_PARAM( comm ) ) );
   m_vector = std::make_unique< Epetra_FEVector >( Copy,
                                                   map,
                                                   const_cast< real64 * >( localValues.data() ),
@@ -139,33 +121,33 @@ void EpetraVector::set( globalIndex const globalRowIndex,
                         real64 const value )
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_CHECK_ERROR( m_vector->ReplaceGlobalValues( 1, toEpetraLongLong( &globalRowIndex ), &value ) );
+  GEOSX_LAI_CHECK_ERROR( m_vector->ReplaceGlobalValues( 1, trilinos::toEpetraLongLong( &globalRowIndex ), &value ) );
 }
 
 void EpetraVector::add( globalIndex const globalRowIndex,
                         real64 const value )
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_CHECK_ERROR( m_vector->SumIntoGlobalValues( 1, toEpetraLongLong( &globalRowIndex ), &value ) );
+  GEOSX_LAI_CHECK_ERROR( m_vector->SumIntoGlobalValues( 1, trilinos::toEpetraLongLong( &globalRowIndex ), &value ) );
 }
 
 void EpetraVector::set( globalIndex const * globalRowIndices,
                         real64 const * values,
-                        localIndex size )
+                        localIndex const size )
 {
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( m_vector->ReplaceGlobalValues( LvArray::integerConversion< int >( size ),
-                                                        toEpetraLongLong( globalRowIndices ),
+                                                        trilinos::toEpetraLongLong( globalRowIndices ),
                                                         values ) );
 }
 
 void EpetraVector::add( globalIndex const * globalRowIndices,
                         real64 const * values,
-                        localIndex size )
+                        localIndex const size )
 {
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( m_vector->SumIntoGlobalValues( LvArray::integerConversion< int >( size ),
-                                                        toEpetraLongLong( globalRowIndices ),
+                                                        trilinos::toEpetraLongLong( globalRowIndices ),
                                                         values ) );
 }
 
@@ -174,7 +156,7 @@ void EpetraVector::set( arraySlice1d< globalIndex const > const & globalRowIndic
 {
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( m_vector->ReplaceGlobalValues( LvArray::integerConversion< int >( values.size() ),
-                                                        toEpetraLongLong( globalRowIndices.dataIfContiguous() ),
+                                                        trilinos::toEpetraLongLong( globalRowIndices.dataIfContiguous() ),
                                                         values.dataIfContiguous() ) );
 }
 
@@ -183,7 +165,7 @@ void EpetraVector::add( arraySlice1d< globalIndex const > const & globalRowIndic
 {
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( m_vector->SumIntoGlobalValues( LvArray::integerConversion< int >( values.size() ),
-                                                        toEpetraLongLong( globalRowIndices.dataIfContiguous() ),
+                                                        trilinos::toEpetraLongLong( globalRowIndices.dataIfContiguous() ),
                                                         values.dataIfContiguous() ) );
 }
 
@@ -444,7 +426,7 @@ MPI_Comm EpetraVector::getComm() const
 {
   GEOSX_LAI_ASSERT( created() );
 #ifdef GEOSX_USE_MPI
-  return dynamic_cast< Epetra_MpiComm const & >( m_vector->Map().Comm() ).Comm();
+  return dynamicCast< Epetra_MpiComm const & >( m_vector->Map().Comm() ).Comm();
 #else
   return MPI_COMM_GEOSX;
 #endif

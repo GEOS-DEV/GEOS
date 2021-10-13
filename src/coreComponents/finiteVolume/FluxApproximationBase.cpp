@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,10 +19,8 @@
 
 #include "FluxApproximationBase.hpp"
 
-#include "managers/GeosxState.hpp"
-#include "managers/ProblemManager.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -47,6 +45,10 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of regions to build the stencil for" );
 
+  registerWrapper( viewKeyStruct::coefficientModelNamesString(), &m_coefficientModelNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "List of constitutive models that contain the coefficient used to build the stencil" );
+
   registerWrapper( viewKeyStruct::areaRelativeToleranceString(), &m_areaRelTol ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0e-8 ).
@@ -62,7 +64,7 @@ FluxApproximationBase::getCatalog()
 
 void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
 {
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
     meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
@@ -108,8 +110,8 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {

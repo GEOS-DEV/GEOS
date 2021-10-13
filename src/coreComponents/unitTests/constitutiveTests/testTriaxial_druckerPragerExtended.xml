@@ -1,0 +1,65 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <TriaxialDriver
+      name="triaxialDriver"
+      material="drucker"
+      mode="mixedControl" 
+      axialControl="strainFunction"
+      radialControl="stressFunction"
+      initialStress="-1.0"
+      steps="40" 
+      output="none" 
+      baseline="testTriaxial_druckerPragerExtended.txt" 
+      logLevel="0" />
+  </Tasks>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="triaxialDriver"
+      target="/Tasks/triaxialDriver"/>
+  </Events>
+
+  <Constitutive>
+    <ExtendedDruckerPrager
+      name="drucker"
+      defaultDensity="2700"
+      defaultBulkModulus="500"
+      defaultShearModulus="300"
+      defaultCohesion="0.0"
+      defaultInitialFrictionAngle="15.27"
+      defaultResidualFrictionAngle="23.05"
+      defaultDilationRatio="1.0"
+      defaultHardening="0.001"/>
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="strainFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 3.0, 4.0, 7.0, 8.0 }"
+      values="{ 0, -0.003, -0.002, -0.005, -0.004 }"/>
+
+    <TableFunction
+      name="stressFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 8.0 }"
+      values="{ -1.0, -1.0 }"/>
+  </Functions>
+
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+</Problem>

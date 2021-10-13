@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -101,10 +101,10 @@ void DruckerPrager::postProcessInput()
 {
   ElasticIsotropic::postProcessInput();
 
-  GEOSX_THROW_IF( m_defaultCohesion <= 0, "Negative cohesion value detected", InputError );
-  GEOSX_THROW_IF( m_defaultFrictionAngle <= 0, "Negative friction angle detected", InputError );
-  GEOSX_THROW_IF( m_defaultDilationAngle <= 0, "Negative dilation angle detected", InputError );
-  GEOSX_THROW_IF( m_defaultFrictionAngle <= m_defaultDilationAngle, "Dilation angle should not exceed friction angle", InputError );
+  GEOSX_THROW_IF( m_defaultCohesion < 0, "Negative cohesion value detected", InputError );
+  GEOSX_THROW_IF( m_defaultFrictionAngle < 0, "Negative friction angle detected", InputError );
+  GEOSX_THROW_IF( m_defaultDilationAngle < 0, "Negative dilation angle detected", InputError );
+  GEOSX_THROW_IF( m_defaultFrictionAngle < m_defaultDilationAngle, "Dilation angle should not exceed friction angle", InputError );
 
   // convert from Mohr-Coulomb constants to Drucker-Prager constants, assuming DP
   // passes through the triaxial compression corners of the MC surface.

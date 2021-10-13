@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,11 +20,11 @@
 #include "PhaseFieldFractureSolver.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "managers/NumericalMethodsManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 

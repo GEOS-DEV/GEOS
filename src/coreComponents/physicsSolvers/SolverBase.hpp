@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
@@ -450,11 +450,10 @@ public:
    * @param scalingFactor factor to scale the solution prior to application
    * @param objectManager the object manager that holds the fields we wish to apply the solution to
    *
-   * This function performs 3 operations:
+   * This function performs 2 operations:
    * 1) extract the solution vector for the "blockSystem" parameter, and applies the
    *    contents of the solution vector to the primary variable field data,
    * 2) perform a synchronization of the primary field variable such that all ghosts are updated,
-   * 3) update secondary variables/state to ensure consistency.
    *
    * The "scalingFactor" parameter allows for the scaled application of the solution vector. For
    * instance, a line search may apply a negative scaling factor to remove part of the previously
@@ -469,6 +468,12 @@ public:
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain );
+
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual void updateState( DomainPartition & domain );
 
   /**
    * @brief reset state of physics back to the beginning of the step.

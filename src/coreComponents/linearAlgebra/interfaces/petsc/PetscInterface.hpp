@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,8 +21,8 @@
 
 #include "linearAlgebra/interfaces/petsc/PetscVector.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
-#include "linearAlgebra/interfaces/petsc/PetscSolver.hpp"
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "linearAlgebra/common/PreconditionerBase.hpp"
+#include "linearAlgebra/common/LinearSolverBase.hpp"
 
 #include <memory>
 
@@ -36,21 +36,22 @@ namespace geosx
 struct PetscInterface
 {
   /**
-   * @brief Initializes the MPI environment for the Petsc library
-   *
-   * @param[in] argc standard argc as in any C main
-   * @param[in] argv standard argv as in any C main
-   *
-   * Essentially, it is a wrapper for PetscInitialize
+   * @brief Initializes the Petsc library.
    */
-  static void initialize( int & argc, char * * & argv );
+  static void initialize();
 
   /**
-   * @brief Finalizes the MPI environment for the Petsc library
-   *
-   * Essentially, it is a wrapper for PetscFinalize
+   * @brief Finalizes the Petsc library.
    */
   static void finalize();
+
+  /**
+   * @brief Create a petsc-based solver object.
+   * @param params the preconditioner parameters
+   * @return owning pointer to the newly created solver
+   */
+  static std::unique_ptr< LinearSolverBase< PetscInterface > >
+  createSolver( LinearSolverParameters params );
 
   /**
    * @brief Create a PETSc-based preconditioner object.
@@ -74,8 +75,6 @@ struct PetscInterface
   using ParallelMatrix = PetscMatrix;
   /// Alias for PetscVector
   using ParallelVector = PetscVector;
-  /// Alias for PetscSolver
-  using LinearSolver   = PetscSolver;
 };
 
 } /* namespace geosx */

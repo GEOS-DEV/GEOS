@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -59,7 +59,7 @@ struct Baker
            real64 const & goRelPerm,
            real64 const & dGoRelPerm_dOilVolFrac,
            real64 & threePhaseRelPerm,
-           arraySlice1d< real64 > const & dThreePhaseRelPerm_dVolFrac )
+           arraySlice1d< real64, relperm::USD_RELPERM_DS - 3 > const & dThreePhaseRelPerm_dVolFrac )
   {
     using PT = RelativePermeabilityBase::PhaseType;
     integer const ipWater = phaseOrder[PT::WATER];

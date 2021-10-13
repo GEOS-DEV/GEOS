@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -21,8 +21,8 @@
 #include "pygeosx.hpp"
 #include "PyGroup.hpp"
 #include "PyWrapper.hpp"
-#include "managers/initialization.hpp"
-#include "managers/GeosxState.hpp"
+#include "mainInterface/initialization.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 // System includes
 #pragma GCC diagnostic push

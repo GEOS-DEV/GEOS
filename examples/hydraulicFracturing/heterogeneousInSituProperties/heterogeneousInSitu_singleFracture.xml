@@ -97,18 +97,18 @@
   <Geometry>
     <Box
       name="source_a"
-      xMin="-0.1, -0.1, -0.1"
-      xMax="4.1, 0.1, 4.1"/>
+      xMin="{ -0.1, -0.1, -0.1 }"
+      xMax="{ 4.1, 0.1, 4.1 }"/>
 
     <Box
       name="perf_a"
-      xMin="-4.1, -0.1, -4.1"
-      xMax="4.1, 0.1, 4.1"/>
+      xMin="{ -4.1, -0.1, -4.1 }"
+      xMax="{ 4.1, 0.1, 4.1 }"/>
 
     <ThickPlane
       name="fracturable_a"
-      normal="0, 1, 0"
-      origin="0, 0, 0"
+      normal="{ 0, 1, 0 }"
+      origin="{ 0, 0, 0 }"
       thickness="0.1"/>
   </Geometry>
 

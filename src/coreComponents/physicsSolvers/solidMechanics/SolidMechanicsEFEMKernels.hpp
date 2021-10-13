@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -79,6 +79,7 @@ public:
   QuasiStatic( NodeManager const & nodeManager,
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
+               localIndex const targetRegionIndex,
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE & inputConstitutiveType,
@@ -92,6 +93,7 @@ public:
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -345,7 +347,7 @@ public:
     // TODO: asking for the stiffness here will only work for elastic models.  most other models
     //       need to know the strain increment to compute the current stiffness value.
 
-    m_constitutiveUpdate.getElasticStiffness( k, stack.constitutiveStiffness );
+    m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
 
     SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
                                                                                   stack.X,
@@ -471,6 +473,50 @@ protected:
 
   ArrayOfArraysView< localIndex const > const m_cellsToEmbeddedSurfaces;
 };
+
+/// The factory used to construct a QuasiStatic kernel.
+using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
+                                                         EmbeddedSurfaceSubRegion const &,
+                                                         arrayView1d< globalIndex const > const &,
+                                                         arrayView1d< globalIndex const > const &,
+                                                         globalIndex const,
+                                                         CRSMatrixView< real64, globalIndex const > const &,
+                                                         arrayView1d< real64 > const &,
+                                                         real64 const (&) [3] >;
+
+
+/**
+ * @brief A struct to update fracture traction
+ */
+struct StateUpdateKernel
+{
+
+  /**
+   * @brief Launch the kernel function doing fracture traction updates
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
+   * @param[in] size the size of the subregion
+   * @param[in] contactWrapper the wrapper implementing the contact relationship
+   * @param[in] jump the displacement jump
+   * @param[out] fractureTraction the fracture traction
+   * @param[out] dFractureTraction_dJump the derivative of the fracture traction wrt displacement jump
+   */
+  template< typename POLICY, typename CONTACT_WRAPPER >
+  static void
+  launch( localIndex const size,
+          CONTACT_WRAPPER const & contactWrapper,
+          arrayView2d< real64 const > const & jump,
+          arrayView2d< real64 > const & fractureTraction,
+          arrayView3d< real64 > const & dFractureTraction_dJump )
+  {
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      contactWrapper.computeTraction( jump[k], fractureTraction[k], dFractureTraction_dJump[k] );
+    } );
+  }
+
+};
+
 
 } // namespace SolidMechanicsEFEMKernels
 

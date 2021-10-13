@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,12 +19,14 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_
 
-#include "linearAlgebra/common.hpp"
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
-//#include "LvArray/src/streamIO.hpp"
+#include "linearAlgebra/common/common.hpp"
+#include "linearAlgebra/common/LinearOperator.hpp"
+#include "LvArray/src/output.hpp"
 
 namespace geosx
 {
+
+class DofManager;
 
 /**
  * @brief Common base template for all matrix wrapper types.
@@ -48,7 +50,10 @@ namespace geosx
 template< typename MATRIX, typename VECTOR >
 class MatrixBase : public virtual LinearOperator< VECTOR >
 {
-public:
+protected:
+
+  /// Alias for base type
+  using Base = LinearOperator< VECTOR >;
 
   /// Type alias for actual derived matrix class
   using Matrix = MATRIX;
@@ -56,49 +61,15 @@ public:
   /// Type alias for a compatible vector class
   using Vector = VECTOR;
 
-protected:
-
-  /**
-   * @name Constructors/destructor/assignment
-   */
-  ///@{
+  using Base::numLocalRows;
+  using Base::numLocalCols;
+  using Base::numGlobalRows;
+  using Base::numGlobalCols;
 
   /**
    * @brief Constructs a matrix in default state
    */
-  MatrixBase()
-    : m_closed( true ),
-    m_assembled( false )
-  {}
-
-  /**
-   * @brief Copy constructor.
-   */
-  MatrixBase( MatrixBase const & ) = default;
-
-  /**
-   * @brief Move constructor.
-   */
-  MatrixBase( MatrixBase && ) = default;
-
-  /**
-   * @brief Copy assignment.
-   * @return reference to this object
-   */
-  MatrixBase & operator=( MatrixBase const & ) = default;
-
-  /**
-   * @brief Move assignment.
-   * @return reference to this object
-   */
-  MatrixBase & operator=( MatrixBase && ) = default;
-
-  /**
-   * @brief Destructor.
-   */
-  ~MatrixBase() = default;
-
-  ///@}
+  MatrixBase() = default;
 
   /**
    * @name Status query methods
@@ -144,6 +115,38 @@ protected:
    * @return @p true if matrix has been created
    */
   virtual bool created() const = 0;
+
+  ///@}
+
+  ///@{
+  /**
+   * @name DofManager related methods
+   *
+   * Some solvers and preconditioners rely on information about degrees-of-freedom
+   * of the linear problem represented by a matrix (for example, to decompose the
+   * matrix into blocks representing various parts of the physical problem).
+   * This lightweight interface allows one to associate a DofManager instance with
+   * the matrix, and thus avoid having to pass it to the preconditioner separately.
+   * The association is non-owning, the user must ensure the lifetime of DofManager
+   * object while any solvers/preconditioners set up with this matrix are in use.
+   */
+
+  /**
+   * @brief Associate a DofManager with this matrix
+   * @param dofManager the DofManager containing the relevant degrees of freedom
+   */
+  void setDofManager( DofManager const * const dofManager )
+  {
+    m_dofManager = dofManager;
+  }
+
+  /**
+   * @brief @return the associated DofManager
+   */
+  DofManager const * dofManager() const
+  {
+    return m_dofManager;
+  }
 
   ///@}
 
@@ -225,7 +228,7 @@ protected:
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                        MPI_Comm const & comm )
   {
-    localMatrix.move( LvArray::MemorySpace::CPU, false );
+    localMatrix.move( LvArray::MemorySpace::host, false );
 
     localIndex maxEntriesPerRow = 0;
     for( localIndex i = 0; i < localMatrix.numRows(); ++i )
@@ -416,7 +419,7 @@ protected:
    */
   virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
+                    arraySlice2d< real64 const > const & values ) = 0;
 
   /**
    * @brief Set a dense block of values.
@@ -426,7 +429,7 @@ protected:
    */
   virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
+                    arraySlice2d< real64 const > const & values ) = 0;
 
   /**
    * @brief Insert a dense block of values.
@@ -436,37 +439,7 @@ protected:
    */
   virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
-
-  /**
-   * @brief Add a dense block of values.
-   * @param rowIndices Global row indices
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values
-   */
-  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
-
-  /**
-   * @brief Set a dense block of values.
-   * @param rowIndices Global row indices
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values
-   */
-  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
-
-  /**
-   * @brief Insert a dense block of values.
-   * @param rowIndices Global row indices
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values
-   */
-  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
+                       arraySlice2d< real64 const > const & values ) = 0;
 
   /**
    * @brief Add a dense block of values.
@@ -533,7 +506,7 @@ protected:
   virtual void applyTranspose( Vector const & src, Vector & dst ) const = 0;
 
   /**
-   * @brief Compute residual <tt>r = Ax - b</tt>.
+   * @brief Compute residual <tt>r = b - A * x</tt>.
    *
    * Overrides LinearOperator::residual().
    *
@@ -541,7 +514,7 @@ protected:
    * @param b Input right hand side.
    * @param r Output residual.
    *
-   * @note @p x and @p r cannot alias the same vector.
+   * @warning @p x and @p r cannot alias the same vector, but @p b and @p r can.
    */
   virtual void residual( Vector const & x, Vector const & b, Vector & r ) const override
   {
@@ -560,10 +533,7 @@ protected:
    * @param src Input matrix (B).
    * @param dst Output matrix (C).
    *
-   * Note that the output matrix C should have the same
-   * row-map as this.  If close() has already been called
-   * on C, then C's sparsity pattern must already contain
-   * the nonzero entries produced by the product this*B.
+   * @note The output matrix @p dst doesn't need to be created beforehand.
    */
   virtual void multiply( Matrix const & src,
                          Matrix & dst ) const = 0;
@@ -576,10 +546,7 @@ protected:
    * @param src Input matrix (B).
    * @param dst Output matrix (C).
    *
-   * Note that the output matrix C should have the same
-   * row-map as this.  If close() has already been called
-   * on C, then C's sparsity pattern must already contain
-   * the nonzero entries produced by the product this*B.
+   * @note The output matrix @p dst doesn't need to be created beforehand.
    */
   virtual void leftMultiplyTranspose( Matrix const & src,
                                       Matrix & dst ) const = 0;
@@ -592,10 +559,7 @@ protected:
    * @param src Input matrix (B).
    * @param dst Output matrix (C).
    *
-   * Note that the output matrix C should have the same
-   * row-map as this.  If close() has already been called
-   * on C, then C's sparsity pattern must already contain
-   * the nonzero entries produced by the product this*B.
+   * @note The output matrix @p dst doesn't need to be created beforehand.
    */
   virtual void rightMultiplyTranspose( Matrix const & src,
                                        Matrix & dst ) const = 0;
@@ -637,6 +601,19 @@ protected:
     Matrix AP;
     multiply( P, AP );
     P.leftMultiplyTranspose( AP, dst );
+  }
+
+  /**
+   * @brief Compute the triple product <tt>dst = R * this * R^T</tt>
+   * @param R the "restriction" matrix
+   * @param dst the resulting product matrix (will be re-created as needed)
+   */
+  virtual void multiplyRARt( Matrix const & R,
+                             Matrix & dst ) const
+  {
+    Matrix P;
+    R.transpose( P );
+    multiplyPtAP( P, dst );
   }
 
   /**
@@ -786,35 +763,6 @@ protected:
   virtual void extractDiagonal( Vector & dst ) const = 0;
 
   /**
-   * @brief Returns the number of global rows.
-   * @return number of global rows
-   */
-  virtual globalIndex numGlobalRows() const override = 0;
-
-  /**
-   * @brief Returns the number of global columns.
-   * @return number of global columns
-   */
-  virtual globalIndex numGlobalCols() const override = 0;
-
-  /**
-   * @brief Return the local number of columns on each processor.
-   * @return number of local columns
-   */
-  virtual localIndex numLocalRows() const = 0;
-
-  /**
-   * @brief Return the local number of columns on each processor.
-   * @return number of local rows
-   *
-   * @note Matrix implementations don't physically "own" columns ranges as they do rows.
-   * Instead, the local column range refers to the "diagonal" block of columns which would
-   * correspond to the local range of entries of a source vector created with the same
-   * local/global size as the number of matrix columns.
-   */
-  virtual localIndex numLocalCols() const = 0;
-
-  /**
    * @brief Returns the index of the first global row owned by that processor.
    * @return the index of the first global row owned by that processor
    */
@@ -892,15 +840,6 @@ protected:
    */
   virtual globalIndex getGlobalRowID( localIndex const index ) const = 0;
 
-  /**
-   * @brief Get the MPI communicator the matrix was created with
-   * @return MPI communicator passed in @p create...()
-   *
-   * @note when build without MPI, may return anything
-   *       (MPI_Comm will be a mock type defined in MpiWrapper)
-   */
-  virtual MPI_Comm getComm() const = 0;
-
   ///@}
 
   /**
@@ -941,10 +880,13 @@ protected:
   }
 
   /// Flag indicating whether the matrix is currently open for adding new entries
-  bool m_closed;
+  bool m_closed = true;
 
   /// Flag indicating whether the matrix (sparsity pattern) has been assembled
-  bool m_assembled;
+  bool m_assembled = false;
+
+  /// (optional) DofManager associated with this matrix
+  DofManager const * m_dofManager{};
 
 };
 

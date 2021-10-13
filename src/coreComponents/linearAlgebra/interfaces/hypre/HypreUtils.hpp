@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,39 +20,91 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include <HYPRE_krylov.h>
 #include <HYPRE_parcsr_ls.h>
+#include <_hypre_parcsr_ls.h>
+
+#ifdef GEOSX_USE_HYPRE_CUDA
+#define GEOSX_HYPRE_HOST_DEVICE GEOSX_HOST_DEVICE
+#else
+#define GEOSX_HYPRE_HOST_DEVICE
+#endif
 
 namespace geosx
 {
 
 /**
- * @brief Convert GEOSX integer value to hypre int
- * @param index the input value
- * @return the converted value
+ * @brief Container for hypre preconditioner function pointers.
+ *
+ * @note: This needs to be here rather than in HyprePreconditioner.cpp,
+ *        because HypreSolver needs to access `apply` member.
  */
-inline HYPRE_Int toHYPRE_Int( integer const index )
+struct HyprePrecWrapper
 {
-  return LvArray::integerConversion< HYPRE_Int >( index );
-}
+  /// Alias for setup function type
+  using SetupFunc = HYPRE_Int (*)( HYPRE_Solver, HYPRE_ParCSRMatrix, HYPRE_ParVector, HYPRE_ParVector );
+
+  /// Alias for apply function type
+  using SolveFunc = HYPRE_Int (*)( HYPRE_Solver, HYPRE_ParCSRMatrix, HYPRE_ParVector, HYPRE_ParVector );
+
+  /// Alias for destroy function type
+  using DestroyFunc = HYPRE_Int (*)( HYPRE_Solver );
+
+  HYPRE_Solver ptr{};    ///< pointer to preconditioner
+  SetupFunc setup{};     ///< pointer to setup function
+  SolveFunc solve{};     ///< pointer to apply function
+  DestroyFunc destroy{}; ///< pointer to destroy function
+};
 
 /**
- * @brief Convert GEOSX global index value to hypre bigint
- * @param index the input value
- * @return the converted value
+ * @brief Contains some hypre-specific functions
  */
-inline HYPRE_BigInt toHYPRE_BigInt( globalIndex const index )
+namespace hypre
 {
-  return LvArray::integerConversion< HYPRE_BigInt >( index );
-}
+
+#ifdef GEOSX_USE_HYPRE_CUDA
+/// Execution policy for operations on hypre data
+using execPolicy = parallelDevicePolicy<>;
+#else
+/// Execution policy for operations on hypre data
+using execPolicy = parallelHostPolicy;
+#endif
+
+// Check matching requirements on index/value types between GEOSX and Hypre
+
+// WARNING. We don't have consistent types between HYPRE_Int and localIndex.
+//          Decision needs to be made either to use bigint option, or change
+//          localIndex to int. We are getting away with this because we do not
+//          pass ( localIndex * ) to hypre except when it is on the GPU, in
+//          which case we are using int for localIndex.
+#if defined(GEOSX_USE_HYPRE_CUDA)
+static_assert( sizeof( HYPRE_Int ) == sizeof( geosx::localIndex ),
+               "HYPRE_Int and geosx::localIndex must have the same size" );
+static_assert( std::is_signed< HYPRE_Int >::value == std::is_signed< geosx::localIndex >::value,
+               "HYPRE_Int and geosx::localIndex must both be signed or unsigned" );
+#endif
+
+static_assert( sizeof( HYPRE_BigInt ) == sizeof( geosx::globalIndex ),
+               "HYPRE_BigInt and geosx::globalIndex must have the same size" );
+
+static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< geosx::globalIndex >::value,
+               "HYPRE_BigInt and geosx::globalIndex must both be signed or unsigned" );
+
+static_assert( std::is_same< HYPRE_Real, geosx::real64 >::value,
+               "HYPRE_Real and geosx::real64 must be the same type" );
+
+#ifndef HYPRE_NO_GLOBAL_PARTITION
+static_assert( false, "Hypre must be built with HYPRE_NO_GLOBAL_PARTITION" )
+#endif
 
 /**
  * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt
  * @param[in] index the input array
  * @return the converted array
  */
-inline HYPRE_BigInt * toHYPRE_BigInt( globalIndex * const index )
+inline HYPRE_BigInt * toHypreBigInt( geosx::globalIndex * const index )
 {
   return reinterpret_cast< HYPRE_BigInt * >(index);
 }
@@ -62,82 +114,71 @@ inline HYPRE_BigInt * toHYPRE_BigInt( globalIndex * const index )
  * @param[in] index the input array
  * @return the converted array
  */
-inline HYPRE_BigInt const * toHYPRE_BigInt( globalIndex const * const index )
+inline HYPRE_BigInt const * toHypreBigInt( geosx::globalIndex const * const index )
 {
   return reinterpret_cast< HYPRE_BigInt const * >(index);
 }
 
 /**
- * @brief Container for hypre preconditioner function pointers.
+ * @brief Dummy function that does nothing but conform to hypre's signature for preconditioner setup/apply functions.
+ * @return always 0 (success).
+ *
+ * Typical use is to prevent hypre from calling preconditioner setup when we have already called it on out side.
  */
-struct HyprePrecFuncs
+inline HYPRE_Int HYPRE_DummySetup( HYPRE_Solver,
+                                   HYPRE_ParCSRMatrix,
+                                   HYPRE_ParVector,
+                                   HYPRE_ParVector )
 {
-  /// Alias for setup function type
-  using SetupFunc = HYPRE_Int (*)( HYPRE_Solver, HYPRE_ParCSRMatrix, HYPRE_ParVector, HYPRE_ParVector );
-
-  /// Alias for apply function type
-  using ApplyFunc = HYPRE_Int (*)( HYPRE_Solver, HYPRE_ParCSRMatrix, HYPRE_ParVector, HYPRE_ParVector );
-
-  /// Alias for destroy function type
-  using DestroyFunc = HYPRE_Int (*)( HYPRE_Solver );
-
-  SetupFunc setup{};     ///< pointer to setup function
-  ApplyFunc apply{};     ///< pointer to apply function
-  DestroyFunc destroy{}; ///< pointer to destroy function
-  DestroyFunc aux_destroy{}; ///< pointer to auxillary destroy function
-};
-
-/**
- * @brief Container for hypre Krylov solver function pointers.
- */
-struct HypreSolverFuncs
-{
-  /// Alias for set preconditioner function type
-  using SetPrecondFunc = HYPRE_Int ( * )( HYPRE_Solver,
-                                          HYPRE_PtrToParSolverFcn,
-                                          HYPRE_PtrToParSolverFcn,
-                                          HYPRE_Solver );
-
-  /// Alias for setup function type
-  using SetupFunc = HYPRE_Int ( * )( HYPRE_Solver,
-                                     HYPRE_ParCSRMatrix,
-                                     HYPRE_ParVector,
-                                     HYPRE_ParVector );
-
-  /// Alias for solve function type
-  using SolveFunc = HYPRE_Int ( * )( HYPRE_Solver,
-                                     HYPRE_ParCSRMatrix,
-                                     HYPRE_ParVector,
-                                     HYPRE_ParVector );
-
-  /// Alias for get number of iterations function type
-  using GetNumIter = HYPRE_Int ( * )( HYPRE_Solver solver,
-                                      HYPRE_Int * num_iterations );
-
-  /// Alias for get final residual norm function type
-  using GetFinalNorm = HYPRE_Int ( * )( HYPRE_Solver solver,
-                                        HYPRE_Real * norm );
-
-  /// Alias for destroy function type
-  using DestroyFunc = HYPRE_Int ( * )( HYPRE_Solver );
-
-  SetPrecondFunc setPrecond{}; ///< pointer to set preconditioner function
-  SetupFunc setup{};           ///< pointer to setup function
-  SolveFunc solve{};           ///< pointer to solve function
-  GetNumIter getNumIter{};     ///< pointer to get number of iterations function
-  GetFinalNorm getFinalNorm{}; ///< pointer to get final residual norm function
-  DestroyFunc destroy{};       ///< pointer to destroy function
-};
-
-/**
- * @brief Container for hypre preconditioner auxiliary data.
- */
-struct HyprePrecAuxData
-{
-  array1d< HYPRE_Int > point_marker_array;     ///< array1d of unique tags for local degrees of freedom
-  array1d< HYPRE_ParVector > nullSpacePointer; ///< Hypre pointer to the near null kernel
-};
-
+  return 0;
 }
+
+/**
+ * @brief The missing wrapper compatible with hypre solver setup signature.
+ * @param solver the solver
+ * @param A the matrix
+ * @param b the rhs vector (unused)
+ * @param x the solution vector (unused)
+ * @return hypre error code
+ */
+inline HYPRE_Int HYPRE_SLUDistSetup( HYPRE_Solver solver,
+                                     HYPRE_ParCSRMatrix A,
+                                     HYPRE_ParVector b,
+                                     HYPRE_ParVector x )
+{
+  GEOSX_UNUSED_VAR( b, x );
+  return hypre_SLUDistSetup( &solver, A, 0 );
+}
+
+/**
+ * @brief The missing wrapper compatible with hypre solver solve signature.
+ * @param solver the solver
+ * @param A the matrix (unused)
+ * @param b the rhs vector
+ * @param x the solution vector
+ * @return hypre error code
+ */
+inline HYPRE_Int HYPRE_SLUDistSolve( HYPRE_Solver solver,
+                                     HYPRE_ParCSRMatrix A,
+                                     HYPRE_ParVector b,
+                                     HYPRE_ParVector x )
+{
+  GEOSX_UNUSED_VAR( A );
+  return hypre_SLUDistSolve( solver, b, x );
+}
+
+/**
+ * @brief The missing wrapper compatible with hypre solver destroy signature.
+ * @param solver the solver
+ * @return hypre error code
+ */
+inline HYPRE_Int HYPRE_SLUDistDestroy( HYPRE_Solver solver )
+{
+  return hypre_SLUDistDestroy( solver );
+}
+
+} // namespace hypre
+
+} // namespace geosx
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_*/

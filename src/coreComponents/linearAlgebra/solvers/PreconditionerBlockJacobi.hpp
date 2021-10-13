@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -15,9 +15,9 @@
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBLOCKJACOBI_HPP_
 #define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBLOCKJACOBI_HPP_
 
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
-#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
+#include "linearAlgebra/common/LinearOperator.hpp"
+#include "linearAlgebra/common/PreconditionerBase.hpp"
+#include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"
 
 namespace geosx
 {
@@ -54,14 +54,14 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat ) override
+  virtual void setup( Matrix const & mat ) override
   {
     GEOSX_LAI_ASSERT( mat.ready() );
     GEOSX_LAI_ASSERT_GT( m_blockSize, 0 );
     GEOSX_LAI_ASSERT_EQ( mat.numLocalRows() % m_blockSize, 0 );
     GEOSX_LAI_ASSERT_EQ( mat.numLocalCols() % m_blockSize, 0 );
 
-    PreconditionerBase< LAI >::compute( mat );
+    PreconditionerBase< LAI >::setup( mat );
 
     m_blockDiag.createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.getComm() );
     m_blockDiag.open();
@@ -71,9 +71,9 @@ public:
     array2d< real64 > valuesInv( m_blockSize, m_blockSize );
     array1d< globalIndex > cols;
     array1d< real64 > vals;
-    for( globalIndex i = mat.ilower(); i < mat.iupper(); i+=m_blockSize )
+    for( globalIndex i = mat.ilower(); i < mat.iupper(); i += m_blockSize )
     {
-      values.setValues< serialPolicy >( 0.0 );
+      values.zero();
       for( localIndex j = 0; j < m_blockSize; ++j )
       {
         globalIndex const iRow = i + LvArray::integerConversion< globalIndex >( j );
@@ -95,18 +95,6 @@ public:
       m_blockDiag.insert( idxBlk, idxBlk, valuesInv );
     }
     m_blockDiag.close();
-  }
-
-  /**
-   * @brief Compute the preconditioner from a matrix
-   * @param mat the matrix to precondition
-   * @param dofManager the Degree-of-Freedom manager associated with matrix
-   */
-  virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager ) override
-  {
-    GEOSX_UNUSED_VAR( dofManager );
-    compute( mat );
   }
 
   /**

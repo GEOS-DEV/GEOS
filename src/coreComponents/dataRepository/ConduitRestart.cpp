@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -18,11 +18,9 @@
 
 // Source includes
 #include "ConduitRestart.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
-#include "managers/GeosxState.hpp"
-#include "managers/initialization.hpp"
 
 // TPL includes
 #include <conduit_relay.hpp>
@@ -34,10 +32,8 @@ namespace dataRepository
 
 string writeRootFile( conduit::Node & root, string const & rootPath )
 {
-  string const completeRootPath = getGlobalState().getCommandLineOptions().outputDirectory + "/" + rootPath;
-
-  string rootDirName, rootFileName;
-  splitPath( completeRootPath, rootDirName, rootFileName );
+  string const completeRootPath = rootPath;
+  string const rootFileName = splitPath( completeRootPath ).second;
 
   if( MpiWrapper::commRank() == 0 )
   {
@@ -56,10 +52,7 @@ string writeRootFile( conduit::Node & root, string const & rootPath )
   }
 
   MpiWrapper::barrier( MPI_COMM_GEOSX );
-
-  std::vector< char > buffer( completeRootPath.size() + 64 );
-  GEOSX_ERROR_IF_GE( std::snprintf( buffer.data(), buffer.size(), "%s/rank_%07d.hdf5", completeRootPath.data(), MpiWrapper::commRank() ), int( buffer.size() ) );
-  return buffer.data();
+  return GEOSX_FMT( "{}/rank_{:07}.hdf5", completeRootPath.data(), MpiWrapper::commRank() );
 }
 
 
@@ -75,9 +68,7 @@ string readRootNode( string const & rootPath )
     GEOSX_THROW_IF_NE( nFiles, MpiWrapper::commSize(), InputError );
 
     string const filePattern = node.fetch_child( "file_pattern" ).as_string();
-
-    string rootDirName, rootFileName;
-    splitPath( rootPath, rootDirName, rootFileName );
+    string const rootDirName = splitPath( rootPath ).first;
 
     rankFilePattern = rootDirName + "/" + filePattern;
     GEOSX_LOG_RANK_VAR( rankFilePattern );

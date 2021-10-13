@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -18,7 +18,7 @@
 
 #include "WellElementRegion.hpp"
 
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 
 namespace geosx
@@ -64,11 +64,12 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
   subRegion.connectPerforationsToMeshElements( mesh, wellGeometry );
 
   globalIndex const matchedPerforations = MpiWrapper::sum( perforationData->size() );
-  GEOSX_ERROR_IF( matchedPerforations != numPerforationsGlobal,
-                  "Invalid mapping perforation-to-element in well " << this->getName() << "." <<
+  GEOSX_THROW_IF( matchedPerforations != numPerforationsGlobal,
+                  "Invalid mapping perforation-to-element in well " << wellGeometry.getName() << "." <<
                   " This happens when GEOSX cannot match a perforation with a reservoir element." <<
                   " The most common reason for this error is that a perforation is on a section of " <<
-                  " the well polyline located outside the domain." );
+                  " the well polyline located outside the domain.",
+                  InputError );
 
 
   // 2) classify well elements based on connectivity to local mesh partition

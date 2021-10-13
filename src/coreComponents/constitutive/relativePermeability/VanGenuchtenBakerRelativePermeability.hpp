@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -39,8 +39,8 @@ public:
                                                real64 const volFracScale,
                                                arrayView1d< integer const > const & phaseTypes,
                                                arrayView1d< integer const > const & phaseOrder,
-                                               arrayView3d< real64 > const & phaseRelPerm,
-                                               arrayView4d< real64 > const & dPhaseRelPerm_dPhaseVolFrac )
+                                               arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                                               arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
                                       phaseRelPerm,
@@ -53,29 +53,15 @@ public:
     m_volFracScale( volFracScale )
   {}
 
-  /// Default copy constructor
-  VanGenuchtenBakerRelativePermeabilityUpdate( VanGenuchtenBakerRelativePermeabilityUpdate const & ) = default;
-
-  /// Default move constructor
-  VanGenuchtenBakerRelativePermeabilityUpdate( VanGenuchtenBakerRelativePermeabilityUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  VanGenuchtenBakerRelativePermeabilityUpdate & operator=( VanGenuchtenBakerRelativePermeabilityUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  VanGenuchtenBakerRelativePermeabilityUpdate & operator=( VanGenuchtenBakerRelativePermeabilityUpdate && ) = delete;
+  GEOSX_HOST_DEVICE
+  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                        arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                        arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseRelPerm,
-                        arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & phaseVolFraction ) const override
+                       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
   {
     compute( phaseVolFraction,
              m_phaseRelPerm[k][q],
@@ -125,8 +111,6 @@ public:
 
   VanGenuchtenBakerRelativePermeability( string const & name, dataRepository::Group * const parent );
 
-  virtual ~VanGenuchtenBakerRelativePermeability() override;
-
   static string catalogName() { return "VanGenuchtenBakerRelativePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -169,17 +153,13 @@ protected:
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
+inline void
 VanGenuchtenBakerRelativePermeabilityUpdate::
-  compute( arraySlice1d< real64 const > const & phaseVolFraction,
-           arraySlice1d< real64 > const & phaseRelPerm,
-           arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
+  compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+           arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  for( real64 & val : dPhaseRelPerm_dPhaseVolFrac )
-  {
-    val = 0.0;
-  }
+  LvArray::forValuesInSlice( dPhaseRelPerm_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
   using PT = RelativePermeabilityBase::PhaseType;
   integer const ipWater = m_phaseOrder[PT::WATER];

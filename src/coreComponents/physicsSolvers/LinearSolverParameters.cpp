@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -33,12 +33,14 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   registerWrapper( viewKeyStruct::solverTypeString(), &m_parameters.solverType ).
     setApplyDefaultValue( m_parameters.solverType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Linear solver type. Available options are:\n* " + EnumStrings< LinearSolverParameters::SolverType >::concat( "\n* " ) );
+    setDescription( "Linear solver type. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::SolverType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::preconditionerTypeString(), &m_parameters.preconditionerType ).
     setApplyDefaultValue( m_parameters.preconditionerType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Preconditioner type. Available options are:\n* " + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "\n* " ) );
+    setDescription( "Preconditioner type. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::stopIfErrorString(), &m_parameters.stopIfError ).
     setApplyDefaultValue( m_parameters.stopIfError ).
@@ -58,12 +60,14 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   registerWrapper( viewKeyStruct::directColPermString(), &m_parameters.direct.colPerm ).
     setApplyDefaultValue( m_parameters.direct.colPerm ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "How to permute the columns. Available options are:\n* " + EnumStrings< LinearSolverParameters::Direct::ColPerm >::concat( "\n* " ) );
+    setDescription( "How to permute the columns. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::Direct::ColPerm >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::directRowPermString(), &m_parameters.direct.rowPerm ).
     setApplyDefaultValue( m_parameters.direct.rowPerm ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "How to permute the rows. Available options are:\n* " + EnumStrings< LinearSolverParameters::Direct::RowPerm >::concat( "\n* " ) );
+    setDescription( "How to permute the rows. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::Direct::RowPerm >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::directReplTinyPivotString(), &m_parameters.direct.replaceTinyPivot ).
     setApplyDefaultValue( m_parameters.direct.replaceTinyPivot ).
@@ -117,14 +121,38 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   registerWrapper( viewKeyStruct::amgSmootherString(), &m_parameters.amg.smootherType ).
     setApplyDefaultValue( m_parameters.amg.smootherType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG smoother type\n"
-                    "Available options are: jacobi, blockJacobi, gaussSeidel, blockGaussSeidel, chebyshev, icc, ilu, ilut" );
+    setDescription( "AMG smoother type. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::SmootherType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgCoarseString(), &m_parameters.amg.coarseType ).
     setApplyDefaultValue( m_parameters.amg.coarseType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG coarsest level solver/smoother type\n"
-                    "Available options are: jacobi, gaussSeidel, blockGaussSeidel, chebyshev, direct" );
+    setDescription( "AMG coarsest level solver/smoother type. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::CoarseType >::concat( "|" ) + "``" );
+
+  registerWrapper( viewKeyStruct::amgCoarseningString(), &m_parameters.amg.coarseningType ).
+    setApplyDefaultValue( "HMIS" ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG coarsening algorithm\n"
+                    "Available options are: TODO" );
+
+  registerWrapper( viewKeyStruct::amgInterpolationString(), &m_parameters.amg.interpolationType ).
+    setApplyDefaultValue( 6 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG interpolation algorithm\n"
+                    "Available options are: TODO" );
+
+  registerWrapper( viewKeyStruct::amgNumFunctionsString(), &m_parameters.amg.numFunctions ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG number of functions\n"
+                    "Available options are: TODO" );
+
+  registerWrapper( viewKeyStruct::amgAggresiveNumLevelsString(), &m_parameters.amg.aggresiveNumLevels ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG number levels for aggressive coarsening \n"
+                    "Available options are: TODO" );
 
   registerWrapper( viewKeyStruct::amgThresholdString(), &m_parameters.amg.threshold ).
     setApplyDefaultValue( m_parameters.amg.threshold ).
@@ -134,15 +162,16 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   registerWrapper( viewKeyStruct::amgNullSpaceTypeString(), &m_parameters.amg.nullSpaceType ).
     setApplyDefaultValue( m_parameters.amg.nullSpaceType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG near null space approximation" );
+    setDescription( "AMG near null space approximation. Available options are:"
+                    "``" + EnumStrings< LinearSolverParameters::AMG::NullSpaceType >::concat( "|" ) + "``" );
 
-  registerWrapper( viewKeyStruct::iluFillString(), &m_parameters.ilu.fill ).
-    setApplyDefaultValue( m_parameters.ilu.fill ).
+  registerWrapper( viewKeyStruct::iluFillString(), &m_parameters.ifact.fill ).
+    setApplyDefaultValue( m_parameters.ifact.fill ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ILU(K) fill factor" );
 
-  registerWrapper( viewKeyStruct::iluThresholdString(), &m_parameters.ilu.threshold ).
-    setApplyDefaultValue( m_parameters.ilu.threshold ).
+  registerWrapper( viewKeyStruct::iluThresholdString(), &m_parameters.ifact.threshold ).
+    setApplyDefaultValue( m_parameters.ifact.threshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ILU(T) threshold factor" );
 }
@@ -166,15 +195,12 @@ void LinearSolverParametersInput::postProcessInput()
   GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.relTolerance, 0.0, "Invalid value of " << viewKeyStruct::krylovTolString() );
   GEOSX_ERROR_IF_GT_MSG( m_parameters.krylov.relTolerance, 1.0, "Invalid value of " << viewKeyStruct::krylovTolString() );
 
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.ilu.fill, 0, "Invalid value of " << viewKeyStruct::iluFillString() );
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.ilu.threshold, 0.0, "Invalid value of " << viewKeyStruct::iluThresholdString() );
+  GEOSX_ERROR_IF_LT_MSG( m_parameters.ifact.fill, 0, "Invalid value of " << viewKeyStruct::iluFillString() );
+  GEOSX_ERROR_IF_LT_MSG( m_parameters.ifact.threshold, 0.0, "Invalid value of " << viewKeyStruct::iluThresholdString() );
 
   GEOSX_ERROR_IF_LT_MSG( m_parameters.amg.numSweeps, 0, "Invalid value of " << viewKeyStruct::amgNumSweepsString() );
   GEOSX_ERROR_IF_LT_MSG( m_parameters.amg.threshold, 0.0, "Invalid value of " << viewKeyStruct::amgThresholdString() );
   GEOSX_ERROR_IF_GT_MSG( m_parameters.amg.threshold, 1.0, "Invalid value of " << viewKeyStruct::amgThresholdString() );
-
-  static const std::set< string > nullSpaceOptions = { "constantModes", "rigidBodyModes" };
-  GEOSX_ERROR_IF( nullSpaceOptions.count( m_parameters.amg.nullSpaceType ) == 0, "Unsupported null space type: " << m_parameters.amg.nullSpaceType );
 
   // TODO input validation for other AMG parameters ?
 }

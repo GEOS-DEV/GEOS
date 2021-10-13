@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -26,17 +26,6 @@
 namespace geosx
 {
 
-// Check matching requirements on index/value types between GEOSX and PETSc
-
-static_assert( sizeof( PetscInt ) == sizeof( globalIndex ),
-               "PetscInt and geosx::globalIndex must have the same size" );
-
-static_assert( std::is_signed< PetscInt >::value == std::is_signed< globalIndex >::value,
-               "PetscInt and geoex::globalIndex must both be signed or unsigned" );
-
-static_assert( std::is_same< PetscScalar, real64 >::value,
-               "PetscScalar and geosx::real64 must be the same type" );
-
 PetscVector::PetscVector()
   : VectorBase(),
   m_vec{}
@@ -56,19 +45,25 @@ PetscVector::PetscVector( PetscVector && src ) noexcept
 
 PetscVector & PetscVector::operator=( PetscVector const & src )
 {
-  GEOSX_LAI_ASSERT( &src != this );
-  GEOSX_LAI_ASSERT( src.ready() );
-  reset();
-  GEOSX_LAI_CHECK_ERROR( VecDuplicate( src.m_vec, &m_vec ) );
-  GEOSX_LAI_CHECK_ERROR( VecCopy( src.m_vec, m_vec ) );
+  if( &src != this )
+  {
+    reset();
+    if( src.created() )
+    {
+      GEOSX_LAI_CHECK_ERROR( VecDuplicate( src.m_vec, &m_vec ) );
+      GEOSX_LAI_CHECK_ERROR( VecCopy( src.m_vec, m_vec ) );
+    }
+  }
   return *this;
 }
 
 PetscVector & PetscVector::operator=( PetscVector && src ) noexcept
 {
-  GEOSX_LAI_ASSERT( &src != this );
-  GEOSX_LAI_ASSERT( src.ready() );
-  std::swap( m_vec, src.m_vec );
+  if( &src != this )
+  {
+    std::swap( m_vec, src.m_vec );
+    std::swap( m_closed, src.m_closed );
+  }
   return *this;
 }
 
@@ -92,9 +87,7 @@ void PetscVector::createWithLocalSize( localIndex const localSize, MPI_Comm cons
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( localSize, 0 );
   reset();
-  GEOSX_LAI_CHECK_ERROR( VecCreate( comm, &m_vec ) );
-  GEOSX_LAI_CHECK_ERROR( VecSetType( m_vec, VECMPI ) );
-  GEOSX_LAI_CHECK_ERROR( VecSetSizes( m_vec, localSize, PETSC_DETERMINE ) );
+  GEOSX_LAI_CHECK_ERROR( VecCreateMPI( comm, localSize, PETSC_DETERMINE, &m_vec ) );
 }
 
 void PetscVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm )
@@ -102,31 +95,21 @@ void PetscVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm c
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( globalSize, 0 );
   reset();
-  GEOSX_LAI_CHECK_ERROR( VecCreate( comm, &m_vec ) );
-  GEOSX_LAI_CHECK_ERROR( VecSetType( m_vec, VECMPI ) );
-  GEOSX_LAI_CHECK_ERROR( VecSetSizes( m_vec, PETSC_DECIDE, globalSize ) );
+  GEOSX_LAI_CHECK_ERROR( VecCreateMPI( comm, PETSC_DECIDE, globalSize, &m_vec ) );
 }
 
 void PetscVector::create( arrayView1d< real64 const > const & localValues, MPI_Comm const & comm )
 {
   GEOSX_LAI_ASSERT( closed() );
   reset();
-  PetscInt const size = localValues.size();
-  PetscScalar * values;
 
-  localValues.move( LvArray::MemorySpace::CPU, false );
-
-  GEOSX_LAI_CHECK_ERROR( VecCreate( comm, &m_vec ) );
-  GEOSX_LAI_CHECK_ERROR( VecSetType( m_vec, VECMPI ) );
-  GEOSX_LAI_CHECK_ERROR( VecSetSizes( m_vec, size, PETSC_DETERMINE ) );
-  GEOSX_LAI_CHECK_ERROR( VecGetArray( m_vec, &values ) );
+  GEOSX_LAI_CHECK_ERROR( VecCreateMPI( comm, localValues.size(), PETSC_DETERMINE, &m_vec ) );
 
   // set vector values
-  for( int i = 0; i < size; i++ )
-  {
-    values[i] = localValues[i];
-  }
-
+  PetscScalar * values;
+  localValues.move( LvArray::MemorySpace::host, false );
+  GEOSX_LAI_CHECK_ERROR( VecGetArray( m_vec, &values ) );
+  std::copy( localValues.begin(), localValues.end(), values );
   GEOSX_LAI_CHECK_ERROR( VecRestoreArray( m_vec, &values ) );
 }
 
@@ -154,7 +137,7 @@ void PetscVector::set( globalIndex const * globalIndices,
                        localIndex size )
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec, size, toPetscInt( globalIndices ), values, INSERT_VALUES ) );
+  GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec, size, petsc::toPetscInt( globalIndices ), values, INSERT_VALUES ) );
 }
 
 void PetscVector::add( globalIndex const * globalIndices,
@@ -162,7 +145,7 @@ void PetscVector::add( globalIndex const * globalIndices,
                        localIndex size )
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec, size, toPetscInt( globalIndices ), values, ADD_VALUES ) );
+  GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec, size, petsc::toPetscInt( globalIndices ), values, ADD_VALUES ) );
 }
 
 void PetscVector::set( arraySlice1d< globalIndex const > const & globalIndices,
@@ -171,7 +154,7 @@ void PetscVector::set( arraySlice1d< globalIndex const > const & globalIndices,
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec,
                                        values.size(),
-                                       toPetscInt( globalIndices.dataIfContiguous()),
+                                       petsc::toPetscInt( globalIndices.dataIfContiguous()),
                                        values.dataIfContiguous(),
                                        INSERT_VALUES ) );
 }
@@ -182,7 +165,7 @@ void PetscVector::add( arraySlice1d< globalIndex const > const & globalIndices,
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( VecSetValues( m_vec,
                                        values.size(),
-                                       toPetscInt( globalIndices.dataIfContiguous()),
+                                       petsc::toPetscInt( globalIndices.dataIfContiguous()),
                                        values.dataIfContiguous(),
                                        ADD_VALUES ) );
 }
@@ -235,12 +218,10 @@ void PetscVector::scale( real64 const scalingFactor )
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  if( isEqual( scalingFactor, 1.0 ) )
+  if( !isEqual( scalingFactor, 1.0 ) )
   {
-    return;
+    GEOSX_LAI_CHECK_ERROR( VecScale( m_vec, scalingFactor ) );
   }
-
-  GEOSX_LAI_CHECK_ERROR( VecScale( m_vec, scalingFactor ) );
 }
 
 void PetscVector::reciprocal()
@@ -276,7 +257,14 @@ void PetscVector::axpy( real64 const alpha, PetscVector const & x )
   GEOSX_LAI_ASSERT( x.ready() );
   GEOSX_LAI_ASSERT_EQ( globalSize(), x.globalSize() );
 
-  GEOSX_LAI_CHECK_ERROR( VecAXPY( m_vec, alpha, x.m_vec ) );
+  if( &x != this )
+  {
+    GEOSX_LAI_CHECK_ERROR( VecAXPY( m_vec, alpha, x.m_vec ) );
+  }
+  else
+  {
+    scale( 1.0 + alpha );
+  }
 }
 
 void PetscVector::axpby( real64 const alpha,
@@ -287,8 +275,14 @@ void PetscVector::axpby( real64 const alpha,
   GEOSX_LAI_ASSERT( x.ready() );
   GEOSX_LAI_ASSERT_EQ( globalSize(), x.globalSize() );
 
-  GEOSX_LAI_CHECK_ERROR( VecScale( m_vec, beta ) );
-  GEOSX_LAI_CHECK_ERROR( VecAXPY( m_vec, alpha, x.m_vec ) );
+  if( &x != this )
+  {
+    GEOSX_LAI_CHECK_ERROR( VecAXPBY( m_vec, alpha, beta, x.m_vec ) );
+  }
+  else
+  {
+    scale( alpha + beta );
+  }
 }
 
 void PetscVector::pointwiseProduct( PetscVector const & x,
@@ -415,7 +409,7 @@ real64 PetscVector::get( globalIndex globalRow ) const
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
 
   real64 value;
-  GEOSX_LAI_CHECK_ERROR( VecGetValues( m_vec, 1, toPetscInt( &globalRow ), &value ) );
+  GEOSX_LAI_CHECK_ERROR( VecGetValues( m_vec, 1, petsc::toPetscInt( &globalRow ), &value ) );
   return value;
 }
 
@@ -430,7 +424,7 @@ void PetscVector::get( arraySlice1d< globalIndex const > const & globalIndices,
 
   GEOSX_LAI_CHECK_ERROR( VecGetValues( m_vec,
                                        globalIndices.size(),
-                                       toPetscInt( globalIndices.dataIfContiguous() ),
+                                       petsc::toPetscInt( globalIndices.dataIfContiguous() ),
                                        values.dataIfContiguous() ) );
 }
 
@@ -459,7 +453,7 @@ globalIndex PetscVector::globalSize() const
   GEOSX_LAI_ASSERT( created() );
   PetscInt size;
   GEOSX_LAI_CHECK_ERROR( VecGetSize( m_vec, &size ) );
-  return size;
+  return LvArray::integerConversion< globalIndex >( size );
 }
 
 localIndex PetscVector::localSize() const
@@ -467,7 +461,7 @@ localIndex PetscVector::localSize() const
   GEOSX_LAI_ASSERT( created() );
   PetscInt size;
   GEOSX_LAI_CHECK_ERROR( VecGetLocalSize( m_vec, &size ) );
-  return size;
+  return LvArray::integerConversion< localIndex >( size );
 }
 
 localIndex PetscVector::getLocalRowID( globalIndex const globalRow ) const

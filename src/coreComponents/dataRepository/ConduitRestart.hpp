@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -80,6 +80,7 @@ struct conduitTypeInfo< T, std::enable_if_t< std::is_enum< T >::value > > : publ
 
 // Tensor types
 CONDUIT_TYPE_INFO( R1Tensor, CONDUIT_NATIVE_DOUBLE );
+CONDUIT_TYPE_INFO( R2SymTensor, CONDUIT_NATIVE_DOUBLE );
 
 } // namespace internal
 

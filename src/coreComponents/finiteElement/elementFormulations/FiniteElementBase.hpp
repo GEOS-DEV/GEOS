@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -203,6 +203,24 @@ public:
   static void symmetricGradient( GRADIENT_TYPE const & gradN,
                                  real64 const (&var)[NUM_SUPPORT_POINTS][3],
                                  real64 ( &gradVar )[6] );
+
+  /**
+   * @brief Calculate the trace of the symmetric gradient of a vector valued support
+   *   field (i.e. the volumetric strain for the displacement field) at a point using
+   *   the stored basis function gradients for all support points.
+   * @tparam NUM_SUPPORT_POINTS The number of support points for the element.
+   * @tparam GRADIENT_TYPE The type of the array object holding the shape
+   * @param gradN The basis function gradients at a point in the element.
+   * @param var The vector valued support field that the gradient operator will
+   *  be applied to.
+   * @return The trace of the symetric gradient tensor.
+   *
+   */
+  template< int NUM_SUPPORT_POINTS,
+            typename GRADIENT_TYPE >
+  GEOSX_HOST_DEVICE
+  static real64 symmetricGradientTrace( GRADIENT_TYPE const & gradN,
+                                        real64 const (&var)[NUM_SUPPORT_POINTS][3] );
 
   /**
    * @brief Calculate the gradient of a scalar valued support field at a point
@@ -439,7 +457,7 @@ protected:
 /// @cond Doxygen_Suppress
 
 //*************************************************************************************************
-//***** Definitons ********************************************************************************
+//***** Definitions *******************************************************************************
 //*************************************************************************************************
 
 template< typename LEAF >
@@ -524,6 +542,22 @@ void FiniteElementBase::symmetricGradient( GRADIENT_TYPE const & gradN,
     gradVar[4] = gradVar[4] + gradN[a][2] * var[ a ][0] + gradN[a][0] * var[ a ][2];
     gradVar[5] = gradVar[5] + gradN[a][1] * var[ a ][0] + gradN[a][0] * var[ a ][1];
   }
+}
+
+template< int NUM_SUPPORT_POINTS,
+          typename GRADIENT_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 FiniteElementBase::symmetricGradientTrace( GRADIENT_TYPE const & gradN,
+                                                  real64 const (&var)[NUM_SUPPORT_POINTS][3] )
+{
+  real64 result = gradN[0][0] * var[0][0] + gradN[0][1] * var[0][1] + gradN[0][2] * var[0][2];
+
+  for( int a=1; a<NUM_SUPPORT_POINTS; ++a )
+  {
+    result = result + gradN[a][0] * var[a][0] + gradN[a][1] * var[a][1] + gradN[a][2] * var[a][2];
+  }
+  return result;
 }
 
 template< int NUM_SUPPORT_POINTS,
