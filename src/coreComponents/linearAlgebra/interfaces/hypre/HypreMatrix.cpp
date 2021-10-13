@@ -696,18 +696,18 @@ void HypreMatrix::multiplyRAP( HypreMatrix const & R,
   HypreMatrix Rt;
   R.transpose( Rt );
 
-  HYPRE_Int const Rt_owns_its_col_starts = hypre_ParCSRMatrixOwnsColStarts( Rt.unwrapped() );
-  HYPRE_Int const P_owns_its_col_starts = hypre_ParCSRMatrixOwnsColStarts( P.unwrapped() );
+//  HYPRE_Int const Rt_owns_its_col_starts = hypre_ParCSRMatrixOwnsColStarts( Rt.unwrapped() );
+//  HYPRE_Int const P_owns_its_col_starts = hypre_ParCSRMatrixOwnsColStarts( P.unwrapped() );
 
   HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAP( Rt.unwrapped(),
                                                                m_parcsr_mat,
                                                                P.unwrapped() );
 
-  hypre_ParCSRMatrixSetRowStartsOwner( dst_parcsr, 0 );
-  hypre_ParCSRMatrixSetColStartsOwner( dst_parcsr, 0 );
-
-  hypre_ParCSRMatrixSetColStartsOwner( Rt.unwrapped(), Rt_owns_its_col_starts );
-  hypre_ParCSRMatrixSetColStartsOwner( P.unwrapped(), P_owns_its_col_starts );
+//  hypre_ParCSRMatrixSetRowStartsOwner( dst_parcsr, 0 );
+//  hypre_ParCSRMatrixSetColStartsOwner( dst_parcsr, 0 );
+//
+//  hypre_ParCSRMatrixSetColStartsOwner( Rt.unwrapped(), Rt_owns_its_col_starts );
+//  hypre_ParCSRMatrixSetColStartsOwner( P.unwrapped(), P_owns_its_col_starts );
 
   dst.parCSRtoIJ( dst_parcsr );
   Rt.reset();
@@ -721,17 +721,17 @@ void HypreMatrix::multiplyPtAP( HypreMatrix const & P,
   GEOSX_LAI_ASSERT_EQ( numGlobalRows(), P.numGlobalRows() );
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
 
-  HYPRE_Int const P_owns_its_col_starts = hypre_ParCSRMatrixOwnsColStarts( P.unwrapped() );
+//  HYPRE_Int const P_owns_its_col_starts = hypre_ParCSRMatrixOwnsColStarts( P.unwrapped() );
 
   HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAPKT( P.unwrapped(),
                                                                  m_parcsr_mat,
                                                                  P.unwrapped(),
                                                                  0 );
 
-  hypre_ParCSRMatrixSetRowStartsOwner( dst_parcsr, 0 );
-  hypre_ParCSRMatrixSetColStartsOwner( dst_parcsr, 0 );
-
-  hypre_ParCSRMatrixSetColStartsOwner( P.unwrapped(), P_owns_its_col_starts );
+//  hypre_ParCSRMatrixSetRowStartsOwner( dst_parcsr, 0 );
+//  hypre_ParCSRMatrixSetColStartsOwner( dst_parcsr, 0 );
+//
+//  hypre_ParCSRMatrixSetColStartsOwner( P.unwrapped(), P_owns_its_col_starts );
 
   dst.parCSRtoIJ( dst_parcsr );
 }
@@ -772,45 +772,45 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix )
   hypre_IJMatrixGlobalNumRows( ijmatrix ) = hypre_ParCSRMatrixGlobalNumRows( parCSRMatrix );
   hypre_IJMatrixGlobalNumCols( ijmatrix ) = hypre_ParCSRMatrixGlobalNumCols( parCSRMatrix );
 
-  // Set row partitioning
-  if( hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix ) )
-  {
-    hypre_IJMatrixRowPartitioning( ijmatrix ) = hypre_ParCSRMatrixRowStarts( parCSRMatrix );
-  }
-  else
-  {
-    HYPRE_BigInt * const row_partitioning = hypre_CTAlloc( HYPRE_BigInt, 2, HYPRE_MEMORY_HOST );
-    row_partitioning[0] = hypre_ParCSRMatrixFirstRowIndex( parCSRMatrix );
-    row_partitioning[1] = hypre_ParCSRMatrixLastRowIndex( parCSRMatrix ) + 1;
-    hypre_IJMatrixRowPartitioning( ijmatrix ) = row_partitioning;
-    hypre_ParCSRMatrixRowStarts( parCSRMatrix ) = row_partitioning;
-  }
-  hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix ) = 0;
+//  // Set row partitioning
+//  if( hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix ) )
+//  {
+//    hypre_IJMatrixRowPartitioning( ijmatrix ) = hypre_ParCSRMatrixRowStarts( parCSRMatrix );
+//  }
+//  else
+//  {
+//    HYPRE_BigInt * const row_partitioning = hypre_CTAlloc( HYPRE_BigInt, 2, HYPRE_MEMORY_HOST );
+//    row_partitioning[0] = hypre_ParCSRMatrixFirstRowIndex( parCSRMatrix );
+//    row_partitioning[1] = hypre_ParCSRMatrixLastRowIndex( parCSRMatrix ) + 1;
+//    hypre_IJMatrixRowPartitioning( ijmatrix ) = row_partitioning;
+//    hypre_ParCSRMatrixRowStarts( parCSRMatrix ) = row_partitioning;
+//  }
+//  hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix ) = 0;
 
-  if( hypre_IJMatrixGlobalNumRows( ijmatrix ) != hypre_IJMatrixGlobalNumCols( ijmatrix ) )
-  {
-    // Rectangular matrix
-    // Set column partitioning
-    if( hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) )
-    {
-      hypre_IJMatrixColPartitioning( ijmatrix ) = hypre_ParCSRMatrixColStarts( parCSRMatrix );
-    }
-    else
-    {
-      HYPRE_BigInt * const col_partitioning = hypre_CTAlloc( HYPRE_BigInt, 2, HYPRE_MEMORY_HOST );
-      col_partitioning[0] = hypre_ParCSRMatrixFirstColDiag( parCSRMatrix );
-      col_partitioning[1] = hypre_ParCSRMatrixLastColDiag( parCSRMatrix ) + 1;
-      hypre_IJMatrixColPartitioning( ijmatrix ) = col_partitioning;
-      hypre_ParCSRMatrixColStarts( parCSRMatrix ) = col_partitioning;
-    }
-    hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) = 0;
-  }
-  else
-  {
-    // Square matrix
-    hypre_IJMatrixColPartitioning( ijmatrix ) = hypre_IJMatrixRowPartitioning( ijmatrix );
-    hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) = hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix );
-  }
+//  if( hypre_IJMatrixGlobalNumRows( ijmatrix ) != hypre_IJMatrixGlobalNumCols( ijmatrix ) )
+//  {
+//    // Rectangular matrix
+//    // Set column partitioning
+//    if( hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) )
+//    {
+//      hypre_IJMatrixColPartitioning( ijmatrix ) = hypre_ParCSRMatrixColStarts( parCSRMatrix );
+//    }
+//    else
+//    {
+//      HYPRE_BigInt * const col_partitioning = hypre_CTAlloc( HYPRE_BigInt, 2, HYPRE_MEMORY_HOST );
+//      col_partitioning[0] = hypre_ParCSRMatrixFirstColDiag( parCSRMatrix );
+//      col_partitioning[1] = hypre_ParCSRMatrixLastColDiag( parCSRMatrix ) + 1;
+//      hypre_IJMatrixColPartitioning( ijmatrix ) = col_partitioning;
+//      hypre_ParCSRMatrixColStarts( parCSRMatrix ) = col_partitioning;
+//    }
+//    hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) = 0;
+//  }
+//  else
+//  {
+//    // Square matrix
+//    hypre_IJMatrixColPartitioning( ijmatrix ) = hypre_IJMatrixRowPartitioning( ijmatrix );
+//    hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) = hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix );
+//  }
 
   m_ij_mat = (HYPRE_IJMatrix) ijmatrix;
   close();
