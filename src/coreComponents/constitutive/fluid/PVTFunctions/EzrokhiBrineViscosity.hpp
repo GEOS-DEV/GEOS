@@ -35,11 +35,19 @@ class EzrokhiBrineViscosityUpdate final : public PVTFunctionBaseUpdate
 public:
 
   EzrokhiBrineViscosityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
+                               integer const CO2Index,
+                               integer const waterIndex,
                                real64 const coef0,
-                               real64 const coef1 )
+                               real64 const coef1,
+                               real64 const coef2,
+                               real64 const coef3 )
     : PVTFunctionBaseUpdate( componentMolarWeight ),
+    m_CO2Index( CO2Index ),
+    m_waterIndex ( waterIndex ),
     m_coef0( coef0 ),
-    m_coef1( coef1 )
+    m_coef1( coef1 ),
+    m_coef2( coef2 ),
+    m_coef3( coef3 )
   {}
 
   template< int USD1 >
@@ -71,9 +79,19 @@ public:
 
 protected:
 
+  /// Index of the CO2 phase
+  integer m_CO2Index;
+
+  /// Index of the water phase
+  integer m_waterIndex;
+
   real64 m_coef0;
 
   real64 m_coef1;
+
+  real64 m_coef2;
+
+  real64 m_coef3;
 
 };
 
@@ -111,9 +129,19 @@ private:
 
   void makeCoefficients( string_array const & inputPara );
 
+  /// Index of the CO2 phase
+  integer m_CO2Index;
+
+  /// Index of the water phase
+  integer m_waterIndex;
+
   real64 m_coef0;
 
   real64 m_coef1;
+
+  real64 m_coef2;
+
+  real64 m_coef3;
 
 };
 
@@ -125,8 +153,9 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
                                            real64 & value,
                                            bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( pressure, phaseComposition, useMass );
-  value = m_coef0 + m_coef1 * temperature;
+  GEOSX_UNUSED_VAR( pressure, useMass );
+  value = m_coef0 + (m_coef1  + m_coef2 * temperature + m_coef3 * temperature * temperature) * phaseComposition[m_CO2Index];
+  value = pow( 10, value );
 }
 
 template< int USD1, int USD2, int USD3, int USD4 >
@@ -143,18 +172,17 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
                                            arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
                                            bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( pressure,
-                    phaseComposition,
-                    dPhaseComposition_dPressure,
-                    dPhaseComposition_dTemperature,
-                    dPhaseComposition_dGlobalCompFraction,
-                    useMass );
+  GEOSX_UNUSED_VAR( pressure, useMass );
+  real64 const coefPhaseComposition = m_coef1 + temperature * ( m_coef2 + m_coef3 * temperature );
+  value = m_coef0 + coefPhaseComposition * phaseComposition[m_CO2Index];
+  value = pow( 10, value );
+  real64 const dValue_dPhaseComp = log( 10 ) * coefPhaseComposition * value;
+  dValue_dPressure = dValue_dPhaseComp * dPhaseComposition_dPressure[m_CO2Index];
+  dValue_dTemperature = log( 10 ) * ( ( m_coef2 + 2 * m_coef3 * temperature) * phaseComposition[m_CO2Index] +
+                                      coefPhaseComposition * dPhaseComposition_dTemperature[m_CO2Index] ) * value;
 
-  value = m_coef0 + m_coef1 * temperature;
-  compute( pressure, temperature, phaseComposition, value, useMass );
-  dValue_dPressure = 0.0;
-  dValue_dTemperature = m_coef1;
-  LvArray::forValuesInSlice( dValue_dGlobalCompFraction, []( real64 & val ){ val = 0.0; } );
+  dValue_dGlobalCompFraction[m_CO2Index] = dValue_dPhaseComp * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_CO2Index];
+  dValue_dGlobalCompFraction[m_waterIndex] = dValue_dPhaseComp * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_waterIndex];
 }
 
 } // end namespace PVTProps

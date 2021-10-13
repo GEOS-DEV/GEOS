@@ -18,6 +18,8 @@
 
 #include "constitutive/fluid/PVTFunctions/EzrokhiBrineViscosity.hpp"
 
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
+
 namespace geosx
 {
 
@@ -37,43 +39,50 @@ EzrokhiBrineViscosity::EzrokhiBrineViscosity( string const & name,
                    componentNames,
                    componentMolarWeight )
 {
+  string const expectedCO2ComponentNames[] = { "CO2", "co2" };
+  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
+
+  string const expectedWaterComponentNames[] = { "Water", "water" };
+  m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
+
   makeCoefficients( inputPara );
 }
 
 void EzrokhiBrineViscosity::makeCoefficients( string_array const & inputPara )
 {
-  // these coefficients come from Phillips et al. (1981), equation (1), pages 5-6
-  constexpr real64 a = 0.0816;
-  constexpr real64 b = 0.0122;
-  constexpr real64 c = 0.000128;
-  constexpr real64 d = 0.000629;
-  constexpr real64 k = -0.7;
+  // compute brine viscosity following Ezrokhi`s method (referenced in Eclipse TD, Aqueous phase properties)
+  // Reference : Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, Boca Raton, Florida, USA CRC Press (1993).
   constexpr real64 waterVisc = 8.9e-4; //at 25C
 
-  GEOSX_THROW_IF_LT_MSG( inputPara.size(), 3,
+  GEOSX_THROW_IF_LT_MSG( inputPara.size(), 5,
                          GEOSX_FMT( "{}: insufficient number of model parameters", m_functionName ),
                          InputError );
 
-  real64 m;
   try
   {
-    m = stod( inputPara[2] );
+    // assume CO2 is the only non-water component in the brine
+    m_coef1 = stod( inputPara[2] );
+    m_coef2 = stod( inputPara[3] );
+    m_coef3 = stod( inputPara[4] );
   }
   catch( std::invalid_argument const & e )
   {
     GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
   }
 
-  m_coef0 = (1.0 + a * m + b * m * m + c * m * m * m) * waterVisc;
-  m_coef1 =  d * (1.0 - exp( k * m )) * waterVisc;
+  m_coef0 = log10( waterVisc );
 }
 
 EzrokhiBrineViscosity::KernelWrapper
 EzrokhiBrineViscosity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
+                        m_CO2Index,
+                        m_waterIndex,
                         m_coef0,
-                        m_coef1 );
+                        m_coef1,
+                        m_coef2,
+                        m_coef3 );
 }
 
 REGISTER_CATALOG_ENTRY( PVTFunctionBase, EzrokhiBrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
