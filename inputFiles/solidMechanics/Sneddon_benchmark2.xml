@@ -4,7 +4,7 @@
 
   <Included>
     <File
-      name="./Sneddon.xml"/>
+      name="./Sneddon_base.xml"/>
   </Included>
 
   <Mesh>

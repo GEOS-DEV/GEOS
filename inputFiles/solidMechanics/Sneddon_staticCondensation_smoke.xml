@@ -4,7 +4,7 @@
 
   <Included>
     <File
-      name="./Sneddon_staticCondensation.xml"/>
+      name="./Sneddon_staticCondensation_base.xml"/>
   </Included>
 
   <Mesh>
