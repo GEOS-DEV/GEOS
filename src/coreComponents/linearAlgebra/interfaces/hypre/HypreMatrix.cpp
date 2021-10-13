@@ -772,45 +772,23 @@ void HypreMatrix::parCSRtoIJ( HYPRE_ParCSRMatrix const & parCSRMatrix )
   hypre_IJMatrixGlobalNumRows( ijmatrix ) = hypre_ParCSRMatrixGlobalNumRows( parCSRMatrix );
   hypre_IJMatrixGlobalNumCols( ijmatrix ) = hypre_ParCSRMatrixGlobalNumCols( parCSRMatrix );
 
-//  // Set row partitioning
-//  if( hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix ) )
-//  {
-//    hypre_IJMatrixRowPartitioning( ijmatrix ) = hypre_ParCSRMatrixRowStarts( parCSRMatrix );
-//  }
-//  else
-//  {
-//    HYPRE_BigInt * const row_partitioning = hypre_CTAlloc( HYPRE_BigInt, 2, HYPRE_MEMORY_HOST );
-//    row_partitioning[0] = hypre_ParCSRMatrixFirstRowIndex( parCSRMatrix );
-//    row_partitioning[1] = hypre_ParCSRMatrixLastRowIndex( parCSRMatrix ) + 1;
-//    hypre_IJMatrixRowPartitioning( ijmatrix ) = row_partitioning;
-//    hypre_ParCSRMatrixRowStarts( parCSRMatrix ) = row_partitioning;
-//  }
-//  hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix ) = 0;
+  // Set row partitioning
+  hypre_IJMatrixRowPartitioning( ijmatrix )[0] = hypre_ParCSRMatrixRowStarts( parCSRMatrix )[0];
+  hypre_IJMatrixRowPartitioning( ijmatrix )[1] = hypre_ParCSRMatrixRowStarts( parCSRMatrix )[1];
 
-//  if( hypre_IJMatrixGlobalNumRows( ijmatrix ) != hypre_IJMatrixGlobalNumCols( ijmatrix ) )
-//  {
-//    // Rectangular matrix
-//    // Set column partitioning
-//    if( hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) )
-//    {
-//      hypre_IJMatrixColPartitioning( ijmatrix ) = hypre_ParCSRMatrixColStarts( parCSRMatrix );
-//    }
-//    else
-//    {
-//      HYPRE_BigInt * const col_partitioning = hypre_CTAlloc( HYPRE_BigInt, 2, HYPRE_MEMORY_HOST );
-//      col_partitioning[0] = hypre_ParCSRMatrixFirstColDiag( parCSRMatrix );
-//      col_partitioning[1] = hypre_ParCSRMatrixLastColDiag( parCSRMatrix ) + 1;
-//      hypre_IJMatrixColPartitioning( ijmatrix ) = col_partitioning;
-//      hypre_ParCSRMatrixColStarts( parCSRMatrix ) = col_partitioning;
-//    }
-//    hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) = 0;
-//  }
-//  else
-//  {
-//    // Square matrix
-//    hypre_IJMatrixColPartitioning( ijmatrix ) = hypre_IJMatrixRowPartitioning( ijmatrix );
-//    hypre_ParCSRMatrixOwnsColStarts( parCSRMatrix ) = hypre_ParCSRMatrixOwnsRowStarts( parCSRMatrix );
-//  }
+  // Set column partitioning
+  if( hypre_IJMatrixGlobalNumRows( ijmatrix ) != hypre_IJMatrixGlobalNumCols( ijmatrix ) )
+  {
+    // Rectangular matrix
+    hypre_IJMatrixColPartitioning( ijmatrix )[0] = hypre_ParCSRMatrixColStarts( parCSRMatrix )[0];
+    hypre_IJMatrixColPartitioning( ijmatrix )[1] = hypre_ParCSRMatrixColStarts( parCSRMatrix )[1];
+  }
+  else
+  {
+    // Square matrix
+    hypre_IJMatrixColPartitioning( ijmatrix )[0] = hypre_IJMatrixRowPartitioning( ijmatrix )[0];
+    hypre_IJMatrixColPartitioning( ijmatrix )[1] = hypre_IJMatrixRowPartitioning( ijmatrix )[1];
+  }
 
   m_ij_mat = (HYPRE_IJMatrix) ijmatrix;
   close();
