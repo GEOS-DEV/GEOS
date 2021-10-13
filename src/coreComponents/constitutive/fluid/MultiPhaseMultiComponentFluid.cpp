@@ -45,7 +45,7 @@ public:
   static string name() { return "CO2BrineFluid"; }
 };
 template<> class
-  TwoPhaseCatalogNames< PVTProps::PhillipsBrineDensity,
+  TwoPhaseCatalogNames< PVTProps::EzrokhiBrineDensity,
                         PVTProps::EzrokhiBrineViscosity,
                         PVTProps::SpanWagnerCO2Density,
                         PVTProps::FenghourCO2Viscosity,
@@ -266,7 +266,7 @@ template class MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
                                               PVTProps::FenghourCO2Viscosity,
                                               PVTProps::CO2Solubility >;
 
-template class MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
+template class MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
                                               PVTProps::EzrokhiBrineViscosity,
                                               PVTProps::SpanWagnerCO2Density,
                                               PVTProps::FenghourCO2Viscosity,

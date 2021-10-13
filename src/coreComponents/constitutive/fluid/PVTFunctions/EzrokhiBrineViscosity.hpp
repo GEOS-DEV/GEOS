@@ -154,8 +154,12 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
                                            bool useMass ) const
 {
   GEOSX_UNUSED_VAR( pressure, useMass );
-  value = m_coef0 + (m_coef1  + m_coef2 * temperature + m_coef3 * temperature * temperature) * phaseComposition[m_CO2Index];
+  value = m_coef0 + (m_coef1  + temperature * ( m_coef2 + m_coef3 * temperature ) ) * phaseComposition[m_CO2Index];
   value = pow( 10, value );
+  if( !useMass )
+  {
+    value /= m_componentMolarWeight[m_waterIndex];
+  }
 }
 
 template< int USD1, int USD2, int USD3, int USD4 >
@@ -176,10 +180,14 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
   real64 const coefPhaseComposition = m_coef1 + temperature * ( m_coef2 + m_coef3 * temperature );
   value = m_coef0 + coefPhaseComposition * phaseComposition[m_CO2Index];
   value = pow( 10, value );
-  real64 const dValue_dPhaseComp = log( 10 ) * coefPhaseComposition * value;
+  if( !useMass )
+  {
+    value /= m_componentMolarWeight[m_waterIndex];
+  }
+  real64 const dValue_dPhaseComp = log( 10 ) * value * coefPhaseComposition;
   dValue_dPressure = dValue_dPhaseComp * dPhaseComposition_dPressure[m_CO2Index];
-  dValue_dTemperature = log( 10 ) * ( ( m_coef2 + 2 * m_coef3 * temperature) * phaseComposition[m_CO2Index] +
-                                      coefPhaseComposition * dPhaseComposition_dTemperature[m_CO2Index] ) * value;
+  dValue_dTemperature = dValue_dPhaseComp * dPhaseComposition_dTemperature[m_CO2Index] +
+                        log( 10 ) * value * ( m_coef2 + 2 * m_coef3 * temperature) * phaseComposition[m_CO2Index];
 
   dValue_dGlobalCompFraction[m_CO2Index] = dValue_dPhaseComp * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_CO2Index];
   dValue_dGlobalCompFraction[m_waterIndex] = dValue_dPhaseComp * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_waterIndex];

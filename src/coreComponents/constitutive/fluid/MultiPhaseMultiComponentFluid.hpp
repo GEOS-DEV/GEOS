@@ -23,6 +23,7 @@
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
 #include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
+#include "constitutive/fluid/PVTFunctions/EzrokhiBrineDensity.hpp"
 #include "constitutive/fluid/PVTFunctions/EzrokhiBrineViscosity.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
 #include "constitutive/fluid/PVTFunctions/FenghourCO2Viscosity.hpp"
@@ -188,7 +189,7 @@ using CO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDens
                                                      PVTProps::FenghourCO2Viscosity,
                                                      PVTProps::CO2Solubility >;
 
-using EzrokhiCO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
+using EzrokhiCO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
                                                             PVTProps::EzrokhiBrineViscosity,
                                                             PVTProps::SpanWagnerCO2Density,
                                                             PVTProps::FenghourCO2Viscosity,
