@@ -206,11 +206,6 @@ void separateComponentFilter( MATRIX const & src,
   array1d< localIndex > numCols( localRows );
 
 
-  array1d< globalIndex > cols;
-  array1d< real64 > values;
-
-
-
   for( globalIndex r = 0; r < localRows; ++r )
   {
     globalIndex row;
@@ -222,14 +217,8 @@ void separateComponentFilter( MATRIX const & src,
 
     srcIndices.resize( rowLength );
     srcValues.resize( rowLength );
-    cols.resize( rowLength );
-    values.resize( rowLength );
-    localIndex count = 0;
-
 
     src.getRowCopy( row, srcIndices, srcValues );
-
-
 
     for( localIndex c = 0; c < rowLength; ++c )
     {
@@ -237,13 +226,10 @@ void separateComponentFilter( MATRIX const & src,
       globalIndex const colComponent = col % dofsPerNode;
       if( rowComponent == colComponent )
       {
-        cols[count] = col;
-        values[count] = srcValues( c );
-        ++count;
+        tempMat.insertNonZero( r, col, srcValues( c ) );
       }
     }
 
-    tempMat.insertNonZeros( r, cols.data(), values.data(), count );
   }
 
   dst.create( tempMat.toViewConst(), MPI_COMM_GEOSX );

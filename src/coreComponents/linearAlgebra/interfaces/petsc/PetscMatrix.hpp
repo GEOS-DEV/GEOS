@@ -263,7 +263,7 @@ public:
   virtual void transpose( PetscMatrix & dst ) const override;
 
   virtual void separateComponentFilter( PetscMatrix & dst,
-                                        localIndex const dofPerPoint ) override
+                                        localIndex const dofPerPoint ) const override
   {
     GEOSX_UNUSED_VAR( dst, dofPerPoint );
     GEOSX_ERROR( "PetscMatrix::separateComponentFilter() not implemented." );

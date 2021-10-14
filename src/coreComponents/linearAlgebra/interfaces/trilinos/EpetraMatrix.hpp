@@ -246,7 +246,7 @@ public:
   virtual void transpose( EpetraMatrix & dst ) const override;
 
   virtual void separateComponentFilter( EpetraMatrix & dst,
-                                        localIndex const dofPerPoint ) override
+                                        localIndex const dofPerPoint ) const override
   {
     GEOSX_UNUSED_VAR( dst, dofPerPoint );
     GEOSX_ERROR( "EpetraMatrix::separateComponentFilter() not implemented." );

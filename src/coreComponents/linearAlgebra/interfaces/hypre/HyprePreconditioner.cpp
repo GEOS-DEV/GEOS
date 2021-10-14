@@ -427,26 +427,19 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
       Stopwatch timer( m_makeRestrictorTime );
       mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
     }
-//    std::cout << "Pu Matrix" << std::endl;
-    Pu.print( std::cout );
     {
       Stopwatch timer( m_computeAuuTime );
       mat.multiplyPtAP( Pu, Auu );
     }
-//    std::cout << "Auu Matrix" << std::endl;
-    Auu.print( std::cout );
     {
       Stopwatch timer( m_componentFilterTime );
-//      LAIHelperFunctions::separateComponentFilter( Auu, m_precondMatrix, m_params.dofsPerNode );
       Auu.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
     }
-//    std::cout << "SDC Matrix" << std::endl;
-    m_precondMatrix.print( std::cout );
   }
   else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg && m_params.amg.separateComponents )
   {
     Stopwatch timer( m_componentFilterTime );
-    LAIHelperFunctions::separateComponentFilter( mat, m_precondMatrix, m_params.dofsPerNode );
+    mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
     return m_precondMatrix;
   }
   return mat;

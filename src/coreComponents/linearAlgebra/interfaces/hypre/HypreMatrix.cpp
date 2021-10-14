@@ -879,7 +879,7 @@ void HypreMatrix::leftScale( HypreVector const & vec )
 }
 
 void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
-                                           localIndex const dofsPerNode )
+                                           localIndex const dofsPerNode ) const
 {
 //  GEOSX_MARK_FUNCTION;
   const localIndex numLocRows  = numLocalRows();

@@ -653,7 +653,7 @@ protected:
    * @param dofPerPoint number of degrees-of-freedom per node
    */
   virtual void separateComponentFilter( MATRIX & dst,
-                                        localIndex const dofPerPoint ) = 0;
+                                        localIndex const dofPerPoint ) const = 0;
 
 
 
