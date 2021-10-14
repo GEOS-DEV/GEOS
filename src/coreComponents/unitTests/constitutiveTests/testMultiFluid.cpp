@@ -234,7 +234,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 
       // Note: in PVTPackage, derivatives are obtained with finite-difference approx **with normalization of the comp fraction**
       //       The component fraction is perturbed (just as above), and then all the component fractions are normalized (as below)
-      //       But, in the native DO model and in CO2Brine, derivatives are computed analytically, which results in different
+      //       But, in the native DO model and in PhillipsCO2Brine, derivatives are computed analytically, which results in different
       //       derivatives wrt component fractions--although the derivatives wrt component densities obtained with the chain rule
       //       in the solver will be very similar (see discussion on PR #1325 on GitHub).
       //
