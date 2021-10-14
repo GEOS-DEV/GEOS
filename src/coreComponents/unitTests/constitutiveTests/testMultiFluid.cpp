@@ -83,8 +83,12 @@ static const char * pvdwTableContent = "# Pref[bar] Bw[m3/sm3] Cp[1/bar]     Vis
 
 // CO2-brine model
 
-static const char * pvtLiquidTableContent = "DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 367.15 369.15 1 0.2\n"
-                                            "ViscosityFun PhillipsBrineViscosity 0.1";
+static const char * pvtLiquidPhillipsTableContent = "DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 367.15 369.15 1 0.2\n"
+                                                    "ViscosityFun PhillipsBrineViscosity 0.1";
+
+// the last are set relatively high (1e-4) to increase derivative value and check it properly
+static const char * pvtLiquidEzrokhiTableContent = "DensityFun EzrokhiBrineDensity 2.01e-6 -6.34e-7 1e-4\n"
+                                                   "ViscosityFun EzrokhiBrineViscosity 2.42e-7 0 1e-4";
 
 static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 367.15 369.15 1\n"
                                          "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 367.15 369.15 1";
@@ -815,7 +819,7 @@ TEST_F( DeadOilFluidFromTableTest, numericalDerivativesMolar )
   }
 }
 
-MultiFluidBase & makeMultiPhaseMultiComponentFluid( string const & name, Group * parent )
+MultiFluidBase & makePhillipsCO2BrineFluid( string const & name, Group * parent )
 {
   PhillipsCO2BrineFluid & fluid = parent->registerGroup< PhillipsCO2BrineFluid >( name );
 
@@ -842,24 +846,24 @@ MultiFluidBase & makeMultiPhaseMultiComponentFluid( string const & name, Group *
   return fluid;
 }
 
-class MultiPhaseMultiComponentFluidTest : public CompositionalFluidTestBase
+class PhillipsCO2BrineFluidTest : public CompositionalFluidTestBase
 {
 protected:
 
-  MultiPhaseMultiComponentFluidTest()
+  PhillipsCO2BrineFluidTest()
   {
-    writeTableToFile( "pvtliquid.txt", pvtLiquidTableContent );
+    writeTableToFile( "pvtliquid.txt", pvtLiquidPhillipsTableContent );
     writeTableToFile( "pvtgas.txt", pvtGasTableContent );
     writeTableToFile( "co2flash.txt", co2FlashTableContent );
 
     parent.resize( 1 );
-    fluid = &makeMultiPhaseMultiComponentFluid( "fluid", &parent );
+    fluid = &makePhillipsCO2BrineFluid( "fluid", &parent );
 
     parent.initialize();
     parent.initializePostInitialConditions();
   }
 
-  ~MultiPhaseMultiComponentFluidTest()
+  ~PhillipsCO2BrineFluidTest()
   {
     removeFile( "pvtliquid.txt" );
     removeFile( "pvtgas.txt" );
@@ -869,7 +873,7 @@ protected:
 };
 
 
-TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMolar )
+TEST_F( PhillipsCO2BrineFluidTest, checkAgainstPreviousImplementationMolar )
 {
   fluid->setMassFlag( false );
 
@@ -934,7 +938,7 @@ TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMol
   }
 }
 
-TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMass )
+TEST_F( PhillipsCO2BrineFluidTest, checkAgainstPreviousImplementationMass )
 {
   fluid->setMassFlag( true );
 
@@ -999,7 +1003,7 @@ TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMas
   }
 }
 
-TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMolar )
+TEST_F( PhillipsCO2BrineFluidTest, numericalDerivativesMolar )
 {
   fluid->setMassFlag( false );
 
@@ -1021,7 +1025,104 @@ TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMolar )
   }
 }
 
-TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMass )
+TEST_F( PhillipsCO2BrineFluidTest, numericalDerivativesMass )
+{
+  fluid->setMassFlag( true );
+
+  // TODO test over a range of values
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-8;
+
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
+    }
+  }
+}
+
+MultiFluidBase & makeEzrokhiCO2BrineFluid( string const & name, Group * parent )
+{
+  EzrokhiCO2BrineFluid & fluid = parent->registerGroup< EzrokhiCO2BrineFluid >( name );
+
+  auto & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
+  compNames.resize( 2 );
+  compNames[0] = "co2"; compNames[1] = "water";
+
+  auto & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
+  molarWgt.resize( 2 );
+  molarWgt[0] = 44e-3; molarWgt[1] = 18e-3;
+
+  auto & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
+  phaseNames.resize( 2 );
+  phaseNames[0] = "gas"; phaseNames[1] = "liquid";
+
+  auto & phasePVTParaFileNames = fluid.getReference< path_array >( EzrokhiCO2BrineFluid::viewKeyStruct::phasePVTParaFilesString() );
+  phasePVTParaFileNames.resize( 2 );
+  phasePVTParaFileNames[0] = "pvtgas.txt"; phasePVTParaFileNames[1] = "pvtliquid.txt";
+
+  auto & flashModelParaFileName = fluid.getReference< Path >( EzrokhiCO2BrineFluid::viewKeyStruct::flashModelParaFileString() );
+  flashModelParaFileName = "co2flash.txt";
+
+  fluid.postProcessInputRecursive();
+  return fluid;
+}
+
+class EzrokhiCO2BrineFluidTest : public CompositionalFluidTestBase
+{
+protected:
+
+  EzrokhiCO2BrineFluidTest()
+  {
+    writeTableToFile( "pvtliquid.txt", pvtLiquidEzrokhiTableContent );
+    writeTableToFile( "pvtgas.txt", pvtGasTableContent );
+    writeTableToFile( "co2flash.txt", co2FlashTableContent );
+
+    parent.resize( 1 );
+    fluid = &makeEzrokhiCO2BrineFluid( "fluid", &parent );
+
+    parent.initialize();
+    parent.initializePostInitialConditions();
+  }
+
+  ~EzrokhiCO2BrineFluidTest()
+  {
+    removeFile( "pvtliquid.txt" );
+    removeFile( "pvtgas.txt" );
+    removeFile( "co2flash.txt" );
+  }
+
+};
+
+TEST_F( EzrokhiCO2BrineFluidTest, numericalDerivativesMolar )
+{
+  fluid->setMassFlag( false );
+
+  // TODO test over a range of values
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-4;
+
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
+    }
+  }
+}
+
+TEST_F( EzrokhiCO2BrineFluidTest, numericalDerivativesMass )
 {
   fluid->setMassFlag( true );
 
