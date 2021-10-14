@@ -316,6 +316,13 @@ Element: ExtendedDruckerPrager
 .. include:: ../../coreComponents/schema/docs/ExtendedDruckerPrager.rst
 
 
+.. _XML_EzrokhiCO2BrineFluid:
+
+Element: EzrokhiCO2BrineFluid
+=============================
+.. include:: ../../coreComponents/schema/docs/EzrokhiCO2BrineFluid.rst
+
+
 .. _XML_FieldSpecification:
 
 Element: FieldSpecification
@@ -1235,6 +1242,13 @@ Datastructure: Events
 Datastructure: ExtendedDruckerPrager
 ====================================
 .. include:: ../../coreComponents/schema/docs/ExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_EzrokhiCO2BrineFluid:
+
+Datastructure: EzrokhiCO2BrineFluid
+===================================
+.. include:: ../../coreComponents/schema/docs/EzrokhiCO2BrineFluid_other.rst
 
 
 .. _DATASTRUCTURE_FaceManager:

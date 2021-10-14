@@ -29,6 +29,7 @@ ElasticIsotropicPressureDependent           node         :ref:`XML_ElasticIsotro
 ElasticOrthotropic                          node         :ref:`XML_ElasticOrthotropic`                          
 ElasticTransverseIsotropic                  node         :ref:`XML_ElasticTransverseIsotropic`                  
 ExtendedDruckerPrager                       node         :ref:`XML_ExtendedDruckerPrager`                       
+EzrokhiCO2BrineFluid                        node         :ref:`XML_EzrokhiCO2BrineFluid`                        
 ModifiedCamClay                             node         :ref:`XML_ModifiedCamClay`                             
 NullModel                                   node         :ref:`XML_NullModel`                                   
 ParallelPlatesPermeability                  node         :ref:`XML_ParallelPlatesPermeability`                  
