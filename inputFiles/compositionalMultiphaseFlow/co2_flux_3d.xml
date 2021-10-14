@@ -247,7 +247,7 @@
       name="aquiferBC1"
       aquiferPorosity="1e-1"
       aquiferPermeability="1e-13"
-      aquiferInitialPressure="1e7"
+      aquiferInitialPressure="8e6"
       aquiferWaterViscosity="1e-3"
       aquiferWaterDensity="1000"
       aquiferWaterPhaseComponentFraction="{ 0.0, 1.0 }"
@@ -256,15 +256,14 @@
       aquiferElevation="20"
       aquiferThickness="10"
       aquiferInnerRadius="10"
-      aquiferAngle="0.1"
-      setNames="{ aquifer1Part1, aquifer1Part2 }"
-      pressureInfluenceFunctionName="pressureInfluenceFunction"/>
+      aquiferAngle="20"
+      setNames="{ aquifer1Part1, aquifer1Part2 }"/>
 
     <Aquifer
       name="aquiferBC2"
       aquiferPorosity="1e-1"
       aquiferPermeability="1e-13"
-      aquiferInitialPressure="1e7"
+      aquiferInitialPressure="8e6"
       aquiferWaterViscosity="1e-3"
       aquiferWaterDensity="1000"
       aquiferWaterPhaseComponentFraction="{ 0.0, 1.0 }"
@@ -273,9 +272,8 @@
       aquiferElevation="20"
       aquiferThickness="10"
       aquiferInnerRadius="10"
-      aquiferAngle="0.1"
-      setNames="{ aquifer2Part1, aquifer2Part2 }"
-      pressureInfluenceFunctionName="pressureInfluenceFunction"/>
+      aquiferAngle="20"
+      setNames="{ aquifer2Part1, aquifer2Part2 }"/>
     
   </FieldSpecifications>
 
