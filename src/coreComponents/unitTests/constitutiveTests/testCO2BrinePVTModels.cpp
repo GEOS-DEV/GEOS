@@ -18,6 +18,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
+#include "constitutive/fluid/PVTFunctions/EzrokhiBrineViscosity.hpp"
 #include "constitutive/fluid/PVTFunctions/FenghourCO2Viscosity.hpp"
 #include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
@@ -37,8 +38,12 @@ using namespace geosx::constitutive::PVTProps;
 
 /// Input tables written into temporary files during testing
 
-static const char * pvtLiquidTableContent = "DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 367.15 369.15 1 0.2\n"
-                                            "ViscosityFun PhillipsBrineViscosity 0.1";
+static const char * pvtLiquidPhillipsTableContent = "DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 367.15 369.15 1 0.2\n"
+                                                    "ViscosityFun PhillipsBrineViscosity 0.1";
+
+// the last are set relatively high (1e-4) to increase derivative value and check it properly
+static const char * pvtLiquidEzrokhiTableContent = "DensityFun EzrokhiBrineDensity 2.01e-6 -6.34e-7 1e-4\n"
+                                                   "ViscosityFun EzrokhiBrineViscosity 2.42e-7 0 1e-4";
 
 static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 367.15 369.15 1\n"
                                          "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 367.15 369.15 1";
@@ -424,7 +429,7 @@ class PhillipsBrineViscosityTest : public ::testing::Test
 public:
   PhillipsBrineViscosityTest()
   {
-    writeTableToFile( filename, pvtLiquidTableContent );
+    writeTableToFile( filename, pvtLiquidPhillipsTableContent );
     pvtFunction = makePVTFunction< PhillipsBrineViscosity >( filename, key );
   }
 
@@ -468,6 +473,55 @@ TEST_F( PhillipsBrineViscosityTest, brineViscosityValuesAndDeriv )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+        counter++;
+      }
+    }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
+  }
+}
+
+class EzrokhiBrineViscosityTest : public ::testing::Test
+{
+public:
+  EzrokhiBrineViscosityTest()
+  {
+    writeTableToFile( filename, pvtLiquidEzrokhiTableContent );
+    pvtFunction = makePVTFunction< EzrokhiBrineViscosity >( filename, key );
+  }
+
+  ~EzrokhiBrineViscosityTest() override
+  {
+    removeFile( filename );
+  }
+
+protected:
+  string const key = "ViscosityFun";
+  string const filename = "pvtliquid.txt";
+  std::unique_ptr< EzrokhiBrineViscosity > pvtFunction;
+};
+
+TEST_F( EzrokhiBrineViscosityTest, brineViscosityValuesAndDeriv )
+{
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const TC[3] = { 94.5, 95, 95.6 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 5e-5;
+
+  EzrokhiBrineViscosity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
+
+  localIndex counter = 0;
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  {
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    {
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
         counter++;
       }
@@ -541,7 +595,7 @@ class PhillipsBrineDensityTest : public ::testing::Test
 public:
   PhillipsBrineDensityTest()
   {
-    writeTableToFile( filename, pvtLiquidTableContent );
+    writeTableToFile( filename, pvtLiquidPhillipsTableContent );
     pvtFunction = makePVTFunction< PhillipsBrineDensity >( filename, key );
   }
 
@@ -618,6 +672,88 @@ TEST_F( PhillipsBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
       {
         //testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
         //                                         P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
+        counter++;
+      }
+    }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
+  }
+}
+
+class EzrokhiBrineDensityTest : public ::testing::Test
+{
+public:
+  EzrokhiBrineDensityTest()
+  {
+    writeTableToFile( filename, pvtLiquidEzrokhiTableContent );
+    pvtFunction = makePVTFunction< EzrokhiBrineDensity >( filename, key );
+  }
+
+  ~EzrokhiBrineDensityTest() override
+  {
+    removeFile( filename );
+  }
+
+protected:
+  string const key = "DensityFun";
+  string const filename = "pvtliquid.txt";
+  std::unique_ptr< EzrokhiBrineDensity > pvtFunction;
+};
+
+TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMassValuesAndDeriv )
+{
+  // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
+  // (see the txt file defined at the top of the file for the definition of the coordinates)
+  real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
+  real64 const TC[3] = { 94.5, 95.1, 95.6 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 5e-5;
+
+  EzrokhiBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
+
+  localIndex counter = 0;
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  {
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    {
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+        counter++;
+      }
+    }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
+  }
+}
+
+TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
+{
+  // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
+  // (see the txt file defined at the top of the file for the definition of the coordinates)
+  real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
+  real64 const TC[3] = { 94.5, 95.1, 95.6 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 5e-5;
+
+  EzrokhiBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
+
+  localIndex counter = 0;
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  {
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    {
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
         counter++;
       }
