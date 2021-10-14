@@ -9,6 +9,8 @@ Validation and Verification Studies
 
    sneddon/Example
 
+   kgdToughnessDominated/Example  
+
    kirschWellbore/Example	      
 
    edpWellbore/Example

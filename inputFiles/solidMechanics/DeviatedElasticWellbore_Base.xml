@@ -11,11 +11,11 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       logLevel="0"
-      targetRegions="{ casing, cement, rock }"
-      solidMaterialNames="{ casing, cement, rock }">
+      targetRegions="{ Omega }"
+      solidMaterialNames="{ shale }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
-        newtonTol="1.0e-9"
+        newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
         solverType="gmres"
@@ -24,26 +24,6 @@
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
-  <!-- SPHINX_WellboreMesh -->
-  <Mesh>
-    <InternalWellbore
-      name="mesh1"
-      elementTypes="{ C3D8, C3D8, C3D8 }"
-      radius="{ 0.1, 0.106, 0.133, 2.0 }"
-      theta="{ 0, 360 }"
-      zCoords="{ 0, 1 }"
-      nr="{ 10, 20, 10 }"
-      nt="{ 320 }"
-      nz="{ 1 }"
-      trajectory="{ { 0.0, 0.0, 0.0 },
-                    { 0.0, 0.0, 1.0 } }"
-      autoSpaceRadialElems="{ 0, 0, 1 }"
-      useCartesianOuterBoundary="2"
-      cellBlockNames="{ casing, cement, rock }"
-      />
-  </Mesh>
-  <!-- SPHINX_WellboreMeshEnd -->
-
   <Events
     maxTime="1.0">
     <!-- This event is applied every cycle, and overrides the
@@ -51,7 +31,7 @@
     <!-- SPHINX_Execution -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.1"
+      forceDt="1.0"
       target="/Solvers/lagsolve"/>
 
     <!-- SPHINX_ExecutionEnd -->
@@ -64,11 +44,11 @@
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
-    <PeriodicEvent
+    <!--PeriodicEvent
       name="restarts"
-      timeFrequency="2"
+      timeFrequency="1e99"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/-->
   </Events>
 
   <!-- SPHINX_FEDiscretization -->
@@ -83,38 +63,16 @@
   <!-- SPHINX_FEDiscretizationEnd -->
   <ElementRegions>
     <CellElementRegion
-      name="casing"
-      cellBlocks="{ casing }"
-      materialList="{ casing }"/>
-      
-    <CellElementRegion
-      name="cement"
-      cellBlocks="{ cement }"
-      materialList="{ cement }"/>
+      name="Omega"
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
 
-    <CellElementRegion
-      name="rock"
-      cellBlocks="{ rock }"
-      materialList="{ rock }"/>
-      
   </ElementRegions>
 
   <Constitutive>
     <!-- SPHINX_Material -->
     <ElasticIsotropic
-      name="casing"
-      defaultDensity="2700"
-      defaultBulkModulus="175e9"
-      defaultShearModulus="80.8e9"/>
-
-    <ElasticIsotropic
-      name="cement"
-      defaultDensity="2700"
-      defaultBulkModulus="10.3e9"
-      defaultShearModulus="6.45e9"/>
-
-    <ElasticIsotropic
-      name="rock"
+      name="shale"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
@@ -131,7 +89,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ xneg, xpos }"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
       name="yConstraint"
@@ -139,7 +97,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ yneg, ypos }"/>
+      setNames="{ tneg, tpos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -147,13 +105,13 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ zneg, zpos }"/>
+      setNames="{ zneg }"/>
 
     <Traction
       name="innerPressure"
       objectPath="faceManager"
       tractionType="normal"
-      scale="-10.0e6"
+      scale="-10.e6"
       setNames="{ rneg }"/>
   </FieldSpecifications>
 
@@ -175,7 +133,7 @@
       plotFileRoot="plot"
       childDirectory="sub"/>
 
-    <Restart
-      name="restartOutput"/>
+    <!--Restart
+      name="restartOutput"/-->
   </Outputs>
 </Problem>
