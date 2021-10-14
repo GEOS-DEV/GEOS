@@ -1443,13 +1443,13 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & GEOSX_UNU
     if( !m_isothermalFlag )
     {
       arrayView1d< real64 const > const dTemp =
-	subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaTemperatureString() );
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaTemperatureString() );
       arrayView1d< real64 > const temp =
-	subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
-	temp[ei] += dTemp[ei];
+        temp[ei] += dTemp[ei];
       } );
     }
 
