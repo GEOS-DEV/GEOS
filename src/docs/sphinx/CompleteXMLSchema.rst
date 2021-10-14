@@ -78,13 +78,6 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
-.. _XML_CO2BrineFluid:
-
-Element: CO2BrineFluid
-======================
-.. include:: ../../coreComponents/schema/docs/CO2BrineFluid.rst
-
-
 .. _XML_CarmanKozenyPermeability:
 
 Element: CarmanKozenyPermeability
@@ -589,6 +582,13 @@ Element: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
 
 
+.. _XML_PhillipsCO2BrineFluid:
+
+Element: PhillipsCO2BrineFluid
+==============================
+.. include:: ../../coreComponents/schema/docs/PhillipsCO2BrineFluid.rst
+
+
 .. _XML_PorousDruckerPrager:
 
 Element: PorousDruckerPrager
@@ -997,13 +997,6 @@ Datastructure: BrooksCoreyCapillaryPressure
 Datastructure: BrooksCoreyRelativePermeability
 ==============================================
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability_other.rst
-
-
-.. _DATASTRUCTURE_CO2BrineFluid:
-
-Datastructure: CO2BrineFluid
-============================
-.. include:: ../../coreComponents/schema/docs/CO2BrineFluid_other.rst
 
 
 .. _DATASTRUCTURE_CarmanKozenyPermeability:
@@ -1536,6 +1529,13 @@ Datastructure: PhaseFieldDamageFEM
 Datastructure: PhaseFieldFracture
 =================================
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
+
+
+.. _DATASTRUCTURE_PhillipsCO2BrineFluid:
+
+Datastructure: PhillipsCO2BrineFluid
+====================================
+.. include:: ../../coreComponents/schema/docs/PhillipsCO2BrineFluid_other.rst
 
 
 .. _DATASTRUCTURE_PorousDruckerPrager:

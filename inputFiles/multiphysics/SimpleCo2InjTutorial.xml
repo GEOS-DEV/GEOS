@@ -151,12 +151,12 @@
 
   <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   <Constitutive>
-    <CO2BrineFluid
+    <PhillipsCO2BrineFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvt_tables/pvtgas.txt, pvt_tables/pvtliquid.txt }"
+      phasePVTParaFiles="{ pvt_tables/pvtgas.txt, pvt_tables/pvtliquidphillips.txt }"
       flashModelParaFile="pvt_tables/co2flash.txt"/>
 
     <CompressibleSolidConstantPermeability
@@ -297,4 +297,3 @@
   </Functions>
   
 </Problem>
-

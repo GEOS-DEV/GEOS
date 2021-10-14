@@ -183,11 +183,11 @@ private:
 };
 
 // this alias will be useful in constitutive dispatch
-using CO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
-                                                     PVTProps::PhillipsBrineViscosity,
-                                                     PVTProps::SpanWagnerCO2Density,
-                                                     PVTProps::FenghourCO2Viscosity,
-                                                     PVTProps::CO2Solubility >;
+using PhillipsCO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
+                                                             PVTProps::PhillipsBrineViscosity,
+                                                             PVTProps::SpanWagnerCO2Density,
+                                                             PVTProps::FenghourCO2Viscosity,
+                                                             PVTProps::CO2Solubility >;
 
 using EzrokhiCO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
                                                             PVTProps::EzrokhiBrineViscosity,

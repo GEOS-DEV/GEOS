@@ -85,12 +85,12 @@
   </ElementRegions>
 
   <Constitutive>
-    <CO2BrineFluid
+    <PhillipsCO2BrineFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
+      phasePVTParaFiles="{ pvtgas.txt, pvtliquidphillips.txt }"
       flashModelParaFile="co2flash.txt"/>
 
     <CompressibleSolidConstantPermeability

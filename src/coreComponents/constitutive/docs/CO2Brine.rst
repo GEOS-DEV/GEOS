@@ -190,11 +190,11 @@ where :math:`m` is the user-defined salinity (in moles of NaCl per kg of brine).
 Parameters
 =========================
 
-The model is represented by ``<CO2BrineFluid>`` node in the input.
+The model is represented by ``<PhillipsCO2BrineFluid>`` node in the input.
 
 The following attributes are supported:
 
-.. include:: ../../../coreComponents/schema/docs/CO2BrineFluid.rst
+.. include:: ../../../coreComponents/schema/docs/PhillipsCO2BrineFluid.rst
 
 Supported phase names are:
 
@@ -220,7 +220,7 @@ Example
 .. code-block:: xml
 
     <Constitutive>
-        <CO2BrineFluid
+        <PhillipsCO2BrineFluid
           name="fluid"
           phaseNames="{ gas, water }"
           componentNames="{ co2, water }"
