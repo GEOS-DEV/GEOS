@@ -268,6 +268,11 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
         }
       }
 
+      // Apply equation/variable change transformation(s)
+      stackArray1d< real64, 2 * MAX_NUM_DOF > work( 2 * resNumDofs );
+      applyBlockLinearCombination( numComps, resNumDofs, 2, 2, localPerfJacobian, work );
+      applyBlockLinearCombination( numComps, 2, localPerf );
+
       for( localIndex i = 0; i < localPerf.size(); ++i )
       {
         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < localMatrix.numRows() )

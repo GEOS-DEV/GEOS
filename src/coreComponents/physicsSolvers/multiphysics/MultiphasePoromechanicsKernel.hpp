@@ -465,8 +465,13 @@ public:
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     //int nFlowDof = m_numComponents + 1;
-
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
+
+    // Apply equation/variable change transformation(s)
+    real64 work[nUDof > ( numMaxComponents + 1 ) ? nUDof : numMaxComponents + 1];
+    applyBlockLinearCombination( m_numComponents, nUDof, 1, 1, stack.localFlowDispJacobian, work );
+    applyBlockLinearCombination( m_numComponents, m_numComponents + 1, 1, 1, stack.localFlowFlowJacobian, work );
+    applyBlockLinearCombination( m_numComponents, 1, stack.localFlowResidual );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
