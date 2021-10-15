@@ -9,7 +9,7 @@
   <Mesh>
     <PAMELAMeshGenerator
       name="CubeHex"
-      file="passingCrack.msh"/>
+      file="passingCrack_smoke.msh"/>
   </Mesh>
 
   <Geometry>
