@@ -47,12 +47,12 @@ We simulate an inclined fracture under a compressive horizontal stress (:math:`\
 To simulate this phenomenon, we use a Lagrange contact model. Displacement and stress fields on the fracture plane are calculated numerically. Predictions of the normal traction (:math:`t_N`) and slip (:math:`g_T`) on the fracture surface are compared with the corresponding analytical solution `(Phan et al., 2003)  <https://onlinelibrary.wiley.com/doi/10.1002/nme.707>`__. 
 
 .. math::
-   t_N = - \sigma {\text{sin} \left( {\psi} \right)}^{ 2 }
+   t_N = - \sigma {( \text{sin} \left( {\psi} \right) )}^{ 2 }
 
 .. math::
-   g_T = \frac{ 4 { 1- {\nu}^{ 2 }} }{ E } { \sigma \text{sin} \left( {\psi} \right) { \text{cos} \left( {\psi} \right) - \text{sin} \left( {\psi} \right) \text{tan} \left( {\theta} \right)} } { { b }^{ 2 } - { b - \xi  }^{ 2 } }^{ 1/2 }
+   g_T = \frac{ 4 ( 1- {\nu}^{ 2 }) }{ E } {( \sigma \text{sin} \left( {\psi} \right) { ( \text{cos} \left( {\psi} \right) - \text{sin} \left( {\psi} \right) \text{tan} \left( {\theta} \right) )} )} \, \sqrt{ { b }^{ 2 } - { (b - \xi) }^{ 2 } }
 
-where :math:`\psi` is the inclination angle, :math:`\nu` is Poisson's ratio, :math:`E` is Young's modulus, :math:`\theta` is the friction angle, :math:`b` is the fracture half-length, :math:`\psi` is a local coordinate on the fracture varying in the range [0, :math:`2b`].
+where :math:`\psi` is the inclination angle, :math:`\nu` is Poisson's ratio, :math:`E` is Young's modulus, :math:`\theta` is the friction angle, :math:`b` is the fracture half-length, :math:`\xi` is a local coordinate on the fracture varying in the range [:math:`0`, :math:`2b`].
 
 
 
@@ -203,7 +203,7 @@ Inspecting results
 ---------------------------------
 
 We request VTK-format output files and use Paraview to visualize the results.
-The following figure shows the distribution of :math:`\u_{yy}` in the computational domain.
+The following figure shows the distribution of :math:`u_{yy}` in the computational domain.
 
 .. _problemVerificationFig1:
 .. figure:: displacement_yy.png
@@ -211,7 +211,7 @@ The following figure shows the distribution of :math:`\u_{yy}` in the computatio
    :width: 1000
    :figclass: align-center
 
-   Simulation result of :math:`\u_{yy}`
+   Simulation result of :math:`u_{yy}`
 
 
 The next figure shows the distribution of relative shear displacement values on the fracture surface.
@@ -311,8 +311,8 @@ The figure below shows a comparison between the numerical predictions (marks) an
         # File path
         hdf5File1Path = "traction_history.hdf5"
         hdf5File2Path = "displacementJump_history.hdf5"
-        xmlFile1Path = "ContactMechanics_SingleFracCompression_Base.xml"
-        xmlFile2Path = "ContactMechanics_SingleFracCompression_Example.xml"
+        xmlFile1Path = "../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml"
+        xmlFile2Path = "../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Example.xml"
 
         # Read HDF5
         # Global Coordinate of Fracture Element Center
