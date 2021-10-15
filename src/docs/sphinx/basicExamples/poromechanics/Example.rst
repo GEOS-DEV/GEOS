@@ -28,11 +28,11 @@ contained within two GEOSX input files located at:
 
 .. code-block:: console
 
-  inputFiles/multiphysics/integratedTests/PoroElastic_Terzaghi_base_direct.xml
+  inputFiles/poromechanics/integratedTests/PoroElastic_Terzaghi_base_direct.xml
 
 .. code-block:: console
 
-  inputFiles/multiphysics/integratedTests/PoroElastic_Terzaghi_smoke.xml
+  inputFiles/poromechanics/integratedTests/PoroElastic_Terzaghi_smoke.xml
 
 
 ------------------------------------------------------------------
@@ -121,7 +121,7 @@ the discretization method (``FE1``, defined further in the input file),
 and the target regions (here, we only have one, ``Domain``).
 
 
-.. literalinclude:: ../../../../../inputFiles/multiphysics/PoroElastic_Terzaghi_base_direct.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
   :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->
@@ -143,7 +143,7 @@ please see the dedicated :ref:`FiniteElement` section.
 The finite volume method requires the specification of a discretization scheme.
 Here, we use a two-point flux approximation as described in the dedicated documentation (found here: :ref:`FiniteVolume`).
 
-.. literalinclude:: ../../../../../inputFiles/multiphysics/PoroElastic_Terzaghi_base_direct.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS -->
   :end-before: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS_END -->
@@ -158,7 +158,7 @@ We use the internal mesh generator to create a beam-like mesh,
 with one single element along the Y and Z axes, and 21 elements along the X axis.
 All the elements are hexahedral elements (C3D8) of the same dimension (1x1x1 meters).
 
-.. literalinclude:: ../../../../../inputFiles/multiphysics/PoroElastic_Terzaghi_base_direct.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_MESH -->
   :end-before: <!-- SPHINX_POROELASTIC_MESH_END -->
@@ -201,7 +201,7 @@ Running GEOSX
 
 To run the case, use the following command:
 
-``path/to/geosx -i inputFiles/multiphysics/PoroElastic_Terzaghi_smoke.xml``
+``path/to/geosx -i inputFiles/poromechanics/PoroElastic_Terzaghi_smoke.xml``
 
 Here, we see for instance the ``RSolid`` and ``RFluid`` at a representative timestep
 (residual values for solid and fluid mechanics solvers, respectively)
@@ -327,8 +327,8 @@ times with the numerical solution (markers).
    def main():
        # File path
        hdf5FilePath = "pressure_history.hdf5"
-       xmlBaseFilePath = "../../../../../inputFiles/multiphysics/PoroElastic_Terzaghi_base_direct.xml"
-       xmlSmokeFilePath = "../../../../../inputFiles/multiphysics/PoroElastic_Terzaghi_smoke.xml"
+       xmlBaseFilePath = "../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml"
+       xmlSmokeFilePath = "../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_smoke.xml"
    
        # Read HDF5
        hf = h5py.File(hdf5FilePath, 'r')

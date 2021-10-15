@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./PoroElastic_Terzaghi_FIM_direct.xml"/>
+    <File name="./PoroElastic_Terzaghi_base_iterative.xml"/>
   </Included>
   <!-- SPHINX_POROELASTIC_MESH -->
   <Mesh>
@@ -12,9 +12,9 @@
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 25 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
+      nx="{ 400 }"
+      ny="{ 16 }"
+      nz="{ 16 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
@@ -49,40 +49,12 @@
       forceDt="1.0"
       target="/Solvers/PoroelasticitySolver"/>
 
-    <PeriodicEvent
-      name="timeHistoryCollection"
-      timeFrequency="10.0"
-      target="/Tasks/pressureCollection"/>
-
-    <PeriodicEvent
-      name="timeHistoryOutput"
-      timeFrequency="10.0"
-      targetExactTimestep="0"
-      target="/Outputs/timeHistoryOutput"/>
-
-    <PeriodicEvent
-      name="restarts"
-      cycleFrequency="50"
-      target="/Outputs/restartOutput"/>
   </Events>
 
   <Outputs>
     <Silo
       name="siloOutput"/>
 
-    <TimeHistory
-      name="timeHistoryOutput"
-      sources="{ /Tasks/pressureCollection }"
-      filename="pressure_history"/>
-
-    <Restart
-      name="restartOutput"/>
   </Outputs>
 
-  <Tasks>
-    <PackCollection
-      name="pressureCollection"
-      objectPath="ElementRegions/Domain/cb1"
-      fieldName="pressure"/>
-  </Tasks>
 </Problem>
