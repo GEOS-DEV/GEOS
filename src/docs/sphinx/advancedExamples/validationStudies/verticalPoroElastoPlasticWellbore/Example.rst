@@ -29,16 +29,16 @@ The xml input files for the test case with poroelasticity are located at:
 
 .. code-block:: console
   
-  inputFiles/multiphysics/PoroElasticWellbore_base.xml
-  inputFiles/multiphysics/PoroElasticWellbore_benchmark.xml
+  inputFiles/poromechanics/PoroElasticWellbore_base.xml
+  inputFiles/poromechanics/PoroElasticWellbore_benchmark.xml
 
 
 The xml input files for the test case with poroplasticity are located at:
 
 .. code-block:: console
 
-  inputFiles/multiphysics/PoroDruckerPragerWellbore_base.xml
-  inputFiles/multiphysics/PoroDruckerPragerWellbore_benchmark.xml
+  inputFiles/poromechanics/PoroDruckerPragerWellbore_base.xml
+  inputFiles/poromechanics/PoroDruckerPragerWellbore_benchmark.xml
 
 
 ------------------------------------------------------------------
@@ -87,7 +87,7 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
 ``cb1``.
 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/PoroElasticWellbore_benchmark.xml
+.. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElasticWellbore_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_MESH -->
     :end-before: <!-- SPHINX_WELLBORE_MESH_END -->
@@ -112,7 +112,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
 
 - the mechanics solver, a solver of type ``SolidMechanics_LagrangianFEM`` called here ``mechanicsSolver`` (more information here: :ref:`SolidMechanicsLagrangianFEM`),
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/PoroElasticWellbore_base.xml
+.. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElasticWellbore_base.xml
   :language: xml
   :start-after: <!-- SPHINX_WELLBORE_MECHANICALSOLVER -->
   :end-before: <!-- SPHINX_WELLBORE_MECHANICALSOLVER_END -->
@@ -120,7 +120,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
 
 - the single-phase flow solver, a solver of type ``SinglePhaseFVM`` called here ``SinglePhaseFlowSolver`` (more information on these solvers at :ref:`SinglePhaseFlow`),
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/PoroElasticWellbore_base.xml
+.. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElasticWellbore_base.xml
   :language: xml
   :start-after: <!-- SPHINX_WELLBORE_SINGLEPHASEFVM -->
   :end-before: <!-- SPHINX_WELLBORE_SINGLEPHASEFVM_END -->
@@ -128,7 +128,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
 
 - the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``PoromechanicsSolver`` (more information at :ref:`PoroelasticSolver`).
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/PoroElasticWellbore_base.xml
+.. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElasticWellbore_base.xml
   :language: xml
   :start-after: <!-- SPHINX_WELLBORE_POROMECHANICSSOLVER -->
   :end-before: <!-- SPHINX_WELLBORE_POROMECHANICSSOLVER_END -->
@@ -158,7 +158,7 @@ please see the dedicated :ref:`FiniteElement` section.
 The finite volume method requires the specification of a discretization scheme.
 Here, we use a two-point flux approximation scheme (``singlePhaseTPFA``), as described in the dedicated documentation (found here: :ref:`FiniteVolume`).
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/PoroElasticWellbore_base.xml
+.. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElasticWellbore_base.xml
   :language: xml
   :start-after: <!-- SPHINX_WELLBORE_NUMERICAL -->
   :end-before: <!-- SPHINX_WELLBORE_NUMERICAL_END -->
@@ -172,7 +172,7 @@ For this test problem, the solid and fluid materials are named as ``rock`` and `
 
 For the poroelastic case, ``PorousElasticIsotropic`` model is used to describe the linear elastic isotropic response of ``rock`` to loading. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the flow of ``water`` upon injection:
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/PoroElasticWellbore_base.xml
+.. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElasticWellbore_base.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_MATERIAL -->
     :end-before: <!-- SPHINX_WELLBORE_MATERIAL_END -->
@@ -181,7 +181,7 @@ For the poroelastic case, ``PorousElasticIsotropic`` model is used to describe t
 For the poroplastic case, ``PorousExtendedDruckerPrager`` model is used to simulate the elastoplastic behavior of ``rock``. And the single-phase fluid model ``CompressibleSinglePhaseFluid`` is employed to handle the storage and flow of ``water``: 
 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/PoroDruckerPragerWellbore_base.xml
+.. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroDruckerPragerWellbore_base.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_MATERIAL -->
     :end-before: <!-- SPHINX_WELLBORE_MATERIAL_END -->
@@ -210,7 +210,7 @@ The remaining parts of the outer boundaries are subjected to roller constraints.
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/PoroElasticWellbore_base.xml
+.. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElasticWellbore_base.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_BC -->
     :end-before: <!-- SPHINX_WELLBORE_BC_END -->
@@ -221,7 +221,7 @@ A table function ``timeFunction`` is used to define the time-dependent loading.
 The ``coordinates`` and ``values`` form a time-magnitude
 pair for the loading time history. In this case, the loading magnitude is given as: 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/PoroElasticWellbore_base.xml
+.. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElasticWellbore_base.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_TABLE -->
     :end-before: <!-- SPHINX_WELLBORE_TABLE_END -->
