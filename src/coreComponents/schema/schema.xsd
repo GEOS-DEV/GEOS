@@ -281,11 +281,66 @@
 	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Aquifer" type="AquiferType" />
 			<xsd:element name="Dirichlet" type="DirichletType" />
 			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
 			<xsd:element name="SourceFlux" type="SourceFluxType" />
 			<xsd:element name="Traction" type="TractionType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="AquiferType">
+		<!--allowAllPhasesIntoAquifer => Flag to allow all phases to flow into the aquifer. 
+This flag only matters for the configuration in which flow is from reservoir to aquifer. 
+    - If the flag is equal to 1, then all phases, including non-aqueous phases, are allowed to flow into the aquifer. 
+     - If the flag is equal to 0, then only the water phase is allowed to flow into the aquifer. 
+If you are in a configuration in which flow is from reservoir to aquifer and you expect non-aqueous phases to saturate the reservoir cells next to the aquifer, set this flag to 1. 
+This keyword is ignored for single-phase flow simulations-->
+		<xsd:attribute name="allowAllPhasesIntoAquifer" type="integer" default="0" />
+		<!--aquiferAngle => Angle subtended by the aquifer boundary from the center of the reservoir [degress]-->
+		<xsd:attribute name="aquiferAngle" type="real64" use="required" />
+		<!--aquiferElevation => Aquifer elevation (positive going upward) [m]-->
+		<xsd:attribute name="aquiferElevation" type="real64" use="required" />
+		<!--aquiferInitialPressure => Aquifer initial pressure [Pa]-->
+		<xsd:attribute name="aquiferInitialPressure" type="real64" use="required" />
+		<!--aquiferInnerRadius => Aquifer inner radius [m]-->
+		<xsd:attribute name="aquiferInnerRadius" type="real64" use="required" />
+		<!--aquiferPermeability => Aquifer permeability [m^2]-->
+		<xsd:attribute name="aquiferPermeability" type="real64" use="required" />
+		<!--aquiferPorosity => Aquifer porosity-->
+		<xsd:attribute name="aquiferPorosity" type="real64" use="required" />
+		<!--aquiferThickness => Aquifer thickness [m]-->
+		<xsd:attribute name="aquiferThickness" type="real64" use="required" />
+		<!--aquiferTotalCompressibility => Aquifer total compressibility (rock and fluid) [Pa^-1]-->
+		<xsd:attribute name="aquiferTotalCompressibility" type="real64" use="required" />
+		<!--aquiferWaterDensity => Aquifer water density [kg.m^-3]-->
+		<xsd:attribute name="aquiferWaterDensity" type="real64" use="required" />
+		<!--aquiferWaterPhaseComponentFraction => Aquifer water phase component fraction. This keyword is ignored for single-phase flow simulations.-->
+		<xsd:attribute name="aquiferWaterPhaseComponentFraction" type="real64_array" default="{0}" />
+		<!--aquiferWaterPhaseComponentNames => Aquifer water phase component names. This keyword is ignored for single-phase flow simulations.-->
+		<xsd:attribute name="aquiferWaterPhaseComponentNames" type="string_array" default="{}" />
+		<!--aquiferWaterViscosity => Aquifer water viscosity [Pa.s]-->
+		<xsd:attribute name="aquiferWaterViscosity" type="real64" use="required" />
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<!--beginTime => time at which BC will start being applied.-->
+		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
+		<!--direction => Direction to apply boundary condition to-->
+		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
+		<!--endTime => time at which bc will stop being applied-->
+		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--functionName => Name of function that specifies variation of the BC-->
+		<xsd:attribute name="functionName" type="string" default="" />
+		<!--initialCondition => BC is applied as an initial condition.-->
+		<xsd:attribute name="initialCondition" type="integer" default="0" />
+		<!--pressureInfluenceFunctionName => Name of the table describing the pressure influence function
+. If not provided, we use a default pressure influence function-->
+		<xsd:attribute name="pressureInfluenceFunctionName" type="string" default="" />
+		<!--scale => Scale factor for value of BC.-->
+		<xsd:attribute name="scale" type="real64" default="0" />
+		<!--setNames => Name of sets that boundary condition is applied to.-->
+		<xsd:attribute name="setNames" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DirichletType">
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->

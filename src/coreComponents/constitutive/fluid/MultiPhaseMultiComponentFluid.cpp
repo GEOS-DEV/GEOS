@@ -86,6 +86,14 @@ deliverClone( string const & name, Group * const parent ) const
 }
 
 template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
+integer MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::getWaterPhaseIndex() const
+{
+  string const expectedWaterPhaseNames[] =  { "Water", "water", "Liquid", "liquid" };
+  return PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
+}
+
+
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
 void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::postProcessInput()
 {
   MultiFluidBase::postProcessInput();
