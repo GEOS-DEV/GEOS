@@ -1,4 +1,8 @@
 <Problem>
+  <Included>
+    <File name="./ModifiedCamClayWellbore_base.xml"/>
+  </Included>
+
   <!-- SPHINX_WELLBORE_MESH -->
   <Mesh>
     <InternalWellbore
