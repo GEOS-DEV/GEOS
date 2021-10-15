@@ -1,22 +1,31 @@
+<?xml version="1.0" ?>
+
 <Problem>
-  <!-- SPHINX_WELLBORE_MESH -->
-  <Mesh>
-    <InternalWellbore
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      radius="{ 0.1, 5.0 }"
-      theta="{ 0, 180 }"
-      zCoords="{ -1, 1 }"
-      nr="{ 4 }"
-      nt="{ 4 }"
-      nz="{ 1 }"
-      trajectory="{ { 0.0, 0.0, -1.0 },
-                    { 0.0, 0.0, 1.0 } }"
-      autoSpaceRadialElems="{ 1 }"
-      useCartesianOuterBoundary="0"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh>
-  <!-- SPHINX_WELLBORE_MESH_END -->
+  <!-- SPHINX_WELLBORE_TABLE -->
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 1.0, 3.0 }"/>
+  </Functions>
+  <!-- SPHINX_WELLBORE_TABLE_END -->
+
+  <!-- SPHINX_WELLBORE_MATERIAL -->
+  <Constitutive>
+    <ModifiedCamClay
+      name="rock"
+      defaultDensity="2700"
+      defaultRefPressure="-1.2e5"
+      defaultRefStrainVol="-0.0"
+      defaultShearModulus="4.302e6"
+      defaultPreConsolidationPressure="-1.69e5"
+      defaultCslSlope="1.2"
+      defaultVirginCompressionIndex="0.072676"
+      defaultRecompressionIndex="0.014535"      
+    />
+  </Constitutive>
+  <!-- SPHINX_WELLBORE_MATERIAL_END -->
 
   <!-- SPHINX_WELLBORE_ELEMENTREGIONS -->
   <ElementRegions>
@@ -29,6 +38,41 @@
 
   <!-- SPHINX_WELLBORE_BC -->
   <FieldSpecifications>
+    <FieldSpecification
+      name="stressXX"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="0"
+      scale="-1.0e5"/>
+
+    <FieldSpecification
+      name="stressYY"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="1"
+      scale="-1.0e5"/>
+
+    <FieldSpecification
+      name="stressZZ"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rock_stress"
+      component="2"
+      scale="-1.6e5"/>
+
+    <Traction
+      name="ExternalLoad"
+      setNames="{ rneg }"
+      objectPath="faceManager"
+      scale="-1.0e5"
+      tractionType="normal"
+      functionName="timeFunction"/> 
+
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
@@ -51,9 +95,9 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ zneg, zpos }"/>
+      setNames="{ zneg, zpos }"/>   
   </FieldSpecifications>
-  <!-- SPHINX_WELLBORE_BC_END -->
+  <!-- SPHINX_WELLBORE_BC_END --> 
 
   <!-- SPHINX_WELLBORE_OUTPUT -->
   <Outputs>
@@ -93,26 +137,5 @@
     </FiniteElements>
   </NumericalMethods>
   <!-- SPHINX_WELLBORE_NUMERICAL_END -->
-
-  <!-- SPHINX_WELLBORE_EXECUTION -->
-  <Events
-    maxTime="1.0">
-    <PeriodicEvent
-      name="solverApplications"
-      timeFrequency="1.0"
-      targetExactTimestep="1"
-      target="/Solvers/mechanicsSolver"/>
-
-    <PeriodicEvent
-      name="outputs"
-      target="/Outputs/siloOutput"/>
-
-   <PeriodicEvent
-      name="restarts"
-      timeFrequency="1"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
-  </Events>
-  <!-- SPHINX_WELLBORE_EXECUTION_END -->
-
+  
 </Problem>
