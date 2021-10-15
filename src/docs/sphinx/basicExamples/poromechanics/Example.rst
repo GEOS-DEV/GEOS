@@ -24,8 +24,11 @@ At the end of this example you will know:
 **Input file**
 
 This example uses no external input files and everything required is
-contained within a single GEOSX input file.
-The xml input file for this test case is located at:
+contained within two GEOSX input files located at:
+
+.. code-block:: console
+
+  inputFiles/multiphysics/integratedTests/PoroElastic_Terzaghi_base_direct.xml
 
 .. code-block:: console
 
@@ -198,7 +201,7 @@ Running GEOSX
 
 To run the case, use the following command:
 
-``path/to/geosx -i inputFiles/multiphysics/PoroElastic_Terzaghi_base_direct.xml``
+``path/to/geosx -i inputFiles/multiphysics/PoroElastic_Terzaghi_smoke.xml``
 
 Here, we see for instance the ``RSolid`` and ``RFluid`` at a representative timestep
 (residual values for solid and fluid mechanics solvers, respectively)
