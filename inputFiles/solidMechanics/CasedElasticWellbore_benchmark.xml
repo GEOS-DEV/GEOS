@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./CasedElasticWellbore_Base.xml"/>
+    <File name="./CasedElasticWellbore_base.xml"/>
   </Included>
 
   <!-- SPHINX_WellboreMesh -->
