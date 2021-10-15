@@ -80,7 +80,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ DEFAULT_HEX }"
-      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS_END -->

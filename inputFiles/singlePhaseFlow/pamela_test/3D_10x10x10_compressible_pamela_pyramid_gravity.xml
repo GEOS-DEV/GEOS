@@ -70,7 +70,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ DEFAULT_PYRAMID }"
-      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>

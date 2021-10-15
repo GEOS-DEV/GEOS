@@ -144,7 +144,7 @@
       component="0"
       scale="-1.0e8"/>
   </FieldSpecifications>
-<!-- SPHINX_BC -->
+<!-- SPHINX_BC_END -->
 
 <!-- SPHINX_TASKS -->
   <Tasks>
@@ -158,7 +158,7 @@
       objectPath="ElementRegions/Fracture/faceElementSubRegion"
       fieldName="localJump"/>   
     </Tasks>
-<!-- SPHINX_TASKS -->
+<!-- SPHINX_TASKS_END -->
 
   <Outputs>
     <VTK

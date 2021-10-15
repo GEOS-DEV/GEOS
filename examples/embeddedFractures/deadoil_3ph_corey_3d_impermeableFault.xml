@@ -64,15 +64,15 @@
       lengthVector="{ 1, 0, 0 }"
       widthVector="{ 0, 0, 1 }"
       dimensions="{ 12, 11 }"/>
-     
+
      <BoundedPlane
       name="FracturePlane2"
       normal="{ 0, 1, 0 }"
       origin="{ 17.5, 9.5, 5.5 }"
       lengthVector="{ 1, 0, 0 }"
       widthVector="{ 0, 0, 1 }"
-      dimensions="{ 12, 11 }"/> 
-      
+      dimensions="{ 12, 11 }"/>
+
   </Geometry>
 
   <Events
@@ -107,12 +107,12 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ block1 }"
-      materialList="{ fluid1, rock, rockPerm, relperm, rockPorosity, nullSolid }"/>
+      materialList="{ fluid1, rock, relperm }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-7"
-      materialList="{ fluid1, fractureFilling, relperm, fracturePerm, fracturePorosity, nullSolid }"
+      materialList="{ fluid1, fractureFilling, relperm }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
 
@@ -122,7 +122,7 @@
       phaseNames="{ oil, gas, water }"
       surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
-      tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
+      tableFiles="{ ../../inputFiles/multiphysics/pvt_tables/pvdo.txt, ../../inputFiles/multiphysics/pvt_tables/pvdg.txt, ../../inputFiles/multiphysics/pvt_tables/pvtw.txt }"/>
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
