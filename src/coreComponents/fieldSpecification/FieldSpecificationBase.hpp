@@ -502,9 +502,6 @@ private:
   /// The name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
 
-  /// The factor used to normalize the boundary flux by the size of the set it is applied to
-  //real64 m_setSizeScalingFactor;
-
 };
 
 
