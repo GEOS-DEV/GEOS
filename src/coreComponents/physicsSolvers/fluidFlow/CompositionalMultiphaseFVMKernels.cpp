@@ -1294,6 +1294,12 @@ AquiferBCKernel::
       dofColIndices[jdof] = offset + jdof;
     }
 
+    // Apply equation/variable change transformation(s)
+    real64 work[NDOF];
+    applyBlockLinearCombination( NC, NDOF, 1, 1, localFluxJacobian, work );
+    applyBlockLinearCombination( NC, 1, localFlux );
+
+
     // Add to residual/jacobian
     if( ghostRank[er][esr][ei] < 0 )
     {
