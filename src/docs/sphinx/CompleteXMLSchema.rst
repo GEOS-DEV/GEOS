@@ -15,6 +15,13 @@ Element: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM.rst
 
 
+.. _XML_Aquifer:
+
+Element: Aquifer
+================
+.. include:: ../../coreComponents/schema/docs/Aquifer.rst
+
+
 .. _XML_Benchmarks:
 
 Element: Benchmarks
@@ -934,6 +941,13 @@ Datastructure Definitions
 Datastructure: AcousticSEM
 ==========================
 .. include:: ../../coreComponents/schema/docs/AcousticSEM_other.rst
+
+
+.. _DATASTRUCTURE_Aquifer:
+
+Datastructure: Aquifer
+======================
+.. include:: ../../coreComponents/schema/docs/Aquifer_other.rst
 
 
 .. _DATASTRUCTURE_Benchmarks:
