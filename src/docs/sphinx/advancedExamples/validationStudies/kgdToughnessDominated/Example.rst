@@ -33,7 +33,7 @@ and the term :math:`X` is given as:
 
 **Input file**
 
-The xml input files for this test case are located at:
+The input xml files for this test case are located at:
 
 .. code-block:: console
 
@@ -107,7 +107,7 @@ Mesh
 
 Internal mesh generator is used to generate the geometry of this example. The domain size is large enough comparing to the final size of the fracture. A sensitivity analysis has shown that the domain size in the direction perpendicular to the fracture plane, i.e. x-axis, must be at least ten times of the final fracture half-length to minimize the boundary effect. However, smaller size along the fracture plane, i.e. y-axis, of only two times the fracture half-length is good enough. It is also important to note that at least two layers are required in z-axis to ensure a good match between the numerical results and analytical solutions, due to the node based fracture propagation criterion. Also in x-axis, bias parameter ``xBias`` is added for optimizing the mesh by refining the elements near the fracture plane.
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdToughnessDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdToughnessDominated_Example.xml
   :language: xml
   :start-after: <!-- Sphinx_Mesh_InternalMesh -->
   :end-before:  <!-- Sphinx_Mesh_InternalMesh_End -->
@@ -159,26 +159,24 @@ Fluid is injected into a sub-area of the initial fracture. Only half of the inje
 
 .. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdToughnessDominated_Base.xml
   :language: xml
-  :start-after: <!-- Sphinx_FieldSpecifications_InjSource -->
-  :end-before:  <!-- Sphinx_FieldSpecifications_InjSource_End -->
-	
+  :start-after: <!-- Sphinx_SourceFlux_InjSource -->
+  :end-before:  <!-- Sphinx_SourceFlux_InjSource_End -->
 
 The parameters used in the simulation are summarized in the following table.
 
-  +----------------+-----------------------+------------------+-------------------+
-  | Symbol         | Parameter             | Units            | Value             |
-  +================+=======================+==================+===================+
-  | :math:`Q_0`    | Injection rate        | [m:sup:`3`/s]    | 10:sup:`-4`       |
-  +----------------+-----------------------+------------------+-------------------+
-  | :math:`E`      | Young's modulus       | [GPa]            | 30                |
-  +----------------+-----------------------+------------------+-------------------+
-  | :math:`\nu`    | Poisson's ratio       | [ - ]            | 0.25              |
-  +----------------+-----------------------+------------------+-------------------+
-  | :math:`\mu`    | Fluid viscosity       | [Pa.s]           | 10:sup:`-6`       |
-  +----------------+-----------------------+------------------+-------------------+
-  | :math:`K_{Ic}` | Rock toughness        | [MPa.m:sup:`1/2`]| 1                 |
-  +----------------+-----------------------+------------------+-------------------+
-
+  +----------------+-----------------------+--------------------+-------------------+
+  | Symbol         | Parameter             | Units              | Value             |
+  +================+=======================+====================+===================+
+  | :math:`Q_0`    | Injection rate        | [m\ :sup:`3`/s]    | 10\ :sup:`-4`     |
+  +----------------+-----------------------+--------------------+-------------------+
+  | :math:`E`      | Young's modulus       | [GPa]              | 30                |
+  +----------------+-----------------------+--------------------+-------------------+
+  | :math:`\nu`    | Poisson's ratio       | [ - ]              | 0.25              |
+  +----------------+-----------------------+--------------------+-------------------+
+  | :math:`\mu`    | Fluid viscosity       | [Pa.s]             | 10\ :sup:`-6`     |
+  +----------------+-----------------------+--------------------+-------------------+
+  | :math:`K_{Ic}` | Rock toughness        | [MPa.m\ :sup:`1/2`]| 1                 |
+  +----------------+-----------------------+--------------------+-------------------+
 
 ---------------------------------
 Inspecting results
