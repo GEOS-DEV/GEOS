@@ -45,6 +45,7 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual integer getWaterPhaseIndex() const override final;
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
