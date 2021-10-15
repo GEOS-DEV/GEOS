@@ -11,25 +11,7 @@
   </Functions>
 
   <!-- SPHINX_DP_WELLBORE_TABLE_END -->
-  <!-- SPHINX_DP_WELLBORE_MESH -->
-  <Mesh>
-    <InternalWellbore
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      radius="{ 0.1, 5.0 }"
-      theta="{ 0, 180 }"
-      zCoords="{ -1, 1 }"
-      nr="{ 40 }"
-      nt="{ 80 }"
-      nz="{ 2 }"
-      trajectory="{ { 0.0, 0.0, -1.0 },
-                    { 0.0, 0.0, 1.0 } }"
-      autoSpaceRadialElems="{ 1 }"
-      useCartesianOuterBoundary="0"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh>
-
-  <!-- SPHINX_DP_WELLBORE_MESH_END -->
+  
   <!-- SPHINX_DP_WELLBORE_MATERIAL -->
   <Constitutive>
     <ExtendedDruckerPrager
@@ -118,8 +100,13 @@
   <!-- SPHINX_DP_WELLBORE_BC_END -->
   <!--Output-->
   <Outputs>
-    <Silo
-      name="siloOutput"/>
+    <Silo 
+      name="siloOutput"
+      parallelThreads="1"
+      plotFileRoot="plot"
+    />
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 
   <!-- SPHINX_DP_WELLBORE_SOLVER -->
@@ -139,19 +126,7 @@
   </Solvers>
 
   <!-- SPHINX_DP_WELLBORE_SOLVER_END -->
-  <!--Solver application-->
-  <Events
-    maxTime="1.0">
-    <PeriodicEvent
-      name="solverApplications"
-      timeFrequency="0.02"
-      target="/Solvers/mechanicsSolver"/>
-
-    <PeriodicEvent
-      name="outputs"
-      target="/Outputs/siloOutput"/>
-  </Events>
-
+  
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
