@@ -1,6 +1,10 @@
 <?xml version="1.0" ?>
 
 <Problem>
+  <Included>
+    <File name="./ExtendedDruckerPragerWellbore_base.xml"/>
+  </Included>
+
   <!-- SPHINX_DP_WELLBORE_MESH -->
   <Mesh>
     <InternalWellbore

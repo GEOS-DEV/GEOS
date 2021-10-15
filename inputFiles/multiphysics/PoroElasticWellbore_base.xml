@@ -10,24 +10,41 @@
 </Functions>
 <!-- SPHINX_WELLBORE_TABLE_END -->
 
-<!-- SPHINX_WELLBORE_MESH -->
-<Mesh>
-  <InternalWellbore
-    name="mesh1"
-    elementTypes="{ C3D8 }"
-    radius="{ 0.1, 5.0 }"
-    theta="{ 0, 180 }"
-    zCoords="{ -1, 1 }"
-    nr="{ 40 }"
-    nt="{ 80 }"
-    nz="{ 2 }"
-    trajectory="{ { 0.0, 0.0, -1.0 },
-                  { 0.0, 0.0,  1.0 } }"
-    autoSpaceRadialElems="{ 1 }"
-    useCartesianOuterBoundary="0"
-    cellBlockNames="{ cb1 }"/>
-</Mesh> 
-<!-- SPHINX_WELLBORE_MESH_END -->
+<!-- SPHINX_WELLBORE_MATERIAL -->
+<Constitutive>
+  <PorousElasticIsotropic
+    name="porousRock"
+    solidModelName="rock"
+    porosityModelName="rockPorosity"
+    permeabilityModelName="rockPerm"
+  />
+  <ElasticIsotropic
+    name="rock"
+    defaultDensity="2700"
+    defaultBulkModulus="1.1111e10"
+    defaultShearModulus="8.3333e9"
+  />
+  <CompressibleSinglePhaseFluid 
+    name="water"
+    defaultDensity="1000"
+    defaultViscosity="0.001"
+    referencePressure="0e6"
+    referenceDensity="1000"
+    compressibility="2.09028227021e-10"
+    referenceViscosity="0.001"
+    viscosibility="0.0"
+  />
+  <BiotPorosity
+    name="rockPorosity"
+    grainBulkModulus="1.0e27"
+    defaultReferencePorosity="0.3"
+  />    
+  <ConstantPermeability
+    name="rockPerm"
+    permeabilityComponents="{1.0e-20, 1.0e-20, 1.0e-20}"
+  /> 
+</Constitutive>
+<!-- SPHINX_WELLBORE_MATERIAL_END -->
 
 <!-- SPHINX_WELLBORE_ELEMENTREGIONS -->
 <ElementRegions>
