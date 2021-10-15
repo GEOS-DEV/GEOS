@@ -188,7 +188,7 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
 
   registerWrapper( viewKeyStruct::nodeBasedSIFString(), &m_nodeBasedSIF ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Rock toughness of the solid material" );
+    setDescription( "Flag for choosing between node or edge based criteria: 1 for node based criterion" );
 
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
