@@ -209,13 +209,13 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void applyBlockLinearCombination( localIndex const M,
                                   localIndex const a,
-                                  VEC && v)
+                                  VEC && v )
 {
   for( localIndex i = 0; i < a; ++i )
   {
     localIndex const ind = i * M + M - 1;
     real64 tmp = v[ind];
-    for(int j = ind - 1; j >= i * M; --j)
+    for( int j = ind - 1; j >= i * M; --j )
     {
       v[j+1] = v[j];
       tmp += v[j];
@@ -234,7 +234,7 @@ void applyBlockLinearCombination( localIndex const M,
                                   MATRIX && mat,
                                   VEC && work )
 {
-  for( localIndex k = 0; k < a; ++k)
+  for( localIndex k = 0; k < a; ++k )
   {
     localIndex const ind = k * M + M - 1;
 //    copy( N * b, mat[ind], work );
@@ -242,7 +242,7 @@ void applyBlockLinearCombination( localIndex const M,
     {
       work[j] = mat[ind][j];
     }
-    for(localIndex i = ind - 1; i >= k * M; --i)
+    for( localIndex i = ind - 1; i >= k * M; --i )
     {
       for( localIndex j = 0; j < b * N; ++j )
       {
@@ -252,7 +252,7 @@ void applyBlockLinearCombination( localIndex const M,
     }
     for( localIndex j = 0; j < b * N; ++j )
     {
-       mat[k*M][j] = work[j];
+      mat[k*M][j] = work[j];
     }
   }
 }

@@ -862,10 +862,6 @@ AssemblerKernelHelper::
 
   }
 
-  real64 divMassFluxes[ NC ]{};
-  real64 dDivMassFluxes_dElemVars[ NC ][ NDOF*(NF+1) ]{};
-  real64 dDivMassFluxes_dFaceVars[ NC ][ NF ]{};
-
   // Apply equation/variable change transformation(s)
   real64 work[NDOF*(NF+1)];
   applyBlockLinearCombination( NC, NDOF * ( NF + 1 ), 1, 1, dDivMassFluxes_dElemVars, work );
