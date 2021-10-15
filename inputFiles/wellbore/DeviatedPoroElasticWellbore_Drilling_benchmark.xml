@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./DeviatedPoroElasticWellbore_Drilling_Base.xml"/>
+    <File name="./DeviatedPoroElasticWellbore_Drilling_base.xml"/>
   </Included>
 
   <!-- SPHINX_WellboreMesh -->
