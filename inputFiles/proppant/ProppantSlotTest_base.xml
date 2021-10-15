@@ -1,9 +1,8 @@
 <?xml version="1.0" ?>
 
-<!--# # -->
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, -9.81 }">
+  <Solvers>
+<!-- SPHINX_PROPPANT_PROPPANTSOLVER -->
     <ProppantTransport
       name="ProppantTransport"
       logLevel="1"
@@ -11,6 +10,7 @@
       proppantDiameter="4.5e-4"
       frictionCoefficient="0.04"
       criticalShieldsNumber="0.0"
+      maxProppantConcentration="0.62"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
@@ -26,14 +26,19 @@
         solverType="gmres"
         krylovTol="1.0e-7"/>
     </ProppantTransport>
+<!-- SPHINX_PROPPANT_PROPPANTSOLVER_END -->
 
+<!-- SPHINX_PROPPANT_COUPLEDSOLVER -->
     <FlowProppantTransport
       name="FlowProppantTransport"
       proppantSolverName="ProppantTransport"
       flowSolverName="SinglePhaseFVM"
       targetRegions="{ Fracture }"
       logLevel="1"/>
+<!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->
 
+
+<!-- SPHINX_PROPPANT_FLOWSOLVER -->
     <SinglePhaseProppantFVM
       name="SinglePhaseFVM"
       logLevel="1"
@@ -49,8 +54,10 @@
         newtonMinIter="0"/>
       <LinearSolverParameters
         solverType="gmres"
+	preconditionerType="amg"  
         krylovTol="1.0e-7"/>
     </SinglePhaseProppantFVM>
+<!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
 
     <SurfaceGenerator
       name="SurfaceGen"
@@ -59,25 +66,15 @@
       rockToughness="1e6"/>
   </Solvers>
 
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ -1, 1 }"
-      yCoords="{ 0, 1.2319 }"
-      zCoords="{ 0, 0.3048 }"
-      nx="{ 2 }"
-      ny="{ 97 }"
-      nz="{ 24 }"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh>
 
   <Geometry>
+    <!-- An additional column of grid cells is added to the left of the domain to mimic proppant injection boundary conditions -->
     <Box
       name="left0"
       xMin="{ -0.001, -0.001, -0.001 }"
       xMax="{ 0.001, 0.013, 0.3148 }"/>
 
+    <!-- three injection points at the inlet (left) -->
     <Box
       name="left1"
       xMin="{ -0.001, -0.001, 0.07 }"
@@ -93,103 +90,82 @@
       xMin="{ -0.001, -0.001, 0.22 }"
       xMax="{ 0.001, 0.013, 0.25 }"/>
 
+    <!-- the outflow boundary at the outlet (right) -->
     <Box
       name="right"
-      xMin="{ -0.001, 1.21, 0.29 }"
-      xMax="{ 0.001, 1.2419, 0.3148 }"/>
+      xMin="{ -0.001, 1.21, 0.22 }"
+      xMax="{ 0.001, 1.2419, 0.25 }"/>
 
+    <!-- fracture plane -->
     <Box
       name="fracture"
       xMin="{ -0.01, -0.01, -0.01 }"
       xMax="{ 0.01, 1.2419, 0.3148 }"/>
   </Geometry>
 
-  <Events
-    maxTime="31">
-    <SoloEvent
-      name="preFracture"
-      target="/Solvers/SurfaceGen"/>
-
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="0.1"
-      target="/Solvers/FlowProppantTransport"/>
-
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
-    <PeriodicEvent
-      name="outputs"
-      target="/Outputs/siloOutput"/>
-
-    <!--    
-    <PeriodicEvent name="restarts"
-                   timeFrequency="5"
-                   targetExactTimestep="0"
-                   target="/Outputs/sidreRestart"/>
--->
-  </Events>
-
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ fracturePerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
     <CellElementRegion
-      name="Region2"
+      name="region"
       cellBlocks="{ cb1 }"
       materialList="{ water, sand }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="7.62e-3"
-      materialList="{ water, fractureFilling, sand, fracturePerm, fracturePorosity }"/>
+      materialList="{ water, fractureFilling, sand }"/>
   </ElementRegions>
 
+<!-- SPHINX_PROPPANT_MATERIAL -->
   <Constitutive>
     <ProppantSlurryFluid
       name="water"
-      componentNames="{ gel }"
       referencePressure="1e5"
-      compressibility="0e-10"
-      referenceProppantDensity="2550.0"
-      defaultDensity="{ 800.0 }"
-      defaultViscosity="{ 0.1 }"
-      defaultCompressibility="{ 0.0 }"/>
+      referenceDensity="1000"
+      compressibility="0.0"
+      maxProppantConcentration="0.62"
+      referenceViscosity="0.001"
+      referenceProppantDensity="2550.0"/>
 
     <ParticleFluid
       name="sand"
       particleSettlingModel="Stokes"
-      hinderedSettlingCoefficient="5.0"
+      hinderedSettlingCoefficient="4.5"
       proppantDensity="2550.0"
-      proppantDiameter="4.5e-4"/>
+      proppantDiameter="4.5e-4"
+      maxProppantConcentration="0.62"/>
 
-    <CompressibleSolidParallelPlatesPermeability
+    <ProppantSolidProppantPermeability
       name="fractureFilling"
       solidModelName="nullSolid"
       porosityModelName="fracturePorosity"
       permeabilityModelName="fracturePerm"/>
-
+    
     <NullModel
       name="nullSolid"/>
 
-    <PressurePorosity
+    <ProppantPorosity
       name="fracturePorosity"
       defaultReferencePorosity="1.00"
-      referencePressure="0.0"
-      compressibility="0.0"/>
+      maxProppantConcentration="0.62"/>
 
-    <ParallelPlatesPermeability
-      name="fracturePerm"/>
+    <ProppantPermeability
+      name="fracturePerm"
+      proppantDiameter="4.5e-4"
+      maxProppantConcentration="0.62"/>
   </Constitutive>
+<!-- SPHINX_PROPPANT_MATERIAL_END -->
 
+<!-- SPHINX_PROPPANT_BC -->
   <FieldSpecifications>
     <FieldSpecification
       name="frac"
@@ -246,9 +222,9 @@
       name="left1a"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="-0.42"
+      scale="-0.14"
       component="0"
-      setNames="{ left0 }"/>
+      setNames="{ left1 }"/>
 
     <FieldSpecification
       name="left1b"
@@ -256,16 +232,39 @@
       fieldName="proppantConcentration"
       scale="0.07"
       component="0"
-      setNames="{ left0 }"/>
+      setNames="{ left1 }"/>
+
+    <SourceFlux
+      name="left2a"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="-0.14"
+      component="0"
+      setNames="{ left2 }"/>
 
     <FieldSpecification
-      name="left1c"
+      name="left2b"
       objectPath="ElementRegions/Fracture"
-      fieldName="componentConcentration"
-      scale="0.1"
+      fieldName="proppantConcentration"
+      scale="0.07"
       component="0"
-      functionName="timeTable"
-      setNames="{ left0 }"/>
+      setNames="{ left2 }"/>
+
+    <SourceFlux
+      name="left3a"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="-0.14"
+      component="0"
+      setNames="{ left3 }"/>
+
+    <FieldSpecification
+      name="left3b"
+      objectPath="ElementRegions/Fracture"
+      fieldName="proppantConcentration"
+      scale="0.07"
+      component="0"
+      setNames="{ left3 }"/>
 
     <FieldSpecification
       name="right1"
@@ -282,23 +281,9 @@
       scale="0.0"
       component="0"
       setNames="{ right }"/>
-
-    <FieldSpecification
-      name="right3"
-      objectPath="ElementRegions/Fracture"
-      fieldName="componentConcentration"
-      scale="0.0"
-      component="0"
-      setNames="{ right }"/>
   </FieldSpecifications>
+<!-- SPHINX_PROPPANT_BC_END -->
 
-  <Functions>
-    <TableFunction
-      name="timeTable"
-      inputVarNames="{ time }"
-      coordinates="{ 0.0, 10.0, 10.001, 1e6 }"
-      values="{ 0.0, 0.0, 1.0, 1.0 }"/>
-  </Functions>
 
   <Outputs>
     <Silo
