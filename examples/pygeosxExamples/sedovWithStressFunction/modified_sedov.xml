@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  
+
   <!-- SPHINX_SEDOV_INCLUDED -->
   <Included>
     <File
-      name="../../../src/coreComponents/physicsSolvers/solidMechanics/integratedTests/sedov.xml"/>
+      name="../../../inputFiles/solidMechanics/sedov.xml"/>
   </Included>
   <!-- SPHINX_SEDOV_INCLUDED_END -->
 

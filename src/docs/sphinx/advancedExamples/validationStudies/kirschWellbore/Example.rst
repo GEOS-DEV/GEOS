@@ -42,19 +42,19 @@ We solve a drained wellbore problem subjected to anisotropic horizontal stress (
 In this example, stress (:math:`\sigma_{rr}`, :math:`\sigma_{\theta\theta}`, and :math:`\sigma_{r\theta}`) and displacement (:math:`u_{r}` and :math:`u_{\theta}`) fields around the wellbore are calculated numerically. These numerical predictions are compared with the corresponding Kirsch solutions `(Poulos and Davis, 1974)  <https://www.geoengineer.org/publications/online-library?keywords=E.H.%20Davis>`__. 
 
 .. math::
-   \sigma_{rr} =  \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } { 1 - ( \frac{ a_0 }{ r })^{ 2 } } + \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } { 1 - 4 ( \frac{ a_0 }{ r })^{ 2 } + 3 ( \frac{ a_0 }{ r })^{ 4 }} \text{cos} \left( {2 \theta} \right) + P_w {( \frac{ a_0 }{ r })^{ 2 }}
+   \sigma_{rr} =  \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } {[ 1 - ( \frac{ a_0 }{ r })^{ 2 } ]} + \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } {[ 1 - 4 ( \frac{ a_0 }{ r })^{ 2 } + 3 ( \frac{ a_0 }{ r })^{ 4 } ]} \text{cos} \left( {2 \theta} \right) + P_w {( \frac{ a_0 }{ r })^{ 2 }}
 
 .. math::
-   \sigma_{\theta\theta} =  \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } { 1 + ( \frac{ a_0 }{ r })^{ 2 } } - \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } { 1 + 3 ( \frac{ a_0 }{ r })^{ 4 }} \text{cos} \left( {2 \theta} \right) - P_w {( \frac{ a_0 }{ r })^{ 2 }}
+   \sigma_{\theta\theta} =  \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } {[ 1 + ( \frac{ a_0 }{ r })^{ 2 } ]} - \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } {[ 1 + 3 ( \frac{ a_0 }{ r })^{ 4 } ]} \text{cos} \left( {2 \theta} \right) - P_w {( \frac{ a_0 }{ r })^{ 2 }}
 
 .. math::
-   \sigma_{r\theta} =  - \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } { 1 + 2 ( \frac{ a_0 }{ r })^{ 2 } - 3 ( \frac{ a_0 }{ r })^{ 4 }} \text{sin} \left( {2 \theta} \right)
+   \sigma_{r\theta} =  - \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } {[ 1 + 2 ( \frac{ a_0 }{ r })^{ 2 } - 3 ( \frac{ a_0 }{ r })^{ 4 } ]} \text{sin} \left( {2 \theta} \right)
 
 .. math::
-   u_{r} = - \frac{ ( a_0 )^{ 2 } }{ 2Gr } { \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } + \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } { 4 { 1- \nu} - ( \frac{ a_0 }{ r })^{ 2 } } \text{cos} \left( {2 \theta} \right) - P_w }
+   u_{r} = - \frac{ ( a_0 )^{ 2 } }{ 2Gr } {[ \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } + \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } {( 4 ( 1- \nu ) - ( \frac{ a_0 }{ r })^{ 2 } )} \text{cos} \left( {2 \theta} \right) - P_w ]}
 
 .. math::
-   u_{\theta} = \frac{ ( a_0 )^{ 2 } }{ 2Gr } { \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } { 2 { 1- 2 \nu} + ( \frac{ a_0 }{ r })^{ 2 } } \text{sin} \left( {2 \theta} \right) }
+   u_{\theta} = \frac{ ( a_0 )^{ 2 } }{ 2Gr } { \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } {[ 2 (1- 2 \nu) + ( \frac{ a_0 }{ r })^{ 2 } ]} \text{sin} \left( {2 \theta} \right) }
 
 where :math:`a_0` is the intiial wellbore radius, :math:`r` is the radial coordinate, :math:`\nu` is the Poisson's ratio, :math:`G` is the shear modulus, :math:`P_w` is the normal traction acting on the wellbore wall, the angle :math:`\theta` is measured with respect to x-z plane and defined as positive in counter-clockwise direction. 
 
@@ -158,7 +158,7 @@ The next step is to specify fields, including:
   - The initial value (the in-situ stresses and traction at the wellbore wall have to be initialized),
   - The boundary conditions (constraints of the outer boundaries have to be set).
 
-Here, we specify anisotropic horizontal stress values (:math:`\sigma_yy` = -9.0 MPa and :math:`\sigma_xx` = -11.25 MPa) and a vertical stress (:math:`\sigma_zz` = -15.0 MPa). 
+Here, we specify anisotropic horizontal stress values (:math:`\sigma_{yy}` = -9.0 MPa and :math:`\sigma_{xx}` = -11.25 MPa) and a vertical stress (:math:`\sigma_{zz}` = -15.0 MPa). 
 A compressive traction (``WellLoad``) :math:`P_w` = -2.0 MPa is loaded at the wellbore wall ``rneg``.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set in the ``FieldSpecifications`` section.
@@ -188,23 +188,23 @@ You may note :
  
 The parameters used in the simulation are summarized in the following table.
 
-+-------------------+-------------------------+------------------+--------------------+
-| Symbol            | Parameter               | Unit             | Value              |
-+===================+=========================+==================+====================+
-| :math:`K`         | Bulk Modulus            | [MPa]            | 500.0              |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`G`         | Shear Modulus           | [MPa]            | 300.0              |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`\sigma_yy` | Min Horizontal Stress   | [MPa]            | -9.0               |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`\sigma_xx` | Max Horizontal Stress   | [MPa]            | -11.25             |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`\sigma_zz` | Vertical Stress         | [MPa]            | -15.0              |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`a_0`       | Initial Well Radius     | [m]              | 0.1                |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`P_w`       | Traction at Well        | [MPa]            | -2.0               |
-+-------------------+-------------------------+------------------+--------------------+
++---------------------+-------------------------+------------------+--------------------+
+| Symbol              | Parameter               | Unit             | Value              |
++=====================+=========================+==================+====================+
+| :math:`K`           | Bulk Modulus            | [MPa]            | 500.0              |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`G`           | Shear Modulus           | [MPa]            | 300.0              |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`\sigma_{yy}` | Min Horizontal Stress   | [MPa]            | -9.0               |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`\sigma_{xx}` | Max Horizontal Stress   | [MPa]            | -11.25             |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`\sigma_{zz}` | Vertical Stress         | [MPa]            | -15.0              |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`a_0`         | Initial Well Radius     | [m]              | 0.1                |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`P_w`         | Traction at Well        | [MPa]            | -2.0               |
++---------------------+-------------------------+------------------+--------------------+
 
 
 ---------------------------------

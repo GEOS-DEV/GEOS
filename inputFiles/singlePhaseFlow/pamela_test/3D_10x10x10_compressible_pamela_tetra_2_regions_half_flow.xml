@@ -77,7 +77,7 @@
     <CellElementRegion
       name="Bot"
       cellBlocks="{ Bottom_TETRA }"
-      materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>
