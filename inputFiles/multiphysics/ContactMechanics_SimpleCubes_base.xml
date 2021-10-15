@@ -7,11 +7,10 @@
       name="lagrangiancontact"
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
-      logLevel="1"
       targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-8"
         logLevel="2"
         newtonMaxIter="10"
         lineSearchAction="Require"
@@ -40,84 +39,6 @@
       mpiCommOrder="1"/>
   </Solvers>
 
-  <Mesh>
-    <PAMELAMeshGenerator
-      name="CubeHex"
-      file="passingCrack.msh"/>
-  </Mesh>
-
-  <Geometry>
-    <BoundedPlane
-      name="fracture"
-      normal="{ -0.707106781186548, 0.707106781186548, 0.0 }"
-      origin="{ 1.0, 1.7, 0.25 }"
-      lengthVector="{ 0.707106781186548, 0.707106781186548, 0.0 }"
-      widthVector="{ 0.0, 0.0, 1.0 }"
-      dimensions="{ 2.82842712474619, 0.51 }"/>
-
-    <BoundedPlane
-      name="core"
-      normal="{ -0.707106781186548, 0.707106781186548, 0.0 }"
-      origin="{ 1.0, 1.7, 0.25 }"
-      lengthVector="{ 0.707106781186548, 0.707106781186548, 0.0 }"
-      widthVector="{ 0.0, 0.0, 1.0 }"
-      dimensions="{ 2.82842712474619, 0.51 }"/>
-
-    <Box
-      name="bottom"
-      xMin="{ -0.1, -0.1, -0.1 }"
-      xMax="{ 2.1, 0.1, 0.6 }"/>
-
-    <Box
-      name="top"
-      xMin="{ -0.1, 3.9, -0.1 }"
-      xMax="{ 2.1, 4.1, 0.6 }"/>
-
-    <Box
-      name="bottomRightCorner"
-      xMin="{ 1.9, -0.1, -0.1 }"
-      xMax="{ 2.1, 0.1, 0.6 }"/>
-
-    <Box
-      name="front"
-      xMin="{ -0.1, -0.1, -0.1 }"
-      xMax="{ 2.1, 4.1, 0.1 }"/>
-
-    <Box
-      name="rear"
-      xMin="{ -0.1, -0.1, 0.4 }"
-      xMax="{ 2.1, 4.1, 0.6 }"/>
-  </Geometry>
-
-  <Events
-    maxTime="1.0">
-    <SoloEvent
-      name="preFracture"
-      target="/Solvers/SurfaceGen"/>
-
-    <PeriodicEvent
-      name="solverApplications"
-      beginTime="0.0"
-      endTime="1.0"
-      forceDt="1.0"
-      target="/Solvers/lagrangiancontact"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="1.0"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
-
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="1"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput"/>
-  </Events>
-
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -136,7 +57,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ South_HEX, North_HEX }"
+      cellBlocks="{ cb1 }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion
@@ -149,13 +70,19 @@
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
-      defaultBulkModulus="16.66666666666666e3"
-      defaultShearModulus="1.0e4"/>
+      defaultBulkModulus="3.33333333333333e3"
+      defaultShearModulus="2.0e3"/>
 
     <Coulomb
       name="fractureMaterial"
       cohesion="0.0"
-      frictionCoefficient="0.577350269189626"/>
+      frictionCoefficient="0.577350269"/>
+
+    <Coulomb
+      name="new_fractureMaterial"
+      cohesion="0.0"
+      frictionCoefficient="0.577350269"/>
+    
   </Constitutive>
 
   <FieldSpecifications>
@@ -176,15 +103,39 @@
       scale="1"/>
 
     <FieldSpecification
-      name="xconstraint"
+      name="xconstraintBack"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ bottomRightCorner }"/>
+      setNames="{ back }"/>
 
     <FieldSpecification
-      name="yconstraint"
+      name="yconstraintBack"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ back }"/>
+
+    <FieldSpecification
+      name="zconstraintBack"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ back }"/>
+
+    <FieldSpecification
+      name="xconstraintBottom"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ bottom }"/>
+
+    <FieldSpecification
+      name="yconstraintBottom"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="1"
@@ -192,29 +143,37 @@
       setNames="{ bottom }"/>
 
     <FieldSpecification
-      name="ydisplacement"
-      objectPath="nodeManager"
-      fieldName="TotalDisplacement"
-      component="1"
-      scale="-0.1"
-      setNames="{ top }"/>
-
-    <FieldSpecification
-      name="zconstraintFront"
+      name="zconstraintBottom"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
+      setNames="{ bottom }"/>
+
+    <Traction
+      name="xload"
+      objectPath="faceManager"
+      direction="{ 1, 0, 0 }"
+      functionName="ForceTimeFunction"
+      scale="-1.0e0"
       setNames="{ front }"/>
 
-    <FieldSpecification
-      name="zconstraintRear"
-      objectPath="nodeManager"
-      fieldName="TotalDisplacement"
-      component="2"
-      scale="0.0"
-      setNames="{ rear }"/>
+    <Traction
+      name="zload"
+      objectPath="faceManager"
+      direction="{ 0, 0, 1 }"
+      functionName="ForceTimeFunction"
+      scale="-3.e0"
+      setNames="{ xpos_top }"/>
   </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="ForceTimeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 5.0, 10.0 }"
+      values="{ 0.0, 5.e0, -5.e0 }"/>
+  </Functions>
 
   <Outputs>
     <Silo

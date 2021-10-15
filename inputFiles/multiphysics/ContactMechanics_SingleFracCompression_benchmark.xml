@@ -10,7 +10,7 @@
   <Mesh>
     <PAMELAMeshGenerator
       name="CubeHex"
-      file="crackInPlane_ref.msh"/>
+      file="crackInPlane_benchmark.msh"/>
   </Mesh>
 
   <Geometry>
