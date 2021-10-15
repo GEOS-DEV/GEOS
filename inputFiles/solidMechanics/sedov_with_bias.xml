@@ -17,7 +17,15 @@
       zBias="{ 0.333, 0, 0, -0.333 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
-
+  <Solvers>
+    <SolidMechanics_LagrangianFEM
+      name="lagsolve"
+      strainTheory="1"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ shale }"/>
+  </Solvers>
   <!-- SPHINX_MESH_BIAS_END -->
   <Events
     maxTime="1.0e-3">
