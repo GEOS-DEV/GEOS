@@ -225,6 +225,10 @@ public:
                        localIndex const numRows,
                        localIndex const numCols ) override;
 
+  virtual void insert( arrayView1d< globalIndex const > const & rowIndices,
+                       arrayView1d< globalIndex const > const & colIndices,
+                       arrayView1d< real64 const > const & values ) override;
+
   virtual void apply( HypreVector const & src,
                       HypreVector & dst ) const override;
 
@@ -263,6 +267,9 @@ public:
                                HypreVector const & vecRight ) override;
 
   virtual void transpose( HypreMatrix & dst ) const override;
+
+  virtual void separateComponentFilter( HypreMatrix & dst,
+                                        localIndex const dofPerPoint ) const override;
 
   virtual real64 clearRow( globalIndex const row,
                            bool const keepDiag = false,
