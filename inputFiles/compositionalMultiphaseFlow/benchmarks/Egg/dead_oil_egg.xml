@@ -63,7 +63,7 @@
         referenceElevation="28"
         targetBHP="3.9e7"
         targetPhaseRate="1e6"
-        targetPhaseName="oil"/>   
+        targetPhaseName="oil"/>
 
       <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
 
@@ -155,7 +155,7 @@
   <Mesh>
     <PAMELAMeshGenerator
       name="mesh"
-      file="../../../../../../../GEOSXDATA/DataSets/Egg/egg.msh"
+      file="../../../../../GEOSXDATA/DataSets/Egg/egg.msh"
       fieldsToImport="{ PERM }"
       fieldNamesInGEOSX="{ rockPerm_permeability }"/>
 
@@ -223,7 +223,7 @@
       <Perforation
         name="producer2_perf7"
         distanceFromHead="26"/>
-    </InternalWell>   
+    </InternalWell>
 
     <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
 
@@ -638,7 +638,7 @@
 
     <WellElementRegion
       name="wellRegion2"
-      materialList="{ fluid, relperm }"/>   
+      materialList="{ fluid, relperm }"/>
 
     <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS_END -->
 

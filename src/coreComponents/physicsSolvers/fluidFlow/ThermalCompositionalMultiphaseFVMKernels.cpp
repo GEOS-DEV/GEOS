@@ -481,9 +481,9 @@ FluxKernel::
     // choose upstream cell
     localIndex const k_up = (potGrad >= 0) ? 0 : 1;
 
-    localIndex er_up  = seri[k_up];
-    localIndex esr_up = sesri[k_up];
-    localIndex ei_up  = sei[k_up];
+    localIndex const er_up  = seri[k_up];
+    localIndex const esr_up = sesri[k_up];
+    localIndex const ei_up  = sei[k_up];
 
     real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
 

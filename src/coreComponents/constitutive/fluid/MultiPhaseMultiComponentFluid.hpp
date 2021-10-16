@@ -137,6 +137,8 @@ private:
     typename FLASH::KernelWrapper m_flash;
   };
 
+  virtual integer getWaterPhaseIndex() const override final;
+
   /**
    * @brief Create an update kernel wrapper.
    * @return the wrapper

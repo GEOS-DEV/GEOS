@@ -13,7 +13,7 @@
     porosityModelName="rockPorosity"
     permeabilityModelName="rockPerm"
   />
-  <ExtendedDruckerPrager 
+  <ExtendedDruckerPrager
     name="rock"
     defaultDensity="2700"
     defaultBulkModulus="1.111e10"
@@ -24,7 +24,7 @@
     defaultDilationRatio="1.0"
     defaultHardening="0.01"
   />
-  <CompressibleSinglePhaseFluid 
+  <CompressibleSinglePhaseFluid
     name="water"
     defaultDensity="1000"
     defaultViscosity="0.001"
@@ -38,35 +38,35 @@
     name="rockPorosity"
     grainBulkModulus="1.0e27"
     defaultReferencePorosity="0.3"
-  />    
+  />
   <ConstantPermeability
     name="rockPerm"
     permeabilityComponents="{1.0e-20, 1.0e-20, 1.0e-20}"
-  /> 
+  />
 </Constitutive>
 <!-- SPHINX_WELLBORE_MATERIAL_END -->
 
 <!-- SPHINX_WELLBORE_ELEMENTREGIONS -->
 <ElementRegions>
-  <CellElementRegion 
-    name="Omega" 
-    cellBlocks="{cb1}" 
-    materialList="{ rock, water, porousRock, rockPerm, rockPorosity}"
+  <CellElementRegion
+    name="Omega"
+    cellBlocks="{cb1}"
+    materialList="{ water, porousRock}"
   />
 </ElementRegions>
 <!-- SPHINX_WELLBORE_ELEMENTREGIONS_END -->
 
 <!-- SPHINX_WELLBORE_POROMECHANICSSOLVER -->
 <Solvers gravityVector="{0.0, 0.0, 0.0}">
-<SinglePhasePoromechanics 
-  name="PoromechanicsSolver" 
+<SinglePhasePoromechanics
+  name="PoromechanicsSolver"
   solidSolverName="mechanicsSolver"
   fluidSolverName="SinglePhaseFlowSolver"
   porousMaterialNames="{porousRock}"
   logLevel="1"
   discretization="FE1"
   targetRegions="{Omega}">
-  <LinearSolverParameters 
+  <LinearSolverParameters
     solverType="direct"
     directParallel="0"
     logLevel="0"
@@ -78,8 +78,8 @@
 <!-- SPHINX_WELLBORE_POROMECHANICSSOLVER_END -->
 
 <!-- SPHINX_WELLBORE_MECHANICALSOLVER -->
-<SolidMechanics_LagrangianFEM 
-  name="mechanicsSolver" 
+<SolidMechanics_LagrangianFEM
+  name="mechanicsSolver"
   timeIntegrationOption="QuasiStatic"
   logLevel="1"
   discretization="FE1"
@@ -88,23 +88,23 @@
   <NonlinearSolverParameters
     newtonTol = "1.0e-5"
     newtonMaxIter = "15"
-  />  
+  />
 </SolidMechanics_LagrangianFEM>
 <!-- SPHINX_WELLBORE_MECHANICALSOLVER_END -->
 
 <!-- SPHINX_WELLBORE_SINGLEPHASEFVM -->
-<SinglePhaseFVM 
+<SinglePhaseFVM
   name="SinglePhaseFlowSolver"
   logLevel="1"
   discretization="singlePhaseTPFA"
   targetRegions="{Omega}"
   fluidNames="{ water }"
   solidNames="{ porousRock }"
-  permeabilityNames="{rockPerm}"> 
+  permeabilityNames="{rockPerm}">
   <NonlinearSolverParameters
     newtonTol = "1.0e-6"
     newtonMaxIter = "8"
-  /> 
+  />
 </SinglePhaseFVM>
 </Solvers>
 <!-- SPHINX_WELLBORE_SINGLEPHASEFVM_END -->
@@ -112,12 +112,12 @@
 <!-- SPHINX_WELLBORE_NUMERICAL -->
 <NumericalMethods>
   <FiniteElements>
-    <FiniteElementSpace 
+    <FiniteElementSpace
       name="FE1"
       order="1"/>
     </FiniteElements>
   <FiniteVolume>
-    <TwoPointFluxApproximation 
+    <TwoPointFluxApproximation
       name="singlePhaseTPFA"
       fieldName="pressure"
       coefficientName="permeability"
@@ -129,7 +129,7 @@
 
 <!-- SPHINX_WELLBORE_BC -->
 <FieldSpecifications>
-  <FieldSpecification 
+  <FieldSpecification
     name="initialPressure"
     initialCondition="1"
     setNames="{all}"
@@ -138,13 +138,13 @@
     scale="0e6"
   />
 
-  <FieldSpecification 
+  <FieldSpecification
     name="InnerFluidLoad"
     setNames="{ rneg }"
     objectPath="faceManager"
     fieldName="pressure"
     scale="10e6"
-    functionName="timeFunction"   
+    functionName="timeFunction"
   />
 </FieldSpecifications>
 <!-- SPHINX_WELLBORE_BC_END -->
@@ -153,14 +153,14 @@
 <!-- SPHINX_WELLBORE_EXECUTION -->
 <Events maxTime="80">
 
-<PeriodicEvent 
+<PeriodicEvent
   name="outputs"
   timeFrequency="80"
   targetExactTimestep="1"
   target="/Outputs/siloOutput"
 />
 
-<PeriodicEvent 
+<PeriodicEvent
   name="solverApplication0"
   forceDt="80"
   target="/Solvers/PoromechanicsSolver"
