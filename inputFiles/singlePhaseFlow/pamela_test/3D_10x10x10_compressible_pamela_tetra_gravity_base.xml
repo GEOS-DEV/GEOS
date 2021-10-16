@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 
 <Problem>
+  <!-- SPHINX_TUT_EXT_TETRA_SOLVERS -->
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="1"
       fluidNames="{ water }"
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
@@ -20,11 +20,7 @@
     </SinglePhaseFVM>
   </Solvers>
 
-  <Mesh>
-    <PAMELAMeshGenerator
-      name="CubeWedge"
-      file="cube_10x10x10_wedge.msh"/>
-  </Mesh>
+  <!-- SPHINX_TUT_EXT_TETRA_SOLVERS_END -->
 
   <Geometry>
     <Box
@@ -33,31 +29,8 @@
       xMax="{ 0.9, 11, 11 }"/>
   </Geometry>
 
-  <Events
-    maxTime="100">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1"
-      target="/Solvers/SinglePhaseFlow"/>
 
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="1"
-      target="/Outputs/siloWellPump"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="1e99"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"
-      endTime="-1"/>
-  </Events>
-
+  <!-- SPHINX_TUT_EXT_TETRA_NUM_METHODS -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
@@ -68,13 +41,17 @@
     </FiniteVolume>
   </NumericalMethods>
 
+  <!-- SPHINX_TUT_EXT_TETRA_NUM_METHODS_END -->
+  <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS -->
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ DEFAULT_WEDGE }"
+      cellBlocks="{ DEFAULT_TETRA }"
       materialList="{ water, rock }"/>
   </ElementRegions>
 
+  <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS_END -->
+  <!-- SPHINX_TUT_EXT_TETRA_CONSTITUTIVE -->
   <Constitutive>
     <CompressibleSinglePhaseFluid
       name="water"
@@ -104,12 +81,14 @@
       permeabilityComponents="{ 2.0e-14, 2.0e-14, 2.0e-14 }"/>
   </Constitutive>
 
+  <!-- SPHINX_TUT_EXT_TETRA_CONSTITUTIVE_END -->
+  <!-- SPHINX_TUT_EXT_TETRA_FIELDS -->
   <FieldSpecifications>
     <FieldSpecification
       name="Porosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/DEFAULT_WEDGE"
+      objectPath="ElementRegions/Domain/elementSubRegions/DEFAULT_TETRA"
       fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
@@ -117,7 +96,7 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/DEFAULT_WEDGE"
+      objectPath="ElementRegions/Domain/elementSubRegions/DEFAULT_TETRA"
       fieldName="pressure"
       scale="1e6"/>
 
@@ -129,6 +108,7 @@
       setNames="{ left }"/>
   </FieldSpecifications>
 
+  <!-- SPHINX_TUT_EXT_TETRA_FIELDS_END -->
   <Outputs>
     <Silo
       name="siloWellPump"/>
