@@ -124,15 +124,20 @@ public:
                                                arrayView1d< real64 > const & minElevation ) const;
 
 
-private:
+protected:
 
   /**
-   * @brief This function generates various discretization information for later use.
-   * @param domain the domain partition
+   * @brief Increment the cumulative flux from each aquifer
+   * @param[in] time the time at the beginning of the time step
+   * @param[in] dt the time step size
+   * @param[in] domain the domain partition
+   *
+   * For now this function is here because it can be used for both single-phase flow and multiphase flow
+   * This may have to be revisited when aquifer BC is implemented for hybrid FVM
    */
-
-
-protected:
+  virtual void saveAquiferConvergedState( real64 const & time,
+                                          real64 const & dt,
+                                          DomainPartition & domain );
 
   virtual void precomputeData( MeshLevel & mesh );
 
@@ -162,7 +167,13 @@ protected:
 
   real64 m_fluxEstimate;
 
+  /// views into pressure fields
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
+
   /// views into constant data fields
+
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_volume;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_gravCoef;

@@ -143,8 +143,8 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
     # depends_on('trilinos +force-new-lapack', when='+trilinos +essl')
 
-    depends_on('hypre@2.20.1 +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
-    depends_on('hypre@2.20.1 +cuda +shared +superlu-dist +mpi +openmp +unified-memory +cusparse', when='+hypre-cuda')
+    depends_on('hypre@2.20.300 +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
+    depends_on('hypre@2.20.300 +cuda +shared +superlu-dist +mpi +openmp +unified-memory +cusparse', when='+hypre-cuda')
  
     petsc_build_options = '+shared +mpi'
     petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
@@ -307,7 +307,7 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write(cmake_cache_entry('MPI_C_COMPILER', spec['mpi'].mpicc))
             cfg.write(cmake_cache_entry('MPI_CXX_COMPILER', spec['mpi'].mpicxx))
 
-            if sys_type == 'linux-rhel7-ppc64le':
+            if sys_type in ('linux-rhel7-ppc64le', 'linux-rhel8-ppc64le'):
                 cfg.write(cmake_cache_option('ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC', True))
                 if socket.gethostname().rstrip('1234567890') == "lassen":
                     cfg.write(cmake_cache_entry('MPIEXEC', 'lrun'))

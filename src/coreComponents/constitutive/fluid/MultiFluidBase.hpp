@@ -61,8 +61,8 @@ public:
   integer numFluidComponents() const { return LvArray::integerConversion< integer >( m_componentNames.size() ); }
 
   /**
-   * @param ic component index
-   * @return name of ic-th fluid component
+   * @brief Getter for the fluid component names
+   * @return an array storing the component names
    */
   arrayView1d< string const > componentNames() const { return m_componentNames; }
 
@@ -72,10 +72,16 @@ public:
   integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
 
   /**
-   * @param ip phase index
-   * @return name of ip-th fluid phase
+   * @brief Getter for the fluid phase names
+   * @return an array storing the phase names
    */
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+
+  /**
+   * @brief Getter for the water phase index
+   * @return the water phase index
+   */
+  virtual integer getWaterPhaseIndex() const = 0;
 
   /**
    * @brief Get the mass flag.
