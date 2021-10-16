@@ -418,19 +418,28 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
 
 HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix const & mat )
 {
-  Stopwatch timer( m_componentFilterTime );
   if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_params.mgr.separateComponents )
   {
     GEOSX_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "MGR preconditioner requires a DofManager instance" );
     HypreMatrix Pu;
     HypreMatrix Auu;
-    mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
-    mat.multiplyPtAP( Pu, Auu );
-    LAIHelperFunctions::separateComponentFilter( Auu, m_precondMatrix, m_params.dofsPerNode );
+    {
+      Stopwatch timer( m_makeRestrictorTime );
+      mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
+    }
+    {
+      Stopwatch timer( m_computeAuuTime );
+      mat.multiplyPtAP( Pu, Auu );
+    }
+    {
+      Stopwatch timer( m_componentFilterTime );
+      Auu.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
+    }
   }
   else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg && m_params.amg.separateComponents )
   {
-    LAIHelperFunctions::separateComponentFilter( mat, m_precondMatrix, m_params.dofsPerNode );
+    Stopwatch timer( m_componentFilterTime );
+    mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
     return m_precondMatrix;
   }
   return mat;
@@ -455,7 +464,7 @@ void HyprePreconditioner::setup( Matrix const & mat )
     // Perform setup of the MGR mechanics F-solver with SDC matrix, if used
     if( m_mgrData && m_mgrData->mechSolver.ptr )
     {
-      GEOSX_LAI_CHECK_ERROR( m_mgrData->mechSolver.setup( m_mgrData->mechSolver.ptr, m_precondMatrix.unwrapped(), nullptr, nullptr ) );
+//      GEOSX_LAI_CHECK_ERROR( m_mgrData->mechSolver.setup( m_mgrData->mechSolver.ptr, m_precondMatrix.unwrapped(), nullptr, nullptr ) );
     }
 
     // Perform setup of the main solver

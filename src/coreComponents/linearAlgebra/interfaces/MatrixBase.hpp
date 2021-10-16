@@ -489,6 +489,17 @@ protected:
                        localIndex const numRows,
                        localIndex const numCols ) = 0;
 
+  /**
+   * @brief Insert values stored in 3 linear vectors.
+   * @param rowIndices Array of global row indices
+   * @param colIndices Array of global column indices
+   * @param values Array of values
+   *
+   */
+  virtual void insert( arrayView1d< globalIndex const > const & rowIndices,
+                       arrayView1d< globalIndex const > const & colIndices,
+                       arrayView1d< real64 const > const & values ) = 0;
+
   ///@}
 
   /**
@@ -634,6 +645,17 @@ protected:
                      real64 const beta,
                      Vector & y,
                      bool useTranspose = false ) const = 0;
+
+  /**
+   * @brief Apply a separate component approximation (filter) to this matrix.
+   * @tparam MATRIX the type of matrices
+   * @param dst         the target (filtered) matrix
+   * @param dofPerPoint number of degrees-of-freedom per node
+   */
+  virtual void separateComponentFilter( MATRIX & dst,
+                                        localIndex const dofPerPoint ) const = 0;
+
+
 
   /**
    * @brief Multiply all elements by scalingFactor.

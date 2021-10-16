@@ -160,8 +160,6 @@ void HypreExport::importVector( real64 const * values,
                                                       partitioning,
                                                       &parVector ) );
 
-      // remove partinioning ownership for parVector to avoid deallocation errors
-      GEOSX_LAI_CHECK_ERROR( hypre_ParVectorSetPartitioningOwner( parVector, 0 ) );
 
       // copy parVector local part over to the output vector
       HYPRE_Real * const parVectorData = hypre_VectorData( hypre_ParVectorLocalVector( parVector ) );

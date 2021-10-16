@@ -223,7 +223,7 @@ std::unordered_map< std::type_index, std::size_t > const &
 getTypeIndexMap( TypeList< Ts... >,
                  std::index_sequence< Is... > )
 {
-  static std::unordered_map< std::type_index, std::size_t > const result{ { typeid( Ts ), Is } ... };
+  static std::unordered_map< std::type_index, std::size_t > const result( { { typeid( Ts ), Is } ... } );
   return result;
 }
 

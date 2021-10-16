@@ -95,9 +95,9 @@ static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< geosx::g
 static_assert( std::is_same< HYPRE_Real, geosx::real64 >::value,
                "HYPRE_Real and geosx::real64 must be the same type" );
 
-#ifndef HYPRE_NO_GLOBAL_PARTITION
-static_assert( false, "Hypre must be built with HYPRE_NO_GLOBAL_PARTITION" )
-#endif
+//#ifndef HYPRE_NO_GLOBAL_PARTITION
+//static_assert( false, "Hypre must be built with HYPRE_NO_GLOBAL_PARTITION" )
+//#endif
 
 /**
  * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt
