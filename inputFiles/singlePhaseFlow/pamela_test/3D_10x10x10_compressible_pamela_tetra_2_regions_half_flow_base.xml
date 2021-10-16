@@ -5,11 +5,12 @@
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
+      logLevel="1"
       fluidNames="{ water }"
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain }">
+      targetRegions="{ Bot }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
@@ -19,57 +20,33 @@
     </SinglePhaseFVM>
   </Solvers>
 
-  <Mesh>
-    <PAMELAMeshGenerator
-      name="CubePyramid"
-      file="cube_10x10x10_pyramid.msh"/>
-  </Mesh>
-
   <Geometry>
     <Box
-      name="left"
-      xMin="{ -1, -1, -1 }"
-      xMax="{ 0.9, 11, 11 }"/>
+      name="midplane"
+      xMin="{ -0.1, -0.1, 4.9 }"
+      xMax="{ 10.1, 10.1, 5.1 }"/>
   </Geometry>
-
-  <Events
-    maxTime="100">
-    <!-- This event is applied every cycle, and overrides the
-    solver time-step request -->
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="1"
-      target="/Solvers/SinglePhaseFlow"/>
-
-    <!-- This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="1"
-      target="/Outputs/siloWellPump"/>
-
-    <PeriodicEvent
-      name="restarts"
-      timeFrequency="1e99"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"
-      endTime="-1"/>
-  </Events>
 
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"
+        targetRegions="{ Bot }"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
     <CellElementRegion
-      name="Domain"
-      cellBlocks="{ DEFAULT_PYRAMID }"
+      name="Top"
+      cellBlocks="{ Top_TETRA }"
+      materialList="{ }"/>
+
+    <CellElementRegion
+      name="Bot"
+      cellBlocks="{ Bottom_TETRA }"
       materialList="{ water, rock }"/>
   </ElementRegions>
 
@@ -104,32 +81,32 @@
 
   <FieldSpecifications>
     <FieldSpecification
-      name="Porosity"
+      name="BotPorosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/DEFAULT_PYRAMID"
+      objectPath="ElementRegions/Bot/Bottom_TETRA"
       fieldName="rockPorosity_referencePorosity"
       scale="0.05"/>
 
     <FieldSpecification
-      name="initialPressure"
+      name="BotInitialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Domain/DEFAULT_PYRAMID"
+      objectPath="ElementRegions/Bot/Bottom_TETRA"
       fieldName="pressure"
       scale="1e6"/>
 
     <FieldSpecification
-      name="boundaryPressure"
+      name="MidplanePressure"
+      setNames="{ midplane }"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="1.1e6"
-      setNames="{ left }"/>
+      scale="2e6"/>
   </FieldSpecifications>
 
   <Outputs>
     <Silo
-      name="siloWellPump"/>
+      name="siloOutput"/>
 
     <Restart
       name="restartOutput"/>
