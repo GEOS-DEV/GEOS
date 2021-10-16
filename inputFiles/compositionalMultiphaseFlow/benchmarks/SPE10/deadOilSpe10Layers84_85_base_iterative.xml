@@ -33,9 +33,10 @@
   </Solvers>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->  
 
-  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->  
+  <!-- TODO: increase max time once linear solver is fixed -->
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->
   <Events
-    maxTime="8e7">
+    maxTime="5e7">
 
    <PeriodicEvent
       name="outputs"
@@ -171,7 +172,7 @@
       objectPath="ElementRegions/reservoir/block"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.9999"/>
+      scale="0.9995"/>
     <FieldSpecification
       name="initialComposition_water"
       initialCondition="1"
@@ -179,7 +180,7 @@
       objectPath="ElementRegions/reservoir/block"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.0001"/>
+      scale="0.0005"/>
     
     <SourceFlux
       name="sourceTerm"
@@ -200,14 +201,14 @@
       objectPath="ElementRegions/reservoir/block"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.9999"/>
+      scale="0.9995"/>
     <FieldSpecification
       name="sinkComposition_water"
       setNames="{ sink1, sink2, sink3, sink4 }"
       objectPath="ElementRegions/reservoir/block"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.0001"/>
+      scale="0.0005"/>
 
   </FieldSpecifications>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
