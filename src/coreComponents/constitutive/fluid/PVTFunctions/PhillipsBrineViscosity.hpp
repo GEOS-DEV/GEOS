@@ -150,7 +150,6 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
                     dPhaseComposition_dGlobalCompFraction,
                     useMass );
 
-  value = m_coef0 + m_coef1 * temperature;
   compute( pressure, temperature, phaseComposition, value, useMass );
   dValue_dPressure = 0.0;
   dValue_dTemperature = m_coef1;
