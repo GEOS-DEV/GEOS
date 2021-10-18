@@ -78,12 +78,13 @@ constexpr char const includedFileTag[] = "File";
 /**
  * @brief Function to add xml nodes from included files.
  * @param targetNode the node for which to look for included children specifications
+ * @param level include tree level used to detect circular includes
  *
  * This function looks for a "Included" node under the targetNode, loops over all subnodes under the "Included"
  * node, and then parses the file specified in those subnodes taking all the nodes in the file and adding them to
  * the targetNode.
  */
-void addIncludedXML( xmlNode & targetNode );
+void addIncludedXML( xmlNode & targetNode, int level = 0 );
 
 /**
  * @brief Function to handle multiple input xml files.

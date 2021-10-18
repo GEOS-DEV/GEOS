@@ -102,7 +102,7 @@
     <CellElementRegion
       name="Omega"
       cellBlocks="{ cb1 }"
-      materialList="{ rock, water, porousRock, rockPerm, rockPorosity }"/>
+      materialList="{ water, porousRock }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -143,7 +143,7 @@
 
   <!-- SPHINX_BoundaryConditions -->
   <FieldSpecifications>
-    <FieldSpecification 
+    <FieldSpecification
       name="initialPorosity"
       initialCondition="1"
       setNames="{all}"
@@ -195,11 +195,11 @@
 
   <!-- SPHINX_Function -->
   <!--Functions>
-    <TableFunction 
+    <TableFunction
       name="timeFunction"
       inputVarNames="{time}"
       coordinates="{0.0, 0.1, 1e6}"
-      values="{0.0, 1.0, 1.0}" 
+      values="{0.0, 1.0, 1.0}"
     />
   </Functions-->
   <!-- SPHINX_FunctionEnd -->
