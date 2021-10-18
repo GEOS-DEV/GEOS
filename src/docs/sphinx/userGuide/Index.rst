@@ -15,6 +15,8 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/constitutive/docs/Constitutive
 
+   /coreComponents/fieldSpecification/docs/FieldSpecification
+   
    /coreComponents/events/docs/EventManager
 
    /coreComponents/events/docs/TasksManager
