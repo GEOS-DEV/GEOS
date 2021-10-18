@@ -7,31 +7,34 @@ Aquifer Boundary Condition
 Overview
 ======================
 
-This type of boundary condition can be used to simulate flow between the computational domain (referred to as the reservoir in the following sections) and one or multiple aquifer(s).
-This is done by placing one or more **Aquifer** tag(s) in the **FieldSpecifications** block of the XML input file.
+Aquifer boundary conditions allow simulating flow between the computational domain (the reservoir) and one or multiple aquifers.
+In GEOSX, we use a Carter-Tracy aquifer model parameterized in **Aquifer** tags of the **FieldSpecifications** XML input file blocks.
 
 Aquifer model
 ======================
 
-An aquifer :math:`A` provides a volumetric flow rate :math:`q^A_f` where :math:`f` is the index of a face connecting this aquifer to the reservoir.
-In GEOSX, this volumetric flow rate is computed using the Carter-Tracy model described in the next section.
+An aquifer :math:`A` is a source of volumetric flow rate :math:`q^A_f`, where :math:`f` is the index of a face connecting the aquifer and the reservoir.
+We use a Carter-Tracy model in GEOSX to compute this volumetric flow rate.
 
-Once :math:`q^A_f` is computed, the aquifer mass contribution, :math:`F^A_f`, is assembled and  added to the mass conservation equations of the reservoir cell :math:`K` connected to face :math:`f`.
+Once :math:`q^A_f` is computed, the aquifer mass contribution :math:`F^A_f` is assembled and added to the mass conservation equations of the reservoir cell :math:`K` connected to face :math:`f`.
 The computation of :math:`F^A_f` depends on the sign of the volumetric flow rate :math:`q^A_f`.
-Specifically, the upwinding procedure is done as follows.
-If the sign of :math:`q^A_f` indicates that flow is from the aquifer into reservoir cell :math:`K`, the aquifer contribution to the mass/molar conservation equation of component :math:`c` is computed as:
+
+The upwinding procedure is done as follows:
+if the sign of :math:`q^A_f` indicates that flow goes from the aquifer to the reservoir, the aquifer contribution to the conservation equation of component :math:`c` is:
 
 .. math::
    F^A_{f,c} = \rho^A_w y^A_{w,c} q^A_f
 
 where :math:`\rho^A_w` is the aquifer mass/molar water phase density and :math:`y^A_{w,c}` is the aquifer mass/molar fraction of component :math:`c` in the water phase.
 We assume that the aquifer is fully saturated with the water phase.
-If the sign of :math:`q^A_f` indicates that flow is from reservoir cell :math:`K` to the aquifer, the aquifer contribution to the mass/molar conservation equation of component :math:`c` is computed as:
+
+If the sign of :math:`q^A_f` indicates that flow goes from the reservoir into the aquifer, the aquifer contribution to the mass/molar conservation equation of component :math:`c` is computed as:
 
 .. math::
    F^A_{f,c} = \sum_{\ell = 1}^{n_p} ( \rho_{\ell} S_{\ell} y_{\ell,c} )_K q^A_f
 
 where :math:`n_p` is the number of fluid phases, :math:`(\rho_{\ell})_K` is the reservoir cell mass/molar density of phase :math:`\ell`, :math:`(S_{\ell})_K` is the reservoir cell saturation of phase :math:`\ell`, and :math:`(y_{\ell,c})_K` is the reservoir cell mass/molar fraction of component :math:`c` in phase :math:`\ell`.
+
 In the next section, we review the computation of the aquifer volumetric flow rate :math:`q^A_f`.   
 
 Carter-Tracy analytical aquifer
@@ -41,7 +44,9 @@ The Carter-Tracy aquifer model is a simplified approximation to a fully transien
 (see R. D. Carter and G. W. Tracy,
 `An improved method for calculating water influx<https://onepetro.org/TRANS/article/219/01/415/162367/An-Improved-Method-for-Calculating-Water-Influx>`__,
 Transactions of the AIME, 1960).
-Although the theory has been developed for a radially symmetric reservoir surrounded by an annular aquifer, the method covers any flow geometry, as long as the dimensionless pressure can be expressed as a function of dimensionless time for a given aquifer geometry.
+
+Although the theory was developed for a radially symmetric reservoir surrounded by an annular aquifer, this method applies to any geometry where the dimensionless pressure can be expressed as a function of a dimensionless time.
+
 The two main parameters that govern the behavior of the aquifer are the time constant and the influx constant.
 These two parameters are precomputed at the beginning of the simulation and are later used to compute the aquifer volumetric flow rate. 
 
@@ -49,12 +54,14 @@ Time constant
 --------------
 
 The time constant, :math:`T_c`, has the dimension of time (in seconds).
+
 It is computed as:
 
 .. math::
    T_c = \frac{\mu^A_w \phi^A c_t^A (r^A_0)^2}{k^A} 
 
 where :math:`\mu^A_w` is the aquifer water phase viscosity, :math:`\phi^A` is the aquifer porosity, :math:`c_t^A` is the aquifer total compressibility (fluid and rock), :math:`r^A_0` is the inner radius of the aquifer, and :math:`k^A` is the aquifer permeability.     
+
 The time constant is used to convert time (:math:`t`, in seconds) into dimensionless time, :math:`t_D` using the following expression:
 
 .. math::
@@ -64,6 +71,7 @@ Influx constant
 ----------------
 
 The influx constant, :math:`\beta`, has the dimension of :math:`m^3.Pa^{-1}`.
+
 It is computed as:
 
 .. math::
@@ -74,13 +82,15 @@ where :math:`h^A` is the aquifer thickness, :math:`\theta^A` is the aquifer angl
 Aquifer volumetric flow rate
 ----------------------------
 
-Let us consider now reservoir cell :math:`K` connected to aquifer :math:`A` through face :math:`f`, and the corresponding aquifer volumetric flow rate :math:`q^A_f` over time interval :math:`[ t^n, t^{n+1}]`.
+Let us consider a reservoir cell :math:`K` connected to aquifer :math:`A` through face :math:`f`, and the corresponding aquifer volumetric flow rate :math:`q^A_f` over time interval :math:`[ t^n, t^{n+1}]`.
+
 The computation of :math:`q^A_f` proceeds as follows:
 
 .. math::
    q^A_f = \alpha^A_f ( a - b ( p_K( t^{n+1} ) - p_K( t^n ) ) )
 
 where :math:`\alpha^A_f` is the area fraction of face `f`, and :math:`p_K( t^{n+1} )` and :math:`p_K( t^n )` are the pressures in cell :math:`K` at time :math:`t^{n+1}` and time :math:`t^n`, respectively.
+
 The area fraction of face :math:`f` with area :math:`|f|` is computed as:
 
 .. math::
@@ -97,8 +107,9 @@ and the coefficient :math:`b` is given by the formula:
    b = \frac{1}{T_c} \frac{\beta}{ P_D( t^{n+1}_D ) - t^{n+1}_D P^{\prime}_D( t^{n+1}_D ) }
 
 where :math:`\Delta \Phi^A_K( t^n_D ) := p^A - p_K( t^n ) - \rho^A_w g ( z_K - z^A )` is the potential difference between the reservoir cell and the aquifer at time :math:`t^n`, :math:`P_D( t_D )` is the dimensionless pressure evaluated at dimensionless time :math:`t_D`, :math:`P^{\prime}_D( t_D )` is the derivative of the dimensionless pressure with respect to dimensionless time, evaluated at dimensionless time :math:`t_D`.
-The functional relationship of dimensionless pressure, :math:`P_D` as a function of dimensionless time is provided by the user (a default table is also available, see below).
-The cumulative aquifer flow rate, :math:`W^A( t^n_D )`, is an explicit quantity (i.e., evaluated at :math:`t^n_D`) updated at the end of each converged time step using the formula:
+
+The functional relationship of dimensionless pressure, :math:`P_D`, as a function of dimensionless time is provided by the user. A default table is also available, as shown below.
+The cumulative aquifer flow rate, :math:`W^A( t^n_D )`, is an explicit quantity evaluated at :math:`t^n_D` and updated at the end of each converged time step using the formula:
 
 .. math::
    W^A( t^{n+1}_D ) = W^A( t^{n}_D ) + ( t^{n+1} - t^{n} ) \sum_{f \in A} q^A_f
@@ -138,10 +149,10 @@ The main Carter-Tracy parameters and the expected units are listed below:
 
 * `pressureInfluenceFunctionName`: the name of the table providing the dimensionless pressure as a function of dimensionless time. This table must be defined as a **TableFunction** in the **Functions** block of the XML file. If this optional parameter is omitted, a default pressure influence table is used. 
   
-* `setNames`: the names of the face sets on which the boundary condition is applied.
+* `setNames`: the names of the face sets on which the aquifer boundary condition is applied.
 
 .. note::
-   Following the GEOSX convention, the z coordinate is increasing going upward. This convention must be taken into account when providing the `aquiferElevation` (in other words, this is not a depth).  
+   Following the GEOSX convention, the z-coordinate is increasing upward. This convention must be taken into account when providing the `aquiferElevation`. In other words, the z-value is not a depth.
 
 The full list of parameters is provided below:
 
@@ -150,9 +161,9 @@ The full list of parameters is provided below:
 Examples
 ===============
 
-The setup of the **Aquifer** boundary condition requires the addition of two main components to the XML input file.
+Setting up the **Aquifer** boundary condition requires two additional pieces of information in the XML input file: a set of faces to specify where the aquifer boundary conditions will apply, and an aquifer tag that specifies the physical characteristics of the aquifer and determines how the boundary condition is applied.
 
-1) In the **Geometry** block of the XML file, it is necessary to define a **Box** that selects the face sets on which the boundary condition is applied. The faces must be fully enclosed in the **Box** to be selected by GEOSX. This is done using the following XML code:
+1) To specifiy a set of faces: on simple grids, in the **Geometry** block of the XML file, we can define a **Box** that selects and assigns a name to a set of faces. To be included in a set, the faces must be fully enclosed in the **Box** (all vertices of a face must be inside the box for the face to be included to the set). The name of this box is a user-defined string, and it will be used in the aquifer tag to locate the face set. Here is an example of XML code to create such a face set from a box:
 
 .. code-block:: xml   
 
@@ -166,9 +177,11 @@ The setup of the **Aquifer** boundary condition requires the addition of two mai
    </Geometry>
    
 .. note::
-   It is important to keep in mind that this step aims at capturing *faces*, and not *cells*. Also, the user must make sure that the faces selected with the **Box** are on the mesh boundary, and are not adjacent to the same cell(s). For complex externally generated meshes imported using the **PAMELAMeshGenerator**, using a **Box** to perform the face selection task may be challenging, and we recommend instead to use a tagged ``PhysicalEntity`` in the .msh file to select aquifer faces.
+   This step captures *faces*, not *cells*. For now, the user must ensure that the box actually contains faces (GEOSX will proceed even if the face set is empty).
+   
+For more complex meshes, sch as those imported using the **PAMELAMeshGenerator**, using a **Box** to perform a face selection is challenging. We recommend using a tagged ``PhysicalEntity`` in the .msh file instead. This physical entity will be used to locate the face set.
 
-2) In the **FieldSpecifications** block of the XML file, the user must include an **Aquifer** tag. For single-phase flow, the aquifer definition looks like:
+2) To specify the aquifer characteristics: in the **FieldSpecifications** block of the XML file, we include an **Aquifer** tag. For single-phase flow, the aquifer definition looks like:
 
 .. code-block:: xml
 
@@ -190,7 +203,7 @@ The setup of the **Aquifer** boundary condition requires the addition of two mai
      ...
    </FieldSpecifications>     
 		
-For compositional multiphase flow, the user must include additional parameters to specify the water composition, and can also control the behavior of the aquifer with ``allowAllPhasesIntoAquifer``. This is illustrated below for the CO2-brine fluid model:
+For compositional multiphase flow, the user must include additional parameters to specify the water composition. We have additional influx controls over the aquifer with ``allowAllPhasesIntoAquifer``. This is illustrated below for the CO2-brine fluid model:
 
 .. code-block:: xml
 
