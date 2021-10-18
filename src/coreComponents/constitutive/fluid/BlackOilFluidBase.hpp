@@ -119,6 +119,8 @@ protected:
     WaterParams m_waterParams;
   };
 
+  virtual integer getWaterPhaseIndex() const override final;
+
   virtual void postProcessInput() override;
 
   virtual void initializePostSubGroups() override;

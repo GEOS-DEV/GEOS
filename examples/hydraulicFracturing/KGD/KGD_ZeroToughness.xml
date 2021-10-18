@@ -18,7 +18,7 @@
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
+      targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
       <NonlinearSolverParameters
@@ -27,7 +27,8 @@
         lineSearchMaxCuts="3"/>
       <LinearSolverParameters
         solverType="gmres"
-        preconditionerType="amg"/>
+        preconditionerType="mgr"
+        logLevel="0"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
@@ -76,7 +77,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
+      materialList="{ water, rock, fractureFilling }"/>
   </ElementRegions>
 
   <Constitutive>

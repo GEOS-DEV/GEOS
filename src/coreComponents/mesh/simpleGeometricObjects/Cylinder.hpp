@@ -78,6 +78,8 @@ private:
   /// Radius of the cylinder
   real64 m_radius = 0.0;
 
+  real64 m_innerRadius = 0.0;
+
   /// @cond DO_NOT_DOCUMENT
 
   struct viewKeyStruct
@@ -85,6 +87,7 @@ private:
     static constexpr char const * point1String() { return "point1"; }
     static constexpr char const * point2String() { return "point2"; }
     static constexpr char const * radiusString() { return "radius"; }
+    static constexpr char const * innerRadiusString() { return "innerRadius"; }
   };
 
   /// @endcond

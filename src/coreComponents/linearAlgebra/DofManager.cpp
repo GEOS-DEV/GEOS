@@ -1487,6 +1487,10 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
   restrictor.createWithLocalSize( rowSize, colSize, 1, comm );
   restrictor.open();
 
+  array1d< globalIndex > rows;
+  array1d< globalIndex > cols;
+  array1d< real64 > values;
+
   for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
   {
     FieldDescription const & fieldNew = fieldsSelected[k];
@@ -1498,21 +1502,35 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
     CompMask const mask = selection[k].mask;
     localIndex const numLocalNodes = fieldNew.numLocalDof / fieldNew.numComponents;
 
+
+    rows.resize( numLocalNodes*mask.size() );
+    cols.resize( numLocalNodes*mask.size() );
+    values.resize( numLocalNodes*mask.size() );
+
     for( localIndex i = 0; i < numLocalNodes; ++i )
     {
       integer newComp = 0;
       for( integer const oldComp : mask )
       {
-        restrictor.insert( fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp ),
-                           fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp ),
-                           1.0 );
+        globalIndex const row = fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp );
+        globalIndex const col = fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp );
+
+        rows( i*mask.size() + newComp ) = row;
+        cols( i*mask.size() + newComp ) = col;
+        values[ i*mask.size() + newComp ] = 1.0;
         ++newComp;
       }
     }
-  }
 
+    restrictor.insert( rows.toViewConst(),
+                       cols.toViewConst(),
+                       values.toViewConst() );
+
+
+  }
   restrictor.close();
 }
+
 
 void DofManager::printFieldInfo( std::ostream & os ) const
 {
