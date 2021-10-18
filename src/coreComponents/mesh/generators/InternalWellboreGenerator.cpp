@@ -503,16 +503,6 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
       }
     }
   }
-  /*
-     std::cout<<"xnegNodes: "<<xnegNodes<<std::endl;
-     std::cout<<"xposNodes: "<<xposNodes<<std::endl;
-     std::cout<<"ynegNodes: "<<ynegNodes<<std::endl;
-     std::cout<<"yposNodes: "<<yposNodes<<std::endl;
-     std::cout<<"rnegNodes: "<<rnegNodes<<std::endl;
-     std::cout<<"rposNodes: "<<rposNodes<<std::endl;
-     std::cout<<"tnegNodes: "<<tnegNodes<<std::endl;
-     std::cout<<"tposNodes: "<<tposNodes<<std::endl;
-   */
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalWellboreGenerator, string const &, Group * const )

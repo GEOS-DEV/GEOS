@@ -30,7 +30,6 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "finiteVolume/ProjectionEDFMHelper.hpp"
-#include "mainInterface/GeosxState.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 #if defined( __INTEL_COMPILER )
