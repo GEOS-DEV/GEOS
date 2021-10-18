@@ -21,6 +21,8 @@
 
 #include "PVTFunctionBase.hpp"
 
+#include "functions/TableFunction.hpp"
+
 namespace geosx
 {
 
@@ -35,19 +37,19 @@ class EzrokhiBrineViscosityUpdate final : public PVTFunctionBaseUpdate
 public:
 
   EzrokhiBrineViscosityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
+                               TableFunction const & waterViscosityTable,
                                integer const CO2Index,
                                integer const waterIndex,
                                real64 const coef0,
                                real64 const coef1,
-                               real64 const coef2,
-                               real64 const coef3 )
+                               real64 const coef2 )
     : PVTFunctionBaseUpdate( componentMolarWeight ),
+    m_waterViscosityTable( waterViscosityTable.createKernelWrapper()),
     m_CO2Index( CO2Index ),
     m_waterIndex ( waterIndex ),
     m_coef0( coef0 ),
     m_coef1( coef1 ),
-    m_coef2( coef2 ),
-    m_coef3( coef3 )
+    m_coef2( coef2 )
   {}
 
   template< int USD1 >
@@ -75,9 +77,13 @@ public:
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
   {
     PVTFunctionBaseUpdate::move( space, touch );
+    m_waterViscosityTable.move( space, touch );
   }
 
 protected:
+
+  /// Table with water viscosity tabulated as a function (T)
+  TableFunction::KernelWrapper m_waterViscosityTable;
 
   /// Index of the CO2 phase
   integer m_CO2Index;
@@ -90,8 +96,6 @@ protected:
   real64 m_coef1;
 
   real64 m_coef2;
-
-  real64 m_coef3;
 
 };
 
@@ -129,6 +133,10 @@ private:
 
   void makeCoefficients( string_array const & inputPara );
 
+  /// Table with water viscosity tabulated as a function (T)
+  TableFunction const * m_waterViscosityTable;
+
+
   /// Index of the CO2 phase
   integer m_CO2Index;
 
@@ -141,8 +149,6 @@ private:
 
   real64 m_coef2;
 
-  real64 m_coef3;
-
 };
 
 template< int USD1 >
@@ -154,8 +160,10 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
                                            bool useMass ) const
 {
   GEOSX_UNUSED_VAR( pressure, useMass );
-  value = m_coef0 + (m_coef1  + temperature * ( m_coef2 + m_coef3 * temperature ) ) * phaseComposition[m_CO2Index];
-  value = pow( 10, value );
+  real64 const waterVisc = m_waterViscosityTable.compute( &temperature );
+
+  value = ( m_coef0  + temperature * ( m_coef1 + m_coef2 * temperature ) ) * phaseComposition[m_CO2Index];
+  value = waterVisc * pow( 10, value );
 }
 
 template< int USD1, int USD2, int USD3, int USD4 >
@@ -173,13 +181,24 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
                                            bool useMass ) const
 {
   GEOSX_UNUSED_VAR( pressure, useMass );
-  real64 const coefPhaseComposition = m_coef1 + temperature * ( m_coef2 + m_coef3 * temperature );
-  value = m_coef0 + coefPhaseComposition * phaseComposition[m_CO2Index];
-  value = pow( 10, value );
-  real64 const dValue_dPhaseComp = log( 10 ) * value * coefPhaseComposition;
-  dValue_dPressure = dValue_dPhaseComp * dPhaseComposition_dPressure[m_CO2Index];
-  dValue_dTemperature = dValue_dPhaseComp * dPhaseComposition_dTemperature[m_CO2Index] +
-                        log( 10 ) * value * ( m_coef2 + 2 * m_coef3 * temperature) * phaseComposition[m_CO2Index];
+  real64 waterVisc_dTemperature;
+  real64 const waterVisc = m_waterViscosityTable.compute( &temperature, &waterVisc_dTemperature );
+
+  real64 const coefPhaseComposition = m_coef0 + temperature * ( m_coef1 + m_coef2 * temperature );
+  real64 const exponent = coefPhaseComposition * phaseComposition[m_CO2Index];
+
+  real64 const exponent_dPressure = coefPhaseComposition * dPhaseComposition_dPressure[m_CO2Index];
+  real64 const exponent_dTemperature = coefPhaseComposition * dPhaseComposition_dTemperature[m_CO2Index] +
+                                       ( m_coef1 + 2 * m_coef2 * temperature) * phaseComposition[m_CO2Index];
+  real64 const exponent_dPhaseComp = coefPhaseComposition;
+  real64 const exponentPowered = pow( 10, exponent );
+
+  value = waterVisc * exponentPowered;
+  real64 const dValueCoef = log( 10 ) * value;
+
+  real64 const dValue_dPhaseComp = dValueCoef * exponent_dPhaseComp;
+  dValue_dPressure = dValueCoef * exponent_dPressure;
+  dValue_dTemperature = dValueCoef * exponent_dTemperature + waterVisc_dTemperature * exponentPowered;
 
   dValue_dGlobalCompFraction[m_CO2Index] = dValue_dPhaseComp * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_CO2Index];
   dValue_dGlobalCompFraction[m_waterIndex] = dValue_dPhaseComp * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_waterIndex];
