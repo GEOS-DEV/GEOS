@@ -216,7 +216,7 @@ A good agreement between GEOSX results and analytical solutions is shown in the 
 			X  = self.X
 		
 			halfLength = 0.9324 * X**( -1.0/6.0 ) * ( ( Ep * Q0**3.0 ) / ( 12.0 * mu ) )**( 1.0/6.0 ) * t**( 2.0/3.0 )
-			print( 0.9324 * X**( -1.0/6.0 ) * ( ( Ep * Q0**3.0 ) / ( 12.0 * mu ) )**( 1.0/6.0 ) )
+
 			inletAperture = np.sqrt( 0.5 * X**( 0.5 ) * ( 12.0 * mu * Q0 / Ep )**( 0.5 ) * halfLength )
 
 			inletPressure = 0.125 * X**( 0.5 ) * (12.0 * mu * Q0 * Ep)**( 0.5 ) / inletAperture

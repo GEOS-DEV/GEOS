@@ -11,6 +11,8 @@ Validation and Verification Studies
 
    kgdToughnessDominated/Example  
 
+   kgdViscosityDominated/Example 
+
    kirschWellbore/Example	      
 
    edpWellbore/Example
