@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -40,15 +40,6 @@ PressurePorosity::PressurePorosity( string const & name, Group * const parent ):
     setDescription( "Solid compressibility" );
 }
 
-PressurePorosity::~PressurePorosity() = default;
-
-std::unique_ptr< ConstitutiveBase >
-PressurePorosity::deliverClone( string const & name,
-                                Group * const parent ) const
-{
-  return ConstitutiveBase::deliverClone( name, parent );
-}
-
 void PressurePorosity::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
@@ -57,8 +48,8 @@ void PressurePorosity::allocateConstitutiveData( dataRepository::Group & parent,
 
 void PressurePorosity::postProcessInput()
 {
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
-    setApplyDefaultValue( m_defaultReferencePorosity );
+  PorosityBase::postProcessInput();
+  // TODO valdate input
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PressurePorosity, string const &, Group * const )

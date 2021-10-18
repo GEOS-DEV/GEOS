@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -52,10 +52,7 @@ string writeRootFile( conduit::Node & root, string const & rootPath )
   }
 
   MpiWrapper::barrier( MPI_COMM_GEOSX );
-
-  std::vector< char > buffer( completeRootPath.size() + 64 );
-  GEOSX_ERROR_IF_GE( std::snprintf( buffer.data(), buffer.size(), "%s/rank_%07d.hdf5", completeRootPath.data(), MpiWrapper::commRank() ), int( buffer.size() ) );
-  return buffer.data();
+  return GEOSX_FMT( "{}/rank_{:07}.hdf5", completeRootPath.data(), MpiWrapper::commRank() );
 }
 
 

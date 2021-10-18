@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -136,6 +136,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 void AcousticWaveEquationSEM::postProcessInput()
 {
+  WaveSolverBase::postProcessInput();
 
   GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources",
@@ -282,33 +283,33 @@ void AcousticWaveEquationSEM::computeSeismoTrace( localIndex const iseismo, arra
     }
   } );
 
-  // TODO: remove the saveSeismo and replace with TimeHistory
-  this->saveSeismo( iseismo );
-}
-
-/// Use for now until we get the same functionality in TimeHistory
-void AcousticWaveEquationSEM::saveSeismo( localIndex const iseismo )
-{
-  arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
-  arrayView1d< real64 const > const p_rcvs   = m_pressureNp1AtReceivers.toViewConst();
-
-  forAll< serialPolicy >( receiverIsLocal.size(), [=] ( localIndex const ircv )
+  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
   {
-    if( receiverIsLocal[ircv] == 1 )
+    if( this->m_outputSeismoTrace == 1 )
     {
-      // Note: this "manual" output to file is temporary
-      //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-      char filename[50];
-      sprintf( filename, "seismoTraceReceiver%0d.txt", static_cast< int >( ircv ) );
-      std::ofstream f( filename, std::ios::app );
-      f<< iseismo << " " << p_rcvs[ircv] << std::endl;
-      f.close();
+      if( receiverIsLocal[ircv] == 1 )
+      {
+        // Note: this "manual" output to file is temporary
+        //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+        // TODO: remove saveSeismo and replace with TimeHistory
+        this->saveSeismo( iseismo, p_rcvs[ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+      }
     }
   } );
 }
 
+/// Use for now until we get the same functionality in TimeHistory
+void AcousticWaveEquationSEM::saveSeismo( localIndex iseismo, real64 valPressure, string const & filename )
+{
+  std::ofstream f( filename, std::ios::app );
+  f<< iseismo << " " << valPressure << std::endl;
+  f.close();
+}
+
 void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
+  WaveSolverBase::initializePostInitialConditionsPreSubGroups();
+
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
@@ -528,7 +529,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     rhs[a] = 0.0;
   } );
 
-  if( this->m_outputSismoTrace == 1 )
+  if( this->m_outputSeismoTrace == 1 )
   {
     computeSeismoTrace( cycleNumber, p_np1 );
   }

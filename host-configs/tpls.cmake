@@ -43,6 +43,10 @@ if(EXISTS ${GEOSX_TPL_DIR}/vtk)
   set(VTK_DIR ${GEOSX_TPL_DIR}/vtk CACHE PATH "" FORCE)
 endif()
 
+if(EXISTS ${GEOSX_TPL_DIR}/fmt)
+  set(FMT_DIR ${GEOSX_TPL_DIR}/fmt CACHE PATH "" FORCE)
+endif()
+
 #
 # Math TPLs
 #
@@ -66,7 +70,7 @@ if(EXISTS ${GEOSX_TPL_DIR}/trilinos)
   set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos CACHE PATH "" FORCE)
 endif()
 
-if(EXISTS ${GEOSX_TPL_DIR}/hypre AND (NOT DEFINED ENABLE_HYPRE OR ENABLE_HYPRE))
+if(EXISTS ${GEOSX_TPL_DIR}/hypre)
   set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre CACHE PATH "" FORCE)
 endif()
 

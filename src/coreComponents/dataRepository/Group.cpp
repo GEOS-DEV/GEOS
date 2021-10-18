@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -122,20 +122,30 @@ string Group::getPath() const
 {
   // In the Conduit node heirarchy everything begins with 'Problem', we should change it so that
   // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
-  string const noProblem = getConduitNode().path().substr( sizeof( "Problem" ) -1 );
-  return noProblem == "" ? "/" : noProblem;
+  string const noProblem = getConduitNode().path().substr( std::strlen( dataRepository::keys::ProblemManager ) - 1 );
+  return noProblem.empty() ? "/" : noProblem;
 }
 
 void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
 {
   xmlWrapper::addIncludedXML( targetNode );
 
-  // loop over the child nodes of the targetNode
-  for( xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
+  // Handle the case where the node was imported from a different input file
+  // Set the path prefix to make sure all relative Path variables are interpreted correctly
+  string const oldPrefix = Path::pathPrefix();
+  xmlWrapper::xmlAttribute filePath = targetNode.attribute( xmlWrapper::filePathString );
+  if( filePath )
+  {
+    Path::pathPrefix() = splitPath( filePath.value() ).first;
+    targetNode.remove_attribute( filePath );
+  }
+
+  // Loop over the child nodes of the targetNode
+  for( xmlWrapper::xmlNode childNode : targetNode.children() )
   {
     // Get the child tag and name
     string childName = childNode.attribute( "name" ).value();
-    if( childName.empty())
+    if( childName.empty() )
     {
       childName = childNode.name();
     }
@@ -153,32 +163,32 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   }
 
   processInputFile( targetNode );
-//  ProcessInputFile_PostProcess();
+
+  // Restore original prefix once the node is processed
+  Path::pathPrefix() = oldPrefix;
 }
 
 void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
 {
-
-  std::set< string > processedXmlNodes;
+  std::set< string > processedAttributes;
   for( std::pair< string const, WrapperBase * > & pair : m_wrappers )
   {
     if( pair.second->processInputFile( targetNode ) )
     {
-      processedXmlNodes.insert( pair.first );
+      processedAttributes.insert( pair.first );
     }
   }
 
-  for( xmlWrapper::xmlAttribute attribute=targetNode.first_attribute(); attribute; attribute = attribute.next_attribute() )
+  for( xmlWrapper::xmlAttribute attribute : targetNode.attributes() )
   {
-    string const childName = attribute.name();
-    if( childName != "name" && childName != "xmlns:xsi" && childName != "xsi:noNamespaceSchemaLocation" )
+    string const attributeName = attribute.name();
+    if( attributeName != "name" && attributeName != "xmlns:xsi" && attributeName != "xsi:noNamespaceSchemaLocation" )
     {
-      GEOSX_THROW_IF( processedXmlNodes.count( childName )==0,
-                      "XML Node ("<<targetNode.name()<<") with attribute name=("<<
-                      targetNode.attribute( "name" ).value()<<") contains child node named ("<<
-                      childName<<") that is not read. Valid options are: \n" << dumpInputOptions()
-                      + "\nFor more details, please refer to documentation at: \n"
-                      + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n",
+      GEOSX_THROW_IF( processedAttributes.count( attributeName ) == 0,
+                      GEOSX_FMT( "XML Node '{}' with name='{}' contains unused attribute '{}'.\n"
+                                 "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
+                                 "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                                 targetNode.path(), targetNode.attribute( "name" ).value(), attributeName, dumpInputOptions() ),
                       InputError );
     }
   }

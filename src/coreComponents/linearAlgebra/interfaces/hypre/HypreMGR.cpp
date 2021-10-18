@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -144,22 +144,31 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   // Set custom F-solver based on SDC for mechanics case
   // Requirement: displacement degrees of freedom are the first being eliminated,
   //              i.e. they are F-points for the first MGR level
-  if( params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && params.mgr.separateComponents )
+  //if( params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && params.mgr.separateComponents )
+  if( params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
   {
-    HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr );
-    HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 );
-    HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 );
-    HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 );
-    HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 );
-    HYPRE_BoomerAMGSetAggNumLevels( mgrData.mechSolver.ptr, 1 );
-    HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.mechSolver.ptr, 1.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.mechSolver.ptr, 0.6 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 ) );
+#ifdef GEOSX_USE_HYPRE_CUDA
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.mechSolver.ptr, 8 ) ); // PMIS
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, 18 ) ); // l1-Jacobi
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 2 ) );
+#else
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 ) );
+#endif
+    //GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( mgrData.mechSolver.ptr, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 ) );
 
     mgrData.mechSolver.setup = HYPRE_BoomerAMGSetup;
     mgrData.mechSolver.solve = HYPRE_BoomerAMGSolve;
     mgrData.mechSolver.destroy = HYPRE_BoomerAMGDestroy;
 
     // Ignore the setup function here, since we'll be performing it manually in setupSeparateComponent()
-    HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, hypre::HYPRE_DummySetup, mgrData.mechSolver.ptr );
+    HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, mgrData.mechSolver.setup, mgrData.mechSolver.ptr );
   }
 }
 

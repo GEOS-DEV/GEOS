@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -214,7 +214,6 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                             kernelFactory );
 
 
-
   // Face-based contributions
   m_flowSolver->assembleFluxTerms( dt,
                                    domain,
@@ -253,12 +252,7 @@ real64 MultiphasePoromechanicsSolver::calculateResidualNorm( DomainPartition con
   // compute norm of mass balance residual equations
   real64 const massResidualNorm = m_flowSolver->calculateResidualNorm( domain, dofManager, localRhs );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    char output[200] = {0};
-    sprintf( output, "    ( Rsolid, Rfluid ) = ( %4.2e, %4.2e )", momementumResidualNorm, massResidualNorm );
-    std::cout << output << std::endl;
-  }
+  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rsolid, Rfluid ) = ( {:4.2e}, {:4.2e} )", momementumResidualNorm, massResidualNorm ) );
 
   return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
 }
@@ -283,6 +277,17 @@ void MultiphasePoromechanicsSolver::applySystemSolution( DofManager const & dofM
   m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
   // update pressure field
   m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
+}
+
+void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
+{
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
+                                                                          auto & subRegion )
+  {
+    m_flowSolver->updateFluidState( subRegion, targetIndex );
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanicsSolver, string const &, Group * const )

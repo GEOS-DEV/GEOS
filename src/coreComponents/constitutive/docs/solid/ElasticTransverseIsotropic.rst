@@ -62,8 +62,8 @@ A typical ``Constititutive`` block will look like:
        defaultDensity="2700"
        defaultPoissonRatioAxialTransverse="0.20"
        defaultPoissonRatioTransverse="0.30"
-       defaultYoungsModulusAxial="50.0e6"
-       defaultYoungsModulusTransverse="60.0e6"
+       defaultYoungModulusAxial="50.0e6"
+       defaultYoungModulusTransverse="60.0e6"
        defaultShearModulusAxialTransverse="30.0e6" />
   </Constitutive>
 

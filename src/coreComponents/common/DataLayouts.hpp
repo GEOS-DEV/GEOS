@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -38,13 +38,10 @@ using defaultLayout = camp::make_idx_seq_t< NDIM >;
 /**
  * @brief Just a handy shortcut for LvArray::typeManipulation::getStrideOneDimension.
  * @tparam PERM sequence type containing layout permutation
- * @return corresponding unit stride dimension
+ * Value: corresponding unit stride dimension
  */
 template< typename PERM >
-inline constexpr int getUSD( PERM )
-{
-  return LvArray::typeManipulation::getStrideOneDimension( PERM{} );
-}
+static constexpr int getUSD = LvArray::typeManipulation::getStrideOneDimension( PERM {} );
 
 namespace nodes
 {

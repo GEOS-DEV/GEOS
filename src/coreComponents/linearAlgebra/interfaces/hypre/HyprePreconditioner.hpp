@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -102,6 +102,18 @@ public:
     return m_componentFilterTime;
   }
 
+  /// @return time to construct restrictor matrix.
+  real64 makeRestrictorTime() const
+  {
+    return m_makeRestrictorTime;
+  }
+
+  /// @return time to apply restrictor matrix.
+  real64 computeAuuTime() const
+  {
+    return m_computeAuuTime;
+  }
+
 private:
 
   /**
@@ -134,6 +146,12 @@ private:
 
   /// Timing of separate component matrix construction
   real64 m_componentFilterTime = 0.0;
+
+  /// Timing of the restrictor matrix construction
+  real64 m_makeRestrictorTime = 0.0;
+
+  /// Timing of the cost of applying the restrictor matrix to the system
+  real64 m_computeAuuTime = 0.0;
 };
 
 }

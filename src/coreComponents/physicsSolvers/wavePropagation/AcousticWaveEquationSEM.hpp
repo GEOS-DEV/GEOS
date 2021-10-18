@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -126,10 +126,12 @@ private:
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
   /**
-   * @brief Save the sismo trace in file
-   * @param isismo index number of the sismo trace
+   * @brief Save the seismo trace in file
+   * @param iseismo index number of the seismo trace
+   * @param valPressure value of the pressure for iseismo
+   * @param filename name of the output file
    */
-  virtual void saveSeismo( localIndex const iseismo ) override;
+  void saveSeismo( localIndex iseismo, real64 valPressure, string const & filename ) override;
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;

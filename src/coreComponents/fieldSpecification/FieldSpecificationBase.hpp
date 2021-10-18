@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -501,9 +501,6 @@ private:
 
   /// The name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
-
-  /// The factor used to normalize the boundary flux by the size of the set it is applied to
-  //real64 m_setSizeScalingFactor;
 
 };
 

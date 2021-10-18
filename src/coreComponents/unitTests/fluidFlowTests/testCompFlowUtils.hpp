@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -192,7 +192,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   commandLine.registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() ).
     setApplyDefaultValue( mpiSize );
 
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   DomainPartition & domain = problemManager.getDomainPartition();

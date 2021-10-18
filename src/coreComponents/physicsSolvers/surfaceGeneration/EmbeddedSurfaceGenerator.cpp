@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -152,7 +152,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes = subRegion.nodeList();
       FixedOneToManyRelation const & cellToEdges = subRegion.edgeList();
 
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       forAll< serialPolicy >( subRegion.size(), [ &, ghostRank,
                                                   cellToNodes,
@@ -194,6 +194,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
               // Add the information to the CellElementSubRegion
               subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
+
+              embeddedSurfaceSubRegion.computeConnectivityIndex( localNumberOfSurfaceElems, cellToNodes, nodesCoord );
 
               newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
 
@@ -294,7 +296,6 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOSX_UNUSED_PARAM( 
   /*
    * This should be the method that generates new fracture elements based on the propagation criterion of choice.
    */
-
   // Add the embedded elements to the fracture stencil.
   addToFractureStencil( domain );
 
@@ -317,7 +318,7 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
       FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
-        fluxApprox->addEDFracToFractureStencil( meshLevel, this->m_fractureRegionName );
+        fluxApprox->addEmbeddedFracturesToStencils( meshLevel, this->m_fractureRegionName );
       }
     }
   }

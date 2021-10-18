@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -59,15 +59,16 @@ public:
     m_grainBulkModulus( grainBulkModulus )
   {}
 
+  GEOSX_HOST_DEVICE
+  real64 getBiotCoefficient( localIndex const k ) const { return m_biotCoefficient[k]; }
 
   GEOSX_HOST_DEVICE
-  void updatePorosity( localIndex const k,
-                       localIndex const q,
-                       real64 const & deltaPressure,
-                       real64 const ( &strainIncrement )[6],
-                       real64 & dPorosity_dPressure,
-                       real64 & dPorosity_dVolStrain,
-                       real64 & dTotalStress_dPressure ) const
+  void updateFromPressureAndStrain( localIndex const k,
+                                    localIndex const q,
+                                    real64 const & deltaPressure,
+                                    real64 const ( &strainIncrement )[6],
+                                    real64 & dPorosity_dPressure,
+                                    real64 & dPorosity_dVolStrain ) const
   {
     real64 const biotSkeletonModulusInverse = ( m_biotCoefficient[k] - m_referencePorosity[k] ) / m_grainBulkModulus;
 
@@ -80,8 +81,6 @@ public:
     dPorosity_dVolStrain = m_biotCoefficient[k];
 
     savePorosity( k, q, porosity, biotSkeletonModulusInverse );
-
-    dTotalStress_dPressure = m_biotCoefficient[k];
   }
 
 
@@ -104,11 +103,6 @@ class BiotPorosity : public PorosityBase
 public:
   BiotPorosity( string const & name, Group * const parent );
 
-  virtual ~BiotPorosity() override;
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -120,9 +114,10 @@ public:
   {
     static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
     static constexpr char const * grainBulkModulusString() { return "grainBulkModulus"; }
-
-
   } viewKeys;
+
+
+  virtual void initializeState() const override final;
 
   using KernelWrapper = BiotPorosityUpdates;
 

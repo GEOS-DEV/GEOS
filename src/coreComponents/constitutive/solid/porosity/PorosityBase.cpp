@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -37,10 +37,10 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::newPorosityString(), &m_newPorosity ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( 0.2 ); // will be overwritten
+    setApplyDefaultValue( 1.0 ); // will be overwritten but it's important for newly created faceElements.
 
   registerWrapper( viewKeyStruct::oldPorosityString(), &m_oldPorosity ).
-    setApplyDefaultValue( 0.0 );// will be overwritten
+    setApplyDefaultValue( 1.0 );// will be overwritten but it's important for newly created faceElements.
 
   registerWrapper( viewKeyStruct::dPorosity_dPressureString(), &m_dPorosity_dPressure ).
     setApplyDefaultValue( 0.0 );// will be overwritten
@@ -51,17 +51,6 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity ).
     setApplyDefaultValue( 1.0 );
-}
-
-PorosityBase::~PorosityBase() = default;
-
-std::unique_ptr< ConstitutiveBase >
-PorosityBase::deliverClone( string const & name,
-                            Group * const parent ) const
-{
-  std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
-
-  return clone;
 }
 
 void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
@@ -76,29 +65,10 @@ void PorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
 
 void PorosityBase::postProcessInput()
 {
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
-    setApplyDefaultValue( m_defaultReferencePorosity );
+  getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() )
+    .setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
-void PorosityBase::initializePostInitialConditionsPreSubGroups()
-{
-
-  localIndex const numE = numElem();
-  localIndex const numQ = numQuad();
-
-  arrayView2d< real64 const > newPorosity = m_newPorosity;
-  arrayView2d< real64 >       oldPorosity = m_oldPorosity;
-
-  //TODO once default component for fieldspec becomes -1 this should become newPorosity[k][q];
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < numQ; ++q )
-    {
-      oldPorosity[k][q] = newPorosity[k][0];
-    }
-  } );
-
-}
 
 void PorosityBase::saveConvergedState() const
 {
@@ -115,6 +85,11 @@ void PorosityBase::saveConvergedState() const
       oldPorosity[k][q] = newPorosity[k][q];
     }
   } );
+}
+
+void PorosityBase::initializeState() const
+{
+  saveConvergedState();
 }
 
 }

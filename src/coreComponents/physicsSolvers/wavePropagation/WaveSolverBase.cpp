@@ -55,7 +55,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 2 ).
     setDescription( "Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default" );
 
-  registerWrapper( viewKeyStruct::outputSismoTraceString(), &m_outputSismoTrace ).
+  registerWrapper( viewKeyStruct::outputSeismoTraceString(), &m_outputSeismoTrace ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise" );
@@ -79,7 +79,9 @@ real64 WaveSolverBase::evaluateRicker( real64 const & time_n, real64 const & f0,
   real64 const o_tpeak = 1.0/f0;
   real64 pulse = 0.0;
   if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
+  {
     return pulse;
+  }
 
   constexpr real64 pi = M_PI;
   real64 const lam = (f0*pi)*(f0*pi);

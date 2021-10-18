@@ -8,10 +8,12 @@
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region2, Fracture }"
+      targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact">
       <LinearSolverParameters
         solverType="gmres"
@@ -23,7 +25,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Domain, Fracture }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <LinearSolverParameters
@@ -34,10 +36,10 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture, Region2 }"
+      targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ fracPerm, rockPerm }"
+      solidNames="{ fractureFilling }"
+      permeabilityNames="{ fracturePerm }"
       inputFluxEstimate="1.0">
       <LinearSolverParameters
         solverType="gmres"
@@ -46,7 +48,7 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Domain }"
       nodeBasedSIF="1"
       solidMaterialNames="{ rock }"
       rockToughness="1.0e6"/>
@@ -171,42 +173,54 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region2"
+      name="Domain"
       cellBlocks="{ cb1 }"
-      materialList="{ water, rock, rockPerm }"/>
+      materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="0.1e-3"
-      materialList="{ water, rock, fracPerm }"/>
+      defaultAperture="0.02e-3"
+      materialList="{ water, rock, fractureFilling }"/>
   </ElementRegions>
 
   <Constitutive>
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="0.001"
+      defaultViscosity="1.0e-3"
       referencePressure="0.0"
       compressibility="5e-12"
       referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
-    <PoroElasticIsotropic
+    <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
       defaultBulkModulus="20.0e9"
-      defaultShearModulus="12.0e9"
-      compressibility="1.6155088853e-18"
-      referencePressure="2.125e6"/>
+      defaultShearModulus="12.0e9"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="1.0e0">
-      <TableFunction
-        name="aperTable"
-        coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 0.01e-3, 0.1e-3 }"/>
-    </Contact>
+      penaltyStiffness="1.0e0"
+      apertureTableName="apertureTable"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -221,7 +235,7 @@
       name="referencePorosity"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
+      objectPath="ElementRegions/Domain/cb1"
       fieldName="referencePorosity"
       scale="0.01"/>
 
@@ -249,13 +263,6 @@
       fieldName="ruptureState"
       scale="1"/>
 
-    <!-- FieldSpecification name="aperture"
-               component="0"
-               initialCondition="1"
-               setNames="{all}"
-               objectPath="ElementRegions/Fracture/fracture"
-               fieldName="elementAperture"
-               scale="1.0e-4"/-->
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
@@ -288,11 +295,6 @@
       scale="-0.0"
       setNames="{ xpos }"/>
 
-    <!-- FieldSpecification name="source"
-               objectPath="ElementRegions/Fracture"
-               fieldName="pressure"
-               scale="0.0"
-               setNames="{all}"/-->
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
@@ -307,6 +309,12 @@
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0, 2.0, 3.0, 100.0 }"
       values="{ 0.0, 1.0, 0.0, 0.0, 0.0 }"/>
+
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.01e-3, 0.1e-3 }"/>
+    
   </Functions>
 
   <Outputs>

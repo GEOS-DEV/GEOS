@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -160,8 +160,6 @@ void HypreExport::importVector( real64 const * values,
                                                       partitioning,
                                                       &parVector ) );
 
-      // remove partinioning ownership for parVector to avoid deallocation errors
-      GEOSX_LAI_CHECK_ERROR( hypre_ParVectorSetPartitioningOwner( parVector, 0 ) );
 
       // copy parVector local part over to the output vector
       HYPRE_Real * const parVectorData = hypre_VectorData( hypre_ParVectorLocalVector( parVector ) );

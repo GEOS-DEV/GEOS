@@ -53,7 +53,7 @@ public:
     static constexpr char const * receiverCoordinatesString() { return "receiverCoordinates"; }
 
     static constexpr char const * rickerOrderString() { return "rickerOrder"; }
-    static constexpr char const * outputSismoTraceString() { return "outputSismoTrace"; }
+    static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
 
   };
 
@@ -101,7 +101,7 @@ protected:
    * @brief Save the sismo trace in file
    * @param iseismo index number of the seismo trace
    */
-  virtual void saveSeismo( localIndex const iseismo ) = 0;
+  virtual void saveSeismo( localIndex const iseismo, real64 valPressure, string const & filename ) = 0;
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
@@ -116,7 +116,7 @@ protected:
   localIndex m_rickerOrder;
 
   /// Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise
-  localIndex m_outputSismoTrace;
+  localIndex m_outputSeismoTrace;
 
 
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -201,14 +201,22 @@ void separateComponentFilter( MATRIX const & src,
   CRSMatrix< real64 > tempMat;
   tempMat.resize( localRows, src.numGlobalCols(), maxDstEntries );
 
-  array1d< globalIndex > const srcIndices( maxEntries );
-  array1d< real64 > const srcValues( maxEntries );
+  array1d< globalIndex > srcIndices;
+  array1d< real64 > srcValues;
+  array1d< localIndex > numCols( localRows );
+
 
   for( globalIndex r = 0; r < localRows; ++r )
   {
-    globalIndex const row = r + src.ilower();
-    globalIndex const rowComponent = row % dofsPerNode;
-    localIndex const rowLength = src.globalRowLength( row );
+    globalIndex row;
+    globalIndex rowComponent;
+    localIndex rowLength;
+    row = r + src.ilower();
+    rowComponent = row % dofsPerNode;
+    rowLength = src.globalRowLength( row );
+
+    srcIndices.resize( rowLength );
+    srcValues.resize( rowLength );
 
     src.getRowCopy( row, srcIndices, srcValues );
 
@@ -221,10 +229,12 @@ void separateComponentFilter( MATRIX const & src,
         tempMat.insertNonZero( r, col, srcValues( c ) );
       }
     }
+
   }
 
   dst.create( tempMat.toViewConst(), MPI_COMM_GEOSX );
   dst.setDofManager( src.dofManager() );
+
 }
 
 /**
