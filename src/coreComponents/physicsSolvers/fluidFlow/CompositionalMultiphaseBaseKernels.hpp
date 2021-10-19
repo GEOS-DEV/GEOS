@@ -472,7 +472,7 @@ struct SolutionCheckKernel
 struct HydrostaticPressureKernel
 {
 
-  // TODO FRANCOIS: high time this type of constants is centralized somewhere or provided by fluid model
+  // TODO: this type of constants should be centralized somewhere or provided by fluid model
   static real64 constexpr MIN_FOR_PHASE_PRESENCE = 1e-12;
 
   enum class ReturnType : integer

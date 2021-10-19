@@ -647,6 +647,11 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
   } );
 
+  if( equilCounter == 0 )
+  {
+    return;
+  }
+
   // Step 2: find the min elevation and the max elevation in the targetSets
 
   array1d< real64 > globalMaxElevation( equilNameToEquilId.size() );

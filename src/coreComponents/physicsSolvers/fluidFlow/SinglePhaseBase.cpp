@@ -82,6 +82,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( [&] ( auto & subRegion )
     {
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString() ).setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::initialPressureString() );
 
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
@@ -215,9 +216,9 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                                                    auto & subRegion )
   {
-    SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+    ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
 
-    real64 const defaultDensity = fluid.defaultDensity();
+    real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
     subRegion.template getWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).setDefaultValue( defaultDensity );
 
     // 1. update porosity, permeability, and density/viscosity
@@ -227,7 +228,11 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
     // 2. save the initial density (for use in the single-phase poromechanics solver to compute the deltaBodyForce)
 
-    fluid.initializeState();
+    if( dynamicCast< SingleFluidBase const * >( &fluid ) )
+    {
+      SingleFluidBase const & singleFluid = dynamicCast< SingleFluidBase const & >( fluid );
+      singleFluid.initializeState();
+    }
 
     // 3. save the initial/old porosity
 
@@ -299,6 +304,11 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
                     InputError );
   } );
 
+  if( equilCounter == 0 )
+  {
+    return;
+  }
+
   // Step 2: find the min elevation and the max elevation in the targetSets
 
   array1d< real64 > globalMaxElevation( equilNameToEquilId.size() );
@@ -358,18 +368,27 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     // Step 3.2: retrieve the fluid model to compute densities
     // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
 
+    // filter out region not in target
     Group const & region = subRegion.getParent().getParent();
     auto it = regionFilter.find( region.getName() );
     if( it == regionFilter.end() )
     {
       return; // the region is not in target, there is nothing to do
     }
+
     string const & fluidName = m_fluidModelNames[ targetRegionIndex( region.getName() ) ];
-    SingleFluidBase & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
+
+    // filter out the proppant fluid constitutive models
+    ConstitutiveBase & fluid = getConstitutiveModel( subRegion, fluidName );
+    if( !dynamicCast< SingleFluidBase * >( &fluid ) )
+    {
+      return;
+    }
+    SingleFluidBase & singleFluid = dynamicCast< SingleFluidBase & >( fluid );
 
     // Step 3.3: compute the hydrostatic pressure values
 
-    constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+    constitutiveUpdatePassThru( singleFluid, [&] ( auto & castedFluid )
     {
       using FluidType = TYPEOFREF( castedFluid );
       typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
