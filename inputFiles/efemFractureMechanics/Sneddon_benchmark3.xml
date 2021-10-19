@@ -35,23 +35,6 @@
   </Geometry>
   <!-- SPHINX_SNEDDON_GEOMETRY_END -->
   
-  <Events
-    maxTime="10">
-    <SoloEvent
-      name="preFracture"
-      target="/Solvers/SurfaceGenerator"/>
-
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="10"
-      target="/Solvers/mechSolve"/>
-
-    <PeriodicEvent
-      name="outputs"
-      cycleFrequency="10"
-      target="/Outputs/vtkOutput"/>
-  </Events>
-  
   <!-- SPHINX_SNEDDON_EVENTS -->
   <Events
     maxTime="10">

@@ -1,11 +1,6 @@
 <?xml version="1.0" ?>
 
-<!--# # -->
 <Problem>
-  <Included>
-    <File
-      name="./KGDBase.xml"/>
-  </Included>
 
   <Solvers
     gravityVector="{ 0.0, 0.0, -0.0 }">

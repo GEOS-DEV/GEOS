@@ -139,7 +139,7 @@ Running GEOSX
 
 To run the case, use the following command:
 
-``path/to/geosx -i src/coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml``
+``path/to/geosx -i inputFiles/efemFractureMechanics/Sneddon_benchmark3.xml``
 
 ---------------------------------
 Inspecting results
