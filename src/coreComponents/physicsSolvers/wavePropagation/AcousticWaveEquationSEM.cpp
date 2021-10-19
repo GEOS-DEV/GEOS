@@ -149,16 +149,16 @@ void AcousticWaveEquationSEM::postProcessInput()
   localIndex const numNodesPerElem = 8;
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceNodeIds.resizeDimension< 0, 1 >( numSourcesGlobal, numNodesPerElem );
-  m_sourceConstants.resizeDimension< 0, 1 >( numSourcesGlobal, numNodesPerElem );
-  m_sourceIsLocal.resizeDimension< 0 >( numSourcesGlobal );
+  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
+  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
+  m_sourceIsLocal.resize( numSourcesGlobal );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverNodeIds.resizeDimension< 0, 1 >( numReceiversGlobal, numNodesPerElem );
-  m_receiverConstants.resizeDimension< 0, 1 >( numReceiversGlobal, numNodesPerElem );
-  m_receiverIsLocal.resizeDimension< 0 >( numReceiversGlobal );
+  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
+  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
+  m_receiverIsLocal.resize( numReceiversGlobal );
 
-  m_pressureNp1AtReceivers.resizeDimension< 0 >( numReceiversGlobal );
+  m_pressureNp1AtReceivers.resize( numReceiversGlobal );
 
 }
 

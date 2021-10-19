@@ -58,10 +58,7 @@ struct PrecomputeSourceAndReceiverKernel
       real64 xLocal[numNodesPerElem][3];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
-        for( localIndex i = 0; i < 3; ++i )
-        {
-          xLocal[a][i] = X( elemsToNodes( elementIndex, a ), i );
-        }
+        LvArray::tensorOps::copy< 3 >( xLocal[ a ], X[ elemsToNodes( elementIndex, a ) ] );
       }
 
       // coordsOnRefElem = invJ*(coords-coordsNode_0)
@@ -99,7 +96,6 @@ struct PrecomputeSourceAndReceiverKernel
    * @param numNodesPerElem number of nodes per element
    * @param X coordinates of the nodes
    * @param elemsToNodes map from element to nodes
-   * @param faceNodeIndices cell-wise storage for the nodes
    * @param sourceCoordinates coordinates of the source terms
    * @param sourceIsLocal flag indicating whether the source is local or not
    * @param sourceNodeIds indices of the nodes of the element where the source is located
@@ -145,12 +141,13 @@ struct PrecomputeSourceAndReceiverKernel
                                      sourceCoordinates[isrc][2] };
 
           real64 coordsOnRefElem[3]{};
-          bool const sourceFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                                    coordsOnRefElem,
-                                                                                    k,
-                                                                                    faceNodeIndices.toNestedViewConst(),
-                                                                                    elemsToNodes,
-                                                                                    X );
+          bool const sourceFound =
+            computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                             coordsOnRefElem,
+                                                             k,
+                                                             faceNodeIndices.toNestedViewConst(),
+                                                             elemsToNodes,
+                                                             X );
           if( sourceFound )
           {
             sourceIsLocal[isrc] = 1;
@@ -176,12 +173,13 @@ struct PrecomputeSourceAndReceiverKernel
                                      receiverCoordinates[ircv][2] };
 
           real64 coordsOnRefElem[3]{};
-          bool const receiverFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
-                                                                                      coordsOnRefElem,
-                                                                                      k,
-                                                                                      faceNodeIndices.toNestedViewConst(),
-                                                                                      elemsToNodes,
-                                                                                      X );
+          bool const receiverFound =
+            computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
+                                                             coordsOnRefElem,
+                                                             k,
+                                                             faceNodeIndices.toNestedViewConst(),
+                                                             elemsToNodes,
+                                                             X );
           if( receiverFound )
           {
             receiverIsLocal[ircv] = 1;
@@ -293,15 +291,15 @@ struct MassAndDampingMatrixKernel
             for( localIndex a = 0; a < numNodesPerFace; ++a )
             {
               // compute ds = || detJ*invJ*normalFace_{kfe} ||
-              real64 tmp[3] = { 0 };
+              real64 tmp = 0.0;
               real64 ds = 0.0;
               for( localIndex i = 0; i < 3; ++i )
               {
                 for( localIndex j = 0; j < 3; ++j )
                 {
-                  tmp[i] += invJ[j][i] * faceNormal[iface][j];
+                  tmp += invJ[j][i] * faceNormal[iface][j];
                 }
-                ds += tmp[i] * tmp[i];
+                ds += tmp * tmp;
               }
               ds = sqrt( ds );
 
