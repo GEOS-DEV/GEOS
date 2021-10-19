@@ -37,7 +37,7 @@ The xml input files for this test case are located at:
 
 .. code-block:: console
 
-  inputFiles/hydraulicFracturing/kgdToughnessDominated_Base.xml
+  inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
 
 and
 
@@ -57,28 +57,28 @@ Mechanics solvers
 
 The solver ``SurfaceGenerator`` defines rock toughness :math:`K_{Ic}` as:
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_Solvers_SurfaceGenerator -->
   :end-before:  <!-- Sphinx_Solvers_SurfaceGenerator_End -->
 
 Rock and fracture deformation are modeled by the solid mechanics solver ``SolidMechanicsLagrangianSSLE``. In this solver, we define ``targetRegions`` that includes both the continuum region and the fracture region. The name of the contact constitutive behavior is also specified in this solver by the ``contactRelationName``, besides the ``solidMaterialNames``.
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_Solvers_SolidMechanicsLagrangianSSLE -->
   :end-before:  <!-- Sphinx_Solvers_SolidMechanicsLagrangianSSLE_End -->
 
 The single phase fluid flow inside the fracture is solved by the finite volume method in the solver ``SinglePhaseFVM`` as:
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_Solvers_SinglePhaseFVM -->
   :end-before:  <!-- Sphinx_Solvers_SinglePhaseFVM_End -->
 
 All these elementary solvers are combined in the solver ``Hydrofracture`` to model the coupling between fluid flow within the fracture, rock deformation, fracture opening/closure and propagation. A fully coupled scheme is defined by setting a flag ``FIM`` for ``couplingTypeOption``.
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_Solvers_Hydrofracture -->
   :end-before:  <!-- Sphinx_Solvers_Hydrofracture_End -->
@@ -89,14 +89,14 @@ The constitutive laws
 
 The constitutive law ``CompressibleSinglePhaseFluid`` defines the default and reference fluid viscosity, compressibility and density. For this toughness dominated example, ultra low fluid viscosity is used:
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid -->
   :end-before:  <!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid_End -->
 
 The isotropic elastic Young modulus and Poisson ratio are defined in the ``ElasticIsotropic`` block. The density of rock defined in this block is useless, as gravity effect is ignored in this example.
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_Constitutive_ElasticIsotropic -->
   :end-before:  <!-- Sphinx_Constitutive_ElasticIsotropic_End -->
@@ -107,7 +107,7 @@ Mesh
 
 Internal mesh generator is used to generate the geometry of this example. The domain size is large enough comparing to the final size of the fracture. A sensitivity analysis has shown that the domain size in the direction perpendicular to the fracture plane, i.e. x-axis, must be at least ten times of the final fracture half-length to minimize the boundary effect. However, smaller size along the fracture plane, i.e. y-axis, of only two times the fracture half-length is good enough. It is also important to note that at least two layers are required in z-axis to ensure a good match between the numerical results and analytical solutions, due to the node based fracture propagation criterion. Also in x-axis, bias parameter ``xBias`` is added for optimizing the mesh by refining the elements near the fracture plane.
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_Mesh_InternalMesh -->
   :end-before:  <!-- Sphinx_Mesh_InternalMesh_End -->
@@ -130,7 +130,7 @@ The initial fracture is defined by a nodeset occupying a small area where the KG
 
 This initial ``ruptureState`` condition must be specified for this area in the following ``FieldSpecification`` block:
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_FieldSpecifications_InitFracture -->
   :end-before:  <!-- Sphinx_FieldSpecifications_InitFracture_End -->
@@ -146,7 +146,7 @@ The plane within which the KGD fracture propagates is predefined to reduce the c
   :start-after: <!-- Sphinx_Geometry_FracturePlane -->
   :end-before:  <!-- Sphinx_Geometry_FracturePlane_End -->
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_FieldSpecifications_FracturePlane -->
   :end-before:  <!-- Sphinx_FieldSpecifications_FracturePlane_End -->
@@ -157,7 +157,7 @@ Defining the injection rate
 
 Fluid is injected into a sub-area of the initial fracture. Only half of the injection rate is defined in this boundary condition because only half-wing of the KGD fracture is modeled regarding its symmetry. Hereby, the mass injection rate is actually defined, instead of the volume injection rate. More precisely, the value given for ``scale`` is :math:`Q_0 \rho_f/2` (not :math:`Q_0 /2`).
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_FieldSpecifications_InjSource -->
   :end-before:  <!-- Sphinx_FieldSpecifications_InjSource_End -->
@@ -226,11 +226,11 @@ A good agreement between GEOSX results and analytical solutions is shown in the 
 			return [ halfLength, inletAperture , inletPressure ]
 
 	def getParametersFromXML( xmlFilePath ):
-		tree = ElementTree.parse(xmlFilePath + "_Example.xml")
+		tree = ElementTree.parse(xmlFilePath + "_benchmark.xml")
 
 		maxTime = float(tree.find('Events').get('maxTime'))
 
-		tree = ElementTree.parse(xmlFilePath + "_Base.xml")
+		tree = ElementTree.parse(xmlFilePath + "_base.xml")
 
 		elasticParam = tree.find('Constitutive/ElasticIsotropic')
 

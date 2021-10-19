@@ -190,7 +190,7 @@ The command to run GEOSX is
 
 .. code-block:: console
 
-  path/to/geosx -i ../../../../../inputFiles/3D_10x10x10_compressible_pamela_hex_gravity_smoke.xml
+  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity_smoke.xml
 
 Note that all paths for files included in the XML file are relative
 to this XML file, not to the GEOSX executable.
@@ -332,7 +332,7 @@ a different mesh file called ``cube_10x10x10_tet.msh``.
 This file contains nodes and tetrahedral elements in `Gmsh`_ format,
 representing a different discretization of the exact same 10x10x10 cubic domain.
 
-.. literalinclude:: ../../../../../inputFiles/3D_10x10x10_compressible_pamela_tetra_gravity_smoke.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_TETRA_MESH -->
   :end-before: <!-- SPHINX_TUT_EXT_TETRA_MESH_END -->

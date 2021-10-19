@@ -17,15 +17,15 @@ Everything required is contained within two GEOSX input files and one mesh file 
 
 .. code-block:: console
 
-  inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml
+  inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
 
 .. code-block:: console
 
-  inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Example.xml
+  inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_benchmark.xml
 
 .. code-block:: console
 
-  inputFiles/multiphysics/crackInPlane_ref.msh
+  inputFiles/lagrangianContactMechanics/crackInPlane_ref.msh
 
 
 ------------------------------------------------------------------
@@ -79,7 +79,7 @@ The syntax to import external meshes is simple: in the XML file,
 the mesh file ``crackInPlane_ref.msh`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``CubeHex``) is given to the mesh object. This unstructured mesh contains quadrilaterals elements and interface elements. Refinement is performed to conform with the fracture geometry specified in the ``Geometry`` section.
 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Example.xml
+.. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -110,7 +110,7 @@ To setup a coupling between rock and fracture deformations, we define three diff
 - The solver ``SurfaceGenerator`` defines the fracture region and rock toughness.
 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SOLVER -->
   :end-before: <!-- SPHINX_SOLVER_END -->
@@ -124,7 +124,7 @@ For this specific problem, we simulate the elastic deformation and fracture slip
 
 Fracture surface slippage is assumed to be governed by the Coulomb failure criterion. The contact constitutive behavior is named ``fractureMaterial`` in the ``Coulomb`` block, where cohesion ``cohesion="0.0"`` and friction angle ``frictionAngle="0.523598776"`` are specified. 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -145,7 +145,7 @@ In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time h
 Either the entire field or specified named sets of indices in the field can be collected. 
 In this example, ``tractionCollection`` and ``displacementJumpCollection`` tasks are specified to output the local traction ``fieldName="traction"`` and relative displacement ``fieldName="localJump"`` on the fracture surface.
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
     :language: xml
     :start-after: <!-- SPHINX_TASKS -->
     :end-before: <!-- SPHINX_TASKS_END -->
@@ -170,7 +170,7 @@ The remaining parts of the outer boundaries are subjected to roller constraints.
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
     :language: xml
     :start-after: <!-- SPHINX_BC -->
     :end-before: <!-- SPHINX_BC_END -->
@@ -311,8 +311,8 @@ The figure below shows a comparison between the numerical predictions (marks) an
         # File path
         hdf5File1Path = "traction_history.hdf5"
         hdf5File2Path = "displacementJump_history.hdf5"
-        xmlFile1Path = "../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml"
-        xmlFile2Path = "../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Example.xml"
+        xmlFile1Path = "../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml"
+        xmlFile2Path = "../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_benchmark.xml"
 
         # Read HDF5
         # Global Coordinate of Fracture Element Center
