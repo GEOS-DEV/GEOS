@@ -1,9 +1,8 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <Solvers
-    gravityVector="{ 0.0, 0.0, -0.0 }">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
@@ -11,26 +10,29 @@
       surfaceGeneratorName="SurfaceGen"
       porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
-      logLevel="1"
       discretization="FE1"
       targetRegions="{ Fracture }"
-      contactRelationName="fractureContact"
-      maxNumResolves="2">
+      contactRelationName="fractureContact">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
-        newtonMaxIter="20"
-        lineSearchMaxCuts="3"/>
+        newtonMaxIter="50"
+        lineSearchMaxCuts="10"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        preconditionerType="amg"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain, Fracture }"
+      targetRegions="{ Region2, Fracture }"
       solidMaterialNames="{ rock }"
-      contactRelationName="fractureContact"/>
+      contactRelationName="fractureContact">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        krylovTol="1.0e-10"/>
+    </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
@@ -38,17 +40,21 @@
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
       solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"/>
+      permeabilityNames="{ fracturePerm }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        krylovTol="1.0e-12"/>
+    </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
-      targetRegions="{ Domain }"
-      nodeBasedSIF="1"
+      targetRegions="{ Region2 }"
       solidMaterialNames="{ rock }"
-      rockToughness="0.3e6"
-      mpiCommOrder="1"/>
+      rockToughness="1e7"/>
   </Solvers>
-
+  
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -60,20 +66,19 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"
-        meanPermCoefficient="0.8"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
     <CellElementRegion
-      name="Domain"
+      name="Region2"
       cellBlocks="{ cb1 }"
       materialList="{ water, rock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
-      defaultAperture="0.02e-3"
+      defaultAperture="1.0e-4"
       materialList="{ water, rock, fractureFilling }"/>
   </ElementRegions>
 
@@ -81,17 +86,17 @@
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="0.005"
+      defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="5e-13"
-      referenceViscosity="5.0e-3"
+      compressibility="5e-10"
+      referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
 
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
-      defaultBulkModulus="20.0e9"
-      defaultShearModulus="12.0e9"/>
+      defaultBulkModulus="1.0e9"
+      defaultShearModulus="1.0e9"/>
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -113,16 +118,10 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="1.0"
-      apertureTableName="apertureTable" />
-  </Constitutive>
+      penaltyStiffness="0.0e8"
+      apertureTableName="apertureTable"/>
 
-  <Functions>
-    <TableFunction
-        name="apertureTable"
-        coordinates="{ -0.01, -1.0e-3, 0.0 }"
-        values="{ 0.005, 0.01e-3, 0.02e-3 }"/>
-  </Functions>
+  </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification
@@ -134,14 +133,6 @@
       scale="1000"/>
 
     <FieldSpecification
-      name="separableFace"
-      initialCondition="1"
-      setNames="{ core }"
-      objectPath="faceManager"
-      fieldName="isFaceSeparable"
-      scale="1"/>
-
-    <FieldSpecification
       name="frac"
       initialCondition="1"
       setNames="{ fracture }"
@@ -150,12 +141,27 @@
       scale="1"/>
 
     <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ core }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <!-- FieldSpecification name="aperture"
+               component="0"
+               initialCondition="1"
+               setNames="{all}"
+               objectPath="ElementRegions/Fracture/fracture"
+               fieldName="elementAperture"
+               scale="1.0e-4"/-->
+    <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ yneg, ypos }"/>
+      setNames="{ all }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -166,26 +172,39 @@
       setNames="{ all }"/>
 
     <FieldSpecification
-      name="xConstraint"
+      name="left"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ xneg, xpos }"/>
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="right"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="-0.0"
+      setNames="{ xpos }"/>
 
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
-      scale="-1.0"
+      scale="-5.0"
       setNames="{ source }"/>
   </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-4 }"/>
+  </Functions>
   
   <Outputs>
     <Silo
       name="siloOutput"
-      plotFileRoot="zeroToughness"
-      plotLevel="3"
-      parallelThreads="48"/>
+      plotLevel="3"/>
 
     <Restart
       name="restartOutput"/>

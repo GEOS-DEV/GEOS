@@ -1,10 +1,11 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
-    <File name="./kgdToughnessDominated_Base.xml"/>
+   <Included>
+    <File name="./kgdViscosityDominated_base.xml"/>
   </Included>
-  <Mesh>
+  
+   <Mesh>
 	<!-- Sphinx_Mesh_InternalMesh -->
     <InternalMesh 
       name="mesh1"
@@ -46,18 +47,10 @@
 
   <Events
     maxTime="100.0">
-    <!-- SoloEvent 
-      name="initialPlot"
-      target="/Outputs/siloOutput"/-->
-
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
-
-    <!-- SoloEvent 
-      name="preFracturePlot"
-      target="/Outputs/siloOutput"/-->
-
+      
     <PeriodicEvent
       name="solverApplications0"
       beginTime="0.0"
@@ -81,8 +74,9 @@
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="10.0"
+      timeFrequency="2.0"
       targetExactTimestep="0"
       target="/Outputs/siloOutput"/>
   </Events>
+  
 </Problem>

@@ -1,13 +1,12 @@
 <?xml version="1.0" ?>
 
-<!--# # -->
 <Problem>
   <Included>
     <File
-      name="./pennyShapedToughnessDominated_base.xml"/>
+      name="./pennyShapedViscosityDominated_base.xml"/>
   </Included>
   
-  <!--Mesh>
+   <!--Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
                   xCoords="{0, 60, 100, 200, 500, 1000}"
@@ -155,5 +154,6 @@
       targetExactTimestep="0"
       target="/Outputs/siloOutput"/>
   </Events>
+   
 
 </Problem>
