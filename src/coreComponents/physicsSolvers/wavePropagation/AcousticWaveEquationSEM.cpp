@@ -164,9 +164,13 @@ void AcousticWaveEquationSEM::postProcessInput()
 
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
 {
-  NodeManager & nodeManager = mesh.getNodeManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X =
+    nodeManager.referencePosition().toViewConst();
+  ArrayOfArraysView< localIndex const > const & facesToNodes =
+    faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -196,7 +200,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
                       "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
                       InputError );
 
+      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+      arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -207,33 +213,25 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-        localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
-        // TODO remove
-        array1d< array1d< array1d< localIndex > > > allFaceNodeIndices( elementSubRegion.size() );
-        for( localIndex ei = 0; ei < elementSubRegion.size(); ++ei )
-        {
-          allFaceNodeIndices[ei].resize( numFacesPerElem );
-          for( localIndex iface = 0; iface < numFacesPerElem; ++iface )
-          {
-            allFaceNodeIndices[ei][iface].resize( 4 );
-          }
-        }
-
-        AcousticWaveEquationSEMKernels::PrecomputeSourceAndReceiverKernel
-          ::launch< EXEC_POLICY, FE_TYPE >( elementSubRegion.size(),
-                                            numNodesPerElem,
-                                            X,
-                                            elemsToNodes,
-                                            allFaceNodeIndices.toNestedView(),
-                                            sourceCoordinates,
-                                            sourceIsLocal,
-                                            sourceNodeIds,
-                                            sourceConstants,
-                                            receiverCoordinates,
-                                            receiverIsLocal,
-                                            receiverNodeIds,
-                                            receiverConstants );
+        AcousticWaveEquationSEMKernels::
+          PrecomputeSourceAndReceiverKernel::
+          launch< EXEC_POLICY, FE_TYPE >
+          ( elementSubRegion.size(),
+          numNodesPerElem,
+          X,
+          elemsToNodes,
+          elemsToFaces,
+          facesToNodes,
+          elemCenter,
+          sourceCoordinates,
+          sourceIsLocal,
+          sourceNodeIds,
+          sourceConstants,
+          receiverCoordinates,
+          receiverIsLocal,
+          receiverNodeIds,
+          receiverConstants );
 
       } );
     } );
@@ -361,20 +359,22 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         localIndex const numNodesPerFace = 4;
 
-        AcousticWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                              numFacesPerElem,
-                                                              numNodesPerFace,
-                                                              X,
-                                                              elemsToNodes,
-                                                              elemsToFaces,
-                                                              facesToNodes,
-                                                              facesDomainBoundaryIndicator,
-                                                              freeSurfaceFaceIndicator,
-                                                              faceNormal,
-                                                              velocity,
-                                                              mass,
-                                                              damping );
+        AcousticWaveEquationSEMKernels::
+          MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
+        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
+          ( elementSubRegion.size(),
+          numFacesPerElem,
+          numNodesPerFace,
+          X,
+          elemsToNodes,
+          elemsToFaces,
+          facesToNodes,
+          facesDomainBoundaryIndicator,
+          freeSurfaceFaceIndicator,
+          faceNormal,
+          velocity,
+          mass,
+          damping );
       } );
     } );
   } );
