@@ -75,7 +75,7 @@ def acoustic_shots(rank, problem, acquisition):
     cycle_freq[0] = maxCycle
     maxT[0]       = (maxCycle+1)*dt
     nsamples[0]   = int(maxT[0]/dt_sismo)
-    
+
     pressure_at_receivers = np.zeros((nsamples[0], acquisition.shots[0].receivers.n))
     nb_shot = len(acquisition.shots)
 
@@ -100,7 +100,7 @@ def acoustic_shots(rank, problem, acquisition):
     acquisition.shots[ishot].flag = "In Progress"
     if rank==0:
         print_flag(acquisition.shots)
-        
+
     segyList = []
     while (np.array([shot.flag for shot in acquisition.shots]) == "Done").all() != True and pygeosx.run() != pygeosx.COMPLETED:
         #Save pressure
@@ -116,18 +116,18 @@ def acoustic_shots(rank, problem, acquisition):
 
             acquisition.shots[ishot].flag = "Done"
 
-            
+
             #Reset pressure values to 0
             pressure_nm1.to_numpy()[:] = 0.0
             pressure_n.to_numpy()[:]   = 0.0
             pressure_np1.to_numpy()[:] = 0.0
             indexSismoTrace[0]         = 0
 
-            #Increment shot, update dt and reset current time to -dt 
+            #Increment shot, update dt and reset current time to -dt
             if ishot < nb_shot:
                 if rank==0:
                     print_shot_config(acquisition.shots, ishot)
-                    
+
                 dt            = acquisition.shots[ishot].dt
                 dt_geosx[0]   = dt
                 maxCycle      = int(ceil(maxT[0]/dt))
@@ -151,5 +151,5 @@ def acoustic_shots(rank, problem, acquisition):
 
             if rank==0:
                 print_flag(acquisition.shots)
-    
+
     return segyList

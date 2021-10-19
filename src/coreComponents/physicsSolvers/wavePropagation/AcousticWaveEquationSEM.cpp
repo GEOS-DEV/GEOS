@@ -703,12 +703,13 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                               integer const cycleNumber,
                                               DomainPartition & domain )
 {
+  std::cout<<"coucou"<<std::endl;
   GEOSX_MARK_FUNCTION;
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
+  /*
   ///Use to reinit params if pygeox set time_n to zero
   if( time_n < 0.5*dt )
   {
@@ -716,7 +717,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     postProcessInput();
     precomputeSourceAndReceiverTerm( mesh );
   }
-
+  */
   NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();

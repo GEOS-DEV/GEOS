@@ -261,6 +261,12 @@ public:
   bool isIdle() const
   { return m_eventForecast > 1; }
 
+  ExecutableGroup * getEventTarget() const
+  { return m_target; }
+
+  string getEventName() const
+  { return m_eventTarget; }
+
 protected:
 
   /**
@@ -304,8 +310,8 @@ protected:
    * @brief Get the target of this event.
    * @return The target of this event.
    */
-  ExecutableGroup * getEventTarget() const
-  { return m_target; }
+  // ExecutableGroup * getEventTarget() const
+  //{ return m_target; }
 
   /// The last time the event occurred.
   real64 m_lastTime;

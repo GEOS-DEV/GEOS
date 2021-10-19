@@ -2,13 +2,38 @@ import segyio
 import os
 import numpy as np
 
-def create_segy(shot_list, physicalName, nsamples, tracePath):
+def create_segy(shot, physicalName, nsamples, tracePath):
 
     if os.path.exists(tracePath):
         pass
     else:
         os.mkdir(tracePath)
 
+    rcvCoord = [receiver.coords for receiver in shot.receivers.receivers_list]
+    srcCoord = shot.source.coords
+    spec = segyio.spec()
+    ilines  = [x[0] for x in rcvCoord]
+    xlines  = [x[1] for x in rcvCoord]
+    spec.ilines = list(set(ilines))
+    spec.xlines = list(set(xlines))
+    spec.samples = np.arange(nsamples)
+    spec.sorting = 2
+    spec.format  = 1
+
+    fileName = physicalName + "_Shot"+ shot.id + ".sgy"
+    with segyio.create(os.path.join(tracePath, fileName), spec) as f:
+        for i in range(len(rcvCoord)):
+            f.header[i] = {segyio.su.scalco : -100,
+                           segyio.su.scalel : -100,
+                           segyio.su.sx : int(srcCoord[0]*100),
+                           segyio.su.sy : int(srcCoord[1]*100),
+                           segyio.su.sdepth : int(srcCoord[2]*100),
+                           segyio.su.gx : int(rcvCoord[i][0]*100),
+                           segyio.su.gy : int(rcvCoord[i][1]*100),
+                           segyio.su.gelev : int(rcvCoord[i][2]*100)}
+            f.trace[i] = np.zeros(nsamples, dtype=np.float32)
+        f.bin.update(tsort = segyio.TraceSortingFormat.INLINE_SORTING)
+    '''
     for ishot in range(len(shot_list)):
         rcvCoord = [receiver.coords for receiver in shot_list[ishot].receivers.receivers_list]
         srcCoord = shot_list[ishot].source.coords
@@ -34,7 +59,7 @@ def create_segy(shot_list, physicalName, nsamples, tracePath):
                                segyio.su.gelev : int(rcvCoord[i][2]*100)}
                 f.trace[i] = np.zeros(nsamples, dtype=np.float32)
             f.bin.update(tsort = segyio.TraceSortingFormat.INLINE_SORTING)
-
+    '''
 
 def export_to_segy(physicalValue, rcvCoord, segyFile):
     """Export the pressure value calculated by GEOSX to a segy file
@@ -54,7 +79,7 @@ def export_to_segy(physicalValue, rcvCoord, segyFile):
     with segyio.open(segyFile, 'r+', ignore_geometry=True) as f:
         for i in range(len(rcvCoord)):
             if any(physicalValue[1:,i])==True:
-                f.trace[i] = physicalValue[:, i]
+                f.trace[i] = np.ascontiguousarray(physicalValue[:, i], dtype = np.float32)
 
 
 def export_for_acquisition(shot_list, acq_name):

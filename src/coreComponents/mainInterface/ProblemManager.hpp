@@ -154,6 +154,11 @@ public:
    * @brief Returns a pointer to the DomainPartition
    * @return Pointer to the DomainPartition
    */
+
+  EventManager & getEventManager()
+  {return *m_eventManager;}
+
+
   DomainPartition & getDomainPartition();
 
   /**

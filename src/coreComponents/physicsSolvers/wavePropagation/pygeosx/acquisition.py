@@ -18,10 +18,12 @@ class Acquisition:
                  receivers_depth=None,
                  output=None,
                  **kwargs):
-        
+
         self.xml=None
         self.limited_aperture=False
         self.boundary=boundary
+        self.velocity_model=velocity_model
+        self.aperture_boundary=boundary
 
         if source_positions is not None and receivers_positions is not None:
             self.acquisition(source,
@@ -30,17 +32,15 @@ class Acquisition:
                              source_depth,
                              receivers_depth)
 
+            for shot in self.shots:
+                shot.velocity_model = velocity_model
 
-        
-        self.velocity_model=velocity_model
-        self.aperture_boundary=boundary
-        
         if dt is not None:
             for shot in self.shots:
                 shot.dt = dt
 
         if output is not None:
-            self.output=output
+            self.output = output
         else:
             self.output = os.path.join(os.getcwd(),"outputSismoTrace/")
             if os.path.exists(self.output):
@@ -93,7 +93,7 @@ class Acquisition:
 
             acqs.append(deepcopy(self))
             acqs[i].shots = acqs[i].shots[ind:ind + nb_shot]
-            
+
             ind = ind + nb_shot
             nb_shot_m1 = nb_shot_m1 - nb_shot
 
@@ -134,17 +134,22 @@ class Acquisition:
                 z = (zCoords[1] - zCoords[0])/z_nb_cells
 
                 minRadius = min(x/2, y/2, z/2)
-            
-                with open(shot.velocity_model,'r') as vf:
-                    minVelocity = float(vf.readline())
-                    for velocity in vf.readlines():
-                        if float(velocity) < minVelocity:
-                            minVelocity = float(velocity)
-                vf.close()
+
+                if isinstance(shot.velocity_model, str):
+
+                    with open(shot.velocity_model,'r') as vf:
+                        minVelocity = float(vf.readline())
+                        for velocity in vf.readlines():
+                            if float(velocity) < minVelocity:
+                                minVelocity = float(velocity)
+                    vf.close()
+
+                else:
+                    minVelocity = shot.velocity_model
 
                 #Suppose space discretization is order 1
                 shot.dt = minRadius/minVelocity
-            
+
 
 
     def limitedAperture(self, aperture_dist):
@@ -155,8 +160,15 @@ class Acquisition:
 
         internal_mesh = [elem.attrib for elem in root.iter('InternalMesh')][0]
         box = [elem.attrib for elem in root.iter('Box')][0]
-        vtk = [elem.attrib for elem in root.iter('VTK')][0]
-        events = [elem.attrib for elem in root.iter('PeriodicEvent')][2]
+        if len([elem.attrib for elem in root.iter('VTK')]):
+            vtk = [elem.attrib for elem in root.iter('VTK')][0]
+        else:
+            vtk = []
+        for periodicEvent in [elem.attrib for elem in root.iter('PeriodicEvent')]:
+            if periodicEvent['name'] == "vtk":
+                events = periodicEvent
+            else:
+                events = []
 
         xCoords_str_list = internal_mesh['xCoords'].strip('').replace(',', ' ').replace('{','').replace('}','').split()
         yCoords_str_list = internal_mesh['yCoords'].strip('').replace(',', ' ').replace('{','').replace('}','').split()
@@ -169,19 +181,19 @@ class Acquisition:
         x_nb_cells = int(internal_mesh['nx'].replace('{','').replace('}',''))
         y_nb_cells = int(internal_mesh['ny'].replace('{','').replace('}',''))
         z_nb_cells = int(internal_mesh['nz'].replace('{','').replace('}',''))
-        
+
         x_cells_boundary = np.append(np.arange(xCoords[0], xCoords[1], (xCoords[1]-xCoords[0])/x_nb_cells), xCoords[1])
         y_cells_boundary = np.append(np.arange(yCoords[0], yCoords[1], (yCoords[1]-yCoords[0])/y_nb_cells), yCoords[1])
         z_cells_boundary = np.append(np.arange(zCoords[0], zCoords[1], (zCoords[1]-zCoords[0])/z_nb_cells), zCoords[1])
-        
+
         self.set_limited_aperture_boundaries(aperture_dist,
-                                             x_cells_boundary, 
-                                             y_cells_boundary, 
+                                             x_cells_boundary,
+                                             y_cells_boundary,
                                              z_cells_boundary)
-        
+
         if os.path.exists("limitedAperture") == False:
             os.mkdir("limitedAperture")
-        
+
 
         if isinstance(self.velocity_model, str):
             tablefunction =[elem.attrib for elem in root.iter('TableFunction')][0]
@@ -212,7 +224,7 @@ class Acquisition:
             nx = int(x_nb_cells*(shot.boundary[0][1]-shot.boundary[0][0])/(xCoords[1]-xCoords[0]))
             ny = int(y_nb_cells*(shot.boundary[1][1]-shot.boundary[1][0])/(yCoords[1]-yCoords[0]))
             nz = int(z_nb_cells*(shot.boundary[2][1]-shot.boundary[2][0])/(zCoords[1]-zCoords[0]))
-            
+
             internal_mesh['xCoords'] = "{"+str(shot.boundary[0][0])+","+str(shot.boundary[0][1])+"}"
             internal_mesh['yCoords'] = "{"+str(shot.boundary[1][0])+","+str(shot.boundary[1][1])+"}"
             internal_mesh['zCoords'] = "{"+str(shot.boundary[2][0])+","+str(shot.boundary[2][1])+"}"
@@ -220,7 +232,7 @@ class Acquisition:
             internal_mesh['nx'] = "{"+str(nx)+"}"
             internal_mesh['ny'] = "{"+str(ny)+"}"
             internal_mesh['nz'] = "{"+str(nz)+"}"
-            
+
             box['xMin'] = "{"+str(shot.boundary[0][0]-0.01)+","+str(shot.boundary[1][0]-0.01)+","+str(shot.boundary[2][1]-0.01)+"}"
             box['xMax'] = "{"+str(shot.boundary[0][1]+0.01)+","+str(shot.boundary[1][1]+0.01)+","+str(shot.boundary[2][1]+0.01)+"}"
 
@@ -244,7 +256,7 @@ class Acquisition:
                                             zlocal.append(zlin[k])
                                         keep_line.append(velocity_model_value[i*ly*lz+j*lz+k])
                                         localToGlobal.append(i*ly*lz+j*lz+k)
-                
+
                 xlin_file = self.velocity_model.split("_velModel")[0]+"_xlin"+shot.id+".geos"
                 ylin_file = self.velocity_model.split("_velModel")[0]+"_ylin"+shot.id+".geos"
                 zlin_file = self.velocity_model.split("_velModel")[0]+"_zlin"+shot.id+".geos"
@@ -275,21 +287,23 @@ class Acquisition:
                 tablefunction['coordinateFiles']="{"+xlin_file+","+ylin_file+","+zlin_file+"}"
                 tablefunction['voxelFile'] = velocity_file
                 shot.velocity_model = velocity_file
-                
-            vtk['name'] = 'vtkOutput'+str(shot.id)
-            events['target'] = '/Outputs/vtkOutput'+str(shot.id)
+
+            if len(vtk) != 0:
+                vtk['name'] = 'vtkOutput'+str(shot.id)
+            if len(events) != 0:
+                events['target'] = '/Outputs/vtkOutput'+str(shot.id)
 
             xmlfile = os.path.join("limitedAperture/", "limited_aperture_Shot"+str(shot.id)+".xml")
             tree.write(xmlfile)
-            
+
             shot.xml = xmlfile
 
 
-            
-    def set_limited_aperture_boundaries(self, 
-                                        distance, 
-                                        x_cells_boundary, 
-                                        y_cells_boundary, 
+
+    def set_limited_aperture_boundaries(self,
+                                        distance,
+                                        x_cells_boundary,
+                                        y_cells_boundary,
                                         z_cells_boundary):
 
         for shot in self.shots:
@@ -302,7 +316,7 @@ class Acquisition:
                     xmin = x_cells_boundary[i]
                 if shot.source.x() + distance <= x_cells_boundary[nx-1-i]:
                     xmax = x_cells_boundary[nx-1-i]
-            
+
             ny = y_cells_boundary.size
             ymin = y_cells_boundary[0]
             ymax = y_cells_boundary[ny-1]
@@ -312,23 +326,23 @@ class Acquisition:
                     ymin = y_cells_boundary[i]
                 if shot.source.y() + distance <= y_cells_boundary[ny-1-i]:
                     ymax = y_cells_boundary[ny-1-i]
-                    
+
             nz = z_cells_boundary.size
             zmin = z_cells_boundary[0]
             zmax = z_cells_boundary[nz-1]
-            
+
             limited_aperture = [[xmin,xmax],[ymin,ymax],[zmin,zmax]]
-            
+
             shot.boundary = deepcopy(limited_aperture)
             shot.receivers.keep_inside_domain(limited_aperture)
 
-            
+
     def add_xml(self, xmlfile):
         self.xml = xmlfile
         for shot in self.shots:
             shot.xml = xmlfile
 
-                
+
 
     def construct_from_dict(self, **kwargs):
         self.shots=[]
@@ -355,16 +369,22 @@ class SEGYAcquisition(Acquisition):
                  directory=None,
                  source=None):
 
-        super().__init__(limited_aperture=limited_aperture,
-                         boundary=boundary,
-                         source=source,
-                         velocity_model=velocity_model)
-
         if directory is not None:
             self.acquisition(directory,
                              source)
+
+            for shot in self.shots:
+                shot.velocity_model = velocity_model
         else:
             raise ValueError("You must specify a directory")
+
+        super().__init__(limited_aperture=limited_aperture,
+                         boundary=boundary,
+                         source=source,
+                         velocity_model=velocity_model,
+                         dt=dt)
+
+
 
     def acquisition(self,
                     directory,
@@ -447,6 +467,7 @@ class EQUISPACEDAcquisition(Acquisition):
                  source_depth=None,
                  receivers_depth=None):
 
+
         if start_source_pos is not None and start_receivers_pos is not None:
             self.acquisition(wavelet=source,
                              start_source_pos=start_source_pos,
@@ -458,12 +479,16 @@ class EQUISPACEDAcquisition(Acquisition):
                              source_depth=source_depth,
                              receivers_depth=receivers_depth)
 
+            for shot in self.shots:
+                shot.velocity_model = velocity_model
+
 
         super().__init__(limited_aperture=limited_aperture,
                          boundary=boundary,
                          source=source,
                          velocity_model=velocity_model,
                          dt=dt)
+
 
 
     def acquisition(self,
@@ -572,11 +597,6 @@ class MOVINGAcquisition(Acquisition):
                  zone_receiver_x = None,
                  zone_receiver_y = None):
 
-        super().__init__(limited_aperture=limited_aperture,
-                         boundary=boundary,
-                         source=source,
-                         velocity_model=velocity_model,
-                         dt=dt)
 
         if number_of_sources_x is not None and number_of_receivers_x is not None:
             self.acquisition(boundary=boundary,
@@ -589,6 +609,17 @@ class MOVINGAcquisition(Acquisition):
                              number_of_receivers=number_of_receivers,
                              source_depth=source_depth,
                              receivers_depth=receivers_depth)
+
+            for shot in self.shots:
+                shot.velocity_model = velocity_model
+
+
+        super().__init__(limited_aperture=limited_aperture,
+                         boundary=boundary,
+                         source=source,
+                         velocity_model=velocity_model,
+                         dt=dt)
+
 
 
     def acquisition(self,
@@ -725,11 +756,6 @@ class RANDOMAcquisition(Acquisition):
                  number_of_receivers_y = None,
                  receivers_depth = None):
 
-        super().__init__(limited_aperture=limited_aperture,
-                         boundary=boundary,
-                         velocity_model=velocity_model,
-                         dt=dt,
-                         source=source)
 
         if number_of_sources is not None and number_of_receivers_x is not None and number_of_receivers_y is not None:
             self.acquisition(wavelet=source,
@@ -739,6 +765,17 @@ class RANDOMAcquisition(Acquisition):
                              number_of_receivers_y=number_of_receivers_y,
                              source_depth=source_depth,
                              receivers_depth=receivers_depth)
+
+            for shot in self.shots:
+                shot.velocity_model = velocity_model
+
+
+        super().__init__(limited_aperture=limited_aperture,
+                         boundary=boundary,
+                         velocity_model=velocity_model,
+                         dt=dt,
+                         source=source)
+
 
 
     def acquisition(self,
@@ -1012,7 +1049,7 @@ class ReceiverSet:
 
     def construct_from_dict(self, **kwargs):
         self.receivers_list = []
-        for key, value in kwargs.items(): 
+        for key, value in kwargs.items():
             if key == "receivers_list":
                 for i in range(len(value)):
                     dict = value[i]

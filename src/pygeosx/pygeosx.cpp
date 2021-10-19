@@ -23,6 +23,7 @@
 #include "PyWrapper.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
+#include "LvArray/src/python/PyArray.hpp"
 
 // System includes
 #pragma GCC diagnostic push
@@ -32,8 +33,10 @@
 #pragma GCC diagnostic pop
 #include <chrono>
 
-// Acoustic Solver
-//#include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.cpp"
+// SolverBase
+#include "physicsSolvers/SolverBase.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
 
 
 namespace geosx
@@ -313,40 +316,122 @@ static bool addExitHandler( PyObject * module )
   return returnval != nullptr;
 }
 
-/*
-PyObject * sismo(PyObject * self, PyObject * args ) noexcept
+
+//This routine gets the targeted solver among all events
+geosx::EventBase * getSpecificTarget(const char* target)
+{
+  geosx::ProblemManager & pb_manager = geosx::g_state->getProblemManager();
+  geosx::EventManager & eventManager = pb_manager.getEventManager();
+  // Setup event targets
+  eventManager.forSubGroups< geosx::EventBase >( [&]( geosx::EventBase & subEvent )
+  {
+    subEvent.getTargetReferences();
+  } );
+  geosx::EventBase * subEvent = nullptr;
+  //Loop over all events until it finds the targeted one
+  for(int currentSubEvent = 0; currentSubEvent<eventManager.numSubGroups(); ++currentSubEvent )
+  {
+    subEvent = static_cast< geosx::EventBase * >( eventManager.getSubGroups()[currentSubEvent]);
+    if (subEvent->getEventName() == target)
+    {
+      break;
+    }
+    else
+    {
+      subEvent = nullptr;
+    }
+  }
+  PYTHON_ERROR_IF( subEvent == nullptr, PyExc_RuntimeError, "Target not found", nullptr );
+
+  return subEvent;
+}
+
+
+// SolverBase routine
+PyObject * explicitStep(PyObject * self, PyObject * args) noexcept
 {
   GEOSX_UNUSED_VAR( self);
-  PyObject * p_rcvs;
-  if( !PyArg_ParseTuple( args, "O", &p_rcvs ) )
+  const char* target;
+  double time;
+  double dt;
+  if( !PyArg_ParseTuple( args, "zdd", &target, &time, &dt ) )
   {
     return nullptr;
   }
-  geosx::saveSismo( p_rcvs );
-  Py_RETURN_NONE;
-}
-*/
 
-PyObject * dummy(PyObject * self, PyObject * args) noexcept
-{
-  GEOSX_UNUSED_VAR(self);
-  //geosx::arrayView2d<geosx::real64> const  p_rcvs;
-  PyObject * lvarray;
-  if(!PyArg_ParseTuple( args, "O", &lvarray ) )
-  {
-    GEOSX_LOG("error");
-  }
-  /*
-  for (int i=0 ; i < p_rcvs.size() ; i++)
-    {
-      for (int j=0 ; j < p_rcvs[i].size() ; j++)
-	{
-	  std::cout<<p_rcvs[i][j];
-	}
-    }
-  */
+  geosx::EventBase * subEvent = getSpecificTarget(target);
+
+  geosx::DomainPartition & domain = geosx::g_state->getProblemManager().getDomainPartition();
+
+  geosx::SolverBase * solver = static_cast<geosx::SolverBase *>(subEvent->getEventTarget());
+  solver->explicitStep(time, dt, 0, domain);
+
   Py_RETURN_NONE;
 }
+
+
+
+//AcousticWaveEquationSEM routines
+PyObject * postProcessInput(PyObject * self, PyObject * args) noexcept
+{
+  GEOSX_UNUSED_VAR( self, args);
+
+  std::string targetString = "/Solvers/acousticSolver";
+  geosx::EventBase * subEvent = getSpecificTarget(targetString.c_str());
+
+  geosx::AcousticWaveEquationSEM * acousticsolver = static_cast<geosx::AcousticWaveEquationSEM *>(subEvent->getEventTarget());
+  acousticsolver->postProcessInput();
+
+  Py_RETURN_NONE;
+}
+
+
+
+PyObject * precomputeSourceAndReceiverTerm(PyObject * self, PyObject * args) noexcept
+{
+  GEOSX_UNUSED_VAR( self, args);
+
+  std::string targetString = "/Solvers/acousticSolver";
+  geosx::EventBase * subEvent = getSpecificTarget(targetString.c_str());
+
+  geosx::DomainPartition & domain = geosx::g_state->getProblemManager().getDomainPartition();
+  geosx::MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  geosx::AcousticWaveEquationSEM * acousticsolver = static_cast<geosx::AcousticWaveEquationSEM *>(subEvent->getEventTarget());
+  acousticsolver->precomputeSourceAndReceiverTerm(mesh);
+
+  Py_RETURN_NONE;
+}
+
+
+
+PyObject * computeSeismoTrace(PyObject * self, PyObject * args) noexcept
+{
+  GEOSX_UNUSED_VAR( self);
+
+  double time;
+  double dt;
+  int iseismo;
+  if( !PyArg_ParseTuple( args, "ddi", &time, &dt, &iseismo ) )
+  {
+    return nullptr;
+  }
+
+  std::string targetString = "/Solvers/acousticSolver";
+  geosx::EventBase * subEvent = getSpecificTarget(targetString.c_str());
+
+  geosx::DomainPartition & domain = geosx::g_state->getProblemManager().getDomainPartition();
+  geosx::NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
+
+  geosx::arrayView1d< geosx::real64 > const p_n = nodeManager.getExtrinsicData< geosx::extrinsicMeshData::Pressure_n >();
+  geosx::arrayView1d< geosx::real64 > const p_np1 = nodeManager.getExtrinsicData< geosx::extrinsicMeshData::Pressure_np1 >();
+
+  geosx::AcousticWaveEquationSEM * acousticsolver = static_cast<geosx::AcousticWaveEquationSEM *>(subEvent->getEventTarget());
+  acousticsolver->computeSismoTrace(time, dt, iseismo, p_np1, p_n);
+
+  Py_RETURN_NONE;
+}
+
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 /**
@@ -358,10 +443,13 @@ static PyMethodDef pygeosxFuncs[] = {
   { "apply_initial_conditions", geosx::applyInitialConditions, METH_NOARGS, geosx::applyInitialConditionsDocString },
   { "run", geosx::run, METH_NOARGS, geosx::runDocString },
   { "_finalize", geosx::finalize, METH_NOARGS, geosx::finalizeDocString },
-  //  { "saveSismo", sismo, METH_VARARGS, "save pressure at receivers" },
-  {"dummy", dummy, METH_VARARGS, "print lvArray object" },
+  { "explicitStep", explicitStep, METH_VARARGS, "explicit Step" },
+  { "postProcessInput", postProcessInput, METH_NOARGS, "resize pressure_at_receivers array to fit with new number of receivers"},
+  { "precomputeSourceAndReceiverTerm", precomputeSourceAndReceiverTerm, METH_NOARGS, "update positions for new source and receivers"},
+  { "computeSeismoTrace", computeSeismoTrace, METH_VARARGS, "compute pressure at receivers"},
   { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };
+
 
 static constexpr char const * pygeosxDocString =
   "Python driver for GEOSX.";

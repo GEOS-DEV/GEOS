@@ -15,9 +15,9 @@
       sourceCoordinates="{ { 1005.0, 1005.0, 1005.0 } }"
       timeSourceFrequency="5.0"
       receiverCoordinates="{ { 1105,1005, 1005 } }"
-      outputSismoTrace="1"
-      dtSismoTrace="0.02"
-      nSampleSismoTrace="30"/>
+      outputSismoTrace="0"
+      dtSismoTrace="0.05"
+      nSampleSismoTrace="50"/>
 
   </Solvers>
 
@@ -30,9 +30,9 @@
       xCoords="{ 0, 2000 }"
       yCoords="{ 0, 2000 }"
       zCoords="{ 0, 2000 }"
-      nx="{ 100 }"
-      ny="{ 100 }"
-      nz="{ 100 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 5 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
 
@@ -51,13 +51,13 @@
 
 
   <Events
-    maxTime="2.0">
+    maxTime="0.2">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <!-- (there are other ways to control the time step size) -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.002"
+      forceDt="0.05"
       target="/Solvers/acousticSolver"/>
     <!-- generate an output that can be read from VTK -->
 

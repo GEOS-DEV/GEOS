@@ -33,7 +33,7 @@ public:
 
   using EXEC_POLICY = parallelDevicePolicy<32>;
   using OMP_EXEC_POLICY = parallelHostPolicy;
-  
+
   AcousticWaveEquationSEM( const std::string & name,
                            Group * const parent );
 
@@ -118,9 +118,15 @@ public:
   } waveEquationViewKeys;
 
 
+  virtual void postProcessInput() override final;
+
+  void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
+
+  void computeSismoTrace( real64 const time_n, real64 const dt, localIndex iSismoTrace, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n );
+
 protected:
 
-  virtual void postProcessInput() override final;
+  //virtual void postProcessInput() override final;
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
@@ -150,7 +156,7 @@ private:
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
-  void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
+  // void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
@@ -164,7 +170,7 @@ private:
    * @param num_timeStep the cycle number of timestep
    * @param pressure_np1 the array to save the pressure value at the receiver position
    */
-  void computeSismoTrace( real64 const time_n, real64 const dt, localIndex iSismoTrace, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n );
+  //void computeSismoTrace( real64 const time_n, real64 const dt, localIndex iSismoTrace, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n );
 
   /**
    * @brief Save the sismo trace in file
