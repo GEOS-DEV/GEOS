@@ -1,6 +1,10 @@
 <?xml version="1.0" ?>
 
 <Problem>
+  <Included>
+    <File name="./FieldCaseTutorial3_base.xml"/>
+  </Included>
+
   <!-- SPHINX_FIELD_CASE_MESH -->
   <Mesh>
     <PAMELAMeshGenerator
