@@ -221,24 +221,25 @@ void CornerPointMeshGenerator::freeResources()
 namespace
 {
 
-string findPermeabilityWrapperName( ElementSubRegionBase const & subRegion )
+string findFullWrapperName( ElementSubRegionBase const & subRegion,
+                            string const & targetWrapperName )
 {
   using namespace constitutive;
-  string permeabilityWrapperName;
+  string fullWrapperName;
   subRegion.getConstitutiveModels().forSubGroups< ConstitutiveBase >( [&]( ConstitutiveBase const & material )
   {
     material.forWrappers( [&]( WrapperBase const & wrapper )
     {
       if( wrapper.sizedFromParent() )
       {
-        if( wrapper.getName() == "permeability" )
+        if( wrapper.getName() == targetWrapperName )
         {
-          permeabilityWrapperName = ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
+          fullWrapperName = ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
         }
       }
     } );
   } );
-  return permeabilityWrapperName;
+  return fullWrapperName;
 }
 
 } // namespace
@@ -270,11 +271,14 @@ void CornerPointMeshGenerator::importFields( DomainPartition & domain ) const
 
     // Step 3: fill property information
 
+    // TODO: here, just copy over what is done in PAMELAMeshGenerator, if it works
+
     // Step 3.a: fill porosity in active cells
     arrayView1d< real64 const > porosityField = m_cpMeshBuilder->porosityField();
-    if( !porosityField.empty() )
+    string const poroWrapperName = findFullWrapperName( subRegion, "referencePorosity" );
+    if( !porosityField.empty()  && !poroWrapperName.empty() )
     {
-      arrayView1d< real64 > referencePorosity = subRegion.getReference< array1d< real64 > >( "referencePorosity" );
+      arrayView1d< real64 > & referencePorosity = subRegion.getReference< array1d< real64 > >( poroWrapperName );
       for( localIndex iOwnedActiveCellInRegion = 0; iOwnedActiveCellInRegion < nOwnedActiveCellsInRegion; ++iOwnedActiveCellInRegion )
       {
         localIndex const iOwnedActiveCell = ownedActiveCellsInRegion( iOwnedActiveCellInRegion );
@@ -286,11 +290,10 @@ void CornerPointMeshGenerator::importFields( DomainPartition & domain ) const
 
     // Step 3.b: fill permeability in active cells
     arrayView2d< real64 const > permeabilityField = m_cpMeshBuilder->permeabilityField();
-    string const permWrapperName = findPermeabilityWrapperName( subRegion );
+    string const permWrapperName = findFullWrapperName( subRegion, "permeability" );
     if( !permeabilityField.empty() && !permWrapperName.empty() )
     {
-      array3d< real64 > & permeability = subRegion.getReference< array3d< real64 > >( permWrapperName );
-
+      arrayView3d< real64 > & permeability = subRegion.getReference< array3d< real64 > >( permWrapperName );
       for( localIndex iOwnedActiveCellInRegion = 0; iOwnedActiveCellInRegion < nOwnedActiveCellsInRegion; ++iOwnedActiveCellInRegion )
       {
         localIndex const iOwnedActiveCell = ownedActiveCellsInRegion( iOwnedActiveCellInRegion );
