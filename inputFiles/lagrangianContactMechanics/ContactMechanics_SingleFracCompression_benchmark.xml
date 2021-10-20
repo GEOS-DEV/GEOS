@@ -3,7 +3,7 @@
 <Problem>
 
   <Included>
-    <File name="./ContactMechanics_SingleFracCompression_Base.xml"/>
+    <File name="./ContactMechanics_SingleFracCompression_base.xml"/>
   </Included>
 
 <!-- SPHINX_MESH -->

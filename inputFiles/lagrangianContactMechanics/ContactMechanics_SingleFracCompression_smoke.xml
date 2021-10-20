@@ -3,14 +3,14 @@
 <Problem>
 
   <Included>
-    <File name="./ContactMechanics_SingleFracCompression_Base.xml"/>
+    <File name="./ContactMechanics_SingleFracCompression_base.xml"/>
   </Included>
 
 <!-- SPHINX_MESH -->
   <Mesh>
     <PAMELAMeshGenerator
       name="CubeHex"
-      file="crackInPlane.msh"/>
+      file="crackInPlane_smoke.msh"/>
   </Mesh>
 
   <Geometry>

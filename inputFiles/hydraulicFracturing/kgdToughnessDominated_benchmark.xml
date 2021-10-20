@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./kgdToughnessDominated_Base.xml"/>
+    <File name="./kgdToughnessDominated_base.xml"/>
   </Included>
   <Mesh>
 	<!-- Sphinx_Mesh_InternalMesh -->
