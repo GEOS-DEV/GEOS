@@ -35,8 +35,8 @@ namespace PVTProps
 namespace
 {
 
-TableFunction const * makeDensityTable( string const & functionName,
-                                        FunctionManager & functionManager )
+TableFunction const * makeSatDensityTable( string const & functionName,
+                                           FunctionManager & functionManager )
 {
   array1d< array1d< real64 > > temperatures;
   array1d< real64 > densities;
@@ -100,7 +100,7 @@ TableFunction const * makeDensityTable( string const & functionName,
   densities[24] = 610.67;
   densities[25] = 527.59;
 
-  string const tableName = functionName +  "_table";
+  string const tableName = functionName +  "_sat_density_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );
@@ -112,6 +112,86 @@ TableFunction const * makeDensityTable( string const & functionName,
     densityTable->setTableValues( densities );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
+  }
+}
+
+TableFunction const * makeSatPressureTable( string const & functionName,
+                                            FunctionManager & functionManager )
+{
+  array1d< array1d< real64 > > temperatures;
+  array1d< real64 > pressures;
+
+  temperatures.resize( 1 );
+  temperatures[0].resize( 26 );
+  pressures.resize( 26 );
+
+  temperatures[0][0] = 0.01;
+  temperatures[0][1] = 10;
+  temperatures[0][2] = 20;
+  temperatures[0][3] = 25;
+  temperatures[0][4] = 30;
+  temperatures[0][5] = 40;
+  temperatures[0][6] = 50;
+  temperatures[0][7] = 60;
+  temperatures[0][8] = 70;
+  temperatures[0][9] = 80;
+  temperatures[0][10] = 90;
+  temperatures[0][11] = 100;
+  temperatures[0][12] = 110;
+  temperatures[0][13] = 120;
+  temperatures[0][14] = 140;
+  temperatures[0][15] = 160;
+  temperatures[0][16] = 180;
+  temperatures[0][17] = 200;
+  temperatures[0][18] = 220;
+  temperatures[0][19] = 240;
+  temperatures[0][20] = 260;
+  temperatures[0][21] = 280;
+  temperatures[0][22] = 300;
+  temperatures[0][23] = 320;
+  temperatures[0][24] = 340;
+  temperatures[0][25] = 360;
+
+
+  pressures[0] =  612;
+  pressures[1] =  1200;
+  pressures[2] =  2300;
+  pressures[3] =  3200;
+  pressures[4] =  4200;
+  pressures[5] =  7400;
+  pressures[6] =  12400;
+  pressures[7] =  19900;
+  pressures[8] =  31200;
+  pressures[9] =  47400;
+  pressures[10] = 70200;
+  pressures[11] = 101000;
+  pressures[12] = 143000;
+  pressures[13] = 199000;
+  pressures[14] = 362000;
+  pressures[15] = 618000;
+  pressures[16] = 1000000;
+  pressures[17] = 1550000;
+  pressures[18] = 2320000;
+  pressures[19] = 3350000;
+  pressures[20] = 4690000;
+  pressures[21] = 6420000;
+  pressures[22] = 8590000;
+  pressures[23] = 11300000;
+  pressures[24] = 14600000;
+  pressures[25] = 18700000;
+
+  string const tableName = functionName +  "_sat_pressure_table";
+  if( functionManager.hasGroup< TableFunction >( tableName ) )
+  {
+    return functionManager.getGroupPointer< TableFunction >( tableName );
+  }
+  else
+  {
+    TableFunction * const pressureTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
+    pressureTable->setTableCoordinates( temperatures );
+    pressureTable->setTableValues( pressures );
+    pressureTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return pressureTable;
   }
 }
 
@@ -133,7 +213,8 @@ EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
   makeCoefficients( inputPara );
-  m_waterDensityTable = makeDensityTable( m_functionName, FunctionManager::getInstance() );
+  m_waterSatDensityTable = makeSatDensityTable( m_functionName, FunctionManager::getInstance() );
+  m_waterSatPressureTable = makeSatPressureTable( m_functionName, FunctionManager::getInstance() );
 }
 
 void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
@@ -142,8 +223,6 @@ void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )
   // Reference : Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, Boca Raton, Florida, USA CRC Press (1993).
 
   m_waterCompressibility = 4.5e-10; // Pa-1
-  m_waterRefDensity = 958.35;
-  m_waterRefPressure = 1e5;
   GEOSX_THROW_IF_LT_MSG( inputPara.size(), 5,
                          GEOSX_FMT( "{}: insufficient number of model parameters", m_functionName ),
                          InputError );
@@ -165,12 +244,11 @@ EzrokhiBrineDensity::KernelWrapper
 EzrokhiBrineDensity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
-                        *m_waterDensityTable,
+                        *m_waterSatDensityTable,
+                        *m_waterSatPressureTable,
                         m_CO2Index,
                         m_waterIndex,
                         m_waterCompressibility,
-                        m_waterRefDensity,
-                        m_waterRefPressure,
                         m_coef0,
                         m_coef1,
                         m_coef2 );

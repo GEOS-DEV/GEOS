@@ -37,22 +37,20 @@ class EzrokhiBrineDensityUpdate final : public PVTFunctionBaseUpdate
 public:
 
   EzrokhiBrineDensityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                             TableFunction const & waterDensityTable,
+                             TableFunction const & waterSatDensityTable,
+                             TableFunction const & waterSatPressureTable,
                              integer const CO2Index,
                              integer const waterIndex,
                              real64 const waterCompressibility,
-                             real64 const waterRefDensity,
-                             real64 const waterRefPressure,
                              real64 const coef0,
                              real64 const coef1,
                              real64 const coef2 )
     : PVTFunctionBaseUpdate( componentMolarWeight ),
-    m_waterDensityTable( waterDensityTable.createKernelWrapper()),
+    m_waterSatDensityTable( waterSatDensityTable.createKernelWrapper()),
+    m_waterSatPressureTable( waterSatPressureTable.createKernelWrapper()),
     m_CO2Index( CO2Index ),
     m_waterIndex ( waterIndex ),
     m_waterCompressibility ( waterCompressibility ),
-    m_waterRefDensity ( waterRefDensity ),
-    m_waterRefPressure ( waterRefPressure ),
     m_coef0( coef0 ),
     m_coef1( coef1 ),
     m_coef2( coef2 )
@@ -83,13 +81,18 @@ public:
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
   {
     PVTFunctionBaseUpdate::move( space, touch );
-    m_waterDensityTable.move( space, touch );
+    m_waterSatDensityTable.move( space, touch );
+    m_waterSatPressureTable.move( space, touch );
   }
 
 protected:
 
-  /// Table with water density tabulated as a function (T)
-  TableFunction::KernelWrapper m_waterDensityTable;
+  /// Table with water saturated density tabulated as a function (T)
+  TableFunction::KernelWrapper m_waterSatDensityTable;
+
+
+  /// Table with water saturated pressure tabulated as a function (T)
+  TableFunction::KernelWrapper m_waterSatPressureTable;
 
   /// Index of the CO2 phase
   integer m_CO2Index;
@@ -98,10 +101,6 @@ protected:
   integer m_waterIndex;
 
   real64 m_waterCompressibility;
-
-  real64 m_waterRefDensity;
-
-  real64 m_waterRefPressure;
 
   real64 m_coef0;
 
@@ -145,8 +144,11 @@ private:
 
   void makeCoefficients( string_array const & inputPara );
 
-  /// Table with water density tabulated as a function (T)
-  TableFunction const * m_waterDensityTable;
+  /// Table with water saturated density tabulated as a function (T)
+  TableFunction const * m_waterSatDensityTable;
+
+  /// Table with water saturated pressure tabulated as a function (T)
+  TableFunction const * m_waterSatPressureTable;
 
   /// Index of the CO2 phase
   integer m_CO2Index;
@@ -155,10 +157,6 @@ private:
   integer m_waterIndex;
 
   real64 m_waterCompressibility;
-
-  real64 m_waterRefDensity;
-
-  real64 m_waterRefPressure;
 
   real64 m_coef0;
 
@@ -177,12 +175,13 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
                                          bool useMass ) const
 {
   GEOSX_UNUSED_VAR( pressure );
-  real64 const satWaterDens = m_waterDensityTable.compute( &temperature );
-  real64 const waterDens = satWaterDens * exp( m_waterCompressibility * ( pressure - m_waterRefPressure ) );
+  real64 const waterSatDensity = m_waterSatDensityTable.compute( &temperature );
+  real64 const waterSatPressure = m_waterSatPressureTable.compute( &temperature );
 
+  real64 const waterDensity = waterSatDensity * exp( m_waterCompressibility * ( pressure - waterSatPressure ) );
 
   value = ( m_coef0  + temperature * ( m_coef1 + m_coef2 * temperature ) ) * phaseComposition[m_CO2Index];
-  value = waterDens * pow( 10, value );
+  value = waterDensity * pow( 10, value );
   if( !useMass )
   {
     value /= m_componentMolarWeight[m_waterIndex];
@@ -203,14 +202,18 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
                                          arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
                                          bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( pressure );
+  real64 waterSatDensity_dTemperature;
+  real64 waterSatPressure_dTemperature;
+  real64 const waterSatDensity = m_waterSatDensityTable.compute( &temperature, &waterSatDensity_dTemperature );
+  real64 const waterSatPressure = m_waterSatPressureTable.compute( &temperature, &waterSatPressure_dTemperature );
 
-  real64 waterDens_dTemperature;
-  real64 const satWaterDens = m_waterDensityTable.compute( &temperature, &waterDens_dTemperature );
-  real64 const satWaterDensCoef = exp( m_waterCompressibility * ( pressure - m_waterRefPressure ) );
-  real64 const waterDens = satWaterDens * satWaterDensCoef;
-  waterDens_dTemperature *= satWaterDensCoef;
-  real64 const waterDens_dPressure = satWaterDens * m_waterCompressibility * satWaterDensCoef;
+  real64 const waterSatDensityCoef = exp( m_waterCompressibility * ( pressure - waterSatPressure ) );
+  real64 const waterDensity = waterSatDensity * waterSatDensityCoef;
+
+  real64 const waterDensity_dTemperature =
+    waterSatDensityCoef * ( waterSatDensity_dTemperature -
+                            waterSatDensity * m_waterCompressibility * waterSatPressure_dTemperature);
+  real64 const waterDensity_dPressure = waterSatDensity * m_waterCompressibility * waterSatDensityCoef;
 
   real64 const coefPhaseComposition = m_coef0 + temperature * ( m_coef1 + m_coef2 * temperature );
   real64 const exponent = coefPhaseComposition * phaseComposition[m_CO2Index];
@@ -221,17 +224,13 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
   real64 const exponent_dPhaseComp = coefPhaseComposition;
   real64 const exponentPowered = useMass ? pow( 10, exponent ) : pow( 10, exponent ) / m_componentMolarWeight[m_waterIndex];
 
-  value = waterDens * exponentPowered;
-  // if( !useMass )
-  // {
-  //   value /= m_componentMolarWeight[m_waterIndex];
-  //   exponentPowered /= ;
-  // }
+  value = waterDensity * exponentPowered;
+
   real64 const dValueCoef = log( 10 ) * value;
 
   real64 const dValue_dPhaseComp = dValueCoef * exponent_dPhaseComp;
-  dValue_dPressure = dValueCoef * exponent_dPressure + waterDens_dPressure * exponentPowered;
-  dValue_dTemperature = dValueCoef * exponent_dTemperature + waterDens_dTemperature * exponentPowered;
+  dValue_dPressure = dValueCoef * exponent_dPressure + waterDensity_dPressure * exponentPowered;
+  dValue_dTemperature = dValueCoef * exponent_dTemperature + waterDensity_dTemperature * exponentPowered;
 
   dValue_dGlobalCompFraction[m_CO2Index] = dValue_dPhaseComp * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_CO2Index];
   dValue_dGlobalCompFraction[m_waterIndex] = dValue_dPhaseComp * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_waterIndex];
