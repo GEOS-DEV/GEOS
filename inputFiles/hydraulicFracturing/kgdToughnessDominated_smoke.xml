@@ -66,7 +66,7 @@
       name="restarts"
       timeFrequency="1e99"
       targetExactTimestep="0"
-      target="/Outputs/sidreRestart"
+      target="/Outputs/restartOutput"
       endTime="-1" />
   </Events>
 </Problem>
