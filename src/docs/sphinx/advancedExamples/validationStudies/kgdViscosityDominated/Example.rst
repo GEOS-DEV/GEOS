@@ -33,28 +33,28 @@ The input xml files for this test case are located at:
 
 .. code-block:: console
 
-  inputFiles/multiphysics/kgdViscosityDominated_Base.xml
+  inputFiles/hydraulicFracturing/kgdViscosityDominated_base.xml
 
 and
 
 .. code-block:: console
 
-  inputFiles/multiphysics/kgdViscosityDominated_Example.xml
+  inputFiles/hydraulicFracturing/kgdViscosityDominated_benchmark.xml
 
 The corresponding integrated test with coarser mesh and smaller injection duration is also prepared:
 
 .. code-block:: console
 
-  inputFiles/multiphysics/kgdViscosityDominated_Smoke.xml
+  inputFiles/hydraulicFracturing/kgdViscosityDominated_smoke.xml
 
 Fluid viscosity and rock toughness are defined by the xml blocks below. We note that setting an absolute zero value for the toughness may lead to a floating point issue. Therefore, a small value of :math:`K_{Ic}=10^{-6}` MPa should be considered.
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdViscosityDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdViscosityDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_Solvers_SurfaceGenerator -->
   :end-before:  <!-- Sphinx_Solvers_SurfaceGenerator_End -->
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/kgdViscosityDominated_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdViscosityDominated_base.xml
   :language: xml
   :start-after: <!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid -->
   :end-before:  <!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid_End -->
@@ -94,11 +94,11 @@ A good agreement between GEOSX results and analytical solutions is shown in the 
 			return [ halfLength, inletAperture , inletPressure ]
 
 	def getParametersFromXML( xmlFilePath ):
-		tree = ElementTree.parse(xmlFilePath + "_Example.xml")
+		tree = ElementTree.parse(xmlFilePath + "_benchmark.xml")
 
 		maxTime = float(tree.find('Events').get('maxTime'))
 
-		tree = ElementTree.parse(xmlFilePath + "_Base.xml")
+		tree = ElementTree.parse(xmlFilePath + "_base.xml")
 
 		elasticParam = tree.find('Constitutive/ElasticIsotropic')
 
@@ -117,7 +117,7 @@ A good agreement between GEOSX results and analytical solutions is shown in the 
 
 
 	def main():
-		xmlFilePathPrefix = "../../../../../../inputFiles/multiphysics/kgdViscosityDominated"
+		xmlFilePathPrefix = "../../../../../../inputFiles/hydraulicFracturing/kgdViscosityDominated"
 
 		tMax, E, nu, KIc, mu, Q0 = getParametersFromXML( xmlFilePathPrefix )
 
