@@ -17,6 +17,7 @@
  */
 
 #include "CompositionalMultiphaseHybridFVMKernels.hpp"
+#include "CompositionalMultiphaseUtilities.hpp"
 
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
@@ -864,9 +865,9 @@ AssemblerKernelHelper::
 
   // Apply equation/variable change transformation(s)
   real64 work[NDOF*(NF+1)];
-  applyBlockLinearCombination( NC, NDOF * ( NF + 1 ), 1, 1, dDivMassFluxes_dElemVars, work );
-  applyBlockLinearCombination( NC, NF, 1, 1, dDivMassFluxes_dFaceVars, work );
-  applyBlockLinearCombination( NC, 1, divMassFluxes );
+  CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NDOF * ( NF + 1 ), 1, 1, dDivMassFluxes_dElemVars, work );
+  CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NF, 1, 1, dDivMassFluxes_dFaceVars, work );
+  CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, 1, divMassFluxes );
 
   // we are ready to assemble the local flux and its derivatives
   // no need for atomic adds - each row is assembled by a single thread

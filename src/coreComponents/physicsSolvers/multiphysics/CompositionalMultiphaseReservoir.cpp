@@ -23,6 +23,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
@@ -270,8 +271,8 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
 
       // Apply equation/variable change transformation(s)
       stackArray1d< real64, 2 * MAX_NUM_DOF > work( 2 * resNumDofs );
-      applyBlockLinearCombination( numComps, resNumDofs, 2, 2, localPerfJacobian, work );
-      applyBlockLinearCombination( numComps, 2, localPerf );
+      CompositionalMultiphaseUtilities::applyBlockLinearCombination( numComps, resNumDofs, 2, 2, localPerfJacobian, work );
+      CompositionalMultiphaseUtilities::applyBlockLinearCombination( numComps, 2, localPerf );
 
       for( localIndex i = 0; i < localPerf.size(); ++i )
       {

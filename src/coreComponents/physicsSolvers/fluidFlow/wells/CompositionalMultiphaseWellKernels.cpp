@@ -17,6 +17,7 @@
  */
 
 #include "CompositionalMultiphaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
 {
@@ -412,9 +413,9 @@ FluxKernel::
 
       // Apply equation/variable change transformation(s)
       real64 work[NC+1];
-      applyBlockLinearCombination( NC, 1, 1, 1, oneSidedFluxJacobian_dRate, work );
-      applyBlockLinearCombination( NC, NC + 1, 1, 1, oneSidedFluxJacobian_dPresCompUp, work );
-      applyBlockLinearCombination( NC, 1, oneSidedFlux );
+      CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, 1, 1, 1, oneSidedFluxJacobian_dRate, work );
+      CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NC + 1, 1, 1, oneSidedFluxJacobian_dPresCompUp, work );
+      CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, 1, oneSidedFlux );
 
       for( localIndex i = 0; i < NC; ++i )
       {
@@ -475,9 +476,9 @@ FluxKernel::
 
       // Apply equation/variable change transformation(s)
       real64 work[NC+1];
-      applyBlockLinearCombination( NC, 1, 2, 1, localFluxJacobian_dRate, work );
-      applyBlockLinearCombination( NC, NC + 1, 2, 1, localFluxJacobian_dPresCompUp, work );
-      applyBlockLinearCombination( NC, 2, localFlux );
+      CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, 1, 2, 1, localFluxJacobian_dRate, work );
+      CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NC + 1, 2, 1, localFluxJacobian_dPresCompUp, work );
+      CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, 2, localFlux );
 
       for( localIndex i = 0; i < 2*NC; ++i )
       {
@@ -1367,8 +1368,8 @@ AccumulationKernel::
 
     // Apply equation/variable change transformation(s)
     real64 work[NC+1];
-    applyBlockLinearCombination( NC, NC + 1, 1, 1, localAccumJacobian, work );
-    applyBlockLinearCombination( NC, 1, localAccum );
+    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NC + 1, 1, 1, localAccumJacobian, work );
+    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, 1, localAccum );
 
     // add contribution to residual and jacobian
     for( localIndex ic = 0; ic < NC; ++ic )

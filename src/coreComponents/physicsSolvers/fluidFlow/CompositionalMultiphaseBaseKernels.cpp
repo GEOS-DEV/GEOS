@@ -17,6 +17,7 @@
  */
 
 #include "CompositionalMultiphaseBaseKernels.hpp"
+#include "CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
 {
@@ -476,8 +477,8 @@ AccumulationKernel::
 
     // Apply equation/variable change transformation(s)
     real64 work[NDOF];
-    applyBlockLinearCombination( NC, NDOF, 1, 1, localAccumJacobian, work );
-    applyBlockLinearCombination( NC, 1, localAccum );
+    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NDOF, 1, 1, localAccumJacobian, work );
+    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, 1, localAccum );
 
     // add contribution to residual and jacobian
     for( localIndex i = 0; i < NC; ++i )

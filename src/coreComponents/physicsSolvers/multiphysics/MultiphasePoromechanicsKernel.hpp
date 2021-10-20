@@ -20,6 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
 {
@@ -469,9 +470,9 @@ public:
 
     // Apply equation/variable change transformation(s)
     real64 work[nUDof > ( numMaxComponents + 1 ) ? nUDof : numMaxComponents + 1];
-    applyBlockLinearCombination( m_numComponents, nUDof, 1, 1, stack.localFlowDispJacobian, work );
-    applyBlockLinearCombination( m_numComponents, m_numComponents + 1, 1, 1, stack.localFlowFlowJacobian, work );
-    applyBlockLinearCombination( m_numComponents, 1, stack.localFlowResidual );
+    CompositionalMultiphaseUtilities::applyBlockLinearCombination( m_numComponents, nUDof, 1, 1, stack.localFlowDispJacobian, work );
+    CompositionalMultiphaseUtilities::applyBlockLinearCombination( m_numComponents, m_numComponents + 1, 1, 1, stack.localFlowFlowJacobian, work );
+    CompositionalMultiphaseUtilities::applyBlockLinearCombination( m_numComponents, 1, stack.localFlowResidual );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {

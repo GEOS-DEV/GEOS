@@ -17,12 +17,14 @@
  */
 
 #include "CompositionalMultiphaseFVMKernels.hpp"
+#include "CompositionalMultiphaseUtilities.hpp"
 
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/SurfaceElementStencil.hpp"
 #include "finiteVolume/EmbeddedSurfaceToCellStencil.hpp"
 #include "finiteVolume/FaceElementToCellStencil.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
+
 
 
 namespace geosx
@@ -635,8 +637,8 @@ FluxKernel::
 
     // Apply equation/variable change transformation(s)
     stackArray1d< real64, MAX_STENCIL_SIZE * NDOF > work( stencilSize * NDOF );
-    applyBlockLinearCombination( NC, NDOF, numFluxElems, stencilSize, localFluxJacobian, work );
-    applyBlockLinearCombination( NC, numFluxElems, localFlux );
+    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NDOF, numFluxElems, stencilSize, localFluxJacobian, work );
+    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, numFluxElems, localFlux );
 
     // Add to residual/jacobian
     for( localIndex i = 0; i < numFluxElems; ++i )
@@ -1296,8 +1298,8 @@ AquiferBCKernel::
 
     // Apply equation/variable change transformation(s)
     real64 work[NDOF];
-    applyBlockLinearCombination( NC, NDOF, 1, 1, localFluxJacobian, work );
-    applyBlockLinearCombination( NC, 1, localFlux );
+    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NDOF, 1, 1, localFluxJacobian, work );
+    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, 1, localFlux );
 
 
     // Add to residual/jacobian
