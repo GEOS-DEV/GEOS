@@ -31,5 +31,7 @@ Validation and Verification Studies
 
    singleFracCompression/Example
 
+   intersectFrac/Example
+
 
 
