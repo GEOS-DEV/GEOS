@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="./sedov_ssle_base.xml"/>
+  </Included>
+
+  <Benchmarks>
+    <quartz>
+      <Run
+        name="OMP"
+        nodes="1"
+        tasksPerNode="1"
+        autoPartition="On"
+        timeLimit="10"/>
+      <Run
+        name="MPI_OMP"
+        nodes="1"
+        tasksPerNode="2"
+        autoPartition="On"
+        timeLimit="10"
+        strongScaling="{ 1, 2, 4, 8 }"/>
+      <Run
+        name="MPI"
+        nodes="1"
+        tasksPerNode="36"
+        autoPartition="On"
+        timeLimit="10"
+        strongScaling="{ 1, 2, 4, 8 }"/>
+    </quartz>
+
+    <lassen>
+      <Run
+        name="OMP_CUDA"
+        nodes="1"
+        tasksPerNode="1"
+        autoPartition="On"
+        timeLimit="10"/>
+      <Run
+        name="MPI_OMP_CUDA"
+        nodes="1"
+        tasksPerNode="4"
+        autoPartition="On"
+        timeLimit="10"
+        strongScaling="{ 1, 2, 4, 8 }"/>
+    </lassen>
+  </Benchmarks>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 10 }"
+      zCoords="{ 0, 10 }"
+      nx="{ 190 }"
+      ny="{ 190 }"
+      nz="{ 190 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="5.0e-3">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0e-5"
+      target="/Solvers/lagsolve"/>
+  </Events>
+
+</Problem>

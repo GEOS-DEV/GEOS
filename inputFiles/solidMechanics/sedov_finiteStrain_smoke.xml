@@ -1,6 +1,26 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
+  <Included>
+    <File
+      name="./sedov_base.xml"/>
+  </Included>
+  
+  
+  <Mesh>
+  <InternalMesh
+    name="mesh1"
+    elementTypes="{ C3D8 }"
+    xCoords="{ 0, 10 }"
+    yCoords="{ 0, 10 }"
+    zCoords="{ 0, 10 }"
+    nx="{ 10 }"
+    ny="{ 10 }"
+    nz="{ 10 }"
+    cellBlockNames="{ cb1 }"/>
+  </Mesh>
+  
   <!-- SPHINX_SOLID_MECHANICS_SOLVER -->
   <Solvers>
     <SolidMechanics_LagrangianFEM
@@ -13,8 +33,5 @@
   </Solvers>
 
   <!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->
-  <Included>
-    <File
-      name="./sedov_base.xml"/>
-  </Included>
+  
 </Problem>
