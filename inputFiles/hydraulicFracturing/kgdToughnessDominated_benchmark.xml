@@ -84,12 +84,5 @@
       timeFrequency="10.0"
       targetExactTimestep="0"
       target="/Outputs/siloOutput"/>
-
-    <!-- PeriodicEvent 
-      name="restarts"
-      timeFrequency="1e99"
-      targetExactTimestep="0"
-      target="/Outputs/sidreRestart"
-      endTime="-1" /-->
   </Events>
 </Problem>

@@ -3,7 +3,7 @@
 
 <Problem>
   <Included>
-    <File name="./kirschProblem_Base.xml"/>
+    <File name="./KirschProblem_base.xml"/>
   </Included>
 
 <!-- SPHINX_MESH -->

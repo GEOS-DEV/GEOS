@@ -4,7 +4,7 @@
 <Problem>
   <Included>
     <File
-      name="./PennyShapedBase.xml"/>
+      name="./PKNBase.xml"/>
   </Included>
 
   <Solvers
@@ -18,9 +18,9 @@
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
+      targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact"
-      maxNumResolves="1"
+      maxNumResolves="5"
       initialDt="0.1">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
@@ -36,7 +36,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"
+      targetRegions="{ Domain, Fracture }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
@@ -51,8 +51,8 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
       fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ fracPerm }"
+      solidNames="{ fractureFilling }"
+      permeabilityNames="{ fracturePerm }"
       inputFluxEstimate="1.0">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
@@ -67,7 +67,7 @@
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
       solidMaterialNames="{ rock }"
-      rockToughness="0.3e6"/>
+      rockToughness="0.1e6"/>
   </Solvers>
 
   <ElementRegions>
@@ -126,10 +126,10 @@
   <Functions>
     <TableFunction
       name="apertureTable"
-      coordinates="{ -0.01, -1.0e-3, 0.0 }"
-      values="{ 0.005, 0.01e-3, 0.02e-3 }"/>
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>
   </Functions>
-      
+    
   <Outputs>
     <Silo
       name="siloOutput"
