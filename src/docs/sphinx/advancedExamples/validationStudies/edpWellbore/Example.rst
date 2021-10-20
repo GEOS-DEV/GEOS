@@ -64,7 +64,7 @@ Mesh
 
 Following figure shows the generated mesh that is used for solving this 3D wellbore problem
 
-.. _problemSketchFig:
+.. _problemSketchFig2:
 .. figure:: WellMesh.png
    :align: center
    :width: 500

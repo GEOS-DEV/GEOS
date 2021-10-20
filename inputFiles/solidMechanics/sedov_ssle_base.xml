@@ -1,6 +1,13 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
+  <Included>
+    <File
+      name="./sedov_base.xml"/>
+  </Included>
+
+
   <Solvers>
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
@@ -9,9 +16,4 @@
       targetRegions="{ Region2 }"
       solidMaterialNames="{ shale }"/>
   </Solvers>
-
-  <Included>
-    <File
-      name="./sedov_base.xml"/>
-  </Included>
 </Problem>
