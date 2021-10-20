@@ -19,11 +19,8 @@
         maxTimeStepCuts="10"
         lineSearchAction="None"/>
       <LinearSolverParameters
-        solverType="fgmres"
-        preconditionerType="mgr"
-        krylovTol="1e-4"
-        krylovAdaptiveTol="1"
-        krylovWeakestTol="1e-2"/>
+        solverType="direct"
+        directParallel="0"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM
@@ -202,6 +199,13 @@
       name="timeHistoryCollection4"
       timeFrequency="1e6"
       target="/Tasks/wellRateCollection4"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="7.5e6"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+    
   </Events>
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS_END -->
@@ -307,7 +311,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+      permeabilityComponents="{ 5.0e-13, 5.0e-13, 1.0e-13 }"/>
   </Constitutive>
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE_END -->
@@ -365,6 +369,10 @@
       name="timeHistoryOutput4"
       sources="{ /Tasks/wellRateCollection4 }"
       filename="wellRateHistory4"/>
+
+    <Restart
+      name="restartOutput"/>
+    
   </Outputs>
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS_END -->
