@@ -15,9 +15,19 @@ if(ENABLE_PAMELA)
     
     set( GMSH_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/toy_model.msh )
     set( ECLIPSE_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/toy_model.GRDECL )
-    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshFileNames.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshFileNames.hpp )
 endif(ENABLE_PAMELA)
 
+if( ENABLE_VTK )
+    list( APPEND gtest_geosx_tests
+          testVTKImport.cpp
+        )
+    set( VTU_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cube.vtu )
+    set( VTK_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cube.vtk )
+    set( PVTU_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cube.vtk )
+endif()
+if(ENABLE_VTK OR ENABLE_PAMELA)
+    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshFileNames.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshFileNames.hpp )
+endif()
 set( dependencyList gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )

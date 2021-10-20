@@ -176,8 +176,11 @@ vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & l
   vtkNew<vtkRedistributeDataSetFilter> rdsf;
   rdsf->SetInputDataObject( &loadedMesh );
   rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
+  GEOSX_LOG_RANK("11111");
   rdsf->GenerateGlobalCellIdsOn();
+  GEOSX_LOG_RANK("22222");
   rdsf->Update();
+  GEOSX_LOG_RANK("33333");
   MpiWrapper::barrier();
 
   // Generate global IDs for vertices and cells
