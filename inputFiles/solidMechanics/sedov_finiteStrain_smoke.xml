@@ -34,4 +34,15 @@
 
   <!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->
   
+  
+  <Events
+    maxTime="1.0e-3">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0e-5"
+      target="/Solvers/lagsolve"/>
+  </Events>
+  
 </Problem>
