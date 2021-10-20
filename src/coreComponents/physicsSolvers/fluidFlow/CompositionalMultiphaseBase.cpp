@@ -896,6 +896,8 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                         string const & )
   {
 
+    GEOSX_ERROR( "Source flux boundary conditions temporarily disabled" );
+
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank =
       subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
