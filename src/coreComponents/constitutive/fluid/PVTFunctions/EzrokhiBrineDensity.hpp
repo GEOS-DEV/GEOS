@@ -212,7 +212,7 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
 
   real64 const waterDensity_dTemperature =
     waterSatDensityCoef * ( waterSatDensity_dTemperature -
-                            waterSatDensity * m_waterCompressibility * waterSatPressure_dTemperature);
+                            waterSatDensity * m_waterCompressibility * waterSatPressure_dTemperature );
   real64 const waterDensity_dPressure = waterSatDensity * m_waterCompressibility * waterSatDensityCoef;
 
   real64 const coefPhaseComposition = m_coef0 + temperature * ( m_coef1 + m_coef2 * temperature );
