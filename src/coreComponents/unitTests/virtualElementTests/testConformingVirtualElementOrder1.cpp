@@ -54,7 +54,10 @@ template< typename VEM >
 GEOSX_HOST_DEVICE
 static void
 checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
-                                         typename VEM::StackVariables const & stack )
+                                         typename VEM::StackVariables const & stack,
+                                         real64 & sumXDerivatives,
+                                         real64 & sumYDerivatives,
+                                         real64 & sumZDerivatives )
 {
   static constexpr localIndex
     maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
@@ -64,26 +67,26 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
   {
     real64 basisDerivativesIntegralMean[maxSupportPoints][3];
     feBase.template getGradN< VEM >( k, q, dummy, stack, basisDerivativesIntegralMean );
-    real64 sumX = 0, sumY = 0, sumZ = 0;
+    sumXDerivatives = 0; sumYDerivatives = 0; sumZDerivatives = 0;
     for( localIndex iBasisFun = 0;
          iBasisFun < feBase.template numSupportPoints< VEM >( stack );
          ++iBasisFun )
     {
-      sumX += basisDerivativesIntegralMean[iBasisFun][0];
-      sumY += basisDerivativesIntegralMean[iBasisFun][1];
-      sumZ += basisDerivativesIntegralMean[iBasisFun][2];
+      sumXDerivatives += basisDerivativesIntegralMean[iBasisFun][0];
+      sumYDerivatives += basisDerivativesIntegralMean[iBasisFun][1];
+      sumZDerivatives += basisDerivativesIntegralMean[iBasisFun][2];
     }
-#ifndef GEOSX_USE_CUDA
-    EXPECT_TRUE( LvArray::math::abs( sumX ) < 1e-15 )
-      << "Sum of the x-derivatives of basis functions integral mean is not 0, but " << sumX << ". "
-      << "The computed integral means are " << basisDerivativesIntegralMean;
-    EXPECT_TRUE( LvArray::math::abs( sumY ) < 1e-15 )
-      << "Sum of the y-derivatives of basis functions integral mean is not 0, but " << sumY << ". "
-      << "The computed integral means are " << basisDerivativesIntegralMean;
-    EXPECT_TRUE( LvArray::math::abs( sumZ ) < 1e-15 )
-      << "Sum of the z-derivatives of basis functions integral mean is not 0, but " << sumZ << ". "
-      << "The computed integral means are " << basisDerivativesIntegralMean;
-#endif
+// #ifndef GEOSX_USE_CUDA
+//     EXPECT_TRUE( LvArray::math::abs( sumXDerivatives ) < 1e-15 )
+//       << "Sum of the x-derivatives of basis functions integral mean is not 0, but " << sumXDerivatives << ". "
+//       << "The computed integral means are " << basisDerivativesIntegralMean;
+//     EXPECT_TRUE( LvArray::math::abs( sumYDerivatives ) < 1e-15 )
+//       << "Sum of the y-derivatives of basis functions integral mean is not 0, but " << sumYDerivatives << ". "
+//       << "The computed integral means are " << basisDerivativesIntegralMean;
+//     EXPECT_TRUE( LvArray::math::abs( sumZDerivatives ) < 1e-15 )
+//       << "Sum of the z-derivatives of basis functions integral mean is not 0, but " << sumZDerivatives << ". "
+//       << "The computed integral means are " << basisDerivativesIntegralMean;
+// #endif
   }
 }
 
@@ -207,15 +210,24 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   CellBlock::NodeMapType const & cellToNodeMap = cellSubRegion.nodeList();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
-  // Loop over cells.
-  localIndex const numCells = cellSubRegion.getElementVolume().size();
 
+  // Allocate and fill VEM Initialization.
   using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
   typename VEM::Initialization initialization;
   FiniteElementBase::initialize< VEM >( nodeManager, edgeManager,
                                         faceManager, cellSubRegion,
                                         initialization );
 
+  // Arrays that store quantities to be tested.
+  localIndex const numCells = cellSubRegion.getElementVolume().size();
+  array1d<real64> sumXDerivatives(numCells), sumYDerivatives(numCells), sumZDerivatives(numCells);
+
+  // Get views of test arrays
+  arrayView1d<real64> sumXDerivativesView = sumXDerivatives.toView(),
+    sumYDerivativesView = sumYDerivatives.toView(),
+    sumZDerivativesView = sumZDerivatives.toView();
+
+  // Loop over cells on the device.
   forAll< parallelDevicePolicy< > >( numCells, [=] GEOSX_HOST_DEVICE
                                        ( localIndex const cellIndex )
   {
@@ -224,11 +236,26 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
     virtualElement.template setup< VEM >( cellIndex, initialization, stack );
 
     checkIntegralMeanConsistency< VEM >( virtualElement, stack );
-    checkIntegralMeanDerivativesConsistency< VEM >( virtualElement, stack );
+    checkIntegralMeanDerivativesConsistency< VEM >( virtualElement, stack,
+                                                    sumXDerivativesView(cellIndex),
+                                                    sumYDerivativesView(cellIndex),
+                                                    sumZDerivativesView(cellIndex)
+                                                    );
     checkStabilizationMatrixConsistency< VEM >( nodesCoords, cellIndex, cellToNodeMap,
                                                 cellCenters, virtualElement, stack );
     checkSumOfQuadratureWeights< VEM >( cellVolumes[cellIndex], stack );
   } );
+
+  // Perform checks.
+  for(localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex)
+  {
+    EXPECT_TRUE( LvArray::math::abs( sumXDerivatives(cellIndex) ) < 1e-15 )
+      << "Sum of integral means of x-derivatives of basis functions is not 0, but " << sumXDerivatives(cellIndex) << ". ";
+    EXPECT_TRUE( LvArray::math::abs( sumYDerivatives(cellIndex) ) < 1e-15 )
+      << "Sum of integral means of y-derivatives of basis functions is not 0, but " << sumYDerivatives(cellIndex) << ". ";
+    EXPECT_TRUE( LvArray::math::abs( sumZDerivatives(cellIndex) ) < 1e-15 )
+      << "Sum of integral means of z-derivatives of basis functions is not 0, but " << sumZDerivatives(cellIndex) << ". ";
+  }
 }
 
 TEST( ConformingVirtualElementOrder1, hexagons )
