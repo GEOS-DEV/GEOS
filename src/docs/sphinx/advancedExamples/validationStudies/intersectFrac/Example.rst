@@ -8,8 +8,8 @@ Fracture Intersection Problem
 
 **Context**
 
-In this example, two fractures intersecting at right angle is simulated using a Lagrange contact model in a 2D infinite domain and subjected to a constant uniaxial compressive remote stress. Numerical solutions based on the symmetric-Galerkin boundary element
-method `(Phan et al., 2003)  <https://onlinelibrary.wiley.com/doi/10.1002/nme.707>`__ is used to verify the accuracy of the GEOSX results for the normal traction, normal opening and shear slippage on the fracture surface, considering frictional contact and fracture-fracture interaction. In this example, the ``TimeHistory`` function and a Python script are used to output and postprocess multi-dimensional data (traction and displacement on the fracture surface).
+In this example, two fractures intersecting at a right angle are simulated using a Lagrange contact model in a 2D infinite domain and subjected to a constant uniaxial compressive remote stress. Numerical solutions based on the symmetric-Galerkin boundary element
+method `(Phan et al., 2003)  <https://onlinelibrary.wiley.com/doi/10.1002/nme.707>`__ is used to verify the accuracy of the GEOSX results for the normal traction, normal opening, and shear slippage on the fracture surface, considering frictional contact and fracture-fracture interaction. In this example, the ``TimeHistory`` function and a Python script are used to output and post-process multi-dimensional data (traction and displacement on the fracture surface).
 
 
 **Input file**
@@ -29,7 +29,7 @@ Everything required is contained within two GEOSX input files located at:
 Description of the case
 ------------------------------------------------------------------
 
-We simulate two intersected fractures under a remote compressive stress (:math:`\sigma`), as shown below. These fractures are placed in an infinite, homogeneous, isotropic, and elastic medium. The vertical fracture is internally pressurized and perpendicularly intersects the middle of the horizontal fracture. Uniaxial compression, frictional contact, and opening of the vertical fracture cause mechanical deformation of the surrounding rock and sliding of the horizontal fracture. For verification purposes, plane strain deformation and Coulomb failure criterion are considered in this numerical model.
+We simulate two intersecting fractures under a remote compressive stress constraint, as shown below. The two fractures sit in an infinite, homogeneous, isotropic, and elastic medium. The vertical fracture is internally pressurized and perpendicularly intersects the middle of the horizontal fracture. A combination of uniaxial compression, frictional contact, and opening of the vertical fracture causes mechanical deformations of the surrounding rock, thus leading to sliding of the horizontal fracture. For verification purposes, a plane strain deformation and Coulomb failure criterion are considered in this numerical model.
 
 
 .. _problemSketchFig:
@@ -45,7 +45,7 @@ To simulate this problem, we use a Lagrange contact model. Displacement and stre
 
 
 
-In this example, we focus our attention on the ``Mesh`` tags,
+For this example, we focus on the ``Mesh`` tags,
 the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
 
 ------------------------------------------------------------------
@@ -63,10 +63,10 @@ The following figure shows the mesh used in this problem.
 
    Generated mesh
 
-We use the internal mesh generator ``InternalMesh`` to create a computational domain. 
-This mesh contains 300 x 300 x 1 eight-node brick elements in the x, y and z directions, respectively. 
-Here, a structured three-dimensional mesh is generated with ``C3D8`` as the elementTypes (eight-node hexahedral elements). 
-This mesh is defined as a cell block with the name ``cb1``. 
+This mesh was created using the internal mesh generator as parametrized in the ``InternalMesh`` XML tag. 
+The mesh contains 300 x 300 x 1 eight-node brick elements in the x, y, and z directions respectively. 
+Such eight-node hexahedral elements are defined as ``C3D8`` elementTypes, and their collection forms a mesh
+with one group of cell blocks named here ``cb1``. 
 
 
 .. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_benchmark.xml
@@ -88,23 +88,23 @@ Refinement is necessary to conform with the fracture geometry specified in the `
 Solid mechanics solver
 ------------------------
 
-GEOSX is a multi-physics platform. Different combinations of
-physics solvers available in the code can be applied
-in different regions of the domain and be functional at different stages of the simulation.
+GEOSX is a multiphysics simulation platform.
+Different combinations of
+physics solvers can be applied
+in different regions of the domain at different stages of the simulation.
 The ``Solvers`` tag in the XML file is used to list and parameterize these solvers.
 
 To specify a coupling between two different solvers, we define and characterize each single-physics solver separately.
-Then, we customize a *coupling solver* between these single-physics
-solvers as an additional solver.
-This approach allows for generality and flexibility in constructing multi-physics solvers.
-Each single-physics solver should be given a meaningful and distinct name because GEOSX recognizes these single-physics solvers
-based on their given names to create the coupling.
+Then, we customize a *coupling solver* between these single-physics solvers as an additional solver.
+This approach allows for generality and flexibility in constructing multiphysics solvers.
+Each single-physics solver should be given a meaningful and distinct name, because GEOSX recognizes these single-physics solvers
+by their given names to create the coupling.
 
 To setup a coupling between rock and fracture deformations, we define three different solvers:
 
-- For solving the frictional contact, we define a Lagrangian contact solver, called here ``lagrangiancontact``. In this solver, we specify ``targetRegions`` that includes both the continuum region ``Region`` and the discontinuum region ``Fracture``  where the solver is applied to couple rock and fracture deformation. The contact constitutive law used for the fracture elements is named ``fractureMaterial``,  and defined later in the ``Constitutive`` section. 
+- For solving the frictional contact, we define a Lagrangian contact solver, called here ``lagrangiancontact``. In this solver, we specify ``targetRegions`` that include both the continuum region ``Region`` and the discontinuum region ``Fracture``  where the solver is applied to couple rock and fracture deformations. The contact constitutive law used for the fracture elements is named ``fractureMaterial``,  and is defined later in the ``Constitutive`` section. 
 
-- Rock deformations are handled by a solid mechanics solver ``SolidMechanics_LagrangianFEM``. This solid mechanics solver (see :ref:`SolidMechanics_LagrangianFEM`) is based on the Lagrangian finite element formulation. The problem is run as ``QuasiStatic`` without considering inertial effects. The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. The solid material is named ``rock``, and its mechanical properties are specified later in the ``Constitutive`` section. 
+- Rock deformations are handled by a solid mechanics solver ``SolidMechanics_LagrangianFEM``. This solid mechanics solver (see :ref:`SolidMechanics_LagrangianFEM`) is based on the Lagrangian finite element formulation. The problem runs in ``QuasiStatic`` mode without inertial effects. The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. The solid material is named ``rock`` and its mechanical properties are specified later in the ``Constitutive`` section.
 
 - The solver ``SurfaceGenerator`` defines the fracture region and rock toughness.
 
@@ -119,7 +119,8 @@ To setup a coupling between rock and fracture deformations, we define three diff
 Constitutive laws
 ------------------------------
 
-For this specific problem, we simulate the elastic deformation and fracture slippage caused by uniaxial compression. A homogeneous and isotropic domain with one solid material is assumed, with mechanical properties specified in the ``Constitutive`` section. 
+For this problem, we simulate the elastic deformation and fracture slippage caused by the uniaxial compression.
+A homogeneous and isotropic domain with one solid material is assumed, and its mechanical properties are specified in the ``Constitutive`` section. 
 
 Fracture surface slippage is assumed to be governed by the Coulomb failure criterion. The contact constitutive behavior is named ``fractureMaterial`` in the ``Coulomb`` block, where cohesion ``cohesion="0.0"`` and friction angle ``frictionAngle="0.523598776"`` are specified. 
 
@@ -149,10 +150,10 @@ In this example, ``tractionCollection`` and ``displacementJumpCollection`` tasks
     :start-after: <!-- SPHINX_TASKS -->
     :end-before: <!-- SPHINX_TASKS_END -->
 
-These two tasks are triggered using the ``Event`` management, with ``PeriodicEvent`` defined for these recurring tasks. 
+These two tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for these recurring tasks. 
 GEOSX writes two files named after the string defined in the ``filename`` keyword and formatted as HDF5 files (displacementJump_history.hdf5 and traction_history.hdf5). The TimeHistory file contains the collected time history information from each specified time history collector.
 This information includes datasets for the simulation time, element center defined in the local coordinate system, and the time history information.
-Then, a Python script is used to access and plot any specified subset of the time history data for verification and visualization. 
+A Python script is used to read and plot any specified subset of the time history data for verification and visualization. 
 
 
 -----------------------------------------------------------
@@ -226,7 +227,7 @@ The next figure shows the distribution of relative shear displacement values alo
    Simulation result of fracture slip 
 
 
-The figure below shows a comparison between the GEOSX predictions (marks) and the corresponding literature work (solid curves) for the normal traction and slip distributions along the horizontal fracture and opening of the vertical fracture. One can observe that the GEOSX can reliably capture the mechanical interactions between two intersected fractures, which are in excellent agreement with the literature work.
+The figure below compares the results from GEOSX (marks) and the corresponding literature reference solution (solid curves) for the normal traction and slip distributions along the horizontal fracture and opening of the vertical fracture. GEOSX reliably captures the mechanical interactions between two intersected fractures and shows excellent agreement with the reference solution.
 
 
 .. plot::
