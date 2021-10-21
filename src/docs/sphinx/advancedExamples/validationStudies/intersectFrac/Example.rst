@@ -9,12 +9,12 @@ Fracture Intersection Problem
 **Context**
 
 In this example, two fractures intersecting at a right angle are simulated using a Lagrange contact model in a 2D infinite domain and subjected to a constant uniaxial compressive remote stress. Numerical solutions based on the symmetric-Galerkin boundary element
-method `(Phan et al., 2003)  <https://onlinelibrary.wiley.com/doi/10.1002/nme.707>`__ is used to verify the accuracy of the GEOSX results for the normal traction, normal opening, and shear slippage on the fracture surface, considering frictional contact and fracture-fracture interaction. In this example, the ``TimeHistory`` function and a Python script are used to output and post-process multi-dimensional data (traction and displacement on the fracture surface).
+method `(Phan et al., 2003)  <https://onlinelibrary.wiley.com/doi/10.1002/nme.707>`__ is used to verify the accuracy of the GEOSX results for the normal traction, normal opening, and shear slippage on the fracture surfaces, considering frictional contact and fracture-fracture interaction. In this example, the ``TimeHistory`` function and a Python script are used to output and post-process multi-dimensional data (traction and displacement on the fracture surfaces).
 
 
 **Input file**
 
-Everything required is contained within two GEOSX input files located at:
+Everything required is contained within two xml files located at:
 
 .. code-block:: console
 
@@ -29,7 +29,7 @@ Everything required is contained within two GEOSX input files located at:
 Description of the case
 ------------------------------------------------------------------
 
-We simulate two intersecting fractures under a remote compressive stress constraint, as shown below. The two fractures sit in an infinite, homogeneous, isotropic, and elastic medium. The vertical fracture is internally pressurized and perpendicularly intersects the middle of the horizontal fracture. A combination of uniaxial compression, frictional contact, and opening of the vertical fracture causes mechanical deformations of the surrounding rock, thus leading to sliding of the horizontal fracture. For verification purposes, a plane strain deformation and Coulomb failure criterion are considered in this numerical model.
+We simulate two intersecting fractures under a remote compressive stress constraint, as shown below. The two fractures sit in an infinite, homogeneous, isotropic, and elastic medium. The vertical fracture is internally pressurized and perpendicularly intersects the middle of the horizontal fracture. A combination of uniaxial compression, frictional contact, and opening of the vertical fracture causes mechanical deformations of the surrounding rock, thus leads to sliding of the horizontal fracture. For verification purposes, a plane strain deformation and Coulomb failure criterion are considered in this numerical model.
 
 
 .. _problemSketchFig:
@@ -45,8 +45,8 @@ To simulate this problem, we use a Lagrange contact model. Displacement and stre
 
 
 
-For this example, we focus on the ``Mesh`` tags,
-the ``Constitutive`` tags, and the ``FieldSpecifications`` tags.
+For this example, we focus on the ``Mesh``,
+the ``Constitutive``, and the ``FieldSpecifications`` tags.
 
 ------------------------------------------------------------------
 Mesh
