@@ -13,9 +13,9 @@
       xCoords="{ 0, 150, 200, 400 }"
       yCoords="{ 0, 150, 200, 400 }"
       zCoords="{ -400, -100, -20, 20, 100, 400 }"
-      nx="{ 75, 10, 20 }"
-      ny="{ 75, 10, 20 }"
-      nz="{ 10, 10, 20, 10, 10 }"
+      nx="{ 8, 1, 2 }"
+      ny="{ 8, 1, 2 }"
+      nz="{ 1, 1, 2, 1, 1 }"
       cellBlockNames="{ cb1 }"/> 
   </Mesh>
  
@@ -37,7 +37,7 @@
   </Geometry>
 
   <Events
-    maxTime="200.0"> 
+    maxTime="20.0"> 
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -68,28 +68,7 @@
       beginTime="8.0"
       endTime="20.0"
       forceDt="2.0"
-      target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="solverApplications5"
-      beginTime="20.0"
-      endTime="60.0"
-      forceDt="4.0"
-      target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="solverApplications6"
-      beginTime="60.0"
-      endTime="100.0"
-      forceDt="8.0"
-      target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="solverApplications7"
-      beginTime="100.0"
-      endTime="200.0"
-      forceDt="10.0"
-      target="/Solvers/hydrofracture"/>
+      target="/Solvers/hydrofracture"/>    
   
     <PeriodicEvent
       name="outputs2"
@@ -100,7 +79,7 @@
 
     <PeriodicEvent 
       name="restarts"
-      timeFrequency="100"
+      timeFrequency="20"
       targetExactTimestep="0"
       target="/Outputs/sidreRestart" />
   </Events>

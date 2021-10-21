@@ -2,11 +2,6 @@
 
 <!--# # -->
 <Problem>
-  <Included>
-    <File
-      name="./PKNBase.xml"/>
-  </Included>
-
   <Solvers
     gravityVector="{ 0.0, 0.0, -0.0 }">
     <Hydrofracture
@@ -140,4 +135,76 @@
     <Restart
       name="sidreRestart"/>
   </Outputs>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+        fieldName="pressure"
+        coefficientName="permeability"
+        coefficientModelNames="{ fracPerm }"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <FieldSpecifications>   
+    <FieldSpecification
+      name="waterDensity"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="ElementRegions"
+      fieldName="water_density"
+      scale="1000"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ core }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+  
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+   
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/Fracture"
+      scale="-6.625"
+      setNames="{ source }"/>
+  </FieldSpecifications>
 </Problem>
