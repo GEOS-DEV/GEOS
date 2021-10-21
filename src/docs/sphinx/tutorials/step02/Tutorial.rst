@@ -35,7 +35,7 @@ The XML input file for this test case is located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+  inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity_smoke.xml
 
 The mesh file format used in this tutorial is called `MSH
 <https://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format>`_.
@@ -142,7 +142,7 @@ we inspect the following XML file:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+  inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity_smoke.xml
 
 
 In the XML ``Mesh`` tag, instead of an ``InternalMesh`` tag,
@@ -153,7 +153,7 @@ The file here contains geometric information in
 `MSH <http://gmsh.info>`__
 format (it can also contain properties, as we will see in the next tutorial).
 
-.. literalinclude::    ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+.. literalinclude::    ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_HEX_MESH -->
   :end-before: <!-- SPHINX_TUT_EXT_HEX_MESH_END -->
@@ -161,7 +161,7 @@ format (it can also contain properties, as we will see in the next tutorial).
 Here are the first few lines of the msh file :
 
 .. literalinclude::
-   ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/cube_10x10x10_hex.msh
+   ../../../../../inputFiles/singlePhaseFlow/pamela_test/cube_10x10x10_hex.msh
    :caption: cube_10x10x10_hex.msh
    :lines: 1-20
 
@@ -176,7 +176,7 @@ Here, the entire field is one region called ``Domain``,
 and contains multiple constitutive models, including ``water``, ``rockPorosity``, and ``rockPerm``.
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS -->
   :end-before: <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS_END -->
@@ -190,7 +190,7 @@ The command to run GEOSX is
 
 .. code-block:: console
 
-  path/to/geosx -i ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity_smoke.xml
 
 Note that all paths for files included in the XML file are relative
 to this XML file, not to the GEOSX executable.
@@ -259,7 +259,7 @@ At the end of your simulation, you should see something like:
 
   Time: 99s, dt:1s, Cycle: 99
   Cleaning up events
-  Writing out restart file at 3D_10x10x10_compressible_pamela_hex_gravity_restart_000000100/rank_0000000.hdf5
+  Writing out restart file at 3D_10x10x10_compressible_pamela_hex_gravity_smoke_restart_000000100/rank_0000000.hdf5
 
   init time = 0.081181s, run time = 5.4595s
 
@@ -324,7 +324,7 @@ Like before, the XML file for this problem is the following:
 
 .. code-block:: console
 
-   src\CoreComponents\physicsSolvers\integratedTests\singlePhaseFlow\pamela_test\3D_10x10x10_compressible_pamela_tetra_gravity.xml
+   inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity_smoke.xml
 
 
 The only difference, is that now, the ``Mesh`` tag points GEOSX to
@@ -332,7 +332,7 @@ a different mesh file called ``cube_10x10x10_tet.msh``.
 This file contains nodes and tetrahedral elements in `Gmsh`_ format,
 representing a different discretization of the exact same 10x10x10 cubic domain.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_TETRA_MESH -->
   :end-before: <!-- SPHINX_TUT_EXT_TETRA_MESH_END -->
@@ -346,13 +346,13 @@ The mesh now looks like this:
 And the MSH file starts as follows (notice the tetrahedral point coordinates as real numbers):
 
 .. literalinclude::
-   ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/cube_10x10x10_tet.msh
+   ../../../../../inputFiles/singlePhaseFlow/pamela_test/cube_10x10x10_tet.msh
    :caption: cube_10x10x10_tet.msh
    :lines: 1-20
 
 Again, the entire field is one region called ``Domain`` and contains ``water`` and ``rock`` only.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS -->
   :end-before: <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS_END -->
@@ -365,7 +365,7 @@ The command to run GEOSX is
 
 .. code-block:: console
 
-  path/to/geosx -i ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/cube_10x10x10_tet.msh
+  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity_smoke.xml
 
 Again, all paths for files included in the XML file are relative
 to this XML file, not to the GEOSX executable.
@@ -384,7 +384,7 @@ In our case, the first lines are:
   Adding Output: Silo, siloWellPump
   Adding Output: Restart, restartOutput
   Adding Object CellElementRegion named Domain from ObjectManager::Catalog.
-  Reading external mesh from /Users/j0529096/Documents/code/GEOSX/src/coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/cube_10x10x10_tet.msh
+  Reading external mesh from /****/inputFiles/singlePhaseFlow/pamela_test/cube_10x10x10_tet.msh
 
 
 Followed by:

@@ -17,11 +17,11 @@ Everything required is contained within two GEOSX input files located at:
 
 .. code-block:: console
 
-  inputFiles/solidMechanics/kirschProblem_Base.xml
+  inputFiles/solidMechanics/KirschProblem_base.xml
   
 .. code-block:: console
 
-  inputFiles/solidMechanics/kirschProblem_Example.xml
+  inputFiles/solidMechanics/KirschProblem_benchmark.xml
 
 
 ------------------------------------------------------------------
@@ -91,7 +91,7 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
 ``cb1``. 
 
 
-.. literalinclude:: ../../../../../../inputFiles/solidMechanics/kirschProblem_Example.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/KirschProblem_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -107,7 +107,7 @@ The problem is run as ``QuasiStatic`` without considering inertial effects.
 The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. 
 The material is named ``rock``, whose mechanical properties are specified in the ``Constitutive`` section.
 
-.. literalinclude:: ../../../../../../inputFiles/solidMechanics/kirschProblem_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SOLVER -->
   :end-before: <!-- SPHINX_SOLVER_END -->
@@ -120,7 +120,7 @@ Constitutive laws
 For this drained wellbore problem, we simulate a linear elastic deformation around the circular cavity.
 A homogeneous and isotropic domain with one solid material is assumed, with mechanical properties specified in the ``Constitutive`` section: 
 
-.. literalinclude:: ../../../../../../inputFiles/solidMechanics/kirschProblem_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -140,7 +140,7 @@ In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time h
 Either the entire field or specified named sets of indices in the field can be collected. 
 In this example, ``stressCollection`` and ``displacementCollection`` tasks are specified to output the resultant stresses (tensor stored as an array with Voigt notation) and total displacement field (stored as a 3-component vector) respectively.
 
-.. literalinclude:: ../../../../../../inputFiles/solidMechanics/kirschProblem_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml
     :language: xml
     :start-after: <!-- SPHINX_TASKS -->
     :end-before: <!-- SPHINX_TASKS_END -->
@@ -164,7 +164,7 @@ The remaining parts of the outer boundaries are subjected to roller constraints.
 These boundary conditions are set in the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../../inputFiles/solidMechanics/kirschProblem_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml
     :language: xml
     :start-after: <!-- SPHINX_BC -->
     :end-before: <!-- SPHINX_BC_END -->
@@ -335,8 +335,8 @@ We use time history function to collect time history information and run a Pytho
         # File path
         hdf5File1Path = "stress_history.hdf5"
         hdf5File2Path = "displacement_history.hdf5"
-        xmlFile1Path = "../../../../../../inputFiles/solidMechanics/kirschProblem_Base.xml"
-        xmlFile2Path = "../../../../../../inputFiles/solidMechanics/kirschProblem_Example.xml"
+        xmlFile1Path = "../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml"
+        xmlFile2Path = "../../../../../../inputFiles/solidMechanics/KirschProblem_benchmark.xml"
 
         # Read HDF5
         # Global Coordinate of Element Center

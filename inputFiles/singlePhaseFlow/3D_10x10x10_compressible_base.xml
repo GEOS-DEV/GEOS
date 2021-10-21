@@ -1,0 +1,130 @@
+<?xml version="1.0" ?>
+
+<!--# # -->
+<!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN -->
+<Problem>
+  <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN_END -->
+  <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
+  <Solvers>
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      fluidNames="{ water }"
+      solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
+      targetRegions="{ mainRegion }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-10"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
+ <!-- SPHINX_TUT_INT_HEX_GEOMETRY -->
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
+
+    <Box
+      name="sink"
+      xMin="{ 8.99, 8.99, 8.99 }"
+      xMax="{ 10.01, 10.01, 10.01 }"/>
+  </Geometry>
+
+  <!-- SPHINX_TUT_INT_HEX_GEOMETRY_END -->
+ <!-- SPHINX_TUT_INT_HEX_NUM_METHODS -->
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+        fieldName="pressure"
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <!-- SPHINX_TUT_INT_HEX_NUM_METHODS_END -->
+  <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS -->
+  <ElementRegions>
+    <CellElementRegion
+      name="mainRegion"
+      cellBlocks="{ cellBlock }"
+      materialList="{ water, rock }"/>
+  </ElementRegions>
+
+  <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS_END -->
+  <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE -->
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="5e-10"
+      viscosibility="0.0"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-15 }"/>
+  </Constitutive>
+
+  <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE_END -->
+  <!-- SPHINX_TUT_INT_HEX_FIELDS -->
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
+      fieldName="pressure"
+      scale="5e6"/>
+
+    <FieldSpecification
+      name="sourceTerm"
+      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
+      fieldName="pressure"
+      scale="1e7"
+      setNames="{ source }"/>
+
+    <FieldSpecification
+      name="sinkTerm"
+      objectPath="ElementRegions/mainRegion/elementSubRegions/cellBlock"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ sink }"/>
+  </FieldSpecifications>
+
+  <!-- SPHINX_TUT_INT_HEX_FIELDS_END -->
+  <!-- SPHINX_TUT_INT_HEX_BLANKS -->
+  <!-- SPHINX_TUT_INT_HEX_BLANKS_END -->
+  <!-- SPHINX_TUT_INT_HEX_OUTPUTS -->
+  <Outputs>
+    <Silo
+      name="siloOutput"/>
+  </Outputs>
+
+  <!-- SPHINX_TUT_INT_HEX_OUTPUTS_END -->
+  <!-- SPHINX_TUT_INT_HEX_PROBLEM_CLOSE -->
+</Problem>
+<!-- SPHINX_TUT_INT_HEX_PROBLEM_CLOSE_END -->

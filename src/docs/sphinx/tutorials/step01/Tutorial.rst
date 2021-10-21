@@ -34,7 +34,7 @@ For this tutorial, we only need a single GEOSX input file located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+    inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml
 
 **Running GEOSX**
 
@@ -98,7 +98,7 @@ This type of solver is one among several cell-centered single-phase finite volum
 
 The XML block used to define this single-phase finite volume solver is shown here:
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
@@ -176,7 +176,7 @@ There are two approaches to specifying meshes in GEOSX: internal or external.
 In this tutorial, to keep things self-contained,
 we use the internal mesh generator. We parameterize it with the **InternalMesh** element.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_MESH -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_MESH_END -->
@@ -230,7 +230,7 @@ For an element to be inside a geometric region,
 it must have all its vertices strictly inside that region.
 Consequently, we need to extend the geometry limits a small amount beyond the actual coordinates of the elements to catch all vertices. Here, we use a safety padding of 0.01.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_GEOMETRY -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_GEOMETRY_END -->
@@ -267,7 +267,7 @@ If we focus on the ``PeriodicEvent`` elements, we see :
  #. A **periodic solver** application: this event is named ``solverApplications``. With the attribute ``forceDt=20``, it tells the solver to compute results at 20-second time intervals. We know what this event does by looking at its ``target`` attribute: here, from time 0 to ``maxTime`` and with a forced time step of 20 seconds, we instruct GEOSX to call the solver registered as ``SinglePhaseFlow``. Note the hierarchical structure of the target formulation, using '/' to indicate a specific named instance (``SinglePhaseFlow``) of an element (``Solvers``). If the solver needs to take smaller time steps, it is allowed to do so, but it will have to compute results for every 20-second increment between time zero and ``maxTime`` regardless of possible intermediate time steps.
  #. An **output event**: this event is used for reporting purposes and instructs GEOSX to write out results at specific frequencies. Here, we need to see results at every 100-second increment. This event triggers a full application of solvers, even if solvers were not summoned by the previous event. In other words, an output event will force an application of solvers, possibly in addition to the periodic events requested directly.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_EVENTS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_EVENTS_END -->
@@ -286,7 +286,7 @@ In the ``Solvers`` elements, for instance, we had specified to use a two-point f
 as discretization scheme for the finite volume single-phase solver.
 Now to use this scheme, we need to supply more details in the ``NumericalMethods`` element.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS_END -->
@@ -314,7 +314,7 @@ We specify the materials contained in that region using a ``materialList``.
 Several materials coexist in ``cellBlock``, and we list them using their user-defined names: ``water``, ``rockPorosity``, and ``rockPerm``, etc. What these names mean, and the physical properties that they are attached to are defined next.
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS_END -->
@@ -338,7 +338,7 @@ for the water, ``PressurePorosity`` for the rock porosity, and
 The list of attributes differs between these constitutive materials.
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE_END -->
@@ -385,7 +385,7 @@ More specifically, we target the ``elementSubRegions`` called ``cellBlock``
 (this contains all the C3D8 elements, effectively all the domain). The ``setNames`` allows to use the elements defined in ``Geometry``, or use everything in the object path (using the ``all``).
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_FIELDS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_FIELDS_END -->
@@ -417,7 +417,7 @@ it was the target of a periodic event named ``outputs``.
 You can verify that the Events section is using this object as a target.
 It does so by pointing to ``/Outputs/siloOutput``.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_OUTPUTS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_OUTPUTS_END -->

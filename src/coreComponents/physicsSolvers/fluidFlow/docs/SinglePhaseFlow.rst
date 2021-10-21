@@ -107,7 +107,7 @@ must be prescribed on this field on cell or face sets of interest.
 Example
 =========================
 
-.. literalinclude:: ../integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->

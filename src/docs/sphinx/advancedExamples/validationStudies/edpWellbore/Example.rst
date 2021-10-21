@@ -23,11 +23,15 @@ At the end of this example you will know:
 **Input file**
 
 This example uses no external input files and everything required is
-contained within a single xml file that is located at:
+contained within two xml files that are located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
+  inputFiles/solidMechanics/ExtendedDruckerPragerWellbore_base.xml
+
+.. code-block:: console
+
+  inputFiles/solidMechanics/ExtendedDruckerPragerWellbore_benchmark.xml
 
 
 ------------------------------------------------------------------
@@ -60,7 +64,7 @@ Mesh
 
 Following figure shows the generated mesh that is used for solving this 3D wellbore problem
 
-.. _problemSketchFig:
+.. _problemSketchFig2:
 .. figure:: WellMesh.png
    :align: center
    :width: 500
@@ -81,7 +85,7 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
 ``cb1``.
 
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/ExtendedDruckerPragerWellbore_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_MESH -->
     :end-before: <!-- SPHINX_DP_WELLBORE_MESH_END -->
@@ -96,7 +100,7 @@ The problem is run as ``QuasiStatic`` without considering inertial effects.
 The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. 
 The material is named as ``rock``, whose mechanical properties are specified in the ``Constitutive`` section.
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/ExtendedDruckerPragerWellbore_base.xml
   :language: xml
   :start-after: <!-- SPHINX_DP_WELLBORE_SOLVER -->
   :end-before: <!-- SPHINX_DP_WELLBORE_SOLVER_END -->
@@ -108,7 +112,7 @@ Constitutive laws
 For this drained wellbore problem, we simulate the elastoplastic deformation caused by wellbore contraction.
 A homogeneous domain with one solid material is assumed, whose mechanical properties are specified in the ``Constitutive`` section: 
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/ExtendedDruckerPragerWellbore_base.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_MATERIAL -->
     :end-before: <!-- SPHINX_DP_WELLBORE_MATERIAL_END -->
@@ -139,7 +143,7 @@ The remaining parts of the outer boundaries are subjected to roller constraints.
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/ExtendedDruckerPragerWellbore_base.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_BC -->
     :end-before: <!-- SPHINX_DP_WELLBORE_BC_END -->
@@ -150,7 +154,7 @@ A table function ``timeFunction`` is used to define the time-dependent traction 
 The ``coordinates`` and ``values`` form a time-magnitude
 pair for the loading time history. In this case, the loading magnitude decreases linearly as the time evolves. 
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/DruckerPrager_Verification.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/ExtendedDruckerPragerWellbore_base.xml
     :language: xml
     :start-after: <!-- SPHINX_DP_WELLBORE_TABLE -->
     :end-before: <!-- SPHINX_DP_WELLBORE_TABLE_END -->

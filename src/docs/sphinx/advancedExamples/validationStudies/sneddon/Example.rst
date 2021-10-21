@@ -21,7 +21,7 @@ The xml input file for this test case is located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
+  inputFiles/efemFractureMechanics/Sneddon_benchmark3.xml
 
 
 ------------------------------------------------------------------
@@ -72,7 +72,7 @@ and other solver-specific attributes.
 Additionally, we need to specify another solver of type, ``EmbeddedSurfaceGenerator``,
 which is used to discretize the fracture planes.
 
-.. literalinclude:: ../../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
+.. literalinclude:: ../../../../../../inputFiles/efemFractureMechanics/Sneddon_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SNEDDON_SOLVER -->
   :end-before: <!-- SPHINX_SNEDDON_SOLVER_END -->
@@ -85,7 +85,7 @@ For this problem we will add two events defining solver applications:
 - an event specifying the execution of the ``EmbeddedSurfaceGenerator`` to generate the fracture elements.
 - a periodic even specifying the execution of the embedded fractures solver.
 
-.. literalinclude:: ../../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
+.. literalinclude:: ../../../../../../inputFiles/efemFractureMechanics/Sneddon_benchmark3.xml
   :language: xml
   :start-after: <!-- SPHINX_SNEDDON_EVENTS -->
   :end-before: <!-- SPHINX_SNEDDON_EVENTS_END -->
@@ -101,7 +101,7 @@ along the Z axes, 420 elements along the X axis and 121 elements along the Y axi
 All the elements are hexahedral elements (C3D8) and that refinement is performed
 around the fracture.
 
-.. literalinclude:: ../../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
+.. literalinclude:: ../../../../../../inputFiles/efemFractureMechanics/Sneddon_benchmark3.xml
     :language: xml
     :start-after: <!-- SPHINX_SNEDDON_MESH -->
     :end-before: <!-- SPHINX_SNEDDON_MESH_END -->
@@ -128,7 +128,7 @@ Adding an embedded fracture
 ---------------------------------
 
 
-.. literalinclude:: ../../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml
+.. literalinclude:: ../../../../../../inputFiles/efemFractureMechanics/Sneddon_benchmark3.xml
   :language: xml
   :start-after: <!-- SPHINX_SNEDDON_GEOMETRY -->
   :end-before: <!-- SPHINX_SNEDDON_GEOMETRY_END -->
@@ -139,7 +139,7 @@ Running GEOSX
 
 To run the case, use the following command:
 
-``path/to/geosx -i src/coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml``
+``path/to/geosx -i inputFiles/efemFractureMechanics/Sneddon_benchmark3.xml``
 
 ---------------------------------
 Inspecting results
@@ -224,7 +224,7 @@ times with the numerical solution (markers).
        # File path
        hdf5File1Path = "displacementJump_history.hdf5"
        hdf5File2Path = "cell_centers.hdf5"
-       xmlFilePath = "../../../../../coreComponents/physicsSolvers/solidMechanics/benchmarks/Sneddon-Validation.xml"
+       xmlFilePath = "../../../../../../inputFiles/efemFractureMechanics/Sneddon_benchmark3.xml"
 
        # Read HDF5
        hf = h5py.File(hdf5File1Path, 'r')
