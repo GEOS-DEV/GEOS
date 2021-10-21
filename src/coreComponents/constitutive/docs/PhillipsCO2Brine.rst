@@ -15,7 +15,7 @@ Thus, considering the phase component fractions, :math:`y_{c,p}` (i.e., the frac
 
 .. math::
     \begin{bmatrix}
-    y_{CO2,g} & y_{CO2,\ell} \\
+    y_{H2O,\ell} & y_{CO2,\ell} \\
          0 & 1            \\
     \end{bmatrix}
 
@@ -123,14 +123,14 @@ These calculations are done in a preprocessing step.
 
 During the simulation, the update of CO2 phase density and viscosity is simply done with a look-up in the precomputed tables. 
 
-Brine density and viscosity 
----------------------------
+Brine density and viscosity using Phillips correllation
+-------------------------------------------------------
 
 The computation of the brine density involves a tabulated correlation presented in Phillips et al. (1981). 
 The user specifies the (constant) salinity and defines the pressure and temperature axis of the brine density table in the form:
 
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
-| DensityFun | PhillipsBrineDensity      | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
+| DensityFun | PhillipsBrineDensity | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
 
 The pressure must be in Pascal and must be less than :math:`5 \times 10^7` Pascal.
@@ -170,9 +170,9 @@ The apparent molar volume of dissolved CO2 is computed as a function of temperat
 
 The brine viscosity is controlled by a salinity parameter provided by the user in the form:
 
-+--------------+----------------+----------+
++--------------+------------------------+----------+
 | ViscosityFun | PhillipsBrineViscosity | Salinity |
-+--------------+----------------+----------+
++--------------+------------------------+----------+
 
 During the simulation, the brine viscosity is updated as a function of temperature using the analytical relationship of Phillips et al. (1981):
 
@@ -186,11 +186,55 @@ where the coefficients :math:`a` and :math:`b` are defined as:
    b &= 0.00089 (1.0 + 0.0816 m + 0.0122 m^2 + 0.000128 m^3) 
    
 where :math:`m` is the user-defined salinity (in moles of NaCl per kg of brine).
+
+
+Brine density and viscosity using Ezrokhi correllation
+-------------------------------------------------------
+
+Brine density :math:`\rho_l` is computed from pure water density :math:`\rho_w` at specified pressure and temperature corrected by Ezrokhi corellation presented in Zaytsev and Aseyev (1993):
+
+.. math::
+   log_{10}(\rho_l) &= log_{10}(\rho_w(P, T)) + A(T) y_{CO2,\ell} \\
+   A(T) &= a_0 + a_1T +  a_2T^2,
+
+where :math:`a_0, a_1, a_2` are corellation coefficients defined by user:
+
++------------+----------------------+-------------+-------------+-------------+
+| DensityFun | EzrokhiBrineDensity  | :math:`a_0` | :math:`a_0` | :math:`a_0` |
++------------+----------------------+-------------+-------------+-------------+
+
+Pure water density is computed according to:
+
+.. math::
+   \rho_w = \rho_{w,sat}(T) e^{c_w * (P-P_{w,sat}(T))},
+
+where :math:`c_w` is water compressibility defined as a constant :math:`4.5 \times 10^{-10} Pa^{-1}`, while :math:`\rho_{w,sat}(T)` and :math:`P_{w,sat}(T)` are density and pressure of saturated water at a given temperature.
+Both are obtained through internally constructed tables tabulated as functions of temperature and filled with the steam table data from Engineering ToolBox (2003, 2004).
+
+Brine viscosity :math:`\mu_l` is computed from pure water viscosity :math:`\mu_w` similarly:
+
+.. math::
+   log_{10}(\mu_l) &= log_{10}(\mu_w(P, T)) + B(T) y_{CO2,\ell} \\
+   B(T) &= b_0 + b_1T +  b_2T^2,
+
+where :math:`a_0, a_1, a_2` are corellation coefficients defined by user:
+
++------------+----------------------+-------------+-------------+-------------+
+| DensityFun | EzrokhiBrineDensity  | :math:`b_0` | :math:`b_0` | :math:`b_0` |
++------------+----------------------+-------------+-------------+-------------+
+
+The dependency of pure water viscosity from pressure is ignored, and it is approximated as saturated pure water viscosity:
+
+.. math::
+   \mu_w(P, T) = \mu_{w, sat} (T),
+
+which is tabulated using internal table as a function of temerature based on steam table data Engineering ToolBox (2004).
+
    
 Parameters
 =========================
 
-The model is represented by ``<PhillipsCO2BrineFluid>`` node in the input.
+The models are represented by ``<PhillipsCO2BrineFluid>``, ``<EzrokhiCO2BrineFluid>`` nodes in the input.
 
 The following attributes are supported:
 
@@ -229,9 +273,23 @@ Example
           flashModelParaFile="co2flash.txt"/>
     </Constitutive>
 
+
+.. code-block:: xml
+
+    <Constitutive>
+        <EzrokhiCO2BrineFluid
+          name="fluid"
+          phaseNames="{ gas, water }"
+          componentNames="{ co2, water }"
+          componentMolarWeight="{ 44e-3, 18e-3 }"
+          phasePVTParaFiles="{ pvtgas.txt, pvtliquidezrokhi.txt }"
+          flashModelParaFile="co2flash.txt"/>
+    </Constitutive>
+
 In the XML code listed above, "co2flash.txt" parameterizes the CO2 solubility table constructed in Step 1.
-The file "pvtgas.txt" parameterizes the CO2 phase density and viscosity tables constructed in Step 2, while
-the file "pvtliquidphillips.txt" parameterizes the brine density and viscosity tables.
+The file "pvtgas.txt" parameterizes the CO2 phase density and viscosity tables constructed in Step 2, 
+the file "pvtliquidphillips.txt" parameterizes the brine density and viscosity tables according to Phillips corellation,
+while the file "pvtliquidezrokhi.txt" parameterizes the brine density and viscosity tables according to Ezrokhi corellation.
     
 References
 ==========
@@ -256,3 +314,15 @@ References
 
 - J. E. Garcia, Density of aqueous solutions of CO2. No. LBNL-49023.
   Lawrence Berkeley National Laboratory, Berkeley, CA, 2001.
+
+- Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, 
+  Boca Raton, Florida, USA CRC Press, 1993.
+
+- Engineering ToolBox, `Water - Density, Specific Weight and Thermal Expansion 
+  Coefficients <https://www.engineeringtoolbox.com/water-density-specific-weight-d_595.html>`__,
+  2003
+
+
+- Engineering ToolBox, `Water - Dynamic (Absolute) and Kinematic Viscosity 
+  <https://www.engineeringtoolbox.com/water-dynamic-kinematic-viscosity-d_596.html>`__,
+  2004
