@@ -30,7 +30,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Region2, Fracture }"
+      targetRegions="{ Domain, Fracture }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
@@ -55,7 +55,7 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      targetRegions="{ Region2 }"
+      targetRegions="{ Domain }"
       solidMaterialNames="{ rock }"
       rockToughness="0.707e7"
       mpiCommOrder="1"/>

@@ -43,6 +43,12 @@
       name="solverApplications"
       forceDt="1.0e-5"
       target="/Solvers/lagsolve"/>
+      
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>  
   </Events>
   
 </Problem>

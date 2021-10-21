@@ -62,11 +62,10 @@
       targetExactTimestep="0"
       target="/Outputs/siloOutput"/>
 
-    <PeriodicEvent 
+     <PeriodicEvent
       name="restarts"
-      timeFrequency="1e99"
+      timeFrequency="5.0"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"
-      endTime="-1" />
+      target="/Outputs/restartOutput"/>
   </Events>
 </Problem>
