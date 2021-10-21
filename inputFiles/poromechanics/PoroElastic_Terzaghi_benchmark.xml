@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PoroElastic_Terzaghi_base_iterative.xml"/>
+  </Included>
+  <!-- SPHINX_POROELASTIC_MESH -->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 400 }"
+      ny="{ 16 }"
+      nz="{ 16 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <!-- SPHINX_POROELASTIC_MESH_END -->
+  <Events
+    maxTime="90.0">
+    <!--This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="10.0"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="1.e-5"
+      forceDt="1.e-5"
+      target="/Solvers/PoroelasticitySolver"/>
+
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="1.e-5"
+      endTime="1.0"
+      forceDt="0.99999"
+      target="/Solvers/PoroelasticitySolver"/>
+
+    <PeriodicEvent
+      name="solverApplication2"
+      beginTime="1.0"
+      endTime="90.0"
+      forceDt="1.0"
+      target="/Solvers/PoroelasticitySolver"/>
+
+  </Events>
+
+  <Outputs>
+    <Silo
+      name="siloOutput"/>
+
+  </Outputs>
+
+</Problem>
