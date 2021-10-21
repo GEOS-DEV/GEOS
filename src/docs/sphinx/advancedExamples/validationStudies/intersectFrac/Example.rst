@@ -227,7 +227,7 @@ The next figure shows the distribution of relative shear displacement values alo
    Simulation result of fracture slip 
 
 
-The figure below compares the results from GEOSX (marks) and the corresponding literature reference solution (solid curves) for the normal traction and slip distributions along the horizontal fracture and opening of the vertical fracture. GEOSX reliably captures the mechanical interactions between two intersected fractures and shows excellent agreement with the reference solution.
+The figure below compares the results from GEOSX (marks) and the corresponding literature reference solution (solid curves) for the normal traction and slip distributions along the horizontal fracture and opening of the vertical fracture. GEOSX reliably captures the mechanical interactions between two intersected fractures and shows excellent agreement with the reference solution. Due to sliding of the horizontal fracture, GEOSX prediction as well as the reference solution on the normal opening of pressurized vertical fracture deviates away from Sneddon's analytical solution, especially near the intersection point. 
 
 
 .. plot::
