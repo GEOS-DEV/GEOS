@@ -1,11 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Included>
-    <File
-      name="./kgdBase_C3D6_base.xml"/>
-  </Included>
-
   <Mesh>
     <InternalMesh
       name="mesh1"
