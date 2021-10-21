@@ -24,6 +24,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseThermoPoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirFVM.hpp"
@@ -85,6 +86,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics:
     {
       setStrategy< SinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::singlePhaseThermoPoromechanics:
+    {
+      setStrategy< SinglePhaseThermoPoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::hybridSinglePhasePoromechanics:

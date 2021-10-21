@@ -743,6 +743,13 @@ Element: SinglePhaseReservoir
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir.rst
 
 
+.. _XML_SinglePhaseThermoPoromechanics:
+
+Element: SinglePhaseThermoPoromechanics
+=================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseThermoPoromechanics.rst
+
+
 .. _XML_SinglePhaseWell:
 
 Element: SinglePhaseWell
@@ -1697,6 +1704,13 @@ Datastructure: SinglePhaseProppantFVM
 Datastructure: SinglePhaseReservoir
 ===================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseThermoPoromechanics:
+
+Datastructure: SinglePhaseThermoPoromechanics
+=======================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseThermoPoromechanics_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:
