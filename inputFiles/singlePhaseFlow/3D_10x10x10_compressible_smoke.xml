@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./3D_10x10x10_compressible_base.xml"/>
+  </Included>
+
+  <!-- SPHINX_TUT_INT_HEX_MESH -->
+  <Mesh>
+    <InternalMesh
+        name="mesh"
+        elementTypes="{ C3D8 }"
+        xCoords="{ 0, 10 }"
+        yCoords="{ 0, 10 }"
+        zCoords="{ 0, 10 }"
+        nx="{ 10 }"
+        ny="{ 10 }"
+        nz="{ 10 }"
+        cellBlockNames="{ cellBlock }"/>
+  </Mesh>
+
+  <!-- SPHINX_TUT_INT_HEX_MESH_END -->
+  <!-- SPHINX_TUT_INT_HEX_EVENTS -->
+  <Events maxTime="5000.0">
+    <PeriodicEvent
+        name="solverApplications"
+        forceDt="20.0"
+        target="/Solvers/SinglePhaseFlow"/>
+    <PeriodicEvent
+        name="outputs"
+        timeFrequency="100.0"
+        target="/Outputs/siloOutput"/>
+  </Events>
+
+  <!-- SPHINX_TUT_INT_HEX_EVENTS_END -->
+
+</Problem>

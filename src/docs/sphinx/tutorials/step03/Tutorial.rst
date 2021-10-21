@@ -25,7 +25,11 @@ The XML input file for this test case is located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+  inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
+
+.. code-block:: console
+
+  inputFiles/singlePhaseFlow/FieldCaseTutorial3_smoke.xml
 
 We consider the following mesh as a numerical support to the simulations in this tutorial:
 
@@ -66,7 +70,7 @@ Single-phase solver
 
 Let us inspect the **Solver** XML tags.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_SOLVER -->
   :end-before: <!-- SPHINX_FIELD_CASE_SOLVER_END -->
@@ -95,7 +99,7 @@ Here, we use the ``PAMELAMeshGenerator`` to load the mesh (see :ref:`ImportingEx
 The syntax to import external meshes is simple : in the XML file,
 the mesh ``file`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified ``name`` label for the mesh object.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_MESH -->
   :end-before: <!-- SPHINX_FIELD_CASE_MESH_END -->
@@ -109,7 +113,7 @@ Geometry
 
         Here, we are using definition of ``source`` and ``sink`` boxes in addition to the ``all`` box in order to flag sets of nodes or cells which will act as injection or production.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_GEOMETRY -->
   :end-before: <!-- SPHINX_FIELD_CASE_GEOMETRY_END -->
@@ -130,7 +134,7 @@ Events
 The events are used here to guide the simulation through time,
 and specify when outputs must be triggered.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_EVENTS -->
   :end-before: <!-- SPHINX_FIELD_CASE_EVENTS_END -->
@@ -151,7 +155,7 @@ Numerical methods
 
 Defining the numerical method used in the solver, we will provide information on how to discretize our equations. Here a classical two-point flux approximation (TPFA) scheme is used to discretize water fluxes over faces.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_NUMERICAL -->
   :end-before: <!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
@@ -186,7 +190,7 @@ There are two methods to achieve this regional solve.
 
 - The second solution is to define all the ``CellElementRegions`` as they are in the GMSH file, but defining the solvers only on the reservoir layer. In this case, the **ElementRegions** tag is :
 
-        .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+        .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
                 :language: xml
                 :start-after: <!-- SPHINX_FIELD_CASE_REGION -->
                 :end-before: <!-- SPHINX_FIELD_CASE_REGION_END -->
@@ -205,7 +209,7 @@ Constitutive models
 
 We simulate a single-phase flow in the reservoir layer, hence with multiple types of materials, a fluid (water) and solid (rock permeability and porosity).
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_FIELD_CASE_CONSTITUTIVE_END -->
@@ -231,7 +235,7 @@ The next step is to specify fields, including:
   - The static properties (here, we have to define the permeability tensor and the porosity)
   - The boundary conditions (here, the injection and production pressure have to be set)
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_FIELD -->
   :end-before: <!-- SPHINX_FIELD_CASE_FIELD_END -->
@@ -252,7 +256,7 @@ Output
 The **Outputs** XML tag is used to trigger the writing of visualization files.
 Here, we write files in a format natively readable by Paraview under the tag *VTK*:
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_OUTPUT -->
   :end-before: <!-- SPHINX_FIELD_CASE_OUTPUT_END -->
@@ -268,7 +272,7 @@ Using functions to specify properties
 
 Eventually, one can define varying properties using ``TableFunction`` (:ref:`FunctionManager`) under the **Functions** tag:
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_TFUNC -->
   :end-before: <!-- SPHINX_FIELD_CASE_TFUNC_END -->
