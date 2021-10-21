@@ -271,8 +271,8 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
 
       // Apply equation/variable change transformation(s)
       stackArray1d< real64, 2 * MAX_NUM_DOF > work( 2 * resNumDofs );
-      CompositionalMultiphaseUtilities::applyBlockLinearCombination( numComps, resNumDofs, 2, 2, localPerfJacobian, work );
-      CompositionalMultiphaseUtilities::applyBlockLinearCombination( numComps, 2, localPerf );
+      CompositionalMultiphaseUtilities::shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, resNumDofs*2, 2, localPerfJacobian, work );
+      CompositionalMultiphaseUtilities::shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, 2, localPerf );
 
       for( localIndex i = 0; i < localPerf.size(); ++i )
       {

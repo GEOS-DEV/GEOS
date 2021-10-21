@@ -865,9 +865,9 @@ AssemblerKernelHelper::
 
   // Apply equation/variable change transformation(s)
   real64 work[NDOF*(NF+1)];
-  CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NDOF * ( NF + 1 ), 1, 1, dDivMassFluxes_dElemVars, work );
-  CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NF, 1, 1, dDivMassFluxes_dFaceVars, work );
-  CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, 1, divMassFluxes );
+  CompositionalMultiphaseUtilities::shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF * ( NF + 1 ), dDivMassFluxes_dElemVars, work );
+  CompositionalMultiphaseUtilities::shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NF, dDivMassFluxes_dFaceVars, work );
+  CompositionalMultiphaseUtilities::shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, divMassFluxes );
 
   // we are ready to assemble the local flux and its derivatives
   // no need for atomic adds - each row is assembled by a single thread

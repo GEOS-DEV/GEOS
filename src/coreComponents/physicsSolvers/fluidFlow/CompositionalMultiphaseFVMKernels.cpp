@@ -637,8 +637,8 @@ FluxKernel::
 
     // Apply equation/variable change transformation(s)
     stackArray1d< real64, MAX_STENCIL_SIZE * NDOF > work( stencilSize * NDOF );
-    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NDOF, numFluxElems, stencilSize, localFluxJacobian, work );
-    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, numFluxElems, localFlux );
+    CompositionalMultiphaseUtilities::shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF*stencilSize, numFluxElems, localFluxJacobian, work );
+    CompositionalMultiphaseUtilities::shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, numFluxElems, localFlux );
 
     // Add to residual/jacobian
     for( localIndex i = 0; i < numFluxElems; ++i )
@@ -1298,8 +1298,8 @@ AquiferBCKernel::
 
     // Apply equation/variable change transformation(s)
     real64 work[NDOF];
-    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NDOF, 1, 1, localFluxJacobian, work );
-    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, 1, localFlux );
+    CompositionalMultiphaseUtilities::shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF, localFluxJacobian, work );
+    CompositionalMultiphaseUtilities::shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localFlux );
 
 
     // Add to residual/jacobian

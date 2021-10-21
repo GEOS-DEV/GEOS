@@ -19,9 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEUTILITIES_H_
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEUTILITIES_H_
 
-//#include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
-//#include "LvArray/src/limits.hpp"
 
 namespace geosx
 {
@@ -29,57 +27,118 @@ namespace geosx
 namespace CompositionalMultiphaseUtilities
 {
 
+/**
+ * @brief Shifts all elements one position ahead and replaces the first element
+ * with the sum of all elements in each block of the input block one-dimensional
+ * array of values.
+ *
+ * @tparam VEC type of one-dimensional array of values
+ * @param N block size
+ * @param NB number of blocks
+ * @param v block one-dimensional array of values
+ */
 template< typename VEC >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void applyBlockLinearCombination( localIndex const M,
-                                  localIndex const a,
-                                  VEC && v )
+void shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( localIndex const N,
+                                                                localIndex const NB,
+                                                                VEC && v )
 {
-  for( localIndex i = 0; i < a; ++i )
+  for( localIndex i = 0; i < NB; ++i )
   {
-    localIndex const ind = i * M + M - 1;
+    localIndex const ind = i * N + N - 1;
     real64 tmp = v[ind];
-    for( int j = ind - 1; j >= i * M; --j )
+    for( int j = ind - 1; j >= i * N; --j )
     {
       v[j+1] = v[j];
       tmp += v[j];
     }
-    v[i*M] = tmp;
+    v[i*N] = tmp;
   }
 }
 
+/**
+ * @brief Shifts all elements one position ahead and replaces the first element
+ * with the sum of all elements in the input one-dimensional array of values.
+ *
+ * @tparam VEC type of one-dimensional array of values
+ * @param N vector size
+ * @param v one-dimensional array of values
+ */
+template< typename VEC >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void shiftElementsAheadByOneAndReplaceFirstElementWithSum( localIndex const N,
+                                                           VEC && v )
+{
+  shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( N, 1, v );
+}
+
+/**
+ * @brief Shifts all rows one position ahead and replaces the first row
+ * with the sum of all rows in each block of the input block row
+ * two-dimensional array of values.
+ *
+ * @tparam MATRIX type of two-dimensional array of values
+ * @tparam VEC type of one-dimensional array of values
+ * @param M block number of rows
+ * @param N block number of columns
+ * @param NB number of row blocks
+ * @param mat block row two-dimensional array of values
+ * @param work one-dimensional working array of values of size N
+ */
 template< typename MATRIX, typename VEC >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void applyBlockLinearCombination( localIndex const M,
-                                  localIndex const N,
-                                  localIndex const a,
-                                  localIndex const b,
-                                  MATRIX && mat,
-                                  VEC && work )
+void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( localIndex const M,
+                                                              localIndex const N,
+                                                              localIndex const NB,
+                                                              MATRIX && mat,
+                                                              VEC && work )
 {
-  for( localIndex k = 0; k < a; ++k )
+  for( localIndex k = 0; k < NB; ++k )
   {
     localIndex const ind = k * M + M - 1;
-//    copy( N * b, mat[ind], work );
-    for( localIndex j = 0; j < b * N; ++j )
+    for( localIndex j = 0; j < N; ++j )
     {
       work[j] = mat[ind][j];
     }
     for( localIndex i = ind - 1; i >= k * M; --i )
     {
-      for( localIndex j = 0; j < b * N; ++j )
+      for( localIndex j = 0; j < N; ++j )
       {
         mat[i+1][j] = mat[i][j];
         work[j] += mat[i][j];
       }
     }
-    for( localIndex j = 0; j < b * N; ++j )
+    for( localIndex j = 0; j < N; ++j )
     {
       mat[k*M][j] = work[j];
     }
   }
+}
+
+/**
+ * @brief Shifts all rows one position ahead and replaces the first row
+ * with the sum of all rows in the input block row two-dimensional array
+ * of values.
+ *
+ * @tparam MATRIX type of two-dimensional array of values
+ * @tparam VEC type of one-dimensional array of values
+ * @param M number of rows
+ * @param N number of columns
+ * @param mat block row two-dimensional array of values
+ * @param work one-dimensional working array of values of size N
+ */
+template< typename MATRIX, typename VEC >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( localIndex const M,
+                                                         localIndex const N,
+                                                         MATRIX && mat,
+                                                         VEC && work )
+{
+  shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( M, N, 1, mat, work );
 }
 
 } // namespace CompositionalMultiphaseUtilities

@@ -477,8 +477,8 @@ AccumulationKernel::
 
     // Apply equation/variable change transformation(s)
     real64 work[NDOF];
-    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, NDOF, 1, 1, localAccumJacobian, work );
-    CompositionalMultiphaseUtilities::applyBlockLinearCombination( NC, 1, localAccum );
+    CompositionalMultiphaseUtilities::shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF, localAccumJacobian, work );
+    CompositionalMultiphaseUtilities::shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localAccum );
 
     // add contribution to residual and jacobian
     for( localIndex i = 0; i < NC; ++i )
