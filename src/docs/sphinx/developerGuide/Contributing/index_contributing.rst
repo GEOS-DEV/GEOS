@@ -15,6 +15,8 @@ Contributing
 
    UnitTests.rst
 
+   InputFiles.rst
+
    IntegratedTests.rst
 
    Benchmarks.rst
