@@ -5,6 +5,6 @@
     <File
       name="./kgdEdgeBased_C3D6_base.xml"/>
     <File
-      name="./kgdBase_C3D6_smoke.xml"/>    
+      name="./kgdSmokeBase_C3D6.xml"/>    
   </Included>
 </Problem>
