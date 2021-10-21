@@ -18,9 +18,9 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
-#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
+#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
 namespace geosx
 {
@@ -61,7 +61,7 @@ public:
                                                   3,
                                                   3 >;
 
-  /// Number of nodes per element...which is equal to the
+  /// Number of nodes per element which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
   using Base::numDofPerTestSupportPoint;
@@ -119,7 +119,7 @@ public:
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) )
   {}
 
-  //*****************************************************************************
+
   /**
    * @class StackVariables
    * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
@@ -170,7 +170,7 @@ public:
     globalIndex localFlowDofIndex[1];
 
   };
-  //*****************************************************************************
+
 
   /**
    * @brief Copy global values from primary field to a local stack array.
@@ -201,11 +201,7 @@ public:
       }
     }
 
-    for( int flowDofIndex=0; flowDofIndex<1; ++flowDofIndex )
-    {
-      stack.localFlowDofIndex[flowDofIndex] = m_flowDofNumber[k] + flowDofIndex;
-    }
-
+    stack.localFlowDofIndex[0] = m_flowDofNumber[k];
   }
 
   GEOSX_HOST_DEVICE
@@ -251,6 +247,7 @@ public:
     real64 bodyForce[3] = { m_gravityVector[0],
                             m_gravityVector[1],
                             m_gravityVector[2]};
+
     if( m_gravityAcceleration > 0.0 )
     {
       real64 mixtureDensity = ( 1.0 - porosityNew ) * m_solidDensity( k, q ) + porosityNew * m_fluidDensity( k, q );
@@ -316,7 +313,6 @@ public:
 
     stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - porosityOld * m_fluidDensityOld( k ) ) * detJxW;
     stack.localFlowFlowJacobian[0][0] += ( dPorosity_dPressure * m_fluidDensity( k, q ) + porosityNew * m_dFluidDensity_dPressure( k, q ) ) * detJxW;
-
   }
 
   /**
@@ -330,7 +326,6 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-//    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
@@ -416,10 +411,8 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                real64 const (&)[3],
                                                                arrayView1d< string const > const >;
 
-} // namespace PoroelasticKernels
+} /* namespace PoroelasticKernels */
 
-} // namespace geosx
-
-#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
+} /* namespace geosx */
 
 #endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_

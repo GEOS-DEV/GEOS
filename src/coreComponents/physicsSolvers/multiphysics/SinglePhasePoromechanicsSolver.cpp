@@ -17,25 +17,7 @@
  *
  */
 
-
 #include "SinglePhasePoromechanicsSolver.hpp"
-
-#include "common/DataLayouts.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/solid/PorousSolid.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "finiteElement/Kinematics.h"
-#include "linearAlgebra/solvers/BlockPreconditioner.hpp"
-#include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mainInterface/ProblemManager.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
-#include "finiteElement/FiniteElementDispatch.hpp"
 #include "SinglePhasePoromechanicsKernel.hpp"
 
 namespace geosx
@@ -44,12 +26,11 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & name,
+SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( string const & name,
                                                                 Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName()
-
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -135,9 +116,7 @@ void SinglePhasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups
 }
 
 SinglePhasePoromechanicsSolver::~SinglePhasePoromechanicsSolver()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
 void SinglePhasePoromechanicsSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
@@ -174,7 +153,6 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                      arrayView1d< real64 > const & localRhs )
 {
-
   GEOSX_MARK_FUNCTION;
   MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
 
@@ -184,8 +162,6 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
-
-//  m_solidSolver->resetStressToBeginningOfStep( domain );
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
@@ -208,6 +184,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                             porousMaterialNames(),
                                                             kernelFactory );
 
+  // Contributions of the fluid flux term
   m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
                                               domain,
                                               dofManager,
@@ -246,7 +223,7 @@ real64 SinglePhasePoromechanicsSolver::calculateResidualNorm( DomainPartition co
   // compute norm of mass balance residual equations
   real64 const massResidualNorm = m_flowSolver->calculateResidualNorm( domain, dofManager, localRhs );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rsolid, Rfluid ) = ( {:4.2e}, {:4.2e} )", momementumResidualNorm, massResidualNorm ) );
+  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "( Rsolid, Rfluid ) = ( {:4.2e}, {:4.2e} )", momementumResidualNorm, massResidualNorm ) );
 
   return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
 }
@@ -294,6 +271,7 @@ void SinglePhasePoromechanicsSolver::applySystemSolution( DofManager const & dof
 {
   // update displacement field
   m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+
   // update pressure field
   m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
 }

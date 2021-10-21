@@ -13,7 +13,7 @@
  */
 
 /**
- * @file PoroelasticSolver.hpp
+ * @file SinglePhasePoromechanicsSolver.hpp
  *
  */
 
@@ -21,11 +21,26 @@
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSSOLVER_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
+#include "common/DataLayouts.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/solid/PorousSolid.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "finiteElement/FiniteElementDispatch.hpp"
+#include "finiteElement/Kinematics.h"
+#include "linearAlgebra/solvers/BlockPreconditioner.hpp"
+#include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mesh/MeshForLoopInterface.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
 {
-
 
 class SolidMechanicsLagrangianFEM;
 class SinglePhaseBase;
@@ -33,7 +48,7 @@ class SinglePhaseBase;
 class SinglePhasePoromechanicsSolver : public SolverBase
 {
 public:
-  SinglePhasePoromechanicsSolver( const string & name,
+  SinglePhasePoromechanicsSolver( string const & name,
                                   Group * const parent );
   ~SinglePhasePoromechanicsSolver() override;
 
@@ -126,6 +141,7 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   string m_solidSolverName;
+
   string m_flowSolverName;
 
   array1d< string > m_porousMaterialNames;
