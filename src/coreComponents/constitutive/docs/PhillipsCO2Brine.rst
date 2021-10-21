@@ -200,7 +200,7 @@ Brine density :math:`\rho_l` is computed from pure water density :math:`\rho_w` 
 where :math:`a_0, a_1, a_2` are corellation coefficients defined by user:
 
 +------------+----------------------+-------------+-------------+-------------+
-| DensityFun | EzrokhiBrineDensity  | :math:`a_0` | :math:`a_0` | :math:`a_0` |
+| DensityFun | EzrokhiBrineDensity  | :math:`a_0` | :math:`a_1` | :math:`a_2` |
 +------------+----------------------+-------------+-------------+-------------+
 
 Pure water density is computed according to:
@@ -217,11 +217,11 @@ Brine viscosity :math:`\mu_l` is computed from pure water viscosity :math:`\mu_w
    log_{10}(\mu_l) &= log_{10}(\mu_w(P, T)) + B(T) y_{CO2,\ell} \\
    B(T) &= b_0 + b_1T +  b_2T^2,
 
-where :math:`a_0, a_1, a_2` are corellation coefficients defined by user:
+where :math:`b_0, b_1, b_2` are corellation coefficients defined by user:
 
-+------------+----------------------+-------------+-------------+-------------+
-| DensityFun | EzrokhiBrineDensity  | :math:`b_0` | :math:`b_0` | :math:`b_0` |
-+------------+----------------------+-------------+-------------+-------------+
++--------------+------------------------+-------------+-------------+-------------+
+| ViscosityFun | EzrokhiBrineViscosity  | :math:`b_0` | :math:`b_1` | :math:`b_2` |
++--------------+------------------------+-------------+-------------+-------------+
 
 The dependency of pure water viscosity from pressure is ignored, and it is approximated as saturated pure water viscosity:
 
