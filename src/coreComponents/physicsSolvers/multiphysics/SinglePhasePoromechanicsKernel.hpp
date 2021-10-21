@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SinglePhasePoroelasticKernel.hpp
+ * @file SinglePhasePoromechanicsKernel.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
@@ -29,7 +29,7 @@ namespace PoromechanicsKernels
 {
 
 /**
- * @brief Implements kernels for solving quasi-static single-phase poromechanics.
+ * @brief Implements kernels for solving quasi-static single-phase poromechanics problems.
  * @copydoc geosx::finiteElement::ImplicitKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
@@ -411,7 +411,7 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                real64 const (&)[3],
                                                                arrayView1d< string const > const >;
 
-} /* namespace PoroelasticKernels */
+} /* namespace PoromechanicsKernels */
 
 } /* namespace geosx */
 
