@@ -574,14 +574,15 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
 
     // call the application of the boundary condition to alter the matrix and rhs
     fs.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy<> >( lset,
-                                                                 time_n + dt,
-                                                                 subRegion,
-                                                                 dofNumber,
-                                                                 dofManager.rankOffset(),
-                                                                 localMatrix,
-                                                                 localRhs,
-                                                                 [=] GEOSX_HOST_DEVICE ( localIndex const a )
+                                       parallelDevicePolicy<>,
+                                       parallelDeviceReduce >( lset,
+                                                               time_n + dt,
+                                                               subRegion,
+                                                               dofNumber,
+                                                               dofManager.rankOffset(),
+                                                               localMatrix,
+                                                               localRhs,
+                                                               [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       return pres[a] + dPres[a];
     } );
@@ -606,7 +607,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
                    [&]( FieldSpecificationBase const & fs,
                         string const &,
-                        SortedArrayView< localIndex const > const & lset,
+                        SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
@@ -616,25 +617,17 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
     arrayView1d< integer const > const
     ghostRank = subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-    SortedArray< localIndex > localSet;
-    for( localIndex const a : lset )
-    {
-      if( ghostRank[a] < 0 )
-      {
-        localSet.insert( a );
-      }
-    }
-
     fs.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                       parallelDevicePolicy<> >( localSet.toViewConst(),
-                                                                 time_n + dt,
-                                                                 dt,
-                                                                 subRegion,
-                                                                 dofNumber,
-                                                                 dofManager.rankOffset(),
-                                                                 localMatrix,
-                                                                 localRhs,
-                                                                 [] GEOSX_HOST_DEVICE ( localIndex const )
+                                       parallelDevicePolicy<>,
+                                       parallelDeviceReduce >( targetSet.toViewConst(),
+                                                               time_n + dt,
+                                                               dt,
+                                                               subRegion,
+                                                               dofNumber,
+                                                               dofManager.rankOffset(),
+                                                               localMatrix,
+                                                               localRhs,
+                                                               [] GEOSX_HOST_DEVICE ( localIndex const )
     {
       return 0.0;
     } );

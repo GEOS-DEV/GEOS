@@ -891,7 +891,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
                    [&]( FieldSpecificationBase const & fs,
                         string const &,
-                        SortedArrayView< localIndex const > const & lset,
+                        SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
@@ -900,81 +900,69 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
     arrayView1d< integer const > const ghostRank =
       subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-    // Step 1: filter out ghost cells from the target set
-
-    // TODO: can we avoid having to rebuild the set and moving host->device?
-    SortedArray< localIndex > localSet;
-    for( localIndex const a : lset )
-    {
-      if( ghostRank[a] < 0 )
-      {
-        localSet.insert( a );
-      }
-    }
-
-    // Step 2: get the values of the source boundary condition that need to be added to the rhs
+    // Step 1: get the values of the source boundary condition that need to be added to the rhs
     // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
     // compositional solvers
 
-    array1d< globalIndex > dofArray( localSet.size() );
-    array1d< real64 > rhsContributionArray( localSet.size() );
+    array1d< globalIndex > dofArray( targetSet.size() );
+    array1d< real64 > rhsContributionArray( targetSet.size() );
     localIndex const rankOffset = dofManager.rankOffset();
 
-    // note that the dofArray will not be used after this step (simpler to use dofArray instead)
+    // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
     fs.computeRhsContribution< FieldSpecificationAdd,
-                               parallelDevicePolicy<> >( localSet.toViewConst(),
-                                                         time + dt,
-                                                         dt,
-                                                         subRegion,
-                                                         dofNumber,
-                                                         rankOffset,
-                                                         localMatrix,
-                                                         dofArray.toView(),
-                                                         rhsContributionArray.toView(),
-                                                         [] GEOSX_HOST_DEVICE ( localIndex const )
+                               parallelDevicePolicy<>,
+                               parallelDeviceReduce >( targetSet.toViewConst(),
+                                                       time + dt,
+                                                       dt,
+                                                       subRegion,
+                                                       dofNumber,
+                                                       rankOffset,
+                                                       localMatrix,
+                                                       dofArray.toView(),
+                                                       rhsContributionArray.toView(),
+                                                       [] GEOSX_HOST_DEVICE ( localIndex const )
     {
       return 0.0;
     } );
 
-    // Step 3: we are ready to add the right-hand side contributions, taking into account our equation layout
+    // Step 2: we are ready to add the right-hand side contributions, taking into account our equation layout
 
     integer const fluidComponentId = fs.getComponent();
     integer const numFluidComponents = m_numComponents;
+    GEOSX_UNUSED_VAR( fluidComponentId );
+    GEOSX_UNUSED_VAR( numFluidComponents );
 
-    forAll< parallelDevicePolicy<> >( localSet.size(), [localRhs,
-                                                        rankOffset,
-                                                        fluidComponentId,
-                                                        numFluidComponents,
-                                                        dofArray, // this will be removed from this parameter list when Nicola's PR is
-                                                                  // merged
-                                                        dofNumber,
-                                                        rhsContributionArray] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
+                                                         rankOffset,
+                                                         ghostRank,
+                                                         //fluidComponentId, // add to this parameter list when Nicola's PR is merge
+                                                         //numFluidComponents, // add to this parameter list when Nicola's PR is merged
+                                                         dofArray, // remove from this parameter list when Nicola's PR is merged
+                                                         dofNumber,
+                                                         rhsContributionArray,
+                                                         localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
     {
+      // we need to filter out ghosts here, because targetSet may contain them
+      localIndex const ei = targetSet[a];
+      if( ghostRank[ei] >= 0 )
+      {
+        return;
+      }
+
       // this will be removed from this parameter list when Nicola's PR is merged
       globalIndex const localRow = dofArray[a] - rankOffset;
-      if( localRow >= 0 && localRow < localRhs.size() )
-      {
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], rhsContributionArray[a] );
-      }
+      localRhs[localRow] += rhsContributionArray[a];
 
 #if 0
       // for all "fluid components", we add the value to the total mass balance equation
       globalIndex const totalMassBalanceRow = dofNumber[a] - rankOffset;
-      if( totalMassBalanceRow >= 0 && totalMassBalanceRow < localRhs.size() )
-      {
-        // note sure the atomicAdd is really needed here, because threads cannot add to the same rows (same as accumulation and vol balance
-        // kernels)
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[totalMassBalanceRow], rhsContributionArray[a] );
-      }
+      localMatrix[totalMassBalanceRow] += rhsContributionArray[a];
 
       // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
       if( fluidComponentId < numFluidComponents - 1 )
       {
-        globalIndex const compMassBalanceRow = dofNumber[a] + fluidComponentId + 1 - rankOffset; // component mass bal equations are shifted
-        if( compMassBalanceRow >= 0 && compMassBalanceRow < localRhs.size() )
-        {
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[compMassBalanceRow], rhsContributionArray[a] );
-        }
+        globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
+        localMatrix[compMassBalanceRow] += rhsContributionArray[a];
       }
 #endif
     } );

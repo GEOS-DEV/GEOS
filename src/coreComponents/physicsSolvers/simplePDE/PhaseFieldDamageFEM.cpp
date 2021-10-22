@@ -582,14 +582,15 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                         string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
   {
     bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy< 32 > >( targetSet,
-                                                                     time,
-                                                                     targetGroup,
-                                                                     m_fieldName,
-                                                                     dofManager.getKey( m_fieldName ),
-                                                                     dofManager.rankOffset(),
-                                                                     localMatrix,
-                                                                     localRhs );
+                                       parallelDevicePolicy< 32 >,
+                                       parallelDeviceReduce >( targetSet,
+                                                               time,
+                                                               targetGroup,
+                                                               m_fieldName,
+                                                               dofManager.getKey( m_fieldName ),
+                                                               dofManager.rankOffset(),
+                                                               localMatrix,
+                                                               localRhs );
   } );
 
   fsManager.applyFieldValue< serialPolicy >( time, domain, "ElementRegions", viewKeyStruct::coeffNameString() );
