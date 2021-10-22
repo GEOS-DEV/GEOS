@@ -95,6 +95,8 @@ private:
 
   /// Time of the most recent SC matrix construction
   real64 m_componentFilterTime;
+  real64 m_makeRestrictorTime;
+  real64 m_computeAuuTime;
 };
 
 } // end geosx namespace

@@ -27,7 +27,7 @@ This example is based on the XML file located at
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
+  ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
 
 The mesh file corresponding to the Egg model is stored in the GEOSXDATA repository.
 Therefore, you must first download the GEOSXDATA repository in the same folder
@@ -103,7 +103,7 @@ If ``lineSearchAction = "Require"``, we cut the time step if the line search doe
    To use the linear solver options of this example, you need to ensure that GEOSX is configured to use the Hypre linear solver package.
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
@@ -154,7 +154,7 @@ internally using the Peaceman formulation.
    :width: 400px
    :align: center          
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
@@ -187,7 +187,7 @@ We define the events involved in the collection and output of the well productio
 The time history collection events trigger the collection of the well rates at the desired frequency, while the time history output events trigger the output of the HDF5 files containing the time series.
 These events point by name to the corresponding blocks of the **Tasks** and **Outputs** XML blocks, respectively. Here, these names are ``wellRateCollection1`` and ``timeHistoryOutput1``.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS_END -->
@@ -203,7 +203,7 @@ In the ``NumericalMethods`` XML block, we instruct GEOSX to use a TPFA finite-vo
 numerical scheme.
 This part is similar to the corresponding section of :ref:`TutorialDeadOilBottomLayersSPE10`, and has been adapted to match the specifications of the Egg model.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_NUMERICAL_METHODS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_NUMERICAL_METHODS_END -->
@@ -229,7 +229,7 @@ We also associate a **WellElementRegion** to each well. As the **CellElementRegi
 it contains a ``materialList`` that must point (by name) to the constitutive models
 defined in the **Constitutive** XML block.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_ELEMENT_REGIONS_END -->
@@ -253,7 +253,7 @@ All the parameters must be provided using the SI unit system.
 
 This part is identical to that of :ref:`TutorialDeadOilBottomLayersSPE10`. 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE_END -->
@@ -281,7 +281,7 @@ in the **DeadOilFluid** block.
 Note that we also define the uniform porosity field here since it is not included in the mesh file
 imported by the **PAMELAMeshGenerator**.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS_END -->
@@ -296,7 +296,7 @@ Outputs
 In this section, we request an output of the results in VTK format and an output of the rates for each producing well.
 Note that the name defined here must match the name used in the **Events** XML block to define the output frequency.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUTS_END -->
@@ -313,7 +313,7 @@ The task contains the path to the object on which the field to collect is regist
 The details of the history collection mechanism can be found in :ref:`TasksManager`. 
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_TASKS_END -->

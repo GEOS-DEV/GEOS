@@ -164,6 +164,9 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
   HYPRE_BigInt const jlower = MpiWrapper::prefixSum< HYPRE_BigInt >( localSize, comm );
   HYPRE_BigInt const jupper = jlower + localSize - 1;
 
+  // In case the vector was already created, we reset it to prevent any memory leak...
+  reset();
+  // ... then we can continue with the standard creation process.
   initialize( comm, jlower, jupper, m_ij_vector );
   finalize( m_ij_vector, m_par_vector );
 
