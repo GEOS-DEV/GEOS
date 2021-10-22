@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASETHERMOPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASETHERMOPOROMECHANICSKERNEL_HPP_
 
+#include "SinglePhaseThermoPoromechanicsSolver.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
@@ -94,7 +95,8 @@ public:
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                arrayView1d< real64 > const & inputRhs,
                real64 const (&inputGravityVector)[3],
-               arrayView1d< string const > const fluidModelNames ):
+               arrayView1d< string const > const fluidModelNames,
+               real64 const dt ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -118,7 +120,11 @@ public:
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
-    m_thermalDofNumber( temperatureDofNumber )
+    m_thermalDofNumber( temperatureDofNumber ),
+    m_temperature( nodeManager.template getReference< array1d< real64 > >( SinglePhaseThermoPoromechanicsSolver::viewKeyStruct::temperatureString() ) ),
+    m_deltaTemperature( nodeManager.template getReference< array1d< real64 > >( SinglePhaseThermoPoromechanicsSolver::viewKeyStruct::newDeltaTemperatureString() ) ),
+    m_thermalDiffusion( 1e-1 ),
+    m_dt( dt )
   {}
 
 
@@ -180,6 +186,13 @@ public:
     /// C-array storage for the element local row degrees of freedom.
     globalIndex localThermalDofIndex[numNodesPerElem];
 
+
+    /// C-array storage for the local nodal temperature.
+    real64 localTemperature[numNodesPerElem];
+
+    /// C-array storage for the local nodal temperature increment.
+    real64 localDeltaTemperature[numNodesPerElem];
+
   };
 
 
@@ -212,6 +225,8 @@ public:
       }
 
       stack.localThermalDofIndex[a] = m_thermalDofNumber[localNodeIndex];
+      stack.localTemperature[a] = m_temperature[localNodeIndex];
+      stack.localDeltaTemperature[a] = m_deltaTemperature[localNodeIndex];
     }
 
     stack.localFlowDofIndex[0] = m_flowDofNumber[k];
@@ -329,8 +344,9 @@ public:
 
     // Thermal conditributon
 
+/**
     // Test an unit jacobian
-    real64 tmpvec[8][8] = { { 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
+    real64 tmpmatr[8][8] = { { 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
       { 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
       { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
       { 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0 },
@@ -339,20 +355,20 @@ public:
       { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 },
       { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 }
     };
-
+*/
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       for( localIndex b=0; b<numNodesPerElem; ++b )
       {
-        //real64 tmpValue1 = N[a] * N[b] * detJxW / m_dt;
-        //real64 tmpValue2 = LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJxW * m_thermalDiffusion;
+        real64 tmpValue1 = N[a] * N[b] * detJxW / m_dt;
+        real64 tmpValue2 = LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJxW * m_thermalDiffusion;
 
         // Update local Jacobian
-        stack.localThermalJacobian[a][b] = tmpvec[a][b];//+= 1.0;//tmpValue1 + tmpValue2;
+        stack.localThermalJacobian[a][b] += tmpValue1 + tmpValue2; //= tmpmatr[a][b];
 
         // Update local Rhs
-        stack.localThermalResidual[a] = a+b+1.0;//+=tmpValue1 * stack.deltaTemperature_local[b];
-        //stack.localThermalResidual[a] += tmpValue2 * stack.temperature_local[b];
+        stack.localThermalResidual[a] += tmpValue1 * stack.localDeltaTemperature[b];//= a+b+1.0;//
+        stack.localThermalResidual[a] += tmpValue2 * stack.localTemperature[b];
       }
     }
 
@@ -465,6 +481,18 @@ protected:
 
   /// The global degree of freedom number of the thermal field.
   arrayView1d< globalIndex const > const m_thermalDofNumber;
+
+  /// The rank-global temperature array.
+  arrayView1d< real64 const > const m_temperature;
+
+  /// The rank-global incremental temperature array.
+  arrayView1d< real64 const > const m_deltaTemperature;
+
+  /// Thermal diffusion coefficient
+  real64 const m_thermalDiffusion;
+
+  /// Time step
+  real64 const m_dt;
 };
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
@@ -475,7 +503,8 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                CRSMatrixView< real64, globalIndex const > const &,
                                                                arrayView1d< real64 > const &,
                                                                real64 const (&)[3],
-                                                               arrayView1d< string const > const >;
+                                                               arrayView1d< string const > const,
+                                                               real64 const >;
 
 } /* namespace ThermoPoromechanicsKernels */
 

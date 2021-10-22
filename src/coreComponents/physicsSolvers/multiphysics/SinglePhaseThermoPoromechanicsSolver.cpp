@@ -78,7 +78,12 @@ void SinglePhaseThermoPoromechanicsSolver::registerDataOnMesh( Group & meshBodie
 
     nodeManager.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString() ).
       setPlotLevel( PlotLevel::LEVEL_0 ).
-      setDescription( "An array that holds the temperature of the nodes" );
+      setDescription( "An array that holds the nodal temperature" );
+
+    nodeManager.registerWrapper< array1d< real64 > >( viewKeyStruct::newDeltaTemperatureString() ).
+      setPlotLevel( PlotLevel::LEVEL_3 ).
+      setDescription( "An array that holds the nodal temperature increment" );
+
   } );
 
 }
@@ -235,7 +240,8 @@ void SinglePhaseThermoPoromechanicsSolver::assembleSystem( real64 const time_n,
                                                                       localMatrix,
                                                                       localRhs,
                                                                       gravityVectorData,
-                                                                      m_flowSolver->fluidModelNames() );
+                                                                      m_flowSolver->fluidModelNames(),
+                                                                      dt );
 
   // Cell-based contributions
   m_solidSolver->getMaxForce() =
@@ -275,6 +281,25 @@ void SinglePhaseThermoPoromechanicsSolver::applyBoundaryConditions( real64 const
                                          dofManager,
                                          localMatrix,
                                          localRhs );
+
+  // Apply boundary temperature
+  FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
+  real64 time = time_n + dt;
+
+  fsManager.apply( time,
+                   domain,
+                   "nodeManager",
+                   viewKeyStruct::temperatureString(),
+                   [&]( FieldSpecificationBase const & bc,
+                        string const &,
+                        SortedArrayView< localIndex const > const & targetSet,
+                        Group & targetGroup,
+                        string const & GEOSX_UNUSED_PARAM( fieldName ) )
+  {
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >
+      ( targetSet, time, targetGroup, viewKeyStruct::temperatureString(), dofManager.getKey( viewKeyStruct::temperatureString() ),
+      dofManager.rankOffset(), localMatrix, localRhs );
+  } );
 }
 
 real64 SinglePhaseThermoPoromechanicsSolver::calculateResidualNorm( DomainPartition const & domain,

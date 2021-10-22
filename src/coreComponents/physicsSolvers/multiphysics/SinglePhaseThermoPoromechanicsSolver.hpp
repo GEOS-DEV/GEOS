@@ -27,6 +27,7 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "finiteElement/Kinematics.h"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
@@ -133,6 +134,7 @@ public:
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
     constexpr static char const * temperatureString() { return "temperature"; }
+    constexpr static char const * newDeltaTemperatureString() { return "newDeltaTemperature"; }
   };
 
   arrayView1d< string const > porousMaterialNames() const { return m_porousMaterialNames; }
