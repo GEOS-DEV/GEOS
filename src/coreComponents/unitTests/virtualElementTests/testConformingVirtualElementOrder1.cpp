@@ -258,7 +258,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   }
 }
 
-TEST( ConformingVirtualElementOrder1, hexagons )
+TEST( ConformingVirtualElementOrder1, hexahedra )
 {
   string const inputStream=
     "<Problem>"
