@@ -89,6 +89,7 @@ public:
                CONSTITUTIVE_TYPE & inputConstitutiveType,
                arrayView1d< globalIndex const > const & inputDispDofNumber,
                string const & inputFlowDofKey,
+               arrayView1d< globalIndex const > const & temperatureDofNumber,
                globalIndex const rankOffset,
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                arrayView1d< real64 > const & inputRhs,
@@ -116,7 +117,8 @@ public:
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
-    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) )
+    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
+    m_thermalDofNumber( temperatureDofNumber )
   {}
 
 
@@ -144,7 +146,10 @@ public:
       localDispFlowJacobian{ {0.0} },
       localFlowDispJacobian{ {0.0} },
       localFlowFlowJacobian{ {0.0} },
-      localFlowDofIndex{ 0 }
+      localFlowDofIndex{ 0 },
+      localThermalResidual{ 0.0 },
+      localThermalJacobian{ {0.0} },
+      localThermalDofIndex{ 0 }
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -168,6 +173,12 @@ public:
 
     /// C-array storage for the element local row degrees of freedom.
     globalIndex localFlowDofIndex[1];
+
+    real64 localThermalResidual[numNodesPerElem];
+    real64 localThermalJacobian[numNodesPerElem][numNodesPerElem];
+
+    /// C-array storage for the element local row degrees of freedom.
+    globalIndex localThermalDofIndex[numNodesPerElem];
 
   };
 
@@ -199,6 +210,8 @@ public:
         stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
         stack.localColDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
       }
+
+      stack.localThermalDofIndex[a] = m_thermalDofNumber[localNodeIndex];
     }
 
     stack.localFlowDofIndex[0] = m_flowDofNumber[k];
@@ -313,6 +326,37 @@ public:
 
     stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - porosityOld * m_fluidDensityOld( k ) ) * detJxW;
     stack.localFlowFlowJacobian[0][0] += ( dPorosity_dPressure * m_fluidDensity( k, q ) + porosityNew * m_dFluidDensity_dPressure( k, q ) ) * detJxW;
+
+    // Thermal conditributon
+
+    // Test an unit jacobian
+    real64 tmpvec[8][8] = { { 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
+      { 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
+      { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
+      { 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0 },
+      { 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 },
+      { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 },
+      { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 },
+      { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 }
+    };
+
+    for( localIndex a=0; a<numNodesPerElem; ++a )
+    {
+      for( localIndex b=0; b<numNodesPerElem; ++b )
+      {
+        //real64 tmpValue1 = N[a] * N[b] * detJxW / m_dt;
+        //real64 tmpValue2 = LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJxW * m_thermalDiffusion;
+
+        // Update local Jacobian
+        stack.localThermalJacobian[a][b] = tmpvec[a][b];//+= 1.0;//tmpValue1 + tmpValue2;
+
+        // Update local Rhs
+        stack.localThermalResidual[a] = a+b+1.0;//+=tmpValue1 * stack.deltaTemperature_local[b];
+        //stack.localThermalResidual[a] += tmpValue2 * stack.temperature_local[b];
+      }
+    }
+
+
   }
 
   /**
@@ -367,6 +411,24 @@ public:
       RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localFlowResidual[0] );
     }
 
+
+    // Assemblage thermal term
+    for( int a = 0; a < numNodesPerElem; ++a )
+    {
+      localIndex const thermalDof = LvArray::integerConversion< localIndex >( stack.localThermalDofIndex[a] - m_dofRankOffset );
+
+      if( 0 <= thermalDof && thermalDof < m_matrix.numRows() )
+      {
+        m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( thermalDof,
+                                                                                stack.localThermalDofIndex,
+                                                                                stack.localThermalJacobian[a],
+                                                                                numNodesPerElem );
+
+
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[thermalDof], stack.localThermalResidual[a] );
+      }
+    }
+
     return maxForce;
   }
 
@@ -400,11 +462,15 @@ protected:
 
   /// The rank-global delta-fluid pressure array.
   arrayView1d< real64 const > const m_deltaFluidPressure;
+
+  /// The global degree of freedom number of the thermal field.
+  arrayView1d< globalIndex const > const m_thermalDofNumber;
 };
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                arrayView1d< globalIndex const > const &,
                                                                string const &,
+                                                               arrayView1d< globalIndex const > const &,
                                                                globalIndex const,
                                                                CRSMatrixView< real64, globalIndex const > const &,
                                                                arrayView1d< real64 > const &,

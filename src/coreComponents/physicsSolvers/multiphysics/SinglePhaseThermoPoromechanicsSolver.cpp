@@ -50,6 +50,40 @@ SinglePhaseThermoPoromechanicsSolver::SinglePhaseThermoPoromechanicsSolver( stri
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
+
+void SinglePhaseThermoPoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
+{
+  SolverBase::registerDataOnMesh( meshBodies );
+
+/**
+   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+   {
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
+
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
+    {
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString() ).
+        setPlotLevel( PlotLevel::LEVEL_0 );
+    } );
+   } );
+ */
+
+
+
+  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  {
+    NodeManager & nodeManager = meshBody.getMeshLevel( 0 ).getNodeManager();
+
+    nodeManager.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString() ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setDescription( "An array that holds the temperature of the nodes" );
+  } );
+
+}
+
+
 void SinglePhaseThermoPoromechanicsSolver::setupDofs( DomainPartition const & domain,
                                                       DofManager & dofManager ) const
 {
@@ -60,6 +94,30 @@ void SinglePhaseThermoPoromechanicsSolver::setupDofs( DomainPartition const & do
   dofManager.addCoupling( keys::TotalDisplacement,
                           FlowSolverBase::viewKeyStruct::pressureString(),
                           DofManager::Connector::Elem );
+
+  // setup dof for the temperature field
+
+  dofManager.addField( viewKeyStruct::temperatureString(),
+                       DofManager::Location::Node,
+                       1,
+                       targetRegionNames() );
+
+  dofManager.addCoupling( viewKeyStruct::temperatureString(),
+                          viewKeyStruct::temperatureString(),
+                          DofManager::Connector::Elem );
+
+
+/**
+   //test cell field
+   dofManager.addField( viewKeyStruct::temperatureString(),
+                       DofManager::Location::Elem,
+                       1,
+                       targetRegionNames() );
+
+   dofManager.addCoupling( viewKeyStruct::temperatureString(),
+                          viewKeyStruct::temperatureString(),
+                          DofManager::Connector::Elem );
+ */
 }
 
 void SinglePhaseThermoPoromechanicsSolver::setupSystem( DomainPartition & domain,
@@ -163,12 +221,16 @@ void SinglePhaseThermoPoromechanicsSolver::assembleSystem( real64 const time_n,
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+
+  string const temperatureDofKey = dofManager.getKey( viewKeyStruct::temperatureString() );
+  arrayView1d< globalIndex const > const & temperatureDofNumber = nodeManager.getReference< globalIndex_array >( temperatureDofKey );
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
   ThermoPoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                      pDofKey,
+                                                                      pressureDofKey,
+                                                                      temperatureDofNumber,
                                                                       dofManager.rankOffset(),
                                                                       localMatrix,
                                                                       localRhs,
@@ -276,6 +338,20 @@ void SinglePhaseThermoPoromechanicsSolver::applySystemSolution( DofManager const
 
   // update pressure field
   m_flowSolver->applySystemSolution( dofManager, localSolution, -scalingFactor, domain );
+
+
+  // update temperature field
+  dofManager.addVectorToField( localSolution,
+                               viewKeyStruct::temperatureString(),
+                               viewKeyStruct::temperatureString(),
+                               scalingFactor );
+
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  std::map< string, string_array > fieldNames;
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::temperatureString() ) );
+
+  CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
 
 void SinglePhaseThermoPoromechanicsSolver::updateState( DomainPartition & domain )

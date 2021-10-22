@@ -58,6 +58,8 @@ public:
    */
   static string catalogName() { return "SinglePhaseThermoPoromechanics"; }
 
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
+
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
@@ -130,6 +132,7 @@ public:
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
+    constexpr static char const * temperatureString() { return "temperature"; }
   };
 
   arrayView1d< string const > porousMaterialNames() const { return m_porousMaterialNames; }
