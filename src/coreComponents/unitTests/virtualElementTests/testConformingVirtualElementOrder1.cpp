@@ -148,8 +148,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
 
 template< typename VEM >
 GEOSX_HOST_DEVICE
-static void checkSumOfQuadratureWeights( real64 const & cellVolume,
-                                         typename VEM::StackVariables stack,
+static void checkSumOfQuadratureWeights( typename VEM::StackVariables stack,
                                          real64 & sumOfQuadratureWeights )
 {
   static constexpr localIndex
@@ -223,8 +222,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
     checkStabilizationMatrixConsistency< VEM >( nodesCoords, cellIndex, cellToNodeMap,
                                                 cellCenters, virtualElement, stack,
                                                 thisCellStabTimeMonomialDofs );
-    checkSumOfQuadratureWeights< VEM >( cellVolumes( cellIndex ), stack,
-                                        sumOfQuadWeightsView( cellIndex ) );
+    checkSumOfQuadratureWeights< VEM >( stack, sumOfQuadWeightsView( cellIndex ) );
   } );
 
   // Perform checks.
