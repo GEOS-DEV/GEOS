@@ -96,30 +96,30 @@ public:
   }
 
   /**
-   * @brief Empty initialization method.
+   * @brief Method to fill a MeshData object.
    * @param nodeManager The node manager.
    * @param edgeManager The edge manager.
    * @param faceManager The face manager.
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
-   * @param initialization Object that holds initialization properties.
+   * @param meshData MeshData struct to be filled.
    */
   GEOSX_HOST_DEVICE
-  static void fillInitialization( NodeManager const & nodeManager,
-                                  EdgeManager const & edgeManager,
-                                  FaceManager const & faceManager,
-                                  CellElementSubRegion const & cellSubRegion,
-                                  Initialization & initialization );
+  static void fillMeshData( NodeManager const & nodeManager,
+                            EdgeManager const & edgeManager,
+                            FaceManager const & faceManager,
+                            CellElementSubRegion const & cellSubRegion,
+                            MeshData & meshData );
 
   /**
    * @brief Empty setup method.
    * @param cellIndex The index of the cell with respect to the cell sub region.
-   * @param initialization Initialization struct filled by @ref fillInitialization.
+   * @param meshData MeshData struct filled by @ref fillMeshData.
    * @param stack Object that holds stack variables.
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void setupStack( localIndex const & cellIndex,
-                          Initialization const & initialization,
+                          MeshData const & meshData,
                           StackVariables & stack );
 
   /**
@@ -185,18 +185,18 @@ private:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_TriangleFace_Lagrange1_Gauss1::
-  fillInitialization( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                      EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                      FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                      CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                      Initialization & GEOSX_UNUSED_PARAM( initialization ) )
+  fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
+                FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
+                CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                MeshData & GEOSX_UNUSED_PARAM( meshData ) )
 {}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_TriangleFace_Lagrange1_Gauss1::
   setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-              Initialization const & GEOSX_UNUSED_PARAM( initialization ),
+              MeshData const & GEOSX_UNUSED_PARAM( meshData ),
               StackVariables & GEOSX_UNUSED_PARAM( stack ) )
 {}
 

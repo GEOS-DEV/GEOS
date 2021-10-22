@@ -33,16 +33,16 @@ class TestFiniteElementBase final : public FiniteElementBase
   GEOSX_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const override {return 8;};
   GEOSX_HOST_DEVICE
-  static void fillInitialization( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                                  EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                                  FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                                  CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                                  Initialization & GEOSX_UNUSED_PARAM( initialization )
-                                  )
+  static void fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                            EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
+                            FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
+                            CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                            MeshData & GEOSX_UNUSED_PARAM( meshData )
+                            )
   {}
   GEOSX_HOST_DEVICE
   static void setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-                          Initialization const & GEOSX_UNUSED_PARAM( initialization ),
+                          MeshData const & GEOSX_UNUSED_PARAM( meshData ),
                           StackVariables & GEOSX_UNUSED_PARAM( stack ) )
   {}
 };

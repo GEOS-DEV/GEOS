@@ -100,39 +100,39 @@ public:
   };
 
   /**
-   * @struct Initialization
+   * @struct MeshData
    * @brief Variables used to initialize the class.
    */
-  struct Initialization
+  struct MeshData
   {
     /**
      * Constructor
      */
     GEOSX_HOST_DEVICE
-    Initialization()
+    MeshData()
     {}
   };
 
   /**
    * @brief Abstract initialization method.
-   * @details It calls the fillInitialization method of the specific element implementation.
+   * @details It calls the fillMeshData method of the specific element implementation.
    * @tparam LEAF Type of the derived finite element implementation.
    * @param nodeManager The node manager.
    * @param edgeManager The edge manager.
    * @param faceManager The face manager.
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
-   * @param initialization The struct to be filled according to the @p LEAF class needs.
+   * @param meshData The struct to be filled according to the @p LEAF class needs.
    */
   template< typename LEAF >
   static void initialize( NodeManager const & nodeManager,
                           EdgeManager const & edgeManager,
                           FaceManager const & faceManager,
                           CellElementSubRegion const & cellSubRegion,
-                          typename LEAF::Initialization & initialization
+                          typename LEAF::MeshData & meshData
                           )
   {
-    LEAF::fillInitialization( nodeManager, edgeManager, faceManager, cellSubRegion,
-                              initialization );
+    LEAF::fillMeshData( nodeManager, edgeManager, faceManager, cellSubRegion,
+                        meshData );
   }
 
   /**
@@ -140,16 +140,16 @@ public:
    * @tparam LEAF Type of the derived finite element implementation.
    * @param cellIndex The index of the cell with respect to the cell sub region to which the element
    * has been initialized previously (see @ref initialize).
-   * @param initialization An initialization object previously filled.
+   * @param meshData A MeshData object previously filled.
    * @param stack Object that holds stack variables.
    */
   template< typename LEAF >
   GEOSX_HOST_DEVICE
   void setup( localIndex const & cellIndex,
-              typename LEAF::Initialization const & initialization,
+              typename LEAF::MeshData const & meshData,
               typename LEAF::StackVariables & stack ) const
   {
-    LEAF::setupStack( cellIndex, initialization, stack );
+    LEAF::setupStack( cellIndex, meshData, stack );
   }
 
   /**

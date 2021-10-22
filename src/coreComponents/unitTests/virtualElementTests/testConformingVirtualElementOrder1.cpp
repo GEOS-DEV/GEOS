@@ -182,12 +182,12 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
 
-  // Allocate and fill VEM Initialization.
+  // Allocate and fill a VEM::MeshData struct.
   using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
-  typename VEM::Initialization initialization;
+  typename VEM::MeshData meshData;
   FiniteElementBase::initialize< VEM >( nodeManager, edgeManager,
                                         faceManager, cellSubRegion,
-                                        initialization );
+                                        meshData );
 
   // Arrays that store quantities to be tested.
   localIndex const numCells = cellSubRegion.getElementVolume().size();
@@ -209,7 +209,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   {
     typename VEM::StackVariables stack;
     VEM virtualElement;
-    virtualElement.template setup< VEM >( cellIndex, initialization, stack );
+    virtualElement.template setup< VEM >( cellIndex, meshData, stack );
 
     checkIntegralMeanConsistency< VEM >( virtualElement, stack,
                                          sumBasisFunctionsView( cellIndex ) );

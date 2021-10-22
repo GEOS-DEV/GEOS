@@ -60,13 +60,13 @@ public:
     real64 basisDerivativesIntegralMean[MAXCELLNODES][3];
   };
 
-  struct Initialization : public FiniteElementBase::Initialization
+  struct MeshData : public FiniteElementBase::MeshData
   {
     /**
      * Constructor
      */
     GEOSX_HOST_DEVICE
-    Initialization()
+    MeshData()
     {}
 
     InputNodeCoords nodesCoords;
@@ -123,51 +123,59 @@ public:
     return stack.numSupportPoints;
   }
 
-  static void fillInitialization( NodeManager const & nodeManager,
-                                  EdgeManager const & edgeManager,
-                                  FaceManager const & faceManager,
-                                  CellElementSubRegion const & cellSubRegion,
-                                  Initialization & initialization
-                                  )
+  /**
+   * @brief Method to fill a MeshData object.
+   * @param nodeManager The node manager.
+   * @param edgeManager The edge manager.
+   * @param faceManager The face manager.
+   * @param cellSubRegion The cell sub-region for which the element has to be initialized.
+   * @param meshData MeshData struct to be filled.
+   */
+  static void fillMeshData( NodeManager const & nodeManager,
+                            EdgeManager const & edgeManager,
+                            FaceManager const & faceManager,
+                            CellElementSubRegion const & cellSubRegion,
+                            MeshData & meshData
+                            )
   {
-    initialization.nodesCoords = nodeManager.referencePosition();
-    initialization.cellToNodeMap = cellSubRegion.nodeList();
-    initialization.cellToFaceMap = cellSubRegion.faceList().toViewConst();
-    initialization.faceToNodeMap = faceManager.nodeList().toViewConst();
-    initialization.faceToEdgeMap = faceManager.edgeList().toViewConst();
-    initialization.edgeToNodeMap = edgeManager.nodeList().toViewConst();
-    initialization.faceCenters = faceManager.faceCenter();
-    initialization.faceNormals = faceManager.faceNormal();
-    initialization.faceAreas = faceManager.faceArea();
-    initialization.cellCenters = cellSubRegion.getElementCenter();
-    initialization.cellVolumes = cellSubRegion.getElementVolume();
+    meshData.nodesCoords = nodeManager.referencePosition();
+    meshData.cellToNodeMap = cellSubRegion.nodeList();
+    meshData.cellToFaceMap = cellSubRegion.faceList().toViewConst();
+    meshData.faceToNodeMap = faceManager.nodeList().toViewConst();
+    meshData.faceToEdgeMap = faceManager.edgeList().toViewConst();
+    meshData.edgeToNodeMap = edgeManager.nodeList().toViewConst();
+    meshData.faceCenters = faceManager.faceCenter();
+    meshData.faceNormals = faceManager.faceNormal();
+    meshData.faceAreas = faceManager.faceArea();
+    meshData.cellCenters = cellSubRegion.getElementCenter();
+    meshData.cellVolumes = cellSubRegion.getElementVolume();
   }
 
   /**
    * @brief Setup method.
    * @param cellIndex The index of the cell with respect to the cell sub region to which the element
-   * has been initialized previously (see @ref fillInitialization).
+   * has been initialized previously (see @ref fillMeshData).
    * @param stack Object that holds stack variables.
    */
   GEOSX_HOST_DEVICE
   static void setupStack( localIndex const & cellIndex,
-                          Initialization const & initialization,
+                          MeshData const & meshData,
                           StackVariables & stack )
   {
-    real64 const cellCenter[3] { initialization.cellCenters( cellIndex, 0 ),
-                                 initialization.cellCenters( cellIndex, 1 ),
-                                 initialization.cellCenters( cellIndex, 2 ) };
-    real64 const cellVolume = initialization.cellVolumes( cellIndex );
+    real64 const cellCenter[3] { meshData.cellCenters( cellIndex, 0 ),
+                                 meshData.cellCenters( cellIndex, 1 ),
+                                 meshData.cellCenters( cellIndex, 2 ) };
+    real64 const cellVolume = meshData.cellVolumes( cellIndex );
     computeProjectors( cellIndex,
-                       initialization.nodesCoords,
-                       initialization.cellToNodeMap,
-                       initialization.cellToFaceMap,
-                       initialization.faceToNodeMap,
-                       initialization.faceToEdgeMap,
-                       initialization.edgeToNodeMap,
-                       initialization.faceCenters,
-                       initialization.faceNormals,
-                       initialization.faceAreas,
+                       meshData.nodesCoords,
+                       meshData.cellToNodeMap,
+                       meshData.cellToFaceMap,
+                       meshData.faceToNodeMap,
+                       meshData.faceToEdgeMap,
+                       meshData.edgeToNodeMap,
+                       meshData.faceCenters,
+                       meshData.faceNormals,
+                       meshData.faceAreas,
                        cellCenter,
                        cellVolume,
                        stack.numSupportPoints,
