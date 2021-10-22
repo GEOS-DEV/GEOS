@@ -19,14 +19,18 @@
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/MeshManager.hpp"
+#include "codingUtilities/UnitTestUtilities.hpp"
 
 // TPL includes
 #include "gtest/gtest.h"
 
 using namespace geosx;
 using namespace finiteElement;
+using namespace geosx::testing;
 
 CommandLineOptions g_commandLineOptions;
+constexpr real64 absTol = geosx::testing::DEFAULT_ABS_TOL;
+constexpr real64 relTol = geosx::testing::DEFAULT_REL_TOL*10;
 
 template< typename VEM >
 GEOSX_HOST_DEVICE
@@ -228,27 +232,24 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   // Perform checks.
   for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
   {
-    EXPECT_TRUE( LvArray::math::abs( sumXDerivatives( cellIndex ) ) < 1e-15 )
-      << "Sum of integral means of x-derivatives of basis functions is not 0, but "
-      << sumXDerivatives( cellIndex ) << ".";
-    EXPECT_TRUE( LvArray::math::abs( sumYDerivatives( cellIndex ) ) < 1e-15 )
-      << "Sum of integral means of y-derivatives of basis functions is not 0, but "
-      << sumYDerivatives( cellIndex ) << ".";
-    EXPECT_TRUE( LvArray::math::abs( sumZDerivatives( cellIndex ) ) < 1e-15 )
-      << "Sum of integral means of z-derivatives of basis functions is not 0, but "
-      << sumZDerivatives( cellIndex ) << ".";
-    EXPECT_TRUE( LvArray::math::abs( sumBasisFunctions( cellIndex ) - 1 ) < 1e-15 )
-      << "Sum of basis functions integral mean is not 1, but "
-      << sumBasisFunctions( cellIndex ) << ".";
+    checkRelativeError(sumXDerivatives(cellIndex), 0.0, relTol, absTol,
+                       "Sum of integral means of x-derivatives of basis functions");
+    checkRelativeError(sumYDerivatives(cellIndex), 0.0, relTol, absTol,
+                       "Sum of integral means of y-derivatives of basis functions");
+    checkRelativeError(sumZDerivatives(cellIndex), 0.0, relTol, absTol,
+                       "Sum of integral means of z-derivatives of basis functions");
+    checkRelativeError(sumBasisFunctions(cellIndex), 1.0, relTol, absTol,
+                       "Sum of integral means of basis functions");
     for( localIndex monomInd = 0; monomInd < 4; ++monomInd )
     {
-      EXPECT_TRUE( LvArray::math::abs( stabTimeMonomialDofsNorm( cellIndex, monomInd ) ) < 1e-15 )
-        << "Product of stabilization matrix and monomial degrees of freedom is not zero for "
-        << "monomial number " << monomInd << ".";
+      char name[100];
+      std::sprintf(name, "Product of stabilization matrix and degrees of freedom of monomial %ld",
+                   monomInd);
+      checkRelativeError(stabTimeMonomialDofsNorm( cellIndex, monomInd ) , 0.0, relTol, absTol,
+                         name);
     }
-    EXPECT_TRUE( LvArray::math::abs( sumOfQuadWeights( cellIndex ) - cellVolumes( cellIndex ) ) < 1e-15 )
-      << "Sum of quadrature weights does not equal the cell volume. Sum is "
-      << sumOfQuadWeights( cellIndex ) << ". Cell volume is " << cellVolumes( cellIndex );
+    checkRelativeError(sumOfQuadWeights( cellIndex ), cellVolumes( cellIndex ), relTol, absTol,
+                       "Sum of quadrature weights");
   }
 }
 
