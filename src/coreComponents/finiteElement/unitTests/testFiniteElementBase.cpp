@@ -32,7 +32,6 @@ class TestFiniteElementBase final : public FiniteElementBase
   virtual localIndex getNumQuadraturePoints() const override {return 8;};
   GEOSX_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const override {return 8;};
-  GEOSX_HOST_DEVICE
   static void fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                             EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
                             FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),

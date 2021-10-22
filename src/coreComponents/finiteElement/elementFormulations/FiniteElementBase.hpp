@@ -108,7 +108,6 @@ public:
     /**
      * Constructor
      */
-    GEOSX_HOST_DEVICE
     MeshData()
     {}
   };

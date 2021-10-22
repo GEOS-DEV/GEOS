@@ -103,7 +103,6 @@ public:
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
    * @param meshData MeshData struct to be filled.
    */
-  GEOSX_HOST_DEVICE
   static void fillMeshData( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
@@ -239,7 +238,6 @@ private:
 
 /// @cond Doxygen_Suppress
 
-GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Tetrahedron_Lagrange1_Gauss1::
   fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
