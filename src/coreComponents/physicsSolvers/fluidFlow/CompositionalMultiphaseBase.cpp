@@ -896,6 +896,10 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                         string const & )
   {
 
+    GEOSX_ERROR( GEOSX_FMT(
+                   "CompositionalMultiphaseBase {}: source flux boundary conditions are temporarily disabled in all the compositional multiphase solvers, please use a Dirichlet boundary condition or a well in the meantime",
+                   getName() ) );
+
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank =
       subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
