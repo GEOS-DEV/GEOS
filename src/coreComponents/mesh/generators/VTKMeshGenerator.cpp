@@ -575,11 +575,9 @@ void writeCellBlock( string const & name, std::vector<vtkIdType > const & cellId
   assert(region_id >= -1 );
   string const cellBlockName = region_id != -1  ? std::to_string(region_id) + "_" + name : name;
 
-  CellBlock & cellBlock = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
+  CellBlock & cellBlock = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( cellBlockName );
   int numPointsPerCell = getNumberOfPoints( cellType);
-  cellBlock.setElementType( getElementType(cellType) );
   CellBlock::NodeMapType & cellToVertex = cellBlock.nodeList();
-  cellBlock.resize( numCells );
   arrayView1d< globalIndex > const & localToGlobal = cellBlock.localToGlobalMap();
 
   /// Writing properties
@@ -637,6 +635,33 @@ void writeCellBlock( string const & name, std::vector<vtkIdType > const & cellId
   }
 }
 
+void VTKMeshGenerator::importFields( DomainPartition & domain ) const 
+{
+  auto importFieldsForElementType= [&](string const & name,std::map<int,std::vector<vtkIdType >> & cellBlocks, int vtkType ) {
+    for( auto & cellBlock : cellBlocks )
+    {
+      writeCellBlock(name, cellBlock.second, cellBlock.first, vtkType, cellBlockManager, arraysToBeImported, mesh);
+    }
+  };
+
+  importFieldsForElementType("hexahedron", m_regionsHex, VTK_HEXAHEDRON);
+  importFieldsForElementType("tetrahedron", m_regionsTetra, VTK_TETRA);
+  importFieldsForElementType("wedges", m_regionsWedges, VTK_WEDGE);
+  importFieldsForElementType("pyramids", m_regionsPyramids, VTK_PYRAMID);
+}
+
+void registerCellBlock(string const & name, std::vector<vtkIdType > const & cellIds, int region_id, int cellType,
+                     CellBlockManager & cellBlockManager)
+{
+  localIndex numCells = cellIds.size();
+  assert(region_id >= -1 );
+  string const cellBlockName = region_id != -1  ? std::to_string(region_id) + "_" + name : name;
+
+  CellBlock & cellBlock = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
+  int numPointsPerCell = getNumberOfPoints( cellType);
+  cellBlock.setElementType( getElementType(cellType) );
+  cellBlock.resize( numCells );
+}
 
 /**
  * @brief Write all the cell blocks
@@ -660,6 +685,7 @@ void writeCellBlocks( DomainPartition& domain,
   auto writeCellBlockForElementType= [&](string const & name,std::map<int,std::vector<vtkIdType >> & cellBlocks, int vtkType ) {
     for( auto & cellBlock : cellBlocks )
     {
+      registerCellBlock(name, cellBlock.second, cellBlock.first, vtkType, cellBlockManager);
       writeCellBlock(name, cellBlock.second, cellBlock.first, vtkType, cellBlockManager, arraysToBeImported, mesh);
     }
   };
@@ -668,6 +694,7 @@ void writeCellBlocks( DomainPartition& domain,
   writeCellBlockForElementType("tetrahedron", regionsTetra, VTK_TETRA);
   writeCellBlockForElementType("wedges", regionsWedges, VTK_WEDGE);
   writeCellBlockForElementType("pyramids", regionsPyramids, VTK_PYRAMID);
+
 }
 
 /**
@@ -740,6 +767,8 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   std::vector< vtkDataArray * > arraysToBeImported = findArrayToBeImported(*m_vtkMesh);
 
   writeCellBlocks( domain,regionsHex, regionsTetra, regionsWedges, regionsPyramids, arraysToBeImported, *m_vtkMesh );
+
+  importFields( domain );
 
   writeSurfaces( nodeManager, allSurfaces, surfaces, *m_vtkMesh);
 

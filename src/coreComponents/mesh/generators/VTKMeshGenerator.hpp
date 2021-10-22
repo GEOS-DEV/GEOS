@@ -29,6 +29,8 @@
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
 
+#include <map>
+
 namespace geosx
 {
 
@@ -108,6 +110,8 @@ private:
    */
   virtual void generateMesh( DomainPartition & domain ) override;
 
+  virtual void importFields( DomainPartition & domain ) const override;
+
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
    * @param childKey the catalog key of the new geometric object to create
@@ -123,8 +127,11 @@ private:
 
   /// Path to the mesh file
   Path m_filePath;
+
+  std::map<int, std::vector<vtkIdType>> m_regionsHex;
+  std::map<int, std::vector<vtkIdType>> m_regionsTetra;
+  std::map<int, std::vector<vtkIdType>> m_regionsWedges;
+  std::map<int, std::vector<vtkIdType>> m_regionsPyramids;
 };
-
 }
-
 #endif /* GEOSX_MESHUTILITIES_VTKMESHGENERATOR_HPP */
