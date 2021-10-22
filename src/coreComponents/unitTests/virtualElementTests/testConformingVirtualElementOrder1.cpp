@@ -242,7 +242,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
       << sumBasisFunctions( cellIndex ) << ".";
     for( localIndex monomInd = 0; monomInd < 4; ++monomInd )
     {
-      EXPECT_TRUE( LvArray::math::abs( stabTimeMonomialDofsNorm( cellIndex, monomInd ) < 1e-15 ) )
+      EXPECT_TRUE( LvArray::math::abs( stabTimeMonomialDofsNorm( cellIndex, monomInd ) ) < 1e-15 )
         << "Product of stabilization matrix and monomial degrees of freedom is not zero for "
         << "monomial number " << monomInd << ".";
     }
