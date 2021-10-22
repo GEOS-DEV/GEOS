@@ -19,17 +19,17 @@ contained within two GEOSX xml files that are located at:
 
 .. code-block:: console
 
-  inputFiles/multiphysics/DeviatedPoroElasticWellbore_Drilling_Base.xml
+  inputFiles/wellbore/DeviatedPoroElasticWellbore_Drilling_base.xml
 
 
 .. code-block:: console
 
-  inputFiles/multiphysics/DeviatedPoroElasticWellbore_Drilling_Example.xml
+  inputFiles/wellbore/DeviatedPoroElasticWellbore_Drilling_benchmark.xml
 
 
 This case is nearly identical to another example :ref:`AdvancedExampleDeviatedPoroElasticWellbore`, except for the ``FieldSpecifications`` tag. For this specific case, we need to consider following additional field specifications to define the in-situ stresses, in-situ pore pressure, as well as the zero pore pressure at the borehole wall.
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Drilling_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Drilling_base.xml
   :language: xml
   :start-after: <!-- SPHINX_InsituConditions -->
   :end-before: <!-- SPHINX_InsituConditionsEnd -->
@@ -177,9 +177,9 @@ A good agreement between the GEOSX results and the corresponding analytical solu
 		return [radius, phi_x, phi_z]
 
 	def main():
-		xmlFilePathPrefix = "../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Drilling"
-		geometry = getWellboreGeometryFromXML( xmlFilePathPrefix + "_Example.xml" )
-		parameters = getParametersFromXML( xmlFilePathPrefix + "_Base.xml" )
+		xmlFilePathPrefix = "../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Drilling"
+		geometry = getWellboreGeometryFromXML( xmlFilePathPrefix + "_benchmark.xml" )
+		parameters = getParametersFromXML( xmlFilePathPrefix + "_base.xml" )
 
 		# Time
 		t = parameters[0]
