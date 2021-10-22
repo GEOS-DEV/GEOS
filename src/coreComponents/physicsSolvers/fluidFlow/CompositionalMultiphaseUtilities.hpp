@@ -39,14 +39,13 @@ namespace CompositionalMultiphaseUtilities
  */
 template< typename VEC >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( localIndex const N,
-                                                                localIndex const NB,
+void shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( integer const N,
+                                                                integer const NB,
                                                                 VEC && v )
 {
-  for( localIndex i = 0; i < NB; ++i )
+  for( integer i = 0; i < NB; ++i )
   {
-    localIndex const ind = i * N + N - 1;
+    integer const ind = i * N + N - 1;
     real64 tmp = v[ind];
     for( int j = ind - 1; j >= i * N; --j )
     {
@@ -67,8 +66,7 @@ void shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( localIndex const
  */
 template< typename VEC >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void shiftElementsAheadByOneAndReplaceFirstElementWithSum( localIndex const N,
+void shiftElementsAheadByOneAndReplaceFirstElementWithSum( integer const N,
                                                            VEC && v )
 {
   shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( N, 1, v );
@@ -89,29 +87,28 @@ void shiftElementsAheadByOneAndReplaceFirstElementWithSum( localIndex const N,
  */
 template< typename MATRIX, typename VEC >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( localIndex const M,
-                                                              localIndex const N,
-                                                              localIndex const NB,
+void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const M,
+                                                              integer const N,
+                                                              integer const NB,
                                                               MATRIX && mat,
                                                               VEC && work )
 {
-  for( localIndex k = 0; k < NB; ++k )
+  for( integer k = 0; k < NB; ++k )
   {
-    localIndex const ind = k * M + M - 1;
-    for( localIndex j = 0; j < N; ++j )
+    integer const ind = k * M + M - 1;
+    for( integer j = 0; j < N; ++j )
     {
       work[j] = mat[ind][j];
     }
-    for( localIndex i = ind - 1; i >= k * M; --i )
+    for( integer i = ind - 1; i >= k * M; --i )
     {
-      for( localIndex j = 0; j < N; ++j )
+      for( integer j = 0; j < N; ++j )
       {
         mat[i+1][j] = mat[i][j];
         work[j] += mat[i][j];
       }
     }
-    for( localIndex j = 0; j < N; ++j )
+    for( integer j = 0; j < N; ++j )
     {
       mat[k*M][j] = work[j];
     }
@@ -132,9 +129,8 @@ void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( localIndex const M
  */
 template< typename MATRIX, typename VEC >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( localIndex const M,
-                                                         localIndex const N,
+void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const M,
+                                                         integer const N,
                                                          MATRIX && mat,
                                                          VEC && work )
 {

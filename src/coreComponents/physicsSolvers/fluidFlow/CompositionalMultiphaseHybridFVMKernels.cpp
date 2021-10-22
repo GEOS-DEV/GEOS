@@ -727,6 +727,7 @@ AssemblerKernelHelper::
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs )
 {
+  using namespace CompositionalMultiphaseUtilities;
   localIndex constexpr NDOF = NC+1;
 
   // dof numbers
@@ -865,9 +866,9 @@ AssemblerKernelHelper::
 
   // Apply equation/variable change transformation(s)
   real64 work[NDOF*(NF+1)];
-  CompositionalMultiphaseUtilities::shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF * ( NF + 1 ), dDivMassFluxes_dElemVars, work );
-  CompositionalMultiphaseUtilities::shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NF, dDivMassFluxes_dFaceVars, work );
-  CompositionalMultiphaseUtilities::shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, divMassFluxes );
+  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF * ( NF + 1 ), dDivMassFluxes_dElemVars, work );
+  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NF, dDivMassFluxes_dFaceVars, work );
+  shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, divMassFluxes );
 
   // we are ready to assemble the local flux and its derivatives
   // no need for atomic adds - each row is assembled by a single thread

@@ -160,6 +160,8 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs )
 {
+  using namespace CompositionalMultiphaseUtilities;
+
   using TAG = WellSolverBase::SubRegionTag;
   using ROFFSET = CompositionalMultiphaseWell::RowOffset;
   using COFFSET = CompositionalMultiphaseWell::ColOffset;
@@ -271,8 +273,8 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
 
       // Apply equation/variable change transformation(s)
       stackArray1d< real64, 2 * MAX_NUM_DOF > work( 2 * resNumDofs );
-      CompositionalMultiphaseUtilities::shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, resNumDofs*2, 2, localPerfJacobian, work );
-      CompositionalMultiphaseUtilities::shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, 2, localPerf );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, resNumDofs*2, 2, localPerfJacobian, work );
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, 2, localPerf );
 
       for( localIndex i = 0; i < localPerf.size(); ++i )
       {

@@ -564,6 +564,9 @@ FluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+
+  using namespace CompositionalMultiphaseUtilities;
+
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
@@ -637,8 +640,8 @@ FluxKernel::
 
     // Apply equation/variable change transformation(s)
     stackArray1d< real64, MAX_STENCIL_SIZE * NDOF > work( stencilSize * NDOF );
-    CompositionalMultiphaseUtilities::shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF*stencilSize, numFluxElems, localFluxJacobian, work );
-    CompositionalMultiphaseUtilities::shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, numFluxElems, localFlux );
+    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF*stencilSize, numFluxElems, localFluxJacobian, work );
+    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, numFluxElems, localFlux );
 
     // Add to residual/jacobian
     for( localIndex i = 0; i < numFluxElems; ++i )
@@ -1236,6 +1239,8 @@ AquiferBCKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+
+  using namespace CompositionalMultiphaseUtilities;
   using Order = BoundaryStencil::Order;
 
   BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
@@ -1298,8 +1303,8 @@ AquiferBCKernel::
 
     // Apply equation/variable change transformation(s)
     real64 work[NDOF];
-    CompositionalMultiphaseUtilities::shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF, localFluxJacobian, work );
-    CompositionalMultiphaseUtilities::shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localFlux );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF, localFluxJacobian, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localFlux );
 
 
     // Add to residual/jacobian

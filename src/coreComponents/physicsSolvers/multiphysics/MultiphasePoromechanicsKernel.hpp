@@ -459,6 +459,8 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
+    using namespace CompositionalMultiphaseUtilities;
+
     GEOSX_UNUSED_VAR( k );
 
     real64 maxForce = 0;
@@ -470,9 +472,9 @@ public:
 
     // Apply equation/variable change transformation(s)
     real64 work[nUDof > ( numMaxComponents + 1 ) ? nUDof : numMaxComponents + 1];
-    CompositionalMultiphaseUtilities::shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, nUDof, stack.localFlowDispJacobian, work );
-    CompositionalMultiphaseUtilities::shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents + 1, stack.localFlowFlowJacobian, work );
-    CompositionalMultiphaseUtilities::shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localFlowResidual );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, nUDof, stack.localFlowDispJacobian, work );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents + 1, stack.localFlowFlowJacobian, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localFlowResidual );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {

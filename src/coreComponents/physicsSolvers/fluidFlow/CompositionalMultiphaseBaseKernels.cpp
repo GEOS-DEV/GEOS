@@ -432,6 +432,9 @@ AccumulationKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+
+  using namespace CompositionalMultiphaseUtilities;
+
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {
     if( elemGhostRank[ei] >= 0 )
@@ -477,8 +480,8 @@ AccumulationKernel::
 
     // Apply equation/variable change transformation(s)
     real64 work[NDOF];
-    CompositionalMultiphaseUtilities::shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF, localAccumJacobian, work );
-    CompositionalMultiphaseUtilities::shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localAccum );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF, localAccumJacobian, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localAccum );
 
     // add contribution to residual and jacobian
     for( localIndex i = 0; i < NC; ++i )
