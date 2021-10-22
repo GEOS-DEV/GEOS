@@ -315,8 +315,7 @@ public:
         }
       }
     }
-    diameter = LvArray::math::sqrt< real64 >( diameter );
-    return diameter;
+    return LvArray::math::sqrt< real64 >( diameter );
   }
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
@@ -343,8 +342,7 @@ public:
         }
       }
     }
-    diameter = LvArray::math::sqrt< real64 >( diameter );
-    return diameter;
+    return LvArray::math::sqrt< real64 >( diameter );
   }
 
 private:
