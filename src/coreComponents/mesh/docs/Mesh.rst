@@ -95,7 +95,7 @@ The following are the two most common scenarios that occur while designing a mes
 
 The following is an example of a mesh block along each dimension, and an image showing the corresponding mesh.  Note that there is a core region of elements with zero bias, and that the transitions between element blocks are smooth.
 
-.. literalinclude:: ../../physicsSolvers/solidMechanics/integratedTests/sedov_with_bias.xml
+.. literalinclude:: ../../../../inputFiles/solidMechanics/sedov_with_bias.xml
   :language: xml
   :start-after: <!-- SPHINX_MESH_BIAS -->
   :end-before: <!-- SPHINX_MESH_BIAS_END -->
