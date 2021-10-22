@@ -135,6 +135,7 @@ public:
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
     constexpr static char const * temperatureString() { return "temperature"; }
     constexpr static char const * newDeltaTemperatureString() { return "newDeltaTemperature"; }
+    constexpr static char const * oldDeltaTemperatureString() { return "oldDeltaTemperature"; }
   };
 
   arrayView1d< string const > porousMaterialNames() const { return m_porousMaterialNames; }

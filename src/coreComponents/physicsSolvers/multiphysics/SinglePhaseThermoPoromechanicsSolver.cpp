@@ -84,6 +84,10 @@ void SinglePhaseThermoPoromechanicsSolver::registerDataOnMesh( Group & meshBodie
       setPlotLevel( PlotLevel::LEVEL_3 ).
       setDescription( "An array that holds the nodal temperature increment" );
 
+    nodeManager.registerWrapper< array1d< real64 > >( viewKeyStruct::oldDeltaTemperatureString() ).
+      setPlotLevel( PlotLevel::LEVEL_3 ).
+      setDescription( "An array that holds the nodal temperature increment of the previous time step" );
+
   } );
 
 }
@@ -187,6 +191,26 @@ void SinglePhaseThermoPoromechanicsSolver::resetStateToBeginningOfStep( DomainPa
 {
   m_flowSolver->resetStateToBeginningOfStep( domain );
   m_solidSolver->resetStateToBeginningOfStep( domain );
+
+  // Reset thermal state
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager & nodeManager = mesh.getNodeManager();
+
+  arrayView1d< real64 > const &
+  temperature = nodeManager.template getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
+
+  arrayView1d< real64 > const &
+  newDeltaTemperature = nodeManager.template getReference< array1d< real64 > >( viewKeyStruct::newDeltaTemperatureString() );
+
+  arrayView1d< real64 > const &
+  oldDeltaTemperature = nodeManager.template getReference< array1d< real64 > >( viewKeyStruct::oldDeltaTemperatureString() );
+
+  forAll< parallelDevicePolicy< 32 > >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+  {
+    temperature( a ) -= newDeltaTemperature( a );
+    oldDeltaTemperature( a ) = newDeltaTemperature( a );
+    newDeltaTemperature( a ) = 0.0;
+  } );
 }
 
 real64 SinglePhaseThermoPoromechanicsSolver::solverStep( real64 const & time_n,
@@ -284,9 +308,8 @@ void SinglePhaseThermoPoromechanicsSolver::applyBoundaryConditions( real64 const
 
   // Apply boundary temperature
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
-  real64 time = time_n + dt;
 
-  fsManager.apply( time,
+  fsManager.apply( time_n + dt,
                    domain,
                    "nodeManager",
                    viewKeyStruct::temperatureString(),
@@ -296,9 +319,15 @@ void SinglePhaseThermoPoromechanicsSolver::applyBoundaryConditions( real64 const
                         Group & targetGroup,
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >
-      ( targetSet, time, targetGroup, viewKeyStruct::temperatureString(), dofManager.getKey( viewKeyStruct::temperatureString() ),
-      dofManager.rankOffset(), localMatrix, localRhs );
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, 
+                                       parallelDevicePolicy< 32 > >( targetSet,
+                                                                     time_n + dt,
+                                                                     targetGroup,
+                                                                     viewKeyStruct::temperatureString(),
+                                                                     dofManager.getKey( viewKeyStruct::temperatureString() ),
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
   } );
 }
 
@@ -371,10 +400,16 @@ void SinglePhaseThermoPoromechanicsSolver::applySystemSolution( DofManager const
                                viewKeyStruct::temperatureString(),
                                scalingFactor );
 
+  dofManager.addVectorToField( localSolution,
+                               viewKeyStruct::temperatureString(),
+                               viewKeyStruct::newDeltaTemperatureString(),
+                               scalingFactor );
+
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::temperatureString() ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::newDeltaTemperatureString() ) );
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
