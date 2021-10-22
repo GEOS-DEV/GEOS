@@ -127,18 +127,29 @@ void compute2DLaplaceOperator( MPI_Comm comm,
   // total dofs = n^2
   globalIndex N = n * n;
 
-  // Create a matrix of global size N with 5 non-zeros per row
-  laplace2D.createWithGlobalSize( N, 5, comm );
-
   // Allocate arrays to fill the matrix (values and columns)
   real64 values[5];
   globalIndex cols[5];
 
-  // Open the matrix
-  laplace2D.open();
+  // Construct a local CRSMatrix
+  localIndex const rank = LvArray::integerConversion< localIndex >( MpiWrapper::commRank( comm ) );
+  localIndex const nproc = LvArray::integerConversion< localIndex >( MpiWrapper::commSize( comm ) );
+
+  localIndex const localRowSize = LvArray::integerConversion< localIndex >( N / nproc );
+  localIndex const rowResidual = LvArray::integerConversion< localIndex >( N % nproc );
+
+  CRSMatrix< real64, globalIndex > matrix( rank == 0 ? localRowSize + rowResidual : localRowSize, N, 5 );
+
+  globalIndex const ilower = rank * localRowSize + ( rank == 0 ? 0 : rowResidual );
+  globalIndex const iupper = ilower + localRowSize + ( rank == 0 ? rowResidual : 0 ) - 1;
+
+  GEOSX_LOG_RANK_VAR( matrix.numRows() );
+  GEOSX_LOG_RANK_VAR( matrix.numColumns() );
+  GEOSX_LOG_RANK_VAR( ilower );
+  GEOSX_LOG_RANK_VAR( iupper );
 
   // Loop over rows to fill the matrix
-  for( globalIndex i = laplace2D.ilower(); i < laplace2D.iupper(); i++ )
+  for( globalIndex i = ilower; i <= iupper; i++ )
   {
     // Re-set the number of non-zeros for row i to 0.
     localIndex nnz = 0;
@@ -181,12 +192,11 @@ void compute2DLaplaceOperator( MPI_Comm comm,
     }
 
     // Set the values for row i
-    laplace2D.insert( i, cols, values, nnz );
+    matrix.insertNonZeros( LvArray::integerConversion<localIndex>( i - ilower ), cols, values, nnz );
   }
 
-  // Close the matrix (make data contiguous in memory)
-  laplace2D.close();
-
+  // Construct the 2D Laplace matrix
+  laplace2D.create( matrix.toViewConst(), comm);
 }
 
 /**
