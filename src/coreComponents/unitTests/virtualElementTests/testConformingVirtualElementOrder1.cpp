@@ -232,24 +232,24 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   // Perform checks.
   for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
   {
-    checkRelativeError(sumXDerivatives(cellIndex), 0.0, relTol, absTol,
-                       "Sum of integral means of x-derivatives of basis functions");
-    checkRelativeError(sumYDerivatives(cellIndex), 0.0, relTol, absTol,
-                       "Sum of integral means of y-derivatives of basis functions");
-    checkRelativeError(sumZDerivatives(cellIndex), 0.0, relTol, absTol,
-                       "Sum of integral means of z-derivatives of basis functions");
-    checkRelativeError(sumBasisFunctions(cellIndex), 1.0, relTol, absTol,
-                       "Sum of integral means of basis functions");
+    checkRelativeError( sumXDerivatives( cellIndex ), 0.0, relTol, absTol,
+                        "Sum of integral means of x-derivatives of basis functions" );
+    checkRelativeError( sumYDerivatives( cellIndex ), 0.0, relTol, absTol,
+                        "Sum of integral means of y-derivatives of basis functions" );
+    checkRelativeError( sumZDerivatives( cellIndex ), 0.0, relTol, absTol,
+                        "Sum of integral means of z-derivatives of basis functions" );
+    checkRelativeError( sumBasisFunctions( cellIndex ), 1.0, relTol, absTol,
+                        "Sum of integral means of basis functions" );
     for( localIndex monomInd = 0; monomInd < 4; ++monomInd )
     {
       char name[100];
-      std::sprintf(name, "Product of stabilization matrix and degrees of freedom of monomial %ld",
-                   monomInd);
-      checkRelativeError(stabTimeMonomialDofsNorm( cellIndex, monomInd ) , 0.0, relTol, absTol,
-                         name);
+      std::sprintf( name, "Product of stabilization matrix and degrees of freedom of monomial %ld",
+                    monomInd );
+      checkRelativeError( stabTimeMonomialDofsNorm( cellIndex, monomInd ), 0.0, relTol, absTol,
+                          name );
     }
-    checkRelativeError(sumOfQuadWeights( cellIndex ), cellVolumes( cellIndex ), relTol, absTol,
-                       "Sum of quadrature weights");
+    checkRelativeError( sumOfQuadWeights( cellIndex ), cellVolumes( cellIndex ), relTol, absTol,
+                        "Sum of quadrature weights" );
   }
 }
 
