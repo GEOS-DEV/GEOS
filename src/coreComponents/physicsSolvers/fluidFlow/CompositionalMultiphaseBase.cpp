@@ -895,11 +895,6 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                         Group & subRegion,
                         string const & )
   {
-
-    GEOSX_ERROR( GEOSX_FMT(
-                   "CompositionalMultiphaseBase {}: source flux boundary conditions are temporarily disabled in all the compositional multiphase solvers, please use a Dirichlet boundary condition or a well in the meantime",
-                   getName() ) );
-
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank =
       subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
@@ -910,6 +905,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
     array1d< globalIndex > dofArray( targetSet.size() );
     array1d< real64 > rhsContributionArray( targetSet.size() );
+    arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
     localIndex const rankOffset = dofManager.rankOffset();
 
     // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
@@ -923,7 +919,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                        rankOffset,
                                                        localMatrix,
                                                        dofArray.toView(),
-                                                       rhsContributionArray.toView(),
+                                                       rhsContributionArrayView,
                                                        [] GEOSX_HOST_DEVICE ( localIndex const )
     {
       return 0.0;
@@ -933,17 +929,13 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
     integer const fluidComponentId = fs.getComponent();
     integer const numFluidComponents = m_numComponents;
-    GEOSX_UNUSED_VAR( fluidComponentId );
-    GEOSX_UNUSED_VAR( numFluidComponents );
-
     forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                          rankOffset,
                                                          ghostRank,
-                                                         //fluidComponentId, // add to this parameter list when Nicola's PR is merge
-                                                         //numFluidComponents, // add to this parameter list when Nicola's PR is merged
-                                                         dofArray, // remove from this parameter list when Nicola's PR is merged
+                                                         fluidComponentId,
+                                                         numFluidComponents,
                                                          dofNumber,
-                                                         rhsContributionArray,
+                                                         rhsContributionArrayView,
                                                          localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       // we need to filter out ghosts here, because targetSet may contain them
@@ -953,22 +945,16 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
         return;
       }
 
-      // this will be removed from this parameter list when Nicola's PR is merged
-      globalIndex const localRow = dofArray[a] - rankOffset;
-      localRhs[localRow] += rhsContributionArray[a];
-
-#if 0
       // for all "fluid components", we add the value to the total mass balance equation
-      globalIndex const totalMassBalanceRow = dofNumber[a] - rankOffset;
-      localMatrix[totalMassBalanceRow] += rhsContributionArray[a];
+      globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
+      localRhs[totalMassBalanceRow] += rhsContributionArrayView[a];
 
       // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
       if( fluidComponentId < numFluidComponents - 1 )
       {
         globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
-        localMatrix[compMassBalanceRow] += rhsContributionArray[a];
+        localRhs[compMassBalanceRow] += rhsContributionArrayView[a];
       }
-#endif
     } );
 
   } );

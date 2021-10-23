@@ -614,9 +614,6 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
     arrayView1d< globalIndex const > const
     dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
-    arrayView1d< integer const > const
-    ghostRank = subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-
     fs.applyBoundaryConditionToSystem< FieldSpecificationAdd,
                                        parallelDevicePolicy<>,
                                        parallelDeviceReduce >( targetSet.toViewConst(),
