@@ -109,9 +109,9 @@ std::pair< int, int > makeNearSquareGrid( T const N )
 
 struct SuperLUDistData
 {
-  int_t * rowPtr{};                   ///< row pointers
-  int_t * colIndices{};               ///< column indices
-  double * values{};                  ///< values
+  array1d< int_t > rowPtr{};          ///< row pointers
+  array1d< int_t > colIndices{};      ///< column indices
+  array1d< double > values{};         ///< values
   SuperMatrix mat{};                  ///< SuperLU_Dist matrix format
   dScalePermstruct_t scalePerm{};     ///< data structure to scale and permute the matrix
   dLUstruct_t lu{};                   ///< data structure to store the LU factorization
@@ -126,7 +126,10 @@ struct SuperLUDistData
                    MPI_Comm const & comm )
   {
     // These will be deleted by Destroy_CompRowLoc_Matrix_dist.
-    dallocateA_dist( numLocalRows, numLocalNonzeros, &values, &colIndices, &rowPtr );
+    // -- dallocateA_dist( numLocalRows, numLocalNonzeros, &values, &colIndices, &rowPtr );
+    rowPtr.resize( numLocalRows + 1 );
+    colIndices.resize( numLocalNonzeros );
+	values.resize( numLocalNonzeros );
     dScalePermstructInit( numGlobalRows, numGlobalRows, &scalePerm );
     dLUstructInit( numGlobalRows, &lu );
     PStatInit( &stat );
@@ -141,7 +144,13 @@ struct SuperLUDistData
 
   ~SuperLUDistData()
   {
-    Destroy_CompRowLoc_Matrix_dist( &mat );
+//    Destroy_CompRowLoc_Matrix_dist( &mat ); //// <-- copy body
+    NRformat_loc *Astore = (NRformat_loc*)mat.Store;
+//    SUPERLU_FREE(Astore->rowptr);
+//    SUPERLU_FREE(Astore->colind);
+//    SUPERLU_FREE(Astore->nzval);
+    SUPERLU_FREE(Astore);
+
     dScalePermstructFree( &scalePerm );
     dDestroy_LU( mat.nrow, &grid, &lu );
     dLUstructFree( &lu );
@@ -185,9 +194,9 @@ void SuperLUDist< LAI >::setup( Matrix const & mat )
                                   numNZ,
                                   numLR,
                                   LvArray::integerConversion< int_t >( mat.ilower() ),
-                                  m_data->values,
-                                  m_data->colIndices,
-                                  m_data->rowPtr,
+                                  m_data->values.data(),
+                                  m_data->colIndices.data(),
+                                  m_data->rowPtr.data(),
                                   SLU_NR_loc,
                                   SLU_D,
                                   SLU_GE );

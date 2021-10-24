@@ -29,7 +29,8 @@
 
 // Pre-define some suitesparse variables since they are not properly defined
 // in the header for alternate index types.
-#if GEOSX_GLOBALINDEX_TYPE_FLAG==0
+//#if GEOSX_GLOBALINDEX_TYPE_FLAG==0
+#if 0
 /// Set alias for SuiteSparse_long
 #define SuiteSparse_long int
 
@@ -59,14 +60,14 @@ using SSlong = SuiteSparse_long;
 
 // Check matching requirements on index/value types between GEOSX and SuiteSparse
 
-static_assert( sizeof( SSlong ) == sizeof( globalIndex ),
-               "SuiteSparse Int and geosx::globalIndex must have the same size" );
-
-static_assert( std::is_signed< SSlong >::value == std::is_signed< globalIndex >::value,
-               "SuiteSparse Int and geosx::globalIndex must both be signed or unsigned" );
-
-static_assert( std::is_same< double, real64 >::value,
-               "SuiteSparse real and geosx::real64 must be the same type" );
+//static_assert( sizeof( SSlong ) == sizeof( globalIndex ),
+//               "SuiteSparse Int and geosx::globalIndex must have the same size" );
+//
+//static_assert( std::is_signed< SSlong >::value == std::is_signed< globalIndex >::value,
+//               "SuiteSparse Int and geosx::globalIndex must both be signed or unsigned" );
+//
+//static_assert( std::is_same< double, real64 >::value,
+//               "SuiteSparse real and geosx::real64 must be the same type" );
 
 struct SuiteSparseData
 {
@@ -135,9 +136,39 @@ void SuiteSparse< LAI >::setup( Matrix const & mat )
   // Export needs to be carried collectively on all ranks
   m_export = std::make_unique< typename Matrix::Export >( mat, m_workingRank );
   m_export->exportCRS( mat,
-                       m_workingRank == rank ? m_data->rowPtr.data() : nullptr,
-                       m_workingRank == rank ? m_data->colIndices.data() : nullptr,
-                       m_workingRank == rank ? m_data->values.data() : nullptr );
+                       m_data->rowPtr.toView(),
+                       m_data->colIndices.toView(),
+                       m_data->values.toView() );
+
+  m_data->rowPtr.move( LvArray::MemorySpace::host, false );
+  m_data->colIndices.move( LvArray::MemorySpace::host, false );
+  m_data->values.move( LvArray::MemorySpace::host, false );
+
+  //////////////////////////////////////////////////////////////////////////
+  GEOSX_LOG_RANK_0( "localIndex is alias of " <<LvArray::system::demangle( typeid(localIndex).name() ) );
+  GEOSX_LOG_RANK_0( "globalIndex is alias of " <<LvArray::system::demangle( typeid(SSlong).name() ) );
+  GEOSX_LOG_RANK_0( "SSlong is alias of " <<LvArray::system::demangle( typeid(SSlong).name() ) );
+  GEOSX_LOG_RANK_0( "SuiteSparse_long is alias of " <<LvArray::system::demangle( typeid(SuiteSparse_long).name() ) );
+  for( SSlong i = 0; i < numGR; ++i)
+  {
+    for( SSlong j = m_data->rowPtr[i]; j < m_data->rowPtr[i+1]; ++j)
+    {
+      //printf("%ld %ld %f\n", i, m_data->colIndices[j], m_data->values[j]);
+      printf("%d %d %f\n", i, m_data->colIndices[j], m_data->values[j]);
+    }
+  }
+
+  m_data->control[UMFPACK_PRL] = 5;
+  SSlong const numRows = m_data->rowPtr.size() - 1;
+  umfpack_dl_report_matrix( numRows,
+           	            numRows,
+                            m_data->rowPtr.data(),
+                            m_data->colIndices.data(),
+                            m_data->values.data(),
+    			      0,
+                            m_data->control );
+
+  //////////////////////////////////////////////////////////////////////////
 
   // Perform matrix factorization on working rank and sync timer
   {

@@ -46,10 +46,11 @@ EpetraExport::~EpetraExport() = default;
 
 template< typename OFFSET_TYPE, typename COLUMN_TYPE >
 void EpetraExport::exportCRS( EpetraMatrix const & mat,
-                              OFFSET_TYPE * const rowOffsets,
-                              COLUMN_TYPE * const colIndices,
-                              real64 * const values ) const
+		                      arrayView1d< OFFSET_TYPE > const & rowOffsets,
+							  arrayView1d< COLUMN_TYPE > const & colIndices,
+							  arrayView1d< real64 > const & values ) const
 {
+
   int const rank = MpiWrapper::commRank( mat.getComm() );
   Epetra_CrsMatrix const * localMatrix = &mat.unwrapped();
 
@@ -57,8 +58,8 @@ void EpetraExport::exportCRS( EpetraMatrix const & mat,
   std::unique_ptr< Epetra_CrsMatrix > serialMatrix;
   if( m_targetRank >= 0 )
   {
-    GEOSX_ERROR_IF( rank == m_targetRank && !( rowOffsets && colIndices && values ),
-                    "EpetraExport: must pass non-null pointers on the target rank" );
+//    GEOSX_ERROR_IF( rank == m_targetRank && !( rowOffsets && colIndices && values ),
+//                    "EpetraExport: must pass non-null pointers on the target rank" );
     serialMatrix = std::make_unique< Epetra_CrsMatrix >( mat.unwrapped(), *m_serialImport, m_serialMap.get() );
     localMatrix = serialMatrix.get();
   }
@@ -73,10 +74,17 @@ void EpetraExport::exportCRS( EpetraMatrix const & mat,
 
     // contains the global ID of local columns
     globalIndex const * const globalColumns = localMatrix->ColMap().MyGlobalElements64();
-    std::transform( ia, ia + localMatrix->NumMyRows() + 1, rowOffsets, LvArray::integerConversion< OFFSET_TYPE, int > );
-    std::transform( ja, ja + localMatrix->NumMyNonzeros(), colIndices,
+
+	///////////////
+    rowOffsets.move( LvArray::MemorySpace::host, false );
+	colIndices.move( LvArray::MemorySpace::host, false );
+	values.move( LvArray::MemorySpace::host, false );
+	/////////
+
+    std::transform( ia, ia + localMatrix->NumMyRows() + 1, rowOffsets.data(), LvArray::integerConversion< OFFSET_TYPE, int > );
+    std::transform( ja, ja + localMatrix->NumMyNonzeros(), colIndices.data(),
                     [globalColumns]( int const i ){ return LvArray::integerConversion< COLUMN_TYPE >( globalColumns[i] ); } );
-    std::copy( va, va + localMatrix->NumMyNonzeros(), values );
+    std::copy( va, va + localMatrix->NumMyNonzeros(), values.data() );
   }
 }
 
@@ -128,9 +136,9 @@ void EpetraExport::importVector( real64 const * values,
 #define INST_EPETRA_EXPORT_CRS( OFFSET_TYPE, COLUMN_TYPE ) \
   template void \
   EpetraExport::exportCRS< OFFSET_TYPE, COLUMN_TYPE >( EpetraMatrix const &, \
-                                                       OFFSET_TYPE * const, \
-                                                       COLUMN_TYPE * const, \
-                                                       real64 * const ) const
+		                                               arrayView1d< OFFSET_TYPE > const &, \
+													   arrayView1d< COLUMN_TYPE > const &, \
+													   arrayView1d< real64 > const & ) const
 
 // Add other instantiations as needed (only use built-in types)
 INST_EPETRA_EXPORT_CRS( int, int );
