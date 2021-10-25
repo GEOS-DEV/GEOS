@@ -122,11 +122,11 @@ public:
 
   void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
 
-  void computeSismoTrace( real64 const time_n, real64 const dt, localIndex iSismoTrace, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n );
-
 protected:
 
   //virtual void postProcessInput() override final;
+
+  //void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
@@ -170,7 +170,7 @@ private:
    * @param num_timeStep the cycle number of timestep
    * @param pressure_np1 the array to save the pressure value at the receiver position
    */
-  //void computeSismoTrace( real64 const time_n, real64 const dt, localIndex iSismoTrace, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n );
+  void computeSismoTrace( real64 const time_n, real64 const dt, localIndex iSismoTrace, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n );
 
   /**
    * @brief Save the sismo trace in file

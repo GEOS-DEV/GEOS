@@ -46,7 +46,7 @@ class Acquisition:
             if os.path.exists(self.output):
                 pass
             else:
-                os.mkdir(self.output)
+                os.system("mkdir -p " + self.output)
 
 
     def acquisition(self,
@@ -192,7 +192,7 @@ class Acquisition:
                                              z_cells_boundary)
 
         if os.path.exists("limitedAperture") == False:
-            os.mkdir("limitedAperture")
+            os.system("mkdir -p limitedAperture")
 
 
         if isinstance(self.velocity_model, str):

@@ -403,35 +403,6 @@ PyObject * precomputeSourceAndReceiverTerm(PyObject * self, PyObject * args) noe
   Py_RETURN_NONE;
 }
 
-
-
-PyObject * computeSeismoTrace(PyObject * self, PyObject * args) noexcept
-{
-  GEOSX_UNUSED_VAR( self);
-
-  double time;
-  double dt;
-  int iseismo;
-  if( !PyArg_ParseTuple( args, "ddi", &time, &dt, &iseismo ) )
-  {
-    return nullptr;
-  }
-
-  std::string targetString = "/Solvers/acousticSolver";
-  geosx::EventBase * subEvent = getSpecificTarget(targetString.c_str());
-
-  geosx::DomainPartition & domain = geosx::g_state->getProblemManager().getDomainPartition();
-  geosx::NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
-
-  geosx::arrayView1d< geosx::real64 > const p_n = nodeManager.getExtrinsicData< geosx::extrinsicMeshData::Pressure_n >();
-  geosx::arrayView1d< geosx::real64 > const p_np1 = nodeManager.getExtrinsicData< geosx::extrinsicMeshData::Pressure_np1 >();
-
-  geosx::AcousticWaveEquationSEM * acousticsolver = static_cast<geosx::AcousticWaveEquationSEM *>(subEvent->getEventTarget());
-  acousticsolver->computeSismoTrace(time, dt, iseismo, p_np1, p_n);
-
-  Py_RETURN_NONE;
-}
-
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 /**
@@ -446,7 +417,6 @@ static PyMethodDef pygeosxFuncs[] = {
   { "explicitStep", explicitStep, METH_VARARGS, "explicit Step" },
   { "postProcessInput", postProcessInput, METH_NOARGS, "resize pressure_at_receivers array to fit with new number of receivers"},
   { "precomputeSourceAndReceiverTerm", precomputeSourceAndReceiverTerm, METH_NOARGS, "update positions for new source and receivers"},
-  { "computeSeismoTrace", computeSeismoTrace, METH_VARARGS, "compute pressure at receivers"},
   { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };
 

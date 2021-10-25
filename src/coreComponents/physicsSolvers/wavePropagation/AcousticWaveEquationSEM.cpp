@@ -703,7 +703,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                               integer const cycleNumber,
                                               DomainPartition & domain )
 {
-  std::cout<<"coucou"<<std::endl;
   GEOSX_MARK_FUNCTION;
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
