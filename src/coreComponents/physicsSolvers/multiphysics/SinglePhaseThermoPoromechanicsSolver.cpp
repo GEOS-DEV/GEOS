@@ -398,12 +398,12 @@ void SinglePhaseThermoPoromechanicsSolver::applySystemSolution( DofManager const
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::temperatureString(),
                                viewKeyStruct::temperatureString(),
-                               scalingFactor );
+                               -scalingFactor );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::temperatureString(),
                                viewKeyStruct::newDeltaTemperatureString(),
-                               scalingFactor );
+                               -scalingFactor );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 

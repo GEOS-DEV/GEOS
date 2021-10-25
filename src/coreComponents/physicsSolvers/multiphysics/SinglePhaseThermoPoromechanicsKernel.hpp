@@ -123,7 +123,7 @@ public:
     m_thermalDofNumber( temperatureDofNumber ),
     m_temperature( nodeManager.template getReference< array1d< real64 > >( SinglePhaseThermoPoromechanicsSolver::viewKeyStruct::temperatureString() ) ),
     m_deltaTemperature( nodeManager.template getReference< array1d< real64 > >( SinglePhaseThermoPoromechanicsSolver::viewKeyStruct::newDeltaTemperatureString() ) ),
-    m_thermalDiffusion( 1e-1 ),
+    m_thermalDiffusion( 1e3 ),
     m_dt( dt )
   {}
 
@@ -342,20 +342,8 @@ public:
     stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - porosityOld * m_fluidDensityOld( k ) ) * detJxW;
     stack.localFlowFlowJacobian[0][0] += ( dPorosity_dPressure * m_fluidDensity( k, q ) + porosityNew * m_dFluidDensity_dPressure( k, q ) ) * detJxW;
 
+   
     // Thermal conditributon
-
-/**
-    // Test an unit jacobian
-    real64 tmpmatr[8][8] = { { 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
-      { 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
-      { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
-      { 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0 },
-      { 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 },
-      { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 },
-      { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 },
-      { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 }
-    };
-*/
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       for( localIndex b=0; b<numNodesPerElem; ++b )
@@ -364,15 +352,13 @@ public:
         real64 tmpValue2 = LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJxW * m_thermalDiffusion;
 
         // Update local Jacobian
-        stack.localThermalJacobian[a][b] += tmpValue1 + tmpValue2; //= tmpmatr[a][b];
+        stack.localThermalJacobian[a][b] += tmpValue1 + tmpValue2;
 
         // Update local Rhs
-        stack.localThermalResidual[a] += tmpValue1 * stack.localDeltaTemperature[b];//= a+b+1.0;//
-        stack.localThermalResidual[a] += tmpValue2 * stack.localTemperature[b];
+        stack.localThermalResidual[a] += -tmpValue1 * stack.localDeltaTemperature[b];
+        stack.localThermalResidual[a] += -tmpValue2 * stack.localTemperature[b];
       }
     }
-
-
   }
 
   /**
