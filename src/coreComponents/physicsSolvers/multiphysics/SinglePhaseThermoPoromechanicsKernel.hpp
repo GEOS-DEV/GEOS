@@ -123,7 +123,7 @@ public:
     m_thermalDofNumber( temperatureDofNumber ),
     m_temperature( nodeManager.template getReference< array1d< real64 > >( SinglePhaseThermoPoromechanicsSolver::viewKeyStruct::temperatureString() ) ),
     m_deltaTemperature( nodeManager.template getReference< array1d< real64 > >( SinglePhaseThermoPoromechanicsSolver::viewKeyStruct::oldDeltaTemperatureString() ) ),
-    m_thermalDiffusion( 1e0 ),
+    m_thermalDiffusion( 3.49e-6 ),
     m_dt( dt )
   {}
 
@@ -342,7 +342,7 @@ public:
     stack.localFlowResidual[0] += ( porosityNew * m_fluidDensity( k, q ) - porosityOld * m_fluidDensityOld( k ) ) * detJxW;
     stack.localFlowFlowJacobian[0][0] += ( dPorosity_dPressure * m_fluidDensity( k, q ) + porosityNew * m_dFluidDensity_dPressure( k, q ) ) * detJxW;
 
-   
+
     // Thermal conditributon
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {

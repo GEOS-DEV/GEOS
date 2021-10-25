@@ -55,23 +55,6 @@ void SinglePhaseThermoPoromechanicsSolver::registerDataOnMesh( Group & meshBodie
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-/**
-   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
-   {
-    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
-
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
-
-    elemManager.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
-    {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 );
-    } );
-   } );
- */
-
-
-
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
     NodeManager & nodeManager = meshBody.getMeshLevel( 0 ).getNodeManager();
@@ -114,19 +97,6 @@ void SinglePhaseThermoPoromechanicsSolver::setupDofs( DomainPartition const & do
   dofManager.addCoupling( viewKeyStruct::temperatureString(),
                           viewKeyStruct::temperatureString(),
                           DofManager::Connector::Elem );
-
-
-/**
-   //test cell field
-   dofManager.addField( viewKeyStruct::temperatureString(),
-                       DofManager::Location::Elem,
-                       1,
-                       targetRegionNames() );
-
-   dofManager.addCoupling( viewKeyStruct::temperatureString(),
-                          viewKeyStruct::temperatureString(),
-                          DofManager::Connector::Elem );
- */
 }
 
 void SinglePhaseThermoPoromechanicsSolver::setupSystem( DomainPartition & domain,
@@ -319,7 +289,7 @@ void SinglePhaseThermoPoromechanicsSolver::applyBoundaryConditions( real64 const
                         Group & targetGroup,
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, 
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                        parallelDevicePolicy< 32 > >( targetSet,
                                                                      time_n + dt,
                                                                      targetGroup,
