@@ -1,0 +1,53 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File
+      name="./deadOilSpe10Layers84_85_base_direct.xml"/>
+  </Included>
+
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH -->
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 365.76 }"
+      yCoords="{ 0, 670.56 }"
+      zCoords="{ 0, 1.22 }"
+      nx="{ 15 }"
+      ny="{ 55 }"
+      nz="{ 1 }"
+      cellBlockNames="{ block }"/>
+  </Mesh>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH_END -->
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY -->  
+  <Geometry>
+
+    <Box
+      name="source"
+      xMin="{ 169.00, 328.00, -0.01 }"
+      xMax="{ 196.00, 342.00, 2.00 }"/>
+    <Box
+      name="sink1"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 25.00, 13.00, 2.00 }"/>
+    <Box
+      name="sink2"
+      xMin="{ -0.01, 656.00, -0.01 }"
+      xMax="{ 25.0,  670.60, 2.00 }"/>
+    <Box
+      name="sink3"
+      xMin="{ 339.0, -0.01, -0.01 }"
+      xMax="{ 365.8, 13.0, 2.00 }"/>
+    <Box
+      name="sink4"
+      xMin="{ 339.0, 656.00, -0.01 }"
+      xMax="{ 365.8, 670.60, 2.00 }"/>
+    
+  </Geometry>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY_END -->  
+  
+</Problem>

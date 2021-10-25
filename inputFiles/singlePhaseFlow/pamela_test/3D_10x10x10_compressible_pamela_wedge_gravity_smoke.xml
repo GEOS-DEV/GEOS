@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./3D_10x10x10_compressible_pamela_wedge_gravity_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <PAMELAMeshGenerator
+        name="CubeWedge"
+        file="cube_10x10x10_wedge.msh"/>
+  </Mesh>
+
+  <Events
+      maxTime="100">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+        name="solverApplications"
+        forceDt="1"
+        target="/Solvers/SinglePhaseFlow"/>
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent
+        name="outputs"
+        timeFrequency="1"
+        target="/Outputs/siloWellPump"/>
+
+    <PeriodicEvent
+        name="restarts"
+        timeFrequency="1e99"
+        targetExactTimestep="0"
+        target="/Outputs/restartOutput"
+        endTime="-1"/>
+  </Events>
+
+
+</Problem>
