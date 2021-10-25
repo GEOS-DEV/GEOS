@@ -700,15 +700,14 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
     dProppantConc = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaProppantConcentrationString() );
 
     fs.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy<>,
-                                       parallelDeviceReduce >( lset,
-                                                               time_n + dt,
-                                                               subRegion,
-                                                               dofNumber,
-                                                               rankOffset,
-                                                               localMatrix,
-                                                               localRhs,
-                                                               [=] GEOSX_HOST_DEVICE ( localIndex const a )
+                                       parallelDevicePolicy<> >( lset,
+                                                                 time_n + dt,
+                                                                 subRegion,
+                                                                 dofNumber,
+                                                                 rankOffset,
+                                                                 localMatrix,
+                                                                 localRhs,
+                                                                 [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       return proppantConc[a] + dProppantConc[a];
     } );

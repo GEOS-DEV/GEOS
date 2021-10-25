@@ -162,7 +162,7 @@ public:
    *
    * @note This function is rarely used directly. More often it is called by other ApplyBoundaryCondition functions.
    */
-  template< typename FIELD_OP, typename POLICY, typename REDUCE_POLICY, typename T, int NDIM, int USD >
+  template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
   void applyBoundaryConditionToSystemKernel( SortedArrayView< localIndex const > const & targetSet,
                                              real64 const time,
                                              dataRepository::Group const & dataGroup,
@@ -191,7 +191,7 @@ public:
    * This function applies the boundary condition to a linear system of equations. This function is
    * typically called from within the lambda to a call to BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template< typename FIELD_OP, typename REDUCE_POLICY, typename POLICY >
+  template< typename FIELD_OP, typename POLICY >
   void applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                        real64 const time,
                                        dataRepository::Group const & dataGroup,
@@ -223,7 +223,7 @@ public:
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template< typename FIELD_OP, typename POLICY, typename REDUCE_POLICY, typename LAMBDA >
+  template< typename FIELD_OP, typename POLICY, typename LAMBDA >
   void
   applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                   real64 const time,
@@ -257,7 +257,7 @@ public:
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template< typename FIELD_OP, typename POLICY, typename REDUCE_POLICY, typename LAMBDA >
+  template< typename FIELD_OP, typename POLICY, typename LAMBDA >
   void
   applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                   real64 const time,
@@ -298,7 +298,7 @@ public:
    * Therefore, the compositional solvers do not call applyBoundaryConditionToSystem, but instead call computeRhsContribution directly, and
    * apply these rhs contributions "manually" according to the equation layout used in the solver
    */
-  template< typename FIELD_OP, typename POLICY, typename REDUCE_POLICY, typename LAMBDA >
+  template< typename FIELD_OP, typename POLICY, typename LAMBDA >
   void
   computeRhsContribution( SortedArrayView< localIndex const > const & targetSet,
                           real64 const time,
@@ -613,7 +613,7 @@ void FieldSpecificationBase::applyFieldValue( SortedArrayView< localIndex const 
   } );
 }
 
-template< typename FIELD_OP, typename POLICY, typename REDUCE_POLICY, typename T, int NDIM, int USD >
+template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
 void FieldSpecificationBase::applyBoundaryConditionToSystemKernel( SortedArrayView< localIndex const > const & targetSet,
                                                                    real64 const time,
                                                                    dataRepository::Group const & dataGroup,
@@ -624,8 +624,8 @@ void FieldSpecificationBase::applyBoundaryConditionToSystemKernel( SortedArrayVi
                                                                    ArrayView< T const, NDIM, USD > const & fieldView ) const
 {
   integer const component = getComponent();
-  this->applyBoundaryConditionToSystem< FIELD_OP, POLICY, REDUCE_POLICY >( targetSet, time, dataGroup, dofMap, dofRankOffset, matrix, rhs,
-                                                                           [fieldView, component] GEOSX_HOST_DEVICE ( localIndex const a )
+  this->applyBoundaryConditionToSystem< FIELD_OP, POLICY >( targetSet, time, dataGroup, dofMap, dofRankOffset, matrix, rhs,
+                                                            [fieldView, component] GEOSX_HOST_DEVICE ( localIndex const a )
   {
     real64 value = 0.0;
     FieldSpecificationEqual::readFieldValue( fieldView, a, component, value );
@@ -633,7 +633,7 @@ void FieldSpecificationBase::applyBoundaryConditionToSystemKernel( SortedArrayVi
   } );
 }
 
-template< typename FIELD_OP, typename POLICY, typename REDUCE_POLICY >
+template< typename FIELD_OP, typename POLICY >
 void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                                              real64 const time,
                                                              dataRepository::Group const & dataGroup,
@@ -652,18 +652,18 @@ void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< lo
   {
     using ArrayType = decltype( array );
     auto const & wrapperT = dataRepository::Wrapper< ArrayType >::cast( wrapper );
-    applyBoundaryConditionToSystemKernel< FIELD_OP, POLICY, REDUCE_POLICY >( targetSet,
-                                                                             time,
-                                                                             dataGroup,
-                                                                             dofMap,
-                                                                             dofRankOffset,
-                                                                             matrix,
-                                                                             rhs,
-                                                                             wrapperT.reference() );
+    applyBoundaryConditionToSystemKernel< FIELD_OP, POLICY >( targetSet,
+                                                              time,
+                                                              dataGroup,
+                                                              dofMap,
+                                                              dofRankOffset,
+                                                              matrix,
+                                                              rhs,
+                                                              wrapperT.reference() );
   } );
 }
 
-template< typename FIELD_OP, typename POLICY, typename REDUCE_POLICY, typename LAMBDA >
+template< typename FIELD_OP, typename POLICY, typename LAMBDA >
 void
 FieldSpecificationBase::
   applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
@@ -675,18 +675,18 @@ FieldSpecificationBase::
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const
 {
-  return applyBoundaryConditionToSystem< FIELD_OP, POLICY, REDUCE_POLICY >( targetSet,
-                                                                            time,
-                                                                            1.0,
-                                                                            dataGroup,
-                                                                            dofMap,
-                                                                            dofRankOffset,
-                                                                            matrix,
-                                                                            rhs,
-                                                                            std::forward< LAMBDA >( lambda ) );
+  return applyBoundaryConditionToSystem< FIELD_OP, POLICY >( targetSet,
+                                                             time,
+                                                             1.0,
+                                                             dataGroup,
+                                                             dofMap,
+                                                             dofRankOffset,
+                                                             matrix,
+                                                             rhs,
+                                                             std::forward< LAMBDA >( lambda ) );
 }
 
-template< typename FIELD_OP, typename POLICY, typename REDUCE_POLICY, typename LAMBDA >
+template< typename FIELD_OP, typename POLICY, typename LAMBDA >
 void
 FieldSpecificationBase::
   applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
@@ -705,21 +705,21 @@ FieldSpecificationBase::
   array1d< real64 > rhsContributionArray( targetSet.size() );
   arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
 
-  computeRhsContribution< FIELD_OP, POLICY, REDUCE_POLICY, LAMBDA >( targetSet,
-                                                                     time,
-                                                                     dt,
-                                                                     dataGroup,
-                                                                     dofMap,
-                                                                     dofRankOffset,
-                                                                     matrix,
-                                                                     dof,
-                                                                     rhsContribution,
-                                                                     std::forward< LAMBDA >( lambda ) );
+  computeRhsContribution< FIELD_OP, POLICY, LAMBDA >( targetSet,
+                                                      time,
+                                                      dt,
+                                                      dataGroup,
+                                                      dofMap,
+                                                      dofRankOffset,
+                                                      matrix,
+                                                      dof,
+                                                      rhsContribution,
+                                                      std::forward< LAMBDA >( lambda ) );
 
   FIELD_OP::template prescribeRhsValues< POLICY >( rhs, dof, dofRankOffset, rhsContribution );
 }
 
-template< typename FIELD_OP, typename POLICY, typename REDUCE_POLICY, typename LAMBDA >
+template< typename FIELD_OP, typename POLICY, typename LAMBDA >
 void
 FieldSpecificationBase::
   computeRhsContribution( SortedArrayView< localIndex const > const & targetSet,
@@ -747,7 +747,7 @@ FieldSpecificationBase::
     arrayView1d< integer const > const ghostRank =
       dataGroup.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-    RAJA::ReduceSum< REDUCE_POLICY, localIndex > localSetSize( 0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, localIndex > localSetSize( 0 );
     forAll< POLICY >( targetSet.size(),
                       [targetSet, ghostRank, localSetSize] GEOSX_HOST_DEVICE ( localIndex const k )
     {

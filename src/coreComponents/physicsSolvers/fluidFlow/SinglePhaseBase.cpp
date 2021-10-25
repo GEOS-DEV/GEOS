@@ -574,15 +574,14 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
 
     // call the application of the boundary condition to alter the matrix and rhs
     fs.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy<>,
-                                       parallelDeviceReduce >( lset,
-                                                               time_n + dt,
-                                                               subRegion,
-                                                               dofNumber,
-                                                               dofManager.rankOffset(),
-                                                               localMatrix,
-                                                               localRhs,
-                                                               [=] GEOSX_HOST_DEVICE ( localIndex const a )
+                                       parallelDevicePolicy<> >( lset,
+                                                                 time_n + dt,
+                                                                 subRegion,
+                                                                 dofNumber,
+                                                                 dofManager.rankOffset(),
+                                                                 localMatrix,
+                                                                 localRhs,
+                                                                 [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       return pres[a] + dPres[a];
     } );
@@ -615,16 +614,15 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
     dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
     fs.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                       parallelDevicePolicy<>,
-                                       parallelDeviceReduce >( targetSet.toViewConst(),
-                                                               time_n + dt,
-                                                               dt,
-                                                               subRegion,
-                                                               dofNumber,
-                                                               dofManager.rankOffset(),
-                                                               localMatrix,
-                                                               localRhs,
-                                                               [] GEOSX_HOST_DEVICE ( localIndex const )
+                                       parallelDevicePolicy<> >( targetSet.toViewConst(),
+                                                                 time_n + dt,
+                                                                 dt,
+                                                                 subRegion,
+                                                                 dofNumber,
+                                                                 dofManager.rankOffset(),
+                                                                 localMatrix,
+                                                                 localRhs,
+                                                                 [] GEOSX_HOST_DEVICE ( localIndex const )
     {
       return 0.0;
     } );

@@ -197,15 +197,14 @@ void LaplaceBaseH1::
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
     bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy< 32 >,
-                                       parallelDeviceReduce >( targetSet,
-                                                               time,
-                                                               targetGroup,
-                                                               m_fieldName,
-                                                               dofManager.getKey( m_fieldName ),
-                                                               dofManager.rankOffset(),
-                                                               localMatrix,
-                                                               localRhs );
+                                       parallelDevicePolicy< 32 > >( targetSet,
+                                                                     time,
+                                                                     targetGroup,
+                                                                     m_fieldName,
+                                                                     dofManager.getKey( m_fieldName ),
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
   } );
 }
 

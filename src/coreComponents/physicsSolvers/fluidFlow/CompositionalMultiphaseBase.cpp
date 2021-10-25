@@ -910,17 +910,16 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
     // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
     fs.computeRhsContribution< FieldSpecificationAdd,
-                               parallelDevicePolicy<>,
-                               parallelDeviceReduce >( targetSet.toViewConst(),
-                                                       time + dt,
-                                                       dt,
-                                                       subRegion,
-                                                       dofNumber,
-                                                       rankOffset,
-                                                       localMatrix,
-                                                       dofArray.toView(),
-                                                       rhsContributionArrayView,
-                                                       [] GEOSX_HOST_DEVICE ( localIndex const )
+                               parallelDevicePolicy<> >( targetSet.toViewConst(),
+                                                         time + dt,
+                                                         dt,
+                                                         subRegion,
+                                                         dofNumber,
+                                                         rankOffset,
+                                                         localMatrix,
+                                                         dofArray.toView(),
+                                                         rhsContributionArrayView,
+                                                         [] GEOSX_HOST_DEVICE ( localIndex const )
     {
       return 0.0;
     } );

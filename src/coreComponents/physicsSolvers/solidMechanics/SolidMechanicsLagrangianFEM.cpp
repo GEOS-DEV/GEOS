@@ -618,15 +618,14 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                         string const fieldName )
   {
     bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy< 32 >,
-                                       parallelDeviceReduce >( targetSet,
-                                                               time,
-                                                               targetGroup,
-                                                               fieldName,
-                                                               dofKey,
-                                                               dofManager.rankOffset(),
-                                                               localMatrix,
-                                                               localRhs );
+                                       parallelDevicePolicy< 32 > >( targetSet,
+                                                                     time,
+                                                                     targetGroup,
+                                                                     fieldName,
+                                                                     dofKey,
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
   } );
 }
 
@@ -967,17 +966,16 @@ SolidMechanicsLagrangianFEM::
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
     bc.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                       parallelDevicePolicy< 32 >,
-                                       parallelDeviceReduce >( targetSet,
-                                                               time_n + dt,
-                                                               targetGroup,
-                                                               keys::TotalDisplacement, // TODO fix use of
-                                                               // dummy
-                                                               // name
-                                                               dofKey,
-                                                               dofManager.rankOffset(),
-                                                               localMatrix,
-                                                               localRhs );
+                                       parallelDevicePolicy< 32 > >( targetSet,
+                                                                     time_n + dt,
+                                                                     targetGroup,
+                                                                     keys::TotalDisplacement, // TODO fix use of
+                                                                     // dummy
+                                                                     // name
+                                                                     dofKey,
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
   } );
 
   applyTractionBC( time_n + dt, dofManager, domain, localRhs );
