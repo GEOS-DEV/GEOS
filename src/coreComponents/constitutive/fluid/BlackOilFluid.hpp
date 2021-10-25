@@ -294,8 +294,8 @@ BlackOilFluid::KernelWrapper::
 {
   GEOSX_UNUSED_VAR( temperature, phaseEnthalpy, phaseInternalEnergy );
 
-  real64 compMoleFrac[NC_BO];
-  real64 dCompMoleFrac_dCompMassFrac[NC_BO][NC_BO];
+  real64 compMoleFrac[NC_BO]{};
+  real64 dCompMoleFrac_dCompMassFrac[NC_BO][NC_BO]{};
   real64 phaseMW[NP_BO]{};
   real64 dPhaseMW_dPressure[NP_BO]{};
   real64 dPhaseMW_dGlobalCompFraction[NP_BO*NC_BO]{};

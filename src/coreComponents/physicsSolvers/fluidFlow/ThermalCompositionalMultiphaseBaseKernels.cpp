@@ -17,6 +17,7 @@
  */
 
 #include "ThermalCompositionalMultiphaseBaseKernels.hpp"
+#include "CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
 {
@@ -437,6 +438,8 @@ AccumulationKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+  using namespace CompositionalMultiphaseUtilities;
+
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {
     if( elemGhostRank[ei] >= 0 )
@@ -491,7 +494,10 @@ AccumulationKernel::
       dofIndices[idof] = dofNumber[ei] + idof;
     }
 
-    // TODO: apply equation/variable change transformation(s)
+    // Apply equation/variable change transformation(s)
+    real64 work[NDOF-1];
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF-1, localAccumJacobian, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localAccum );
 
     // add contribution to residual and jacobian
     for( localIndex i = 0; i < NBEQ; ++i )

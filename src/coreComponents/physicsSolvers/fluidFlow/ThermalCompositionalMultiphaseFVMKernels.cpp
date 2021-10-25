@@ -17,6 +17,7 @@
  */
 
 #include "ThermalCompositionalMultiphaseFVMKernels.hpp"
+#include "CompositionalMultiphaseUtilities.hpp"
 
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/SurfaceElementStencil.hpp"
@@ -693,6 +694,8 @@ FluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+  using namespace CompositionalMultiphaseUtilities;
+
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
@@ -772,7 +775,10 @@ FluxKernel::
       }
     }
 
-    // TODO: apply equation/variable change transformation(s)
+    // Apply equation/variable change transformation(s)
+    stackArray1d< real64, MAX_STENCIL_SIZE * (NDOF-1) > work( stencilSize * (NDOF-1) );
+    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, (NDOF-1)*stencilSize, numFluxElems, localFluxJacobian, work );
+    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, numFluxElems, localFlux );
 
     // Add to residual/jacobian
     for( localIndex i = 0; i < numFluxElems; ++i )
