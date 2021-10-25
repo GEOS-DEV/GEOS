@@ -122,8 +122,8 @@ public:
     m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
     m_thermalDofNumber( temperatureDofNumber ),
     m_temperature( nodeManager.template getReference< array1d< real64 > >( SinglePhaseThermoPoromechanicsSolver::viewKeyStruct::temperatureString() ) ),
-    m_deltaTemperature( nodeManager.template getReference< array1d< real64 > >( SinglePhaseThermoPoromechanicsSolver::viewKeyStruct::newDeltaTemperatureString() ) ),
-    m_thermalDiffusion( 1e3 ),
+    m_deltaTemperature( nodeManager.template getReference< array1d< real64 > >( SinglePhaseThermoPoromechanicsSolver::viewKeyStruct::oldDeltaTemperatureString() ) ),
+    m_thermalDiffusion( 1e0 ),
     m_dt( dt )
   {}
 
@@ -355,8 +355,8 @@ public:
         stack.localThermalJacobian[a][b] += tmpValue1 + tmpValue2;
 
         // Update local Rhs
-        stack.localThermalResidual[a] += -tmpValue1 * stack.localDeltaTemperature[b];
-        stack.localThermalResidual[a] += -tmpValue2 * stack.localTemperature[b];
+        stack.localThermalResidual[a] += tmpValue1 * stack.localDeltaTemperature[b];
+        stack.localThermalResidual[a] += tmpValue2 * stack.localTemperature[b];
       }
     }
   }
