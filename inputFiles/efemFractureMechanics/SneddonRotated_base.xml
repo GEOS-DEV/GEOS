@@ -142,14 +142,9 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-<<<<<<< HEAD:inputFiles/solidMechanics/Sneddon_staticCondensation_base.xml
-      plotFileRoot="Sneddon"
-=======
       plotFileRoot="SneddonRotated"
       plotLevel="3"
->>>>>>> origin/develop:inputFiles/efemFractureMechanics/SneddonRotated_base.xml
-      writeBinaryData="0"/>
-
+      writeBinaryData="1"/>
     <Restart
       name="restartOutput"/>
   </Outputs>
