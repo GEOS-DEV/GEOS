@@ -17,15 +17,15 @@ Everything required is contained within two GEOSX input files and one mesh file 
 
 .. code-block:: console
 
-  inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml
+  inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
 
 .. code-block:: console
 
-  inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Example.xml
+  inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_benchmark.xml
 
 .. code-block:: console
 
-  inputFiles/multiphysics/crackInPlane_ref.msh
+  inputFiles/lagrangianContactMechanics/crackInPlane_ref.msh
 
 
 ------------------------------------------------------------------
@@ -47,12 +47,12 @@ We simulate an inclined fracture under a compressive horizontal stress (:math:`\
 To simulate this phenomenon, we use a Lagrange contact model. Displacement and stress fields on the fracture plane are calculated numerically. Predictions of the normal traction (:math:`t_N`) and slip (:math:`g_T`) on the fracture surface are compared with the corresponding analytical solution `(Phan et al., 2003)  <https://onlinelibrary.wiley.com/doi/10.1002/nme.707>`__. 
 
 .. math::
-   t_N = - \sigma {\text{sin} \left( {\psi} \right)}^{ 2 }
+   t_N = - \sigma {( \text{sin} \left( {\psi} \right) )}^{ 2 }
 
 .. math::
-   g_T = \frac{ 4 { 1- {\nu}^{ 2 }} }{ E } { \sigma \text{sin} \left( {\psi} \right) { \text{cos} \left( {\psi} \right) - \text{sin} \left( {\psi} \right) \text{tan} \left( {\theta} \right)} } { { b }^{ 2 } - { b - \xi  }^{ 2 } }^{ 1/2 }
+   g_T = \frac{ 4 ( 1- {\nu}^{ 2 }) }{ E } {( \sigma \text{sin} \left( {\psi} \right) { ( \text{cos} \left( {\psi} \right) - \text{sin} \left( {\psi} \right) \text{tan} \left( {\theta} \right) )} )} \, \sqrt{ { b }^{ 2 } - { (b - \xi) }^{ 2 } }
 
-where :math:`\psi` is the inclination angle, :math:`\nu` is Poisson's ratio, :math:`E` is Young's modulus, :math:`\theta` is the friction angle, :math:`b` is the fracture half-length, :math:`\psi` is a local coordinate on the fracture varying in the range [0, :math:`2b`].
+where :math:`\psi` is the inclination angle, :math:`\nu` is Poisson's ratio, :math:`E` is Young's modulus, :math:`\theta` is the friction angle, :math:`b` is the fracture half-length, :math:`\xi` is a local coordinate on the fracture varying in the range [:math:`0`, :math:`2b`].
 
 
 
@@ -79,7 +79,7 @@ The syntax to import external meshes is simple: in the XML file,
 the mesh file ``crackInPlane_ref.msh`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``CubeHex``) is given to the mesh object. This unstructured mesh contains quadrilaterals elements and interface elements. Refinement is performed to conform with the fracture geometry specified in the ``Geometry`` section.
 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Example.xml
+.. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -110,7 +110,7 @@ To setup a coupling between rock and fracture deformations, we define three diff
 - The solver ``SurfaceGenerator`` defines the fracture region and rock toughness.
 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SOLVER -->
   :end-before: <!-- SPHINX_SOLVER_END -->
@@ -124,7 +124,7 @@ For this specific problem, we simulate the elastic deformation and fracture slip
 
 Fracture surface slippage is assumed to be governed by the Coulomb failure criterion. The contact constitutive behavior is named ``fractureMaterial`` in the ``Coulomb`` block, where cohesion ``cohesion="0.0"`` and friction angle ``frictionAngle="0.523598776"`` are specified. 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -145,7 +145,7 @@ In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time h
 Either the entire field or specified named sets of indices in the field can be collected. 
 In this example, ``tractionCollection`` and ``displacementJumpCollection`` tasks are specified to output the local traction ``fieldName="traction"`` and relative displacement ``fieldName="localJump"`` on the fracture surface.
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
     :language: xml
     :start-after: <!-- SPHINX_TASKS -->
     :end-before: <!-- SPHINX_TASKS_END -->
@@ -170,7 +170,7 @@ The remaining parts of the outer boundaries are subjected to roller constraints.
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/ContactMechanics_SingleFracCompression_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
     :language: xml
     :start-after: <!-- SPHINX_BC -->
     :end-before: <!-- SPHINX_BC_END -->
@@ -203,7 +203,7 @@ Inspecting results
 ---------------------------------
 
 We request VTK-format output files and use Paraview to visualize the results.
-The following figure shows the distribution of :math:`\u_{yy}` in the computational domain.
+The following figure shows the distribution of :math:`u_{yy}` in the computational domain.
 
 .. _problemVerificationFig1:
 .. figure:: displacement_yy.png
@@ -211,7 +211,7 @@ The following figure shows the distribution of :math:`\u_{yy}` in the computatio
    :width: 1000
    :figclass: align-center
 
-   Simulation result of :math:`\u_{yy}`
+   Simulation result of :math:`u_{yy}`
 
 
 The next figure shows the distribution of relative shear displacement values on the fracture surface.
@@ -311,8 +311,8 @@ The figure below shows a comparison between the numerical predictions (marks) an
         # File path
         hdf5File1Path = "traction_history.hdf5"
         hdf5File2Path = "displacementJump_history.hdf5"
-        xmlFile1Path = "ContactMechanics_SingleFracCompression_Base.xml"
-        xmlFile2Path = "ContactMechanics_SingleFracCompression_Example.xml"
+        xmlFile1Path = "../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml"
+        xmlFile2Path = "../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_benchmark.xml"
 
         # Read HDF5
         # Global Coordinate of Fracture Element Center

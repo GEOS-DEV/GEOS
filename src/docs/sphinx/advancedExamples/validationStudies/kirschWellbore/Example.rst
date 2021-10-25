@@ -17,11 +17,11 @@ Everything required is contained within two GEOSX input files located at:
 
 .. code-block:: console
 
-  inputFiles/solidMechanics/kirschProblem_Base.xml
+  inputFiles/solidMechanics/KirschProblem_base.xml
   
 .. code-block:: console
 
-  inputFiles/solidMechanics/kirschProblem_Example.xml
+  inputFiles/solidMechanics/KirschProblem_benchmark.xml
 
 
 ------------------------------------------------------------------
@@ -42,19 +42,19 @@ We solve a drained wellbore problem subjected to anisotropic horizontal stress (
 In this example, stress (:math:`\sigma_{rr}`, :math:`\sigma_{\theta\theta}`, and :math:`\sigma_{r\theta}`) and displacement (:math:`u_{r}` and :math:`u_{\theta}`) fields around the wellbore are calculated numerically. These numerical predictions are compared with the corresponding Kirsch solutions `(Poulos and Davis, 1974)  <https://www.geoengineer.org/publications/online-library?keywords=E.H.%20Davis>`__. 
 
 .. math::
-   \sigma_{rr} =  \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } { 1 - ( \frac{ a_0 }{ r })^{ 2 } } + \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } { 1 - 4 ( \frac{ a_0 }{ r })^{ 2 } + 3 ( \frac{ a_0 }{ r })^{ 4 }} \text{cos} \left( {2 \theta} \right) + P_w {( \frac{ a_0 }{ r })^{ 2 }}
+   \sigma_{rr} =  \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } {[ 1 - ( \frac{ a_0 }{ r })^{ 2 } ]} + \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } {[ 1 - 4 ( \frac{ a_0 }{ r })^{ 2 } + 3 ( \frac{ a_0 }{ r })^{ 4 } ]} \text{cos} \left( {2 \theta} \right) + P_w {( \frac{ a_0 }{ r })^{ 2 }}
 
 .. math::
-   \sigma_{\theta\theta} =  \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } { 1 + ( \frac{ a_0 }{ r })^{ 2 } } - \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } { 1 + 3 ( \frac{ a_0 }{ r })^{ 4 }} \text{cos} \left( {2 \theta} \right) - P_w {( \frac{ a_0 }{ r })^{ 2 }}
+   \sigma_{\theta\theta} =  \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } {[ 1 + ( \frac{ a_0 }{ r })^{ 2 } ]} - \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } {[ 1 + 3 ( \frac{ a_0 }{ r })^{ 4 } ]} \text{cos} \left( {2 \theta} \right) - P_w {( \frac{ a_0 }{ r })^{ 2 }}
 
 .. math::
-   \sigma_{r\theta} =  - \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } { 1 + 2 ( \frac{ a_0 }{ r })^{ 2 } - 3 ( \frac{ a_0 }{ r })^{ 4 }} \text{sin} \left( {2 \theta} \right)
+   \sigma_{r\theta} =  - \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } {[ 1 + 2 ( \frac{ a_0 }{ r })^{ 2 } - 3 ( \frac{ a_0 }{ r })^{ 4 } ]} \text{sin} \left( {2 \theta} \right)
 
 .. math::
-   u_{r} = - \frac{ ( a_0 )^{ 2 } }{ 2Gr } { \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } + \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } { 4 { 1- \nu} - ( \frac{ a_0 }{ r })^{ 2 } } \text{cos} \left( {2 \theta} \right) - P_w }
+   u_{r} = - \frac{ ( a_0 )^{ 2 } }{ 2Gr } {[ \frac{ \sigma_{xx} + \sigma_{yy} }{ 2 } + \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } {( 4 ( 1- \nu ) - ( \frac{ a_0 }{ r })^{ 2 } )} \text{cos} \left( {2 \theta} \right) - P_w ]}
 
 .. math::
-   u_{\theta} = \frac{ ( a_0 )^{ 2 } }{ 2Gr } { \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } { 2 { 1- 2 \nu} + ( \frac{ a_0 }{ r })^{ 2 } } \text{sin} \left( {2 \theta} \right) }
+   u_{\theta} = \frac{ ( a_0 )^{ 2 } }{ 2Gr } { \frac{ \sigma_{xx} - \sigma_{yy} }{ 2 } {[ 2 (1- 2 \nu) + ( \frac{ a_0 }{ r })^{ 2 } ]} \text{sin} \left( {2 \theta} \right) }
 
 where :math:`a_0` is the intiial wellbore radius, :math:`r` is the radial coordinate, :math:`\nu` is the Poisson's ratio, :math:`G` is the shear modulus, :math:`P_w` is the normal traction acting on the wellbore wall, the angle :math:`\theta` is measured with respect to x-z plane and defined as positive in counter-clockwise direction. 
 
@@ -91,7 +91,7 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
 ``cb1``. 
 
 
-.. literalinclude:: ../../../../../../inputFiles/solidMechanics/kirschProblem_Example.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/KirschProblem_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -107,7 +107,7 @@ The problem is run as ``QuasiStatic`` without considering inertial effects.
 The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. 
 The material is named ``rock``, whose mechanical properties are specified in the ``Constitutive`` section.
 
-.. literalinclude:: ../../../../../../inputFiles/solidMechanics/kirschProblem_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SOLVER -->
   :end-before: <!-- SPHINX_SOLVER_END -->
@@ -120,7 +120,7 @@ Constitutive laws
 For this drained wellbore problem, we simulate a linear elastic deformation around the circular cavity.
 A homogeneous and isotropic domain with one solid material is assumed, with mechanical properties specified in the ``Constitutive`` section: 
 
-.. literalinclude:: ../../../../../../inputFiles/solidMechanics/kirschProblem_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL -->
     :end-before: <!-- SPHINX_MATERIAL_END -->
@@ -140,7 +140,7 @@ In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time h
 Either the entire field or specified named sets of indices in the field can be collected. 
 In this example, ``stressCollection`` and ``displacementCollection`` tasks are specified to output the resultant stresses (tensor stored as an array with Voigt notation) and total displacement field (stored as a 3-component vector) respectively.
 
-.. literalinclude:: ../../../../../../inputFiles/solidMechanics/kirschProblem_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml
     :language: xml
     :start-after: <!-- SPHINX_TASKS -->
     :end-before: <!-- SPHINX_TASKS_END -->
@@ -158,13 +158,13 @@ The next step is to specify fields, including:
   - The initial value (the in-situ stresses and traction at the wellbore wall have to be initialized),
   - The boundary conditions (constraints of the outer boundaries have to be set).
 
-Here, we specify anisotropic horizontal stress values (:math:`\sigma_yy` = -9.0 MPa and :math:`\sigma_xx` = -11.25 MPa) and a vertical stress (:math:`\sigma_zz` = -15.0 MPa). 
+Here, we specify anisotropic horizontal stress values (:math:`\sigma_{yy}` = -9.0 MPa and :math:`\sigma_{xx}` = -11.25 MPa) and a vertical stress (:math:`\sigma_{zz}` = -15.0 MPa). 
 A compressive traction (``WellLoad``) :math:`P_w` = -2.0 MPa is loaded at the wellbore wall ``rneg``.
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set in the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../../inputFiles/solidMechanics/kirschProblem_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml
     :language: xml
     :start-after: <!-- SPHINX_BC -->
     :end-before: <!-- SPHINX_BC_END -->
@@ -188,23 +188,23 @@ You may note :
  
 The parameters used in the simulation are summarized in the following table.
 
-+-------------------+-------------------------+------------------+--------------------+
-| Symbol            | Parameter               | Unit             | Value              |
-+===================+=========================+==================+====================+
-| :math:`K`         | Bulk Modulus            | [MPa]            | 500.0              |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`G`         | Shear Modulus           | [MPa]            | 300.0              |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`\sigma_yy` | Min Horizontal Stress   | [MPa]            | -9.0               |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`\sigma_xx` | Max Horizontal Stress   | [MPa]            | -11.25             |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`\sigma_zz` | Vertical Stress         | [MPa]            | -15.0              |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`a_0`       | Initial Well Radius     | [m]              | 0.1                |
-+-------------------+-------------------------+------------------+--------------------+
-| :math:`P_w`       | Traction at Well        | [MPa]            | -2.0               |
-+-------------------+-------------------------+------------------+--------------------+
++---------------------+-------------------------+------------------+--------------------+
+| Symbol              | Parameter               | Unit             | Value              |
++=====================+=========================+==================+====================+
+| :math:`K`           | Bulk Modulus            | [MPa]            | 500.0              |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`G`           | Shear Modulus           | [MPa]            | 300.0              |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`\sigma_{yy}` | Min Horizontal Stress   | [MPa]            | -9.0               |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`\sigma_{xx}` | Max Horizontal Stress   | [MPa]            | -11.25             |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`\sigma_{zz}` | Vertical Stress         | [MPa]            | -15.0              |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`a_0`         | Initial Well Radius     | [m]              | 0.1                |
++---------------------+-------------------------+------------------+--------------------+
+| :math:`P_w`         | Traction at Well        | [MPa]            | -2.0               |
++---------------------+-------------------------+------------------+--------------------+
 
 
 ---------------------------------
@@ -335,8 +335,8 @@ We use time history function to collect time history information and run a Pytho
         # File path
         hdf5File1Path = "stress_history.hdf5"
         hdf5File2Path = "displacement_history.hdf5"
-        xmlFile1Path = "../../../../../../inputFiles/solidMechanics/kirschProblem_Base.xml"
-        xmlFile2Path = "../../../../../../inputFiles/solidMechanics/kirschProblem_Example.xml"
+        xmlFile1Path = "../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml"
+        xmlFile2Path = "../../../../../../inputFiles/solidMechanics/KirschProblem_benchmark.xml"
 
         # Read HDF5
         # Global Coordinate of Element Center
