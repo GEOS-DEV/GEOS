@@ -36,22 +36,28 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
 {
   registerWrapper( viewKeyStruct::internalEnergyString(), &m_internalEnergy ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( 1.0 );
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Internal energy of the solid" );
 
   registerWrapper( viewKeyStruct::oldInternalEnergyString(), &m_oldInternalEnergy ).
-      setApplyDefaultValue( 1.0 );
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Internal energy of the solid at the previous time-step" );
 
   registerWrapper( viewKeyStruct::dInternalEnergy_dTemperatureString(), &m_dInternalEnergy_dTemperature ).
-    setApplyDefaultValue( 1.0 );
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Derivative of the solid internal energy w.r.t. temperature" );
 
   registerWrapper( viewKeyStruct::heatCapacityString(), &m_heatCapacity ).
-      setApplyDefaultValue( 1.0 );
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Solid heat capacity" );
 
   registerWrapper( viewKeyStruct::refereceTemperatureString(), &m_referenceTemperature ).
-      setApplyDefaultValue( 1.0 );
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Reference temperature" );
 
   registerWrapper( viewKeyStruct::referenceInternalEnergyString(), &m_referenceInternalEnergy ).
-      setApplyDefaultValue( 1.0 );
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Internal energy at the reference temperature" );
 }
 
 void SolidInternalEnergy::allocateConstitutiveData( dataRepository::Group & parent,
@@ -68,9 +74,9 @@ void SolidInternalEnergy::saveConvergedState() const
   arrayView2d< real64 const > internalEnergy = m_internalEnergy;
   arrayView2d< real64 >       oldInternalEnergy = m_oldInternalEnergy;
 
-  forAll< parallelDevicePolicy<> >( internalEnergy.size(0), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( internalEnergy.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-      oldInternalEnergy[k][0] = internalEnergy[k][0];
+    oldInternalEnergy[k][0] = internalEnergy[k][0];
   } );
 }
 

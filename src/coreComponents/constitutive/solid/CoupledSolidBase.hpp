@@ -23,6 +23,7 @@
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
+#include "constitutive/solid/SolidInternalEnergy.hpp"
 
 namespace geosx
 {
@@ -49,6 +50,7 @@ public:
     static constexpr char const * solidModelNameString() { return "solidModelName"; }
     static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
     static constexpr char const * permeabilityModelNameString() { return "permeabilityModelName"; }
+    static constexpr char const * solidInternalEnergyModelNameString() { return "solidInternalEnergyModelName"; }
   };
 
   virtual std::vector< string > getSubRelationNames() const override final
@@ -93,6 +95,32 @@ public:
   arrayView2d< real64 const > const  getDporosity_dPressure() const
   { return getBasePorosityModel().dPorosity_dPressure(); }
 
+
+  /**
+   * @brief get the old internal energy.
+   * return a constant arrayView2d to the old internal energy
+   */
+  arrayView2d< real64 const > const getOldInternalEnergy() const
+  {
+    return getSolidInternalEnergyModel().getOldInternalEnergy();
+  }
+
+  /*
+   * @brief get the internal energy.
+   * return a constant arrayView2d to the internal energy
+   */
+  arrayView2d< real64 const > const getInternalEnergy() const
+  {
+    return getSolidInternalEnergyModel().getInternalEnergy();
+  }
+
+  /**
+   * @brief get the dInternalEnergy_dTemperature.
+   * return a constant arrayView2d to dInternalEnergy_dTemperature
+   */
+  arrayView2d< real64 const > const  getDinternalEnergy_dTemperature() const
+  { return getSolidInternalEnergyModel().getDinternalEnergy_dTemperature(); }
+
   /**
    * @brief initialize the constitutive models fields.
    */
@@ -104,7 +132,20 @@ public:
   virtual void saveConvergedState() const override final
   {
     getBasePorosityModel().saveConvergedState();
+    if( !m_solidInternalEnergyModelName.empty() )
+    {
+      /// If the name is provided it has to be saved as well.
+      getSolidInternalEnergyModel().saveConvergedState();
+    }
   }
+
+  /**
+   * @brief get a constant reference to the solid internal energy model
+   * return a constant SolidInternalEnergy reference to the solid internal energy model
+   */
+  SolidInternalEnergy const & getSolidInternalEnergyModel() const
+  { return this->getParent().template getGroup< SolidInternalEnergy >( m_solidInternalEnergyModelName ); }
+
 protected:
 
   /// the name of the solid model
@@ -115,6 +156,9 @@ protected:
 
   /// the name of the permeability model
   string m_permeabilityModelName;
+
+  /// the name of the solid internal energy model
+  string m_solidInternalEnergyModelName;
 
 private:
 
@@ -131,12 +175,6 @@ private:
   PermeabilityBase const & getBasePermModel() const
   { return this->getParent().template getGroup< PermeabilityBase >( m_permeabilityModelName ); }
 
-  /**
-   * @brief get a constant reference to the solid internal energy model
-   * return a constant SolidInternalEnergy reference to the solid internal energy model
-   */
-  //  SolidInternalEnergy const & getSolidInternalEnergyModel(  )
-  //  { return this->getParent().template getGroup< SolidInternalEnergy >( m_solidInternalEnergyModelName ); }
 };
 
 }

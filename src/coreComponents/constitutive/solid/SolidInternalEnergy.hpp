@@ -43,7 +43,7 @@ public:
     m_heatCapacity( heatCapacity ),
     m_referenceTemperature( referenceTemperature ),
     m_referenceInternalEnergy( referenceInternalEnergy )
-    {}
+  {}
 
   GEOSX_DEVICE
   void update( localIndex const k,
@@ -121,19 +121,25 @@ public:
 
 
   /**
-     * @brief Const accessor for internalEnergy.
-     * @return Accessor
-     */
-    arrayView2d< real64 const > const  getInternalEnergy() const { return m_internalEnergy; }
+   * @brief Const accessor for internalEnergy.
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const  getInternalEnergy() const { return m_internalEnergy; }
 
-    /**
-     * @brief Const/non-mutable accessor for oldInternalEnergy.
-     * @return Accessor
-     */
-    arrayView2d< real64 const > const  getOldInternalEnergy() const { return m_oldInternalEnergy; }
+  /**
+   * @brief Const/non-mutable accessor for oldInternalEnergy.
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const  getOldInternalEnergy() const { return m_oldInternalEnergy; }
 
-    /// Save state data in preparation for next timestep
-    virtual void saveConvergedState() const override;
+  /**
+   * @brief Const/non-mutable accessor for oldInternalEnergy.
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const  getDinternalEnergy_dTemperature() const { return m_dInternalEnergy_dTemperature; }
+
+  /// Save state data in preparation for next timestep
+  virtual void saveConvergedState() const override;
 
 private:
 

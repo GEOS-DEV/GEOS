@@ -21,7 +21,6 @@
 #define GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
 
 #include "constitutive/solid/CoupledSolidBase.hpp"
-#include "constitutive/solid/SolidInternalEnergy.hpp"
 
 namespace geosx
 {
