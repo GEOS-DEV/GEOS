@@ -48,9 +48,7 @@ The corresponding integrated test with coarser mesh and smaller injection durati
 
   inputFiles/multiphysics/kgdViscosityDominated_smoke.xml
 
-Fluid viscosity and rock toughness are defined by the xml blocks below. We note that setting an absolute zero value for the toughness may lead to a floating point issue. Therefore, a small value of :math:`K_{Ic}=10^{-6}` MPa should be considered.
-
-Fluid rheology and rock toughness are defined in the xml blocks below. Please note that setting an absolute zero value for the rock toughness could lead to instability issue. Therefore, an unrealistic low value of :math:`K_{Ic}=10^{-6} \frac{ MPa }{ sqrt{m} }` is used in this example.
+Fluid rheology and rock toughness are defined in the xml blocks below. Please note that setting an absolute zero value for the rock toughness could lead to instability issue. Therefore, a low value of :math:`K_{Ic}` is used in this example.
 
 .. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdViscosityDominated_base.xml
   :language: xml
