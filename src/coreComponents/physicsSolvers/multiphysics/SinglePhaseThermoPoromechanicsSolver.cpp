@@ -378,8 +378,8 @@ void SinglePhaseThermoPoromechanicsSolver::applySystemSolution( DofManager const
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::temperatureString() ) );
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::newDeltaTemperatureString() ) );
+  fieldNames["node"].emplace_back( string( viewKeyStruct::temperatureString() ) );
+  fieldNames["node"].emplace_back( string( viewKeyStruct::newDeltaTemperatureString() ) );
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
