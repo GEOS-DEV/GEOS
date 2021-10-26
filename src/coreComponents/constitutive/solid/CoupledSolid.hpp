@@ -21,6 +21,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
 
 #include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/solid/SolidInternalEnergy.hpp"
 
 namespace geosx
 {
@@ -142,7 +143,6 @@ protected:
 
   PERM_TYPE const & getPermModel() const
   { return this->getParent().template getGroup< PERM_TYPE >( m_permeabilityModelName ); }
-
 
 };
 

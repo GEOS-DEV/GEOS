@@ -131,6 +131,12 @@ private:
   PermeabilityBase const & getBasePermModel() const
   { return this->getParent().template getGroup< PermeabilityBase >( m_permeabilityModelName ); }
 
+  /**
+   * @brief get a constant reference to the solid internal energy model
+   * return a constant SolidInternalEnergy reference to the solid internal energy model
+   */
+  //  SolidInternalEnergy const & getSolidInternalEnergyModel(  )
+  //  { return this->getParent().template getGroup< SolidInternalEnergy >( m_solidInternalEnergyModelName ); }
 };
 
 }
