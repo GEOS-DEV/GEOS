@@ -10,30 +10,33 @@ packages:
   openblas:
     buildable: False
     externals:
-      - spec: openblas@0.3.9 threads=openmp
+      - spec: openblas@0.3.15 threads=openmp
         modules:
-        - openblas/0.3.9-omp
+        - openblas/0.3.15-omp
 
   spectrum-mpi:
     buildable: False
     externals:
-      - spec: spectrum-mpi@10.3.1.2-20200121
+      - spec: spectrum-mpi@10.4.0.3-20210112
         modules:
-        - spectrum-mpi/10.3.1.2-20200121
+        - spectrum-mpi/10.4.0.3-20210112
 
   cuda:
     buildable: False
     externals:
-    - spec: cuda@11.2.0
-      modules:
-      - cuda/11.2.0
+      - spec: cuda@11.0.3
+        modules:
+        - cuda/11.0.3
+      - spec: cuda@11.3.1
+        modules:
+        - cuda/11.3.1
 
   cmake:
     buildable: False
     externals:
-    - spec: cmake@3.14.5
+    - spec: cmake@3.18.4
       modules:
-      - cmake/3.14.2
+      - cmake/3.18.4
 
   readline:
     buildable: False
@@ -62,6 +65,6 @@ packages:
   python:
     buildable: False
     externals:
-    - spec: python@3.7.0
+    - spec: python@3.8
       modules:
-      - python/3.7.0
+      - python/3.8-anaconda3

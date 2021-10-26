@@ -27,7 +27,8 @@ The xml input file for this test case is located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
+  src/coreComponents/physicsSolvers/solidMechanics/integratedTests/beamBending_base.xml
+  src/coreComponents/physicsSolvers/solidMechanics/integratedTests/beamBending_benchmark.xml
 
 ------------------------------------
 Discretized computational domain
@@ -44,7 +45,7 @@ is used to generate a structured three-dimensional mesh with ``C3D8`` as
 the ``elementTypes``. This mesh is defined as a cell block with the name
 ``cb1``.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
+.. literalinclude:: ../../../../../inputFiles/solidMechanics/beamBending_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_BeamBendingMesh -->
   :end-before:  <!-- SPHINX_BeamBendingMeshEnd -->
@@ -54,7 +55,7 @@ Gravity
 ------------------------------------
 The gravity is turned off explicitly at the beginning of the input file:
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
+.. literalinclude:: ../../../../../inputFiles/solidMechanics/beamBending_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_Gravity -->
   :end-before:  <!-- SPHINX_GravityEnd -->
@@ -69,7 +70,7 @@ which is defined in the ``NumericalMethods`` block. The material is designated a
 ``shale``, whose properties are defined in the
 ``Constitutive`` block.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
+.. literalinclude:: ../../../../../inputFiles/solidMechanics/beamBending_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_SolidMechanicsSolver -->
   :end-before:  <!-- SPHINX_SolidMechanicsSolverEnd -->
@@ -81,7 +82,7 @@ The computational domain is discretized by ``C3D8`` elements with the first orde
 functions at each direction in the parent domain. The 2 x 2 x 2 Gauss quadrature rule is adopted to be
 compatible with the first order interpolation functions.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
+.. literalinclude:: ../../../../../inputFiles/solidMechanics/beamBending_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FEDiscretization -->
   :end-before:  <!-- SPHINX_FEDiscretizationEnd -->
@@ -93,7 +94,7 @@ Recall that in the ``SolidMechanicsLagrangianSSLE`` block,
 ``shale`` is designated as the material in the computational domain. Here, the material
 is defined as linear isotropic.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
+.. literalinclude:: ../../../../../inputFiles/solidMechanics/beamBending_base.xml
   :language: xml
   :start-after: <!-- SPHINX_Material -->
   :end-before:  <!-- SPHINX_MaterialEnd -->
@@ -114,7 +115,7 @@ For instance, ``xneg`` means the portion of the computational domain located at 
 ``zpos``, and ``zneg``. Particularly, the time-dependent loading applied at the beam tip is defined through a function with
 the name ``timeFunction``.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
+.. literalinclude:: ../../../../../inputFiles/solidMechanics/beamBending_base.xml
   :language: xml
   :start-after: <!-- SPHINX_BoundaryConditions -->
   :end-before:  <!-- SPHINX_BoundaryConditionsEnd -->
@@ -125,7 +126,7 @@ Table function
 A table function is used to define the time-dependent loading at the beam tip. The ``coordinates`` and ``values`` form a time-magnitude
 pair for the loading time history. In this case, the loading magnitude increases linearly as the time evolves.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
+.. literalinclude:: ../../../../../inputFiles/solidMechanics/beamBending_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TableFunction -->
   :end-before:  <!-- SPHINX_TableFunctionEnd -->
@@ -137,7 +138,7 @@ Finally, the execution of the simulation is set up in the ``Events`` block, wher
 ``target`` points to the solid mechanics solver defined in the ``Solvers`` block, and
 the time increment ``forceDt`` is set as 1.0s.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
+.. literalinclude:: ../../../../../inputFiles/solidMechanics/beamBending_base.xml
   :language: xml
   :start-after: <!-- SPHINX_Execution -->
   :end-before:  <!-- SPHINX_ExecutionEnd -->

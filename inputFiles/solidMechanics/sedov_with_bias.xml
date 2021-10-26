@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File
+      name="./sedov_base.xml"/>
+  </Included>
+
+  <!-- SPHINX_MESH_BIAS -->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -10, -1, 0, 1, 10 }"
+      yCoords="{ -10, -1, 0, 1, 10 }"
+      zCoords="{ -10, -1, 0, 1, 10 }"
+      nx="{ 4, 1, 1, 4 }"
+      ny="{ 5, 1, 1, 5 }"
+      nz="{ 6, 1, 1, 6 }"
+      xBias="{ 0.555, 0, 0, -0.555 }"
+      yBias="{ 0.444, 0, 0, -0.444 }"
+      zBias="{ 0.333, 0, 0, -0.333 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+  
+  <Solvers>
+    <SolidMechanics_LagrangianFEM
+      name="lagsolve"
+      strainTheory="1"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ shale }"/>
+  </Solvers>
+  <!-- SPHINX_MESH_BIAS_END -->
+
+  <Events
+    maxTime="1.0e-3">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0e-5"
+      target="/Solvers/lagsolve"/>
+
+    <!-- This event is applied every 5e-4s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <!-- PeriodicEvent name="outputs"
+                   timeFrequency="1e-6"
+                   targetExactTimestep="0"
+                   target="/Outputs/siloOutput" /-->
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+</Problem>
