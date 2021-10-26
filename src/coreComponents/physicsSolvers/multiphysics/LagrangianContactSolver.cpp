@@ -809,7 +809,8 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
 
   if( !isActiveSetConverged )
   {
-    GEOSX_ERROR( "Active set did not reached a solution. Terminating..." );
+    // GEOSX_ERROR( "Active set did not reach a solution. Terminating..." );
+    GEOSX_LOG_RANK_0( "Active set did not reach a solution in " << m_activeSetIter << " iterations." );
   }
   else
   {
