@@ -30,6 +30,8 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/DemoKernel.hpp"
+#include "physicsSolvers/fluidFlow/ThermalDemoKernel.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -777,31 +779,116 @@ void CompositionalMultiphaseBase::assembleAccumulationTerms( DomainPartition & d
     arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
     arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
 
-    KernelLaunchSelector1< AccumulationKernel >( m_numComponents,
-                                                 m_numPhases,
-                                                 subRegion.size(),
-                                                 dofManager.rankOffset(),
-                                                 dofNumber,
-                                                 elemGhostRank,
-                                                 volume,
-                                                 porosityOld,
-                                                 porosity,
-                                                 dPoro_dPres,
-                                                 dCompFrac_dCompDens,
-                                                 phaseVolFracOld,
-                                                 phaseVolFrac,
-                                                 dPhaseVolFrac_dPres,
-                                                 dPhaseVolFrac_dCompDens,
-                                                 phaseDensOld,
-                                                 phaseDens,
-                                                 dPhaseDens_dPres,
-                                                 dPhaseDens_dComp,
-                                                 phaseCompFracOld,
-                                                 phaseCompFrac,
-                                                 dPhaseCompFrac_dPres,
-                                                 dPhaseCompFrac_dComp,
-                                                 localMatrix,
-                                                 localRhs );
+    using namespace DemoKernels;
+    using namespace ThermalDemoKernels;
+
+    // We instantiate a hard coded combinaison ( NC, NDOF ) here to compile
+    // Later we will need a smart dispatch that can use the m_isothermalFlag
+
+    // COMPILE THE ISOTHERMAL CASE
+    // Let's assume CO2-brine fluid in the isothermal case
+    /*
+       AccumulationDemoKernel< 2, 3 > kernel( m_numPhases,
+             dofManager.rankOffset(),
+             dofNumber,
+             elemGhostRank,
+             volume,
+             porosityOld,
+             porosity,
+             dPoro_dPres,
+             dCompFrac_dCompDens,
+             phaseVolFracOld,
+             phaseVolFrac,
+             dPhaseVolFrac_dPres,
+             dPhaseVolFrac_dCompDens,
+             phaseDensOld,
+             phaseDens,
+             dPhaseDens_dPres,
+             dPhaseDens_dComp,
+             phaseCompFracOld,
+             phaseCompFrac,
+             dPhaseCompFrac_dPres,
+             dPhaseCompFrac_dComp,
+             localMatrix,
+             localRhs );
+       AccumulationDemoKernel< 2, 3 >::
+       launch< parallelDevicePolicy<>, AccumulationDemoKernel< 2, 3 > >
+       ( subRegion.size(), kernel );
+     */
+
+    // COMPILE THE NON-ISOTHERMAL CASE
+
+    // Instantiate thermal arrayViews to test compilation
+    array3d< real64, multifluid::LAYOUT_PHASE > dPhaseDens_dTemp( subRegion.size(), 1, m_numPhases );
+    arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dTempViewConst = dPhaseDens_dTemp.toViewConst();
+    array4d< real64, multifluid::LAYOUT_PHASE_COMP > dPhaseCompFrac_dTemp( subRegion.size(), 1, m_numPhases, m_numComponents );
+    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dTempViewConst = dPhaseCompFrac_dTemp.toViewConst();
+    array2d< real64, compflow::LAYOUT_PHASE > dPhaseVolFrac_dTemp( subRegion.size(), m_numPhases );
+    arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dTempViewConst = dPhaseVolFrac_dTemp.toViewConst();
+
+    array3d< real64, multifluid::LAYOUT_PHASE > phaseInternalEnergy( subRegion.size(), 1, m_numPhases );
+    arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseInternalEnergyViewConst = phaseInternalEnergy.toViewConst();
+    array3d< real64, multifluid::LAYOUT_PHASE > dPhaseInternalEnergy_dPres( subRegion.size(), 1, m_numPhases );
+    arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseInternalEnergy_dPresViewConst = dPhaseInternalEnergy_dPres.toViewConst();
+    array3d< real64, multifluid::LAYOUT_PHASE > dPhaseInternalEnergy_dTemp( subRegion.size(), 1, m_numPhases );
+    arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseInternalEnergy_dTempViewConst = dPhaseInternalEnergy_dTemp.toViewConst();
+    array4d< real64, multifluid::LAYOUT_PHASE_DC > dPhaseInternalEnergy_dComp( subRegion.size(), 1, m_numPhases, m_numComponents );
+    arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseInternalEnergy_dCompViewConst = dPhaseInternalEnergy_dComp.toViewConst();
+    array2d< real64, compflow::LAYOUT_PHASE > phaseInternalEnergyOld( subRegion.size(), m_numPhases );
+    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseInternalEnergyOldViewConst = phaseInternalEnergyOld.toViewConst();
+
+    array2d< real64 > rockInternalEnergy( subRegion.size(), 1 );
+    arrayView2d< real64 const > const & rockInternalEnergyViewConst = rockInternalEnergy.toViewConst();
+    array2d< real64 > dRockInternalEnergy_dTemp( subRegion.size(), 1 );
+    arrayView2d< real64 const > const & dRockInternalEnergy_dTempViewConst = dRockInternalEnergy_dTemp.toViewConst();
+    array2d< real64 > rockDensity( subRegion.size(), 1 );
+    arrayView2d< real64 const > const & rockDensityViewConst = rockDensity.toViewConst();
+    array1d< real64 > rockInternalEnergyOld( subRegion.size() );
+    arrayView1d< real64 const > const & rockInternalEnergyOldViewConst = rockInternalEnergyOld.toViewConst();
+
+    localIndex constexpr NC = 2;
+    localIndex constexpr NDOF = 4;
+
+    // Let's assume CO2-brine fluid in the non-isothermal case
+    ThermalAccumulationDemoKernel< NC, NDOF > kernel( m_numPhases,
+                                                      dofManager.rankOffset(),
+                                                      dofNumber,
+                                                      elemGhostRank,
+                                                      volume,
+                                                      porosityOld,
+                                                      porosity,
+                                                      dPoro_dPres,
+                                                      dCompFrac_dCompDens,
+                                                      phaseVolFracOld,
+                                                      phaseVolFrac,
+                                                      dPhaseVolFrac_dPres,
+                                                      dPhaseVolFrac_dTempViewConst,
+                                                      dPhaseVolFrac_dCompDens,
+                                                      phaseDensOld,
+                                                      phaseDens,
+                                                      dPhaseDens_dPres,
+                                                      dPhaseDens_dTempViewConst,
+                                                      dPhaseDens_dComp,
+                                                      phaseCompFracOld,
+                                                      phaseCompFrac,
+                                                      dPhaseCompFrac_dPres,
+                                                      dPhaseCompFrac_dTempViewConst,
+                                                      dPhaseCompFrac_dComp,
+                                                      phaseInternalEnergyOldViewConst,
+                                                      phaseInternalEnergyViewConst,
+                                                      dPhaseInternalEnergy_dPresViewConst,
+                                                      dPhaseInternalEnergy_dTempViewConst,
+                                                      dPhaseInternalEnergy_dCompViewConst,
+                                                      rockInternalEnergyOldViewConst,
+                                                      rockInternalEnergyViewConst,
+                                                      dRockInternalEnergy_dTempViewConst,
+                                                      rockDensityViewConst,
+                                                      localMatrix,
+                                                      localRhs );
+    ThermalAccumulationDemoKernel< NC, NDOF >::
+    launch< parallelDevicePolicy<>, ThermalAccumulationDemoKernel< NC, NDOF > >
+      ( subRegion.size(), kernel );
+
   } );
 }
 
