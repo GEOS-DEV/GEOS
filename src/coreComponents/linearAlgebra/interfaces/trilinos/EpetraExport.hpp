@@ -78,9 +78,9 @@ public:
    */
   template< typename OFFSET_TYPE, typename COLUMN_TYPE >
   void exportCRS( EpetraMatrix const & mat,
-		          arrayView1d< OFFSET_TYPE > const & rowOffsets,
-				  arrayView1d< COLUMN_TYPE > const & colIndices,
-				  arrayView1d< real64 > const & values ) const;
+                  arrayView1d< OFFSET_TYPE > const & rowOffsets,
+                  arrayView1d< COLUMN_TYPE > const & colIndices,
+                  arrayView1d< real64 > const & values ) const;
 
   /**
    * @brief Export the target vector into an array provided by the user.

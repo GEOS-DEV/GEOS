@@ -129,7 +129,7 @@ struct SuperLUDistData
     // -- dallocateA_dist( numLocalRows, numLocalNonzeros, &values, &colIndices, &rowPtr );
     rowPtr.resize( numLocalRows + 1 );
     colIndices.resize( numLocalNonzeros );
-	values.resize( numLocalNonzeros );
+    values.resize( numLocalNonzeros );
     dScalePermstructInit( numGlobalRows, numGlobalRows, &scalePerm );
     dLUstructInit( numGlobalRows, &lu );
     PStatInit( &stat );
@@ -145,11 +145,11 @@ struct SuperLUDistData
   ~SuperLUDistData()
   {
 //    Destroy_CompRowLoc_Matrix_dist( &mat ); //// <-- copy body
-    NRformat_loc *Astore = (NRformat_loc*)mat.Store;
+    NRformat_loc *Astore = (NRformat_loc *)mat.Store;
 //    SUPERLU_FREE(Astore->rowptr);
 //    SUPERLU_FREE(Astore->colind);
 //    SUPERLU_FREE(Astore->nzval);
-    SUPERLU_FREE(Astore);
+    SUPERLU_FREE( Astore );
 
     dScalePermstructFree( &scalePerm );
     dDestroy_LU( mat.nrow, &grid, &lu );
