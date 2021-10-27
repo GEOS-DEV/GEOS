@@ -55,10 +55,16 @@ public:
 
   virtual std::vector< string > getSubRelationNames() const override final
   {
-    return { m_solidModelName,
-             m_porosityModelName,
-             m_permeabilityModelName };
+    std::vector< string > subRelationNames = { m_solidModelName,
+                                               m_porosityModelName,
+                                               m_permeabilityModelName };
 
+    if( !m_solidInternalEnergyModelName.empty() )
+    {
+      subRelationNames.push_back( m_solidInternalEnergyModelName );
+    }
+
+    return subRelationNames;
   }
 
   /**
