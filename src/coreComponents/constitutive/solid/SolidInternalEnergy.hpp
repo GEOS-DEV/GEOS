@@ -100,7 +100,7 @@ public:
     static constexpr char const * oldInternalEnergyString() { return "oldInternalEnergy"; }
     static constexpr char const * dInternalEnergy_dTemperatureString() { return "dInternalEnergy_dTemperature"; }
     static constexpr char const * heatCapacityString() { return "heatCapacity"; }
-    static constexpr char const * refereceTemperatureString() { return "refereceTemperature"; }
+    static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
     static constexpr char const * referenceInternalEnergyString() { return "referenceInternalEnergy"; }
   } viewKeys;
 

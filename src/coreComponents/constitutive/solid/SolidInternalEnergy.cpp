@@ -51,7 +51,7 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
     setApplyDefaultValue( 0.0 ).
     setDescription( "Solid heat capacity" );
 
-  registerWrapper( viewKeyStruct::refereceTemperatureString(), &m_referenceTemperature ).
+  registerWrapper( viewKeyStruct::referenceTemperatureString(), &m_referenceTemperature ).
     setApplyDefaultValue( 0.0 ).
     setDescription( "Reference temperature" );
 
@@ -65,6 +65,7 @@ void SolidInternalEnergy::allocateConstitutiveData( dataRepository::Group & pare
 {
   m_internalEnergy.resize( 0, 1 );
   m_dInternalEnergy_dTemperature.resize( 0, 1 );
+  m_oldInternalEnergy.resize( 0, 1 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
