@@ -9,7 +9,7 @@ Sneddon's Problem
 
 At the end of this example you will know:
 
-  - how to define fractures in the porous domain,
+  - how to define fractures in a porous medium,
   - how to use various solvers (EmbeddedFractures, LagrangianContact and HydroFracture) to solve the mechanics problems with fractures.
 
 
