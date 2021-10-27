@@ -190,14 +190,42 @@ void HypreVector::set( globalIndex const globalRow,
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector, 1, &globalRow, &value ) );
+
+
+#if defined(GEOSX_USE_HYPRE_CUDA)
+  array1d< globalIndex > globalRowDevice( 1 );
+  array1d< real64 > valueDevice( 1 );
+  globalRowDevice[0] = globalRow;
+  valueDevice[0] = value;
+  globalRowDevice.move( LvArray::MemorySpace::cuda, false );
+  valueDevice.move( LvArray::MemorySpace::cuda, false );
+  globalIndex const * const pGlobalRow = globalRowDevice.data();
+  real64 const * const pValue = valueDevice.data();
+#else
+  globalIndex const * const pGlobalRow = &globalRow;
+  real64 const * const pValue = &value;
+#endif
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector, 1, pGlobalRow, pValue ) );
 }
 
 void HypreVector::add( globalIndex const globalRow,
                        real64 const value )
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorAddToValues( m_ij_vector, 1, &globalRow, &value ) );
+#if defined(GEOSX_USE_HYPRE_CUDA)
+  array1d< globalIndex > globalRowDevice( 1 );
+  array1d< real64 > valueDevice( 1 );
+  globalRowDevice[0] = globalRow;
+  valueDevice[0] = value;
+  globalRowDevice.move( LvArray::MemorySpace::cuda, false );
+  valueDevice.move( LvArray::MemorySpace::cuda, false );
+  globalIndex const * const pGlobalRow = globalRowDevice.data();
+  real64 const * const pValue = valueDevice.data();
+#else
+  globalIndex const * const pGlobalRow = &globalRow;
+  real64 const * const pValue = &value;
+#endif
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorAddToValues( m_ij_vector, 1, pGlobalRow, pValue ) );
 }
 
 void HypreVector::set( globalIndex const * globalIndices,
@@ -207,10 +235,20 @@ void HypreVector::set( globalIndex const * globalIndices,
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices, globalIndices + size ), ilower() );
   GEOSX_LAI_ASSERT_GE( iupper(), getLocalRowID( *std::max_element( globalIndices, globalIndices + size ) ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector,
-                                                  LvArray::integerConversion< HYPRE_Int >( size ),
-                                                  hypre::toHypreBigInt( globalIndices ),
-                                                  values ) );
+//  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector,
+//                                                  LvArray::integerConversion< HYPRE_Int >( size ),
+//                                                  hypre::toHypreBigInt( globalIndices ),
+//                                                  values ) );
+
+  HYPRE_Real * const local_data = hypre_VectorData( hypre_ParVectorLocalVector ( m_par_vector ) );
+
+  forAll< hypre::execPolicy >( size,
+                               [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
+  {
+    local_data[i] = values[i];
+  } );
+
+
 }
 
 void HypreVector::add( globalIndex const * globalIndices,

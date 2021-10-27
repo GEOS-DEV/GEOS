@@ -495,4 +495,29 @@ void compute2DElasticityOperator( MPI_Comm const comm,
 } // namespace testing
 } // namespace geosx
 
+
+#define TYPED_TEST_P2( SuiteName, TestName )                             \
+  namespace GTEST_SUITE_NAMESPACE_( SuiteName ) {                       \
+    template< typename gtest_TypeParam_ >                              \
+    class TestName : public SuiteName< gtest_TypeParam_ > {             \
+private:                                                         \
+      typedef SuiteName< gtest_TypeParam_ > TestFixture;                \
+      typedef gtest_TypeParam_ TypeParam;                             \
+      void TestBody() override;                                       \
+public:                                                           \
+      void TestBody2();                                               \
+    };                                                                \
+    static bool gtest_ ## TestName ## _defined_ GTEST_ATTRIBUTE_UNUSED_ = \
+      GTEST_TYPED_TEST_SUITE_P_STATE_( SuiteName ).AddTestName(       \
+        __FILE__, __LINE__, GTEST_STRINGIFY_( SuiteName ),          \
+        GTEST_STRINGIFY_( TestName ));                              \
+  }                                                                   \
+  template< typename gtest_TypeParam_ >                                \
+  void GTEST_SUITE_NAMESPACE_(                                        \
+    SuiteName ) ::TestName< gtest_TypeParam_ >::TestBody() {            \
+    TestBody2(); }                                                    \
+  template< typename gtest_TypeParam_ >                                \
+  void GTEST_SUITE_NAMESPACE_(                                        \
+    SuiteName ) ::TestName< gtest_TypeParam_ >::TestBody2()
+
 #endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_

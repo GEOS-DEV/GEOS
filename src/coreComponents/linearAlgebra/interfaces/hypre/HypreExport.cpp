@@ -111,6 +111,7 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     std::transform( ia, ia + numRows + 1, rowOffsets.data(), LvArray::integerConversion< OFFSET_TYPE, HYPRE_Int > );
     std::copy( va, va + numNz, values.data() );
 #endif
+
     GEOSX_ERROR( "IA AND VALUES --- OK!" );
     // We have to handle two cases differently because hypre uses two different struct members
     // (j/big_j) to store the column indices depending on how we obtained the local matrix.
@@ -153,6 +154,7 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
       using LvArray::sortedArrayManipulation::dualSort;
       dualSort( colIndices.data() + rowOffsets[i], colIndices.data() + rowOffsets[i + 1], values.data() + rowOffsets[i] );
     }
+    GEOSX_LOG_RANK( "Exiting sorting" );
 #endif
   }
 
