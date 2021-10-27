@@ -26,6 +26,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshManager.hpp"
 
+
 #include <gtest/gtest.h>
 
 namespace geosx
@@ -127,10 +128,6 @@ void compute2DLaplaceOperator( MPI_Comm comm,
   // total dofs = n^2
   globalIndex N = n * n;
 
-  // Allocate arrays to fill the matrix (values and columns)
-  real64 values[5];
-  globalIndex cols[5];
-
   // Construct a local CRSMatrix
   localIndex const rank = LvArray::integerConversion< localIndex >( MpiWrapper::commRank( comm ) );
   localIndex const nproc = LvArray::integerConversion< localIndex >( MpiWrapper::commSize( comm ) );
@@ -139,18 +136,22 @@ void compute2DLaplaceOperator( MPI_Comm comm,
   localIndex const rowResidual = LvArray::integerConversion< localIndex >( N % nproc );
 
   CRSMatrix< real64, globalIndex > matrix( rank == 0 ? localRowSize + rowResidual : localRowSize, N, 5 );
+  CRSMatrixView< real64, globalIndex > matrixView = matrix.toView();
 
   globalIndex const ilower = rank * localRowSize + ( rank == 0 ? 0 : rowResidual );
-  globalIndex const iupper = ilower + localRowSize + ( rank == 0 ? rowResidual : 0 ) - 1;
+  globalIndex const iupper = ilower + localRowSize + ( rank == 0 ? rowResidual : 0 );
 
-  GEOSX_LOG_RANK_VAR( matrix.numRows() );
-  GEOSX_LOG_RANK_VAR( matrix.numColumns() );
-  GEOSX_LOG_RANK_VAR( ilower );
-  GEOSX_LOG_RANK_VAR( iupper );
 
   // Loop over rows to fill the matrix
-  for( globalIndex i = ilower; i <= iupper; i++ )
+  forAll< parallelDevicePolicy<> >( iupper - ilower, [=] GEOSX_HOST_DEVICE ( globalIndex const iRow )
   {
+
+    // Allocate arrays to fill the matrix (values and columns)
+    real64 values[5];
+    globalIndex cols[5];
+
+    globalIndex const i = iRow + ilower;
+
     // Re-set the number of non-zeros for row i to 0.
     localIndex nnz = 0;
 
@@ -192,11 +193,11 @@ void compute2DLaplaceOperator( MPI_Comm comm,
     }
 
     // Set the values for row i
-    matrix.insertNonZeros( LvArray::integerConversion<localIndex>( i - ilower ), cols, values, nnz );
-  }
+    matrixView.insertNonZeros( LvArray::integerConversion< localIndex >( i - ilower ), cols, values, nnz );
+  } );
 
   // Construct the 2D Laplace matrix
-  laplace2D.create( matrix.toViewConst(), comm);
+  laplace2D.create( matrix.toViewConst(), comm );
 }
 
 /**
@@ -207,11 +208,12 @@ void compute2DLaplaceOperator( MPI_Comm comm,
  * @param nu Poisson ratio
  * @param Ke the output stiffness matrix
  */
+GEOSX_HOST_DEVICE
 inline void Q12d_local( real64 const & hx,
                         real64 const & hy,
                         real64 const & E,
                         real64 const & nu,
-                        arraySlice2d< real64 > const & Ke )
+                        real64 (& Ke)[8][8] )
 {
   real64 fac = E / ( 1. - 2. * nu ) / ( 1. + nu );
 
@@ -224,69 +226,93 @@ inline void Q12d_local( real64 const & hx,
                - ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
   for( localIndex i = 0; i < 8; i += 2 )
   {
-    Ke( i, i ) = Dxx;
-    Ke( i + 1, i + 1 ) = Dyy;
+    Ke[i][i] = Dxx;
+    Ke[i+1][i+1] = Dyy;
   }
 
   // --- Fill upper triangular part
   // --- --- Ke( 0, 1:7 )
-  Ke( 0, 1 ) = fac / 8.;
-  Ke( 0, 2 ) = ( fac * hx * ( 1. - 2. * nu ) ) / ( 12. * hy )
-               + ( fac * hy * ( -1. + nu ) ) / ( 3. * hx );
-  Ke( 0, 3 ) = ( fac * ( -1 + 4. * nu ) ) / 8.;
-  Ke( 0, 4 ) = ( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
-               + ( fac * hx * ( -1. + 2. * nu ) ) / ( 12. * hy );
-  Ke( 0, 5 ) = -Ke( 0, 1 );
-  Ke( 0, 6 ) = -( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
-               + ( fac * hx * ( -1. + 2. * nu ) ) / ( 6. * hy );
-  Ke( 0, 7 ) = -( fac * ( -1. + 4. * nu ) ) / 8.;
+  Ke[0][1] = fac / 8.;
+  Ke[0][2] = ( fac * hx * ( 1. - 2. * nu ) ) / ( 12. * hy )
+             + ( fac * hy * ( -1. + nu ) ) / ( 3. * hx );
+  Ke[0][3] = ( fac * ( -1 + 4. * nu ) ) / 8.;
+  Ke[0][4] = -( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
+             + ( fac * hx * ( -1. + 2. * nu ) ) / ( 6. * hy );
+  Ke[0][5] = -( fac * ( -1. + 4. * nu ) ) / 8.;
+  Ke[0][6] = ( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
+             + ( fac * hx * ( -1. + 2. * nu ) ) / ( 12. * hy );
+  Ke[0][7] = -Ke[0][1];
 
   // --- --- Ke( 1, 2:7 )
-  Ke( 1, 2 ) = Ke( 0, 7 );
-  Ke( 1, 3 ) = -( fac * ( hy * hy * ( 1. - 2. * nu ) + hx * hx * ( -1. + nu ) ) ) / ( 6. * hx * hy );
-  Ke( 1, 4 ) = Ke( 0, 5 );
-  Ke( 1, 5 ) = ( fac * hx * ( -1. + nu ) ) / ( 6. * hy ) + ( fac * hy * ( -1. + 2. * nu ) ) / ( 12. * hx );
-  Ke( 1, 6 ) = Ke( 0, 3 );
-  Ke( 1, 7 ) = ( fac * hy * ( 1. - 2. * nu ) ) / ( 12. * hx )
-               + ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
+  Ke[1][2] = Ke[0][5];
+  Ke[1][3] = -( fac * ( hy * hy * ( 1. - 2. * nu ) + hx * hx * ( -1. + nu ) ) ) / ( 6. * hx * hy );
+  Ke[1][4] = Ke[0][3];
+  Ke[1][5] = ( fac * hy * ( 1. - 2. * nu ) ) / ( 12. * hx )
+             + ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
+  Ke[1][6] = Ke[0][7];
+  Ke[1][7] = ( fac * hx * ( -1. + nu ) ) / ( 6. * hy ) + ( fac * hy * ( -1. + 2. * nu ) ) / ( 12. * hx );
 
   // --- --- Ke( 2, 3:7 )
-  Ke( 2, 3 ) = Ke( 0, 5 );
-  Ke( 2, 4 ) = Ke( 0, 6 );
-  Ke( 2, 5 ) = Ke( 1, 6 );
-  Ke( 2, 6 ) = ( fac * hy * ( -1 + nu ) ) / ( 6. * hx ) + ( fac * hx * ( -1. + 2. * nu ) ) / ( 12. * hy );
-  Ke( 2, 7 ) = Ke( 0, 1 );
+  Ke[2][3] = Ke[0][7];
+  Ke[2][6] = Ke[0][4];
+  Ke[2][7] = Ke[1][4];
+  Ke[2][4] = ( fac * hy * ( -1 + nu ) ) / ( 6. * hx ) + ( fac * hx * ( -1. + 2. * nu ) ) / ( 12. * hy );
+  Ke[2][5] = Ke[0][1];
 
   // --- --- Ke( 3, 4:7 )
-  Ke( 3, 4 ) = Ke( 1, 2 );
-  Ke( 3, 5 ) = Ke( 1, 7 );
-  Ke( 3, 6 ) = Ke( 0, 1 );
-  Ke( 3, 7 ) = Ke( 1, 5 );
+  Ke[3][4] = Ke[0][1];
+  Ke[3][5] = Ke[1][7];
+  Ke[3][6] = Ke[1][2];
+  Ke[3][7] = Ke[1][5];
 
   // --- --- Ke( 4, 5:7 )
-  Ke( 4, 5 ) = Ke( 0, 1 );
-  Ke( 4, 6 ) = Ke( 0, 2 );
-  Ke( 4, 7 ) = Ke( 0, 3 );
+  Ke[4][5] = Ke[0][7];
+  Ke[4][6] = Ke[0][2];
+  Ke[4][7] = Ke[0][5];
 
   // --- --- Ke( 5, 6:7 )
-  Ke( 5, 6 ) = Ke( 0, 7 );
-  Ke( 5, 7 ) = Ke( 1, 3 );
+  Ke[5][6] = Ke[0][3];
+  Ke[5][7] = Ke[1][3];
 
   // --- --- Ke( 6, 7 )
-  Ke( 6, 7 ) = Ke( 0, 5 );
+  Ke[6][7] = Ke[0][1];
 
   // --- Fill lower triangular part
   for( localIndex i = 1; i < 8; ++i )
   {
     for( localIndex j = 0; j < i; ++j )
     {
-      Ke( i, j ) = Ke( j, i );
+      Ke[i][j] = Ke[j][i];
     }
   }
 }
 
 /**
- * @brief Compute the 2D elasticity (plane strain) operator
+ * @brief Compute cell dof indices for a quad element.
+ * @param iCell global cell index
+ * @param nCellsX number of cells in the X-direction
+ * @param localDofIndex indices of local degrees of freedom
+ */
+GEOSX_HOST_DEVICE
+inline void computeQuadElementDofIndices( globalIndex const & iCell,
+                                          globalIndex const & nCellsX,
+                                          globalIndex (& localDofIndex)[8] )
+{
+  globalIndex cellNodes[4];
+  cellNodes[0] = iCell / nCellsX + iCell;
+  cellNodes[1] = cellNodes[0] + 1;
+  cellNodes[2] = cellNodes[1] + nCellsX;
+  cellNodes[3] = cellNodes[2] + 1;
+
+  for( integer i = 0; i < 4; ++i )
+  {
+    localDofIndex[2*i] = cellNodes[i] * 2;
+    localDofIndex[2*i+1] = localDofIndex[2*i] + 1;
+  }
+}
+
+/**
+ * @brief Compute the 2D elasticity (plane strain) operator.
  * @tparam MATRIX type of output matrix
  * @param comm MPI communicator
  * @param domainSizeX domain size in the X-direction
@@ -327,47 +353,141 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   localIndex const nLocalCells = LvArray::integerConversion< localIndex >( nCellsY / nproc * nCellsX );
   localIndex const nExtraCells = LvArray::integerConversion< localIndex >( nCells ) - nLocalCells * nproc;
   globalIndex const iCellLower = rank * nLocalCells + ( rank == 0 ? 0 : nExtraCells );
-  globalIndex const iCellUpper = iCellLower + nLocalCells + ( rank == 0 ? 0 : nExtraCells );
+  globalIndex const iCellUpper = iCellLower + nLocalCells + ( rank == 0 ? nExtraCells : 0 );
 
   // Compute node partitioning
   globalIndex const iNodeLower = iCellLower / nCellsX + iCellLower;
   globalIndex const iNodeUpper = iCellUpper / nCellsX + iCellUpper + ( rank == nproc - 1 ? nCellsX + 1 : 0 );
   localIndex const nLocalNodes = iNodeUpper - iNodeLower;
 
+  // Construct a local CRSMatrix
+  SparsityPattern< globalIndex > sparsity( nLocalNodes * 2,
+                                           ( nCellsX + 1 ) * ( nCellsY + 1 ) * 2,
+                                           18 );
+
+
   // Construct local stiffness matrix (same for all cells)
-  stackArray2d< real64, 8 * 8 > Ke( 8, 8 );
+  real64 Ke[8][8];
   Q12d_local( hx, hy, youngModulus, poissonRatio, Ke );
 
-  // Create a matrix of global size N with at most 18 non-zeros per row
-  elasticity2D.createWithLocalSize( nLocalNodes * 2, 18, comm );
+  globalIndex iStart = LvArray::math::max( iCellLower - nCellsX, globalIndex( 0 ) );
+  globalIndex iEnd   = LvArray::math::min( iCellUpper + nCellsX, nCells );
 
-  // Open the matrix
-  elasticity2D.open();
+  globalIndex minGlobalDof = iNodeLower*2;
+  globalIndex maxGlobalDof = iNodeUpper*2 - 1;
 
-  // Loop over grid cells
-  stackArray1d< globalIndex, 4 > cellNodes( 4 );
-  stackArray1d< globalIndex, 8 > localDofIndex( 8 );
-
-  for( globalIndex iCell = iCellLower; iCell < iCellUpper; ++iCell )
+#if 1
+  for( globalIndex iCell = iStart; iCell < iEnd-iStart; ++iCell )
   {
+    // Loop over grid cells
+    globalIndex localDofIndex[8];
 
-    // Compute local DOF global indeces
-    cellNodes( 0 ) = iCell / nCellsX + iCell;
-    cellNodes( 1 ) = cellNodes( 0 ) + 1;
-    cellNodes( 3 ) = cellNodes( 1 ) + nCellsX;
-    cellNodes( 2 ) = cellNodes( 3 ) + 1;
-    for( localIndex i = 0; i < 4; ++i )
+    computeQuadElementDofIndices( iCell, nCellsX, localDofIndex );
+
+    // Element matrix assembly into the local matrix
+
+    for( integer i = 0; i < 8; ++i )
     {
-      localDofIndex( 2 * i ) = cellNodes( i ) * 2;
-      localDofIndex( 2 * i + 1 ) = localDofIndex( 2 * i ) + 1;
+      globalIndex ind = localDofIndex[i] - minGlobalDof;
+      if( ( 0 <= ind ) && ( localDofIndex[i] <= maxGlobalDof )  )
+      {
+        sparsity.insertNonZeros( LvArray::integerConversion< localIndex >( ind ),
+                                 localDofIndex,
+                                 localDofIndex + 8 );
+      }
     }
+  }
+#else // not working on Lassen
+  SparsityPatternView< globalIndex > sparsityView = sparsity.toView();
+  forAll< parallelDevicePolicy<> >( iEnd-iStart, [=] GEOSX_HOST_DEVICE ( localIndex const iCell )
+  {
+    // Loop over grid cells
+    globalIndex localDofIndex[8];
 
-    // Assemble local stiffness matrix and right-hand side
-    elasticity2D.insert( localDofIndex.data(), localDofIndex.data(), Ke.data(), 8, 8 );
+    computeQuadElementDofIndices( iCell + iStart, nCellsX, localDofIndex );
+
+    // Element matrix assembly into the local matrix
+
+    for( integer i = 0; i < 8; ++i )
+    {
+      globalIndex ind = localDofIndex[i] - minGlobalDof;
+      if( ( 0 <= ind ) && ( localDofIndex[i] <= maxGlobalDof )  )
+      {
+        sparsityView.insertNonZeros( LvArray::integerConversion< localIndex >( ind ),
+                                     localDofIndex,
+                                     localDofIndex + 8 );
+      }
+    }
+  } );
+#endif
+
+  sparsity.compress();
+
+  CRSMatrix< real64, globalIndex > matrix;
+  matrix.assimilate< parallelDevicePolicy<> >( std::move( sparsity ) );
+  CRSMatrixView< real64, globalIndex > matrixView = matrix.toView();
+
+  forAll< parallelDevicePolicy<> >( iEnd-iStart, [=] GEOSX_HOST_DEVICE ( localIndex const iCell )
+  {
+    // Loop over grid cells
+    globalIndex localDofIndex[8];
+    computeQuadElementDofIndices( iCell + iStart, nCellsX, localDofIndex );
+
+    // Element matrix assembly into the local matrix
+    for( integer i = 0; i < 8; ++i )
+    {
+      globalIndex ind = localDofIndex[i] - minGlobalDof;
+      if( ( 0 <= ind ) && ( localDofIndex[i] <= maxGlobalDof )  )
+      {
+        matrixView.addToRowBinarySearch< parallelDeviceAtomic >( LvArray::integerConversion< localIndex >( ind ),
+                                                                 localDofIndex,
+                                                                 Ke[i],
+                                                                 8 );
+      }
+    }
+  } );
+
+  // Impose Dirichlet boundary conditions: fix domain bottom (first 2*(nCellsX + 1) rows of matrix)
+  if( rank == 0 )
+  {
+    forAll< parallelDevicePolicy<> >( 2 * (nCellsX + 1), [=] GEOSX_HOST_DEVICE ( localIndex const localRow )
+    {
+      arraySlice1d< globalIndex const > const columns = matrixView.getColumns( localRow );
+      arraySlice1d< real64 > const entries = matrixView.getEntries( localRow );
+      localIndex const numEntries = matrixView.numNonZeros( localRow );
+
+      for( localIndex j = 0; j < numEntries; ++j )
+      {
+        if( columns[ j ] != localRow )
+        {
+          entries[ j ] = 0;
+        }
+      }
+    } );
   }
 
-  // Close the matrix
-  elasticity2D.close();
+//  //////////////////
+//  if( rank == 0 )
+//  {
+//    for( localIndex iRow = 0; iRow < matrix.numRows(); ++iRow )
+//    {
+//      arraySlice1d< globalIndex const > const columns = matrix.getColumns( iRow );
+//      arraySlice1d< real64 > const entries = matrix.getEntries( iRow );
+//      localIndex const numEntries = matrix.numNonZeros( iRow );
+//      GEOSX_LOG_RANK_VAR( iRow );
+//      GEOSX_LOG_RANK_VAR( numEntries );
+//      GEOSX_LOG_RANK_VAR( columns );
+//      GEOSX_LOG_RANK_VAR( entries );
+//    }
+//  }
+//  //////////////////
+  // Construct the 2D elasticity (plane strain) operator
+  elasticity2D.create( matrix.toViewConst(), comm );
+
+//  //////////////////////////
+//  elasticity2D.write("mat.mtx");
+//  GEOSX_ERROR("Stop here");
+//  //////////////////////////
 }
 
 ///@}

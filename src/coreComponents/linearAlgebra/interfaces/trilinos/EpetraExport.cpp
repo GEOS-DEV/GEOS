@@ -46,9 +46,9 @@ EpetraExport::~EpetraExport() = default;
 
 template< typename OFFSET_TYPE, typename COLUMN_TYPE >
 void EpetraExport::exportCRS( EpetraMatrix const & mat,
-		                      arrayView1d< OFFSET_TYPE > const & rowOffsets,
-							  arrayView1d< COLUMN_TYPE > const & colIndices,
-							  arrayView1d< real64 > const & values ) const
+                              arrayView1d< OFFSET_TYPE > const & rowOffsets,
+                              arrayView1d< COLUMN_TYPE > const & colIndices,
+                              arrayView1d< real64 > const & values ) const
 {
 
   int const rank = MpiWrapper::commRank( mat.getComm() );
@@ -75,11 +75,11 @@ void EpetraExport::exportCRS( EpetraMatrix const & mat,
     // contains the global ID of local columns
     globalIndex const * const globalColumns = localMatrix->ColMap().MyGlobalElements64();
 
-	///////////////
+    ///////////////
     rowOffsets.move( LvArray::MemorySpace::host, false );
-	colIndices.move( LvArray::MemorySpace::host, false );
-	values.move( LvArray::MemorySpace::host, false );
-	/////////
+    colIndices.move( LvArray::MemorySpace::host, false );
+    values.move( LvArray::MemorySpace::host, false );
+    /////////
 
     std::transform( ia, ia + localMatrix->NumMyRows() + 1, rowOffsets.data(), LvArray::integerConversion< OFFSET_TYPE, int > );
     std::transform( ja, ja + localMatrix->NumMyNonzeros(), colIndices.data(),
@@ -136,9 +136,9 @@ void EpetraExport::importVector( real64 const * values,
 #define INST_EPETRA_EXPORT_CRS( OFFSET_TYPE, COLUMN_TYPE ) \
   template void \
   EpetraExport::exportCRS< OFFSET_TYPE, COLUMN_TYPE >( EpetraMatrix const &, \
-		                                               arrayView1d< OFFSET_TYPE > const &, \
-													   arrayView1d< COLUMN_TYPE > const &, \
-													   arrayView1d< real64 > const & ) const
+                                                       arrayView1d< OFFSET_TYPE > const &, \
+                                                       arrayView1d< COLUMN_TYPE > const &, \
+                                                       arrayView1d< real64 > const & ) const
 
 // Add other instantiations as needed (only use built-in types)
 INST_EPETRA_EXPORT_CRS( int, int );

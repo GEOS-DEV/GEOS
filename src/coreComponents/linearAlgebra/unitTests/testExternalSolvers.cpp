@@ -109,6 +109,13 @@ protected:
     sol_comp.createWithLocalSize( sol_true.localSize(), sol_true.getComm() );
     sol_comp.zero();
 
+    /////////////////////////////
+//    sol_true.write("sol_true.mtx");
+//    rhs.write("rhs.mtx");
+//    sol_comp.write("sol_comp.mtx");
+//    GEOSX_ERROR("OK");
+    /////////////////////////////
+
     // Create the solver and solve the system
     auto solver = LAI::createSolver( params );
     solver->setup( matrix );
@@ -118,6 +125,9 @@ protected:
     // Check that solution is within epsilon of true
     Vector sol_diff( sol_comp );
     sol_diff.axpy( -1.0, sol_true );
+
+    sol_comp.write( "sol_comp.mtx" );
+    sol_diff.write( "sol_diff.mtx" );
     real64 const relTol = cond_est * params.krylov.relTolerance;
     EXPECT_LT( sol_diff.norm2() / sol_true.norm2(), relTol );
   }
@@ -138,7 +148,7 @@ protected:
 
   void SetUp() override
   {
-    globalIndex constexpr n = 100;
+    globalIndex constexpr n = 4;//100;
     geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
 
     // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
@@ -203,17 +213,9 @@ protected:
   {
     globalIndex constexpr n = 100;
     geosx::testing::compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );
-
-    // Impose Dirichlet boundary conditions: fix domain bottom (first 2*(nCellsX + 1) rows of matrix)
-    this->matrix.open();
-    for( globalIndex iRow = 0; iRow < 2 * (n + 1); ++iRow )
-    {
-      if( this->matrix.getLocalRowID( iRow ) >= 0 )
-      {
-        this->matrix.clearRow( iRow, true );
-      }
-    }
-    this->matrix.close();
+//    globalIndex constexpr nx = 3;
+//    globalIndex constexpr ny = 7;
+//    geosx::testing::compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, nx, ny, 10000., 0.2, this->matrix );
     this->cond_est = 1e4; // not a true condition number estimate, but enough to pass tests
   }
 };
