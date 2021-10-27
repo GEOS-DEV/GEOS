@@ -662,10 +662,14 @@ void importFieldOnCellBlock( string const & name, std::vector<vtkIdType > const 
   string const cellBlockName = region_id != -1  ? std::to_string(region_id) + "_" + name : name;
   elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
   {
-    if( subRegion.getName() == name)
+    if( subRegion.getName() == cellBlockName)
     {
       /// Writing properties
       std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
+      for( string namee : materialWrapperNames )
+      {
+        GEOSX_LOG_RANK_0(namee);
+      }
       for( vtkDataArray * vtkArray : arraysTobeImported )
       {
         WrapperBase & wrapper = subRegion.getWrapperBase( vtkArray->GetName() );
@@ -699,10 +703,12 @@ void importFieldOnCellBlock( string const & name, std::vector<vtkIdType > const 
 void VTKMeshGenerator::importFields( DomainPartition & domain ) const 
 {
 
+  GEOSX_LOG_RANK_0("import fields");
   ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( 0 ).getElemManager();
   auto importFieldsForElementType= [&](string const & name,std::map<int,std::vector<vtkIdType >> const & cellBlocks ) {
     for( auto & cellBlock : cellBlocks )
     {
+      GEOSX_LOG_RANK_0("importing a cell block");
       importFieldOnCellBlock(name, cellBlock.second, cellBlock.first, elemManager, m_arraysToBeImported);
     }
   };
@@ -813,22 +819,15 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   domain.getMetisNeighborList() = computePotentialNeighborLists( m_vtkMesh->GetBounds(), globalLength );
 
-  // region id link to their number of cells
-  std::map<int,std::vector<vtkIdType >> regionsHex;
-  std::map<int,std::vector<vtkIdType >> regionsTetra;
-  std::map<int,std::vector<vtkIdType >> regionsWedges;
-  std::map<int,std::vector<vtkIdType >> regionsPyramids;
-
-  // surface and greionids
   std::map<int, std::vector<vtkIdType >> surfaces; //local to this rank
   std::vector<int> allSurfaces; // global to the whole mesh
   std::vector< string > allCellBlockNames;
 
-  countCellsAndFaces( regionsHex, regionsTetra, regionsWedges, regionsPyramids, surfaces, allSurfaces, *m_vtkMesh);
+  countCellsAndFaces( m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, surfaces, allSurfaces, *m_vtkMesh);
 
   m_arraysToBeImported = findArrayToBeImported(*m_vtkMesh);
 
-  writeCellBlocks( domain,regionsHex, regionsTetra, regionsWedges, regionsPyramids, m_arraysToBeImported, *m_vtkMesh );
+  writeCellBlocks( domain,m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, m_arraysToBeImported, *m_vtkMesh );
 
   importFields( domain );
 
