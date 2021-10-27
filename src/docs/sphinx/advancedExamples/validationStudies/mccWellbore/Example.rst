@@ -17,9 +17,11 @@ Everything required is contained within two GEOSX input files located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/solidMechanics/benchmarks/PlasticWell_Base.xml
-  src/coreComponents/physicsSolvers/solidMechanics/benchmarks/ModifiedCamClay_Verification.xml
+  inputFiles/solidMechanics/ModifiedCamClayWellbore_base.xml
 
+.. code-block:: console
+
+  inputFiles/solidMechanics/ModifiedCamClayWellbore_benchmark.xml
 
 ------------------------------------------------------------------
 Description of the case
@@ -72,7 +74,7 @@ to conform with the wellbore geometry. This mesh is defined as a cell block with
 ``cb1``.
 
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/PlasticWell_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/ModifiedCamClayWellbore_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_MESH -->
     :end-before: <!-- SPHINX_WELLBORE_MESH_END -->
@@ -88,7 +90,7 @@ The problem is run as ``QuasiStatic`` without considering inertial effects.
 The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. 
 The material is named as ``rock``, whose mechanical properties are specified in the ``Constitutive`` section.
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/PlasticWell_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/ModifiedCamClayWellbore_base.xml
   :language: xml
   :start-after: <!-- SPHINX_WELLBORE_SOLVER -->
   :end-before: <!-- SPHINX_WELLBORE_SOLVER_END -->
@@ -101,7 +103,7 @@ Constitutive laws
 For this drained wellbore problem, we simulate the elastoplastic deformation caused by wellbore expansion.
 A homogeneous domain with one solid material is assumed, whose mechanical properties are specified in the ``Constitutive`` section: 
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/MCC_Verification.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/ModifiedCamClayWellbore_base.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_MATERIAL -->
     :end-before: <!-- SPHINX_WELLBORE_MATERIAL_END -->
@@ -134,7 +136,7 @@ The remaining parts of the outer boundaries are subjected to roller constraints.
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/MCC_Verification.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/ModifiedCamClayWellbore_base.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_BC -->
     :end-before: <!-- SPHINX_WELLBORE_BC_END -->
@@ -145,7 +147,7 @@ A table function ``timeFunction`` is used to define the time-dependent traction 
 The ``coordinates`` and ``values`` form a time-magnitude
 pair for the loading time history. In this case, the loading magnitude increases linearly as the time evolves. 
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/solidMechanics/benchmarks/MCC_Verification.xml
+.. literalinclude:: ../../../../../../inputFiles/solidMechanics/ModifiedCamClayWellbore_base.xml
     :language: xml
     :start-after: <!-- SPHINX_WELLBORE_TABLE -->
     :end-before: <!-- SPHINX_WELLBORE_TABLE_END -->
