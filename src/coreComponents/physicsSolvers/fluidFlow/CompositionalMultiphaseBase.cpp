@@ -891,41 +891,69 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
                    [&]( FieldSpecificationBase const & fs,
                         string const &,
-                        SortedArrayView< localIndex const > const & lset,
+                        SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
-
-    GEOSX_ERROR( GEOSX_FMT(
-                   "CompositionalMultiphaseBase {}: source flux boundary conditions are temporarily disabled in all the compositional multiphase solvers, please use a Dirichlet boundary condition or a well in the meantime",
-                   getName() ) );
-
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank =
       subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-    // TODO: can we avoid having to rebuild the set and moving host->device?
-    SortedArray< localIndex > localSet;
-    for( localIndex const a : lset )
-    {
-      if( ghostRank[a] < 0 )
-      {
-        localSet.insert( a );
-      }
-    }
+    // Step 1: get the values of the source boundary condition that need to be added to the rhs
+    // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
+    // compositional solvers
 
-    fs.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                       parallelDevicePolicy<> >( localSet.toViewConst(),
-                                                                 time + dt,
-                                                                 dt,
-                                                                 subRegion,
-                                                                 dofNumber,
-                                                                 dofManager.rankOffset(),
-                                                                 localMatrix,
-                                                                 localRhs,
-                                                                 [] GEOSX_HOST_DEVICE ( localIndex const )
+    array1d< globalIndex > dofArray( targetSet.size() );
+    array1d< real64 > rhsContributionArray( targetSet.size() );
+    arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
+    localIndex const rankOffset = dofManager.rankOffset();
+
+    // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
+    fs.computeRhsContribution< FieldSpecificationAdd,
+                               parallelDevicePolicy<> >( targetSet.toViewConst(),
+                                                         time + dt,
+                                                         dt,
+                                                         subRegion,
+                                                         dofNumber,
+                                                         rankOffset,
+                                                         localMatrix,
+                                                         dofArray.toView(),
+                                                         rhsContributionArrayView,
+                                                         [] GEOSX_HOST_DEVICE ( localIndex const )
     {
       return 0.0;
+    } );
+
+    // Step 2: we are ready to add the right-hand side contributions, taking into account our equation layout
+
+    integer const fluidComponentId = fs.getComponent();
+    integer const numFluidComponents = m_numComponents;
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
+                                                         rankOffset,
+                                                         ghostRank,
+                                                         fluidComponentId,
+                                                         numFluidComponents,
+                                                         dofNumber,
+                                                         rhsContributionArrayView,
+                                                         localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      // we need to filter out ghosts here, because targetSet may contain them
+      localIndex const ei = targetSet[a];
+      if( ghostRank[ei] >= 0 )
+      {
+        return;
+      }
+
+      // for all "fluid components", we add the value to the total mass balance equation
+      globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
+      localRhs[totalMassBalanceRow] += rhsContributionArrayView[a];
+
+      // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
+      if( fluidComponentId < numFluidComponents - 1 )
+      {
+        globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
+        localRhs[compMassBalanceRow] += rhsContributionArrayView[a];
+      }
     } );
 
   } );
