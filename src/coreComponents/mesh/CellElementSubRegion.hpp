@@ -211,6 +211,7 @@ public:
    * @param elementIndex the local index of the target element
    * @param localFaceIndex the local index of the target face in the element  (this will be 0-numFacesInElement)
    * @param nodeIndices a reference to the array of node indices of the face
+   * @deprecated This method will be removed soon.
    */
   void getFaceNodes( localIndex const elementIndex,
                      localIndex const localFaceIndex,
