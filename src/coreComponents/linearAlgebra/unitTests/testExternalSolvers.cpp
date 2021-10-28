@@ -148,7 +148,7 @@ protected:
 
   void SetUp() override
   {
-    globalIndex constexpr n = 4;//100;
+    globalIndex constexpr n = 100;
     geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
 
     // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2

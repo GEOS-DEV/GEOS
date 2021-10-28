@@ -71,11 +71,11 @@ using SSlong = SuiteSparse_long;
 
 struct SuiteSparseData
 {
-  array1d< SSlong > rowPtr;          /// row pointers
-  array1d< SSlong > colIndices;      /// column indices
-  array1d< double > values;          /// values
-  array1d< double > rhs;             /// right-hand side vector
-  array1d< double > sol;             /// solution vector
+  array1d< SSlong > rowPtr{};          /// row pointers
+  array1d< SSlong > colIndices{};      /// column indices
+  array1d< double > values{};          /// values
+  array1d< double > rhs{};             /// right-hand side vector
+  array1d< double > sol{};             /// solution vector
   real64 info[UMFPACK_INFO]{};       /// data structure to gather various info
   real64 control[UMFPACK_CONTROL]{}; /// SuiteSparse options
   void * symbolic{};                 /// pointer to the symbolic factorization
@@ -135,47 +135,36 @@ void SuiteSparse< LAI >::setup( Matrix const & mat )
 
   // Export needs to be carried collectively on all ranks
   m_export = std::make_unique< typename Matrix::Export >( mat, m_workingRank );
-  GEOSX_LOG_RANK( " Entering exportCRS " );
-  m_export->exportCRS( mat,
-                       m_data->rowPtr.toView(),
-                       m_data->colIndices.toView(),
-                       m_data->values.toView() );
 
-
-  GEOSX_ERROR( "m_export->exportCRS(...) --- OK!" );
-
-  GEOSX_ERROR( "OK" );
-  m_data->rowPtr.move( LvArray::MemorySpace::host, false );
-  m_data->colIndices.move( LvArray::MemorySpace::host, false );
-  m_data->values.move( LvArray::MemorySpace::host, false );
-
-  //////////////////////////////////////////////////////////////////////////
-  //GEOSX_LOG_RANK_0( "localIndex is alias of " <<LvArray::system::demangle( typeid(localIndex).name() ) );
-  //GEOSX_LOG_RANK_0( "globalIndex is alias of " <<LvArray::system::demangle( typeid(SSlong).name() ) );
-  //GEOSX_LOG_RANK_0( "SSlong is alias of " <<LvArray::system::demangle( typeid(SSlong).name() ) );
-  //GEOSX_LOG_RANK_0( "SuiteSparse_long is alias of " <<LvArray::system::demangle( typeid(SuiteSparse_long).name() ) );
-  //for( SSlong i = 0; i < numGR; ++i)
-  //{
-  //  for( SSlong j = m_data->rowPtr[i]; j < m_data->rowPtr[i+1]; ++j)
-  //  {
-  //    //printf("%ld %ld %f\n", i, m_data->colIndices[j], m_data->values[j]);
-  //    printf("%d %d %f\n", i, m_data->colIndices[j], m_data->values[j]);
-  //  }
-  //}
-
-  if( m_workingRank == rank )
+  arrayView1d< SSlong > rowPtrView;
+  arrayView1d< SSlong > colIndicesView;
+  arrayView1d< double > valuesView;
+  if( rank == m_workingRank )
   {
-    m_data->control[UMFPACK_PRL] = 5;
-    SSlong const numRows = m_data->rowPtr.size() - 1;
-    umfpack_dl_report_matrix( numRows,
-                              numRows,
-                              m_data->rowPtr.data(),
-                              m_data->colIndices.data(),
-                              m_data->values.data(),
-                              0,
-                              m_data->control );
+    rowPtrView = m_data->rowPtr.toView();
+    colIndicesView = m_data->colIndices.toView();
+    valuesView = m_data->values.toView();
   }
-  //////////////////////////////////////////////////////////////////////////
+  else
+  {
+    array1d< SSlong > dummySSlongArray1d;
+    array1d< double > dummyDoubleArray1d;
+    rowPtrView = dummySSlongArray1d.toView();
+    colIndicesView = dummySSlongArray1d.toView();
+    valuesView = dummyDoubleArray1d.toView();
+  }
+
+  m_export->exportCRS( mat,
+                       rowPtrView,
+                       colIndicesView,
+                       valuesView );
+
+  if( rank == m_workingRank )
+  {
+    m_data->rowPtr.move( LvArray::MemorySpace::host, false );
+    m_data->colIndices.move( LvArray::MemorySpace::host, false );
+    m_data->values.move( LvArray::MemorySpace::host, false );
+  }
 
   // Perform matrix factorization on working rank and sync timer
   {

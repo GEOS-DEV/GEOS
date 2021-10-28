@@ -56,17 +56,10 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
                              arrayView1d< COLUMN_TYPE > const & colIndices,
                              arrayView1d< real64 > const & values ) const
 {
-  GEOSX_LOG_RANK( "Inside export CRS" );
-
   int const rank = MpiWrapper::commRank( mat.getComm() );
 
   // import on target rank if needed, or extract diag+offdiag part in each rank
   hypre_CSRMatrix * localMatrix;
-
-  ///////////////////////////
-  GEOSX_LOG_RANK( "Local matrix gathered --- Entering!" );
-  MpiWrapper::barrier( mat.getComm() );
-  ///////////////////////////
 
   if( m_targetRank < 0 )
   {
@@ -79,8 +72,7 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     localMatrix = hypre_ParCSRMatrixToCSRMatrixAll( mat.unwrapped() );
     GEOSX_ERROR_IF( rank == m_targetRank && !localMatrix, "HypreExport: matrix is empty on target rank" );
   }
-  GEOSX_ERROR( "Local matrix gathered --- OK!" );
-  // export the raw CRS data
+
   if( m_targetRank < 0 || m_targetRank == rank )
   {
     HYPRE_Int const numRows = hypre_CSRMatrixNumRows( localMatrix );
@@ -112,7 +104,6 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     std::copy( va, va + numNz, values.data() );
 #endif
 
-    GEOSX_ERROR( "IA AND VALUES --- OK!" );
     // We have to handle two cases differently because hypre uses two different struct members
     // (j/big_j) to store the column indices depending on how we obtained the local matrix.
     if( m_targetRank < 0 )
@@ -154,7 +145,6 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
       using LvArray::sortedArrayManipulation::dualSort;
       dualSort( colIndices.data() + rowOffsets[i], colIndices.data() + rowOffsets[i + 1], values.data() + rowOffsets[i] );
     }
-    GEOSX_LOG_RANK( "Exiting sorting" );
 #endif
   }
 

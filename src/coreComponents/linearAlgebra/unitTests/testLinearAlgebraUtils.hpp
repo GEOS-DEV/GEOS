@@ -377,7 +377,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   globalIndex maxGlobalDof = iNodeUpper*2 - 1;
 
 #if 1
-  for( globalIndex iCell = iStart; iCell < iEnd-iStart; ++iCell )
+  for( globalIndex iCell = iStart; iCell < iEnd; ++iCell )
   {
     // Loop over grid cells
     globalIndex localDofIndex[8];
