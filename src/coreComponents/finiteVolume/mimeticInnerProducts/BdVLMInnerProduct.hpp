@@ -105,7 +105,7 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
     real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[ 3 ];
     // compute the face geometry data: center, normal, vector from cell center to face center
     faceAreaMat[ ifaceLoc ][ ifaceLoc ] =
-      computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
+      computationalGeometry::centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
                                                  nodePosition,
                                                  faceCenter,
                                                  faceNormal,
