@@ -26,6 +26,19 @@ compilers:
     environment: {}
     extra_rpaths: []
 - compiler:
+    spec: clang@upstream
+    paths:
+      cc: /usr/tce/packages/clang/clang-upstream-2019.03.26/bin/clang
+      cxx: /usr/tce/packages/clang/clang-upstream-2019.03.26/bin/clang++
+      f77: /usr/tce/packages/xl/xl-beta-2019.06.20/bin/xlf_r
+      fc: /usr/tce/packages/xl/xl-beta-2019.06.20/bin/xlf_r
+    flags: {}
+    operating_system: rhel7
+    target: ppc64le
+    modules: []
+    environment: {}
+    extra_rpaths: []
+- compiler:
     spec: gcc@8.3.1
     paths:
       cc: /usr/tce/packages/gcc/gcc-8.3.1/bin/gcc

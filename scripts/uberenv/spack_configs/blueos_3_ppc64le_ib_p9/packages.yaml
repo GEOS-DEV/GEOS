@@ -13,6 +13,8 @@ packages:
     externals:
       - spec: spectrum-mpi@10.3.1.03rtm0 %gcc@8.3.1
         prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-gcc-8.3.1/
+      - spec: spectrum-mpi@10.3.1.03rtm0%clang@upstream
+        prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-upstream-2019.03.26
       - spec: spectrum-mpi@10.3.1.03rtm0 %clang@10.0.1
         prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-ibm-10.0.1-gcc-8.3.1/
       - spec: spectrum-mpi@10.3.1.03rtm0 %clang@11.0.1
