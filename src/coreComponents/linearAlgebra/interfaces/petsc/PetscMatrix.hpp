@@ -213,6 +213,16 @@ public:
                        localIndex const numRows,
                        localIndex const numCols ) override;
 
+  virtual void insert( arrayView1d< globalIndex const > const & rowIndices,
+                       arrayView1d< globalIndex const > const & colIndices,
+                       arrayView1d< real64 const > const & values ) override
+  {
+    GEOSX_UNUSED_VAR( rowIndices, colIndices, values );
+    GEOSX_ERROR( "PetscMatrix::insert( arrayView1d<globalIndex const> const &,"
+                 " arrayView1d<globalIndex const> const &,"
+                 " arrayView1d<real64 const> const & )" );
+  }
+
   virtual void apply( PetscVector const & src,
                       PetscVector & dst ) const override;
 
@@ -251,6 +261,13 @@ public:
                                PetscVector const & vecRight ) override;
 
   virtual void transpose( PetscMatrix & dst ) const override;
+
+  virtual void separateComponentFilter( PetscMatrix & dst,
+                                        localIndex const dofPerPoint ) const override
+  {
+    GEOSX_UNUSED_VAR( dst, dofPerPoint );
+    GEOSX_ERROR( "PetscMatrix::separateComponentFilter() not implemented." );
+  }
 
   virtual real64 clearRow( globalIndex const row,
                            bool const keepDiag = false,

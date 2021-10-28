@@ -127,7 +127,7 @@ char const * xmlInput =
   "  <ElementRegions>\n"
   "    <CellElementRegion name=\"Region1\"\n"
   "                       cellBlocks=\"{cb1}\"\n"
-  "                       materialList=\"{fluid1, rock, relperm, rockPerm, rockPorosity, nullSolid}\"/>\n"
+  "                       materialList=\"{fluid1, rock, relperm}\"/>\n"
   "    <WellElementRegion name=\"wellRegion1\"\n"
   "                       materialList=\"{fluid1, relperm}\"/> \n"
   "    <WellElementRegion name=\"wellRegion2\"\n"

@@ -19,14 +19,18 @@
 #include "xmlWrapper.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
+#include "common/MpiWrapper.hpp"
 #include "dataRepository/KeyNames.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
+namespace xmlWrapper
+{
+
 template< typename T, int SIZE >
-void xmlWrapper::stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue )
+void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue )
 {
   std::istringstream ss( inputValue );
   auto const errorMsg = [&]( auto const & msg )
@@ -63,30 +67,32 @@ void xmlWrapper::stringToInputVariable( Tensor< T, SIZE > & target, string const
   GEOSX_THROW_IF( ss.peek() != std::char_traits< char >::eof(), errorMsg( "Unparsed characters" ), InputError );
 }
 
+template void stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue );
+template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue );
 
-template void xmlWrapper::stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue );
-template void xmlWrapper::stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue );
-
-void xmlWrapper::addIncludedXML( xmlNode & targetNode )
+void addIncludedXML( xmlNode & targetNode, int const level )
 {
+  GEOSX_THROW_IF( level > 100, "XML include level limit reached, please check input for include loops", InputError );
 
   xmlNode const rootNode = targetNode.root();
   string const currentFilePath = rootNode.child( filePathString ).attribute( filePathString ).value();
 
   // Schema currently allows a single unique <Included>, but a non-validating file may include multiple
-  for( xmlNode const includedNode : targetNode.children( includedListTag ) )
+  for( xmlNode includedNode : targetNode.children( includedListTag ) )
   {
-    for( xmlNode const fileNode : includedNode.children() )
+    for( xmlNode fileNode : includedNode.children() )
     {
       // Extract the file name and construct full includedDirPath
       string const includedFilePath = [&]()
       {
         GEOSX_THROW_IF_NE_MSG( string( fileNode.name() ), includedFileTag,
-                               GEOSX_FMT( "Child nodes of <{}> should be named <{}>", includedListTag, includedFileTag ),
+                               GEOSX_FMT( "<{}> must only contain <{}> tags", includedListTag, includedFileTag ),
                                InputError );
         xmlAttribute const nameAttr = fileNode.attribute( "name" );
-        GEOSX_THROW_IF( !nameAttr, GEOSX_FMT( "<{}> nodes must have a 'name' attribute", includedFileTag ), InputError );
         string const fileName = nameAttr.value();
+        GEOSX_THROW_IF( !nameAttr || fileName.empty(),
+                        GEOSX_FMT( "<{}> tag must have a non-empty 'name' attribute", includedFileTag ),
+                        InputError );
         return isAbsolutePath( fileName ) ? fileName : joinPath( splitPath( currentFilePath ).first, fileName );
       }();
 
@@ -105,12 +111,17 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
 
       // Process potential includes in the included file to allow nesting
       includedXmlDocument.append_child( filePathString ).append_attribute( filePathString ).set_value( includedFilePath.c_str() );
-      addIncludedXML( includedRootNode );
+      addIncludedXML( includedRootNode, level + 1 );
 
       // Add each top level tag of imported document to current
       // This may result in repeated XML blocks, which will be implicitly merged when processed
       for( xmlNode importedNode : includedRootNode.children() )
       {
+        // Save path to current file on the node, in order to handle relative paths later
+        if( !importedNode.attribute( filePathString ) )
+        {
+          importedNode.append_attribute( filePathString ).set_value( includedFilePath.c_str() );
+        }
         targetNode.append_copy( importedNode );
       }
     }
@@ -121,28 +132,42 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
   {}
 }
 
-string xmlWrapper::buildMultipleInputXML( string_array const & inputFileList )
+string buildMultipleInputXML( string_array const & inputFileList,
+                              string const & outputDir )
 {
+  if( inputFileList.empty() )
+  {
+    return {};
+  }
   if( inputFileList.size() == 1 )
   {
     return inputFileList[0];
   }
 
-  // Write the composite xml file
-  constexpr char const inputFileName[] = "composite_input.xml";
-  xmlWrapper::xmlDocument compositeTree;
-  xmlWrapper::xmlNode compositeRoot = compositeTree.append_child( dataRepository::keys::ProblemManager );
-  xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( includedListTag );
+  string inputFileName = joinPath( outputDir, "composite_input.xml" );
 
-  for( auto & fileName: inputFileList )
+  // Write the composite xml file on one rank
+  if( MpiWrapper::commRank() == 0 )
   {
-    xmlWrapper::xmlNode fileNode = includedRoot.append_child( includedFileTag );
-    fileNode.append_attribute( "name" ) = fileName.c_str();
+    xmlWrapper::xmlDocument compositeTree;
+    xmlWrapper::xmlNode compositeRoot = compositeTree.append_child( dataRepository::keys::ProblemManager );
+    xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( includedListTag );
+
+    for( auto & fileName: inputFileList )
+    {
+      xmlWrapper::xmlNode fileNode = includedRoot.append_child( includedFileTag );
+      fileNode.append_attribute( "name" ) = fileName.c_str();
+    }
+
+    compositeTree.save_file( inputFileName.c_str() );
   }
 
-  compositeTree.save_file( inputFileName );
+  // Everybody else has to wait before attempting to read
+  MpiWrapper::barrier();
+
   return inputFileName;
 }
 
+} /* namespace xmlWrapper */
 
 } /* namespace geosx */

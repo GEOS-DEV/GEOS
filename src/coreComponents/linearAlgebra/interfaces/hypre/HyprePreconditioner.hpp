@@ -102,6 +102,18 @@ public:
     return m_componentFilterTime;
   }
 
+  /// @return time to construct restrictor matrix.
+  real64 makeRestrictorTime() const
+  {
+    return m_makeRestrictorTime;
+  }
+
+  /// @return time to apply restrictor matrix.
+  real64 computeAuuTime() const
+  {
+    return m_computeAuuTime;
+  }
+
 private:
 
   /**
@@ -134,6 +146,12 @@ private:
 
   /// Timing of separate component matrix construction
   real64 m_componentFilterTime = 0.0;
+
+  /// Timing of the restrictor matrix construction
+  real64 m_makeRestrictorTime = 0.0;
+
+  /// Timing of the cost of applying the restrictor matrix to the system
+  real64 m_computeAuuTime = 0.0;
 };
 
 }

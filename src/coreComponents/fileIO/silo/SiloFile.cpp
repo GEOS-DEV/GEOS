@@ -1272,7 +1272,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
         // check if the field actually exists / plotted on the current subregion
         if( viewPointers[esr].count( fieldName ) > 0 )
         {
-          Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( *( viewPointers[esr].at( fieldName ) ) );
+          auto const & sourceWrapper = Wrapper< std::remove_reference_t< decltype( targetArray ) > >::cast( *( viewPointers[esr].at( fieldName ) ) );
           auto const sourceArray = sourceWrapper.reference().toViewConst();
 
           localIndex const offset = counter * targetArray.strides()[0];
@@ -2148,6 +2148,7 @@ void SiloFile::writeDataField( string const & meshName,
   string_array varnamestring( nvars );
   array1d< array1d< OUTTYPE > > castedField( nvars );
 
+  field.move( LvArray::MemorySpace::host );
 
   for( int i = 0; i < nvars; ++i )
   {
@@ -2159,10 +2160,10 @@ void SiloFile::writeDataField( string const & meshName,
     {
       castedField[i].resize( nels );
       vars[i] = static_cast< void * >( (castedField[i]).data() );
-      for( int k = 0; k < nels; ++k )
-      {
-        castedField[i][k] = SiloFileUtilities::CastField< OUTTYPE >( field[k], i );
-      }
+      forAll< serialPolicy >( nels, [=, &castedField] GEOSX_HOST ( localIndex const k )
+        {
+          castedField[i][k] = SiloFileUtilities::CastField< OUTTYPE >( field[k], i );
+        } );
     }
   }
 
@@ -2273,6 +2274,7 @@ void SiloFile::writeDataField( string const & meshName,
 {
   int const primaryDimIndex = 0;
   int const secondaryDimIndex = 1;
+  field.move( LvArray::MemorySpace::host );
 
   localIndex const npts = field.size( primaryDimIndex );
   localIndex const nvar = field.size( secondaryDimIndex );
@@ -2311,6 +2313,7 @@ void SiloFile::writeDataField( string const & meshName,
   int const primaryDimIndex = 0;
   int const secondaryDimIndex1 = 1;
   int const secondaryDimIndex2 = 2;
+  field.move( LvArray::MemorySpace::host );
 
   localIndex const npts  = field.size( primaryDimIndex );
   localIndex const nvar1 = field.size( secondaryDimIndex1 );
@@ -2403,6 +2406,8 @@ void SiloFile::writeDataField( string const & meshName,
                                string const & multiRoot )
 {
   int nvars = 1;
+  field.move( LvArray::MemorySpace::host );
+
   for( int i=1; i<NDIM; ++i )
   {
     nvars *= field.size( i );

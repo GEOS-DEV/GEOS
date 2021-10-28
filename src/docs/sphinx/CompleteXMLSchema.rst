@@ -15,6 +15,13 @@ Element: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM.rst
 
 
+.. _XML_Aquifer:
+
+Element: Aquifer
+================
+.. include:: ../../coreComponents/schema/docs/Aquifer.rst
+
+
 .. _XML_Benchmarks:
 
 Element: Benchmarks
@@ -813,6 +820,13 @@ Element: SymbolicFunction
 .. include:: ../../coreComponents/schema/docs/SymbolicFunction.rst
 
 
+.. _XML_TableCapillaryPressure:
+
+Element: TableCapillaryPressure
+===============================
+.. include:: ../../coreComponents/schema/docs/TableCapillaryPressure.rst
+
+
 .. _XML_TableFunction:
 
 Element: TableFunction
@@ -927,6 +941,13 @@ Datastructure Definitions
 Datastructure: AcousticSEM
 ==========================
 .. include:: ../../coreComponents/schema/docs/AcousticSEM_other.rst
+
+
+.. _DATASTRUCTURE_Aquifer:
+
+Datastructure: Aquifer
+======================
+.. include:: ../../coreComponents/schema/docs/Aquifer_other.rst
 
 
 .. _DATASTRUCTURE_Benchmarks:
@@ -1753,6 +1774,13 @@ Datastructure: SurfaceGenerator
 Datastructure: SymbolicFunction
 ===============================
 .. include:: ../../coreComponents/schema/docs/SymbolicFunction_other.rst
+
+
+.. _DATASTRUCTURE_TableCapillaryPressure:
+
+Datastructure: TableCapillaryPressure
+=====================================
+.. include:: ../../coreComponents/schema/docs/TableCapillaryPressure_other.rst
 
 
 .. _DATASTRUCTURE_TableFunction:

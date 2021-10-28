@@ -969,9 +969,9 @@ SolidMechanicsLagrangianFEM::
                                        parallelDevicePolicy< 32 > >( targetSet,
                                                                      time_n + dt,
                                                                      targetGroup,
-                                                                     keys::TotalDisplacement,    // TODO fix use of
-                                                                                                 // dummy
-                                                                                                 // name
+                                                                     keys::TotalDisplacement, // TODO fix use of
+                                                                     // dummy
+                                                                     // name
                                                                      dofKey,
                                                                      dofManager.rankOffset(),
                                                                      localMatrix,
