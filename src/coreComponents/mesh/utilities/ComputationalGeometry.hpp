@@ -192,7 +192,7 @@ real64 ComputeSurfaceArea( arrayView2d< real64 const > const & points,
 template< typename CENTER_TYPE, typename NORMAL_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 Centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
+real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
                            CENTER_TYPE && center,
                            NORMAL_TYPE && normal,
@@ -349,9 +349,9 @@ int sign( T const val )
  * @brief Check if a point is inside a convex polyhedron (3D polygon)
  * @tparam POINT_TYPE type of @p point
  * @param[in] nodeCoordinates a global array of nodal coordinates
- * @param[in] faceNodeIndicies ordered lists of node indices for each face of the polyhedron
+ * @param[in] faceNodeIndices ordered lists of node indices for each face of the polyhedron
  * @param[in] point coordinates of the query point
- * @param[in] areaTolerance same as in Centroid_3DPolygon
+ * @param[in] areaTolerance same as in centroid_3DPolygon
  * @return whether the point is inside
  *
  * @note Face nodes must all be ordered the same way (i.e. CW or CCW),
@@ -361,32 +361,87 @@ int sign( T const val )
  */
 template< typename POINT_TYPE >
 GEOSX_HOST_DEVICE
-bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
-                              array1d< array1d< localIndex > > const & faceNodeIndicies,
+bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
+                              arrayView1d< arrayView1d< localIndex const > const > const & faceNodeIndices,
                               POINT_TYPE const & point,
                               real64 const areaTolerance = 0.0 )
 {
-  localIndex const numFaces = faceNodeIndicies.size( 0 );
+  localIndex const numFaces = faceNodeIndices.size( 0 );
   R1Tensor faceCenter, faceNormal;
-  int prev_sign = 0;
+  int prevSign = 0;
 
   for( localIndex kf = 0; kf < numFaces; ++kf )
   {
-    Centroid_3DPolygon( faceNodeIndicies[kf], nodeCoordinates, faceCenter, faceNormal, areaTolerance );
+    centroid_3DPolygon( faceNodeIndices[kf], nodeCoordinates, faceCenter, faceNormal, areaTolerance );
 
     LvArray::tensorOps::subtract< 3 >( faceCenter, point );
     int const s = sign( LvArray::tensorOps::AiBi< 3 >( faceNormal, faceCenter ) );
 
     // all dot products should be non-negative (for outward normals) or non-positive (for inward normals)
-    if( prev_sign * s < 0 )
+    if( prevSign * s < 0 )
     {
       return false;
     }
-    prev_sign = s;
+    prevSign = s;
   }
 
   return true;
 }
+
+/**
+ * @brief Check if a point is inside a convex polyhedron (3D polygon)
+ * @tparam POINT_TYPE type of @p point
+ * @param[in] nodeCoordinates a global array of nodal coordinates
+ * @param[in] faceIndices global indices of the faces of the cell
+ * @param[in] facesToNodes map from face to nodes
+ * @param[in] elemCenter coordinates of the element center
+ * @param[in] point coordinates of the query point
+ * @param[in] areaTolerance same as in centroid_3DPolygon
+ * @return whether the point is inside
+ *
+ * @note For faces with n>3 nodes that are non-planar, average normal is used
+ */
+template< typename POINT_TYPE >
+GEOSX_HOST_DEVICE
+bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
+                              arraySlice1d< localIndex const > const & faceIndices,
+                              ArrayOfArraysView< localIndex const > const & facesToNodes,
+                              POINT_TYPE const & elemCenter,
+                              POINT_TYPE const & point,
+                              real64 const areaTolerance = 0.0 )
+{
+  localIndex const numFaces = faceIndices.size();
+  R1Tensor faceCenter, faceNormal, cellToFaceVec;
+  int prevSign = 0;
+
+  for( localIndex kf = 0; kf < numFaces; ++kf )
+  {
+    // compute the face normal at this face
+    localIndex const faceIndex = faceIndices[kf];
+    centroid_3DPolygon( facesToNodes[faceIndex], nodeCoordinates, faceCenter, faceNormal, areaTolerance );
+
+    // make sure that the normal is outward pointing
+    LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
+    LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
+    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
+    {
+      LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
+    }
+
+    // compute the vector face center to query point
+    LvArray::tensorOps::subtract< 3 >( faceCenter, point );
+    int const s = sign( LvArray::tensorOps::AiBi< 3 >( faceNormal, faceCenter ) );
+
+    // all dot products should be non-negative (we enforce outward normals)
+    if( prevSign * s < 0 )
+    {
+      return false;
+    }
+    prevSign = s;
+  }
+  return true;
+}
+
 
 /**
  * @brief Compute the dimensions of the bounding box containing the element

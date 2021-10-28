@@ -144,7 +144,6 @@ public:
                      localIndex const localFaceIndex,
                      localIndex_array & nodeIndices ) const;
 
-
   /**
    * @brief Get the element-to-node map.
    * @return a reference to the element-to-node map
