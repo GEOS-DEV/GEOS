@@ -15,72 +15,84 @@
 // Source includes
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "virtualElement/VirtualElementBase.hpp"
 #include "virtualElement/ConformingVirtualElementOrder1.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/MeshManager.hpp"
+#include "codingUtilities/UnitTestUtilities.hpp"
 
 // TPL includes
 #include "gtest/gtest.h"
 
 using namespace geosx;
-using namespace virtualElement;
+using namespace finiteElement;
+using namespace geosx::testing;
 
 CommandLineOptions g_commandLineOptions;
+constexpr real64 absTol = geosx::testing::DEFAULT_ABS_TOL;
+constexpr real64 relTol = geosx::testing::DEFAULT_REL_TOL*10;
 
-template< typename VEM, typename VEMBASISDATATYPE >
-static void checkIntegralMeanConsistency( VEMBASISDATATYPE const & basisData )
+template< typename VEM >
+GEOSX_HOST_DEVICE
+static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
+                                          typename VEM::StackVariables const & stack,
+                                          real64 & sumBasisFunctions )
 {
-  real64 basisFunctionsIntegralMean[VEM::maxSupportPoints];
-  VEM::calcN( 0, basisData, basisFunctionsIntegralMean );
-  real64 sum = 0;
-  for( localIndex iBasisFun = 0; iBasisFun <
-       VEM::getNumSupportPoints( basisData ); ++iBasisFun )
+  static constexpr localIndex
+    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
+  real64 basisFunctionsIntegralMean[maxSupportPoints];
+  VEM::calcN( 0, stack, basisFunctionsIntegralMean );
+  sumBasisFunctions = 0;
+  for( localIndex iBasisFun = 0;
+       iBasisFun < feBase.template numSupportPoints< VEM >( stack ); ++iBasisFun )
   {
-    sum += basisFunctionsIntegralMean[iBasisFun];
+    sumBasisFunctions += basisFunctionsIntegralMean[iBasisFun];
   }
-  EXPECT_TRUE( LvArray::math::abs( sum-1 ) < 1e-15 )
-    << "Sum of basis functions integral mean is not 1, but " << sum << ". "
-    << "The computed integral means are " << basisFunctionsIntegralMean;
 }
 
-template< typename VEM, typename BASISDATATYPE >
+template< typename VEM >
+GEOSX_HOST_DEVICE
 static void
-checkIntegralMeanDerivativesConsistency( BASISDATATYPE const & basisData )
+checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
+                                         typename VEM::StackVariables const & stack,
+                                         real64 & sumXDerivatives,
+                                         real64 & sumYDerivatives,
+                                         real64 & sumZDerivatives )
 {
+  static constexpr localIndex
+    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
+  real64 const dummy[VEM::numNodes][3] { { 0.0 } };
+  localIndex const k = 0;
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
-    real64 basisDerivativesIntegralMean[VEM::maxSupportPoints][3];
-    VEM::calcGradN( q, basisData, basisDerivativesIntegralMean );
-    real64 sumX = 0, sumY = 0, sumZ = 0;
-    for( localIndex iBasisFun = 0; iBasisFun < VEM::getNumSupportPoints( basisData ); ++iBasisFun )
+    real64 basisDerivativesIntegralMean[maxSupportPoints][3];
+    feBase.template getGradN< VEM >( k, q, dummy, stack, basisDerivativesIntegralMean );
+    sumXDerivatives = 0; sumYDerivatives = 0; sumZDerivatives = 0;
+    for( localIndex iBasisFun = 0;
+         iBasisFun < feBase.template numSupportPoints< VEM >( stack );
+         ++iBasisFun )
     {
-      sumX += basisDerivativesIntegralMean[iBasisFun][0];
-      sumY += basisDerivativesIntegralMean[iBasisFun][1];
-      sumZ += basisDerivativesIntegralMean[iBasisFun][2];
+      sumXDerivatives += basisDerivativesIntegralMean[iBasisFun][0];
+      sumYDerivatives += basisDerivativesIntegralMean[iBasisFun][1];
+      sumZDerivatives += basisDerivativesIntegralMean[iBasisFun][2];
     }
-    EXPECT_TRUE( LvArray::math::abs( sumX ) < 1e-15 )
-      << "Sum of the x-derivatives of basis functions integral mean is not 0, but " << sumX << ". "
-      << "The computed integral means are " << basisDerivativesIntegralMean;
-    EXPECT_TRUE( LvArray::math::abs( sumY ) < 1e-15 )
-      << "Sum of the y-derivatives of basis functions integral mean is not 0, but " << sumY << ". "
-      << "The computed integral means are " << basisDerivativesIntegralMean;
-    EXPECT_TRUE( LvArray::math::abs( sumZ ) < 1e-15 )
-      << "Sum of the z-derivatives of basis functions integral mean is not 0, but " << sumZ << ". "
-      << "The computed integral means are " << basisDerivativesIntegralMean;
   }
 }
 
-template< typename VEM, typename BASISDATATYPE >
+template< typename VEM >
+GEOSX_HOST_DEVICE
 static void
 checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                                    nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                                       localIndex const & cellIndex,
                                       CellElementSubRegion::NodeMapType const & cellToNodes,
                                       arrayView2d< real64 const > const & cellCenters,
-                                      BASISDATATYPE const & basisData )
+                                      FiniteElementBase const & feBase,
+                                      typename VEM::StackVariables const & stack,
+                                      arraySlice1d< real64 > & stabTimeMonomialDofsNorm )
 {
+  static constexpr localIndex
+    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
   real64 cellDiameter = 0;
@@ -110,53 +122,48 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
   }
 
   array1d< real64 > stabTimeMonomialDofs( numCellPoints );
-  real64 stabTimeMonomialDofsNorm = 0;
+  real64 stabilizationMatrix[maxSupportPoints][maxSupportPoints] { { 0.0 } };
+  feBase.template addGradGradStabilizationMatrix< VEM >( stack, stabilizationMatrix );
+  stabTimeMonomialDofsNorm( 0 ) = 0;
   for( localIndex i = 0; i < numCellPoints; ++i )
   {
     stabTimeMonomialDofs( i ) = 0;
-    stabTimeMonomialDofsNorm = 0;
+    stabTimeMonomialDofsNorm( 0 ) = 0;
     for( localIndex j = 0; j < numCellPoints; ++j )
     {
-      stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j, basisData );
+      stabTimeMonomialDofs( i ) += stabilizationMatrix[ i ][ j ];
     }
-    stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
+    stabTimeMonomialDofsNorm( 0 ) += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
   }
-  EXPECT_TRUE( LvArray::math::abs( stabTimeMonomialDofsNorm ) < 1e-15 )
-    << "Product of stabilization matrix and monomial degrees of freedom is not zero for "
-    << "monomial number 0. The computed product is " << stabTimeMonomialDofs;
   for( localIndex monomInd = 0; monomInd < 3; ++monomInd )
   {
-    stabTimeMonomialDofsNorm = 0;
+    stabTimeMonomialDofsNorm( monomInd+1 ) = 0;
     for( localIndex i = 0; i < numCellPoints; ++i )
     {
       stabTimeMonomialDofs( i ) = 0;
       for( localIndex j = 0; j < numCellPoints; ++j )
       {
-        stabTimeMonomialDofs( i ) += VEM::calcStabilizationValue( i, j, basisData ) *
-                                     monomialVemDofs( monomInd, j );
+        stabTimeMonomialDofs( i ) += stabilizationMatrix[ i ][ j ] * monomialVemDofs( monomInd, j );
       }
-      stabTimeMonomialDofsNorm += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
+      stabTimeMonomialDofsNorm( monomInd+1 ) += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
     }
-    EXPECT_TRUE( LvArray::math::abs( stabTimeMonomialDofsNorm ) < 1e-15 )
-      << "Product of stabilization matrix and monomial degrees of freedom is not zero for "
-      << "monomial number " << monomInd+1 << ". The computed product is " << stabTimeMonomialDofs;
   }
 }
 
-template< typename VEM, typename BASISDATATYPE >
-static void checkSumOfQuadratureWeights( real64 const & cellVolume,
-                                         BASISDATATYPE const & basisData )
+template< typename VEM >
+GEOSX_HOST_DEVICE
+static void checkSumOfQuadratureWeights( typename VEM::StackVariables stack,
+                                         real64 & sumOfQuadratureWeights )
 {
-  real64 sum = 0.0;
+  static constexpr localIndex
+    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
+  sumOfQuadratureWeights = 0.0;
+  real64 const dummy[maxSupportPoints][3] { { 0.0 } };
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
-    real64 weight =
-      VEM::transformedQuadratureWeight( q, basisData );
-    sum += weight;
+    real64 weight = VEM::transformedQuadratureWeight( q, dummy, stack );
+    sumOfQuadratureWeights += weight;
   }
-  EXPECT_TRUE( LvArray::math::abs( sum - cellVolume ) < 1e-15 )
-    << "Sum of quadrature weights does not equal the cell volume. Sum is " << sum
-    << ". Cell volume is " << cellVolume;
 }
 
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
@@ -176,51 +183,77 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
   CellElementSubRegion::NodeMapType const & cellToNodeMap = cellSubRegion.nodeList();
-  arrayView2d< localIndex const > const & elementToFaceMap = cellSubRegion.faceList().toViewConst();
-  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
-  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
-  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList().toViewConst();
-  arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
-  arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
-  arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
 
-  // Loop over cells.
+  // Allocate and fill a VEM::MeshData struct.
+  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
+  typename VEM::MeshData meshData;
+  FiniteElementBase::initialize< VEM >( nodeManager, edgeManager,
+                                        faceManager, cellSubRegion,
+                                        meshData );
+
+  // Arrays that store quantities to be tested.
   localIndex const numCells = cellSubRegion.getElementVolume().size();
+  array1d< real64 > sumBasisFunctions( numCells ), sumXDerivatives( numCells ),
+  sumYDerivatives( numCells ), sumZDerivatives( numCells ), sumOfQuadWeights( numCells );
+  array2d< real64 > stabTimeMonomialDofsNorm( numCells, 4 );
+
+  // Get views of test arrays
+  arrayView1d< real64 > sumBasisFunctionsView = sumBasisFunctions.toView(),
+                        sumXDerivativesView = sumXDerivatives.toView(),
+                        sumYDerivativesView = sumYDerivatives.toView(),
+                        sumZDerivativesView = sumZDerivatives.toView(),
+                        sumOfQuadWeightsView = sumOfQuadWeights.toView();
+  arrayView2d< real64 > stabTimeMonomialDofsNormView = stabTimeMonomialDofsNorm.toView();
+
+  // Loop over cells on the device.
+  forAll< parallelDevicePolicy< > >( numCells, [=] GEOSX_HOST_DEVICE
+                                       ( localIndex const cellIndex )
+  {
+    typename VEM::StackVariables stack;
+    VEM virtualElement;
+    virtualElement.template setup< VEM >( cellIndex, meshData, stack );
+
+    checkIntegralMeanConsistency< VEM >( virtualElement, stack,
+                                         sumBasisFunctionsView( cellIndex ) );
+    checkIntegralMeanDerivativesConsistency< VEM >( virtualElement, stack,
+                                                    sumXDerivativesView( cellIndex ),
+                                                    sumYDerivativesView( cellIndex ),
+                                                    sumZDerivativesView( cellIndex )
+                                                    );
+    arraySlice1d< real64 > thisCellStabTimeMonomialDofs = stabTimeMonomialDofsNormView[cellIndex];
+    checkStabilizationMatrixConsistency< VEM >( nodesCoords, cellIndex, cellToNodeMap,
+                                                cellCenters, virtualElement, stack,
+                                                thisCellStabTimeMonomialDofs );
+    checkSumOfQuadratureWeights< VEM >( stack, sumOfQuadWeightsView( cellIndex ) );
+  } );
+
+  // Perform checks.
   for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
   {
-    using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
-    typename VEM::BasisData basisData;
-    real64 const cellCenter[3] { cellCenters( cellIndex, 0 ),
-                                 cellCenters( cellIndex, 1 ),
-                                 cellCenters( cellIndex, 2 ) };
-    VEM::computeProjectors( cellIndex,
-                            nodesCoords,
-                            cellToNodeMap,
-                            elementToFaceMap,
-                            faceToNodeMap,
-                            faceToEdgeMap,
-                            edgeToNodeMap,
-                            faceCenters,
-                            faceNormals,
-                            faceAreas,
-                            cellCenter,
-                            cellVolumes[cellIndex],
-                            basisData
-                            );
-
-    checkIntegralMeanConsistency< VEM >( basisData );
-    checkIntegralMeanDerivativesConsistency< VEM >( basisData );
-    checkStabilizationMatrixConsistency< VEM >( nodesCoords, cellIndex,
-                                                cellToNodeMap, cellCenters,
-                                                basisData );
-    checkSumOfQuadratureWeights< VEM >( cellVolumes[cellIndex],
-                                        basisData );
+    checkRelativeError( sumXDerivatives( cellIndex ), 0.0, relTol, absTol,
+                        "Sum of integral means of x-derivatives of basis functions" );
+    checkRelativeError( sumYDerivatives( cellIndex ), 0.0, relTol, absTol,
+                        "Sum of integral means of y-derivatives of basis functions" );
+    checkRelativeError( sumZDerivatives( cellIndex ), 0.0, relTol, absTol,
+                        "Sum of integral means of z-derivatives of basis functions" );
+    checkRelativeError( sumBasisFunctions( cellIndex ), 1.0, relTol, absTol,
+                        "Sum of integral means of basis functions" );
+    for( localIndex monomInd = 0; monomInd < 4; ++monomInd )
+    {
+      char name[100];
+      std::sprintf( name, "Product of stabilization matrix and degrees of freedom of monomial %ld",
+                    monomInd );
+      checkRelativeError( stabTimeMonomialDofsNorm( cellIndex, monomInd ), 0.0, relTol, absTol,
+                          name );
+    }
+    checkRelativeError( sumOfQuadWeights( cellIndex ), cellVolumes( cellIndex ), relTol, absTol,
+                        "Sum of quadrature weights" );
   }
 }
 
-TEST( VirtualElementBase, unitCube )
+TEST( ConformingVirtualElementOrder1, hexahedra )
 {
   string const inputStream=
     "<Problem>"
@@ -260,7 +293,8 @@ TEST( VirtualElementBase, unitCube )
 
   // Open mesh levels
   DomainPartition & domain  = problemManager.getDomainPartition();
-  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys
+                                                                        .meshManager );
   meshManager.generateMeshLevels( domain );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elementManager = mesh.getElemManager();
@@ -273,7 +307,7 @@ TEST( VirtualElementBase, unitCube )
   testCellsInMeshLevel< 10, 6 >( mesh );
 }
 
-TEST( VirtualElementBase, wedges )
+TEST( ConformingVirtualElementOrder1, wedges )
 {
   string const inputStream=
     "<Problem>"
