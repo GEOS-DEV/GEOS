@@ -168,15 +168,6 @@
       scale="1"/>
 	<!-- Sphinx_FieldSpecifications_InitFracture_End -->
 
-    <!-- FieldSpecification 
-      name="aperture"
-      component="0"
-      initialCondition="1"
-      setNames="{all}"
-      objectPath="ElementRegions/Fracture/fracture"
-      fieldName="elementAperture"
-      scale="1.0e-4"/-->
-
     <FieldSpecification
       name="xConstraint"
       objectPath="nodeManager"
@@ -200,13 +191,6 @@
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
-
-    <!-- FieldSpecification 
-      name="source"
-      objectPath="ElementRegions/Fracture"
-      fieldName="pressure"
-      scale="0.0"
-      setNames="{all}"/-->
 
 	<!-- Sphinx_SourceFlux_InjSource -->
     <SourceFlux
