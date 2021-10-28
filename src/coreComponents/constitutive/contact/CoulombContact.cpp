@@ -86,7 +86,9 @@ void CoulombContact::postProcessInput()
 
 CoulombContactUpdates CoulombContact::createKernelWrapper() const
 {
-  return CoulombContactUpdates( m_cohesion,
+  return CoulombContactUpdates( m_penaltyStiffness,
+                                *m_apertureTable,
+                                m_cohesion,
                                 m_frictionCoefficient );
 }
 

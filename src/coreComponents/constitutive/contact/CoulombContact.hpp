@@ -36,9 +36,12 @@ class CoulombContactUpdates : public ContactBaseUpdates
 {
 public:
 
-  CoulombContactUpdates( real64 const & cohesion,
+  CoulombContactUpdates( real64 const & penaltyStiffness,
+                         TableFunction const & apertureTable,
+                         real64 const & cohesion,
                          real64 const & frictionCoefficient )
-    : m_cohesion( cohesion ),
+    : ContactBaseUpdates( penaltyStiffness, apertureTable ),
+    m_cohesion( cohesion ),
     m_frictionCoefficient( frictionCoefficient )
   {}
 
@@ -67,6 +70,12 @@ public:
   inline
   virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const override final;
+
+  GEOSX_HOST_DEVICE
+  inline
+  virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
+                                arraySlice1d< real64 > const & tractionVector,
+                                arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
 
 private:
 
@@ -175,6 +184,21 @@ real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const &
 {
   dLimitTangentialTractionNorm_dTraction = m_frictionCoefficient;
   return ( m_cohesion - normalTraction * m_frictionCoefficient );
+}
+
+
+GEOSX_HOST_DEVICE
+void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const & dispJump,
+                                             arraySlice1d< real64 > const & tractionVector,
+                                             arraySlice2d< real64 > const & dTractionVector_dJump ) const
+{
+  // Here goes Coulomb based traction calculation
+  tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
+  tractionVector[1] = 0.0;
+  tractionVector[2] = 0.0;
+
+  LvArray::forValuesInSlice( dTractionVector_dJump, []( real64 & val ){ val = 0.0; } );
+  dTractionVector_dJump( 0, 0 ) = dispJump[0] >=0 ? 0.0 : m_penaltyStiffness;
 }
 
 } /* namespace constitutive */

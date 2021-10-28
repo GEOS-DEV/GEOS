@@ -173,7 +173,7 @@ public:
     constexpr static char const * fractureStateString() { return "fractureState"; }
     constexpr static char const * previousFractureStateString() { return "previousFractureState"; }
     constexpr static char const * dispJumpString() { return "displacementJump"; }
-    constexpr static char const * previousLocalJumpString() { return "previousLocalJump"; }
+    constexpr static char const * previousDispJumpString() { return "previousLocalJump"; }
 
     constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }

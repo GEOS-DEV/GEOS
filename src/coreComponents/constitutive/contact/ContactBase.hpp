@@ -20,6 +20,8 @@
 #define GEOSX_CONSTITUTIVE_CONTACT_CONTACTBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
+#include "functions/TableFunction.hpp"
+
 
 namespace geosx
 {
@@ -35,6 +37,12 @@ namespace constitutive
 class ContactBaseUpdates
 {
 public:
+
+  ContactBaseUpdates( real64 const & penaltyStiffness,
+                      TableFunction const & apertureTable )
+    : m_penaltyStiffness( penaltyStiffness ),
+    m_apertureTable( apertureTable.createKernelWrapper() )
+  {}
 
   /// Default copy constructor
   ContactBaseUpdates( ContactBaseUpdates const & ) = default;
@@ -60,8 +68,7 @@ public:
   GEOSX_HOST_DEVICE
   inline
   virtual real64 computeEffectiveAperture( real64 const aperture,
-                                           real64 & dEffectiveAperture_dAperture ) const
-  { GEOSX_UNUSED_VAR( aperture, dEffectiveAperture_dAperture ); return 0.0; }
+                                           real64 & dEffectiveAperture_dAperture ) const;
 
 
   /**
@@ -74,8 +81,7 @@ public:
   inline
   virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump ) const
-  { GEOSX_UNUSED_VAR( dispJump, tractionVector, dTractionVector_dJump ); }
+                                arraySlice2d< real64 > const & dTractionVector_dJump ) const;
 
   /**
    * @brief Update the traction with the pressure term
@@ -90,8 +96,7 @@ public:
   virtual void addPressureToTraction( real64 const & pressure,
                                       bool const isOpen,
                                       arraySlice1d< real64 >const & tractionVector,
-                                      real64 & dTraction_dPressure ) const
-  { GEOSX_UNUSED_VAR( pressure, isOpen, tractionVector, dTraction_dPressure ); }
+                                      real64 & dTraction_dPressure ) const;
 
   /**
    * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
@@ -105,6 +110,13 @@ public:
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const
   { GEOSX_UNUSED_VAR( normalTraction, dLimitTangentialTractionNorm_dTraction ); return 0.0; }
 
+protected:
+
+  /// The penalty stiffness
+  real64 m_penaltyStiffness;
+
+  /// The aperture table function wrapper
+  TableFunction::KernelWrapper m_apertureTable;
 };
 
 
@@ -133,10 +145,27 @@ public:
   virtual ~ContactBase() override;
 
   /**
+   * @return A string that is used to register/lookup this class in the registry
+   */
+  static string catalogName() { return "Contact"; }
+
+  virtual string getCatalogName() const override { return catalogName(); }
+
+  /**
    * @brief accessor for penalty stiffness
    * @return the stiffness
    */
   real64 stiffness() const { return m_penaltyStiffness; }
+
+
+  /// Type of kernel wrapper for in-kernel update
+  using KernelWrapper = ContactBaseUpdates;
+
+  /**
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
+   */
+  KernelWrapper createKernelWrapper() const;
 
   /**
    * @struct Structure to hold scoped key names
@@ -145,6 +174,12 @@ public:
   {
     /// string/key for penalty stiffness
     static constexpr char const * penaltyStiffnessString() { return "penaltyStiffness"; }
+
+    /// string/key for aperture tolerance
+    static constexpr char const * apertureToleranceString() { return "apertureTolerance"; }
+
+    /// string/key for aperture table name
+    static constexpr char const * apertureTableNameString() { return "apertureTableName"; }
   };
 
 protected:
@@ -152,7 +187,58 @@ protected:
   /// The value of penalty to penetration
   real64 m_penaltyStiffness;
 
+  virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
+
+  /**
+   * @brief Validate the values provided in the aperture table
+   * @param[in] apertureTable the effective aperture vs aperture table
+   */
+  void validateApertureTable( TableFunction const & apertureTable ) const;
+
+  /// The aperture tolerance to avoid floating point errors in expressions involving aperture
+  real64 m_apertureTolerance;
+
+  /// The name of the aperture table, if any
+  string m_apertureTableName;
+
+  /// Pointer to the function that limits the model aperture to a physically admissible value.
+  TableFunction const * m_apertureTable;
+
 };
+
+GEOSX_HOST_DEVICE
+void ContactBaseUpdates::computeTraction( arraySlice1d< real64 const > const & dispJump,
+                                          arraySlice1d< real64 > const & tractionVector,
+                                          arraySlice2d< real64 > const & dTractionVector_dJump ) const
+{
+  tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
+  tractionVector[1] = 0.0;
+  tractionVector[2] = 0.0;
+
+  LvArray::forValuesInSlice( dTractionVector_dJump, []( real64 & val ){ val = 0.0; } );
+  dTractionVector_dJump( 0, 0 ) = dispJump[0] >=0 ? 0.0 : m_penaltyStiffness;
+}
+
+
+GEOSX_HOST_DEVICE
+void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
+                                                bool const isOpen,
+                                                arraySlice1d< real64 > const & tractionVector,
+                                                real64 & dTraction_dPressure ) const
+{
+  tractionVector[0] -= pressure;
+  dTraction_dPressure = isOpen ? -1.0 : 0.0;
+}
+
+
+GEOSX_HOST_DEVICE
+real64 ContactBaseUpdates::computeEffectiveAperture( real64 const aperture,
+                                                     real64 & dEffectiveAperture_dAperture ) const
+{
+  return m_apertureTable.compute( &aperture, &dEffectiveAperture_dAperture );
+}
 
 } /* namespace constitutive */
 

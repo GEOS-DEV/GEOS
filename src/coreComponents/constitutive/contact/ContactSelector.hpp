@@ -20,7 +20,6 @@
 #define GEOSX_CONSTITUTIVE_CONTACT_CONTACTSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
-#include "constitutive/contact/ApertureTableContact.hpp"
 #include "constitutive/contact/CoulombContact.hpp"
 
 namespace geosx
@@ -33,16 +32,14 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( ContactBase const & contact,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< CoulombContact,
-                               ApertureTableContact >::execute( contact, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< CoulombContact >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( ContactBase & contact,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< CoulombContact,
-                               ApertureTableContact >::execute( contact, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< CoulombContact >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 
 } /* namespace constitutive */
