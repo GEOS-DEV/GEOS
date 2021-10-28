@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./kgdToughnessDominated_base.xml"/>
+    <File name="./kgdViscosityDominated_Base.xml"/>
   </Included>
   <Mesh>
     <InternalMesh 
@@ -62,10 +62,11 @@
       targetExactTimestep="0"
       target="/Outputs/siloOutput"/>
 
-    <PeriodicEvent
+    <PeriodicEvent 
       name="restarts"
-      timeFrequency="5.0"
+      timeFrequency="1e99"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"
+      endTime="-1" />
   </Events>
 </Problem>
