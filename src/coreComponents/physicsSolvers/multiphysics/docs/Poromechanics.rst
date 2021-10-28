@@ -32,7 +32,7 @@ The fluid mass conservation equation is expressed in terms of pore pressure and 
 
 where :math:`M` is the Biot's modulus and :math:`K_{dr}` is the drained bulk modulus.
 
-Unlike the conventional reservoir model that uses Lagrange’s porosity, in the coupled geomechanics and flow model, Euler’s porosity :math:`\phi` is adopted so the porosity variation is derived as:
+Unlike the conventional reservoir model that uses Lagranges porosity, in the coupled geomechanics and flow model, Eulers porosity :math:`\phi` is adopted so the porosity variation is derived as:
 
 .. math::
     \partial \phi = \left( \frac{b-\phi}{K_s}\right) \partial p + \left( b-\phi \right) \partial \epsilon_v
@@ -56,7 +56,7 @@ The solid constitutive model used here is PoroLinearElasticIsotropic, which deri
 
 An example of a valid XML block for the constitutive model is given here:
 
-.. literalinclude:: ../integratedTests/PoroElastic_Terzaghi_FIM.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
@@ -64,7 +64,7 @@ An example of a valid XML block for the constitutive model is given here:
 Example
 ===========================================
 
-.. literalinclude:: ../integratedTests/PoroElastic_Terzaghi_FIM.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
   :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->
