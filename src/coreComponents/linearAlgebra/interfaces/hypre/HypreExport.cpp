@@ -215,7 +215,7 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
       HYPRE_Real const * const parVectorData = hypre_VectorData( hypre_ParVectorLocalVector( parVector ) );
 
 #if defined(GEOSX_USE_HYPRE_CUDA)
-      cudaMemcpy( vec.extractLocalVector(), parVectorData, vec.localSize() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice  );
+      cudaMemcpy( vec.extractLocalVector(), parVectorData, vec.localSize() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice );
 #else
       std::copy( parVectorData, parVectorData + vec.localSize(), vec.extractLocalVector() );
 #endif
@@ -227,7 +227,7 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
   else
   {
 #if defined(GEOSX_USE_HYPRE_CUDA)
-    cudaMemcpy( vec.extractLocalVector(), values.data(), values.size() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice  );
+    cudaMemcpy( vec.extractLocalVector(), values.data(), values.size() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice );
 #else
     values.move( LvArray::MemorySpace::host, false );
     std::copy( values.data(), values.data() + values.size(), vec.extractLocalVector() );
