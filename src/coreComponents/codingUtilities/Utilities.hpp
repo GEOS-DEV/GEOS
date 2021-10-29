@@ -162,10 +162,9 @@ std::vector< KEY > mapKeys( mapBase< KEY, VAL, SORTED > const & map )
 
 template< typename VEC1, typename VEC2 >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void copy( localIndex const N, VEC1 const & v1, VEC2 const & v2 )
+void copy( integer const N, VEC1 const & v1, VEC2 const & v2 )
 {
-  for( localIndex i = 0; i < N; ++i )
+  for( integer i = 0; i < N; ++i )
   {
     v2[i] = v1[i];
   }
@@ -173,17 +172,16 @@ void copy( localIndex const N, VEC1 const & v1, VEC2 const & v2 )
 
 template< typename MATRIX, typename VEC1, typename VEC2 >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void applyChainRule( localIndex const N,
+void applyChainRule( integer const N,
                      MATRIX const & dy_dx,
                      VEC1 const & df_dy,
                      VEC2 && df_dx )
 {
   // this could use some dense linear algebra
-  for( localIndex i = 0; i < N; ++i )
+  for( integer i = 0; i < N; ++i )
   {
     df_dx[i] = 0.0;
-    for( localIndex j = 0; j < N; ++j )
+    for( integer j = 0; j < N; ++j )
     {
       df_dx[i] += df_dy[j] * dy_dx[j][i];
     }
@@ -192,8 +190,7 @@ void applyChainRule( localIndex const N,
 
 template< typename MATRIX, typename VEC1, typename VEC2 >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void applyChainRuleInPlace( localIndex const N,
+void applyChainRuleInPlace( integer const N,
                             MATRIX const & dy_dx,
                             VEC1 && df_dxy,
                             VEC2 && work )
@@ -201,7 +198,6 @@ void applyChainRuleInPlace( localIndex const N,
   applyChainRule( N, dy_dx, df_dxy, work );
   copy( N, work, df_dxy );
 }
-
 
 } // namespace geosx
 

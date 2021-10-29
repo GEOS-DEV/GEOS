@@ -65,9 +65,9 @@ using SSlong = SuiteSparse_long;
 //
 //static_assert( std::is_signed< SSlong >::value == std::is_signed< globalIndex >::value,
 //               "SuiteSparse Int and geosx::globalIndex must both be signed or unsigned" );
-//
-//static_assert( std::is_same< double, real64 >::value,
-//               "SuiteSparse real and geosx::real64 must be the same type" );
+
+static_assert( std::is_same< double, real64 >::value,
+               "SuiteSparse real and geosx::real64 must be the same type" );
 
 struct SuiteSparseData
 {
@@ -331,10 +331,24 @@ void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose )
   GEOSX_LAI_ASSERT_EQ( b.localSize(), matrix().numLocalRows() );
 
   int const rank = MpiWrapper::commRank( b.getComm() );
-  m_export->exportVector( b, rank == m_workingRank ? m_data->rhs.data() : nullptr );
+
+  arrayView1d< double > rhsView;
+  if( rank == m_workingRank )
+  {
+    rhsView = m_data->rhs.toView();
+  }
+  else
+  {
+    array1d< double > dummyDoubleArray1d;
+    rhsView = dummyDoubleArray1d.toView();
+  }
+
+  m_export->exportVector( b, rhsView );
 
   if( rank == m_workingRank )
   {
+    m_data->rhs.move( LvArray::MemorySpace::host, false );
+
     // To be able to use UMFPACK direct solver we need to disable floating point exceptions
     LvArray::system::FloatingPointExceptionGuard guard;
 
@@ -357,7 +371,17 @@ void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose )
     }
   }
 
-  m_export->importVector( rank == m_workingRank ? m_data->sol.data() : nullptr, x );
+  arrayView1d< double > solView;
+  if( rank == m_workingRank )
+  {
+    solView = m_data->sol.toView();
+  }
+  else
+  {
+    array1d< double > dummyDoubleArray1d;
+    solView = dummyDoubleArray1d.toView();
+  }
+  m_export->importVector( solView, x );
 }
 
 template< typename LAI >

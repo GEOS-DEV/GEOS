@@ -63,9 +63,9 @@ public:
    * @tparam OFFSET_TYPE row pointer offset type
    * @tparam COLUMN_TYPE column index type
    * @param mat the source matrix
-   * @param rowOffsets pointer to user-managed array of row pointers
-   * @param colIndices pointer to user-managed array of column indices
-   * @param values pointer to user-managed array of matrix values
+   * @param rowOffsets array view to user-managed array of row pointers
+   * @param colIndices array view to user-managed array of column indices
+   * @param values array view to user-managed array of matrix values
    *
    * This function must be called on all ranks in the matrix's communicator.
    * Only target rank needs to provide meaningful pointer parameters when doing single-rank export.
@@ -79,7 +79,7 @@ public:
   /**
    * @brief Export the target vector into an array provided by the user.
    * @param vec the source vector, must be compatible with matrix row distribution
-   * @param values pointer to user-managed array of vector values
+   * @param values array view to user-managed array of vector values
    *
    * This method can be used to extract data from vectors associated with the original matrix.
    * It is mostly useful for single-rank export (gather) of vector values.
@@ -88,11 +88,12 @@ public:
    * This function must be called on all ranks in the matrix/vector communicator.
    * Only target rank needs to provide meaningful pointer parameter when doing single-rank export.
    */
-  void exportVector( HypreVector const & vec, real64 * values ) const;
+  void exportVector( HypreVector const & vec,
+                     arrayView1d< real64 > const & values ) const;
 
   /**
    * @brief Import the target vector from an array provided by the user.
-   * @param values pointer to user-managed array of vector values
+   * @param values array view to user-managed array of vector values
    * @param vec the target vector, must be compatible with matrix row distribution
    *
    * This method can be used to populate data into vectors associated with the original matrix.
@@ -102,7 +103,8 @@ public:
    * This function must be called on all ranks in the matrix/vector communicator.
    * Only target rank needs to provide meaningful pointer parameter when doing single-rank import.
    */
-  void importVector( real64 const * values, HypreVector & vec ) const;
+  void importVector( arrayView1d< const real64 > const & values,
+                     HypreVector & vec ) const;
 
 private:
 
