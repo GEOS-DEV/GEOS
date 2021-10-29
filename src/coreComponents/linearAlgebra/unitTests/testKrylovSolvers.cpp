@@ -33,9 +33,6 @@ LinearSolverParameters params_CG()
   parameters.krylov.maxIterations = 500;
   parameters.solverType = geosx::LinearSolverParameters::SolverType::cg;
   parameters.isSymmetric = true;
-  ////////////////
-  parameters.logLevel = 2;
-  /////////////////
   return parameters;
 }
 
@@ -45,9 +42,6 @@ LinearSolverParameters params_BiCGSTAB()
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
   parameters.solverType = geosx::LinearSolverParameters::SolverType::bicgstab;
-  ////////////////
-  parameters.logLevel = 2;
-  /////////////////
   return parameters;
 }
 
@@ -57,9 +51,6 @@ LinearSolverParameters params_GMRES()
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
   parameters.solverType = geosx::LinearSolverParameters::SolverType::gmres;
-  ////////////////
-  parameters.logLevel = 2;
-  /////////////////
   return parameters;
 }
 

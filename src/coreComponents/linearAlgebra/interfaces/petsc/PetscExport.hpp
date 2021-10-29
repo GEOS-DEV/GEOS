@@ -70,7 +70,7 @@ public:
    * @tparam COLUMN_TYPE column index type
    * @param mat the source matrix
    * @param rowOffsets array view to user-managed array of row pointers
-   * @param array view to user-managed array of column indices
+   * @param colIndices array view to user-managed array of column indices
    * @param values array view to user-managed array of matrix values
    *
    * This function must be called on all ranks in the matrix's communicator.
