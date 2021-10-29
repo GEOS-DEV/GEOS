@@ -32,12 +32,17 @@ ContactBase::ContactBase( string const & name,
                           Group * const parent ):
   ConstitutiveBase( name, parent ),
   m_penaltyStiffness( 0.0 ),
+  m_shearStiffness( 0.0 ),
   m_apertureTolerance( 1.0e-99 ),
   m_apertureTable( nullptr )
 {
   registerWrapper( viewKeyStruct::penaltyStiffnessString(), &m_penaltyStiffness ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
+
+  registerWrapper( viewKeyStruct::shearStiffnessString(), &m_shearStiffness ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Value of the shear elastic stiffness. Units of Pressure/length" );
 
   registerWrapper( viewKeyStruct::apertureToleranceString(), &m_apertureTolerance ).
     setApplyDefaultValue( 1.0e-9 ).
@@ -127,6 +132,7 @@ void ContactBase::validateApertureTable( TableFunction const & apertureTable ) c
 ContactBaseUpdates ContactBase::createKernelWrapper() const
 {
   return ContactBaseUpdates( m_penaltyStiffness,
+                             m_shearStiffness,
                              *m_apertureTable );
 }
 

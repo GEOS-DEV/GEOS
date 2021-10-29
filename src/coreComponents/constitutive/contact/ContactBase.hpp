@@ -39,8 +39,10 @@ class ContactBaseUpdates
 public:
 
   ContactBaseUpdates( real64 const & penaltyStiffness,
+                      real64 const & shearStiffness,
                       TableFunction const & apertureTable )
     : m_penaltyStiffness( penaltyStiffness ),
+    m_shearStiffness( shearStiffness ),
     m_apertureTable( apertureTable.createKernelWrapper() )
   {}
 
@@ -79,7 +81,8 @@ public:
    */
   GEOSX_HOST_DEVICE
   inline
-  virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
+  virtual void computeTraction( arraySlice1d< real64 const > const & oldDispJump,
+                                arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump ) const;
 
@@ -178,6 +181,9 @@ public:
     /// string/key for penalty stiffness
     static constexpr char const * penaltyStiffnessString() { return "penaltyStiffness"; }
 
+    /// string/key for shear stiffness
+    static constexpr char const * shearStiffnessString() { return "shearStiffness"; }
+
     /// string/key for aperture tolerance
     static constexpr char const * apertureToleranceString() { return "apertureTolerance"; }
 
@@ -214,10 +220,13 @@ protected:
 };
 
 GEOSX_HOST_DEVICE
-void ContactBaseUpdates::computeTraction( arraySlice1d< real64 const > const & dispJump,
+void ContactBaseUpdates::computeTraction( arraySlice1d< real64 const > const & oldDispJump,
+                                          arraySlice1d< real64 const > const & dispJump,
                                           arraySlice1d< real64 > const & tractionVector,
                                           arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
+  GEOSX_UNUSED_VAR( oldDispJump );
+
   tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
   tractionVector[1] = 0.0;
   tractionVector[2] = 0.0;

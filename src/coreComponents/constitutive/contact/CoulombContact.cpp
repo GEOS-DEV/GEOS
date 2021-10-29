@@ -87,9 +87,11 @@ void CoulombContact::postProcessInput()
 CoulombContactUpdates CoulombContact::createKernelWrapper() const
 {
   return CoulombContactUpdates( m_penaltyStiffness,
+                                m_shearStiffness,
                                 *m_apertureTable,
                                 m_cohesion,
-                                m_frictionCoefficient );
+                                m_frictionCoefficient,
+                                m_elasticSlip );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CoulombContact, string const &, Group * const )

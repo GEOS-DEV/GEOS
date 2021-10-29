@@ -39,10 +39,12 @@ public:
   CoulombContactUpdates( real64 const & penaltyStiffness,
                          TableFunction const & apertureTable,
                          real64 const & cohesion,
-                         real64 const & frictionCoefficient )
+                         real64 const & frictionCoefficient,
+                         arrayView2d< real64 > const & elasticSlip )
     : ContactBaseUpdates( penaltyStiffness, apertureTable ),
     m_cohesion( cohesion ),
-    m_frictionCoefficient( frictionCoefficient )
+    m_frictionCoefficient( frictionCoefficient ),
+    m_elasticSlip( elasticSlip )
   {}
 
   /// Default copy constructor
@@ -73,7 +75,8 @@ public:
 
   GEOSX_HOST_DEVICE
   inline
-  virtual void computeTraction( arraySlice1d< real64 const > const & dispJump,
+  virtual void computeTraction( arraySlice1d< real64 const > const & oldDispJump,
+                                arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
 
@@ -192,18 +195,18 @@ real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const &
 
 
 GEOSX_HOST_DEVICE
-void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const & dispJump,
-                                             arraySlice1d< real64 const > const & oldDispJump,
+void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const & oldDispJump,
+                                             arraySlice1d< real64 const > const & dispJump,
                                              arraySlice1d< real64 > const & tractionVector,
                                              arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
   // Initialize everyting to 0
-    tractionVector[0] = 0.0;
-    tractionVector[1] = 0.0;
-    tractionVector[2] = 0.0;
-    LvArray::forValuesInSlice( dTractionVector_dJump, []( real64 & val ){ val = 0.0; } );
+  tractionVector[0] = 0.0;
+  tractionVector[1] = 0.0;
+  tractionVector[2] = 0.0;
+  LvArray::forValuesInSlice( dTractionVector_dJump, []( real64 & val ){ val = 0.0; } );
   // If the fracture is open the traction is 0 and so are its derivatives so there is nothing to do
-  if ( dispJump[0] < 0.0 )
+  if( dispJump[0] < 0.0 )
   {
     // normal component of the traction
     tractionVector[0] = m_penaltyStiffness * dispJump[0];
@@ -213,12 +216,12 @@ void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const 
     // Compute the slip
     real64 const slip[2] = { dispJump[1] - oldDispJump[1],
                              dispJump[2] - oldDispJump[2] };
-    real64 const slipNorm = LvArray::tensorOps::l2Norm<2>( slip );
+    real64 const slipNorm = LvArray::tensorOps::l2Norm< 2 >( slip );
 
     real64 const tau = { m_shearStiffness * ( slip[0] + m_elasticSlip[0] ),
-                         m_shearStiffness * ( slip[1] + m_elasticSlip[1] ) } ;
+                         m_shearStiffness * ( slip[1] + m_elasticSlip[1] ) };
 
-    real64 const tauNorm = LvArray::tensorOps::l2Norm<2>( tau );
+    real64 const tauNorm = LvArray::tensorOps::l2Norm< 2 >( tau );
 
     real64 dLimitTau_dNormalTraction;
     real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0],
@@ -226,7 +229,7 @@ void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const 
 
     // Yield function (not necessary but makes it clearer)
     real64 const yield = tauNorm - limitTau;
-    if ( yield < 0 )
+    if( yield < 0 )
     {
       // Elastic slip case
 
@@ -238,8 +241,9 @@ void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const 
       dTractionVector_dJump[2][2] = m_shearStiffness;
 
       // The slip is only elastic: we add the full slip to the elastic one
-      LvArray::tensorOps::add<2>( m_elasticSlip, slip );
-    }else
+      LvArray::tensorOps::add< 2 >( m_elasticSlip, slip );
+    }
+    else
     {
       // Plastic slip case
 
@@ -248,19 +252,19 @@ void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const 
       tractionVector[2] = limitTau * slip[1] / slipNorm;
 
       dTractionVector_dJump[1][0] = m_penaltyStiffness * dLimitTau_dNormalTraction * slip[0] / slipNorm;
-      dTractionVector_dJump[1][1] = limitTau * pow( slip[1], 2)  / pow( LvArray::tensorOps::l2NormSquared<2>(slip), 1.5 ) ;
-      dTractionVector_dJump[1][2] = limitTau * slip[0] * slip[1] / pow( LvArray::tensorOps::l2NormSquared<2>(slip), 1.5 );
+      dTractionVector_dJump[1][1] = limitTau * pow( slip[1], 2 )  / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
+      dTractionVector_dJump[1][2] = limitTau * slip[0] * slip[1] / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
 
       dTractionVector_dJump[2][0] = m_penaltyStiffness * dLimitTau_dNormalTraction * slip[1] / slipNorm;
-      dTractionVector_dJump[2][1] = limitTau * slip[0] * slip[1] / pow( LvArray::tensorOps::l2NormSquared<2>(slip), 1.5 );
-      dTractionVector_dJump[2][2] = limitTau * pow( slip[0], 2)  / pow( LvArray::tensorOps::l2NormSquared<2>(slip), 1.5 ) ;
+      dTractionVector_dJump[2][1] = limitTau * slip[0] * slip[1] / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
+      dTractionVector_dJump[2][2] = limitTau * pow( slip[0], 2 )  / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
 
       // Compute elastic component of the slip for this case
-      real64 const plasticSlip[2] = { tractionVector[1] / m_shearStiffness ,
+      real64 const plasticSlip[2] = { tractionVector[1] / m_shearStiffness,
                                       tractionVector[2] / m_shearStiffness };
 
-      LvArray::tensorOps::copy<2>( m_elasticSlip, slip );
-      LvArray::tensorOps::subtract<2>( m_elasticSlip, plasticSlip );
+      LvArray::tensorOps::copy< 2 >( m_elasticSlip, slip );
+      LvArray::tensorOps::subtract< 2 >( m_elasticSlip, plasticSlip );
     }
   }
 
