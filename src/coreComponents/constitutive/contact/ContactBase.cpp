@@ -99,6 +99,14 @@ void ContactBase::initializePreSubGroups()
   m_apertureTable = &apertureTable;
 }
 
+
+void ContactBase::allocateConstitutiveData( Group & parent,
+                                            localIndex const numConstitutivePointsPerParentIndex )
+{
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+}
+
+
 void ContactBase::validateApertureTable( TableFunction const & apertureTable ) const
 {
   ArrayOfArraysView< real64 const > const coords = apertureTable.getCoordinates();

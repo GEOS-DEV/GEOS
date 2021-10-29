@@ -30,7 +30,8 @@ CoulombContact::CoulombContact( string const & name, Group * const parent ):
   ContactBase( name, parent ),
   m_cohesion(),
   m_frictionAngle(),
-  m_frictionCoefficient()
+  m_frictionCoefficient(),
+  m_elasticSlip()
 {
   registerWrapper( viewKeyStruct::cohesionString(), &m_cohesion ).
     setApplyDefaultValue( -1 ).
@@ -47,6 +48,11 @@ CoulombContact::CoulombContact( string const & name, Group * const parent ):
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Friction coefficient" );
+
+  registerWrapper( viewKeyStruct::elasticSlipString(), &m_elasticSlip ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Elastic Slip" );
+
 }
 
 CoulombContact::~CoulombContact()
@@ -83,6 +89,15 @@ void CoulombContact::postProcessInput()
                   InputError );
 
 }
+
+void CoulombContact::allocateConstitutiveData( Group & parent,
+                                               localIndex const numConstitutivePointsPerParentIndex )
+{
+  m_elasticSlip.resize( 0, 2 );
+
+  ContactBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+}
+
 
 CoulombContactUpdates CoulombContact::createKernelWrapper() const
 {

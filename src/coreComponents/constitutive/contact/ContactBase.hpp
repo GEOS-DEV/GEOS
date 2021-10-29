@@ -81,7 +81,8 @@ public:
    */
   GEOSX_HOST_DEVICE
   inline
-  virtual void computeTraction( arraySlice1d< real64 const > const & oldDispJump,
+  virtual void computeTraction( localIndex const k,
+                                arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump ) const;
@@ -157,6 +158,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   /**
    * @brief accessor for penalty stiffness
    * @return the stiffness
@@ -220,12 +224,13 @@ protected:
 };
 
 GEOSX_HOST_DEVICE
-void ContactBaseUpdates::computeTraction( arraySlice1d< real64 const > const & oldDispJump,
+void ContactBaseUpdates::computeTraction( localIndex const k,
+                                          arraySlice1d< real64 const > const & oldDispJump,
                                           arraySlice1d< real64 const > const & dispJump,
                                           arraySlice1d< real64 > const & tractionVector,
                                           arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
-  GEOSX_UNUSED_VAR( oldDispJump );
+  GEOSX_UNUSED_VAR( k, oldDispJump );
 
   tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
   tractionVector[1] = 0.0;

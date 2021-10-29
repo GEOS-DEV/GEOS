@@ -37,11 +37,12 @@ class CoulombContactUpdates : public ContactBaseUpdates
 public:
 
   CoulombContactUpdates( real64 const & penaltyStiffness,
+                         real64 const & shearStiffness,
                          TableFunction const & apertureTable,
                          real64 const & cohesion,
                          real64 const & frictionCoefficient,
                          arrayView2d< real64 > const & elasticSlip )
-    : ContactBaseUpdates( penaltyStiffness, apertureTable ),
+    : ContactBaseUpdates( penaltyStiffness, shearStiffness, apertureTable ),
     m_cohesion( cohesion ),
     m_frictionCoefficient( frictionCoefficient ),
     m_elasticSlip( elasticSlip )
@@ -75,7 +76,8 @@ public:
 
   GEOSX_HOST_DEVICE
   inline
-  virtual void computeTraction( arraySlice1d< real64 const > const & oldDispJump,
+  virtual void computeTraction( localIndex const k,
+                                arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
@@ -127,6 +129,9 @@ public:
 
   ///@}
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override final;
+
   /**
    * @struct Set of "char const *" and keys for data specified in this class.
    */
@@ -140,6 +145,9 @@ public:
 
     /// string/key for friction coefficient
     static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
+
+    /// string/key for the elastic slip
+    static constexpr char const * elasticSlipString() { return "elasticSlip"; }
   };
 
   /**
@@ -195,7 +203,8 @@ real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const &
 
 
 GEOSX_HOST_DEVICE
-void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const & oldDispJump,
+void CoulombContactUpdates::computeTraction( localIndex const k,
+                                             arraySlice1d< real64 const > const & oldDispJump,
                                              arraySlice1d< real64 const > const & dispJump,
                                              arraySlice1d< real64 > const & tractionVector,
                                              arraySlice2d< real64 > const & dTractionVector_dJump ) const
@@ -218,8 +227,8 @@ void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const 
                              dispJump[2] - oldDispJump[2] };
     real64 const slipNorm = LvArray::tensorOps::l2Norm< 2 >( slip );
 
-    real64 const tau = { m_shearStiffness * ( slip[0] + m_elasticSlip[0] ),
-                         m_shearStiffness * ( slip[1] + m_elasticSlip[1] ) };
+    real64 const tau[2] = { m_shearStiffness * ( slip[0] + m_elasticSlip[k][0] ),
+                            m_shearStiffness * ( slip[1] + m_elasticSlip[k][1] ) };
 
     real64 const tauNorm = LvArray::tensorOps::l2Norm< 2 >( tau );
 
@@ -241,7 +250,7 @@ void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const 
       dTractionVector_dJump[2][2] = m_shearStiffness;
 
       // The slip is only elastic: we add the full slip to the elastic one
-      LvArray::tensorOps::add< 2 >( m_elasticSlip, slip );
+      LvArray::tensorOps::add< 2 >( m_elasticSlip[k], slip );
     }
     else
     {
@@ -263,8 +272,8 @@ void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const 
       real64 const plasticSlip[2] = { tractionVector[1] / m_shearStiffness,
                                       tractionVector[2] / m_shearStiffness };
 
-      LvArray::tensorOps::copy< 2 >( m_elasticSlip, slip );
-      LvArray::tensorOps::subtract< 2 >( m_elasticSlip, plasticSlip );
+      LvArray::tensorOps::copy< 2 >( m_elasticSlip[k], slip );
+      LvArray::tensorOps::subtract< 2 >( m_elasticSlip[k], plasticSlip );
     }
   }
 
