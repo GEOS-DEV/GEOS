@@ -5,7 +5,7 @@
 
   <Included>
     <File
-      name="./Sneddon_base.xml"/>
+      name="./Sneddon_embeddedFrac_base.xml"/>
   </Included>
 
   <!-- SPHINX_SNEDDON_MESH -->
