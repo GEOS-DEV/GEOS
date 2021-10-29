@@ -85,6 +85,7 @@ private:
   /// The friction coefficient for each upper level dimension (i.e. cell) of *this
   real64 m_frictionCoefficient;
 
+  arrayView2d< real64 > m_elasticSlip;
 };
 
 
@@ -175,6 +176,9 @@ private:
 
   /// The friction coefficient for each upper level dimension (i.e. cell) of *this
   real64 m_frictionCoefficient;
+
+  /// Elastic slip
+  array2d< real64 > m_elasticSlip;
 };
 
 
@@ -189,16 +193,79 @@ real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const &
 
 GEOSX_HOST_DEVICE
 void CoulombContactUpdates::computeTraction( arraySlice1d< real64 const > const & dispJump,
+                                             arraySlice1d< real64 const > const & oldDispJump,
                                              arraySlice1d< real64 > const & tractionVector,
                                              arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
-  // Here goes Coulomb based traction calculation
-  tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
-  tractionVector[1] = 0.0;
-  tractionVector[2] = 0.0;
+  // Initialize everyting to 0
+    tractionVector[0] = 0.0;
+    tractionVector[1] = 0.0;
+    tractionVector[2] = 0.0;
+    LvArray::forValuesInSlice( dTractionVector_dJump, []( real64 & val ){ val = 0.0; } );
+  // If the fracture is open the traction is 0 and so are its derivatives so there is nothing to do
+  if ( dispJump[0] < 0.0 )
+  {
+    // normal component of the traction
+    tractionVector[0] = m_penaltyStiffness * dispJump[0];
+    // derivative of the normal component w.r.t. to the nomral dispJump
+    dTractionVector_dJump[0][0] = m_penaltyStiffness;
 
-  LvArray::forValuesInSlice( dTractionVector_dJump, []( real64 & val ){ val = 0.0; } );
-  dTractionVector_dJump( 0, 0 ) = dispJump[0] >=0 ? 0.0 : m_penaltyStiffness;
+    // Compute the slip
+    real64 const slip[2] = { dispJump[1] - oldDispJump[1],
+                             dispJump[2] - oldDispJump[2] };
+    real64 const slipNorm = LvArray::tensorOps::l2Norm<2>( slip );
+
+    real64 const tau = { m_shearStiffness * ( slip[0] + m_elasticSlip[0] ),
+                         m_shearStiffness * ( slip[1] + m_elasticSlip[1] ) } ;
+
+    real64 const tauNorm = LvArray::tensorOps::l2Norm<2>( tau );
+
+    real64 dLimitTau_dNormalTraction;
+    real64 const limitTau = computeLimitTangentialTractionNorm( tractionVector[0],
+                                                                dLimitTau_dNormalTraction );
+
+    // Yield function (not necessary but makes it clearer)
+    real64 const yield = tauNorm - limitTau;
+    if ( yield < 0 )
+    {
+      // Elastic slip case
+
+      // Tangential components of the traction are equal to tau
+      tractionVector[1] = tau[0];
+      tractionVector[2] = tau[1];
+
+      dTractionVector_dJump[1][1] = m_shearStiffness;
+      dTractionVector_dJump[2][2] = m_shearStiffness;
+
+      // The slip is only elastic: we add the full slip to the elastic one
+      LvArray::tensorOps::add<2>( m_elasticSlip, slip );
+    }else
+    {
+      // Plastic slip case
+
+      // Tangential components of the traction computed based on the limitTau
+      tractionVector[1] = limitTau * slip[0] / slipNorm;
+      tractionVector[2] = limitTau * slip[1] / slipNorm;
+
+      dTractionVector_dJump[1][0] = m_penaltyStiffness * dLimitTau_dNormalTraction * slip[0] / slipNorm;
+      dTractionVector_dJump[1][1] = limitTau * pow( slip[1], 2)  / pow( LvArray::tensorOps::l2NormSquared<2>(slip), 1.5 ) ;
+      dTractionVector_dJump[1][2] = limitTau * slip[0] * slip[1] / pow( LvArray::tensorOps::l2NormSquared<2>(slip), 1.5 );
+
+      dTractionVector_dJump[2][0] = m_penaltyStiffness * dLimitTau_dNormalTraction * slip[1] / slipNorm;
+      dTractionVector_dJump[2][1] = limitTau * slip[0] * slip[1] / pow( LvArray::tensorOps::l2NormSquared<2>(slip), 1.5 );
+      dTractionVector_dJump[2][2] = limitTau * pow( slip[0], 2)  / pow( LvArray::tensorOps::l2NormSquared<2>(slip), 1.5 ) ;
+
+      // Compute elastic component of the slip for this case
+      real64 const plasticSlip[2] = { tractionVector[1] / m_shearStiffness ,
+                                      tractionVector[2] / m_shearStiffness };
+
+      LvArray::tensorOps::copy<2>( m_elasticSlip, slip );
+      LvArray::tensorOps::subtract<2>( m_elasticSlip, plasticSlip );
+    }
+  }
+
+
+
 }
 
 } /* namespace constitutive */

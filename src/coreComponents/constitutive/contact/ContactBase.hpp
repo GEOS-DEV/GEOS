@@ -115,6 +115,9 @@ protected:
   /// The penalty stiffness
   real64 m_penaltyStiffness;
 
+  ///
+  real64 m_shearStiffness;
+
   /// The aperture table function wrapper
   TableFunction::KernelWrapper m_apertureTable;
 };
@@ -183,10 +186,6 @@ public:
   };
 
 protected:
-
-  /// The value of penalty to penetration
-  real64 m_penaltyStiffness;
-
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
@@ -196,6 +195,12 @@ protected:
    * @param[in] apertureTable the effective aperture vs aperture table
    */
   void validateApertureTable( TableFunction const & apertureTable ) const;
+
+
+  /// The value of penalty to penetration
+  real64 m_penaltyStiffness;
+
+  real64 m_shearStiffness;
 
   /// The aperture tolerance to avoid floating point errors in expressions involving aperture
   real64 m_apertureTolerance;
