@@ -109,23 +109,11 @@ protected:
     sol_comp.createWithLocalSize( sol_true.localSize(), sol_true.getComm() );
     sol_comp.zero();
 
-    /////////////////////////////
-//    GEOSX_LOG_RANK_VAR( sol_true );
-//    sol_true.write("sol_true.mtx");
-//    rhs.write("rhs.mtx");
-//    sol_comp.write("sol_comp.mtx");
-//    GEOSX_ERROR("OK");
-    /////////////////////////////
-
     // Create the solver and solve the system
     auto solver = LAI::createSolver( params );
     solver->setup( matrix );
     solver->solve( rhs, sol_comp );
     EXPECT_TRUE( solver->result().success() );
-//
-//    /////////////////////////////
-//    GEOSX_LOG_RANK_VAR( sol_comp );
-//    /////////////////////////////
 
     // Check that solution is within epsilon of true
     Vector sol_diff( sol_comp );

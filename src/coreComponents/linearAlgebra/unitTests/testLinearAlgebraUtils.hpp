@@ -76,20 +76,30 @@ void computeIdentity( MPI_Comm comm,
                       globalIndex N,
                       MATRIX & I )
 {
-  // Create a matrix of size N with 1 non-zero per row
-  I.createWithGlobalSize( N, 1, comm );
+  // Construct a local CRS matrix
+  localIndex const rank = LvArray::integerConversion< localIndex >( MpiWrapper::commRank( comm ) );
+  localIndex const nproc = LvArray::integerConversion< localIndex >( MpiWrapper::commSize( comm ) );
 
-  I.open();
+  localIndex const localRowSize = LvArray::integerConversion< localIndex >( N / nproc );
+  localIndex const rowResidual = LvArray::integerConversion< localIndex >( N % nproc );
+
+  CRSMatrix< real64, globalIndex > matrix( rank == 0 ? localRowSize + rowResidual : localRowSize, N, 1 );
+  CRSMatrixView< real64, globalIndex > matrixView = matrix.toView();
+
+  globalIndex const ilower = rank * localRowSize + ( rank == 0 ? 0 : rowResidual );
+  globalIndex const iupper = ilower + localRowSize + ( rank == 0 ? rowResidual : 0 );
 
   // Loop over rows to fill the matrix
-  for( globalIndex i = I.ilower(); i < I.iupper(); i++ )
+  forAll< parallelDevicePolicy<> >( iupper - ilower, [=] GEOSX_HOST_DEVICE ( globalIndex const iRow )
   {
-    // Set the value for element (i,i) to 1
-    I.insert( i, i, 1.0 );
-  }
+    // Set the values for global row i
+    globalIndex const i = iRow + ilower;
+    matrixView.insertNonZero( LvArray::integerConversion< localIndex >( iRow ), i, 1 );
+  } );
 
-  // Close the matrix (make data contiguous in memory)
-  I.close();
+  // Construct the 2D Laplace matrix
+  I.create( matrix.toViewConst(), comm );
+
 }
 
 /**
@@ -140,7 +150,6 @@ void compute2DLaplaceOperator( MPI_Comm comm,
 
   globalIndex const ilower = rank * localRowSize + ( rank == 0 ? 0 : rowResidual );
   globalIndex const iupper = ilower + localRowSize + ( rank == 0 ? rowResidual : 0 );
-
 
   // Loop over rows to fill the matrix
   forAll< parallelDevicePolicy<> >( iupper - ilower, [=] GEOSX_HOST_DEVICE ( globalIndex const iRow )
