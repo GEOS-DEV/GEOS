@@ -297,7 +297,16 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
           localDofIndex[ke * numComp + c] = elemDofIndex[er][esr][ei] + c;
         }
       }
-      sparsity.insert( localDofIndex, localDofIndex, localValues );
+      GEOSX_LOG_RANK( "Boom" );
+      //sparsity.insert( localDofIndex, localDofIndex, localValues );
+      for( localIndex iRow = 0; iRow < numElem * numComp; ++iRow )
+      {
+        for( localIndex iCol = 0; iCol < numElem * numComp; ++iCol )
+        {
+          sparsity.insert( localDofIndex[iRow], localDofIndex[iCol], localValues[iRow][iCol] );
+        }
+      }
+      GEOSX_LOG_RANK( "Boom boom!" );
     }
   } );
 }

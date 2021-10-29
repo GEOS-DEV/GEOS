@@ -89,41 +89,47 @@ void EpetraExport::exportCRS( EpetraMatrix const & mat,
 }
 
 void EpetraExport::exportVector( EpetraVector const & vec,
-                                 real64 * values ) const
+                                 arrayView1d< real64 > const & values ) const
 {
   if( m_targetRank >= 0 )
   {
-    int const rank = MpiWrapper::commRank( vec.getComm() );
-    GEOSX_ERROR_IF( rank == m_targetRank && !values, "EpetraExport: must pass non-null pointers on the target rank" );
+    //int const rank = MpiWrapper::commRank( vec.getComm() );
+    //GEOSX_ERROR_IF( rank == m_targetRank && !values, "EpetraExport: must pass non-null pointers on the target rank" );
 
     // Create a local vector that directly wraps the user-provided buffer and gather
-    Epetra_MultiVector localVec( View, *m_serialMap, values, 0, 1 );
+    ///////////////
+    values.move( LvArray::MemorySpace::host, false );
+    /////////
+    Epetra_MultiVector localVec( View, *m_serialMap, values.data(), 0, 1 );
     localVec.Import( vec.unwrapped(), *m_serialImport, Insert );
   }
   else
   {
+    ///////////////
+    values.move( LvArray::MemorySpace::host, false );
+    /////////
     real64 const * const data = vec.extractLocalVector();
-    std::copy( data, data + vec.localSize(), values );
+    std::copy( data, data + vec.localSize(), values.data() );
   }
 }
 
-void EpetraExport::importVector( real64 const * values,
+void EpetraExport::importVector( arrayView1d< const real64 > const & values,
                                  EpetraVector & vec ) const
 {
   if( m_targetRank >= 0 )
   {
-    int const rank = MpiWrapper::commRank( vec.getComm() );
-    GEOSX_ERROR_IF( rank == m_targetRank && !values, "EpetraExport: must pass non-null pointers on the target rank" );
+    //int const rank = MpiWrapper::commRank( vec.getComm() );
+    //GEOSX_ERROR_IF( rank == m_targetRank && !values, "EpetraExport: must pass non-null pointers on the target rank" );
 
     // HACK: const_cast required in order to create an Epetra vector that wraps user data;
     //       we promise the values won't be changed since the only thing we do is scatter.
-    Epetra_MultiVector localVector( View, *m_serialMap, const_cast< real64 * >( values ), LvArray::integerConversion< int >( vec.globalSize() ), 1 );
+    Epetra_MultiVector localVector( View, *m_serialMap, const_cast< real64 * >( values.data() ), LvArray::integerConversion< int >( vec.globalSize() ), 1 );
     vec.unwrapped().Export( localVector, *m_serialImport, Insert );
   }
   else
   {
     real64 * const data = vec.extractLocalVector();
-    std::copy( values, values + vec.localSize(), data );
+    std::copy( values.data(), values.data() + vec.localSize(), data );
   }
 }
 

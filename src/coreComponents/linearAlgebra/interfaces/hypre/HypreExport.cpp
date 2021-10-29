@@ -60,7 +60,6 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
 
   // import on target rank if needed, or extract diag+offdiag part in each rank
   hypre_CSRMatrix * localMatrix;
-
   if( m_targetRank < 0 )
   {
     localMatrix = hypre_MergeDiagAndOffd( mat.unwrapped() );
@@ -81,9 +80,9 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     HYPRE_Real const * const va = hypre_CSRMatrixData( localMatrix );
 
 #if defined(GEOSX_USE_HYPRE_CUDA)
-    rowOffsets.move( LvArray::MemorySpace::cuda, true );
-    colIndices.move( LvArray::MemorySpace::cuda, true );
-    values.move( LvArray::MemorySpace::cuda, true );
+    rowOffsets.move( LvArray::MemorySpace::cuda, false );
+    colIndices.move( LvArray::MemorySpace::cuda, false );
+    values.move( LvArray::MemorySpace::cuda, false );
 #else
     rowOffsets.move( LvArray::MemorySpace::host, false );
     colIndices.move( LvArray::MemorySpace::host, false );
@@ -152,35 +151,43 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
 }
 
 void HypreExport::exportVector( HypreVector const & vec,
-                                real64 * values ) const
+                                arrayView1d< real64 > const & values ) const
 {
   if( m_targetRank >= 0 )
   {
     int const rank = MpiWrapper::commRank( vec.getComm() );
-    GEOSX_ERROR_IF( rank == m_targetRank && !values, "HypreExport: must pass non-null pointers on the target rank" );
 
     hypre_Vector * const localVector = hypre_ParVectorToVectorAll( vec.unwrapped() );
     if( rank == m_targetRank )
     {
       HYPRE_Real const * const data = hypre_VectorData( localVector );
-      std::copy( data, data + vec.globalSize(), values );
+      values.move( LvArray::MemorySpace::host, false );
+#if defined(GEOSX_USE_HYPRE_CUDA)
+      cudaMemcpy( values.data(), data, vec.globalSize() * sizeof( HYPRE_Real ), cudaMemcpyDeviceToHost );
+#else
+      std::copy( data, data + vec.globalSize(), values.data() );
+#endif
     }
     GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( localVector ) );
   }
   else
   {
     real64 const * const data = vec.extractLocalVector();
-    std::copy( data, data + vec.localSize(), values );
+    values.move( LvArray::MemorySpace::host, false );
+#if defined(GEOSX_USE_HYPRE_CUDA)
+    cudaMemcpy( values.data(), data, vec.localSize() * sizeof( HYPRE_Real ), cudaMemcpyDeviceToHost );
+#else
+    std::copy( data, data + vec.globalSize(), values.data() );
+#endif
   }
 }
 
-void HypreExport::importVector( real64 const * values,
+void HypreExport::importVector( arrayView1d< const real64 > const & values,
                                 HypreVector & vec ) const
 {
   if( m_targetRank >= 0 )
   {
     int const rank = MpiWrapper::commRank( vec.getComm() );
-    GEOSX_ERROR_IF( rank == m_targetRank && !values, "HypreExport: must pass non-null pointers on the target rank" );
 
     if( m_subComm != MPI_COMM_NULL )
     {
@@ -191,7 +198,8 @@ void HypreExport::importVector( real64 const * values,
         //       but this is ok because we don't modify the values, only scatter the vector.
         localVector = HYPRE_VectorCreate( LvArray::integerConversion< HYPRE_Int >( vec.globalSize() ) );
         hypre_VectorOwnsData( ( hypre_Vector * ) localVector ) = false;
-        hypre_VectorData( ( hypre_Vector * ) localVector ) = const_cast< real64 * >( values );
+        values.move( LvArray::MemorySpace::host, false );
+        hypre_VectorData( ( hypre_Vector * ) localVector ) = const_cast< real64 * >( values.data() );
         hypre_SeqVectorInitialize_v2( ( hypre_Vector * ) localVector, HYPRE_MEMORY_HOST );
       }
 
@@ -204,11 +212,13 @@ void HypreExport::importVector( real64 const * values,
                                                       localVector,
                                                       partitioning,
                                                       &parVector ) );
+      HYPRE_Real const * const parVectorData = hypre_VectorData( hypre_ParVectorLocalVector( parVector ) );
 
-
-      // copy parVector local part over to the output vector
-      HYPRE_Real * const parVectorData = hypre_VectorData( hypre_ParVectorLocalVector( parVector ) );
+#if defined(GEOSX_USE_HYPRE_CUDA)
+      cudaMemcpy( vec.extractLocalVector(), parVectorData, vec.localSize() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice  );
+#else
       std::copy( parVectorData, parVectorData + vec.localSize(), vec.extractLocalVector() );
+#endif
 
       GEOSX_LAI_CHECK_ERROR( HYPRE_ParVectorDestroy( parVector ) );
       GEOSX_LAI_CHECK_ERROR( HYPRE_VectorDestroy( localVector ) );
@@ -216,8 +226,12 @@ void HypreExport::importVector( real64 const * values,
   }
   else
   {
-    real64 * const data = vec.extractLocalVector();
-    std::copy( values, values + vec.localSize(), data );
+#if defined(GEOSX_USE_HYPRE_CUDA)
+    cudaMemcpy( vec.extractLocalVector(), values.data(), values.size() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice  );
+#else
+    values.move( LvArray::MemorySpace::host, false );
+    std::copy( values.data(), values.data() + values.size(), vec.extractLocalVector() );
+#endif
   }
 
 }

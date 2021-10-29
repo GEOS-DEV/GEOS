@@ -110,6 +110,7 @@ protected:
     sol_comp.zero();
 
     /////////////////////////////
+//    GEOSX_LOG_RANK_VAR( sol_true );
 //    sol_true.write("sol_true.mtx");
 //    rhs.write("rhs.mtx");
 //    sol_comp.write("sol_comp.mtx");
@@ -121,13 +122,15 @@ protected:
     solver->setup( matrix );
     solver->solve( rhs, sol_comp );
     EXPECT_TRUE( solver->result().success() );
+//
+//    /////////////////////////////
+//    GEOSX_LOG_RANK_VAR( sol_comp );
+//    /////////////////////////////
 
     // Check that solution is within epsilon of true
     Vector sol_diff( sol_comp );
     sol_diff.axpy( -1.0, sol_true );
 
-    sol_comp.write( "sol_comp.mtx" );
-    sol_diff.write( "sol_diff.mtx" );
     real64 const relTol = cond_est * params.krylov.relTolerance;
     EXPECT_LT( sol_diff.norm2() / sol_true.norm2(), relTol );
   }
@@ -148,7 +151,7 @@ protected:
 
   void SetUp() override
   {
-    globalIndex constexpr n = 100;
+    globalIndex constexpr n = 4;//100;
     geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
 
     // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
@@ -211,11 +214,11 @@ protected:
 
   void SetUp() override
   {
-    globalIndex constexpr n = 100;
-    geosx::testing::compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );
-//    globalIndex constexpr nx = 3;
-//    globalIndex constexpr ny = 7;
-//    geosx::testing::compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, nx, ny, 10000., 0.2, this->matrix );
+//    globalIndex constexpr n = 100;
+//    geosx::testing::compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );
+    globalIndex constexpr nx = 3;
+    globalIndex constexpr ny = 7;
+    geosx::testing::compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, nx, ny, 10000., 0.2, this->matrix );
     this->cond_est = 1e4; // not a true condition number estimate, but enough to pass tests
   }
 };
