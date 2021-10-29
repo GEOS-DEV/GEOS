@@ -33,7 +33,7 @@ and the term :math:`X` is given as:
 
 **Input file**
 
-The xml input files for this test case are located at:
+The input xml files for this test case are located at:
 
 .. code-block:: console
 
@@ -159,26 +159,24 @@ Fluid is injected into a sub-area of the initial fracture. Only half of the inje
 
 .. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
   :language: xml
-  :start-after: <!-- Sphinx_FieldSpecifications_InjSource -->
-  :end-before:  <!-- Sphinx_FieldSpecifications_InjSource_End -->
-
+  :start-after: <!-- Sphinx_SourceFlux_InjSource -->
+  :end-before:  <!-- Sphinx_SourceFlux_InjSource_End -->
 
 The parameters used in the simulation are summarized in the following table.
 
-  +----------------+-----------------------+------------------+-------------------+
-  | Symbol         | Parameter             | Units            | Value             |
-  +================+=======================+==================+===================+
-  | :math:`Q_0`    | Injection rate        | [m:sup:`3`/s]    | 10:sup:`-4`       |
-  +----------------+-----------------------+------------------+-------------------+
-  | :math:`E`      | Young's modulus       | [GPa]            | 30                |
-  +----------------+-----------------------+------------------+-------------------+
-  | :math:`\nu`    | Poisson's ratio       | [ - ]            | 0.25              |
-  +----------------+-----------------------+------------------+-------------------+
-  | :math:`\mu`    | Fluid viscosity       | [Pa.s]           | 10:sup:`-6`       |
-  +----------------+-----------------------+------------------+-------------------+
-  | :math:`K_{Ic}` | Rock toughness        | [MPa.m:sup:`1/2`]| 1                 |
-  +----------------+-----------------------+------------------+-------------------+
-
+  +----------------+-----------------------+--------------------+-------------------+
+  | Symbol         | Parameter             | Units              | Value             |
+  +================+=======================+====================+===================+
+  | :math:`Q_0`    | Injection rate        | [m\ :sup:`3`/s]    | 10\ :sup:`-4`     |
+  +----------------+-----------------------+--------------------+-------------------+
+  | :math:`E`      | Young's modulus       | [GPa]              | 30                |
+  +----------------+-----------------------+--------------------+-------------------+
+  | :math:`\nu`    | Poisson's ratio       | [ - ]              | 0.25              |
+  +----------------+-----------------------+--------------------+-------------------+
+  | :math:`\mu`    | Fluid viscosity       | [Pa.s]             | 10\ :sup:`-6`     |
+  +----------------+-----------------------+--------------------+-------------------+
+  | :math:`K_{Ic}` | Rock toughness        | [MPa.m\ :sup:`1/2`]| 1                 |
+  +----------------+-----------------------+--------------------+-------------------+
 
 ---------------------------------
 Inspecting results
@@ -218,7 +216,7 @@ A good agreement between GEOSX results and analytical solutions is shown in the 
 			X  = self.X
 
 			halfLength = 0.9324 * X**( -1.0/6.0 ) * ( ( Ep * Q0**3.0 ) / ( 12.0 * mu ) )**( 1.0/6.0 ) * t**( 2.0/3.0 )
-			print( 0.9324 * X**( -1.0/6.0 ) * ( ( Ep * Q0**3.0 ) / ( 12.0 * mu ) )**( 1.0/6.0 ) )
+
 			inletAperture = np.sqrt( 0.5 * X**( 0.5 ) * ( 12.0 * mu * Q0 / Ep )**( 0.5 ) * halfLength )
 
 			inletPressure = 0.125 * X**( 0.5 ) * (12.0 * mu * Q0 * Ep)**( 0.5 ) / inletAperture
