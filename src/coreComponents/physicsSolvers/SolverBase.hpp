@@ -585,8 +585,6 @@ public:
     return m_nonlinearSolverParameters;
   }
 
-  string getDiscretization() const { return m_discretizationName; }
-
   arrayView1d< string const > targetRegionNames() const { return m_targetRegionNames; }
 
   virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const
