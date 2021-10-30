@@ -66,8 +66,6 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
   }
   else
   {
-//    GEOSX_ERROR_IF( rank == m_targetRank && !( rowOffsets && colIndices && values ),
-//                    "HypreExport: must pass non-null pointers on the target rank" );
     localMatrix = hypre_ParCSRMatrixToCSRMatrixAll( mat.unwrapped() );
     GEOSX_ERROR_IF( rank == m_targetRank && !localMatrix, "HypreExport: matrix is empty on target rank" );
   }
@@ -153,6 +151,7 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
 void HypreExport::exportVector( HypreVector const & vec,
                                 arrayView1d< real64 > const & values ) const
 {
+  values.move( LvArray::MemorySpace::host, false );
   if( m_targetRank >= 0 )
   {
     int const rank = MpiWrapper::commRank( vec.getComm() );
@@ -161,7 +160,6 @@ void HypreExport::exportVector( HypreVector const & vec,
     if( rank == m_targetRank )
     {
       HYPRE_Real const * const data = hypre_VectorData( localVector );
-      values.move( LvArray::MemorySpace::host, false );
 #if defined(GEOSX_USE_HYPRE_CUDA)
       cudaMemcpy( values.data(), data, vec.globalSize() * sizeof( HYPRE_Real ), cudaMemcpyDeviceToHost );
 #else
@@ -173,7 +171,6 @@ void HypreExport::exportVector( HypreVector const & vec,
   else
   {
     real64 const * const data = vec.extractLocalVector();
-    values.move( LvArray::MemorySpace::host, false );
 #if defined(GEOSX_USE_HYPRE_CUDA)
     cudaMemcpy( values.data(), data, vec.localSize() * sizeof( HYPRE_Real ), cudaMemcpyDeviceToHost );
 #else
@@ -185,6 +182,7 @@ void HypreExport::exportVector( HypreVector const & vec,
 void HypreExport::importVector( arrayView1d< const real64 > const & values,
                                 HypreVector & vec ) const
 {
+  values.move( LvArray::MemorySpace::host, false );
   if( m_targetRank >= 0 )
   {
     int const rank = MpiWrapper::commRank( vec.getComm() );
@@ -198,7 +196,6 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
         //       but this is ok because we don't modify the values, only scatter the vector.
         localVector = HYPRE_VectorCreate( LvArray::integerConversion< HYPRE_Int >( vec.globalSize() ) );
         hypre_VectorOwnsData( ( hypre_Vector * ) localVector ) = false;
-        values.move( LvArray::MemorySpace::host, false );
         hypre_VectorData( ( hypre_Vector * ) localVector ) = const_cast< real64 * >( values.data() );
         hypre_SeqVectorInitialize_v2( ( hypre_Vector * ) localVector, HYPRE_MEMORY_HOST );
       }
