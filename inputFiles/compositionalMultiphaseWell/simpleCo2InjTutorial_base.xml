@@ -90,6 +90,7 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
+
       phasePVTParaFiles="{ pvtgas.txt, pvtliquidphillips.txt }"
       flashModelParaFile="co2flash.txt"/>
 
