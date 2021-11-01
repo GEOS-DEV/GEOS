@@ -612,7 +612,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 
     if( solver != nullptr )
     {
-      string const discretizationName = solver->getDiscretization();
+      string const discretizationName = solver->getDiscretizationName();
       arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
 
       FiniteElementDiscretizationManager const &
