@@ -1,0 +1,233 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
+  <Solvers>
+    <CompositionalMultiphaseReservoir
+      name="coupledFlowAndWells"
+      flowSolverName="compositionalMultiphaseFlow"
+      wellSolverName="compositionalMultiphaseWell"
+      logLevel="1"
+      initialDt="1e2"
+      targetRegions="{ reservoir, wellRegion }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        lineSearchAction="Attempt"
+        maxTimeStepCuts="10"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="1e-4"
+        krylovAdaptiveTol="1"
+        krylovWeakestTol="1e-2"/>
+    </CompositionalMultiphaseReservoir>
+
+    <CompositionalMultiphaseFVM
+      name="compositionalMultiphaseFlow"
+      targetRegions="{ reservoir }"
+      discretization="fluidTPFA"
+      fluidNames="{ fluid }"
+      solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
+      relPermNames="{ relperm }"
+      temperature="368.15"
+      maxCompFractionChange="0.2"
+      logLevel="1"
+      useMass="1"/>
+
+    <CompositionalMultiphaseWell
+      name="compositionalMultiphaseWell"
+      targetRegions="{ wellRegion }"
+      fluidNames="{ fluid }"
+      relPermNames="{ relperm }"
+      wellTemperature="368.15"
+      logLevel="1"
+      useMass="1">
+      <WellControls
+        name="wellControls"
+        type="injector"
+        control="totalVolRate"
+        referenceElevation="7500"
+        targetBHP="1e8"
+        targetTotalRate="5e-2"
+        injectionStream="{ 0.995, 0.005 }"/>
+    </CompositionalMultiphaseWell>
+  </Solvers>
+  <!-- SPHINX_FIELD_CASE_Co2_SOLVER_END -->  
+  
+  <!-- SPHINX_FIELD_CASE_Co2_REGION -->
+  <ElementRegions>
+    <CellElementRegion
+      name="reservoir"
+      cellBlocks="{ cellBlock }"
+      materialList="{ fluid, rock, relperm }"/>
+
+    <WellElementRegion
+      name="wellRegion"
+      materialList="{ fluid, relperm, rockPerm }"/>
+  </ElementRegions>
+  <!-- SPHINX_FIELD_CASE_Co2_REGION_END --> 
+ 
+  <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL -->
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"
+        targetRegions="{ reservoir }"
+        fieldName="pressure"
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
+    </FiniteVolume>
+  </NumericalMethods>
+  <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL_END -->
+
+  <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
+  <Constitutive>
+    <CO2BrinePhillipsFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ pvtgas.txt, pvtliquidphillips.txt }"
+      flashModelParaFile="co2flash.txt"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="1.0e7"
+      compressibility="4.5e-10"/>
+
+    <BrooksCoreyRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      phaseMinVolumeFraction="{ 0.05, 0.30 }"
+      phaseRelPermExponent="{ 2.0, 2.0 }"
+      phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-17, 1.0e-17, 3.0e-17 }"/>
+
+  </Constitutive>
+  <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
+
+  <!-- SPHINX_FIELD_CASE_Co2_FIELD -->
+  <FieldSpecifications>
+   <FieldSpecification
+      name="permx"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rockPerm_permeability"
+      scale="1e-15"
+      functionName="permxFunc"/>
+
+    <FieldSpecification
+      name="permy"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rockPerm_permeability"
+      scale="1e-15"
+      functionName="permyFunc"/>
+
+    <FieldSpecification
+      name="permz"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rockPerm_permeability"
+      scale="3e-15"
+      functionName="permzFunc"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir"
+      fieldName="pressure"
+      scale="1.25e7"/>
+
+    <FieldSpecification
+      name="initialComposition_co2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialComposition_water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="1.0"/>
+  </FieldSpecifications>
+  <!-- SPHINX_FIELD_CASE_Co2_FIELD_END -->
+
+  <!-- SPHINX_FIELD_CASE_Co2_OUTPUT -->
+  <Outputs>
+    <VTK
+      name="simpleReservoirViz"/>
+
+    <Restart
+      name="restartOutput"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/wellPressureCollection}"
+      filename="wellPressureHistory" />
+
+  </Outputs>
+  <!-- SPHINX_FIELD_CASE_Co2_OUTPUT_END -->
+
+  <!-- SPHINX_FIELD_CASE_Co2_TASKS -->  
+  <Tasks>
+    <PackCollection
+      name="wellPressureCollection"
+      objectPath="ElementRegions/wellRegion/wellRegionuniqueSubRegion"
+      fieldName="pressure" />
+    
+  </Tasks>
+  <!-- SPHINX_FIELD_CASE_Co2_TASKS_END -->  
+  <Functions>
+    <TableFunction 
+        name="permxFunc"
+        inputVarNames="{elementCenter}"
+        coordinateFiles="{tables_FieldCaseTuto/xlin2.geos,tables_FieldCaseTuto/ylin2.geos,tables_FieldCaseTuto/zlin2.geos}"
+        voxelFile="tables_FieldCaseTuto/perm.geos"
+        interpolation="nearest" />
+
+    <TableFunction 
+        name="permyFunc"
+        inputVarNames="{elementCenter}"
+        coordinateFiles="{tables_FieldCaseTuto/xlin2.geos,tables_FieldCaseTuto/ylin2.geos,tables_FieldCaseTuto/zlin2.geos}"
+        voxelFile="tables_FieldCaseTuto/perm.geos"
+        interpolation="nearest" />
+
+    <TableFunction 
+        name="permzFunc"
+        inputVarNames="{elementCenter}"
+        coordinateFiles="{tables_FieldCaseTuto/xlin2.geos,tables_FieldCaseTuto/ylin2.geos,tables_FieldCaseTuto/zlin2.geos}"
+        voxelFile="tables_FieldCaseTuto/perm.geos"
+        interpolation="nearest" />
+  </Functions>
+  
+</Problem>
