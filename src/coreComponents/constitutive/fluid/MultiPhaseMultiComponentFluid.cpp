@@ -52,7 +52,7 @@ template<> class
                         PVTProps::CO2Solubility >
 {
 public:
-  static string name() { return "EzrokhiCO2BrineFluid"; }
+  static string name() { return "CO2BrineEzrokhiFluid"; }
 };
 } // end namespace
 
@@ -281,7 +281,7 @@ template class MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
                                               PVTProps::CO2Solubility >;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrinePhillipsFluid, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, EzrokhiCO2BrineFluid, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrineEzrokhiFluid, string const &, Group * const )
 
 } //namespace constitutive
 

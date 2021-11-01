@@ -191,7 +191,7 @@ using CO2BrinePhillipsFluid = MultiPhaseMultiComponentFluid< PVTProps::PhillipsB
                                                              PVTProps::FenghourCO2Viscosity,
                                                              PVTProps::CO2Solubility >;
 
-using EzrokhiCO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
+using CO2BrineEzrokhiFluid = MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
                                                             PVTProps::EzrokhiBrineViscosity,
                                                             PVTProps::SpanWagnerCO2Density,
                                                             PVTProps::FenghourCO2Viscosity,

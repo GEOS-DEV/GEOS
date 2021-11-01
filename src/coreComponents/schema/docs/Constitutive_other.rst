@@ -28,7 +28,7 @@ ElasticIsotropicPressureDependent           node :ref:`DATASTRUCTURE_ElasticIsot
 ElasticOrthotropic                          node :ref:`DATASTRUCTURE_ElasticOrthotropic`                          
 ElasticTransverseIsotropic                  node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`                  
 ExtendedDruckerPrager                       node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                       
-EzrokhiCO2BrineFluid                        node :ref:`DATASTRUCTURE_EzrokhiCO2BrineFluid`                        
+CO2BrineEzrokhiFluid                        node :ref:`DATASTRUCTURE_CO2BrineEzrokhiFluid`                        
 ModifiedCamClay                             node :ref:`DATASTRUCTURE_ModifiedCamClay`                             
 NullModel                                   node :ref:`DATASTRUCTURE_NullModel`                                   
 ParallelPlatesPermeability                  node :ref:`DATASTRUCTURE_ParallelPlatesPermeability`                  

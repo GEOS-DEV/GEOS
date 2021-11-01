@@ -1047,9 +1047,9 @@ TEST_F( CO2BrinePhillipsFluidTest, numericalDerivativesMass )
   }
 }
 
-MultiFluidBase & makeEzrokhiCO2BrineFluid( string const & name, Group * parent )
+MultiFluidBase & makeCO2BrineEzrokhiFluid( string const & name, Group * parent )
 {
-  EzrokhiCO2BrineFluid & fluid = parent->registerGroup< EzrokhiCO2BrineFluid >( name );
+  CO2BrineEzrokhiFluid & fluid = parent->registerGroup< CO2BrineEzrokhiFluid >( name );
 
   auto & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   compNames.resize( 2 );
@@ -1063,35 +1063,35 @@ MultiFluidBase & makeEzrokhiCO2BrineFluid( string const & name, Group * parent )
   phaseNames.resize( 2 );
   phaseNames[0] = "gas"; phaseNames[1] = "liquid";
 
-  auto & phasePVTParaFileNames = fluid.getReference< path_array >( EzrokhiCO2BrineFluid::viewKeyStruct::phasePVTParaFilesString() );
+  auto & phasePVTParaFileNames = fluid.getReference< path_array >( CO2BrineEzrokhiFluid::viewKeyStruct::phasePVTParaFilesString() );
   phasePVTParaFileNames.resize( 2 );
   phasePVTParaFileNames[0] = "pvtgas.txt"; phasePVTParaFileNames[1] = "pvtliquid.txt";
 
-  auto & flashModelParaFileName = fluid.getReference< Path >( EzrokhiCO2BrineFluid::viewKeyStruct::flashModelParaFileString() );
+  auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrineEzrokhiFluid::viewKeyStruct::flashModelParaFileString() );
   flashModelParaFileName = "co2flash.txt";
 
   fluid.postProcessInputRecursive();
   return fluid;
 }
 
-class EzrokhiCO2BrineFluidTest : public CompositionalFluidTestBase
+class CO2BrineEzrokhiFluidTest : public CompositionalFluidTestBase
 {
 protected:
 
-  EzrokhiCO2BrineFluidTest()
+  CO2BrineEzrokhiFluidTest()
   {
     writeTableToFile( "pvtliquid.txt", pvtLiquidEzrokhiTableContent );
     writeTableToFile( "pvtgas.txt", pvtGasTableContent );
     writeTableToFile( "co2flash.txt", co2FlashTableContent );
 
     parent.resize( 1 );
-    fluid = &makeEzrokhiCO2BrineFluid( "fluid", &parent );
+    fluid = &makeCO2BrineEzrokhiFluid( "fluid", &parent );
 
     parent.initialize();
     parent.initializePostInitialConditions();
   }
 
-  ~EzrokhiCO2BrineFluidTest()
+  ~CO2BrineEzrokhiFluidTest()
   {
     removeFile( "pvtliquid.txt" );
     removeFile( "pvtgas.txt" );
@@ -1100,7 +1100,7 @@ protected:
 
 };
 
-TEST_F( EzrokhiCO2BrineFluidTest, numericalDerivativesMolar )
+TEST_F( CO2BrineEzrokhiFluidTest, numericalDerivativesMolar )
 {
   fluid->setMassFlag( false );
 
@@ -1122,7 +1122,7 @@ TEST_F( EzrokhiCO2BrineFluidTest, numericalDerivativesMolar )
   }
 }
 
-TEST_F( EzrokhiCO2BrineFluidTest, numericalDerivativesMass )
+TEST_F( CO2BrineEzrokhiFluidTest, numericalDerivativesMass )
 {
   fluid->setMassFlag( true );
 
