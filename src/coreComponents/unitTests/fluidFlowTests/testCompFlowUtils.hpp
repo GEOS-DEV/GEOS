@@ -163,12 +163,12 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
                             real64 const eps,
                             CRSMatrixView< real64, globalIndex const > const & jacobian )
 {
-  forAll< parallelDevicePolicy<> >( residual.size(), [=] GEOSX_HOST_DEVICE ( localIndex const row )
+  forAll<  parallelDevicePolicy<> >( residual.size(), [=] GEOSX_HOST_DEVICE ( localIndex const row )
   {
     real64 const dRdX = ( residual[row] - residualOrig[row] ) / eps;
     if( fabs( dRdX ) > 0.0 )
     {
-      jacobian.addToRow< serialAtomic >( row, &dofIndex, &dRdX, 1 );
+      jacobian.addToRow< parallelDeviceAtomic >( row, &dofIndex, &dRdX, 1 );
     }
   } );
 }

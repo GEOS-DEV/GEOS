@@ -392,7 +392,7 @@ protected:
                                   string_array const & regions,
                                   globalIndex const rankOffset,
                                   localIndex const numComp,
-                                  CRSMatrix<real64> & sparsity );
+                                  CRSMatrix< real64 > & sparsity );
 
   using CoupledPatternFunc = void ( * )( MeshLevel const * const mesh,
                                          string const & dofIndexKey1,
@@ -401,7 +401,7 @@ protected:
                                          globalIndex const rankOffset,
                                          localIndex const numComp1,
                                          localIndex const numComp2,
-                                         CRSMatrix<real64> & sparsity );
+                                         CRSMatrix< real64 > & sparsity );
 
   struct FieldDesc
   {
@@ -509,9 +509,9 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
     pattern.set( 1.0 );
   }
 
-  CRSMatrix< real64, globalIndex > localPatternExpected(numLocalDof,
-                                                        dofManager.numGlobalDofs(),
-                                                        27 * numCompTotal);
+  CRSMatrix< real64, globalIndex > localPatternExpected( numLocalDof,
+                                                         dofManager.numGlobalDofs(),
+                                                         27 * numCompTotal );
   Matrix patternExpected;
 //  patternExpected.createWithLocalSize( numLocalDof, numLocalDof, 27 * numCompTotal, MPI_COMM_GEOSX );
 //  patternExpected.open();
