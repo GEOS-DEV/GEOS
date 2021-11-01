@@ -262,7 +262,7 @@ public:
   virtual
   HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
-    return geosx::getHistoryMetadata( getName(), referenceAsView( ), packCount );
+    return geosx::getHistoryMetadata( getName(), referenceAsView( ), numArrayComp(), packCount );
   }
 
   /**
