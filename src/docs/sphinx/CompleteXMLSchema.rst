@@ -589,11 +589,11 @@ Element: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
 
 
-.. _XML_PhillipsCO2BrineFluid:
+.. _XML_CO2BrinePhillipsFluid:
 
-Element: PhillipsCO2BrineFluid
+Element: CO2BrinePhillipsFluid
 ==============================
-.. include:: ../../coreComponents/schema/docs/PhillipsCO2BrineFluid.rst
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
 
 
 .. _XML_PorousDruckerPrager:
@@ -1552,11 +1552,11 @@ Datastructure: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
 
 
-.. _DATASTRUCTURE_PhillipsCO2BrineFluid:
+.. _DATASTRUCTURE_CO2BrinePhillipsFluid:
 
-Datastructure: PhillipsCO2BrineFluid
+Datastructure: CO2BrinePhillipsFluid
 ====================================
-.. include:: ../../coreComponents/schema/docs/PhillipsCO2BrineFluid_other.rst
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid_other.rst
 
 
 .. _DATASTRUCTURE_PorousDruckerPrager:

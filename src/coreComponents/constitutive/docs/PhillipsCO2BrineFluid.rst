@@ -234,11 +234,11 @@ which is tabulated using internal table as a function of temerature based on ste
 Parameters
 =========================
 
-The models are represented by ``<PhillipsCO2BrineFluid>``, ``<EzrokhiCO2BrineFluid>`` nodes in the input.
+The models are represented by ``<CO2BrinePhillipsFluid>``, ``<EzrokhiCO2BrineFluid>`` nodes in the input.
 
 The following attributes are supported:
 
-.. include:: ../../../coreComponents/schema/docs/PhillipsCO2BrineFluid.rst
+.. include:: ../../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
 
 Supported phase names are:
 
@@ -264,7 +264,7 @@ Example
 .. code-block:: xml
 
     <Constitutive>
-        <PhillipsCO2BrineFluid
+        <CO2BrinePhillipsFluid
           name="fluid"
           phaseNames="{ gas, water }"
           componentNames="{ co2, water }"

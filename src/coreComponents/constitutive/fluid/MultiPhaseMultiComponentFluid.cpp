@@ -42,7 +42,7 @@ template<> class
                         PVTProps::CO2Solubility >
 {
 public:
-  static string name() { return "PhillipsCO2BrineFluid"; }
+  static string name() { return "CO2BrinePhillipsFluid"; }
 };
 template<> class
   TwoPhaseCatalogNames< PVTProps::EzrokhiBrineDensity,
@@ -267,7 +267,7 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
   m_flash( flashWrapper.createKernelWrapper() )
 {}
 
-// explicit instantiation of the model template; unfortunately we can't use PhillipsCO2BrineFluid alias for this
+// explicit instantiation of the model template; unfortunately we can't use CO2BrinePhillipsFluid alias for this
 template class MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
                                               PVTProps::PhillipsBrineViscosity,
                                               PVTProps::SpanWagnerCO2Density,
@@ -280,7 +280,7 @@ template class MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
                                               PVTProps::FenghourCO2Viscosity,
                                               PVTProps::CO2Solubility >;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PhillipsCO2BrineFluid, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrinePhillipsFluid, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EzrokhiCO2BrineFluid, string const &, Group * const )
 
 } //namespace constitutive

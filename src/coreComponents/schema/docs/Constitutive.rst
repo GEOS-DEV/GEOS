@@ -34,7 +34,7 @@ NullModel                                   node         :ref:`XML_NullModel`
 ParallelPlatesPermeability                  node         :ref:`XML_ParallelPlatesPermeability`                  
 ParticleFluid                               node         :ref:`XML_ParticleFluid`                               
 PermeabilityBase                            node         :ref:`XML_PermeabilityBase`                            
-PhillipsCO2BrineFluid                       node         :ref:`XML_PhillipsCO2BrineFluid`                       
+CO2BrinePhillipsFluid                       node         :ref:`XML_CO2BrinePhillipsFluid`                       
 PorousDruckerPrager                         node         :ref:`XML_PorousDruckerPrager`                         
 PorousElasticIsotropic                      node         :ref:`XML_PorousElasticIsotropic`                      
 PorousElasticOrthotropic                    node         :ref:`XML_PorousElasticOrthotropic`                    

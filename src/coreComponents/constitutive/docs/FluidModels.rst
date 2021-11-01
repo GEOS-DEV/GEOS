@@ -15,4 +15,4 @@ single fluids and fluid mixtures.
 
    CompositionalMultiphaseFluid
 
-   PhillipsCO2Brine
+   CO2BrinePhillips

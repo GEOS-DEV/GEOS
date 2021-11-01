@@ -238,7 +238,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 
       // Note: in PVTPackage, derivatives are obtained with finite-difference approx **with normalization of the comp fraction**
       //       The component fraction is perturbed (just as above), and then all the component fractions are normalized (as below)
-      //       But, in the native DO model and in PhillipsCO2Brine, derivatives are computed analytically, which results in different
+      //       But, in the native DO model and in CO2BrinePhillips, derivatives are computed analytically, which results in different
       //       derivatives wrt component fractions--although the derivatives wrt component densities obtained with the chain rule
       //       in the solver will be very similar (see discussion on PR #1325 on GitHub).
       //
@@ -277,7 +277,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   } );
 }
 
-void testValuesAgainstPreviousImplementation( PhillipsCO2BrineFluid::KernelWrapper const & wrapper,
+void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapper const & wrapper,
                                               real64 const P,
                                               real64 const T,
                                               arraySlice1d< real64 const > const & compositionInput,
@@ -819,9 +819,9 @@ TEST_F( DeadOilFluidFromTableTest, numericalDerivativesMolar )
   }
 }
 
-MultiFluidBase & makePhillipsCO2BrineFluid( string const & name, Group * parent )
+MultiFluidBase & makeCO2BrinePhillipsFluid( string const & name, Group * parent )
 {
-  PhillipsCO2BrineFluid & fluid = parent->registerGroup< PhillipsCO2BrineFluid >( name );
+  CO2BrinePhillipsFluid & fluid = parent->registerGroup< CO2BrinePhillipsFluid >( name );
 
   auto & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   compNames.resize( 2 );
@@ -835,35 +835,35 @@ MultiFluidBase & makePhillipsCO2BrineFluid( string const & name, Group * parent 
   phaseNames.resize( 2 );
   phaseNames[0] = "gas"; phaseNames[1] = "liquid";
 
-  auto & phasePVTParaFileNames = fluid.getReference< path_array >( PhillipsCO2BrineFluid::viewKeyStruct::phasePVTParaFilesString() );
+  auto & phasePVTParaFileNames = fluid.getReference< path_array >( CO2BrinePhillipsFluid::viewKeyStruct::phasePVTParaFilesString() );
   phasePVTParaFileNames.resize( 2 );
   phasePVTParaFileNames[0] = "pvtgas.txt"; phasePVTParaFileNames[1] = "pvtliquid.txt";
 
-  auto & flashModelParaFileName = fluid.getReference< Path >( PhillipsCO2BrineFluid::viewKeyStruct::flashModelParaFileString() );
+  auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrinePhillipsFluid::viewKeyStruct::flashModelParaFileString() );
   flashModelParaFileName = "co2flash.txt";
 
   fluid.postProcessInputRecursive();
   return fluid;
 }
 
-class PhillipsCO2BrineFluidTest : public CompositionalFluidTestBase
+class CO2BrinePhillipsFluidTest : public CompositionalFluidTestBase
 {
 protected:
 
-  PhillipsCO2BrineFluidTest()
+  CO2BrinePhillipsFluidTest()
   {
     writeTableToFile( "pvtliquid.txt", pvtLiquidPhillipsTableContent );
     writeTableToFile( "pvtgas.txt", pvtGasTableContent );
     writeTableToFile( "co2flash.txt", co2FlashTableContent );
 
     parent.resize( 1 );
-    fluid = &makePhillipsCO2BrineFluid( "fluid", &parent );
+    fluid = &makeCO2BrinePhillipsFluid( "fluid", &parent );
 
     parent.initialize();
     parent.initializePostInitialConditions();
   }
 
-  ~PhillipsCO2BrineFluidTest()
+  ~CO2BrinePhillipsFluidTest()
   {
     removeFile( "pvtliquid.txt" );
     removeFile( "pvtgas.txt" );
@@ -873,7 +873,7 @@ protected:
 };
 
 
-TEST_F( PhillipsCO2BrineFluidTest, checkAgainstPreviousImplementationMolar )
+TEST_F( CO2BrinePhillipsFluidTest, checkAgainstPreviousImplementationMolar )
 {
   fluid->setMassFlag( false );
 
@@ -886,8 +886,8 @@ TEST_F( PhillipsCO2BrineFluidTest, checkAgainstPreviousImplementationMolar )
 
   fluid->allocateConstitutiveData( fluid->getParent(), 1 );
 
-  PhillipsCO2BrineFluid::KernelWrapper wrapper =
-    dynamicCast< PhillipsCO2BrineFluid * >( fluid )->createKernelWrapper();
+  CO2BrinePhillipsFluid::KernelWrapper wrapper =
+    dynamicCast< CO2BrinePhillipsFluid * >( fluid )->createKernelWrapper();
 
   real64 const savedTotalDens[] =
   { 5881.8128183956969224, 5869.522096458530541, 5854.9469601674582009, 9180.9455320478591602, 9157.2045503913905122, 9129.1751063784995495, 15755.475565136142905, 15696.691553847707837,
@@ -938,7 +938,7 @@ TEST_F( PhillipsCO2BrineFluidTest, checkAgainstPreviousImplementationMolar )
   }
 }
 
-TEST_F( PhillipsCO2BrineFluidTest, checkAgainstPreviousImplementationMass )
+TEST_F( CO2BrinePhillipsFluidTest, checkAgainstPreviousImplementationMass )
 {
   fluid->setMassFlag( true );
 
@@ -951,8 +951,8 @@ TEST_F( PhillipsCO2BrineFluidTest, checkAgainstPreviousImplementationMass )
 
   fluid->allocateConstitutiveData( fluid->getParent(), 1 );
 
-  PhillipsCO2BrineFluid::KernelWrapper wrapper =
-    dynamicCast< PhillipsCO2BrineFluid * >( fluid )->createKernelWrapper();
+  CO2BrinePhillipsFluid::KernelWrapper wrapper =
+    dynamicCast< CO2BrinePhillipsFluid * >( fluid )->createKernelWrapper();
 
   real64 const savedTotalDens[] =
   { 238.33977561940088208, 237.86350488026934613, 237.29874890241927687, 354.01144731214282046, 353.18618684355078585, 352.21120673560858449, 550.02182875764299297, 548.3889751707506548,
@@ -1003,7 +1003,7 @@ TEST_F( PhillipsCO2BrineFluidTest, checkAgainstPreviousImplementationMass )
   }
 }
 
-TEST_F( PhillipsCO2BrineFluidTest, numericalDerivativesMolar )
+TEST_F( CO2BrinePhillipsFluidTest, numericalDerivativesMolar )
 {
   fluid->setMassFlag( false );
 
@@ -1025,7 +1025,7 @@ TEST_F( PhillipsCO2BrineFluidTest, numericalDerivativesMolar )
   }
 }
 
-TEST_F( PhillipsCO2BrineFluidTest, numericalDerivativesMass )
+TEST_F( CO2BrinePhillipsFluidTest, numericalDerivativesMass )
 {
   fluid->setMassFlag( true );
 

@@ -185,7 +185,7 @@ private:
 };
 
 // this alias will be useful in constitutive dispatch
-using PhillipsCO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
+using CO2BrinePhillipsFluid = MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
                                                              PVTProps::PhillipsBrineViscosity,
                                                              PVTProps::SpanWagnerCO2Density,
                                                              PVTProps::FenghourCO2Viscosity,

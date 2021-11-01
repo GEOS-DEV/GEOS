@@ -117,7 +117,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <PhillipsCO2BrineFluid
+    <CO2BrinePhillipsFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
