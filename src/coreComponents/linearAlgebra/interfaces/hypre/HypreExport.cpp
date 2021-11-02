@@ -190,7 +190,7 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
     if( m_subComm != MPI_COMM_NULL )
     {
       int const subRank = MpiWrapper::commRank( m_subComm );
-      int const nSubProc = MpiWrapper::commSize(  );
+      int const nSubProc = MpiWrapper::commSize( m_subComm );
       array1d< globalIndex > globalVecStarts;
       array1d< real64 > localVector( vec.localSize( ) );
 
