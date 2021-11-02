@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -347,7 +347,7 @@ public:
 
     // TODO: asking for the stiffness here will only work for elastic models.  most other models
     //       need to know the strain increment to compute the current stiffness value.
-    m_constitutiveUpdate.getElasticStiffness( k, stack.constitutiveStiffness );
+    m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
 
     SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
                                                                                   stack.xLocal,
@@ -582,10 +582,68 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                real64 const (&)[3],
                                                                arrayView1d< string const > const >;
 
+/**
+ * @brief A struct to perform volume, aperture and fracture traction updates
+ */
+struct StateUpdateKernel
+{
 
-} // namespace PoromechanicsEFEMKernels
+  /**
+   * @brief Launch the kernel function doing volume, aperture and fracture traction updates
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
+   * @param[in] size the size of the subregion
+   * @param[in] contactWrapper the wrapper implementing the contact relationship
+   * @param[in] dispJump the displacement jump
+   * @param[in] pressure the pressure
+   * @param[in] deltaPressure the accumulated pressure updates
+   * @param[in] area the area
+   * @param[in] volume the volume
+   * @param[out] deltaVolume the change in volume
+   * @param[out] aperture the aperture
+   * @param[out] effectiveAperture the effecture aperture
+   * @param[out] fractureTraction the fracture traction
+   * @param[out] dFractureTraction_dPressure the derivative of the fracture traction wrt pressure
+   */
+  template< typename POLICY, typename CONTACT_WRAPPER >
+  static void
+  launch( localIndex const size,
+          CONTACT_WRAPPER const & contactWrapper,
+          arrayView2d< real64 const > const & dispJump,
+          arrayView1d< real64 const > const & pressure,
+          arrayView1d< real64 const > const & deltaPressure,
+          arrayView1d< real64 const > const & area,
+          arrayView1d< real64 const > const & volume,
+          arrayView1d< real64 > const & deltaVolume,
+          arrayView1d< real64 > const & aperture,
+          arrayView1d< real64 > const & effectiveAperture,
+          arrayView2d< real64 > const & fractureTraction,
+          arrayView1d< real64 > const & dFractureTraction_dPressure )
+  {
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      // update aperture to be equal to the normal displacement jump
+      aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
-} // namespace geosx
+      real64 dEffectiveAperture_dAperture = 0;
+      effectiveAperture[k] = contactWrapper.computeEffectiveAperture( aperture[k],
+                                                                      dEffectiveAperture_dAperture );
+
+      deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
+
+      // traction on the fracture to include the pressure contribution
+      bool const isOpen = ( aperture[k] >= 0 );
+      contactWrapper.addPressureToTraction( pressure[k] + deltaPressure[k],
+                                            isOpen,
+                                            fractureTraction[k],
+                                            dFractureTraction_dPressure[k] );
+    } );
+  }
+};
+
+} /* namespace PoromechanicsEFEMKernels */
+
+} /* namespace geosx */
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 

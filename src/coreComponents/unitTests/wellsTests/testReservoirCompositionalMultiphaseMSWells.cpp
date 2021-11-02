@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -37,7 +37,7 @@ CommandLineOptions g_commandLineOptions;
 
 char const * xmlInput =
   "<Problem>\n"
-  "  <Solvers gravityVector=\"0.0, 0.0, -9.81\">\n"
+  "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
   "    <CompositionalMultiphaseReservoir name=\"reservoirSystem\"\n"
   "               flowSolverName=\"compositionalMultiphaseFlow\"\n"
   "               wellSolverName=\"compositionalMultiphaseWell\"\n"
@@ -127,7 +127,7 @@ char const * xmlInput =
   "  <ElementRegions>\n"
   "    <CellElementRegion name=\"Region1\"\n"
   "                       cellBlocks=\"{cb1}\"\n"
-  "                       materialList=\"{fluid1, rock, relperm, rockPerm, rockPorosity, nullSolid}\"/>\n"
+  "                       materialList=\"{fluid1, rock, relperm}\"/>\n"
   "    <WellElementRegion name=\"wellRegion1\"\n"
   "                       materialList=\"{fluid1, relperm}\"/> \n"
   "    <WellElementRegion name=\"wellRegion2\"\n"
@@ -545,7 +545,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Volum
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->assembleVolumeBalanceTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->getWellSolver()->assembleVolumeBalanceTerms( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
@@ -560,7 +560,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Press
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->formPressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->getWellSolver()->assemblePressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

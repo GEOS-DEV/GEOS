@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -47,7 +47,7 @@ public:
   ConstitutiveBase( string const & name,
                     Group * const parent );
 
-  virtual ~ConstitutiveBase() override;
+  virtual ~ConstitutiveBase() override = default;
 
   /**
    * @brief create a clone of this constitutive model
@@ -83,6 +83,12 @@ public:
    */
   virtual string getCatalogName() const = 0;
 
+  /**
+   * @brief Get full name of the model.
+   * @return full name, consisting of XML (catalog) name and actual model name
+   */
+  string getFullName() const { return getCatalogName() + " " + getName(); }
+
   ///@}
 
   /**
@@ -98,24 +104,17 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
-  {
-    static constexpr char const * poreVolumeMultiplierString() { return "poreVolumeMultiplier"; }
-    static constexpr char const * dPVMult_dPresString() { return "dPVMult_dDensity"; }
-  };
+  {};
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
+
+  virtual std::vector< string > getSubRelationNames() const { return {}; }
 
 protected:
 
 private:
+
   localIndex m_numQuadraturePoints;
-  Group * m_constitutiveDataGroup = nullptr;
-
-  ConstitutiveBase( ConstitutiveBase const & ) = delete;
-  ConstitutiveBase( ConstitutiveBase && ) = delete;
-  ConstitutiveBase const & operator=( ConstitutiveBase const & ) = delete;
-  ConstitutiveBase const & operator=( ConstitutiveBase && ) = delete;
-
 };
 
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -116,11 +116,6 @@ class PorosityBase : public ConstitutiveBase
 public:
   PorosityBase( string const & name, Group * const parent );
 
-  virtual ~PorosityBase() override;
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -191,6 +186,11 @@ public:
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
+
+  /**
+   * @brief Initialize newPorosity and oldPorosity.
+   */
+  virtual void initializeState() const;
 
   using KernelWrapper = PorosityBaseUpdates;
 

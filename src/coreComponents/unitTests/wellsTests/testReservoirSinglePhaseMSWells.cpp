@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -37,7 +37,7 @@ CommandLineOptions g_commandLineOptions;
 
 char const * xmlInput =
   "<Problem>\n"
-  "  <Solvers gravityVector=\"0.0, 0.0, -9.81\">\n"
+  "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
   "    <SinglePhaseReservoir name=\"reservoirSystem\"\n"
   "               flowSolverName=\"singlePhaseFlow\"\n"
   "               wellSolverName=\"singlePhaseWell\"\n"
@@ -118,7 +118,7 @@ char const * xmlInput =
   "  <ElementRegions>\n"
   "    <CellElementRegion name=\"Region1\"\n"
   "                       cellBlocks=\"{cb1}\"\n"
-  "                       materialList=\"{water, rock,  rockPerm, rockPorosity, nullSolid}\"/>\n"
+  "                       materialList=\"{water, rock}\"/>\n"
   "    <WellElementRegion name=\"wellRegion1\"\n"
   "                       materialList=\"{water}\"/> \n"
   "    <WellElementRegion name=\"wellRegion2\"\n"
@@ -422,9 +422,25 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_PressureRel )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->getWellSolver()->formPressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->getWellSolver()->assemblePressureRelations( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
+
+TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Accum )
+{
+  real64 const perturb = std::sqrt( eps );
+  real64 const tol = 1e-1; // 10% error margin
+
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+  testNumericalJacobian( *solver, domain, perturb, tol,
+                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs )
+  {
+    solver->getWellSolver()->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );
+  } );
+}
+
 
 int main( int argc, char * * argv )
 {

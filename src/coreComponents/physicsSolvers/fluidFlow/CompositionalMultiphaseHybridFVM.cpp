@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,16 +19,17 @@
 #include "CompositionalMultiphaseHybridFVM.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
-#include "constitutive/ConstitutivePassThru.hpp"
-
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -89,15 +90,15 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  if( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ) )
-  {
-    GEOSX_ERROR( "The HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM" );
-  }
+  GEOSX_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
+                  catalogName() << " " << getName() <<
+                  ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
+                  InputError );
 
-  if( m_capPressureFlag )
-  {
-    GEOSX_ERROR( "Capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM" );
-  }
+  GEOSX_THROW_IF( m_capPressureFlag,
+                  catalogName() << " " << getName() <<
+                  ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
+                  InputError );
 }
 
 void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGroups()
@@ -106,7 +107,8 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
   if( m_computeCFLNumbers )
   {
-    GEOSX_LOG_RANK_0( "The computation of CFL numbers in not supported by CompositionalMultiphaseHybridFVM yet" );
+    GEOSX_LOG_RANK_0( catalogName() << " " << getName()
+                                    << ": the computation of CFL numbers in not supported by CompositionalMultiphaseHybridFVM yet" );
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -149,9 +151,18 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     minVal.min( transMultiplier[iface] );
   } );
 
-  GEOSX_ERROR_IF_LE_MSG( minVal.get(), 0.0,
-                         "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0" );
+  GEOSX_THROW_IF( minVal.get() <= 0.0,
+                  catalogName() << " " << getName()
+                                << ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                  std::runtime_error );
 
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
+  {
+    GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
+                      "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
+                                                                                "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
+  } );
 }
 
 void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh )
@@ -354,15 +365,9 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                        phaseDens, dPhaseDens_dPres, dPhaseDens_dComp]
                                       GEOSX_HOST_DEVICE ( localIndex const )
     {
-      GEOSX_UNUSED_VAR( phaseCompFrac )
-      GEOSX_UNUSED_VAR( dPhaseCompFrac_dPres )
-      GEOSX_UNUSED_VAR( dPhaseCompFrac_dComp )
-      GEOSX_UNUSED_VAR( phaseMassDens )
-      GEOSX_UNUSED_VAR( dPhaseMassDens_dPres )
-      GEOSX_UNUSED_VAR( dPhaseMassDens_dComp )
-      GEOSX_UNUSED_VAR( phaseDens )
-      GEOSX_UNUSED_VAR( dPhaseDens_dPres )
-      GEOSX_UNUSED_VAR( dPhaseDens_dComp )
+      GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
+                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp,
+                        phaseDens, dPhaseDens_dPres, dPhaseDens_dComp );
     } );
   } );
 
@@ -695,6 +700,29 @@ void CompositionalMultiphaseHybridFVM::applyBoundaryConditions( real64 const tim
   // TODO: implement face boundary conditions here
 }
 
+void CompositionalMultiphaseHybridFVM::applyAquiferBC( real64 const time,
+                                                       real64 const dt,
+                                                       DofManager const & dofManager,
+                                                       DomainPartition & domain,
+                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                       arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
+
+}
+
+void CompositionalMultiphaseHybridFVM::saveAquiferConvergedState( real64 const & time,
+                                                                  real64 const & dt,
+                                                                  DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt, domain );
+}
+
+
 real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition const & domain,
                                                                 DofManager const & dofManager,
                                                                 arrayView1d< real64 const > const & localRhs )
@@ -779,11 +807,9 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
   // compute global residual norm
   real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    char output[200] = {0};
-    sprintf( output, "    ( Rfluid ) = (%4.2e) ; ", residual );
-    std::cout<<output;
+    std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ;", residual );
   }
 
   return residual;
@@ -879,6 +905,9 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( Group & dataGroup, l
 
   // inputs
 
+  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
+
   arrayView2d< real64 const, compflow::USD_PHASE > const dPhaseVolFrac_dPres =
     dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
 
@@ -907,6 +936,7 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( Group & dataGroup, l
                                                 dPhaseVisc_dComp,
                                                 phaseRelPerm,
                                                 dPhaseRelPerm_dPhaseVolFrac,
+                                                phaseVolFrac,
                                                 dPhaseVolFrac_dPres,
                                                 dPhaseVolFrac_dComp,
                                                 phaseMob,

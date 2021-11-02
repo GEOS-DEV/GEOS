@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,6 +20,7 @@
 #include "FluxApproximationBase.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
@@ -80,10 +81,13 @@ void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
                              stencilParentGroup.registerGroup( getName() );
 
       registerCellStencil( stencilGroup );
+
       registerFractureStencil( stencilGroup );
-      // For each face-based boundary condition on target field, create a boundary stencil
+
+      // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
+      // TODO: Apply() should take a MeshLevel directly
       fsManager.apply( 0.0,
-                       dynamicCast< DomainPartition & >( meshBodies.getParent() ), // TODO: Apply() should take a MeshLevel directly
+                       dynamicCast< DomainPartition & >( meshBodies.getParent() ),
                        "faceManager",
                        m_fieldName,
                        [&] ( FieldSpecificationBase const &,
@@ -93,6 +97,20 @@ void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
                              string const & )
       {
         registerBoundaryStencil( stencilGroup, setName );
+      } );
+
+      // For each aquifer boundary condition, create a boundary stencil
+      fsManager.apply< AquiferBoundaryCondition >( 0.0,
+                                                   dynamicCast< DomainPartition & >( meshBodies.getParent() ),
+                                                   "faceManager",
+                                                   AquiferBoundaryCondition::catalogName(),
+                                                   [&] ( AquiferBoundaryCondition const &,
+                                                         string const & setName,
+                                                         SortedArrayView< localIndex const > const &,
+                                                         Group const &,
+                                                         string const & )
+      {
+        registerAquiferStencil( stencilGroup, setName );
       } );
 
       FaceManager & faceManager = mesh.getFaceManager();
@@ -122,7 +140,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
       // Compute the main cell-based stencil
       computeCellStencil( mesh );
 
-      // For each face-based boundary condition on target field, create a boundary stencil
+      // For each face-based boundary condition on target field, compute the boundary stencil weights
       fsManager.apply( 0.0,
                        domain,
                        "faceManager",
@@ -135,6 +153,10 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
       {
         computeBoundaryStencil( mesh, setName, faceSet );
       } );
+
+      // Compute the aquifer stencil weights
+      computeAquiferStencil( domain, mesh );
+
     } );
   } );
 }

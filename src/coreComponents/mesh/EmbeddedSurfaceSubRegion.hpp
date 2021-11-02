@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -117,15 +117,24 @@ public:
   ///@{
 
   virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & facemanager ) override;
+                                                    FaceManager const & facemanager ) override final;
 
   /**
    * @brief Function to compute the geometric quantities of a specific embedded surface element.
    * @param intersectionPoints array containing the nodes defining the embedded surface elements
-   * @param k index of the face element
+   * @param k index of the embedded surface element
    */
-  void CalculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
+  void calculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                             localIndex k );
+  /**
+   * @brief computes the connectivityIndex of the embedded surface element.
+   * @param k element index
+   * @param cellToNodes cell to nodes map
+   * @param nodesCoord cordinates of the nodes
+   */
+  void computeConnectivityIndex( localIndex const k,
+                                 arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes,
+                                 arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodesCoord );
 
   /**
    * @brief Function to add a new embedded surface element.
@@ -277,6 +286,13 @@ public:
   arraySlice1d< real64 const > getNormalVector( localIndex k ) const { return m_normalVector[k]; }
 
   /**
+   * @brief Get the name of the bounding plate that was used to generate fracture element k.
+   * @param k the index of the embedded surface element
+   * @return the name of the bounded plane, the element was generated from
+   */
+  string const & getFractureName( localIndex k ) const { return m_parentPlaneName[k]; }
+
+  /**
    * @brief Get an array of the first tangent vector of the embedded surface elements.
    * @return an array of the first tangent vector of the embedded surface elements
    */
@@ -321,7 +337,6 @@ public:
    * @copydoc getTangentVector2( localIndex k )
    */
   arraySlice1d< real64 const > getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
-
 
   /**
    * @brief Get the connectivity index of the  embedded surface element.
@@ -450,6 +465,9 @@ private:
 
   /// The CI of the cells
   array1d< real64 > m_connectivityIndex;
+
+  // Indices of geometric objects the element belongs to
+  array1d< string > m_parentPlaneName;
 
   /// Surfaces with ghost nodes
   std::vector< struct surfaceWithGhostNodes > m_surfaceWithGhostNodes;

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -136,8 +136,8 @@ bool isPointInsideElement( NodeManager const & nodeManager,
   }
 
   // if the point is in the element, save the indices and stop the search
-  if( computationalGeometry::IsPointInsidePolyhedron( nodeManager.referencePosition(),
-                                                      faceNodes,
+  if( computationalGeometry::isPointInsidePolyhedron( nodeManager.referencePosition(),
+                                                      faceNodes.toNestedViewConst(),
                                                       location ))
   {
     isInsideElement = true;

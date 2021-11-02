@@ -33,6 +33,10 @@ you have suggestions for improving the guides below, please post an issue on our
 
    docs/sphinx/tutorials/Index
 
+   docs/sphinx/basicExamples/Index
+
+   docs/sphinx/advancedExamples/Index
+   
    docs/sphinx/userGuide/Index
 
    docs/sphinx/developerGuide/Index

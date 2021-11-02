@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -195,6 +195,8 @@ void HypreSolver::setup( HypreMatrix const & mat )
 
   m_precond.setup( mat );
   m_componentFilterTime = m_precond.componentFilterTime();
+  m_makeRestrictorTime = m_precond.makeRestrictorTime();
+  m_computeAuuTime = m_precond.computeAuuTime();
 
   m_solver = std::make_unique< HypreSolverWrapper >();
   createHypreKrylovSolver( m_params, mat.getComm(), *m_solver );
@@ -264,6 +266,8 @@ void HypreSolver::solve( HypreVector const & rhs,
     GEOSX_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
                       " | Iterations: " << m_result.numIterations <<
                       " | Final Rel Res: " << m_result.residualReduction <<
+                      " | Make Restrictor Time: " << m_makeRestrictorTime <<
+                      " | Compute Auu Time: " << m_computeAuuTime <<
                       " | SC Filter Time: " << m_componentFilterTime <<
                       " | Setup Time: " << m_result.setupTime << " s" <<
                       " | Solve Time: " << m_result.solveTime << " s" );

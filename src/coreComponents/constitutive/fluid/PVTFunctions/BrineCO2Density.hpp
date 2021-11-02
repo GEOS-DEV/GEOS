@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -92,11 +92,10 @@ class BrineCO2Density : public PVTFunctionBase
 {
 public:
 
-  BrineCO2Density( string_array const & inputParams,
+  BrineCO2Density( string const & name,
+                   string_array const & inputParams,
                    string_array const & componentNames,
                    array1d< real64 > const & componentMolarWeight );
-
-  virtual ~BrineCO2Density() override = default;
 
   static string catalogName() { return "BrineCO2Density"; }
 
@@ -114,7 +113,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper();
+  KernelWrapper createKernelWrapper() const;
 
 
 private:
@@ -147,9 +146,7 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
   constexpr real64 d = -5.044e-7;
 
   real64 const input[2] = { pressure, temperature };
-  real64 density;
-  real64 densityDeriv[2];
-  m_brineDensityTable.compute( input, density, densityDeriv );
+  real64 const density = m_brineDensityTable.compute( input );
 
   // equation (2) from Garcia (2001)
   real64 const squaredTemp = temperature * temperature;
@@ -202,9 +199,8 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
   constexpr real64 d = -5.044e-7;
 
   real64 const input[2] = { pressure, temperature };
-  real64 density;
   real64 densityDeriv[2];
-  m_brineDensityTable.compute( input, density, densityDeriv );
+  real64 const density = m_brineDensityTable.compute( input, densityDeriv );
 
   // equation (2) from Garcia (2001)
   real64 const squaredTemp = temperature * temperature;

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -15,9 +15,11 @@
  * @file ConformingVirtualElementOrder1_impl.hpp
  */
 
+#include "mesh/utilities/ComputationalGeometry.hpp"
+
 namespace geosx
 {
-namespace virtualElement
+namespace finiteElement
 {
 template< localIndex MCN, localIndex MFN >
 GEOSX_HOST_DEVICE
@@ -34,13 +36,17 @@ computeProjectors( localIndex const & cellIndex,
                    arrayView1d< real64 const > const faceAreas,
                    real64 const (&cellCenter)[3],
                    real64 const & cellVolume,
-                   BasisData & basisData
+                   localIndex & numSupportPoints,
+                   real64 & quadratureWeight,
+                   real64 (& basisFunctionsIntegralMean)[MCN],
+                   real64 (& stabilizationMatrix)[MCN][MCN],
+                   real64 (& basisDerivativesIntegralMean)[MCN][3]
                    )
 {
   localIndex const numCellFaces = elementToFaceMap[cellIndex].size();
   localIndex const numCellPoints = cellToNodeMap[cellIndex].size();
-  basisData.numSupportPoints = numCellPoints;
-  basisData.quadratureWeight = cellVolume;
+  numSupportPoints = numCellPoints;
+  quadratureWeight = cellVolume;
 
   // Compute cell diameter.
   real64 cellDiameter = ConformingVirtualElementOrder1< MCN, MFN >::
@@ -199,7 +205,7 @@ computeProjectors( localIndex const & cellIndex,
 
   // Compute integral mean of basis functions and of derivatives of basis functions.
   // Compute VEM degrees of freedom of the piNabla projection minus the identity (used for
-  // basisData.stabilizationMatrix).
+  // stabilizationMatrix).
   real64 const invCellVolume = 1.0/cellVolume;
   real64 const monomialDerivativeInverse = cellDiameter*cellDiameter*invCellVolume;
   real64 piNablaVemDofsMinusIdentity[ MCN ][ MCN ];
@@ -229,14 +235,14 @@ computeProjectors( localIndex const & cellIndex,
                       piNablaDofs[2]*monomBoundaryIntegrals[2] -
                       piNablaDofs[3]*monomBoundaryIntegrals[3] )/monomBoundaryIntegrals[0];
     // - integrate piNabla proj and compute integral means
-    basisData.basisFunctionsIntegralMean[numBasisFunction] =
+    basisFunctionsIntegralMean[numBasisFunction] =
       piNablaDofs[0] + invCellVolume * (piNablaDofs[1]*monomInternalIntegrals[0]
                                         + piNablaDofs[2]*monomInternalIntegrals[1]
                                         + piNablaDofs[3] * monomInternalIntegrals[2]);
     // - compute integral means of derivatives
     for( localIndex i = 0; i < 3; ++i )
     {
-      basisData.basisDerivativesIntegralMean[numBasisFunction][i] =
+      basisDerivativesIntegralMean[numBasisFunction][i] =
         -invCellVolume *basisTimesNormalBoundaryInt[numBasisFunction][i];
     }
     // - compute VEM dofs of piNabla projection
@@ -261,7 +267,7 @@ computeProjectors( localIndex const & cellIndex,
       {
         rowColProd += piNablaVemDofsMinusIdentity[ k ][ i ]*piNablaVemDofsMinusIdentity[ k ][ j ];
       }
-      basisData.stabilizationMatrix[ i ][ j ] = cellDiameter*rowColProd;
+      stabilizationMatrix[ i ][ j ] = cellDiameter*rowColProd;
     }
   }
 }

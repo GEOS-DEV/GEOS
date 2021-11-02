@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -91,7 +91,6 @@ public:
   using BASE::m_dDens_dPres;
   using BASE::m_viscosity;
   using BASE::m_dVisc_dPres;
-  using BASE::m_transTMultiplier;
 
   /**
    * @brief main constructor for Group Objects
@@ -206,6 +205,14 @@ public:
                               CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
 
   /**@}*/
+
+  virtual void
+  applyAquiferBC( real64 const time,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void initializePreSubGroups() override;
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -31,60 +31,6 @@
 
 namespace geosx
 {
-
-/**
- * @struct CellDescriptor
- * @brief A structure containing a single cell (element) identifier triplet.
- */
-struct CellDescriptor
-{
-  /// region index
-  localIndex region;
-  /// subregion index
-  localIndex subRegion;
-  /// cell index
-  localIndex index;
-
-  /**
-   * @brief Comparison operator between two CellDescriptors.
-   * @param[in] other the CellDescriptor to compare with
-   * @return true if they represent the same mesh element
-   */
-  bool operator==( CellDescriptor const & other )
-  {
-    return( region==other.region && subRegion==other.subRegion && index==other.index );
-  }
-};
-
-/**
- * @struct PointDescriptor
- * @brief A structure describing an arbitrary point participating in a stencil.
- *
- * Nodal and face center points are identified by local mesh index.
- * Cell center points are identified by a triplet <region,subregion,index>.
- *
- * The sad reality is, a boundary flux MPFA stencil may be comprised of a mix of
- * cell and face centroids, so we have to discriminate between them at runtime
- */
-struct PointDescriptor
-{
-  /// Enum to classify the variable location
-  enum class Tag { CELL, FACE, NODE };
-
-  /// The tag
-  Tag tag;
-
-  /// union to characterize a PointDescriptor
-  union
-  {
-    /// node index
-    localIndex nodeIndex;
-    /// face index
-    localIndex faceIndex;
-    /// CellDescriptor index
-    CellDescriptor cellIndex;
-  };
-};
 
 /**
  * @class FluxApproximationBase
@@ -166,8 +112,8 @@ public:
    * @param[in,out] mesh the mesh on which to add the fracture stencil
    * @param[in] embeddedSurfaceRegionName the embedded surface element region name
    */
-  virtual void addEDFracToFractureStencil( MeshLevel & mesh,
-                                           string const & embeddedSurfaceRegionName ) const = 0;
+  virtual void addEmbeddedFracturesToStencils( MeshLevel & mesh,
+                                               string const & embeddedSurfaceRegionName ) const = 0;
 
   /**
    * @brief View keys.
@@ -266,7 +212,7 @@ protected:
                                         string const & setName ) const = 0;
 
   /**
-   * @brief Allocate and populate a stencil to be used in boundary condition application
+   * @brief Allocate and populate a stencil to be used in dirichlet boundary condition application
    * @param mesh the target mesh level
    * @param setName name of the face set, to be used as wrapper name for the produced stencil
    * @param faceSet set of face indices to use
@@ -274,6 +220,23 @@ protected:
   virtual void computeBoundaryStencil( MeshLevel & mesh,
                                        string const & setName,
                                        SortedArrayView< localIndex const > const & faceSet ) const = 0;
+
+  /**
+   * @brief Register the wrapper for aquifer stencil on a mesh.
+   * @param stencilGroup the group holding the stencil objects
+   * @param setName the face set name (used as the wrapper name)
+   */
+  virtual void registerAquiferStencil( Group & stencilGroup,
+                                       string const & setName ) const = 0;
+
+  /**
+   * @brief Allocate and populate a stencil to be used in aquifer boundary condition application
+   * @param domain the domain partion
+   * @param mesh the target mesh level
+   */
+  virtual void computeAquiferStencil( DomainPartition & domain,
+                                      MeshLevel & mesh ) const = 0;
+
 
   /// name of the primary solution field
   string m_fieldName;

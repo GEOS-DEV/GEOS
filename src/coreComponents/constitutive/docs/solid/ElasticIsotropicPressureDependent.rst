@@ -27,7 +27,6 @@ The following attributes are supported.  Note that two elastic constants :math:`
 is the default value adopted for a region unless the user separately specifies a heterogeneous field via the
 ``FieldSpecification`` mechanism. 
 
-.. include:: /coreComponents/schema/docs/ElasticIsotropicPressureDependent.rst
 
 Example
 =========================

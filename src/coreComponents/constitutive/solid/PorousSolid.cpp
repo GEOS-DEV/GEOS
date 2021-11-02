@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,6 +20,7 @@
 #include "PorousSolid.hpp"
 #include "ElasticIsotropic.hpp"
 #include "ElasticTransverseIsotropic.hpp"
+#include "ElasticOrthotropic.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
 #include "Damage.hpp"
@@ -45,6 +46,7 @@ PorousSolid< SOLID_TYPE >::~PorousSolid() = default;
 // Register all PorousSolid model types.
 typedef PorousSolid< ElasticIsotropic > PorousElasticIsotropic;
 typedef PorousSolid< ElasticTransverseIsotropic > PorousElasticTransverseIsotropic;
+typedef PorousSolid< ElasticOrthotropic > PorousElasticOrthotropic;
 typedef PorousSolid< DruckerPrager > PorousDruckerPrager;
 typedef PorousSolid< DruckerPragerExtended > PorousDruckerPragerExtended;
 typedef PorousSolid< Damage< ElasticIsotropic > > PorousDamageElasticIsotropic;
@@ -53,6 +55,7 @@ typedef PorousSolid< DamageVolDev< ElasticIsotropic > > PorousDamageVolDevElasti
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticTransverseIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticOrthotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPrager, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPragerExtended, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageElasticIsotropic, string const &, Group * const )

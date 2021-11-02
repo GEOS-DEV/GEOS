@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -29,10 +29,11 @@ namespace constitutive
 namespace PVTProps
 {
 
-BrineViscosity::BrineViscosity( string_array const & inputPara,
+BrineViscosity::BrineViscosity( string const & name,
+                                string_array const & inputPara,
                                 string_array const & componentNames,
                                 array1d< real64 > const & componentMolarWeight ):
-  PVTFunctionBase( inputPara[1],
+  PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
 {
@@ -49,31 +50,33 @@ void BrineViscosity::makeCoefficients( string_array const & inputPara )
   constexpr real64 k = -0.7;
   constexpr real64 waterVisc = 8.9e-4; //at 25C
 
-  real64 m = -1.0;
+  GEOSX_THROW_IF_LT_MSG( inputPara.size(), 3,
+                         GEOSX_FMT( "{}: insufficient number of model parameters", m_functionName ),
+                         InputError );
 
-  GEOSX_ERROR_IF( inputPara.size() < 3, "Invalid BrineViscosity input!" );
-
+  real64 m;
   try
   {
     m = stod( inputPara[2] );
   }
-  catch( const std::invalid_argument & e )
+  catch( std::invalid_argument const & e )
   {
-    GEOSX_ERROR( "Invalid BrineViscosity argument:" + string( e.what() ) );
+    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
   }
 
   m_coef0 = (1.0 + a * m + b * m * m + c * m * m * m) * waterVisc;
   m_coef1 =  d * (1.0 - exp( k * m )) * waterVisc;
 }
 
-BrineViscosity::KernelWrapper BrineViscosity::createKernelWrapper()
+BrineViscosity::KernelWrapper
+BrineViscosity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         m_coef0,
                         m_coef1 );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineViscosity, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineViscosity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // end namespace PVTProps
 

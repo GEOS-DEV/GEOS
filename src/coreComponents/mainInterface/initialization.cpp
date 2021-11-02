@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -15,33 +15,13 @@
 #include "initialization.hpp"
 
 #include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
 #include "LvArray/src/system.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "common/MpiWrapper.hpp"
+#include "mainInterface/GeosxVersion.hpp"
 
 // TPL includes
 #include <optionparser.h>
-#include <umpire/ResourceManager.hpp>
-
-#if defined( GEOSX_USE_CALIPER )
-#include <caliper/cali-manager.h>
-#include <adiak.hpp>
-#endif
-
-// System includes
-#include <iomanip>
-
-#if defined( GEOSX_USE_OPENMP )
-#include <omp.h>
-#endif
-
-#if defined( GEOSX_USE_CUDA )
-#include <cuda.h>
-#endif
-
-#include <fenv.h>
 
 namespace geosx
 {
@@ -182,7 +162,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       case RESTART:
       {
         commandLineOptions->restartFileName = opt.arg;
-        commandLineOptions->beginFromRestart = 1;
+        commandLineOptions->beginFromRestart = true;
       }
       break;
       case XPAR:
@@ -241,7 +221,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     }
   }
 
-  if( commandLineOptions->problemName == "" && options[INPUT].count() > 0 )
+  if( commandLineOptions->problemName.empty() && options[INPUT].count() > 0 )
   {
     string & inputFileName = commandLineOptions->inputFileNames[0];
     if( inputFileName.length() > 4 && inputFileName.substr( inputFileName.length() - 4, 4 ) == ".xml" )
@@ -284,6 +264,16 @@ void basicCleanup()
 {
   finalizeLAI();
   cleanupEnvironment();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+string getVersion()
+{
+#if defined(GEOSX_GIT_BRANCH) && defined(GEOSX_GIT_HASH)
+  return GEOSX_VERSION_FULL " (" GEOSX_GIT_BRANCH ", sha1: " GEOSX_GIT_HASH ")";
+#else
+  return GEOSX_VERSION_FULL;
+#endif
 }
 
 

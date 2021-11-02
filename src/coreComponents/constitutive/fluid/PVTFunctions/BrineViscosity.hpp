@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -82,7 +82,8 @@ class BrineViscosity : public PVTFunctionBase
 {
 public:
 
-  BrineViscosity( string_array const & inputPara,
+  BrineViscosity( string const & name,
+                  string_array const & inputPara,
                   string_array const & componentNames,
                   array1d< real64 > const & componentMolarWeight );
 
@@ -104,7 +105,7 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper();
+  KernelWrapper createKernelWrapper() const;
 
 private:
 
@@ -124,7 +125,7 @@ void BrineViscosityUpdate::compute( real64 const & pressure,
                                     real64 & value,
                                     bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( pressure, phaseComposition, useMass )
+  GEOSX_UNUSED_VAR( pressure, phaseComposition, useMass );
   value = m_coef0 + m_coef1 * temperature;
 }
 
@@ -147,7 +148,7 @@ void BrineViscosityUpdate::compute( real64 const & pressure,
                     dPhaseComposition_dPressure,
                     dPhaseComposition_dTemperature,
                     dPhaseComposition_dGlobalCompFraction,
-                    useMass )
+                    useMass );
 
   value = m_coef0 + m_coef1 * temperature;
   compute( pressure, temperature, phaseComposition, value, useMass );

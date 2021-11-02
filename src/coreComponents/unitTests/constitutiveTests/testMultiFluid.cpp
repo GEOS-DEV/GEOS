@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -34,36 +34,6 @@ using namespace geosx::dataRepository;
 using namespace geosx::constitutive::PVTProps;
 
 /// Black-oil tables written into temporary files during testing
-
-static const char * pvtgTableContent = "#\tPg(Pa)\t\tRv(sm3/sm3)\tBg(m3/sm3)\tVisc(Pa.s)\n"
-                                       "\n"
-                                       "\t3000000\t\t0.000132\t0.04234\t    0.00001344\n"
-                                       "\t\t\t\t0\t\t\t0.04231\t    0.00001389\n"
-                                       "\t6000000\t\t0.000124\t0.02046\t    0.0000142\n"
-                                       "\t\t\t\t0\t\t\t0.02043\t    0.0000145\n"
-                                       "\t9000000\t\t0.000126\t0.01328\t    0.00001526\n"
-                                       "\t\t\t\t0\t\t\t0.01325\t    0.00001532\n"
-                                       "   12000000\t\t0.000135\t0.00977\t    0.0000166\n"
-                                       "\t\t\t\t0\t\t\t0.00973\t    0.00001634\n"
-                                       "   15000000\t\t0.000149\t0.00773\t    0.00001818\n"
-                                       "\t\t\t\t0\t\t\t0.00769\t    0.00001752\n"
-                                       "   18000000\t\t0.000163\t0.006426\t0.00001994\n"
-                                       "\t\t\t\t0\t\t\t0.006405\t0.00001883\n"
-                                       "   21000000\t\t0.000191\t0.005541\t0.00002181\n"
-                                       "\t\t\t\t0\t\t\t0.005553\t0.00002021\n"
-                                       "   24000000\t\t0.000225\t0.004919\t0.0000237\n"
-                                       "\t\t\t\t0\t\t\t0.004952\t0.00002163\n"
-                                       "   27000000\t\t0.000272\t0.004471\t0.00002559\n"
-                                       "\t\t\t\t0\t\t\t0.004511\t0.00002305\n"
-                                       "   29500000\t\t0.000354\t0.004194\t0.00002714\n"
-                                       "\t\t\t\t0\t\t\t0.004225\t0.00002423\n"
-                                       "   31000000\t\t0.000403\t0.004031\t0.00002806\n"
-                                       "\t\t\t\t0.000354\t0.004059\t0.00002768\n"
-                                       "   33000000\t\t0.000354\t0.00391\t    0.00002832\n"
-                                       "\t\t\t\t0\t\t\t0.003913\t0.00002583\n"
-                                       "   53000000\t\t0.000479\t0.003868\t0.00002935\n"
-                                       "\t\t\t\t0.000354\t0.0039\t\t0.00002842\n"
-                                       "\t\t\t\t0\t\t\t0.003903\t0.00002593";
 
 static const char * pvtoTableContent = "# Rs[sm3/sm3]\tPbub[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\n"
                                        "\n"
@@ -156,35 +126,35 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   #define GET_FLUID_DATA( FLUID, DIM, PERM, KEY ) \
     FLUID.getReference< Array< real64, DIM, PERM > >( MultiFluidBase::viewKeyStruct::KEY() )[0][0]
 
-  CompositionalVarContainer< 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseFrac {
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseFrac {
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseFractionString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseFraction_dPressureString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseFraction_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseFraction_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseDens {
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseDens {
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseDensityString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseDensity_dPressureString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseDensity_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseDensity_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseVisc {
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseVisc {
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseViscosityString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseViscosity_dPressureString ),
     GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseViscosity_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseViscosity_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 2, USD_PHASE_COMP-2, USD_PHASE_COMP_DC-2 > phaseCompFrac {
+  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 > phaseCompFrac {
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, phaseCompFractionString ),
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, dPhaseCompFraction_dPressureString ),
     GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, dPhaseCompFraction_dTemperatureString ),
     GET_FLUID_DATA( fluid, 5, LAYOUT_PHASE_COMP_DC, dPhaseCompFraction_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer< 0, USD_FLUID - 2, USD_FLUID_DC - 2 > totalDens {
+  MultiFluidVarSlice< real64, 0, USD_FLUID - 2, USD_FLUID_DC - 2 > totalDens {
     GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, totalDensityString ),
     GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, dTotalDensity_dPressureString ),
     GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, dTotalDensity_dTemperatureString ),
@@ -353,30 +323,42 @@ void testValuesAgainstPreviousImplementation( CO2BrineFluid::KernelWrapper const
   StackArray< real64, 3, 2, LAYOUT_FLUID_DC >  dTotalDensity_dGlobalCompFraction( 1, 1, 2 );
 
   wrapper.compute( P, T, composition,
-                   phaseFraction[0][0],
-                   dPhaseFraction_dPressure[0][0],
-                   dPhaseFraction_dTemperature[0][0],
-                   dPhaseFraction_dGlobalCompFraction[0][0],
-                   phaseDensity[0][0],
-                   dPhaseDensity_dPressure[0][0],
-                   dPhaseDensity_dTemperature[0][0],
-                   dPhaseDensity_dGlobalCompFraction[0][0],
-                   phaseMassDensity[0][0],
-                   dPhaseMassDensity_dPressure[0][0],
-                   dPhaseMassDensity_dTemperature[0][0],
-                   dPhaseMassDensity_dGlobalCompFraction[0][0],
-                   phaseViscosity[0][0],
-                   dPhaseViscosity_dPressure[0][0],
-                   dPhaseViscosity_dTemperature[0][0],
-                   dPhaseViscosity_dGlobalCompFraction[0][0],
-                   phaseCompFraction[0][0],
-                   dPhaseCompFraction_dPressure[0][0],
-                   dPhaseCompFraction_dTemperature[0][0],
-                   dPhaseCompFraction_dGlobalCompFraction[0][0],
-                   totalDensity[0][0],
-                   dTotalDensity_dPressure[0][0],
-                   dTotalDensity_dTemperature[0][0],
-                   dTotalDensity_dGlobalCompFraction[0][0] );
+  {
+    phaseFraction[0][0],
+    dPhaseFraction_dPressure[0][0],
+    dPhaseFraction_dTemperature[0][0],
+    dPhaseFraction_dGlobalCompFraction[0][0]
+  },
+  {
+    phaseDensity[0][0],
+    dPhaseDensity_dPressure[0][0],
+    dPhaseDensity_dTemperature[0][0],
+    dPhaseDensity_dGlobalCompFraction[0][0]
+  },
+  {
+    phaseMassDensity[0][0],
+    dPhaseMassDensity_dPressure[0][0],
+    dPhaseMassDensity_dTemperature[0][0],
+    dPhaseMassDensity_dGlobalCompFraction[0][0]
+  },
+  {
+    phaseViscosity[0][0],
+    dPhaseViscosity_dPressure[0][0],
+    dPhaseViscosity_dTemperature[0][0],
+    dPhaseViscosity_dGlobalCompFraction[0][0]
+  },
+  {
+    phaseCompFraction[0][0],
+    dPhaseCompFraction_dPressure[0][0],
+    dPhaseCompFraction_dTemperature[0][0],
+    dPhaseCompFraction_dGlobalCompFraction[0][0]
+  },
+  {
+    totalDensity[0][0],
+    dTotalDensity_dPressure[0][0],
+    dTotalDensity_dTemperature[0][0],
+    dTotalDensity_dGlobalCompFraction[0][0]
+  } );
 
   checkRelativeError( totalDensity[0][0], savedTotalDensity, relTol );
   for( localIndex ip = 0; ip < 2; ++ip )
@@ -506,8 +488,6 @@ MultiFluidBase & makeLiveOilFluid( string const & name, Group * parent )
 {
   BlackOilFluid & fluid = parent->registerGroup< BlackOilFluid >( name );
 
-  // TODO we should actually create a fake XML node with data, but this seemed easier...
-
   string_array & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   compNames.resize( 3 );
   compNames[0] = "oil"; compNames[1] = "gas"; compNames[2] = "water";
@@ -520,13 +500,13 @@ MultiFluidBase & makeLiveOilFluid( string const & name, Group * parent )
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
 
-  array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluid::viewKeyStruct::surfaceDensitiesString() );
+  array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluidBase::viewKeyStruct::surfacePhaseMassDensitiesString() );
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
 
-  path_array & tableNames = fluid.getReference< path_array >( BlackOilFluid::viewKeyStruct::tableFilesString() );
+  path_array & tableNames = fluid.getReference< path_array >( BlackOilFluidBase::viewKeyStruct::tableFilesString() );
   tableNames.resize( 3 );
-  tableNames[0] = "pvto.txt"; tableNames[1] = "pvtg.txt"; tableNames[2] = "pvtw.txt";
+  tableNames[0] = "pvto.txt"; tableNames[1] = "pvdg.txt"; tableNames[2] = "pvtw.txt";
 
   fluid.postProcessInputRecursive();
   return fluid;
@@ -548,11 +528,11 @@ MultiFluidBase & makeDeadOilFluid( string const & name, Group * parent )
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "water"; phaseNames[2] = "gas";
 
-  array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluid::viewKeyStruct::surfaceDensitiesString() );
+  array1d< real64 > & surfaceDens = fluid.getReference< array1d< real64 > >( BlackOilFluidBase::viewKeyStruct::surfacePhaseMassDensitiesString() );
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 1022.0; surfaceDens[2] = 0.9907;
 
-  path_array & tableNames = fluid.getReference< path_array >( BlackOilFluid::viewKeyStruct::tableFilesString() );
+  path_array & tableNames = fluid.getReference< path_array >( BlackOilFluidBase::viewKeyStruct::tableFilesString() );
   tableNames.resize( 3 );
   tableNames[0] = "pvdo.txt"; tableNames[1] = "pvdw.txt"; tableNames[2] = "pvdg.txt";
 
@@ -687,7 +667,7 @@ public:
   LiveOilFluidTest()
   {
     writeTableToFile( "pvto.txt", pvtoTableContent );
-    writeTableToFile( "pvtg.txt", pvtgTableContent );
+    writeTableToFile( "pvdg.txt", pvdgTableContent );
     writeTableToFile( "pvtw.txt", pvtwTableContent );
 
     parent.resize( 1 );
@@ -700,7 +680,7 @@ public:
   ~LiveOilFluidTest()
   {
     removeFile( "pvto.txt" );
-    removeFile( "pvtg.txt" );
+    removeFile( "pvdg.txt" );
     removeFile( "pvtw.txt" );
   }
 };
@@ -709,33 +689,36 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
 {
   fluid->setMassFlag( false );
 
-  // TODO test over a range of values
-  real64 const P = 5e6;
+  real64 const P[3] = { 5.4e6, 1.24e7, 3.21e7 };
   real64 const T = 297.15;
   array1d< real64 > comp( 3 );
-  comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
+  comp[0] = 0.79999; comp[1] = 0.2; comp[2] = 0.00001;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
-  real64 const relTol = 1e-4;
+  real64 const relTol = 1e-12;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol );
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
+  }
 }
 
 TEST_F( LiveOilFluidTest, numericalDerivativesMass )
 {
   fluid->setMassFlag( true );
 
-  // TODO test over a range of values
-  real64 const P = 5e6;
+  real64 const P[3] = { 5.4e6, 1.24e7, 3.21e7 };
   real64 const T = 297.15;
   array1d< real64 > comp( 3 );
-  comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
+  comp[0] = 0.79999; comp[1] = 0.2; comp[2] = 0.00001;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
-  real64 const relTol = 1e-2;
-  real64 const absTol = 1e-14;
+  real64 const relTol = 1e-12;
 
-  testNumericalDerivatives( *fluid, parent, P, T, comp, eps, true, relTol, absTol );
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
+  }
 }
 
 class DeadOilFluidTest : public CompositionalFluidTestBase

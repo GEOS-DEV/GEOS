@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -506,18 +506,25 @@ void KernelLaunchSelector1( localIndex const numComp, ARGS && ... args )
 template< typename KERNELWRAPPER, typename ... ARGS >
 void KernelLaunchSelector2( localIndex const numComp, localIndex const numPhase, ARGS && ... args )
 {
-  internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+  // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
+  if( numPhase == 2 )
   {
-    switch( numPhase )
+    internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
     {
-      case 2:
-        { KERNELWRAPPER::template launch< NC(), 2 >( std::forward< ARGS >( args )... ); return; }
-      case 3:
-        { KERNELWRAPPER::template launch< NC(), 3 >( std::forward< ARGS >( args )... ); return; }
-      default:
-        { GEOSX_ERROR( "Unsupported number of phases: " << numPhase ); }
-    }
-  } );
+      KERNELWRAPPER::template launch< NC(), 2 >( std::forward< ARGS >( args ) ... );
+    } );
+  }
+  else if( numPhase == 3 )
+  {
+    internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+    {
+      KERNELWRAPPER::template launch< NC(), 3 >( std::forward< ARGS >( args ) ... );
+    } );
+  }
+  else
+  {
+    GEOSX_ERROR( "Unsupported number of phases: " << numPhase );
+  }
 }
 
 } // namespace CompositionalMultiphaseBaseKernels

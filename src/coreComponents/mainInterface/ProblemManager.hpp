@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -27,6 +27,7 @@ namespace geosx
 
 class PhysicsSolverManager;
 class DomainPartition;
+class GeometricObjectManager;
 namespace constitutive
 {
 class ConstitutiveManager;
@@ -106,6 +107,19 @@ public:
    * @details The name of the input file is indicated via the -i option on the command line
    */
   void parseInputFile();
+
+  /**
+   * @brief Parses the input xml string
+   * @param xmlString the contents of the xml file as a string
+   * @details This is used primarily for testing purposes
+   */
+  void parseInputString( string const & xmlString );
+
+  /**
+   * @brief Parses the input xml document
+   * @param xmlDocument The parsed xml document handle
+   */
+  void parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocument );
 
   /**
    * @brief Generates numerical meshes used throughout the code
@@ -194,15 +208,6 @@ public:
    */
   string const & getSchemaFileName() const
   { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.schemaFileName ); }
-
-  /// Input file xml document handle
-  xmlWrapper::xmlDocument xmlDocument;
-
-  /// Input file parsing results
-  xmlWrapper::xmlResult xmlResult;
-
-  /// Input file Problem node handle
-  xmlWrapper::xmlNode xmlProblemNode;
 
   /// Command line input viewKeys
   struct viewKeysStruct

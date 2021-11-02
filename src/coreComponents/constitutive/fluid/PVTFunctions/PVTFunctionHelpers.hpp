@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -15,6 +15,8 @@
 /**
  * @file PVTFunctionHelpers.hpp
  */
+
+#include "common/DataTypes.hpp"
 
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONHELPERS_HPP
 #define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONHELPERS_HPP
@@ -27,6 +29,88 @@ namespace constitutive
 
 namespace PVTProps
 {
+
+/**
+ * @class BlackOilTables
+ *
+ * A class to read and store the PVT tables from file
+ */
+class BlackOilTables
+{
+public:
+
+  /**
+   * @brief Read a table from file and check its row length
+   * @param[in] fileName the name of the file
+   * @param[in] minRowLength the expected minimum row length (3 for water, 4 for gas and oil)
+   * @param[out] data the data from the table
+   */
+  static void
+  readTable( string const & fileName,
+             integer minRowLength,
+             array1d< array1d< real64 > > & data );
+
+  /**
+   * @brief Read all the raw data from file, and copy the raw data into the phase tables
+   * @param[in] ipOil the index of the oil phase
+   * @param[in] ipWater the index of the water phase
+   * @param[in] ipGas the index of the gas phase
+   * @param[in] phases the array of phase indices
+   * @param[in] tableFileNames the names of the table files
+   */
+  void
+  buildAllTables( localIndex const ipOil,
+                  localIndex const ipWater,
+                  localIndex const ipGas,
+                  array1d< integer > const & phases,
+                  path_array const & tableFileNames );
+
+  /**
+   * @brief Getter for the oil table
+   * @return the oil table
+   */
+  array1d< array1d< real64 > > const &
+  getOilTable() const { return m_oilTable; }
+
+  /**
+   * @brief Getter for the gas table
+   * @return the gas table
+   */
+  array1d< array1d< real64 > > const &
+  getGasTable() const { return m_gasTable; }
+
+  /**
+   * @brief Getter for the water table
+   * @return the water table
+   */
+  array1d< real64 > const &
+  getWaterTable() const { return m_waterTable; }
+
+private:
+
+  /**
+   * @brief Call function readTable for each phase
+   * @param[in] ipWater the index of the water phase
+   * @param[in] phases the array of phase indices
+   * @param[in] tableFileNames the names of the table files
+   * @return the raw data for all phases
+   */
+  array1d< array1d< array1d< real64 > > >
+  readAllTables( localIndex const ipWater,
+                 array1d< integer > const & phases,
+                 path_array const & tableFileNames ) const;
+
+  /// The oil phase PVT table read from file
+  array1d< array1d< real64 > > m_oilTable;
+
+  /// The gas phase PVT table read from file
+  array1d< array1d< real64 > > m_gasTable;
+
+  /// The water phase PVT table read from file
+  array1d< real64 > m_waterTable;
+
+};
+
 
 class PTTableCoordinates
 {
@@ -71,17 +155,18 @@ template< typename InputRange, typename ExpectedRange >
 inline integer
 findName( InputRange const & input,
           ExpectedRange const & expected,
-          string const & attribute = {} )
+          string const & attribute )
 {
   using std::begin;
   using std::end;
   auto const it = std::find_first_of( begin( input ), end( input ), begin( expected ), end( expected ) );
   GEOSX_THROW_IF( it == end( input ),
-                  "Name " << *begin( expected ) << " not found" << ( attribute.empty() ? "" : " in " + attribute ) << ".\n" <<
-                  "Expected one of: " << stringutilities::join( begin( expected ), end( expected ), ", " ) << ".\n" <<
-                  "Input provided: " << stringutilities::join( begin( input ), end( input ) )  << '.',
+                  GEOSX_FMT( "Name '{}' not found in `{}`.\nExpected one of: {}.\nInput provided: {}.",
+                             *begin( expected ), attribute,
+                             stringutilities::join( begin( expected ), end( expected ), ", " ),
+                             stringutilities::join( begin( input ), end( input ) ) ),
                   InputError );
-  return std::distance( begin( input ), it );
+  return static_cast< integer >( std::distance( begin( input ), it ) );
 }
 
 /**

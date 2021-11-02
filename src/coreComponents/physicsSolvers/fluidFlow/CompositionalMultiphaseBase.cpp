@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -25,6 +25,7 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -223,30 +224,30 @@ namespace
 template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
-  GEOSX_ERROR_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
-                         "Mismatch in number of phases between constitutive models "
-                         << lhs.getName() << " and " << rhs.getName() );
+  GEOSX_THROW_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
+                         GEOSX_FMT( "Mismatch in number of phases between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                         InputError );
 
   for( localIndex ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
-    GEOSX_ERROR_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
-                           "Mismatch in phase names between constitutive models "
-                           << lhs.getName() << " and " << rhs.getName() );
+    GEOSX_THROW_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
+                           GEOSX_FMT( "Mismatch in phase names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                           InputError );
   }
 }
 
 template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
-  GEOSX_ERROR_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
-                         "Mismatch in number of components between constitutive models "
-                         << lhs.getName() << " and " << rhs.getName() );
+  GEOSX_THROW_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
+                         GEOSX_FMT( "Mismatch in number of components between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                         InputError );
 
   for( localIndex ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
-    GEOSX_ERROR_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
-                           "Mismatch in component names between constitutive models "
-                           << lhs.getName() << " and " << rhs.getName() );
+    GEOSX_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
+                           GEOSX_FMT( "Mismatch in component names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                           InputError );
   }
 }
 
@@ -285,6 +286,45 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( constitutive::Cons
   }
 }
 
+void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const & cm ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition & bc )
+  {
+    // set the gravity vector (needed later for the potential diff calculations)
+    bc.setGravityVector( gravityVector() );
+
+    // set the water phase index in the Aquifer boundary condition
+    // note: if the water phase is not found, the fluid model is going to throw an error
+    integer const waterPhaseIndex = fluid0.getWaterPhaseIndex();
+    bc.setWaterPhaseIndex( waterPhaseIndex );
+  } );
+}
+
+void CompositionalMultiphaseBase::validateAquiferBC( ConstitutiveManager const & cm ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
+  {
+    arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
+    arrayView1d< string const > const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
+
+    GEOSX_ERROR_IF_NE_MSG( fluid0.numFluidComponents(), aquiferWaterPhaseCompFrac.size(),
+                           "Mismatch in number of components between constitutive model "
+                           << fluid0.getName() << " and the water phase composition in aquifer " << bc.getName() );
+
+    for( localIndex ic = 0; ic < fluid0.numFluidComponents(); ++ic )
+    {
+      GEOSX_ERROR_IF_NE_MSG( fluid0.componentNames()[ic], aquiferWaterPhaseCompNames[ic],
+                             "Mismatch in component names between constitutive model "
+                             << fluid0.getName() << " and the water phase components in aquifer " << bc.getName() );
+    }
+  } );
+}
 
 void CompositionalMultiphaseBase::initializePreSubGroups()
 {
@@ -308,6 +348,10 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
       validateModelMapping< CapillaryPressureBase >( meshLevel.getElemManager(), m_capPressureModelNames );
     }
   }
+
+  // 3. Initialize and validate the aquifer boundary condition
+  initializeAquiferBC( cm );
+  validateAquiferBC( cm );
 }
 
 void CompositionalMultiphaseBase::updateComponentFraction( Group & dataGroup ) const
@@ -517,7 +561,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh ) const
     CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
     // saves porosity in oldPorosity
-    porousSolid.saveConvergedState();
+    porousSolid.initializeState();
 
   } );
 
@@ -823,6 +867,9 @@ void CompositionalMultiphaseBase::applyBoundaryConditions( real64 const time_n,
 
   // apply flux boundary conditions
   applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
+
+  // apply aquifer boundary conditions
+  applyAquiferBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 }
 
 void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
@@ -844,40 +891,174 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
                    [&]( FieldSpecificationBase const & fs,
                         string const &,
-                        SortedArrayView< localIndex const > const & lset,
+                        SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
-
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank =
       subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-    // TODO: can we avoid having to rebuild the set and moving host->device?
-    SortedArray< localIndex > localSet;
-    for( localIndex const a : lset )
-    {
-      if( ghostRank[a] < 0 )
-      {
-        localSet.insert( a );
-      }
-    }
+    // Step 1: get the values of the source boundary condition that need to be added to the rhs
+    // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
+    // compositional solvers
 
-    fs.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                       parallelDevicePolicy<> >( localSet.toViewConst(),
-                                                                 time + dt,
-                                                                 dt,
-                                                                 subRegion,
-                                                                 dofNumber,
-                                                                 dofManager.rankOffset(),
-                                                                 localMatrix,
-                                                                 localRhs,
-                                                                 [] GEOSX_HOST_DEVICE ( localIndex const )
+    array1d< globalIndex > dofArray( targetSet.size() );
+    array1d< real64 > rhsContributionArray( targetSet.size() );
+    arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
+    localIndex const rankOffset = dofManager.rankOffset();
+
+    // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
+    fs.computeRhsContribution< FieldSpecificationAdd,
+                               parallelDevicePolicy<> >( targetSet.toViewConst(),
+                                                         time + dt,
+                                                         dt,
+                                                         subRegion,
+                                                         dofNumber,
+                                                         rankOffset,
+                                                         localMatrix,
+                                                         dofArray.toView(),
+                                                         rhsContributionArrayView,
+                                                         [] GEOSX_HOST_DEVICE ( localIndex const )
     {
       return 0.0;
     } );
 
+    // Step 2: we are ready to add the right-hand side contributions, taking into account our equation layout
+
+    integer const fluidComponentId = fs.getComponent();
+    integer const numFluidComponents = m_numComponents;
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
+                                                         rankOffset,
+                                                         ghostRank,
+                                                         fluidComponentId,
+                                                         numFluidComponents,
+                                                         dofNumber,
+                                                         rhsContributionArrayView,
+                                                         localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      // we need to filter out ghosts here, because targetSet may contain them
+      localIndex const ei = targetSet[a];
+      if( ghostRank[ei] >= 0 )
+      {
+        return;
+      }
+
+      // for all "fluid components", we add the value to the total mass balance equation
+      globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
+      localRhs[totalMassBalanceRow] += rhsContributionArrayView[a];
+
+      // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
+      if( fluidComponentId < numFluidComponents - 1 )
+      {
+        globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
+        localRhs[compMassBalanceRow] += rhsContributionArrayView[a];
+      }
+    } );
+
   } );
+}
+
+namespace
+{
+
+bool validateDirichletBC( DomainPartition & domain,
+                          integer const numComp,
+                          real64 const time )
+{
+  constexpr integer MAX_NC = MultiFluidBase::MAX_NUM_COMPONENTS;
+  using keys = CompositionalMultiphaseBase::viewKeyStruct;
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcStatusMap; // map to check consistent application of BC
+  bool bcConsistent = true;
+
+  // 1. Check pressure Dirichlet BCs
+  fsManager.apply( time,
+                   domain,
+                   "ElementRegions",
+                   keys::pressureString(),
+                   [&]( FieldSpecificationBase const &,
+                        string const & setName,
+                        SortedArrayView< localIndex const > const &,
+                        Group & subRegion,
+                        string const & )
+  {
+    // 1.0. Check whether pressure has already been applied to this set
+    string const & subRegionName = subRegion.getName();
+    string const & regionName = subRegion.getParent().getParent().getName();
+
+    auto & subRegionSetMap = bcStatusMap[regionName][subRegionName];
+    if( subRegionSetMap.count( setName ) > 0 )
+    {
+      bcConsistent = false;
+      GEOSX_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
+    }
+    subRegionSetMap[setName].setNumComp( numComp );
+  } );
+
+  // 2. Check composition BC (global component fraction)
+  fsManager.apply( time,
+                   domain,
+                   "ElementRegions",
+                   keys::globalCompFractionString(),
+                   [&] ( FieldSpecificationBase const & fs,
+                         string const & setName,
+                         SortedArrayView< localIndex const > const &,
+                         Group & subRegion,
+                         string const & )
+  {
+    // 2.0. Check pressure and record composition bc application
+    string const & subRegionName = subRegion.getName();
+    string const & regionName = subRegion.getParent().getParent().getName();
+    integer const comp = fs.getComponent();
+
+    auto & subRegionSetMap = bcStatusMap[regionName][subRegionName];
+    if( subRegionSetMap.count( setName ) == 0 )
+    {
+      bcConsistent = false;
+      GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+    }
+    if( comp < 0 || comp >= numComp )
+    {
+      bcConsistent = false;
+      GEOSX_WARNING( GEOSX_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
+      return; // can't check next part with invalid component id
+    }
+
+    ComponentMask< MAX_NC > & compMask = subRegionSetMap[setName];
+    if( compMask[comp] )
+    {
+      bcConsistent = false;
+      GEOSX_WARNING( GEOSX_FMT( "Conflicting composition[{}] boundary conditions on set {}/{}/{}", comp, regionName, subRegionName, setName ) );
+    }
+    compMask.set( comp );
+  } );
+
+  // 2.3 Check consistency between composition BC applied to sets
+  for( auto const & regionEntry : bcStatusMap )
+  {
+    for( auto const & subRegionEntry : regionEntry.second )
+    {
+      for( auto const & setEntry : subRegionEntry.second )
+      {
+        ComponentMask< MAX_NC > const & compMask = setEntry.second;
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          if( !compMask[ic] )
+          {
+            bcConsistent = false;
+            GEOSX_WARNING( GEOSX_FMT( "Boundary condition not applied to composition[{}] on set {}/{}/{}",
+                                      ic, regionEntry.first, subRegionEntry.first, setEntry.first ) );
+          }
+        }
+      }
+    }
+  }
+
+  return bcConsistent;
+}
+
 }
 
 
@@ -890,32 +1071,26 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 {
   GEOSX_MARK_FUNCTION;
 
-  integer const numComp = m_numComponents;
+  // Only validate BC at the beginning of Newton loop
+  if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+  {
+    bool const bcConsistent = validateDirichletBC( domain, m_numComponents, time + dt );
+    GEOSX_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+  }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  map< string, map< string, array1d< bool > > > bcStatusMap; // map to check consistent application of BC
-
-  // 1. apply pressure Dirichlet BCs
+  // 1. Apply pressure Dirichlet BCs, store in a separate field
   fsManager.apply( time + dt,
                    domain,
                    "ElementRegions",
                    viewKeyStruct::pressureString(),
                    [&]( FieldSpecificationBase const & fs,
-                        string const & setName,
+                        string const &,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
-    // 1.0. Check whether pressure has already been applied to this set
-    string const & subRegionName = subRegion.getName();
-    GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0,
-                    "Conflicting pressure boundary conditions on set " << setName );
-
-    bcStatusMap[subRegionName][setName].resize( m_numComponents );
-    bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
-
-    // 1.1. Apply BC to set the field values
     fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                            time + dt,
                                                                            subRegion,
@@ -928,42 +1103,16 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
                    "ElementRegions",
                    viewKeyStruct::globalCompFractionString(),
                    [&] ( FieldSpecificationBase const & fs,
-                         string const & setName,
+                         string const &,
                          SortedArrayView< localIndex const > const & targetSet,
                          Group & subRegion,
                          string const & )
   {
-    // 2.0. Check pressure and record composition bc application
-    string const & subRegionName = subRegion.getName();
-    integer const comp = fs.getComponent();
-    GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0,
-                    "Pressure boundary condition not prescribed on set '" << setName << "'" );
-    GEOSX_ERROR_IF( bcStatusMap[subRegionName][setName][comp],
-                    "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
-    bcStatusMap[subRegionName][setName][comp] = true;
-
-    // 2.1. Apply BC to set the field values
     fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                            time + dt,
                                                                            subRegion,
                                                                            viewKeyStruct::globalCompFractionString() );
   } );
-
-  // 2.3 Check consistency between composition BC applied to sets
-  bool bcConsistent = true;
-  for( auto const & bcStatusEntryOuter : bcStatusMap )
-  {
-    for( auto const & bcStatusEntryInner : bcStatusEntryOuter.second )
-    {
-      for( localIndex ic = 0; ic < m_numComponents; ++ic )
-      {
-        bcConsistent &= bcStatusEntryInner.second[ic];
-        GEOSX_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component " << ic <<
-                          " on region " << bcStatusEntryOuter.first << ", set " << bcStatusEntryInner.first );
-      }
-    }
-  }
-  GEOSX_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
@@ -1016,6 +1165,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
     arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
 
+    integer const numComp = m_numComponents;
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       localIndex const ei = targetSet[a];
@@ -1122,13 +1272,17 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
   } );
 }
 
-void CompositionalMultiphaseBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
-                                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
+void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
+                                                        real64 const & dt,
                                                         DomainPartition & domain )
 {
   integer const numComp = m_numComponents;
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  // note: we have to save the aquifer state **before** updating the pressure,
+  // otherwise the aquifer flux is saved with the wrong pressure time level
+  saveAquiferConvergedState( time, dt, domain );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
@@ -1178,18 +1332,15 @@ void CompositionalMultiphaseBase::resetViews( MeshLevel & mesh )
     using keys = viewKeyStruct;
     using namespace compflow;
 
-    m_pressure.clear();
-    m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( keys::pressureString() );
-    m_pressure.setName( getName() + "/accessors/" + keys::pressureString() );
-
-    m_deltaPressure.clear();
-    m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( keys::deltaPressureString() );
-    m_deltaPressure.setName( getName() + "/accessors/" + keys::deltaPressureString() );
-
     m_dCompFrac_dCompDens.clear();
     m_dCompFrac_dCompDens =
       elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_COMP_DC >( keys::dGlobalCompFraction_dGlobalCompDensityString() );
     m_dCompFrac_dCompDens.setName( getName() + "/accessors/" + keys::dGlobalCompFraction_dGlobalCompDensityString() );
+
+    m_phaseVolFrac.clear();
+    m_phaseVolFrac =
+      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( keys::phaseVolumeFractionString() );
+    m_phaseVolFrac.setName( getName() + "/accessors/" + keys::phaseVolumeFractionString() );
 
     m_dPhaseVolFrac_dPres.clear();
     m_dPhaseVolFrac_dPres =
@@ -1320,4 +1471,4 @@ void CompositionalMultiphaseBase::resetViews( MeshLevel & mesh )
   }
 }
 
-}// namespace geosx
+} // namespace geosx

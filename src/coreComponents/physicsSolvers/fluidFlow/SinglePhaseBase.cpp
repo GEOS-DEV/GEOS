@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -24,10 +24,11 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
-#include "finiteVolume/FiniteVolumeManager.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mainInterface/ProblemManager.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "finiteVolume/FiniteVolumeManager.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
 namespace geosx
@@ -91,10 +92,6 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
-
-      subRegion.template registerWrapper< array2d< real64 > >( viewKeyStruct::transTMultString() ).
-        setDefaultValue( 1.0 ).
-        reference().template resizeDimension< 1 >( 3 );
     } );
 
     FaceManager & faceManager = meshLevel.getFaceManager();
@@ -106,6 +103,18 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     }
   } );
 }
+
+void SinglePhaseBase::initializeAquiferBC() const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition & bc )
+  {
+    // set the gravity vector (needed later for the potential diff calculations)
+    bc.setGravityVector( gravityVector() );
+  } );
+}
+
 
 void SinglePhaseBase::validateFluidModels( DomainPartition const & domain ) const
 {
@@ -132,6 +141,8 @@ void SinglePhaseBase::initializePreSubGroups()
   FlowSolverBase::initializePreSubGroups();
 
   validateFluidModels( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
+
+  initializeAquiferBC();
 }
 
 void SinglePhaseBase::updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const
@@ -207,8 +218,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
     CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
-    // saves porosity in oldPorosity
-    porousSolid.saveConvergedState();
+    porousSolid.initializeState();
   } );
 
   mesh.getElemManager().forElementRegions< SurfaceElementRegion >( targetRegionNames(),
@@ -313,13 +323,17 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
   backupFields( mesh );
 }
 
-void SinglePhaseBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
+void SinglePhaseBase::implicitStepComplete( real64 const & time,
+                                            real64 const & dt,
                                             DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  // note: we have to save the aquifer state **before** updating the pressure,
+  // otherwise the aquifer flux is saved with the wrong pressure time level
+  saveAquiferConvergedState( time, dt, domain );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
@@ -523,6 +537,8 @@ void SinglePhaseBase::applyBoundaryConditions( real64 time_n,
 
   applySourceFluxBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
   applyDirichletBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  applyAquiferBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+
 }
 
 void SinglePhaseBase::applyDirichletBC( real64 const time_n,
@@ -590,27 +606,15 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
                    [&]( FieldSpecificationBase const & fs,
                         string const &,
-                        SortedArrayView< localIndex const > const & lset,
+                        SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
     arrayView1d< globalIndex const > const
     dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
-    arrayView1d< integer const > const
-    ghostRank = subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-
-    SortedArray< localIndex > localSet;
-    for( localIndex const a : lset )
-    {
-      if( ghostRank[a] < 0 )
-      {
-        localSet.insert( a );
-      }
-    }
-
     fs.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                       parallelDevicePolicy<> >( localSet.toViewConst(),
+                                       parallelDevicePolicy<> >( targetSet.toViewConst(),
                                                                  time_n + dt,
                                                                  dt,
                                                                  subRegion,
@@ -696,14 +700,6 @@ void SinglePhaseBase::resetViews( MeshLevel & mesh )
   FlowSolverBase::resetViews( mesh );
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  m_pressure.clear();
-  m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::pressureString() );
-  m_pressure.setName( getName() + "/accessors/" + viewKeyStruct::pressureString() );
-
-  m_deltaPressure.clear();
-  m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::deltaPressureString() );
-  m_deltaPressure.setName( getName() + "/accessors/" + viewKeyStruct::deltaPressureString() );
-
   m_volume.clear();
   m_volume = elemManager.constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
   m_volume.setName( string( "accessors/" ) + ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
@@ -749,9 +745,6 @@ void SinglePhaseBase::resetViewsPrivate( ElementRegionManager const & elemManage
                                                                                fluidModelNames() );
   m_dVisc_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dVisc_dPresString() );
 
-  m_transTMultiplier.clear();
-  m_transTMultiplier = elemManager.constructArrayViewAccessor< real64, 2 >( viewKeyStruct::transTMultString() );
-  m_transTMultiplier.setName( getName() + "/accessors/" + viewKeyStruct::transTMultString() );
 }
 
 } /* namespace geosx */

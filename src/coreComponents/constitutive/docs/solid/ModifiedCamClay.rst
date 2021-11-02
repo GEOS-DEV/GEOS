@@ -54,9 +54,7 @@ where :math:`c_c` is the virgin compressibility index and we have :math:`0 < c_r
 Parameters
 ~~~~~~~~~~~~~~~~
 
-The following attributes are supported:
-
-.. include:: /coreComponents/schema/docs/ModifiedCamClay.rst
+The supported attributes will be documented soon.
 
 Example
 ~~~~~~~~~~~~~~~~~~~

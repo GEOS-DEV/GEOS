@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -33,7 +33,7 @@ CommandLineOptions g_commandLineOptions;
 
 char const * xmlInput =
   "<Problem>\n"
-  "  <Solvers gravityVector=\"0.0, 0.0, -9.81\">\n"
+  "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
   "    <CompositionalMultiphaseFVM name=\"compflow\"\n"
   "                                 logLevel=\"0\"\n"
   "                                 discretization=\"fluidTPFA\"\n"
@@ -64,8 +64,8 @@ char const * xmlInput =
   "                  cellBlockNames=\"{cb1}\"/>\n"
   "  </Mesh>\n"
   "  <Geometry>\n"
-  "    <Box name=\"source\" xMin=\"-0.01, -0.01, -0.01\" xMax=\"1.01, 1.01, 1.01\"/>\n"
-  "    <Box name=\"sink\"   xMin=\"1.99, -0.01, -0.01\" xMax=\"3.01, 1.01, 1.01\"/>\n"
+  "    <Box name=\"source\" xMin=\"{ -0.01, -0.01, -0.01 }\" xMax=\"{ 1.01, 1.01, 1.01 }\"/>\n"
+  "    <Box name=\"sink\"   xMin=\"{ 1.99, -0.01, -0.01 }\" xMax=\"{ 3.01, 1.01, 1.01 }\"/>\n"
   "  </Geometry>\n"
   "  <NumericalMethods>\n"
   "    <FiniteVolume>\n"
@@ -76,7 +76,7 @@ char const * xmlInput =
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
-  "    <CellElementRegion name=\"Region2\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, cappressure, rockPerm, rockPorosity, nullSolid}\" />\n"
+  "    <CellElementRegion name=\"Region2\" cellBlocks=\"{cb1}\" materialList=\"{fluid1, rock, relperm, cappressure}\" />\n"
   "  </ElementRegions>\n"
   "  <Constitutive>\n"
   "    <CompositionalMultiphaseFluid name=\"fluid1\"\n"

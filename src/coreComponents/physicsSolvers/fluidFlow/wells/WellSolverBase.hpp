@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -199,17 +199,25 @@ public:
                                   arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
-   * @brief assembles the volume balance terms for all well elements
-   * @param time_n previous time value
-   * @param dt time step
+   * @brief assembles the accumulation term for all the well elements
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleVolumeBalanceTerms( real64 const time_n,
-                                           real64 const dt,
-                                           DomainPartition const & domain,
+  virtual void assembleAccumulationTerms( DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) = 0;
+
+  /**
+   * @brief assembles the volume balance terms for all well elements
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleVolumeBalanceTerms( DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs ) = 0;
@@ -221,10 +229,10 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void formPressureRelations( DomainPartition const & domain,
-                                      DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs ) = 0;
+  virtual void assemblePressureRelations( DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
@@ -237,6 +245,12 @@ public:
    * @param well the well containing all the primary and dependent fields
    */
   virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
+
+  /**
+   * @brief Backup current values of all constitutive fields that participate in the accumulation term
+   * @param mesh reference to the mesh
+   */
+  virtual void backupFields( MeshLevel & mesh ) const = 0;
 
   arrayView1d< string const > const fluidModelNames() const { return m_fluidModelNames; }
 
@@ -294,6 +308,9 @@ protected:
 
   /// the number of Degrees of Freedom per reservoir element
   integer m_numDofPerResElement;
+
+  // copy of the current time saved in this class for time-dependent
+  real64 m_currentTime;
 
   /// copy of the time step size saved in this class for residual normalization
   real64 m_currentDt;

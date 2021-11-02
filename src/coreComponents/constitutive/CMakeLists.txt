@@ -10,16 +10,22 @@ set( constitutive_headers
      NullModel.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/TableCapillaryPressure.hpp     
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/layouts.hpp
-     contact/ContactRelationBase.hpp
-     contact/Coulomb.hpp
+     contact/ContactBase.hpp
+     contact/ApertureTableContact.hpp
+     contact/CoulombContact.hpp
+     contact/ContactSelector.hpp
+     fluid/BlackOilFluidBase.hpp	
+     fluid/BlackOilFluid.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
      fluid/DeadOilFluid.hpp
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
+     fluid/PVTOData.hpp
      fluid/PVTFunctions/BrineCO2Density.hpp
      fluid/PVTFunctions/BrineViscosity.hpp
      fluid/PVTFunctions/CO2Solubility.hpp
@@ -43,6 +49,7 @@ set( constitutive_headers
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
      permeability/StrainDependentPermeability.hpp
+     permeability/ProppantPermeability.hpp     
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp
@@ -52,6 +59,7 @@ set( constitutive_headers
      relativePermeability/layouts.hpp
      relativePermeability/relativePermeabilitySelector.hpp
      solid/CompressibleSolid.hpp
+     solid/ProppantSolid.hpp
      solid/CoupledSolidBase.hpp
      solid/CoupledSolid.hpp
      solid/Damage.hpp
@@ -60,8 +68,12 @@ set( constitutive_headers
      solid/DamageVolDev.hpp
      solid/DruckerPrager.hpp
      solid/DruckerPragerExtended.hpp
+     solid/ModifiedCamClay.hpp
+     solid/DelftEgg.hpp
      solid/ElasticIsotropic.hpp
+     solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
+     solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
@@ -70,10 +82,12 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
+     solid/SolidModelDiscretizationOpsOrthotropic.hpp
      solid/TriaxialDriver.hpp
      solid/porosity/BiotPorosity.hpp
      solid/porosity/PorosityBase.hpp
      solid/porosity/PressurePorosity.hpp
+     solid/porosity/ProppantPorosity.hpp
    )
 #
 # Specify all sources
@@ -84,18 +98,24 @@ set( constitutive_sources
      NullModel.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
+     capillaryPressure/TableCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
-     contact/ContactRelationBase.cpp
-     contact/Coulomb.cpp
+     contact/ContactBase.cpp
+     contact/ApertureTableContact.cpp     
+     contact/CoulombContact.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
+     fluid/BlackOilFluidBase.cpp
+     fluid/BlackOilFluid.cpp
      fluid/DeadOilFluid.cpp
      fluid/MultiFluidBase.cpp
      fluid/MultiPhaseMultiComponentFluid.cpp
+     fluid/PVTOData.cpp
      fluid/PVTFunctions/BrineCO2Density.cpp
      fluid/PVTFunctions/BrineViscosity.cpp
      fluid/PVTFunctions/CO2Solubility.cpp
      fluid/PVTFunctions/FenghourCO2Viscosity.cpp
      fluid/PVTFunctions/SpanWagnerCO2Density.cpp
+     fluid/PVTFunctions/PVTFunctionHelpers.cpp     
      fluid/ParticleFluid.cpp              
      fluid/ParticleFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp
@@ -106,26 +126,33 @@ set( constitutive_sources
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
      permeability/StrainDependentPermeability.cpp
+     permeability/ProppantPermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/TableRelativePermeability.cpp        
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
      solid/CompressibleSolid.cpp
-     solid/CoupledSolidBase.cpp   
+     solid/CoupledSolidBase.cpp
+     solid/ProppantSolid.cpp
      solid/Damage.cpp
      solid/DamageSpectral.cpp
      solid/DamageVolDev.cpp
      solid/DruckerPrager.cpp
      solid/DruckerPragerExtended.cpp
+     solid/ModifiedCamClay.cpp
+     solid/DelftEgg.cpp
      solid/ElasticIsotropic.cpp
+     solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
+     solid/ElasticOrthotropic.cpp
      solid/PorousSolid.cpp
      solid/SolidBase.cpp
      solid/TriaxialDriver.cpp
      solid/porosity/BiotPorosity.cpp
      solid/porosity/PorosityBase.cpp
      solid/porosity/PressurePorosity.cpp
+     solid/porosity/ProppantPorosity.cpp
    )
 
 set( dependencyList events dataRepository functions )
@@ -133,17 +160,13 @@ set( dependencyList events dataRepository functions )
 if( ENABLE_PVTPackage )
     set( constitutive_headers
          ${constitutive_headers}
-         fluid/BlackOilFluid.hpp
          fluid/CompositionalMultiphaseFluid.hpp
-         fluid/MultiFluidPVTPackageWrapper.hpp
-       )
+         )
 
     set( constitutive_sources
          ${constitutive_sources}
-         fluid/BlackOilFluid.cpp
          fluid/CompositionalMultiphaseFluid.cpp
-         fluid/MultiFluidPVTPackageWrapper.cpp
-       )
+         )
        
     add_subdirectory( PVTPackage )
 

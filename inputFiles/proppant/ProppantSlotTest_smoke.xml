@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./ProppantSlotTest_base.xml"/>
+  </Included>
+ 
+<!-- SPHINX_PROPPANT_MESH -->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ 0, 1.2319 }"
+      zCoords="{ 0, 0.3048 }"
+      nx="{ 2 }"
+      ny="{ 97 }"
+      nz="{ 24 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+<!-- SPHINX_PROPPANT_MESH_END -->
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="0.1"
+      target="/Solvers/FlowProppantTransport"/>
+
+    <PeriodicEvent
+      name="outputs"
+      target="/Outputs/siloOutput"/>
+  </Events>
+ 
+</Problem>

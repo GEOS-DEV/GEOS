@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -144,7 +144,6 @@ public:
                      localIndex const localFaceIndex,
                      localIndex_array & nodeIndices ) const;
 
-
   /**
    * @brief Get the element-to-node map.
    * @return a reference to the element-to-node map
@@ -265,22 +264,22 @@ private:
     {
       case ElementType::Hexahedron:
       {
-        m_elementVolume[k] = computationalGeometry::HexVolume( Xlocal );
+        m_elementVolume[k] = computationalGeometry::hexVolume( Xlocal );
         break;
       }
       case ElementType::Tetrahedron:
       {
-        m_elementVolume[k] = computationalGeometry::TetVolume( Xlocal );
+        m_elementVolume[k] = computationalGeometry::tetVolume( Xlocal );
         break;
       }
       case ElementType::Prism:
       {
-        m_elementVolume[k] = computationalGeometry::WedgeVolume( Xlocal );
+        m_elementVolume[k] = computationalGeometry::wedgeVolume( Xlocal );
         break;
       }
       case ElementType::Pyramid:
       {
-        m_elementVolume[k] = computationalGeometry::PyramidVolume( Xlocal );
+        m_elementVolume[k] = computationalGeometry::pyramidVolume( Xlocal );
         break;
       }
       default:

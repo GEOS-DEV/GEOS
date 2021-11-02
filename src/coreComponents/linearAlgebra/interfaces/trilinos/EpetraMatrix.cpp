@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -347,6 +347,23 @@ void EpetraMatrix::insert( globalIndex const * rowIndices,
                                                             values,
                                                             Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
+
+
+void EpetraMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
+                           arrayView1d< globalIndex const > const & colIndices,
+                           arrayView1d< real64 const > const & values )
+{
+  GEOSX_LAI_ASSERT( insertable() );
+  localIndex const n = rowIndices.size();
+  for( localIndex a=0; a<n; ++a )
+  {
+    GEOSX_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( rowIndices[a],
+                                                              1,
+                                                              &(values[a]),
+                                                              &(colIndices[a]) ) );
+  }
+}
+
 
 void EpetraMatrix::apply( EpetraVector const & src,
                           EpetraVector & dst ) const

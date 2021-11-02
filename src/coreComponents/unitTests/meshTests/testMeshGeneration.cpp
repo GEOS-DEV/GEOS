@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -113,7 +113,7 @@ protected:
       GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
     }
 
-    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
+    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
     getGlobalState().getProblemManager().processInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -101,22 +101,26 @@ public:
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion,
                                       localIndex const targetIndex ) const;
 
-  void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
-                                      localIndex const targetIndex ) const;
+  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
+                                              localIndex const targetIndex ) const;
+
+  /**
+   * @brief Increment the cumulative flux from each aquifer
+   * @param[in] time the time at the beginning of the time step
+   * @param[in] dt the time step size
+   * @param[in] domain the domain partition
+   *
+   * For now this function is here because it can be used for both single-phase flow and multiphase flow
+   * This may have to be revisited when aquifer BC is implemented for hybrid FVM
+   */
+  virtual void saveAquiferConvergedState( real64 const & time,
+                                          real64 const & dt,
+                                          DomainPartition & domain );
 
   /**
    * @brief Setup stored views into domain data for the current step
    */
   virtual void resetViews( MeshLevel & mesh );
-
-
-private:
-
-  /**
-   * @brief This function generates various discretization information for later use.
-   * @param domain the domain partition
-   */
-
 
 protected:
 
@@ -148,7 +152,13 @@ protected:
 
   real64 m_fluxEstimate;
 
+  /// views into pressure fields
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
+
   /// views into constant data fields
+
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_elemGhostRank;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_volume;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_gravCoef;

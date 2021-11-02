@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -357,20 +357,16 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
 
   // read parameters from file
   std::ifstream is( filename );
-
-  constexpr std::streamsize buf_size = 256;
-  char buf[buf_size];
-
   std::unique_ptr< MODEL > pvtFunction = nullptr;
-
-  while( is.getline( buf, buf_size ))
+  string str;
+  while( std::getline( is, str ) )
   {
-    string const str( buf );
     string_array const strs = stringutilities::tokenize( str, " " );
 
     if( strs[0] == key )
     {
-      pvtFunction = std::make_unique< MODEL >( strs,
+      pvtFunction = std::make_unique< MODEL >( strs[1],
+                                               strs,
                                                componentNames,
                                                componentMolarWeight );
     }
@@ -401,20 +397,16 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
 
   // read parameters from file
   std::ifstream is( filename );
-
-  constexpr std::streamsize buf_size = 256;
-  char buf[buf_size];
-
-  std::unique_ptr< MODEL > flashModel = nullptr;
-
-  while( is.getline( buf, buf_size ))
+  std::unique_ptr< MODEL > flashModel;
+  string str;
+  while( std::getline( is, str ) )
   {
-    string const str( buf );
     string_array const strs = stringutilities::tokenize( str, " " );
 
     if( strs[0] == key )
     {
-      flashModel = std::make_unique< MODEL >( strs,
+      flashModel = std::make_unique< MODEL >( strs[1],
+                                              strs,
                                               phaseNames,
                                               componentNames,
                                               componentMolarWeight );
@@ -436,7 +428,7 @@ public:
     pvtFunction = makePVTFunction< BrineViscosity >( filename, key );
   }
 
-  ~BrineViscosityTest()
+  ~BrineViscosityTest() override
   {
     removeFile( filename );
   }
@@ -494,7 +486,7 @@ public:
     pvtFunction = makePVTFunction< FenghourCO2Viscosity >( filename, key );
   }
 
-  ~FenghourCO2ViscosityTest()
+  ~FenghourCO2ViscosityTest() override
   {
     removeFile( filename );
   }
@@ -553,7 +545,7 @@ public:
     pvtFunction = makePVTFunction< BrineCO2Density >( filename, key );
   }
 
-  ~BrineCO2DensityTest()
+  ~BrineCO2DensityTest() override
   {
     removeFile( filename );
   }
@@ -645,7 +637,7 @@ public:
     pvtFunction = makePVTFunction< SpanWagnerCO2Density >( filename, key );
   }
 
-  ~SpanWagnerCO2DensityTest()
+  ~SpanWagnerCO2DensityTest() override
   {
     removeFile( filename );
   }
@@ -742,7 +734,7 @@ public:
     flashModel = makeFlashModel< CO2Solubility >( filename, key );
   }
 
-  ~CO2SolubilityTest()
+  ~CO2SolubilityTest() override
   {
     removeFile( filename );
   }

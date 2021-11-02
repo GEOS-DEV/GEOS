@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -117,7 +117,7 @@ public:
   GEOSX_FORCE_INLINE
   constexpr int size( int junk ) const
   {
-    GEOSX_UNUSED_VAR( junk )
+    GEOSX_UNUSED_VAR( junk );
     return SIZE;
   }
 
@@ -134,11 +134,12 @@ private:
    */
   friend inline std::ostream & operator<<( std::ostream & os, Tensor< T, SIZE > const & t )
   {
-    os << t.data[0];
+    os << '{' << t.data[0];
     for( int i = 1; i < SIZE; ++i )
     {
       os << ',' << t.data[i];
     }
+    os << '}';
     return os;
   }
 };

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -446,13 +446,13 @@ public:
    * @param stiffness the stiffness array
    */
   GEOSX_HOST_DEVICE
-  virtual void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
+  virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
   {
     GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
     GEOSX_UNUSED_VAR( stiffness );
     GEOSX_ERROR( "getElasticStiffness() not implemented for this model" );
   }
-
 
   /**
    * @brief Perform a finite-difference stiffness computation

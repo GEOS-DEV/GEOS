@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -17,6 +17,7 @@
  */
 
 #include "CompositionalMultiphaseBaseKernels.hpp"
+#include "CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
 {
@@ -147,6 +148,20 @@ PhaseVolumeFractionKernel::
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
+
+    // set the saturation to zero if the phase is absent
+    bool const phaseExists = (phaseFrac[ip] > 0);
+    if( !phaseExists )
+    {
+      phaseVolFrac[ip] = 0.;
+      dPhaseVolFrac_dPres[ip] = 0.;
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dPhaseVolFrac_dComp[ip][jc] = 0.;
+      }
+      continue;
+    }
+
     // Expression for volume fractions: S_p = (nu_p / rho_p) * rho_t
     real64 const phaseDensInv = 1.0 / phaseDens[ip];
 
@@ -417,6 +432,9 @@ AccumulationKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+
+  using namespace CompositionalMultiphaseUtilities;
+
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {
     if( elemGhostRank[ei] >= 0 )
@@ -460,7 +478,10 @@ AccumulationKernel::
       dofIndices[idof] = dofNumber[ei] + idof;
     }
 
-    // TODO: apply equation/variable change transformation(s)
+    // Apply equation/variable change transformation(s)
+    real64 work[NDOF];
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF, localAccumJacobian, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localAccum );
 
     // add contribution to residual and jacobian
     for( localIndex i = 0; i < NC; ++i )

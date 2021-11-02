@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -25,6 +25,8 @@
 #include "constitutive/fluid/layouts.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "constitutive/capillaryPressure/layouts.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "finiteVolume/BoundaryStencil.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
 namespace geosx
@@ -54,6 +56,7 @@ struct PhaseMobilityKernel
            arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseVisc_dComp,
            arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
            arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dComp,
            arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseMob,
@@ -72,6 +75,7 @@ struct PhaseMobilityKernel
           arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp,
           arrayView2d< real64, compflow::USD_PHASE > const & phaseMob,
@@ -90,6 +94,7 @@ struct PhaseMobilityKernel
           arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp,
           arrayView2d< real64, compflow::USD_PHASE > const & phaseMob,
@@ -212,6 +217,7 @@ struct CFLFluxKernel
            real64 const (&transmissibility)[2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
@@ -229,6 +235,7 @@ struct CFLFluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
@@ -254,6 +261,7 @@ struct CFLKernel
   GEOSX_FORCE_INLINE
   static void
   computePhaseCFL( real64 const & poreVol,
+                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
                    arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > phaseRelPerm,
                    arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > dPhaseRelPerm_dPhaseVolFrac,
                    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseVisc,
@@ -277,6 +285,7 @@ struct CFLKernel
           arrayView2d< real64 const > const & porosity,
           arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
           arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc,
@@ -286,6 +295,79 @@ struct CFLKernel
           arrayView1d< real64 > const & compCFLNumber,
           real64 & maxPhaseCFLNumber,
           real64 & maxCompCFLNumber );
+
+};
+
+/******************************** AquiferBCKernel ********************************/
+
+/**
+ * @brief Functions to assemble aquifer boundary condition contributions to residual and Jacobian
+ */
+struct AquiferBCKernel
+{
+
+  /**
+   * @brief The type for element-based data. Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewConstAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  template< localIndex NC >
+  GEOSX_HOST_DEVICE
+  static void
+    compute( localIndex const numPhases,
+             localIndex const ipWater,
+             bool const allowAllPhasesIntoAquifer,
+             real64 const & aquiferVolFlux,
+             real64 const & dAquiferVolFlux_dPres,
+             real64 const & aquiferWaterPhaseDens,
+             arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac,
+             arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens,
+             arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > dPhaseDens_dPres,
+             arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens_dCompFrac,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres,
+             arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens,
+             arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac,
+             arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > dPhaseCompFrac_dPres,
+             arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac_dCompFrac,
+             arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens,
+             real64 const & dt,
+             real64 ( &localFlux )[NC],
+             real64 ( &localFluxJacobian )[NC][NC+1] );
+
+  template< localIndex NC >
+  static void
+  launch( localIndex const numPhases,
+          localIndex const ipWater,
+          bool const allowAllPhasesIntoAquifer,
+          BoundaryStencil const & stencil,
+          globalIndex const rankOffset,
+          ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+          AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
+          real64 const & aquiferWaterPhaseDens,
+          arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac,
+          ElementViewConst< arrayView1d< real64 const > > const & pres,
+          ElementViewConst< arrayView1d< real64 const > > const & dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
+          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
+          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
+          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dCompDens,
+          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
+          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
+          ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,
+          ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+          real64 const & timeAtBeginningOfStep,
+          real64 const & dt,
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs );
 
 };
 

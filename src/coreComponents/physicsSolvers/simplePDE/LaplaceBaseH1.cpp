@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -154,7 +154,7 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
 
 void LaplaceBaseH1::updateState( DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( domain )
+  GEOSX_UNUSED_VAR( domain );
 }
 
 /*
@@ -196,9 +196,15 @@ void LaplaceBaseH1::
                         Group & targetGroup,
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >
-      ( targetSet, time, targetGroup, m_fieldName, dofManager.getKey( m_fieldName ),
-      dofManager.rankOffset(), localMatrix, localRhs );
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                       parallelDevicePolicy< 32 > >( targetSet,
+                                                                     time,
+                                                                     targetGroup,
+                                                                     m_fieldName,
+                                                                     dofManager.getKey( m_fieldName ),
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
   } );
 }
 
