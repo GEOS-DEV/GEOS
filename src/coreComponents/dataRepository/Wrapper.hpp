@@ -262,7 +262,7 @@ public:
   virtual
   HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
-    return geosx::getHistoryMetadata( getName(), referenceAsView( ), packCount );
+    return geosx::getHistoryMetadata( getName(), referenceAsView( ), numArrayComp(), packCount );
   }
 
   /**
@@ -720,10 +720,10 @@ public:
                                                                      targetNode,
                                                                      inputFlag == InputFlags::REQUIRED );
         GEOSX_THROW_IF( !m_successfulReadFromInput,
-                        "Input variable " << getName() << " is required in " << targetNode.path() <<
-                        ". Available options are: \n" << dumpInputOptions( true ) <<
-                        "\nFor more details, please refer to documentation at: \n" <<
-                        "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n",
+                        GEOSX_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
+                                   "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
+                                   "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                                   targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),
                         InputError );
       }
       else

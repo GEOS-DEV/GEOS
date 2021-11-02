@@ -79,17 +79,17 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
 
   // initialize salinity
-  GEOSX_THROW_IF( inputParams.size() < 9,
-                  "BrineCO2Density: invalid property input!",
-                  InputError );
-  real64 salinity = 0.0;
+  GEOSX_THROW_IF_LT_MSG( inputParams.size(), 9,
+                         GEOSX_FMT( "{}: insufficient number of model parameters", functionName ),
+                         InputError );
+  real64 salinity;
   try
   {
     salinity = stod( inputParams[8] );
   }
-  catch( const std::invalid_argument & e )
+  catch( std::invalid_argument const & e )
   {
-    GEOSX_THROW( functionName << ": invalid property argument: " << e.what(), InputError );
+    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
@@ -121,15 +121,16 @@ BrineCO2Density::BrineCO2Density( string const & name,
                    componentMolarWeight )
 {
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
-  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
+  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
   string const expectedWaterComponentNames[] = { "Water", "water" };
-  m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames );
+  m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
   m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
-BrineCO2Density::KernelWrapper BrineCO2Density::createKernelWrapper() const
+BrineCO2Density::KernelWrapper
+BrineCO2Density::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         *m_brineDensityTable,

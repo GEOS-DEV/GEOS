@@ -59,10 +59,11 @@ public:
     static constexpr char const * faceToCellStencilString() { return "faceElementToCellStencil"; }
     /// @return The key for the meanPermCoefficient
     static constexpr char const * meanPermCoefficientString() { return "meanPermCoefficient"; }
+    /// @return The key for the usePEDFM flag
+    static constexpr char const * usePEDFMString() { return "usePEDFM"; }
   };
 
 protected:
-
   virtual void registerCellStencil( Group & stencilGroup ) const override;
 
   virtual void computeCellStencil( MeshLevel & mesh ) const override;
@@ -80,15 +81,36 @@ protected:
                                        string const & setName,
                                        SortedArrayView< localIndex const > const & faceSet ) const override;
 
-  virtual void addEDFracToFractureStencil( MeshLevel & mesh,
-                                           string const & embeddedSurfaceRegionName ) const override;
+  virtual void registerAquiferStencil( Group & stencilGroup,
+                                       string const & setName ) const override;
 
+  virtual void computeAquiferStencil( DomainPartition & domain,
+                                      MeshLevel & mesh ) const override;
+
+  virtual void addEmbeddedFracturesToStencils( MeshLevel & mesh,
+                                               string const & embeddedSurfaceRegionName ) const override;
+
+  /**
+   * @brief adds fracture-fracture connections to the surfaceElement stencil
+   * @param mesh the mesh object
+   * @param embeddedSurfaceRegionName name of the fracture region
+   */
+  void addFractureFractureConnections( MeshLevel & mesh,
+                                       string const & embeddedSurfaceRegionName ) const;
+
+  /**
+   * @brief adds fracture-matrix connections to the edfm stencil
+   * @param mesh the mesh object
+   * @param embeddedSurfaceRegionName name of the fracture region
+   */
+  void addFractureMatrixConnections( MeshLevel & mesh,
+                                     string const & embeddedSurfaceRegionName ) const;
 private:
 
   /// mean permeability coefficient
   real64 m_meanPermCoefficient;
-
-
+  /// flag to determine whether or not to use projection EDFM
+  integer m_useProjectionEmbeddedFractureMethod;
 };
 
 }

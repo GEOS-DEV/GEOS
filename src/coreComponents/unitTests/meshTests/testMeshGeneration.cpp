@@ -113,7 +113,7 @@ protected:
       GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
     }
 
-    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
+    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
     getGlobalState().getProblemManager().processInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels

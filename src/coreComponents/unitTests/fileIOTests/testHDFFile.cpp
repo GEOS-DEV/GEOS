@@ -45,7 +45,7 @@ TEST( testHDFIO, ArrayHistory )
       value = count++;
     } );
 
-    HistoryMetadata spec = getHistoryMetadata( "Array1d History", arr.toViewConst( ) );
+    HistoryMetadata spec = getHistoryMetadata( "Array1d History", arr.toViewConst( ), 1 );
     HDFHistIO io( filename, spec );
     io.init( true );
 
@@ -68,7 +68,7 @@ TEST( testHDFIO, ArrayHistory )
       value = count++;
     } );
 
-    HistoryMetadata spec = getHistoryMetadata( "Array2d History", arr.toViewConst( ) );
+    HistoryMetadata spec = getHistoryMetadata( "Array2d History", arr.toViewConst( ), 4 );
     HDFHistIO io( filename, spec );
     io.init( true );
 
@@ -101,7 +101,7 @@ TEST( testHDFIO, IdxArrayHistory )
       value = rand() % 1024;
     } );
 
-    HistoryMetadata spec = getHistoryMetadata( "Array1d Idx History", arr.toViewConst( ), idx.size( ));
+    HistoryMetadata spec = getHistoryMetadata( "Array1d Idx History", arr.toViewConst( ), 4, idx.size( ));
     HDFHistIO io( filename, spec );
     io.init( true );
 

@@ -601,7 +601,7 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
       localIndex const numEntries = matrix.numNonZeros( localRow );
 
       real64 diagonal = 0;
-      real64 const minDiagonal = 1e-15;
+      real64 const minDiagonal = 1;
       for( localIndex j = 0; j < numEntries; ++j )
       {
         if( columns[ j ] == dof )

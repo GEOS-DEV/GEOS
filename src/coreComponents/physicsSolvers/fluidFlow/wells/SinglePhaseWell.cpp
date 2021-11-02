@@ -545,6 +545,14 @@ void SinglePhaseWell::computePerforationRates( WellElementSubRegion & subRegion,
 {
   GEOSX_MARK_FUNCTION;
 
+  // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
+  // therefore, we do not want to compute perforation rates and we simply assume they are zero
+  WellControls const & wellControls = getWellControls( subRegion );
+  if( !wellControls.wellIsOpen( m_currentTime + m_currentDt ) )
+  {
+    return;
+  }
+
   // get the well data
   PerforationData * const perforationData = subRegion.getPerforationData();
 

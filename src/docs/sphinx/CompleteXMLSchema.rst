@@ -15,6 +15,13 @@ Element: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM.rst
 
 
+.. _XML_Aquifer:
+
+Element: Aquifer
+================
+.. include:: ../../coreComponents/schema/docs/Aquifer.rst
+
+
 .. _XML_Benchmarks:
 
 Element: Benchmarks
@@ -239,6 +246,13 @@ Element: DeadOilFluid
 .. include:: ../../coreComponents/schema/docs/DeadOilFluid.rst
 
 
+.. _XML_DelftEgg:
+
+Element: DelftEgg
+=================
+.. include:: ../../coreComponents/schema/docs/DelftEgg.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -258,6 +272,13 @@ Element: DruckerPrager
 Element: ElasticIsotropic
 =========================
 .. include:: ../../coreComponents/schema/docs/ElasticIsotropic.rst
+
+
+.. _XML_ElasticIsotropicPressureDependent:
+
+Element: ElasticIsotropicPressureDependent
+==========================================
+.. include:: ../../coreComponents/schema/docs/ElasticIsotropicPressureDependent.rst
 
 
 .. _XML_ElasticOrthotropic:
@@ -449,6 +470,13 @@ Element: Mesh
 .. include:: ../../coreComponents/schema/docs/Mesh.rst
 
 
+.. _XML_ModifiedCamClay:
+
+Element: ModifiedCamClay
+========================
+.. include:: ../../coreComponents/schema/docs/ModifiedCamClay.rst
+
+
 .. _XML_MultiphasePoromechanics:
 
 Element: MultiphasePoromechanics
@@ -610,11 +638,32 @@ Element: Problem
 .. include:: ../../coreComponents/schema/docs/Problem.rst
 
 
+.. _XML_ProppantPermeability:
+
+Element: ProppantPermeability
+=============================
+.. include:: ../../coreComponents/schema/docs/ProppantPermeability.rst
+
+
+.. _XML_ProppantPorosity:
+
+Element: ProppantPorosity
+=========================
+.. include:: ../../coreComponents/schema/docs/ProppantPorosity.rst
+
+
 .. _XML_ProppantSlurryFluid:
 
 Element: ProppantSlurryFluid
 ============================
 .. include:: ../../coreComponents/schema/docs/ProppantSlurryFluid.rst
+
+
+.. _XML_ProppantSolidProppantPermeability:
+
+Element: ProppantSolidProppantPermeability
+==========================================
+.. include:: ../../coreComponents/schema/docs/ProppantSolidProppantPermeability.rst
 
 
 .. _XML_ProppantTransport:
@@ -771,6 +820,13 @@ Element: SymbolicFunction
 .. include:: ../../coreComponents/schema/docs/SymbolicFunction.rst
 
 
+.. _XML_TableCapillaryPressure:
+
+Element: TableCapillaryPressure
+===============================
+.. include:: ../../coreComponents/schema/docs/TableCapillaryPressure.rst
+
+
 .. _XML_TableFunction:
 
 Element: TableFunction
@@ -885,6 +941,13 @@ Datastructure Definitions
 Datastructure: AcousticSEM
 ==========================
 .. include:: ../../coreComponents/schema/docs/AcousticSEM_other.rst
+
+
+.. _DATASTRUCTURE_Aquifer:
+
+Datastructure: Aquifer
+======================
+.. include:: ../../coreComponents/schema/docs/Aquifer_other.rst
 
 
 .. _DATASTRUCTURE_Benchmarks:
@@ -1118,6 +1181,13 @@ Datastructure: DeadOilFluid
 .. include:: ../../coreComponents/schema/docs/DeadOilFluid_other.rst
 
 
+.. _DATASTRUCTURE_DelftEgg:
+
+Datastructure: DelftEgg
+=======================
+.. include:: ../../coreComponents/schema/docs/DelftEgg_other.rst
+
+
 .. _DATASTRUCTURE_Dirichlet:
 
 Datastructure: Dirichlet
@@ -1137,6 +1207,13 @@ Datastructure: DruckerPrager
 Datastructure: ElasticIsotropic
 ===============================
 .. include:: ../../coreComponents/schema/docs/ElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticIsotropicPressureDependent:
+
+Datastructure: ElasticIsotropicPressureDependent
+================================================
+.. include:: ../../coreComponents/schema/docs/ElasticIsotropicPressureDependent_other.rst
 
 
 .. _DATASTRUCTURE_ElasticOrthotropic:
@@ -1349,6 +1426,13 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/schema/docs/MeshBodies_other.rst
 
 
+.. _DATASTRUCTURE_ModifiedCamClay:
+
+Datastructure: ModifiedCamClay
+==============================
+.. include:: ../../coreComponents/schema/docs/ModifiedCamClay_other.rst
+
+
 .. _DATASTRUCTURE_MultiphasePoromechanics:
 
 Datastructure: MultiphasePoromechanics
@@ -1510,11 +1594,32 @@ Datastructure: Problem
 .. include:: ../../coreComponents/schema/docs/Problem_other.rst
 
 
+.. _DATASTRUCTURE_ProppantPermeability:
+
+Datastructure: ProppantPermeability
+===================================
+.. include:: ../../coreComponents/schema/docs/ProppantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ProppantPorosity:
+
+Datastructure: ProppantPorosity
+===============================
+.. include:: ../../coreComponents/schema/docs/ProppantPorosity_other.rst
+
+
 .. _DATASTRUCTURE_ProppantSlurryFluid:
 
 Datastructure: ProppantSlurryFluid
 ==================================
 .. include:: ../../coreComponents/schema/docs/ProppantSlurryFluid_other.rst
+
+
+.. _DATASTRUCTURE_ProppantSolidProppantPermeability:
+
+Datastructure: ProppantSolidProppantPermeability
+================================================
+.. include:: ../../coreComponents/schema/docs/ProppantSolidProppantPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ProppantTransport:
@@ -1669,6 +1774,13 @@ Datastructure: SurfaceGenerator
 Datastructure: SymbolicFunction
 ===============================
 .. include:: ../../coreComponents/schema/docs/SymbolicFunction_other.rst
+
+
+.. _DATASTRUCTURE_TableCapillaryPressure:
+
+Datastructure: TableCapillaryPressure
+=====================================
+.. include:: ../../coreComponents/schema/docs/TableCapillaryPressure_other.rst
 
 
 .. _DATASTRUCTURE_TableFunction:

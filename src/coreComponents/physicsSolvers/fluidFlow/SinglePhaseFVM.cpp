@@ -29,6 +29,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsFluxKernels.hpp"
@@ -169,13 +170,13 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
 
-template< typename BASE >
-void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
-                                                real64 const dt,
-                                                DomainPartition const & domain,
-                                                DofManager const & dofManager,
-                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                arrayView1d< real64 > const & localRhs )
+template<>
+void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+                                                           real64 const dt,
+                                                           DomainPartition const & domain,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -185,7 +186,7 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM 
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
+  string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::pressureString() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
@@ -208,11 +209,62 @@ void SinglePhaseFVM< BASE >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM 
                         m_dMobility_dPres.toNestedViewConst(),
                         m_permeability.toNestedViewConst(),
                         m_dPerm_dPressure.toNestedViewConst(),
-                        m_transTMultiplier.toNestedViewConst(),
-                        this->gravityVector(),
                         localMatrix,
                         localRhs );
 
+  } );
+}
+
+
+template<>
+void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
+                                                                   real64 const dt,
+                                                                   DomainPartition const & domain,
+                                                                   DofManager const & dofManager,
+                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                   arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & dofKey = dofManager.getKey( SinglePhaseProppantBase::viewKeyStruct::pressureString() );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
+  elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+  elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
+
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
+    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
+                                                                           targetRegionNames(),
+                                                                           m_permeabilityModelNames );
+
+  fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
+  {
+    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+
+    FaceElementFluxKernel::launch( stencilWrapper,
+                                   dt,
+                                   dofManager.rankOffset(),
+                                   elemDofNumber.toNestedViewConst(),
+                                   m_elemGhostRank.toNestedViewConst(),
+                                   m_pressure.toNestedViewConst(),
+                                   m_deltaPressure.toNestedViewConst(),
+                                   m_gravCoef.toNestedViewConst(),
+                                   m_density.toNestedViewConst(),
+                                   m_dDens_dPres.toNestedViewConst(),
+                                   m_mobility.toNestedViewConst(),
+                                   m_dMobility_dPres.toNestedViewConst(),
+                                   m_permeability.toNestedViewConst(),
+                                   m_dPerm_dPressure.toNestedViewConst(),
+                                   dPerm_dAper.toNestedViewConst(),
+                                   SinglePhaseProppantBase::m_permeabilityMultiplier.toNestedViewConst(),
+                                   this->gravityVector(),
+                                   localMatrix,
+                                   localRhs );
   } );
 }
 
@@ -269,8 +321,6 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
                                        m_permeability.toNestedViewConst(),
                                        m_dPerm_dPressure.toNestedViewConst(),
                                        dPerm_dAper.toNestedViewConst(),
-                                       m_transTMultiplier.toNestedViewConst(),
-                                       this->gravityVector(),
                                        localMatrix,
                                        localRhs );
   } );
@@ -322,8 +372,6 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
                                    m_permeability.toNestedViewConst(),
                                    m_dPerm_dPressure.toNestedViewConst(),
                                    dPerm_dAper.toNestedViewConst(),
-                                   m_transTMultiplier.toNestedViewConst(),
-                                   this->gravityVector(),
                                    localMatrix,
                                    localRhs,
                                    dR_dAper );
@@ -442,6 +490,66 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                      localMatrix,
                                      localRhs );
     } );
+  } );
+}
+
+template< typename BASE >
+void SinglePhaseFVM< BASE >::applyAquiferBC( real64 const time,
+                                             real64 const dt,
+                                             DomainPartition & domain,
+                                             DofManager const & dofManager,
+                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                             arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & elemDofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
+    mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+  elemDofNumber.setName( this->getName() + "/accessors/" + elemDofKey );
+
+  fsManager.apply< AquiferBoundaryCondition >( time + dt,
+                                               domain,
+                                               "faceManager",
+                                               AquiferBoundaryCondition::catalogName(),
+                                               [&] ( AquiferBoundaryCondition const & bc,
+                                                     string const & setName,
+                                                     SortedArrayView< localIndex const > const &,
+                                                     Group &,
+                                                     string const & )
+  {
+    BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+    if( stencil.size() == 0 )
+    {
+      return;
+    }
+
+    AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
+    real64 const & aquiferDens = bc.getWaterPhaseDensity();
+
+    SinglePhaseFVMKernels::AquiferBCKernel::launch( stencil,
+                                                    dofManager.rankOffset(),
+                                                    elemDofNumber.toNestedViewConst(),
+                                                    m_elemGhostRank.toNestedViewConst(),
+                                                    aquiferBCWrapper,
+                                                    aquiferDens,
+                                                    m_pressure.toNestedViewConst(),
+                                                    m_deltaPressure.toNestedViewConst(),
+                                                    m_gravCoef.toNestedViewConst(),
+                                                    m_density.toNestedViewConst(),
+                                                    m_dDens_dPres.toNestedViewConst(),
+                                                    time,
+                                                    dt,
+                                                    localMatrix.toViewConstSizes(),
+                                                    localRhs.toView() );
+
   } );
 }
 

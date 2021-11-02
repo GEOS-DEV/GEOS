@@ -157,7 +157,8 @@ PAMELA::ELEMENTS::TYPE toPamelaElementType( ElementType const type )
   }
 }
 
-std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type )
+std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type,
+                                       bool const isZReverse )
 {
   switch( type )
   {
@@ -167,7 +168,19 @@ std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type )
     case PAMELA::ELEMENTS::TYPE::VTK_TETRA: return { 0, 1, 2, 3 };
     case PAMELA::ELEMENTS::TYPE::VTK_PYRAMID: return { 0, 1, 2, 3, 4 };
     case PAMELA::ELEMENTS::TYPE::VTK_WEDGE: return { 0, 3, 1, 4, 2, 5 };
-    case PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON: return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON:
+    {
+      // if the reverseZ option is on, we have to switch the node ordering
+      // (top nodes become bottom nodes) to make sure that the hex volume is positive
+      if( isZReverse )
+      {
+        return { 4, 5, 7, 6, 0, 1, 3, 2 };
+      }
+      else
+      {
+        return { 0, 1, 3, 2, 4, 5, 7, 6 };
+      }
+    }
     default:
     {
       GEOSX_THROW( "Unsupported PAMELA element type", std::runtime_error );
@@ -216,6 +229,7 @@ real64 importNodes( PAMELA::Mesh & srcMesh, // PAMELA is not const-correct,
 
 void importCellBlock( PAMELA::SubPart< PAMELA::Polyhedron * > * const cellBlockPtr,
                       string const & cellBlockName,
+                      bool const isZReverse,
                       CellBlockManager & cellBlockManager )
 {
   GEOSX_ASSERT( cellBlockPtr != nullptr );
@@ -226,7 +240,8 @@ void importCellBlock( PAMELA::SubPart< PAMELA::Polyhedron * > * const cellBlockP
   localIndex const nbCells = LvArray::integerConversion< localIndex >( cellBlockPtr->SubCollection.size_owned() );
   cellBlock.resize( nbCells );
 
-  std::vector< int > const nodeOrder = getPamelaNodeOrder( cellBlockPtr->ElementType );
+  std::vector< int > const nodeOrder = getPamelaNodeOrder( cellBlockPtr->ElementType,
+                                                           isZReverse );
   arrayView2d< localIndex, cells::NODE_MAP_USD > const cellToVertex = cellBlock.nodeList().toView();
   arrayView1d< globalIndex > const & localToGlobal = cellBlock.localToGlobalMap();
 
@@ -324,7 +339,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       if( elementFamily == PAMELA::ELEMENTS::FAMILY::POLYHEDRON )
       {
         string cellBlockName = makeRegionLabel( regionName, getElementLabel( subPart.second->ElementType ) );
-        importCellBlock( subPart.second, cellBlockName, cellBlockManager );
+        importCellBlock( subPart.second, cellBlockName, m_isZReverse, cellBlockManager );
         m_cellBlockRegions.emplace( std::move( cellBlockName ), polyhedronPart.first );
       }
     }

@@ -20,7 +20,7 @@ A typical XML file to run the triaxial driver will have the following key elemen
 
 .. code-block:: console
 
-   src/coreComponents/unitTests/constitutiveTests/testTriaxial_sphinxExample.xml
+   src/coreComponents/unitTests/constitutiveTests/testTriaxial_druckerPragerExtended.xml
 
 The first thing to note is that the XML structure is identical to a standard GEOSX input deck.  In fact, once the constitutive block is calibrated, one could start adding solver and discretization blocks to the same file to create a proper field simulation.  This makes it easy to go back and forth between calibration and simulation.
 
@@ -43,22 +43,26 @@ The key parameters for the TriaxialDriver are:
 Test Modes
 ----------
 The most complicated part of the driver is understanding how the stress and strain functions are applied in different testing modes.  The driver mimics laboratory core tests, with loading controlled in the
-axial and radial directions. These conditions may be either strain-controlled or stress-controlled.  The following table describes the available test modes in detail:
+axial and radial directions. These conditions may be either strain-controlled or stress-controlled, with the user providing time-dependent functions to describe the loading.  The following table describes the available test modes in detail:
 
-+---------------+-------------------------+-------------------------+---------------------------+
-| **mode**      | **axial loading**       | **radial loading**      | **initial stress**        |
-+---------------+-------------------------+-------------------------+---------------------------+
-| ``triaxial``  | axial strain controlled | radial stress controlled| isotropic stress using    |
-|               | with ``strainFunction`` | with ``stressFunction`` | ``stressFunction(t=tmin)``|
-+---------------+-------------------------+-------------------------+---------------------------+
-| ``volumetric``| axial strain controlled | radial strain =         | isotropic stress using    |
-|               | with ``strainFunction`` | axial strain            | ``stressFunction(t=tmin)``|
-+---------------+-------------------------+-------------------------+---------------------------+
-| ``oedometer`` | axial strain controlled | zero radial strain      | isotropic stress using    |
-|               | with ``strainFunction`` |                         | ``stressFunction(t=tmin)``|
-+---------------+-------------------------+-------------------------+---------------------------+
++--------------------+-------------------------+--------------------------+---------------------------+
+| **mode**           | **axial loading**       | **radial loading**       | **initial stress**        |
++--------------------+-------------------------+--------------------------+---------------------------+
+| ``strainControl``  | axial strain controlled | radial strain controlled | isotropic stress using    |
+|                    | with ``axialControl``   | with ``radialControl``   | ``initialStress``         |
++--------------------+-------------------------+--------------------------+---------------------------+
+| ``stressControl``  | axial stress controlled | radial stress controlled | isotropic stress using    |
+|                    | with ``axialControl``   | with ``radialControl``   | ``initialStress``         |
++--------------------+-------------------------+--------------------------+---------------------------+
+| ``mixedControl``   | axial strain controlled | radial stress controlled | isotropic stress using    |
+|                    | with ``axialControl``   | with ``radialControl``   | ``initialStress``         |
++--------------------+-------------------------+--------------------------+---------------------------+
 
-To set the initial stress state, the ``stressFunction`` is evaluated at ``t=tmin`` (usually ``t=0``, though conceivably a user may put in a time-function with a non-zero starting point). This scalar value is used to set the material to an isotropic initial stress state.  In the volumetric and oedometer tests, the remainder of the ``stressFunction`` time history is ignored, as they are strain-controlled tests.  By setting the initial stress this way, it makes it easy to start the test from a well-defined confining pressure.
+Note that a classical triaxial test can be described using either the ``stressControl`` or ``mixedControl`` mode.  We recommend using the ``mixedControl`` mode when possible, because this almost always leads to well-posed loading conditions.  In a pure stress controlled test, it is possible for the user to request that the material sustain a load beyond its intrinsic strength envelope, in which case there is no feasible solution and the driver will fail to converge.  Imagine, for example, a perfectly plastic material with a yield strength of 10 MPa, but the user attempts to load it to 11 MPa.  
+
+A volumetric test can be created by setting the axial and radial control functions to the same time history function.  Similarly, an oedometer test can be created by setting the radial strain to zero. 
+
+The user should be careful to ensure that the initial stress set via the ``initialStress`` value is consistent any applied stresses set through axial or radial loading functions.  Otherwise, the material may experience sudden and unexpected deformation at the first timestep because it is not in static equilibrium.
 
 Output Format
 -------------

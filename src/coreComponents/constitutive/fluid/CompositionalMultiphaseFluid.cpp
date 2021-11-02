@@ -19,6 +19,7 @@
 #include "CompositionalMultiphaseFluid.hpp"
 
 #include "codingUtilities/Utilities.hpp"
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 
 #include "pvt/pvt.hpp"
 
@@ -32,23 +33,6 @@ using namespace dataRepository;
 
 namespace constitutive
 {
-
-namespace
-{
-
-pvt::EOS_TYPE getCompositionalEosType( string const & name )
-{
-  static std::map< string, pvt::EOS_TYPE > const eosTypes =
-  {
-    { "PR", pvt::EOS_TYPE::PENG_ROBINSON },
-    { "SRK", pvt::EOS_TYPE::REDLICH_KWONG_SOAVE }
-  };
-  auto const it = eosTypes.find( name );
-  GEOSX_ERROR_IF( it == eosTypes.end(), "Compositional EOS type not supported by PVTPackage: " << name );
-  return it->second;
-}
-
-} // namespace
 
 CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name, Group * const parent )
   : MultiFluidBase( name, parent )
@@ -82,61 +66,59 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name,
     setDescription( "Table of binary interaction coefficients" );
 }
 
-namespace
+integer CompositionalMultiphaseFluid::getWaterPhaseIndex() const
 {
-
-template< typename ARRAY >
-void checkInputSize( ARRAY const & array, integer const expected, string const & attr, string const & name )
-{
-  GEOSX_THROW_IF_NE_MSG( array.size(), expected,
-                         name << ": invalid number of entries in " << attr << " attribute",
-                         InputError );
-
-}
-
-pvt::PHASE_TYPE getPVTPackagePhaseType( string const & name, string const & groupName )
-{
-  static map< string, pvt::PHASE_TYPE > const phaseTypes
-  {
-    { "gas", pvt::PHASE_TYPE::GAS },
-    { "oil", pvt::PHASE_TYPE::OIL },
-    { "water", pvt::PHASE_TYPE::LIQUID_WATER_RICH }
-  };
-  return findOption( phaseTypes, name, MultiFluidBase::viewKeyStruct::phaseNamesString(), groupName );
-}
-
+  string const expectedWaterPhaseNames[] = { "water" };
+  return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
 void CompositionalMultiphaseFluid::postProcessInput()
 {
   MultiFluidBase::postProcessInput();
 
+  auto const getPVTPackagePhaseType = [&]( string const & phaseName )
+  {
+    static map< string, pvt::PHASE_TYPE > const phaseTypes
+    {
+      { "gas", pvt::PHASE_TYPE::GAS },
+      { "oil", pvt::PHASE_TYPE::OIL },
+      { "water", pvt::PHASE_TYPE::LIQUID_WATER_RICH }
+    };
+    return findOption( phaseTypes, phaseName, viewKeyStruct::phaseNamesString(), getFullName() );
+  };
+
   m_phaseTypes.resize( numFluidPhases() );
-  std::transform( m_phaseNames.begin(), m_phaseNames.end(), m_phaseTypes.begin(),
-                  [&]( string const & name ){ return getPVTPackagePhaseType( name, getFullName() ); } );
+  std::transform( m_phaseNames.begin(), m_phaseNames.end(), m_phaseTypes.begin(), getPVTPackagePhaseType );
 
   integer const NC = numFluidComponents();
   integer const NP = numFluidPhases();
 
-  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString(), getFullName() );
-  checkInputSize( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString(), getFullName() );
-  checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString(), getFullName() );
-  checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString(), getFullName() );
-  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString(), getFullName() );
+  auto const checkInputSize = [&]( auto const & array, integer const expected, string const & attribute )
+  {
+    GEOSX_THROW_IF_NE_MSG( array.size(), expected,
+                           GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                           InputError );
+
+  };
+  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
+  checkInputSize( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
+  checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
+  checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
+  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
 
   if( m_componentVolumeShift.empty() )
   {
     m_componentVolumeShift.resize( NC );
     m_componentVolumeShift.zero();
   }
-  checkInputSize( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString(), getFullName() );
+  checkInputSize( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString() );
 
   if( m_componentBinaryCoeff.empty() )
   {
     m_componentBinaryCoeff.resize( NC, NC );
     m_componentBinaryCoeff.zero();
   }
-  checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString(), getFullName() );
+  checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
 }
 
 void CompositionalMultiphaseFluid::initializePostSubGroups()
@@ -147,6 +129,16 @@ void CompositionalMultiphaseFluid::initializePostSubGroups()
 
 void CompositionalMultiphaseFluid::createFluid()
 {
+  auto const getCompositionalEosType = [&]( string const & name )
+  {
+    static map< string, pvt::EOS_TYPE > const eosTypes =
+    {
+      { "PR", pvt::EOS_TYPE::PENG_ROBINSON },
+      { "SRK", pvt::EOS_TYPE::REDLICH_KWONG_SOAVE }
+    };
+    return findOption( eosTypes, name, viewKeyStruct::phaseNamesString(), getFullName() );
+  };
+
   std::vector< pvt::EOS_TYPE > eos( numFluidPhases() );
   std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), eos.begin(), getCompositionalEosType );
 

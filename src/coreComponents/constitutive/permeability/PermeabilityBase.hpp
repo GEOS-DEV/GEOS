@@ -73,6 +73,17 @@ public:
     GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
 
+  GEOSX_HOST_DEVICE
+  virtual void updateFromApertureAndProppantVolumeFraction ( localIndex const k,
+                                                             localIndex const q,
+                                                             real64 const & oldHydraulicAperture,
+                                                             real64 const & newHydraulicAperture,
+                                                             real64 const & proppantPackVolumeFraction ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, proppantPackVolumeFraction );
+  }
+
+
 protected:
 
   PermeabilityBaseUpdate( arrayView3d< real64 > const & permeability,
