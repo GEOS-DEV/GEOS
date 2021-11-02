@@ -116,13 +116,13 @@ void LagrangianContactFlowSolver::setupSystem( DomainPartition & domain,
     m_precond->clear();
   }
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  m_flowSolver->resetViews( mesh );
-
-  dofManager.setMesh( mesh );
-
-  setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
+//  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+//  m_flowSolver->resetViews( mesh );
+//
+//  dofManager.setMesh( mesh );
+//
+//  setupDofs( domain, dofManager );
+//  dofManager.reorderByRank();
 
   localIndex const numLocalRows = dofManager.numLocalDofs();
 
@@ -1866,7 +1866,7 @@ void LagrangianContactFlowSolver::setUpDflux_dApertureMatrix( DomainPartition & 
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretizationName() );
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
