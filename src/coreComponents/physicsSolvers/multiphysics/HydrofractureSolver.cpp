@@ -248,12 +248,11 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
   // arrayView1d<real64 const> const faceArea = faceManager.faceArea();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-
-  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
-
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
+
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
     arrayView1d< real64 > const effectiveAperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString() );
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();

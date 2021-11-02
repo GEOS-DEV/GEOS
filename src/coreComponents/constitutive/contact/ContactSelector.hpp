@@ -32,14 +32,18 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( ContactBase const & contact,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< CoulombContact >::execute( contact, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< CoulombContact,
+                               ContactBase >::execute( contact, std::forward< LAMBDA >( lambda ) );
+
+
 }
 
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( ContactBase & contact,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< CoulombContact >::execute( contact, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< CoulombContact,
+                               ContactBase >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 
 } /* namespace constitutive */

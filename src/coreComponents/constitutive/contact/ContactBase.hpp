@@ -220,7 +220,6 @@ protected:
 
   /// Pointer to the function that limits the model aperture to a physically admissible value.
   TableFunction const * m_apertureTable;
-
 };
 
 GEOSX_HOST_DEVICE

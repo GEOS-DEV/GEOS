@@ -78,6 +78,14 @@ void ContactBase::postProcessInput()
 
 void ContactBase::initializePreSubGroups()
 {
+}
+
+
+void ContactBase::allocateConstitutiveData( Group & parent,
+                                            localIndex const numConstitutivePointsPerParentIndex )
+{
+  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
   FunctionManager & functionManager = FunctionManager::getInstance();
   TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
   validateApertureTable( apertureTable );
@@ -97,13 +105,6 @@ void ContactBase::initializePreSubGroups()
   apertureTable.reInitializeFunction();
 
   m_apertureTable = &apertureTable;
-}
-
-
-void ContactBase::allocateConstitutiveData( Group & parent,
-                                            localIndex const numConstitutivePointsPerParentIndex )
-{
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 

@@ -59,8 +59,6 @@
   </ElementRegions>
   <!-- SPHINX_SNEDDON_REGIONS_END -->
   
-
-
   <Constitutive>
     <ElasticIsotropic
       name="rock"
@@ -72,7 +70,6 @@
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>
-
   </Constitutive>
 
   <!-- SPHINX_SNEDDON_BC -->
@@ -118,7 +115,6 @@
       scale="-1.00e5"/>
   </FieldSpecifications>
   <!-- SPHINX_SNEDDON_BC_END -->
-
 
   <Functions>
     <TableFunction

@@ -623,11 +623,11 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
 
   elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
   {
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
     arrayView2d< real64 const > const & jump  =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
 
