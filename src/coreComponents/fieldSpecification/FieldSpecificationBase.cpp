@@ -80,6 +80,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "time at which bc will stop being applied" );
 
+  enableLogLevelInput();
 }
 
 

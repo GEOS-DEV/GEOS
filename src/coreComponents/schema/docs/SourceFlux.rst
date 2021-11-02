@@ -11,6 +11,7 @@ endTime                real64       1e+99    time at which bc will stop being ap
 fieldName              string                Name of field that boundary condition is applied to.           
 functionName           string                Name of function that specifies variation of the BC            
 initialCondition       integer      0        BC is applied as an initial condition.                         
+logLevel               integer      0        Log level                                                      
 name                   string       required A name is required for any non-unique nodes                    
 objectPath             string                Path to the target field                                       
 scale                  real64       0        Scale factor for value of BC.                                  

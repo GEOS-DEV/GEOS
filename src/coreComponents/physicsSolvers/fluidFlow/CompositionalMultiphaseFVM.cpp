@@ -604,10 +604,18 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                [&] ( AquiferBoundaryCondition const & bc,
                                                      string const & setName,
                                                      SortedArrayView< localIndex const > const &,
-                                                     Group &,
+                                                     Group & subRegion,
                                                      string const & )
   {
     BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+    if( bc.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      localIndex const numTargetFaces = MpiWrapper::sum( stencil.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT(
+                          "CompositionalMultiphaseFVM {}: at time {}s, the <{}> boundary condition named \"{}\" is applied to the face set named \"{}\" in \"{}\". \nThe total number of target faces (including ghost faces) is {}. \nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.",
+                          getName(), time+dt, AquiferBoundaryCondition::catalogName(), bc.getName(), setName, subRegion.getName(), numTargetFaces ) );
+    }
+
     if( stencil.size() == 0 )
     {
       return;

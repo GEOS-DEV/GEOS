@@ -332,6 +332,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="functionName" type="string" default="" />
 		<!--initialCondition => BC is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--pressureInfluenceFunctionName => Name of the table describing the pressure influence function
 . If not provided, we use a default pressure influence function-->
 		<xsd:attribute name="pressureInfluenceFunctionName" type="string" default="" />
@@ -359,6 +361,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="functionName" type="string" default="" />
 		<!--initialCondition => BC is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
 		<!--scale => Scale factor for value of BC.-->
@@ -385,6 +389,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="functionName" type="string" default="" />
 		<!--initialCondition => BC is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
 		<!--scale => Scale factor for value of BC.-->
@@ -411,6 +417,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="functionName" type="string" default="" />
 		<!--initialCondition => BC is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
 		<!--scale => Scale factor for value of BC.-->
@@ -435,6 +443,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--inputStress => Input stress for tractionType = stress-->
 		<xsd:attribute name="inputStress" type="R2SymTensor" default="{0,0,0,0,0,0}" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
 		<!--scale => Scale factor for value of BC.-->

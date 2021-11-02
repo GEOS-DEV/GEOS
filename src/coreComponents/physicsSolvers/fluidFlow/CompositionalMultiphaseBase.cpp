@@ -27,6 +27,7 @@
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
@@ -890,11 +891,19 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                    "ElementRegions",
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
                    [&]( FieldSpecificationBase const & fs,
-                        string const &,
+                        string const & setName,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
+    if( fs.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      localIndex const numTargetElems = MpiWrapper::sum( targetSet.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT(
+                          "CompositionalMultiphaseBase {}: at time {}s, the <{}> boundary condition named \"{}\" is applied to the element set named \"{}\" in subRegion \"{}\". \nThe total number of target elements (including ghost elements) is {}. \nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.",
+                          getName(), time+dt, SourceFluxBoundaryCondition::catalogName(), fs.getName(), setName, subRegion.getName(), numTargetElems ) );
+    }
+
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank =
       subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
@@ -1086,11 +1095,19 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
                    "ElementRegions",
                    viewKeyStruct::pressureString(),
                    [&]( FieldSpecificationBase const & fs,
-                        string const &,
+                        string const & setName,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
+    if( fs.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      localIndex const numTargetElems = MpiWrapper::sum( targetSet.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT(
+                          "CompositionalMultiphaseBase {}: at time {}s, the <{}> boundary condition named \"{}\" is applied to the element set named \"{}\" in subRegion \"{}\". \nThe total number of target elements (including ghost elements) is {}. \nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.",
+                          getName(), time+dt, FieldSpecificationBase::catalogName(), fs.getName(), setName, subRegion.getName(), numTargetElems ) );
+    }
+
     fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                            time + dt,
                                                                            subRegion,

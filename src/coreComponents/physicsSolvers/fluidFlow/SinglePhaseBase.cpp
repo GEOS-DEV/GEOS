@@ -26,6 +26,7 @@
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -558,11 +559,20 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                    "ElementRegions",
                    viewKeyStruct::pressureString(),
                    [&]( FieldSpecificationBase const & fs,
-                        string const &,
+                        string const & setName,
                         SortedArrayView< localIndex const > const & lset,
                         Group & subRegion,
                         string const & )
   {
+    if( fs.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      localIndex const numTargetElems = MpiWrapper::sum( lset.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT(
+                          "SinglePhaseBase {}: at time {}s, the <{}> boundary condition named \"{}\" is applied to the element set named \"{}\" in subRegion \"{}\". \nThe total number of target elements (including ghost elements) is {}. \nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.",
+                          getName(), time_n+dt, FieldSpecificationBase::catalogName(), fs.getName(), setName, subRegion.getName(), numTargetElems ) );
+    }
+
+
     arrayView1d< globalIndex const > const dofNumber =
       subRegion.getReference< array1d< globalIndex > >( dofKey );
 
@@ -605,11 +615,19 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                    "ElementRegions",
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
                    [&]( FieldSpecificationBase const & fs,
-                        string const &,
+                        string const & setName,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
+    if( fs.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      localIndex const numTargetElems = MpiWrapper::sum( targetSet.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT(
+                          "SinglePhaseBase {}: at time {}s, the <{}> boundary condition named \"{}\" is applied to the element set named \"{}\" in subRegion \"{}\". \nThe total number of target elements (including ghost elements) is {}. \nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.",
+                          getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(), fs.getName(), setName, subRegion.getName(), numTargetElems ) );
+    }
+
     arrayView1d< globalIndex const > const
     dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
