@@ -189,36 +189,70 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
 
     if( m_subComm != MPI_COMM_NULL )
     {
-      HYPRE_Vector localVector = nullptr;
-      if( rank == m_targetRank )
+      int const subRank = MpiWrapper::commRank( m_subComm );
+      int const nSubProc = MpiWrapper::commSize(  );
+      array1d< globalIndex > globalVecStarts;
+      array1d< real64 > localVector( vec.localSize( ) );
+
+      globalVecStarts.move( LvArray::MemorySpace::host, false );
+      localVector.move( LvArray::MemorySpace::host, false );
+
+      GEOSX_LOG_RANK_VAR( rank );
+      GEOSX_LOG_RANK_VAR( subRank );
+      GEOSX_LOG_RANK_VAR( nSubProc );
+      GEOSX_LOG_RANK_VAR( values );
+
+      if ( subRank == 0 )
       {
-        // HACK: create a hypre vector that points to local data; we have to use const_cast,
-        //       but this is ok because we don't modify the values, only scatter the vector.
-        localVector = HYPRE_VectorCreate( LvArray::integerConversion< HYPRE_Int >( vec.globalSize() ) );
-        hypre_VectorOwnsData( ( hypre_Vector * ) localVector ) = false;
-        hypre_VectorData( ( hypre_Vector * ) localVector ) = const_cast< real64 * >( values.data() );
-        hypre_SeqVectorInitialize_v2( ( hypre_Vector * ) localVector, HYPRE_MEMORY_HOST );
+        globalVecStarts.resize( nSubProc + 1 );
+        globalVecStarts[nSubProc] = vec.globalSize();
       }
 
-      // output vector partitioning array
-      HYPRE_BigInt * const partitioning = hypre_ParVectorPartitioning( vec.unwrapped() );
+      globalIndex ilower = vec.ilower();
+      MpiWrapper::gather( &ilower,
+                          1,
+                          subRank == 0 ? globalVecStarts.data() : nullptr,
+                          1,
+                          0,
+                          m_subComm );
 
-      // scatter the data
-      HYPRE_ParVector parVector;
-      GEOSX_LAI_CHECK_ERROR( HYPRE_VectorToParVector( m_subComm,
-                                                      localVector,
-                                                      partitioning,
-                                                      &parVector ) );
-      HYPRE_Real const * const parVectorData = hypre_VectorData( hypre_ParVectorLocalVector( parVector ) );
+      MPI_Request request;
+      if ( subRank == 0 )
+      {
+        for( int p = 1; p < nSubProc; ++p )
+        {
+          MpiWrapper::iSend( values.data() + globalVecStarts[p],
+                             globalVecStarts[p+1] - globalVecStarts[p],
+                             p,
+                             0,
+                             m_subComm,
+                             &request );
+
+
+        }
+        std::copy( values.data(), values.data() + vec.localSize(), localVector.data() );
+        GEOSX_LOG_RANK_VAR( localVector );
+      }
+      else
+      {
+        for( int p = 1; p < nSubProc; ++p )
+        {
+          MpiWrapper::recv( localVector,
+                             0,
+                             0,
+                             m_subComm,
+                             MPI_STATUS_IGNORE );
+          GEOSX_LOG_RANK_VAR( localVector );
+        }
+      }
 
 #if defined(GEOSX_USE_HYPRE_CUDA)
-      cudaMemcpy( vec.extractLocalVector(), parVectorData, vec.localSize() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice );
+    cudaMemcpy( vec.extractLocalVector(), localVector.data(), localVector.size() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice );
 #else
-      std::copy( parVectorData, parVectorData + vec.localSize(), vec.extractLocalVector() );
+    std::copy( localVector.data(), localVector.data() + localVector.size(), vec.extractLocalVector() );
 #endif
 
-      GEOSX_LAI_CHECK_ERROR( HYPRE_ParVectorDestroy( parVector ) );
-      GEOSX_LAI_CHECK_ERROR( HYPRE_VectorDestroy( localVector ) );
+
     }
   }
   else
@@ -226,7 +260,6 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
 #if defined(GEOSX_USE_HYPRE_CUDA)
     cudaMemcpy( vec.extractLocalVector(), values.data(), values.size() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice );
 #else
-    values.move( LvArray::MemorySpace::host, false );
     std::copy( values.data(), values.data() + values.size(), vec.extractLocalVector() );
 #endif
   }
