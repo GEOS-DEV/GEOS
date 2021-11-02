@@ -1858,6 +1858,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
+			<xsd:element name="CO2BrineEzrokhiFluid" type="CO2BrineEzrokhiFluidType" />
+			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
@@ -1878,13 +1880,11 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
-			<xsd:element name="CO2BrineEzrokhiFluid" type="CO2BrineEzrokhiFluidType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
-			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
 			<xsd:element name="PorousElasticOrthotropic" type="PorousElasticOrthotropicType" />
@@ -1983,6 +1983,34 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseRelPermExponent" type="real64_array" default="{1}" />
 		<!--phaseRelPermMaxValue => Maximum relative permeability value for each phase-->
 		<xsd:attribute name="phaseRelPermMaxValue" type="real64_array" default="{0}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CO2BrineEzrokhiFluidType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
+		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
+		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CO2BrinePhillipsFluidType">
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
+		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
+		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2363,20 +2391,6 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="CO2BrineEzrokhiFluidType">
-		<!--componentMolarWeight => Component molar weights-->
-		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
-		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
-		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
-		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
-		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
-		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
 	<xsd:complexType name="ModifiedCamClayType">
 		<!--defaultCslSlope => Slope of the critical state line-->
 		<xsd:attribute name="defaultCslSlope" type="real64" default="1" />
@@ -2440,20 +2454,6 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="PermeabilityBaseType">
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="CO2BrinePhillipsFluidType">
-		<!--componentMolarWeight => Component molar weights-->
-		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
-		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
-		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
-		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
-		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
-		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

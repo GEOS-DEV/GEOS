@@ -8,6 +8,8 @@ BlackOilFluid                               node :ref:`DATASTRUCTURE_BlackOilFlu
 BrooksCoreyBakerRelativePermeability        node :ref:`DATASTRUCTURE_BrooksCoreyBakerRelativePermeability`        
 BrooksCoreyCapillaryPressure                node :ref:`DATASTRUCTURE_BrooksCoreyCapillaryPressure`                
 BrooksCoreyRelativePermeability             node :ref:`DATASTRUCTURE_BrooksCoreyRelativePermeability`             
+CO2BrineEzrokhiFluid                        node :ref:`DATASTRUCTURE_CO2BrineEzrokhiFluid`                        
+CO2BrinePhillipsFluid                       node :ref:`DATASTRUCTURE_CO2BrinePhillipsFluid`                       
 CarmanKozenyPermeability                    node :ref:`DATASTRUCTURE_CarmanKozenyPermeability`                    
 CompositionalMultiphaseFluid                node :ref:`DATASTRUCTURE_CompositionalMultiphaseFluid`                
 CompressibleSinglePhaseFluid                node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`                
@@ -28,13 +30,11 @@ ElasticIsotropicPressureDependent           node :ref:`DATASTRUCTURE_ElasticIsot
 ElasticOrthotropic                          node :ref:`DATASTRUCTURE_ElasticOrthotropic`                          
 ElasticTransverseIsotropic                  node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`                  
 ExtendedDruckerPrager                       node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                       
-CO2BrineEzrokhiFluid                        node :ref:`DATASTRUCTURE_CO2BrineEzrokhiFluid`                        
 ModifiedCamClay                             node :ref:`DATASTRUCTURE_ModifiedCamClay`                             
 NullModel                                   node :ref:`DATASTRUCTURE_NullModel`                                   
 ParallelPlatesPermeability                  node :ref:`DATASTRUCTURE_ParallelPlatesPermeability`                  
 ParticleFluid                               node :ref:`DATASTRUCTURE_ParticleFluid`                               
 PermeabilityBase                            node :ref:`DATASTRUCTURE_PermeabilityBase`                            
-CO2BrinePhillipsFluid                       node :ref:`DATASTRUCTURE_CO2BrinePhillipsFluid`                       
 PorousDruckerPrager                         node :ref:`DATASTRUCTURE_PorousDruckerPrager`                         
 PorousElasticIsotropic                      node :ref:`DATASTRUCTURE_PorousElasticIsotropic`                      
 PorousElasticOrthotropic                    node :ref:`DATASTRUCTURE_PorousElasticOrthotropic`                    

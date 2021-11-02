@@ -85,6 +85,20 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
+.. _XML_CO2BrineEzrokhiFluid:
+
+Element: CO2BrineEzrokhiFluid
+=============================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid.rst
+
+
+.. _XML_CO2BrinePhillipsFluid:
+
+Element: CO2BrinePhillipsFluid
+==============================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
+
+
 .. _XML_CarmanKozenyPermeability:
 
 Element: CarmanKozenyPermeability
@@ -314,13 +328,6 @@ Element: Events
 Element: ExtendedDruckerPrager
 ==============================
 .. include:: ../../coreComponents/schema/docs/ExtendedDruckerPrager.rst
-
-
-.. _XML_CO2BrineEzrokhiFluid:
-
-Element: CO2BrineEzrokhiFluid
-=============================
-.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid.rst
 
 
 .. _XML_FieldSpecification:
@@ -587,13 +594,6 @@ Element: PhaseFieldDamageFEM
 Element: PhaseFieldFracture
 ===========================
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
-
-
-.. _XML_CO2BrinePhillipsFluid:
-
-Element: CO2BrinePhillipsFluid
-==============================
-.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
 
 
 .. _XML_PorousDruckerPrager:
@@ -1020,6 +1020,20 @@ Datastructure: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability_other.rst
 
 
+.. _DATASTRUCTURE_CO2BrineEzrokhiFluid:
+
+Datastructure: CO2BrineEzrokhiFluid
+===================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid_other.rst
+
+
+.. _DATASTRUCTURE_CO2BrinePhillipsFluid:
+
+Datastructure: CO2BrinePhillipsFluid
+====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid_other.rst
+
+
 .. _DATASTRUCTURE_CarmanKozenyPermeability:
 
 Datastructure: CarmanKozenyPermeability
@@ -1256,13 +1270,6 @@ Datastructure: Events
 Datastructure: ExtendedDruckerPrager
 ====================================
 .. include:: ../../coreComponents/schema/docs/ExtendedDruckerPrager_other.rst
-
-
-.. _DATASTRUCTURE_CO2BrineEzrokhiFluid:
-
-Datastructure: CO2BrineEzrokhiFluid
-===================================
-.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid_other.rst
 
 
 .. _DATASTRUCTURE_FaceManager:
@@ -1550,13 +1557,6 @@ Datastructure: PhaseFieldDamageFEM
 Datastructure: PhaseFieldFracture
 =================================
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
-
-
-.. _DATASTRUCTURE_CO2BrinePhillipsFluid:
-
-Datastructure: CO2BrinePhillipsFluid
-====================================
-.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid_other.rst
 
 
 .. _DATASTRUCTURE_PorousDruckerPrager:
