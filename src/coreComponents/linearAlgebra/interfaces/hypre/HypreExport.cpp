@@ -197,11 +197,6 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
       globalVecStarts.move( LvArray::MemorySpace::host, false );
       localVector.move( LvArray::MemorySpace::host, false );
 
-      GEOSX_LOG_RANK_VAR( rank );
-      GEOSX_LOG_RANK_VAR( subRank );
-      GEOSX_LOG_RANK_VAR( nSubProc );
-      GEOSX_LOG_RANK_VAR( values );
-
       if ( subRank == 0 )
       {
         globalVecStarts.resize( nSubProc + 1 );
@@ -231,7 +226,6 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
 
         }
         std::copy( values.data(), values.data() + vec.localSize(), localVector.data() );
-        GEOSX_LOG_RANK_VAR( localVector );
       }
       else
       {
@@ -242,7 +236,6 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
                              0,
                              m_subComm,
                              MPI_STATUS_IGNORE );
-          GEOSX_LOG_RANK_VAR( localVector );
         }
       }
 
