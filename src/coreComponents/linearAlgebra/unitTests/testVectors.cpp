@@ -330,18 +330,15 @@ TYPED_TEST_P( VectorTest, setSingleValue )
 
   localIndex const localSize = 3;
 
-  std::cout<<"breakpoint1 "<<std::endl;
   Vector x;
   x.createWithLocalSize( localSize, MPI_COMM_GEOSX );
 
-  std::cout<<"breakpoint2 "<<std::endl;
   x.open();
   for( localIndex i = 0; i < localSize; ++i )
   {
     x.set( x.getGlobalRowID( i ), x.ilower() + i );
   }
   x.close();
-  std::cout<<"breakpoint3 "<<std::endl;
 
   for( localIndex i = 0; i < localSize; ++i )
   {
@@ -372,56 +369,6 @@ TYPED_TEST_P( VectorTest, addSingleValue )
   }
 }
 
-//TYPED_TEST_P2( VectorTest, setValues )
-//{
-//  using Vector = typename TypeParam::ParallelVector;
-//
-//  localIndex const localSize = 3;
-//  real64 const value = 1.23;
-//
-//  Vector x;
-//  x.createWithLocalSize( localSize, MPI_COMM_GEOSX );
-//
-//  std::cout<<"breakpoint 1"<<std::endl;
-//  array1d< globalIndex > const globalIndices(localSize);
-//  array1d< real64 > const values(localSize);
-//
-//  arrayView1d< globalIndex > const globalIndicesView = globalIndices.toView();
-//  arrayView1d< real64 > const valuesView = values.toView();
-//
-//  forAll< parallelDevicePolicy<> >( localSize,
-//                                    [=] GEOSX_DEVICE (localIndex const k )
-//  {
-//    globalIndicesView(k) = k;
-//    valuesView(k) = value + k;
-//    printf( "address of valuesView = %p \n", &(valuesView[0]) );
-//    printf( "valuesView[%d]=%f\n",k,valuesView[k] );
-//
-//  });
-//
-//  printf( "address of valuesView.data() = %p \n", valuesView.data() );
-//  arrayView1d< real64 > const valuesView2 = values.toView();
-//  printf( "address of valuesView2.data() = %p \n", valuesView2.data() );
-//  printf( "address of values.data() = %p \n", values.data() );
-//  values.move( LvArray::MemorySpace::cuda );
-//  arrayView1d< real64 > const valuesView3 = values.toView();
-//  printf( "address of valuesView3.data() = %p \n", valuesView3.data() );
-//
-//  x.open();
-//  x.set( globalIndicesView.data(), valuesView.data(), localSize );
-//  x.close();
-//  std::cout<<"breakpoint 2"<<std::endl;
-//
-//
-//  array1d< real64 > const valuesExtracted( localSize );
-//  x.extract( valuesExtracted );
-//  std::cout<<"breakpoint 3"<<std::endl;
-//
-//  forAll<serialPolicy>( localSize,
-//                        [=] GEOSX_HOST (localIndex const i )
-//  {
-//    EXPECT_EQ( valuesExtracted[i], valuesView[i] );
-//  });
 //}
 
 TYPED_TEST_P2( VectorTest, setAllValues )
@@ -621,7 +568,6 @@ REGISTER_TYPED_TEST_SUITE_P( VectorTest,
                              getMultipleValues,
                              setSingleValue,
                              addSingleValue,
-//                             setValues,
                              setAllValues,
                              zeroAllValues,
                              scaleValues,
