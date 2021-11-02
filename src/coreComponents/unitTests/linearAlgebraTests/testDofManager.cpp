@@ -513,8 +513,6 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
                                                          dofManager.numGlobalDofs(),
                                                          27 * numCompTotal );
   Matrix patternExpected;
-//  patternExpected.createWithLocalSize( numLocalDof, numLocalDof, 27 * numCompTotal, MPI_COMM_GEOSX );
-//  patternExpected.open();
 
   for( FieldDesc const & f : fields )
   {

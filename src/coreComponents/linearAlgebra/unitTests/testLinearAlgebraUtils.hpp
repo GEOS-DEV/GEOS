@@ -475,21 +475,6 @@ void compute2DElasticityOperator( MPI_Comm const comm,
     } );
   }
 
-//  //////////////////
-//  if( rank == 0 )
-//  {
-//    for( localIndex iRow = 0; iRow < matrix.numRows(); ++iRow )
-//    {
-//      arraySlice1d< globalIndex const > const columns = matrix.getColumns( iRow );
-//      arraySlice1d< real64 > const entries = matrix.getEntries( iRow );
-//      localIndex const numEntries = matrix.numNonZeros( iRow );
-//      GEOSX_LOG_RANK_VAR( iRow );
-//      GEOSX_LOG_RANK_VAR( numEntries );
-//      GEOSX_LOG_RANK_VAR( columns );
-//      GEOSX_LOG_RANK_VAR( entries );
-//    }
-//  }
-//  //////////////////
   // Construct the 2D elasticity (plane strain) operator
   elasticity2D.create( matrix.toViewConst(), comm );
 

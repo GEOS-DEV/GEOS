@@ -280,7 +280,6 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
   localValues.setValues< serialPolicy >( 1.0 );
 
   // Loop over faces and assemble TPFA-style "flux" contributions
-//  forLocalObjects< DofManager::Location::Face >( mesh, regions, [&]( localIndex const kf )
   for( localIndex kf=0; kf<faceManager.size(); ++kf )
   {
     localIndex const er0 = faceToElem.m_toElementRegion[kf][0];
@@ -315,7 +314,7 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
                                  count );
       }
     }
-  } //);
+  }
 }
 
 /**
@@ -359,7 +358,6 @@ void makeSparsityFEM( MeshLevel const * const mesh,
           localDofIndex[a * numComp + c] = nodeDofIndex[nodeMap[k][a]] + c;
         }
       }
-//      sparsity.insertNonZero( localDofIndex, localDofIndex, localValues );
       std::sort( localDofIndex.begin(), localDofIndex.end() );
       for( localIndex row=0; row<(numNode * numComp); ++row )
       {
@@ -433,9 +431,6 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
         }
       }
 
-//      sparsity.insert( localNodeDofIndex, localElemDofIndex, localValues1 );
-//      sparsity.insert( localElemDofIndex, localNodeDofIndex, localValues2 );
-
       std::sort( localNodeDofIndex.begin(), localNodeDofIndex.end() );
       std::sort( localElemDofIndex.begin(), localElemDofIndex.end() );
 
@@ -495,7 +490,6 @@ void makeSparsityMass( MeshLevel const * const mesh,
     {
       localDofIndex[c] = elemDofIndex[idx[0]][idx[1]][idx[2]] + c;
     }
-//    sparsity.insert( localDofIndex, localDofIndex, localValues );
 
     std::sort( localDofIndex.begin(), localDofIndex.end() );
     for( localIndex row=0; row<numComp; ++row )
@@ -555,7 +549,6 @@ void makeSparsityFlux( MeshLevel const * const mesh,
         }
       }
 
-//      sparsity.insert( localDofIndex, localDofIndex, localValues );
       std::sort( localDofIndex.begin(), localDofIndex.end() );
 
       for( localIndex row=0; row<(numFace*numComp); ++row )
