@@ -184,7 +184,6 @@ public:
     constexpr static char const * contactSolverNameString() { return "contactSolverName"; }
     constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
     constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
-
   } LagrangianContactFlowSolverViewKeys;
 
 protected:
@@ -192,6 +191,7 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
+public:
   /**
    * @Brief add the nnz induced by the flux-aperture coupling
    * @param domain the physical domain object

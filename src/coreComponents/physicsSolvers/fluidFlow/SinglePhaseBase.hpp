@@ -211,7 +211,8 @@ public:
                               DofManager const & dofManager,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
-                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) = 0;
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                              string_array const & fractureRegions = {} ) = 0;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's

@@ -29,7 +29,6 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsFluxKernels.hpp"
@@ -280,6 +279,8 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 {
   GEOSX_MARK_FUNCTION;
 
+  std::cout << "SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms" << std::endl;
+
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -295,15 +296,39 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   jumpDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( jumpDofKey );
   jumpDofNumber.setName( this->getName() + "/accessors/" + jumpDofKey );
 
+  std::cout << "targetRegionNames" << std::endl;
+  std::cout << targetRegionNames() << std::endl;
+  std::cout << m_permeabilityModelNames << std::endl;
+  std::string const fracture = "Fracture";
+  string_array regionList;
+  regionList.emplace_back( fracture );
+  string_array modelList;
+  for( localIndex i = 0; i < m_permeabilityModelNames.size(); ++i )
+  {
+    //if( targetRegionNames()[i] == fracture )
+    if( true )
+    {
+      modelList.emplace_back( m_permeabilityModelNames[i] );
+    }
+  }
+
+  std::cout << modelList << std::endl;
+
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
     mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
+                                                                           //regionList,
+                                                                           ////modelList,
                                                                            targetRegionNames(),
                                                                            m_permeabilityModelNames,
                                                                            true );
 
+  //std::cout << "step 2" << std::endl;
+
   fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
   {
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+
+    //std::cout << "stencil size " << stencil.size() << std::endl;
 
     EmbeddedSurfaceFluxKernel::launch( stencilWrapper,
                                        dt,
@@ -324,6 +349,8 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
                                        localMatrix,
                                        localRhs );
   } );
+
+  //std::cout << "step 3" << std::endl;
 }
 
 template< typename BASE >
@@ -333,8 +360,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
                                                          DofManager const & dofManager,
                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs,
-                                                         CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                         string_array const & fractureRegions )
+                                                         CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -351,38 +377,29 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
+  std::cout << "targetRegionNames" << std::endl;
+  std::cout << targetRegionNames() << std::endl;
+  std::cout << m_permeabilityModelNames << std::endl;
+  std::string const fracture = "Fracture";
   string_array regionList;
+  regionList.emplace_back( fracture );
   string_array modelList;
-  if( fractureRegions.size() > 0 )
+  for( localIndex i = 0; i < m_permeabilityModelNames.size(); ++i )
   {
-    regionList = fractureRegions;
-    for( localIndex i = 0; i < m_permeabilityModelNames.size(); ++i )
+    if( targetRegionNames()[i] == fracture )
     {
-      for( localIndex j = 0; j < fractureRegions.size(); ++j )
-      {
-        if( targetRegionNames()[i] == fractureRegions[j] )
-        {
-          modelList.emplace_back( m_permeabilityModelNames[i] );
-        }
-      }
+      modelList.emplace_back( m_permeabilityModelNames[i] );
     }
-  }
-  else
-  {
-    for( localIndex i = 0; i < targetRegionNames().size(); ++i )
-    {
-      regionList.emplace_back( targetRegionNames()[i] );
-    }
-    modelList = m_permeabilityModelNames;
   }
 
-  std::cout << "regionList " << regionList << std::endl;
-  std::cout << "modelList " << modelList << std::endl;
+  std::cout << modelList << std::endl;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
     mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
                                                                            regionList,
                                                                            modelList );
+                                                                           //targetRegionNames(),
+                                                                           //m_permeabilityModelNames );
 
   fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
   {
@@ -521,66 +538,6 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                      localMatrix,
                                      localRhs );
     } );
-  } );
-}
-
-template< typename BASE >
-void SinglePhaseFVM< BASE >::applyAquiferBC( real64 const time,
-                                             real64 const dt,
-                                             DomainPartition & domain,
-                                             DofManager const & dofManager,
-                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                             arrayView1d< real64 > const & localRhs ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-
-  string const & elemDofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
-    mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
-  elemDofNumber.setName( this->getName() + "/accessors/" + elemDofKey );
-
-  fsManager.apply< AquiferBoundaryCondition >( time + dt,
-                                               domain,
-                                               "faceManager",
-                                               AquiferBoundaryCondition::catalogName(),
-                                               [&] ( AquiferBoundaryCondition const & bc,
-                                                     string const & setName,
-                                                     SortedArrayView< localIndex const > const &,
-                                                     Group &,
-                                                     string const & )
-  {
-    BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-    if( stencil.size() == 0 )
-    {
-      return;
-    }
-
-    AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
-    real64 const & aquiferDens = bc.getWaterPhaseDensity();
-
-    SinglePhaseFVMKernels::AquiferBCKernel::launch( stencil,
-                                                    dofManager.rankOffset(),
-                                                    elemDofNumber.toNestedViewConst(),
-                                                    m_elemGhostRank.toNestedViewConst(),
-                                                    aquiferBCWrapper,
-                                                    aquiferDens,
-                                                    m_pressure.toNestedViewConst(),
-                                                    m_deltaPressure.toNestedViewConst(),
-                                                    m_gravCoef.toNestedViewConst(),
-                                                    m_density.toNestedViewConst(),
-                                                    m_dDens_dPres.toNestedViewConst(),
-                                                    time,
-                                                    dt,
-                                                    localMatrix.toViewConstSizes(),
-                                                    localRhs.toView() );
-
   } );
 }
 

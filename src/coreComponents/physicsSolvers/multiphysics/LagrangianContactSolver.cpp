@@ -1080,6 +1080,8 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
 
   MpiWrapper::bcast( globalResidualNorm, 3, 0, MPI_COMM_GEOSX );
 
+  real64 const res = globalResidualNorm[2];
+
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     m_initialResidual[0] = globalResidualNorm[0];
@@ -1102,7 +1104,8 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
                                         globalResidualNorm[1],
                                         globalResidualNorm[2] ) );
 
-  return globalResidualNorm[2];
+  //return globalResidualNorm[2];
+  return res;
 }
 
 void LagrangianContactSolver::createPreconditioner( DomainPartition const & domain )

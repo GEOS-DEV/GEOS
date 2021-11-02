@@ -750,6 +750,13 @@ Element: SinglePhasePoromechanicsEmbeddedFractures
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures.rst
 
 
+.. _XML_SinglePhasePoromechanicsLagrangianContact:
+
+Element: SinglePhasePoromechanicsLagrangianContact
+==================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsLagrangianContact.rst
+
+
 .. _XML_SinglePhaseProppantFVM:
 
 Element: SinglePhaseProppantFVM
@@ -1725,6 +1732,13 @@ Datastructure: SinglePhasePoromechanics
 Datastructure: SinglePhasePoromechanicsEmbeddedFractures
 ========================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsEmbeddedFractures_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsLagrangianContact:
+
+Datastructure: SinglePhasePoromechanicsLagrangianContact
+========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsLagrangianContact_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseProppantFVM:

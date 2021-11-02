@@ -23,6 +23,7 @@ SinglePhaseFVM                            node :ref:`DATASTRUCTURE_SinglePhaseFV
 SinglePhaseHybridFVM                      node :ref:`DATASTRUCTURE_SinglePhaseHybridFVM`                      
 SinglePhasePoromechanics                  node :ref:`DATASTRUCTURE_SinglePhasePoromechanics`                  
 SinglePhasePoromechanicsEmbeddedFractures node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures` 
+SinglePhasePoromechanicsLagrangianContact node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsLagrangianContact` 
 SinglePhaseProppantFVM                    node :ref:`DATASTRUCTURE_SinglePhaseProppantFVM`                    
 SinglePhaseReservoir                      node :ref:`DATASTRUCTURE_SinglePhaseReservoir`                      
 SinglePhaseWell                           node :ref:`DATASTRUCTURE_SinglePhaseWell`                           
