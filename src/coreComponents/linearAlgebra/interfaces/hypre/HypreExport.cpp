@@ -228,14 +228,11 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
       }
       else
       {
-        for( int p = 1; p < nSubProc; ++p )
-        {
-          MpiWrapper::recv( localVector,
-                            0,
-                            0,
-                            m_subComm,
-                            MPI_STATUS_IGNORE );
-        }
+        MpiWrapper::recv( localVector,
+                          0,
+                          0,
+                          m_subComm,
+                          MPI_STATUS_IGNORE );
       }
 
 #if defined(GEOSX_USE_HYPRE_CUDA)
