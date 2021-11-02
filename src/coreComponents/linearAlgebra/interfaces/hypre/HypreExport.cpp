@@ -185,7 +185,6 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
   values.move( LvArray::MemorySpace::host, false );
   if( m_targetRank >= 0 )
   {
-    int const rank = MpiWrapper::commRank( vec.getComm() );
 
     if( m_subComm != MPI_COMM_NULL )
     {
