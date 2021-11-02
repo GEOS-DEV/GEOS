@@ -196,7 +196,7 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
       globalVecStarts.move( LvArray::MemorySpace::host, false );
       localVector.move( LvArray::MemorySpace::host, false );
 
-      if ( subRank == 0 )
+      if( subRank == 0 )
       {
         globalVecStarts.resize( nSubProc + 1 );
         globalVecStarts[nSubProc] = vec.globalSize();
@@ -211,7 +211,7 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
                           m_subComm );
 
       MPI_Request request;
-      if ( subRank == 0 )
+      if( subRank == 0 )
       {
         for( int p = 1; p < nSubProc; ++p )
         {
@@ -231,17 +231,17 @@ void HypreExport::importVector( arrayView1d< const real64 > const & values,
         for( int p = 1; p < nSubProc; ++p )
         {
           MpiWrapper::recv( localVector,
-                             0,
-                             0,
-                             m_subComm,
-                             MPI_STATUS_IGNORE );
+                            0,
+                            0,
+                            m_subComm,
+                            MPI_STATUS_IGNORE );
         }
       }
 
 #if defined(GEOSX_USE_HYPRE_CUDA)
-    cudaMemcpy( vec.extractLocalVector(), localVector.data(), localVector.size() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice );
+      cudaMemcpy( vec.extractLocalVector(), localVector.data(), localVector.size() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice );
 #else
-    std::copy( localVector.data(), localVector.data() + localVector.size(), vec.extractLocalVector() );
+      std::copy( localVector.data(), localVector.data() + localVector.size(), vec.extractLocalVector() );
 #endif
 
 
