@@ -55,17 +55,13 @@
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <!-- (there are other ways to control the time step size) -->
+
     <PeriodicEvent
       name="solverApplications"
       forceDt="0.05"
       target="/Solvers/acousticSolver"/>
     <!-- generate an output that can be read from VTK -->
 
-    <PeriodicEvent
-      name="python"
-      cycleFrequency="1"
-      targetExactTimestep="0"
-      target="/Outputs/pythonOutput"/>
   </Events>
 
   <NumericalMethods>
@@ -141,17 +137,5 @@
       objectPath="nodeManager"
       fieldName="pressure_np1"/>
   </Tasks>
-
-  <Outputs>
-
-    <!-- output all the mesh values registered with a plot level LEVEL_0, LEVEL_1, LEVEL_2, LEVEL_3   -->
-
-
-    <Python
-      name="pythonOutput"/>
-    <!-- output the pressure values to a file named pressure_history.hdf5  -->
-
-
-  </Outputs>
 
 </Problem>

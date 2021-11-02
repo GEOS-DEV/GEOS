@@ -23,7 +23,7 @@
 #include "mesh/ExtrinsicMeshData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
-
+  class pyAcousticSolver;
 namespace geosx
 {
 
@@ -117,6 +117,7 @@ public:
 
   } waveEquationViewKeys;
 
+public:
 
   virtual void postProcessInput() override final;
 

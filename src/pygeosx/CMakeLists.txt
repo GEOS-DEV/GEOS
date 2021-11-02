@@ -1,10 +1,14 @@
 set( python_headers pygeosx.hpp
                     PyGroup.hpp
-                    PyWrapper.hpp )
+                    PyWrapper.hpp 
+                    PySolver.hpp
+                    )
 
 set( python_sources pygeosx.cpp
                     PyGroup.cpp
-                    PyWrapper.cpp )
+                    PyWrapper.cpp
+                    PySolver.cpp
+                    )
 
 set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python )
 
