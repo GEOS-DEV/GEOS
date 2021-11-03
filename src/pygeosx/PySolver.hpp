@@ -1,5 +1,6 @@
 #include "events/EventBase.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 
 namespace geosx
@@ -7,20 +8,28 @@ namespace geosx
 namespace python
 {
 
-struct PySolver
+
+template<typename T>
+PyObject * explicitStep(T * self, PyObject * args)
 {
-  PyObject_HEAD
+  //VERIFY_NON_NULL_SELF( self );
+  //VERIFY_INITIALIZED( self );
 
-  static constexpr char const * docString =
-    "A Python interface to geosx::SolverBase.";
+  double time;
+  double dt;
+  if( !PyArg_ParseTuple( args, "dd", &time, &dt ) )
+  {
+    return nullptr;
+  }
 
-  geosx::SolverBase * solver;
-};
+  geosx::DomainPartition & domain = self->pb_manager->getDomainPartition();
 
+  self->group->explicitStep(time, dt, 0, domain);
 
-PyObject * explicitStep(PySolver * self, PyObject * args);
+  Py_RETURN_NONE;
+}
 
-PyObject * createNewPySolver( geosx::EventBase * subEvent );
+PyObject * createNewPySolver( geosx::EventBase * subEvent, geosx::ProblemManager * group );
 
 PyTypeObject * getPySolverType();
 

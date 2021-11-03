@@ -102,17 +102,12 @@ public:
 
   } waveEquationViewKeys;
 
-public:
 
   virtual void postProcessInput() override final;
 
-  void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
-
 protected:
 
-  //virtual void postProcessInput() override final;
 
-  //void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
@@ -159,7 +154,7 @@ private:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
-  array2d< real64 > m_pressureNp1AtReceivers;
+  array1d< real64 > m_pressureNp1AtReceivers;
 
 
 };
@@ -220,7 +215,7 @@ EXTRINSIC_MESH_DATA_TRAIT( MediumVelocity,
                            "mediumVelocity",
                            array1d< real64 >,
                            0,
-                           LEVEL_0,
+                           NOPLOT,
                            WRITE_AND_READ,
                            "Medium velocity of the cell" );
 

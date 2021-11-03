@@ -14,9 +14,10 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseUtilities.hpp
      fluidFlow/FlowSolverBase.hpp
+     fluidFlow/FluxKernelsHelper.hpp
      fluidFlow/HybridFVMHelperKernels.hpp
-     fluidFlow/ProppantTransport.hpp
-     fluidFlow/ProppantTransportKernels.hpp
+     fluidFlow/proppantTransport/ProppantTransport.hpp
+     fluidFlow/proppantTransport/ProppantTransportKernels.hpp
      fluidFlow/SinglePhaseBase.hpp
      fluidFlow/SinglePhaseBaseKernels.hpp
      fluidFlow/SinglePhaseFVM.hpp
@@ -68,8 +69,8 @@ set( physicsSolvers_headers
      surfaceGeneration/SurfaceGenerator.hpp
      wavePropagation/WaveSolverBase.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
-#     wavePropagation/ElasticWaveEquationSEM.hpp
-     )
+     wavePropagation/AcousticWaveEquationSEMKernel.hpp
+   )
 
 #
 # Specify solver sources
@@ -94,7 +95,9 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseHybridFVM.cpp
      fluidFlow/SinglePhaseProppantBase.cpp
      fluidFlow/wells/CompositionalMultiphaseWell.cpp
+     fluidFlow/wells/CompositionalMultiphaseWellKernels.cpp
      fluidFlow/wells/SinglePhaseWell.cpp
+     fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
      fluidFlow/wells/WellSolverBase.cpp
      multiphysics/CompositionalMultiphaseReservoir.cpp
@@ -121,8 +124,7 @@ set( physicsSolvers_sources
      surfaceGeneration/SurfaceGenerator.cpp
      wavePropagation/WaveSolverBase.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
-#     wavePropagation/ElasticWaveEquationSEM.cpp
-     )
+   )
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 

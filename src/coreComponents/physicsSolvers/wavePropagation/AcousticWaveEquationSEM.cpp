@@ -38,7 +38,6 @@ AcousticWaveEquationSEM::AcousticWaveEquationSEM( const std::string & name,
   WaveSolverBase( name,
                   parent )
 {
-  GEOSX_MARK_FUNCTION;
 
   registerWrapper( viewKeyStruct::sourceNodeIdsString(), &m_sourceNodeIds ).
     setInputFlag( InputFlags::FALSE ).
@@ -104,7 +103,6 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 
 void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
-  GEOSX_MARK_FUNCTION;
 
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
@@ -139,7 +137,6 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 void AcousticWaveEquationSEM::postProcessInput()
 {
   WaveSolverBase::postProcessInput();
-
   GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources",
                   InputError );
@@ -243,8 +240,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
 
 void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs )
 {
-  GEOSX_MARK_FUNCTION;
-
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
@@ -266,58 +261,36 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, a
 
 void AcousticWaveEquationSEM::computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 )
 {
-  GEOSX_MARK_FUNCTION;
-
-  real64 const time_sismo = m_dtSismoTrace*iSismo;
-  real64 const time_np1 = time_n+dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
+  arrayView1d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
 
   forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
   {
     if( receiverIsLocal[ircv] == 1 )
     {
-      p_rcvs[ircv][iSismo] = 0.0;
-      real64 ptmp_np1 = 0.0;
-      real64 ptmp_n = 0.0;
+      p_rcvs[ircv] = 0.0;
       for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
       {
         real64 const localIncrement = pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
         RAJA::atomicAdd< ATOMIC_POLICY >( &p_rcvs[ircv], localIncrement );
       }
-      p_rcvs[ircv][iSismo] = ((time_np1 - time_sismo)*ptmp_n+(time_sismo-time_n)*ptmp_np1)/dt;
     }
   } );
 
-}
-
-/// Use for now until we get the same functionality in TimeHistory
-void AcousticWaveEquationSEM::saveSismo( arrayView2d< real64 const > const pressure_receivers )
-{
-  GEOSX_MARK_FUNCTION;
-
-  arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
-
-  forAll< serialPolicy >( pressure_receivers.size( 0 ), [=] ( localIndex const ircv )
+  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
   {
     if( this->m_outputSeismoTrace == 1 )
     {
-      char filename[50];
-      sprintf( filename, "sismoTraceReceiver%0d.txt", static_cast< int >( ircv ) );
-      std::ofstream f( filename, std::ios::app );
-
-      for( localIndex iSismo=0; iSismo < pressure_receivers.size( 1 ); iSismo++ )
+      if( receiverIsLocal[ircv] == 1 )
       {
         // Note: this "manual" output to file is temporary
         //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
         // TODO: remove saveSeismo and replace with TimeHistory
         this->saveSeismo( iseismo, p_rcvs[ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
       }
-
-      f.close();
     }
   } );
 }
@@ -410,8 +383,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
-
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
@@ -495,15 +466,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  /*
-  ///Use to reinit params if pygeox set time_n to zero
-  if( time_n < 0.5*dt )
-  {
-    applyFreeSurfaceBC( time_n, domain );
-    postProcessInput();
-    precomputeSourceAndReceiverTerm( mesh );
-  }
-  */
+
   NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
@@ -545,7 +508,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       p_np1[a] /= mass[a]+0.5*dt*damping[a];
     }
   } );
-  }
 
   /// synchronize pressure fields
   std::map< string, string_array > fieldNames;
@@ -573,7 +535,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   return dt;
 }
-
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEM, string const &, dataRepository::Group * const )
 

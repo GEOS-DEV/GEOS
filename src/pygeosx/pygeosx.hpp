@@ -13,11 +13,11 @@
  */
 
 // Source includes
-#include "PyGroup.hpp"
+//#include "PyGroup.hpp"
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
-
+/*
 namespace geosx
 {
 
@@ -26,3 +26,4 @@ std::unique_ptr< GeosxState > g_state;
 bool g_alreadyInitialized = false;
 
 }
+*/

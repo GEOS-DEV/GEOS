@@ -1,13 +1,14 @@
 #include "events/EventBase.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
 namespace geosx
 {
 namespace python
 {
 
-PyObject * createNewPySolver( geosx::EventBase * subEvent );
+PyObject * createNewPyWaveSolver( geosx::EventBase * subEvent, geosx::ProblemManager * pbManager );
 
-PyTypeObject * getPySolverType();
+PyTypeObject * getPyWaveSolverType();
 
 } // namespace python
 } // namespace geosx

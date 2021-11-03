@@ -21,6 +21,8 @@
 #include "pygeosx.hpp"
 #include "PyGroup.hpp"
 #include "PyWrapper.hpp"
+#include "PySolver.hpp"
+#include "PyWaveSolver.hpp"
 #include "mainInterface/initialization.hpp"
 
 #include "LvArray/src/python/PyArray.hpp"
@@ -35,15 +37,15 @@
 
 // SolverBase
 //#include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
+//#include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
 
 
 namespace geosx
 {
 
-  //std::unique_ptr< GeosxState > g_state;
+  std::unique_ptr< GeosxState > g_state;
 
-  //bool g_alreadyInitialized = false;
+  bool g_alreadyInitialized = false;
 
 PyObject * init( PyObject * const pyArgv, bool const performSetup, long const pythonMPIRank=-1 )
 {
@@ -557,6 +559,16 @@ PyInit_pygeosx()
   }
 
   if( !LvArray::python::addTypeToModule( module, geosx::python::getPyWrapperType(), "Wrapper" ) )
+  {
+    return nullptr;
+  }
+
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyWaveSolverType(), "WaveSolver" ) )
+  {
+    return nullptr;
+  }
+
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolverType(), "Solver" ) )
   {
     return nullptr;
   }
