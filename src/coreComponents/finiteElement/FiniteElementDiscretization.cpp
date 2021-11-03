@@ -42,6 +42,11 @@ FiniteElementDiscretization::FiniteElementDiscretization( string const & name, G
                     "For instance, one of the many enhanced assumed strain "
                     "methods of the Hexahedron parent shape would be indicated "
                     "here" );
+
+  registerWrapper( viewKeyStruct::useVemString(), &m_useVem ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Specifier to indicate whether to force the use of VEM" );
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
@@ -52,6 +57,7 @@ void FiniteElementDiscretization::postProcessInput()
 {
   GEOSX_ERROR_IF_NE_MSG( m_order, 1, "Higher order finite element spaces are currently not supported." );
   GEOSX_ERROR_IF_NE_MSG( m_formulation, "default", "Only standard element formulations are currently supported." );
+  GEOSX_ERROR_IF_GT_MSG( m_useVem, 1, "The flag useVirtualElements can be either 0 or 1" );
 }
 
 std::unique_ptr< FiniteElementBase >

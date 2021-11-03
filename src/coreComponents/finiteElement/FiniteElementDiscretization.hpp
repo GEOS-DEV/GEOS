@@ -89,6 +89,7 @@ private:
   {
     static constexpr char const * orderString() { return "order"; }
     static constexpr char const * formulationString() { return "formulation"; }
+    static constexpr char const * useVemString() { return "useVirtualElements"; }
   };
 
   /// The order of the finite element basis
@@ -96,6 +97,9 @@ private:
 
   /// Optional string indicating any specialized formulation type.
   string m_formulation;
+
+  /// Optional parameter indicating if the class should use Virtual Elements.
+  int m_useVem;
 
   void postProcessInput() override final;
 
