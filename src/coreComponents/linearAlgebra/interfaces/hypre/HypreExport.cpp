@@ -32,7 +32,7 @@ namespace geosx
 HypreExport::HypreExport() = default;
 
 HypreExport::HypreExport( HypreMatrix const & mat,
-                          integer targetRank )
+                          integer const targetRank )
   : m_targetRank( targetRank )
 {
   // make a sub-communicator for scatter and ensure target rank is mapped to 0 in new comm
@@ -50,6 +50,69 @@ HypreExport::~HypreExport()
   }
 }
 
+namespace
+{
+
+template< typename T, typename U >
+std::enable_if_t< std::is_same< T, U >::value >
+copyOrTransform( T const * const first,
+                 T const * const last,
+                 U * const out )
+{
+  std::copy( first, last, out );
+}
+
+template< typename T, typename U >
+std::enable_if_t< !std::is_same< T, U >::value >
+copyOrTransform( T const * const first,
+                 T const * const last,
+                 U * const out )
+{
+  std::transform( first, last, out, []( T const v ) { return static_cast< U >( v ); } );
+}
+
+template< typename HYPRE_TYPE, typename GEOSX_TYPE >
+void exportArray( HYPRE_MemoryLocation const memorySpace,
+                  HYPRE_TYPE const * const hypreArray,
+                  arrayView1d< GEOSX_TYPE > const & geosxArray )
+{
+  if( memorySpace == HYPRE_MEMORY_HOST )
+  {
+    geosxArray.move( LvArray::MemorySpace::host, true );
+    copyOrTransform( hypreArray, hypreArray + geosxArray.size(), geosxArray.data() );
+  }
+  else // hypreArray is on device
+  {
+    forAll< hypre::execPolicy >( geosxArray.size(),
+                                 [geosxArray, hypreArray] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
+    {
+      geosxArray[i] = static_cast< GEOSX_TYPE >( hypreArray[i] );
+    } );
+  }
+}
+
+template< typename HYPRE_TYPE, typename GEOSX_TYPE >
+void importArray( HYPRE_MemoryLocation const memorySpace,
+                  arrayView1d< GEOSX_TYPE const > const & geosxArray,
+                  HYPRE_TYPE * const hypreArray )
+{
+  if( memorySpace == HYPRE_MEMORY_HOST )
+  {
+    geosxArray.move( LvArray::MemorySpace::host, false );
+    copyOrTransform( geosxArray.data(), geosxArray.data() + geosxArray.size(), hypreArray );
+  }
+  else // hypreArray is on device
+  {
+    forAll< hypre::execPolicy >( geosxArray.size(),
+                                 [geosxArray, hypreArray] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
+    {
+      hypreArray[i] = static_cast< HYPRE_TYPE >( geosxArray[i] );
+    } );
+  }
+}
+
+} // namespace
+
 template< typename OFFSET_TYPE, typename COLUMN_TYPE >
 void HypreExport::exportCRS( HypreMatrix const & mat,
                              arrayView1d< OFFSET_TYPE > const & rowOffsets,
@@ -58,91 +121,45 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
 {
   int const rank = MpiWrapper::commRank( mat.getComm() );
 
-  // import on target rank if needed, or extract diag+offdiag part in each rank
-  hypre_CSRMatrix * localMatrix;
-  if( m_targetRank < 0 )
-  {
-    localMatrix = hypre_MergeDiagAndOffd( mat.unwrapped() );
-  }
-  else
-  {
-    localMatrix = hypre_ParCSRMatrixToCSRMatrixAll( mat.unwrapped() );
-    GEOSX_ERROR_IF( rank == m_targetRank && !localMatrix, "HypreExport: matrix is empty on target rank" );
-  }
+  // import on target rank if needed, or extract diag+offd part in each rank
+  hypre_CSRMatrix * const localMatrix = m_targetRank < 0
+                                      ? hypre_MergeDiagAndOffd( mat.unwrapped() )
+                                      : hypre_ParCSRMatrixToCSRMatrixAll( mat.unwrapped() );
+  GEOSX_ERROR_IF( rank == m_targetRank && !localMatrix, "HypreExport: matrix is empty on target rank" );
 
   if( m_targetRank < 0 || m_targetRank == rank )
   {
-    HYPRE_Int const numRows = hypre_CSRMatrixNumRows( localMatrix );
-    HYPRE_Int const numNz = hypre_CSRMatrixNumNonzeros( localMatrix );
-    HYPRE_Int const * const ia = hypre_CSRMatrixI( localMatrix );
-    HYPRE_Real const * const va = hypre_CSRMatrixData( localMatrix );
+    HYPRE_Int const numRow = hypre_CSRMatrixNumRows( localMatrix );
+    HYPRE_Int const numNz  = hypre_CSRMatrixNumNonzeros( localMatrix );
 
-#if defined(GEOSX_USE_HYPRE_CUDA)
-    rowOffsets.move( LvArray::MemorySpace::cuda, false );
-    colIndices.move( LvArray::MemorySpace::cuda, false );
-    values.move( LvArray::MemorySpace::cuda, false );
-#else
-    rowOffsets.move( LvArray::MemorySpace::host, false );
-    colIndices.move( LvArray::MemorySpace::host, false );
-    values.move( LvArray::MemorySpace::host, false );
-#endif
+    GEOSX_LAI_ASSERT_EQ( rowOffsets.size(), numRow + 1 );
+    GEOSX_LAI_ASSERT_EQ( colIndices.size(), numNz );
+    GEOSX_LAI_ASSERT_EQ( values.size(), numNz );
 
-#if defined(GEOSX_USE_HYPRE_CUDA)
-    forAll< hypre::execPolicy >( numRows + 1, [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
-    {
-      rowOffsets[i] = LvArray::integerConversion< OFFSET_TYPE, HYPRE_Int >( ia[i] );
-    } );
-    forAll< hypre::execPolicy >( numNz, [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
-    {
-      values[i] = va[i];
-    } );
-#else
-    std::transform( ia, ia + numRows + 1, rowOffsets.data(), LvArray::integerConversion< OFFSET_TYPE, HYPRE_Int > );
-    std::copy( va, va + numNz, values.data() );
-#endif
+    HYPRE_MemoryLocation const memorySpace = hypre_CSRMatrixMemoryLocation( localMatrix );
+
+    exportArray( memorySpace, hypre_CSRMatrixI( localMatrix ), rowOffsets );
+    exportArray( memorySpace, hypre_CSRMatrixData( localMatrix ), values );
 
     // We have to handle two cases differently because hypre uses two different struct members
     // (j/big_j) to store the column indices depending on how we obtained the local matrix.
     if( m_targetRank < 0 )
     {
-      HYPRE_BigInt const * const ja = hypre_CSRMatrixBigJ( localMatrix );
-
-#if defined(GEOSX_USE_HYPRE_CUDA)
-      forAll< hypre::execPolicy >( numNz, [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
-      {
-        colIndices[i] = LvArray::integerConversion< COLUMN_TYPE, HYPRE_BigInt >( ja[i] );
-      } );
-#else
-      std::transform( ja, ja + numNz, colIndices.data(), LvArray::integerConversion< COLUMN_TYPE, HYPRE_BigInt > );
-#endif
+      exportArray( memorySpace, hypre_CSRMatrixBigJ( localMatrix ), colIndices );
     }
     else
     {
-      HYPRE_Int const * const ja = hypre_CSRMatrixJ( localMatrix );
-#if defined(GEOSX_USE_HYPRE_CUDA)
-      forAll< hypre::execPolicy >( numNz, [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
-      {
-        colIndices[i] = LvArray::integerConversion< COLUMN_TYPE, HYPRE_Int >( ja[i] );
-      } );
-#else
-      std::transform( ja, ja + numNz, colIndices.data(), LvArray::integerConversion< COLUMN_TYPE, HYPRE_Int > );
-#endif
+      exportArray( memorySpace, hypre_CSRMatrixJ( localMatrix ), colIndices );
     }
 
     // Sort the values by column index after copying (some solvers expect this)
-#if defined(GEOSX_USE_HYPRE_CUDA)
-    forAll< hypre::execPolicy >( numRows, [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
+    forAll< hypre::execPolicy >( numRow, [rowOffsets, colIndices, values] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
     {
       using LvArray::sortedArrayManipulation::dualSort;
-      dualSort( colIndices.data() + rowOffsets[i], colIndices.data() + rowOffsets[i + 1], values.data() + rowOffsets[i] );
+      dualSort( colIndices.data() + rowOffsets[i],
+                colIndices.data() + rowOffsets[i + 1],
+                values.data() + rowOffsets[i] );
     } );
-#else
-    for( localIndex i = 0; i < numRows; ++i )
-    {
-      using LvArray::sortedArrayManipulation::dualSort;
-      dualSort( colIndices.data() + rowOffsets[i], colIndices.data() + rowOffsets[i + 1], values.data() + rowOffsets[i] );
-    }
-#endif
   }
 
   GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( localMatrix ) );
@@ -151,108 +168,79 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
 void HypreExport::exportVector( HypreVector const & vec,
                                 arrayView1d< real64 > const & values ) const
 {
-  values.move( LvArray::MemorySpace::host, false );
+  int const rank = MpiWrapper::commRank( vec.getComm() );
+
+  // Gather vector on target rank, or just get the local part
+  hypre_Vector * const localVector = m_targetRank < 0
+                                   ? hypre_ParVectorLocalVector( vec.unwrapped() )
+                                   : hypre_ParVectorToVectorAll( vec.unwrapped() );
+  GEOSX_ERROR_IF( rank == m_targetRank && !localVector, "HypreExport: vector is empty on target rank" );
+
+  if( m_targetRank < 0 || m_targetRank == rank )
+  {
+    GEOSX_LAI_ASSERT_EQ( values.size(), hypre_VectorSize( localVector ) );
+    exportArray( hypre_VectorMemoryLocation( localVector ),
+                 hypre_VectorData( localVector ),
+                 values );
+  }
+
   if( m_targetRank >= 0 )
   {
-    int const rank = MpiWrapper::commRank( vec.getComm() );
+    GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( localVector ) );
+  }
+}
 
-    hypre_Vector * const localVector = hypre_ParVectorToVectorAll( vec.unwrapped() );
-    if( rank == m_targetRank )
+void HypreExport::importVector( arrayView1d< real64 const > const & values,
+                                HypreVector & vec ) const
+{
+  if( m_subComm != MPI_COMM_NULL )
+  {
+    hypre_Vector * localVector{};
+    if( MpiWrapper::commRank( vec.getComm() ) == m_targetRank )
     {
-      HYPRE_Real const * const data = hypre_VectorData( localVector );
-#if defined(GEOSX_USE_HYPRE_CUDA)
-      cudaMemcpy( values.data(), data, vec.globalSize() * sizeof( HYPRE_Real ), cudaMemcpyDeviceToHost );
+      GEOSX_LAI_ASSERT_EQ( values.size(), vec.globalSize() );
+      values.move( LvArray::MemorySpace::host, false );
+
+      // HACK: create a hypre vector that points to local data; we have to use const_cast,
+      //       but this is ok because we don't modify the values, only scatter the vector.
+      localVector = hypre_SeqVectorCreate( LvArray::integerConversion< HYPRE_Int >( values.size() ) );
+      hypre_VectorOwnsData( localVector ) = false;
+      hypre_VectorData( localVector ) = const_cast< real64 * >( values.data() );
+      hypre_SeqVectorInitialize_v2( localVector, HYPRE_MEMORY_HOST );
+    }
+
+    // scatter the data
+    hypre_ParVector * const parVector = hypre_VectorToParVector( m_subComm,
+                                                                 localVector,
+                                                                 hypre_ParVectorPartitioning( vec.unwrapped() ) );
+    // copy local part of the data over to the output vector
+    HYPRE_Real const * const parVectorData = hypre_VectorData( hypre_ParVectorLocalVector( parVector ) );
+    if( hypre_ParVectorMemoryLocation( vec.unwrapped() ) == HYPRE_MEMORY_HOST )
+    {
+      std::copy( parVectorData, parVectorData + vec.localSize(), vec.extractLocalVector() );
+    }
+    else
+    {
+#ifdef GEOSX_USE_HYPRE_CUDA
+      cudaMemcpy( vec.extractLocalVector(),
+                  parVectorData,
+                  vec.localSize() * sizeof( HYPRE_Real ),
+                  cudaMemcpyHostToDevice );
 #else
-      std::copy( data, data + vec.globalSize(), values.data() );
+      GEOSX_ERROR( "HypreExport: invalid memory space of target vector" );
 #endif
     }
+
+    GEOSX_LAI_CHECK_ERROR( hypre_ParVectorDestroy( parVector ) );
     GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( localVector ) );
   }
   else
   {
-    real64 const * const data = vec.extractLocalVector();
-#if defined(GEOSX_USE_HYPRE_CUDA)
-    cudaMemcpy( values.data(), data, vec.localSize() * sizeof( HYPRE_Real ), cudaMemcpyDeviceToHost );
-#else
-    std::copy( data, data + vec.globalSize(), values.data() );
-#endif
+    hypre_Vector * const localVector = hypre_ParVectorLocalVector( vec.unwrapped() );
+    importArray( hypre_VectorMemoryLocation( localVector ),
+                 values,
+                 hypre_VectorData( localVector ) );
   }
-}
-
-void HypreExport::importVector( arrayView1d< const real64 > const & values,
-                                HypreVector & vec ) const
-{
-  values.move( LvArray::MemorySpace::host, false );
-  if( m_targetRank >= 0 )
-  {
-
-    if( m_subComm != MPI_COMM_NULL )
-    {
-      int const subRank = MpiWrapper::commRank( m_subComm );
-      int const nSubProc = MpiWrapper::commSize( m_subComm );
-      array1d< globalIndex > globalVecStarts;
-      array1d< real64 > localVector( vec.localSize( ) );
-
-      globalVecStarts.move( LvArray::MemorySpace::host, false );
-      localVector.move( LvArray::MemorySpace::host, false );
-
-      if( subRank == 0 )
-      {
-        globalVecStarts.resize( nSubProc + 1 );
-        globalVecStarts[nSubProc] = vec.globalSize();
-      }
-
-      globalIndex ilower = vec.ilower();
-      MpiWrapper::gather( &ilower,
-                          1,
-                          subRank == 0 ? globalVecStarts.data() : nullptr,
-                          1,
-                          0,
-                          m_subComm );
-
-      MPI_Request request;
-      if( subRank == 0 )
-      {
-        for( int p = 1; p < nSubProc; ++p )
-        {
-          MpiWrapper::iSend( values.data() + globalVecStarts[p],
-                             globalVecStarts[p+1] - globalVecStarts[p],
-                             p,
-                             0,
-                             m_subComm,
-                             &request );
-
-
-        }
-        std::copy( values.data(), values.data() + vec.localSize(), localVector.data() );
-      }
-      else
-      {
-        MpiWrapper::recv( localVector,
-                          0,
-                          0,
-                          m_subComm,
-                          MPI_STATUS_IGNORE );
-      }
-
-#if defined(GEOSX_USE_HYPRE_CUDA)
-      cudaMemcpy( vec.extractLocalVector(), localVector.data(), localVector.size() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice );
-#else
-      std::copy( localVector.data(), localVector.data() + localVector.size(), vec.extractLocalVector() );
-#endif
-
-
-    }
-  }
-  else
-  {
-#if defined(GEOSX_USE_HYPRE_CUDA)
-    cudaMemcpy( vec.extractLocalVector(), values.data(), values.size() * sizeof( HYPRE_Real ), cudaMemcpyHostToDevice );
-#else
-    std::copy( values.data(), values.data() + values.size(), vec.extractLocalVector() );
-#endif
-  }
-
 }
 
 /**

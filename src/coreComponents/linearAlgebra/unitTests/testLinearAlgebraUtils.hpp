@@ -152,57 +152,58 @@ void compute2DLaplaceOperator( MPI_Comm comm,
   globalIndex const iupper = ilower + localRowSize + ( rank == 0 ? rowResidual : 0 );
 
   // Loop over rows to fill the matrix
-  forAll< parallelDevicePolicy<> >( iupper - ilower, [=] GEOSX_HOST_DEVICE ( globalIndex const iRow )
+  forAll< parallelDevicePolicy<> >( LvArray::integerConversion< localIndex >( iupper - ilower ),
+                                    [matrixView, n, N, ilower] GEOSX_HOST_DEVICE ( localIndex const localRow )
   {
 
     // Allocate arrays to fill the matrix (values and columns)
     real64 values[5];
     globalIndex cols[5];
 
-    globalIndex const i = iRow + ilower;
+    globalIndex const globalRow = localRow + ilower;
 
-    // Re-set the number of non-zeros for row i to 0.
+    // Re-set the number of non-zeros for row globalRow to 0.
     localIndex nnz = 0;
 
-    // The left -n: position i-n
-    if( i - n >= 0 )
+    // The left -n: position globalRow-n
+    if( globalRow - n >= 0 )
     {
-      cols[nnz] = i - n;
+      cols[nnz] = globalRow - n;
       values[nnz] = -1.0;
-      nnz++;
+      ++nnz;
     }
 
-    // The left -1: position i-1
-    if( i - 1 >= 0 )
+    // The left -1: position globalRow-1
+    if( globalRow - 1 >= 0 )
     {
-      cols[nnz] = i - 1;
+      cols[nnz] = globalRow - 1;
       values[nnz] = -1.0;
-      nnz++;
+      ++nnz;
     }
 
-    // Set the diagonal: position i
-    cols[nnz] = i;
+    // Set the diagonal: position globalRow
+    cols[nnz] = globalRow;
     values[nnz] = 4.0;
-    nnz++;
+    ++nnz;
 
-    // The right +1: position i+1
-    if( i + 1 < N )
+    // The right +1: position globalRow+1
+    if( globalRow + 1 < N )
     {
-      cols[nnz] = i + 1;
+      cols[nnz] = globalRow + 1;
       values[nnz] = -1.0;
-      nnz++;
+      ++nnz;
     }
 
-    // The right +n: position i+n
-    if( i + n < N )
+    // The right +n: position globalRow+n
+    if( globalRow + n < N )
     {
-      cols[nnz] = i + n;
+      cols[nnz] = globalRow + n;
       values[nnz] = -1.0;
-      nnz++;
+      ++nnz;
     }
 
-    // Set the values for row i
-    matrixView.insertNonZeros( LvArray::integerConversion< localIndex >( i - ilower ), cols, values, nnz );
+    // Set the values for row globalRow
+    matrixView.insertNonZeros( localRow, cols, values, nnz );
   } );
 
   // Construct the 2D Laplace matrix
@@ -477,41 +478,11 @@ void compute2DElasticityOperator( MPI_Comm const comm,
 
   // Construct the 2D elasticity (plane strain) operator
   elasticity2D.create( matrix.toViewConst(), comm );
-
-//  //////////////////////////
-//  elasticity2D.write("mat.mtx");
-//  GEOSX_ERROR("Stop here");
-//  //////////////////////////
 }
 
 ///@}
 
 } // namespace testing
 } // namespace geosx
-
-
-#define TYPED_TEST_P2( SuiteName, TestName )                             \
-  namespace GTEST_SUITE_NAMESPACE_( SuiteName ) {                       \
-    template< typename gtest_TypeParam_ >                              \
-    class TestName : public SuiteName< gtest_TypeParam_ > {             \
-private:                                                         \
-      typedef SuiteName< gtest_TypeParam_ > TestFixture;                \
-      typedef gtest_TypeParam_ TypeParam;                             \
-      void TestBody() override;                                       \
-public:                                                           \
-      void TestBody2();                                               \
-    };                                                                \
-    static bool gtest_ ## TestName ## _defined_ GTEST_ATTRIBUTE_UNUSED_ = \
-      GTEST_TYPED_TEST_SUITE_P_STATE_( SuiteName ).AddTestName(       \
-        __FILE__, __LINE__, GTEST_STRINGIFY_( SuiteName ),          \
-        GTEST_STRINGIFY_( TestName ));                              \
-  }                                                                   \
-  template< typename gtest_TypeParam_ >                                \
-  void GTEST_SUITE_NAMESPACE_(                                        \
-    SuiteName ) ::TestName< gtest_TypeParam_ >::TestBody() {            \
-    TestBody2(); }                                                    \
-  template< typename gtest_TypeParam_ >                                \
-  void GTEST_SUITE_NAMESPACE_(                                        \
-    SuiteName ) ::TestName< gtest_TypeParam_ >::TestBody2()
 
 #endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP_

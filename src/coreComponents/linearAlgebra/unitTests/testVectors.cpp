@@ -285,93 +285,7 @@ TYPED_TEST_P( VectorTest, localGlobalRowID )
   }
 }
 
-TYPED_TEST_P( VectorTest, getSingleValue )
-{
-  using Vector = typename TypeParam::ParallelVector;
-
-  localIndex const localSize = 3;
-  array1d< real64 > const localValues = makeLocalValuesUniform( 3 );
-  array1d< real64 > const localValuesCopy = localValues;
-
-  Vector x;
-  x.create( localValues, MPI_COMM_GEOSX );
-
-  for( localIndex i = 0; i < localSize; ++i )
-  {
-    EXPECT_EQ( x.get( x.getGlobalRowID( i ) ), localValuesCopy[i] );
-  }
-}
-
-TYPED_TEST_P( VectorTest, getMultipleValues )
-{
-  using Vector = typename TypeParam::ParallelVector;
-
-  localIndex const localSize = 3;
-  array1d< real64 > const valuesInitial = makeLocalValuesUniform( 3 );
-
-  Vector x;
-  x.create( valuesInitial, MPI_COMM_GEOSX );
-
-  array1d< globalIndex > const rowIndices( localSize );
-  array1d< real64 > const valuesExtracted( localSize );
-
-  for( localIndex i = 0; i < localSize; ++i )
-  {
-    rowIndices[i] = x.getGlobalRowID( i );
-  }
-
-  x.get( rowIndices, valuesExtracted );
-  compareValues( valuesExtracted, valuesInitial );
-}
-
-TYPED_TEST_P( VectorTest, setSingleValue )
-{
-  using Vector = typename TypeParam::ParallelVector;
-
-  localIndex const localSize = 3;
-
-  Vector x;
-  x.createWithLocalSize( localSize, MPI_COMM_GEOSX );
-
-  x.open();
-  for( localIndex i = 0; i < localSize; ++i )
-  {
-    x.set( x.getGlobalRowID( i ), x.ilower() + i );
-  }
-  x.close();
-
-  for( localIndex i = 0; i < localSize; ++i )
-  {
-    EXPECT_EQ( x.get( x.getGlobalRowID( i ) ), x.ilower() + i );
-  }
-}
-
-TYPED_TEST_P( VectorTest, addSingleValue )
-{
-  using Vector = typename TypeParam::ParallelVector;
-
-  localIndex const localSize = 3;
-
-  Vector x;
-  x.createWithLocalSize( localSize, MPI_COMM_GEOSX );
-  x.set( 1.0 );
-
-  x.open();
-  for( localIndex i = 0; i < localSize; ++i )
-  {
-    x.add( x.getGlobalRowID( i ), x.ilower() + i );
-  }
-  x.close();
-
-  for( localIndex i = 0; i < localSize; ++i )
-  {
-    EXPECT_EQ( x.get( x.getGlobalRowID( i ) ), 1.0 + x.ilower() + i );
-  }
-}
-
-//}
-
-TYPED_TEST_P2( VectorTest, setAllValues )
+TYPED_TEST_P( VectorTest, setAllValues )
 {
   using Vector = typename TypeParam::ParallelVector;
 
@@ -564,10 +478,6 @@ REGISTER_TYPED_TEST_SUITE_P( VectorTest,
                              copy,
                              extract,
                              localGlobalRowID,
-                             getSingleValue,
-                             getMultipleValues,
-                             setSingleValue,
-                             addSingleValue,
                              setAllValues,
                              zeroAllValues,
                              scaleValues,

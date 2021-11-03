@@ -544,10 +544,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
                            localPatternExpected );
   }
   patternExpected.create( localPatternExpected.toViewConst(), MPI_COMM_GEOSX );
-//  patternExpected.close();
 
-//  pattern.print(std::cout);
-//  patternExpected.print(std::cout);
   // Compare the sparsity patterns
   pattern.set( 1.0 );
   patternExpected.set( 1.0 );

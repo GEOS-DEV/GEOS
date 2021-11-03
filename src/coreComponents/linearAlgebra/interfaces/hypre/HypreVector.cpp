@@ -235,10 +235,6 @@ void HypreVector::set( globalIndex const * globalIndices,
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices, globalIndices + size ), ilower() );
   GEOSX_LAI_ASSERT_GE( iupper(), getLocalRowID( *std::max_element( globalIndices, globalIndices + size ) ) );
-//  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector,
-//                                                  LvArray::integerConversion< HYPRE_Int >( size ),
-//                                                  hypre::toHypreBigInt( globalIndices ),
-//                                                  values ) );
 
   HYPRE_Real * const local_data = hypre_VectorData( hypre_ParVectorLocalVector ( m_par_vector ) );
 
