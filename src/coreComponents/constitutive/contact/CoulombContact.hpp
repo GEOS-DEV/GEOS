@@ -140,9 +140,6 @@ public:
     /// string/key for cohesion
     static constexpr char const * cohesionString() { return "cohesion"; }
 
-    /// string/key for friction angle input (in radians)
-    static constexpr char const * frictionAngleString() { return "frictionAngle"; }
-
     /// string/key for friction coefficient
     static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
 
@@ -181,9 +178,6 @@ private:
 
   /// The cohesion for each upper level dimension (i.e. cell) of *this
   real64 m_cohesion;
-
-  /// The friction angle for each upper level dimension (i.e. cell) of *this
-  real64 m_frictionAngle;
 
   /// The friction coefficient for each upper level dimension (i.e. cell) of *this
   real64 m_frictionCoefficient;

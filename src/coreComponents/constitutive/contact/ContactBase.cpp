@@ -77,8 +77,7 @@ void ContactBase::postProcessInput()
 }
 
 void ContactBase::initializePreSubGroups()
-{
-}
+{}
 
 
 void ContactBase::allocateConstitutiveData( Group & parent,

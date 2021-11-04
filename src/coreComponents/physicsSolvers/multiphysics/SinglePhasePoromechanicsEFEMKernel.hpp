@@ -632,9 +632,7 @@ struct StateUpdateKernel
       deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
 
       // traction on the fracture to include the pressure contribution
-      bool const isOpen = ( aperture[k] >= 0 );
       contactWrapper.addPressureToTraction( pressure[k] + deltaPressure[k],
-                                            isOpen,
                                             fractureTraction[k],
                                             dFractureTraction_dPressure[k] );
     } );

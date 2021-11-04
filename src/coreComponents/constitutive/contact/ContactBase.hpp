@@ -85,7 +85,8 @@ public:
                                 arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump ) const = 0;
+                                arraySlice2d< real64 > const & dTractionVector_dJump ) const
+  {GEOSX_UNUSED_VAR( k, oldDispJump, dispJump, tractionVector, dTractionVector_dJump );}
 
   /**
    * @brief Update the traction with the pressure term
@@ -98,7 +99,6 @@ public:
   GEOSX_HOST_DEVICE
   inline
   virtual void addPressureToTraction( real64 const & pressure,
-                                      bool const isOpen,
                                       arraySlice1d< real64 >const & tractionVector,
                                       real64 & dTraction_dPressure ) const;
 
@@ -111,7 +111,8 @@ public:
   GEOSX_HOST_DEVICE
   inline
   virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
-                                                     real64 & dLimitTangentialTractionNorm_dTraction ) const = 0;
+                                                     real64 & dLimitTangentialTractionNorm_dTraction ) const
+  { GEOSX_UNUSED_VAR(normalTraction, dLimitTangentialTractionNorm_dTraction); return 0; };
 
 protected:
 
@@ -223,7 +224,6 @@ real64 ContactBaseUpdates::computeEffectiveAperture( real64 const aperture,
 
 GEOSX_HOST_DEVICE
 void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
-                                                bool const isOpen,
                                                 arraySlice1d< real64 > const & tractionVector,
                                                 real64 & dTraction_dPressure ) const
 {

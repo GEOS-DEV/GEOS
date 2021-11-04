@@ -16,8 +16,8 @@
  * @file FrictionlessContact.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONTACT_CONTACTBASE_HPP_
-#define GEOSX_CONSTITUTIVE_CONTACT_CONTACTBASE_HPP_
+#ifndef GEOSX_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_
+#define GEOSX_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_
 
 #include "constitutive/contact/ContactBase.hpp"
 
@@ -39,9 +39,7 @@ public:
   FrictionlessContactUpdates( real64 const & penaltyStiffness,
                               real64 const & shearStiffness,
                               TableFunction const & apertureTable )
-    : m_penaltyStiffness( penaltyStiffness ),
-    m_shearStiffness( shearStiffness ),
-    m_apertureTable( apertureTable.createKernelWrapper() )
+    : ContactBaseUpdates(penaltyStiffness, shearStiffness, apertureTable )
   {}
 
   /// Default copy constructor
@@ -136,8 +134,7 @@ public:
    * @struct Structure to hold scoped key names
    */
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
-  {
-  };
+  {};
 
 protected:
 
@@ -165,4 +162,4 @@ void FrictionlessContactUpdates::computeTraction( localIndex const k,
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_CONTACT_CONTACTBASE_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_ */
