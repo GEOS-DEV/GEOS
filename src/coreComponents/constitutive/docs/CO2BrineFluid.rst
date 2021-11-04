@@ -274,7 +274,7 @@ Example
           phaseNames="{ gas, water }"
           componentNames="{ co2, water }"
           componentMolarWeight="{ 44e-3, 18e-3 }"
-          phasePVTParaFiles="{ pvtgas.txt, pvtliquidphillips.txt }"
+          phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
           flashModelParaFile="co2flash.txt"/>
     </Constitutive>
 
@@ -287,14 +287,13 @@ Example
           phaseNames="{ gas, water }"
           componentNames="{ co2, water }"
           componentMolarWeight="{ 44e-3, 18e-3 }"
-          phasePVTParaFiles="{ pvtgas.txt, pvtliquidezrokhi.txt }"
+          phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
           flashModelParaFile="co2flash.txt"/>
     </Constitutive>
 
 In the XML code listed above, "co2flash.txt" parameterizes the CO2 solubility table constructed in Step 1.
 The file "pvtgas.txt" parameterizes the CO2 phase density and viscosity tables constructed in Step 2, 
-the file "pvtliquidphillips.txt" parameterizes the brine density and viscosity tables according to Phillips corellation,
-while the file "pvtliquidezrokhi.txt" parameterizes the brine density and viscosity tables according to Ezrokhi corellation.
+the file "pvtliquid.txt" parameterizes the brine density and viscosity tables according to Phillips or Ezrokhi corellation, depending on chosen fluid model.
     
 References
 ==========

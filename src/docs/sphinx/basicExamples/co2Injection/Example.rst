@@ -178,7 +178,7 @@ The trailing 0 defines a zero-salinity in the model.
 Note that the water component is not allowed to evaporate into the CO :sub:`2` -rich phase.
 
 
-The *pvtgas.txt* and *pvtliquidphillips.txt* files define the models used to compute the density and viscosity of the two phases, as follows:
+The *pvtgas.txt* and *pvtliquid.txt* files define the models used to compute the density and viscosity of the two phases, as follows:
 
 .. code:: 
 
