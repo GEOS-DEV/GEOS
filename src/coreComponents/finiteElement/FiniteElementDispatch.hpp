@@ -26,6 +26,7 @@
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
+#include "virtualElement/ConformingVirtualElementOrder1.hpp"
 #include "LvArray/src/system.hpp"
 
 
@@ -56,6 +57,22 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr4 );
   }
+  else if( auto const * const ptr5 = dynamic_cast< ConformingVirtualElementOrder1< 4, 4 > const * >(&input) ) // VEM on Tetrahedron
+  {
+    lambda( *ptr5 );
+  }
+  else if( auto const * const ptr6 = dynamic_cast< ConformingVirtualElementOrder1< 5, 5 > const * >(&input) ) // VEM on Pyramid
+  {
+    lambda( *ptr6 );
+  }
+  else if( auto const * const ptr7 = dynamic_cast< ConformingVirtualElementOrder1< 6, 5 > const * >(&input) ) // VEM on Prism / Wedge
+  {
+    lambda( *ptr7 );
+  }
+  else if( auto const * const ptr8 = dynamic_cast< ConformingVirtualElementOrder1< 8, 6 > const * >(&input) ) // VEM on Hexahedron
+  {
+    lambda( *ptr8 );
+  }
   else
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
@@ -83,6 +100,22 @@ dispatch3D( FiniteElementBase & input,
   else if( auto * const ptr4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 * >(&input) )
   {
     lambda( *ptr4 );
+  }
+  else if( auto * const ptr5 = dynamic_cast< ConformingVirtualElementOrder1< 4, 4 > * >(&input) ) // VEM on Tetrahedron
+  {
+    lambda( *ptr5 );
+  }
+  else if( auto * const ptr6 = dynamic_cast< ConformingVirtualElementOrder1< 5, 5 > * >(&input) ) // VEM on Pyramid
+  {
+    lambda( *ptr6 );
+  }
+  else if( auto * const ptr7 = dynamic_cast< ConformingVirtualElementOrder1< 6, 5 > * >(&input) ) // VEM on Prism / Wedge
+  {
+    lambda( *ptr7 );
+  }
+  else if( auto * const ptr8 = dynamic_cast< ConformingVirtualElementOrder1< 8, 6 > * >(&input) ) // VEM on Hexahedron
+  {
+    lambda( *ptr8 );
   }
   else
   {

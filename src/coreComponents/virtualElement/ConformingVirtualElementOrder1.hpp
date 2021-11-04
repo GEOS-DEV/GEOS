@@ -184,14 +184,32 @@ public:
                        stack.basisDerivativesIntegralMean );
   }
 
+  // TO BE REMOVED
   GEOSX_HOST_DEVICE
-  void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
-              real64 ( & N )[maxSupportPoints] ) const
+  void DEPRcalcN( localIndex const GEOSX_UNUSED_PARAM( q ),
+                  real64 ( & N )[maxSupportPoints] ) const
   {
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
       N[i] = m_basisFunctionsIntegralMean[i];
     }
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
+                     real64 ( & N )[maxSupportPoints] )
+  {
+    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+  }
+
+  GEOSX_HOST_DEVICE
+  static real64 invJacobianTransformation( int const GEOSX_UNUSED_PARAM( q ),
+                                           real64 const (&GEOSX_UNUSED_PARAM( X ))[numNodes][3],
+                                           real64 ( &GEOSX_UNUSED_PARAM( J ) )[3][3] )
+  {
+    GEOSX_ERROR( "No reference element map is defined for VEM classes" );
+    return 0.0;
   }
 
   GEOSX_HOST_DEVICE
@@ -207,9 +225,20 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  real64 calcGradN( localIndex const q,
-                    real64 const ( &X )[maxSupportPoints][3],
-                    real64 ( & gradN )[maxSupportPoints][3] ) const
+  GEOSX_FORCE_INLINE
+  static real64 calcGradN( localIndex const GEOSX_UNUSED_PARAM( q ),
+                           real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3],
+                           real64 ( &GEOSX_UNUSED_PARAM( gradN ) )[maxSupportPoints][3] )
+  {
+    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    return 0.0;
+  }
+
+  // TO BE REMOVED
+  GEOSX_HOST_DEVICE
+  real64 DEPRcalcGradN( localIndex const q,
+                        real64 const ( &X )[maxSupportPoints][3],
+                        real64 ( & gradN )[maxSupportPoints][3] ) const
   {
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {

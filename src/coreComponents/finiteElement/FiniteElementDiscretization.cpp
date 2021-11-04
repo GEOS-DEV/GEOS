@@ -69,10 +69,50 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     {
       case ElementType::Triangle:      return std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
       case ElementType::Quadrilateral: return std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
-      case ElementType::Tetrahedron:    return std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
-      case ElementType::Pyramid:       return std::make_unique< H1_Pyramid_Lagrange1_Gauss5 >();
-      case ElementType::Prism:         return std::make_unique< H1_Wedge_Lagrange1_Gauss6 >();
-      case ElementType::Hexahedron:    return std::make_unique< H1_Hexahedron_Lagrange1_GaussLegendre2 >();
+      case ElementType::Tetrahedron:
+      {
+        if( m_useVem == 1 )
+        {
+          return std::make_unique< ConformingVirtualElementOrder1< 4, 4 > >();
+        }
+        else
+        {
+          return std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
+        }
+      }
+      case ElementType::Pyramid:
+      {
+        if( m_useVem == 1 )
+        {
+          return std::make_unique< ConformingVirtualElementOrder1< 5, 5 > >();
+        }
+        else
+        {
+          return std::make_unique< H1_Pyramid_Lagrange1_Gauss5 >();
+        }
+      }
+      case ElementType::Prism:
+      {
+        if( m_useVem == 1 )
+        {
+          return std::make_unique< ConformingVirtualElementOrder1< 6, 5 > >();
+        }
+        else
+        {
+          return std::make_unique< H1_Wedge_Lagrange1_Gauss6 >();
+        }
+      }
+      case ElementType::Hexahedron:
+      {
+        if( m_useVem == 1 )
+        {
+          return std::make_unique< ConformingVirtualElementOrder1< 8, 6 > >();
+        }
+        else
+        {
+          return std::make_unique< H1_Hexahedron_Lagrange1_GaussLegendre2 >();
+        }
+      }
       default:
       {
         GEOSX_ERROR( "Element type " << parentElementShape << " does not have an associated element formulation." );
