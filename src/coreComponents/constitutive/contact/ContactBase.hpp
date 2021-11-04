@@ -85,7 +85,7 @@ public:
                                 arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump ) const;
+                                arraySlice2d< real64 > const & dTractionVector_dJump ) const = 0;
 
   /**
    * @brief Update the traction with the pressure term
@@ -111,8 +111,7 @@ public:
   GEOSX_HOST_DEVICE
   inline
   virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
-                                                     real64 & dLimitTangentialTractionNorm_dTraction ) const
-  { GEOSX_UNUSED_VAR( normalTraction, dLimitTangentialTractionNorm_dTraction ); return 0.0; }
+                                                     real64 & dLimitTangentialTractionNorm_dTraction ) const = 0;
 
 protected:
 
@@ -150,13 +149,6 @@ public:
    * @brief default destructor
    */
   virtual ~ContactBase() override;
-
-  /**
-   * @return A string that is used to register/lookup this class in the registry
-   */
-  static string catalogName() { return "Contact"; }
-
-  virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
@@ -223,22 +215,11 @@ protected:
 };
 
 GEOSX_HOST_DEVICE
-void ContactBaseUpdates::computeTraction( localIndex const k,
-                                          arraySlice1d< real64 const > const & oldDispJump,
-                                          arraySlice1d< real64 const > const & dispJump,
-                                          arraySlice1d< real64 > const & tractionVector,
-                                          arraySlice2d< real64 > const & dTractionVector_dJump ) const
+real64 ContactBaseUpdates::computeEffectiveAperture( real64 const aperture,
+                                                     real64 & dEffectiveAperture_dAperture ) const
 {
-  GEOSX_UNUSED_VAR( k, oldDispJump );
-
-  tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
-  tractionVector[1] = 0.0;
-  tractionVector[2] = 0.0;
-
-  LvArray::forValuesInSlice( dTractionVector_dJump, []( real64 & val ){ val = 0.0; } );
-  dTractionVector_dJump( 0, 0 ) = dispJump[0] >=0 ? 0.0 : m_penaltyStiffness;
+  return m_apertureTable.compute( &aperture, &dEffectiveAperture_dAperture );
 }
-
 
 GEOSX_HOST_DEVICE
 void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
@@ -247,16 +228,9 @@ void ContactBaseUpdates::addPressureToTraction( real64 const & pressure,
                                                 real64 & dTraction_dPressure ) const
 {
   tractionVector[0] -= pressure;
-  dTraction_dPressure = isOpen ? -1.0 : 0.0;
+  dTraction_dPressure = -1.0;
 }
 
-
-GEOSX_HOST_DEVICE
-real64 ContactBaseUpdates::computeEffectiveAperture( real64 const aperture,
-                                                     real64 & dEffectiveAperture_dAperture ) const
-{
-  return m_apertureTable.compute( &aperture, &dEffectiveAperture_dAperture );
-}
 
 } /* namespace constitutive */
 

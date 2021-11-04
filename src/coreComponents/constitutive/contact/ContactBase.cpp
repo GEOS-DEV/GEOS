@@ -145,8 +145,6 @@ ContactBaseUpdates ContactBase::createKernelWrapper() const
                              *m_apertureTable );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ContactBase, string const &, Group * const )
-
 } /* end namespace constitutive */
 
 } /* end namespace geosx */
