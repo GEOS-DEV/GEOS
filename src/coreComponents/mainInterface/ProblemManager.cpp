@@ -411,9 +411,12 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
     // Open mesh levels
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
-    ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-    topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
-    elementManager.processInputFileRecursive( topLevelNode );
+    for( localIndex a = 0; a < domain.getMeshBodies().getSubGroups().size(); ++a )
+    {
+      ElementRegionManager & elementManager = domain.getMeshBody( a ).getMeshLevel( 0 ).getElemManager();
+      topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
+      elementManager.processInputFileRecursive( topLevelNode );
+    }
 
   }
 }
@@ -552,20 +555,23 @@ void ProblemManager::generateMesh()
     }
   }
 
-  GEOSX_THROW_IF_NE( meshBodies.numSubGroups(), 1, InputError );
-  MeshBody & meshBody = meshBodies.getGroup< MeshBody >( 0 );
+  //GEOSX_THROW_IF_NE( meshBodies.numSubGroups(), 1, InputError );
+  for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
+  {
+    MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
 
-  GEOSX_THROW_IF_NE( meshBody.numSubGroups(), 1, InputError );
-  MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( 0 );
+    GEOSX_THROW_IF_NE( meshBody.numSubGroups(), 1, InputError );
+    MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( 0 );
 
-  FaceManager & faceManager = meshLevel.getFaceManager();
-  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+    FaceManager & faceManager = meshLevel.getFaceManager();
+    EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
-  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
-  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
-  domain.setupCommunications( useNonblockingMPI );
-  faceManager.setIsExternal();
-  edgeManager.setIsExternal( faceManager );
+    Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
+    integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+    domain.setupCommunications( useNonblockingMPI );
+    faceManager.setIsExternal();
+    edgeManager.setIsExternal( faceManager );
+  }
 }
 
 
