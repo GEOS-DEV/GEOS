@@ -155,10 +155,17 @@ protected:
                             array1d< array1d< real64 > > const & tableValues );
 
   /**
-   * @brief Check that the table values make sense
+   * @brief Check that the formation volume factor table values make sense
    * @param[in] table the values in the oil or gas table
    */
-  void validateTable( TableFunction const & table ) const;
+  virtual void validateFormationVolumeFactorTable( TableFunction const & table ) const;
+
+  /**
+   * @brief Check that the viscosity table values make sense
+   * @param[in] table the values in the oil or gas table
+   */
+  virtual void validateViscosityTable( TableFunction const & table ) const;
+
 
   /**
    * @brief Check water parameters for correctness.

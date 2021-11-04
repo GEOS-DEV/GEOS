@@ -43,6 +43,19 @@ CompositionalMultiphaseReservoir::CompositionalMultiphaseReservoir( const string
 CompositionalMultiphaseReservoir::~CompositionalMultiphaseReservoir()
 {}
 
+void CompositionalMultiphaseReservoir::postProcessInput()
+{
+  ReservoirSolverBase::postProcessInput();
+
+  integer const & useMassFlow = m_flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
+  integer const & useMassWell = m_wellSolver->getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
+  GEOSX_THROW_IF( useMassFlow != useMassWell,
+                  GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                             getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                             m_flowSolver->getName(), m_wellSolver->getName() ),
+                  InputError );
+}
+
 void CompositionalMultiphaseReservoir::initializePostInitialConditionsPreSubGroups()
 {
   ReservoirSolverBase::initializePostInitialConditionsPreSubGroups();
