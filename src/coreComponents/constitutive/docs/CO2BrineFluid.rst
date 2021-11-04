@@ -11,7 +11,7 @@ Summary
 The CO2-brine model implemented in GEOSX includes two components (CO2 and H2O) that are transported by one or two fluid phases (the brine phase and the CO2 phase).
 We refer to the brine phase with the subscript :math:`\ell` and to the CO2 phase with the subscript :math:`g` (although the CO2 phase can be in supercritical, liquid, or gas state).
 The water component is only present in the brine phase, while the CO2 component can be present in the CO2 phase as well as in the brine phase.
-Thus, considering the phase component fractions, :math:`y_{c,p}` (i.e., the fraction of the mass of phase :math:`p` represented by component :math:`c`) the following partition matrix determines the component distribution within the two phases:
+Thus, considering the molar phase component fractions, :math:`y_{c,p}` (i.e., the fraction of the molar mass of phase :math:`p` represented by component :math:`c`) the following partition matrix determines the component distribution within the two phases:
 
 .. math::
     \begin{bmatrix}
@@ -57,10 +57,10 @@ Using the reduced volume, :math:`V_r`, we compute the fugacity coefficient of CO
 To conclude this preprocessing step, we use the fugacity coefficient of CO2 to compute and store the solubility of CO2 in brine, :math:`s_{CO2}`, using equation (6) of Duan and Sun (2003):
 
 .. math::
-   \ln \frac{ x_{CO2} P }{ s_{CO2} } = \frac{\Phi_{CO2}}{RT} - \ln_{\phi}(p,T) + \sum_c 2 \lambda_c m + \sum_a 2 \lambda_a m + \sum_{a,c} \zeta_{a,c} m^2
+   \ln \frac{ y_{CO2} P }{ s_{CO2} } = \frac{\Phi_{CO2}}{RT} - \ln_{\phi}(p,T) + \sum_c 2 \lambda_c m + \sum_a 2 \lambda_a m + \sum_{a,c} \zeta_{a,c} m^2
 
 where :math:`\Phi_{CO2}` is the chemical potential of the CO2 component, :math:`R` is the gas constant, and :math:`m` is the salinity.
-The mole fraction of CO2 in the vapor phase, :math:`x_{CO2}`, is computed with equation (4) of Duan and Sun (2003).
+The mole fraction of CO2 in the vapor phase, :math:`y_{CO2}`, is computed with equation (4) of Duan and Sun (2003).
 Note that the first, third, fourth, and fifth terms in the equation written above are approximated using equation (7) of Duan and Sun (2003) as recommended by the authors.
 
 During the simulation, Step 1 starts with a look-up in the precomputed table to get the CO2 solubility, :math:`s_{CO2}`, as a function of pressure and temperature.
@@ -194,7 +194,7 @@ Brine density and viscosity using Ezrokhi correllation
 Brine density :math:`\rho_l` is computed from pure water density :math:`\rho_w` at specified pressure and temperature corrected by Ezrokhi corellation presented in Zaytsev and Aseyev (1993):
 
 .. math::
-   log_{10}(\rho_l) &= log_{10}(\rho_w(P, T)) + A(T) y_{CO2,\ell} \\
+   log_{10}(\rho_l) &= log_{10}(\rho_w(P, T)) + A(T) x_{CO2,\ell} \\
    A(T) &= a_0 + a_1T +  a_2T^2,
 
 where :math:`a_0, a_1, a_2` are corellation coefficients defined by user:
@@ -202,6 +202,11 @@ where :math:`a_0, a_1, a_2` are corellation coefficients defined by user:
 +------------+----------------------+-------------+-------------+-------------+
 | DensityFun | EzrokhiBrineDensity  | :math:`a_0` | :math:`a_1` | :math:`a_2` |
 +------------+----------------------+-------------+-------------+-------------+
+
+While :math:`x_{CO2,\ell}` is mass fraction of CO2 component in brine, computed from molar fractions as
+
+.. math::
+   x_{CO2,\ell} = \frac{M_{CO2}y_{CO2,\ell}}{M_{CO2}y_{CO2,\ell} + M_{H2O}y_{H2O,\ell}},
 
 Pure water density is computed according to:
 
@@ -214,7 +219,7 @@ Both are obtained through internally constructed tables tabulated as functions o
 Brine viscosity :math:`\mu_l` is computed from pure water viscosity :math:`\mu_w` similarly:
 
 .. math::
-   log_{10}(\mu_l) &= log_{10}(\mu_w(P, T)) + B(T) y_{CO2,\ell} \\
+   log_{10}(\mu_l) &= log_{10}(\mu_w(P, T)) + B(T) x_{CO2,\ell} \\
    B(T) &= b_0 + b_1T +  b_2T^2,
 
 where :math:`b_0, b_1, b_2` are corellation coefficients defined by user:
@@ -223,7 +228,7 @@ where :math:`b_0, b_1, b_2` are corellation coefficients defined by user:
 | ViscosityFun | EzrokhiBrineViscosity  | :math:`b_0` | :math:`b_1` | :math:`b_2` |
 +--------------+------------------------+-------------+-------------+-------------+
 
-The dependency of pure water viscosity from pressure is ignored, and it is approximated as saturated pure water viscosity:
+Mass fraction of CO2 component in brine :math:`x_{CO2,\ell}` is exactly as in density calculation. The dependency of pure water viscosity from pressure is ignored, and it is approximated as saturated pure water viscosity:
 
 .. math::
    \mu_w(P, T) = \mu_{w, sat} (T),

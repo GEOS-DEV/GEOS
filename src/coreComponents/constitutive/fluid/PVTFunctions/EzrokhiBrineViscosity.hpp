@@ -161,8 +161,13 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
 {
   GEOSX_UNUSED_VAR( pressure, useMass );
   real64 const waterVisc = m_waterViscosityTable.compute( &temperature );
+  // we have to convert molar component phase fraction (phaseComposition[m_CO2Index]) to mass fraction
+  real64 const massPhaseCompositionCO2 = phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index] /
+                                         ( phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index] +
+                                           phaseComposition[m_waterIndex] * m_componentMolarWeight[m_waterIndex]);
 
-  value = ( m_coef0  + temperature * ( m_coef1 + m_coef2 * temperature ) ) * phaseComposition[m_CO2Index];
+
+  value = ( m_coef0  + temperature * ( m_coef1 + m_coef2 * temperature ) ) * massPhaseCompositionCO2;
   value = waterVisc * pow( 10, value );
 }
 
@@ -185,12 +190,23 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
   real64 const waterVisc = m_waterViscosityTable.compute( &temperature, &waterVisc_dTemperature );
 
   real64 const coefPhaseComposition = m_coef0 + temperature * ( m_coef1 + m_coef2 * temperature );
-  real64 const exponent = coefPhaseComposition * phaseComposition[m_CO2Index];
+
+  // we have to convert molar component phase fraction (phaseComposition[m_CO2Index]) to mass fraction
+  real64 const waterMWInv = 1.0 / (phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index]
+                                   + phaseComposition[m_waterIndex] * m_componentMolarWeight[m_waterIndex]);
+
+  real64 const massPhaseCompositionCO2 = phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index] * waterMWInv;
+
+  real64 const exponent = coefPhaseComposition * massPhaseCompositionCO2;
 
   real64 const exponent_dPressure = coefPhaseComposition * dPhaseComposition_dPressure[m_CO2Index];
   real64 const exponent_dTemperature = coefPhaseComposition * dPhaseComposition_dTemperature[m_CO2Index] +
-                                       ( m_coef1 + 2 * m_coef2 * temperature) * phaseComposition[m_CO2Index];
-  real64 const exponent_dPhaseComp = coefPhaseComposition;
+                                       ( m_coef1 + 2 * m_coef2 * temperature) * massPhaseCompositionCO2;
+
+  // compute only common part of derivatives w.r.t. CO2 and water phase compositions
+  // later to be multiplied by (phaseComposition[m_waterIndex]) and ( -phaseComposition[m_CO2Index] ) respectively
+  real64 const exponent_dPhaseComp = coefPhaseComposition * m_componentMolarWeight[m_CO2Index] * m_componentMolarWeight[m_waterIndex] * waterMWInv * waterMWInv;
+
   real64 const exponentPowered = pow( 10, exponent );
 
   value = waterVisc * exponentPowered;
@@ -200,8 +216,9 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
   dValue_dPressure = dValueCoef * exponent_dPressure;
   dValue_dTemperature = dValueCoef * exponent_dTemperature + waterVisc_dTemperature * exponentPowered;
 
-  dValue_dGlobalCompFraction[m_CO2Index] = dValue_dPhaseComp * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_CO2Index];
-  dValue_dGlobalCompFraction[m_waterIndex] = dValue_dPhaseComp * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_waterIndex];
+  // here, we multiply common part of derivatives by specific coefficients
+  dValue_dGlobalCompFraction[m_CO2Index] = dValue_dPhaseComp * phaseComposition[m_waterIndex] * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_CO2Index];
+  dValue_dGlobalCompFraction[m_waterIndex] = dValue_dPhaseComp * ( -phaseComposition[m_CO2Index] ) * dPhaseComposition_dGlobalCompFraction[m_waterIndex][m_waterIndex];
 }
 
 } // end namespace PVTProps
