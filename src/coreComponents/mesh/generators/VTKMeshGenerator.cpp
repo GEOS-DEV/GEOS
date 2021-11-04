@@ -658,66 +658,70 @@ void importFieldOnCellBlock( string const & name, std::vector<vtkIdType > const 
                              ElementRegionManager & elemManager,
                              std::vector< vtkDataArray * > const & arraysTobeImported)
 {
-  assert(region_id >= -1);
-  string const cellBlockName = region_id != -1 ? std::to_string(region_id) + "_" + name : name;
-  elemManager.forElementSubRegions<CellElementSubRegion>([&](CellElementSubRegion &subRegion)
-                                                         {
-                                                           if (subRegion.getName() == cellBlockName)
-                                                           {
-                                                             /// Writing properties
-                                                             std::unordered_set<string> const materialWrapperNames = getMaterialWrapperNames(subRegion);
-                                                             for (string namee : materialWrapperNames)
-                                                             {
-                                                               GEOSX_LOG_RANK_0(namee);
-                                                             }
-                                                             for (vtkDataArray *vtkArray : arraysTobeImported)
-                                                             {
-                                                               WrapperBase &wrapper = subRegion.getWrapperBase(vtkArray->GetName());
-                                                               GEOSX_LOG_RANK_0("name of the array " << vtkArray->GetName());
-                                                               GEOSX_LOG_RANK_0("wrapper.numArrayDims() = " << wrapper.numArrayDims());
-                                                               if (materialWrapperNames.count(vtkArray->GetName()) > 0 && wrapper.numArrayDims() > 1)
-                                                               {
-                                                                 GEOSX_LOG_RANK_0("going in with : " << vtkArray->GetName());
-                                                                 using ImportTypes = types::ArrayTypes<types::RealTypes, types::DimsRange<2, 3>>;
-                                                                 types::dispatch(ImportTypes{}, wrapper.getTypeId(), true, [&](auto array)
-                                                                                 {
-                                                                                   using ArrayType = decltype(array);
-                                                                                   Wrapper<ArrayType> &wrapperT = Wrapper<ArrayType>::cast(wrapper);
-                                                                                   auto const view = wrapperT.reference().toView();
+  assert(region_id >= -1 );
+  string const cellBlockName = region_id != -1  ? std::to_string(region_id) + "_" + name : name;
+  elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+  {
+    if( subRegion.getName() == cellBlockName)
+    {
+      /// Writing properties
+      std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
+      for( string namee : materialWrapperNames )
+      {
+        GEOSX_LOG_RANK_0(namee);
+      }
+      for( vtkDataArray * vtkArray : arraysTobeImported )
+      {
+        WrapperBase & wrapper = subRegion.getWrapperBase( vtkArray->GetName() );
+        GEOSX_LOG_RANK_0("name of the array " << vtkArray->GetName());
+        GEOSX_LOG_RANK_0( "wrapper.numArrayDims() = " << wrapper.numArrayDims() );
+        if( materialWrapperNames.count( vtkArray->GetName() ) > 0 && wrapper.numArrayDims() > 1 )
+        {
+          GEOSX_LOG_RANK_0("going in with : " << vtkArray->GetName());
+          using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > >;
+          types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
+          {
+            using ArrayType = decltype( array );
+            Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
+            auto const view = wrapperT.reference().toView();
 
-                                                                                   localIndex cellCount = 0;
-                                                                                   for (vtkIdType c : cellIds)
-                                                                                   {
-                                                                                     int comp = 0;
-                                                                                     LvArray::forValuesInSlice(view[cellCount++], [&](auto &val)
-                                                                                                               { val = vtkArray->GetComponent(c, comp++); });
-                                                                                   }
-                                                                                 });
-                                                               }
-                                                               else
-                                                               {
-                                                                 GEOSX_LOG_RANK_0("2going in with : " << vtkArray->GetName());
-                                                                 // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
-                                                                 using ImportTypes = types::ArrayTypes<types::RealTypes, types::DimsRange<1, 2>>;
-                                                                 types::dispatch(ImportTypes{}, wrapper.getTypeId(), true, [&](auto array)
-                                                                                 {
-                                                                                   using ArrayType = decltype(array);
-                                                                                   Wrapper<ArrayType> &wrapperT = Wrapper<ArrayType>::cast(wrapper);
-                                                                                   auto const view = wrapperT.reference().toView();
-                                                                                   for (int i = 0; i < view.size(0); ++i)
-                                                                                   {
-                                                                                     // For material fields, copy identical values into each quadrature point
-                                                                                     for (vtkIdType c : cellIds)
-                                                                                     {
-                                                                                       LvArray::forValuesInSlice(view[i], [&](auto &val)
-                                                                                                                 { val = vtkArray->GetComponent(c, 0); });
-                                                                                     }
-                                                                                   }
-                                                                                 });
-                                                               }
-                                                             }
-                                                           }
-                                                         });
+            localIndex cellCount = 0;
+            for( vtkIdType c : cellIds )
+            {
+              int comp = 0;
+              LvArray::forValuesInSlice( view[cellCount++], [&]( auto & val )
+              {
+                val = vtkArray->GetComponent(c,comp++);
+              } );
+            }
+          });
+        }
+        else
+        {
+          GEOSX_LOG_RANK_0("2going in with : " << vtkArray->GetName());
+          // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
+          using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >;
+          types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
+          {
+            using ArrayType = decltype( array );
+            Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
+            auto const view = wrapperT.reference().toView();
+            for( int i = 0; i < view.size( 0 ); ++i )
+            {
+              // For material fields, copy identical values into each quadrature point
+              for( vtkIdType c : cellIds )
+              {
+                LvArray::forValuesInSlice( view[i], [&]( auto & val )
+                {
+                  val = vtkArray->GetComponent(c,0);
+                } );
+              }
+            }
+          } );
+        }
+      }
+    }
+  });    
 }
 void VTKMeshGenerator::importFields( DomainPartition & domain ) const 
 {
