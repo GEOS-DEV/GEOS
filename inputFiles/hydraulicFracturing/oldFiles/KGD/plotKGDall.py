@@ -4,7 +4,7 @@ import numpy as np
 
 import math
 import matplotlib.pyplot as plt
-import HydrofactureSolutions
+import HydrofractureSolutions
 
 
 
@@ -74,7 +74,7 @@ for i in range(0,numFiles):
 endTime = t_sim[0][-1]
 time = np.arange(0,endTime+1,0.2)
 radTimes = np.array([t_sim[0][-1]])
-hfsolns = HydrofactureSolutions.KGDSolutions()
+hfsolns = HydrofractureSolutions.KGDSolutions()
 solns = hfsolns.Solutions( mu, E, q, KI, time, radTimes, x_source )
 
 rho       = solns[0]
