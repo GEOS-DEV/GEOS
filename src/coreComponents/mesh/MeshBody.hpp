@@ -55,13 +55,17 @@ public:
    */
   MeshLevel & createMeshLevel( localIndex const newLevel );
 
+
+  Group & getMeshLevels() { return m_meshLevels; }
+  Group const & getMeshLevels() const { return m_meshLevels; }
+
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to MeshLevel
    */
   MeshLevel & getMeshLevel( localIndex const level )
-  { return this->getGroup< MeshLevel >( level ); }
+  { return m_meshLevels.getGroup< MeshLevel >( intToMeshLevelString(level) ); }
 
   /**
    * @brief Get mesh level
@@ -69,7 +73,20 @@ public:
    * @return pointer to const MeshLevel
    */
   MeshLevel const & getMeshLevel( localIndex const level ) const
-  { return this->getGroup< MeshLevel >( level ); }
+  { return m_meshLevels.getGroup< MeshLevel >( intToMeshLevelString(level) ); }
+
+
+  template< typename FUNCTION >
+  void forMeshLevels( FUNCTION && function ) const
+  {
+    m_meshLevels.forSubGroups<MeshLevel>( std::forward<FUNCTION>(function) );
+  }
+
+  template< typename FUNCTION >
+  void forMeshLevels( FUNCTION && function )
+  {
+    m_meshLevels.forSubGroups<MeshLevel>( std::forward<FUNCTION>(function) );
+  }
 
   /**
    * @brief Set mesh length scale used to define an absolute length tolerance
@@ -91,21 +108,25 @@ public:
    */
   struct viewKeysStruct
   {
-    /// The key for MeshLevel
-    dataRepository::ViewKey meshLevels                = { "meshLevels" };
   } viewKeys; ///< viewKeys
 
   /**
    * @brief Group keys
    */
   struct groupStructKeys
-  {} groupKeys; ///< groupKeys
+  {
+    static constexpr char const * meshLevelsString() {return "meshLevels"; }
+  } groupKeys; ///< groupKeys
 
 private:
+  Group & m_meshLevels;
+
   /// Mesh length scale used to define an absolute length tolerance
   /// The default value can be set to another value
   real64 m_globalLengthScale { 0. };
 
+
+  string intToMeshLevelString( localIndex const meshLevel ) const;
 
 };
 

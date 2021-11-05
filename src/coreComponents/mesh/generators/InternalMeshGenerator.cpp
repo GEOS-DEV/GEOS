@@ -566,14 +566,13 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
-  MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
+  MeshBody & meshBody = domain.getMeshBody( this->getName() );
+  MeshLevel & meshLevel0 = meshBody.getMeshLevel( 0 );
   NodeManager & nodeManager = meshLevel0.getNodeManager();
 
   // Make sure that the node manager fields are initialized
 
-  CellBlockManager & elementManager = domain.getGroup< CellBlockManager >( keys::cellManager );
+  CellBlockManager & elementManager = meshBody.getGroup< CellBlockManager >( keys::cellManager );
   Group & nodeSets = nodeManager.sets();
 
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
