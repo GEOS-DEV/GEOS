@@ -706,16 +706,15 @@ void importFieldOnCellBlock( string const & name, std::vector<vtkIdType > const 
             using ArrayType = decltype( array );
             Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
             auto const view = wrapperT.reference().toView();
-            for( int i = 0; i < view.size( 0 ); ++i )
-            {
               // For material fields, copy identical values into each quadrature point
+              localIndex cellCount = 0;
               for( vtkIdType c : cellIds )
               {
-                LvArray::forValuesInSlice( view[i], [&]( auto & val )
+                LvArray::forValuesInSlice( view[cellCount++], [&]( auto & val )
                 {
                   val = vtkArray->GetComponent(c,0);
+                  GEOSX_LOG_RANK_0(val);
                 } );
-              }
             }
           } );
         }
