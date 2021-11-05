@@ -40,6 +40,7 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
     setApplyDefaultValue( 1.0 ); // will be overwritten but it's important for newly created faceElements.
 
   registerWrapper( viewKeyStruct::oldPorosityString(), &m_oldPorosity ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setApplyDefaultValue( 1.0 );// will be overwritten but it's important for newly created faceElements.
 
   registerWrapper( viewKeyStruct::dPorosity_dPressureString(), &m_dPorosity_dPressure ).
@@ -50,6 +51,7 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
     setDescription( "Default value of the reference porosity" );
 
   registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setApplyDefaultValue( 1.0 );
 }
 
@@ -77,6 +79,13 @@ void PorosityBase::saveConvergedState() const
 
   arrayView2d< real64 const > newPorosity = m_newPorosity;
   arrayView2d< real64 >       oldPorosity = m_oldPorosity;
+  arrayView1d< real64 const >       refPorosity = m_referencePorosity;
+
+  std::cout << "refPorosity " << std::endl;
+  for (localIndex i=0; i<numE; i++)
+  {
+    std::cout << refPorosity[i] << std::endl;
+  }
 
   forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {

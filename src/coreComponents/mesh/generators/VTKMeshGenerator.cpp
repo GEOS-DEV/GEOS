@@ -22,6 +22,7 @@
 #include "mesh/mpiCommunications/PartitionBase.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "mesh/MeshBody.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 
 #include "common/MpiWrapper.hpp"
 #include "common/TypeDispatch.hpp"
@@ -582,35 +583,6 @@ void writeCellBlock( string const & name, std::vector<vtkIdType > const & cellId
   CellBlock::NodeMapType & cellToVertex = cellBlock.nodeList();
   arrayView1d< globalIndex > const & localToGlobal = cellBlock.localToGlobalMap();
 
-  /// Writing properties
-  for( vtkDataArray * array : arraysTobeImported )
-  {
-    int dimension = array->GetNumberOfComponents();
-    if( dimension == 1 )
-    {
-      real64_array & property = cellBlock.addProperty< real64_array >( array->GetName() );
-      localIndex cellCount = 0;
-      for( vtkIdType c : cellIds )
-      {
-        property[cellCount++] = array->GetTuple1(c);
-      }
-    }
-    else
-    {
-      array2d< real64 > & property = cellBlock.addProperty< array2d< real64 > >( array->GetName() );
-      property.resizeDimension< 1 >( dimension );
-      localIndex cellCount = 0;
-      for( vtkIdType c : cellIds )
-      {
-        for(int i = 0; i < dimension; i++ )
-        {
-          property(cellCount,i) = array->GetComponent(c,i);
-        }
-        cellCount++;
-      }
-    }
-  }
-
   /// Writing connectivity and Local to Global
   cellToVertex.resize( numCells, numPointsPerCell );
   if( cellType == VTK_HEXAHEDRON ) // Special case for hexahedron because of the ordering
@@ -666,17 +638,12 @@ void importFieldOnCellBlock( string const & name, std::vector<vtkIdType > const 
     {
       /// Writing properties
       std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
-      for( string namee : materialWrapperNames )
-      {
-        GEOSX_LOG_RANK_0(namee);
-      }
       for( vtkDataArray * vtkArray : arraysTobeImported )
       {
         WrapperBase & wrapper = subRegion.getWrapperBase( vtkArray->GetName() );
-        GEOSX_LOG_RANK_0("name of the array " << vtkArray->GetName());
-        GEOSX_LOG_RANK_0( "wrapper.numArrayDims() = " << wrapper.numArrayDims() );
         if( materialWrapperNames.count( vtkArray->GetName() ) > 0 && wrapper.numArrayDims() > 1 )
         {
+          // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
           GEOSX_LOG_RANK_0("going in with : " << vtkArray->GetName());
           using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > >;
           types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
@@ -689,36 +656,48 @@ void importFieldOnCellBlock( string const & name, std::vector<vtkIdType > const 
             for( vtkIdType c : cellIds )
             {
               int comp = 0;
-              LvArray::forValuesInSlice( view[cellCount++], [&]( auto & val )
+              for( localIndex q = 0; q < view.size( 1 ); ++q )
               {
-                val = vtkArray->GetComponent(c,comp++);
-              } );
+                // The same value is copied for all quadrature points.
+                LvArray::forValuesInSlice( view[cellCount][q], [&]( auto & val )
+                {
+                  val = vtkArray->GetComponent(c,comp);
+                } );
+              }
+              cellCount++;
+              comp++;
             }
           });
         }
         else
         {
-          GEOSX_LOG_RANK_0("2going in with : " << vtkArray->GetName());
-          // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
           using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >;
           types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
           {
             using ArrayType = decltype( array );
             Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
             auto const view = wrapperT.reference().toView();
-              // For material fields, copy identical values into each quadrature point
-              localIndex cellCount = 0;
-              for( vtkIdType c : cellIds )
-              {
-                LvArray::forValuesInSlice( view[cellCount++], [&]( auto & val )
+            std::cout << "print the view: " << view << std::endl;
+            localIndex cellCount = 0;
+            for( vtkIdType c : cellIds )
+            {
+                LvArray::forValuesInSlice( view[cellCount], [&]( auto & val )
                 {
                   val = vtkArray->GetComponent(c,0);
                   GEOSX_LOG_RANK_0(val);
                 } );
+                cellCount++;
             }
           } );
         }
       }
+
+      Group const & constitutiveModels =
+          subRegion.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
+
+      constitutive::CoupledSolidBase const & porousSolid = constitutiveModels.getGroup< constitutive::CoupledSolidBase >( "rock" );
+
+      porousSolid.initializeState();
     }
   });    
 }
