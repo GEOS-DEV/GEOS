@@ -26,6 +26,7 @@
       fluidNames="{ fluid }"
       solidNames="{ rock }"
       relPermNames="{ relperm }"
+      capPressureNames="{ cappres }" 
       permeabilityNames="{ rockPerm }"
       computeCFLNumbers="1"      
       temperature="297.15"
@@ -150,7 +151,7 @@
     <CellElementRegion
       name="region"
       cellBlocks="{ cb }"
-      materialList="{ fluid, rock, relperm }"/>
+      materialList="{ fluid, rock, relperm, cappres }"/>
     <WellElementRegion
       name="wellRegion1"
       materialList="{ fluid, relperm }"/>
@@ -182,13 +183,18 @@
       referencePressure="4.1369e7"
       compressibility="1.0e-9"/>
 
-    <BrooksCoreyRelativePermeability
+    <TableRelativePermeability
       name="relperm"
       phaseNames="{ oil, gas, water }"
-      phaseMinVolumeFraction="{ 0.0, 0.0, 0.0}"
-      phaseRelPermExponent="{ 2.0, 2.0, 2.0}"
-      phaseRelPermMaxValue="{ 1.0, 1.0, 1.0 }"/>
+      wettingIntermediateRelPermTableNames="{ waterRelPermTable, oilRelPermTableForOW }"
+      nonWettingIntermediateRelPermTableNames="{ gasRelPermTable, oilRelPermTableForOG }"/>
 
+    <TableCapillaryPressure
+      name="cappres"
+      phaseNames="{ oil, gas, water }"
+      wettingIntermediateCapPressureTableName="waterCapPresTable"
+      nonWettingIntermediateCapPressureTableName="gasCapPresTable"/>
+    
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
@@ -230,6 +236,48 @@
       scale="0.00001"/>
   </FieldSpecifications>
 
+  <Functions>
+
+    <TableFunction
+      name="waterRelPermTable"
+      coordinates="{ 0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45,
+		     0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00 }"
+      values="{ 0, 0.0025, 0.0100, 0.0225, 0.0400, 0.0625, 0.0900, 0.1225, 0.1600, 0.2025,
+	        0.2500, 0.3025, 0.3600, 0.4225, 0.4900, 0.5625, 0.6400, 0.7225, 0.8100, 0.9025, 1.0000 }"/>
+    <TableFunction
+      name="oilRelPermTableForOW"
+      coordinates="{ 0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45,
+		     0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00 }"
+      values="{ 0, 0.0025, 0.0100, 0.0225, 0.0400, 0.0625, 0.0900, 0.1225, 0.1600, 0.2025,
+	        0.2500, 0.3025, 0.3600, 0.4225, 0.4900, 0.5625, 0.6400, 0.7225, 0.8100, 0.9025, 1.0000 }"/>
+    <TableFunction
+      name="gasRelPermTable"
+      coordinates="{ 0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45,
+		     0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00 }"
+      values="{ 0, 0.0025, 0.0100, 0.0225, 0.0400, 0.0625, 0.0900, 0.1225, 0.1600, 0.2025,
+	        0.2500, 0.3025, 0.3600, 0.4225, 0.4900, 0.5625, 0.6400, 0.7225, 0.8100, 0.9025, 1.0000 }"/>
+    <TableFunction
+      name="oilRelPermTableForOG"
+      coordinates="{ 0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45,
+		     0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00 }"
+      values="{ 0, 0.0025, 0.0100, 0.0225, 0.0400, 0.0625, 0.0900, 0.1225, 0.1600, 0.2025,
+	        0.2500, 0.3025, 0.3600, 0.4225, 0.4900, 0.5625, 0.6400, 0.7225, 0.8100, 0.9025, 1.0000 }"/>
+
+    <TableFunction
+      name="waterCapPresTable"
+      coordinates="{ 0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45,
+		     0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00 }"
+      values="{ 10000, 9025, 8100, 7225, 6400, 5625, 4900, 4225, 3600, 3025,
+	        2500, 2025, 1600, 1225, 900, 625, 400, 225, 100, 25, 0 }"/>
+    <TableFunction
+      name="gasCapPresTable"
+      coordinates="{ 0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45,
+		     0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00 }"
+      values="{ 0, 50, 200, 450, 800, 1250, 1800, 2450, 3200, 4050, 5000, 6050,
+  	       7200, 8450, 9800, 11250, 12800, 14450, 16200, 18050, 20000 }"/>
+    
+  </Functions>
+    
   <Tasks>
     <PackCollection
       name="wellRateCollection"

@@ -2,7 +2,7 @@
 
 
 #########################################################################################
-A Deviated Poro-Elastic Wellbore Subjected to In-situ Stresses and Pore Pressure
+Deviated Poro-Elastic Wellbore Subjected to In-situ Stresses and Pore Pressure
 #########################################################################################
 
 ------------------------------------------------------------------
@@ -19,17 +19,17 @@ contained within two GEOSX xml files that are located at:
 
 .. code-block:: console
 
-  inputFiles/multiphysics/DeviatedPoroElasticWellbore_Drilling_Base.xml
+  inputFiles/wellbore/DeviatedPoroElasticWellbore_Drilling_base.xml
 
 
 .. code-block:: console
 
-  inputFiles/multiphysics/DeviatedPoroElasticWellbore_Drilling_Example.xml
+  inputFiles/wellbore/DeviatedPoroElasticWellbore_Drilling_benchmark.xml
 
 
 This case is nearly identical to another example :ref:`AdvancedExampleDeviatedPoroElasticWellbore`, except for the ``FieldSpecifications`` tag. For this specific case, we need to consider following additional field specifications to define the in-situ stresses, in-situ pore pressure, as well as the zero pore pressure at the borehole wall.
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Drilling_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Drilling_base.xml
   :language: xml
   :start-after: <!-- SPHINX_InsituConditions -->
   :end-before: <!-- SPHINX_InsituConditionsEnd -->
@@ -177,9 +177,9 @@ A good agreement between the GEOSX results and the corresponding analytical solu
 		return [radius, phi_x, phi_z]
 
 	def main():
-		xmlFilePathPrefix = "../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Drilling"
-		geometry = getWellboreGeometryFromXML( xmlFilePathPrefix + "_Example.xml" )
-		parameters = getParametersFromXML( xmlFilePathPrefix + "_Base.xml" )
+		xmlFilePathPrefix = "../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Drilling"
+		geometry = getWellboreGeometryFromXML( xmlFilePathPrefix + "_benchmark.xml" )
+		parameters = getParametersFromXML( xmlFilePathPrefix + "_base.xml" )
 
 		# Time
 		t = parameters[0]
@@ -288,15 +288,7 @@ A good agreement between the GEOSX results and the corresponding analytical solu
 			sig_rr.append(stressLocal[0][0])
 			sig_tt.append(stressLocal[1][1])
 
-
 		plt.subplot(221)
-		plt.plot(r, pPore, 'ko', label='GEOSX result')
-		plt.plot(r_anal, pPore_anal,  'k', linewidth=2, label='Analytic')
-		plt.ylabel('Pore pressure (MPa)')
-		plt.xlabel('r (m)')
-		plt.xlim(ri,10*ri)
-
-		plt.subplot(223)
 		plt.plot(r, sig_rr, 'ko', label='GEOSX result')
 		plt.plot(r_anal, sig_rr_anal+bBiot*pPore_anal,  'k', linewidth=2, label='Analytic')
 		plt.ylabel('Effective radial stress (MPa)')
@@ -304,10 +296,17 @@ A good agreement between the GEOSX results and the corresponding analytical solu
 		plt.xlim(ri,10*ri)
 		plt.legend()
 
-		plt.subplot(224)
+		plt.subplot(222)
 		plt.plot(r, sig_tt, 'ko', label='GEOSX result')
 		plt.plot(r_anal, sig_tt_anal+bBiot*pPore_anal,  'k', linewidth=2, label='Analytic')
 		plt.ylabel('Effective tangent stress (MPa)')
+		plt.xlabel('r (m)')
+		plt.xlim(ri,10*ri)
+
+		plt.subplot(223)
+		plt.plot(r, pPore, 'ko', label='GEOSX result')
+		plt.plot(r_anal, pPore_anal,  'k', linewidth=2, label='Analytic')
+		plt.ylabel('Pore pressure (MPa)')
 		plt.xlabel('r (m)')
 		plt.xlim(ri,10*ri)
 

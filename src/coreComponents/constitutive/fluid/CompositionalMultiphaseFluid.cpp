@@ -19,6 +19,7 @@
 #include "CompositionalMultiphaseFluid.hpp"
 
 #include "codingUtilities/Utilities.hpp"
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 
 #include "pvt/pvt.hpp"
 
@@ -63,6 +64,12 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name,
   registerWrapper( viewKeyStruct::componentBinaryCoeffString(), &m_componentBinaryCoeff ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Table of binary interaction coefficients" );
+}
+
+integer CompositionalMultiphaseFluid::getWaterPhaseIndex() const
+{
+  string const expectedWaterPhaseNames[] = { "water" };
+  return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
 void CompositionalMultiphaseFluid::postProcessInput()

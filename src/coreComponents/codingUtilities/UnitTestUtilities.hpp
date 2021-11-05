@@ -58,7 +58,7 @@ namespace geosx
 namespace testing
 {
 
-constexpr real64 DEFAULT_ABS_TOL = 1E-13;
+constexpr real64 DEFAULT_ABS_TOL = 1E-12;
 constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
 
 ::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *, const char *,

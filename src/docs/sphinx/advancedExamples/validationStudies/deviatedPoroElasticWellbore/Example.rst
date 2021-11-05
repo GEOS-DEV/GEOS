@@ -1,9 +1,9 @@
 .. _AdvancedExampleDeviatedPoroElasticWellbore:
 
 
-####################################################
-Deviated Poro-Elastic Wellbore Problem
-####################################################
+#################################################################
+Deviated Poro-Elastic Wellbore Subjected to Fluid Injection
+#################################################################
 
 ------------------------------------------------------------------
 Problem description
@@ -17,7 +17,7 @@ Analytical solutions of the pore pressure, the radial and hoop stresses in the n
     p = p_0 \frac{k_0(R \sqrt{s})}{s k_0(\sqrt{s})}
 
 .. math::
-    \sigma_{rr} = -b \frac{1-2\nu}{1-\nu} p_0 \frac{-R * k_1(R \sqrt{s}) + k_1(\sqrt{s})}{R^2 \sqrt{s^3} k_0(\sqrt{s})}
+    \sigma_{rr} = -b \frac{1-2\nu}{1-\nu} p_0 \frac{-R k_1(R \sqrt{s}) + k_1(\sqrt{s})}{R^2 \sqrt{s^3} k_0(\sqrt{s})}
 
 .. math::
     \sigma_{\theta\theta} = -b \frac{1-2\nu}{1-\nu} p - \sigma_{rr}
@@ -32,12 +32,12 @@ contained within two GEOSX xml files that are located at:
 
 .. code-block:: console
 
-  inputFiles/multiphysics/DeviatedPoroElasticWellbore_Injection_Base.xml
+  inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_base.xml
 
 
 .. code-block:: console
 
-  inputFiles/multiphysics/DeviatedPoroElasticWellbore_Injection_Example.xml
+  inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_benchmark.xml
 
 
 In this example, we would focus our attention on the ``Solvers`` and the ``Mesh`` tags.
@@ -48,19 +48,19 @@ Poroelastic solver
 
 The coupled ``Poroelastic`` solver, that defines a coupling strategy between the solid mechanics solver ``SolidMechanicsLagrangianSSLE`` and the single phase flow solver ``SinglePhaseFVM``, is required for solving this wellbore problem.
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Injection_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_base.xml
   :language: xml
   :start-after: <!-- SPHINX_PoroelasticSolver -->
   :end-before: <!-- SPHINX_PoroelasticSolverEnd -->
 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Injection_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SolidMechanicsSolver -->
   :end-before: <!-- SPHINX_SolidMechanicsSolverEnd -->
 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Injection_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SinglePhaseFVM -->
   :end-before: <!-- SPHINX_SinglePhaseFVMEnd -->
@@ -72,7 +72,7 @@ Deviated wellbore mesh
 
 The internal wellbore mesh generator ``InternalWellbore`` is employed to create the mesh of this wellbore problem. The radius of the wellbore and the size of the surrounding rock formation are defined by a vector ``radius``. In the tangent direction, ``theta`` angle is specified from 0 to 180 degree for a half of the domain regarding its symmetry. Note that the whole domain could be specified with a ``theta`` angle from 0 to 360 degree, if modeling complicated scenarios. The trajectory of the well is defined by ``trajectory``. In this example, the wellbore is inclined in the x-z plane by an angle of 45 degree. The ``autoSpaceRadialElems`` parameter allows optimally increasing the element size from local zone around the wellbore to the far-field zone, which is set to 1 to activate this option. The ``useCartesianOuterBoundary`` transforms the far-field boundary to a squared shape to enforce a Cartesian aligned outer boundary, which eases the loading of the far-field boundary conditions. In this example, this value is set to 0 for the single region along the radial direction.  
  
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Injection_Example.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_WellboreMesh -->
   :end-before: <!-- SPHINX_WellboreMeshEnd -->
@@ -84,7 +84,7 @@ Constitutive law
 
 Isotropic elastic constitutive block ``ElasticIsotropic``, with the specified bulk and shear elastic moduli, is considered for the rock around the wellbore. Fluid properties, such as dynamic viscosity and compressibility, are given in the ``CompressibleSinglePhaseFluid`` constitutive block. The grain bulk modulus, that is required for computing the Biot coefficient, as well as the default porosity are located in the ``BiotPorosity`` block. The constant permeability is given in the ``ConstantPermeability`` block. 
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Injection_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_base.xml
   :language: xml
   :start-after: <!-- SPHINX_Material -->
   :end-before: <!-- SPHINX_MaterialEnd -->
@@ -96,7 +96,7 @@ Boundary conditions
 
 Far-field boundaries are impermeable and subjected to roller constraints. The pressure on the wellbore wall is defined by face pressure field specification. The nodeset generated by the internal wellbore generator for this face is named as ``rneg``. The negative sign of the scale denotes the fluid injection. Initial fluid pressure and the corresponding initial porosity are also given for the computational domain. In this example, uniform isotropic permeability is assumed.
 
-.. literalinclude:: ../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Injection_Base.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_base.xml
   :language: xml
   :start-after: <!-- SPHINX_BoundaryConditions -->
   :end-before: <!-- SPHINX_BoundaryConditionsEnd -->
@@ -244,10 +244,10 @@ A good agreement between the GEOSX results and the corresponding analytical solu
 		return [radius, phi_x, phi_z]
 
 	def main():
-		xmlFilePathPrefix = "../../../../../../inputFiles/multiphysics/DeviatedPoroElasticWellbore_Injection"
+		xmlFilePathPrefix = "../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection"
 
-		geometry = getWellboreGeometryFromXML( xmlFilePathPrefix + "_Example.xml" )
-		parameters = getParametersFromXML( xmlFilePathPrefix + "_Base.xml" )
+		geometry = getWellboreGeometryFromXML( xmlFilePathPrefix + "_benchmark.xml" )
+		parameters = getParametersFromXML( xmlFilePathPrefix + "_base.xml" )
 
 		# Wellbore radius
 		a = geometry[0]
@@ -360,25 +360,26 @@ A good agreement between the GEOSX results and the corresponding analytical solu
 		fig = plt.figure(figsize=[13,10])
 
 		plt.subplot(221)
-		plt.plot(r, pPore, 'ko', label='GEOSX result')
-		plt.plot(listr,listp, 'k', linewidth=2, label='Analytic')
-		plt.ylabel('Pore pressure (MPa)')
-		plt.xlim(a, 10*a)
-		plt.legend()
-
-		plt.subplot(223)
 		plt.plot(r, sig_rr, 'ko', label='GEOSX result')
 		plt.plot(listr, listSigrr,  'k', linewidth=2, label='Analytic')
 		plt.ylabel('Effectve radial stress (MPa)')
 		plt.xlabel('r (m)')
 		plt.xlim(a, 10*a)
 
-		plt.subplot(224)
+		plt.subplot(222)
 		plt.plot(r, sig_tt, 'ko', label='GEOSX result')
 		plt.plot(listr, listSigtt,  'k', linewidth=2, label='Analytic')
 		plt.ylabel('Effectve tangent stress (MPa)')
 		plt.xlabel('r (m)')
 		plt.xlim(a, 10*a)
+
+		plt.subplot(223)
+		plt.plot(r, pPore, 'ko', label='GEOSX result')
+		plt.plot(listr,listp, 'k', linewidth=2, label='Analytic')
+		plt.ylabel('Pore pressure (MPa)')
+		plt.xlim(a, 10*a)
+		plt.legend()
+
 		plt.show()
 
 	if __name__ == "__main__":

@@ -74,7 +74,8 @@ HydrofractureSolver::HydrofractureSolver( const string & name,
   m_numResolves[0] = 0;
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hydrofracture;
-  m_linearSolverParameters.get().mgr.separateComponents = true;
+  //m_linearSolverParameters.get().mgr.separateComponents = true;
+  m_linearSolverParameters.get().mgr.separateComponents = false;
   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
   m_linearSolverParameters.get().dofsPerNode = 3;
 }
@@ -540,7 +541,7 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretizationName() );
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
@@ -603,7 +604,7 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretizationName() );
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
@@ -978,7 +979,7 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretizationName() );
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {

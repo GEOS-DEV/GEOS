@@ -6,14 +6,14 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
-      fluidNames="{ fluid1 }"
+      fluidNames="{ fluid }"
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
       computeCFLNumbers="1"
-      targetRegions="{ Region1 }">
+      targetRegions="{ region }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="100"
@@ -34,7 +34,7 @@
       nx="{ 10 }"
       ny="{ 10 }"
       nz="{ 10 }"
-      cellBlockNames="{ cb1 }"/>
+      cellBlockNames="{ cellBlock }"/>
   </Mesh>
 
   <Geometry>
@@ -57,6 +57,28 @@
       name="barrier"
       xMin="{ -0.01, 20.99, 20.99 }"
       xMax="{ 12.01, 30.01, 21.01 }"/>
+
+    <Box
+      name="aquifer1Part1"
+      xMin="{ 14.99, -0.01, 14.99 }"
+      xMax="{ 18.01,  0.01, 18.01 }"/> 
+
+    <Box
+      name="aquifer1Part2"
+      xMin="{ 17.99, -0.01, 17.99 }"
+      xMax="{ 21.01,  0.01, 24.01 }"/> 
+
+    <Box
+      name="aquifer2Part1"
+      xMin="{ 14.99, 29.99, 14.99 }"
+      xMax="{ 18.01, 30.01, 18.01 }"/> 
+
+    <Box
+      name="aquifer2Part2"
+      xMin="{ 17.99, 29.99, 17.99 }"
+      xMax="{ 21.01, 30.01, 24.01 }"/> 
+
+    
   </Geometry>
 
   <Events
@@ -89,14 +111,14 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region1"
-      cellBlocks="{ cb1 }"
-      materialList="{ fluid1, rock, relperm }"/>
+      name="region"
+      cellBlocks="{ cellBlock }"
+      materialList="{ fluid, rock, relperm }"/>
   </ElementRegions>
 
   <Constitutive>
     <CO2BrineFluid
-      name="fluid1"
+      name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
@@ -118,13 +140,12 @@
       referencePressure="0.0"
       compressibility="1.0e-9"/>
 
-    <BrooksCoreyRelativePermeability
+    <TableRelativePermeability
       name="relperm"
       phaseNames="{ gas, water }"
-      phaseMinVolumeFraction="{ 0.05, 0.05 }"
-      phaseRelPermExponent="{ 1.5, 1.5 }"
-      phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
-
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
+                                            gasRelativePermeabilityTable }"/>
+    
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
@@ -143,33 +164,33 @@
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cellBlock"
       fieldName="pressure"
       scale="9e6"/>
 
-    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
+    <!-- Initial composition: CO2 phase close to residual saturation  -->
     <FieldSpecification
       name="initialComposition_co2"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cellBlock"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.005"/>
+      scale="0.04"/>
 
     <FieldSpecification
       name="initialComposition_water"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cellBlock"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.995"/>
+      scale="0.96"/>
 
     <!-- Injection rate: 0.03 kg/s -->
     <SourceFlux
       name="sourceTerm"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cellBlock"
       component="0"
       scale="-0.03"
       setNames="{ source }"/>
@@ -177,7 +198,7 @@
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
     <FieldSpecification
       name="sinkTerm1"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cellBlock"
       fieldName="pressure"
       scale="9e6"
       setNames="{ sink1 }"/>
@@ -185,22 +206,22 @@
     <FieldSpecification
       name="sinkTermComposition1_co2"
       setNames="{ sink1 }"
-      objectPath="ElementRegions/Region1/elementSubRegions/cb1"
+      objectPath="ElementRegions/region/cellBlock"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.005"/>
+      scale="0.04"/>
 
     <FieldSpecification
       name="sinkTermComposition1_water"
       setNames="{ sink1 }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cellBlock"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.995"/>
+      scale="0.96"/>
 
     <FieldSpecification
       name="sinkTerm2"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cellBlock"
       fieldName="pressure"
       scale="9e6"
       setNames="{ sink2 }"/>
@@ -209,20 +230,67 @@
     <FieldSpecification
       name="sinkTermComposition2_co2"
       setNames="{ sink2 }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cellBlock"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.005"/>
+      scale="0.04"/>
 
     <FieldSpecification
       name="sinkTermComposition2_water"
       setNames="{ sink2 }"
-      objectPath="ElementRegions/Region1/cb1"
+      objectPath="ElementRegions/region/cellBlock"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.995"/>
+      scale="0.96"/>
+
+    <Aquifer
+      name="aquiferBC1"
+      aquiferPorosity="1e-1"
+      aquiferPermeability="1e-13"
+      aquiferInitialPressure="8e6"
+      aquiferWaterViscosity="1e-3"
+      aquiferWaterDensity="1000"
+      aquiferWaterPhaseComponentFraction="{ 0.0, 1.0 }"
+      aquiferWaterPhaseComponentNames="{ co2, water }"       
+      aquiferTotalCompressibility="1e-10"
+      aquiferElevation="20"
+      aquiferThickness="10"
+      aquiferInnerRadius="10"
+      aquiferAngle="20"
+      setNames="{ aquifer1Part1, aquifer1Part2 }"/>
+
+    <Aquifer
+      name="aquiferBC2"
+      aquiferPorosity="1e-1"
+      aquiferPermeability="1e-13"
+      aquiferInitialPressure="8e6"
+      aquiferWaterViscosity="1e-3"
+      aquiferWaterDensity="1000"
+      aquiferWaterPhaseComponentFraction="{ 0.0, 1.0 }"
+      aquiferWaterPhaseComponentNames="{ co2, water }"
+      aquiferTotalCompressibility="1e-10"
+      aquiferElevation="20"
+      aquiferThickness="10"
+      aquiferInnerRadius="10"
+      aquiferAngle="20"
+      setNames="{ aquifer2Part1, aquifer2Part2 }"/>
+    
   </FieldSpecifications>
 
+  <Functions>
+
+    <TableFunction
+      name="waterRelativePermeabilityTable"
+      coordinateFiles="{ phaseVolFraction_water.txt }"
+      voxelFile="relPerm_water.txt"/>
+
+    <TableFunction
+      name="gasRelativePermeabilityTable"
+      coordinateFiles="{ phaseVolFraction_gas.txt }"
+      voxelFile="relPerm_gas.txt"/>       
+
+  </Functions>      
+  
   <Outputs>
     <VTK
       name="vtkOutput"/>
@@ -230,4 +298,14 @@
     <Restart
       name="sidreRestart"/>
   </Outputs>
+
+  <Functions>
+    <TableFunction
+      name="pressureInfluenceFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0, 10.0, 100.0 }"
+      values="{ 0.0, 2.0, 15.0, 1000.0 }"/>
+  </Functions>
+
+  
 </Problem>

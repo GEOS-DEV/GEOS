@@ -130,12 +130,22 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
 {
   xmlWrapper::addIncludedXML( targetNode );
 
-  // loop over the child nodes of the targetNode
+  // Handle the case where the node was imported from a different input file
+  // Set the path prefix to make sure all relative Path variables are interpreted correctly
+  string const oldPrefix = Path::pathPrefix();
+  xmlWrapper::xmlAttribute filePath = targetNode.attribute( xmlWrapper::filePathString );
+  if( filePath )
+  {
+    Path::pathPrefix() = splitPath( filePath.value() ).first;
+    targetNode.remove_attribute( filePath );
+  }
+
+  // Loop over the child nodes of the targetNode
   for( xmlWrapper::xmlNode childNode : targetNode.children() )
   {
     // Get the child tag and name
     string childName = childNode.attribute( "name" ).value();
-    if( childName.empty())
+    if( childName.empty() )
     {
       childName = childNode.name();
     }
@@ -153,12 +163,13 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   }
 
   processInputFile( targetNode );
-//  ProcessInputFile_PostProcess();
+
+  // Restore original prefix once the node is processed
+  Path::pathPrefix() = oldPrefix;
 }
 
 void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
 {
-
   std::set< string > processedAttributes;
   for( std::pair< string const, WrapperBase * > & pair : m_wrappers )
   {

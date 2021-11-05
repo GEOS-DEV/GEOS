@@ -176,8 +176,12 @@ void ProblemManager::parseCommandLineInput()
   commandLine.getReference< integer >( viewKeys.useNonblockingMPI ) = opts.useNonblockingMPI;
   commandLine.getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
 
+  string & outputDirectory = commandLine.getReference< string >( viewKeys.outputDirectory );
+  outputDirectory = opts.outputDirectory;
+  OutputBase::setOutputDirectory( outputDirectory );
+
   string & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
-  inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames );
+  inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
 
   string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
   schemaName = opts.schemaName;
@@ -185,10 +189,6 @@ void ProblemManager::parseCommandLineInput()
   string & problemName = commandLine.getReference< string >( viewKeys.problemName );
   problemName = opts.problemName;
   OutputBase::setFileNameRoot( problemName );
-
-  string & outputDirectory = commandLine.getReference< string >( viewKeys.outputDirectory );
-  outputDirectory = opts.outputDirectory;
-  OutputBase::setOutputDirectory( outputDirectory );
 
   if( schemaName.empty())
   {
@@ -609,7 +609,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 
     if( solver != nullptr )
     {
-      string const discretizationName = solver->getDiscretization();
+      string const discretizationName = solver->getDiscretizationName();
       arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
 
       FiniteElementDiscretizationManager const &
