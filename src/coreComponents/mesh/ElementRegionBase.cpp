@@ -26,7 +26,8 @@ using namespace dataRepository;
 
 ElementRegionBase::ElementRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
-  m_numericalMethod()
+  m_materialList(),
+  m_meshBody()
 {
 
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -36,6 +37,10 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
   registerWrapper( viewKeyStruct::materialListString(), &m_materialList ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of materials present in this region" );
+
+  registerWrapper( viewKeyStruct::meshBodyString(), &m_meshBody ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Mesh body that contains this region" );
 
 }
 

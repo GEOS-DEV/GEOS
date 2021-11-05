@@ -251,6 +251,12 @@ public:
     return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getGroup< T >( key );
   }
 
+  template< typename T=ElementRegionBase >
+  bool hasRegion( string const & name ) const
+  {
+    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).hasGroup< T >( name );
+  }
+
   /**
    * @brief Get number of the regions.
    * @return number of the regions

@@ -769,13 +769,17 @@ void SolverBase::validateModelMapping( ElementRegionManager const & elemRegionMa
                                        arrayView1d< string const > const & modelNames ) const
 {
   GEOSX_ERROR_IF_NE( modelNames.size(), m_targetRegionNames.size() );
-  for( localIndex k = 0; k < modelNames.size(); ++k )
+
+  for( localIndex k = 0; k < m_targetRegionNames.size(); ++k )
   {
-    ElementRegionBase const & region = elemRegionManager.getRegion( m_targetRegionNames[k] );
-    for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
+    if( elemRegionManager.hasRegion(m_targetRegionNames[k]) )
     {
-      ElementSubRegionBase const & subRegion = region.getSubRegion( esr );
-      subRegion.getConstitutiveModel< MODEL_TYPE >( modelNames[ k ] );
+      ElementRegionBase const & region = elemRegionManager.getRegion( m_targetRegionNames[k] );
+      for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
+      {
+        ElementSubRegionBase const & subRegion = region.getSubRegion( esr );
+        subRegion.getConstitutiveModel< MODEL_TYPE >( modelNames[ k ] );
+      }
     }
   }
 }

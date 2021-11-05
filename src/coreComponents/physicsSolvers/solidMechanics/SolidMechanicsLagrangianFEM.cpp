@@ -237,11 +237,11 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   // Validate solid models in target regions
-  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
+  domain.forMeshBodies( [&]( MeshBody const & meshBody )
   {
-    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
     validateModelMapping< SolidBase >( meshLevel.getElemManager(), m_solidMaterialNames );
-  }
+  } );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 

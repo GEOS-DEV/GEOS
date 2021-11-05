@@ -293,6 +293,8 @@ public:
   {
     /// @return String key for the material list
     static constexpr char const * materialListString() { return "materialList"; }
+    /// @return String key for the material list
+    static constexpr char const * meshBodyString() { return "meshBody"; }
     /// @return String key for the element subregions
     static constexpr char const * elementSubRegions() { return "elementSubRegions"; }
   };
@@ -304,8 +306,8 @@ private:
   /// List of materials for the element region
   string_array m_materialList;
 
-  /// Name of the numerical method
-  string m_numericalMethod;
+  /// Name of the mesh body that contains this region
+  string m_meshBody;
 
 };
 

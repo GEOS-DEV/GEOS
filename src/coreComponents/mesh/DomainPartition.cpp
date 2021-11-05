@@ -45,7 +45,7 @@ DomainPartition::DomainPartition( string const & name,
 
   registerGroup( groupKeys.meshBodies );
   registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
-  registerGroup< CellBlockManager >( keys::cellManager );
+//  registerGroup< CellBlockManager >( keys::cellManager );
 }
 
 

@@ -202,6 +202,19 @@ public:
   MeshBody & getMeshBody( KEY_TYPE const & key )
   { return getMeshBodies().getGroup< MeshBody >( key ); }
 
+  template< typename FUNCTION >
+  void forMeshBodies( FUNCTION && function ) const
+  {
+    getMeshBodies().forSubGroups<MeshBody>( std::forward<FUNCTION>(function) );
+  }
+
+  template< typename FUNCTION >
+  void forMeshBodies( FUNCTION && function )
+  {
+    getMeshBodies().forSubGroups<MeshBody>( std::forward<FUNCTION>(function) );
+  }
+
+
   /**
    * @brief Get the metis neighbors indices.  @see DomainPartition#m_metisNeighborList
    * @return Container of global indices.
