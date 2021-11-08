@@ -29,7 +29,8 @@
 
 // Pre-define some suitesparse variables since they are not properly defined
 // in the header for alternate index types.
-#if GEOSX_GLOBALINDEX_TYPE_FLAG==0
+//#if GEOSX_GLOBALINDEX_TYPE_FLAG==0
+#if 0
 /// Set alias for SuiteSparse_long
 #define SuiteSparse_long int
 
@@ -57,24 +58,16 @@ namespace geosx
  */
 using SSlong = SuiteSparse_long;
 
-// Check matching requirements on index/value types between GEOSX and SuiteSparse
-
-static_assert( sizeof( SSlong ) == sizeof( globalIndex ),
-               "SuiteSparse Int and geosx::globalIndex must have the same size" );
-
-static_assert( std::is_signed< SSlong >::value == std::is_signed< globalIndex >::value,
-               "SuiteSparse Int and geosx::globalIndex must both be signed or unsigned" );
-
 static_assert( std::is_same< double, real64 >::value,
                "SuiteSparse real and geosx::real64 must be the same type" );
 
 struct SuiteSparseData
 {
-  array1d< SSlong > rowPtr;          /// row pointers
-  array1d< SSlong > colIndices;      /// column indices
-  array1d< double > values;          /// values
-  array1d< double > rhs;             /// right-hand side vector
-  array1d< double > sol;             /// solution vector
+  array1d< SSlong > rowPtr{};          /// row pointers
+  array1d< SSlong > colIndices{};      /// column indices
+  array1d< double > values{};          /// values
+  array1d< double > rhs{};             /// right-hand side vector
+  array1d< double > sol{};             /// solution vector
   real64 info[UMFPACK_INFO]{};       /// data structure to gather various info
   real64 control[UMFPACK_CONTROL]{}; /// SuiteSparse options
   void * symbolic{};                 /// pointer to the symbolic factorization
@@ -112,6 +105,76 @@ SuiteSparse< LAI >::SuiteSparse( LinearSolverParameters params )
 template< typename LAI >
 SuiteSparse< LAI >::~SuiteSparse() = default;
 
+namespace
+{
+
+void factorize( SuiteSparseData & data, LinearSolverParameters const & params )
+{
+  // To be able to use UMFPACK direct solver we need to disable floating point exceptions
+  LvArray::system::FloatingPointExceptionGuard guard;
+
+  SSlong status;
+  SSlong const numRows = data.rowPtr.size() - 1;
+
+  data.rowPtr.move( LvArray::MemorySpace::host, false );
+  data.colIndices.move( LvArray::MemorySpace::host, false );
+  data.values.move( LvArray::MemorySpace::host, false );
+
+  // symbolic factorization
+  status = umfpack_dl_symbolic( numRows,
+                                numRows,
+                                data.rowPtr.data(),
+                                data.colIndices.data(),
+                                data.values.data(),
+                                &data.symbolic,
+                                data.control,
+                                data.info );
+  if( status < 0 )
+  {
+    umfpack_dl_report_info( data.control, data.info );
+    umfpack_dl_report_status( data.control, status );
+    GEOSX_ERROR( "SuiteSparse: umfpack_dl_symbolic failed." );
+  }
+
+  // print the symbolic factorization
+  if( params.logLevel > 1 )
+  {
+    umfpack_dl_report_symbolic( data.symbolic, data.control );
+  }
+
+  // numeric factorization
+  status = umfpack_dl_numeric( data.rowPtr.data(),
+                               data.colIndices.data(),
+                               data.values.data(),
+                               data.symbolic,
+                               &data.numeric,
+                               data.control,
+                               data.info );
+
+  if( status < 0 )
+  {
+    umfpack_dl_report_info( data.control, data.info );
+    umfpack_dl_report_status( data.control, status );
+    GEOSX_ERROR( "SuiteSparse: umfpack_dl_numeric failed." );
+  }
+
+  // print the numeric factorization
+  if( params.logLevel > 1 )
+  {
+    umfpack_dl_report_numeric( data.symbolic, data.control );
+  }
+}
+
+void setOptions( SuiteSparseData & data, LinearSolverParameters const & params )
+{
+  // Get the default control parameters
+  umfpack_dl_defaults( data.control );
+  data.control[UMFPACK_PRL] = params.logLevel > 1 ? 6 : 1;
+  data.control[UMFPACK_ORDERING] = UMFPACK_ORDERING_BEST;
+}
+
+} // namespace
+
 template< typename LAI >
 void SuiteSparse< LAI >::setup( Matrix const & mat )
 {
@@ -126,24 +189,26 @@ void SuiteSparse< LAI >::setup( Matrix const & mat )
   SSlong const numNZ = LvArray::integerConversion< SSlong >( mat.numGlobalNonzeros() );
 
   // Allocate memory and control structures on working rank only
-  if( m_workingRank == rank )
-  {
-    m_data = std::make_unique< SuiteSparseData >( numGR, numNZ );
-    setOptions();
-  }
+  m_data = std::make_unique< SuiteSparseData >( rank == m_workingRank ? numGR : 0,
+                                                rank == m_workingRank ? numNZ : 0 );
+  setOptions( *m_data, m_params );
 
   // Export needs to be carried collectively on all ranks
   m_export = std::make_unique< typename Matrix::Export >( mat, m_workingRank );
-  m_export->exportCRS( mat,
-                       m_workingRank == rank ? m_data->rowPtr.data() : nullptr,
-                       m_workingRank == rank ? m_data->colIndices.data() : nullptr,
-                       m_workingRank == rank ? m_data->values.data() : nullptr );
 
-  // Perform matrix factorization on working rank and sync timer
+  m_export->exportCRS( mat,
+                       m_data->rowPtr,
+                       m_data->colIndices,
+                       m_data->values );
+
+  // Perform matrix factorization on working rank
+  if( rank == m_workingRank )
   {
     Stopwatch timer( m_result.setupTime );
-    factorize();
+    factorize( *m_data, m_params );
   }
+
+  // Sync timer to all ranks
   MpiWrapper::bcast( &m_result.setupTime, 1, m_workingRank, mat.getComm() );
 }
 
@@ -167,74 +232,6 @@ void SuiteSparse< LAI >::clear()
   PreconditionerBase< LAI >::clear();
   m_data.reset();
   m_condEst = -1.0;
-}
-
-template< typename LAI >
-void SuiteSparse< LAI >::setOptions()
-{
-  // Get the default control parameters
-  umfpack_dl_defaults( m_data->control );
-  m_data->control[UMFPACK_PRL] = m_params.logLevel > 1 ? 6 : 1;
-  m_data->control[UMFPACK_ORDERING] = UMFPACK_ORDERING_BEST;
-}
-
-template< typename LAI >
-void SuiteSparse< LAI >::factorize()
-{
-  int const rank = MpiWrapper::commRank( matrix().getComm() );
-
-  if( rank == m_workingRank )
-  {
-    // To be able to use UMFPACK direct solver we need to disable floating point exceptions
-    LvArray::system::FloatingPointExceptionGuard guard;
-
-    SSlong status;
-    SSlong const numRows = m_data->rowPtr.size() - 1;
-
-    // symbolic factorization
-    status = umfpack_dl_symbolic( numRows,
-                                  numRows,
-                                  m_data->rowPtr.data(),
-                                  m_data->colIndices.data(),
-                                  m_data->values.data(),
-                                  &m_data->symbolic,
-                                  m_data->control,
-                                  m_data->info );
-    if( status < 0 )
-    {
-      umfpack_dl_report_info( m_data->control, m_data->info );
-      umfpack_dl_report_status( m_data->control, status );
-      GEOSX_ERROR( "SuiteSparse: umfpack_dl_symbolic failed." );
-    }
-
-    // print the symbolic factorization
-    if( m_params.logLevel > 1 )
-    {
-      umfpack_dl_report_symbolic( m_data->symbolic, m_data->control );
-    }
-
-    // numeric factorization
-    status = umfpack_dl_numeric( m_data->rowPtr.data(),
-                                 m_data->colIndices.data(),
-                                 m_data->values.data(),
-                                 m_data->symbolic,
-                                 &m_data->numeric,
-                                 m_data->control,
-                                 m_data->info );
-
-    if( status < 0 )
-    {
-      umfpack_dl_report_info( m_data->control, m_data->info );
-      umfpack_dl_report_status( m_data->control, status );
-      GEOSX_ERROR( "SuiteSparse: umfpack_dl_numeric failed." );
-    }
-
-    // print the numeric factorization
-    if( m_params.logLevel > 1 )
-    {
-      umfpack_dl_report_numeric( m_data->symbolic, m_data->control );
-    }
-  }
 }
 
 template< typename LAI >
@@ -303,11 +300,13 @@ void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose )
   GEOSX_LAI_ASSERT_EQ( b.localSize(), x.localSize() );
   GEOSX_LAI_ASSERT_EQ( b.localSize(), matrix().numLocalRows() );
 
-  int const rank = MpiWrapper::commRank( b.getComm() );
-  m_export->exportVector( b, rank == m_workingRank ? m_data->rhs.data() : nullptr );
+  m_export->exportVector( b, m_data->rhs );
 
-  if( rank == m_workingRank )
+  if( MpiWrapper::commRank( b.getComm() ) == m_workingRank )
   {
+    m_data->rhs.move( LvArray::MemorySpace::host, false );
+    m_data->sol.move( LvArray::MemorySpace::host, true );
+
     // To be able to use UMFPACK direct solver we need to disable floating point exceptions
     LvArray::system::FloatingPointExceptionGuard guard;
 
@@ -330,7 +329,7 @@ void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose )
     }
   }
 
-  m_export->importVector( rank == m_workingRank ? m_data->sol.data() : nullptr, x );
+  m_export->importVector( m_data->sol, x );
 }
 
 template< typename LAI >
