@@ -241,6 +241,11 @@ public:
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
 
+    static constexpr char const * sendOrRecieveNodesString() { return "sendOrReceiveNodes";}
+    static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
+    static constexpr char const * targetNodesString() { return "targetNodes";}
+
+
     dataRepository::ViewKey vTilde = { vTildeString() };
     dataRepository::ViewKey uhatTilde = { uhatTildeString() };
     dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
@@ -291,9 +296,9 @@ protected:
   integer m_strainTheory;
   array1d< string > m_solidMaterialNames;
   string m_contactRelationName;
-  SortedArray< localIndex > m_sendOrReceiveNodes;
-  SortedArray< localIndex > m_nonSendOrReceiveNodes;
-  SortedArray< localIndex > m_targetNodes;
+//  SortedArray< localIndex > m_sendOrReceiveNodes;
+//  SortedArray< localIndex > m_nonSendOrReceiveNodes;
+//  SortedArray< localIndex > m_targetNodes;
   MPI_iCommData m_iComm;
 
   /// Rigid body modes

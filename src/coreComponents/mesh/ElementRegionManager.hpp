@@ -1351,25 +1351,28 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   for( localIndex k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
-    GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
-    ElementRegionBase const & region = getRegion( er );
-
-    region.forElementSubRegionsIndex( [&]( localIndex const esr,
-                                           ElementSubRegionBase const & subRegion )
+    if( er >=0 )
     {
-      dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
-      dataRepository::Group const & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
+      GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      ElementRegionBase const & region = getRegion( er );
 
-      dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
-      if( wrapper )
+      region.forElementSubRegionsIndex( [&]( localIndex const esr,
+                                             ElementSubRegionBase const & subRegion )
       {
-        accessor[er][esr] = wrapper->reference();
-      }
-      else
-      {
-        GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialNames[k] << " does not contain " << viewName );
-      }
-    } );
+        dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
+        dataRepository::Group const & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
+
+        dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
+        if( wrapper )
+        {
+          accessor[er][esr] = wrapper->reference();
+        }
+        else
+        {
+          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialNames[k] << " does not contain " << viewName );
+        }
+      } );
+    }
   }
   return accessor;
 }
@@ -1397,24 +1400,27 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   for( localIndex k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
-    GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
-    ElementRegionBase & region = getRegion( er );
-
-    region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
+    if( er >=0 )
     {
-      dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
-      dataRepository::Group & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
+      GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      ElementRegionBase & region = getRegion( er );
 
-      dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
-      if( wrapper )
+      region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
       {
-        accessor[er][esr] = wrapper->reference();
-      }
-      else
-      {
-        GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialNames[k] << " does not contain " << viewName );
-      }
-    } );
+        dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
+        dataRepository::Group & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
+
+        dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
+        if( wrapper )
+        {
+          accessor[er][esr] = wrapper->reference();
+        }
+        else
+        {
+          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialNames[k] << " does not contain " << viewName );
+        }
+      } );
+    }
   }
   return accessor;
 }
