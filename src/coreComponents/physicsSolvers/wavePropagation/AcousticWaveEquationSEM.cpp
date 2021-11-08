@@ -145,6 +145,11 @@ void AcousticWaveEquationSEM::postProcessInput()
                   "Invalid number of physical coordinates for the receivers",
                   InputError );
 
+  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+
+  m_samplesSeismoTrace = int(maxTime/m_dtSeismoTrace) + 1;
+
   localIndex const numNodesPerElem = 8;
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
@@ -157,7 +162,7 @@ void AcousticWaveEquationSEM::postProcessInput()
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resize( numReceiversGlobal );
 
-  m_pressureNp1AtReceivers.resize( numReceiversGlobal );
+  m_pressureNp1AtReceivers.resize( m_samplesSeismoTrace, numReceiversGlobal );
 
 }
 
@@ -259,8 +264,33 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, a
 }
 
 
-void AcousticWaveEquationSEM::computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 )
+void AcousticWaveEquationSEM::computeSeismoTrace(real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n)
 {
+  real64 const time_seismo = m_dtSeismoTrace*iSeismo;
+  real64 const time_np1 = time_n+dt;
+  arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
+  arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
+  arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
+
+  arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
+
+  forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+  {
+    if( receiverIsLocal[ircv] == 1 )
+    {
+      p_rcvs[iSeismo][ircv] = 0.0;
+      real64 ptmp_np1 = 0.0;
+      real64 ptmp_n = 0.0;
+      for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+      {
+	ptmp_np1 += pressure_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
+	ptmp_n += pressure_n[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
+      }
+      p_rcvs[iSeismo][ircv] = ((time_np1 - time_seismo)*ptmp_n+(time_seismo-time_n)*ptmp_np1)/dt;
+    }
+  } );
+
+  /*
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
@@ -292,7 +322,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( localIndex const iseismo, arra
         this->saveSeismo( iseismo, p_rcvs[ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
       }
     }
-  } );
+  } ); */
 }
 
 /// Use for now until we get the same functionality in TimeHistory
@@ -530,7 +560,13 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   if( this->m_outputSeismoTrace == 1 )
   {
-    computeSeismoTrace( cycleNumber, p_np1 );
+    real64 checkSismo = m_dtSeismoTrace*m_indexSeismoTrace;
+    real64 epsilonLoc = 1e-12;
+    if( (time_n-epsilonLoc) <= checkSismo && checkSismo < (time_n + dt) )
+    {
+      computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );
+      m_indexSeismoTrace ++;
+    }
   }
 
   return dt;

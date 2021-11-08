@@ -54,6 +54,9 @@ public:
 
     static constexpr char const * rickerOrderString() { return "rickerOrder"; }
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
+    static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
+    static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
+
 
   };
 
@@ -97,7 +100,7 @@ protected:
    * @param iseismo index number of the seismo trace
    * @param val_np1 the array to save the value at the receiver position
    */
-  virtual void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 ) = 0;
+  virtual void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n ) = 0;
 
   /**
    * @brief Save the sismo trace in file
@@ -117,8 +120,14 @@ protected:
   /// Flag that indicates the order of the Ricker to be used, order 2 by default
   localIndex m_rickerOrder;
 
-  /// Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise
+  /// Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise
   localIndex m_outputSeismoTrace;
+
+  real64 m_dtSeismoTrace;
+
+  localIndex m_indexSeismoTrace;
+
+  localIndex m_samplesSeismoTrace;
 
 
 

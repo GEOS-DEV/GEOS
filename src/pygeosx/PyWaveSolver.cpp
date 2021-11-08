@@ -82,7 +82,7 @@ BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 static PyMethodDef PyWaveSolver_methods[] = {
 { "explicitStep", (PyCFunction) explicitStep<PyWaveSolver>, METH_VARARGS, "explicit Step" },
 { "resizeArrays", (PyCFunction) postProcessInput, METH_NOARGS, "resize pressure_at_receivers array to fit with new number of receivers"},
-{ "updateSourceAndReceivers", (PyCFunction) precomputeSourceAndReceiverTerm, METH_NOARGS, "update positions for new source and receivers"},
+{ "applyNewSourceAndReceivers", (PyCFunction) precomputeSourceAndReceiverTerm, METH_NOARGS, "update positions for new source and receivers"},
 { "get_wrapper", (PyCFunction) PyGroup_getWrapper<PyWaveSolver>, METH_VARARGS, PyGroup_getWrapperDocString },
 { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };

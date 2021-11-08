@@ -56,6 +56,8 @@ BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyMethodDef PySolver_methods[] = {
 { "explicitStep", (PyCFunction) explicitStep<PySolver>, METH_VARARGS, "explicit Step" },
+{ "linearImplicitStep", (PyCFunction) linearImplicitStep<PySolver>, METH_VARARGS, "linear implicit step" },
+{ "nonlinearImplicitStep", (PyCFunction) nonlinearImplicitStep<PySolver>, METH_VARARGS, "non linear implicit step" },
 { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };
 

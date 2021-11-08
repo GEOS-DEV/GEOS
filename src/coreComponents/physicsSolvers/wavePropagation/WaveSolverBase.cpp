@@ -60,6 +60,16 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise" );
 
+  registerWrapper( viewKeyStruct::dtSeismoTraceString(), &m_dtSeismoTrace ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Time step for output pressure at receivers" );
+
+  registerWrapper( viewKeyStruct::indexSeismoTraceString(), &m_indexSeismoTrace ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Count for output pressure at receivers" );
+
 }
 
 WaveSolverBase::~WaveSolverBase()

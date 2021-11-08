@@ -86,7 +86,7 @@ public:
    * @param iseismo the index number of of the seismo trace
    * @param pressure_np1 the array to save the pressure value at the receiver position
    */
-  virtual void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 ) override;
+  virtual void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n ) override;
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
@@ -154,7 +154,7 @@ private:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
-  array1d< real64 > m_pressureNp1AtReceivers;
+  array2d< real64 > m_pressureNp1AtReceivers;
 
 
 };
