@@ -325,23 +325,22 @@
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="Level0" type="Level0Type" />
+			<xsd:element name="cellManager" type="cellManagerType" />
+			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
-		<!--meshLevels => (no description available)-->
-		<xsd:attribute name="meshLevels" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="InternalWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Perforation" type="PerforationType" />
-			<xsd:element name="Level0" type="Level0Type" />
+			<xsd:element name="cellManager" type="cellManagerType" />
+			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
-		<!--meshLevels => (no description available)-->
-		<xsd:attribute name="meshLevels" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="PerforationType" />
 	<xsd:complexType name="InternalWellboreType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="Level0" type="Level0Type" />
+			<xsd:element name="cellManager" type="cellManagerType" />
+			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 		<!--nx => Number of elements in the x-direction within each mesh block-->
 		<xsd:attribute name="nx" type="integer_array" />
@@ -351,15 +350,12 @@
 		<xsd:attribute name="xCoords" type="real64_array" />
 		<!--yCoords => y-coordinates of each mesh block vertex-->
 		<xsd:attribute name="yCoords" type="real64_array" />
-		<!--meshLevels => (no description available)-->
-		<xsd:attribute name="meshLevels" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="PAMELAMeshGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="Level0" type="Level0Type" />
+			<xsd:element name="cellManager" type="cellManagerType" />
+			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
-		<!--meshLevels => (no description available)-->
-		<xsd:attribute name="meshLevels" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="NumericalMethodsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -749,7 +745,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
 			<xsd:element name="MeshBodies" type="MeshBodiesType" />
-			<xsd:element name="cellManager" type="cellManagerType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
 		<xsd:attribute name="Neighbors" type="std_vector&lt;geosx_NeighborCommunicator, std_allocator&lt;geosx_NeighborCommunicator&gt; &gt;" />
@@ -1498,14 +1493,47 @@
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="Level0Type">
+	<xsd:complexType name="cellManagerType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="cellBlocks" type="cellBlocksType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+	</xsd:complexType>
+	<xsd:complexType name="cellBlocksType" />
+	<xsd:complexType name="neighborDataType" />
+	<xsd:complexType name="setsType">
+		<!--externalSet => (no description available)-->
+		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<!--nonSendOrReceiveNodes => (no description available)-->
+		<xsd:attribute name="nonSendOrReceiveNodes" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<!--sendOrReceiveNodes => (no description available)-->
+		<xsd:attribute name="sendOrReceiveNodes" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
+		<!--targetNodes => (no description available)-->
+		<xsd:attribute name="targetNodes" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="meshLevelsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Level00" type="Level00Type" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="Level00Type">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="edgeManager" type="edgeManagerType" />
 			<xsd:element name="embeddedSurfacesEdgeManager" type="embeddedSurfacesEdgeManagerType" />
 			<xsd:element name="embeddedSurfacesNodeManager" type="embeddedSurfacesNodeManagerType" />
 			<xsd:element name="FaceManager" type="FaceManagerType" />
-			<xsd:element name="finiteVolumeStencils" type="finiteVolumeStencilsType" />
 			<xsd:element name="nodeManager" type="nodeManagerType" />
 		</xsd:choice>
 		<!--meshLevel => (no description available)-->
@@ -1532,11 +1560,6 @@
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 	</xsd:complexType>
 	<xsd:complexType name="elementRegionsGroupType" />
-	<xsd:complexType name="neighborDataType" />
-	<xsd:complexType name="setsType">
-		<!--externalSet => (no description available)-->
-		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
-	</xsd:complexType>
 	<xsd:complexType name="edgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="neighborData" type="neighborDataType" />
@@ -1638,8 +1661,6 @@
 		<xsd:attribute name="K_IC" type="real64_array2d" />
 		<!--SIFonFace => Calculated Stress Intensity Factor on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
-		<!--TransMultiplier => An array that holds the transmissibility multipliers => HybridMimeticDiscretization, TwoPointFluxApproximation-->
-		<xsd:attribute name="TransMultiplier" type="real64_array" />
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
@@ -1693,11 +1714,6 @@
 		<xsd:attribute name="ruptureState" type="integer_array" />
 		<!--ruptureTime => Time that the object was ruptured/split. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
-	</xsd:complexType>
-	<xsd:complexType name="finiteVolumeStencilsType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
-		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1775,24 +1791,6 @@
 		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="velocityTilde" type="real64_array2d" />
 	</xsd:complexType>
-	<xsd:complexType name="cellManagerType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="cellBlocks" type="cellBlocksType" />
-			<xsd:element name="neighborData" type="neighborDataType" />
-			<xsd:element name="sets" type="setsType" />
-		</xsd:choice>
-		<!--domainBoundaryIndicator => (no description available)-->
-		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--ghostRank => (no description available)-->
-		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
-		<!--isExternal => (no description available)-->
-		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
-		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-	</xsd:complexType>
-	<xsd:complexType name="cellBlocksType" />
 	<xsd:complexType name="CellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />

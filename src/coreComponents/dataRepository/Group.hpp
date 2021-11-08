@@ -492,6 +492,47 @@ public:
     }
   }
 
+
+  /**
+   * @brief Apply the given functor to subgroups that can be casted to one of specified types.
+   * @tparam GROUPTYPE  the first type that will be used in the attempted casting of group.
+   * @tparam GROUPTYPES a variadic list of types that will be used in the attempted casting of group.
+   * @tparam LAMBDA     the type of functor to call
+   * @param[in] lambda  the functor to call on subgroups
+   */
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
+  void forSubGroupsIndex( LAMBDA && lambda )
+  {
+    localIndex counter = 0;
+    for( auto & subGroupIter : m_subGroups )
+    {
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *subGroupIter.second,
+                                                          [&]( auto & castedSubGroup )
+      {
+        lambda( counter, castedSubGroup );
+      } );
+      ++counter;
+    }
+  }
+
+  /**
+   * @copydoc forSubGroups(LAMBDA &&)
+   */
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
+  void forSubGroupsIndex( LAMBDA && lambda ) const
+  {
+    localIndex counter = 0;
+    for( auto const & subGroupIter : m_subGroups )
+    {
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *subGroupIter.second,
+                                                          [&]( auto const & castedSubGroup )
+      {
+        lambda( counter, castedSubGroup );
+      } );
+      ++counter;
+    }
+  }
+
   /**
    * @copybrief forSubGroups(LAMBDA &&)
    * @tparam GROUPTYPE        the first type that will be used in the attempted casting of group.

@@ -61,14 +61,14 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_strainTheory( 0 ),
 //  m_elemsAttachedToSendOrReceiveNodes(),
 //  m_elemsNotAttachedToSendOrReceiveNodes(),
-  m_sendOrReceiveNodes(),
-  m_nonSendOrReceiveNodes(),
-  m_targetNodes(),
+//  m_sendOrReceiveNodes(),
+//  m_nonSendOrReceiveNodes(),
+//  m_targetNodes(),
   m_iComm( CommunicationTools::getInstance().getCommID() )
 {
-  m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
-  m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
-  m_targetNodes.setName( "SolidMechanicsLagrangianFEM::m_targetNodes" );
+//  m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
+//  m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
+//  m_targetNodes.setName( "SolidMechanicsLagrangianFEM::m_targetNodes" );
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
     setApplyDefaultValue( 0.5 ).
@@ -213,6 +213,19 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       setDescription( "An array that holds the contact force." ).
       reference().resizeDimension< 1 >( 3 );
 
+    Group & nodeSets = nodes.sets();
+    nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::sendOrRecieveNodesString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRestartFlags( RestartFlags::NO_WRITE );
+
+    nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::nonSendOrReceiveNodesString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRestartFlags( RestartFlags::NO_WRITE );
+
+    nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::targetNodesString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRestartFlags( RestartFlags::NO_WRITE );
+
     ElementRegionManager &
     elementRegionManager = meshBody.getMeshLevel( 0 ).getElemManager();
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
@@ -239,7 +252,7 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
   // Validate solid models in target regions
   domain.forMeshBodies( [&]( MeshBody const & meshBody )
   {
-    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
+    MeshLevel const & meshLevel = meshBody.getMeshLevel( 0 );
     validateModelMapping< SolidBase >( meshLevel.getElemManager(), m_solidMaterialNames );
   } );
 
@@ -301,115 +314,126 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
 void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NodeManager & nodes = mesh.getNodeManager();
-
-  ElementRegionManager & elementRegionManager = mesh.getElemManager();
-
-  arrayView1d< real64 > & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
-
-  arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
-
-  // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
-  // the nodes one-by-one in the following std::sets. Then, when all the nodes
-  // have been collected, we do a batch insertion into m_sendOrReceiveNodes and
-  // m_nonSendOrReceiveNodes
-  std::set< localIndex > tmpSendOrReceiveNodes;
-  std::set< localIndex > tmpNonSendOrReceiveNodes;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
-  rho = elementRegionManager.constructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
-                                                                                                              targetRegionNames(),
-                                                                                                              solidMaterialNames() );
-
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const er,
-                                       ElementRegionBase & elemRegion )
+  domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion & elementSubRegion )
+    MeshLevel & mesh = meshBody.getMeshLevel( 0 );
+
+    NodeManager & nodes = mesh.getNodeManager();
+    Group & nodeSets = nodes.sets();
+
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+
+    arrayView1d< real64 > & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
+
+    arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
+
+    // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
+    // the nodes one-by-one in the following std::sets. Then, when all the nodes
+    // have been collected, we do a batch insertion into m_sendOrReceiveNodes and
+    // m_nonSendOrReceiveNodes
+    std::set< localIndex > tmpSendOrReceiveNodes;
+    std::set< localIndex > tmpNonSendOrReceiveNodes;
+
+    SortedArray< localIndex > & m_sendOrReceiveNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::sendOrRecieveNodesString() );
+    SortedArray< localIndex > & m_nonSendOrReceiveNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::nonSendOrReceiveNodesString() );
+    SortedArray< localIndex > & m_targetNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::targetNodesString() );
+
+
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
+    rho = elementRegionManager.constructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
+                                                                                                                targetRegionNames(),
+                                                                                                                solidMaterialNames() );
+
+    forTargetRegionsComplete( mesh, [&]( localIndex const,
+                                         localIndex const er,
+                                         ElementRegionBase & elemRegion )
     {
-      SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes( elementSubRegion );
-      SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes( elementSubRegion );
-
-      std::set< localIndex > tmpElemsAttachedToSendOrReceiveNodes;
-      std::set< localIndex > tmpElemsNotAttachedToSendOrReceiveNodes;
-
-      elemsAttachedToSendOrReceiveNodes.setName(
-        "SolidMechanicsLagrangianFEM::m_elemsAttachedToSendOrReceiveNodes["
-        + std::to_string( er ) + "][" + std::to_string( esr ) + "]" );
-
-      elemsNotAttachedToSendOrReceiveNodes.setName(
-        "SolidMechanicsLagrangianFEM::m_elemsNotAttachedToSendOrReceiveNodes["
-        + std::to_string( er ) + "][" + std::to_string( esr ) + "]" );
-
-      arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-      finiteElement::dispatch3D( fe,
-                                 [&] ( auto const finiteElement )
+      elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion & elementSubRegion )
       {
-        using FE_TYPE = TYPEOFREF( finiteElement );
+        SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes( elementSubRegion );
+        SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes( elementSubRegion );
 
-        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+        std::set< localIndex > tmpElemsAttachedToSendOrReceiveNodes;
+        std::set< localIndex > tmpElemsNotAttachedToSendOrReceiveNodes;
 
-        real64 N[numNodesPerElem];
-        for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
+        elemsAttachedToSendOrReceiveNodes.setName(
+          "SolidMechanicsLagrangianFEM::m_elemsAttachedToSendOrReceiveNodes["
+          + std::to_string( er ) + "][" + std::to_string( esr ) + "]" );
+
+        elemsNotAttachedToSendOrReceiveNodes.setName(
+          "SolidMechanicsLagrangianFEM::m_elemsNotAttachedToSendOrReceiveNodes["
+          + std::to_string( er ) + "][" + std::to_string( esr ) + "]" );
+
+        arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+
+        finiteElement::FiniteElementBase const &
+        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+        finiteElement::dispatch3D( fe,
+                                   [&] ( auto const finiteElement )
         {
-          real64 elemMass = 0;
-          for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-          {
-            elemMass += rho[er][esr][k][q] * detJ[k][q];
-            FE_TYPE::calcN( q, N );
+          using FE_TYPE = TYPEOFREF( finiteElement );
 
-            for( localIndex a=0; a< numNodesPerElem; ++a )
+          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+          constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+          real64 N[numNodesPerElem];
+          for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
+          {
+            real64 elemMass = 0;
+            for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
-              mass[elemsToNodes[k][a]] += rho[er][esr][k][q] * detJ[k][q] * N[a];
+              elemMass += rho[er][esr][k][q] * detJ[k][q];
+              FE_TYPE::calcN( q, N );
+
+              for( localIndex a=0; a< numNodesPerElem; ++a )
+              {
+                mass[elemsToNodes[k][a]] += rho[er][esr][k][q] * detJ[k][q] * N[a];
+              }
             }
-          }
 
-          bool isAttachedToGhostNode = false;
-          for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
-          {
-            if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
+            bool isAttachedToGhostNode = false;
+            for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
             {
-              isAttachedToGhostNode = true;
-              tmpSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
+              {
+                isAttachedToGhostNode = true;
+                tmpSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              }
+              else
+              {
+                tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              }
+            }
+
+            if( isAttachedToGhostNode )
+            {
+              tmpElemsAttachedToSendOrReceiveNodes.insert( k );
             }
             else
             {
-              tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+              tmpElemsNotAttachedToSendOrReceiveNodes.insert( k );
             }
           }
+        } );
+        elemsAttachedToSendOrReceiveNodes.insert( tmpElemsAttachedToSendOrReceiveNodes.begin(),
+                                                  tmpElemsAttachedToSendOrReceiveNodes.end() );
+        elemsNotAttachedToSendOrReceiveNodes.insert( tmpElemsNotAttachedToSendOrReceiveNodes.begin(),
+                                                     tmpElemsNotAttachedToSendOrReceiveNodes.end() );
 
-          if( isAttachedToGhostNode )
-          {
-            tmpElemsAttachedToSendOrReceiveNodes.insert( k );
-          }
-          else
-          {
-            tmpElemsNotAttachedToSendOrReceiveNodes.insert( k );
-          }
-        }
+        m_sendOrReceiveNodes.insert( tmpSendOrReceiveNodes.begin(),
+                                     tmpSendOrReceiveNodes.end() );
+        m_nonSendOrReceiveNodes.insert( tmpNonSendOrReceiveNodes.begin(),
+                                        tmpNonSendOrReceiveNodes.end() );
+        m_targetNodes = m_sendOrReceiveNodes;
+        m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
+                              m_nonSendOrReceiveNodes.end() );
+
       } );
-      elemsAttachedToSendOrReceiveNodes.insert( tmpElemsAttachedToSendOrReceiveNodes.begin(),
-                                                tmpElemsAttachedToSendOrReceiveNodes.end() );
-      elemsNotAttachedToSendOrReceiveNodes.insert( tmpElemsNotAttachedToSendOrReceiveNodes.begin(),
-                                                   tmpElemsNotAttachedToSendOrReceiveNodes.end() );
-
     } );
-  } );
 
-  m_sendOrReceiveNodes.insert( tmpSendOrReceiveNodes.begin(),
-                               tmpSendOrReceiveNodes.end() );
-  m_nonSendOrReceiveNodes.insert( tmpNonSendOrReceiveNodes.begin(),
-                                  tmpNonSendOrReceiveNodes.end() );
-  m_targetNodes = m_sendOrReceiveNodes;
-  m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
-                        m_nonSendOrReceiveNodes.end() );
+  });
 }
 
 
@@ -489,6 +513,17 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   NodeManager & nodes = mesh.getNodeManager();
+  Group const & nodeSets = nodes.sets();
+
+  SortedArrayView< localIndex const > const &
+  m_sendOrReceiveNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::sendOrRecieveNodesString() ).toViewConst();
+
+  SortedArrayView< localIndex const > const &
+  m_nonSendOrReceiveNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::nonSendOrReceiveNodesString() ).toViewConst();
+
+  SortedArrayView< localIndex const> const &
+  m_targetNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::targetNodesString() ).toViewConst();
+
 
   // save previous constitutive state data in preparation for next timestep
   forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
@@ -1000,15 +1035,16 @@ SolidMechanicsLagrangianFEM::
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   NodeManager const & nodeManager = mesh.getNodeManager();
 
-  arrayView1d< globalIndex const > const dofNumber =
-    nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( keys::TotalDisplacement ) );
+  arrayView1d< globalIndex const > const
+  dofNumber = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( keys::TotalDisplacement ) );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   arrayView1d< integer const > const ghostRank = nodeManager.ghostRank();
 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
-  SortedArrayView< localIndex const > const targetNodes = m_targetNodes.toViewConst();
+  SortedArrayView< localIndex const> const &
+  targetNodes = nodeManager.sets().getReference<SortedArray<localIndex>>( viewKeyStruct::targetNodesString() ).toViewConst();
 
   forAll< parallelDevicePolicy<> >( targetNodes.size(),
                                     [localRhs, localSum, dofNumber, rankOffset, ghostRank, targetNodes] GEOSX_HOST_DEVICE ( localIndex const k )

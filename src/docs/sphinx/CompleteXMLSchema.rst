@@ -1398,11 +1398,11 @@ Datastructure: LaplaceVEM
 .. include:: ../../coreComponents/schema/docs/LaplaceVEM_other.rst
 
 
-.. _DATASTRUCTURE_Level0:
+.. _DATASTRUCTURE_Level00:
 
-Datastructure: Level0
-=====================
-.. include:: ../../coreComponents/schema/docs/Level0_other.rst
+Datastructure: Level00
+======================
+.. include:: ../../coreComponents/schema/docs/Level00_other.rst
 
 
 .. _DATASTRUCTURE_LinearSolverParameters:
@@ -1944,18 +1944,18 @@ Datastructure: embeddedSurfacesNodeManager
 .. include:: ../../coreComponents/schema/docs/embeddedSurfacesNodeManager_other.rst
 
 
-.. _DATASTRUCTURE_finiteVolumeStencils:
-
-Datastructure: finiteVolumeStencils
-===================================
-.. include:: ../../coreComponents/schema/docs/finiteVolumeStencils_other.rst
-
-
 .. _DATASTRUCTURE_lassen:
 
 Datastructure: lassen
 =====================
 .. include:: ../../coreComponents/schema/docs/lassen_other.rst
+
+
+.. _DATASTRUCTURE_meshLevels:
+
+Datastructure: meshLevels
+=========================
+.. include:: ../../coreComponents/schema/docs/meshLevels_other.rst
 
 
 .. _DATASTRUCTURE_neighborData:
