@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -361,6 +361,11 @@ public:
                      ParallelMatrix const & matrix,
                      ParallelVector const & rhs ) const;
 
+  void
+  debugMarkerArray( integer const cycleNumber,
+                    integer const nonlinearIteration,
+                    DofManager const * const dofManager ) const;
+
   /**
    * @brief Output the linear system solution for debug purposes.
    * @param time beginning-of-step time
@@ -584,6 +589,8 @@ public:
   {
     return m_nonlinearSolverParameters;
   }
+
+  string getDiscretization() const { return m_discretizationName; }
 
   arrayView1d< string const > targetRegionNames() const { return m_targetRegionNames; }
 

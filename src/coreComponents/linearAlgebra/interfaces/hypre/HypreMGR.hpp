@@ -86,6 +86,8 @@ protected:
   HYPRE_Int m_levelInterpType[numLevels]{ -1 };        ///< Interpolation type for each level
   HYPRE_Int m_levelRestrictType[numLevels]{ -1 };      ///< Restriction type for each level
   HYPRE_Int m_levelCoarseGridMethod[numLevels]{ -1 };  ///< Coarse grid method for each level
+  HYPRE_Int m_levelSmoothType[numLevels]{ -1 };  ///< Coarse grid method for each level
+  HYPRE_Int m_levelSmoothIters[numLevels]{ -1 };  ///< Coarse grid method for each level
 
   HYPRE_Int m_numRestrictSweeps{ -1 };                 ///< Number of restrict sweeps
   HYPRE_Int m_numInterpSweeps{ -1 };                   ///< Number of interpolation sweeps
