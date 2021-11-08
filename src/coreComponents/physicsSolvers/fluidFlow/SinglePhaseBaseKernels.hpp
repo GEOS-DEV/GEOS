@@ -364,14 +364,14 @@ struct HydrostaticPressureKernel
     real64 pres0 = refPres - refDens * gravCoef;
     real64 pres1 = 0.0;
 
-    // Step 3: compute the mass density at this elevation using the guess, and update pressure
+    // Step 2: compute the mass density at this elevation using the guess, and update pressure
 
     real64 dens = 0.0;
     real64 visc = 0.0;
     fluidWrapper.compute( pres0, dens, visc );
     pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
 
-    // Step 4: fixed-point iteration until convergence
+    // Step 3: fixed-point iteration until convergence
 
     bool equilHasConverged = false;
     for( localIndex eqIter = 0; eqIter < maxNumEquilIterations; ++eqIter )
@@ -392,7 +392,7 @@ struct HydrostaticPressureKernel
       pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
     }
 
-    // Step 5: save the hydrostatic pressure and the corresponding density
+    // Step 4: save the hydrostatic pressure and the corresponding density
 
     newPres = pres1;
     newDens = dens;

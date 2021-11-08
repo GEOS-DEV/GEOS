@@ -17,6 +17,7 @@
  */
 
 #include "CompositionalMultiphaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
 {
@@ -287,6 +288,9 @@ FluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+
+  using namespace CompositionalMultiphaseUtilities;
+
   WellControls::Type const wellType = wellControls.getType();
   arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
 
@@ -410,6 +414,12 @@ FluxKernel::
         oneSidedDofColIndices_dPresCompUp[jdof] = offsetUp + COFFSET::DPRES + jdof;
       }
 
+      // Apply equation/variable change transformation(s)
+      real64 work[NC+1];
+      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, 1, oneSidedFluxJacobian_dRate, work );
+      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, oneSidedFluxJacobian_dPresCompUp, work );
+      shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, oneSidedFlux );
+
       for( localIndex i = 0; i < NC; ++i )
       {
         if( oneSidedEqnRowIndices[i] >= 0 && oneSidedEqnRowIndices[i] < localMatrix.numRows() )
@@ -466,6 +476,12 @@ FluxKernel::
         // dofs are the **upstream** pressure and component densities
         dofColIndices_dPresCompUp[jdof] = offsetUp + COFFSET::DPRES + jdof;
       }
+
+      // Apply equation/variable change transformation(s)
+      real64 work[NC+1];
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, 1, 2, localFluxJacobian_dRate, work );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, 2, localFluxJacobian_dPresCompUp, work );
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, 2, localFlux );
 
       for( localIndex i = 0; i < 2*NC; ++i )
       {
@@ -1310,6 +1326,8 @@ AccumulationKernel::
           arrayView1d< real64 > const & localRhs )
 {
 
+  using namespace CompositionalMultiphaseUtilities;
+
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
 
@@ -1352,6 +1370,11 @@ AccumulationKernel::
     {
       dofColIndices[idof] = wellElemDofNumber[iwelem] + COFFSET::DPRES + idof;
     }
+
+    // Apply equation/variable change transformation(s)
+    real64 work[NC+1];
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, localAccumJacobian, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localAccum );
 
     // add contribution to residual and jacobian
     for( localIndex ic = 0; ic < NC; ++ic )

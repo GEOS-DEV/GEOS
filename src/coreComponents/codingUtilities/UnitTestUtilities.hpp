@@ -58,7 +58,7 @@ namespace geosx
 namespace testing
 {
 
-constexpr real64 DEFAULT_ABS_TOL = 1E-13;
+constexpr real64 DEFAULT_ABS_TOL = 1E-12;
 constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
 
 ::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *, const char *,
@@ -71,7 +71,9 @@ constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
     return ::testing::AssertionFailure() << std::scientific << std::setprecision( 5 )
                                          << " relative error: " << delta / value
                                          << " (" << v1 << " vs " << v2 << "),"
-                                         << " exceeds " << relTol << std::endl;
+                                         << " exceeds " << relTol <<". "
+                                         << " absolute error: " << delta << " exeeds "
+                                         << absTol <<std::endl;
   }
   return ::testing::AssertionSuccess();
 }

@@ -12,6 +12,7 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
+     fluidFlow/CompositionalMultiphaseUtilities.hpp
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/FluxKernelsHelper.hpp
      fluidFlow/HybridFVMHelperKernels.hpp          
@@ -66,7 +67,9 @@ set( physicsSolvers_headers
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
      surfaceGeneration/ParallelTopologyChange.hpp
      surfaceGeneration/SurfaceGenerator.hpp
+     wavePropagation/WaveSolverBase.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
+     wavePropagation/AcousticWaveEquationSEMKernel.hpp
    )
 
 #
@@ -119,6 +122,7 @@ set( physicsSolvers_sources
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
      surfaceGeneration/ParallelTopologyChange.cpp
      surfaceGeneration/SurfaceGenerator.cpp
+     wavePropagation/WaveSolverBase.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
    )
 

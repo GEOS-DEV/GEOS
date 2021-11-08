@@ -20,6 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
 {
@@ -469,6 +470,8 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
+    using namespace CompositionalMultiphaseUtilities;
+
     GEOSX_UNUSED_VAR( k );
 
     real64 maxForce = 0;
@@ -476,8 +479,13 @@ public:
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     //int nFlowDof = m_numComponents + 1;
-
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
+
+    // Apply equation/variable change transformation(s)
+    real64 work[nUDof > ( numMaxComponents + 1 ) ? nUDof : numMaxComponents + 1];
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, nUDof, stack.localFlowDispJacobian, work );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents + 1, stack.localFlowFlowJacobian, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localFlowResidual );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
