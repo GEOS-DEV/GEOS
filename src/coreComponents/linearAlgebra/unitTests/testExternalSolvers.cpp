@@ -203,17 +203,6 @@ protected:
   {
     globalIndex constexpr n = 100;
     geosx::testing::compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );
-
-    // Impose Dirichlet boundary conditions: fix domain bottom (first 2*(nCellsX + 1) rows of matrix)
-    this->matrix.open();
-    for( globalIndex iRow = 0; iRow < 2 * (n + 1); ++iRow )
-    {
-      if( this->matrix.getLocalRowID( iRow ) >= 0 )
-      {
-        this->matrix.clearRow( iRow, true );
-      }
-    }
-    this->matrix.close();
     this->cond_est = 1e4; // not a true condition number estimate, but enough to pass tests
   }
 };
