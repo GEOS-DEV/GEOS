@@ -109,9 +109,10 @@ std::pair< int, int > makeNearSquareGrid( T const N )
 
 struct SuperLUDistData
 {
-  int_t * rowPtr{};                   ///< row pointers
-  int_t * colIndices{};               ///< column indices
-  double * values{};                  ///< values
+  array1d< int_t > rowPtr{};          ///< row pointers
+  array1d< int_t > colIndices{};      ///< column indices
+  array1d< double > values{};         ///< values
+  array1d< double > rhs{};            ///< rhs/solution vector values
   SuperMatrix mat{};                  ///< SuperLU_Dist matrix format
   dScalePermstruct_t scalePerm{};     ///< data structure to scale and permute the matrix
   dLUstruct_t lu{};                   ///< data structure to store the LU factorization
@@ -125,8 +126,10 @@ struct SuperLUDistData
                    int_t const numLocalNonzeros,
                    MPI_Comm const & comm )
   {
-    // These will be deleted by Destroy_CompRowLoc_Matrix_dist.
-    dallocateA_dist( numLocalRows, numLocalNonzeros, &values, &colIndices, &rowPtr );
+    rowPtr.resize( numLocalRows + 1 );
+    colIndices.resize( numLocalNonzeros );
+    values.resize( numLocalNonzeros );
+    rhs.resize( numLocalRows );
     dScalePermstructInit( numGlobalRows, numGlobalRows, &scalePerm );
     dLUstructInit( numGlobalRows, &lu );
     PStatInit( &stat );
@@ -141,7 +144,10 @@ struct SuperLUDistData
 
   ~SuperLUDistData()
   {
-    Destroy_CompRowLoc_Matrix_dist( &mat );
+    // Only cleanup memory taken by the NRformat_loc struct
+    // The actual CSR memory is managed by array1d<> objects
+    SUPERLU_FREE( (NRformat_loc *)mat.Store );
+
     dScalePermstructFree( &scalePerm );
     dDestroy_LU( mat.nrow, &grid, &lu );
     dLUstructFree( &lu );
@@ -178,6 +184,9 @@ void SuperLUDist< LAI >::setup( Matrix const & mat )
 
   typename Matrix::Export matExport;
   matExport.exportCRS( mat, m_data->rowPtr, m_data->colIndices, m_data->values );
+  m_data->rowPtr.move( LvArray::MemorySpace::host, false );
+  m_data->colIndices.move( LvArray::MemorySpace::host, false );
+  m_data->values.move( LvArray::MemorySpace::host, false );
 
   dCreate_CompRowLoc_Matrix_dist( &m_data->mat,
                                   numGR,
@@ -185,9 +194,9 @@ void SuperLUDist< LAI >::setup( Matrix const & mat )
                                   numNZ,
                                   numLR,
                                   LvArray::integerConversion< int_t >( mat.ilower() ),
-                                  m_data->values,
-                                  m_data->colIndices,
-                                  m_data->rowPtr,
+                                  m_data->values.data(),
+                                  m_data->colIndices.data(),
+                                  m_data->rowPtr.data(),
                                   SLU_NR_loc,
                                   SLU_D,
                                   SLU_GE );
@@ -211,11 +220,10 @@ void SuperLUDist< LAI >::apply( Vector const & src,
   // To be able to use SuperLU_Dist solver we need to disable floating point exceptions
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  // Copy rhs in solution vector (SuperLU_Dist works in place)
-  if( &src != &dst )
-  {
-    dst.copy( src );
-  }
+  // Export the rhs to a host-based array (this is required when vector is on GPU)
+  typename Matrix::Export vecExport;
+  vecExport.exportVector( src, m_data->rhs );
+  m_data->rhs.move( LvArray::MemorySpace::host, true );
 
   // Call the linear equation solver to solve the matrix.
   real64 berr = 0.0;
@@ -225,8 +233,8 @@ void SuperLUDist< LAI >::apply( Vector const & src,
   pdgssvx( &m_data->options,
            &m_data->mat,
            &m_data->scalePerm,
-           dst.extractLocalVector(),
-           dst.localSize(),
+           m_data->rhs.data(),
+           m_data->rhs.size(),
            1,
            &m_data->grid,
            &m_data->lu,
@@ -238,6 +246,9 @@ void SuperLUDist< LAI >::apply( Vector const & src,
   GEOSX_LAI_ASSERT_EQ( info, 0 );
   GEOSX_LAI_ASSERT( !std::isnan( berr ) );
   GEOSX_LAI_ASSERT( !std::isinf( berr ) );
+
+  // Import the solution back into the vector
+  vecExport.importVector( m_data->rhs, dst );
 }
 
 template< typename LAI >

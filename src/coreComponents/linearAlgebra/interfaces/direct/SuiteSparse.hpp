@@ -115,16 +115,6 @@ private:
   void doSolve( Vector const & b, Vector & x, bool transpose ) const;
 
   /**
-   * @brief Convert input parameters into SuperLU_Dist options.
-   */
-  void setOptions();
-
-  /**
-   * @brief Perform symbolic/numeric factorization of the matrix.
-   */
-  void factorize();
-
-  /**
    * @brief Estimates the condition number of the matrix using LU factors.
    * @return the estimated condition number
    */
