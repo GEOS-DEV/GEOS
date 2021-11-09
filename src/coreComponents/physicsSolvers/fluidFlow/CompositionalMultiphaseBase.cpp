@@ -818,12 +818,20 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
     arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
     arrayView1d< real64 > const temp = subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
-    arrayView2d< real64, compflow::USD_COMP > const compDens =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
     arrayView2d< real64, compflow::USD_COMP > const compFrac =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() );
+    arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappersViewConst =
+      compFracTableWrappers.toViewConst();
 
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
+                                                         elemCenter,
+                                                         presTableWrapper,
+                                                         tempTableWrapper,
+                                                         compFracTableWrappersViewConst,
+                                                         numComps,
+                                                         pres,
+                                                         temp,
+                                                         compFrac] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
@@ -832,7 +840,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       temp[k] = tempTableWrapper.compute( &elevation );
       for( localIndex ic = 0; ic < numComps; ++ic )
       {
-        compFrac[k][ic] = compFracTableWrappers[ic].compute( &elevation );
+        compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
       }
     } );
   } );
