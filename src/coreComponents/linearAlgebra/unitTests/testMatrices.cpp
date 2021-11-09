@@ -257,9 +257,10 @@ TYPED_TEST_P( MatrixTest, RectangularMatrixOperations )
   A.open();
   for( globalIndex i = A.ilower(); i < A.iupper(); ++i )
   {
-    real64 const entry = static_cast< real64 >( i + 1 );
-    A.insert( i, 2 * i, entry );
-    A.insert( i, 2 * i + 1, -entry );
+    real64 const entry0 = static_cast< real64 >( i + 1 );
+    real64 const entry1 = -entry0;
+    A.insert( i, 2 * i, entry0 );
+    A.insert( i, 2 * i + 1, entry1 );
   }
   A.close();
 
