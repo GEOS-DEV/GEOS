@@ -363,8 +363,8 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
 {
   array1d< real64 > localMaxElevation( equilNameToEquilId.size() );
   array1d< real64 > localMinElevation( equilNameToEquilId.size() );
-  localMaxElevation.setValues< parallelDevicePolicy<> >( -1e99 );
-  localMinElevation.setValues< parallelDevicePolicy<> >( 1e99 );
+  localMaxElevation.setValues< parallelHostPolicy >( -1e99 );
+  localMinElevation.setValues< parallelHostPolicy >( 1e99 );
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
