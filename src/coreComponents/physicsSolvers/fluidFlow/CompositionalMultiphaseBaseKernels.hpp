@@ -281,6 +281,21 @@ struct CapillaryPressureUpdateKernel
 /******************************** ElementBasedAssemblyKernel ********************************/
 
 /**
+ * @brief Internal struct to provide no-op defaults used in the inclusion
+ *   of lambda functions into kernel component functions.
+ * @struct NoOpFuncs
+ */
+struct NoOpFunc
+{
+  template< typename ... Ts >
+  GEOSX_HOST_DEVICE
+  constexpr void
+  operator()( Ts && ... ) const {}
+};
+
+
+
+/**
  * @class ElementBasedAssemblyKernel
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_DOF number of degrees of freedom
@@ -292,13 +307,13 @@ class ElementBasedAssemblyKernel
 public:
 
   /// Compile time value for the number of components
-  static constexpr localIndex NC = NUM_COMP;
+  static constexpr localIndex numComp = NUM_COMP;
 
   /// Compute time value for the number of degrees of freedom
-  static constexpr localIndex NDOF = NUM_DOF;
+  static constexpr localIndex numDof = NUM_DOF;
 
   /// Compute time value for the number of equations
-  static constexpr localIndex NEQ = NUM_DOF;
+  static constexpr localIndex numEqn = NUM_DOF;
 
   /**
    * @brief Constructor
@@ -352,9 +367,6 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
-    StackVariables() {}
-
     // Pore volume information (used by both accumulation and volume balance)
 
     /// Pore volume at time n+1
@@ -372,13 +384,13 @@ public:
     localIndex localRow = -1;
 
     /// Indices of the matrix rows/columns corresponding to the dofs in this element
-    globalIndex dofIndices[NDOF]{};
+    globalIndex dofIndices[numDof]{};
 
     /// C-array storage for the element local residual vector (all equations except volume balance)
-    real64 localResidual[NEQ]{};
+    real64 localResidual[numEqn]{};
 
     /// C-array storage for the element local Jacobian matrix (all equations except volume balance, all dogs)
-    real64 localJacobian[NEQ][NDOF]{};
+    real64 localJacobian[numEqn][numDof]{};
 
   };
 
@@ -388,8 +400,7 @@ public:
    * @return the ghost rank of the element
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  real64 getElemGhostRank( localIndex const ei ) const
+  integer getElemGhostRank( localIndex const ei ) const
   { return m_elemGhostRank( ei ); }
 
 
@@ -399,7 +410,6 @@ public:
    * @param[in] stack the stack variables
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
@@ -410,65 +420,24 @@ public:
 
     // set row index and degrees of freedom indices for this element
     stack.localRow = m_dofNumber[ei] - m_rankOffset;
-    for( integer idof = 0; idof < NDOF; ++idof )
+    for( integer idof = 0; idof < numDof; ++idof )
     {
       stack.dofIndices[idof] = m_dofNumber[ei] + idof;
     }
   }
 
   /**
-   * @brief Internal struct to provide no-op defaults used in the inclusion
-   *   of lambda functions into kernel component functions.
-   * @struct NoOpFunctors
-   */
-  struct NoOpFunctors
-  {
-
-    /**
-     * @brief operator() no-op used for additional terms in the residual / Jacobian in the accumulation term
-     * @tparam NC the number of components
-     * @param[in] ip the phase index
-     * @param[in] phaseAmountNew the volume of phase ip at time n+1
-     * @param[in] phaseAmountOld the volume of phase ip at the previous converged time step
-     * @param[in] dPhaseAmount_dPres the derivative of the volume of phase ip with respect to pressure
-     * @param[in] dPhaseAmount_dCompDens the derivatives of the volume of phase ip with respect to component densities
-     */
-    template< localIndex NC >
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( localIndex const ip,
-                      real64 const & phaseAmountNew,
-                      real64 const & phaseAmountOld,
-                      real64 const & dPhaseAmount_dPres,
-                      real64 const (&dPhaseAmount_dCompDens )[ NC ] )
-    {
-      GEOSX_UNUSED_VAR( ip, phaseAmountNew, phaseAmountOld, dPhaseAmount_dPres, dPhaseAmount_dCompDens );
-    }
-
-    /**
-     * @brief operator() no-op used for additional terms in the residual / Jacobian in the volume balance term
-     * @param[in] oneMinusPhaseVolumeFracSum one minus the sum of the phase volume fractions in the element
-     */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( real64 const & oneMinusPhaseVolFracSum )
-    {
-      GEOSX_UNUSED_VAR( oneMinusPhaseVolFracSum );
-    }
-
-  };
-
-  /**
    * @brief Compute the local accumulation contributions to the residual and Jacobian
-   * @tparam LAMBDA the type of the functor that can be used to customize the kernel
+   * @tparam FUNC the type of the function that can be used to customize the kernel
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
-   * @param[in] lambda the functor used to customize the kernel
+   * @param[in] phaseAmountKernelOp the function used to customize the kernel
    */
-  template< typename LAMBDA = NoOpFunctors >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack,
-                            LAMBDA && lambda = NoOpFunctors{} ) const
+                            FUNC && phaseAmountKernelOp = NoOpFunc{} ) const
   {
     // construct the slices for variables accessed multiple times
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
@@ -489,8 +458,8 @@ public:
     arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC-2 > dPhaseCompFrac_dComp = m_dPhaseCompFrac_dComp[ei][0];
 
     // temporary work arrays
-    real64 dPhaseAmount_dC[NC]{};
-    real64 dPhaseCompFrac_dC[NC]{};
+    real64 dPhaseAmount_dC[numComp]{};
+    real64 dPhaseCompFrac_dC[numComp]{};
 
     // sum contributions to component accumulation from each phase
     for( integer ip = 0; ip < m_numPhases; ++ip )
@@ -503,8 +472,8 @@ public:
                                                               + phaseVolFrac[ip] * dPhaseDens_dPres[ip]);
 
       // assemble density dependence
-      applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC );
-      for( integer jc = 0; jc < NC; ++jc )
+      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC );
+      for( integer jc = 0; jc < numComp; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
                               + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][jc];
@@ -513,7 +482,7 @@ public:
 
       // ic - index of component whose conservation equation is assembled
       // (i.e. row number in local matrix)
-      for( integer ic = 0; ic < NC; ++ic )
+      for( integer ic = 0; ic < numComp; ++ic )
       {
         real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFrac[ip][ic];
         real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOld[ip][ic];
@@ -528,8 +497,8 @@ public:
         // (i.e. col number in local matrix)
 
         // assemble phase composition dependence
-        applyChainRule( NC, dCompFrac_dCompDens, dPhaseCompFrac_dComp[ip][ic], dPhaseCompFrac_dC );
-        for( integer jc = 0; jc < NC; ++jc )
+        applyChainRule( numComp, dCompFrac_dCompDens, dPhaseCompFrac_dComp[ip][ic], dPhaseCompFrac_dC );
+        for( integer jc = 0; jc < numComp; ++jc )
         {
           real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
                                              + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
@@ -539,24 +508,23 @@ public:
 
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-      lambda( ip, phaseAmountNew, phaseAmountOld, dPhaseAmount_dP, dPhaseAmount_dC );
+      phaseAmountKernelOp( ip, phaseAmountNew, phaseAmountOld, dPhaseAmount_dP, dPhaseAmount_dC );
 
     }
   }
 
   /**
    * @brief Compute the local accumulation contributions to the residual and Jacobian
-   * @tparam LAMBDA the type of the functor that can be used to customize the kernel
+   * @tparam FUNC the type of the function that can be used to customize the kernel
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
-   * @param[in] lambda the functor used to customize the kernel
+   * @param[in] phaseVolFractionSumKernelOp the function used to customize the kernel
    */
-  template< typename LAMBDA = NoOpFunctors >
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void computeVolumeBalance( localIndex const ei,
                              StackVariables & stack,
-                             LAMBDA && lambda = NoOpFunctors{} ) const
+                             FUNC && phaseVolFractionSumKernelOp = NoOpFunc{} ) const
   {
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
@@ -568,25 +536,25 @@ public:
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
       oneMinusPhaseVolFracSum -= phaseVolFrac[ip];
-      stack.localJacobian[NC][0] -= dPhaseVolFrac_dPres[ip];
+      stack.localJacobian[numComp][0] -= dPhaseVolFrac_dPres[ip];
 
-      for( integer jc = 0; jc < NC; ++jc )
+      for( integer jc = 0; jc < numComp; ++jc )
       {
-        stack.localJacobian[NC][jc+1] -= dPhaseVolFrac_dCompDens[ip][jc];
+        stack.localJacobian[numComp][jc+1] -= dPhaseVolFrac_dCompDens[ip][jc];
       }
     }
 
     // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
-    stack.localResidual[NC] = stack.poreVolumeNew * oneMinusPhaseVolFracSum;
-    for( integer idof = 0; idof < NC+1; ++idof )
+    stack.localResidual[numComp] = stack.poreVolumeNew * oneMinusPhaseVolFracSum;
+    for( integer idof = 0; idof < numComp+1; ++idof )
     {
-      stack.localJacobian[NC][idof] *= stack.poreVolumeNew;
+      stack.localJacobian[numComp][idof] *= stack.poreVolumeNew;
     }
-    stack.localJacobian[NC][0] += stack.dPoreVolume_dPres * oneMinusPhaseVolFracSum;
+    stack.localJacobian[numComp][0] += stack.dPoreVolume_dPres * oneMinusPhaseVolFracSum;
 
     // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
     // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolumeNew depends on temperature
-    lambda( oneMinusPhaseVolFracSum );
+    phaseVolFractionSumKernelOp( oneMinusPhaseVolFracSum );
   }
 
   /**
@@ -595,27 +563,26 @@ public:
    * @param[inout] stack the stack variables
    */
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
     using namespace CompositionalMultiphaseUtilities;
 
     // apply equation/variable change transformation to the component mass balance equations
-    real64 work[NDOF]{};
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF, stack.localJacobian, work );
-    shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, stack.localResidual );
+    real64 work[numDof]{};
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localJacobian, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localResidual );
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations
     // - the volume balance equations
-    for( integer i = 0; i < NC+1; ++i )
+    for( integer i = 0; i < numComp+1; ++i )
     {
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
       m_localMatrix.addToRow< serialAtomic >( stack.localRow + i,
                                               stack.dofIndices,
                                               stack.localJacobian[i],
-                                              NDOF );
+                                              numDof );
     }
   }
 

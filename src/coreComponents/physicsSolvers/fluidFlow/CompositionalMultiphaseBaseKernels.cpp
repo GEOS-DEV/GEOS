@@ -313,20 +313,6 @@ INST_PhaseVolumeFractionKernel( 5, 3 );
 
 #undef INST_PhaseVolumeFractionKernel
 
-/******************************** ElementBasedAssemblyKernel ********************************/
-
-#define INST_ElementBasedAssemblyKernel( NC, NDOF ) \
-  template \
-  class ElementBasedAssemblyKernel< NC, NDOF >
-
-INST_ElementBasedAssemblyKernel( 1, 2 );
-INST_ElementBasedAssemblyKernel( 2, 3 );
-INST_ElementBasedAssemblyKernel( 3, 4 );
-INST_ElementBasedAssemblyKernel( 4, 5 );
-INST_ElementBasedAssemblyKernel( 5, 6 );
-
-#undef INST_ElementBasedAssemblyKernel
-
 } // namespace CompositionalMultiphaseBaseKernels
 
 } // namespace geosx
