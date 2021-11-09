@@ -21,6 +21,7 @@ dPhaseViscosity_dTemperature           real64_array3d                           
 dTotalDensity_dGlobalCompFraction      real64_array3d                                                                                 (no description available) 
 dTotalDensity_dPressure                real64_array2d                                                                                 (no description available) 
 dTotalDensity_dTemperature             real64_array2d                                                                                 (no description available) 
+initialTotalMassDensity                real64_array2d                                                                                 (no description available) 
 phaseCompFraction                      real64_array4d                                                                                 (no description available) 
 phaseDensity                           real64_array3d                                                                                 (no description available) 
 phaseFraction                          real64_array3d                                                                                 (no description available) 

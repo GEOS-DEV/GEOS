@@ -167,13 +167,11 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="initialPressure_channel"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="pressure"
-      scale="1e6"/>
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions/Channel"      
+      datumElevation="5"
+      datumPressure="1e6"/>
   </FieldSpecifications>
 
   <Functions>
