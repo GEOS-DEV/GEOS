@@ -47,7 +47,7 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
     setApplyDefaultValue( 0.0 ).
     setDescription( "Derivative of the solid internal energy w.r.t. temperature" );
 
-  registerWrapper( viewKeyStruct::specificHeatCapacityString(), &m_specificHeatCapacity().
+  registerWrapper( viewKeyStruct::specificHeatCapacityString(), &m_specificHeatCapacity ).
     setApplyDefaultValue( 0.0 ).
     setDescription( "Solid specific heat capacity" );
 
