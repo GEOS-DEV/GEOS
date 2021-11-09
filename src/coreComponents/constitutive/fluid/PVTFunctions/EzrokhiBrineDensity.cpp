@@ -84,7 +84,7 @@ TableFunction const * makeSatDensityTable( string const & functionName,
   densities[8] = 977.76;
   densities[9] = 971.79;
   densities[10] = 965.31;
-  densities[11] = 958.35; // this value is used as referense density with referense pressure 100 kPa.
+  densities[11] = 958.35;
   densities[12] = 950.95;
   densities[13] = 943.11;
   densities[14] = 926.13;
