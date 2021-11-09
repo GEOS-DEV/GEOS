@@ -312,6 +312,11 @@ public:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
+   * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
+   */
+  void computeHydrostaticEquilibrium();
+
+  /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param mesh the mesh to operate on
    */
