@@ -226,5 +226,8 @@
       name="timeHistoryOutput"
       sources="{/Tasks/apertureCollection}"
       filename="displacementJump_hydroFrac" />
+      
+     <Restart
+      name="restartOutput"/> 
   </Outputs>
 </Problem>

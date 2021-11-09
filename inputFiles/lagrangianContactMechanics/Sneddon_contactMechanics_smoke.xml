@@ -52,6 +52,11 @@
       timeFrequency="1.0"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
+      
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0"
+      target="/Outputs/restartOutput"/>      
   </Events> 
   <!-- SPHINX_SNEDDON_EVENTS_END -->
 </Problem>

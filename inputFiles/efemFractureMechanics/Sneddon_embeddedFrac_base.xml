@@ -35,7 +35,8 @@
       solidMaterialNames="{ rock }"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
-      logLevel="1"/>
+      logLevel="1"
+      mpiCommOrder="1"/>
   </Solvers>
   <!-- SPHINX_SNEDDON_SOLVER_END -->
 
@@ -151,5 +152,8 @@
       name="timeHistoryOutput"
       sources="{/Tasks/displacementJumpCollection}"
       filename="displacementJump_embeddedFrac" />
+      
+     <Restart
+      name="restartOutput"/> 
   </Outputs>
 </Problem>

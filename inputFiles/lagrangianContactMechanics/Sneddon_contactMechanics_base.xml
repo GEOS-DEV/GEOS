@@ -184,6 +184,9 @@
     <TimeHistory
       name="timeHistoryOutput"
       sources="{/Tasks/displacementJumpCollection}"
-      filename="displacementJump_contactMechanics" /> 
+      filename="displacementJump_contactMechanics" />
+      
+    <Restart
+      name="restartOutput"/>   
    </Outputs>
 </Problem>
