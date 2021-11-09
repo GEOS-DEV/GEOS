@@ -32,7 +32,6 @@
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
       fluidNames="{ fluid }"
       relPermNames="{ relperm }"
-      wellTemperature="297.15"
       maxRelativePressureChange="0.1"
       maxCompFractionChange="0.1">
       <WellControls
@@ -67,6 +66,7 @@
         surfaceTemperature="297.15"
         targetBHP="4.5e7"
         targetTotalRate="1e-5"
+        injectionTemperature="297.15"
         injectionStream="{ 0.0, 0.0, 1.0 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>

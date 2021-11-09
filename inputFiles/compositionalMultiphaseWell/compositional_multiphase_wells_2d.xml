@@ -33,8 +33,7 @@
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
       fluidNames="{ fluid1 }"
-      relPermNames="{ relperm }"
-      wellTemperature="297.15">
+      relPermNames="{ relperm }">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -58,6 +57,7 @@
         referenceElevation="0.5"
         targetBHP="4e7"
         targetTotalRate="5e-7"
+        injectionTemperature="297.15"
         injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
     </CompositionalMultiphaseWell>
 

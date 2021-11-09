@@ -170,6 +170,10 @@ public:
   arrayView3d< real64 const, multifluid::USD_FLUID_DC > dTotalDensity_dGlobalCompFraction() const
   { return m_totalDensity.dComp; }
 
+  arrayView2d< real64 const, multifluid::USD_FLUID > initialTotalMassDensity() const
+  { return m_initialTotalMassDensity.toViewConst(); }
+
+
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * componentNamesString() { return "componentNames"; }
@@ -206,6 +210,8 @@ public:
     static constexpr char const * dTotalDensity_dPressureString() { return "dTotalDensity_dPressure"; } // dRho_t/dP
     static constexpr char const * dTotalDensity_dTemperatureString() { return "dTotalDensity_dTemperature"; } // dRho_t/dT
     static constexpr char const * dTotalDensity_dGlobalCompFractionString() { return "dTotalDensity_dGlobalCompFraction"; } // dRho_t/dz
+
+    static constexpr char const * initialTotalMassDensityString() { return "initialTotalMassDensity"; } // rho^int_t
 
     static constexpr char const * useMassString() { return "useMass"; }
   };
@@ -354,6 +360,10 @@ protected:
   PhaseProp m_phaseViscosity;
   PhaseComp m_phaseCompFraction;
   FluidProp m_totalDensity;
+
+  // initial data (used to compute the body force in the poromechanics solver)
+
+  array2d< real64, multifluid::LAYOUT_FLUID > m_initialTotalMassDensity;
 
 };
 
