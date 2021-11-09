@@ -57,23 +57,26 @@ PetscExport::~PetscExport()
 
 template< typename OFFSET_TYPE, typename COLUMN_TYPE >
 void PetscExport::exportCRS( PetscMatrix const & mat,
-                             OFFSET_TYPE * const rowOffsets,
-                             COLUMN_TYPE * const colIndices,
-                             real64 * const values ) const
+                             arrayView1d< OFFSET_TYPE > const & rowOffsets,
+                             arrayView1d< COLUMN_TYPE > const & colIndices,
+                             arrayView1d< real64 > const & values ) const
 {
   int const rank = MpiWrapper::commRank( mat.getComm() );
 
   // import on target rank if needed, or extract diag+offdiag part in each rank
   Mat * submat; // needed by MatCreateSubMatrices API
   Mat localMatrix;
+
+  rowOffsets.move( LvArray::MemorySpace::host, false );
+  colIndices.move( LvArray::MemorySpace::host, false );
+  values.move( LvArray::MemorySpace::host, false );
+
   if( m_targetRank < 0 )
   {
     GEOSX_LAI_CHECK_ERROR( MatMPIAIJGetLocalMat( mat.unwrapped(), MAT_INITIAL_MATRIX, &localMatrix ) );
   }
   else
   {
-    GEOSX_ERROR_IF( rank == m_targetRank && !( rowOffsets && colIndices && values ),
-                    "PetscExport: must pass non-null pointers on the target rank" );
     GEOSX_LAI_CHECK_ERROR( MatCreateSubMatrices( mat.unwrapped(), rank == m_targetRank ? 1 : 0,
                                                  &m_indexSet, &m_indexSet, MAT_INITIAL_MATRIX, &submat ) );
     localMatrix = rank == m_targetRank ? submat[0] : nullptr;
@@ -96,9 +99,9 @@ void PetscExport::exportCRS( PetscMatrix const & mat,
     GEOSX_LAI_CHECK_ERROR( MatGetInfo( localMatrix, MAT_LOCAL, &info ) );
     PetscInt const numNz = static_cast< PetscInt >( info.nz_used );
 
-    std::transform( ia, ia + numRows + 1, rowOffsets, LvArray::integerConversion< OFFSET_TYPE, PetscInt > );
-    std::transform( ja, ja + numNz, colIndices, LvArray::integerConversion< COLUMN_TYPE, PetscInt > );
-    std::copy( va, va + numNz, values );
+    std::transform( ia, ia + numRows + 1, rowOffsets.data(), LvArray::integerConversion< OFFSET_TYPE, PetscInt > );
+    std::transform( ja, ja + numNz, colIndices.data(), LvArray::integerConversion< COLUMN_TYPE, PetscInt > );
+    std::copy( va, va + numNz, values.data() );
 
     GEOSX_LAI_CHECK_ERROR( MatSeqAIJRestoreArrayRead( localMatrix, &va ) );
     GEOSX_LAI_CHECK_ERROR( MatRestoreRowIJ( localMatrix, 0, PETSC_FALSE, PETSC_FALSE, &numRows, &ia, &ja, &status ) );
@@ -115,16 +118,16 @@ void PetscExport::exportCRS( PetscMatrix const & mat,
 }
 
 void PetscExport::exportVector( PetscVector const & vec,
-                                real64 * values ) const
+                                arrayView1d< real64 > const & values ) const
 {
+  values.move( LvArray::MemorySpace::host, false );
   if( m_targetRank >= 0 )
   {
     int const rank = MpiWrapper::commRank( vec.getComm() );
     localIndex const N = ( rank == m_targetRank ) ? vec.globalSize() : 0;
-    GEOSX_ERROR_IF( rank == m_targetRank && !values, "PetscExport: must pass non-null pointers on the target rank" );
 
     Vec localVector;
-    GEOSX_LAI_CHECK_ERROR( VecCreateSeqWithArray( PETSC_COMM_SELF, 1, N, values, &localVector ) );
+    GEOSX_LAI_CHECK_ERROR( VecCreateSeqWithArray( PETSC_COMM_SELF, 1, N, values.data(), &localVector ) );
     GEOSX_LAI_CHECK_ERROR( VecScatterBegin( m_scatter, vec.unwrapped(), localVector, INSERT_VALUES, SCATTER_FORWARD ) );
     GEOSX_LAI_CHECK_ERROR( VecScatterEnd( m_scatter, vec.unwrapped(), localVector, INSERT_VALUES, SCATTER_FORWARD ) );
     GEOSX_LAI_CHECK_ERROR( VecDestroy( &localVector ) );
@@ -132,23 +135,23 @@ void PetscExport::exportVector( PetscVector const & vec,
   else
   {
     real64 const * const data = vec.extractLocalVector();
-    std::copy( data, data + vec.localSize(), values );
+    std::copy( data, data + vec.localSize(), values.data() );
   }
 }
 
-void PetscExport::importVector( real64 const * values,
+void PetscExport::importVector( arrayView1d< const real64 > const & values,
                                 PetscVector & vec ) const
 {
+  values.move( LvArray::MemorySpace::host, false );
   if( m_targetRank >= 0 )
   {
     int const rank = MpiWrapper::commRank( vec.getComm() );
     localIndex const N = ( rank == m_targetRank ) ? vec.globalSize() : 0;
-    GEOSX_ERROR_IF( rank == m_targetRank && !values, "PetscExport: must pass non-null pointers on the target rank" );
 
     // Note: PETSc creates a vector wrapper around values by taking a pointer-to-const and casting away const-ness (!)
     //       This would lead to UB if we did anything that modified values, but here we only scatter (read) them.
     Vec localVector;
-    GEOSX_LAI_CHECK_ERROR( VecCreateSeqWithArray( PETSC_COMM_SELF, 1, N, values, &localVector ) );
+    GEOSX_LAI_CHECK_ERROR( VecCreateSeqWithArray( PETSC_COMM_SELF, 1, N, values.data(), &localVector ) );
     GEOSX_LAI_CHECK_ERROR( VecScatterBegin( m_scatter, localVector, vec.unwrapped(), INSERT_VALUES, SCATTER_REVERSE ) );
     GEOSX_LAI_CHECK_ERROR( VecScatterEnd( m_scatter, localVector, vec.unwrapped(), INSERT_VALUES, SCATTER_REVERSE ) );
     GEOSX_LAI_CHECK_ERROR( VecDestroy( &localVector ) );
@@ -156,7 +159,7 @@ void PetscExport::importVector( real64 const * values,
   else
   {
     real64 * const data = vec.extractLocalVector();
-    std::copy( values, values + vec.localSize(), data );
+    std::copy( values.data(), values.data() + vec.localSize(), data );
   }
 }
 
@@ -169,9 +172,9 @@ void PetscExport::importVector( real64 const * values,
 #define INST_PETSC_EXPORT_CRS( OFFSET_TYPE, COLUMN_TYPE ) \
   template void \
   PetscExport::exportCRS< OFFSET_TYPE, COLUMN_TYPE >( PetscMatrix const &, \
-                                                      OFFSET_TYPE * const, \
-                                                      COLUMN_TYPE * const, \
-                                                      real64 * const ) const
+                                                      arrayView1d< OFFSET_TYPE > const &, \
+                                                      arrayView1d< COLUMN_TYPE > const &, \
+                                                      arrayView1d< real64 > const & ) const
 
 // Add other instantiations as needed (only use built-in types)
 INST_PETSC_EXPORT_CRS( int, int );

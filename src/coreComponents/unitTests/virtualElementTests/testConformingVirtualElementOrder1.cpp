@@ -40,7 +40,7 @@ static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
 {
   static constexpr localIndex
     maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
-  real64 basisFunctionsIntegralMean[maxSupportPoints];
+  real64 basisFunctionsIntegralMean[maxSupportPoints]{};
   VEM::calcN( 0, stack, basisFunctionsIntegralMean );
   sumBasisFunctions = 0;
   for( localIndex iBasisFun = 0;
@@ -65,7 +65,7 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
   localIndex const k = 0;
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
-    real64 basisDerivativesIntegralMean[maxSupportPoints][3];
+    real64 basisDerivativesIntegralMean[maxSupportPoints][3]{};
     feBase.template getGradN< VEM >( k, q, dummy, stack, basisDerivativesIntegralMean );
     sumXDerivatives = 0; sumYDerivatives = 0; sumZDerivatives = 0;
     for( localIndex iBasisFun = 0;
@@ -85,7 +85,7 @@ static void
 checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                                    nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                                       localIndex const & cellIndex,
-                                      CellElementSubRegion::NodeMapType const & cellToNodes,
+                                      traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const & cellToNodes,
                                       arrayView2d< real64 const > const & cellCenters,
                                       FiniteElementBase const & feBase,
                                       typename VEM::StackVariables const & stack,
@@ -100,47 +100,49 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
   {
     for( localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex )
     {
-      array1d< real64 > vertDiff( 3 );
+      real64 vertDiff[ 3 ]{};
       LvArray::tensorOps::copy< 3 >( vertDiff, nodesCoords[cellToNodes( cellIndex, numVertex )] );
       LvArray::tensorOps::subtract< 3 >( vertDiff,
                                          nodesCoords[cellToNodes( cellIndex, numOthVertex )] );
       real64 const candidateDiameter = LvArray::tensorOps::l2NormSquared< 3 >( vertDiff );
       if( cellDiameter < candidateDiameter )
+      {
         cellDiameter = candidateDiameter;
+      }
     }
   }
   cellDiameter = LvArray::math::sqrt< real64 >( cellDiameter );
   real64 const invCellDiameter = 1.0/cellDiameter;
 
-  array2d< real64 > monomialVemDofs( 3, numCellPoints );
+  stackArray2d< real64, 3*VEM::numNodes > monomialVemDofs( 3, numCellPoints );
   for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
   {
     for( localIndex pos = 0; pos < 3; ++pos )
-      monomialVemDofs( pos, numVertex ) = invCellDiameter*
-                                          (nodesCoords( cellToNodes( cellIndex, numVertex ), pos )
-                                           - cellCenters( cellIndex, pos ));
+      monomialVemDofs[ pos ][ numVertex ] = invCellDiameter*
+                                            (nodesCoords( cellToNodes( cellIndex, numVertex ), pos ) - cellCenters( cellIndex, pos ));
   }
 
-  array1d< real64 > stabTimeMonomialDofs( numCellPoints );
-  real64 stabilizationMatrix[maxSupportPoints][maxSupportPoints] { { 0.0 } };
+  stackArray1d< real64, VEM::numNodes > stabTimeMonomialDofs( numCellPoints );
+  real64 stabilizationMatrix[maxSupportPoints][maxSupportPoints]{};
   feBase.template addGradGradStabilizationMatrix< VEM >( stack, stabilizationMatrix );
-  stabTimeMonomialDofsNorm( 0 ) = 0;
+  stabTimeMonomialDofsNorm( 0 ) = 0.0;
   for( localIndex i = 0; i < numCellPoints; ++i )
   {
-    stabTimeMonomialDofs( i ) = 0;
-    stabTimeMonomialDofsNorm( 0 ) = 0;
+    stabTimeMonomialDofs( i ) = 0.0;
+    stabTimeMonomialDofsNorm( 0 ) = 0.0;
     for( localIndex j = 0; j < numCellPoints; ++j )
     {
       stabTimeMonomialDofs( i ) += stabilizationMatrix[ i ][ j ];
     }
     stabTimeMonomialDofsNorm( 0 ) += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
   }
+
   for( localIndex monomInd = 0; monomInd < 3; ++monomInd )
   {
     stabTimeMonomialDofsNorm( monomInd+1 ) = 0;
     for( localIndex i = 0; i < numCellPoints; ++i )
     {
-      stabTimeMonomialDofs( i ) = 0;
+      stabTimeMonomialDofs( i ) = 0.0;
       for( localIndex j = 0; j < numCellPoints; ++j )
       {
         stabTimeMonomialDofs( i ) += stabilizationMatrix[ i ][ j ] * monomialVemDofs( monomInd, j );
@@ -148,6 +150,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
       stabTimeMonomialDofsNorm( monomInd+1 ) += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
     }
   }
+
 }
 
 template< typename VEM >
@@ -158,10 +161,10 @@ static void checkSumOfQuadratureWeights( typename VEM::StackVariables stack,
   static constexpr localIndex
     maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
   sumOfQuadratureWeights = 0.0;
-  real64 const dummy[maxSupportPoints][3] { { 0.0 } };
+  real64 const dummy[maxSupportPoints][3]{};
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
-    real64 weight = VEM::transformedQuadratureWeight( q, dummy, stack );
+    real64 const weight = VEM::transformedQuadratureWeight( q, dummy, stack );
     sumOfQuadratureWeights += weight;
   }
 }
@@ -182,7 +185,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   // Get geometric properties to be passed as inputs.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
-  CellElementSubRegion::NodeMapType const & cellToNodeMap = cellSubRegion.nodeList();
+  traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const & cellToNodeMap = cellSubRegion.nodeList();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
 
@@ -230,27 +233,25 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   } );
 
   // Perform checks.
-  for( localIndex cellIndex = 0; cellIndex < numCells; ++cellIndex )
+  forAll< serialPolicy >( numCells, [=] ( localIndex const cellIndex )
   {
-    checkRelativeError( sumXDerivatives( cellIndex ), 0.0, relTol, absTol,
+    checkRelativeError( sumXDerivativesView( cellIndex ), 0.0, relTol, absTol,
                         "Sum of integral means of x-derivatives of basis functions" );
-    checkRelativeError( sumYDerivatives( cellIndex ), 0.0, relTol, absTol,
+    checkRelativeError( sumYDerivativesView( cellIndex ), 0.0, relTol, absTol,
                         "Sum of integral means of y-derivatives of basis functions" );
-    checkRelativeError( sumZDerivatives( cellIndex ), 0.0, relTol, absTol,
+    checkRelativeError( sumZDerivativesView( cellIndex ), 0.0, relTol, absTol,
                         "Sum of integral means of z-derivatives of basis functions" );
-    checkRelativeError( sumBasisFunctions( cellIndex ), 1.0, relTol, absTol,
+    checkRelativeError( sumBasisFunctionsView( cellIndex ), 1.0, relTol, absTol,
                         "Sum of integral means of basis functions" );
     for( localIndex monomInd = 0; monomInd < 4; ++monomInd )
     {
-      char name[100];
-      std::sprintf( name, "Product of stabilization matrix and degrees of freedom of monomial %ld",
-                    monomInd );
-      checkRelativeError( stabTimeMonomialDofsNorm( cellIndex, monomInd ), 0.0, relTol, absTol,
+      string const name = "Product of stabilization matrix and degrees of freedom of monomial " + std::to_string( monomInd );
+      checkRelativeError( stabTimeMonomialDofsNormView( cellIndex, monomInd ), 0.0, relTol, absTol,
                           name );
     }
-    checkRelativeError( sumOfQuadWeights( cellIndex ), cellVolumes( cellIndex ), relTol, absTol,
+    checkRelativeError( sumOfQuadWeightsView( cellIndex ), cellVolumes( cellIndex ), relTol, absTol,
                         "Sum of quadrature weights" );
-  }
+  } );
 }
 
 TEST( ConformingVirtualElementOrder1, hexahedra )

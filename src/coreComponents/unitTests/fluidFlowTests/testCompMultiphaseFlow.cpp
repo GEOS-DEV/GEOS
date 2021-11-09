@@ -538,7 +538,9 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
         dPres.move( LvArray::MemorySpace::host, true );
         dPres[ei] = dP;
-
+#if defined(GEOSX_USE_CUDA)
+        dPres.move( LvArray::MemorySpace::cuda, false );
+#endif
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
@@ -717,6 +719,7 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geosx::basicSetup( argc, argv );
+//  chai::ArrayManager::getInstance()->disableCallbacks();
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();
   return result;

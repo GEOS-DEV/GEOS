@@ -407,6 +407,13 @@ Element: Hydrofracture
 .. include:: ../../coreComponents/schema/docs/Hydrofracture.rst
 
 
+.. _XML_HydrostaticEquilibrium:
+
+Element: HydrostaticEquilibrium
+===============================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium.rst
+
+
 .. _XML_Included:
 
 Element: Included
@@ -1347,6 +1354,13 @@ Datastructure: HybridMimeticDiscretization
 Datastructure: Hydrofracture
 ============================
 .. include:: ../../coreComponents/schema/docs/Hydrofracture_other.rst
+
+
+.. _DATASTRUCTURE_HydrostaticEquilibrium:
+
+Datastructure: HydrostaticEquilibrium
+=====================================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium_other.rst
 
 
 .. _DATASTRUCTURE_Included:
