@@ -78,6 +78,7 @@ set( constitutive_headers
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
+     solid/SolidInternalEnergy.hpp
      solid/SolidModelDiscretizationOps.hpp
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
@@ -148,6 +149,7 @@ set( constitutive_sources
      solid/ElasticOrthotropic.cpp
      solid/PorousSolid.cpp
      solid/SolidBase.cpp
+     solid/SolidInternalEnergy.cpp
      solid/TriaxialDriver.cpp
      solid/porosity/BiotPorosity.cpp
      solid/porosity/PorosityBase.cpp
