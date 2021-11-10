@@ -231,7 +231,7 @@ protected:
    * @brief Set vector elements to random entries.
    * @param seed the random number seed to use
    */
-  virtual void rand( unsigned const seed = 1984 ) = 0;
+  virtual void rand( unsigned const seed ) = 0;
 
   ///@}
 

@@ -242,7 +242,7 @@ TYPED_TEST_P( VectorTest, copy )
 
   Vector x;
   x.createWithLocalSize( localSize, MPI_COMM_GEOSX );
-  x.rand();
+  x.rand( 1984 );
 
   Vector y;
   y.createWithLocalSize( localSize, MPI_COMM_GEOSX );
