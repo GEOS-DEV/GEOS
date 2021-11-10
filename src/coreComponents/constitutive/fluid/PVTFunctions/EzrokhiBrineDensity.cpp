@@ -107,7 +107,7 @@ TableFunction const * makeSatDensityTable( string const & functionName,
   }
   else
   {
-    TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
+    TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     densityTable->setTableCoordinates( temperatures );
     densityTable->setTableValues( densities );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
