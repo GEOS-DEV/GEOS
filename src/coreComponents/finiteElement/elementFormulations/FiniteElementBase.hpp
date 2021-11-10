@@ -122,11 +122,11 @@ public:
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
    * @param meshData The struct to be filled according to the @p LEAF class needs.
    */
-  template< typename LEAF >
+  template< typename LEAF, typename SUBREGION_TYPE >
   static void initialize( NodeManager const & nodeManager,
                           EdgeManager const & edgeManager,
                           FaceManager const & faceManager,
-                          CellElementSubRegion const & cellSubRegion,
+                          SUBREGION_TYPE const & cellSubRegion,
                           typename LEAF::MeshData & meshData
                           )
   {

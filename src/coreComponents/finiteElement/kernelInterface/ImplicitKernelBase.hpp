@@ -99,9 +99,11 @@ public:
     m_matrix( inputMatrix ),
     m_rhs( inputRhs )
   {
-    GEOSX_UNUSED_VAR( nodeManager );
-    GEOSX_UNUSED_VAR( edgeManager );
-    GEOSX_UNUSED_VAR( faceManager );
+    FiniteElementBase::initialize< FE_TYPE >( nodeManager,
+                                              edgeManager,
+                                              faceManager,
+                                              elementSubRegion,
+                                              m_meshData );
     GEOSX_UNUSED_VAR( targetRegionIndex );
   }
 
@@ -191,6 +193,9 @@ protected:
 
   /// The global residaul vector.
   arrayView1d< real64 > const m_rhs;
+
+  /// Data structure containing mesh data used to setup the finite element
+  typename FE_TYPE::MeshData m_meshData;
 
 };
 

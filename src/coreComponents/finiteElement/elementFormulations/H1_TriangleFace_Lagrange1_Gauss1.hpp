@@ -103,10 +103,11 @@ public:
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
    * @param meshData MeshData struct to be filled.
    */
+  template< typename SUBREGION_TYPE >
   static void fillMeshData( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
-                            CellElementSubRegion const & cellSubRegion,
+                            SUBREGION_TYPE const & cellSubRegion,
                             MeshData & meshData );
 
   /**
@@ -181,12 +182,13 @@ private:
 
 /// @cond Doxygen_Suppress
 
+template< typename SUBREGION_TYPE >
 GEOSX_FORCE_INLINE
 void H1_TriangleFace_Lagrange1_Gauss1::
   fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                 EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
                 FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                SUBREGION_TYPE const & GEOSX_UNUSED_PARAM( cellSubRegion ),
                 MeshData & GEOSX_UNUSED_PARAM( meshData ) )
 {}
 

@@ -20,6 +20,7 @@
 #define GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
 
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
+#include "mesh/FaceElementSubRegion.hpp"
 
 namespace geosx
 {
@@ -130,10 +131,11 @@ public:
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
    * @param meshData MeshData struct to be filled.
    */
+  template< typename SUBREGION_TYPE >
   static void fillMeshData( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
-                            CellElementSubRegion const & cellSubRegion,
+                            SUBREGION_TYPE const & cellSubRegion,
                             MeshData & meshData
                             )
   {
@@ -149,6 +151,14 @@ public:
     meshData.cellCenters = cellSubRegion.getElementCenter();
     meshData.cellVolumes = cellSubRegion.getElementVolume();
   }
+
+  static void fillMeshData( NodeManager const & nodeManager,
+                            EdgeManager const & edgeManager,
+                            FaceManager const & faceManager,
+                            FaceElementSubRegion const & cellSubRegion,
+                            MeshData & meshData
+                            )
+  {}
 
   /**
    * @brief Setup method.
@@ -429,10 +439,10 @@ private:
                        );
 };
 
-  using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 4 >;
-  using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 6 >;
-  using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 5 >;
-  using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 5 >;
+using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 4 >;
+using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 6 >;
+using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 5 >;
+using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 5 >;
 }
 }
 
