@@ -233,7 +233,7 @@ Mass fraction of CO2 component in brine :math:`x_{CO2,\ell}` is exactly as in de
 .. math::
    \mu_w(P, T) = \mu_{w, sat} (T),
 
-which is tabulated using internal table as a function of temerature based on steam table data Engineering ToolBox (2004).
+which is tabulated using internal table as a function of temperature based on steam table data Engineering ToolBox (2004).
 
    
 Parameters
