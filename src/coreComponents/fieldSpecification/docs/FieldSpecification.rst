@@ -3,7 +3,10 @@
 Initial and Boundary Conditions
 ==================================
 
-.. toctree::
+.. toctree:
    :maxdepth: 1
-	      
+
+   EquilibriumInitialCondition	      
+
    AquiferBoundaryCondition
+
