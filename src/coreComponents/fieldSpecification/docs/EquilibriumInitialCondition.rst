@@ -7,10 +7,10 @@ Hydrostatic equilibrium initial condition
 Overview
 ======================
 
-The user can request an initialization procedure enforcing a hydrostatic equilibrium for flow simulations as well as coupled flow and mechanics simulations.
-This is done by placing one or more **HydrostaticEquilibrium** tag(s) in the **FieldSpecifications** block of the XML input file.
-The equilibrium initialization procedure is described below in the context of single-phase and compositional multiphase flow.
-It is compared to another initialization method based on x-y-z tables at the end of this page. 
+The user can request an initialization procedure enforcing a hydrostatic equilibrium for flow simulations and for coupled flow and mechanics simulations.
+The hydrostatic initialization is done by placing one or more **HydrostaticEquilibrium** tag(s) in the **FieldSpecifications** block of the XML input file.
+This initialization procedure is described below in the context of single-phase and compositional multiphase flow.
+At the end of this document, we compare the hydrostatic equilibrium method to another initialization method, based on the input of x-y-z tables.
 
 Single-phase flow parameters
 ==============================
@@ -24,11 +24,11 @@ For single-phase flow, the **HydrostaticEquilibrium** initialization procedure r
 * ``objectPath``: the path defining the groups on which the hydrostatic equilibrium is computed. We recommend using ``ElementRegions`` to apply the hydrostatic equilibrium to all the cells in the mesh. Alternatively, the format ``ElementRegions/NameOfRegion/NameOfCellBlock`` can be used to select only a cell block on which the hydrostatic equilibrium is computed.
 
 .. note::
-   In GEOSX, the z-axis is positive going upward, which is why the attributes listed in this page are expressed as a function of elevation, and not as a function of depth. 
+   In GEOSX, the z-axis is positive going upward, this is why the attributes listed in this page are expressed as a function of elevation, not depth. 
 
-Using these parameters and the pressure-density constitutive relationship, GEOSX uses a fixed-point iteration scheme to populate a table of hydrostatic pressures as a function of elevation. The fixed-point iteration scheme can be parameterized using two optional attributes, namely ``equilibriumTolerance`` specifying the absolute tolerance at which we declare that the algorithm has converged, and ``maxNumberOfEquilibrationTolerance`` controlling the maximum number of iterations (for a given elevation) in the fixed point iteration scheme.
+Using these parameters and the pressure-density constitutive relationship, GEOSX uses a fixed-point iteration scheme to populate a table of hydrostatic pressures as a function of elevation. The fixed-point iteration scheme uses two optional attributes: ``equilibriumTolerance``, the absolute tolerance to declare that the algorithm has converged, and ``maxNumberOfEquilibrationTolerance``, the maximum number of iterations for a given elevation in the fixed point iteration scheme.
 
-In addition, the elevation spacing  of the hydrostatic pressure table can be controlled using the optional ``elevationIncrementInHydrostaticPressureTable`` parameter (in meters), whose default value is 0.6096 meter. 
+In addition, the elevation spacing of the hydrostatic pressure table is set with the optional ``elevationIncrementInHydrostaticPressureTable`` parameter (in meters), whose default value is 0.6096 meters. 
 Then, once the table is fully constructed, the hydrostatic pressure in each cell is obtained by interpolating in the hydrostatic pressure table using the elevation at the center of the cell.
 
 .. note::
@@ -48,10 +48,10 @@ In addition to the required ``datumElevation``, ``datumPressure``, and ``objectP
 
 * ``initialPhaseName``: the name of the phase initially saturating the domain. The other phases are assumed to be at residual saturation at the beginning of the simulation. 
 
-These parameters are used along with the fluid density model (depending for compositional flow on pressure, component fractions, and in some cases, temperature) to populate the hydrostatic pressure table, and later initialize the pressure in each cell.
+These parameters are used with the fluid density model (depending for compositional flow on pressure, component fractions, and in some cases, temperature) to populate the hydrostatic pressure table, and later initialize the pressure in each cell.
 
 .. note::
-   The current initialization algorithm has an important limitation, since it does not support initial phase contacts (e.g., water-oil, gas-oil, or water-gas contacts). The implementation assumes that there is only one mobile phase in the initial system, identified by the ``initialPhaseName`` attribute. The other phases are assumed to be at residual saturation. As a result, the system may not be at equilibrium if there is initially more than one mobile phase in the system (e.g., if the domain is saturated with gas at the top, and water at the bottom). 
+   The current initialization algorithm has an important limitation and does not support initial phase contacts (e.g., water-oil, gas-oil, or water-gas contacts). The implementation assumes only one mobile phase in the initial system, identified by the ``initialPhaseName`` attribute. The other phases are assumed at residual saturation. As a result, the system may not be at equilibrium if there is initially more than one mobile phase in the system (for instance if the domain is saturated with gas at the top, and water at the bottom, for instance).
 
 .. note::
    As in the single-phase flow case, GEOSX terminates the simulation if **HydrostaticEquilibrium** tag is present in an XML file defining a ``gravityVector`` not aligned with the z-axis.
@@ -139,7 +139,7 @@ Expected behavior:
 
 * If **FieldSpecification** tags specifying initial pressure, component fractions, and/or temperature are included in an XML input file that also contains the **HydrostaticEquilibrium** tag, the **FieldSpecification** tags are ignored by GEOSX. In other words, only the pressure, component fractions, and temperature fields defined with the **HydrostaticEquilibrium** tag as a function of elevation are taken into account.
 
-* In the absence of source/sink terms and wells, the initial flow residual should be very small (smaller than :math:`10^-6`). Similarly, in coupled simulations, the residual of the mechanical problem should be close to zero.
+* In the absence of source/sink terms and wells, the initial flow residual should be smaller than :math:`10^-6`. Similarly, in coupled simulations, the residual of the mechanical problem should be close to zero.
 
 Initialization using **FieldSpecification** tags
 ------------------------------------------------
@@ -196,12 +196,8 @@ Then, the cell-wise values are determined by interpolating in these tables using
 
 Expected behavior:
 
-* In this approach, it is the responsibility of the user to make sure that these initial fields satisfy a hydrostatic equilibrium. If not, the model will equilibrate itself during the first time steps of the simulation, which may cause large changes in pressure, component fractions, and temperature.
+* In this approach, it is the responsibility of the user to make sure that these initial fields satisfy a hydrostatic equilibrium. If not, the model will equilibrate itself during the first time steps of the simulation, possibly causing large initial changes in pressure, component fractions, and temperature.
 
-* If the initial state imposed by the **FieldSpecification** tags is not at equilibrium, the displacements produced by coupled flow and mechanics simulations should be interpreted with caution, as these displacements are computed with respect to the non-equilibrium initial state.
+* If the initial state imposed by the **FieldSpecification** tags is not at equilibrium, the displacements produced by coupled flow and mechanics simulations should be interpreted with caution, as these displacements are computed with respect to a non-equilibrium initial state.
 
-* This method is well suited to impose initial fields in complex cases currently not supported by the **HydrostaticEquilibrium** tag (e.g., in the presence of phase contacts, capillary pressure, etc). Specifically, the user can equilibrate the model using other means (e.g., using another simulator, or running a few steps of GEOSX), retrieve the equilibrated values, convert them into x-y-z tables, and impose them in the new GEOSX simulations using **FieldSpecification** tags.  
-
-
-
-  
+* This method is suited to impose initial fields in complex cases currently not supported by the **HydrostaticEquilibrium** tag (e.g., in the presence of phase contacts, capillary pressure, etc). Specifically, the user can equilibrate the model using other means (such as using another simulator, or running a few steps of GEOSX), retrieve the equilibrated values, convert them into x-y-z tables, and impose them in the new GEOSX simulations using **FieldSpecification** tags.  
