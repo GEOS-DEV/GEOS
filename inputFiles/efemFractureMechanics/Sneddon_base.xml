@@ -66,7 +66,7 @@
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>
