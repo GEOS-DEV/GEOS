@@ -428,6 +428,11 @@ private:
                        real64 ( &basisDerivativesIntegralMean )[MAXCELLNODES][3]
                        );
 };
+
+  using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 4 >;
+  using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 6 >;
+  using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 5 >;
+  using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 5 >;
 }
 }
 

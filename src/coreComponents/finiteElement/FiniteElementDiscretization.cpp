@@ -73,7 +73,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       {
         if( m_useVem == 1 )
         {
-          return std::make_unique< ConformingVirtualElementOrder1< 4, 4 > >();
+          return std::make_unique< H1_Tetrahedron_VEM_Gauss1 >();
         }
         else
         {
@@ -84,7 +84,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       {
         if( m_useVem == 1 )
         {
-          return std::make_unique< ConformingVirtualElementOrder1< 5, 5 > >();
+          return std::make_unique< H1_Pyramid_VEM_Gauss1 >();
         }
         else
         {
@@ -95,7 +95,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       {
         if( m_useVem == 1 )
         {
-          return std::make_unique< ConformingVirtualElementOrder1< 6, 5 > >();
+          return std::make_unique< H1_Wedge_VEM_Gauss1 >();
         }
         else
         {
@@ -106,7 +106,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
       {
         if( m_useVem == 1 )
         {
-          return std::make_unique< ConformingVirtualElementOrder1< 8, 6 > >();
+          return std::make_unique< H1_Hexahedron_VEM_Gauss1 >();
         }
         else
         {
