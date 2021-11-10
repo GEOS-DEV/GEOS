@@ -123,7 +123,7 @@ These calculations are done in a preprocessing step.
 
 During the simulation, the update of CO2 phase density and viscosity is simply done with a look-up in the precomputed tables. 
 
-Brine density and viscosity using Phillips correllation
+Brine density and viscosity using Phillips correlation
 -------------------------------------------------------
 
 The computation of the brine density involves a tabulated correlation presented in Phillips et al. (1981). 
