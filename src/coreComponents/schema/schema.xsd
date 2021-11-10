@@ -284,6 +284,7 @@
 			<xsd:element name="Aquifer" type="AquiferType" />
 			<xsd:element name="Dirichlet" type="DirichletType" />
 			<xsd:element name="FieldSpecification" type="FieldSpecificationType" />
+			<xsd:element name="HydrostaticEquilibrium" type="HydrostaticEquilibriumType" />
 			<xsd:element name="SourceFlux" type="SourceFluxType" />
 			<xsd:element name="Traction" type="TractionType" />
 		</xsd:choice>
@@ -320,22 +321,22 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="aquiferWaterPhaseComponentNames" type="string_array" default="{}" />
 		<!--aquiferWaterViscosity => Aquifer water viscosity [Pa.s]-->
 		<xsd:attribute name="aquiferWaterViscosity" type="real64" use="required" />
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
-		<!--beginTime => time at which BC will start being applied.-->
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--direction => Direction to apply boundary condition to-->
+		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
-		<!--endTime => time at which bc will stop being applied-->
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
-		<!--functionName => Name of function that specifies variation of the BC-->
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="string" default="" />
-		<!--initialCondition => BC is applied as an initial condition.-->
+		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--pressureInfluenceFunctionName => Name of the table describing the pressure influence function
 . If not provided, we use a default pressure influence function-->
 		<xsd:attribute name="pressureInfluenceFunctionName" type="string" default="" />
-		<!--scale => Scale factor for value of BC.-->
+		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
@@ -343,25 +344,25 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DirichletType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
-		<!--beginTime => time at which BC will start being applied.-->
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
-		<!--direction => Direction to apply boundary condition to-->
+		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
-		<!--endTime => time at which bc will stop being applied-->
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="string" default="" />
-		<!--functionName => Name of function that specifies variation of the BC-->
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="string" default="" />
-		<!--initialCondition => BC is applied as an initial condition.-->
+		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
-		<!--scale => Scale factor for value of BC.-->
+		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
@@ -369,51 +370,87 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
-		<!--beginTime => time at which BC will start being applied.-->
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
-		<!--direction => Direction to apply boundary condition to-->
+		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
-		<!--endTime => time at which bc will stop being applied-->
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="string" default="" />
-		<!--functionName => Name of function that specifies variation of the BC-->
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="string" default="" />
-		<!--initialCondition => BC is applied as an initial condition.-->
+		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
-		<!--scale => Scale factor for value of BC.-->
+		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="SourceFluxType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+	<xsd:complexType name="HydrostaticEquilibriumType">
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
-		<!--beginTime => time at which BC will start being applied.-->
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to-->
-		<xsd:attribute name="component" type="integer" default="-1" />
-		<!--direction => Direction to apply boundary condition to-->
+		<!--componentFractionVsElevationTableNames => Names of the tables specifying the (component fraction vs elevation) relationship for each component-->
+		<xsd:attribute name="componentFractionVsElevationTableNames" type="string_array" default="{}" />
+		<!--componentNames => Names of the fluid components-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--datumElevation => Datum elevation [m]-->
+		<xsd:attribute name="datumElevation" type="real64" use="required" />
+		<!--datumPressure => Datum pressure [Pa]-->
+		<xsd:attribute name="datumPressure" type="real64" use="required" />
+		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
-		<!--endTime => time at which bc will stop being applied-->
+		<!--elevationIncrementInHydrostaticPressureTable => Elevation increment [m] in the hydrostatic pressure table constructed internally-->
+		<xsd:attribute name="elevationIncrementInHydrostaticPressureTable" type="real64" default="0.6096" />
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
+		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--equilibrationTolerance => Tolerance in the fixed-point iteration scheme used for hydrostatic initialization-->
+		<xsd:attribute name="equilibrationTolerance" type="real64" default="0.001" />
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionName" type="string" default="" />
+		<!--initialPhaseName => Name of the phase initially saturating the reservoir-->
+		<xsd:attribute name="initialPhaseName" type="string" default="" />
+		<!--maxNumberOfEquilibrationIterations => Maximum number of equilibration iterations-->
+		<xsd:attribute name="maxNumberOfEquilibrationIterations" type="integer" default="5" />
+		<!--objectPath => Path to the target field-->
+		<xsd:attribute name="objectPath" type="string" default="" />
+		<!--scale => Scale factor for value of the boundary condition.-->
+		<xsd:attribute name="scale" type="real64" default="0" />
+		<!--temperatureVsElevationTableName => Name of the table specifying the (temperature [K] vs elevation) relationship-->
+		<xsd:attribute name="temperatureVsElevationTableName" type="string" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SourceFluxType">
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
+		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
+		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
+		<!--component => Component of field (if tensor) to apply boundary condition to.-->
+		<xsd:attribute name="component" type="integer" default="-1" />
+		<!--direction => Direction to apply boundary condition to.-->
+		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="string" default="" />
-		<!--functionName => Name of function that specifies variation of the BC-->
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="string" default="" />
-		<!--initialCondition => BC is applied as an initial condition.-->
+		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
-		<!--scale => Scale factor for value of BC.-->
+		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
@@ -421,23 +458,23 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TractionType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the bc.-->
+		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
-		<!--beginTime => time at which BC will start being applied.-->
+		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--direction => Direction to apply boundary condition to-->
+		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
-		<!--endTime => time at which bc will stop being applied-->
+		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
-		<!--functionName => Name of function that specifies variation of the BC-->
+		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="string" default="" />
-		<!--initialCondition => BC is applied as an initial condition.-->
+		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--inputStress => Input stress for tractionType = stress-->
 		<xsd:attribute name="inputStress" type="R2SymTensor" default="{0,0,0,0,0,0}" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="string" default="" />
-		<!--scale => Scale factor for value of BC.-->
+		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
@@ -714,7 +751,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--amgAggresiveCoarseningLevels => AMG number levels for aggressive coarsening 
 Available options are: TODO-->
 		<xsd:attribute name="amgAggresiveCoarseningLevels" type="integer" default="0" />
-		<!--amgCoarseSolver => AMG coarsest level solver/smoother type. Available options are: ``default|jacobi|l1jacobi|gs|sgs|l1sgs|chebyshev|direct``-->
+		<!--amgCoarseSolver => AMG coarsest level solver/smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs``-->
 		<xsd:attribute name="amgCoarseSolver" type="geosx_LinearSolverParameters_AMG_CoarseType" default="direct" />
 		<!--amgCoarseningType => AMG coarsening algorithm
 Available options are: TODO-->
@@ -729,8 +766,8 @@ Available options are: TODO-->
 		<xsd:attribute name="amgNumFunctions" type="integer" default="1" />
 		<!--amgNumSweeps => AMG smoother sweeps-->
 		<xsd:attribute name="amgNumSweeps" type="integer" default="2" />
-		<!--amgSmootherType => AMG smoother type. Available options are: ``default|jacobi|l1jacobi|gs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict``-->
-		<xsd:attribute name="amgSmootherType" type="geosx_LinearSolverParameters_AMG_SmootherType" default="gs" />
+		<!--amgSmootherType => AMG smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|bgs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict``-->
+		<xsd:attribute name="amgSmootherType" type="geosx_LinearSolverParameters_AMG_SmootherType" default="fgs" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
 		<!--directCheckResidual => Whether to check the linear system solution residual-->
@@ -766,7 +803,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="krylovWeakestTol" type="real64" default="0.001" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--preconditionerType => Preconditioner type. Available options are: ``none|jacobi|l1-jacobi|gs|sgs|l1-sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct``-->
+		<!--preconditionerType => Preconditioner type. Available options are: ``none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs``-->
 		<xsd:attribute name="preconditionerType" type="geosx_LinearSolverParameters_PreconditionerType" default="iluk" />
 		<!--solverType => Linear solver type. Available options are: ``direct|cg|gmres|fgmres|bicgstab|preconditioner``-->
 		<xsd:attribute name="solverType" type="geosx_LinearSolverParameters_SolverType" default="direct" />
@@ -775,7 +812,7 @@ the relative residual norm satisfies:
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_AMG_CoarseType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|gs|sgs|l1sgs|chebyshev|direct" />
+			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_AMG_NullSpaceType">
@@ -785,7 +822,7 @@ the relative residual norm satisfies:
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_AMG_SmootherType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|gs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict" />
+			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|fgs|bgs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_Direct_ColPerm">
@@ -800,7 +837,7 @@ the relative residual norm satisfies:
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_PreconditionerType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|l1-jacobi|gs|sgs|l1-sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct" />
+			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_SolverType">
@@ -1171,8 +1208,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
-		<!--wellTemperature => Temperature-->
-		<xsd:attribute name="wellTemperature" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1182,8 +1217,10 @@ the relative residual norm satisfies:
 * phaseVolRate
 * totalVolRate-->
 		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
-		<!--injectionStream => Global component densities for the injection stream-->
+		<!--injectionStream => Global component densities of the injection stream-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
+		<!--injectionTemperature => Temperature of the injection stream-->
+		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
 		<!--referenceElevation => Reference elevation where BHP control is enforced-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used-->

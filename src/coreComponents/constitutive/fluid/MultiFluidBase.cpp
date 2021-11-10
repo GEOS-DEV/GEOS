@@ -99,6 +99,8 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::dTotalDensity_dGlobalCompFractionString(), &m_totalDensity.dComp ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
+  registerWrapper( viewKeyStruct::initialTotalMassDensityString(), &m_initialTotalMassDensity );
+
   registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
@@ -138,6 +140,8 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
   m_totalDensity.dPres.resize( size, numPts );
   m_totalDensity.dTemp.resize( size, numPts );
   m_totalDensity.dComp.resize( size, numPts, numComp );
+
+  m_initialTotalMassDensity.resize( size, numPts );
 }
 
 void MultiFluidBase::setLabels()

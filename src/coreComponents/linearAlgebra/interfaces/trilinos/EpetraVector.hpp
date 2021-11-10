@@ -132,7 +132,7 @@ public:
 
   virtual void zero() override;
 
-  virtual void rand( unsigned const seed = 1984 ) override;
+  virtual void rand( unsigned const seed ) override;
 
   virtual void scale( real64 const scalingFactor ) override;
 

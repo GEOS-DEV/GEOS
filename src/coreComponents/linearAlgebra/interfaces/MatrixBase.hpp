@@ -29,6 +29,29 @@ namespace geosx
 class DofManager;
 
 /**
+ * @brief Type of row sum to compute.
+ */
+enum class RowSumType
+{
+  SumValues,
+  SumAbsValues,
+  SumSqrValues,
+  MaxAbsValues
+};
+
+/**
+ * @brief Describes relationship between and treatment of nonzero
+ *        patterns of arguments in matrix functions like addEntries().
+ */
+enum class MatrixPatternOp
+{
+  Same,     // Caller guarantees patterns of arguments are exactly the same
+  Subset,   // Caller guarantees pattern of second argument is a subset of the first
+  Restrict, // Restrict pattern of second argument, ignoring any entries that don't exist in first
+  Extend    // Extend pattern of the first argument with entries from the second
+};
+
+/**
  * @brief Common base template for all matrix wrapper types.
  * @tparam MATRIX derived matrix type
  * @tparam VECTOR compatible vector type
@@ -65,11 +88,6 @@ protected:
   using Base::numLocalCols;
   using Base::numGlobalRows;
   using Base::numGlobalCols;
-
-  /**
-   * @brief Constructs a matrix in default state
-   */
-  MatrixBase() = default;
 
   /**
    * @name Status query methods
@@ -220,12 +238,14 @@ protected:
   /**
    * @brief Create parallel matrix from a local CRS matrix.
    * @param localMatrix The input local matrix.
+   * @param numLocalColumns number of local columns (not available from localMatrix in general)
    * @param comm The MPI communicator to use.
    *
    * @note Copies values, so that @p localMatrix does not need to retain its values after the call.
    * @todo Replace generic implementation with more efficient ones in each package.
    */
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                       localIndex const numLocalColumns,
                        MPI_Comm const & comm )
   {
     localMatrix.move( LvArray::MemorySpace::host, false );
@@ -237,7 +257,7 @@ protected:
     }
 
     createWithLocalSize( localMatrix.numRows(),
-                         localMatrix.numRows(),
+                         numLocalColumns,
                          maxEntriesPerRow,
                          comm );
 
@@ -648,12 +668,11 @@ protected:
 
   /**
    * @brief Apply a separate component approximation (filter) to this matrix.
-   * @tparam MATRIX the type of matrices
    * @param dst         the target (filtered) matrix
    * @param dofPerPoint number of degrees-of-freedom per node
    */
-  virtual void separateComponentFilter( MATRIX & dst,
-                                        localIndex const dofPerPoint ) const = 0;
+  virtual void separateComponentFilter( Matrix & dst,
+                                        integer const dofPerPoint ) const = 0;
 
 
 
@@ -685,6 +704,14 @@ protected:
                                Vector const & vecRight ) = 0;
 
   /**
+   * @brief Rescales selected rows of matrix using row sum reciprocal as a factor.
+   * @param rowIndices global indicies of rows to scale (all must be locally owned)
+   * @param rowSumType type of row sums to use as scaling factors
+   */
+  virtual void rescaleRows( arrayView1d< globalIndex const > const & rowIndices,
+                            RowSumType const rowSumType ) = 0;
+
+  /**
    * @brief Matrix transposition.
    *
    * Compute <tt>B = this^T</tt>.
@@ -709,25 +736,39 @@ protected:
 
   /**
    * @brief Add entries of another matrix to this.
-   * @param src   the source matrix
+   * @param src the source matrix
+   * @param op handling of nonzero patterns, see MatrixPatternOp
    * @param scale factor to scale entries of @p src by
-   * @param samePattern whether to keep the original pattern or to extend it
    *
    * @note Sparsity pattern of @p this must be a superset of sparsity of @p src.
    *       @p this and @p src must have the same parallel row distribution.
    */
   virtual void addEntries( Matrix const & src,
-                           real64 const scale = 1.0,
-                           bool const samePattern = true ) = 0;
+                           MatrixPatternOp const op,
+                           real64 const scale ) = 0;
 
   /**
-   * @brief Add entries of a vector to the diagonal of this matrix.
+   * @brief Add (scaled) entries of a vector to the diagonal of this matrix.
    * @param src the source vector
+   * @param scale optional scaling factor
    *
    * @note @p this must be square and have a (possibly zero) diagonal entry in every row.
    *       @p this and @p src must have the same parallel row distribution.
    */
-  virtual void addDiagonal( Vector const & src ) = 0;
+  virtual void addDiagonal( Vector const & src,
+                            real64 const scale ) = 0;
+
+  /**
+   * @brief Clamp each matrix value between values of @p lo and @p hi.
+   * @param lo min value
+   * @param hi max value
+   * @param excludeDiag iff @p true, diagonal values are unchanged
+   *
+   * Effectively sets each matrix value v to min(max(v, lo), hi).
+   */
+  virtual void clampEntries( real64 const lo,
+                             real64 const hi,
+                             bool const excludeDiag ) = 0;
 
   ///@}
 
@@ -745,21 +786,18 @@ protected:
   virtual localIndex maxRowLength() const = 0;
 
   /**
-   * @brief Get row length via local row index.
-   * @param[in] localRowIndex the local row index
-   * @return the number of nonzero entries in the row
-   *
-   * TODO: Breaks the goal of hiding local row indexing from user.
-   *       Revise use cases to use ilower() and iupper().
-   */
-  virtual localIndex localRowLength( localIndex localRowIndex ) const = 0;
-
-  /**
    * @brief Get row length via global row index.
    * @param[in] globalRowIndex the global row index
    * @return the number of nonzero entries in the row
    */
-  virtual localIndex globalRowLength( globalIndex const globalRowIndex ) const = 0;
+  virtual localIndex rowLength( globalIndex const globalRowIndex ) const = 0;
+
+  /**
+   * @brief Get the row lengths of every local row.
+   * @param lengths an array view to be populated with row lengths
+   * @note The implementation may move the view's buffer to a different memory space.
+   */
+  virtual void getRowLengths( arrayView1d< localIndex > const & lengths ) const = 0;
 
   /**
    * @brief Returns a copy of the data in row @p globalRow.
@@ -772,17 +810,17 @@ protected:
                            arraySlice1d< real64 > const & values ) const = 0;
 
   /**
-   * @brief get diagonal element value on a given row
-   * @param globalRow global row index
-   * @return value of diagonal element on the row
-   */
-  virtual real64 getDiagValue( globalIndex globalRow ) const = 0;
-
-  /**
    * @brief Extract diagonal values into a vector.
    * @param dst the target vector, must have the same row partitioning as @p this
    */
   virtual void extractDiagonal( Vector & dst ) const = 0;
+
+  /**
+   * @brief Populate a vector with row sums of @p this.
+   * @param dst the target vector, must have the same row partitioning as @p this
+   * @param rowSumType type of row sum operation to perform
+   */
+  virtual void getRowSums( Vector & dst, RowSumType const rowSumType ) const = 0;
 
   /**
    * @brief Returns the index of the first global row owned by that processor.
@@ -847,6 +885,19 @@ protected:
    * @return the value of Frobenius norm
    */
   virtual real64 normFrobenius() const = 0;
+
+  /**
+   * @brief Returns the max norm of the matrix (the largest absolute element value).
+   * @return the value of max norm
+   */
+  virtual real64 normMax() const = 0;
+
+  /**
+   * @brief Returns the max norm of the matrix on a subset of rows.
+   * @param rowIndices global indices of rows to compute norm over
+   * @return the value of max norm
+   */
+  virtual real64 normMax( arrayView1d< globalIndex const > const & rowIndices ) const = 0;
 
   /**
    * @brief Map a global row index to local row index

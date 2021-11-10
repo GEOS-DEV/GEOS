@@ -24,12 +24,13 @@
 
 #include <HYPRE_krylov.h>
 #include <HYPRE_parcsr_ls.h>
-#include <_hypre_parcsr_ls.h>
 
 #ifdef GEOSX_USE_HYPRE_CUDA
-#define GEOSX_HYPRE_HOST_DEVICE GEOSX_HOST_DEVICE
+/// Host-device marker for custom hypre kernels
+#define GEOSX_HYPRE_DEVICE GEOSX_DEVICE
 #else
-#define GEOSX_HYPRE_HOST_DEVICE
+/// Host-device marker for custom hypre kernels
+#define GEOSX_HYPRE_DEVICE
 #endif
 
 namespace geosx
@@ -67,9 +68,13 @@ namespace hypre
 #ifdef GEOSX_USE_HYPRE_CUDA
 /// Execution policy for operations on hypre data
 using execPolicy = parallelDevicePolicy<>;
+/// Memory space used by hypre matrix/vector objects
+constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::cuda;
 #else
 /// Execution policy for operations on hypre data
 using execPolicy = parallelHostPolicy;
+/// Memory space used by hypre matrix/vector objects
+constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::host;
 #endif
 
 // Check matching requirements on index/value types between GEOSX and Hypre
@@ -79,12 +84,34 @@ using execPolicy = parallelHostPolicy;
 //          localIndex to int. We are getting away with this because we do not
 //          pass ( localIndex * ) to hypre except when it is on the GPU, in
 //          which case we are using int for localIndex.
-#if defined(GEOSX_USE_HYPRE_CUDA)
+#ifdef GEOSX_USE_HYPRE_CUDA
 static_assert( sizeof( HYPRE_Int ) == sizeof( geosx::localIndex ),
                "HYPRE_Int and geosx::localIndex must have the same size" );
 static_assert( std::is_signed< HYPRE_Int >::value == std::is_signed< geosx::localIndex >::value,
                "HYPRE_Int and geosx::localIndex must both be signed or unsigned" );
 #endif
+
+/**
+ * @brief
+ * @param msg
+ * @param file
+ * @param line
+ */
+inline void checkDeviceErrors( char const * msg, char const * file, int const line )
+{
+#ifdef GEOSX_USE_HYPRE_CUDA
+  cudaError_t const err = cudaGetLastError();
+  GEOSX_ERROR_IF( err != cudaSuccess, GEOSX_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
+#else
+  GEOSX_UNUSED_VAR( msg, file, line );
+#endif
+}
+
+/**
+ * @brief Check for previous device errors and report with line information.
+ * @param msg custom message to add
+ */
+#define GEOSX_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geosx::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
 
 static_assert( sizeof( HYPRE_BigInt ) == sizeof( geosx::globalIndex ),
                "HYPRE_BigInt and geosx::globalIndex must have the same size" );
@@ -94,10 +121,6 @@ static_assert( std::is_signed< HYPRE_BigInt >::value == std::is_signed< geosx::g
 
 static_assert( std::is_same< HYPRE_Real, geosx::real64 >::value,
                "HYPRE_Real and geosx::real64 must be the same type" );
-
-//#ifndef HYPRE_NO_GLOBAL_PARTITION
-//static_assert( false, "Hypre must be built with HYPRE_NO_GLOBAL_PARTITION" )
-//#endif
 
 /**
  * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt
@@ -125,30 +148,10 @@ inline HYPRE_BigInt const * toHypreBigInt( geosx::globalIndex const * const inde
  *
  * Typical use is to prevent hypre from calling preconditioner setup when we have already called it on out side.
  */
-inline HYPRE_Int HYPRE_DummySetup( HYPRE_Solver,
-                                   HYPRE_ParCSRMatrix,
-                                   HYPRE_ParVector,
-                                   HYPRE_ParVector )
-{
-  return 0;
-}
-
-/**
- * @brief The missing wrapper compatible with hypre solver setup signature.
- * @param solver the solver
- * @param A the matrix
- * @param b the rhs vector (unused)
- * @param x the solution vector (unused)
- * @return hypre error code
- */
-inline HYPRE_Int HYPRE_SLUDistSetup( HYPRE_Solver solver,
-                                     HYPRE_ParCSRMatrix A,
-                                     HYPRE_ParVector b,
-                                     HYPRE_ParVector x )
-{
-  GEOSX_UNUSED_VAR( b, x );
-  return hypre_SLUDistSetup( &solver, A, 0 );
-}
+HYPRE_Int DummySetup( HYPRE_Solver,
+                      HYPRE_ParCSRMatrix,
+                      HYPRE_ParVector,
+                      HYPRE_ParVector );
 
 /**
  * @brief The missing wrapper compatible with hypre solver solve signature.
@@ -158,24 +161,59 @@ inline HYPRE_Int HYPRE_SLUDistSetup( HYPRE_Solver solver,
  * @param x the solution vector
  * @return hypre error code
  */
-inline HYPRE_Int HYPRE_SLUDistSolve( HYPRE_Solver solver,
-                                     HYPRE_ParCSRMatrix A,
-                                     HYPRE_ParVector b,
-                                     HYPRE_ParVector x )
-{
-  GEOSX_UNUSED_VAR( A );
-  return hypre_SLUDistSolve( solver, b, x );
-}
+HYPRE_Int SuperLUDistSolve( HYPRE_Solver solver,
+                            HYPRE_ParCSRMatrix A,
+                            HYPRE_ParVector b,
+                            HYPRE_ParVector x );
 
 /**
  * @brief The missing wrapper compatible with hypre solver destroy signature.
  * @param solver the solver
  * @return hypre error code
  */
-inline HYPRE_Int HYPRE_SLUDistDestroy( HYPRE_Solver solver )
-{
-  return hypre_SLUDistDestroy( solver );
-}
+HYPRE_Int SuperLUDistDestroy( HYPRE_Solver solver );
+
+/**
+ * @brief Create a relaxation-based smoother.
+ * @param solver the solver
+ * @param type hypre's internal identifier of the relaxation type
+ * @return always 0
+ */
+HYPRE_Int RelaxationCreate( HYPRE_Solver & solver,
+                            HYPRE_Int const type );
+
+/**
+ * @brief Setup a relaxation-based smoother.
+ * @param solver the solver
+ * @param A the matrix
+ * @param b the rhs vector (unused)
+ * @param x the solution vector (unused)
+ * @return hypre error code
+ */
+HYPRE_Int RelaxationSetup( HYPRE_Solver solver,
+                           HYPRE_ParCSRMatrix A,
+                           HYPRE_ParVector b,
+                           HYPRE_ParVector x );
+
+/**
+ * @brief Solve with a relaxation-based smoother.
+ * @param solver the solver
+ * @param A the matrix
+ * @param b the rhs vector (unused)
+ * @param x the solution vector (unused)
+ * @return hypre error code
+ */
+HYPRE_Int RelaxationSolve( HYPRE_Solver solver,
+                           HYPRE_ParCSRMatrix A,
+                           HYPRE_ParVector b,
+                           HYPRE_ParVector x );
+
+/**
+ * @brief Destroy a relaxation-based smoother.
+ * @param solver the solver
+ * @return always 0
+ */
+HYPRE_Int RelaxationDestroy( HYPRE_Solver solver );
 
 } // namespace hypre
 
