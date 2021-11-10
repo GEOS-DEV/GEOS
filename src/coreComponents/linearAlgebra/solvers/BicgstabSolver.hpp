@@ -59,11 +59,6 @@ public:
                   LinearOperator< Vector > const & A,
                   LinearOperator< Vector > const & M );
 
-  /**
-   * @brief Virtual destructor.
-   */
-  virtual ~BicgstabSolver() override;
-
   ///@}
 
   /**

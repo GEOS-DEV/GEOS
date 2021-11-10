@@ -215,13 +215,7 @@ public:
 
   virtual void insert( arrayView1d< globalIndex const > const & rowIndices,
                        arrayView1d< globalIndex const > const & colIndices,
-                       arrayView1d< real64 const > const & values ) override
-  {
-    GEOSX_UNUSED_VAR( rowIndices, colIndices, values );
-    GEOSX_ERROR( "PetscMatrix::insert( arrayView1d<globalIndex const> const &,"
-                 " arrayView1d<globalIndex const> const &,"
-                 " arrayView1d<real64 const> const & )" );
-  }
+                       arrayView1d< real64 const > const & values ) override;
 
   virtual void apply( PetscVector const & src,
                       PetscVector & dst ) const override;
@@ -260,37 +254,42 @@ public:
   virtual void leftRightScale( PetscVector const & vecLeft,
                                PetscVector const & vecRight ) override;
 
+  virtual void rescaleRows( arrayView1d< globalIndex const > const & rowIndices,
+                            RowSumType const rowSumType ) override;
+
   virtual void transpose( PetscMatrix & dst ) const override;
 
   virtual void separateComponentFilter( PetscMatrix & dst,
-                                        localIndex const dofPerPoint ) const override
-  {
-    GEOSX_UNUSED_VAR( dst, dofPerPoint );
-    GEOSX_ERROR( "PetscMatrix::separateComponentFilter() not implemented." );
-  }
+                                        integer const dofsPerNode ) const override;
 
   virtual real64 clearRow( globalIndex const row,
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) override;
 
   virtual void addEntries( PetscMatrix const & src,
-                           real64 const scale = 1.0,
-                           bool const samePattern = true ) override;
+                           MatrixPatternOp const op,
+                           real64 const scale = 1.0 ) override;
 
-  virtual void addDiagonal( PetscVector const & src ) override;
+  virtual void addDiagonal( PetscVector const & src,
+                            real64 const scale ) override;
+
+  virtual void clampEntries( real64 const lo,
+                             real64 const hi,
+                             bool const excludeDiag ) override;
 
   /**
    * @copydoc MatrixBase<PetscMatrix,PetscVector>::maxRowLength
    */
   virtual localIndex maxRowLength() const override;
 
-  virtual localIndex localRowLength( localIndex localRowIndex ) const override;
+  virtual localIndex rowLength( globalIndex const globalRowIndex ) const override;
 
-  virtual localIndex globalRowLength( globalIndex globalRowIndex ) const override;
-
-  virtual real64 getDiagValue( globalIndex globalRow ) const override;
+  virtual void getRowLengths( arrayView1d< localIndex > const & lengths ) const override;
 
   virtual void extractDiagonal( PetscVector & dst ) const override;
+
+  virtual void getRowSums( PetscVector & dst,
+                           RowSumType const rowSumType ) const override;
 
   virtual void getRowCopy( globalIndex globalRow,
                            arraySlice1d< globalIndex > const & colIndices,
@@ -360,6 +359,13 @@ public:
    * @copydoc MatrixBase<PetscMatrix,PetscVector>::normFrobenius
    */
   virtual real64 normFrobenius() const override;
+
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::normMax
+   */
+  virtual real64 normMax() const override;
+
+  virtual real64 normMax( arrayView1d< globalIndex const > const & m ) const override;
 
   virtual localIndex getLocalRowID( globalIndex const index ) const override;
 
