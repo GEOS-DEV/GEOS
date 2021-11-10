@@ -751,7 +751,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--amgAggresiveCoarseningLevels => AMG number levels for aggressive coarsening 
 Available options are: TODO-->
 		<xsd:attribute name="amgAggresiveCoarseningLevels" type="integer" default="0" />
-		<!--amgCoarseSolver => AMG coarsest level solver/smoother type. Available options are: ``default|jacobi|l1jacobi|gs|sgs|l1sgs|chebyshev|direct``-->
+		<!--amgCoarseSolver => AMG coarsest level solver/smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs``-->
 		<xsd:attribute name="amgCoarseSolver" type="geosx_LinearSolverParameters_AMG_CoarseType" default="direct" />
 		<!--amgCoarseningType => AMG coarsening algorithm
 Available options are: TODO-->
@@ -766,8 +766,8 @@ Available options are: TODO-->
 		<xsd:attribute name="amgNumFunctions" type="integer" default="1" />
 		<!--amgNumSweeps => AMG smoother sweeps-->
 		<xsd:attribute name="amgNumSweeps" type="integer" default="2" />
-		<!--amgSmootherType => AMG smoother type. Available options are: ``default|jacobi|l1jacobi|gs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict``-->
-		<xsd:attribute name="amgSmootherType" type="geosx_LinearSolverParameters_AMG_SmootherType" default="gs" />
+		<!--amgSmootherType => AMG smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|bgs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict``-->
+		<xsd:attribute name="amgSmootherType" type="geosx_LinearSolverParameters_AMG_SmootherType" default="fgs" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
 		<!--directCheckResidual => Whether to check the linear system solution residual-->
@@ -803,7 +803,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="krylovWeakestTol" type="real64" default="0.001" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--preconditionerType => Preconditioner type. Available options are: ``none|jacobi|l1-jacobi|gs|sgs|l1-sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct``-->
+		<!--preconditionerType => Preconditioner type. Available options are: ``none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs``-->
 		<xsd:attribute name="preconditionerType" type="geosx_LinearSolverParameters_PreconditionerType" default="iluk" />
 		<!--solverType => Linear solver type. Available options are: ``direct|cg|gmres|fgmres|bicgstab|preconditioner``-->
 		<xsd:attribute name="solverType" type="geosx_LinearSolverParameters_SolverType" default="direct" />
@@ -812,7 +812,7 @@ the relative residual norm satisfies:
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_AMG_CoarseType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|gs|sgs|l1sgs|chebyshev|direct" />
+			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_AMG_NullSpaceType">
@@ -822,7 +822,7 @@ the relative residual norm satisfies:
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_AMG_SmootherType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|gs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict" />
+			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|fgs|bgs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_Direct_ColPerm">
@@ -837,7 +837,7 @@ the relative residual norm satisfies:
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_PreconditionerType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|l1-jacobi|gs|sgs|l1-sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct" />
+			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_SolverType">
