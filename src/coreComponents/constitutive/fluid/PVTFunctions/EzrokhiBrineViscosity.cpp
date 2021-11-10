@@ -107,7 +107,7 @@ TableFunction const * makeViscosityTable( string const & functionName,
   }
   else
   {
-    TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
+    TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     viscosityTable->setTableCoordinates( temperatures );
     viscosityTable->setTableValues( viscosities );
     viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
