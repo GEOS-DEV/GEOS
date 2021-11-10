@@ -36,16 +36,10 @@ BicgstabSolver< VECTOR >::BicgstabSolver( LinearSolverParameters params,
 {}
 
 template< typename VECTOR >
-BicgstabSolver< VECTOR >::~BicgstabSolver() = default;
-
-template< typename VECTOR >
 void BicgstabSolver< VECTOR >::solve( Vector const & b,
                                       Vector & x ) const
 {
-  Stopwatch watch( m_result.solveTime );
-
-  // Compute the target absolute tolerance
-  real64 const absTol = b.norm2() * m_params.krylov.relTolerance;
+  Stopwatch watch;
 
   // Define vectors
   VectorTemp r( x );
@@ -53,11 +47,15 @@ void BicgstabSolver< VECTOR >::solve( Vector const & b,
   // Compute initial rk
   m_operator.residual( x, b, r );
 
+  // Compute the target absolute tolerance
+  real64 const rnorm0 = r.norm2();
+  real64 const absTol = rnorm0 * m_params.krylov.relTolerance;
+
   // Define vectors
   VectorTemp r0( r );
 
   // Define scalars and reinitialize some
-  real64 rho_old = r.dot( r0 );
+  real64 rho_old = rnorm0 * rnorm0; // same as r.dot( r0 );
   real64 alpha = 1.0;
   real64 omega = 1.0;
 
@@ -72,19 +70,20 @@ void BicgstabSolver< VECTOR >::solve( Vector const & b,
 
   v.zero();
   p.zero();
+
+  // Initialize iteration state
   m_result.status = LinearSolverResult::Status::NotConverged;
-  m_residualNorms.resize( m_params.krylov.maxIterations + 1 );
+  m_residualNorms.clear();
 
-  localIndex k;
-  real64 rnorm = 0.0;
-
+  integer & k = m_result.numIterations;
   for( k = 0; k <= m_params.krylov.maxIterations; ++k )
   {
-    rnorm = r.norm2();
-    logProgress( k, rnorm );
+    real64 const rnorm = r.norm2();
+    m_residualNorms.emplace_back( rnorm );
+    logProgress();
 
     // Convergence check on ||rk||/||b||
-    if( rnorm < absTol )
+    if( rnorm <= absTol )
     {
       m_result.status = LinearSolverResult::Status::Success;
       break;
@@ -144,12 +143,9 @@ void BicgstabSolver< VECTOR >::solve( Vector const & b,
     rho_old = rho;
   }
 
-  m_result.numIterations = k;
-  m_result.residualReduction = rnorm / absTol * m_params.krylov.relTolerance;
-
-  watch.~Stopwatch();
+  m_result.residualReduction = rnorm0 > 0.0 ? m_residualNorms.back() / rnorm0 : 0.0;
+  m_result.solveTime = watch.elapsedTime();
   logResult();
-  m_residualNorms.resize( m_result.numIterations + 1 );
 }
 
 // -----------------------

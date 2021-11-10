@@ -39,7 +39,7 @@ set( linearAlgebra_headers
      utilities/LinearSolverResult.hpp
      utilities/NormalOperator.hpp
      utilities/TransposeOperator.hpp
-   ) 
+   )
 
 #
 # Specify all sources
@@ -54,7 +54,7 @@ set( linearAlgebra_sources
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
-   ) 
+   )
 
 set( dependencyList mesh blas lapack )
 
@@ -97,6 +97,7 @@ if( ENABLE_HYPRE )
     list( APPEND linearAlgebra_headers
           interfaces/hypre/HypreExport.hpp
           interfaces/hypre/HypreInterface.hpp
+          interfaces/hypre/HypreKernels.hpp
           interfaces/hypre/HypreMGR.hpp
           interfaces/hypre/HypreMatrix.hpp
           interfaces/hypre/HyprePreconditioner.hpp
@@ -113,17 +114,19 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp
-          interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp	  
+          interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
         )
 
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreExport.cpp
           interfaces/hypre/HypreInterface.cpp
+          interfaces/hypre/HypreKernels.cpp
           interfaces/hypre/HypreMGR.cpp
           interfaces/hypre/HypreMatrix.cpp
           interfaces/hypre/HyprePreconditioner.cpp
           interfaces/hypre/HypreSolver.cpp
+          interfaces/hypre/HypreUtils.cpp
           interfaces/hypre/HypreVector.cpp
         )
 

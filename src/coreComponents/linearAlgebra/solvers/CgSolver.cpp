@@ -42,7 +42,6 @@ namespace geosx
 // ----------------------------
 // Constructor
 // ----------------------------
-// Empty constructor.
 template< typename VECTOR >
 CgSolver< VECTOR >::CgSolver( LinearSolverParameters params,
                               LinearOperator< Vector > const & A,
@@ -53,22 +52,12 @@ CgSolver< VECTOR >::CgSolver( LinearSolverParameters params,
 }
 
 // ----------------------------
-// Destructor
-// ----------------------------
-template< typename VECTOR >
-CgSolver< VECTOR >::~CgSolver() = default;
-
-// ----------------------------
-// Monolithic CG solver
+// Solve method
 // ----------------------------
 template< typename VECTOR >
 void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
-
 {
-  Stopwatch watch( m_result.solveTime );
-
-  // Compute the target absolute tolerance
-  real64 const absTol = b.norm2() * m_params.krylov.relTolerance;
+  Stopwatch watch;
 
   // Define residual vector
   VectorTemp r = createTempVector( b );
@@ -76,31 +65,34 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   // Compute initial rk =  b - Ax
   m_operator.residual( x, b, r );
 
+  // Compute the target absolute tolerance
+  real64 const rnorm0 = r.norm2();
+  real64 const absTol = rnorm0 * m_params.krylov.relTolerance;
+
   // Preconditioning
   VectorTemp z = createTempVector( x );
 
   // Search direction
   VectorTemp p = createTempVector( z );
   VectorTemp Ap = createTempVector( z );
+  p.zero();
 
   // Keep old value of preconditioned residual norm
   real64 tau_old = 0.0;
 
-  p.zero();
+  // Initialize iteration state
   m_result.status = LinearSolverResult::Status::NotConverged;
-  m_result.numIterations = 0;
-  m_residualNorms.resize( m_params.krylov.maxIterations + 1 );
+  m_residualNorms.clear();
 
-  localIndex k;
-  real64 rnorm = 0.0;
-
+  integer & k = m_result.numIterations;
   for( k = 0; k <= m_params.krylov.maxIterations; ++k )
   {
-    rnorm = r.norm2();
-    logProgress( k, rnorm );
+    real64 const rnorm = r.norm2();
+    m_residualNorms.emplace_back( rnorm );
+    logProgress();
 
     // Convergence check on ||rk||/||b||
-    if( rnorm < absTol )
+    if( rnorm <= absTol )
     {
       m_result.status = LinearSolverResult::Status::Success;
       break;
@@ -130,16 +122,13 @@ void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     // Update rk = rk - alpha*Ap
     r.axpby( -alpha, Ap, 1.0 );
 
-    // Keep the old tau value
+    // Keep the old value of tau
     tau_old = tau;
   }
 
-  m_result.numIterations = k;
-  m_result.residualReduction = rnorm / absTol * m_params.krylov.relTolerance;
-
-  watch.~Stopwatch();
+  m_result.residualReduction = rnorm0 > 0.0 ? m_residualNorms.back() / rnorm0 : 0.0;
+  m_result.solveTime = watch.elapsedTime();
   logResult();
-  m_residualNorms.resize( m_result.numIterations + 1 );
 }
 
 // END_RST_NARRATIVE

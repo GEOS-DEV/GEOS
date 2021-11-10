@@ -418,7 +418,7 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
         }
 
         // Compose parallel LA matrix/rhs out of local LA matrix/rhs
-        m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
+        m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
         m_rhs.create( m_localRhs, MPI_COMM_GEOSX );
         m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
 

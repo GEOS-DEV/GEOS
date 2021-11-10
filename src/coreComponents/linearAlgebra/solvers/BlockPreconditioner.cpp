@@ -118,7 +118,7 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
       m_matBlocks( 0, 1 ).leftScale( m_rhs( 0 ) );
       Matrix mat11;
       m_matBlocks( 1, 0 ).multiply( m_matBlocks( 0, 1 ), mat11 );
-      m_matBlocks( 1, 1 ).addEntries( mat11, -1.0 );
+      m_matBlocks( 1, 1 ).addEntries( mat11, MatrixPatternOp::Restrict, -1.0 );
       // Restore original scaling
       m_rhs( 0 ).reciprocal();
       m_matBlocks( 0, 1 ).leftScale( m_rhs( 0 ) );
@@ -130,7 +130,7 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
       m_matBlocks( 0, 1 ).apply( m_sol( 1 ), m_rhs( 0 ) );
       m_solvers[0]->apply( m_rhs( 0 ), m_sol( 0 ) );
       m_matBlocks( 1, 0 ).apply( m_sol( 0 ), m_rhs( 1 ) );
-      m_matBlocks( 1, 1 ).addDiagonal( m_rhs( 1 ) );
+      m_matBlocks( 1, 1 ).addDiagonal( m_rhs( 1 ), 1.0 );
       break;
     }
     case SchurComplementOption::FirstBlockUserDefined:
@@ -138,7 +138,7 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
       Matrix const & prec00 = m_solvers[0]->preconditionerMatrix();
       Matrix mat11;
       prec00.multiplyRAP( m_matBlocks( 1, 0 ), m_matBlocks( 0, 1 ), mat11 );
-      m_matBlocks( 1, 1 ).addEntries( mat11, -1.0, false );
+      m_matBlocks( 1, 1 ).addEntries( mat11, MatrixPatternOp::Extend, -1.0 );
       break;
     }
     default:
