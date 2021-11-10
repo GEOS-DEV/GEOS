@@ -92,6 +92,7 @@ public:
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * pressureString() { return "pressure"; }
     static constexpr char const * deltaPressureString() { return "deltaPressure"; }
+    static constexpr char const * initialPressureString() { return "initialPressure"; }
     static constexpr char const * deltaVolumeString() { return "deltaVolume"; }
     static constexpr char const * aperture0String() { return "aperture_n"; }
     static constexpr char const * effectiveApertureString() { return "effectiveAperture"; }
@@ -105,6 +106,27 @@ public:
                                               localIndex const targetIndex ) const;
 
   /**
+   * @brief Setup stored views into domain data for the current step
+   * @param[in] mesh the mesh level object
+   */
+  virtual void resetViews( MeshLevel & mesh );
+
+  /**
+   * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
+   * @param[in] domain the domain partition
+   * @param[in] equilNameToEquilId the map from the name of the initial condition to the initial condition index (used in min/maxElevation)
+   * @param[out] maxElevation the max elevation for each initial condition
+   * @param[out] minElevation the min elevation for each initial condition
+   */
+  void findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
+                                               std::map< string, localIndex > const & equilNameToEquilId,
+                                               arrayView1d< real64 > const & maxElevation,
+                                               arrayView1d< real64 > const & minElevation ) const;
+
+
+protected:
+
+  /**
    * @brief Increment the cumulative flux from each aquifer
    * @param[in] time the time at the beginning of the time step
    * @param[in] dt the time step size
@@ -116,13 +138,6 @@ public:
   virtual void saveAquiferConvergedState( real64 const & time,
                                           real64 const & dt,
                                           DomainPartition & domain );
-
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  virtual void resetViews( MeshLevel & mesh );
-
-protected:
 
   virtual void precomputeData( MeshLevel & mesh );
 
