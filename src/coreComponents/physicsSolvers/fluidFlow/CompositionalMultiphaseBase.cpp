@@ -29,7 +29,6 @@
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
-
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
@@ -1151,6 +1150,15 @@ void CompositionalMultiphaseBase::applyBoundaryConditions( real64 const time_n,
   applyAquiferBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 }
 
+namespace internal
+{
+string const bcLogMessage = string( "CompositionalMultiphaseBase {}: at time {}s, " )
+                            + string( "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. " )
+                            + string( "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). " )
+                            + string( "\nThe total number of target elements (including ghost elements) is {}. " )
+                            + string( "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set." );
+}
+
 void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                      real64 const dt,
                                                      DofManager const & dofManager,
@@ -1176,10 +1184,10 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
   {
     if( fs.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
-      localIndex const numTargetElems = MpiWrapper::sum( targetSet.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT(
-                          "CompositionalMultiphaseBase {}: at time {}s, the <{}> boundary condition named \"{}\" is applied to the element set named \"{}\" in subRegion \"{}\". \nThe total number of target elements (including ghost elements) is {}. \nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.",
-                          getName(), time+dt, SourceFluxBoundaryCondition::catalogName(), fs.getName(), setName, subRegion.getName(), numTargetElems ) );
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                   getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
     }
 
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
@@ -1380,10 +1388,10 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
   {
     if( fs.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
-      localIndex const numTargetElems = MpiWrapper::sum( targetSet.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT(
-                          "CompositionalMultiphaseBase {}: at time {}s, the <{}> boundary condition named \"{}\" is applied to the element set named \"{}\" in subRegion \"{}\". \nThe total number of target elements (including ghost elements) is {}. \nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.",
-                          getName(), time+dt, FieldSpecificationBase::catalogName(), fs.getName(), setName, subRegion.getName(), numTargetElems ) );
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
     }
 
     fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,

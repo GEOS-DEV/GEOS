@@ -610,10 +610,14 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
     BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
     if( bc.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
-      localIndex const numTargetFaces = MpiWrapper::sum( stencil.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT(
-                          "CompositionalMultiphaseFVM {}: at time {}s, the <{}> boundary condition named \"{}\" is applied to the face set named \"{}\" in \"{}\". \nThe total number of target faces (including ghost faces) is {}. \nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.",
-                          getName(), time+dt, AquiferBoundaryCondition::catalogName(), bc.getName(), setName, subRegion.getName(), numTargetFaces ) );
+      globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+      string const logMessage = string( "CompositionalMultiphaseFVM {}: at time {}s, " )
+                                + string( "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. " )
+                                + string( "\nThe total number of target faces (including ghost faces) is {}. " )
+                                + string( "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set." );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( logMessage,
+                                   getName(), time+dt, AquiferBoundaryCondition::catalogName(),
+                                   bc.getName(), setName, subRegion.getName(), numTargetFaces ) );
     }
 
     if( stencil.size() == 0 )
