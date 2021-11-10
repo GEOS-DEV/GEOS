@@ -187,7 +187,7 @@ TableFunction const * makeSatPressureTable( string const & functionName,
   }
   else
   {
-    TableFunction * const pressureTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
+    TableFunction * const pressureTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     pressureTable->setTableCoordinates( temperatures );
     pressureTable->setTableValues( pressures );
     pressureTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
