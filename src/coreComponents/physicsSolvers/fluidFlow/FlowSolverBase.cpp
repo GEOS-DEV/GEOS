@@ -18,13 +18,16 @@
 
 #include "FlowSolverBase.hpp"
 
+#include "constitutive/ConstitutivePassThru.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "constitutive/ConstitutivePassThru.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
-
+#include "mesh/DomainPartition.hpp"
+#include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 
 namespace geosx
 {
@@ -295,6 +298,14 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
 {
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
+  m_pressure.clear();
+  m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::pressureString() );
+  m_pressure.setName( getName() + "/accessors/" + viewKeyStruct::pressureString() );
+
+  m_deltaPressure.clear();
+  m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::deltaPressureString() );
+  m_deltaPressure.setName( getName() + "/accessors/" + viewKeyStruct::deltaPressureString() );
+
   m_elemGhostRank.clear();
   m_elemGhostRank = elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
   m_elemGhostRank.setName( getName() + "/accessors/" + ObjectManagerBase::viewKeyStruct::ghostRankString() );
@@ -343,6 +354,139 @@ std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & r
   std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
 
   return rval;
+}
+
+void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
+                                                             std::map< string, localIndex > const & equilNameToEquilId,
+                                                             arrayView1d< real64 > const & maxElevation,
+                                                             arrayView1d< real64 > const & minElevation ) const
+{
+  array1d< real64 > localMaxElevation( equilNameToEquilId.size() );
+  array1d< real64 > localMinElevation( equilNameToEquilId.size() );
+  localMaxElevation.setValues< parallelHostPolicy >( -1e99 );
+  localMinElevation.setValues< parallelHostPolicy >( 1e99 );
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  fsManager.apply< EquilibriumInitialCondition >( 0.0,
+                                                  domain,
+                                                  "ElementRegions",
+                                                  EquilibriumInitialCondition::catalogName(),
+                                                  [&] ( EquilibriumInitialCondition const & fs,
+                                                        string const &,
+                                                        SortedArrayView< localIndex const > const & targetSet,
+                                                        Group & subRegion,
+                                                        string const & )
+  {
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > targetSetMaxElevation( -1e99 );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > targetSetMinElevation( 1e99 );
+
+    arrayView2d< real64 const > const elemCenter =
+      subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    {
+      localIndex const k = targetSet[i];
+      targetSetMaxElevation.max( elemCenter[k][2] );
+      targetSetMinElevation.min( elemCenter[k][2] );
+    } );
+
+    localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
+    localMaxElevation[equilIndex] = LvArray::math::max( targetSetMaxElevation.get(), localMaxElevation[equilIndex] );
+    localMinElevation[equilIndex] = LvArray::math::min( targetSetMinElevation.get(), localMinElevation[equilIndex] );
+
+  } );
+
+  MpiWrapper::allReduce( localMaxElevation.data(),
+                         maxElevation.data(),
+                         localMaxElevation.size(),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
+                         MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( localMinElevation.data(),
+                         minElevation.data(),
+                         localMinElevation.size(),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Min ),
+                         MPI_COMM_GEOSX );
+}
+
+void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
+                                                real64 const & dt,
+                                                DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  // This step requires three passes:
+  //    - First we count the number of individual aquifers
+  //    - Second we loop over all the stencil entries to compute the sum of aquifer influxes
+  //    - Third we loop over the aquifers to save the sums of each individual aquifer
+
+  // Step 1: count individual aquifers
+
+  std::map< string, localIndex > aquiferNameToAquiferId;
+  localIndex aquiferCounter = 0;
+
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
+  {
+    aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
+    aquiferCounter++;
+  } );
+
+  // Step 2: sum the aquifer fluxes for each individual aquifer
+
+  array1d< real64 > globalSumFluxes( aquiferNameToAquiferId.size() );
+  array1d< real64 > localSumFluxes( aquiferNameToAquiferId.size() );
+
+  fsManager.apply< AquiferBoundaryCondition >( time + dt,
+                                               domain,
+                                               "faceManager",
+                                               AquiferBoundaryCondition::catalogName(),
+                                               [&] ( AquiferBoundaryCondition const & bc,
+                                                     string const & setName,
+                                                     SortedArrayView< localIndex const > const &,
+                                                     Group &,
+                                                     string const & )
+  {
+    BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+    if( stencil.size() == 0 )
+    {
+      return;
+    }
+
+    AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
+
+    real64 const targetSetSumFluxes =
+      FluxKernelsHelper::AquiferBCKernel::sumFluxes( stencil,
+                                                     aquiferBCWrapper,
+                                                     m_pressure.toNestedViewConst(),
+                                                     m_deltaPressure.toNestedViewConst(),
+                                                     m_gravCoef.toNestedViewConst(),
+                                                     time,
+                                                     dt );
+
+    localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
+    localSumFluxes[aquiferIndex] += targetSetSumFluxes;
+  } );
+
+  MpiWrapper::allReduce( localSumFluxes.data(),
+                         globalSumFluxes.data(),
+                         localSumFluxes.size(),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                         MPI_COMM_GEOSX );
+
+  // Step 3: we are ready to save the summed fluxes for each individual aquifer
+
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition & bc )
+  {
+    localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
+    bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
+  } );
 }
 
 

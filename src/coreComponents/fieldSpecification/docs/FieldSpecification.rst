@@ -7,3 +7,6 @@ Initial and Boundary Conditions
    :maxdepth: 1
 
    EquilibriumInitialCondition	      
+
+   AquiferBoundaryCondition
+

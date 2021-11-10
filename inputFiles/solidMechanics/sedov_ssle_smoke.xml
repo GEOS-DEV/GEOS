@@ -1,0 +1,66 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File
+      name="./sedov_ssle_base.xml"/>
+  </Included>
+  
+    <!-- SPHINX_INTERNAL_MESH -->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 10 }"
+      zCoords="{ 0, 10 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+    <!-- SPHINX_INTERNAL_MESH_END -->
+
+  <Events
+    maxTime="1.0e-3">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0e-5"
+      target="/Solvers/lagsolve"/>
+
+    <!-- This event is applied every 5e-4s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent
+      name="blueprint"
+      timeFrequency="1.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/blueprint"/>
+
+    <PeriodicEvent
+      name="silo"
+      timeFrequency="1.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="1.0e-5"
+      target="/Tasks/velocityCollection"/>
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="5.0e-4"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/>
+  </Events>
+</Problem>

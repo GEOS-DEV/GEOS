@@ -225,7 +225,10 @@ public:
     static constexpr char const * elemDofFieldString() { return "compositionalVariables"; }
 
     // inputs
+
+    // TODO: when GEOSX becomes thermal, remove inputTemperatureString
     static constexpr char const * temperatureString() { return "temperature"; }
+    static constexpr char const * inputTemperatureString() { return "temperature"; }
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 
@@ -302,7 +305,12 @@ public:
    * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
-  void initializeFluidState( MeshLevel & mesh ) const;
+  void initializeFluidState( MeshLevel & mesh );
+
+  /**
+   * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
+   */
+  void computeHydrostaticEquilibrium();
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
@@ -342,6 +350,21 @@ public:
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) const;
 
+  /**
+   * @brief Apply aquifer boundary conditions to the system
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
+  virtual void applyAquiferBC( real64 const time,
+                               real64 const dt,
+                               DofManager const & dofManager,
+                               DomainPartition & domain,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) const = 0;
 
   /**
    * @brief Sets all the negative component densities (if any) to zero.
@@ -359,9 +382,21 @@ protected:
 
   /**
    * @brief Checks constitutive models for consistency
-   * @param cm        reference to the global constitutive model manager
+   * @param[in] cm reference to the global constitutive model manager
    */
   void validateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
+
+  /**
+   * @brief Checks aquifer boundary condition for consistency
+   * @param[in] cm reference to the global constitutive model manager
+   */
+  void validateAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
+
+  /**
+   * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
+   * @param[in] cm reference to the global constitutive model manager
+   */
+  void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -374,8 +409,8 @@ protected:
   /// the number of fluid components
   integer m_numComponents;
 
-  /// the (uniform) temperature
-  real64 m_temperature;
+  /// the input temperature
+  real64 m_inputTemperature;
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
@@ -400,9 +435,6 @@ protected:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dCompFrac_dCompDens;
 

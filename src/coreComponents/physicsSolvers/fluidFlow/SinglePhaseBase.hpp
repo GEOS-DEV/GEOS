@@ -213,6 +213,15 @@ public:
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper ) = 0;
 
+  /**
+   * @brief Function to perform the Application of Dirichlet type BC's
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
   void
   applyDirichletBC( real64 const time_n,
                     real64 const dt,
@@ -221,6 +230,15 @@ public:
                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                     arrayView1d< real64 > const & localRhs ) const;
 
+  /**
+   * @brief Apply source flux boundary conditions to the system
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
   void
   applySourceFluxBC( real64 const time_n,
                      real64 const dt,
@@ -229,27 +247,47 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const;
 
+  /**
+   * @brief Apply aquifer boundary conditions to the system
+   * @param time current time
+   * @param dt time step
+   * @param domain the domain
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
+  virtual void
+  applyAquiferBC( real64 const time,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) const = 0;
 
-  virtual void updateState ( DomainPartition & domain ) override final;
+  virtual void
+  updateState ( DomainPartition & domain ) override final;
 
   /**
    * @brief Function to update all constitutive state and dependent variables
    * @param dataGroup group that contains the fields
    */
-  void updateFluidState( Group & subRegion, localIndex const targetIndex ) const;
+  void
+  updateFluidState( Group & subRegion, localIndex const targetIndex ) const;
 
 
   /**
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
-  virtual void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
+  virtual void
+  updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
-  void updateMobility( Group & dataGroup, localIndex const targetIndex ) const;
+  void
+  updateMobility( Group & dataGroup, localIndex const targetIndex ) const;
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
@@ -274,14 +312,32 @@ public:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
+   * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
+   */
+  void computeHydrostaticEquilibrium();
+
+  /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param mesh the mesh to operate on
    */
-  void backupFields( MeshLevel & mesh ) const;
+  void
+  backupFields( MeshLevel & mesh ) const;
 
 protected:
 
-  virtual void validateFluidModels( DomainPartition const & domain ) const;
+  /**
+   * @brief Checks constitutive models for consistency
+   * @param[in] domain the domain partition
+   */
+  virtual void
+  validateFluidModels( DomainPartition const & domain ) const;
+
+  /**
+   * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
+   */
+  void
+  initializeAquiferBC() const;
+
 
   /**
    * @brief Structure holding views into fluid properties used by the base solver.
@@ -293,7 +349,7 @@ protected:
     arrayView2d< real64 const > const visc;        ///< viscosity
     arrayView2d< real64 const > const dVisc_dPres; ///< derivative of viscosity w.r.t. pressure
     real64 const defaultDensity;                     ///< default density to use for new elements
-    real64 const defaulViscosity;                    ///< default vi to use for new elements
+    real64 const defaultViscosity;                    ///< default vi to use for new elements
   };
 
   /**
@@ -308,9 +364,6 @@ protected:
    */
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaVolume;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_mobility;

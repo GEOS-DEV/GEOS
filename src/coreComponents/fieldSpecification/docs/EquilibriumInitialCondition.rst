@@ -26,7 +26,7 @@ For single-phase flow, the **HydrostaticEquilibrium** initialization procedure r
 .. note::
    In GEOSX, the z-axis is positive going upward, which is why the attributes listed in this page are expressed as a function of elevation, and not as a function of depth. 
 
-Using these parameters and the pressure-density constitutive relationship, GEOSX uses a fixed-point iteration scheme to populate a table of hydrostatic pressure as a function of elevation. The fixed-point iteration scheme can be parameterized using two optional attributes, namely ``equilibriumTolerance`` specifying the absolute tolerance at which we declare that the algorithm has converged, and ``maxNumberOfEquilibrationTolerance`` controlling the maximum number of iterations (for a given elevation) in the fixed point iteration scheme.
+Using these parameters and the pressure-density constitutive relationship, GEOSX uses a fixed-point iteration scheme to populate a table of hydrostatic pressures as a function of elevation. The fixed-point iteration scheme can be parameterized using two optional attributes, namely ``equilibriumTolerance`` specifying the absolute tolerance at which we declare that the algorithm has converged, and ``maxNumberOfEquilibrationTolerance`` controlling the maximum number of iterations (for a given elevation) in the fixed point iteration scheme.
 
 In addition, the elevation spacing  of the hydrostatic pressure table can be controlled using the optional ``elevationIncrementInHydrostaticPressureTable`` parameter (in meters), whose default value is 0.6096 meter. 
 Then, once the table is fully constructed, the hydrostatic pressure in each cell is obtained by interpolating in the hydrostatic pressure table using the elevation at the center of the cell.
@@ -58,7 +58,7 @@ These parameters are used along with the fluid density model (depending for comp
 
 The full list of parameters is provided below:
 
-.. include:: /coreComponents/schema/docs/EquilibriumInitialCondition.rst
+.. include:: /coreComponents/schema/docs/HydrostaticEquilibrium.rst
 
 
 Examples

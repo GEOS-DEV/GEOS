@@ -494,6 +494,7 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
     {
       FaceElementSubRegion::FaceMapType const & faceList = subRegion.faceList();
       localIndex_array & elemGhostsToSend = subRegion.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
+      elemGhostsToSend.move( LvArray::MemorySpace::host );
       for( localIndex const & k : receivedObjects.newElements.at( {er, esr} ) )
       {
         if( faceGhostsToSendSet.count( faceList( k, 0 ) ) )

@@ -348,6 +348,23 @@ void EpetraMatrix::insert( globalIndex const * rowIndices,
                                                             Epetra_FECrsMatrix::ROW_MAJOR ) );
 }
 
+
+void EpetraMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
+                           arrayView1d< globalIndex const > const & colIndices,
+                           arrayView1d< real64 const > const & values )
+{
+  GEOSX_LAI_ASSERT( insertable() );
+  localIndex const n = rowIndices.size();
+  for( localIndex a=0; a<n; ++a )
+  {
+    GEOSX_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( rowIndices[a],
+                                                              1,
+                                                              &(values[a]),
+                                                              &(colIndices[a]) ) );
+  }
+}
+
+
 void EpetraMatrix::apply( EpetraVector const & src,
                           EpetraVector & dst ) const
 {

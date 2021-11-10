@@ -15,6 +15,13 @@ Element: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM.rst
 
 
+.. _XML_Aquifer:
+
+Element: Aquifer
+================
+.. include:: ../../coreComponents/schema/docs/Aquifer.rst
+
+
 .. _XML_Benchmarks:
 
 Element: Benchmarks
@@ -398,6 +405,13 @@ Element: HybridMimeticDiscretization
 Element: Hydrofracture
 ======================
 .. include:: ../../coreComponents/schema/docs/Hydrofracture.rst
+
+
+.. _XML_HydrostaticEquilibrium:
+
+Element: HydrostaticEquilibrium
+===============================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium.rst
 
 
 .. _XML_Included:
@@ -936,6 +950,13 @@ Datastructure: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM_other.rst
 
 
+.. _DATASTRUCTURE_Aquifer:
+
+Datastructure: Aquifer
+======================
+.. include:: ../../coreComponents/schema/docs/Aquifer_other.rst
+
+
 .. _DATASTRUCTURE_Benchmarks:
 
 Datastructure: Benchmarks
@@ -1333,6 +1354,13 @@ Datastructure: HybridMimeticDiscretization
 Datastructure: Hydrofracture
 ============================
 .. include:: ../../coreComponents/schema/docs/Hydrofracture_other.rst
+
+
+.. _DATASTRUCTURE_HydrostaticEquilibrium:
+
+Datastructure: HydrostaticEquilibrium
+=====================================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium_other.rst
 
 
 .. _DATASTRUCTURE_Included:

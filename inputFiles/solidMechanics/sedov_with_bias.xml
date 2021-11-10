@@ -1,6 +1,12 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
+  <Included>
+    <File
+      name="./sedov_base.xml"/>
+  </Included>
+
   <!-- SPHINX_MESH_BIAS -->
   <Mesh>
     <InternalMesh
@@ -17,8 +23,18 @@
       zBias="{ 0.333, 0, 0, -0.333 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
-
+  
+  <Solvers>
+    <SolidMechanics_LagrangianFEM
+      name="lagsolve"
+      strainTheory="1"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ shale }"/>
+  </Solvers>
   <!-- SPHINX_MESH_BIAS_END -->
+
   <Events
     maxTime="1.0e-3">
     <!-- This event is applied every cycle, and overrides the
@@ -41,109 +57,4 @@
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
-
-  <NumericalMethods>
-    <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
-    </FiniteElements>
-  </NumericalMethods>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="Region2"
-      cellBlocks="{ cb1 }"
-      materialList="{ shale }"/>
-  </ElementRegions>
-
-  <Constitutive>
-    <ElasticIsotropic
-      name="granite"
-      defaultDensity="2700"
-      defaultBulkModulus="5.5556e9"
-      defaultShearModulus="4.16667e9"/>
-
-    <ElasticIsotropic
-      name="shale"
-      defaultDensity="2700"
-      defaultBulkModulus="5.5556e9"
-      defaultShearModulus="4.16667e9"/>
-
-    <ElasticIsotropic
-      name="water"
-      defaultDensity="1000"
-      defaultBulkModulus="2.0e9"
-      defaultShearModulus="1.0e-9"/>
-  </Constitutive>
-
-  <FieldSpecifications>
-    <FieldSpecification
-      name="source0"
-      initialCondition="1"
-      setNames="{ source }"
-      objectPath="ElementRegions"
-      fieldName="shale_stress"
-      component="0"
-      scale="-1.0e6"/>
-
-    <FieldSpecification
-      name="source1"
-      initialCondition="1"
-      setNames="{ source }"
-      objectPath="ElementRegions"
-      fieldName="shale_stress"
-      component="2"
-      scale="-1.0e6"/>
-
-    <FieldSpecification
-      name="source2"
-      initialCondition="1"
-      setNames="{ source }"
-      objectPath="ElementRegions"
-      fieldName="shale_stress"
-      component="5"
-      scale="-1.0e6"/>
-
-    <FieldSpecification
-      name="xconstraint"
-      objectPath="nodeManager"
-      fieldName="Velocity"
-      component="0"
-      scale="0.0"
-      setNames="{ xneg }"/>
-
-    <FieldSpecification
-      name="yconstraint"
-      objectPath="nodeManager"
-      fieldName="Velocity"
-      component="1"
-      scale="0.0"
-      setNames="{ yneg }"/>
-
-    <FieldSpecification
-      name="zconstraint"
-      objectPath="nodeManager"
-      fieldName="Velocity"
-      component="2"
-      scale="0.0"
-      setNames="{ zneg }"/>
-  </FieldSpecifications>
-
-  <Outputs>
-    <Silo
-      name="siloOutput"
-      parallelThreads="32"
-      childDirectory="sub"/>
-
-    <Restart
-      name="restartOutput"/>
-  </Outputs>
-
-  <Geometry>
-    <Box
-      name="source"
-      xMin="{ -1, -1, -1 }"
-      xMax="{ 1.1, 1.1, 1.1 }"/>
-  </Geometry>
 </Problem>

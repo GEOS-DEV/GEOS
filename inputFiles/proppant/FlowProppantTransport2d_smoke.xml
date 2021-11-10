@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+
+<!--# # -->
+<Problem>
+  <Included>
+    <File name="./FlowProppantTransport2d_base.xml"/>
+  </Included>
+  
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ 0, 25 }"
+      zCoords="{ 0, 25 }"
+      nx="{ 2 }"
+      ny="{ 25 }"
+      nz="{ 25 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+  
+  <Events
+    maxTime="10">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1"
+      target="/Solvers/FlowProppantTransport"/>
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent
+      name="outputs"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5"
+      targetExactTimestep="0"
+      target="/Outputs/sidreRestart"/>
+  </Events>
+  
+</Problem>

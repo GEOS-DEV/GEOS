@@ -41,6 +41,12 @@
       name="sink"
       xMin="{ 7.99, -0.01, -0.01 }"
       xMax="{ 10.01, 2.01, 0.01 }"/>
+
+    <Box
+      name="aquifer"
+      xMin="{ -0.01, 3.99, 3.99 }"
+      xMax="{  0.01, 5.01, 6.01 }"/> 
+    
   </Geometry>
 
   <Events
@@ -135,6 +141,21 @@
       fieldName="pressure"
       scale="-5e6"
       setNames="{ sink }"/>
+
+    <Aquifer
+      name="aquiferBC"
+      aquiferPorosity="2e-1"
+      aquiferPermeability="3e-13"
+      aquiferInitialPressure="6e6"
+      aquiferWaterViscosity="0.00089"
+      aquiferWaterDensity="962.81"
+      aquiferTotalCompressibility="1e-10"
+      aquiferElevation="5"
+      aquiferThickness="18"
+      aquiferInnerRadius="2000"
+      aquiferAngle="20"
+      setNames="{ aquifer }"/>
+      
   </FieldSpecifications>
 
   <Outputs>

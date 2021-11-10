@@ -29,6 +29,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsFluxKernels.hpp"
@@ -489,6 +490,66 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                      localMatrix,
                                      localRhs );
     } );
+  } );
+}
+
+template< typename BASE >
+void SinglePhaseFVM< BASE >::applyAquiferBC( real64 const time,
+                                             real64 const dt,
+                                             DomainPartition & domain,
+                                             DofManager const & dofManager,
+                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                             arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & elemDofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
+    mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+  elemDofNumber.setName( this->getName() + "/accessors/" + elemDofKey );
+
+  fsManager.apply< AquiferBoundaryCondition >( time + dt,
+                                               domain,
+                                               "faceManager",
+                                               AquiferBoundaryCondition::catalogName(),
+                                               [&] ( AquiferBoundaryCondition const & bc,
+                                                     string const & setName,
+                                                     SortedArrayView< localIndex const > const &,
+                                                     Group &,
+                                                     string const & )
+  {
+    BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+    if( stencil.size() == 0 )
+    {
+      return;
+    }
+
+    AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
+    real64 const & aquiferDens = bc.getWaterPhaseDensity();
+
+    SinglePhaseFVMKernels::AquiferBCKernel::launch( stencil,
+                                                    dofManager.rankOffset(),
+                                                    elemDofNumber.toNestedViewConst(),
+                                                    m_elemGhostRank.toNestedViewConst(),
+                                                    aquiferBCWrapper,
+                                                    aquiferDens,
+                                                    m_pressure.toNestedViewConst(),
+                                                    m_deltaPressure.toNestedViewConst(),
+                                                    m_gravCoef.toNestedViewConst(),
+                                                    m_density.toNestedViewConst(),
+                                                    m_dDens_dPres.toNestedViewConst(),
+                                                    time,
+                                                    dt,
+                                                    localMatrix.toViewConstSizes(),
+                                                    localRhs.toView() );
+
   } );
 }
 
