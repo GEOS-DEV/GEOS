@@ -150,7 +150,6 @@ protected:
   PERM_TYPE const & getPermModel() const
   { return this->getParent().template getGroup< PERM_TYPE >( m_permeabilityModelName ); }
 
-
 };
 
 
