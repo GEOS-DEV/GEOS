@@ -7,21 +7,15 @@ Validation and Verification Studies
 .. toctree::
    :maxdepth: 1
 
-   sneddon/Example
-
-   kgdToughnessDominated/Example  
-
-   kgdViscosityDominated/Example 
-
    kirschWellbore/Example	      
-
-   edpWellbore/Example
-   
-   mccWellbore/Example
 
    casedElasticWellbore/Example
 
    deviatedElasticWellbore/Example
+
+   edpWellbore/Example
+   
+   mccWellbore/Example
 
    mandel/Example
 
@@ -30,12 +24,20 @@ Validation and Verification Studies
    deviatedPoroElasticWellbore/Example2
 
    verticalPoroElastoPlasticWellbore/Example
-
-   proppantSlotTest/Example
+   
+   sneddon/Example
 
    singleFracCompression/Example
 
    intersectFrac/Example
+
+   kgdToughnessDominated/Example  
+
+   kgdViscosityDominated/Example 
+ 
+   proppantSlotTest/Example
+
+
 
 
 
