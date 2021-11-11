@@ -23,6 +23,8 @@ Validation and Verification Studies
 
    deviatedElasticWellbore/Example
 
+   mandel/Example
+
    deviatedPoroElasticWellbore/Example
 
    deviatedPoroElasticWellbore/Example2
