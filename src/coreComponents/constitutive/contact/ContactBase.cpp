@@ -55,7 +55,7 @@ ContactBase::ContactBase( string const & name,
                     "1/0 error." );
 
   registerWrapper( viewKeyStruct::apertureTableNameString(), &m_apertureTableName ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the aperture table" );
 }
 
@@ -66,8 +66,8 @@ ContactBase::~ContactBase()
 void ContactBase::postProcessInput()
 {
 
-  GEOSX_WARNING_IF( m_apertureTableName.empty(),
-                    getCatalogName() << " " << getName() << ": the aperture table name " << m_apertureTableName << " is empty" );
+  GEOSX_THROW_IF( m_apertureTableName.empty(),
+                  getCatalogName() << " " << getName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
 
 }
 
@@ -80,33 +80,30 @@ void ContactBase::allocateConstitutiveData( Group & parent,
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  if ( !m_apertureTableName.empty() )
-  {
-    FunctionManager & functionManager = FunctionManager::getInstance();
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
-    GEOSX_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
-                      getCatalogName() << " " << getName() << ": the aperture table named " << m_apertureTableName << " could not be found",
-                      InputError );
+  GEOSX_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
+                  getCatalogName() << " " << getName() << ": the aperture table named " << m_apertureTableName << " could not be found",
+                  InputError );
 
-    TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
-    validateApertureTable( apertureTable );
+  TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
+  validateApertureTable( apertureTable );
 
-    ArrayOfArraysView< real64 > coords = apertureTable.getCoordinates();
-    arraySlice1d< real64 const > apertureValues = coords[0];
-    array1d< real64 > & effectiveApertureValues = apertureTable.getValues();
+  ArrayOfArraysView< real64 > coords = apertureTable.getCoordinates();
+  arraySlice1d< real64 const > apertureValues = coords[0];
+  array1d< real64 > & effectiveApertureValues = apertureTable.getValues();
 
-    localIndex const n = apertureValues.size()-1;
-    real64 const slope = ( effectiveApertureValues[n] - effectiveApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
-    real64 const apertureTransition = ( effectiveApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
+  localIndex const n = apertureValues.size()-1;
+  real64 const slope = ( effectiveApertureValues[n] - effectiveApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
+  real64 const apertureTransition = ( effectiveApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
 
-    coords.emplaceBack( 0, apertureTransition );
-    effectiveApertureValues.emplace_back( apertureTransition );
-    coords.emplaceBack( 0, apertureTransition*10e9 );
-    effectiveApertureValues.emplace_back( apertureTransition*10e9 );
-    apertureTable.reInitializeFunction();
+  coords.emplaceBack( 0, apertureTransition );
+  effectiveApertureValues.emplace_back( apertureTransition );
+  coords.emplaceBack( 0, apertureTransition*10e9 );
+  effectiveApertureValues.emplace_back( apertureTransition*10e9 );
+  apertureTable.reInitializeFunction();
 
-    m_apertureTable = &apertureTable;
-  }
+  m_apertureTable = &apertureTable;
 }
 
 

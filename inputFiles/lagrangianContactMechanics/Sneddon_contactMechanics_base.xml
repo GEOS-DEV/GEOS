@@ -111,7 +111,7 @@
     <Coulomb
       name="fractureMaterial"
       cohesion="0.0"
-      frictionAngle="0.523598776"/>
+      frictionCoefficient="0.577350269"/>
   </Constitutive>
   <!-- SPHINX_SNEDDON_MATERIAL_END-->
 
