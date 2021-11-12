@@ -66,6 +66,7 @@ public:
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_elemsToNodes;
+    using Base::m_finiteElementSpace;
 
 
   /**
@@ -142,6 +143,9 @@ public:
 
     /// C-array storage for the element local Jacobian matrix.
     real64 localJacobian[numRows][numCols];
+
+    /// Stack variables needed for the underlying FEM type
+    typename FE_TYPE::StackVariables feStack;
   };
   //***************************************************************************
 
@@ -161,7 +165,10 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a<numTestSupportPointsPerElem; ++a )
+    m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
+    localIndex numTestSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    localIndex numTrialSupportPoints = numTestSupportPoints;
+    for( localIndex a=0; a<numTestSupportPoints; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes[k][a];
       for( int i=0; i<numDofPerTestSupportPoint; ++i )
@@ -170,7 +177,7 @@ public:
       }
     }
 
-    for( localIndex a=0; a<numTrialSupportPointsPerElem; ++a )
+    for( localIndex a=0; a<numTrialSupportPoints; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes[k][a];
       for( int i=0; i<numDofPerTrialSupportPoint; ++i )
