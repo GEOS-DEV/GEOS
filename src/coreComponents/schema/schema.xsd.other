@@ -782,7 +782,6 @@
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
-			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
@@ -795,6 +794,7 @@
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
+			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
@@ -1070,8 +1070,10 @@
 		<!--permeability =>  permeability of the rock.-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
-	<xsd:complexType name="ContactType" />
-	<xsd:complexType name="CoulombType" />
+	<xsd:complexType name="CoulombType">
+		<!--elasticSlip => Elastic Slip-->
+		<xsd:attribute name="elasticSlip" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
@@ -1328,6 +1330,7 @@
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
+	<xsd:complexType name="FrictionlessContactType" />
 	<xsd:complexType name="ModifiedCamClayType">
 		<!--cslSlope => Slope of the critical state line-->
 		<xsd:attribute name="cslSlope" type="real64_array" />

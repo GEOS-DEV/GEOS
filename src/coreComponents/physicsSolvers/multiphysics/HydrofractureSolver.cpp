@@ -828,7 +828,6 @@ HydrofractureSolver::
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
 
   string const presDofKey = m_dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
   string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
@@ -838,8 +837,6 @@ HydrofractureSolver::
   CRSMatrixView< real64 const, localIndex const > const
   dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
 
-  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
-
   forTargetSubRegionsComplete< FaceElementSubRegion >( mesh,
                                                        [&]( localIndex const,
                                                             localIndex const,
@@ -847,6 +844,8 @@ HydrofractureSolver::
                                                             ElementRegionBase const & region,
                                                             FaceElementSubRegion const & subRegion )
   {
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
     string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 

@@ -70,7 +70,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{}"
+      materialList="{ fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions>
   <!-- SPHINX_SNEDDON_REGIONS_END -->

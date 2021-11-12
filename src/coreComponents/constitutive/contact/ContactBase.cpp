@@ -65,7 +65,6 @@ ContactBase::~ContactBase()
 
 void ContactBase::postProcessInput()
 {
-  FunctionManager const & functionManager = FunctionManager::getInstance();
 
   GEOSX_WARNING_IF( m_apertureTableName.empty(),
                     getCatalogName() << " " << getName() << ": the aperture table name " << m_apertureTableName << " is empty" );
@@ -83,11 +82,12 @@ void ContactBase::allocateConstitutiveData( Group & parent,
 
   if ( !m_apertureTableName.empty() )
   {
+    FunctionManager & functionManager = FunctionManager::getInstance();
+
     GEOSX_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
                       getCatalogName() << " " << getName() << ": the aperture table named " << m_apertureTableName << " could not be found",
                       InputError );
 
-    FunctionManager & functionManager = FunctionManager::getInstance();
     TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
     validateApertureTable( apertureTable );
 

@@ -95,7 +95,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, rock, fractureFilling }"/>
+      materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
   <!-- SPHINX_SNEDDON_REGIONS_END -->
 
