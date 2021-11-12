@@ -357,6 +357,7 @@ void PetscPreconditioner::apply( Vector const & src,
   GEOSX_LAI_ASSERT_EQ( dst.globalSize(), this->numGlobalRows() );
 
   GEOSX_LAI_CHECK_ERROR( PCApply( m_precond, src.unwrapped(), dst.unwrapped() ) );
+  dst.touch();
 }
 
 void PetscPreconditioner::clear()

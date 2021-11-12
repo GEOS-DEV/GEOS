@@ -134,8 +134,9 @@ void PetscExport::exportVector( PetscVector const & vec,
   }
   else
   {
-    real64 const * const data = vec.extractLocalVector();
-    std::copy( data, data + vec.localSize(), values.data() );
+    arrayView1d< real64 const > const data = vec.values();
+    data.move( LvArray::MemorySpace::host, false );
+    std::copy( data.begin(), data.end(), values.data() );
   }
 }
 
@@ -158,8 +159,9 @@ void PetscExport::importVector( arrayView1d< const real64 > const & values,
   }
   else
   {
-    real64 * const data = vec.extractLocalVector();
-    std::copy( values.data(), values.data() + vec.localSize(), data );
+    arrayView1d< real64 > const data = vec.open();
+    std::copy( values.data(), values.data() + vec.localSize(), data.begin() );
+    vec.close();
   }
 }
 

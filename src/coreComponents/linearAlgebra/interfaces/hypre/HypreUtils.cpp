@@ -68,7 +68,7 @@ struct RelaxationData
   HYPRE_Int type = -1;
   HypreVector vtemp;
   HypreVector ztemp;
-  HypreVector norms;
+  HYPRE_Real * norms{};
 };
 
 HYPRE_Int RelaxationCreate( HYPRE_Solver & solver,
@@ -103,22 +103,18 @@ HYPRE_Int RelaxationSetup( HYPRE_Solver solver,
 
   // Refer to RelaxationData doxygen above for explanation of reinterpret_cast
   RelaxationData * const data = reinterpret_cast< RelaxationData * >( solver );
-  data->vtemp.createWithLocalSize( hypre_ParCSRMatrixNumRows( A ), hypre_ParCSRMatrixComm( A ) );
-  data->ztemp.createWithLocalSize( hypre_ParCSRMatrixNumRows( A ), hypre_ParCSRMatrixComm( A ) );
+  data->vtemp.create( hypre_ParCSRMatrixNumRows( A ), hypre_ParCSRMatrixComm( A ) );
+  data->ztemp.create( hypre_ParCSRMatrixNumRows( A ), hypre_ParCSRMatrixComm( A ) );
 
   // L1-smoothers need row L1-norms precomputed
   HYPRE_Int const normType = getL1NormType( data->type );
   if( normType > 0 )
   {
-    data->norms.createWithLocalSize( hypre_ParCSRMatrixNumRows( A ), hypre_ParCSRMatrixComm( A ) );
-    HYPRE_Real * l1Norms = nullptr;
-    hypre_ParCSRComputeL1Norms( A, normType, nullptr, &l1Norms );
-
-    // Sadly, hypre's L1 norms method always allocates new storage for result.
-    // Therefore we "sneak" it into the vector while deleting old storage.
-    hypre_Vector * const localVector = hypre_ParVectorLocalVector( data->norms.unwrapped() );
-    hypre_TFree( hypre_VectorData( localVector ), hypre_VectorMemoryLocation( localVector ) );
-    hypre_VectorData( localVector ) = l1Norms;
+    if( data->norms )
+    {
+      hypre_TFree( data->norms, hypre::memoryLocation );
+    }
+    hypre_ParCSRComputeL1Norms( A, normType, nullptr, &data->norms );
   }
   return 0;
 }
@@ -130,14 +126,17 @@ HYPRE_Int RelaxationSolve( HYPRE_Solver solver,
 {
   // Refer to RelaxationData doxygen above for explanation of reinterpret_cast
   RelaxationData * const data = reinterpret_cast< RelaxationData * >( solver );
-  HYPRE_Real * const l1Norms = data->norms.ready() ? data->norms.extractLocalVector() : nullptr;
-  return hypre_BoomerAMGRelax( A, b, nullptr, data->type, 0, 1.0, 1.0, l1Norms, x, data->vtemp.unwrapped(), data->ztemp.unwrapped() );
+  return hypre_BoomerAMGRelax( A, b, nullptr, data->type, 0, 1.0, 1.0, data->norms, x, data->vtemp.unwrapped(), data->ztemp.unwrapped() );
 }
 
 HYPRE_Int RelaxationDestroy( HYPRE_Solver solver )
 {
   // Refer to RelaxationData doxygen above for explanation of reinterpret_cast
   RelaxationData * const data = reinterpret_cast< RelaxationData * >( solver );
+  if( data->norms )
+  {
+    hypre_TFree( data->norms, hypre::memoryLocation );
+  }
   delete data;
   return 0;
 }

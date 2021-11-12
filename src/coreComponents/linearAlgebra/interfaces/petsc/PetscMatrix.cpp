@@ -930,10 +930,13 @@ double reduceRow( Mat mat,
 
 template< typename F, typename R >
 void getRowSumsImpl( Mat const & mat,
-                     real64 * const values,
+                     Vec & vec,
                      F transform,
                      R reduce )
 {
+  PetscScalar * values;
+  GEOSX_LAI_CHECK_ERROR( VecGetArray( vec, &values ) );
+
   PetscInt numLocalRows, firstLocalRow;
   GEOSX_LAI_CHECK_ERROR( MatGetLocalSize( mat, &numLocalRows, nullptr ) );
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( mat, &firstLocalRow, nullptr ) );
@@ -942,6 +945,8 @@ void getRowSumsImpl( Mat const & mat,
   {
     values[localRow] = reduceRow( mat, firstLocalRow + localRow, reducer );
   }
+
+  GEOSX_LAI_CHECK_ERROR( VecRestoreArray( vec, &values ) );
 }
 
 template< typename F, typename R >
@@ -974,22 +979,22 @@ void PetscMatrix::getRowSums( PetscMatrix::Vector & dst,
   {
     case RowSumType::SumValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), []( auto v ){ return v; }, std::plus<>{} );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), []( auto v ){ return v; }, std::plus<>{} );
       break;
     }
     case RowSumType::SumAbsValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), LvArray::math::abs< double >, std::plus<>{} );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), LvArray::math::abs< double >, std::plus<>{} );
       break;
     }
     case RowSumType::SumSqrValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), LvArray::math::square< double >, std::plus<>{} );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), LvArray::math::square< double >, std::plus<>{} );
       break;
     }
     case RowSumType::MaxAbsValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), LvArray::math::abs< double >, LvArray::math::max< double > );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), LvArray::math::abs< double >, LvArray::math::max< double > );
       break;
     }
   }

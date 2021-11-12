@@ -70,11 +70,13 @@ namespace hypre
 using execPolicy = parallelDevicePolicy<>;
 /// Memory space used by hypre matrix/vector objects
 constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::cuda;
+constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_DEVICE;
 #else
 /// Execution policy for operations on hypre data
 using execPolicy = parallelHostPolicy;
 /// Memory space used by hypre matrix/vector objects
 constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::host;
+constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 #endif
 
 // Check matching requirements on index/value types between GEOSX and Hypre

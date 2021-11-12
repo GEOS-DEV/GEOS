@@ -152,7 +152,7 @@ private:
     static VEC createFrom( VEC const & src )
     {
       VEC v;
-      v.createWithLocalSize( src.localSize(), src.getComm() );
+      v.create( src.localSize(), src.getComm() );
       return v;
     }
   };
@@ -167,7 +167,7 @@ private:
       BlockVector< VEC > v( src.blockSize() );
       for( localIndex i = 0; i < src.blockSize(); ++i )
       {
-        v.block( i ).createWithLocalSize( src.block( i ).localSize(), src.block( i ).getComm() );
+        v.block( i ).create( src.block( i ).localSize(), src.block( i ).getComm() );
       }
       return v;
     }

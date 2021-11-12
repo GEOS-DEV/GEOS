@@ -120,7 +120,7 @@ class VectorTest : public ::testing::Test
 
 TYPED_TEST_SUITE_P( VectorTest );
 
-TYPED_TEST_P( VectorTest, createWithLocalSize )
+TYPED_TEST_P( VectorTest, create )
 {
   using Vector = typename TypeParam::ParallelVector;
 
@@ -133,7 +133,7 @@ TYPED_TEST_P( VectorTest, createWithLocalSize )
   globalIndex const rankOffset = ( rank + 1 ) * rank / 2;
 
   Vector x;
-  x.createWithLocalSize( localSize, comm );
+  x.create( localSize, comm );
 
   EXPECT_TRUE( x.ready() );
   EXPECT_TRUE( MpiWrapper::commCompare( x.getComm(), comm ) );
@@ -141,51 +141,6 @@ TYPED_TEST_P( VectorTest, createWithLocalSize )
   EXPECT_EQ( x.globalSize(), globalSize );
   EXPECT_EQ( x.ilower(), rankOffset );
   EXPECT_EQ( x.iupper(), rankOffset + localSize );
-}
-
-TYPED_TEST_P( VectorTest, createWithGlobalSize )
-{
-  using Vector = typename TypeParam::ParallelVector;
-
-  MPI_Comm const comm = MPI_COMM_GEOSX;
-  int const rank = MpiWrapper::commRank( comm );
-  int const nproc = MpiWrapper::commSize( comm );
-
-  localIndex const localSize = 3;
-  globalIndex const globalSize = localSize * nproc;
-  globalIndex const rankOffset = localSize * rank;
-
-  Vector x;
-  x.createWithGlobalSize( globalSize, comm );
-
-  EXPECT_TRUE( x.ready() );
-  EXPECT_TRUE( MpiWrapper::commCompare( x.getComm(), comm ) );
-  EXPECT_EQ( x.localSize(), localSize );
-  EXPECT_EQ( x.globalSize(), globalSize );
-  EXPECT_EQ( x.ilower(), rankOffset );
-  EXPECT_EQ( x.iupper(), rankOffset + localSize );
-}
-
-TYPED_TEST_P( VectorTest, create )
-{
-  using Vector = typename TypeParam::ParallelVector;
-
-  array1d< real64 > const valuesInitial = makeLocalValuesNonUniform( 1 );
-  localIndex const localSize = valuesInitial.size();
-  globalIndex const globalSize = MpiWrapper::sum( localSize, MPI_COMM_GEOSX );
-
-  Vector x;
-  x.create( valuesInitial, MPI_COMM_GEOSX );
-
-  EXPECT_TRUE( x.ready() );
-  EXPECT_TRUE( MpiWrapper::commCompare( x.getComm(), MPI_COMM_GEOSX ) );
-  EXPECT_EQ( x.localSize(), localSize );
-  EXPECT_EQ( x.globalSize(), globalSize );
-
-  array1d< real64 > const valuesExtracted( localSize );
-  x.extract( valuesExtracted );
-
-  compareValues( valuesExtracted, valuesInitial );
 }
 
 TYPED_TEST_P( VectorTest, copyConstruction )
@@ -264,25 +219,6 @@ TYPED_TEST_P( VectorTest, extract )
   x.extract( valuesExtracted );
 
   compareValues( valuesExtracted, valuesInitial );
-}
-
-TYPED_TEST_P( VectorTest, localGlobalRowID )
-{
-  using Vector = typename TypeParam::ParallelVector;
-
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-
-  localIndex const localSize = rank + 1;
-  globalIndex const offset = ( rank + 1 ) * rank / 2;
-
-  Vector x;
-  x.createWithLocalSize( localSize, MPI_COMM_GEOSX );
-
-  for( localIndex i = 0; i < localSize; ++i )
-  {
-    EXPECT_EQ( x.getGlobalRowID( i ), offset + i );
-    EXPECT_EQ( x.getLocalRowID( offset + i ), i );
-  }
 }
 
 TYPED_TEST_P( VectorTest, setAllValues )
@@ -470,14 +406,11 @@ TYPED_TEST_P( VectorTest, normInf )
 }
 
 REGISTER_TYPED_TEST_SUITE_P( VectorTest,
-                             createWithLocalSize,
-                             createWithGlobalSize,
                              create,
                              copyConstruction,
                              moveConstruction,
                              copy,
                              extract,
-                             localGlobalRowID,
                              setAllValues,
                              zeroAllValues,
                              scaleValues,

@@ -912,7 +912,7 @@ void HypreMatrix::addDiagonal( HypreVector const & src,
   GEOSX_LAI_ASSERT( numLocalRows() == src.localSize() );
 
   hypre::CSRData< false > const csr{ hypre_ParCSRMatrixDiag( m_parcsr_mat ) };
-  real64 const * const values = src.extractLocalVector();
+  arrayView1d< real64 const > const values = src.values();
 
   if( isEqual( scale, 1.0 ) )
   {
@@ -1023,7 +1023,9 @@ void HypreMatrix::extractDiagonal( HypreVector & dst ) const
   GEOSX_LAI_ASSERT( dst.ready() );
   GEOSX_LAI_ASSERT_EQ( dst.localSize(), numLocalRows() );
 
-  hypre_CSRMatrixExtractDiagonal( hypre_ParCSRMatrixDiag( m_parcsr_mat ), dst.extractLocalVector(), 0 );
+  HYPRE_Real * const data = hypre_VectorData( hypre_ParVectorLocalVector( dst.unwrapped() ) );
+  hypre_CSRMatrixExtractDiagonal( hypre_ParCSRMatrixDiag( m_parcsr_mat ), data, 0 );
+  dst.touch();
 }
 
 namespace

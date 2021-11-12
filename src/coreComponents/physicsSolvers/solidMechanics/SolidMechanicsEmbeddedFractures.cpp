@@ -144,8 +144,8 @@ real64 SolidMechanicsEmbeddedFractures::solverStep( real64 const & time_n,
   setupSystem( domain,
                m_dofManager,
                m_localMatrix,
-               m_localRhs,
-               m_localSolution );
+               m_rhs,
+               m_solution );
 
   // currently the only method is implicit time integration
   dtReturn = this->nonlinearImplicitStep( time_n,
@@ -171,7 +171,8 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   array1d< string > regions;
-  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region ) {
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
+  {
     regions.emplace_back( region.getName() );
   } );
 
@@ -189,8 +190,8 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
 void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
                                                    DofManager & dofManager,
                                                    CRSMatrix< real64, globalIndex > & localMatrix,
-                                                   array1d< real64 > & localRhs,
-                                                   array1d< real64 > & localSolution,
+                                                   ParallelVector & rhs,
+                                                   ParallelVector & solution,
                                                    bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
@@ -231,12 +232,13 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
 
   // Finally, steal the pattern into a CRS matrix
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localRhs.resize( localMatrix.numRows() );
-  localSolution.resize( localMatrix.numRows() );
-
   localMatrix.setName( this->getName() + "/localMatrix" );
-  localRhs.setName( this->getName() + "/localRhs" );
-  localSolution.setName( this->getName() + "/localSolution" );
+
+  rhs.create( localMatrix.numRows(), MPI_COMM_GEOSX );
+  rhs.setName( this->getName() + "/rhs" );
+
+  solution.create( localMatrix.numRows(), MPI_COMM_GEOSX );
+  solution.setName( this->getName() + "/solution" );
 
 }
 

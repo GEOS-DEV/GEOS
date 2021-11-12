@@ -58,8 +58,8 @@ void BlockPreconditioner< LAI >::reinitialize( Matrix const & mat, DofManager co
   {
     dofManager.makeRestrictor( m_blockDofs[i], comm, false, m_restrictors[i] );
     dofManager.makeRestrictor( m_blockDofs[i], comm, true, m_prolongators[i] );
-    m_rhs( i ).createWithLocalSize( m_restrictors[i].numLocalRows(), comm );
-    m_sol( i ).createWithLocalSize( m_restrictors[i].numLocalRows(), comm );
+    m_rhs( i ).create( m_restrictors[i].numLocalRows(), comm );
+    m_sol( i ).create( m_restrictors[i].numLocalRows(), comm );
   }
 }
 

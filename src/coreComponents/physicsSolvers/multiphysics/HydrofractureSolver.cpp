@@ -184,8 +184,8 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
       setupSystem( domain,
                    m_dofManager,
                    m_localMatrix,
-                   m_localRhs,
-                   m_localSolution );
+                   m_rhs,
+                   m_solution );
 
       // currently the only method is implicit time integration
       dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
@@ -466,8 +466,8 @@ void HydrofractureSolver::setupDofs( DomainPartition const & domain,
 void HydrofractureSolver::setupSystem( DomainPartition & domain,
                                        DofManager & dofManager,
                                        CRSMatrix< real64, globalIndex > & localMatrix,
-                                       array1d< real64 > & localRhs,
-                                       array1d< real64 > & localSolution,
+                                       ParallelVector & rhs,
+                                       ParallelVector & solution,
                                        bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
@@ -515,12 +515,13 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
 
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
 
-  localRhs.resize( numLocalRows );
-  localSolution.resize( numLocalRows );
-
   localMatrix.setName( this->getName() + "/localMatrix" );
-  localRhs.setName( this->getName() + "/localRhs" );
-  localSolution.setName( this->getName() + "/localSolution" );
+
+  rhs.create( numLocalRows, MPI_COMM_GEOSX );
+  rhs.setName( this->getName() + "/rhs" );
+
+  solution.create( numLocalRows, MPI_COMM_GEOSX );
+  solution.setName( this->getName() + "/solution" );
 
   setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 }

@@ -345,23 +345,6 @@ public:
   /**
    * @brief Copy values from LA vectors to simulation data arrays.
    *
-   * @tparam VECTOR type of LA vector
-   * @param vector source LA vector
-   * @param srcFieldName name of the source field (as defined in DofManager)
-   * @param dstFieldName name of the destination field (view wrapper key on the manager)
-   * @param scalingFactor a factor to scale vector values by
-   * @param mask component selection mask
-   */
-  template< typename VECTOR >
-  void copyVectorToField( VECTOR const & vector,
-                          string const & srcFieldName,
-                          string const & dstFieldName,
-                          real64 scalingFactor,
-                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
-
-  /**
-   * @brief Copy values from LA vectors to simulation data arrays.
-   *
    * @param localVector source local vector
    * @param srcFieldName name of the source field (as defined in DofManager)
    * @param dstFieldName name of the destination field (view wrapper key on the manager)
@@ -373,23 +356,6 @@ public:
                           string const & dstFieldName,
                           real64 scalingFactor,
                           CompMask mask = CompMask( MAX_COMP, true ) ) const;
-
-  /**
-   * @brief Add values from LA vectors to simulation data arrays.
-   *
-   * @tparam VECTOR type of LA vector
-   * @param vector source LA vector
-   * @param srcFieldName name of the source field (as defined in DofManager)
-   * @param dstFieldName name of the destination field (view wrapper key on the manager)
-   * @param scalingFactor a factor to scale vector values by
-   * @param mask component selection mask
-   */
-  template< typename VECTOR >
-  void addVectorToField( VECTOR const & vector,
-                         string const & srcFieldName,
-                         string const & dstFieldName,
-                         real64 scalingFactor,
-                         CompMask mask = CompMask( MAX_COMP, true ) ) const;
 
   /**
    * @brief Add values from LA vectors to simulation data arrays.
@@ -407,23 +373,6 @@ public:
                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
 
   /**
-   * @brief Copy values from nodes to DOFs.
-   *
-   * @tparam VECTOR type of LA vector
-   * @param vector target LA vector
-   * @param srcFieldName name of the source field (view wrapper key on the manager)
-   * @param dstFieldName name of the destination field (as defined in DofManager)
-   * @param scalingFactor a factor to scale vector values by
-   * @param mask component selection mask
-   */
-  template< typename VECTOR >
-  void copyFieldToVector( VECTOR & vector,
-                          string const & srcFieldName,
-                          string const & dstFieldName,
-                          real64 scalingFactor,
-                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
-
-  /**
    * @brief Copy values from simulation data arrays to vectors.
    *
    * @param localVector target LA vector
@@ -437,23 +386,6 @@ public:
                           string const & dstFieldName,
                           real64 scalingFactor,
                           CompMask mask = CompMask( MAX_COMP, true ) ) const;
-
-  /**
-   * @brief Add values from a simulation data array to a DOF vector.
-   *
-   * @tparam VECTOR type of LA vector
-   * @param vector target LA vector
-   * @param srcFieldName name of the source field (view wrapper key on the manager)
-   * @param dstFieldName name of the destination field (as defined in DofManager)
-   * @param scalingFactor a factor to scale vector values by
-   * @param mask component selection mask
-   */
-  template< typename VECTOR >
-  void addFieldToVector( VECTOR & vector,
-                         string const & srcFieldName,
-                         string const & dstFieldName,
-                         real64 scalingFactor,
-                         CompMask mask = CompMask( MAX_COMP, true ) ) const;
 
   /**
    * @brief Add values from a simulation data array to a DOF vector.
@@ -605,19 +537,14 @@ private:
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
    * @tparam POLICY execution policy for the kernel
-   * @param vector source LA vector
+   * @param localVector view of source vector
    * @param srcFieldName name of the source field (as defined in DofManager)
-   * @param scalingFactor a factor to scale vector values by
-   * @param manager mesh object manager that contains the target field (subregion for elements)
    * @param dstFieldName name of the destination field (view wrapper key on the manager)
-   * @param loCompIndex index of starting DoF component (for partial copy)
-   * @param hiCompIndex index past the ending DoF component (for partial copy)
-   *
-   * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
-   *       Negative value of @p hiCompIndex means use full number of field components
+   * @param scalingFactor a factor to scale vector values by
+   * @param mask component selection mask (for partial copy)
    */
-  template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
-  void vectorToField( LOCAL_VECTOR localVector,
+  template< typename FIELD_OP, typename POLICY >
+  void vectorToField( arrayView1d< real64 const > const & localVector,
                       string const & srcFieldName,
                       string const & dstFieldName,
                       real64 scalingFactor,
@@ -627,19 +554,14 @@ private:
    * @brief Generic implementation for @ref copyFieldToVector and @ref addFieldToVector
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
    * @tparam POLICY execution policy for the kernel
-   * @param manager mesh object manager that contains the target field (subregion for elements)
+   * @param localVector view of target vector local data
    * @param srcFieldName name of the source field (view wrapper key on the manager)
-   * @param scalingFactor a factor to scale vector values by
-   * @param vector ponter to target vector local data (host or device)
    * @param dstFieldName name of the destination field (as defined in DofManager)
-   * @param loCompIndex index of starting DoF component (for partial copy)
-   * @param hiCompIndex index past the ending DoF component (for partial copy)
-   *
-   * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
-   *       Negative value of @p hiCompIndex means use full number of field components
+   * @param scalingFactor a factor to scale vector values by
+   * @param mask component selection mask (for partial copy)
    */
-  template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
-  void fieldToVector( LOCAL_VECTOR localVector,
+  template< typename FIELD_OP, typename POLICY >
+  void fieldToVector( arrayView1d< real64 > const & localVector,
                       string const & srcFieldName,
                       string const & dstFieldName,
                       real64 scalingFactor,

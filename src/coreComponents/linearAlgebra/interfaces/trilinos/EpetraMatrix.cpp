@@ -772,9 +772,7 @@ void EpetraMatrix::extractDiagonal( EpetraVector & dst ) const
   GEOSX_LAI_ASSERT( dst.ready() );
   GEOSX_LAI_ASSERT_EQ( dst.localSize(), numLocalRows() );
 
-  // Need to construct a wrapper, because ExtractDiagonalCopy does not accept an Epetra_FEVector
-  Epetra_Vector view( View, dst.unwrapped().Map(), dst.extractLocalVector() );
-  GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractDiagonalCopy( view ) );
+  GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractDiagonalCopy( dst.unwrapped() ) );
 }
 
 namespace
@@ -793,10 +791,11 @@ double reduceRow( Epetra_CrsMatrix const & mat,
 
 template< typename F, typename R >
 void getRowSumsImpl( Epetra_CrsMatrix const & mat,
-                     real64 * const values,
+                     Epetra_Vector & dst,
                      F transform,
                      R reduce )
 {
+  real64 * const values = dst.Values();
   auto const reducer = [=]( double acc, double v ){ return reduce( acc, transform( v ) ); };
   forAll< parallelHostPolicy >( mat.NumMyRows(), [=, &mat]( int const localRow )
   {
@@ -845,22 +844,22 @@ void EpetraMatrix::getRowSums( EpetraVector & dst,
   {
     case RowSumType::SumValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), []( auto v ){ return v; }, std::plus<>{} );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), []( auto v ){ return v; }, std::plus<>{} );
       break;
     }
     case RowSumType::SumAbsValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), LvArray::math::abs< double >, std::plus<>{} );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), LvArray::math::abs< double >, std::plus<>{} );
       break;
     }
     case RowSumType::SumSqrValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), LvArray::math::square< double >, std::plus<>{} );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), LvArray::math::square< double >, std::plus<>{} );
       break;
     }
     case RowSumType::MaxAbsValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), LvArray::math::abs< double >, LvArray::math::max< double > );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), LvArray::math::abs< double >, LvArray::math::max< double > );
       break;
     }
   }

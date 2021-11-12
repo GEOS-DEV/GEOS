@@ -615,8 +615,8 @@ protected:
     solver->setupSystem( domain,
                          solver->getDofManager(),
                          solver->getLocalMatrix(),
-                         solver->getLocalRhs(),
-                         solver->getLocalSolution() );
+                         solver->getSystemRhs(),
+                         solver->getSystemSolution() );
 
     solver->implicitStepSetup( time, dt, domain );
   }

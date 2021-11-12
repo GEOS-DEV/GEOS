@@ -24,7 +24,7 @@
 
 #include <Epetra_Map.h>
 #include <Epetra_FECrsMatrix.h>
-#include <Epetra_FEVector.h>
+#include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 
 namespace geosx
@@ -95,8 +95,9 @@ void EpetraExport::exportVector( EpetraVector const & vec,
   }
   else
   {
-    real64 const * const data = vec.extractLocalVector();
-    std::copy( data, data + vec.localSize(), values.data() );
+    arrayView1d< real64 const > const data = vec.values();
+    data.move( LvArray::MemorySpace::host, false );
+    std::copy( data.begin(), data.end(), values.data() );
   }
 }
 
@@ -113,8 +114,9 @@ void EpetraExport::importVector( arrayView1d< const real64 > const & values,
   }
   else
   {
-    real64 * const data = vec.extractLocalVector();
-    std::copy( values.data(), values.data() + vec.localSize(), data );
+    arrayView1d< real64 > const data = vec.open();
+    std::copy( values.data(), values.data() + vec.localSize(), data.begin() );
+    vec.close();
   }
 }
 

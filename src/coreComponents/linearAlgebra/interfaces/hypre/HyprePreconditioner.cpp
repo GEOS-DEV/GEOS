@@ -519,6 +519,7 @@ void HyprePreconditioner::apply( Vector const & src,
   dst.zero();
 
   GEOSX_LAI_CHECK_ERROR( m_precond->solve( m_precond->ptr, matrix().unwrapped(), src.unwrapped(), dst.unwrapped() ) );
+  dst.touch();
 }
 
 void HyprePreconditioner::clear()

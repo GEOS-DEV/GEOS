@@ -193,9 +193,10 @@ void HypreExport::exportVector( HypreVector const & vec,
 void HypreExport::importVector( arrayView1d< real64 const > const & values,
                                 HypreVector & vec ) const
 {
+  hypre_Vector * const localVector = hypre_ParVectorLocalVector( vec.unwrapped() );
   if( m_subComm != MPI_COMM_NULL )
   {
-    hypre_Vector * localVector{};
+    hypre_Vector * wrapperVector{};
     if( MpiWrapper::commRank( vec.getComm() ) == m_targetRank )
     {
       GEOSX_LAI_ASSERT_EQ( values.size(), vec.globalSize() );
@@ -203,26 +204,26 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
 
       // HACK: create a hypre vector that points to local data; we have to use const_cast,
       //       but this is ok because we don't modify the values, only scatter the vector.
-      localVector = hypre_SeqVectorCreate( LvArray::integerConversion< HYPRE_Int >( values.size() ) );
-      hypre_VectorOwnsData( localVector ) = false;
-      hypre_VectorData( localVector ) = const_cast< real64 * >( values.data() );
-      hypre_SeqVectorInitialize_v2( localVector, HYPRE_MEMORY_HOST );
+      wrapperVector = hypre_SeqVectorCreate( LvArray::integerConversion< HYPRE_Int >( values.size() ) );
+      hypre_VectorOwnsData( wrapperVector ) = false;
+      hypre_VectorData( wrapperVector ) = const_cast< real64 * >( values.data() );
+      hypre_SeqVectorInitialize_v2( wrapperVector, HYPRE_MEMORY_HOST );
     }
 
     // scatter the data
     hypre_ParVector * const parVector = hypre_VectorToParVector( m_subComm,
-                                                                 localVector,
+                                                                 wrapperVector,
                                                                  hypre_ParVectorPartitioning( vec.unwrapped() ) );
     // copy local part of the data over to the output vector
     HYPRE_Real const * const parVectorData = hypre_VectorData( hypre_ParVectorLocalVector( parVector ) );
-    if( hypre_ParVectorMemoryLocation( vec.unwrapped() ) == HYPRE_MEMORY_HOST )
+    if( hypre_VectorMemoryLocation( localVector ) == HYPRE_MEMORY_HOST )
     {
-      std::copy( parVectorData, parVectorData + vec.localSize(), vec.extractLocalVector() );
+      std::copy( parVectorData, parVectorData + vec.localSize(), hypre_VectorData( localVector ) );
     }
     else
     {
 #ifdef GEOSX_USE_HYPRE_CUDA
-      cudaMemcpy( vec.extractLocalVector(),
+      cudaMemcpy( hypre_VectorData( localVector ),
                   parVectorData,
                   vec.localSize() * sizeof( HYPRE_Real ),
                   cudaMemcpyHostToDevice );
@@ -232,15 +233,15 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
     }
 
     GEOSX_LAI_CHECK_ERROR( hypre_ParVectorDestroy( parVector ) );
-    GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( localVector ) );
+    GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( wrapperVector ) );
   }
   else
   {
-    hypre_Vector * const localVector = hypre_ParVectorLocalVector( vec.unwrapped() );
     importArray( hypre_VectorMemoryLocation( localVector ),
                  values,
                  hypre_VectorData( localVector ) );
   }
+  vec.touch();
 }
 
 /**
