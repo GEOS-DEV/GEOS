@@ -8,7 +8,8 @@ BlackOilFluid                               node :ref:`DATASTRUCTURE_BlackOilFlu
 BrooksCoreyBakerRelativePermeability        node :ref:`DATASTRUCTURE_BrooksCoreyBakerRelativePermeability`        
 BrooksCoreyCapillaryPressure                node :ref:`DATASTRUCTURE_BrooksCoreyCapillaryPressure`                
 BrooksCoreyRelativePermeability             node :ref:`DATASTRUCTURE_BrooksCoreyRelativePermeability`             
-CO2BrineFluid                               node :ref:`DATASTRUCTURE_CO2BrineFluid`                               
+CO2BrineEzrokhiFluid                        node :ref:`DATASTRUCTURE_CO2BrineEzrokhiFluid`                        
+CO2BrinePhillipsFluid                       node :ref:`DATASTRUCTURE_CO2BrinePhillipsFluid`                       
 CarmanKozenyPermeability                    node :ref:`DATASTRUCTURE_CarmanKozenyPermeability`                    
 CompositionalMultiphaseFluid                node :ref:`DATASTRUCTURE_CompositionalMultiphaseFluid`                
 CompressibleSinglePhaseFluid                node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`                
