@@ -107,17 +107,17 @@ protected:
   {
     // Create a random "true" solution vector
     Vector sol_true;
-    sol_true.createWithLocalSize( matrix.numLocalCols(), matrix.getComm() );
+    sol_true.create( matrix.numLocalCols(), matrix.getComm() );
     sol_true.rand( 1984 );
 
     // Create and compute the right-hand side vector
     Vector rhs;
-    rhs.createWithLocalSize( matrix.numLocalRows(), matrix.getComm() );
+    rhs.create( matrix.numLocalRows(), matrix.getComm() );
     matrix.apply( sol_true, rhs );
 
     // Create and zero out the computed solution vector
     Vector sol_comp;
-    sol_comp.createWithLocalSize( sol_true.localSize(), sol_true.getComm() );
+    sol_comp.create( sol_true.localSize(), sol_true.getComm() );
     sol_comp.zero();
 
     // Create the solver and solve the system

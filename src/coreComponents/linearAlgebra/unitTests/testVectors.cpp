@@ -26,32 +26,21 @@ using namespace geosx;
 
 /** ---------------------- Helpers ---------------------- **/
 
-array1d< real64 > makeLocalValues( localIndex const localSize, globalIndex const rankOffset )
-{
-  array1d< real64 > localValues( localSize );
-  for( localIndex i = 0; i < localSize; ++i )
-  {
-    globalIndex const row = rankOffset + i;
-    localValues[i] = std::pow( -1.0, row ) * ( 1.0 + row );
-  }
-  return localValues;
-}
-
-array1d< real64 > makeLocalValuesUniform( localIndex const localSize )
-{
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  localIndex const rankOffset = localSize * rank;
-
-  return makeLocalValues( localSize, rankOffset );
-}
-
-array1d< real64 > makeLocalValuesNonUniform( localIndex const startSize )
+template< typename POLICY, typename VEC >
+void createAndAssemble( localIndex const startSize, VEC & x )
 {
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   localIndex const localSize = rank + startSize;
   globalIndex const rankOffset = ( rank + startSize ) * ( rank + startSize - 1 ) / 2;
 
-  return makeLocalValues( localSize, rankOffset );
+  x.create( localSize, MPI_COMM_GEOSX );
+  arrayView1d< real64 > const values = x.open();
+  forAll< POLICY >( localSize, [=] GEOSX_HOST_DEVICE ( localIndex i )
+  {
+    globalIndex const row = rankOffset + i;
+    values[i] = std::pow( -1.0, row ) * ( 1.0 + row );
+  } );
+  x.close();
 }
 
 namespace ops
@@ -69,9 +58,10 @@ auto const reciprocal = []( real64 const x ){ return 1.0 / x; };
 
 }
 
-template< typename OP_X = decltype( ops::identity ), typename OP_Y = decltype( ops::identity ) >
-void compareValues( arrayView1d< real64 > const & x,
-                    arrayView1d< real64 > const & y,
+template< typename OP_X = decltype( ops::identity ),
+          typename OP_Y = decltype( ops::identity ) >
+void compareValues( arrayView1d< real64 const > const & x,
+                    arrayView1d< real64 const > const & y,
                     bool exact = true,
                     OP_X const op_x = ops::identity,
                     OP_Y const op_y = ops::identity )
@@ -92,24 +82,32 @@ void compareValues( arrayView1d< real64 > const & x,
   }
 }
 
-template< typename VEC, typename OP_X = decltype( ops::identity ), typename OP_Y = decltype( ops::identity ) >
+template< typename VEC,
+          typename OP_X = decltype( ops::identity ),
+          typename OP_Y = decltype( ops::identity ) >
 void compareVectors( VEC const & x,
                      VEC const & y,
                      bool exact = true,
-                     OP_X const op_x = ops::identity,
-                     OP_Y const op_y = ops::identity )
+                     OP_X op_x = ops::identity,
+                     OP_Y op_y = ops::identity )
 {
+  EXPECT_EQ( y.created(), x.created() );
+  if( !x.created() || !y.created() )
+  {
+    return;
+  }
+
   EXPECT_TRUE( MpiWrapper::commCompare( y.getComm(), x.getComm() ) );
   EXPECT_EQ( y.localSize(), x.localSize() );
   EXPECT_EQ( y.globalSize(), x.globalSize() );
 
-  array1d< real64 > xval( x.localSize() );
-  x.extract( xval );
+  EXPECT_EQ( y.closed(), x.closed() );
+  if( !x.closed() || !y.closed() )
+  {
+    return;
+  }
 
-  array1d< real64 > yval( y.localSize() );
-  y.extract( yval );
-
-  compareValues( xval, yval, exact, op_x, op_y );
+  compareValues( x.values(), y.values(), exact, std::forward< OP_X >( op_x ), std::forward< OP_Y >( op_y ) );
 }
 
 /** ---------------------- Tests ---------------------- **/
@@ -147,15 +145,11 @@ TYPED_TEST_P( VectorTest, copyConstruction )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  array1d< real64 > const localValues = makeLocalValuesUniform( 3 );
-
   Vector x;
-  x.create( localValues, MPI_COMM_GEOSX );
-
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
   Vector y( x );
 
-  // Test that values are equal after copy contruction
-  EXPECT_TRUE( y.ready() );
+  // Test that values are equal after copy construction
   compareVectors( x, y );
 
   // Test that vectors don't share data after copy construction
@@ -169,12 +163,13 @@ TYPED_TEST_P( VectorTest, moveConstruction )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  array1d< real64 > const valuesInitial = makeLocalValuesUniform( 3 );
-  localIndex const localSize = valuesInitial.size();
-  globalIndex const globalSize = MpiWrapper::sum( localSize );
-
   Vector x;
-  x.create( valuesInitial, MPI_COMM_GEOSX );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
+  localIndex const localSize = x.localSize();
+  globalIndex const globalSize = x.globalSize();
+
+  array1d< real64 > values( x.localSize() );
+  values.template setValues< parallelDevicePolicy<> >( x.values() );
 
   Vector y( std::move( x ) );
 
@@ -182,43 +177,21 @@ TYPED_TEST_P( VectorTest, moveConstruction )
   EXPECT_TRUE( MpiWrapper::commCompare( y.getComm(), MPI_COMM_GEOSX ) );
   EXPECT_EQ( y.localSize(), localSize );
   EXPECT_EQ( y.globalSize(), globalSize );
-
-  array1d< real64 > const valuesExtracted( localSize );
-  y.extract( valuesExtracted );
-
-  compareValues( valuesExtracted, valuesInitial );
+  compareValues( y.values(), values );
 }
 
 TYPED_TEST_P( VectorTest, copy )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  localIndex const localSize = 3;
-
   Vector x;
-  x.createWithLocalSize( localSize, MPI_COMM_GEOSX );
-  x.rand( 1984 );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
 
   Vector y;
-  y.createWithLocalSize( localSize, MPI_COMM_GEOSX );
+  y.create( x.localSize(), x.getComm() );
   y.copy( x );
 
   compareVectors( x, y );
-}
-
-TYPED_TEST_P( VectorTest, extract )
-{
-  using Vector = typename TypeParam::ParallelVector;
-
-  array1d< real64 > const valuesInitial = makeLocalValuesUniform( 3 );
-
-  Vector x;
-  x.create( valuesInitial, MPI_COMM_GEOSX );
-
-  array1d< real64 > const valuesExtracted( valuesInitial.size() );
-  x.extract( valuesExtracted );
-
-  compareValues( valuesExtracted, valuesInitial );
 }
 
 TYPED_TEST_P( VectorTest, setAllValues )
@@ -229,16 +202,14 @@ TYPED_TEST_P( VectorTest, setAllValues )
   real64 const value = 1.23;
 
   Vector x;
-  x.createWithLocalSize( localSize, MPI_COMM_GEOSX );
+  x.create( localSize, MPI_COMM_GEOSX );
   x.set( value );
 
-  array1d< real64 > const valuesExtracted( localSize );
-  x.extract( valuesExtracted );
-  valuesExtracted.move( LvArray::MemorySpace::host, false );
-
+  arrayView1d< real64 const > const values = x.values();
+  values.move( LvArray::MemorySpace::host, false );
   for( localIndex i = 0; i < localSize; ++i )
   {
-    EXPECT_EQ( valuesExtracted[i], value );
+    EXPECT_EQ( values[i], value );
   }
 }
 
@@ -246,19 +217,16 @@ TYPED_TEST_P( VectorTest, zeroAllValues )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  localIndex const localSize = 3;
-
   Vector x;
-  x.createWithLocalSize( localSize, MPI_COMM_GEOSX );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
+
   x.zero();
 
-  array1d< real64 > const valuesExtracted( localSize );
-  x.extract( valuesExtracted );
-  valuesExtracted.move( LvArray::MemorySpace::host, false );
-
-  for( localIndex i = 0; i < localSize; ++i )
+  arrayView1d< real64 const > const values = x.values();
+  values.move( LvArray::MemorySpace::host, false );
+  for( localIndex i = 0; i < values.size(); ++i )
   {
-    EXPECT_EQ( valuesExtracted[i], 0.0 );
+    EXPECT_EQ( values[i], 0.0 );
   }
 }
 
@@ -266,53 +234,40 @@ TYPED_TEST_P( VectorTest, scaleValues )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  localIndex const localSize = 3;
-  array1d< real64 > const valuesInitial = makeLocalValuesUniform( 3 );
-  array1d< real64 > const valuesCopy = valuesInitial;
-
   Vector x;
-  x.create( valuesInitial, MPI_COMM_GEOSX );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
+
+  array1d< real64 > values;
+  values.template setValues< parallelDevicePolicy<> >( x.values() );
 
   real64 const factor = 0.5;
-  x.scale( factor );
+  Vector y( x );
+  y.scale( factor );
 
-  array1d< real64 > const valuesExtracted( localSize );
-  x.extract( valuesExtracted );
-
-  compareValues( valuesExtracted, valuesCopy, true, ops::identity, ops::multiply{factor} );
+  compareVectors( x, y, true, ops::multiply{factor}, ops::identity );
 }
 
 TYPED_TEST_P( VectorTest, reciprocal )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  localIndex const localSize = 3;
-  array1d< real64 > const valuesInitial = makeLocalValuesUniform( 3 );
-  array1d< real64 > const valuesCopy = valuesInitial;
-
   Vector x;
-  x.create( valuesInitial, MPI_COMM_GEOSX );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
 
-  x.reciprocal();
+  Vector y( x );
+  y.reciprocal();
 
-  array1d< real64 > const valuesExtracted( localSize );
-  x.extract( valuesExtracted );
-
-  compareValues( valuesExtracted, valuesCopy, true, ops::reciprocal );
+  compareVectors( x, y, true, ops::reciprocal, ops::identity );
 }
 
 TYPED_TEST_P( VectorTest, dotProduct )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  array1d< real64 > const xValues = makeLocalValuesUniform( 3 );
-  array1d< real64 > const yValues = xValues;
-
   Vector x;
-  x.create( xValues, MPI_COMM_GEOSX );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
 
-  Vector y;
-  y.create( yValues, MPI_COMM_GEOSX );
+  Vector y( x );
   y.reciprocal();
 
   real64 const dp = x.dot( y );
@@ -323,20 +278,15 @@ TYPED_TEST_P( VectorTest, axpy )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  real64 const alpha = 2.0;
-
-  array1d< real64 > const xValues = makeLocalValuesUniform( 3 );
-  array1d< real64 > const yValues = xValues;
+  real64 const alpha = 1.23;
 
   Vector x;
-  x.create( xValues, MPI_COMM_GEOSX );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
 
-  Vector y;
-  y.create( yValues, MPI_COMM_GEOSX );
-
+  Vector y( x );
   x.axpy( alpha, y );
 
-  compareVectors( y, x, false, ops::multiply{ 1.0 + alpha } );
+  compareVectors( x, y, false, ops::identity, ops::multiply{ 1.0 + alpha } );
 }
 
 TYPED_TEST_P( VectorTest, axpby )
@@ -346,32 +296,25 @@ TYPED_TEST_P( VectorTest, axpby )
   real64 const alpha = 2.0;
   real64 const beta = 3.0;
 
-  array1d< real64 > const xValues = makeLocalValuesUniform( 3 );
-  array1d< real64 > const yValues = xValues;
-
   Vector x;
-  x.create( xValues, MPI_COMM_GEOSX );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
 
-  Vector y;
-  y.create( yValues, MPI_COMM_GEOSX );
-
+  Vector y( x );
   x.axpby( alpha, y, beta );
 
-  compareVectors( y, x, false, ops::multiply{ alpha + beta } );
+  compareVectors( x, y, false, ops::identity, ops::multiply{ alpha + beta } );
 }
 
 TYPED_TEST_P( VectorTest, norm1 )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  array1d< real64 > const xValues = makeLocalValuesUniform( 3 );
-
   Vector x;
-  x.create( xValues, MPI_COMM_GEOSX );
-  x.scale( -1.0 );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
 
   real64 const normTrue = ( x.globalSize() + 1 ) * x.globalSize() / 2;
-
+  EXPECT_DOUBLE_EQ( x.norm1(), normTrue );
+  x.scale( -1.0 );
   EXPECT_DOUBLE_EQ( x.norm1(), normTrue );
 }
 
@@ -379,14 +322,12 @@ TYPED_TEST_P( VectorTest, norm2 )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  array1d< real64 > const xValues = makeLocalValuesUniform( 3 );
-
   Vector x;
-  x.create( xValues, MPI_COMM_GEOSX );
-  x.scale( -1.0 );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
 
   real64 const normTrue = std::sqrt( ( 2 * x.globalSize() + 1 ) * ( x.globalSize() + 1 ) * x.globalSize() / 6 );
-
+  EXPECT_DOUBLE_EQ( x.norm2(), normTrue );
+  x.scale( -1.0 );
   EXPECT_DOUBLE_EQ( x.norm2(), normTrue );
 }
 
@@ -394,14 +335,12 @@ TYPED_TEST_P( VectorTest, normInf )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  array1d< real64 > const xValues = makeLocalValuesUniform( 3 );
-
   Vector x;
-  x.create( xValues, MPI_COMM_GEOSX );
-  x.scale( -1.0 );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
 
   real64 const normTrue = x.globalSize();
-
+  EXPECT_DOUBLE_EQ( x.normInf(), normTrue );
+  x.scale( -1.0 );
   EXPECT_DOUBLE_EQ( x.normInf(), normTrue );
 }
 
@@ -410,7 +349,6 @@ REGISTER_TYPED_TEST_SUITE_P( VectorTest,
                              copyConstruction,
                              moveConstruction,
                              copy,
-                             extract,
                              setAllValues,
                              zeroAllValues,
                              scaleValues,

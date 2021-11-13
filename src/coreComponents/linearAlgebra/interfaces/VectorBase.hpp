@@ -52,13 +52,6 @@ protected:
   using Vector = VECTOR;
 
   /**
-   * @brief Constructs a vector in default state
-   */
-  VectorBase()
-    : m_closed( true )
-  {}
-
-  /**
    * @name Status query methods
    */
   ///@{
@@ -344,7 +337,7 @@ protected:
   }
 
   /// Flag indicating whether the vector is closed
-  bool m_closed;
+  bool m_closed = true;
 
   /// Actual storage for the local vector values
   array1d< real64 > m_data;

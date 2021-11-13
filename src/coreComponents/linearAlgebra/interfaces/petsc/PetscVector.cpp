@@ -61,8 +61,9 @@ PetscVector & PetscVector::operator=( PetscVector && src ) noexcept
 {
   if( &src != this )
   {
-    std::swap( m_vec, src.m_vec );
-    std::swap( m_closed, src.m_closed );
+    m_vec = src.m_vec;
+    src.m_vec = nullptr;
+    VectorBase::operator=( std::move( src ) );
   }
   return *this;
 }

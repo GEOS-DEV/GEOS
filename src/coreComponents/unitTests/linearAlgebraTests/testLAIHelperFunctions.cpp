@@ -31,9 +31,6 @@
 
 using namespace geosx;
 
-static real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
-static real64 const tolerance  = machinePrecision;//1e-10;
-
 char const * xmlInput =
   "<Problem>"
   "  <Mesh>"
@@ -48,7 +45,7 @@ char const * xmlInput =
   "                  cellBlockNames=\"{block1}\"/>"
   "  </Mesh>"
   "  <ElementRegions>"
-  "    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{dummy_material}\" />"
+  "    <CellElementRegion name=\"region1\" cellBlocks=\"{block1}\" materialList=\"{dummy}\" />"
   "  </ElementRegions>"
   "</Problem>";
 
@@ -84,54 +81,48 @@ TYPED_TEST_P( LAIHelperFunctionsTest, nodalVectorPermutation )
 
   arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
+  string const fieldName = "nodalVariable";
+  integer constexpr numComp = 3;
+
   DofManager dofManager( "test" );
   dofManager.setMesh( meshLevel );
-
-  string_array regions;
-  regions.emplace_back( "region1" );
-
-  dofManager.addField( "nodalVariable", DofManager::Location::Node, 3, regions );
-  dofManager.addCoupling( "nodalVariable", "nodalVariable", DofManager::Connector::Elem );
+  dofManager.addField( fieldName, DofManager::Location::Node, numComp );
+  dofManager.addCoupling( fieldName, fieldName, DofManager::Connector::Elem );
   dofManager.reorderByRank();
 
-  localIndex const numLocalDof = 3 * nodeManager.getNumberOfLocalIndices();
-
-  arrayView1d< globalIndex const > const dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( "nodalVariable" ) );
+  arrayView1d< globalIndex const > const dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( fieldName ) );
   arrayView1d< integer const > const isNodeGhost = nodeManager.ghostRank();
 
-  Vector nodalVariable, expectedPermutedVector;
-  nodalVariable.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-  nodalVariable.set( 0 );
-  expectedPermutedVector.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-  expectedPermutedVector.set( 0 );
+  Vector nodalVariable;
+  nodalVariable.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  globalIndex const rankOffset = dofManager.rankOffset();
 
-  nodalVariable.open();
-  expectedPermutedVector.open();
-  for( localIndex a = 0; a < nodeManager.size(); ++a )
+  arrayView1d< real64 > const nodalVariableView = nodalVariable.open();
+  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
   {
-    if( isNodeGhost[a] < 0 )
+    if( dofNumber[a] >= 0 && isNodeGhost[a] < 0 )
     {
-      for( localIndex d = 0; d < 3; ++d )
+      for( localIndex c = 0; c < numComp; ++c )
       {
-        real64 const value = nodeLocalToGlobal[a] * 3 + d;
-        nodalVariable.add( dofNumber[a] + d, value );
-        expectedPermutedVector.add( nodeLocalToGlobal[a] * 3 + d, value );
+        nodalVariableView[dofNumber[a] + c] = static_cast< real64 >( nodeLocalToGlobal[a] * numComp + c );
       }
     }
-  }
+  } );
   nodalVariable.close();
-  expectedPermutedVector.close();
 
   Matrix permutationMatrix;
   LAIHelperFunctions::createPermutationMatrix( nodeManager,
-                                               3,
-                                               dofManager.getKey( "nodalVariable" ),
+                                               numComp,
+                                               dofManager.getKey( fieldName ),
                                                permutationMatrix );
   Vector permutedVector = LAIHelperFunctions::permuteVector( nodalVariable, permutationMatrix );
 
-  permutedVector.axpy( -1, expectedPermutedVector );
-  real64 const vectorNorm = permutedVector.norm1();
-  EXPECT_LT( vectorNorm, tolerance );
+  // After permutation, the vector should become an increasing sequence of numbers
+  arrayView1d< real64 const > permutedValues = permutedVector.values();
+  forAll< serialPolicy >( permutedValues.size(), [=]( localIndex const i )
+  {
+    EXPECT_EQ( permutedValues[i], rankOffset + i );
+  } );
 }
 
 TYPED_TEST_P( LAIHelperFunctionsTest, cellCenteredVectorPermutation )
@@ -143,57 +134,52 @@ TYPED_TEST_P( LAIHelperFunctionsTest, cellCenteredVectorPermutation )
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
+  string const fieldName = "cellCenteredVariable";
+  integer constexpr numComp = 3;
+
   DofManager dofManager( "test" );
   dofManager.setMesh( meshLevel );
-
-  string_array regions;
-  regions.emplace_back( "region1" );
-
-  dofManager.addField( "cellCentered", DofManager::Location::Elem, 1, regions );
-  dofManager.addCoupling( "cellCentered", "cellCentered", DofManager::Connector::Face );
+  dofManager.addField( fieldName, DofManager::Location::Elem, numComp );
+  dofManager.addCoupling( fieldName, fieldName, DofManager::Connector::Face );
   dofManager.reorderByRank();
 
-  integer const numLocalDof = dofManager.numLocalDofs( "cellCentered" );
+  Vector cellCenteredVariable;
+  cellCenteredVariable.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+  globalIndex const rankOffset = dofManager.rankOffset();
 
-  Vector cellCenteredVariable, expectedPermutedVector;
-  cellCenteredVariable.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-  cellCenteredVariable.set( 0 );
-  expectedPermutedVector.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-  expectedPermutedVector.set( 0 );
-
-  cellCenteredVariable.open();
-  expectedPermutedVector.open();
+  arrayView1d< real64 > const cellCenteredVariableView = cellCenteredVariable.open();
   elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & elementSubRegion )
   {
-    localIndex const numElems = elementSubRegion.size();
-    arrayView1d< globalIndex const > const dofNumber = elementSubRegion.getReference< array1d< globalIndex > >( dofManager.getKey( "cellCentered" ) );
+    arrayView1d< globalIndex const > const dofNumber = elementSubRegion.getReference< array1d< globalIndex > >( dofManager.getKey( fieldName ) );
     arrayView1d< integer const > const isGhost = elementSubRegion.ghostRank();
     arrayView1d< globalIndex const > const localToGlobal = elementSubRegion.localToGlobalMap();
 
-    for( localIndex k = 0; k < numElems; ++k )
+    forAll< parallelDevicePolicy<> >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       if( dofNumber[k] >= 0 && isGhost[k] < 0 )
       {
-        real64 const value = localToGlobal[k];
-        cellCenteredVariable.add( dofNumber[k], value );
-        expectedPermutedVector.add( localToGlobal[k], value );
+        for( localIndex c = 0; c < numComp; ++c )
+        {
+          cellCenteredVariableView[dofNumber[k] - rankOffset + c] = static_cast< real64 >( localToGlobal[k] * numComp + c );
+        }
       }
-    }
+    } );
   } );
-
   cellCenteredVariable.close();
-  expectedPermutedVector.close();
 
   Matrix permutationMatrix;
   LAIHelperFunctions::createPermutationMatrix( elemManager,
-                                               1,
-                                               dofManager.getKey( "cellCentered" ),
+                                               numComp,
+                                               dofManager.getKey( fieldName ),
                                                permutationMatrix );
   Vector permutedVector = LAIHelperFunctions::permuteVector( cellCenteredVariable, permutationMatrix );
 
-  permutedVector.axpy( -1, expectedPermutedVector );
-  real64 const vectorNorm = permutedVector.norm1();
-  EXPECT_LT( vectorNorm, tolerance );
+  // After permutation, the vector should become an increasing sequence of numbers
+  arrayView1d< real64 const > permutedValues = permutedVector.values();
+  forAll< serialPolicy >( permutedValues.size(), [=]( localIndex const i )
+  {
+    EXPECT_EQ( permutedValues[i], rankOffset + i );
+  } );
 }
 
 REGISTER_TYPED_TEST_SUITE_P( LAIHelperFunctionsTest,

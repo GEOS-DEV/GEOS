@@ -53,60 +53,63 @@ HypreExport::~HypreExport()
 namespace
 {
 
-template< typename T, typename U >
-std::enable_if_t< std::is_same< T, U >::value >
-copyOrTransform( T const * const first,
-                 T const * const last,
-                 U * const out )
+template< typename T >
+void exportArray( HYPRE_MemoryLocation const location,
+                  T const * const src,
+                  arrayView1d< T > const & dst )
 {
-  std::copy( first, last, out );
+  // hypre does not maintain const-correctness of its APIs, hence the const_cast<>
+  dst.move( hypre::getLvArrayMemorySpace( location ), true );
+  hypre_TMemcpy( dst.data(), const_cast< T * >( src ), T, dst.size(), location, location );
+}
+
+template< typename T >
+void exportArray( HYPRE_MemoryLocation const location,
+                  arrayView1d< T const > const & src,
+                  T * const dst )
+{
+  // hypre does not maintain const-correctness of its APIs, hence the const_cast<>
+  src.move( hypre::getLvArrayMemorySpace( location ), false );
+  hypre_TMemcpy( dst, const_cast< T * >( src.data() ), T, src.size(), location, location );
 }
 
 template< typename T, typename U >
-std::enable_if_t< !std::is_same< T, U >::value >
-copyOrTransform( T const * const first,
-                 T const * const last,
-                 U * const out )
+void exportArray( HYPRE_MemoryLocation const location,
+                  T const * const src,
+                  arrayView1d< U > const & dst )
 {
-  std::transform( first, last, out, []( T const v ) { return static_cast< U >( v ); } );
-}
-
-template< typename HYPRE_TYPE, typename GEOSX_TYPE >
-void exportArray( HYPRE_MemoryLocation const memorySpace,
-                  HYPRE_TYPE const * const hypreArray,
-                  arrayView1d< GEOSX_TYPE > const & geosxArray )
-{
-  if( memorySpace == HYPRE_MEMORY_HOST )
+  if( location == HYPRE_MEMORY_HOST )
   {
-    geosxArray.move( LvArray::MemorySpace::host, true );
-    copyOrTransform( hypreArray, hypreArray + geosxArray.size(), geosxArray.data() );
+    dst.move( LvArray::MemorySpace::host, true );
+    std::transform( src, src + dst.size(), dst.begin(),
+                    []( T const v ) { return static_cast< U >( v ); } );
   }
-  else // hypreArray is on device
+  else // src is on device
   {
-    forAll< hypre::execPolicy >( geosxArray.size(),
-                                 [geosxArray, hypreArray] GEOSX_HYPRE_DEVICE ( localIndex const i )
+    forAll< parallelDevicePolicy<> >( dst.size(),
+                                      [dst, src] GEOSX_HYPRE_DEVICE ( localIndex const i )
     {
-      geosxArray[i] = static_cast< GEOSX_TYPE >( hypreArray[i] );
+      dst[i] = static_cast< U >( src[i] );
     } );
   }
 }
 
-template< typename HYPRE_TYPE, typename GEOSX_TYPE >
-void importArray( HYPRE_MemoryLocation const memorySpace,
-                  arrayView1d< GEOSX_TYPE const > const & geosxArray,
-                  HYPRE_TYPE * const hypreArray )
+template< typename T, typename U >
+void exportArray( HYPRE_MemoryLocation const location,
+                  arrayView1d< T const > const & src,
+                  U * const dst )
 {
-  if( memorySpace == HYPRE_MEMORY_HOST )
+  if( location == HYPRE_MEMORY_HOST )
   {
-    geosxArray.move( LvArray::MemorySpace::host, false );
-    copyOrTransform( geosxArray.data(), geosxArray.data() + geosxArray.size(), hypreArray );
+    src.move( LvArray::MemorySpace::host, false );
+    std::transform( src.begin(), src.end(), dst,
+                    []( T const v ) { return static_cast< U >( v ); } );
   }
-  else // hypreArray is on device
+  else // dst is on device
   {
-    forAll< hypre::execPolicy >( geosxArray.size(),
-                                 [geosxArray, hypreArray] GEOSX_HYPRE_DEVICE ( localIndex const i )
+    forAll< parallelDevicePolicy<> >( src.size(), [dst, src] GEOSX_HYPRE_DEVICE ( localIndex const i )
     {
-      hypreArray[i] = static_cast< HYPRE_TYPE >( geosxArray[i] );
+      dst[i] = static_cast< U >( src[i] );
     } );
   }
 }
@@ -136,20 +139,20 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     GEOSX_LAI_ASSERT_EQ( colIndices.size(), numNz );
     GEOSX_LAI_ASSERT_EQ( values.size(), numNz );
 
-    HYPRE_MemoryLocation const memorySpace = hypre_CSRMatrixMemoryLocation( localMatrix );
+    HYPRE_MemoryLocation const location = hypre_CSRMatrixMemoryLocation( localMatrix );
 
-    exportArray( memorySpace, hypre_CSRMatrixI( localMatrix ), rowOffsets );
-    exportArray( memorySpace, hypre_CSRMatrixData( localMatrix ), values );
+    exportArray( location, hypre_CSRMatrixI( localMatrix ), rowOffsets );
+    exportArray( location, hypre_CSRMatrixData( localMatrix ), values );
 
     // We have to handle two cases differently because hypre uses two different struct members
     // (j/big_j) to store the column indices depending on how we obtained the local matrix.
     if( m_targetRank < 0 )
     {
-      exportArray( memorySpace, hypre_CSRMatrixBigJ( localMatrix ), colIndices );
+      exportArray( location, hypre_CSRMatrixBigJ( localMatrix ), colIndices );
     }
     else
     {
-      exportArray( memorySpace, hypre_CSRMatrixJ( localMatrix ), colIndices );
+      exportArray( location, hypre_CSRMatrixJ( localMatrix ), colIndices );
     }
 
     // Sort the values by column index after copying (some solvers expect this)
@@ -165,6 +168,25 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
   GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( localMatrix ) );
 }
 
+namespace hypre
+{
+
+hypre_Vector * parVectorToVectorAll( hypre_ParVector * const vec )
+{
+  if( hypre_ParVectorMemoryLocation( vec ) == HYPRE_MEMORY_HOST )
+  {
+    return hypre_ParVectorToVectorAll( vec );
+  }
+
+  // Create a host-based clone
+  hypre_ParVector * const hostVec = hypre_ParVectorCloneDeep_v2( vec, HYPRE_MEMORY_HOST );
+  hypre_Vector * const fullVec = hypre_ParVectorToVectorAll( hostVec );
+  hypre_ParVectorDestroy( hostVec );
+  return fullVec;
+}
+
+}
+
 void HypreExport::exportVector( HypreVector const & vec,
                                 arrayView1d< real64 > const & values ) const
 {
@@ -173,7 +195,7 @@ void HypreExport::exportVector( HypreVector const & vec,
   // Gather vector on target rank, or just get the local part
   hypre_Vector * const localVector = m_targetRank < 0
                                    ? hypre_ParVectorLocalVector( vec.unwrapped() )
-                                   : hypre_ParVectorToVectorAll( vec.unwrapped() );
+                                   : hypre::parVectorToVectorAll( vec.unwrapped() );
   GEOSX_ERROR_IF( rank == m_targetRank && !localVector, "HypreExport: vector is empty on target rank" );
 
   if( m_targetRank < 0 || m_targetRank == rank )
@@ -215,29 +237,19 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
                                                                  wrapperVector,
                                                                  hypre_ParVectorPartitioning( vec.unwrapped() ) );
     // copy local part of the data over to the output vector
-    HYPRE_Real const * const parVectorData = hypre_VectorData( hypre_ParVectorLocalVector( parVector ) );
-    if( hypre_VectorMemoryLocation( localVector ) == HYPRE_MEMORY_HOST )
-    {
-      std::copy( parVectorData, parVectorData + vec.localSize(), hypre_VectorData( localVector ) );
-    }
-    else
-    {
-#ifdef GEOSX_USE_HYPRE_CUDA
-      cudaMemcpy( hypre_VectorData( localVector ),
-                  parVectorData,
-                  vec.localSize() * sizeof( HYPRE_Real ),
-                  cudaMemcpyHostToDevice );
-#else
-      GEOSX_ERROR( "HypreExport: invalid memory space of target vector" );
-#endif
-    }
+    hypre_TMemcpy( hypre_VectorData( localVector ),
+                   hypre_VectorData( hypre_ParVectorLocalVector( parVector ) ),
+                   HYPRE_Real,
+                   vec.localSize(),
+                   hypre_VectorMemoryLocation( localVector ),
+                   hypre_ParVectorMemoryLocation( parVector ) );
 
     GEOSX_LAI_CHECK_ERROR( hypre_ParVectorDestroy( parVector ) );
     GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( wrapperVector ) );
   }
   else
   {
-    importArray( hypre_VectorMemoryLocation( localVector ),
+    exportArray( hypre_VectorMemoryLocation( localVector ),
                  values,
                  hypre_VectorData( localVector ) );
   }

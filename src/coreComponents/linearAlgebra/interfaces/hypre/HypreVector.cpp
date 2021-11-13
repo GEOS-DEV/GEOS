@@ -21,7 +21,6 @@
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 
-#include <HYPRE.h>
 #include <_hypre_IJ_mv.h>
 
 #include <iomanip>
@@ -31,7 +30,7 @@ namespace geosx
 
 HypreVector::HypreVector()
   : VectorBase(),
-    m_vec{}
+  m_vec{}
 {}
 
 // Copy constructor
@@ -69,8 +68,9 @@ HypreVector & HypreVector::operator=( HypreVector && src ) noexcept
 {
   if( &src != this )
   {
-    std::swap( m_vec, src.m_vec );
-    std::swap( m_closed, src.m_closed );
+    m_vec = src.m_vec;
+    src.m_vec = nullptr;
+    VectorBase::operator=( std::move( src ) );
   }
   return *this;
 }
@@ -115,6 +115,7 @@ void HypreVector::create( localIndex const localSize,
 
   // Complete the initialization (vector will not allocate if data is already set)
   GEOSX_LAI_CHECK_ERROR( hypre_ParVectorInitialize_v2( m_vec, hypre::memoryLocation ) );
+  GEOSX_LAI_CHECK_ERROR( hypre_ParVectorSetConstantValues( m_vec, 0.0 ) );
 }
 
 bool HypreVector::created() const

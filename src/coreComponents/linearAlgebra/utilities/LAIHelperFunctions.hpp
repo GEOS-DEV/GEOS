@@ -123,7 +123,7 @@ void createPermutationMatrix( ElementRegionManager const & elemManager,
   {
     if( elementSubRegion.hasWrapper( dofKey ) )
     {
-      numLocalRows += elementSubRegion.getNumberOfLocalIndices();
+      numLocalRows += elementSubRegion.getNumberOfLocalIndices() * nDofPerCell;
     }
   } );
   permutationMatrix.createWithLocalSize( numLocalRows, numLocalRows, 1, MPI_COMM_GEOSX );
@@ -142,7 +142,7 @@ void createPermutationMatrix( ElementRegionManager const & elemManager,
         for( int d = 0; d < nDofPerCell; ++d )
         {
           globalIndex const rowIndex    = localToGlobal[k] * nDofPerCell + d;
-          globalIndex const columnIndex = dofNumber[k] * nDofPerCell + d;
+          globalIndex const columnIndex = dofNumber[k] + d;
           permutationMatrix.insert( rowIndex, columnIndex, 1.0 );
         }
       }
@@ -165,7 +165,7 @@ VECTOR permuteVector( VECTOR const & vector,
                       MATRIX const & permutationMatrix )
 {
   VECTOR permutedVector;
-  permutedVector.createWithLocalSize( vector.localSize(), MPI_COMM_GEOSX );
+  permutedVector.create( vector.localSize(), permutationMatrix.getComm() );
   permutationMatrix.apply( vector, permutedVector );
   return permutedVector;
 }

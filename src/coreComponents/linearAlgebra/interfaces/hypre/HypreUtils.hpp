@@ -65,6 +65,30 @@ struct HyprePrecWrapper
 namespace hypre
 {
 
+constexpr HYPRE_MemoryLocation getHypreMemoryLocation( LvArray::MemorySpace const space )
+{
+  switch( space )
+  {
+    case LvArray::MemorySpace::host: return HYPRE_MEMORY_HOST;
+#ifdef GEOSX_USE_HYPRE_CUDA
+    case LvArray::MemorySpace::cuda: return HYPRE_MEMORY_DEVICE;
+#endif
+    default: return HYPRE_MEMORY_HOST;
+  }
+}
+
+constexpr LvArray::MemorySpace getLvArrayMemorySpace( HYPRE_MemoryLocation const location )
+{
+  switch( location )
+  {
+    case HYPRE_MEMORY_HOST: return LvArray::MemorySpace::host;
+#ifdef GEOSX_USE_HYPRE_CUDA
+    case HYPRE_MEMORY_DEVICE: return LvArray::MemorySpace::cuda;
+#endif
+    default: return LvArray::MemorySpace::host;
+  }
+}
+
 #ifdef GEOSX_USE_HYPRE_CUDA
 /// Execution policy for operations on hypre data
 using execPolicy = parallelDevicePolicy<>;
