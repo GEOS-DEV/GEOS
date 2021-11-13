@@ -145,7 +145,12 @@ protected:
    */
   virtual void reset()
   {
-    m_data.clear();
+    // Clearing the array causes issues on GPU when it is later resized again
+    // (the bug is in bufferManipulation::resize(), which calls buf.data() without
+    // moving the buffer to host, if a capacity increase does not occur, i.e. the new
+    // array size is exactly the same as the one prior to clearing).
+
+    //m_data.clear();
     m_closed = true;
   };
 

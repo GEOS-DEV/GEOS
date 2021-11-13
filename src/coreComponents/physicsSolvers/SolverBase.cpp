@@ -668,10 +668,10 @@ void SolverBase::setupSystem( DomainPartition & domain,
     localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   }
 
-  rhs.create( localMatrix.numRows(), MPI_COMM_GEOSX );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   rhs.setName( this->getName() + "/rhs" );
 
-  solution.create( localMatrix.numRows(), MPI_COMM_GEOSX );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   solution.setName( this->getName() + "/solution" );
 }
 
