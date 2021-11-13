@@ -39,7 +39,7 @@ public:
   FrictionlessContactUpdates( real64 const & penaltyStiffness,
                               real64 const & shearStiffness,
                               TableFunction const & apertureTable )
-    : ContactBaseUpdates(penaltyStiffness, shearStiffness, apertureTable )
+    : ContactBaseUpdates( penaltyStiffness, shearStiffness, apertureTable )
   {}
 
   /// Default copy constructor

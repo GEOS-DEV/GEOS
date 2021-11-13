@@ -112,7 +112,7 @@ public:
   inline
   virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const
-  { GEOSX_UNUSED_VAR(normalTraction, dLimitTangentialTractionNorm_dTraction); return 0; };
+  { GEOSX_UNUSED_VAR( normalTraction, dLimitTangentialTractionNorm_dTraction ); return 0; };
 
 protected:
 
