@@ -625,7 +625,7 @@ struct StateUpdateKernel
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
-      real64 dEffectiveAperture_dAperture = 0;
+      real64 dHydraulicAperture_dAperture = 0;
       hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
                                                                       dHydraulicAperture_dAperture );
 

@@ -91,16 +91,16 @@ void ContactBase::allocateConstitutiveData( Group & parent,
 
   ArrayOfArraysView< real64 > coords = apertureTable.getCoordinates();
   arraySlice1d< real64 const > apertureValues = coords[0];
-  array1d< real64 > & effectiveApertureValues = apertureTable.getValues();
+  array1d< real64 > & hydraulicApertureValues = apertureTable.getValues();
 
   localIndex const n = apertureValues.size()-1;
-  real64 const slope = ( effectiveApertureValues[n] - effectiveApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
-  real64 const apertureTransition = ( effectiveApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
+  real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
+  real64 const apertureTransition = ( hydraulicApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
 
   coords.emplaceBack( 0, apertureTransition );
-  effectiveApertureValues.emplace_back( apertureTransition );
+  hydraulicApertureValues.emplace_back( apertureTransition );
   coords.emplaceBack( 0, apertureTransition*10e9 );
-  effectiveApertureValues.emplace_back( apertureTransition*10e9 );
+  hydraulicApertureValues.emplace_back( apertureTransition*10e9 );
   apertureTable.reInitializeFunction();
 
   m_apertureTable = &apertureTable;
@@ -110,7 +110,7 @@ void ContactBase::allocateConstitutiveData( Group & parent,
 void ContactBase::validateApertureTable( TableFunction const & apertureTable ) const
 {
   ArrayOfArraysView< real64 const > const coords = apertureTable.getCoordinates();
-  arrayView1d< real64 const > const & effectiveApertureValues = apertureTable.getValues();
+  arrayView1d< real64 const > const & hydraulicApertureValues = apertureTable.getValues();
 
   GEOSX_THROW_IF( coords.size() > 1,
                   getCatalogName() << " " << getName() << ": Aperture limiter table cannot be greater than a 1D table.",
@@ -128,7 +128,7 @@ void ContactBase::validateApertureTable( TableFunction const & apertureTable ) c
                   InputError );
 
   localIndex const n = apertureValues.size()-1;
-  real64 const slope = ( effectiveApertureValues[n] - effectiveApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
+  real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
 
   GEOSX_THROW_IF( slope >= 1.0,
                   getCatalogName() << " " << getName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",
