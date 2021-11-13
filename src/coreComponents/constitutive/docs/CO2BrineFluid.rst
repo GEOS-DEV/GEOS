@@ -11,11 +11,11 @@ Summary
 The CO2-brine model implemented in GEOSX includes two components (CO2 and H2O) that are transported by one or two fluid phases (the brine phase and the CO2 phase).
 We refer to the brine phase with the subscript :math:`\ell` and to the CO2 phase with the subscript :math:`g` (although the CO2 phase can be in supercritical, liquid, or gas state).
 The water component is only present in the brine phase, while the CO2 component can be present in the CO2 phase as well as in the brine phase.
-Thus, considering the phase component fractions, :math:`y_{c,p}` (i.e., the fraction of the mass of phase :math:`p` represented by component :math:`c`) the following partition matrix determines the component distribution within the two phases:
+Thus, considering the molar phase component fractions, :math:`y_{c,p}` (i.e., the fraction of the molar mass of phase :math:`p` represented by component :math:`c`) the following partition matrix determines the component distribution within the two phases:
 
 .. math::
     \begin{bmatrix}
-    y_{CO2,g} & y_{CO2,\ell} \\
+    y_{H2O,\ell} & y_{CO2,\ell} \\
          0 & 1            \\
     \end{bmatrix}
 
@@ -57,10 +57,10 @@ Using the reduced volume, :math:`V_r`, we compute the fugacity coefficient of CO
 To conclude this preprocessing step, we use the fugacity coefficient of CO2 to compute and store the solubility of CO2 in brine, :math:`s_{CO2}`, using equation (6) of Duan and Sun (2003):
 
 .. math::
-   \ln \frac{ x_{CO2} P }{ s_{CO2} } = \frac{\Phi_{CO2}}{RT} - \ln_{\phi}(p,T) + \sum_c 2 \lambda_c m + \sum_a 2 \lambda_a m + \sum_{a,c} \zeta_{a,c} m^2
+   \ln \frac{ y_{CO2} P }{ s_{CO2} } = \frac{\Phi_{CO2}}{RT} - \ln_{\phi}(p,T) + \sum_c 2 \lambda_c m + \sum_a 2 \lambda_a m + \sum_{a,c} \zeta_{a,c} m^2
 
 where :math:`\Phi_{CO2}` is the chemical potential of the CO2 component, :math:`R` is the gas constant, and :math:`m` is the salinity.
-The mole fraction of CO2 in the vapor phase, :math:`x_{CO2}`, is computed with equation (4) of Duan and Sun (2003).
+The mole fraction of CO2 in the vapor phase, :math:`y_{CO2}`, is computed with equation (4) of Duan and Sun (2003).
 Note that the first, third, fourth, and fifth terms in the equation written above are approximated using equation (7) of Duan and Sun (2003) as recommended by the authors.
 
 During the simulation, Step 1 starts with a look-up in the precomputed table to get the CO2 solubility, :math:`s_{CO2}`, as a function of pressure and temperature.
@@ -123,14 +123,14 @@ These calculations are done in a preprocessing step.
 
 During the simulation, the update of CO2 phase density and viscosity is simply done with a look-up in the precomputed tables. 
 
-Brine density and viscosity 
----------------------------
+Brine density and viscosity using Phillips correlation
+-------------------------------------------------------
 
 The computation of the brine density involves a tabulated correlation presented in Phillips et al. (1981). 
 The user specifies the (constant) salinity and defines the pressure and temperature axis of the brine density table in the form:
 
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
-| DensityFun | BrineCO2Density      | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
+| DensityFun | PhillipsBrineDensity | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
 
 The pressure must be in Pascal and must be less than :math:`5 \times 10^7` Pascal.
@@ -170,9 +170,9 @@ The apparent molar volume of dissolved CO2 is computed as a function of temperat
 
 The brine viscosity is controlled by a salinity parameter provided by the user in the form:
 
-+--------------+----------------+----------+
-| ViscosityFun | BrineViscosity | Salinity |
-+--------------+----------------+----------+
++--------------+------------------------+----------+
+| ViscosityFun | PhillipsBrineViscosity | Salinity |
++--------------+------------------------+----------+
 
 During the simulation, the brine viscosity is updated as a function of temperature using the analytical relationship of Phillips et al. (1981):
 
@@ -186,15 +186,64 @@ where the coefficients :math:`a` and :math:`b` are defined as:
    b &= 0.00089 (1.0 + 0.0816 m + 0.0122 m^2 + 0.000128 m^3) 
    
 where :math:`m` is the user-defined salinity (in moles of NaCl per kg of brine).
+
+
+Brine density and viscosity using Ezrokhi correllation
+-------------------------------------------------------
+
+Brine density :math:`\rho_l` is computed from pure water density :math:`\rho_w` at specified pressure and temperature corrected by Ezrokhi corellation presented in Zaytsev and Aseyev (1993):
+
+.. math::
+   log_{10}(\rho_l) &= log_{10}(\rho_w(P, T)) + A(T) x_{CO2,\ell} \\
+   A(T) &= a_0 + a_1T +  a_2T^2,
+
+where :math:`a_0, a_1, a_2` are corellation coefficients defined by user:
+
++------------+----------------------+-------------+-------------+-------------+
+| DensityFun | EzrokhiBrineDensity  | :math:`a_0` | :math:`a_1` | :math:`a_2` |
++------------+----------------------+-------------+-------------+-------------+
+
+While :math:`x_{CO2,\ell}` is mass fraction of CO2 component in brine, computed from molar fractions as
+
+.. math::
+   x_{CO2,\ell} = \frac{M_{CO2}y_{CO2,\ell}}{M_{CO2}y_{CO2,\ell} + M_{H2O}y_{H2O,\ell}},
+
+Pure water density is computed according to:
+
+.. math::
+   \rho_w = \rho_{w,sat}(T) e^{c_w * (P-P_{w,sat}(T))},
+
+where :math:`c_w` is water compressibility defined as a constant :math:`4.5 \times 10^{-10} Pa^{-1}`, while :math:`\rho_{w,sat}(T)` and :math:`P_{w,sat}(T)` are density and pressure of saturated water at a given temperature.
+Both are obtained through internally constructed tables tabulated as functions of temperature and filled with the steam table data from Engineering ToolBox (2003, 2004).
+
+Brine viscosity :math:`\mu_{\ell}` is computed from pure water viscosity :math:`\mu_w` similarly:
+
+.. math::
+   log_{10}(\mu_l) &= log_{10}(\mu_w(P, T)) + B(T) x_{CO2,\ell} \\
+   B(T) &= b_0 + b_1T +  b_2T^2,
+
+where :math:`b_0, b_1, b_2` are corellation coefficients defined by user:
+
++--------------+------------------------+-------------+-------------+-------------+
+| ViscosityFun | EzrokhiBrineViscosity  | :math:`b_0` | :math:`b_1` | :math:`b_2` |
++--------------+------------------------+-------------+-------------+-------------+
+
+Mass fraction of CO2 component in brine :math:`x_{CO2,\ell}` is exactly as in density calculation. The dependency of pure water viscosity from pressure is ignored, and it is approximated as saturated pure water viscosity:
+
+.. math::
+   \mu_w(P, T) = \mu_{w, sat} (T),
+
+which is tabulated using internal table as a function of temperature based on steam table data Engineering ToolBox (2004).
+
    
 Parameters
 =========================
 
-The model is represented by ``<CO2BrineFluid>`` node in the input.
+The models are represented by ``<CO2BrinePhillipsFluid>``, ``<CO2BrineEzrokhiFluid>`` nodes in the input.
 
 The following attributes are supported:
 
-.. include:: ../../../coreComponents/schema/docs/CO2BrineFluid.rst
+.. include:: ../../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
 
 Supported phase names are:
 
@@ -220,7 +269,20 @@ Example
 .. code-block:: xml
 
     <Constitutive>
-        <CO2BrineFluid
+        <CO2BrinePhillipsFluid
+          name="fluid"
+          phaseNames="{ gas, water }"
+          componentNames="{ co2, water }"
+          componentMolarWeight="{ 44e-3, 18e-3 }"
+          phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
+          flashModelParaFile="co2flash.txt"/>
+    </Constitutive>
+
+
+.. code-block:: xml
+
+    <Constitutive>
+        <CO2BrineEzrokhiFluid
           name="fluid"
           phaseNames="{ gas, water }"
           componentNames="{ co2, water }"
@@ -230,8 +292,8 @@ Example
     </Constitutive>
 
 In the XML code listed above, "co2flash.txt" parameterizes the CO2 solubility table constructed in Step 1.
-The file "pvtgas.txt" parameterizes the CO2 phase density and viscosity tables constructed in Step 2, while
-the file "pvtliquid.txt" parameterizes the brine density and viscosity tables.
+The file "pvtgas.txt" parameterizes the CO2 phase density and viscosity tables constructed in Step 2, 
+the file "pvtliquid.txt" parameterizes the brine density and viscosity tables according to Phillips or Ezrokhi corellation, depending on chosen fluid model.
     
 References
 ==========
@@ -256,3 +318,15 @@ References
 
 - J. E. Garcia, Density of aqueous solutions of CO2. No. LBNL-49023.
   Lawrence Berkeley National Laboratory, Berkeley, CA, 2001.
+
+- Zaytsev, I.D. and Aseyev, G.G. Properties of Aqueous Solutions of Electrolytes, 
+  Boca Raton, Florida, USA CRC Press, 1993.
+
+- Engineering ToolBox, `Water - Density, Specific Weight and Thermal Expansion 
+  Coefficients <https://www.engineeringtoolbox.com/water-density-specific-weight-d_595.html>`__,
+  2003
+
+
+- Engineering ToolBox, `Water - Dynamic (Absolute) and Kinematic Viscosity 
+  <https://www.engineeringtoolbox.com/water-dynamic-kinematic-viscosity-d_596.html>`__,
+  2004
