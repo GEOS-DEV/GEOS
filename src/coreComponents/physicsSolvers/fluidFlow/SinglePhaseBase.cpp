@@ -250,7 +250,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       ConstitutiveBase & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
       real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
 
-      subRegion.getWrapper< real64_array >( viewKeyStruct::effectiveApertureString() ).
+      subRegion.getWrapper< real64_array >( viewKeyStruct::hydraulicApertureString() ).
         setApplyDefaultValue( region.getDefaultAperture() );
 
       subRegion.getWrapper< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() ).
@@ -508,7 +508,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
   forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                           FaceElementSubRegion & subRegion )
   {
-    arrayView1d< real64 const > const aper = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
+    arrayView1d< real64 const > const aper = subRegion.getReference< array1d< real64 > >( viewKeyStruct::hydraulicApertureString() );
     arrayView1d< real64 > const aper0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::aperture0String() );
 
     aper0.setValues< parallelDevicePolicy<> >( aper );

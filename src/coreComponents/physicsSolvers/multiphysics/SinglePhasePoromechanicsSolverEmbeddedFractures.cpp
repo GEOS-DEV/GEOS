@@ -584,8 +584,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
 
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
 
-    arrayView1d< real64 > const effectiveAperture =
-      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString() );
+    arrayView1d< real64 > const hydraulicAperture =
+      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::hydraulicApertureString() );
 
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
@@ -620,7 +620,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
                                           volume,
                                           deltaVolume,
                                           aperture,
-                                          effectiveAperture,
+                                          hydraulicAperture,
                                           fractureTraction,
                                           dTdpf );
 

@@ -254,7 +254,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
     ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
-    arrayView1d< real64 > const effectiveAperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString() );
+    arrayView1d< real64 > const hydraulicAperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::hydraulicApertureString() );
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 > const deltaVolume = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() );
     arrayView1d< real64 const > const area = subRegion.getElementArea();
@@ -289,7 +289,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
                                             volume,
                                             deltaVolume,
                                             aperture,
-                                            effectiveAperture
+                                            hydraulicAperture
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                             ,
                                             apertureF,
@@ -304,7 +304,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
 //#if defined(USE_CUDA)
 //    deltaVolume.move( LvArray::MemorySpace::cuda );
 //    aperture.move( LvArray::MemorySpace::cuda );
-//    effectiveAperture.move( LvArray::MemorySpace::cuda );
+//    hydraulicAperture.move( LvArray::MemorySpace::cuda );
 //#endif
   } );
 }

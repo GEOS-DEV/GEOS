@@ -64,13 +64,13 @@ public:
   /**
    * @brief Evaluate the effective aperture, and its derivative wrt aperture
    * @param[in] aperture the model aperture/gap
-   * @param[out] dEffectiveAperture_dAperture the derivative of the effective aperture wrt aperture
-   * @return An effective physical aperture that is always > 0
+   * @param[out] dHydraulicAperture_dAperture the derivative of the effective aperture wrt aperture
+   * @return The hydraulic aperture that is always > 0
    */
   GEOSX_HOST_DEVICE
   inline
-  virtual real64 computeEffectiveAperture( real64 const aperture,
-                                           real64 & dEffectiveAperture_dAperture ) const;
+  virtual real64 computeHydraulicAperture( real64 const aperture,
+                                           real64 & dHydraulicAperture_dAperture ) const;
 
 
   /**
@@ -216,10 +216,10 @@ protected:
 };
 
 GEOSX_HOST_DEVICE
-real64 ContactBaseUpdates::computeEffectiveAperture( real64 const aperture,
-                                                     real64 & dEffectiveAperture_dAperture ) const
+real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
+                                                     real64 & dHydraulicAperture_dAperture ) const
 {
-  return m_apertureTable.compute( &aperture, &dEffectiveAperture_dAperture );
+  return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
 }
 
 GEOSX_HOST_DEVICE
