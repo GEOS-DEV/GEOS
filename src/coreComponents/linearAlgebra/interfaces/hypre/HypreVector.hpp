@@ -29,10 +29,11 @@
  */
 ///@{
 
-/// ParVector struct forward definition
 extern "C"
 {
+/// ParVector struct forward declaration
 struct hypre_ParVector_struct;
+/// ParVector struct alias
 typedef struct hypre_ParVector_struct hypre_ParVector;
 }
 

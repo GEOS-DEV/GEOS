@@ -376,6 +376,7 @@ void EpetraMatrix::apply( EpetraVector const & src,
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.globalSize() );
 
   GEOSX_LAI_CHECK_ERROR( m_matrix->Multiply( false, src.unwrapped(), dst.unwrapped() ) );
+  dst.touch();
 }
 
 void EpetraMatrix::applyTranspose( EpetraVector const & src,
@@ -388,6 +389,7 @@ void EpetraMatrix::applyTranspose( EpetraVector const & src,
   GEOSX_LAI_ASSERT_EQ( numGlobalRows(), src.globalSize() );
 
   GEOSX_LAI_CHECK_ERROR( m_matrix->Multiply( true, src.unwrapped(), dst.unwrapped() ) );
+  dst.touch();
 }
 
 void EpetraMatrix::multiply( EpetraMatrix const & src,
@@ -773,6 +775,7 @@ void EpetraMatrix::extractDiagonal( EpetraVector & dst ) const
   GEOSX_LAI_ASSERT_EQ( dst.localSize(), numLocalRows() );
 
   GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractDiagonalCopy( dst.unwrapped() ) );
+  dst.touch();
 }
 
 namespace
@@ -863,6 +866,7 @@ void EpetraMatrix::getRowSums( EpetraVector & dst,
       break;
     }
   }
+  dst.touch();
 }
 
 void EpetraMatrix::rescaleRows( arrayView1d< globalIndex const > const & rowIndices,

@@ -540,6 +540,7 @@ void PetscMatrix::apply( PetscVector const & src,
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.globalSize() );
 
   GEOSX_LAI_CHECK_ERROR( MatMult( m_mat, src.unwrapped(), dst.unwrapped() ) );
+  dst.touch();
 }
 
 void PetscMatrix::applyTranspose( Vector const & src,
@@ -552,6 +553,7 @@ void PetscMatrix::applyTranspose( Vector const & src,
   GEOSX_LAI_ASSERT_EQ( numGlobalRows(), src.globalSize() );
 
   GEOSX_LAI_CHECK_ERROR( MatMultTranspose( m_mat, src.unwrapped(), dst.unwrapped() ) );
+  dst.touch();
 }
 
 void PetscMatrix::multiply( PetscMatrix const & src,
@@ -616,6 +618,7 @@ void PetscMatrix::gemv( real64 const alpha,
     GEOSX_LAI_CHECK_ERROR( MatMult( m_mat, x_.unwrapped(), b_.unwrapped() ) ); // alpha*A*x_ = b_
   }
   GEOSX_LAI_CHECK_ERROR( VecAXPY( y.unwrapped(), 1, b_.unwrapped() ) ); // alpha*A*x_ + beta*y = y
+  y.touch();
 }
 
 void PetscMatrix::scale( real64 const scalingFactor )
@@ -909,6 +912,7 @@ void PetscMatrix::extractDiagonal( PetscVector & dst ) const
   GEOSX_LAI_ASSERT_EQ( dst.localSize(), numLocalRows() );
 
   GEOSX_LAI_CHECK_ERROR( MatGetDiagonal( m_mat, dst.unwrapped() ) );
+  dst.touch();
 }
 
 namespace

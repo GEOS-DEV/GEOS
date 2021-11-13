@@ -50,8 +50,8 @@ PetscVector & PetscVector::operator=( PetscVector const & src )
     reset();
     if( src.created() )
     {
-      GEOSX_LAI_CHECK_ERROR( VecDuplicate( src.m_vec, &m_vec ) );
-      GEOSX_LAI_CHECK_ERROR( VecCopy( src.m_vec, m_vec ) );
+      create( src.localSize(), src.getComm() );
+      copy( src );
     }
   }
   return *this;

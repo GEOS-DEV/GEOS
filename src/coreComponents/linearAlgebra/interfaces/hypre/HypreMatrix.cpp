@@ -585,6 +585,7 @@ void HypreMatrix::apply( HypreVector const & src,
                                                    src.unwrapped(),
                                                    0.0,
                                                    dst.unwrapped() ) );
+  dst.touch();
 }
 
 void HypreMatrix::applyTranspose( HypreVector const & src,
@@ -601,6 +602,7 @@ void HypreMatrix::applyTranspose( HypreVector const & src,
                                                     src.unwrapped(),
                                                     0.0,
                                                     dst.unwrapped() ) );
+  dst.touch();
 }
 
 void HypreMatrix::multiply( HypreMatrix const & src,
@@ -763,6 +765,7 @@ void HypreMatrix::gemv( real64 const alpha,
                                                       beta,
                                                       y.unwrapped() ) );
   }
+  y.touch();
 }
 
 void HypreMatrix::scale( real64 const scalingFactor )
@@ -1072,6 +1075,7 @@ void HypreMatrix::getRowSums( HypreVector & dst,
       break;
     }
   }
+  dst.touch();
 }
 
 real64 HypreMatrix::clearRow( globalIndex const globalRow,

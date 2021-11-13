@@ -65,6 +65,10 @@ struct HyprePrecWrapper
 namespace hypre
 {
 
+/**
+ * @brief @return Hypre memory location corresponding to a given LvArray memory space
+ * @param space the space
+ */
 constexpr HYPRE_MemoryLocation getHypreMemoryLocation( LvArray::MemorySpace const space )
 {
   switch( space )
@@ -77,6 +81,10 @@ constexpr HYPRE_MemoryLocation getHypreMemoryLocation( LvArray::MemorySpace cons
   }
 }
 
+/**
+ * @brief @return LvArray memory space corresponding to hypre's memory location
+ * @param location the location
+ */
 constexpr LvArray::MemorySpace getLvArrayMemorySpace( HYPRE_MemoryLocation const location )
 {
   switch( location )
@@ -94,12 +102,14 @@ constexpr LvArray::MemorySpace getLvArrayMemorySpace( HYPRE_MemoryLocation const
 using execPolicy = parallelDevicePolicy<>;
 /// Memory space used by hypre matrix/vector objects
 constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::cuda;
+/// Memory location used by hypre matrix/vector objects
 constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_DEVICE;
 #else
 /// Execution policy for operations on hypre data
 using execPolicy = parallelHostPolicy;
 /// Memory space used by hypre matrix/vector objects
 constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::host;
+/// Memory location used by hypre matrix/vector objects
 constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 #endif
 

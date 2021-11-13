@@ -55,10 +55,7 @@ HypreVector & HypreVector::operator=( HypreVector const & src )
     if( src.created() )
     {
       create( src.localSize(), src.getComm() );
-      if( src.ready() )
-      {
-        copy( src );
-      }
+      copy( src );
     }
   }
   return *this;

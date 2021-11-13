@@ -50,9 +50,10 @@ EpetraVector & EpetraVector::operator=( EpetraVector const & src )
   if( &src != this )
   {
     reset();
-    if( src.ready() )
+    if( src.created() )
     {
-      m_vec = std::make_unique< Epetra_Vector >( *src.m_vec );
+      create( src.localSize(), src.getComm() );
+      copy( src );
     }
   }
   return *this;

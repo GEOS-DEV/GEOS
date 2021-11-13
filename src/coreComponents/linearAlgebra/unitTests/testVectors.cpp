@@ -29,13 +29,17 @@ using namespace geosx;
 template< typename POLICY, typename VEC >
 void createAndAssemble( localIndex const startSize, VEC & x )
 {
+  // Create a vector of local sizes:
+  // - startSize      on rank 0;
+  // - startSize + 1  on rank 1;
+  // - etc.
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   localIndex const localSize = rank + startSize;
-  globalIndex const rankOffset = ( rank + startSize ) * ( rank + startSize - 1 ) / 2;
+  globalIndex const rankOffset = rank * ( rank - 1 ) / 2 + rank * startSize;
 
   x.create( localSize, MPI_COMM_GEOSX );
   arrayView1d< real64 > const values = x.open();
-  forAll< POLICY >( localSize, [=] GEOSX_HOST_DEVICE ( localIndex i )
+  forAll< POLICY >( localSize, [=] GEOSX_HOST_DEVICE ( localIndex const i )
   {
     globalIndex const row = rankOffset + i;
     values[i] = std::pow( -1.0, row ) * ( 1.0 + row );
@@ -237,7 +241,7 @@ TYPED_TEST_P( VectorTest, scaleValues )
   Vector x;
   createAndAssemble< parallelDevicePolicy<> >( 3, x );
 
-  array1d< real64 > values;
+  array1d< real64 > values( x.localSize() );
   values.template setValues< parallelDevicePolicy<> >( x.values() );
 
   real64 const factor = 0.5;
