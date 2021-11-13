@@ -21,8 +21,10 @@
 
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "constitutive/fluid/PVTFunctions/BrineCO2Density.hpp"
-#include "constitutive/fluid/PVTFunctions/BrineViscosity.hpp"
+#include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
+#include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
+#include "constitutive/fluid/PVTFunctions/EzrokhiBrineDensity.hpp"
+#include "constitutive/fluid/PVTFunctions/EzrokhiBrineViscosity.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
 #include "constitutive/fluid/PVTFunctions/FenghourCO2Viscosity.hpp"
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
@@ -183,11 +185,17 @@ private:
 };
 
 // this alias will be useful in constitutive dispatch
-using CO2BrineFluid = MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,
-                                                     PVTProps::BrineViscosity,
-                                                     PVTProps::SpanWagnerCO2Density,
-                                                     PVTProps::FenghourCO2Viscosity,
-                                                     PVTProps::CO2Solubility >;
+using CO2BrinePhillipsFluid = MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
+                                                             PVTProps::PhillipsBrineViscosity,
+                                                             PVTProps::SpanWagnerCO2Density,
+                                                             PVTProps::FenghourCO2Viscosity,
+                                                             PVTProps::CO2Solubility >;
+
+using CO2BrineEzrokhiFluid = MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
+                                                            PVTProps::EzrokhiBrineViscosity,
+                                                            PVTProps::SpanWagnerCO2Density,
+                                                            PVTProps::FenghourCO2Viscosity,
+                                                            PVTProps::CO2Solubility >;
 
 template< typename P1DENSWRAPPER, typename P1VISCWRAPPER, typename P2DENSWRAPPER, typename P2VISCWRAPPER, typename FLASHWRAPPER >
 GEOSX_HOST_DEVICE

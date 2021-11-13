@@ -89,11 +89,12 @@
 
   <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   <Constitutive>
-    <CO2BrineFluid
+    <CO2BrinePhillipsFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
+
       phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
       flashModelParaFile="co2flash.txt"/>
 
@@ -235,4 +236,3 @@
   </Functions>
   
 </Problem>
-
