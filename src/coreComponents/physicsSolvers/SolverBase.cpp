@@ -661,18 +661,19 @@ void SolverBase::setupSystem( DomainPartition & domain,
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
-  SparsityPattern< globalIndex > pattern;
   if( setSparsity )
   {
+    SparsityPattern< globalIndex > pattern;
     dofManager.setSparsityPattern( pattern );
     localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   }
+  localMatrix.setName( this->getName() + "/matrix" );
 
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   rhs.setName( this->getName() + "/rhs" );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   solution.setName( this->getName() + "/solution" );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 }
 
 void SolverBase::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),

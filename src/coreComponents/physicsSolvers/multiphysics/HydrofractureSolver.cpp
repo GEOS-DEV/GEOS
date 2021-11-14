@@ -514,14 +514,13 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
   addFluxApertureCouplingSparsityPattern( domain, dofManager, pattern.toView() );
 
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  localMatrix.setName( this->getName() + "/matrix" );
 
-  localMatrix.setName( this->getName() + "/localMatrix" );
-
-  rhs.create( numLocalRows, MPI_COMM_GEOSX );
   rhs.setName( this->getName() + "/rhs" );
+  rhs.create( numLocalRows, MPI_COMM_GEOSX );
 
-  solution.create( numLocalRows, MPI_COMM_GEOSX );
   solution.setName( this->getName() + "/solution" );
+  solution.create( numLocalRows, MPI_COMM_GEOSX );
 
   setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 }

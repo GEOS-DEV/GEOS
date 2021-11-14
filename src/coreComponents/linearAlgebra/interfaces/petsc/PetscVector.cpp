@@ -86,8 +86,8 @@ void PetscVector::reset()
 void PetscVector::create( localIndex const localSize, MPI_Comm const & comm )
 {
   VectorBase::create( localSize, comm );
-  m_data.move( LvArray::MemorySpace::host, false );
-  GEOSX_LAI_CHECK_ERROR( VecCreateMPIWithArray( comm, 1, localSize, PETSC_DETERMINE, m_data.data(), &m_vec ) );
+  m_values.move( LvArray::MemorySpace::host, false );
+  GEOSX_LAI_CHECK_ERROR( VecCreateMPIWithArray( comm, 1, localSize, PETSC_DETERMINE, m_values.data(), &m_vec ) );
 }
 
 bool PetscVector::created() const
@@ -125,14 +125,14 @@ void PetscVector::rand( unsigned const seed )
 void PetscVector::close()
 {
   GEOSX_LAI_ASSERT( !closed() );
-  m_data.move( LvArray::MemorySpace::host, false );
+  m_values.move( LvArray::MemorySpace::host, false );
   m_closed = true;
 }
 
 void PetscVector::touch()
 {
   GEOSX_LAI_ASSERT( ready() );
-  m_data.registerTouch( LvArray::MemorySpace::host );
+  m_values.registerTouch( LvArray::MemorySpace::host );
 }
 
 void PetscVector::scale( real64 const scalingFactor )

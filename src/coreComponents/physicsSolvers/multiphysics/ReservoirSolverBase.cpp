@@ -246,11 +246,11 @@ void ReservoirSolverBase::setupSystem( DomainPartition & domain,
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   localMatrix.setName( this->getName() + "/localMatrix" );
 
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   rhs.setName( this->getName() + "/rhs" );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   solution.setName( this->getName() + "/solution" );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 }
 
 

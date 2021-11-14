@@ -106,9 +106,9 @@ void HypreVector::create( localIndex const localSize,
   hypre_Vector * const localVector = hypre_ParVectorLocalVector( m_vec );
   hypre_VectorOwnsData( localVector ) = false;
 
-  // Inject the memory managed by m_data in the correct space into hypre vector
-  m_data.move( hypre::memorySpace, false );
-  hypre_VectorData( localVector ) = m_data.data();
+  // Inject the memory managed by m_values in the correct space into hypre vector
+  m_values.move( hypre::memorySpace, false );
+  hypre_VectorData( localVector ) = m_values.data();
 
   // Complete the initialization (vector will not allocate if data is already set)
   GEOSX_LAI_CHECK_ERROR( hypre_ParVectorInitialize_v2( m_vec, hypre::memoryLocation ) );
@@ -137,14 +137,14 @@ void HypreVector::rand( unsigned const seed )
 void HypreVector::close()
 {
   GEOSX_LAI_ASSERT( !closed() );
-  m_data.move( hypre::memorySpace, false );
+  m_values.move( hypre::memorySpace, false );
   m_closed = true;
 }
 
 void HypreVector::touch()
 {
   GEOSX_LAI_ASSERT( ready() );
-  m_data.registerTouch( hypre::memorySpace );
+  m_values.registerTouch( hypre::memorySpace );
 }
 
 void HypreVector::scale( real64 const scalingFactor )
@@ -160,7 +160,7 @@ void HypreVector::scale( real64 const scalingFactor )
 void HypreVector::reciprocal()
 {
   GEOSX_LAI_ASSERT( ready() );
-  arrayView1d< real64 > values = m_data.toView();
+  arrayView1d< real64 > values = m_values.toView();
   forAll< hypre::execPolicy >( localSize(), [values] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {
     values[i] = 1.0 / values[i];
@@ -233,9 +233,9 @@ void HypreVector::pointwiseProduct( HypreVector const & x,
   GEOSX_LAI_ASSERT_EQ( localSize(), x.localSize() );
   GEOSX_LAI_ASSERT_EQ( localSize(), y.localSize() );
 
-  arrayView1d< real64 const > my_values = m_data.toViewConst();
-  arrayView1d< real64 const > x_values = x.m_data.toViewConst();
-  arrayView1d< real64 > y_values = y.m_data.toView();
+  arrayView1d< real64 const > my_values = m_values.toViewConst();
+  arrayView1d< real64 const > x_values = x.m_values.toViewConst();
+  arrayView1d< real64 > y_values = y.m_values.toView();
   forAll< hypre::execPolicy >( localSize(), [y_values, my_values, x_values] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {
     y_values[i] = my_values[i] * x_values[i];
@@ -246,7 +246,7 @@ real64 HypreVector::norm1() const
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  arrayView1d< real64 const > values = m_data.toViewConst();
+  arrayView1d< real64 const > values = m_values.toViewConst();
   RAJA::ReduceSum< ReducePolicy< hypre::execPolicy >, real64 > localNorm( 0.0 );
   forAll< hypre::execPolicy >( localSize(), [localNorm, values] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {
@@ -265,7 +265,7 @@ real64 HypreVector::normInf() const
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  arrayView1d< real64 const > values = m_data.toViewConst();
+  arrayView1d< real64 const > values = m_values.toViewConst();
   RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, real64 > localNorm( 0.0 );
   forAll< hypre::execPolicy >( localSize(), [localNorm, values] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {

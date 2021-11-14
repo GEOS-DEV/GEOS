@@ -95,7 +95,14 @@ protected:
     GEOSX_LAI_ASSERT( closed() );
     GEOSX_LAI_ASSERT_GE( localSize, 0 );
     reset();
-    m_data.resize( localSize );
+
+    // Ideally, resizing to the same size should be a no-op.
+    // But bufferManipulation::resize() always forces a touch in host memory.
+    // We want to avoid moving values to device again in that case.
+    if( m_values.size() != localSize )
+    {
+      m_values.resize( localSize );
+    }
   }
 
   /**
@@ -104,7 +111,7 @@ protected:
    */
   void setName( string const & name )
   {
-    m_data.setName( name );
+    m_values.setName( name );
   }
 
   ///@}
@@ -122,7 +129,7 @@ protected:
   {
     GEOSX_LAI_ASSERT( ready() );
     m_closed = false;
-    return m_data.toView();
+    return m_values.toView();
   }
 
   /**
@@ -150,7 +157,7 @@ protected:
     // moving the buffer to host, if a capacity increase does not occur, i.e. the new
     // array size is exactly the same as the one prior to clearing).
 
-    //m_data.clear();
+    //m_values.clear();
     m_closed = true;
   };
 
@@ -297,7 +304,7 @@ protected:
   arrayView1d< real64 const > values() const
   {
     GEOSX_LAI_ASSERT( ready() );
-    return m_data.toViewConst();
+    return m_values.toViewConst();
   }
 
   /**
@@ -345,7 +352,7 @@ protected:
   bool m_closed = true;
 
   /// Actual storage for the local vector values
-  array1d< real64 > m_data;
+  array1d< real64 > m_values;
 };
 
 } // namespace geosx

@@ -85,8 +85,8 @@ void EpetraVector::create( localIndex const localSize,
                         LvArray::integerConversion< int >( localSize ),
                         0,
                         trilinos::EpetraComm( MPI_PARAM( comm ) ) );
-  m_data.move( LvArray::MemorySpace::host, false );
-  m_vec = std::make_unique< Epetra_Vector >( View, map, m_data.data() );
+  m_values.move( LvArray::MemorySpace::host, false );
+  m_vec = std::make_unique< Epetra_Vector >( View, map, m_values.data() );
 }
 
 void EpetraVector::set( real64 value )
@@ -107,14 +107,14 @@ void EpetraVector::rand( unsigned const seed )
 void EpetraVector::close()
 {
   GEOSX_LAI_ASSERT( !closed() );
-  m_data.move( LvArray::MemorySpace::host, false );
+  m_values.move( LvArray::MemorySpace::host, false );
   m_closed = true;
 }
 
 void EpetraVector::touch()
 {
   GEOSX_LAI_ASSERT( ready() );
-  m_data.registerTouch( LvArray::MemorySpace::host );
+  m_values.registerTouch( LvArray::MemorySpace::host );
 }
 
 void EpetraVector::reset()
