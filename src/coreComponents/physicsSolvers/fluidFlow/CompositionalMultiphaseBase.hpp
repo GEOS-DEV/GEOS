@@ -171,7 +171,7 @@ public:
   localIndex numFluidPhases() const { return m_numPhases; }
 
   /**
-   * @brief assembles the accumulation terms for all cells
+   * @brief assembles the accumulation and volume balance terms for all cells
    * @param time_n previous time value
    * @param dt time step
    * @param domain the physical domain object
@@ -179,10 +179,10 @@ public:
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    */
-  void assembleAccumulationTerms( DomainPartition & domain,
-                                  DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs ) const;
+  void assembleAccumulationAndVolumeBalanceTerms( DomainPartition & domain,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs ) const;
 
   /**
    * @brief assembles the flux terms for all cells
@@ -200,19 +200,6 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const = 0;
 
-  /**
-   * @brief assembles the volume balance terms for all cells
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  void assembleVolumeBalanceTerms( DomainPartition const & domain,
-                                   DofManager const & dofManager,
-                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                   arrayView1d< real64 > const & localRhs ) const;
 
   /**@}*/
 

@@ -8,7 +8,8 @@ BlackOilFluid                                           node         :ref:`XML_B
 BrooksCoreyBakerRelativePermeability                    node         :ref:`XML_BrooksCoreyBakerRelativePermeability`                    
 BrooksCoreyCapillaryPressure                            node         :ref:`XML_BrooksCoreyCapillaryPressure`                            
 BrooksCoreyRelativePermeability                         node         :ref:`XML_BrooksCoreyRelativePermeability`                         
-CO2BrineFluid                                           node         :ref:`XML_CO2BrineFluid`                                           
+CO2BrineEzrokhiFluid                                    node         :ref:`XML_CO2BrineEzrokhiFluid`                                    
+CO2BrinePhillipsFluid                                   node         :ref:`XML_CO2BrinePhillipsFluid`                                   
 CarmanKozenyPermeability                                node         :ref:`XML_CarmanKozenyPermeability`                                
 CompositionalMultiphaseFluid                            node         :ref:`XML_CompositionalMultiphaseFluid`                            
 CompressibleSinglePhaseFluid                            node         :ref:`XML_CompressibleSinglePhaseFluid`                            

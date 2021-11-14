@@ -85,11 +85,18 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
-.. _XML_CO2BrineFluid:
+.. _XML_CO2BrineEzrokhiFluid:
 
-Element: CO2BrineFluid
-======================
-.. include:: ../../coreComponents/schema/docs/CO2BrineFluid.rst
+Element: CO2BrineEzrokhiFluid
+=============================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid.rst
+
+
+.. _XML_CO2BrinePhillipsFluid:
+
+Element: CO2BrinePhillipsFluid
+==============================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
 
 
 .. _XML_CarmanKozenyPermeability:
@@ -1048,11 +1055,18 @@ Datastructure: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability_other.rst
 
 
-.. _DATASTRUCTURE_CO2BrineFluid:
+.. _DATASTRUCTURE_CO2BrineEzrokhiFluid:
 
-Datastructure: CO2BrineFluid
-============================
-.. include:: ../../coreComponents/schema/docs/CO2BrineFluid_other.rst
+Datastructure: CO2BrineEzrokhiFluid
+===================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid_other.rst
+
+
+.. _DATASTRUCTURE_CO2BrinePhillipsFluid:
+
+Datastructure: CO2BrinePhillipsFluid
+====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid_other.rst
 
 
 .. _DATASTRUCTURE_CarmanKozenyPermeability:
