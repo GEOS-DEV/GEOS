@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
@@ -198,31 +194,14 @@ protected:
 
   /**
    * @brief Output iteration progress (called by implementations).
-   * @param iter  current iteration number
-   * @param rnorm current residual norm
+   * @note must be called **after** pushing the most recent residual into m_residualNorms
    */
-  void logProgress( localIndex const iter, real64 const rnorm ) const
-  {
-    m_residualNorms[iter] = rnorm;
-    if( m_params.logLevel >= 2 )
-    {
-      GEOSX_LOG_RANK_0( methodName() << " iteration " << iter << ": residual = " << rnorm );
-    }
-  }
+  void logProgress() const;
 
   /**
    * @brief Output convergence result (called by implementations).
    */
-  void logResult() const
-  {
-    if( m_params.logLevel >= 1 )
-    {
-      GEOSX_LOG_RANK_0( methodName() << ' ' <<
-                        ( m_result.success() ? "converged" : "failed to converge" ) <<
-                        " in " << m_result.numIterations << " iterations " <<
-                        "(" << m_result.solveTime << " s)" );
-    }
-  }
+  void logResult() const;
 
   /// parameters of the solver
   LinearSolverParameters m_params;

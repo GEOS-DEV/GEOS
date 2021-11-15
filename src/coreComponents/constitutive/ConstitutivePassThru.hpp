@@ -26,7 +26,10 @@
 #include "solid/DamageSpectral.hpp"
 #include "solid/DruckerPrager.hpp"
 #include "solid/DruckerPragerExtended.hpp"
+#include "solid/ModifiedCamClay.hpp"
+#include "solid/DelftEgg.hpp"
 #include "solid/ElasticIsotropic.hpp"
+#include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticOrthotropic.hpp"
 #include "solid/PorousSolid.hpp"
@@ -79,9 +82,12 @@ struct ConstitutivePassThru< SolidBase >
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic >,
                                  DruckerPragerExtended,
+                                 ModifiedCamClay,
+                                 DelftEgg,
                                  DruckerPrager,
                                  ElasticIsotropic,
                                  ElasticTransverseIsotropic,
+                                 ElasticIsotropicPressureDependent,
                                  ElasticOrthotropic >::execute( constitutiveRelation,
                                                                 std::forward< LAMBDA >( lambda ) );
   }
@@ -138,9 +144,12 @@ struct ConstitutivePassThru< PorousSolidBase >
   static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< ModifiedCamClay >,
+                                 PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
@@ -211,9 +220,12 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< ModifiedCamClay >,
+                                 PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
@@ -228,9 +240,12 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< ModifiedCamClay >,
+                                 PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,

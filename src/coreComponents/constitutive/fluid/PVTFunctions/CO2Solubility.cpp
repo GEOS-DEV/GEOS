@@ -206,7 +206,9 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
 
   // initialize salinity and tolerance
-  GEOSX_THROW_IF( inputParams.size() < 9, "Invalid property input!", InputError );
+  GEOSX_THROW_IF_LT_MSG( inputParams.size(), 9,
+                         GEOSX_FMT( "{}: insufficient number of model parameters", functionName ),
+                         InputError );
 
   real64 tolerance = 1e-9;
   real64 salinity = 0.0;
@@ -220,7 +222,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( "Invalid property argument:" + string( e.what() ), InputError );
+    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
@@ -260,16 +262,16 @@ CO2Solubility::CO2Solubility( string const & name,
                          InputError );
 
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
-  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
+  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
   string const expectedWaterComponentNames[] = { "Water", "water" };
-  m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames );
+  m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
   string const expectedGasPhaseNames[] = { "CO2", "co2", "gas", "Gas" };
-  m_phaseGasIndex = PVTFunctionHelpers::findName( phaseNames, expectedGasPhaseNames );
+  m_phaseGasIndex = PVTFunctionHelpers::findName( phaseNames, expectedGasPhaseNames, "phaseNames" );
 
   string const expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
-  m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames );
+  m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, "phaseNames" );
 
   m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
 }

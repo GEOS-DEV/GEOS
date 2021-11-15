@@ -94,8 +94,6 @@ public:
   BrooksCoreyCapillaryPressure( string const & name,
                                 dataRepository::Group * const parent );
 
-  virtual ~BrooksCoreyCapillaryPressure() override;
-
   static string catalogName() { return "BrooksCoreyCapillaryPressure"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -177,7 +175,7 @@ BrooksCoreyCapillaryPressureUpdate::
     real64 const volFracScaled = (phaseVolFraction[ip_gas] - m_phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
     real64 const exponentInv   = m_phaseCapPressureExponentInv[ip_gas];
     real64 const entryPressure = -m_phaseEntryPressure[ip_gas]; // for gas capillary pressure, take the opposite of the
-                                                                // VG function
+                                                                // BC function
 
     real64 const wettingVolFracScaled           = 1-volFracScaled;
     real64 const dWettingVolFracScaled_dVolFrac =  -volFracScaleInv;

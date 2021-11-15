@@ -47,19 +47,17 @@ namespace
 
 HYPRE_Int getHypreAMGCycleType( LinearSolverParameters::AMG::CycleType const & type )
 {
-  static std::map< LinearSolverParameters::AMG::CycleType, HYPRE_Int > const typeMap =
+  static map< LinearSolverParameters::AMG::CycleType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::CycleType::V, 1 },
     { LinearSolverParameters::AMG::CycleType::W, 2 },
   };
-
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG cycle option: " << type );
-  return typeMap.at( type );
+  return findOption( typeMap, type, "multigrid cycle", "HyprePreconditioner" );
 }
 
 HYPRE_Int getHypreAMGRelaxationType( LinearSolverParameters::AMG::SmootherType const & type )
 {
-  static std::map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
+  static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::SmootherType::default_, -1 },
 #ifdef GEOSX_USE_HYPRE_CUDA
@@ -67,20 +65,38 @@ HYPRE_Int getHypreAMGRelaxationType( LinearSolverParameters::AMG::SmootherType c
 #else
     { LinearSolverParameters::AMG::SmootherType::jacobi, 0 },
 #endif
-    { LinearSolverParameters::AMG::SmootherType::gs, 3 }, // 3 = forward, 4 = backward; do we need both?
+    { LinearSolverParameters::AMG::SmootherType::fgs, 3 },
+    { LinearSolverParameters::AMG::SmootherType::bgs, 4 },
     { LinearSolverParameters::AMG::SmootherType::sgs, 6 },
     { LinearSolverParameters::AMG::SmootherType::l1sgs, 8 },
     { LinearSolverParameters::AMG::SmootherType::chebyshev, 16 },
     { LinearSolverParameters::AMG::SmootherType::l1jacobi, 18 },
   };
+  return findOption( typeMap, type, "multigrid relaxation", "HyprePreconditioner" );
+}
 
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG relaxation option: " << type );
-  return typeMap.at( type );
+HYPRE_Int getHypreRelaxationType( LinearSolverParameters::PreconditionerType const type )
+{
+  static map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
+  {
+#ifdef GEOSX_USE_HYPRE_CUDA
+    { LinearSolverParameters::PreconditionerType::jacobi, 7 },
+#else
+    { LinearSolverParameters::PreconditionerType::jacobi, 0 },
+#endif
+    { LinearSolverParameters::PreconditionerType::fgs, 3 },
+    { LinearSolverParameters::PreconditionerType::bgs, 4 },
+    { LinearSolverParameters::PreconditionerType::sgs, 6 },
+    { LinearSolverParameters::PreconditionerType::l1sgs, 8 },
+    { LinearSolverParameters::PreconditionerType::chebyshev, 16 },
+    { LinearSolverParameters::PreconditionerType::l1jacobi, 18 },
+  };
+  return findOption( typeMap, type, "relaxation", "HyprePreconditioner" );
 }
 
 HYPRE_Int getHypreAMGCoarseType( LinearSolverParameters::AMG::CoarseType const & type )
 {
-  static std::map< LinearSolverParameters::AMG::CoarseType, HYPRE_Int > const typeMap =
+  static map< LinearSolverParameters::AMG::CoarseType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::CoarseType::default_, -1 },
 #ifdef GEOSX_USE_HYPRE_CUDA
@@ -88,21 +104,20 @@ HYPRE_Int getHypreAMGCoarseType( LinearSolverParameters::AMG::CoarseType const &
 #else
     { LinearSolverParameters::AMG::CoarseType::jacobi, 0 },
 #endif
-    { LinearSolverParameters::AMG::CoarseType::gs, 3 },   // 3 = forward, 4 = backward; do we need both?
+    { LinearSolverParameters::AMG::CoarseType::fgs, 3 },
+    { LinearSolverParameters::AMG::CoarseType::bgs, 4 },
     { LinearSolverParameters::AMG::CoarseType::sgs, 6 },
     { LinearSolverParameters::AMG::CoarseType::l1sgs, 8 },
     { LinearSolverParameters::AMG::CoarseType::direct, 9 },
     { LinearSolverParameters::AMG::CoarseType::chebyshev, 16 },
     { LinearSolverParameters::AMG::CoarseType::l1jacobi, 18 },
   };
-
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG relaxation option: " << type );
-  return typeMap.at( type );
+  return findOption( typeMap, type, "multigrid coarse solver", "HyprePreconditioner" );
 }
 
 HYPRE_Int getHypreAMGCoarseningType( string const & type )
 {
-  static std::map< string, HYPRE_Int > const typeMap =
+  static map< string, HYPRE_Int > const typeMap =
   {
     { "CLJP", 0 },
     { "Ruge-Stueben", 3 },
@@ -114,33 +129,27 @@ HYPRE_Int getHypreAMGCoarseningType( string const & type )
     { "CGC", 21 },
     { "CGC-E", 22 }
   };
-
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre AMG coarsening option: " << type );
-  return typeMap.at( type );
+  return findOption( typeMap, type, "multigrid coarsening", "HyprePreconditioner" );
 }
 
 HYPRE_Int getHypreILUType( LinearSolverParameters::PreconditionerType const type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
+  static map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::iluk, 0 },
     { LinearSolverParameters::PreconditionerType::ilut, 1 },
   };
-
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre ILU option: " << type );
-  return typeMap.at( type );
+  return findOption( typeMap, type, "ILU", "HyprePreconditioner" );
 }
 
 HYPRE_Int getHypreILUType( LinearSolverParameters::AMG::SmootherType const type )
 {
-  static std::map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
+  static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::SmootherType::ilu0, 0 },
     { LinearSolverParameters::AMG::SmootherType::ilut, 1 },
   };
-
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Hypre ILU option: " << type );
-  return typeMap.at( type );
+  return findOption( typeMap, type, "ILU", "HyprePreconditioner" );
 }
 
 void convertRigidBodyModes( arrayView1d< HypreVector > const & nearNullKernel,
@@ -345,6 +354,15 @@ void createILU( LinearSolverParameters const & params,
   precond.destroy = HYPRE_ILUDestroy;
 }
 
+void createRelaxation( LinearSolverParameters const & params,
+                       HyprePrecWrapper & precond )
+{
+  GEOSX_LAI_CHECK_ERROR( hypre::RelaxationCreate( precond.ptr, getHypreRelaxationType( params.preconditionerType ) ) );
+  precond.setup = hypre::RelaxationSetup;
+  precond.solve = hypre::RelaxationSolve;
+  precond.destroy = hypre::RelaxationDestroy;
+}
+
 } // namespace
 
 HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params )
@@ -375,14 +393,19 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
   {
     case LinearSolverParameters::PreconditionerType::none:
     {
-      m_precond->setup = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentitySetup;
-      m_precond->solve = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentity;
+      m_precond->setup = (HyprePrecWrapper::SetupFunc) hypre_ParKrylovIdentitySetup;
+      m_precond->solve = (HyprePrecWrapper::SetupFunc) hypre_ParKrylovIdentity;
       break;
     }
     case LinearSolverParameters::PreconditionerType::jacobi:
+    case LinearSolverParameters::PreconditionerType::fgs:
+    case LinearSolverParameters::PreconditionerType::bgs:
+    case LinearSolverParameters::PreconditionerType::sgs:
+    case LinearSolverParameters::PreconditionerType::l1jacobi:
+    case LinearSolverParameters::PreconditionerType::chebyshev:
+    case LinearSolverParameters::PreconditionerType::l1sgs:
     {
-      m_precond->setup = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
-      m_precond->solve = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
+      createRelaxation( m_params, *m_precond );
       break;
     }
     case LinearSolverParameters::PreconditionerType::amg:
@@ -404,9 +427,8 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
     }
     case LinearSolverParameters::PreconditionerType::direct:
     {
-      m_precond->setup = hypre::HYPRE_SLUDistSetup;
-      m_precond->solve = hypre::HYPRE_SLUDistSolve;
-      m_precond->destroy = hypre::HYPRE_SLUDistDestroy;
+      m_precond->solve = hypre::SuperLUDistSolve;
+      m_precond->destroy = hypre::SuperLUDistDestroy;
       break;
     }
     default:
@@ -418,19 +440,28 @@ void HyprePreconditioner::create( DofManager const * const dofManager )
 
 HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix const & mat )
 {
-  Stopwatch timer( m_componentFilterTime );
   if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::mgr && m_params.mgr.separateComponents )
   {
     GEOSX_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "MGR preconditioner requires a DofManager instance" );
     HypreMatrix Pu;
     HypreMatrix Auu;
-    mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
-    mat.multiplyPtAP( Pu, Auu );
-    LAIHelperFunctions::separateComponentFilter( Auu, m_precondMatrix, m_params.dofsPerNode );
+    {
+      Stopwatch timer( m_makeRestrictorTime );
+      mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
+    }
+    {
+      Stopwatch timer( m_computeAuuTime );
+      mat.multiplyPtAP( Pu, Auu );
+    }
+    {
+      Stopwatch timer( m_componentFilterTime );
+      Auu.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
+    }
   }
   else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg && m_params.amg.separateComponents )
   {
-    LAIHelperFunctions::separateComponentFilter( mat, m_precondMatrix, m_params.dofsPerNode );
+    Stopwatch timer( m_componentFilterTime );
+    mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
     return m_precondMatrix;
   }
   return mat;
@@ -445,7 +476,6 @@ void HyprePreconditioner::setup( Matrix const & mat )
   }
 
   HypreMatrix const & precondMat = setupPreconditioningMatrix( mat );
-  create( mat.dofManager() );
   Base::setup( precondMat );
 
   // To be able to use Hypre preconditioner (e.g., BoomerAMG) we need to disable floating point exceptions
@@ -453,13 +483,26 @@ void HyprePreconditioner::setup( Matrix const & mat )
     LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
 
     // Perform setup of the MGR mechanics F-solver with SDC matrix, if used
-    if( m_mgrData && m_mgrData->mechSolver.ptr )
+    if( m_mgrData && m_mgrData->mechSolver.ptr && m_mgrData->mechSolver.setup )
     {
-      GEOSX_LAI_CHECK_ERROR( m_mgrData->mechSolver.setup( m_mgrData->mechSolver.ptr, m_precondMatrix.unwrapped(), nullptr, nullptr ) );
+//      GEOSX_LAI_CHECK_ERROR( m_mgrData->mechSolver.setup( m_mgrData->mechSolver.ptr, m_precondMatrix.unwrapped(), nullptr, nullptr ) );
     }
 
-    // Perform setup of the main solver
-    GEOSX_LAI_CHECK_ERROR( m_precond->setup( m_precond->ptr, precondMat.unwrapped(), nullptr, nullptr ) );
+    // Perform setup of the main solver, if needed
+    if( m_precond->setup )
+    {
+      GEOSX_LAI_CHECK_ERROR( m_precond->setup( m_precond->ptr, precondMat.unwrapped(), nullptr, nullptr ) );
+    }
+    else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::direct )
+    {
+      // Special handling for hypre's SuperLU_Dist interface: it combines Create and Setup methods in one,
+      // and thus we have to reallocate the entire solver data structure
+      if( m_precond->ptr && m_precond->destroy )
+      {
+        m_precond->destroy( m_precond->ptr );
+      }
+      hypre_SLUDistSetup( &m_precond->ptr, precondMat.unwrapped(), 0 );
+    }
   }
 }
 
@@ -481,15 +524,15 @@ void HyprePreconditioner::apply( Vector const & src,
 void HyprePreconditioner::clear()
 {
   Base::clear();
-  if( m_precond && m_precond->ptr )
+  if( m_precond && m_precond->ptr && m_precond->destroy )
   {
     GEOSX_LAI_CHECK_ERROR( m_precond->destroy( m_precond->ptr ) );
   }
-  if( m_mgrData && m_mgrData->coarseSolver.ptr )
+  if( m_mgrData && m_mgrData->coarseSolver.ptr && m_mgrData->coarseSolver.destroy )
   {
     GEOSX_LAI_CHECK_ERROR( m_mgrData->coarseSolver.destroy( m_mgrData->coarseSolver.ptr ) );
   }
-  if( m_mgrData && m_mgrData->mechSolver.ptr )
+  if( m_mgrData && m_mgrData->mechSolver.ptr && m_mgrData->mechSolver.destroy )
   {
     GEOSX_LAI_CHECK_ERROR( m_mgrData->mechSolver.destroy( m_mgrData->mechSolver.ptr ) );
   }

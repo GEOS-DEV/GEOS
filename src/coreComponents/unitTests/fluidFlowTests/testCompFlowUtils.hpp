@@ -168,7 +168,7 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
     real64 const dRdX = ( residual[row] - residualOrig[row] ) / eps;
     if( fabs( dRdX ) > 0.0 )
     {
-      jacobian.addToRow< serialAtomic >( row, &dofIndex, &dRdX, 1 );
+      jacobian.addToRow< parallelDeviceAtomic >( row, &dofIndex, &dRdX, 1 );
     }
   } );
 }
@@ -192,7 +192,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   commandLine.registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() ).
     setApplyDefaultValue( mpiSize );
 
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
   problemManager.processInputFileRecursive( xmlProblemNode );
 
   DomainPartition & domain = problemManager.getDomainPartition();

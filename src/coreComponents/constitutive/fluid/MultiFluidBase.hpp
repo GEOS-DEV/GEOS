@@ -61,8 +61,8 @@ public:
   integer numFluidComponents() const { return LvArray::integerConversion< integer >( m_componentNames.size() ); }
 
   /**
-   * @param ic component index
-   * @return name of ic-th fluid component
+   * @brief Getter for the fluid component names
+   * @return an array storing the component names
    */
   arrayView1d< string const > componentNames() const { return m_componentNames; }
 
@@ -72,10 +72,16 @@ public:
   integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
 
   /**
-   * @param ip phase index
-   * @return name of ip-th fluid phase
+   * @brief Getter for the fluid phase names
+   * @return an array storing the phase names
    */
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+
+  /**
+   * @brief Getter for the water phase index
+   * @return the water phase index
+   */
+  virtual integer getWaterPhaseIndex() const = 0;
 
   /**
    * @brief Get the mass flag.
@@ -164,6 +170,10 @@ public:
   arrayView3d< real64 const, multifluid::USD_FLUID_DC > dTotalDensity_dGlobalCompFraction() const
   { return m_totalDensity.dComp; }
 
+  arrayView2d< real64 const, multifluid::USD_FLUID > initialTotalMassDensity() const
+  { return m_initialTotalMassDensity.toViewConst(); }
+
+
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * componentNamesString() { return "componentNames"; }
@@ -201,6 +211,8 @@ public:
     static constexpr char const * dTotalDensity_dTemperatureString() { return "dTotalDensity_dTemperature"; } // dRho_t/dT
     static constexpr char const * dTotalDensity_dGlobalCompFractionString() { return "dTotalDensity_dGlobalCompFraction"; } // dRho_t/dz
 
+    static constexpr char const * initialTotalMassDensityString() { return "initialTotalMassDensity"; } // rho^int_t
+
     static constexpr char const * useMassString() { return "useMass"; }
   };
 
@@ -212,8 +224,6 @@ protected:
 
   class KernelWrapper
   {
-public:
-
 public:
 
     /// @cond DO_NOT_DOCUMENT
@@ -350,6 +360,10 @@ protected:
   PhaseProp m_phaseViscosity;
   PhaseComp m_phaseCompFraction;
   FluidProp m_totalDensity;
+
+  // initial data (used to compute the body force in the poromechanics solver)
+
+  array2d< real64, multifluid::LAYOUT_FLUID > m_initialTotalMassDensity;
 
 };
 

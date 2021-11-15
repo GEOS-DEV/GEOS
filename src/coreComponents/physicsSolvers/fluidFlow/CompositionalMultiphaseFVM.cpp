@@ -19,18 +19,21 @@
 #include "CompositionalMultiphaseFVM.hpp"
 
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "dataRepository/Group.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "common/MpiWrapper.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVMKernels.hpp"
 
@@ -343,11 +346,9 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
   // compute global residual norm
   real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    char output[200] = {0};
-    sprintf( output, "    ( Rfluid ) = (%4.2e) ; ", residual );
-    std::cout<<output;
+    std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ;", residual );
   }
 
   return residual;
@@ -573,6 +574,81 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIn
                                                 phaseMob,
                                                 dPhaseMob_dPres,
                                                 dPhaseMob_dComp );
+}
+
+void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
+                                                 real64 const dt,
+                                                 DofManager const & dofManager,
+                                                 DomainPartition & domain,
+                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
+    mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+  elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
+
+  fsManager.apply< AquiferBoundaryCondition >( time + dt,
+                                               domain,
+                                               "faceManager",
+                                               AquiferBoundaryCondition::catalogName(),
+                                               [&] ( AquiferBoundaryCondition const & bc,
+                                                     string const & setName,
+                                                     SortedArrayView< localIndex const > const &,
+                                                     Group &,
+                                                     string const & )
+  {
+    BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+    if( stencil.size() == 0 )
+    {
+      return;
+    }
+
+    AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
+    bool const allowAllPhasesIntoAquifer = bc.allowAllPhasesIntoAquifer();
+    localIndex const waterPhaseIndex = bc.getWaterPhaseIndex();
+    real64 const & aquiferWaterPhaseDens = bc.getWaterPhaseDensity();
+    arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
+
+    KernelLaunchSelector1< CompositionalMultiphaseFVMKernels::AquiferBCKernel >
+      ( m_numComponents,
+      m_numPhases,
+      waterPhaseIndex,
+      allowAllPhasesIntoAquifer,
+      stencil,
+      dofManager.rankOffset(),
+      elemDofNumber.toNestedViewConst(),
+      m_elemGhostRank.toNestedViewConst(),
+      aquiferBCWrapper,
+      aquiferWaterPhaseDens,
+      aquiferWaterPhaseCompFrac,
+      m_pressure.toNestedViewConst(),
+      m_deltaPressure.toNestedViewConst(),
+      m_gravCoef.toNestedViewConst(),
+      m_phaseDens.toNestedViewConst(),
+      m_dPhaseDens_dPres.toNestedViewConst(),
+      m_dPhaseDens_dComp.toNestedViewConst(),
+      m_phaseVolFrac.toNestedViewConst(),
+      m_dPhaseVolFrac_dPres.toNestedViewConst(),
+      m_dPhaseVolFrac_dCompDens.toNestedViewConst(),
+      m_phaseCompFrac.toNestedViewConst(),
+      m_dPhaseCompFrac_dPres.toNestedViewConst(),
+      m_dPhaseCompFrac_dComp.toNestedViewConst(),
+      m_dCompFrac_dCompDens.toNestedViewConst(),
+      time,
+      dt,
+      localMatrix.toViewConstSizes(),
+      localRhs.toView() );
+  } );
 }
 
 //START_SPHINX_INCLUDE_01

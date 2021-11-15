@@ -270,6 +270,49 @@ public:
                                   LAMBDA && lambda ) const;
 
   /**
+   * @brief Compute the contributions that will be added/enforced to the right-hand side, and collect the corresponding dof numbers
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
+   *                  Either \ref OpEqual or \ref OpAdd.
+   * @tparam POLICY Execution policy to use when iterating over target set.
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the boundary condition.
+   * @param[in] dt time step size which is applied as a factor to bc values
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
+   * @param[in] dofMap The map from the local index of the primary field to the global degree of
+   *                   freedom number.
+   * @param[in] dofRankOffset Offset of dof indices on current rank.
+   * @param[inout] matrix Local part of the system matrix.
+   * @param[inout] dof array storing the degrees of freedom of the rhsContribution, to know where in the rhs they will be added/enforced
+   * @param[inout] rhsContribution array storing the values that will be added/enforced to the right-hand side
+   * @param[in] lambda A lambda function which defines how the value that is passed into the functions
+   *                   provided by the FIELD_OP templated type.
+   *
+   * Note that this function only computes the rhs contributions, but does not apply them to the right-hand side.
+   * The application of these rhs contributions is done in applyBoundaryConditionToSystem.
+   *
+   * Why did we have to extract the computation of the rhs contributions from applyBoundaryConditionToSystem?
+   * Because applyBoundaryConditionToSystem is not very well suited to apply the rhsContributions to the equation layout used in the
+   * compositional solvers.
+   * Therefore, the compositional solvers do not call applyBoundaryConditionToSystem, but instead call computeRhsContribution directly, and
+   * apply these rhs contributions "manually" according to the equation layout used in the solver
+   */
+  template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+  void
+  computeRhsContribution( SortedArrayView< localIndex const > const & targetSet,
+                          real64 const time,
+                          real64 const dt,
+                          dataRepository::Group const & dataGroup,
+                          arrayView1d< globalIndex const > const & dofMap,
+                          globalIndex const dofRankOffset,
+                          CRSMatrixView< real64, globalIndex const > const & matrix,
+                          arrayView1d< globalIndex > const & dof,
+                          arrayView1d< real64 > const & rhsContribution,
+                          LAMBDA && lambda ) const;
+
+
+  /**
    * @brief Function to zero matrix rows to apply boundary conditions
    * @tparam POLICY the execution policy to use when zeroing rows
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
@@ -476,8 +519,6 @@ private:
   string m_fieldName;
 
 
-//  string m_dataType;
-
   /// The component the boundary condition acts on. Not used if field is a scalar.
   int m_component;
 
@@ -501,9 +542,6 @@ private:
 
   /// The name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
-
-  /// The factor used to normalize the boundary flux by the size of the set it is applied to
-  //real64 m_setSizeScalingFactor;
 
 };
 
@@ -661,25 +699,71 @@ FieldSpecificationBase::
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const
 {
-  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
-  string const & functionName = getReference< string >( viewKeyStruct::functionNameString() );
-  FunctionManager & functionManager = FunctionManager::getInstance();
-
   array1d< globalIndex > dofArray( targetSet.size() );
   arrayView1d< globalIndex > const & dof = dofArray.toView();
 
   array1d< real64 > rhsContributionArray( targetSet.size() );
   arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
 
+  computeRhsContribution< FIELD_OP, POLICY, LAMBDA >( targetSet,
+                                                      time,
+                                                      dt,
+                                                      dataGroup,
+                                                      dofMap,
+                                                      dofRankOffset,
+                                                      matrix,
+                                                      dof,
+                                                      rhsContribution,
+                                                      std::forward< LAMBDA >( lambda ) );
+
+  FIELD_OP::template prescribeRhsValues< POLICY >( rhs, dof, dofRankOffset, rhsContribution );
+}
+
+template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+void
+FieldSpecificationBase::
+  computeRhsContribution( SortedArrayView< localIndex const > const & targetSet,
+                          real64 const time,
+                          real64 const dt,
+                          dataRepository::Group const & dataGroup,
+                          arrayView1d< globalIndex const > const & dofMap,
+                          globalIndex const dofRankOffset,
+                          CRSMatrixView< real64, globalIndex const > const & matrix,
+                          arrayView1d< globalIndex > const & dof,
+                          arrayView1d< real64 > const & rhsContribution,
+                          LAMBDA && lambda ) const
+{
+  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
+  string const & functionName = getReference< string >( viewKeyStruct::functionNameString() );
+  FunctionManager & functionManager = FunctionManager::getInstance();
+
+  // Step 1: we have to compute the global set size (the global number of elements on which the boundary condition is applied)
+  // Note that this global set size is only needed by the SourceFlux boundary condition
+  // We cannot precompute this number in the boundary condition classes the face elements are created after initialisation
+
   real64 sizeScalingFactor = 1.0;
   if( m_normalizeBySetSize )
   {
-    // note: this assumes that the ghost elements have been filtered out
-    // recompute the set size here to make sure that topology changes are accounted for
-    globalIndex const globalSetSize = MpiWrapper::sum( LvArray::integerConversion< globalIndex >( targetSet.size() ), MPI_COMM_GEOSX );
+    arrayView1d< integer const > const ghostRank =
+      dataGroup.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+    RAJA::ReduceSum< ReducePolicy< POLICY >, localIndex > localSetSize( 0 );
+    forAll< POLICY >( targetSet.size(),
+                      [targetSet, ghostRank, localSetSize] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      localIndex const ei = targetSet[k];
+      if( ghostRank[ei] < 0 )
+      {
+        localSetSize += 1;
+      }
+    } );
+
+    globalIndex const globalSetSize = MpiWrapper::sum( LvArray::integerConversion< globalIndex >( localSetSize.get() ), MPI_COMM_GEOSX );
     sizeScalingFactor = ( globalSetSize > 0 ) ? ( 1.0 / globalSetSize ) : 1.0;
   }
 
+  // Step 2: compute the value of the rhs terms, and collect the dof numbers
+  // The rhs terms will be assembled in applyBoundaryConditionToSystem (or in the solver for CompositionalMultiphaseBase)
 
   if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
   {
@@ -726,9 +810,8 @@ FieldSpecificationBase::
                                    lambda( a ) );
     } );
   }
-
-  FIELD_OP::template prescribeRhsValues< POLICY >( rhs, dof, dofRankOffset, rhsContribution );
 }
+
 
 template< typename POLICY >
 void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,

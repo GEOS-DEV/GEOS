@@ -3,7 +3,7 @@
 #
 
 set(testSources
-  testVirtualElementBase.cpp
+  testConformingVirtualElementOrder1.cpp
    )
 
 set( dependencyList gtest )

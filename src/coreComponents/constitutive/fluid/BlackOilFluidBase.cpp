@@ -15,6 +15,7 @@
 #include "BlackOilFluidBase.hpp"
 
 #include "constitutive/fluid/MultiFluidUtils.hpp"
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
 
@@ -25,22 +26,6 @@ using namespace dataRepository;
 
 namespace constitutive
 {
-
-namespace
-{
-
-integer toPhaseType( string const & lookup, string const & groupName )
-{
-  static unordered_map< string, integer > const phaseDict =
-  {
-    { "gas", BlackOilFluidBase::PhaseType::GAS },
-    { "oil", BlackOilFluidBase::PhaseType::OIL },
-    { "water", BlackOilFluidBase::PhaseType::WATER }
-  };
-  return findOption( phaseDict, lookup, BlackOilFluidBase::viewKeyStruct::phaseNamesString(), groupName );
-}
-
-} // namespace
 
 BlackOilFluidBase::BlackOilFluidBase( string const & name,
                                       Group * const parent )
@@ -167,6 +152,12 @@ void BlackOilFluidBase::fillHydrocarbonData( integer const ip,
   tablePVDX_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 }
 
+integer BlackOilFluidBase::getWaterPhaseIndex() const
+{
+  string const expectedWaterPhaseNames[] = { "water" };
+  return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
+}
+
 void BlackOilFluidBase::postProcessInput()
 {
   m_componentNames = m_phaseNames;
@@ -176,18 +167,31 @@ void BlackOilFluidBase::postProcessInput()
   m_phaseTypes.resize( numFluidPhases() );
   m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );
 
+  auto const toPhaseType = [&]( string const & lookup )
+  {
+    static unordered_map< string, integer > const phaseDict =
+    {
+      { "gas", BlackOilFluidBase::PhaseType::GAS },
+      { "oil", BlackOilFluidBase::PhaseType::OIL },
+      { "water", BlackOilFluidBase::PhaseType::WATER }
+    };
+    return findOption( phaseDict, lookup, viewKeyStruct::phaseNamesString(), getFullName() );
+  };
+
   for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
-    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip], getCatalogName() + ' ' + getName() );
+    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip] );
     m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
 
-  GEOSX_THROW_IF_NE_MSG( m_surfacePhaseMassDensity.size(), m_phaseNames.size(),
-                         getFullName() << ": the number of surfacePhaseMassDensities is inconsistent with the phase names",
-                         InputError );
-  GEOSX_THROW_IF_NE_MSG( m_componentMolarWeight.size(), m_phaseNames.size(),
-                         getFullName() << ": the number of componentMolarWeights is inconsistent with the phase names",
-                         InputError );
+  auto const checkInputSize = [&]( auto const & array, auto const & attribute )
+  {
+    GEOSX_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
+                           GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                           InputError );
+  };
+  checkInputSize( m_surfacePhaseMassDensity, viewKeyStruct::surfacePhaseMassDensitiesString() );
+  checkInputSize( m_componentMolarWeight, viewKeyStruct::componentMolarWeightString() );
 
   // we make the distinction between the two input options
   if( m_tableFiles.empty() )
@@ -212,7 +216,7 @@ void BlackOilFluidBase::createAllKernelWrappers()
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
   GEOSX_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
-                  getFullName() << ": the number of hydrocarbon phases should be equal to 1 (oil) or 2 (oil+gas)",
+                  GEOSX_FMT( "{}: the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)", getFullName() ),
                   InputError );
 
   if( m_formationVolFactorTables.empty() && m_viscosityTables.empty() )
@@ -239,34 +243,32 @@ void BlackOilFluidBase::validateTable( TableFunction const & table ) const
   arrayView1d< real64 const > const property = table.getValues();
 
   GEOSX_THROW_IF_NE_MSG( table.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
-                         getFullName() << ": the interpolation method in the table " << table.getName() << " must be linear",
+                         GEOSX_FMT( "{}: in table '{}' interpolation method must be linear", getFullName(), table.getName() ),
                          InputError );
-  GEOSX_THROW_IF( property.size() <= 1,
-                  getFullName() << ": the table " << table.getName() << " must contain at least 2 values",
-                  InputError );
+  GEOSX_THROW_IF_LT_MSG( property.size(), 2,
+                         GEOSX_FMT( "{}: table `{}` must contain at least two values", getFullName(), table.getName() ),
+                         InputError );
 
   for( localIndex i = 2; i < property.size(); ++i )
   {
     GEOSX_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
-                    getFullName() << ": the values in the table " << table.getName() << " must be monotone",
+                    GEOSX_FMT( "{}: in table '{}' values must be monotone", getFullName(), table.getName() ),
                     InputError );
   }
 }
 
 void BlackOilFluidBase::validateWaterParams() const
 {
-  GEOSX_THROW_IF( m_waterParams.referencePressure <= 0.0,
-                  getFullName() << ": a strictly positive value must be provided for " << viewKeyStruct::waterRefPressureString(),
-                  InputError );
-  GEOSX_THROW_IF( m_waterParams.formationVolFactor <= 0.0,
-                  getFullName() << ": a strictly positive value must be provided for: " << viewKeyStruct::waterFormationVolumeFactorString(),
-                  InputError );
-  GEOSX_THROW_IF( m_waterParams.compressibility <= 0.0,
-                  getFullName() << ": a strictly positive value must be provided for: " << viewKeyStruct::waterCompressibilityString(),
-                  InputError );
-  GEOSX_THROW_IF( m_waterParams.viscosity <= 0.0,
-                  getFullName() << ": a strictly positive value must be provided for: " << viewKeyStruct::waterViscosityString(),
-                  InputError );
+  auto const checkPositiveValue = [&]( real64 const value, auto const & attribute )
+  {
+    GEOSX_THROW_IF_LE_MSG( value, 0.0,
+                           GEOSX_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
+                           InputError );
+  };
+  checkPositiveValue( m_waterParams.referencePressure, viewKeyStruct::waterRefPressureString() );
+  checkPositiveValue( m_waterParams.formationVolFactor, viewKeyStruct::waterFormationVolumeFactorString() );
+  checkPositiveValue( m_waterParams.compressibility, viewKeyStruct::waterCompressibilityString() );
+  checkPositiveValue( m_waterParams.viscosity, viewKeyStruct::waterViscosityString() );
 }
 
 BlackOilFluidBase::KernelWrapper::

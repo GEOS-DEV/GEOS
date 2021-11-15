@@ -25,7 +25,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/contact/ContactBase.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "LvArray/src/output.hpp"
@@ -969,9 +969,9 @@ SolidMechanicsLagrangianFEM::
                                        parallelDevicePolicy< 32 > >( targetSet,
                                                                      time_n + dt,
                                                                      targetGroup,
-                                                                     keys::TotalDisplacement,    // TODO fix use of
-                                                                                                 // dummy
-                                                                                                 // name
+                                                                     keys::TotalDisplacement, // TODO fix use of
+                                                                     // dummy
+                                                                     // name
                                                                      dofKey,
                                                                      dofManager.rankOffset(),
                                                                      localMatrix,
@@ -1061,13 +1061,8 @@ SolidMechanicsLagrangianFEM::
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    char output[200] = {0};
-    sprintf( output,
-             "( RSolid ) = (%4.2e) ; ",
-             residual );
-    std::cout<<output;
+    std::cout << GEOSX_FMT( "( RSolid ) = ( {:4.2e} ) ; ", residual );
   }
-
 
   return residual;
 }
@@ -1149,10 +1144,8 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
     ConstitutiveManager const &
     constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
-    ContactRelationBase const &
-    contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
-
-    real64 const contactStiffness = contactRelation.stiffness();
+    ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
+    real64 const contactStiffness = contact.stiffness();
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager.totalDisplacement();
     arrayView2d< real64 > const fc = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::contactForceString() );

@@ -56,7 +56,7 @@ public:
    * @brief @return True iff there is communication of the associated objects with the neighbor.
    */
   bool communicationExists() const
-  { return m_ghostsToSend.size() && m_ghostsToReceive.size(); }
+  { return !m_ghostsToSend.empty() || !m_ghostsToReceive.empty(); }
 
   /**
    * @brief @return An array containing the indices of the objects on the domain boundary with the neighbor.

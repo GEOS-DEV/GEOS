@@ -99,6 +99,8 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::dTotalDensity_dGlobalCompFractionString(), &m_totalDensity.dComp ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
+  registerWrapper( viewKeyStruct::initialTotalMassDensityString(), &m_initialTotalMassDensity );
+
   registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
@@ -138,6 +140,8 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
   m_totalDensity.dPres.resize( size, numPts );
   m_totalDensity.dTemp.resize( size, numPts );
   m_totalDensity.dComp.resize( size, numPts, numComp );
+
+  m_initialTotalMassDensity.resize( size, numPts );
 }
 
 void MultiFluidBase::setLabels()
@@ -173,14 +177,20 @@ void MultiFluidBase::postProcessInput()
   integer const numComp = numFluidComponents();
   integer const numPhase = numFluidPhases();
 
-  GEOSX_THROW_IF( numComp< 1 || numComp > MAX_NUM_COMPONENTS,
-                  getFullName() << ": number of fluid components must be between 1 and " << MAX_NUM_COMPONENTS << ", got " << numComp,
-                  InputError );
-  GEOSX_THROW_IF( numPhase< 1 || numPhase > MAX_NUM_PHASES,
-                  getFullName() << ": number of fluid phases must be between 1 and " << MAX_NUM_PHASES << ", got " << numPhase,
-                  InputError );
+  GEOSX_THROW_IF_LT_MSG( numComp, 1,
+                         GEOSX_FMT( "{}: invalid number of components", getFullName() ),
+                         InputError );
+  GEOSX_THROW_IF_GT_MSG( numComp, MAX_NUM_COMPONENTS,
+                         GEOSX_FMT( "{}: invalid number of components", getFullName() ),
+                         InputError );
+  GEOSX_THROW_IF_LT_MSG( numPhase, 1,
+                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
+                         InputError );
+  GEOSX_THROW_IF_GT_MSG( numPhase, MAX_NUM_PHASES,
+                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
+                         InputError );
   GEOSX_THROW_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
-                         getFullName() << ": invalid number of entries in " << viewKeyStruct::componentMolarWeightString() << " attribute",
+                         GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentMolarWeightString() ),
                          InputError );
 
   // call to correctly set member array tertiary sizes on the 'main' material object

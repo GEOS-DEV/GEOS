@@ -15,6 +15,13 @@ Element: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM.rst
 
 
+.. _XML_Aquifer:
+
+Element: Aquifer
+================
+.. include:: ../../coreComponents/schema/docs/Aquifer.rst
+
+
 .. _XML_Benchmarks:
 
 Element: Benchmarks
@@ -78,11 +85,18 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
-.. _XML_CO2BrineFluid:
+.. _XML_CO2BrineEzrokhiFluid:
 
-Element: CO2BrineFluid
-======================
-.. include:: ../../coreComponents/schema/docs/CO2BrineFluid.rst
+Element: CO2BrineEzrokhiFluid
+=============================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid.rst
+
+
+.. _XML_CO2BrinePhillipsFluid:
+
+Element: CO2BrinePhillipsFluid
+==============================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
 
 
 .. _XML_CarmanKozenyPermeability:
@@ -239,6 +253,13 @@ Element: DeadOilFluid
 .. include:: ../../coreComponents/schema/docs/DeadOilFluid.rst
 
 
+.. _XML_DelftEgg:
+
+Element: DelftEgg
+=================
+.. include:: ../../coreComponents/schema/docs/DelftEgg.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -258,6 +279,13 @@ Element: DruckerPrager
 Element: ElasticIsotropic
 =========================
 .. include:: ../../coreComponents/schema/docs/ElasticIsotropic.rst
+
+
+.. _XML_ElasticIsotropicPressureDependent:
+
+Element: ElasticIsotropicPressureDependent
+==========================================
+.. include:: ../../coreComponents/schema/docs/ElasticIsotropicPressureDependent.rst
 
 
 .. _XML_ElasticOrthotropic:
@@ -386,6 +414,13 @@ Element: Hydrofracture
 .. include:: ../../coreComponents/schema/docs/Hydrofracture.rst
 
 
+.. _XML_HydrostaticEquilibrium:
+
+Element: HydrostaticEquilibrium
+===============================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium.rst
+
+
 .. _XML_Included:
 
 Element: Included
@@ -447,6 +482,13 @@ Element: LinearSolverParameters
 Element: Mesh
 =============
 .. include:: ../../coreComponents/schema/docs/Mesh.rst
+
+
+.. _XML_ModifiedCamClay:
+
+Element: ModifiedCamClay
+========================
+.. include:: ../../coreComponents/schema/docs/ModifiedCamClay.rst
 
 
 .. _XML_MultiphasePoromechanics:
@@ -792,6 +834,13 @@ Element: SymbolicFunction
 .. include:: ../../coreComponents/schema/docs/SymbolicFunction.rst
 
 
+.. _XML_TableCapillaryPressure:
+
+Element: TableCapillaryPressure
+===============================
+.. include:: ../../coreComponents/schema/docs/TableCapillaryPressure.rst
+
+
 .. _XML_TableFunction:
 
 Element: TableFunction
@@ -908,6 +957,13 @@ Datastructure: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM_other.rst
 
 
+.. _DATASTRUCTURE_Aquifer:
+
+Datastructure: Aquifer
+======================
+.. include:: ../../coreComponents/schema/docs/Aquifer_other.rst
+
+
 .. _DATASTRUCTURE_Benchmarks:
 
 Datastructure: Benchmarks
@@ -971,11 +1027,18 @@ Datastructure: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability_other.rst
 
 
-.. _DATASTRUCTURE_CO2BrineFluid:
+.. _DATASTRUCTURE_CO2BrineEzrokhiFluid:
 
-Datastructure: CO2BrineFluid
-============================
-.. include:: ../../coreComponents/schema/docs/CO2BrineFluid_other.rst
+Datastructure: CO2BrineEzrokhiFluid
+===================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid_other.rst
+
+
+.. _DATASTRUCTURE_CO2BrinePhillipsFluid:
+
+Datastructure: CO2BrinePhillipsFluid
+====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid_other.rst
 
 
 .. _DATASTRUCTURE_CarmanKozenyPermeability:
@@ -1139,6 +1202,13 @@ Datastructure: DeadOilFluid
 .. include:: ../../coreComponents/schema/docs/DeadOilFluid_other.rst
 
 
+.. _DATASTRUCTURE_DelftEgg:
+
+Datastructure: DelftEgg
+=======================
+.. include:: ../../coreComponents/schema/docs/DelftEgg_other.rst
+
+
 .. _DATASTRUCTURE_Dirichlet:
 
 Datastructure: Dirichlet
@@ -1158,6 +1228,13 @@ Datastructure: DruckerPrager
 Datastructure: ElasticIsotropic
 ===============================
 .. include:: ../../coreComponents/schema/docs/ElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_ElasticIsotropicPressureDependent:
+
+Datastructure: ElasticIsotropicPressureDependent
+================================================
+.. include:: ../../coreComponents/schema/docs/ElasticIsotropicPressureDependent_other.rst
 
 
 .. _DATASTRUCTURE_ElasticOrthotropic:
@@ -1293,6 +1370,13 @@ Datastructure: Hydrofracture
 .. include:: ../../coreComponents/schema/docs/Hydrofracture_other.rst
 
 
+.. _DATASTRUCTURE_HydrostaticEquilibrium:
+
+Datastructure: HydrostaticEquilibrium
+=====================================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium_other.rst
+
+
 .. _DATASTRUCTURE_Included:
 
 Datastructure: Included
@@ -1368,6 +1452,13 @@ Datastructure: Mesh
 Datastructure: MeshBodies
 =========================
 .. include:: ../../coreComponents/schema/docs/MeshBodies_other.rst
+
+
+.. _DATASTRUCTURE_ModifiedCamClay:
+
+Datastructure: ModifiedCamClay
+==============================
+.. include:: ../../coreComponents/schema/docs/ModifiedCamClay_other.rst
 
 
 .. _DATASTRUCTURE_MultiphasePoromechanics:
@@ -1711,6 +1802,13 @@ Datastructure: SurfaceGenerator
 Datastructure: SymbolicFunction
 ===============================
 .. include:: ../../coreComponents/schema/docs/SymbolicFunction_other.rst
+
+
+.. _DATASTRUCTURE_TableCapillaryPressure:
+
+Datastructure: TableCapillaryPressure
+=====================================
+.. include:: ../../coreComponents/schema/docs/TableCapillaryPressure_other.rst
 
 
 .. _DATASTRUCTURE_TableFunction:

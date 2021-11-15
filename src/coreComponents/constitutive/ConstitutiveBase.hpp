@@ -47,7 +47,7 @@ public:
   ConstitutiveBase( string const & name,
                     Group * const parent );
 
-  virtual ~ConstitutiveBase() override;
+  virtual ~ConstitutiveBase() override = default;
 
   /**
    * @brief create a clone of this constitutive model
@@ -104,24 +104,17 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
-  {
-    static constexpr char const * poreVolumeMultiplierString() { return "poreVolumeMultiplier"; }
-    static constexpr char const * dPVMult_dPresString() { return "dPVMult_dDensity"; }
-  };
+  {};
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
+
+  virtual std::vector< string > getSubRelationNames() const { return {}; }
 
 protected:
 
 private:
+
   localIndex m_numQuadraturePoints;
-  Group * m_constitutiveDataGroup = nullptr;
-
-  ConstitutiveBase( ConstitutiveBase const & ) = delete;
-  ConstitutiveBase( ConstitutiveBase && ) = delete;
-  ConstitutiveBase const & operator=( ConstitutiveBase const & ) = delete;
-  ConstitutiveBase const & operator=( ConstitutiveBase && ) = delete;
-
 };
 
 

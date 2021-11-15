@@ -110,8 +110,6 @@ public:
 
   BrooksCoreyBakerRelativePermeability( string const & name, dataRepository::Group * const parent );
 
-  virtual ~BrooksCoreyBakerRelativePermeability() override;
-
   static string catalogName() { return "BrooksCoreyBakerRelativePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }

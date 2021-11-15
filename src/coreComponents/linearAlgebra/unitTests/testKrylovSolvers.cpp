@@ -81,7 +81,7 @@ protected:
 
   void test( LinearSolverParameters const & params )
   {
-    sol_true.rand();
+    sol_true.rand( 1984 );
     sol_comp.zero();
     matrix.apply( sol_true, rhs_true );
 
