@@ -79,6 +79,18 @@ public:
              m_dPerm_dAperture[k][0] );
   }
 
+  GEOSX_HOST_DEVICE
+  virtual void updateFromApertureAndShearDisplacement( localIndex const k,
+                                                       localIndex const q,
+                                                       real64 const & oldHydraulicAperture,
+                                                       real64 const & newHydraulicAperture,
+                                                       real64 const ( &dispJump )[3] ) const override final
+  {
+    GEOSX_UNUSED_VAR( dispJump );
+
+    updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
+  }
+
 private:
 
   arrayView3d< real64 > m_dPerm_dAperture;

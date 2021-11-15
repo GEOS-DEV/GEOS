@@ -51,14 +51,18 @@ public:
                 arraySlice2d< real64 > const & dPerm_dDispJump ) const;
 
   GEOSX_HOST_DEVICE
-  virtual void updateFromShearDisplacement( localIndex const k,
-                                            localIndex const q,
-                                            real64 const ( &dispJump )[3] ) const override
+  virtual void updateFromApertureAndShearDisplacement( localIndex const k,
+                                                       localIndex const q,
+                                                       real64 const & oldHydraulicAperture,
+                                                       real64 const & newHydraulicAperture,
+                                                       real64 const ( &dispJump )[3] ) const override
   {
+    GEOSX_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture );
+
     compute( dispJump,
-             m_initialPermeability[k][q],
-             m_permeability[k][q],
-             m_dPerm_dDispJump[k][q] );
+             m_initialPermeability[k][0],
+             m_permeability[k][0],
+             m_dPerm_dDispJump[k][0] );
   }
 
 private:
@@ -139,9 +143,9 @@ private:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void SlipDependentPermeabilityUpdate::compute( real64 const ( &dispJump )[3],
-                                                       arraySlice1d< real64 > const & initialPermeability,
-                                                       arraySlice1d< real64 > const & permeability,
-                                                       arraySlice2d< real64 > const & dPerm_dDispJump ) const
+                                               arraySlice1d< real64 > const & initialPermeability,
+                                               arraySlice1d< real64 > const & permeability,
+                                               arraySlice2d< real64 > const & dPerm_dDispJump ) const
 { 
   real64 const shearMag = std::sqrt( dispJump[1]*dispJump[1] + dispJump[2]*dispJump[2] );
   

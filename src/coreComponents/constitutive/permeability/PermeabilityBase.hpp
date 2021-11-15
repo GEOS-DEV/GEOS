@@ -56,20 +56,22 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  virtual void updateFromShearDisplacement( localIndex const k,
-                                            localIndex const q,
-                                            real64 const ( &dispJump )[3] ) const
-  {
-    GEOSX_UNUSED_VAR( k, q, dispJump );
-  }
-
-  GEOSX_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
                                    real64 const & oldHydraulicAperture,
                                    real64 const & newHydraulicAperture ) const
   {
     GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture );
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateFromApertureAndShearDisplacement( localIndex const k,
+                                                       localIndex const q,
+                                                       real64 const & oldHydraulicAperture,
+                                                       real64 const & newHydraulicAperture,
+                                                       real64 const ( &dispJump )[3] ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump );
   }
 
   GEOSX_HOST_DEVICE
