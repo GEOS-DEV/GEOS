@@ -204,13 +204,6 @@ Element: Constitutive
 .. include:: ../../coreComponents/schema/docs/Constitutive.rst
 
 
-.. _XML_Contact:
-
-Element: Contact
-================
-.. include:: ../../coreComponents/schema/docs/Contact.rst
-
-
 .. _XML_Coulomb:
 
 Element: Coulomb
@@ -377,6 +370,13 @@ Element: FiniteVolume
 Element: FlowProppantTransport
 ==============================
 .. include:: ../../coreComponents/schema/docs/FlowProppantTransport.rst
+
+
+.. _XML_FrictionlessContact:
+
+Element: FrictionlessContact
+============================
+.. include:: ../../coreComponents/schema/docs/FrictionlessContact.rst
 
 
 .. _XML_Functions:
@@ -1153,13 +1153,6 @@ Datastructure: ConstitutiveModels
 .. include:: ../../coreComponents/schema/docs/ConstitutiveModels_other.rst
 
 
-.. _DATASTRUCTURE_Contact:
-
-Datastructure: Contact
-======================
-.. include:: ../../coreComponents/schema/docs/Contact_other.rst
-
-
 .. _DATASTRUCTURE_Coulomb:
 
 Datastructure: Coulomb
@@ -1333,6 +1326,13 @@ Datastructure: FiniteVolume
 Datastructure: FlowProppantTransport
 ====================================
 .. include:: ../../coreComponents/schema/docs/FlowProppantTransport_other.rst
+
+
+.. _DATASTRUCTURE_FrictionlessContact:
+
+Datastructure: FrictionlessContact
+==================================
+.. include:: ../../coreComponents/schema/docs/FrictionlessContact_other.rst
 
 
 .. _DATASTRUCTURE_Functions:

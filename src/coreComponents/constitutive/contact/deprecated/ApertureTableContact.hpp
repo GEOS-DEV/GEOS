@@ -39,7 +39,7 @@ public:
 
   ApertureTableContactUpdates( real64 const & penaltyStiffness,
                                TableFunction const & apertureTable )
-    : m_penaltyStiffness( penaltyStiffness ),
+    : ContactBaseUpdates( penaltyStiffness ),
     m_apertureTable( apertureTable.createKernelWrapper() )
   {}
 
@@ -77,9 +77,6 @@ public:
                               real64 & dTraction_dPressure ) const;
 
 private:
-
-  /// The penalty stiffness
-  real64 m_penaltyStiffness;
 
   /// The aperture table function wrapper
   TableFunction::KernelWrapper m_apertureTable;
@@ -170,29 +167,6 @@ real64 ApertureTableContactUpdates::computeEffectiveAperture( real64 const apert
                                                               real64 & dEffectiveAperture_dAperture ) const
 {
   return m_apertureTable.compute( &aperture, &dEffectiveAperture_dAperture );
-}
-
-GEOSX_HOST_DEVICE
-void ApertureTableContactUpdates::computeTraction( arraySlice1d< real64 const > const & dispJump,
-                                                   arraySlice1d< real64 > const & tractionVector,
-                                                   arraySlice2d< real64 > const & dTractionVector_dJump ) const
-{
-  tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
-  tractionVector[1] = 0.0;
-  tractionVector[2] = 0.0;
-
-  LvArray::forValuesInSlice( dTractionVector_dJump, []( real64 & val ){ val = 0.0; } );
-  dTractionVector_dJump( 0, 0 ) = dispJump[0] >=0 ? 0.0 : m_penaltyStiffness;
-}
-
-GEOSX_HOST_DEVICE
-void ApertureTableContactUpdates::addPressureToTraction( real64 const & pressure,
-                                                         bool const isOpen,
-                                                         arraySlice1d< real64 > const & tractionVector,
-                                                         real64 & dTraction_dPressure ) const
-{
-  tractionVector[0] -= pressure;
-  dTraction_dPressure = isOpen ? -1.0 : 0.0;
 }
 
 

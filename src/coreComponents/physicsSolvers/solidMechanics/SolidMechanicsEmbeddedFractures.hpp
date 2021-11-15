@@ -126,6 +126,8 @@ public:
 
     constexpr static char const * deltaDispJumpString() { return "deltaDisplacementJump"; }
 
+    constexpr static char const * oldDispJumpString()  { return "oldDisplacementJump"; }
+
     constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }
 
     constexpr static char const * fractureTractionString() { return "fractureTraction"; }
