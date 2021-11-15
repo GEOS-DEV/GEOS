@@ -70,11 +70,12 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{}"
+      materialList="{ fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions>
   <!-- SPHINX_SNEDDON_REGIONS_END -->
   
+
   <!-- SPHINX_SNEDDON_MATERIAL-->
   <Constitutive>
     <ElasticIsotropic
@@ -82,8 +83,8 @@
       defaultDensity="2700"
       defaultBulkModulus="16.66666666666666e9"
       defaultShearModulus="1.0e10"/>
-      
-    <Contact
+
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>
@@ -132,6 +133,13 @@
       scale="-2.0e6"/>      
   </FieldSpecifications>
   <!-- SPHINX_SNEDDON_BC_END -->
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-4 }"/>
+  </Functions>
   
   <!-- SPHINX_SNEDDON_TASK -->
   <Tasks>

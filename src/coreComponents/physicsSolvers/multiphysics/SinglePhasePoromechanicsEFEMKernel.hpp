@@ -601,7 +601,7 @@ struct StateUpdateKernel
    * @param[in] volume the volume
    * @param[out] deltaVolume the change in volume
    * @param[out] aperture the aperture
-   * @param[out] effectiveAperture the effecture aperture
+   * @param[out] hydraulicAperture the effecture aperture
    * @param[out] fractureTraction the fracture traction
    * @param[out] dFractureTraction_dPressure the derivative of the fracture traction wrt pressure
    */
@@ -616,7 +616,7 @@ struct StateUpdateKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
-          arrayView1d< real64 > const & effectiveAperture,
+          arrayView1d< real64 > const & hydraulicAperture,
           arrayView2d< real64 > const & fractureTraction,
           arrayView1d< real64 > const & dFractureTraction_dPressure )
   {
@@ -625,16 +625,14 @@ struct StateUpdateKernel
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
-      real64 dEffectiveAperture_dAperture = 0;
-      effectiveAperture[k] = contactWrapper.computeEffectiveAperture( aperture[k],
-                                                                      dEffectiveAperture_dAperture );
+      real64 dHydraulicAperture_dAperture = 0;
+      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
+                                                                      dHydraulicAperture_dAperture );
 
-      deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
+      deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
       // traction on the fracture to include the pressure contribution
-      bool const isOpen = ( aperture[k] >= 0 );
       contactWrapper.addPressureToTraction( pressure[k] + deltaPressure[k],
-                                            isOpen,
                                             fractureTraction[k],
                                             dFractureTraction_dPressure[k] );
     } );

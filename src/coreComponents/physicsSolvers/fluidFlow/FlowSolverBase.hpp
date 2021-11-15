@@ -95,7 +95,7 @@ public:
     static constexpr char const * initialPressureString() { return "initialPressure"; }
     static constexpr char const * deltaVolumeString() { return "deltaVolume"; }
     static constexpr char const * aperture0String() { return "aperture_n"; }
-    static constexpr char const * effectiveApertureString() { return "effectiveAperture"; }
+    static constexpr char const * hydraulicApertureString() { return "hydraulicAperture"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
   };
 
