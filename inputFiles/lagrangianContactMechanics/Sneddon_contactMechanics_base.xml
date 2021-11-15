@@ -111,7 +111,8 @@
     <Coulomb
       name="fractureMaterial"
       cohesion="0.0"
-      frictionCoefficient="0.577350269"/>
+      frictionCoefficient="0.577350269"
+      apertureTableName="apertureTable"/>
   </Constitutive>
   <!-- SPHINX_SNEDDON_MATERIAL_END-->
 
@@ -165,13 +166,20 @@
       setNames="{ core }"/>
   </FieldSpecifications>
   <!-- SPHINX_SNEDDON_BC_END -->
+  
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-3 }"/>
+  </Functions>
 
   <!-- SPHINX_SNEDDON_TASK -->
   <Tasks>
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/faceElementSubRegion"
-      fieldName="localJump"/>     
+      fieldName="displacementJump"/>     
   </Tasks>
   <!-- SPHINX_SNEDDON_TASK_END -->
 
