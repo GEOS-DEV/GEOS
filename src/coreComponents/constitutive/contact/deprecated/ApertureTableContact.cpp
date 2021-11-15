@@ -16,7 +16,8 @@
  * @file ApertureTableContact.cpp
  */
 
-#include "ApertureTableContact.hpp"
+#include "../deprecated/ApertureTableContact.hpp"
+
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
