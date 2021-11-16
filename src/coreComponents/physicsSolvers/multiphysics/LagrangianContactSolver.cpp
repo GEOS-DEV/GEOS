@@ -138,14 +138,14 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
           setDescription( "An array that holds the fracture state." );
         initializeFractureState( meshLevel, viewKeyStruct::previousFractureStateString() );
 
-        subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::localJumpString() ).
+        subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dispJumpString() ).
           setApplyDefaultValue( 0.0 ).
           setPlotLevel( PlotLevel::LEVEL_0 ).
           setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the local jump on the fracture at the current time step." ).
+          setDescription( "An array that holds the displacement jump on the fracture at the current time step." ).
           reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::previousLocalJumpString() ).
+        subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::previousDispJumpString() ).
           setApplyDefaultValue( 0.0 ).
           setPlotLevel( PlotLevel::NOPLOT ).
           setRegisteringObjects( this->getName()).
@@ -236,9 +236,9 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
       arrayView2d< real64 > const &
       deltaTraction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaTractionString() );
       arrayView2d< real64 const > const &
-      localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString() );
+      dispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
       arrayView2d< real64 > const &
-      previousLocalJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::previousLocalJumpString() );
+      previousDispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::previousDispJumpString() );
       arrayView1d< integer const > const &
       fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
       arrayView1d< integer > const &
@@ -249,7 +249,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
         for( localIndex i = 0; i < 3; ++i )
         {
           deltaTraction[kfe][i] = 0.0;
-          previousLocalJump[kfe][i] = localJump[kfe][i];
+          previousDispJump[kfe][i] = dispJump[kfe][i];
         }
         previousFractureState[kfe] = fractureState[kfe];
       } );
@@ -443,8 +443,8 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
     {
       arrayView2d< real64 > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
       arrayView2d< real64 > const & deltaTraction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaTractionString() );
-      arrayView2d< real64 > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString() );
-      arrayView2d< real64 const > const & previousLocalJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::previousLocalJumpString() );
+      arrayView2d< real64 > const & dispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
+      arrayView2d< real64 const > const & previousDispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::previousDispJumpString() );
 
       arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
       arrayView1d< integer const > const & previousFractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::previousFractureStateString() );
@@ -456,7 +456,7 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
           traction[kfe][i] -= deltaTraction[kfe][i];
           deltaTraction[kfe][i] = 0.0;
 
-          localJump[kfe][i] = previousLocalJump[kfe][i];
+          dispJump[kfe][i] = previousDispJump[kfe][i];
         }
         fractureState[kfe] = previousFractureState[kfe];
       } );
@@ -512,7 +512,7 @@ void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & dom
       arrayView3d< real64 > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-      arrayView2d< real64 > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString() );
+      arrayView2d< real64 > const & dispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
       arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -535,9 +535,9 @@ void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & dom
           }
         }
 
-        real64 localJumpTemp[ 3 ];
-        LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( localJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
-        LvArray::tensorOps::copy< 3 >( localJump[ kfe ], localJumpTemp );
+        real64 dispJumpTemp[ 3 ];
+        LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( dispJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
+        LvArray::tensorOps::copy< 3 >( dispJump[ kfe ], dispJumpTemp );
       } );
     }
   } );
@@ -809,7 +809,8 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
 
   if( !isActiveSetConverged )
   {
-    GEOSX_ERROR( "Active set did not reached a solution. Terminating..." );
+    // GEOSX_ERROR( "Active set did not reach a solution. Terminating..." );
+    GEOSX_LOG_RANK_0( "Active set did not reach a solution in " << m_activeSetIter << " iterations." );
   }
   else
   {
@@ -1430,9 +1431,6 @@ void LagrangianContactSolver::
   NodeManager const & nodeManager = mesh.getNodeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
-
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString() );
@@ -1446,6 +1444,8 @@ void LagrangianContactSolver::
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
       arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
@@ -1456,8 +1456,8 @@ void LagrangianContactSolver::
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
       arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
-      arrayView2d< real64 const > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString() );
-      arrayView2d< real64 const > const & previousLocalJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::previousLocalJumpString() );
+      arrayView2d< real64 const > const & dispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
+      arrayView2d< real64 const > const & previousDispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::previousDispJumpString() );
       arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
@@ -1491,11 +1491,11 @@ void LagrangianContactSolver::
                   {
                     if( i == 0 )
                     {
-                      elemRHS[i] = +Ja * localJump[kfe][i];
+                      elemRHS[i] = +Ja * dispJump[kfe][i];
                     }
                     else
                     {
-                      elemRHS[i] = +Ja * ( localJump[kfe][i] - previousLocalJump[kfe][i] );
+                      elemRHS[i] = +Ja * ( dispJump[kfe][i] - previousDispJump[kfe][i] );
                     }
                   }
 
@@ -1522,7 +1522,7 @@ void LagrangianContactSolver::
               case FractureState::SLIP:
               case FractureState::NEW_SLIP:
                 {
-                  elemRHS[0] = +Ja * localJump[kfe][0];
+                  elemRHS[0] = +Ja * dispJump[kfe][0];
 
                   for( localIndex kf = 0; kf < 2; ++kf )
                   {
@@ -1545,7 +1545,7 @@ void LagrangianContactSolver::
                   real64 const limitTau = contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
                                                                                              dLimitTau_dNormalTraction );
 
-                  real64 sliding[ 2 ] = { localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] };
+                  real64 sliding[ 2 ] = { dispJump[kfe][1] - previousDispJump[kfe][1], dispJump[kfe][2] - previousDispJump[kfe][2] };
                   real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
 
 //                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding[0] << " " << sliding[1] );
@@ -1620,7 +1620,7 @@ void LagrangianContactSolver::
                 }
               case FractureState::OPEN:
                 {
-//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " opening: " << localJump[kfe][0] );
+//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " opening: " << dispJump[kfe][0] );
 
                   for( localIndex i = 0; i < 3; ++i )
                   {
@@ -2100,9 +2100,9 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
   fieldNames["elems"].emplace_back( string( viewKeyStruct::tractionString() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTractionString() ) );
   // This is used locally only, synchronized just for output reasons
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::localJumpString() ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::dispJumpString() ) );
   // fractureStateString is synchronized in UpdateFractureState
-  // previousFractureStateString and previousLocalJumpString used locally only
+  // previousFractureStateString and previousDispJumpString used locally only
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                        domain.getMeshBody( 0 ).getMeshLevel( 0 ),
@@ -2158,18 +2158,17 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = mesh.getElemManager();
 
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
-
   bool checkActiveSet = true;
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
-      arrayView2d< real64 const > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString() );
+      arrayView2d< real64 const > const & dispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
       arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
 
       arrayView1d< real64 const > const & normalTractionTolerance =
@@ -2191,7 +2190,7 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
             integer const originalFractureState = fractureState[kfe];
             if( originalFractureState == FractureState::OPEN )
             {
-              if( localJump[kfe][0] > -normalDisplacementTolerance[kfe] )
+              if( dispJump[kfe][0] > -normalDisplacementTolerance[kfe] )
               {
                 fractureState[kfe] = FractureState::OPEN;
               }

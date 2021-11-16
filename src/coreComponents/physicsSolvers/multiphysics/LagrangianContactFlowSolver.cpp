@@ -241,11 +241,11 @@ void LagrangianContactFlowSolver::updateOpeningForFlow( DomainPartition & domain
     if( subRegion.hasWrapper( m_pressureKey ) )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView2d< real64 const > const & localJump = subRegion.getReference< array2d< real64 > >( m_localJumpKey );
+      arrayView2d< real64 const > const & dispJump = subRegion.getReference< array2d< real64 > >( m_dispJumpKey );
       arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
       arrayView1d< real64 > const &
-      aperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString() );
+      aperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::hydraulicApertureString() );
       arrayView1d< real64 > const &
       deltaVolume = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() );
 
@@ -255,7 +255,7 @@ void LagrangianContactFlowSolver::updateOpeningForFlow( DomainPartition & domain
         {
           if( m_contactSolver->isElementInOpenState( subRegion, kfe ) )
           {
-            aperture[kfe] = localJump[kfe][0];
+            aperture[kfe] = dispJump[kfe][0];
             deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
           }
           else

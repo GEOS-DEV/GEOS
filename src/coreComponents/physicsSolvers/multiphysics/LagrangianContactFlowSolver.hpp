@@ -233,7 +233,7 @@ private:
 
   string const m_tractionKey = LagrangianContactSolver::viewKeyStruct::tractionString();
   string const m_fractureStateKey = LagrangianContactSolver::viewKeyStruct::fractureStateString();
-  string const m_localJumpKey = LagrangianContactSolver::viewKeyStruct::localJumpString();
+  string const m_dispJumpKey = LagrangianContactSolver::viewKeyStruct::dispJumpString();
   string const m_pressureKey = FlowSolverBase::viewKeyStruct::pressureString();
   string const m_deltaPressureKey = FlowSolverBase::viewKeyStruct::deltaPressureString();
 
