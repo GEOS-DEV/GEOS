@@ -95,6 +95,12 @@ public:
     return numNodes;
   }
 
+  GEOSX_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override
+  {
+    return maxSupportPoints;
+  }
+
   /**
    * @brief Method to fill a MeshData object.
    * @param nodeManager The node manager.

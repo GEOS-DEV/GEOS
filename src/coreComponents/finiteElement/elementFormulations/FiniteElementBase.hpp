@@ -180,17 +180,12 @@ public:
 
   /**
    * @brief Get the maximum number of support points for this element.
-   * @details This should be used to pre-allocate objects whose size depend on the number of support
-   * points.
-   * @tparam LEAF Type of the derived finite element implementation.
-   * @return A constant expression of the number of maximum support points for this element.
+   * @details This should be used to know the size of pre-allocated objects whose size depend on the
+   * number of support points.
+   * @return The number of maximum support points for this element.
    */
-  template< typename LEAF >
   GEOSX_HOST_DEVICE
-  static constexpr localIndex getMaxSupportPoints()
-  {
-    return LEAF::maxSupportPoints;
-  }
+  virtual localIndex getMaxSupportPoints() const = 0;
 
   /**
    * @brief Get the shape function gradients.
@@ -539,7 +534,7 @@ public:
                            getNumQuadraturePoints(),
                            "2nd-dimension of gradN array does not match number of quadrature points" );
     GEOSX_ERROR_IF_NE_MSG( source.size( 2 ),
-                           getNumSupportPoints(),
+                           getMaxSupportPoints(),
                            "3rd-dimension of gradN array does not match number of support points" );
     GEOSX_ERROR_IF_NE_MSG( source.size( 3 ),
                            3,

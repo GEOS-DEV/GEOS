@@ -626,6 +626,8 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
           MeshLevel & meshLevel = meshBody.getMeshLevel( b );
           NodeManager & nodeManager = meshLevel.getNodeManager();
           ElementRegionManager & elemManager = meshLevel.getElemManager();
+          FaceManager const & faceManager = meshLevel.getFaceManager();
+          EdgeManager const & edgeManager = meshLevel.getEdgeManager();
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
           for( auto const & regionName : targetRegions )
@@ -647,9 +649,16 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
                 {
                   using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
 
+                  typename FE_TYPE::MeshData meshData;
+                  finiteElement::FiniteElementBase::initialize< FE_TYPE >(nodeManager,
+                                                                          edgeManager,
+                                                                          faceManager,
+                                                                          subRegion,
+                                                                          meshData);
+
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                  feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
+                  feDiscretization->calculateShapeFunctionGradients( X, &subRegion, meshData, finiteElement );
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
                                                                                              subRegion.getName() ) ];

@@ -83,6 +83,12 @@ public:
     return numNodes;
   }
 
+  GEOSX_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override
+  {
+    return maxSupportPoints;
+  }
+
   /**
    * @brief Get the number of support points.
    * @param stack Object that holds stack variables.

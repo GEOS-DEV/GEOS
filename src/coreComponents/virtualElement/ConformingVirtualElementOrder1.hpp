@@ -112,6 +112,12 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override
+  {
+    return maxSupportPoints;
+  }
+
+  GEOSX_HOST_DEVICE
   localIndex getNumSupportPoints() const override
   {
     return m_numSupportPoints;

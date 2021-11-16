@@ -70,6 +70,7 @@ public:
             typename FE_TYPE >
   void calculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                         SUBREGION_TYPE * const elementSubRegion,
+                                        typename FE_TYPE::MeshData meshData,
                                         FE_TYPE & fe ) const;
 
 
@@ -111,6 +112,7 @@ void
 FiniteElementDiscretization::
   calculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                    SUBREGION_TYPE * const elementSubRegion,
+                                   typename FE_TYPE::MeshData meshData,
                                    FE_TYPE & finiteElement ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -119,7 +121,7 @@ FiniteElementDiscretization::
   array2d< real64 > & detJ = elementSubRegion->detJ();
   auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
 
-  constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+  constexpr localIndex numNodesPerElem = FE_TYPE::maxSupportPoints;
   constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
   dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), numQuadraturePointsPerElem, numNodesPerElem, 3 );
   detJ.resize( elementSubRegion->size(), numQuadraturePointsPerElem );
@@ -129,8 +131,11 @@ FiniteElementDiscretization::
 
   for( localIndex k = 0; k < elementSubRegion->size(); ++k )
   {
+    typename FE_TYPE::StackVariables feStack;
+    finiteElement.template setup< FE_TYPE >( k, meshData, feStack );
     real64 xLocal[numNodesPerElem][3];
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+    localIndex numSupportPoints = finiteElement.template numSupportPoints< FE_TYPE >( feStack );
+    for( localIndex a=0; a< numSupportPoints; ++a )
     {
       localIndex const nodeIndex = elemsToNodes[ k][ a ];
       for( int i=0; i<3; ++i )
@@ -144,9 +149,9 @@ FiniteElementDiscretization::
     for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
     {
       real64 dNdXLocal[numNodesPerElem][3];
-      detJ( k, q ) = finiteElement.calcGradN( q, xLocal, dNdXLocal );
+      detJ( k, q ) = finiteElement.calcGradN( q, xLocal, feStack, dNdXLocal );
 
-      for( localIndex b = 0; b < numNodesPerElem; ++b )
+      for( localIndex b = 0; b < numSupportPoints; ++b )
       {
         LvArray::tensorOps::copy< 3 >( dNdX[ k ][ q ][ b ], dNdXLocal[b] );
       }
