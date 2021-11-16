@@ -584,6 +584,9 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
     arrayView1d< real64 > const hydraulicAperture =
       subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::hydraulicApertureString() );
 
+    arrayView1d< real64 const > const oldHydraulicAperture =
+        subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::aperture0String() );
+
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
     arrayView1d< real64 > const deltaVolume =
@@ -604,14 +607,18 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
 
     ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_fracturesSolver->getContactRelationName() );
 
-    constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+    ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
+
+    CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_porousMaterialNames[targetIndex] );
+
+    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
     {
-      using ContactType = TYPEOFREF( castedContact );
-      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+      typename TYPEOFREF( castedPorousSolid )::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
       PoromechanicsEFEMKernels::StateUpdateKernel::
         launch< parallelDevicePolicy<> >( subRegion.size(),
                                           contactWrapper,
+                                          porousMaterialWrapper,
                                           dispJump,
                                           pressure,
                                           deltaPressure,
@@ -619,14 +626,12 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
                                           volume,
                                           deltaVolume,
                                           aperture,
+                                          oldHydraulicAperture,
                                           hydraulicAperture,
                                           fractureTraction,
                                           dTdpf );
 
     } );
-
-    // update fracture's permeability and porosity
-    m_flowSolver->updatePorosityAndPermeability( subRegion, targetIndex );
     // update fluid model
     m_flowSolver->updateFluidState( subRegion, targetIndex );
 
