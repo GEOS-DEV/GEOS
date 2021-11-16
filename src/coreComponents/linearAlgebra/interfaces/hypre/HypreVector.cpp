@@ -21,9 +21,8 @@
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 
-#include "HYPRE.h"
-#include "_hypre_IJ_mv.h"
-#include "_hypre_parcsr_mv.h"
+#include <HYPRE.h>
+#include <_hypre_IJ_mv.h>
 
 #include <iomanip>
 
@@ -170,11 +169,11 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
   initialize( comm, jlower, jupper, m_ij_vector );
   finalize( m_ij_vector, m_par_vector );
 
-  HYPRE_Real * const local_data = extractLocalVector();
+  HYPRE_Real * const data = extractLocalVector();
 
-  forAll< hypre::execPolicy >( localValues.size(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localValues.size(), [data, localValues] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {
-    local_data[i] = localValues[i];
+    data[i] = localValues[i];
   } );
 
 }
@@ -190,14 +189,42 @@ void HypreVector::set( globalIndex const globalRow,
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector, 1, &globalRow, &value ) );
+
+
+#if defined(GEOSX_USE_HYPRE_CUDA)
+  array1d< globalIndex > globalRowDevice( 1 );
+  array1d< real64 > valueDevice( 1 );
+  globalRowDevice[0] = globalRow;
+  valueDevice[0] = value;
+  globalRowDevice.move( LvArray::MemorySpace::cuda, false );
+  valueDevice.move( LvArray::MemorySpace::cuda, false );
+  globalIndex const * const pGlobalRow = globalRowDevice.data();
+  real64 const * const pValue = valueDevice.data();
+#else
+  globalIndex const * const pGlobalRow = &globalRow;
+  real64 const * const pValue = &value;
+#endif
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector, 1, pGlobalRow, pValue ) );
 }
 
 void HypreVector::add( globalIndex const globalRow,
                        real64 const value )
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorAddToValues( m_ij_vector, 1, &globalRow, &value ) );
+#if defined(GEOSX_USE_HYPRE_CUDA)
+  array1d< globalIndex > globalRowDevice( 1 );
+  array1d< real64 > valueDevice( 1 );
+  globalRowDevice[0] = globalRow;
+  valueDevice[0] = value;
+  globalRowDevice.move( LvArray::MemorySpace::cuda, false );
+  valueDevice.move( LvArray::MemorySpace::cuda, false );
+  globalIndex const * const pGlobalRow = globalRowDevice.data();
+  real64 const * const pValue = valueDevice.data();
+#else
+  globalIndex const * const pGlobalRow = &globalRow;
+  real64 const * const pValue = &value;
+#endif
+  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorAddToValues( m_ij_vector, 1, pGlobalRow, pValue ) );
 }
 
 void HypreVector::set( globalIndex const * globalIndices,
@@ -207,10 +234,15 @@ void HypreVector::set( globalIndex const * globalIndices,
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices, globalIndices + size ), ilower() );
   GEOSX_LAI_ASSERT_GE( iupper(), getLocalRowID( *std::max_element( globalIndices, globalIndices + size ) ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector,
-                                                  LvArray::integerConversion< HYPRE_Int >( size ),
-                                                  hypre::toHypreBigInt( globalIndices ),
-                                                  values ) );
+
+  HYPRE_Real * const local_data = hypre_VectorData( hypre_ParVectorLocalVector ( m_par_vector ) );
+
+  forAll< hypre::execPolicy >( size, [local_data, values] GEOSX_HYPRE_DEVICE ( localIndex const i )
+  {
+    local_data[i] = values[i];
+  } );
+
+
 }
 
 void HypreVector::add( globalIndex const * globalIndices,
@@ -294,7 +326,7 @@ void HypreVector::reciprocal()
 {
   GEOSX_LAI_ASSERT( ready() );
   real64 * const values = extractLocalVector();
-  forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localSize(), [values] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {
     values[i] = 1.0 / values[i];
   } );
@@ -367,7 +399,7 @@ void HypreVector::pointwiseProduct( HypreVector const & x,
   real64 const * const data = extractLocalVector();
   real64 const * const x_data = x.extractLocalVector();
   real64 * const y_data = y.extractLocalVector();
-  forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localSize(), [y_data, data, x_data] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {
     y_data[i] = data[i] * x_data[i];
   } );
@@ -379,9 +411,9 @@ real64 HypreVector::norm1() const
 
   real64 const * const values = extractLocalVector();
   RAJA::ReduceSum< ReducePolicy< hypre::execPolicy >, real64 > localNorm( 0.0 );
-  forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localSize(), [localNorm, values] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {
-    localNorm += fabs( values[i] );
+    localNorm += LvArray::math::abs( values[i] );
   } );
   return MpiWrapper::sum( localNorm.get(), getComm() );
 }
@@ -398,9 +430,9 @@ real64 HypreVector::normInf() const
 
   real64 const * const values = extractLocalVector();
   RAJA::ReduceMax< ReducePolicy< hypre::execPolicy >, real64 > localNorm( 0.0 );
-  forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
+  forAll< hypre::execPolicy >( localSize(), [localNorm, values] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {
-    localNorm.max( fabs( values[i] ) );
+    localNorm.max( LvArray::math::abs( values[i] ) );
   } );
   return MpiWrapper::max( localNorm.get(), getComm() );
 }
@@ -590,7 +622,7 @@ void HypreVector::extract( arrayView1d< real64 > const & localVector ) const
 {
   GEOSX_LAI_ASSERT_EQ( localSize(), localVector.size() );
   real64 const * const data = extractLocalVector();
-  forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( HYPRE_Int const i )
+  forAll< hypre::execPolicy >( localSize(), [localVector, data] GEOSX_HYPRE_DEVICE ( HYPRE_Int const i )
   {
     localVector[i] = data[i];
   } );

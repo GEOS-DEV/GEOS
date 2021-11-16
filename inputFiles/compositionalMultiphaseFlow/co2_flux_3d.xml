@@ -117,7 +117,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <CO2BrineFluid
+    <CO2BrinePhillipsFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
@@ -160,32 +160,16 @@
       fieldName="permeabilityTransMultiplier"
       scale="0.0"/>
 
-    <FieldSpecification
-      name="initialPressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/region/cellBlock"
-      fieldName="pressure"
-      scale="9e6"/>
-
-    <!-- Initial composition: CO2 phase close to residual saturation  -->
-    <FieldSpecification
-      name="initialComposition_co2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/region/cellBlock"
-      fieldName="globalCompFraction"
-      component="0"
-      scale="0.04"/>
-
-    <FieldSpecification
-      name="initialComposition_water"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/region/cellBlock"
-      fieldName="globalCompFraction"
-      component="1"
-      scale="0.96"/>
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions"      
+      datumElevation="28.5"
+      datumPressure="1.1e7"
+      initialPhaseName="water"
+      componentNames="{ co2, water }"
+      componentFractionVsElevationTableNames="{ initCO2CompFracTable,
+                                                initWaterCompFracTable }"
+      temperatureVsElevationTableName="initTempTable"/>
 
     <!-- Injection rate: 0.03 kg/s -->
     <SourceFlux
@@ -279,6 +263,21 @@
 
   <Functions>
 
+    <TableFunction
+      name="initCO2CompFracTable"
+      coordinateFiles="{ elevation.txt }"
+      voxelFile="initCO2CompFrac.txt"/>
+
+    <TableFunction
+      name="initWaterCompFracTable"
+      coordinateFiles="{ elevation.txt }"
+      voxelFile="initWaterCompFrac.txt"/>       
+    
+    <TableFunction
+      name="initTempTable"
+      coordinateFiles="{ elevation.txt }"
+      voxelFile="initTemp.txt"/>        
+    
     <TableFunction
       name="waterRelativePermeabilityTable"
       coordinateFiles="{ phaseVolFraction_water.txt }"
