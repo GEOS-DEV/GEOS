@@ -32,7 +32,7 @@ class ContactSolverBase : public SolverBase
 {
 public:
   ContactSolverBase( const string & name,
-                                   Group * const parent );
+                     Group * const parent );
 
   ~ContactSolverBase() override;
 
@@ -51,12 +51,6 @@ public:
                              real64 const & dt,
                              int const cycleNumber,
                              DomainPartition & domain ) override;
-
-  virtual real64
-  nonlinearImplicitStep( real64 const & time_n,
-                         real64 const & dt,
-                         integer const cycleNumber,
-                         DomainPartition & domain ) override final;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
