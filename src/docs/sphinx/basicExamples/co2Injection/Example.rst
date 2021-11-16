@@ -152,7 +152,7 @@ Constitutive laws
 
 Under the **Constitutive** tag, four items can be found:
 
-- **CO2BrineFluid** : this tag defines phase names, component molar weights, and fluid behaviors such as CO :sub:`2` solubility in brine and viscosity/density dependencies on pressure and temperature. 
+- **CO2BrinePhillipsFluid** : this tag defines phase names, component molar weights, and fluid behaviors such as CO :sub:`2` solubility in brine and viscosity/density dependencies on pressure and temperature. 
 - **PressurePorosity** : this tag contains all the data needed to model rock compressibility.
 - **BrooksCoreyRelativePermeability** : this tag defines the relative permeability model for each phase, its end-point values, residual volume fractions (saturations), and the Corey exponents.
 - **ConstantPermeability** : this tag defines the permeability model that is set to a simple constant diagonal tensor, whose values are defined in ``permeabilityComponent``. Note that these values will be overwritten by the permeability field imported in **FieldSpecifications**.
@@ -162,7 +162,7 @@ Under the **Constitutive** tag, four items can be found:
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
 
-The PVT data specified by **CO2BrineFluid** is set to model the behavior of the CO :sub:`2`-brine system as a function of pressure, temperature, and salinity.
+The PVT data specified by **CO2BrinePhillipsFluid** is set to model the behavior of the CO :sub:`2`-brine system as a function of pressure, temperature, and salinity.
 We currently rely on a two-phase, two-component (CO :sub:`2` and H :sub:`2` O) model in which salinity is a constant parameter in space and in time.
 The model is described in detail in  :ref:`CO2-EOS`.
 The model definition requires three text files:
@@ -187,13 +187,13 @@ The *pvtgas.txt* and *pvtliquid.txt* files define the models used to compute the
 
 .. code::
   
-        DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0
-        ViscosityFun BrineViscosity 0
+        DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 94 96 1 0
+        ViscosityFun PhillipsBrineViscosity 0
 
 In these files, the first keyword of each line is an identifier for the model type (either a density or a viscosity model).
 It is followed by the model name.
 Then, the lower, upper, and step increment values for pressure and temperature ranges are specified.
-The trailing 0 for ``BrineCO2Density`` and ``BrineViscosity`` entry is the salinity of the brine, set to zero.
+The trailing 0 for ``PhillipsBrineDensity`` and ``PhillipsBrineViscosity`` entry is the salinity of the brine, set to zero.
 
 .. note::
    It is the responsibility of the user to make sure that the pressure and temperature values encountered in the simulation (in the reservoir and in the well) are within the bounds specified in the PVT files. GEOSX will not throw an error if a value outside these bounds is encountered, but the (nonlinear) behavior of the simulation and the quality of the results will likely be negatively impacted.  

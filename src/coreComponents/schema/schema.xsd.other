@@ -774,7 +774,8 @@
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
-			<xsd:element name="CO2BrineFluid" type="CO2BrineFluidType" />
+			<xsd:element name="CO2BrineEzrokhiFluid" type="CO2BrineEzrokhiFluidType" />
+			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
@@ -782,7 +783,6 @@
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
-			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
@@ -795,6 +795,7 @@
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
+			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
@@ -933,7 +934,61 @@
 		<!--volFracScale => Factor used to scale the phase relative permeability, defined as: one minus the sum of the phase minimum volume fractions.-->
 		<xsd:attribute name="volFracScale" type="real64" />
 	</xsd:complexType>
-	<xsd:complexType name="CO2BrineFluidType">
+	<xsd:complexType name="CO2BrineEzrokhiFluidType">
+		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--dPhaseCompFraction_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseCompFraction_dPressure" type="real64_array4d" />
+		<!--dPhaseCompFraction_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="real64_array4d" />
+		<!--dPhaseDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="real64_array4d" />
+		<!--dPhaseDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseDensity_dPressure" type="real64_array3d" />
+		<!--dPhaseDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseDensity_dTemperature" type="real64_array3d" />
+		<!--dPhaseFraction_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="real64_array4d" />
+		<!--dPhaseFraction_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
+		<!--dPhaseFraction_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
+		<!--dPhaseMassDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dGlobalCompFraction" type="real64_array4d" />
+		<!--dPhaseMassDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dPressure" type="real64_array3d" />
+		<!--dPhaseMassDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseMassDensity_dTemperature" type="real64_array3d" />
+		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="real64_array4d" />
+		<!--dPhaseViscosity_dPressure => (no description available)-->
+		<xsd:attribute name="dPhaseViscosity_dPressure" type="real64_array3d" />
+		<!--dPhaseViscosity_dTemperature => (no description available)-->
+		<xsd:attribute name="dPhaseViscosity_dTemperature" type="real64_array3d" />
+		<!--dTotalDensity_dGlobalCompFraction => (no description available)-->
+		<xsd:attribute name="dTotalDensity_dGlobalCompFraction" type="real64_array3d" />
+		<!--dTotalDensity_dPressure => (no description available)-->
+		<xsd:attribute name="dTotalDensity_dPressure" type="real64_array2d" />
+		<!--dTotalDensity_dTemperature => (no description available)-->
+		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
+		<!--initialTotalMassDensity => (no description available)-->
+		<xsd:attribute name="initialTotalMassDensity" type="real64_array2d" />
+		<!--phaseCompFraction => (no description available)-->
+		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
+		<!--phaseDensity => (no description available)-->
+		<xsd:attribute name="phaseDensity" type="real64_array3d" />
+		<!--phaseFraction => (no description available)-->
+		<xsd:attribute name="phaseFraction" type="real64_array3d" />
+		<!--phaseMassDensity => (no description available)-->
+		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
+		<!--phaseViscosity => (no description available)-->
+		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
+		<!--totalDensity => (no description available)-->
+		<xsd:attribute name="totalDensity" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="CO2BrinePhillipsFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
 		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_ChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dPressure => (no description available)-->
@@ -1070,8 +1125,10 @@
 		<!--permeability =>  permeability of the rock.-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
-	<xsd:complexType name="ContactType" />
-	<xsd:complexType name="CoulombType" />
+	<xsd:complexType name="CoulombType">
+		<!--elasticSlip => Elastic Slip-->
+		<xsd:attribute name="elasticSlip" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
@@ -1328,6 +1385,7 @@
 		<!--stress => Current Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
+	<xsd:complexType name="FrictionlessContactType" />
 	<xsd:complexType name="ModifiedCamClayType">
 		<!--cslSlope => Slope of the critical state line-->
 		<xsd:attribute name="cslSlope" type="real64_array" />
