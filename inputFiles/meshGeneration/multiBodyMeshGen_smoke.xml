@@ -1,0 +1,161 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 2 }"
+      yCoords="{ 0, 2 }"
+      zCoords="{ 0, 2 }"
+      nx="{ 2 }"
+      ny="{ 2 }"
+      nz="{ 2 }"
+      cellBlockNames="{ cb1 }"/>
+      
+    <InternalMesh
+      name="mesh2"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 4, 6 }"
+      yCoords="{ 0, 2 }"
+      zCoords="{ 0, 2 }"
+      nx="{ 4 }"
+      ny="{ 4 }"
+      nz="{ 4 }"
+      cellBlockNames="{ cb2 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      meshBody="mesh1"
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
+      
+    <CellElementRegion
+      name="Region2"
+      meshBody="mesh2"
+      cellBlocks="{ cb2 }"
+      materialList="{ shale }"/>
+  </ElementRegions>
+
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="ExplicitDynamic"
+      discretization="FE1"
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ shale }">
+      <!-- SPHINX_SolidMechanicsSolverEnd -->
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+  </Solvers>
+
+
+  <Events
+    maxTime="10.0">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <!-- SPHINX_Execution -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/lagsolve"/>
+
+    <!-- SPHINX_ExecutionEnd -->
+    <!-- This event is applied every 5.0e-5s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1e99"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
+
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="xnegconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <Traction
+      name="xposconstraint"
+      objectPath="faceManager"
+      scale="1.0e6"
+      direction="{ 0, 1, 0 }"
+      functionName="timeFunction"
+      setNames="{ xpos }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 10.0 }"
+      values="{ 0.0, 10.0 }"/>
+  </Functions>
+
+  <Outputs>
+    <Silo
+      name="siloOutput"
+      parallelThreads="32"
+      childDirectory="sub"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+
+
+
+</Problem>
