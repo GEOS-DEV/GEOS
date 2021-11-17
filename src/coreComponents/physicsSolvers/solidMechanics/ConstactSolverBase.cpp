@@ -59,7 +59,6 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
-
 }
 
 ContactSolverBase::~ContactSolverBase()
@@ -101,6 +100,19 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
           subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() ).
             reference().resizeDimension< 1, 2 >( 3, 3 );
+
+          subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::fractureStateString() ).
+            setPlotLevel( PlotLevel::LEVEL_0 ).
+            setRegisteringObjects( this->getName()).
+            setDescription( "An array that holds the fracture state." );
+          initializeFractureState( meshLevel, viewKeyStruct::fractureStateString() );
+
+          subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::oldFractureStateString() ).
+            setPlotLevel( PlotLevel::NOPLOT ).
+            setRegisteringObjects( this->getName()).
+            setDescription( "An array that holds the fracture state." );
+          initializeFractureState( meshLevel, viewKeyStruct::oldFractureStateString() );
+
         } );
       } );
     }

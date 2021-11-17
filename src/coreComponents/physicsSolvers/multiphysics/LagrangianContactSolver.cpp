@@ -62,32 +62,18 @@ constexpr integer LagrangianContactSolver::FractureState::OPEN;
 
 LagrangianContactSolver::LagrangianContactSolver( const string & name,
                                                   Group * const parent ):
-  SolverBase( name, parent ),
-  m_solidSolverName(),
-  m_solidSolver( nullptr ),
+  ContactSolverBase( name, parent ),
   m_stabilizationName(),
-  m_contactRelationName(),
   m_activeSetMaxIter()
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the solid mechanics solver to use in the lagrangian contact solver" );
-
   registerWrapper( viewKeyStruct::stabilizationNameString(), &m_stabilizationName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
-
-  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the constitutive law used for fracture elements" );
 
   registerWrapper( viewKeyStruct::activeSetMaxIterString(), &m_activeSetMaxIter ).
     setApplyDefaultValue( 10 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum number of iteration for the active set strategy in the lagrangian contact solver" );
-
-  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -97,6 +83,8 @@ LagrangianContactSolver::LagrangianContactSolver( const string & name,
 
 void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 {
+  ContactSolverBase::registerDataOnMesh( meshBodies );
+
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
@@ -124,32 +112,6 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
           setPlotLevel( PlotLevel::NOPLOT ).
           setRegisteringObjects( this->getName()).
           setDescription( "An array that holds the traction increments on the fracture." ).
-          reference().resizeDimension< 1 >( 3 );
-
-        subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::fractureStateString() ).
-          setPlotLevel( PlotLevel::LEVEL_0 ).
-          setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the fracture state." );
-        initializeFractureState( meshLevel, viewKeyStruct::fractureStateString() );
-
-        subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::previousFractureStateString() ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the fracture state." );
-        initializeFractureState( meshLevel, viewKeyStruct::previousFractureStateString() );
-
-        subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dispJumpString() ).
-          setApplyDefaultValue( 0.0 ).
-          setPlotLevel( PlotLevel::LEVEL_0 ).
-          setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the displacement jump on the fracture at the current time step." ).
-          reference().resizeDimension< 1 >( 3 );
-
-        subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::previousDispJumpString() ).
-          setApplyDefaultValue( 0.0 ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the local jump on the fracture at the previous time step." ).
           reference().resizeDimension< 1 >( 3 );
 
         subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).

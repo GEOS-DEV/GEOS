@@ -40,27 +40,8 @@ using namespace constitutive;
 
 SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string & name,
                                                                   Group * const parent ):
-  SolverBase( name, parent ),
-  m_solidSolverName(),
-  m_fractureRegionName(),
-  m_solidSolver( nullptr )
-{
-  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the solid mechanics solver in the rock matrix" );
-
-  registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the fracture region." );
-
-  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
-
-  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );
-
-}
+  ContactSolverBase( name, parent )
+{}
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
 {
@@ -74,6 +55,8 @@ void SolidMechanicsEmbeddedFractures::postProcessInput()
 
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
+  ContactSolverBase::registerDataOnMesh( meshBodies );
+
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
@@ -84,20 +67,6 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
       {
         region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
         {
-
-          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dispJumpString() ).
-            setPlotLevel( PlotLevel::LEVEL_0 ).
-            reference().resizeDimension< 1 >( 3 );
-
-          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaDispJumpString() ).
-            reference().resizeDimension< 1 >( 3 );
-
-          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::oldDispJumpString() ).
-            reference().resizeDimension< 1 >( 3 );
-
-          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::fractureTractionString() ).
-            reference().resizeDimension< 1 >( 3 );
-
           subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() ).
             reference().resizeDimension< 1, 2 >( 3, 3 );
         } );

@@ -20,14 +20,14 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_LAGRANGIANCONTACTSOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_LAGRANGIANCONTACTSOLVER_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/ContactSolverBase.hpp"
 
 namespace geosx
 {
 
 class SolidMechanicsLagrangianFEM;
 
-class LagrangianContactSolver : public SolverBase
+class LagrangianContactSolver : public ContactSolverBase
 {
 public:
 
@@ -159,12 +159,11 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
-    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-    constexpr static char const * activeSetMaxIterString() { return "activeSetMaxIter"; }
+    constexpr static char const * activeSetMaxIterString() { return "activeSetMaxIter"; } // TODO: remove
 
     constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
@@ -172,7 +171,6 @@ public:
     constexpr static char const * deltaTractionString() { return "deltaTraction"; }
     constexpr static char const * fractureStateString() { return "fractureState"; }
     constexpr static char const * previousFractureStateString() { return "previousFractureState"; }
-    constexpr static char const * dispJumpString() { return "displacementJump"; }
     constexpr static char const * previousDispJumpString() { return "previousLocalJump"; }
 
     constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
@@ -191,13 +189,8 @@ protected:
   initializePostInitialConditionsPreSubGroups() override final;
 
 private:
-
-  string m_solidSolverName;
-  SolidMechanicsLagrangianFEM * m_solidSolver;
-
   string m_stabilizationName;
 
-  string m_contactRelationName;
   localIndex m_contactRelationFullIndex;
 
   integer m_activeSetMaxIter;
@@ -209,49 +202,6 @@ private:
   string const m_tractionKey = viewKeyStruct::tractionString();
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
-
-  /**
-   * @struct FractureState
-   *
-   * A struct for the fracture states
-   */
-  struct FractureState
-  {
-    static constexpr integer STICK = 0;    ///< element is closed: no jump across the discontinuity
-    static constexpr integer SLIP = 1;     ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed for
-    static constexpr integer NEW_SLIP = 2; ///< element just starts sliding: no normal jump across the discontinuity, but sliding is allowed
-                                           ///< for
-    static constexpr integer OPEN = 3;     ///< element is open: no constraints are imposed
-  };
-
-  string fractureStateToString( integer const & state ) const
-  {
-    string stringState;
-    switch( state )
-    {
-      case FractureState::STICK:
-      {
-        stringState = "stick";
-        break;
-      }
-      case FractureState::SLIP:
-      {
-        stringState = "slip";
-        break;
-      }
-      case FractureState::NEW_SLIP:
-      {
-        stringState = "new_slip";
-        break;
-      }
-      case FractureState::OPEN:
-      {
-        stringState = "open";
-        break;
-      }
-    }
-    return stringState;
-  }
 
   void createPreconditioner( DomainPartition const & domain );
 

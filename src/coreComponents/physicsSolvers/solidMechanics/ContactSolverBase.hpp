@@ -52,6 +52,8 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
+  virtual bool updateConfiguration( DomainPartition & domain ) override;
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
@@ -68,8 +70,9 @@ public:
 
     constexpr static char const * fractureTractionString() { return "fractureTraction"; }
 
-    constexpr static char const * dTraction_dJumpString() { return "dTraction_dJump"; }
-
+    constexpr static char const * fractureStateString() { return "fractureState"; }
+  
+    constexpr static char const * oldFractureStateString() { return "oldFractureState"; }
   };
 
   string const & getContactRelationName() const { return m_contactRelationName; }
@@ -78,11 +81,52 @@ public:
 
 protected:
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  virtual void postProcessInput() override final;
+  virtual void postProcessInput() override;
 
-private:
+  /**
+   * @struct FractureState
+   *
+   * A struct for the fracture states
+   */
+  struct FractureState
+  {
+    static constexpr integer STICK = 0;    ///< element is closed: no jump across the discontinuity.
+    static constexpr integer SLIP = 1;     ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed.
+    static constexpr integer NEW_SLIP = 2; ///< element just starts sliding: no normal jump across the discontinuity, but sliding is
+                                           ///< allowed.
+    static constexpr integer OPEN = 3;     ///< element is open: no constraints are imposed.
+  };
+
+  string fractureStateToString( integer const & state ) const
+  {
+    string stringState;
+    switch( state )
+    {
+      case FractureState::STICK:
+      {
+        stringState = "stick";
+        break;
+      }
+      case FractureState::SLIP:
+      {
+        stringState = "slip";
+        break;
+      }
+      case FractureState::NEW_SLIP:
+      {
+        stringState = "new_slip";
+        break;
+      }
+      case FractureState::OPEN:
+      {
+        stringState = "open";
+        break;
+      }
+    }
+    return stringState;
+  }
 
   /// Solid mechanics solver name
   string m_solidSolverName;
