@@ -71,7 +71,9 @@ constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
     return ::testing::AssertionFailure() << std::scientific << std::setprecision( 5 )
                                          << " relative error: " << delta / value
                                          << " (" << v1 << " vs " << v2 << "),"
-                                         << " exceeds " << relTol << std::endl;
+                                         << " exceeds " << relTol <<". "
+                                         << " absolute error: " << delta << " exeeds "
+                                         << absTol <<std::endl;
   }
   return ::testing::AssertionSuccess();
 }
@@ -160,12 +162,12 @@ void compareMatrices( MATRIX const & matrix1,
   // check the accuracy across local rows
   for( globalIndex i = matrix1.ilower(); i < matrix1.iupper(); ++i )
   {
-    indices1.resize( matrix1.globalRowLength( i ) );
-    values1.resize( matrix1.globalRowLength( i ) );
+    indices1.resize( matrix1.rowLength( i ) );
+    values1.resize( matrix1.rowLength( i ) );
     matrix1.getRowCopy( i, indices1, values1 );
 
-    indices2.resize( matrix2.globalRowLength( i ) );
-    values2.resize( matrix2.globalRowLength( i ) );
+    indices2.resize( matrix2.rowLength( i ) );
+    values2.resize( matrix2.rowLength( i ) );
     matrix2.getRowCopy( i, indices2, values2 );
 
     compareMatrixRow( i, relTol, absTol,

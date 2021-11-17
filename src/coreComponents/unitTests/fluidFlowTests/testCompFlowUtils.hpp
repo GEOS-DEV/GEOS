@@ -168,7 +168,7 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
     real64 const dRdX = ( residual[row] - residualOrig[row] ) / eps;
     if( fabs( dRdX ) > 0.0 )
     {
-      jacobian.addToRow< serialAtomic >( row, &dofIndex, &dRdX, 1 );
+      jacobian.addToRow< parallelDeviceAtomic >( row, &dofIndex, &dRdX, 1 );
     }
   } );
 }

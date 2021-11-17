@@ -37,6 +37,9 @@ void HypreInterface::initialize()
 #if defined(GEOSX_USE_HYPRE_CUDA)
   hypre_HandleDefaultExecPolicy( hypre_handle() ) = HYPRE_EXEC_DEVICE;
   hypre_HandleSpgemmUseCusparse( hypre_handle() ) = 0;
+  HYPRE_SetMemoryLocation( HYPRE_MEMORY_DEVICE );
+#else
+  HYPRE_SetMemoryLocation( HYPRE_MEMORY_HOST );
 #endif
 }
 

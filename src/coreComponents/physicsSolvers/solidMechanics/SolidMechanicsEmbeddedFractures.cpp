@@ -92,6 +92,9 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
           subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaDispJumpString() ).
             reference().resizeDimension< 1 >( 3 );
 
+          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::oldDispJumpString() ).
+            reference().resizeDimension< 1 >( 3 );
+
           subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::fractureTractionString() ).
             reference().resizeDimension< 1 >( 3 );
 
@@ -128,6 +131,22 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
                                                             DomainPartition & domain )
 {
   m_solidSolver->implicitStepComplete( time_n, dt, domain );
+
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  ElementRegionManager & elemManager = mesh.getElemManager();
+  SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+  EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+  arrayView2d< real64 > oldDispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::oldDispJumpString() );
+  arrayView2d< real64 const > const dispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
+
+  forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                    [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  {
+    LvArray::tensorOps::copy< 3 >( oldDispJump[k], dispJump[k] );
+  } );
+
 }
 
 real64 SolidMechanicsEmbeddedFractures::solverStep( real64 const & time_n,
@@ -604,13 +623,16 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
 
   elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
   {
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
     arrayView2d< real64 const > const & jump  =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
+
+    arrayView2d< real64 const > const & oldJump  =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::oldDispJumpString() );
 
     arrayView2d< real64 > const & fractureTraction =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::fractureTractionString() );
@@ -626,6 +648,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
       SolidMechanicsEFEMKernels::StateUpdateKernel::
         launch< parallelDevicePolicy<> >( subRegion.size(),
                                           contactWrapper,
+                                          oldJump,
                                           jump,
                                           fractureTraction,
                                           dFractureTraction_dJump );
