@@ -154,9 +154,10 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 
 void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 {
-  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  forMeshTargets( meshBodies, [&] ( MeshLevel & meshLevel,
+                                    arrayView1d<string const> const & regionNames )
   {
-    NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
+    NodeManager & nodes = meshLevel.getNodeManager();
 
     nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
       setPlotLevel( PlotLevel::LEVEL_0 ).
@@ -226,9 +227,10 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       setPlotLevel( PlotLevel::NOPLOT ).
       setRestartFlags( RestartFlags::NO_WRITE );
 
-    ElementRegionManager &
-    elementRegionManager = meshBody.getMeshLevel( 0 ).getElemManager();
-    elementRegionManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                       [&]( localIndex const,
+                                                                            CellElementSubRegion & subRegion )
     {
       subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).

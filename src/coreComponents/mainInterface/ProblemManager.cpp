@@ -151,6 +151,8 @@ void ProblemManager::problemSetup()
 
   generateMesh();
 
+  initialize_postMeshGeneration();
+
   applyNumericalMethods();
 
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );

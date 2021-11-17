@@ -550,11 +550,14 @@ public:
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
+      if( hasGroup(subgroup) )
       {
-        lambda( counter, castedSubGroup );
-      } );
-      ++counter;
+        applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
+        {
+          lambda( counter, castedSubGroup );
+        } );
+        ++counter;
+      }
     }
   }
 
@@ -575,11 +578,14 @@ public:
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto const & castedSubGroup )
+      if( hasGroup(subgroup) )
       {
-        lambda( counter, castedSubGroup );
-      } );
-      ++counter;
+        applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto const & castedSubGroup )
+        {
+          lambda( counter, castedSubGroup );
+        } );
+        ++counter;
+      }
     }
   }
   ///@}
@@ -663,6 +669,9 @@ public:
    * @name Initialization and data registration
    */
   ///@{
+
+  virtual void initialize_postMeshGeneration();
+
 
   /**
    * @brief Run initialization functions on this and all subgroups.
