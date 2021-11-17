@@ -100,13 +100,6 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
           setDescription( "An array that holds the rotation matrices on the fracture." ).
           reference().resizeDimension< 1, 2 >( 3, 3 );
 
-        subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::tractionString() ).
-          setApplyDefaultValue( 0.0 ).
-          setPlotLevel( PlotLevel::LEVEL_0 ).
-          setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the tractions on the fracture." ).
-          reference().resizeDimension< 1 >( 3 );
-
         subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaTractionString() ).
           setApplyDefaultValue( 0.0 ).
           setPlotLevel( PlotLevel::NOPLOT ).
@@ -424,32 +417,6 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
       } );
     }
   } );
-}
-
-real64 LagrangianContactSolver::solverStep( real64 const & time_n,
-                                            real64 const & dt,
-                                            int const cycleNumber,
-                                            DomainPartition & domain )
-{
-  real64 dtReturn = dt;
-
-  implicitStepSetup( time_n,
-                     dt,
-                     domain );
-
-  setupSystem( domain,
-               m_dofManager,
-               m_localMatrix,
-               m_localRhs,
-               m_localSolution );
-
-  // currently the only method is implicit time integration
-  dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-  // final step for completion of timestep. Typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dtReturn, domain );
-
-  return dtReturn;
 }
 
 void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & domain )
@@ -2345,39 +2312,6 @@ void LagrangianContactSolver::computeFractureStateStatistics( DomainPartition co
   GEOSX_LOG_RANK_0( GEOSX_FMT( " Number of element for each fracture state:"
                                " stick: {:12} | slip:  {:12} | open:  {:12}",
                                numStick, numSlip, numOpen ) );
-}
-
-void LagrangianContactSolver::solveSystem( DofManager const & dofManager,
-                                           ParallelMatrix & matrix,
-                                           ParallelVector & rhs,
-                                           ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  if( getLogLevel() > 3 )
-  {
-    matrix.write( "matrix.mtx", LAIOutputFormat::MATRIX_MARKET );
-    rhs.write( "rhs.mtx", LAIOutputFormat::MATRIX_MARKET );
-  }
-
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
-
-  if( getLogLevel() > 3 )
-  {
-    solution.write( "sol.mtx", LAIOutputFormat::MATRIX_MARKET );
-  }
-
-  // int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  // if( rank == 0 )
-  // {
-  //   string str;
-  //   std::getline( std::cin, str );
-  //   if( str.length() > 0 )
-  //   {
-  //     GEOSX_ERROR( "STOP" );
-  //   }
-  // }
-  // MpiWrapper::Barrier( MPI_COMM_GEOSX );
 }
 
 void LagrangianContactSolver::setNextDt( real64 const & currentDt,

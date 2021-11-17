@@ -95,7 +95,11 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
           subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::oldDispJumpString() ).
             reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::fractureTractionString() ).
+          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::tractionString() ).
+            setApplyDefaultValue( 0.0 ).
+            setPlotLevel( PlotLevel::LEVEL_0 ).
+            setRegisteringObjects( this->getName()).
+            setDescription( "An array that holds the tractions on the fracture." ).
             reference().resizeDimension< 1 >( 3 );
 
           subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() ).
@@ -118,5 +122,32 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
     }
   } );
 }
+
+real64 ContactSolverBase::solverStep( real64 const & time_n,
+                                      real64 const & dt,
+                                      int const cycleNumber,
+                                      DomainPartition & domain )
+{
+  real64 dtReturn = dt;
+
+  implicitStepSetup( time_n,
+                     dt,
+                     domain );
+
+  setupSystem( domain,
+               m_dofManager,
+               m_localMatrix,
+               m_localRhs,
+               m_localSolution );
+
+  // currently the only method is implicit time integration
+  dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+
+  // final step for completion of timestep. Typically secondary variable updates and cleanup.
+  implicitStepComplete( time_n, dtReturn, domain );
+
+  return dtReturn;
+}
+
 
 } /* namespace geosx */

@@ -442,9 +442,9 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
   integer & dtAttempt = m_nonlinearSolverParameters.m_numdtAttempts;
 
-  integer const & maxConfigurationIter = m_nonlinearSolverParameter.m_maxNumConfigurationAttempts;
+  integer const & maxConfigurationIter = m_nonlinearSolverParameters.m_maxNumConfigurationAttempts;
 
-  integer & configurationLoopIter = m_nonlinearSolverParameter.m_numConfigurationAttempts;
+  integer & configurationLoopIter = m_nonlinearSolverParameters.m_numConfigurationAttempts;
 
   // a flag to denote whether we have converged
   bool isNewtonConverged = false;

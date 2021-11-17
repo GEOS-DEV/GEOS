@@ -20,7 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
 
-#include "physicsSolvers/ContactSolverBase.hpp"
+#include "physicsSolvers/solidMechanics/ContactSolverBase.hpp"
 
 namespace geosx
 {
@@ -95,12 +95,6 @@ public:
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
   virtual void updateState( DomainPartition & domain ) override;
-
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition & domain ) override;
-
 
   void addCouplingNumNonzeros( DomainPartition & domain,
                                DofManager & dofManager,

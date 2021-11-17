@@ -118,37 +118,6 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
 
 }
 
-real64 SolidMechanicsEmbeddedFractures::solverStep( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    int const cycleNumber,
-                                                    DomainPartition & domain )
-{
-  real64 dtReturn = dt;
-
-  implicitStepSetup( time_n,
-                     dt,
-                     domain );
-
-  setupSystem( domain,
-               m_dofManager,
-               m_localMatrix,
-               m_localRhs,
-               m_localSolution );
-
-  // currently the only method is implicit time integration
-  dtReturn = this->nonlinearImplicitStep( time_n,
-                                          dt,
-                                          cycleNumber,
-                                          domain );
-
-  // m_solidSolver->updateStress( domain );
-
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dtReturn, domain );
-
-  return dtReturn;
-}
-
 void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                                                  DofManager & dofManager ) const
 {

@@ -36,15 +36,6 @@ public:
 
   ~ContactSolverBase() override;
 
-  /**
-   * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
-   */
-  static string catalogName()
-  {
-    return "ContactSolverBase";
-  }
-
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
   virtual real64 solverStep( real64 const & time_n,
@@ -68,7 +59,7 @@ public:
 
     constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }
 
-    constexpr static char const * fractureTractionString() { return "fractureTraction"; }
+    constexpr static char const * tractionString() { return "traction"; }
 
     constexpr static char const * fractureStateString() { return "fractureState"; }
   

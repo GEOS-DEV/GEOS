@@ -53,6 +53,7 @@ set( physicsSolvers_headers
      simplePDE/LaplaceVEM.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
+     solidMechanics/ContactSolverBase.hpp
      solidMechanics/SolidMechanicsEFEMKernels.hpp
      solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp
      solidMechanics/SolidMechanicsEmbeddedFractures.hpp
@@ -115,6 +116,7 @@ set( physicsSolvers_sources
      simplePDE/LaplaceFEM.cpp
      simplePDE/LaplaceVEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
+     solidMechanics/ContactSolverBase.cpp
      solidMechanics/SolidMechanicsEmbeddedFractures.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp

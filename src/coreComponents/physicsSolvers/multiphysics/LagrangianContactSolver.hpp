@@ -20,7 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_LAGRANGIANCONTACTSOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_LAGRANGIANCONTACTSOLVER_HPP_
 
-#include "physicsSolvers/ContactSolverBase.hpp"
+#include "physicsSolvers/solidMechanics/ContactSolverBase.hpp"
 
 namespace geosx
 {
@@ -93,12 +93,6 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
-
-  virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
@@ -106,12 +100,6 @@ public:
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
-
-  virtual real64
-  solverStep( real64 const & time_n,
-              real64 const & dt,
-              int const cycleNumber,
-              DomainPartition & domain ) override;
 
   virtual void
   setNextDt( real64 const & currentDt,
@@ -167,11 +155,7 @@ public:
 
     constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
-    constexpr static char const * tractionString() { return "traction"; }
     constexpr static char const * deltaTractionString() { return "deltaTraction"; }
-    constexpr static char const * fractureStateString() { return "fractureState"; }
-    constexpr static char const * previousFractureStateString() { return "previousFractureState"; }
-    constexpr static char const * previousDispJumpString() { return "previousLocalJump"; }
 
     constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
