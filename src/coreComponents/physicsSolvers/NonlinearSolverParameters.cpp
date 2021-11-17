@@ -99,7 +99,10 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum number of time sub-steps allowed for the solver" );
 
-
+  registerWrapper( viewKeysStruct::maxNumConfigurationAttemptsString, &m_maxNumConfigurationAttempts ).
+    setApplyDefaultValue( 10 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Max number of times that the configuration can be changed" );
 
 }
 

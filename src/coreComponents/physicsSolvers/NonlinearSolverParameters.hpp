@@ -159,6 +159,11 @@ public:
   /// number of times that the time-step had to be cut
   integer m_numdtAttempts;
 
+  /// number of times that the configuration had to be changed
+  integer m_numConfigurationAttempts;
+
+  /// Max number of times that the configuration had to be changed
+  integer m_maxNumConfigurationAttempts;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
