@@ -22,6 +22,7 @@
 #include "pygeosx.hpp"
 //#include "PyWrapper.hpp"
 #include "PySolver.hpp"
+#include "PySolver2.hpp"
 #include "PyWaveSolver.hpp"
 
 #define VERIFY_NON_NULL_SELF( self ) \
@@ -229,6 +230,7 @@ static constexpr char const * PyGroup_getSolverDocString =
   "_______\n"
   "Solver\n"
   "    The solver at the relative path.";
+
 static PyObject * PyGroup_getSolver( PyGroup * const self, PyObject * const args ) noexcept
 {
   VERIFY_NON_NULL_SELF( self );
@@ -277,14 +279,7 @@ static PyObject * PyGroup_getSolver( PyGroup * const self, PyObject * const args
     }
     PYTHON_ERROR_IF( subEvent == nullptr, PyExc_RuntimeError, "Target not found", nullptr );
 
-    if(subEvent->getEventName() == "/Solvers/acousticSolver" || subEvent->getEventName() == "/Solvers/elasticSolver")
-    {
-      return createNewPyWaveSolver( subEvent, pbManager );
-    }
-    else
-    {
-      return createNewPySolver( subEvent, pbManager );
-    }
+    return createNewPySolver2( subEvent, pbManager );
   }
   // If the path isn't valid then either getGroupByPath or getWrapperBase will throw a std::domain_error
   catch( std::domain_error const & e )

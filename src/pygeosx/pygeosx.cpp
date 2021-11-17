@@ -22,6 +22,7 @@
 #include "PyGroup.hpp"
 #include "PyWrapper.hpp"
 #include "PySolver.hpp"
+#include "PySolver2.hpp"
 #include "PyWaveSolver.hpp"
 #include "mainInterface/initialization.hpp"
 
@@ -34,10 +35,6 @@
 #include <numpy/arrayobject.h>
 #pragma GCC diagnostic pop
 #include <chrono>
-
-// SolverBase
-//#include "physicsSolvers/SolverBase.hpp"
-//#include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
 
 
 namespace geosx
@@ -319,119 +316,6 @@ static bool addExitHandler( PyObject * module )
 }
 
 
-/*
-//This routine gets the targeted solver among all events
-geosx::EventBase * getSpecificTarget(const char* target)
-{
-  geosx::ProblemManager & pb_manager = geosx::g_state->getProblemManager();
-  geosx::EventManager & eventManager = pb_manager.getEventManager();
-  // Setup event targets
-  eventManager.forSubGroups< geosx::EventBase >( [&]( geosx::EventBase & subEvent )
-  {
-    subEvent.getTargetReferences();
-  } );
-  geosx::EventBase * subEvent = nullptr;
-  //Loop over all events until it finds the targeted one
-  for(int currentSubEvent = 0; currentSubEvent<eventManager.numSubGroups(); ++currentSubEvent )
-  {
-    subEvent = static_cast< geosx::EventBase * >( eventManager.getSubGroups()[currentSubEvent]);
-    if (subEvent->getEventName() == target)
-    {
-      break;
-    }
-    else
-    {
-      subEvent = nullptr;
-    }
-  }
-  PYTHON_ERROR_IF( subEvent == nullptr, PyExc_RuntimeError, "Target not found", nullptr );
-
-  return subEvent;
-}
-
-
-// SolverBase routine
-PyObject * explicitStep(PyObject * self, PyObject * args) noexcept
-{
-  GEOSX_UNUSED_VAR( self);
-  //const char* target;
-  double time;
-  double dt;
-  if( !PyArg_ParseTuple( args, "dd", &time, &dt ) )
-  {
-    return nullptr;
-  }
-
-  std::string targetString = "/Solvers/acousticSolver";
-  geosx::EventBase * subEvent = getSpecificTarget(targetString.c_str());
-
-  geosx::DomainPartition & domain = geosx::g_state->getProblemManager().getDomainPartition();
-
-  geosx::SolverBase * solver = static_cast<geosx::SolverBase *>(subEvent->getEventTarget());
-  solver->explicitStep(time, dt, 0, domain);
-
-  Py_RETURN_NONE;
-}
-
-
-
-//AcousticWaveEquationSEM routines
-
-PyObject * postProcessInput(PyObject * self, PyObject * args) noexcept
-{
-  GEOSX_UNUSED_VAR( self, args);
-
-  std::string targetString = "/Solvers/acousticSolver";
-  geosx::EventBase * subEvent = getSpecificTarget(targetString.c_str());
-
-  geosx::AcousticWaveEquationSEM * solver = static_cast<geosx::AcousticWaveEquationSEM *>(subEvent->getEventTarget());
-  solver->postProcessInput();
-
-  Py_RETURN_NONE;
-}
-
-
-
-PyObject * precomputeSourceAndReceiverTerm(PyObject * self, PyObject * args) noexcept
-{
-  GEOSX_UNUSED_VAR( self, args);
-
-  std::string targetString = "/Solvers/acousticSolver";
-  geosx::EventBase * subEvent = getSpecificTarget(targetString.c_str());
-
-  geosx::DomainPartition & domain = geosx::g_state->getProblemManager().getDomainPartition();
-  geosx::MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  geosx::AcousticWaveEquationSEM * solver = static_cast<geosx::AcousticWaveEquationSEM *>(subEvent->getEventTarget());
-  solver->precomputeSourceAndReceiverTerm(mesh);
-
-  Py_RETURN_NONE;
-}
-
-BEGIN_ALLOW_DESIGNATED_INITIALIZERS
-
-static PyMethodDef pyWaveSolversFuncs[] = {
-{ "explicitStep", explicitStep, METH_VARARGS, "explicit Step" },
-{ "postProcessInput", postProcessInput, METH_NOARGS, "resize pressure_at_receivers array to fit with new number of receivers"},
-{ "precomputeSourceAndReceiverTerm", precomputeSourceAndReceiverTerm, METH_NOARGS, "update positions for new source and receivers"},
-{ nullptr, nullptr, 0, nullptr }        // Sentinel
-};
-
-
-
-static constexpr char const * pyWaveSolversDocString =
-  "Python driver for WaveSolversBase.";
-
-static struct PyModuleDef pyWaveSolversModuleFunctions = {
-  PyModuleDef_HEAD_INIT,
-  .m_name = "WaveSolvers",
-  .m_doc = pyWaveSolversDocString,
-  .m_size = -1,
-  .m_methods = pyWaveSolversFuncs
-};
-
-END_ALLOW_DESIGNATED_INITIALIZERS
-*/
 
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
@@ -445,9 +329,6 @@ static PyMethodDef pygeosxFuncs[] = {
   { "apply_initial_conditions", geosx::applyInitialConditions, METH_NOARGS, geosx::applyInitialConditionsDocString },
   { "run", geosx::run, METH_NOARGS, geosx::runDocString },
   { "_finalize", geosx::finalize, METH_NOARGS, geosx::finalizeDocString },
-  //{ "explicitStep", explicitStep, METH_VARARGS, "explicit Step" },
-  //{ "postProcessInput", postProcessInput, METH_NOARGS, "resize pressure_at_receivers array to fit with new number of receivers"},
-  //{ "precomputeSourceAndReceiverTerm", precomputeSourceAndReceiverTerm, METH_NOARGS, "update positions for new source and receivers"},
   { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };
 
@@ -472,54 +353,6 @@ static struct PyModuleDef pygeosxModuleFunctions = {
 END_ALLOW_DESIGNATED_INITIALIZERS
 
 
-/*
-PyMODINIT_FUNC
-PyInit_pyWaveSolvers()
-{
-  //import_array();
-
-  PyObject* module = PyModule_Create( &pyWaveSolversModuleFunctions );
-
-
-  if( module == nullptr )
-  {
-    return nullptr;
-  }
-
-  if( !addExitHandler( module ) )
-  {
-    PYTHON_ERROR_IF( PyErr_Occurred() == nullptr, PyExc_RuntimeError,
-                     "couldn't add exit handler", nullptr );
-
-    return nullptr;
-  }
-
-  if( !addConstants( module ) )
-  {
-    return nullptr;
-  }
-
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyGroupType(), "Group" ) )
-  {
-    return nullptr;
-  }
-
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyWrapperType(), "Wrapper" ) )
-  {
-    return nullptr;
-  }
-
-  // Add the LvArray submodule.
-  if( !LvArray::python::addPyLvArrayModule( module ) )
-  {
-    return nullptr;
-  }
-
-  // Since we return module we don't want to decrease the reference count.
-  return module;
-  }*/
-
-
 /**
  * @brief Initialize the module with functions, constants, and exit handler
  */
@@ -529,16 +362,11 @@ PyInit_pygeosx()
   import_array();
 
   PyObject* module = PyModule_Create( &pygeosxModuleFunctions );
-  //PyObject* submodule1 = PyInit_pyWaveSolvers();
+  PyObject* submodule = geosx::python::PyInit_pysolver();
 
-  //Py_INCREF(submodule1);
-  //PyModule_AddObject( module, "WaveSolvers", submodule1 );
+  Py_INCREF(submodule);
+  PyModule_AddObject( module, "pysolver", submodule );
 
-
-  if( module == nullptr )
-  {
-    return nullptr;
-  }
 
   if( !addExitHandler( module ) )
   {
@@ -563,14 +391,15 @@ PyInit_pygeosx()
     return nullptr;
   }
 
+
   if( !LvArray::python::addTypeToModule( module, geosx::python::getPyWaveSolverType(), "WaveSolver" ) )
   {
-    return nullptr;
+   return nullptr;
   }
 
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolverType(), "Solver" ) )
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolver2Type(), "Solver2" ) )
   {
-    return nullptr;
+  return nullptr;
   }
 
   // Add the LvArray submodule.

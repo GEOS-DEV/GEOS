@@ -148,7 +148,7 @@ void AcousticWaveEquationSEM::postProcessInput()
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
 
-  m_samplesSeismoTrace = int(maxTime/m_dtSeismoTrace) + 1;
+  m_nsamplesSeismoTrace = int(maxTime/m_dtSeismoTrace) + 1;
 
   localIndex const numNodesPerElem = 8;
 
@@ -162,7 +162,7 @@ void AcousticWaveEquationSEM::postProcessInput()
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverIsLocal.resize( numReceiversGlobal );
 
-  m_pressureNp1AtReceivers.resize( m_samplesSeismoTrace, numReceiversGlobal );
+  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
 
 }
 
@@ -283,10 +283,10 @@ void AcousticWaveEquationSEM::computeSeismoTrace(real64 const time_n, real64 con
       real64 ptmp_n = 0.0;
       for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
       {
-	ptmp_np1 += pressure_np1[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
-	ptmp_n += pressure_n[receiverNodeIds[ircv][inode]]*receiverConstants[ircv][inode];
+	ptmp_np1 += pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+	ptmp_n += pressure_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
       }
-      p_rcvs[iSeismo][ircv] = ((time_np1 - time_seismo)*ptmp_n+(time_seismo-time_n)*ptmp_np1)/dt;
+      p_rcvs[iSeismo][ircv] = ((time_np1 - time_seismo)*ptmp_n+(time_seismo - time_n)*ptmp_np1)/dt;
     }
   } );
 

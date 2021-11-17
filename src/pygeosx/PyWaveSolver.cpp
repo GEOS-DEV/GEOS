@@ -3,7 +3,7 @@
 
 // Source includes
 #include "pygeosx.hpp"
-#include "PySolver.hpp"
+#include "PySolver2.hpp"
 #include "PyWaveSolver.hpp"
 #include "PyGroup.hpp"
 
@@ -55,7 +55,7 @@ static PyObject * PyWaveSolver_repr( PyObject * const obj ) noexcept
 
 static PyObject * postProcessInput(PyWaveSolver * self, PyObject * args) noexcept
 {
-  GEOSX_UNUSED_VAR( self, args);
+  GEOSX_UNUSED_VAR( args);
 
   self->group->postProcessInput();
 
@@ -66,7 +66,7 @@ static PyObject * postProcessInput(PyWaveSolver * self, PyObject * args) noexcep
 
 static PyObject * precomputeSourceAndReceiverTerm(PyWaveSolver * self, PyObject * args) noexcept
 {
-  GEOSX_UNUSED_VAR( self, args);
+  GEOSX_UNUSED_VAR( args);
 
   geosx::DomainPartition & domain = self->pb_manager->getDomainPartition();
   geosx::MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
@@ -81,8 +81,8 @@ BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyMethodDef PyWaveSolver_methods[] = {
 { "explicitStep", (PyCFunction) explicitStep<PyWaveSolver>, METH_VARARGS, "explicit Step" },
-{ "resizeArrays", (PyCFunction) postProcessInput, METH_NOARGS, "resize pressure_at_receivers array to fit with new number of receivers"},
-{ "applyNewSourceAndReceivers", (PyCFunction) precomputeSourceAndReceiverTerm, METH_NOARGS, "update positions for new source and receivers"},
+{ "postProcessInput", (PyCFunction) postProcessInput, METH_NOARGS, "resize pressure_at_receivers array to fit with new number of receivers"},
+{ "precomputeSourceAndReceiverTerm", (PyCFunction) precomputeSourceAndReceiverTerm, METH_NOARGS, "update positions for new source and receivers"},
 { "get_wrapper", (PyCFunction) PyGroup_getWrapper<PyWaveSolver>, METH_VARARGS, PyGroup_getWrapperDocString },
 { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };

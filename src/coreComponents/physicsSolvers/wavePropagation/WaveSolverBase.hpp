@@ -60,16 +60,16 @@ public:
 
   };
 
+
+
+protected:
+
   /**
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
   virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh ) = 0;
-
-  virtual void postProcessInput(){};
-
-protected:
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
@@ -127,7 +127,7 @@ protected:
 
   localIndex m_indexSeismoTrace;
 
-  localIndex m_samplesSeismoTrace;
+  localIndex m_nsamplesSeismoTrace;
 
 
 

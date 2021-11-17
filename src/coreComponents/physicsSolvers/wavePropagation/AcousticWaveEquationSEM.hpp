@@ -103,11 +103,9 @@ public:
   } waveEquationViewKeys;
 
 
-  virtual void postProcessInput() override final;
-
 protected:
 
-
+  virtual void postProcessInput() override final;
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
