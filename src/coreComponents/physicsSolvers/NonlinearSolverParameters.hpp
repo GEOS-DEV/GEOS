@@ -83,6 +83,8 @@ public:
     static constexpr auto minNumNewtonIterationsString  = "minNumberOfNewtonIterations";
     static constexpr auto timeStepCutFactorString       = "timestepCutFactor";
 
+    static constexpr auto numConfigurationAttemptsString    = "numConfigurationAttempts";
+    static constexpr auto maxNumConfigurationAttemptsString = "maxNumConfigurationAttempts";
   } viewKeys;
 
 
@@ -162,7 +164,7 @@ public:
   /// number of times that the configuration had to be changed
   integer m_numConfigurationAttempts;
 
-  /// Max number of times that the configuration had to be changed
+  /// Max number of times that the configuration can be changed
   integer m_maxNumConfigurationAttempts;
 };
 
