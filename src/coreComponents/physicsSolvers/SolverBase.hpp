@@ -55,6 +55,7 @@ public:
 //  virtual void Registration( dataRepository::WrapperCollection& domain );
 
 
+  virtual void initialize_postMeshGeneration() override;
 
   /**
    * This method is called when its host event is triggered
@@ -530,6 +531,8 @@ public:
     static constexpr char const * maxStableDtString() { return "maxStableDt"; }
     static constexpr char const * discretizationString() { return "discretization"; }
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
+    static constexpr char const * meshTargetsString() { return "meshTargets"; }
+
   };
 
   struct groupKeyStruct
@@ -601,6 +604,37 @@ public:
    * @return index within target regions list
    */
   localIndex targetRegionIndex( string const & regionName ) const;
+
+
+  template< typename LAMBDA >
+  void forMeshTargets( Group const & meshBodies, LAMBDA && lambda )
+  {
+    for( auto const & target: m_meshTargets )
+    {
+      string const meshBodyName = target.first;
+      arrayView1d<string const> const & regionNames = target.second.toViewConst();
+      MeshBody const & meshBody = meshBodies.getGroup<MeshBody>(meshBodyName);
+      meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
+      {
+        lambda( meshLevel, regionNames );
+      } );
+    }
+  }
+
+  template< typename LAMBDA >
+  void forMeshTargets( Group & meshBodies, LAMBDA && lambda )
+  {
+    for( auto const & target: m_meshTargets )
+    {
+      string const meshBodyName = target.first;
+      arrayView1d<string const> const & regionNames = target.second.toViewConst();
+      MeshBody & meshBody = meshBodies.getGroup<MeshBody>(meshBodyName);
+      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+      {
+        lambda( meshLevel, regionNames );
+      } );
+    }
+  }
 
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forTargetRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
@@ -741,6 +775,7 @@ protected:
 
 private:
 
+  map< string, array1d< string > > m_meshTargets;
   /// List of names of regions the solver will be applied to
   array1d< string > m_targetRegionNames;
 

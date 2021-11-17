@@ -47,7 +47,7 @@
       name="lagsolve"
       timeIntegrationOption="ExplicitDynamic"
       discretization="FE1"
-      targetRegions="{ Region2 }"
+      targetRegions="{ mesh1/Region1, mesh2/Region2 }"
       solidMaterialNames="{ shale }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters

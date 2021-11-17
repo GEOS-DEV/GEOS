@@ -705,14 +705,17 @@ public:
     {
       localIndex const er = elementRegion.getIndexInParent();
 
-      for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
+      if( er>-1 )
       {
-        ElementSubRegionBase & subRegion = elementRegion.getSubRegion( esr );
-
-        Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
+        for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
         {
-          lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
-        } );
+          ElementSubRegionBase & subRegion = elementRegion.getSubRegion( esr );
+
+          Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
+          {
+            lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
+          } );
+        }
       }
     } );
   }
@@ -732,14 +735,17 @@ public:
     {
       localIndex const er = elementRegion.getIndexInParent();
 
-      for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
+      if( er>-1 )
       {
-        ElementSubRegionBase const & subRegion = elementRegion.getSubRegion( esr );
-
-        Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
+        for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
         {
-          lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
-        } );
+          ElementSubRegionBase const & subRegion = elementRegion.getSubRegion( esr );
+
+          Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
+          {
+            lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
+          } );
+        }
       }
     } );
   }
