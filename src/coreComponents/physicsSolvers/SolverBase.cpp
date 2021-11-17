@@ -611,9 +611,10 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         {
           break; // get out of configuration loop coz everything converged.
         }
-      }else
+      }
+      else
       {
-        break; // get out of configuration loop and cut the time-step if you can. 
+        break; // get out of configuration loop and cut the time-step if you can.
       }
 
     }  // end of configuration loop
@@ -881,7 +882,7 @@ bool SolverBase::updateConfiguration( DomainPartition & GEOSX_UNUSED_PARAM( doma
 
 void SolverBase::resetConfigurationToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
-  // For most solvers there is nothing to do. 
+  // For most solvers there is nothing to do.
 }
 
 void SolverBase::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )

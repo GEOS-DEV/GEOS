@@ -472,12 +472,12 @@ public:
   /**
    * @brief updates the configuration (if needed) based on the state after a converged Newton loop.
    * @param domain the domain containing the mesh and fields
-   * @return a bool that states whether the configuration used to solve the nonlinear loop is still valid or not. 
+   * @return a bool that states whether the configuration used to solve the nonlinear loop is still valid or not.
    */
   virtual bool updateConfiguration( DomainPartition & domain );
 
   /**
-   * @brief resets the configuration to the beginning of the time-step. 
+   * @brief resets the configuration to the beginning of the time-step.
    * @param domain the domain containing the mesh and fields
    */
   virtual void resetConfigurationToBeginningOfStep( DomainPartition & domain );

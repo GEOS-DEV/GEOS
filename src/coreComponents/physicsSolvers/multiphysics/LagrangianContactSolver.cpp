@@ -2165,7 +2165,7 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
 
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
-      ContactBase const & contact = getConstitutiveModel<ContactBase>(subRegion, m_contactRelationName);
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
