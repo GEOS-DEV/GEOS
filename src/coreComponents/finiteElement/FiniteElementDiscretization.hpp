@@ -70,7 +70,7 @@ public:
             typename FE_TYPE >
   void calculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                         SUBREGION_TYPE * const elementSubRegion,
-                                        typename FE_TYPE::MeshData meshData,
+                                        typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData,
                                         FE_TYPE & fe ) const;
 
 
@@ -112,7 +112,7 @@ void
 FiniteElementDiscretization::
   calculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                    SUBREGION_TYPE * const elementSubRegion,
-                                   typename FE_TYPE::MeshData meshData,
+                                   typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData,
                                    FE_TYPE & finiteElement ) const
 {
   GEOSX_MARK_FUNCTION;

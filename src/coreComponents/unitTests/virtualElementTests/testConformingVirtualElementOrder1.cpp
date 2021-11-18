@@ -39,7 +39,7 @@ static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
                                           real64 & sumBasisFunctions )
 {
   static constexpr localIndex
-    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
+    maxSupportPoints = VEM::maxSupportPoints;
   real64 basisFunctionsIntegralMean[maxSupportPoints];
   VEM::calcN( 0, stack, basisFunctionsIntegralMean );
   sumBasisFunctions = 0;
@@ -60,7 +60,7 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
                                          real64 & sumZDerivatives )
 {
   static constexpr localIndex
-    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
+    maxSupportPoints = VEM::maxSupportPoints;
   real64 const dummy[VEM::numNodes][3] { { 0.0 } };
   localIndex const k = 0;
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
@@ -92,7 +92,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                       arraySlice1d< real64 > & stabTimeMonomialDofsNorm )
 {
   static constexpr localIndex
-    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
+    maxSupportPoints = VEM::maxSupportPoints;
   localIndex const numCellPoints = cellToNodes[cellIndex].size();
 
   real64 cellDiameter = 0;
@@ -156,7 +156,7 @@ static void checkSumOfQuadratureWeights( typename VEM::StackVariables stack,
                                          real64 & sumOfQuadratureWeights )
 {
   static constexpr localIndex
-    maxSupportPoints = FiniteElementBase::getMaxSupportPoints< VEM >();
+    maxSupportPoints = VEM::maxSupportPoints;
   sumOfQuadratureWeights = 0.0;
   real64 const dummy[maxSupportPoints][3] { { 0.0 } };
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
@@ -188,7 +188,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
 
   // Allocate and fill a VEM::MeshData struct.
   using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
-  typename VEM::MeshData meshData;
+  typename VEM::template MeshData< CellElementSubRegion > meshData;
   FiniteElementBase::initialize< VEM >( nodeManager, edgeManager,
                                         faceManager, cellSubRegion,
                                         meshData );

@@ -103,6 +103,7 @@ public:
    * @struct MeshData
    * @brief Variables used to initialize the class.
    */
+  template< typename SUBREGION_TYPE >
   struct MeshData
   {
     /**
@@ -127,11 +128,11 @@ public:
                           EdgeManager const & edgeManager,
                           FaceManager const & faceManager,
                           SUBREGION_TYPE const & cellSubRegion,
-                          typename LEAF::MeshData & meshData
+                          typename LEAF::template MeshData< SUBREGION_TYPE > & meshData
                           )
   {
-    LEAF::fillMeshData( nodeManager, edgeManager, faceManager, cellSubRegion,
-                        meshData );
+    LEAF::template fillMeshData< SUBREGION_TYPE >( nodeManager, edgeManager, faceManager, cellSubRegion,
+                                                   meshData );
   }
 
   /**
@@ -142,10 +143,10 @@ public:
    * @param meshData A MeshData object previously filled.
    * @param stack Object that holds stack variables.
    */
-  template< typename LEAF >
+  template< typename LEAF, typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
   void setup( localIndex const & cellIndex,
-              typename LEAF::MeshData const & meshData,
+              typename LEAF::template MeshData< SUBREGION_TYPE > const & meshData,
               typename LEAF::StackVariables & stack ) const
   {
     LEAF::setupStack( cellIndex, meshData, stack );

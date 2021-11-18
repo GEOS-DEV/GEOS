@@ -66,7 +66,7 @@ public:
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_elemsToNodes;
-    using Base::m_finiteElementSpace;
+  using Base::m_finiteElementSpace;
 
 
   /**
@@ -202,7 +202,7 @@ protected:
   arrayView1d< real64 > const m_rhs;
 
   /// Data structure containing mesh data used to setup the finite element
-  typename FE_TYPE::MeshData m_meshData;
+  typename FE_TYPE::template MeshData< SUBREGION_TYPE > m_meshData;
 
 };
 

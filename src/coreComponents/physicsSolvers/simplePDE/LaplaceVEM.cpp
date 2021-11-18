@@ -168,18 +168,18 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                        elemCenters( cellIndex, 2 ) };
 
           VEM virtualElement;
-          virtualElement.processLocalGeometry( cellIndex,
-                                               nodesCoords,
-                                               elemToNodeMap,
-                                               elementToFaceMap,
-                                               faceToNodeMap,
-                                               faceToEdgeMap,
-                                               edgeToNodeMap,
-                                               faceCenters,
-                                               faceNormals,
-                                               faceAreas,
-                                               cellCenter,
-                                               cellVolume );
+          virtualElement.processLocalGeometry< CellElementSubRegion >( cellIndex,
+                                                                       nodesCoords,
+                                                                       elemToNodeMap,
+                                                                       elementToFaceMap,
+                                                                       faceToNodeMap,
+                                                                       faceToEdgeMap,
+                                                                       edgeToNodeMap,
+                                                                       faceCenters,
+                                                                       faceNormals,
+                                                                       faceAreas,
+                                                                       cellCenter,
+                                                                       cellVolume );
 
           real64 derivativesIntMean[VEM::maxSupportPoints][3] { { 0.0 } };
           globalIndex elemDofIndex[VEM::maxSupportPoints] { 0 };

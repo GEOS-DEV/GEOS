@@ -20,7 +20,9 @@
 #define GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
 
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
-#include "mesh/FaceElementSubRegion.hpp"
+#include "codingUtilities/traits.hpp"
+#include "mesh/FaceElementSubRegion.hpp" // TBR
+#include "mesh/CellElementSubRegion.hpp" // TBR
 
 namespace geosx
 {
@@ -31,7 +33,8 @@ class ConformingVirtualElementOrder1 final : public FiniteElementBase
 {
 public:
   using InputNodeCoords = arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >;
-  using InputCellToNodeMap = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
+  template< typename SUBREGION_TYPE >
+  using InputCellToNodeMap = traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType >;
   using InputCellToFaceMap = arrayView2d< localIndex const >;
   using InputFaceToNodeMap = ArrayOfArraysView< localIndex const >;
   using InputFaceToEdgeMap = ArrayOfArraysView< localIndex const >;
@@ -61,7 +64,8 @@ public:
     real64 basisDerivativesIntegralMean[MAXCELLNODES][3];
   };
 
-  struct MeshData : public FiniteElementBase::MeshData
+  template< typename SUBREGION_TYPE >
+  struct MeshData : public FiniteElementBase::MeshData< SUBREGION_TYPE >
   {
     /**
      * Constructor
@@ -70,7 +74,7 @@ public:
     {}
 
     InputNodeCoords nodesCoords;
-    InputCellToNodeMap cellToNodeMap;
+    InputCellToNodeMap< SUBREGION_TYPE > cellToNodeMap;
     InputCellToFaceMap cellToFaceMap;
     InputFaceToNodeMap faceToNodeMap;
     InputFaceToEdgeMap faceToEdgeMap;
@@ -82,10 +86,11 @@ public:
     arrayView1d< real64 const > cellVolumes;
   };
 
+  template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
   void processLocalGeometry( localIndex const & cellIndex,
                              InputNodeCoords const & nodesCoords,
-                             InputCellToNodeMap const & cellToNodeMap,
+                             InputCellToNodeMap< SUBREGION_TYPE > const & cellToNodeMap,
                              InputCellToFaceMap const & elementToFaceMap,
                              InputFaceToNodeMap const & faceToNodeMap,
                              InputFaceToEdgeMap const & faceToEdgeMap,
@@ -97,12 +102,12 @@ public:
                              real64 const & cellVolume
                              )
   {
-    computeProjectors( cellIndex, nodesCoords, cellToNodeMap,
-                       elementToFaceMap, faceToNodeMap, faceToEdgeMap,
-                       edgeToNodeMap, faceCenters, faceNormals,
-                       faceAreas, cellCenter, cellVolume,
-                       m_numSupportPoints, m_quadratureWeight, m_basisFunctionsIntegralMean,
-                       m_stabilizationMatrix, m_basisDerivativesIntegralMean );
+    computeProjectors< SUBREGION_TYPE >( cellIndex, nodesCoords, cellToNodeMap,
+                                         elementToFaceMap, faceToNodeMap, faceToEdgeMap,
+                                         edgeToNodeMap, faceCenters, faceNormals,
+                                         faceAreas, cellCenter, cellVolume,
+                                         m_numSupportPoints, m_quadratureWeight, m_basisFunctionsIntegralMean,
+                                         m_stabilizationMatrix, m_basisDerivativesIntegralMean );
   }
 
   GEOSX_HOST_DEVICE
@@ -142,11 +147,11 @@ public:
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
                             SUBREGION_TYPE const & cellSubRegion,
-                            MeshData & meshData
+                            MeshData< SUBREGION_TYPE > & meshData
                             )
   {
     meshData.nodesCoords = nodeManager.referencePosition();
-    meshData.cellToNodeMap = cellSubRegion.nodeList();
+    meshData.cellToNodeMap = cellSubRegion.nodeList().toViewConst();
     meshData.cellToFaceMap = cellSubRegion.faceList().toViewConst();
     meshData.faceToNodeMap = faceManager.nodeList().toViewConst();
     meshData.faceToEdgeMap = faceManager.edgeList().toViewConst();
@@ -158,46 +163,39 @@ public:
     meshData.cellVolumes = cellSubRegion.getElementVolume();
   }
 
-  static void fillMeshData( NodeManager const & nodeManager,
-                            EdgeManager const & edgeManager,
-                            FaceManager const & faceManager,
-                            FaceElementSubRegion const & cellSubRegion,
-                            MeshData & meshData
-                            )
-  {}
-
   /**
    * @brief Setup method.
    * @param cellIndex The index of the cell with respect to the cell sub region to which the element
    * has been initialized previously (see @ref fillMeshData).
    * @param stack Object that holds stack variables.
    */
+  template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
   static void setupStack( localIndex const & cellIndex,
-                          MeshData const & meshData,
+                          MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack )
   {
     real64 const cellCenter[3] { meshData.cellCenters( cellIndex, 0 ),
                                  meshData.cellCenters( cellIndex, 1 ),
                                  meshData.cellCenters( cellIndex, 2 ) };
     real64 const cellVolume = meshData.cellVolumes( cellIndex );
-    computeProjectors( cellIndex,
-                       meshData.nodesCoords,
-                       meshData.cellToNodeMap,
-                       meshData.cellToFaceMap,
-                       meshData.faceToNodeMap,
-                       meshData.faceToEdgeMap,
-                       meshData.edgeToNodeMap,
-                       meshData.faceCenters,
-                       meshData.faceNormals,
-                       meshData.faceAreas,
-                       cellCenter,
-                       cellVolume,
-                       stack.numSupportPoints,
-                       stack.quadratureWeight,
-                       stack.basisFunctionsIntegralMean,
-                       stack.stabilizationMatrix,
-                       stack.basisDerivativesIntegralMean );
+    computeProjectors< SUBREGION_TYPE >( cellIndex,
+                                         meshData.nodesCoords,
+                                         meshData.cellToNodeMap,
+                                         meshData.cellToFaceMap,
+                                         meshData.faceToNodeMap,
+                                         meshData.faceToEdgeMap,
+                                         meshData.edgeToNodeMap,
+                                         meshData.faceCenters,
+                                         meshData.faceNormals,
+                                         meshData.faceAreas,
+                                         cellCenter,
+                                         cellVolume,
+                                         stack.numSupportPoints,
+                                         stack.quadratureWeight,
+                                         stack.basisFunctionsIntegralMean,
+                                         stack.stabilizationMatrix,
+                                         stack.basisDerivativesIntegralMean );
   }
 
   // TO BE REMOVED
@@ -216,6 +214,10 @@ public:
   static void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
                      real64 ( & N )[maxSupportPoints] )
   {
+    for( localIndex i = 0; i < maxSupportPoints; ++i )
+    {
+      N[i] = 0.0;
+    }
     GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
   }
 
@@ -398,7 +400,7 @@ private:
   real64 m_stabilizationMatrix[MAXCELLNODES][MAXCELLNODES];
   real64 m_basisDerivativesIntegralMean[MAXCELLNODES][3];
   InputNodeCoords m_nodesCoords;
-  InputCellToNodeMap m_cellToNodeMap;
+  InputCellToNodeMap< CellElementSubRegion > m_cellToNodeMap;
   InputCellToFaceMap m_cellToFaceMap;
   InputFaceToNodeMap m_faceToNodeMap;
   InputFaceToEdgeMap m_faceToEdgeMap;
@@ -423,11 +425,12 @@ private:
                           real64 const (&cellCenter)[3],
                           real64 ( &basisIntegrals )[MAXFACENODES],
                           real64 ( &threeDMonomialIntegrals )[3] );
+  template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
   static void
     computeProjectors( localIndex const & cellIndex,
                        InputNodeCoords const & nodesCoords,
-                       InputCellToNodeMap const & cellToNodeMap,
+                       InputCellToNodeMap< SUBREGION_TYPE > const & cellToNodeMap,
                        InputCellToFaceMap const & elementToFaceMap,
                        InputFaceToNodeMap const & faceToNodeMap,
                        InputFaceToEdgeMap const & faceToEdgeMap,

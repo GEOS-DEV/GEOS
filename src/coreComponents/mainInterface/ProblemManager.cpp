@@ -648,17 +648,18 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
                                            [&] ( auto & finiteElement )
                 {
                   using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
+                  using SUBREGION_TYPE = TYPEOFREF( subRegion );
 
-                  typename FE_TYPE::MeshData meshData;
-                  finiteElement::FiniteElementBase::initialize< FE_TYPE >(nodeManager,
-                                                                          edgeManager,
-                                                                          faceManager,
-                                                                          subRegion,
-                                                                          meshData);
+                  typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
+                  finiteElement::FiniteElementBase::initialize< FE_TYPE, SUBREGION_TYPE >( nodeManager,
+                                                                                           edgeManager,
+                                                                                           faceManager,
+                                                                                           subRegion,
+                                                                                           meshData );
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                  feDiscretization->calculateShapeFunctionGradients( X, &subRegion, meshData, finiteElement );
+                  feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
                                                                                              subRegion.getName() ) ];

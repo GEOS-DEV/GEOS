@@ -22,11 +22,12 @@ namespace geosx
 namespace finiteElement
 {
 template< localIndex MCN, localIndex MFN >
+template< typename SUBREGION_TYPE >
 GEOSX_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 computeProjectors( localIndex const & cellIndex,
                    InputNodeCoords const & nodesCoords,
-                   InputCellToNodeMap const & cellToNodeMap,
+                   InputCellToNodeMap< SUBREGION_TYPE > const & cellToNodeMap,
                    InputCellToFaceMap const & elementToFaceMap,
                    InputFaceToNodeMap const & faceToNodeMap,
                    InputFaceToEdgeMap const & faceToEdgeMap,

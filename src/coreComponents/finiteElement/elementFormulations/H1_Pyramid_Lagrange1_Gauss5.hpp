@@ -122,7 +122,7 @@ public:
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
                             SUBREGION_TYPE const & cellSubRegion,
-                            MeshData & meshData );
+                            MeshData< SUBREGION_TYPE > & meshData );
 
   /**
    * @brief Empty setup method.
@@ -130,10 +130,11 @@ public:
    * @param meshData MeshData struct filled by @ref fillMeshData.
    * @param stack Object that holds stack variables.
    */
+  template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void setupStack( localIndex const & cellIndex,
-                          MeshData const & meshData,
+                          MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
 
   /**
@@ -395,14 +396,15 @@ void H1_Pyramid_Lagrange1_Gauss5::
                 EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
                 FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
                 SUBREGION_TYPE const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                MeshData & GEOSX_UNUSED_PARAM( meshData ) )
+                MeshData< SUBREGION_TYPE > & GEOSX_UNUSED_PARAM( meshData ) )
 {}
 
+template< typename SUBREGION_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Pyramid_Lagrange1_Gauss5::
   setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-              MeshData const & GEOSX_UNUSED_PARAM( meshData ),
+              MeshData< SUBREGION_TYPE > const & GEOSX_UNUSED_PARAM( meshData ),
               StackVariables & GEOSX_UNUSED_PARAM( stack ) )
 {}
 
