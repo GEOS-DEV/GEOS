@@ -93,7 +93,7 @@ rowperm_t const & getRowPermType( LinearSolverParameters::Direct::RowPerm const 
  * @return a pair (x,y) of grid dimensions
  */
 template< typename T >
-std::pair< int, int > makeNearSquareGrid( T const N )
+std::pair< T, T > makeNearSquareGrid( T const N )
 {
   static_assert( std::is_integral< T >::value, "T should be an integral type" );
   T x = static_cast< T >( std::sqrt( N ) );
@@ -135,7 +135,7 @@ struct SuperLUDistData
     PStatInit( &stat );
 
     // Create process grid: the goal is to have the process grid as square as possible
-    auto gridsize = makeNearSquareGrid( MpiWrapper::commSize( comm ) );
+    std::pair< int, int > const gridsize = makeNearSquareGrid( MpiWrapper::commSize( comm ) );
     superlu_gridinit( comm, gridsize.first, gridsize.second, &grid );
   }
 

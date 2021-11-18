@@ -77,7 +77,8 @@
     <Coulomb
       name="fractureMaterial"
       cohesion="0.0"
-      frictionAngle="0.523598776"/>
+      frictionCoefficient="0.577350269"
+      apertureTableName="apertureTable"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -152,6 +153,11 @@
       inputVarNames="{ time }"
       coordinates="{ 0.0, 2.0 }"
       values="{ 0.0, 2.e0 }"/>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>  
+      
   </Functions>
 
   <Outputs>

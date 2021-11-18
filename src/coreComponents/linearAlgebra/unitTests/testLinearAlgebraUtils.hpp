@@ -73,12 +73,12 @@ public:
  */
 template< typename MATRIX >
 void computeIdentity( MPI_Comm comm,
-                      globalIndex N,
+                      globalIndex const N,
                       MATRIX & I )
 {
   // Construct a local CRS matrix
-  localIndex const rank = LvArray::integerConversion< localIndex >( MpiWrapper::commRank( comm ) );
-  localIndex const nproc = LvArray::integerConversion< localIndex >( MpiWrapper::commSize( comm ) );
+  int const rank = MpiWrapper::commRank( comm );
+  int const nproc = MpiWrapper::commSize( comm );
 
   localIndex const localRowSize = LvArray::integerConversion< localIndex >( N / nproc );
   localIndex const rowResidual = LvArray::integerConversion< localIndex >( N % nproc );
@@ -90,33 +90,17 @@ void computeIdentity( MPI_Comm comm,
   globalIndex const iupper = ilower + localRowSize + ( rank == 0 ? rowResidual : 0 );
 
   // Loop over rows to fill the matrix
-  forAll< parallelDevicePolicy<> >( iupper - ilower, [=] GEOSX_HOST_DEVICE ( globalIndex const iRow )
+  forAll< parallelDevicePolicy<> >( LvArray::integerConversion< localIndex >( iupper - ilower ),
+                                    [=] GEOSX_DEVICE ( localIndex const localRow )
   {
     // Set the values for global row i
-    globalIndex const i = iRow + ilower;
-    matrixView.insertNonZero( LvArray::integerConversion< localIndex >( iRow ), i, 1 );
+    globalIndex const i = localRow + ilower;
+    matrixView.insertNonZero( localRow, i, 1 );
   } );
 
   // Construct the 2D Laplace matrix
-  I.create( matrix.toViewConst(), comm );
+  I.create( matrix.toViewConst(), matrix.numRows(), comm );
 
-}
-
-/**
- * @brief Construct a square zero matrix.
- * @tparam MATRIX type of matrix
- * @param comm MPI communicator
- * @param N global size of the natrix
- * @param Z the output matrix
- */
-template< typename MATRIX >
-void computeZero( MPI_Comm comm,
-                  globalIndex N,
-                  MATRIX & Z )
-{
-  Z.createWithGlobalSize( N, 0, comm );
-  Z.open();
-  Z.close();
 }
 
 /**
@@ -132,15 +116,15 @@ void computeZero( MPI_Comm comm,
  */
 template< typename MATRIX >
 void compute2DLaplaceOperator( MPI_Comm comm,
-                               globalIndex n,
+                               globalIndex const n,
                                MATRIX & laplace2D )
 {
   // total dofs = n^2
   globalIndex N = n * n;
 
   // Construct a local CRSMatrix
-  localIndex const rank = LvArray::integerConversion< localIndex >( MpiWrapper::commRank( comm ) );
-  localIndex const nproc = LvArray::integerConversion< localIndex >( MpiWrapper::commSize( comm ) );
+  int const rank = MpiWrapper::commRank( comm );
+  int const nproc = MpiWrapper::commSize( comm );
 
   localIndex const localRowSize = LvArray::integerConversion< localIndex >( N / nproc );
   localIndex const rowResidual = LvArray::integerConversion< localIndex >( N % nproc );
@@ -153,7 +137,7 @@ void compute2DLaplaceOperator( MPI_Comm comm,
 
   // Loop over rows to fill the matrix
   forAll< parallelDevicePolicy<> >( LvArray::integerConversion< localIndex >( iupper - ilower ),
-                                    [matrixView, n, N, ilower] GEOSX_HOST_DEVICE ( localIndex const localRow )
+                                    [matrixView, n, N, ilower] GEOSX_DEVICE ( localIndex const localRow )
   {
 
     // Allocate arrays to fill the matrix (values and columns)
@@ -207,7 +191,7 @@ void compute2DLaplaceOperator( MPI_Comm comm,
   } );
 
   // Construct the 2D Laplace matrix
-  laplace2D.create( matrix.toViewConst(), comm );
+  laplace2D.create( matrix.toViewConst(), matrix.numRows(), comm );
 }
 
 /**
@@ -350,8 +334,8 @@ void compute2DElasticityOperator( MPI_Comm const comm,
                                   real64 const poissonRatio,
                                   MATRIX & elasticity2D )
 {
-  localIndex const rank = LvArray::integerConversion< localIndex >( MpiWrapper::commRank( comm ) );
-  localIndex const nproc = LvArray::integerConversion< localIndex >( MpiWrapper::commSize( comm ) );
+  int const rank = MpiWrapper::commRank( comm );
+  int const nproc = MpiWrapper::commSize( comm );
 
   GEOSX_ERROR_IF( nCellsY < nproc, "Less than one cell row per processor is not supported" );
 
@@ -380,36 +364,35 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   real64 Ke[8][8];
   Q12d_local( hx, hy, youngModulus, poissonRatio, Ke );
 
-  globalIndex iStart = LvArray::math::max( iCellLower - nCellsX, globalIndex( 0 ) );
-  globalIndex iEnd   = LvArray::math::min( iCellUpper + nCellsX, nCells );
+  globalIndex const iStart = LvArray::math::max( iCellLower - nCellsX, globalIndex( 0 ) );
+  globalIndex const iEnd   = LvArray::math::min( iCellUpper + nCellsX, nCells );
 
-  globalIndex minGlobalDof = iNodeLower*2;
-  globalIndex maxGlobalDof = iNodeUpper*2 - 1;
+  globalIndex const minGlobalDof = iNodeLower*2;
+  globalIndex const maxGlobalDof = iNodeUpper*2 - 1;
 
 #if 1
   for( globalIndex iCell = iStart; iCell < iEnd; ++iCell )
   {
     // Loop over grid cells
-    globalIndex localDofIndex[8];
+    globalIndex dofIndex[8];
 
-    computeQuadElementDofIndices( iCell, nCellsX, localDofIndex );
+    computeQuadElementDofIndices( iCell, nCellsX, dofIndex );
 
     // Element matrix assembly into the local matrix
 
     for( integer i = 0; i < 8; ++i )
     {
-      globalIndex ind = localDofIndex[i] - minGlobalDof;
-      if( ( 0 <= ind ) && ( localDofIndex[i] <= maxGlobalDof )  )
+      if( ( minGlobalDof <= dofIndex[i] ) && ( dofIndex[i] <= maxGlobalDof ) )
       {
-        sparsity.insertNonZeros( LvArray::integerConversion< localIndex >( ind ),
-                                 localDofIndex,
-                                 localDofIndex + 8 );
+        sparsity.insertNonZeros( LvArray::integerConversion< localIndex >( dofIndex[i] - minGlobalDof ),
+                                 dofIndex,
+                                 dofIndex + 8 );
       }
     }
   }
 #else // not working on Lassen
   SparsityPatternView< globalIndex > sparsityView = sparsity.toView();
-  forAll< parallelDevicePolicy<> >( iEnd-iStart, [=] GEOSX_HOST_DEVICE ( localIndex const iCell )
+  forAll< parallelDevicePolicy<> >( iEnd-iStart, [=] GEOSX_DEVICE ( localIndex const iCell )
   {
     // Loop over grid cells
     globalIndex localDofIndex[8];
@@ -420,10 +403,9 @@ void compute2DElasticityOperator( MPI_Comm const comm,
 
     for( integer i = 0; i < 8; ++i )
     {
-      globalIndex ind = localDofIndex[i] - minGlobalDof;
-      if( ( 0 <= ind ) && ( localDofIndex[i] <= maxGlobalDof )  )
+      if( ( minGlobalDof <= dofIndex[i] ) && ( localDofIndex[i] <= maxGlobalDof )  )
       {
-        sparsityView.insertNonZeros( LvArray::integerConversion< localIndex >( ind ),
+        sparsityView.insertNonZeros( LvArray::integerConversion< localIndex >( dofIndex[i] - minGlobalDof ),
                                      localDofIndex,
                                      localDofIndex + 8 );
       }
@@ -437,20 +419,20 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   matrix.assimilate< parallelDevicePolicy<> >( std::move( sparsity ) );
   CRSMatrixView< real64, globalIndex > matrixView = matrix.toView();
 
-  forAll< parallelDevicePolicy<> >( iEnd-iStart, [=] GEOSX_HOST_DEVICE ( localIndex const iCell )
+  forAll< parallelDevicePolicy<> >( LvArray::integerConversion< localIndex >( iEnd - iStart ),
+                                    [=] GEOSX_DEVICE ( localIndex const iCell )
   {
     // Loop over grid cells
-    globalIndex localDofIndex[8];
-    computeQuadElementDofIndices( iCell + iStart, nCellsX, localDofIndex );
+    globalIndex dofIndex[8];
+    computeQuadElementDofIndices( iCell + iStart, nCellsX, dofIndex );
 
     // Element matrix assembly into the local matrix
     for( integer i = 0; i < 8; ++i )
     {
-      globalIndex ind = localDofIndex[i] - minGlobalDof;
-      if( ( 0 <= ind ) && ( localDofIndex[i] <= maxGlobalDof )  )
+      if( ( minGlobalDof <= dofIndex[i] ) && ( dofIndex[i] <= maxGlobalDof )  )
       {
-        matrixView.addToRowBinarySearch< parallelDeviceAtomic >( LvArray::integerConversion< localIndex >( ind ),
-                                                                 localDofIndex,
+        matrixView.addToRowBinarySearch< parallelDeviceAtomic >( LvArray::integerConversion< localIndex >( dofIndex[i] - minGlobalDof ),
+                                                                 dofIndex,
                                                                  Ke[i],
                                                                  8 );
       }
@@ -460,7 +442,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   // Impose Dirichlet boundary conditions: fix domain bottom (first 2*(nCellsX + 1) rows of matrix)
   if( rank == 0 )
   {
-    forAll< parallelDevicePolicy<> >( 2 * (nCellsX + 1), [=] GEOSX_HOST_DEVICE ( localIndex const localRow )
+    forAll< parallelDevicePolicy<> >( 2 * (nCellsX + 1), [=] GEOSX_DEVICE ( localIndex const localRow )
     {
       arraySlice1d< globalIndex const > const columns = matrixView.getColumns( localRow );
       arraySlice1d< real64 > const entries = matrixView.getEntries( localRow );
@@ -477,7 +459,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   }
 
   // Construct the 2D elasticity (plane strain) operator
-  elasticity2D.create( matrix.toViewConst(), comm );
+  elasticity2D.create( matrix.toViewConst(), matrix.numRows(), comm );
 }
 
 ///@}

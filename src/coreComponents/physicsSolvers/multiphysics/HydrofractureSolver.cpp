@@ -248,14 +248,13 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
   // arrayView1d<real64 const> const faceArea = faceManager.faceArea();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-
-  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
-
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
+
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
-    arrayView1d< real64 > const effectiveAperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString() );
+    arrayView1d< real64 > const hydraulicAperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::hydraulicApertureString() );
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 > const deltaVolume = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() );
     arrayView1d< real64 const > const area = subRegion.getElementArea();
@@ -290,7 +289,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
                                             volume,
                                             deltaVolume,
                                             aperture,
-                                            effectiveAperture
+                                            hydraulicAperture
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                             ,
                                             apertureF,
@@ -305,7 +304,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
 //#if defined(USE_CUDA)
 //    deltaVolume.move( LvArray::MemorySpace::cuda );
 //    aperture.move( LvArray::MemorySpace::cuda );
-//    effectiveAperture.move( LvArray::MemorySpace::cuda );
+//    hydraulicAperture.move( LvArray::MemorySpace::cuda );
 //#endif
   } );
 }
@@ -829,7 +828,6 @@ HydrofractureSolver::
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
 
   string const presDofKey = m_dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
   string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
@@ -839,8 +837,6 @@ HydrofractureSolver::
   CRSMatrixView< real64 const, localIndex const > const
   dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
 
-  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
-
   forTargetSubRegionsComplete< FaceElementSubRegion >( mesh,
                                                        [&]( localIndex const,
                                                             localIndex const,
@@ -848,6 +844,8 @@ HydrofractureSolver::
                                                             ElementRegionBase const & region,
                                                             FaceElementSubRegion const & subRegion )
   {
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
     string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
