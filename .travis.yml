@@ -127,6 +127,18 @@ draft_script: &draft_script
       exit 0
     fi
 
+# PR must be assigned to be merged.
+# This script will fail if this is not the case.
+assign_script: &assign_script
+  script:
+  # TRAVIS_PULL_REQUEST is false if job is not from a PR
+  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then exit 0; fi;
+  - |
+    is_assigned=$(curl -H "Accept: application/vnd.github.v3+json" \
+        https://api.github.com/repos/$TRAVIS_PULL_REQUEST_SLUG/pulls/$TRAVIS_PULL_REQUEST | \
+        jq ".assignees|length")
+  - if [[ $is_assigned == 0 ]]; then exit 1; else exit 0; fi
+
 return_script: &return_script
   script:
   # Verifies if all the "checks" jobs passed
@@ -149,6 +161,7 @@ jobs:
   - name: code_style
   - name: documentation
   - name: check_submodules
+  - name: check_pr_is_assigned
   include:
   - stage: checks
     name: check_pr_is_not_a_draft
@@ -170,6 +183,9 @@ jobs:
   - stage: checks
     name: check_submodules
     script: scripts/test_submodule_updated.sh
+  - stage: checks
+    name: check_pr_is_assigned
+    <<: *assign_script
   - stage: builds
     name: Ubuntu18.04_clang8.0.0_cuda10.1.243_debug
     <<: *geosx_linux_build
