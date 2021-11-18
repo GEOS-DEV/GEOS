@@ -6,10 +6,7 @@ compilers:
       cxx: /usr/tce/packages/clang/clang-10.0.0/bin/clang++
       f77: /usr/tce/packages/gcc/gcc-4.9.3/bin/gfortran
       fc: /usr/tce/packages/gcc/gcc-4.9.3/bin/gfortran
-    flags:
-      cflags: -march=native -mtune=native
-      cxxflags: -march=native -mtune=native
-      fflags: -march=native -mtune=native
+    flags: {}
     operating_system: rhel7
     target: x86_64
     modules: []
@@ -22,10 +19,7 @@ compilers:
       cxx: /usr/tce/packages/clang/clang-10.0.1/bin/clang++
       f77: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
       fc: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
-    flags:
-      cflags: -march=native -mtune=native
-      cxxflags: -march=native -mtune=native
-      fflags: -march=native -mtune=native
+    flags: {}
     operating_system: rhel7
     target: x86_64
     modules: []
@@ -38,10 +32,7 @@ compilers:
       cxx: /usr/tce/packages/gcc/gcc-8.1.0/bin/g++
       f77: /usr/tce/packages/gcc/gcc-8.1.0/bin/gfortran
       fc: /usr/tce/packages/gcc/gcc-8.1.0/bin/gfortran
-    flags:
-      cflags: -march=native -mtune=native
-      cxxflags: -march=native -mtune=native
-      fflags: -march=native -mtune=native
+    flags: {}
     operating_system: rhel7
     target: x86_64
     modules: []
@@ -54,10 +45,7 @@ compilers:
       cxx: /usr/tce/packages/gcc/gcc-8.3.1/bin/g++
       f77: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
       fc: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
-    flags:
-      cflags: -march=native -mtune=native
-      cxxflags: -march=native -mtune=native
-      fflags: -march=native -mtune=native
+    flags: {}
     operating_system: rhel7
     target: x86_64
     modules: []
@@ -71,9 +59,9 @@ compilers:
       f77: /usr/tce/packages/intel/intel-19.1.2/bin/ifort
       fc: /usr/tce/packages/intel/intel-19.1.2/bin/ifort
     flags:
-      cflags: -gcc-name=/usr/tce/packages/gcc/gcc-8.3.1/bin/gcc -march=native -mtune=native
-      cxxflags: -gxx-name=/usr/tce/packages/gcc/gcc-8.3.1/bin/g++ -march=native -mtune=native
-      fflags: -gcc-name=/usr/tce/packages/gcc/gcc-8.3.1/bin/gcc -march=native -mtune=native
+      cflags: -gcc-name=/usr/tce/packages/gcc/gcc-8.3.1/bin/gcc
+      cxxflags: -gxx-name=/usr/tce/packages/gcc/gcc-8.3.1/bin/g++
+      fflags: -gcc-name=/usr/tce/packages/gcc/gcc-8.3.1/bin/gcc
     operating_system: rhel7
     target: x86_64
     modules: []

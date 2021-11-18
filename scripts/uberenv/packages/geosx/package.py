@@ -169,7 +169,7 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Dev tools
     #
-    depends_on('uncrustify@0.71:')
+    depends_on('uncrustify@0.70geosx')
 
     #
     # Documentation
