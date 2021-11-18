@@ -169,7 +169,9 @@ struct ConstitutivePassThru< CompressibleSolidBase >
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
-                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >
+ >::execute( constitutiveRelation,
                                                                                                                std::forward< LAMBDA >( lambda ) );
   }
 
@@ -178,7 +180,9 @@ struct ConstitutivePassThru< CompressibleSolidBase >
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
-                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >
+ >::execute( constitutiveRelation,
                                                                                                                std::forward< LAMBDA >( lambda ) );
   }
 };
@@ -219,6 +223,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  PorousSolid< DruckerPragerExtended >,
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
@@ -239,6 +244,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  PorousSolid< DruckerPragerExtended >,
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
