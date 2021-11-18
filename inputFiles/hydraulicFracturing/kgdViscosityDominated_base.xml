@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <Solvers
     gravityVector="{ 0.0, 0.0, -0.0 }">
+	<!-- Sphinx_Solvers_Hydrofracture -->
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
@@ -16,6 +16,8 @@
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="2">
+	  <!-- Sphinx_Solvers_Hydrofracture_End -->
+
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="20"
@@ -24,6 +26,7 @@
         directParallel="0"/>
     </Hydrofracture>
 
+	<!-- Sphinx_Solvers_SolidMechanicsLagrangianSSLE -->
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
@@ -31,7 +34,9 @@
       targetRegions="{ Domain, Fracture }"
       solidMaterialNames="{ rock }"
       contactRelationName="fractureContact"/>
+	<!-- Sphinx_Solvers_SolidMechanicsLagrangianSSLE_End -->
 
+    <!-- Sphinx_Solvers_SinglePhaseFVM -->
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
@@ -39,14 +44,18 @@
       fluidNames="{ water }"
       solidNames="{ fractureFilling }"
       permeabilityNames="{ fracturePerm }"/>
+    <!-- Sphinx_Solvers_SinglePhaseFVM_End -->
 
+    <!-- Sphinx_Solvers_SurfaceGenerator -->
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
       solidMaterialNames="{ rock }"
-      rockToughness="0.3e6"
+      rockToughness="1e4"
       mpiCommOrder="1"/>
+    <!-- Sphinx_Solvers_SurfaceGenerator_End -->
+
   </Solvers>
 
   <NumericalMethods>
@@ -60,10 +69,10 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        coefficientName="permeability"
-        meanPermCoefficient="0.8"/>
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
+
 
   <ElementRegions>
     <CellElementRegion
@@ -78,20 +87,24 @@
   </ElementRegions>
 
   <Constitutive>
+	<!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid -->
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="0.005"
+      defaultViscosity="1.0e-3"
       referencePressure="0.0"
-      compressibility="5e-13"
-      referenceViscosity="5.0e-3"
+      compressibility="5e-10"
+      referenceViscosity="1.0e-3"
       viscosibility="0.0"/>
+	<!-- Sphinx_Constitutive_CompressibleSinglePhaseFluid_End -->
 
+	<!-- Sphinx_Constitutive_ElasticIsotropic -->
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
-      defaultBulkModulus="20.0e9"
-      defaultShearModulus="12.0e9"/>
+      defaultYoungModulus="30.0e9"
+      defaultPoissonRatio="0.25"/>
+	<!-- Sphinx_Constitutive_ElasticIsotropic_End -->
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -113,16 +126,10 @@
 
     <Contact
       name="fractureContact"
-      penaltyStiffness="1.0"
-      apertureTableName="apertureTable" />
-  </Constitutive>
+      penaltyStiffness="1.0e0"
+      apertureTableName="aperTable"/>
 
-  <Functions>
-    <TableFunction
-        name="apertureTable"
-        coordinates="{ -0.01, -1.0e-3, 0.0 }"
-        values="{ 0.005, 0.01e-3, 0.02e-3 }"/>
-  </Functions>
+  </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification
@@ -133,6 +140,7 @@
       fieldName="water_density"
       scale="1000"/>
 
+	<!-- Sphinx_FieldSpecifications_FracturePlane -->
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
@@ -140,7 +148,9 @@
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
+	<!-- Sphinx_FieldSpecifications_FracturePlane_End -->
 
+	<!-- Sphinx_FieldSpecifications_InitFracture -->
     <FieldSpecification
       name="frac"
       initialCondition="1"
@@ -148,6 +158,15 @@
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
+	<!-- Sphinx_FieldSpecifications_InitFracture_End -->
+
+    <FieldSpecification
+      name="xConstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
       name="yconstraint"
@@ -163,27 +182,30 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ all }"/>
+      setNames="{ zneg, zpos }"/>
 
-    <FieldSpecification
-      name="xConstraint"
-      objectPath="nodeManager"
-      fieldName="TotalDisplacement"
-      component="0"
-      scale="0.0"
-      setNames="{ xneg, xpos }"/>
-
+	<!-- Sphinx_SourceFlux_InjSource -->
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
-      scale="-1.0"
+      scale="-5e-2"
       setNames="{ source }"/>
+	<!-- Sphinx_SourceFlux_InjSource_End -->
   </FieldSpecifications>
+
   
+  <Functions>
+    <TableFunction
+      name="aperTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>
+  </Functions>
+ 
+
   <Outputs>
     <Silo
       name="siloOutput"
-      plotFileRoot="zeroToughness"
+      plotFileRoot="plot"
       plotLevel="3"
       parallelThreads="48"/>
 

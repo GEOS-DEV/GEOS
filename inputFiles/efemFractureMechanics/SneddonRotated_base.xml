@@ -17,7 +17,8 @@
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="gmres"
+        directParallel="0"
+        solverType="direct"
         preconditionerType="amg"
         amgAggresiveCoarseningLevels="1"
         logLevel="0"/>

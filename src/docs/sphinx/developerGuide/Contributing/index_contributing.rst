@@ -24,3 +24,5 @@ Contributing
    Caliper.rst
 
    UsingDocker.rst
+
+   InstallWin.rst
