@@ -432,7 +432,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
   fsManager.apply( time_n+ dt,
                    domain,
                    "ElementRegions",
-                   viewKeyStruct::fractureTractionString(),
+                   viewKeyStruct::tractionString(),
                    [&] ( FieldSpecificationBase const & fs,
                          string const &,
                          SortedArrayView< localIndex const > const & targetSet,
@@ -442,7 +442,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
     fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
                                                                        time_n+dt,
                                                                        subRegion,
-                                                                       viewKeyStruct::fractureTractionString() );
+                                                                       viewKeyStruct::tractionString() );
   } );
 
 }
@@ -572,10 +572,10 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
     arrayView2d< real64 const > const & oldJump  =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::oldDispJumpString() );
 
-    arrayView2d< real64 > const & fractureTraction =
-      subRegion.getReference< array2d< real64 > >( viewKeyStruct::fractureTractionString() );
+    arrayView2d< real64 > const & traction =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
 
-    arrayView3d< real64 > const & dFractureTraction_dJump =
+    arrayView3d< real64 > const & dTraction_dJump =
       subRegion.getReference< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() );
 
     constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
@@ -588,8 +588,8 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
                                           contactWrapper,
                                           oldJump,
                                           jump,
-                                          fractureTraction,
-                                          dFractureTraction_dJump );
+                                          traction,
+                                          dTraction_dJump );
     } );
   } );
 }

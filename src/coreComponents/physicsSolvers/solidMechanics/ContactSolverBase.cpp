@@ -102,20 +102,17 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
             setDescription( "An array that holds the tractions on the fracture." ).
             reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() ).
-            reference().resizeDimension< 1, 2 >( 3, 3 );
-
           subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::fractureStateString() ).
             setPlotLevel( PlotLevel::LEVEL_0 ).
             setRegisteringObjects( this->getName()).
             setDescription( "An array that holds the fracture state." );
-          initializeFractureState( meshLevel, viewKeyStruct::fractureStateString() );
+          // initializeFractureState( meshLevel, viewKeyStruct::fractureStateString() );
 
           subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::oldFractureStateString() ).
             setPlotLevel( PlotLevel::NOPLOT ).
             setRegisteringObjects( this->getName()).
             setDescription( "An array that holds the fracture state." );
-          initializeFractureState( meshLevel, viewKeyStruct::oldFractureStateString() );
+          // initializeFractureState( meshLevel, viewKeyStruct::oldFractureStateString() );
 
         } );
       } );

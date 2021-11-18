@@ -591,7 +591,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
     arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
 
     arrayView2d< real64 > const & fractureTraction =
-      subRegion.template getReference< array2d< real64 > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::fractureTractionString() );
+      subRegion.template getReference< array2d< real64 > >( SolidMechanicsEmbeddedFractures::viewKeyStruct::tractionString() );
 
     arrayView1d< real64 >  const & dTdpf =
       subRegion.template getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString() );

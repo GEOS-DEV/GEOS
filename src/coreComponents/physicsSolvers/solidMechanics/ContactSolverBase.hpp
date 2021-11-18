@@ -36,14 +36,14 @@ public:
 
   ~ContactSolverBase() override;
 
-  virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
+  virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override;
 
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
-  virtual bool updateConfiguration( DomainPartition & domain ) override;
+  // virtual bool updateConfiguration( DomainPartition & domain ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -71,8 +71,6 @@ public:
   string const & getFractureRegionName() const { return m_fractureRegionName; }
 
 protected:
-
-  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void postProcessInput() override;
 
