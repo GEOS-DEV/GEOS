@@ -67,10 +67,10 @@ class Geosx(CMakePackage, CudaPackage):
     variant('trilinos', default=True, description='Build Trilinos support.')
     variant('hypre', default=True, description='Build HYPRE support.')
     variant('hypre-cuda', default=False, description='Build HYPRE with CUDA support.')
-    variant('petsc', default=True, description='Build PETSc support.')
+    variant('petsc', default=False, description='Build PETSc support.')
     variant('scotch', default=True, description='Build Scotch support.')
     variant('lai',
-            default='trilinos',
+            default='hypre',
             description='Linear algebra interface.',
             values=('trilinos', 'hypre', 'petsc'),
             multi=False)
