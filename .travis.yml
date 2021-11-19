@@ -129,7 +129,7 @@ draft_script: &draft_script
 
 # PR must be assigned to be merged.
 # This script will fail if this is not the case.
-assign_script: &assign_script
+assigned_script: &assigned_script
   script:
   # TRAVIS_PULL_REQUEST is false if job is not from a PR
   - if [[ $TRAVIS_PULL_REQUEST == false ]]; then exit 0; fi;
