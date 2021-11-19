@@ -185,7 +185,7 @@ jobs:
     script: scripts/test_submodule_updated.sh
   - stage: checks
     name: check_pr_is_assigned
-    <<: *assign_script
+    <<: *assigned_script
   - stage: builds
     name: Ubuntu18.04_clang8.0.0_cuda10.1.243_debug
     <<: *geosx_linux_build
