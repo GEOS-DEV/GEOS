@@ -101,7 +101,7 @@ void compareVectors( VEC const & x,
     return;
   }
 
-  EXPECT_TRUE( MpiWrapper::commCompare( y.getComm(), x.getComm() ) );
+  EXPECT_TRUE( MpiWrapper::commCompare( y.comm(), x.comm() ) );
   EXPECT_EQ( y.localSize(), x.localSize() );
   EXPECT_EQ( y.globalSize(), x.globalSize() );
 
@@ -138,7 +138,7 @@ TYPED_TEST_P( VectorTest, create )
   x.create( localSize, comm );
 
   EXPECT_TRUE( x.ready() );
-  EXPECT_TRUE( MpiWrapper::commCompare( x.getComm(), comm ) );
+  EXPECT_TRUE( MpiWrapper::commCompare( x.comm(), comm ) );
   EXPECT_EQ( x.localSize(), localSize );
   EXPECT_EQ( x.globalSize(), globalSize );
   EXPECT_EQ( x.ilower(), rankOffset );
@@ -178,7 +178,7 @@ TYPED_TEST_P( VectorTest, moveConstruction )
   Vector y( std::move( x ) );
 
   EXPECT_TRUE( y.ready() );
-  EXPECT_TRUE( MpiWrapper::commCompare( y.getComm(), MPI_COMM_GEOSX ) );
+  EXPECT_TRUE( MpiWrapper::commCompare( y.comm(), MPI_COMM_GEOSX ) );
   EXPECT_EQ( y.localSize(), localSize );
   EXPECT_EQ( y.globalSize(), globalSize );
   compareValues( y.values(), values );
@@ -192,7 +192,7 @@ TYPED_TEST_P( VectorTest, copy )
   createAndAssemble< parallelDevicePolicy<> >( 3, x );
 
   Vector y;
-  y.create( x.localSize(), x.getComm() );
+  y.create( x.localSize(), x.comm() );
   y.copy( x );
 
   compareVectors( x, y );

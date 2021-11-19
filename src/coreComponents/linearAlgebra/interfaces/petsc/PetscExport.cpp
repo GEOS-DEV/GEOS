@@ -35,13 +35,13 @@ PetscExport::PetscExport( PetscMatrix const & mat,
   globalIndex const numGlobalRows = mat.numGlobalRows();
   localIndex const numLocalRows = mat.numLocalRows();
 
-  int const rank = MpiWrapper::commRank( mat.getComm() );
+  int const rank = MpiWrapper::commRank( mat.comm() );
   localIndex const N = ( rank == m_targetRank ) ? numGlobalRows : 0;
 
   // create vector scatter context
   Vec tmpGlobal;
   Vec tmpLocal;
-  GEOSX_LAI_CHECK_ERROR( VecCreateMPI( mat.getComm(), numLocalRows, numGlobalRows, &tmpGlobal ) );
+  GEOSX_LAI_CHECK_ERROR( VecCreateMPI( mat.comm(), numLocalRows, numGlobalRows, &tmpGlobal ) );
   GEOSX_LAI_CHECK_ERROR( VecCreateSeq( PETSC_COMM_SELF, N, &tmpLocal ) );
   GEOSX_LAI_CHECK_ERROR( ISCreateStride( PETSC_COMM_SELF, N, 0, 1, &m_indexSet ) );
   GEOSX_LAI_CHECK_ERROR( VecScatterCreate( tmpGlobal, m_indexSet, tmpLocal, m_indexSet, &m_scatter ) );
@@ -61,7 +61,7 @@ void PetscExport::exportCRS( PetscMatrix const & mat,
                              arrayView1d< COLUMN_TYPE > const & colIndices,
                              arrayView1d< real64 > const & values ) const
 {
-  int const rank = MpiWrapper::commRank( mat.getComm() );
+  int const rank = MpiWrapper::commRank( mat.comm() );
 
   // import on target rank if needed, or extract diag+offdiag part in each rank
   Mat * submat; // needed by MatCreateSubMatrices API
@@ -123,7 +123,7 @@ void PetscExport::exportVector( PetscVector const & vec,
   values.move( LvArray::MemorySpace::host, false );
   if( m_targetRank >= 0 )
   {
-    int const rank = MpiWrapper::commRank( vec.getComm() );
+    int const rank = MpiWrapper::commRank( vec.comm() );
     localIndex const N = ( rank == m_targetRank ) ? vec.globalSize() : 0;
 
     Vec localVector;
@@ -146,7 +146,7 @@ void PetscExport::importVector( arrayView1d< const real64 > const & values,
   values.move( LvArray::MemorySpace::host, false );
   if( m_targetRank >= 0 )
   {
-    int const rank = MpiWrapper::commRank( vec.getComm() );
+    int const rank = MpiWrapper::commRank( vec.comm() );
     localIndex const N = ( rank == m_targetRank ) ? vec.globalSize() : 0;
 
     // Note: PETSc creates a vector wrapper around values by taking a pointer-to-const and casting away const-ness (!)

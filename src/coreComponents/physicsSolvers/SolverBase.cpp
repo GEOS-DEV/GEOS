@@ -236,30 +236,34 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   m_localMatrix.zero();
   m_rhs.zero();
 
-  arrayView1d< real64 > localRhs = m_rhs.open();
+  {
+    arrayView1d< real64 > const localRhs = m_rhs.open();
 
-  // call assemble to fill the matrix and the rhs
-  assembleSystem( time_n,
-                  dt,
-                  domain,
-                  m_dofManager,
-                  m_localMatrix.toViewConstSizes(),
-                  localRhs );
+    // call assemble to fill the matrix and the rhs
+    assembleSystem( time_n,
+                    dt,
+                    domain,
+                    m_dofManager,
+                    m_localMatrix.toViewConstSizes(),
+                    localRhs );
 
-  // apply boundary conditions to system
-  applyBoundaryConditions( time_n,
-                           dt,
-                           domain,
-                           m_dofManager,
-                           m_localMatrix.toViewConstSizes(),
-                           localRhs );
+    // apply boundary conditions to system
+    applyBoundaryConditions( time_n,
+                             dt,
+                             domain,
+                             m_dofManager,
+                             m_localMatrix.toViewConstSizes(),
+                             localRhs );
 
-  m_rhs.close();
+    m_rhs.close();
+  }
 
   if( m_assemblyCallback )
   {
-    // TODO: figure out why callback takes LA objects by value, not by view
-    // m_assemblyCallback( m_localMatrix, localRhs );
+    // Make a copy of LA objects and ship off to the callback
+    array1d< real64 > localRhsCopy( m_rhs.localSize() );
+    localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
+    m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
   }
 
   // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
@@ -494,8 +498,10 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
       if( m_assemblyCallback )
       {
-        // TODO: figure out why callback takes LA objects by value, not by view
-        // m_assemblyCallback( m_localMatrix, localRhs );
+        // Make a copy of LA objects and ship off to the callback
+        array1d< real64 > localRhsCopy( m_rhs.localSize() );
+        localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
+        m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
       }
 
       // TODO: maybe add scale function here?

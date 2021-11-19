@@ -165,7 +165,7 @@ VECTOR permuteVector( VECTOR const & vector,
                       MATRIX const & permutationMatrix )
 {
   VECTOR permutedVector;
-  permutedVector.create( vector.localSize(), permutationMatrix.getComm() );
+  permutedVector.create( vector.localSize(), permutationMatrix.comm() );
   permutationMatrix.apply( vector, permutedVector );
   return permutedVector;
 }
@@ -182,6 +182,7 @@ MATRIX permuteMatrix( MATRIX const & matrix,
 {
   MATRIX permutedMatrix;
   matrix.multiplyRARt( permutationMatrix, permutedMatrix );
+  return matrix;
 }
 
 /**
@@ -198,6 +199,7 @@ MATRIX permuteMatrix( MATRIX const & matrix,
 {
   MATRIX permutedMatrix;
   matrix.multiplyRAP( permutationMatrixLeft, permutationMatrixRight, permutedMatrix );
+  return matrix;
 }
 
 /**
@@ -297,7 +299,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
       {
         rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
       }
-      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
 
       ++k;
       rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
@@ -315,7 +317,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
       {
         rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
       }
-      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
 
       ++k;
       rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
@@ -333,7 +335,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
       {
         rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
       }
-      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
       break;
     }
     default:

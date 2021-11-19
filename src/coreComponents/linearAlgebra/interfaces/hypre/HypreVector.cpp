@@ -54,7 +54,7 @@ HypreVector & HypreVector::operator=( HypreVector const & src )
     reset();
     if( src.created() )
     {
-      create( src.localSize(), src.getComm() );
+      create( src.localSize(), src.comm() );
       copy( src );
     }
   }
@@ -233,9 +233,9 @@ void HypreVector::pointwiseProduct( HypreVector const & x,
   GEOSX_LAI_ASSERT_EQ( localSize(), x.localSize() );
   GEOSX_LAI_ASSERT_EQ( localSize(), y.localSize() );
 
-  arrayView1d< real64 const > my_values = m_values.toViewConst();
-  arrayView1d< real64 const > x_values = x.m_values.toViewConst();
-  arrayView1d< real64 > y_values = y.m_values.toView();
+  arrayView1d< real64 const > const my_values = m_values.toViewConst();
+  arrayView1d< real64 const > const x_values = x.m_values.toViewConst();
+  arrayView1d< real64 > const y_values = y.m_values.toView();
   forAll< hypre::execPolicy >( localSize(), [y_values, my_values, x_values] GEOSX_HYPRE_DEVICE ( localIndex const i )
   {
     y_values[i] = my_values[i] * x_values[i];
@@ -252,7 +252,7 @@ real64 HypreVector::norm1() const
   {
     localNorm += LvArray::math::abs( values[i] );
   } );
-  return MpiWrapper::sum( localNorm.get(), getComm() );
+  return MpiWrapper::sum( localNorm.get(), comm() );
 }
 
 real64 HypreVector::norm2() const
@@ -271,7 +271,7 @@ real64 HypreVector::normInf() const
   {
     localNorm.max( LvArray::math::abs( values[i] ) );
   } );
-  return MpiWrapper::max( localNorm.get(), getComm() );
+  return MpiWrapper::max( localNorm.get(), comm() );
 }
 
 globalIndex HypreVector::globalSize() const
@@ -302,8 +302,8 @@ void HypreVector::print( std::ostream & os ) const
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  int const myRank = MpiWrapper::commRank( getComm() );
-  int const numProcs = MpiWrapper::commSize( getComm() );
+  int const myRank = MpiWrapper::commRank( comm() );
+  int const numProcs = MpiWrapper::commSize( comm() );
   char str[77];
 
   constexpr char const lineFormat[] = "{:>11}{:>18}{:>28.16e}\n";
@@ -317,7 +317,7 @@ void HypreVector::print( std::ostream & os ) const
 
   for( int rank = 0; rank < numProcs; ++rank )
   {
-    MpiWrapper::barrier( getComm() );
+    MpiWrapper::barrier( comm() );
     if( rank == myRank )
     {
       arrayView1d< real64 const > const data = values();
@@ -347,8 +347,7 @@ void HypreVector::write( string const & filename,
     }
     case LAIOutputFormat::MATRIX_MARKET:
     {
-      MPI_Comm const comm = getComm();
-      int const rank = MpiWrapper::commRank( comm );
+      int const rank = MpiWrapper::commRank( comm() );
 
       // Write MatrixMarket header
       if( rank == 0 )
@@ -363,13 +362,13 @@ void HypreVector::write( string const & filename,
       {
         // Copy distributed parVector in a local vector on every process with at least one component
         // Warning: works for a parVector that is smaller than 2^31-1
-        hypre_Vector * const fullVector = hypre_ParVectorToVectorAll( m_vec );
+        hypre_Vector * const fullVector = (hypre_Vector *)hypre::parVectorToVectorAll( m_vec );
 
         // Identify the smallest process where vector exists
-        int const printRank = MpiWrapper::min( fullVector ? rank : MpiWrapper::commSize( comm ), comm );
+        int const printRank = MpiWrapper::min( fullVector ? rank : MpiWrapper::commSize( comm() ), comm() );
 
         // Write to file vector
-        if( MpiWrapper::commRank( getComm() ) == printRank )
+        if( MpiWrapper::commRank( comm() ) == printRank )
         {
           std::ofstream os( filename, std::ios_base::app );
           GEOSX_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
@@ -402,7 +401,7 @@ HYPRE_ParVector const & HypreVector::unwrapped() const
   return m_vec;
 }
 
-MPI_Comm HypreVector::getComm() const
+MPI_Comm HypreVector::comm() const
 {
   GEOSX_LAI_ASSERT( created() );
   return hypre_ParVectorComm( m_vec );

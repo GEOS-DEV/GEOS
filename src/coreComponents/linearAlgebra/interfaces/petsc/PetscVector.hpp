@@ -177,9 +177,9 @@ public:
                       LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const override;
 
   /**
-   * @copydoc VectorBase<PetscVector>::getComm
+   * @copydoc VectorBase<PetscVector>::comm
    */
-  virtual MPI_Comm getComm() const override;
+  virtual MPI_Comm comm() const override;
 
   ///@}
 

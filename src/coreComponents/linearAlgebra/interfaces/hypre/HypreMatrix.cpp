@@ -860,7 +860,7 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
     }
   } );
 
-  dst.create( tempMatView.toViewConst(), numLocalCols(), getComm() );
+  dst.create( tempMatView.toViewConst(), numLocalCols(), comm() );
   dst.setDofManager( dofManager() );
 }
 
@@ -959,7 +959,7 @@ localIndex HypreMatrix::maxRowLength() const
     localMaxRowLength.max( (ia_diag[localRow + 1] - ia_diag[localRow]) + (ia_offd[localRow + 1] - ia_offd[localRow] ) );
   } );
 
-  return MpiWrapper::max( localMaxRowLength.get(), getComm() );
+  return MpiWrapper::max( localMaxRowLength.get(), comm() );
 }
 
 localIndex HypreMatrix::rowLength( globalIndex const globalRowIndex ) const
@@ -1203,15 +1203,15 @@ localIndex HypreMatrix::numLocalNonzeros() const
 
 globalIndex HypreMatrix::numGlobalNonzeros() const
 {
-  return MpiWrapper::sum( LvArray::integerConversion< globalIndex >( numLocalNonzeros() ), getComm() );
+  return MpiWrapper::sum( LvArray::integerConversion< globalIndex >( numLocalNonzeros() ), comm() );
 }
 
 void HypreMatrix::print( std::ostream & os ) const
 {
   GEOSX_LAI_ASSERT( ready() );
 
-  int const myRank = MpiWrapper::commRank( getComm() );
-  int const numProcs = MpiWrapper::commSize( getComm() );
+  int const myRank = MpiWrapper::commRank( comm() );
+  int const numProcs = MpiWrapper::commSize( comm() );
   char str[77];
 
   constexpr char const lineFormat[] = "{:>11}{:>18}{:>18}{:>28.16e}\n";
@@ -1225,7 +1225,7 @@ void HypreMatrix::print( std::ostream & os ) const
 
   for( int rank = 0; rank < numProcs; ++rank )
   {
-    MpiWrapper::barrier( getComm() );
+    MpiWrapper::barrier( comm() );
     if( rank == myRank )
     {
       globalIndex const firstRowID = ilower();
@@ -1277,8 +1277,7 @@ void HypreMatrix::write( string const & filename,
     }
     case LAIOutputFormat::MATRIX_MARKET:
     {
-      MPI_Comm const comm = getComm();
-      int const rank = MpiWrapper::commRank( comm );
+      int const rank = MpiWrapper::commRank( comm() );
 
       // Write MatrixMarket header
       if( rank == 0 )
@@ -1297,7 +1296,7 @@ void HypreMatrix::write( string const & filename,
         hypre_CSRMatrix * const fullMatrix = hypre_ParCSRMatrixToCSRMatrixAll( m_parcsr_mat );
 
         // Identify the smallest process where CSRmatrix exists
-        int const printRank = MpiWrapper::min( fullMatrix ? rank : MpiWrapper::commSize( comm ), comm );
+        int const printRank = MpiWrapper::min( fullMatrix ? rank : MpiWrapper::commSize( comm() ), comm() );
 
         // Write to file CSRmatrix on one rank
         if( rank == printRank )
@@ -1361,7 +1360,7 @@ real64 HypreMatrix::normInf() const
     maxRowAbsSum.max( rowAbsSum );
   } );
 
-  return MpiWrapper::max( maxRowAbsSum.get(), getComm() );
+  return MpiWrapper::max( maxRowAbsSum.get(), comm() );
 
 }
 
@@ -1376,7 +1375,7 @@ real64 HypreMatrix::normMax() const
   GEOSX_LAI_ASSERT( ready() );
   real64 const maxNorm = std::max( hypre::computeMaxNorm( hypre_ParCSRMatrixDiag( m_parcsr_mat ) ),
                                    hypre::computeMaxNorm( hypre_ParCSRMatrixOffd( m_parcsr_mat ) ) );
-  return MpiWrapper::max( maxNorm, getComm() );
+  return MpiWrapper::max( maxNorm, comm() );
 }
 
 real64 HypreMatrix::normMax( arrayView1d< globalIndex const > const & rowIndices ) const
@@ -1384,7 +1383,7 @@ real64 HypreMatrix::normMax( arrayView1d< globalIndex const > const & rowIndices
   GEOSX_LAI_ASSERT( ready() );
   real64 const maxNorm = std::max( hypre::computeMaxNorm( hypre_ParCSRMatrixDiag( m_parcsr_mat ), rowIndices, ilower() ),
                                    hypre::computeMaxNorm( hypre_ParCSRMatrixOffd( m_parcsr_mat ), rowIndices, ilower() ) );
-  return MpiWrapper::max( maxNorm, getComm() );
+  return MpiWrapper::max( maxNorm, comm() );
 }
 
 void HypreMatrix::rightScale( HypreVector const & vec )
@@ -1415,7 +1414,7 @@ void HypreMatrix::transpose( HypreMatrix & dst ) const
   dst.parCSRtoIJ( dst_parcsr );
 }
 
-MPI_Comm HypreMatrix::getComm() const
+MPI_Comm HypreMatrix::comm() const
 {
   GEOSX_LAI_ASSERT( created() );
   return hypre_IJMatrixComm( m_ij_mat );

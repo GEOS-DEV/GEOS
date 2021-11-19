@@ -50,7 +50,7 @@ PetscVector & PetscVector::operator=( PetscVector const & src )
     reset();
     if( src.created() )
     {
-      create( src.localSize(), src.getComm() );
+      create( src.localSize(), src.comm() );
       copy( src );
     }
   }
@@ -330,7 +330,7 @@ void PetscVector::write( string const & filename,
   if( !useMatrixMarket )
   {
     PetscViewer viewer;
-    GEOSX_LAI_CHECK_ERROR( PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer ) );
+    GEOSX_LAI_CHECK_ERROR( PetscViewerASCIIOpen( comm(), filename.c_str(), &viewer ) );
     GEOSX_LAI_CHECK_ERROR( PetscViewerPushFormat( viewer, petscFormat ) );
     GEOSX_LAI_CHECK_ERROR( VecView( m_vec, viewer ) );
     GEOSX_LAI_CHECK_ERROR( PetscViewerDestroy( &viewer ) );
@@ -342,7 +342,7 @@ void PetscVector::write( string const & filename,
     GEOSX_LAI_CHECK_ERROR( VecScatterCreateToAll( m_vec, &scatter, &globalVec ) );
     GEOSX_LAI_CHECK_ERROR( VecScatterBegin( scatter, m_vec, globalVec, INSERT_VALUES, SCATTER_FORWARD ) );
     GEOSX_LAI_CHECK_ERROR( VecScatterEnd( scatter, m_vec, globalVec, INSERT_VALUES, SCATTER_FORWARD ) );
-    if( MpiWrapper::commRank( getComm() ) == 0 )
+    if( MpiWrapper::commRank( comm() ) == 0 )
     {
       PetscScalar *v;
       GEOSX_LAI_CHECK_ERROR( VecGetArray( globalVec, &v ) );
@@ -375,7 +375,7 @@ Vec & PetscVector::unwrapped()
   return m_vec;
 }
 
-MPI_Comm PetscVector::getComm() const
+MPI_Comm PetscVector::comm() const
 {
   GEOSX_LAI_ASSERT( created() );
   MPI_Comm comm;

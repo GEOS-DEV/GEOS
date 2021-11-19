@@ -37,7 +37,7 @@ EpetraExport::EpetraExport( EpetraMatrix const & mat,
   : m_targetRank( targetRank )
 {
   globalIndex const numGlobalRows = mat.numGlobalRows();
-  localIndex const numLocalRows = ( m_targetRank == MpiWrapper::commRank( mat.getComm() ) ) ? numGlobalRows : 0;
+  localIndex const numLocalRows = ( m_targetRank == MpiWrapper::commRank( mat.comm() ) ) ? numGlobalRows : 0;
   m_serialMap = std::make_unique< Epetra_Map >( numGlobalRows, numLocalRows, 0, mat.unwrapped().Comm() );
   m_serialImport = std::make_unique< Epetra_Import >( *m_serialMap, mat.unwrapped().RowMap() );
 }
@@ -51,7 +51,7 @@ void EpetraExport::exportCRS( EpetraMatrix const & mat,
                               arrayView1d< real64 > const & values ) const
 {
 
-  int const rank = MpiWrapper::commRank( mat.getComm() );
+  int const rank = MpiWrapper::commRank( mat.comm() );
   Epetra_CrsMatrix const * localMatrix = &mat.unwrapped();
 
   rowOffsets.move( LvArray::MemorySpace::host, false );

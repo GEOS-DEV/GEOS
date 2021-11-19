@@ -986,7 +986,7 @@ real64 EpetraMatrix::normMax() const
   {
     maxAbsValue.max( LvArray::math::abs( values[k] ) );
   } );
-  return MpiWrapper::max( maxAbsValue.get(), getComm() );
+  return MpiWrapper::max( maxAbsValue.get(), comm() );
 }
 
 real64 EpetraMatrix::normMax( arrayView1d< globalIndex const > const & rowIndices ) const
@@ -1006,7 +1006,7 @@ real64 EpetraMatrix::normMax( arrayView1d< globalIndex const > const & rowIndice
       maxAbsValue.max( LvArray::math::abs( values[k] ) );
     }
   } );
-  return MpiWrapper::max( maxAbsValue.get(), getComm() );
+  return MpiWrapper::max( maxAbsValue.get(), comm() );
 }
 
 localIndex EpetraMatrix::getLocalRowID( globalIndex const index ) const
@@ -1035,7 +1035,7 @@ localIndex EpetraMatrix::numLocalRows() const
   return LvArray::integerConversion< localIndex >( m_matrix->RowMap().NumMyElements() );
 }
 
-MPI_Comm EpetraMatrix::getComm() const
+MPI_Comm EpetraMatrix::comm() const
 {
   GEOSX_LAI_ASSERT( created() );
 #ifdef GEOSX_USE_MPI
@@ -1089,7 +1089,7 @@ void EpetraMatrix::multiply( bool const transA,
   C.createWithLocalSize( transA ? numLocalCols() : numLocalRows(),
                          transB ? B.numLocalRows() : B.numLocalCols(),
                          1, // TODO: estimate entries per row?
-                         getComm() );
+                         comm() );
 
   GEOSX_LAI_CHECK_ERROR( EpetraExt::MatrixMatrix::Multiply( unwrapped(),
                                                             transA,

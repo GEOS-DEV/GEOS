@@ -36,10 +36,10 @@ HypreExport::HypreExport( HypreMatrix const & mat,
   : m_targetRank( targetRank )
 {
   // make a sub-communicator for scatter and ensure target rank is mapped to 0 in new comm
-  int const rank = MpiWrapper::commRank( mat.getComm() );
+  int const rank = MpiWrapper::commRank( mat.comm() );
   int const color = ( mat.numLocalRows() > 0 ) ? 0 : MPI_UNDEFINED;
   int const key = ( rank == m_targetRank ) ? 0 : ( rank < m_targetRank ) ? rank + 1 : rank;
-  m_subComm = MpiWrapper::commSplit( mat.getComm(), color, key );
+  m_subComm = MpiWrapper::commSplit( mat.comm(), color, key );
 }
 
 HypreExport::~HypreExport()
@@ -122,7 +122,7 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
                              arrayView1d< COLUMN_TYPE > const & colIndices,
                              arrayView1d< real64 > const & values ) const
 {
-  int const rank = MpiWrapper::commRank( mat.getComm() );
+  int const rank = MpiWrapper::commRank( mat.comm() );
 
   // import on target rank if needed, or extract diag+offd part in each rank
   hypre_CSRMatrix * const localMatrix = m_targetRank < 0
@@ -168,34 +168,15 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
   GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( localMatrix ) );
 }
 
-namespace hypre
-{
-
-hypre_Vector * parVectorToVectorAll( hypre_ParVector * const vec )
-{
-  if( hypre_ParVectorMemoryLocation( vec ) == HYPRE_MEMORY_HOST )
-  {
-    return hypre_ParVectorToVectorAll( vec );
-  }
-
-  // Create a host-based clone
-  hypre_ParVector * const hostVec = hypre_ParVectorCloneDeep_v2( vec, HYPRE_MEMORY_HOST );
-  hypre_Vector * const fullVec = hypre_ParVectorToVectorAll( hostVec );
-  hypre_ParVectorDestroy( hostVec );
-  return fullVec;
-}
-
-}
-
 void HypreExport::exportVector( HypreVector const & vec,
                                 arrayView1d< real64 > const & values ) const
 {
-  int const rank = MpiWrapper::commRank( vec.getComm() );
+  int const rank = MpiWrapper::commRank( vec.comm() );
 
   // Gather vector on target rank, or just get the local part
   hypre_Vector * const localVector = m_targetRank < 0
                                    ? hypre_ParVectorLocalVector( vec.unwrapped() )
-                                   : hypre::parVectorToVectorAll( vec.unwrapped() );
+                                   : (hypre_Vector *)hypre::parVectorToVectorAll( vec.unwrapped() );
   GEOSX_ERROR_IF( rank == m_targetRank && !localVector, "HypreExport: vector is empty on target rank" );
 
   if( m_targetRank < 0 || m_targetRank == rank )
@@ -219,7 +200,7 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
   if( m_subComm != MPI_COMM_NULL )
   {
     hypre_Vector * wrapperVector{};
-    if( MpiWrapper::commRank( vec.getComm() ) == m_targetRank )
+    if( MpiWrapper::commRank( vec.comm() ) == m_targetRank )
     {
       GEOSX_LAI_ASSERT_EQ( values.size(), vec.globalSize() );
       values.move( LvArray::MemorySpace::host, false );

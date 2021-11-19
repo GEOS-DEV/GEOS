@@ -447,7 +447,7 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
     HypreMatrix Auu;
     {
       Stopwatch timer( m_makeRestrictorTime );
-      mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
+      mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.comm(), true, Pu );
     }
     {
       Stopwatch timer( m_computeAuuTime );

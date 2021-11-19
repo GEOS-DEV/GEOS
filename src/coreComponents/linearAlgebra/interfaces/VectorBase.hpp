@@ -142,8 +142,8 @@ protected:
   /**
    * @brief Notify the vector about external modification through direct data pointer.
    *
-   * This method must be called by the linear solver on the solution vector, so that the
-   * underlying Array object can be made aware of external changes in a specific memory space.
+   * This method MUST be called after any changes to vector values performed through direct pointer access,
+   * so that the underlying Array object can be made aware of external changes in a specific memory space.
    */
   virtual void touch() = 0;
 
@@ -311,7 +311,7 @@ protected:
    * @brief Get the communicator used by this vector
    * @return the MPI communicator
    */
-  virtual MPI_Comm getComm() const = 0;
+  virtual MPI_Comm comm() const = 0;
 
   ///@}
 

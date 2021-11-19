@@ -294,7 +294,7 @@ void PetscPreconditioner::setup( PetscMatrix const & mat )
   // Basic setup common for all preconditioners
   if( create )
   {
-    GEOSX_LAI_CHECK_ERROR( PCCreate( precondMat.getComm(), &m_precond ) );
+    GEOSX_LAI_CHECK_ERROR( PCCreate( precondMat.comm(), &m_precond ) );
   }
   GEOSX_LAI_CHECK_ERROR( PCSetOperators( m_precond, mat.unwrapped(), precondMat.unwrapped() ) );
 

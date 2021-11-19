@@ -179,6 +179,16 @@ inline HYPRE_BigInt const * toHypreBigInt( geosx::globalIndex const * const inde
 }
 
 /**
+ * @brief Gather a parallel vector on a every rank
+ * @param vec the vector to gather
+ * @return A newly allocated serial vector (may be null on ranks that don't have any elements)
+ *
+ * This is a wrapper around hypre_ParVectorToVectorAll() that works for both host-based
+ * and device-based vectors without relying on Unified Memory.
+ */
+HYPRE_Vector parVectorToVectorAll( HYPRE_ParVector const vec );
+
+/**
  * @brief Dummy function that does nothing but conform to hypre's signature for preconditioner setup/apply functions.
  * @return always 0 (success).
  *

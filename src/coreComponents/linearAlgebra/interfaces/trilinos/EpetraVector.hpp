@@ -161,9 +161,9 @@ public:
   virtual globalIndex iupper() const override;
 
   /**
-   * @copydoc VectorBase<EpetraVector>::getComm
+   * @copydoc VectorBase<EpetraVector>::comm
    */
-  virtual MPI_Comm getComm() const override;
+  virtual MPI_Comm comm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;
 

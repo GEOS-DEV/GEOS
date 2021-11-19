@@ -33,8 +33,6 @@ extern "C"
 {
 /// ParVector struct forward declaration
 struct hypre_ParVector_struct;
-/// ParVector struct alias
-typedef struct hypre_ParVector_struct hypre_ParVector;
 }
 
 ///@}
@@ -180,9 +178,9 @@ public:
   virtual globalIndex iupper() const override;
 
   /**
-   * @copydoc VectorBase<HypreVector>::getComm
+   * @copydoc VectorBase<HypreVector>::comm
    */
-  virtual MPI_Comm getComm() const override;
+  virtual MPI_Comm comm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;
 
@@ -194,7 +192,7 @@ public:
 private:
 
   /// ParVector pointer alias
-  using HYPRE_ParVector = hypre_ParVector *;
+  using HYPRE_ParVector = struct hypre_ParVector_struct *;
 
 public:
 

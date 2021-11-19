@@ -104,9 +104,9 @@ public:
     return m_operator.numLocalCols();
   }
 
-  virtual MPI_Comm getComm() const override final
+  virtual MPI_Comm comm() const override final
   {
-    return m_operator.getComm();
+    return m_operator.comm();
   }
 
   /**
@@ -152,7 +152,7 @@ private:
     static VEC createFrom( VEC const & src )
     {
       VEC v;
-      v.create( src.localSize(), src.getComm() );
+      v.create( src.localSize(), src.comm() );
       return v;
     }
   };
@@ -167,7 +167,7 @@ private:
       BlockVector< VEC > v( src.blockSize() );
       for( localIndex i = 0; i < src.blockSize(); ++i )
       {
-        v.block( i ).create( src.block( i ).localSize(), src.block( i ).getComm() );
+        v.block( i ).create( src.block( i ).localSize(), src.block( i ).comm() );
       }
       return v;
     }

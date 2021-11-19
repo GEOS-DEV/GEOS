@@ -199,7 +199,7 @@ void HypreSolver::setup( HypreMatrix const & mat )
   m_computeAuuTime = m_precond.computeAuuTime();
 
   m_solver = std::make_unique< HypreSolverWrapper >();
-  createHypreKrylovSolver( m_params, mat.getComm(), *m_solver );
+  createHypreKrylovSolver( m_params, mat.comm(), *m_solver );
 
   // Set the preconditioner
   GEOSX_LAI_CHECK_ERROR( m_solver->setPrecond( m_solver->ptr,
@@ -209,7 +209,7 @@ void HypreSolver::setup( HypreMatrix const & mat )
 
   // Setup the solver (need a dummy vector for rhs/sol to avoid hypre segfaulting in setup)
   HypreVector dummy;
-  dummy.create( mat.numLocalRows(), mat.getComm() );
+  dummy.create( mat.numLocalRows(), mat.comm() );
   GEOSX_LAI_CHECK_ERROR( m_solver->setup( m_solver->ptr,
                                           mat.unwrapped(),
                                           dummy.unwrapped(),

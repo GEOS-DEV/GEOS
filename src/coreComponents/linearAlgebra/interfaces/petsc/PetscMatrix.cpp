@@ -860,7 +860,7 @@ localIndex PetscMatrix::maxRowLength() const
   {
     maxLocalLength.max( rowLength( globalRow ) );
   } );
-  return MpiWrapper::max( maxLocalLength.get(), getComm() );
+  return MpiWrapper::max( maxLocalLength.get(), comm() );
 }
 
 localIndex PetscMatrix::rowLength( globalIndex const globalRowIndex ) const
@@ -1158,7 +1158,7 @@ real64 PetscMatrix::normMax() const
     GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, row, &numEntries, nullptr, &vals ) );
   }
 
-  return MpiWrapper::max( norm, getComm() );
+  return MpiWrapper::max( norm, comm() );
 }
 
 real64 PetscMatrix::normMax( arrayView1d< globalIndex const > const & rowIndices ) const
@@ -1180,7 +1180,7 @@ real64 PetscMatrix::normMax( arrayView1d< globalIndex const > const & rowIndices
     GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, row, &numEntries, nullptr, &vals ) );
   }
 
-  return MpiWrapper::max( norm, getComm() );
+  return MpiWrapper::max( norm, comm() );
 }
 
 localIndex PetscMatrix::getLocalRowID( globalIndex const index ) const
@@ -1217,7 +1217,7 @@ localIndex PetscMatrix::numLocalRows() const
   return LvArray::integerConversion< localIndex >( rows );
 }
 
-MPI_Comm PetscMatrix::getComm() const
+MPI_Comm PetscMatrix::comm() const
 {
   GEOSX_LAI_ASSERT( created() );
   MPI_Comm comm;
@@ -1229,7 +1229,7 @@ void PetscMatrix::print( std::ostream & os ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_ERROR_IF( &os != &std::cout, "Only output to stdout currently supported" );
-  GEOSX_LAI_CHECK_ERROR( MatView( m_mat, PETSC_VIEWER_STDOUT_( getComm() ) ) );
+  GEOSX_LAI_CHECK_ERROR( MatView( m_mat, PETSC_VIEWER_STDOUT_( comm() ) ) );
 }
 
 void PetscMatrix::write( string const & filename,
@@ -1276,11 +1276,11 @@ void PetscMatrix::write( string const & filename,
 
   if( ASCIIfile )
   {
-    GEOSX_LAI_CHECK_ERROR( PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer ) );
+    GEOSX_LAI_CHECK_ERROR( PetscViewerASCIIOpen( comm(), filename.c_str(), &viewer ) );
   }
   else
   {
-    GEOSX_LAI_CHECK_ERROR( PetscViewerBinaryOpen( getComm(), filename.c_str(), FILE_MODE_WRITE, &viewer ) );
+    GEOSX_LAI_CHECK_ERROR( PetscViewerBinaryOpen( comm(), filename.c_str(), FILE_MODE_WRITE, &viewer ) );
   }
   GEOSX_LAI_CHECK_ERROR( PetscViewerPushFormat( viewer, petscFormat ) );
   GEOSX_LAI_CHECK_ERROR( MatView( m_mat, viewer ) );

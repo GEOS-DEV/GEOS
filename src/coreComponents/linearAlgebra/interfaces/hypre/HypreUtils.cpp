@@ -20,6 +20,7 @@
 
 #include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
 
+#include <_hypre_parcsr_mv.h>
 #include <_hypre_parcsr_ls.h>
 
 namespace geosx
@@ -27,6 +28,22 @@ namespace geosx
 
 namespace hypre
 {
+
+HYPRE_Vector parVectorToVectorAll( HYPRE_ParVector const vec )
+{
+  if( hypre_ParVectorMemoryLocation( vec ) == HYPRE_MEMORY_HOST )
+  {
+    return (HYPRE_Vector)hypre_ParVectorToVectorAll( vec );
+  }
+  else
+  {
+    // Explicitly copy data to host before gathering, since hypre_ParVectorToVectorAll relies on UM.
+    hypre_ParVector * const hostVec = hypre_ParVectorCloneDeep_v2( vec, HYPRE_MEMORY_HOST );
+    hypre_Vector * const fullVec = hypre_ParVectorToVectorAll( hostVec );
+    hypre_ParVectorDestroy( hostVec );
+    return (HYPRE_Vector)fullVec;
+  }
+}
 
 HYPRE_Int DummySetup( HYPRE_Solver,
                       HYPRE_ParCSRMatrix,

@@ -52,7 +52,7 @@ EpetraVector & EpetraVector::operator=( EpetraVector const & src )
     reset();
     if( src.created() )
     {
-      create( src.localSize(), src.getComm() );
+      create( src.localSize(), src.comm() );
       copy( src );
     }
   }
@@ -286,7 +286,7 @@ globalIndex EpetraVector::iupper() const
   return m_vec->Map().MaxMyGID64() + 1;
 }
 
-MPI_Comm EpetraVector::getComm() const
+MPI_Comm EpetraVector::comm() const
 {
   GEOSX_LAI_ASSERT( created() );
 #ifdef GEOSX_USE_MPI
