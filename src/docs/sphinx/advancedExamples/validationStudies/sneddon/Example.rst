@@ -364,10 +364,10 @@ This plot compares the analytical solution (continuous lines) with the numerical
        
         # Read HDF5
         hf = h5py.File(hdf5File2Path, 'r')
-        jump = hf.get('localJump')
+        jump = hf.get('displacementJump')
         jump = np.array(jump) 
         aperture_Contact = jump[0,:,0]
-        x = hf.get('localJump elementCenter')
+        x = hf.get('displacementJump elementCenter')
         loc_Contact = x[0,:,1]
          
         #-------- HydroFrac File path
