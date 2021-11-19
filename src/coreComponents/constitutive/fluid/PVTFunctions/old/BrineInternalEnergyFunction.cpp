@@ -16,7 +16,7 @@
  * @file BrineInternalEnergyFunction.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/BrineInternalEnergyFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/old/BrineInternalEnergyFunction.hpp"
 
 namespace geosx
 {

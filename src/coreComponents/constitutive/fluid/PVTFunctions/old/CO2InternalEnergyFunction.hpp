@@ -17,7 +17,7 @@
 #define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2INTERNALENERGYFUNCTION_HPP_
 
 
-#include "PVTFunctionBase.hpp"
+#include "constitutive/fluid/PVTFunctions/old/PVTFunctionBase.hpp"
 
 namespace geosx
 {

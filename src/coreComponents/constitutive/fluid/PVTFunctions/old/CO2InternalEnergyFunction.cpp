@@ -16,7 +16,7 @@
  * @file CO2InternalEnergyFunction.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/CO2InternalEnergyFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/old/CO2InternalEnergyFunction.hpp"
 
 namespace geosx
 {

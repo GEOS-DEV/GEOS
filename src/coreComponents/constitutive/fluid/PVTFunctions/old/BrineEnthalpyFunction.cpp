@@ -16,9 +16,9 @@
  * @file BrineEnthalpyFunction.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/BrineEnthalpyFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/CO2EnthalpyFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
+#include "constitutive/fluid/PVTFunctions/old/BrineEnthalpyFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/old/CO2EnthalpyFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/old/SpanWagnerCO2Density.hpp"
 
 namespace geosx
 {
