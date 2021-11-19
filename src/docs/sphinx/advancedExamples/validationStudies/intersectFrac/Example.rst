@@ -122,7 +122,7 @@ Constitutive laws
 For this problem, we simulate the elastic deformation and fracture slippage caused by the uniaxial compression.
 A homogeneous and isotropic domain with one solid material is assumed, and its mechanical properties are specified in the ``Constitutive`` section. 
 
-Fracture surface slippage is assumed to be governed by the Coulomb failure criterion. The contact constitutive behavior is named ``fractureMaterial`` in the ``Coulomb`` block, where cohesion ``cohesion="0.0"`` and friction angle ``frictionAngle="0.523598776"`` are specified. 
+Fracture surface slippage is assumed to be governed by the Coulomb failure criterion. The contact constitutive behavior is named ``fractureMaterial`` in the ``Coulomb`` block, where cohesion ``cohesion="0.0"`` and friction coefficient ``frictionCoefficient="0.577350269"`` are specified. 
 
 .. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml
     :language: xml
@@ -263,12 +263,12 @@ The figure below compares the results from GEOSX (marks) and the corresponding l
 
         param = tree.find('Constitutive/ElasticIsotropic')
 
-        mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus", "frictionAngle"])
+        mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus", "frictionCoefficient"])
         mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
         mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
 
         param = tree.find('Constitutive/Coulomb')
-        mechanicalParameters["frictionAngle"] = float(param.get("frictionAngle"))
+        mechanicalParameters["frictionCoefficient"] = float(param.get("frictionCoefficient"))
         return mechanicalParameters
 
 
@@ -342,7 +342,7 @@ The figure below compares the results from GEOSX (marks) and the corresponding l
 
         # Local Shear Displacement
         hf = h5py.File(hdf5File2Path, 'r')
-        jump = hf.get('localJump')
+        jump = hf.get('displacementJump')
         jump = np.array(jump)
         displacementJump = jump[-1,:,1]
         aperture = jump[-1,:,0]
