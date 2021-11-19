@@ -143,7 +143,7 @@ Time history function
 
 In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time history information from fields. 
 Either the entire field or specified named sets of indices in the field can be collected. 
-In this example, ``tractionCollection`` and ``displacementJumpCollection`` tasks are specified to output the local traction ``fieldName="traction"`` and relative displacement ``fieldName="localJump"`` on the fracture surface.
+In this example, ``tractionCollection`` and ``displacementJumpCollection`` tasks are specified to output the local traction ``fieldName="traction"`` and relative displacement ``fieldName="displacementJump"`` on the fracture surface.
 
 .. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml
     :language: xml
@@ -191,7 +191,7 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+-------------------------+------------------+--------------------+
 | :math:`\sigma_y` | Remote Stress           | [MPa]            | -100.0             |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`P_in`     | Internal Pressure       | [MPa]            | -100.0             |
+| :math:`P_{in}`   | Internal Pressure       | [MPa]            | -100.0             |
 +------------------+-------------------------+------------------+--------------------+
 | :math:`\theta`   | Friction Angle          | [Degree]         | 30.0               |
 +------------------+-------------------------+------------------+--------------------+

@@ -25,7 +25,7 @@ Everything required is contained within two GEOSX input files and one mesh file 
 
 .. code-block:: console
 
-  inputFiles/lagrangianContactMechanics/crackInPlane_ref.msh
+  inputFiles/lagrangianContactMechanics/crackInPlane_benchmark.msh
 
 
 ------------------------------------------------------------------
