@@ -98,7 +98,6 @@ protected:
   arrayView3d< real64 > m_dPerm_dPressure;
 };
 
-
 class PermeabilityBase : public ConstitutiveBase
 {
 public:
@@ -125,6 +124,9 @@ public:
     static constexpr char const * dPerm_dPressureString() { return "dPerm_dPressure"; }
     static constexpr char const * dPerm_dApertureString() { return "dPerm_dAperture"; }
   } viewKeys;
+
+  virtual void initializeState() const 
+  {}
 
 protected:
 

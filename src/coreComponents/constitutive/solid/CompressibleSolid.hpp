@@ -82,7 +82,9 @@ public:
                                                real64 const & newHydraulicAperture,
                                                real64 const ( &dispJump )[3] ) const
   {
+    std::cout << "I m in here" << std::endl;
     m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
+    std::cout << "I m in here" << std::endl;
     m_permUpdate.updateFromApertureAndShearDisplacement( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump );
   }
 

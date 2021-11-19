@@ -98,6 +98,8 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void initializeState() const override final;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = SlipDependentPermeabilityUpdate;
 
@@ -120,7 +122,7 @@ public:
     static constexpr char const * dPerm_dDispJumpString() { return "dPerm_dDispJump"; }
     static constexpr char const * shearDispThresholdString() { return "shearDispThreshold"; }
     static constexpr char const * maxPermMultiplierString() { return "maxPermMultiplier"; }
-    static constexpr char const * iniPermeabilityString() { return "iniPermeability"; }
+    static constexpr char const * initialPermeabilityString() { return "iniPermeability"; }
   } ;
 
 private:
@@ -152,9 +154,9 @@ void SlipDependentPermeabilityUpdate::compute( real64 const ( &dispJump )[3],
   real64 const tmpTanh = std::tanh ( 3.0 * shearMag/m_shearDispThreshold );
   
   real64 const permMultiplier = ( m_maxPermMultiplier - 1.0 ) * tmpTanh + 1.0;
-
+  
   real64 const dpermMultiplier_dshearMag = ( m_maxPermMultiplier - 1.0 ) * ( 1.0 - tmpTanh * tmpTanh ) * 3.0/m_shearDispThreshold;  
- 
+
   for( localIndex i=0; i < permeability.size(); i++ )
   {
     permeability[i] = permMultiplier * initialPermeability[i];
