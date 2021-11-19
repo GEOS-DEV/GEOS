@@ -165,7 +165,7 @@
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/faceElementSubRegion"
-      fieldName="localJump"/>   
+      fieldName="displacementJump"/>   
     </Tasks>
 <!-- SPHINX_TASKS_END -->
 
