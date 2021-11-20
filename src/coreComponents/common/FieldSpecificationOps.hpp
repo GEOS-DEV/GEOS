@@ -535,41 +535,6 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
    * @brief Function to apply a Dirichlet like boundary condition to a single dof in a system of
    *        equations.
    * @param[in] dof The degree of freedom that is to be set.
-   * @param[inout] matrix A ParallelMatrix object: the system matrix.
-   * @param[out] rhs The rhs contribution resulting from the application of the BC.
-   * @param[in] bcValue The target value of the Boundary Condition
-   * @param[in] fieldValue The current value of the variable to be set.
-   *
-   * This function clears the matrix row for the specified \p dof, sets the diagonal to some
-   * appropriately scaled value, and sets \p rhs to the negative product of the scaled value
-   * of the diagonal and the difference between \p bcValue and \p fieldValue.
-   *
-   * @note This function assumes the user is doing a Newton-type nonlinear solve and will
-   * negate the rhs vector upon assembly. Thus, it sets the value to negative of the desired
-   * update for the field. For a linear problem, this may lead to unexpected results.
-   */
-  template< typename LAI >
-  static inline void SpecifyFieldValue( globalIndex const dof,
-                                        typename LAI::ParallelMatrix & matrix,
-                                        real64 & rhs,
-                                        real64 const bcValue,
-                                        real64 const fieldValue )
-  {
-    if( matrix.getLocalRowID( dof ) >= 0 )
-    {
-      real64 const diag = matrix.clearRow( dof, true );
-      rhs = -diag * (bcValue - fieldValue);
-    }
-    else
-    {
-      rhs = 0.0;
-    }
-  }
-
-  /**
-   * @brief Function to apply a Dirichlet like boundary condition to a single dof in a system of
-   *        equations.
-   * @param[in] dof The degree of freedom that is to be set.
    * @param[in] dofRankOffset offset of dof indices on current rank
    * @param[in,out] matrix the local part of the system matrix
    * @param[out] rhs The rhs contribution resulting from the application of the BC.
@@ -626,28 +591,6 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
     else
     {
       rhs = 0.0;
-    }
-  }
-
-  /**
-   * @brief Function to add some values of a vector.
-   * @param rhs A ParallelVector object.
-   * @param num The number of values in \p rhs to replace
-   * @param dof A pointer to the global DOF to be replaced
-   * @param values A pointer to the values corresponding to \p dof that will be added to \p rhs.
-   */
-  template< typename LAI >
-  static inline void prescribeRhsValues( typename LAI::ParallelVector & rhs,
-                                         localIndex const num,
-                                         globalIndex * const dof,
-                                         real64 * const values )
-  {
-    for( localIndex a = 0; a < num; ++a )
-    {
-      if( rhs.getLocalRowID( dof[a] ) >= 0 )
-      {
-        rhs.set( dof[a], values[a] );
-      }
     }
   }
 
@@ -710,22 +653,6 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
     GEOSX_UNUSED_VAR( matrix );
     GEOSX_UNUSED_VAR( fieldValue );
     rhs += bcValue;
-  }
-
-  /**
-   * @brief Function to add some values of a vector.
-   * @param rhs A ParallelVector object.
-   * @param num The number of values in \p rhs to replace
-   * @param dof A pointer to the global DOF to be replaced
-   * @param values A pointer to the values corresponding to \p dof that will be added to \p rhs.
-   */
-  template< typename LAI >
-  static inline void prescribeRhsValues( typename LAI::ParallelVector & rhs,
-                                         localIndex const num,
-                                         globalIndex * const dof,
-                                         real64 * const values )
-  {
-    rhs.add( dof, values, num );
   }
 
   /**

@@ -540,6 +540,7 @@ void PetscMatrix::apply( PetscVector const & src,
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), src.globalSize() );
 
   GEOSX_LAI_CHECK_ERROR( MatMult( m_mat, src.unwrapped(), dst.unwrapped() ) );
+  dst.touch();
 }
 
 void PetscMatrix::applyTranspose( Vector const & src,
@@ -552,6 +553,7 @@ void PetscMatrix::applyTranspose( Vector const & src,
   GEOSX_LAI_ASSERT_EQ( numGlobalRows(), src.globalSize() );
 
   GEOSX_LAI_CHECK_ERROR( MatMultTranspose( m_mat, src.unwrapped(), dst.unwrapped() ) );
+  dst.touch();
 }
 
 void PetscMatrix::multiply( PetscMatrix const & src,
@@ -616,6 +618,7 @@ void PetscMatrix::gemv( real64 const alpha,
     GEOSX_LAI_CHECK_ERROR( MatMult( m_mat, x_.unwrapped(), b_.unwrapped() ) ); // alpha*A*x_ = b_
   }
   GEOSX_LAI_CHECK_ERROR( VecAXPY( y.unwrapped(), 1, b_.unwrapped() ) ); // alpha*A*x_ + beta*y = y
+  y.touch();
 }
 
 void PetscMatrix::scale( real64 const scalingFactor )
@@ -857,7 +860,7 @@ localIndex PetscMatrix::maxRowLength() const
   {
     maxLocalLength.max( rowLength( globalRow ) );
   } );
-  return MpiWrapper::max( maxLocalLength.get(), getComm() );
+  return MpiWrapper::max( maxLocalLength.get(), comm() );
 }
 
 localIndex PetscMatrix::rowLength( globalIndex const globalRowIndex ) const
@@ -909,6 +912,7 @@ void PetscMatrix::extractDiagonal( PetscVector & dst ) const
   GEOSX_LAI_ASSERT_EQ( dst.localSize(), numLocalRows() );
 
   GEOSX_LAI_CHECK_ERROR( MatGetDiagonal( m_mat, dst.unwrapped() ) );
+  dst.touch();
 }
 
 namespace
@@ -930,10 +934,13 @@ double reduceRow( Mat mat,
 
 template< typename F, typename R >
 void getRowSumsImpl( Mat const & mat,
-                     real64 * const values,
+                     Vec & vec,
                      F transform,
                      R reduce )
 {
+  PetscScalar * values;
+  GEOSX_LAI_CHECK_ERROR( VecGetArray( vec, &values ) );
+
   PetscInt numLocalRows, firstLocalRow;
   GEOSX_LAI_CHECK_ERROR( MatGetLocalSize( mat, &numLocalRows, nullptr ) );
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( mat, &firstLocalRow, nullptr ) );
@@ -942,6 +949,8 @@ void getRowSumsImpl( Mat const & mat,
   {
     values[localRow] = reduceRow( mat, firstLocalRow + localRow, reducer );
   }
+
+  GEOSX_LAI_CHECK_ERROR( VecRestoreArray( vec, &values ) );
 }
 
 template< typename F, typename R >
@@ -974,22 +983,22 @@ void PetscMatrix::getRowSums( PetscMatrix::Vector & dst,
   {
     case RowSumType::SumValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), []( auto v ){ return v; }, std::plus<>{} );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), []( auto v ){ return v; }, std::plus<>{} );
       break;
     }
     case RowSumType::SumAbsValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), LvArray::math::abs< double >, std::plus<>{} );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), LvArray::math::abs< double >, std::plus<>{} );
       break;
     }
     case RowSumType::SumSqrValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), LvArray::math::square< double >, std::plus<>{} );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), LvArray::math::square< double >, std::plus<>{} );
       break;
     }
     case RowSumType::MaxAbsValues:
     {
-      getRowSumsImpl( unwrapped(), dst.extractLocalVector(), LvArray::math::abs< double >, LvArray::math::max< double > );
+      getRowSumsImpl( unwrapped(), dst.unwrapped(), LvArray::math::abs< double >, LvArray::math::max< double > );
       break;
     }
   }
@@ -1149,7 +1158,7 @@ real64 PetscMatrix::normMax() const
     GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, row, &numEntries, nullptr, &vals ) );
   }
 
-  return MpiWrapper::max( norm, getComm() );
+  return MpiWrapper::max( norm, comm() );
 }
 
 real64 PetscMatrix::normMax( arrayView1d< globalIndex const > const & rowIndices ) const
@@ -1171,7 +1180,7 @@ real64 PetscMatrix::normMax( arrayView1d< globalIndex const > const & rowIndices
     GEOSX_LAI_CHECK_ERROR( MatRestoreRow( m_mat, row, &numEntries, nullptr, &vals ) );
   }
 
-  return MpiWrapper::max( norm, getComm() );
+  return MpiWrapper::max( norm, comm() );
 }
 
 localIndex PetscMatrix::getLocalRowID( globalIndex const index ) const
@@ -1208,7 +1217,7 @@ localIndex PetscMatrix::numLocalRows() const
   return LvArray::integerConversion< localIndex >( rows );
 }
 
-MPI_Comm PetscMatrix::getComm() const
+MPI_Comm PetscMatrix::comm() const
 {
   GEOSX_LAI_ASSERT( created() );
   MPI_Comm comm;
@@ -1220,7 +1229,7 @@ void PetscMatrix::print( std::ostream & os ) const
 {
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_ERROR_IF( &os != &std::cout, "Only output to stdout currently supported" );
-  GEOSX_LAI_CHECK_ERROR( MatView( m_mat, PETSC_VIEWER_STDOUT_( getComm() ) ) );
+  GEOSX_LAI_CHECK_ERROR( MatView( m_mat, PETSC_VIEWER_STDOUT_( comm() ) ) );
 }
 
 void PetscMatrix::write( string const & filename,
@@ -1267,11 +1276,11 @@ void PetscMatrix::write( string const & filename,
 
   if( ASCIIfile )
   {
-    GEOSX_LAI_CHECK_ERROR( PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer ) );
+    GEOSX_LAI_CHECK_ERROR( PetscViewerASCIIOpen( comm(), filename.c_str(), &viewer ) );
   }
   else
   {
-    GEOSX_LAI_CHECK_ERROR( PetscViewerBinaryOpen( getComm(), filename.c_str(), FILE_MODE_WRITE, &viewer ) );
+    GEOSX_LAI_CHECK_ERROR( PetscViewerBinaryOpen( comm(), filename.c_str(), FILE_MODE_WRITE, &viewer ) );
   }
   GEOSX_LAI_CHECK_ERROR( PetscViewerPushFormat( viewer, petscFormat ) );
   GEOSX_LAI_CHECK_ERROR( MatView( m_mat, viewer ) );

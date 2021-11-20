@@ -24,7 +24,7 @@
 
 #include <Epetra_Map.h>
 #include <Epetra_FECrsMatrix.h>
-#include <Epetra_FEVector.h>
+#include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 
 namespace geosx
@@ -37,7 +37,7 @@ EpetraExport::EpetraExport( EpetraMatrix const & mat,
   : m_targetRank( targetRank )
 {
   globalIndex const numGlobalRows = mat.numGlobalRows();
-  localIndex const numLocalRows = ( m_targetRank == MpiWrapper::commRank( mat.getComm() ) ) ? numGlobalRows : 0;
+  localIndex const numLocalRows = ( m_targetRank == MpiWrapper::commRank( mat.comm() ) ) ? numGlobalRows : 0;
   m_serialMap = std::make_unique< Epetra_Map >( numGlobalRows, numLocalRows, 0, mat.unwrapped().Comm() );
   m_serialImport = std::make_unique< Epetra_Import >( *m_serialMap, mat.unwrapped().RowMap() );
 }
@@ -51,7 +51,7 @@ void EpetraExport::exportCRS( EpetraMatrix const & mat,
                               arrayView1d< real64 > const & values ) const
 {
 
-  int const rank = MpiWrapper::commRank( mat.getComm() );
+  int const rank = MpiWrapper::commRank( mat.comm() );
   Epetra_CrsMatrix const * localMatrix = &mat.unwrapped();
 
   rowOffsets.move( LvArray::MemorySpace::host, false );
@@ -95,8 +95,9 @@ void EpetraExport::exportVector( EpetraVector const & vec,
   }
   else
   {
-    real64 const * const data = vec.extractLocalVector();
-    std::copy( data, data + vec.localSize(), values.data() );
+    arrayView1d< real64 const > const data = vec.values();
+    data.move( LvArray::MemorySpace::host, false );
+    std::copy( data.begin(), data.end(), values.data() );
   }
 }
 
@@ -113,8 +114,9 @@ void EpetraExport::importVector( arrayView1d< const real64 > const & values,
   }
   else
   {
-    real64 * const data = vec.extractLocalVector();
-    std::copy( values.data(), values.data() + vec.localSize(), data );
+    arrayView1d< real64 > const data = vec.open();
+    std::copy( values.data(), values.data() + vec.localSize(), data.begin() );
+    vec.close();
   }
 }
 

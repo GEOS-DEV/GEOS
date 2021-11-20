@@ -447,7 +447,7 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
     HypreMatrix Auu;
     {
       Stopwatch timer( m_makeRestrictorTime );
-      mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.getComm(), true, Pu );
+      mat.dofManager()->makeRestrictor( { { m_params.mgr.displacementFieldName, { 3, true } } }, mat.comm(), true, Pu );
     }
     {
       Stopwatch timer( m_computeAuuTime );
@@ -519,6 +519,7 @@ void HyprePreconditioner::apply( Vector const & src,
   dst.zero();
 
   GEOSX_LAI_CHECK_ERROR( m_precond->solve( m_precond->ptr, matrix().unwrapped(), src.unwrapped(), dst.unwrapped() ) );
+  dst.touch();
 }
 
 void HyprePreconditioner::clear()

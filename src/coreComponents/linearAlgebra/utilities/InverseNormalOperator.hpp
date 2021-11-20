@@ -170,9 +170,9 @@ public:
   /**
    * @brief @return the communicator
    */
-  MPI_Comm getComm() const override
+  MPI_Comm comm() const override
   {
-    return m_matrix.getComm();
+    return m_matrix.comm();
   }
 
 private:

@@ -179,7 +179,7 @@ void SuperLUDist< LAI >::setup( Matrix const & mat )
   int_t const numLR = LvArray::integerConversion< int_t >( mat.numLocalRows() );
   int_t const numNZ = LvArray::integerConversion< int_t >( mat.numLocalNonzeros() );
 
-  m_data = std::make_unique< SuperLUDistData >( numGR, numLR, numNZ, mat.getComm() );
+  m_data = std::make_unique< SuperLUDistData >( numGR, numLR, numNZ, mat.comm() );
   setOptions();
 
   typename Matrix::Export matExport;

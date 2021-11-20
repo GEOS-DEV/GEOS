@@ -452,7 +452,7 @@ real64 SinglePhaseBase::solverStep( real64 const & time_n,
   real64 dt_return;
 
   // setup dof numbers and linear system
-  setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
 
   implicitStepSetup( time_n, dt, domain );
 
@@ -468,8 +468,8 @@ real64 SinglePhaseBase::solverStep( real64 const & time_n,
 void SinglePhaseBase::setupSystem( DomainPartition & domain,
                                    DofManager & dofManager,
                                    CRSMatrix< real64, globalIndex > & localMatrix,
-                                   array1d< real64 > & localRhs,
-                                   array1d< real64 > & localSolution,
+                                   ParallelVector & rhs,
+                                   ParallelVector & solution,
                                    bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
@@ -478,8 +478,8 @@ void SinglePhaseBase::setupSystem( DomainPartition & domain,
   SolverBase::setupSystem( domain,
                            dofManager,
                            localMatrix,
-                           localRhs,
-                           localSolution,
+                           rhs,
+                           solution,
                            setSparsity );
 }
 

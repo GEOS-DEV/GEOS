@@ -885,7 +885,7 @@ real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
   static bool systemSetupDone = false;
   if( !systemSetupDone )
   {
-    setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
     systemSetupDone = true;
   }
 
