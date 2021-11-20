@@ -86,8 +86,7 @@ void exportArray( HYPRE_MemoryLocation const location,
   }
   else // src is on device
   {
-    forAll< parallelDevicePolicy<> >( dst.size(),
-                                      [dst, src] GEOSX_HYPRE_DEVICE ( localIndex const i )
+    forAll< hypre::execPolicy >( dst.size(), [dst, src] GEOSX_HYPRE_DEVICE ( localIndex const i )
     {
       dst[i] = static_cast< U >( src[i] );
     } );
@@ -107,7 +106,7 @@ void exportArray( HYPRE_MemoryLocation const location,
   }
   else // dst is on device
   {
-    forAll< parallelDevicePolicy<> >( src.size(), [dst, src] GEOSX_HYPRE_DEVICE ( localIndex const i )
+    forAll< hypre::execPolicy >( src.size(), [dst, src] GEOSX_HYPRE_DEVICE ( localIndex const i )
     {
       dst[i] = static_cast< U >( src[i] );
     } );
