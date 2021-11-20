@@ -143,6 +143,7 @@ void EmbeddedSurfaceFluxKernel::
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
+  std::cout << "size fo perm'" << permeability[1][0].size(0) << std::endl;
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {

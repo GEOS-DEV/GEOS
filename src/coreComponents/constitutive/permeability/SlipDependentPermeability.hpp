@@ -161,7 +161,7 @@ void SlipDependentPermeabilityUpdate::compute( real64 const ( &dispJump )[3],
   {
     permeability[i] = permMultiplier * initialPermeability[i];
     dPerm_dDispJump[i][0] = 0.0;
-    real64 const tmpValue = initialPermeability[i] * dpermMultiplier_dshearMag /shearMag;
+    real64 const tmpValue = shearMag > 0.0 ? initialPermeability[i] * dpermMultiplier_dshearMag /shearMag : 0.0;
     dPerm_dDispJump[i][1] = tmpValue * dispJump[1];
     dPerm_dDispJump[i][2] = tmpValue * dispJump[2];
   }
