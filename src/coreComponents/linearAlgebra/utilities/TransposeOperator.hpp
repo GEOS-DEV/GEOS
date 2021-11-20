@@ -108,9 +108,9 @@ public:
    * @brief Get the MPI communicator the matrix was created with
    * @return MPI communicator of the underlying matrix
    */
-  virtual MPI_Comm getComm() const override
+  virtual MPI_Comm comm() const override
   {
-    return m_matrix.getComm();
+    return m_matrix.comm();
   }
 
 private:

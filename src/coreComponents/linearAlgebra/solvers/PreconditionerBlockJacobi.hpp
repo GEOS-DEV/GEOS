@@ -63,7 +63,7 @@ public:
 
     PreconditionerBase< LAI >::setup( mat );
 
-    m_blockDiag.createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.getComm() );
+    m_blockDiag.createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.comm() );
     m_blockDiag.open();
 
     array1d< globalIndex > idxBlk( m_blockSize );

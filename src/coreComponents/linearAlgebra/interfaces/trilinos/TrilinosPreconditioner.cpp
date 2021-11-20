@@ -21,7 +21,7 @@
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 #include <Epetra_Operator.h>
-#include <Epetra_FEVector.h>
+#include <Epetra_Vector.h>
 #include <Epetra_FECrsMatrix.h>
 #include <ml_MultiLevelPreconditioner.h>
 #include <Ifpack.h>
@@ -51,10 +51,11 @@ void convertRigidBodyModes( array1d< EpetraVector > const & nearNullKernel,
     nullSpacePointer.resize( numRBM, size );
     for( localIndex k = 0; k < numRBM; ++k )
     {
-      for( localIndex j = 0; j < size; ++j )
+      arrayView1d< real64 const > const values = nearNullKernel[k].values();
+      forAll< parallelHostPolicy >( size, [k, values, nsp = nullSpacePointer.toView()]( localIndex const j )
       {
-        nullSpacePointer( k, j ) = nearNullKernel[k].get( nearNullKernel[k].getGlobalRowID( j ) );
-      }
+        nsp( k, j ) = values[j];
+      } );
     }
   }
 }
@@ -327,6 +328,7 @@ void TrilinosPreconditioner::apply( Vector const & src,
   {
     GEOSX_LAI_ASSERT( m_precond );
     m_precond->ApplyInverse( src.unwrapped(), dst.unwrapped() );
+    dst.touch();
   }
 }
 
