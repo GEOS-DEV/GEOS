@@ -191,8 +191,8 @@ void LagrangianContactSolver::initializePreSubGroups()
 void LagrangianContactSolver::setupSystem( DomainPartition & domain,
                                            DofManager & dofManager,
                                            CRSMatrix< real64, globalIndex > & localMatrix,
-                                           array1d< real64 > & localRhs,
-                                           array1d< real64 > & localSolution,
+                                           ParallelVector & rhs,
+                                           ParallelVector & solution,
                                            bool const setSparsity )
 {
   if( m_precond )
@@ -201,7 +201,7 @@ void LagrangianContactSolver::setupSystem( DomainPartition & domain,
   }
 
   // setup monolithic coupled system
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
@@ -478,8 +478,8 @@ real64 LagrangianContactSolver::solverStep( real64 const & time_n,
   setupSystem( domain,
                m_dofManager,
                m_localMatrix,
-               m_localRhs,
-               m_localSolution );
+               m_rhs,
+               m_solution );
 
   // currently the only method is implicit time integration
   dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
@@ -614,24 +614,29 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
 
         // zero out matrix/rhs before assembly
         m_localMatrix.zero();
-        m_localRhs.zero();
+        m_rhs.zero();
 
-        // call assemble to fill the matrix and the rhs
-        assembleSystem( time_n,
-                        stepDt,
-                        domain,
-                        m_dofManager,
-                        m_localMatrix.toViewConstSizes(),
-                        m_localRhs );
+        {
+          arrayView1d< real64 > const localRhs = m_rhs.open();
 
-        // apply boundary conditions to system
-        applyBoundaryConditions( time_n,
-                                 stepDt,
-                                 domain,
-                                 m_dofManager,
-                                 m_localMatrix.toViewConstSizes(),
-                                 m_localRhs );
+          // call assemble to fill the matrix and the rhs
+          assembleSystem( time_n,
+                          stepDt,
+                          domain,
+                          m_dofManager,
+                          m_localMatrix.toViewConstSizes(),
+                          localRhs );
 
+          // apply boundary conditions to system
+          applyBoundaryConditions( time_n,
+                                   stepDt,
+                                   domain,
+                                   m_dofManager,
+                                   m_localMatrix.toViewConstSizes(),
+                                   localRhs );
+
+          m_rhs.close();
+        }
         // TODO: maybe add scale function here?
         // Scale()
 
@@ -639,7 +644,7 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
         // get residual norm
         if( computeResidual )
         {
-          residualNorm = calculateResidualNorm( domain, m_dofManager, m_localRhs );
+          residualNorm = calculateResidualNorm( domain, m_dofManager, m_rhs.values() );
         }
         else
         {
@@ -674,8 +679,6 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
 
         // Compose parallel LA matrix/rhs out of local LA matrix/rhs
         m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
-        m_rhs.create( m_localRhs, MPI_COMM_GEOSX );
-        m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
 
         // Output the linear system matrix/rhs for debugging purposes
         debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
@@ -686,11 +689,7 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
         // Output the linear system solution for debugging purposes
         debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
-        // Copy solution from parallel vector back to local
-        // TODO: This step will not be needed when we teach LA vectors to wrap our pointers
-        m_solution.extract( m_localSolution );
-
-        scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_localSolution );
+        scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
 
         // do line search in case residual has increased
         if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None && newtonIter > 0 )
@@ -701,8 +700,8 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
                                                domain,
                                                m_dofManager,
                                                m_localMatrix.toViewConstSizes(),
-                                               m_localRhs,
-                                               m_localSolution,
+                                               m_rhs,
+                                               m_solution,
                                                scaleFactor,
                                                residualNorm );
 
@@ -725,12 +724,12 @@ real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
         else
         {
           // apply the system solution to the fields/variables
-          applySystemSolution( m_dofManager, m_localSolution, scaleFactor, domain );
+          applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, domain );
           // Need to compute the residual norm
           computeResidual = true;
         }
 
-        if( !checkSystemSolution( domain, m_dofManager, m_localSolution, scaleFactor ) )
+        if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
         {
           // TODO try chopping (similar to line search)
           GEOSX_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
@@ -827,8 +826,8 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const & localRhs,
-                                          arrayView1d< real64 const > const & localSolution,
+                                          ParallelVector & rhs,
+                                          ParallelVector & solution,
                                           real64 const scaleFactor,
                                           real64 & lastResidual )
 {
@@ -847,18 +846,21 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
   // get residual norm
   real64 residualNorm0 = lastResidual;
 
-  applySystemSolution( dofManager, localSolution, scaleFactor, domain );
+  applySystemSolution( dofManager, solution.values(), scaleFactor, domain );
 
   // re-assemble system
   localMatrix.zero();
-  localRhs.zero();
-  assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  rhs.zero();
 
-  // apply boundary conditions to system
-  applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  {
+    arrayView1d< real64 > const localRhs = rhs.open();
+    assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    rhs.close();
+  }
 
   // get residual norm
-  real64 residualNormT = calculateResidualNorm( domain, dofManager, localRhs );
+  real64 residualNormT = calculateResidualNorm( domain, dofManager, rhs.values() );
 
   real64 ff0 = residualNorm0*residualNorm0;
   real64 ffT = residualNormT*residualNormT;
@@ -882,13 +884,13 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
     real64 const deltaLocalScaleFactor = ( localScaleFactor - previousLocalScaleFactor );
     cumulativeScale += deltaLocalScaleFactor;
 
-    if( !checkSystemSolution( domain, dofManager, localSolution, deltaLocalScaleFactor ) )
+    if( !checkSystemSolution( domain, dofManager, solution.values(), deltaLocalScaleFactor ) )
     {
       GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
       continue;
     }
 
-    applySystemSolution( dofManager, localSolution, deltaLocalScaleFactor, domain );
+    applySystemSolution( dofManager, solution.values(), deltaLocalScaleFactor, domain );
     lamm = lamc;
     lamc = localScaleFactor;
 
@@ -896,11 +898,14 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
     // re-assemble system
     // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
     localMatrix.zero();
-    localRhs.zero();
-    assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    rhs.zero();
 
-    // apply boundary conditions to system
-    applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    {
+      arrayView1d< real64 > const localRhs = rhs.open();
+      assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+      applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+      rhs.close();
+    }
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
@@ -908,7 +913,7 @@ bool LagrangianContactSolver::lineSearch( real64 const & time_n,
     }
 
     // get residual norm
-    residualNormT = calculateResidualNorm( domain, dofManager, localRhs );
+    residualNormT = calculateResidualNorm( domain, dofManager, rhs.values() );
     ffm = ffT;
     ffT = residualNormT*residualNormT;
     lineSearchIteration += 1;

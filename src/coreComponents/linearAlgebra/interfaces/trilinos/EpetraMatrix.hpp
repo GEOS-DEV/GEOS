@@ -361,9 +361,9 @@ public:
   virtual globalIndex getGlobalRowID( localIndex const index ) const override;
 
   /**
-   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::getComm
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::comm
    */
-  virtual MPI_Comm getComm() const override;
+  virtual MPI_Comm comm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;
 
