@@ -54,7 +54,7 @@ BlockPreconditionerGeneral< LAI >::~BlockPreconditionerGeneral() = default;
 template< typename LAI >
 void BlockPreconditionerGeneral< LAI >::reinitialize( Matrix const & mat, DofManager const & dofManager, localIndex const iBlock )
 {
-  MPI_Comm const & comm = mat.getComm();
+  MPI_Comm const & comm = mat.comm();
 
   std::vector< DofManager::SubComponent > dofsList;
   for( localIndex i = 0; i <= iBlock; ++i )
@@ -85,10 +85,10 @@ void BlockPreconditionerGeneral< LAI >::reinitialize( Matrix const & mat, DofMan
     restrictorNext.multiply( m_prolongators[i].next, m_restrictors[iBlock].next );
   }
 
-  m_rhs( 2*iBlock ).createWithLocalSize( m_restrictors[iBlock].current.numLocalRows(), comm );
-  m_rhs( 2*iBlock+1 ).createWithLocalSize( m_restrictors[iBlock].next.numLocalRows(), comm );
-  m_sol( 2*iBlock ).createWithLocalSize( m_restrictors[iBlock].current.numLocalRows(), comm );
-  m_sol( 2*iBlock+1 ).createWithLocalSize( m_restrictors[iBlock].next.numLocalRows(), comm );
+  m_rhs( 2*iBlock ).create( m_restrictors[iBlock].current.numLocalRows(), comm );
+  m_rhs( 2*iBlock+1 ).create( m_restrictors[iBlock].next.numLocalRows(), comm );
+  m_sol( 2*iBlock ).create( m_restrictors[iBlock].current.numLocalRows(), comm );
+  m_sol( 2*iBlock+1 ).create( m_restrictors[iBlock].next.numLocalRows(), comm );
 }
 
 template< typename LAI >

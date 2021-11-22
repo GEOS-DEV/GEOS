@@ -137,8 +137,8 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
 void SinglePhasePoromechanicsLagrangianContactSolver::setupSystem( DomainPartition & domain,
                                                   DofManager & dofManager,
                                                   CRSMatrix< real64, globalIndex > & localMatrix,
-                                                  array1d< real64 > & localRhs,
-                                                  array1d< real64 > & localSolution,
+                                                  ParallelVector & rhs,
+                                                  ParallelVector & solution,
                                                   bool const setSparsity )
 {
   if( m_precond )
@@ -147,9 +147,9 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupSystem( DomainPartiti
   }
 
   // setup monolithic coupled system
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
-  m_contactFlowSolver->setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  m_contactFlowSolver->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   //ParallelMatrix MM;
   //MM.create( localMatrix.toViewConst(), MPI_COMM_GEOSX );
@@ -225,8 +225,8 @@ real64 SinglePhasePoromechanicsLagrangianContactSolver::solverStep( real64 const
   setupSystem( domain,
                m_dofManager,
                m_localMatrix,
-               m_localRhs,
-               m_localSolution );
+               m_rhs,
+               m_solution );
 
   implicitStepSetup( time_n, dt, domain );
 
@@ -407,7 +407,8 @@ void SinglePhasePoromechanicsLagrangianContactSolver::solveSystem( DofManager co
                                                   ParallelVector & rhs,
                                                   ParallelVector & solution )
 {
-  solution.zero();
+            std::cout << "RHS " << rhs.norm2() << std::endl;
+
   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
 
   int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );

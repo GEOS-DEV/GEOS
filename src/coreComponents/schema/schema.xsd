@@ -1961,11 +1961,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="CompressibleSolidConstantPlusParallelPlatesPermeability" type="CompressibleSolidConstantPlusParallelPlatesPermeabilityType" />
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
-<<<<<<< HEAD
 			<xsd:element name="ConstantPlusParallelPlatesPermeability" type="ConstantPlusParallelPlatesPermeabilityType" />
-			<xsd:element name="Contact" type="ContactType" />
-=======
->>>>>>> origin/develop
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
@@ -2230,17 +2226,13 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-<<<<<<< HEAD
 	<xsd:complexType name="ConstantPlusParallelPlatesPermeabilityType">
 		<!--defaultConductivity => Value of the default conductivity C_{f,0} for the fracture.-->
 		<xsd:attribute name="defaultConductivity" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="ContactType">
-=======
 	<xsd:complexType name="CoulombType">
->>>>>>> origin/develop
 		<!--apertureTableName => Name of the aperture table-->
 		<xsd:attribute name="apertureTableName" type="string" use="required" />
 		<!--apertureTolerance => Value to be used to avoid floating point errors in expressions involving aperture. For example in the case of dividing by the actual aperture (not the effective aperture that results from the aperture function) this value may be used to avoid the 1/0 error. Note that this value may have some physical significance in its usage, as it may be used to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the 1/0 error.-->
