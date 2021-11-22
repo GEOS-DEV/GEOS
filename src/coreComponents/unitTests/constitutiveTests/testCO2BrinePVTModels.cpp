@@ -23,6 +23,7 @@
 #include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
+#include "constitutive/fluid/PVTFunctions/old/BrineEnthalpyFunction.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 
@@ -35,11 +36,15 @@ using namespace geosx::constitutive;
 using namespace geosx::dataRepository;
 using namespace geosx::stringutilities;
 using namespace geosx::constitutive::PVTProps;
+using namespace geosx::PVTProps;
 
 /// Input tables written into temporary files during testing
 
 static const char * pvtLiquidPhillipsTableContent = "DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 367.15 369.15 1 0.2\n"
                                                     "ViscosityFun PhillipsBrineViscosity 0.1";
+
+// Temperature is specified in Celcius!!!
+static const char * pvtLiquidOldEnthaplyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 40 300 1 0.2";
 
 // the last are set relatively high (1e-4) to increase derivative value and check it properly
 static const char * pvtLiquidEzrokhiTableContent = "DensityFun EzrokhiBrineDensity 2.01e-6 -6.34e-7 1e-4\n"
@@ -421,6 +426,40 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
                   "Could not find " << key << " in " << filename );
 
   return flashModel;
+}
+
+template< typename MODEL >
+std::unique_ptr< MODEL > makeOldPVTFunction( string const & filename,
+                                             string const & key )
+{
+  // define component names and molar weight
+  string_array componentNames;
+  componentNames.resize( 2 );
+  componentNames[0] = "co2"; componentNames[1] = "water";
+
+  array1d< real64 > componentMolarWeight;
+  componentMolarWeight.resize( 2 );
+  componentMolarWeight[0] = 44e-3; componentMolarWeight[1] = 18e-3;
+
+  // read parameters from file
+  std::ifstream is( filename );
+  std::unique_ptr< MODEL > pvtFunction = nullptr;
+  string str;
+  while( std::getline( is, str ) )
+  {
+    string_array const strs = stringutilities::tokenize( str, " " );
+
+    if( strs[0] == key )
+    {
+      pvtFunction = std::make_unique< MODEL >( strs,
+                                               componentNames,
+                                               componentMolarWeight );
+    }
+  }
+  GEOSX_ERROR_IF( pvtFunction == nullptr,
+                  "Could not find " << key << " in " << filename );
+
+  return pvtFunction;
 }
 
 
@@ -924,6 +963,111 @@ TEST_F( CO2SolubilityTest, co2SolubilityValuesAndDeriv )
     comp[1] = 1 - comp[0];
   }
 }
+
+class BrineEnthalpyTest : public ::testing::Test
+{
+public:
+  BrineEnthalpyTest()
+  {
+    writeTableToFile( filename, pvtLiquidOldEnthaplyTableContent );
+    pvtFunction = makeOldPVTFunction< BrineEnthalpyFunction >( filename, key );
+  }
+
+  ~BrineEnthalpyTest() override
+  {
+    removeFile( filename );
+  }
+
+protected:
+  string const key = "EnthalpyFun";
+  string const filename = "pvtliquid.txt";
+  std::unique_ptr< BrineEnthalpyFunction > pvtFunction;
+};
+
+TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
+{
+  // // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
+  // // (see the txt file defined at the top of the file for the definition of the coordinates)
+  // real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
+  // real64 const TC[3] = { 94.5, 95.1, 95.6 };
+  // array1d< real64 > comp( 2 );
+  // comp[0] = 0.304; comp[1] = 0.696;
+  // real64 const deltaComp = 0.2;
+
+  // real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  // real64 const relTol = 5e-5;
+  EvalVarArgs const pressure = 5.012e6;
+  EvalVarArgs const temp = 100;
+  array1d< EvalVarArgs > comp ( 2 );
+  comp[0] = 0.304; comp[1] = 0.696;
+  EvalVarArgs value;
+
+  pvtFunction->evaluation( pressure, temp, comp, value, true );
+  printf ( "Old BrineEnthalpy value=%lf, d_dP=%lf, d_dT=%lf, d_dcomp[0]=%lf, d_dcomp[1] = %lf\n", value.m_var, value.m_der[0], value.m_der[3], value.m_der[1], value.m_der[2] );
+
+  // real64 const savedValues[] = { 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962, 280.2559694,
+  //                                278.9092508, 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962,
+  //                                280.2559694, 278.9092508, 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568,
+  //                                281.9140962, 280.2559694, 278.9092508 };
+
+  // SpanWagnerCO2Density::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
+
+  // localIndex counter = 0;
+  // for( localIndex iComp = 0; iComp < 3; ++iComp )
+  // {
+  //   for( localIndex iPres = 0; iPres < 3; ++iPres )
+  //   {
+  //     for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+  //     {
+  //       testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+  //                                                P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
+  //       testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+  //       counter++;
+  //     }
+  //   }
+  //   comp[0] += deltaComp;
+  //   comp[1] = 1 - comp[0];
+  // }
+}
+
+// TEST_F( BrineEnthalpyTest, BrineEnthalpyMolarValuesAndDeriv )
+// {
+//   // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
+//   // (see the txt file defined at the top of the file for the definition of the coordinates)
+//   real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
+//   real64 const TC[3] = { 94.5, 95.1, 95.6 };
+//   array1d< real64 > comp( 2 );
+//   comp[0] = 0.304; comp[1] = 0.696;
+//   real64 const deltaComp = 0.2;
+
+//   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+//   real64 const relTol = 5e-5;
+
+//   real64 const savedValues[] = { 1881.446264, 1876.565603, 1872.538366, 3076.760999, 3066.362862, 3057.819473, 6407.138549, 6369.45385,
+//                                  6338.846609, 1881.446264, 1876.565603, 1872.538366, 3076.760999, 3066.362862, 3057.819473, 6407.138549,
+//                                  6369.45385, 6338.846609, 1881.446264, 1876.565603, 1872.538366, 3076.760999, 3066.362862, 3057.819473,
+//                                  6407.138549, 6369.45385, 6338.846609 };
+
+//   // SpanWagnerCO2Density::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
+
+//   // localIndex counter = 0;
+//   // for( localIndex iComp = 0; iComp < 3; ++iComp )
+//   // {
+//   //   for( localIndex iPres = 0; iPres < 3; ++iPres )
+//   //   {
+//   //     for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+//   //     {
+//   //       testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+//   //                                                P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
+//   //       testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
+//   //       counter++;
+//   //     }
+//   //   }
+//   //   comp[0] += deltaComp;
+//   //   comp[1] = 1 - comp[0];
+//   // }
+// }
+
 
 int main( int argc, char * * argv )
 {

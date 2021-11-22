@@ -17,7 +17,7 @@
  */
 
 #include "constitutive/fluid/PVTFunctions/old/CO2EnthalpyFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/old/SpanWagnerCO2Density.hpp"
+#include "constitutive/fluid/PVTFunctions/old/SpanWagnerCO2DensityFunction.hpp"
 
 namespace geosx
 {

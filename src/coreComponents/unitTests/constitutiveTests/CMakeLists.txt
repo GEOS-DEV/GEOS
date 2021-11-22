@@ -32,7 +32,13 @@ endif()
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testMultiFluid.cpp
-          testCO2BrinePVTModels.cpp )
+          testCO2BrinePVTModels.cpp
+          ../../constitutive/fluid/PVTFunctions/old/BrineEnthalpyFunction.cpp
+          ../../constitutive/fluid/PVTFunctions/old/BrineInternalEnergyFunction.cpp
+          ../../constitutive/fluid/PVTFunctions/old/CO2EnthalpyFunction.cpp
+          ../../constitutive/fluid/PVTFunctions/old/CO2InternalEnergyFunction.cpp
+          ../../constitutive/fluid/PVTFunctions/old/SpanWagnerCO2DensityFunction.cpp
+          ../../constitutive/fluid/PVTFunctions/old/UtilityFunctions.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
 endif()

@@ -13,8 +13,8 @@
  */
 
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2INTERNALENERGYFUNCTION_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2INTERNALENERGYFUNCTION_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2ENTHALPYFUNCTION_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2ENTHALPYFUNCTION_HPP_
 
 
 #include "constitutive/fluid/PVTFunctions/old/PVTFunctionBase.hpp"
@@ -25,34 +25,42 @@ namespace geosx
 namespace PVTProps
 {
 
-class CO2InternalEnergyFunction : public PVTFunction
+class CO2EnthalpyFunction : public PVTFunction
 {
 public:
 
 
-  CO2InternalEnergyFunction( string_array const & inputPara,
-                             string_array const & componentNames,
-                             real64_array const & componentMolarWeight );
+  CO2EnthalpyFunction( string_array const & inputPara,
+                       string_array const & componentNames,
+                       real64_array const & componentMolarWeight );
 
-  ~CO2InternalEnergyFunction() override {}
+  ~CO2EnthalpyFunction() override {}
 
 
-  static constexpr auto m_catalogName = "CO2InternalEnergy";
+  static constexpr auto m_catalogName = "CO2Enthalpy";
   static string catalogName()                    { return m_catalogName; }
   virtual string getCatalogName() const override final { return catalogName(); }
 
 
   virtual PVTFuncType functionType() const override
   {
-    return PVTFuncType::INTERNALENR;
+    return PVTFuncType::ENTHALPY;
   }
 
   virtual void evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
                            EvalVarArgs & value, bool useMass = 0 ) const override;
 
-  static void calculateCO2InternalEnergy( real64_array const & pressure, real64_array const & temperature, real64_array2d const & internalEnergy );
+
+  static void calculateCO2Enthalpy( real64_array const & pressure, real64_array const & temperature, real64_array2d const & density, real64_array2d const & enthalpy );
+
 
 private:
+
+  void makeTable( string_array const & inputPara );
+
+
+  TableFunctionPtr m_CO2EnthalpyTable;
+  localIndex m_CO2Index;
 
 
 };
@@ -62,4 +70,4 @@ private:
 }
 
 
-#endif /* GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2INTERNALENERGYFUNCTION_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2ENTHALPYFUNCTION_HPP_ */
