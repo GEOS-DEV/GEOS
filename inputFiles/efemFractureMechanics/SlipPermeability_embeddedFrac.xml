@@ -58,8 +58,8 @@
       xCoords="{ -40, -3.5, 3.5, 40 }"
       yCoords="{ -40, -3.5, 3.5, 40 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10, 20, 10 }"
-      ny="{ 10, 20, 10 }"
+      nx="{ 10, 21, 10 }"
+      ny="{ 10, 21, 10 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -68,7 +68,7 @@
     <BoundedPlane
       name="FracturePlane"
       normal="{-0.342020143325669, 0.939692620785908, 0.0}"
-      origin="{0.0, 0.0, 0.0}"
+      origin="{0.0, 0.0, 0.5}"
       lengthVector="{0.939692620785908, 0.342020143325669, 0.0}"
       widthVector="{0, 0, 1}"
       dimensions="{ 2,  10 }"/>
@@ -226,6 +226,12 @@
       porosityModelName="fracturePorosity"
       permeabilityModelName="fracturePerm"/>
 
+    <!--CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm2"/-->  
+
     <NullModel
       name="nullSolid"/>
 
@@ -239,6 +245,9 @@
       name="fracturePerm"
       shearDispThreshold="0.05"
       maxPermMultiplier="100"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm2"/>  
       
     <FrictionlessContact
       name="fractureContact"

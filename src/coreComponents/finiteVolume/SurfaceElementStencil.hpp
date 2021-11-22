@@ -402,14 +402,13 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
                                                           real64 (& dWeight_dVar1 )[MAX_NUM_OF_CONNECTIONS][2],
                                                           real64 (& dWeight_dVar2 )[MAX_NUM_OF_CONNECTIONS][2] ) const
 {
-  // TODO: this should become star-delta method
   real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
   {
     localIndex const er  =  m_elementRegionIndices[iconn][k];
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
     localIndex const ei  =  m_elementIndices[iconn][k];
-
+        
     sumOfTrans += coefficient[er][esr][ei][0][0] * m_weights[iconn][k];
   }
 
