@@ -36,6 +36,14 @@ set( constitutive_headers
      fluid/PVTFunctions/PVTFunctionBase.hpp
      fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/PVTFunctions/SpanWagnerCO2Density.hpp
+     fluid/PVTFunctions/old/BrineEnthalpyFunction.hpp
+     fluid/PVTFunctions/old/BrineInternalEnergyFunction.hpp
+     fluid/PVTFunctions/old/CO2EnthalpyFunction.hpp
+     fluid/PVTFunctions/old/CO2InternalEnergyFunction.hpp
+     fluid/PVTFunctions/old/SpanWagnerCO2DensityFunction.hpp
+     fluid/PVTFunctions/old/UtilityFunctions.hpp
+     fluid/PVTFunctions/old/PVTFunctionBase.hpp
+     fluid/PVTFunctions/old/StringUtilities.hpp
      fluid/ParticleFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp
@@ -120,7 +128,13 @@ set( constitutive_sources
      fluid/PVTFunctions/CO2Solubility.cpp
      fluid/PVTFunctions/FenghourCO2Viscosity.cpp
      fluid/PVTFunctions/SpanWagnerCO2Density.cpp
-     fluid/PVTFunctions/PVTFunctionHelpers.cpp   
+     fluid/PVTFunctions/PVTFunctionHelpers.cpp
+     fluid/PVTFunctions/old/BrineEnthalpyFunction.cpp
+     fluid/PVTFunctions/old/BrineInternalEnergyFunction.cpp
+     fluid/PVTFunctions/old/CO2EnthalpyFunction.cpp
+     fluid/PVTFunctions/old/CO2InternalEnergyFunction.cpp
+     fluid/PVTFunctions/old/SpanWagnerCO2DensityFunction.cpp
+     fluid/PVTFunctions/old/UtilityFunctions.cpp 
      fluid/ParticleFluid.cpp              
      fluid/ParticleFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp

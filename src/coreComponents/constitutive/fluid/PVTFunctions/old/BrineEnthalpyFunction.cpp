@@ -88,6 +88,7 @@ void BrineEnthalpyFunction::makeTable( string_array const & inputPara )
   TEnd = -1.0;
   PStart = -1.0;
   PEnd = -1.0;
+  m = -1.0;
 
 
   GEOSX_ERROR_IF( inputPara.size() < 9, "Invalid BrineEnthalpy input!" );
