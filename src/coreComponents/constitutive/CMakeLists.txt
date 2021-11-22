@@ -36,6 +36,7 @@ set( constitutive_headers
      fluid/PVTFunctions/PVTFunctionBase.hpp
      fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/PVTFunctions/SpanWagnerCO2Density.hpp
+     fluid/PVTFunctions/BrineEnthalpy.hpp
      fluid/PVTFunctions/old/BrineEnthalpyFunction.hpp
      fluid/PVTFunctions/old/BrineInternalEnergyFunction.hpp
      fluid/PVTFunctions/old/CO2EnthalpyFunction.hpp
@@ -129,6 +130,7 @@ set( constitutive_sources
      fluid/PVTFunctions/FenghourCO2Viscosity.cpp
      fluid/PVTFunctions/SpanWagnerCO2Density.cpp
      fluid/PVTFunctions/PVTFunctionHelpers.cpp
+     fluid/PVTFunctions/BrineEnthalpy.cpp
      fluid/PVTFunctions/old/BrineEnthalpyFunction.cpp
      fluid/PVTFunctions/old/BrineInternalEnergyFunction.cpp
      fluid/PVTFunctions/old/CO2EnthalpyFunction.cpp

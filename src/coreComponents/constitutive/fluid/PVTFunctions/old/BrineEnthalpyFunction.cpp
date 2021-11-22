@@ -69,8 +69,6 @@ BrineEnthalpyFunction::BrineEnthalpyFunction( string_array const & inputPara,
 
   makeTable( inputPara );
 
-  makeTable( inputPara );
-
 }
 
 void BrineEnthalpyFunction::makeTable( string_array const & inputPara )
