@@ -127,7 +127,7 @@ public:
 
 private:
 
-  /// Derivative of fracture permeability to shear displacement jump between fracture surfaces
+  /// Derivative of fracture permeability w.r.t. displacement jump
   array4d< real64 > m_dPerm_dDispJump;
 
   /// Threshold of shear displacement

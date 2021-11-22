@@ -79,7 +79,7 @@ struct EmbeddedSurfaceFluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
+          ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
@@ -142,7 +142,7 @@ struct FaceElementFluxKernel
  * @param[in] dMob_dPres The derivative of mobility wrt pressure in each element
  * @param[in] permeability The permeability in each element
  * @param[in] dPerm_dPres The derivative of permeability wrt pressure in each element
- * @param[in] dPerm_dAper The derivative of permeability wrt aperture in each element
+ * @param[in] dPerm_dDispJump The derivative of permeability wrt aperture in each element
  * @param[in] permeabilityMultiplier The permeability multiplier
  * @param[in] gravityVector The gravity vector
  * @param[out] localMatrix The linear system matrix
@@ -164,7 +164,7 @@ struct FaceElementFluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
+          ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs,
           CRSMatrixView< real64, localIndex const > const & dR_dAper );
@@ -204,7 +204,7 @@ struct FaceElementFluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
+          ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
           ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
           R1Tensor const & gravityVector,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,

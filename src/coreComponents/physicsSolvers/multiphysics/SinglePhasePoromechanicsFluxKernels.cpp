@@ -47,12 +47,12 @@ void EmbeddedSurfaceFluxKernel::
                                            ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                            ElementViewConst< arrayView3d< real64 const > > const & permeability,
                                            ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-                                           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
+                                           ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs )
 {
   GEOSX_UNUSED_VAR( jumpDofNumber );
-  GEOSX_UNUSED_VAR( dPerm_dAper );
+  GEOSX_UNUSED_VAR( dPerm_dDispJump );
 
   SinglePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
@@ -89,12 +89,12 @@ void EmbeddedSurfaceFluxKernel::
                                                  ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                                  ElementViewConst< arrayView3d< real64 const > > const & permeability,
                                                  ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-                                                 ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
+                                                 ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOSX_UNUSED_VAR( jumpDofNumber );
-  GEOSX_UNUSED_VAR( dPerm_dAper );
+  GEOSX_UNUSED_VAR( dPerm_dDispJump );
 
   SinglePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
@@ -132,7 +132,7 @@ void EmbeddedSurfaceFluxKernel::
                                           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                           ElementViewConst< arrayView3d< real64 const > > const & permeability,
                                           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-                                          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
+                                          ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
@@ -163,7 +163,7 @@ void EmbeddedSurfaceFluxKernel::
     stencilWrapper.computeWeights( iconn,
                                    permeability,
                                    dPerm_dPres,
-                                   dPerm_dAper,
+                                   dPerm_dDispJump,
                                    transmissibility,
                                    dTrans_dPres,
                                    dTrans_dAper );
@@ -300,12 +300,12 @@ void FaceElementFluxKernel::
                                            ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                            ElementViewConst< arrayView3d< real64 const > > const & permeability,
                                            ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-                                           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
+                                           ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs,
                                            CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
-  GEOSX_UNUSED_VAR( dPerm_dAper );
+  GEOSX_UNUSED_VAR( dPerm_dDispJump );
   GEOSX_UNUSED_VAR( dR_dAper );
 
   SinglePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
@@ -342,12 +342,12 @@ void FaceElementFluxKernel::
                                              ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                              ElementViewConst< arrayView3d< real64 const > > const & permeability,
                                              ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-                                             ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
+                                             ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                              arrayView1d< real64 > const & localRhs,
                                              CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
-  GEOSX_UNUSED_VAR( dPerm_dAper );
+  GEOSX_UNUSED_VAR( dPerm_dDispJump );
   GEOSX_UNUSED_VAR( dR_dAper );
 
   SinglePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
@@ -384,7 +384,7 @@ void FaceElementFluxKernel::
                                           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
                                           ElementViewConst< arrayView3d< real64 const > > const & permeability,
                                           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-                                          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
+                                          ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs,
                                           CRSMatrixView< real64, localIndex const > const & dR_dAper )
@@ -426,7 +426,7 @@ void FaceElementFluxKernel::
       stencilWrapper.computeWeights( iconn,
                                      permeability,
                                      dPerm_dPres,
-                                     dPerm_dAper,
+                                     dPerm_dDispJump,
                                      transmissibility,
                                      dTrans_dPres,
                                      dTrans_dAper );
@@ -498,7 +498,7 @@ void FaceElementFluxKernel::
           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dAper,
+          ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
           ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
           R1Tensor const & gravityVector,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -537,7 +537,7 @@ void FaceElementFluxKernel::
 
       // compute transmissibility
       real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2], dTrans_dAper[MAX_NUM_OF_CONNECTIONS][2];
-      GEOSX_UNUSED_VAR( dPerm_dPres, dPerm_dAper );
+      GEOSX_UNUSED_VAR( dPerm_dPres, dPerm_dDispJump );
       stencilWrapper.computeWeights( iconn,
                                      permeability,
                                      permeabilityMultiplier,
