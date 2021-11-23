@@ -189,10 +189,10 @@ Initial and boundary conditions
 
 The next step is to specify fields, including:
 
-  - The initial value (the displacements and pore pressure have to be initialized),
-  - The boundary conditions (traction loaded on the top surface and the constraints of the outer boundaries have to be set).
+  - The initial value (the displacements and pore pressure have to be initialized, corresponding to the undrained response),
+  - The boundary conditions (the vertical displacement applied at the top surface and the constraints of the outer boundaries have to be set).
 
-In this example, a compressive traction ``NormalTraction`` (:math:`\sigma_zz` = -1.0e4 Pa) is applied at the top surface (``zpos``) of computational domain. The lateral surface (``xpos``) is traction free and allows drainage. 
+In this example,the analytical z-displacement is applied at the top surface (``zpos``) of computational domain to enforce the rigid plate condition. The lateral surface (``xpos``) is traction free and allows drainage. 
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
@@ -330,7 +330,6 @@ The figure below compares the results from GEOSX (marks) and the corresponding a
 
             return (scaling1+scaling2*solution)*z;
         
-
     def rootsearch(f,a,b,dx):
         x1 = a; f1 = f(a)
         x2 = a + dx; f2 = f(x2)
@@ -367,7 +366,6 @@ The figure below compares the results from GEOSX (marks) and the corresponding a
         return (x1 + x2)/2.0
 
     def roots(f, a, b, eps=1e-6):
-        #print ('The roots on the interval [%f, %f] are:' % (a,b))
         out = []
         while 1:
             x1,x2 = rootsearch(f,a,b,eps)
@@ -376,7 +374,6 @@ The figure below compares the results from GEOSX (marks) and the corresponding a
                 root = bisect(f,x1,x2,1)              
                 if root != None:
                     pass
-                    #print (round(root,-int(math.log(eps, 10)))) 
                     out.append(root)            
             else:
                 print ('Done')
@@ -440,12 +437,6 @@ The figure below compares the results from GEOSX (marks) and the corresponding a
         return hydromechanicalParameters
 
 
-    def getAppliedTractionFromXML( xmlFilePath ):
-        tree = ElementTree.parse(xmlFilePath)
-        param = tree.find('FieldSpecifications/Traction')
-        return float(param.get("scale"))*(-1)
-
-
     def getGeometryFromXML(xmlFilePath):
         tree = ElementTree.parse(xmlFilePath)
 
@@ -494,7 +485,7 @@ The figure below compares the results from GEOSX (marks) and the corresponding a
            
         # Extract Mechanical Properties and Fracture Geometry from XML
         hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFile1Path)
-        F = getAppliedTractionFromXML(xmlFile1Path)
+        F = 1.0e4
         La, Lb, na, nb = getGeometryFromXML(xmlFile2Path)
         B = hydromechanicalParameters["skemptonCoefficient"]
         nuu = hydromechanicalParameters["undrainedPoissonRatio"]
@@ -502,45 +493,22 @@ The figure below compares the results from GEOSX (marks) and the corresponding a
         p0 = 1./3./La*B*(1.+nuu)*F
         u0 = -F*Lb*(1.0-nuu)/2./G/La
         
-        # Extract Local Inform for Bottom Layer (z=0.01)
-        xlist = [] 
-        indlist = []    
-        for i in range(0,len(zcord)):
-            if abs(zcord[i]/(Lb/nb/2.)-1.) < 0.01 and abs(ycord[i]/0.05-1.) < 0.01:
-               xlist.append(xcord[i]/La)
-               indlist.append(i)            
-  
-        pplist = np.zeros([len(tl), len(xlist)]) 
-        for i in range(len(xlist)): 
-            ind = indlist[i]
-            pplist[:,i]= pl[:,ind]
-
-        zlist = [] 
-        indlist = [] 
-        for i in range(0,len(zcord_node)):
-            if xcord_node[i]==0.5 and ycord_node[i]==0.0:
-               zlist.append(zcord_node[i]/Lb)
-               indlist.append(i) 
-        
-        displist = np.zeros([len(tl), len(zlist)]) 
-        for i in range(len(zlist)): 
-            ind = indlist[i]
-            displist[:,i]= disp[:,ind,2]       
-
+        xd_numerical = xcord/La     
+        zd_numerical = zcord_node/Lb         
         t = [0.05, 0.5, 5.0, 10.0]     
-        pressure_numerical = np.zeros([len(t), len(xlist)])
-        displacement_numerical = np.zeros([len(t), len(zlist)])  
+        pressure_numerical = np.zeros([len(t), len(xd_numerical)])
+        displacement_numerical = np.zeros([len(t), len(zd_numerical)])  
         for i in range(len(t)):
-            for j in range(len(tl)):
-                if tl[j]<t[i]:
-                   pressure_numerical[i,:] = pplist[j,:]/p0
-                   displacement_numerical[i,:] = displist[j,:]/u0
+            for j in range(1, len(tl)):
+                if tl[j]<=t[i]:
+                   pressure_numerical[i,:] = pl[j-1,:]/p0
+                   displacement_numerical[i,:] = disp[j-1,:,2]/u0
 
         # Initialize Mandel's analytical solution
         mandelAnalyticalSolution = Mandel(hydromechanicalParameters, La, Lb, F)        
  
         x = np.linspace(0, La, 101, endpoint=True)
-        xd = x/La 
+        xd_analytical = x/La 
         pressure_analytical = np.zeros([len(t), len(x)])
         displacement_analytical = np.zeros([len(t), len(x)])
         for i in range(len(t)):
@@ -554,11 +522,10 @@ The figure below compares the results from GEOSX (marks) and the corresponding a
         lw=8
         fig, ax = plt.subplots(1,2,figsize=(32, 12))
         cmap = plt.get_cmap("tab10")
-        #colorlist = ['lime', 'blue', 'deepskyblue', 'orange']
 
         for i in range(len(t)):
-            ax[0].plot(xd, pressure_analytical[i][:], color=cmap(i), alpha=0.6, label= 't = '+str(t[i])+'s - Analytical Solution', lw=lw)
-            ax[0].plot(xlist, pressure_numerical[i][:], 'o', alpha=0.8, color=cmap(i), mec = 'k', label='t = '+str(t[i])+'s - Numerical Solution', markersize=msize)
+            ax[0].plot(xd_analytical, pressure_analytical[i][:], color=cmap(i), alpha=0.6, label= 't = '+str(t[i])+'s - Analytical Solution', lw=lw)
+            ax[0].plot(xd_numerical, pressure_numerical[i][:], 'o', alpha=0.8, color=cmap(i), mec = 'k', label='t = '+str(t[i])+'s - Numerical Solution', markersize=msize)
         ax[0].set_xlim(0, 1)
         ax[0].set_ylim(0, 1.2)
         ax[0].set_xlabel('Normalized Distance, 'r'$x$/$a$', size=fsize, weight="bold")
@@ -570,8 +537,8 @@ The figure below compares the results from GEOSX (marks) and the corresponding a
 
 
         for i in range(len(t)):
-            ax[1].plot(xd, displacement_analytical[i][:], color=cmap(i), alpha=0.6, label= 't = '+str(t[i])+'s - Analytical Solution', lw=lw)
-            ax[1].plot(zlist, displacement_numerical[i][:], 'o', alpha=0.8, color=cmap(i), mec = 'k', label='t = '+str(t[i])+'s - Numerical Solution', markersize=msize)
+            ax[1].plot(xd_analytical, displacement_analytical[i][:], color=cmap(i), alpha=0.6, label= 't = '+str(t[i])+'s - Analytical Solution', lw=lw)
+            ax[1].plot(zd_numerical, displacement_numerical[i][:], 'o', alpha=0.8, color=cmap(i), mec = 'k', label='t = '+str(t[i])+'s - Numerical Solution', markersize=msize)
         ax[1].set_xlim(0, 1)
         ax[1].set_ylim(0, 1.5)
         ax[1].set_xlabel('Normalized Distance, 'r'$z$/$b$', size=fsize, weight="bold")
@@ -580,13 +547,13 @@ The figure below compares the results from GEOSX (marks) and the corresponding a
         ax[1].grid(True)        
         ax[1].xaxis.set_tick_params(labelsize=fsize)
         ax[1].yaxis.set_tick_params(labelsize=fsize)
-          
+
+        plt.savefig('Mandel.png')   
         plt.show() 
 
 
-    if __name__ == "__main__":
+   if __name__ == "__main__":
         main()
-
 
 
 
