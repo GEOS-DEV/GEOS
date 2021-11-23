@@ -147,12 +147,12 @@ void EmbeddedSurfaceFluxKernel::
   {
     localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
-    localIndex const numDofs = stencilSize * (4);// pressure and normal jump (3)
+    localIndex const numDofs = stencilSize * 4;// pressure and normal jump (3)
 
     // working arrays
-    stackArray1d< globalIndex, MAX_NUM_FLUX_ELEMS > dofColIndices( numDofs );
+    stackArray1d< globalIndex, MAX_NUM_FLUX_ELEMS * 4 > dofColIndices( numDofs );
     stackArray1d< real64, MAX_NUM_FLUX_ELEMS > localFlux( numFluxElems );
-    stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, numDofs );
+    stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE * 4 > localFluxJacobian( numFluxElems, numDofs );
 
     // compute transmissibility
     real64 transmissibility[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
