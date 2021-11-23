@@ -149,7 +149,7 @@ void EmbeddedSurfaceFluxKernel::
   {
     localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
-    localIndex const numDofs = stencilSize * 2;// pressure and normal jump
+    localIndex const numDofs = stencilSize * (4);// pressure and normal jump (3)
 
     // working arrays
     stackArray1d< globalIndex, MAX_NUM_FLUX_ELEMS > dofColIndices( numDofs );
@@ -159,7 +159,7 @@ void EmbeddedSurfaceFluxKernel::
     // compute transmissibility
     real64 transmissibility[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
     real64 dTrans_dPres[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
-    real64 dTrans_dAper[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
+    real64 dTrans_dDispJump[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2][3];
 
     stencilWrapper.computeWeights( iconn,
                                    permeability,
@@ -167,7 +167,7 @@ void EmbeddedSurfaceFluxKernel::
                                    dPerm_dDispJump,
                                    transmissibility,
                                    dTrans_dPres,
-                                   dTrans_dAper );
+                                   dTrans_dDispJump );
 
     compute( stencilSize,
              seri[iconn],
@@ -175,7 +175,7 @@ void EmbeddedSurfaceFluxKernel::
              sei[iconn],
              transmissibility,
              dTrans_dPres,
-             dTrans_dAper,
+             dTrans_dDispJump,
              pres,
              dPres,
              gravCoef,
@@ -190,9 +190,11 @@ void EmbeddedSurfaceFluxKernel::
     // extract DOF numbers
     for( localIndex i = 0; i < stencilSize; ++i )
     {
-      localIndex localDofIndex = 2 * i;
+      localIndex localDofIndex = 4 * i;
       dofColIndices[ localDofIndex ]     = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
       dofColIndices[ localDofIndex + 1 ] = jumpDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+      dofColIndices[ localDofIndex + 2 ] = jumpDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + 1;
+      dofColIndices[ localDofIndex + 3 ] = jumpDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + 2;
     }
 
     for( localIndex i = 0; i < numFluxElems; ++i )
@@ -224,7 +226,7 @@ void EmbeddedSurfaceFluxKernel::
            arraySlice1d< localIndex const > const & sei,
            real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
            real64 const (&dTrans_dPres)[MAX_NUM_OF_CONNECTIONS][2],
-           real64 const (&dTrans_dAper)[MAX_NUM_OF_CONNECTIONS][2],
+           real64 const (&dTrans_dDispJump)[MAX_NUM_OF_CONNECTIONS][2][3],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -268,18 +270,25 @@ void EmbeddedSurfaceFluxKernel::
   flux[0] =  dt * fluxVal;
   flux[1] = -dt * fluxVal;
 
-  real64 dFlux_dAper[2] = {0.0, 0.0};
-  dFlux_dAper[0] = dt * dFlux_dTrans * dTrans_dAper[0][0];
-  dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dAper[0][1];
-
+  real64 dFlux_dAper[2][3] = {{0.0,0.0,0.0}, {0.0, 0.0, 0.0}};
+  for localIndex i=0; i < 3; i++
+  {
+    dFlux_dDispJump[0][i] = dt * dFlux_dTrans * dTrans_dDispJump[0][0][i];
+    dFlux_dDispJump[1][i] = -dt * dFlux_dTrans * dTrans_dDispJump[0][1][i];
+  }
   for( localIndex ke = 0; ke < 2; ++ke )
   {
-    localIndex const dofIndex = 2*ke;
+    localIndex const dofIndex = 4*ke;
 
     fluxJacobian[0][dofIndex]   =  dt * dFlux_dP[ke];
-    fluxJacobian[0][dofIndex+1] =  dt * dFlux_dAper[ke];
+    fluxJacobian[0][dofIndex+1] =  dt * dFlux_dDispJump[ke][0];
+    fluxJacobian[0][dofIndex+2] =  dt * dFlux_dDispJump[ke][1];
+    fluxJacobian[0][dofIndex+3] =  dt * dFlux_dDispJump[ke][2];
+
     fluxJacobian[1][dofIndex]   = -dt * dFlux_dP[ke];
-    fluxJacobian[1][dofIndex+1] = -dt * dFlux_dAper[ke];
+    fluxJacobian[1][dofIndex+1] = -dt * dFlux_dDispJump[ke][0];
+    fluxJacobian[1][dofIndex+2] = -dt * dFlux_dDispJump[ke][1];
+    fluxJacobian[1][dofIndex+3] = -dt * dFlux_dDispJump[ke][2];
   }
 }
 
@@ -422,7 +431,7 @@ void FaceElementFluxKernel::
       // compute transmissibility
       real64 transmissibility[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
       real64 dTrans_dPres[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
-      real64 dTrans_dAper[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
+      real64 dTrans_dDispJump[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2][3];
 
       stencilWrapper.computeWeights( iconn,
                                      permeability,
@@ -430,7 +439,7 @@ void FaceElementFluxKernel::
                                      dPerm_dDispJump,
                                      transmissibility,
                                      dTrans_dPres,
-                                     dTrans_dAper );
+                                     dTrans_dDispJump );
 
       compute( stencilSize,
                seri[iconn],
@@ -438,7 +447,7 @@ void FaceElementFluxKernel::
                sei[iconn],
                transmissibility,
                dTrans_dPres,
-               dTrans_dAper,
+               dTrans_dDispJump,
                pres,
                dPres,
                gravCoef,
@@ -537,7 +546,7 @@ void FaceElementFluxKernel::
       stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > dFlux_dAper( numFluxElems, stencilSize );
 
       // compute transmissibility
-      real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2], dTrans_dAper[MAX_NUM_OF_CONNECTIONS][2];
+      real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2], dTrans_dDispJump[MAX_NUM_OF_CONNECTIONS][2][3];
       GEOSX_UNUSED_VAR( dPerm_dPres, dPerm_dDispJump );
       stencilWrapper.computeWeights( iconn,
                                      permeability,
@@ -551,7 +560,7 @@ void FaceElementFluxKernel::
                sei[iconn],
                transmissibility,
                dTrans_dPres,
-               dTrans_dAper,
+               dTrans_dDispJump,
                pres,
                dPres,
                gravCoef,
@@ -604,7 +613,7 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
                                 arraySlice1d< localIndex const > const & sei,
                                 real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
                                 real64 const (&dTrans_dPres)[MAX_NUM_OF_CONNECTIONS][2],
-                                real64 const (&dTrans_dAper)[MAX_NUM_OF_CONNECTIONS][2],
+                                real64 const (&dTrans_dDispJump)[MAX_NUM_OF_CONNECTIONS][2][3],
                                 ElementViewConst< arrayView1d< real64 const > > const & pres,
                                 ElementViewConst< arrayView1d< real64 const > > const & dPres,
                                 ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -652,8 +661,8 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
       flux[k[1]] -= dt * fluxVal;
 
       real64 dFlux_dAper[2] = {0.0, 0.0};
-      dFlux_dAper[0] = dt * dFlux_dTrans * dTrans_dAper[connectionIndex][0];
-      dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dAper[connectionIndex][1];
+      dFlux_dAper[0] = dt * dFlux_dTrans * dTrans_dDispJump[connectionIndex][0][0];
+      dFlux_dAper[1] = -dt * dFlux_dTrans * dTrans_dDispJump[connectionIndex][1][0];
 
       fluxJacobian[k[0]][k[0]] += dFlux_dP[0] * dt;
       fluxJacobian[k[0]][k[1]] += dFlux_dP[1] * dt;

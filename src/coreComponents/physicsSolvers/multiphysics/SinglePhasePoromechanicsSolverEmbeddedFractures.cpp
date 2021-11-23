@@ -267,7 +267,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( Do
             // so we only add the coupling with the jumps of the neighbours.
             if( k1 != k0 )
             {
-              rowLengths[ rowNumber ] += 1;
+              rowLengths[ rowNumber ] += embeddedSurfaceSubRegion.numOfJumpEnrichments(); // number of jump enrichments.
             }
           }
         }
@@ -366,8 +366,12 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingSparsityPattern
             // so we only add the coupling with the jumps of the neighbours.
             if( k1 != k0 )
             {
-              globalIndex const colIndex = jumpDofNumber[sei[iconn][k1]];
-              pattern.insertNonZero( rowIndex, colIndex );
+              for (localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++)
+              {
+                globalIndex const colIndex = jumpDofNumber[sei[iconn][k1]] + i;
+                pattern.insertNonZero( rowIndex, colIndex );
+              }
+              
             }
           }
         }
