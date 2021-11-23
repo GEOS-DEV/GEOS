@@ -43,7 +43,8 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
 #ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluid,
 #endif
-                               CO2BrineFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrinePhillipsFluid,
+                               CO2BrineEzrokhiFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -55,7 +56,8 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 #ifdef GEOSX_USE_PVTPackage
                                CompositionalMultiphaseFluid,
 #endif
-                               CO2BrineFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrinePhillipsFluid,
+                               CO2BrineEzrokhiFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

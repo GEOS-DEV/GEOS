@@ -90,12 +90,12 @@ LaplaceVEM::~LaplaceVEM()
 void LaplaceVEM::setupSystem( DomainPartition & domain,
                               DofManager & dofManager,
                               CRSMatrix< real64, globalIndex > & localMatrix,
-                              array1d< real64 > & localRhs,
-                              array1d< real64 > & localSolution,
+                              ParallelVector & rhs,
+                              ParallelVector & solution,
                               bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 }
 
 /*

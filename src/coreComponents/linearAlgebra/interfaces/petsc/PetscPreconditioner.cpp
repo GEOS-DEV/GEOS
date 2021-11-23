@@ -64,7 +64,8 @@ PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & 
     { LinearSolverParameters::PreconditionerType::ic, PCICC },
     { LinearSolverParameters::PreconditionerType::jacobi, PCJACOBI },
     { LinearSolverParameters::PreconditionerType::l1jacobi, PCJACOBI },
-    { LinearSolverParameters::PreconditionerType::gs, PCSOR },
+    { LinearSolverParameters::PreconditionerType::fgs, PCSOR },
+    { LinearSolverParameters::PreconditionerType::bgs, PCSOR },
     { LinearSolverParameters::PreconditionerType::sgs, PCSOR },
     { LinearSolverParameters::PreconditionerType::l1sgs, PCSOR },
   };
@@ -75,27 +76,23 @@ PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & 
 
 PCJacobiType getPetscJacobiType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, PCJacobiType > const typeMap =
+  static map< LinearSolverParameters::PreconditionerType, PCJacobiType > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::jacobi, PC_JACOBI_DIAGONAL },
     { LinearSolverParameters::PreconditionerType::l1jacobi, PC_JACOBI_ROWSUM },
   };
-
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Petsc smoother option: " << type );
-  return typeMap.at( type );
+  return findOption( typeMap, type, "Jacobi type", "PetscPreconditioner" );
 }
 
 MatSORType getPetscSORType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, MatSORType > const typeMap =
+  static map< LinearSolverParameters::PreconditionerType, MatSORType > const typeMap =
   {
-    { LinearSolverParameters::PreconditionerType::gs, SOR_FORWARD_SWEEP },
+    { LinearSolverParameters::PreconditionerType::fgs, SOR_FORWARD_SWEEP },
+    { LinearSolverParameters::PreconditionerType::bgs, SOR_BACKWARD_SWEEP },
     { LinearSolverParameters::PreconditionerType::sgs, SOR_SYMMETRIC_SWEEP },
-    { LinearSolverParameters::PreconditionerType::l1sgs, SOR_SYMMETRIC_SWEEP },
   };
-
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Petsc smoother option: " << type );
-  return typeMap.at( type );
+  return findOption( typeMap, type, "Gauss-Seidel type", "PetscPreconditioner" );
 }
 
 void createPetscSmoother( LinearSolverParameters const & params, PC const precond )
@@ -131,14 +128,12 @@ void createPetscSmoother( LinearSolverParameters const & params, PC const precon
 
 PCMGCycleType getPetscMGCycleType( LinearSolverParameters::AMG::CycleType const & type )
 {
-  static std::map< LinearSolverParameters::AMG::CycleType, PCMGCycleType > const typeMap =
+  static map< LinearSolverParameters::AMG::CycleType, PCMGCycleType > const typeMap =
   {
     { LinearSolverParameters::AMG::CycleType::V, PC_MG_CYCLE_V },
     { LinearSolverParameters::AMG::CycleType::W, PC_MG_CYCLE_W }
   };
-
-  GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Petsc MG cycle option: " << type );
-  return typeMap.at( type );
+  return findOption( typeMap, type, "multigrid cycle", "PetscPreconditioner" );
 }
 
 void createPetscAMG( LinearSolverParameters const & params,
@@ -207,7 +202,7 @@ void createPetscAMG( LinearSolverParameters const & params,
     {
       GEOSX_LAI_CHECK_ERROR( PCSetType( smootherPC, PCJACOBI ) );
     }
-    else if( params.amg.smootherType == LinearSolverParameters::AMG::SmootherType::gs )
+    else if( params.amg.smootherType == LinearSolverParameters::AMG::SmootherType::fgs )
     {
       GEOSX_LAI_CHECK_ERROR( PCSetType( smootherPC, PCSOR ) );
     }
@@ -280,7 +275,7 @@ PetscMatrix const & PetscPreconditioner::setupPreconditioningMatrix( PetscMatrix
 {
   if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg && m_params.amg.separateComponents )
   {
-    LAIHelperFunctions::separateComponentFilter( mat, m_precondMatrix, m_params.dofsPerNode );
+    mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
     return m_precondMatrix;
   }
   return mat;
@@ -299,7 +294,7 @@ void PetscPreconditioner::setup( PetscMatrix const & mat )
   // Basic setup common for all preconditioners
   if( create )
   {
-    GEOSX_LAI_CHECK_ERROR( PCCreate( precondMat.getComm(), &m_precond ) );
+    GEOSX_LAI_CHECK_ERROR( PCCreate( precondMat.comm(), &m_precond ) );
   }
   GEOSX_LAI_CHECK_ERROR( PCSetOperators( m_precond, mat.unwrapped(), precondMat.unwrapped() ) );
 
@@ -317,6 +312,7 @@ void PetscPreconditioner::setup( PetscMatrix const & mat )
         break;
       }
       case LinearSolverParameters::PreconditionerType::jacobi:
+      case LinearSolverParameters::PreconditionerType::l1jacobi:
       {
         GEOSX_LAI_CHECK_ERROR( PCSetType( m_precond, PCJACOBI ) );
         break;
@@ -326,6 +322,9 @@ void PetscPreconditioner::setup( PetscMatrix const & mat )
         createPetscAMG( m_params, m_precond, m_nullsp );
         break;
       }
+      case LinearSolverParameters::PreconditionerType::fgs:
+      case LinearSolverParameters::PreconditionerType::bgs:
+      case LinearSolverParameters::PreconditionerType::sgs:
       case LinearSolverParameters::PreconditionerType::iluk:
       case LinearSolverParameters::PreconditionerType::ic:
       {
@@ -358,6 +357,7 @@ void PetscPreconditioner::apply( Vector const & src,
   GEOSX_LAI_ASSERT_EQ( dst.globalSize(), this->numGlobalRows() );
 
   GEOSX_LAI_CHECK_ERROR( PCApply( m_precond, src.unwrapped(), dst.unwrapped() ) );
+  dst.touch();
 }
 
 void PetscPreconditioner::clear()

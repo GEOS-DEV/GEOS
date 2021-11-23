@@ -505,13 +505,14 @@ struct StateUpdateKernel
   static void
   launch( localIndex const size,
           CONTACT_WRAPPER const & contactWrapper,
+          arrayView2d< real64 const > const & oldJump,
           arrayView2d< real64 const > const & jump,
           arrayView2d< real64 > const & fractureTraction,
           arrayView3d< real64 > const & dFractureTraction_dJump )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      contactWrapper.computeTraction( jump[k], fractureTraction[k], dFractureTraction_dJump[k] );
+      contactWrapper.computeTraction( k, oldJump[k], jump[k], fractureTraction[k], dFractureTraction_dJump[k] );
     } );
   }
 
