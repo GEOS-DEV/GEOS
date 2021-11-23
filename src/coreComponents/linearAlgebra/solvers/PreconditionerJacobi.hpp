@@ -46,7 +46,7 @@ public:
   virtual void setup( Matrix const & mat ) override
   {
     GEOSX_LAI_ASSERT( mat.ready() );
-    m_diagInv.createWithLocalSize( mat.numLocalRows(), mat.getComm() );
+    m_diagInv.createWithLocalSize( mat.numLocalRows(), mat.comm() );
     mat.extractDiagonal( m_diagInv );
     m_diagInv.reciprocal();
   }
