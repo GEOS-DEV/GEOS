@@ -616,19 +616,19 @@ void ProblemManager::applyNumericalMethods()
   ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   Group & meshBodies = domain.getMeshBodies();
 
-  map< std::pair< string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
+  map< std::tuple< string, string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
 
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
 
 
-map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
+map< std::tuple< string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
 {
 
   NumericalMethodsManager const &
   numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
 
-  map< std::pair< string, string >, localIndex > regionQuadrature;
+  map< std::tuple< string, string, string >, localIndex > regionQuadrature;
 
   for( localIndex solverIndex=0; solverIndex<m_physicsSolverManager->numSubGroups(); ++solverIndex )
   {
@@ -645,16 +645,16 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
       FiniteElementDiscretization const * const
       feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( discretizationName );
 
-      for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
+      solver->forMeshTargets( meshBodies,
+                              [&]( string const & meshBodyName,
+                                   MeshLevel & meshLevel,
+                                   auto const & regionNames )
       {
-        MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
-        meshBody.forMeshLevels( [&] (MeshLevel & meshLevel )
-        {
           NodeManager & nodeManager = meshLevel.getNodeManager();
           ElementRegionManager & elemManager = meshLevel.getElemManager();
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-          for( auto const & regionName : targetRegions )
+          for( auto const & regionName : regionNames )
           {
             if( elemManager.hasRegion( regionName ) )
             {
@@ -679,8 +679,9 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 
                     feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
 
-                    localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
-                                                                                               subRegion.getName() ) ];
+                    localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                                regionName,
+                                                                                                subRegion.getName() ) ];
 
                     numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
                   } );
@@ -690,7 +691,8 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
               {
                 elemRegion.forElementSubRegions( [&]( auto & subRegion )
                 {
-                  localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
+                  localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                             regionName,
                                                                                              subRegion.getName() ) ];
                   localIndex const numQuadraturePoints = 1;
                   numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
@@ -698,8 +700,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
               }
             }
           }
-        } );
-      }
+      } );
     } // if( solver!=nullptr )
   }
 
@@ -709,7 +710,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 
 void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                           ConstitutiveManager const & constitutiveManager,
-                                          map< std::pair< string, string >, localIndex > const & regionQuadrature )
+                                          map< std::tuple< string, string, string >, localIndex > const & regionQuadrature )
 {
   for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
   {
@@ -726,7 +727,9 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
         string const & regionName = elemRegion.getName();
         string const & subRegionName = elemSubRegion.getName();
         string_array const & materialList = elemRegion.getMaterialList();
-        TYPEOFREF( regionQuadrature ) ::const_iterator rqIter = regionQuadrature.find( std::make_pair( regionName, subRegionName ) );
+        TYPEOFREF( regionQuadrature ) ::const_iterator rqIter = regionQuadrature.find( std::make_tuple( meshBody.getName(),
+                                                                                                        regionName,
+                                                                                                        subRegionName ) );
         if( rqIter != regionQuadrature.end() )
         {
           localIndex const quadratureSize = rqIter->second;

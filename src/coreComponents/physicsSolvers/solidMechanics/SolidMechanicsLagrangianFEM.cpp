@@ -154,7 +154,8 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 
 void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 {
-  forMeshTargets( meshBodies, [&] ( MeshLevel & meshLevel,
+  forMeshTargets( meshBodies, [&] ( string const &,
+                                    MeshLevel & meshLevel,
                                     arrayView1d<string const> const & regionNames )
   {
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -239,6 +240,12 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE );
+
+      subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setSizedFromParent(0);
+
     } );
 
   } );
@@ -251,6 +258,20 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
+
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                    MeshLevel & meshLevel,
+                                    arrayView1d<string const> const & regionNames )
+  {
+    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                       [&]( localIndex const,
+                                                                            CellElementSubRegion & subRegion )
+    {
+      string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
+      solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
+    });
+  });
   // Validate solid models in target regions
   domain.forMeshBodies( [&]( MeshBody const & meshBody )
   {
@@ -317,10 +338,11 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  domain.forMeshBodies( [&]( MeshBody & meshBody )
+  forMeshTargets( domain.getMeshBodies(),
+                  [&]( string const &,
+                       MeshLevel & mesh,
+                       auto const & regionNames )
   {
-    MeshLevel & mesh = meshBody.getMeshLevel( 0 );
-
     NodeManager & nodes = mesh.getNodeManager();
     Group & nodeSets = nodes.sets();
 
@@ -341,18 +363,18 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     SortedArray< localIndex > & m_nonSendOrReceiveNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::nonSendOrReceiveNodesString() );
     SortedArray< localIndex > & m_targetNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::targetNodesString() );
 
-
-    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
-    rho = elementRegionManager.constructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
-                                                                                                                targetRegionNames(),
-                                                                                                                solidMaterialNames() );
-
-    forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                         localIndex const er,
-                                         ElementRegionBase & elemRegion )
+    elementRegionManager.forElementRegionsComplete( regionNames,
+                                                    [&]( localIndex const,
+                                                         localIndex const er,
+                                                         ElementRegionBase & elemRegion )
     {
       elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion & elementSubRegion )
       {
+        string const & solidMaterialName = elementSubRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
+
+        arrayView2d< real64 const > const
+        rho = elementSubRegion.getConstitutiveModel(solidMaterialName).getReference< array2d< real64 > >( SolidBase::viewKeyStruct::densityString() );
+
         SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes( elementSubRegion );
         SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes( elementSubRegion );
 
@@ -386,12 +408,12 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
             real64 elemMass = 0;
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {
-              elemMass += rho[er][esr][k][q] * detJ[k][q];
+              elemMass += rho[k][q] * detJ[k][q];
               FE_TYPE::calcN( q, N );
 
               for( localIndex a=0; a< numNodesPerElem; ++a )
               {
-                mass[elemsToNodes[k][a]] += rho[er][esr][k][q] * detJ[k][q] * N[a];
+                mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
               }
             }
 
