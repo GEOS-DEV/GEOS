@@ -127,6 +127,8 @@ void PetscVector::close()
   GEOSX_LAI_ASSERT( !closed() );
   m_values.move( LvArray::MemorySpace::host, false );
   m_closed = true;
+  GEOSX_LAI_CHECK_ERROR( VecAssemblyBegin( m_vec ) );
+  GEOSX_LAI_CHECK_ERROR( VecAssemblyEnd( m_vec ) );
 }
 
 void PetscVector::touch()
