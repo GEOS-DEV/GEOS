@@ -54,13 +54,16 @@ with :math:`\alpha_{n}` denoting the positive roots of the following equation:
 .. math::
    \text{tan} \alpha_{n} = \frac{1- \nu}{\nu_{u}-\nu} \alpha_{n}
 
-Upon sudden application of the verical load, the instantaneous overpressure (:math:`p_0(x,z)`) and settlement (:math:`u_{z,0}(x,z)`) across the sample are derived from the Skempton effect:
+Upon sudden application of the verical load, the instantaneous overpressure (:math:`p_0(x,z)`) and settlement (:math:`u_{z,0}(x,z)` and :math:`u_{x,0}(x,z)`) across the sample are derived from the Skempton effect:
             
 .. math::
    p_0(x,z) = \frac{1}{3a} B \left( 1 + \nu_{u} \right) F
 
 .. math::
    u_{z,0}(x,z) = -\frac{F \left( 1 - \nu_{u} \right)}{2G} \frac{z}{a}
+
+.. math::
+   u_{x,0}(x,z) = \frac{F \nu_{u} }{2G} \frac{x}{a}
 
 where :math:`\nu` and :math:`\nu_{u}` are the drained and undrained Poisson's ratio respectively, :math:`c` is the consolidation coefficient, :math:`B` is Skempton's coefficient, :math:`G` is the shear modulus, and :math:`F` is the applied force.
 
