@@ -95,7 +95,7 @@ public:
 
 private:
 
-  arrayViewd< real64 > m_dPerm_dDispJump;
+  arrayView4d< real64 > m_dPerm_dDispJump;
 
 };
 

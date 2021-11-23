@@ -33,11 +33,11 @@ public:
 
   ProppantPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                               arrayView3d< real64 > const & dPerm_dPressure,
-                              arrayView3d< real64 > const & dPerm_dAperture,
+                              arrayView4d< real64 > const & dPerm_dDispJump,
                               arrayView3d< real64 > const & permeabilityMultiplier,
                               real64 const & proppantPackPermeability )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
-    m_dPerm_dAperture( dPerm_dAperture ),
+    m_dPerm_dDispJump( dPerm_dDispJump ),
     m_permeabilityMultiplier( permeabilityMultiplier ),
     m_proppantPackPermeability( proppantPackPermeability )
   {}
@@ -47,7 +47,7 @@ public:
                 real64 const & newHydraulicAperture,
                 real64 const & proppantPackVolumeFraction,
                 arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dAperture,
+                arraySlice2d< real64 > const & dPerm_dDispJump,
                 arraySlice1d< real64 > const & permeabilityMultiplier ) const
   {
 
@@ -71,8 +71,11 @@ public:
 
     for( int dim=0; dim < 3; dim++ )
     {
-      permeability[dim]     = perm;
-      dPerm_dAperture[dim]  = dPerm;
+      permeability[dim]        = perm;
+      dPerm_dDispJump[dim][0]  = dPerm;
+      dPerm_dDispJump[dim][1]  = 0.0;
+      dPerm_dDispJump[dim][2]  = 0.0;
+      
     }
   }
 
@@ -89,13 +92,13 @@ public:
              newHydraulicAperture,
              proppantPackVolumeFraction,
              m_permeability[k][0],
-             m_dPerm_dAperture[k][0],
+             m_dPerm_dDispJump[k][0],
              m_permeabilityMultiplier[k][0] );
   }
 
 private:
 
-  arrayView3d< real64 > m_dPerm_dAperture;
+  arrayView4d< real64 > m_dPerm_dDispJump;
 
   arrayView3d< real64 > m_permeabilityMultiplier;
 
@@ -131,7 +134,7 @@ public:
   {
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
-                          m_dPerm_dAperture,
+                          m_dPerm_dDispJump,
                           m_permeabilityMultiplier,
                           m_proppantPackPermeability );
   }
@@ -154,7 +157,7 @@ protected:
 
 private:
 
-  array3d< real64 > m_dPerm_dAperture;
+  array4d< real64 > m_dPerm_dDispJump;
 
   array3d< real64 > m_permeabilityMultiplier;
 

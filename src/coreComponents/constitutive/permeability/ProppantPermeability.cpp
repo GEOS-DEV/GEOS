@@ -44,7 +44,7 @@ ProppantPermeability::ProppantPermeability( string const & name, Group * const p
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Proppant diameter." );
 
-  registerWrapper( viewKeyStruct::dPerm_dApertureString(), &m_dPerm_dAperture );
+  registerWrapper( viewKeyStruct::dPerm_dDispJumpString(), &m_dPerm_dDispJump );
   registerWrapper( viewKeyStruct::permeabilityMultiplierString(), &m_permeabilityMultiplier );
   registerWrapper( viewKeyStruct::proppantPackPermeabilityString(), &m_proppantPackPermeability );
 }
@@ -68,7 +68,7 @@ void ProppantPermeability::allocateConstitutiveData( dataRepository::Group & par
                                                      localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dAperture.resize( 0, 1, 3 );
+  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
   m_permeabilityMultiplier.resize( 0, 1, 3 );
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
