@@ -2,7 +2,7 @@ language: minimal
 
 env:
   global:
-  - GEOSX_TPL_TAG=166-682
+  - GEOSX_TPL_TAG=168-693
   - secure: CGs2uH6efq1Me6xJWRr0BnwtwxoujzlowC4FHXHdWbNOkPsXf7nCgdaW5vthfD3bhnOeEUQSrfxdhTRtyU/NfcKLmKgGBnZOdUG4/JJK4gDSJ2Wp8LZ/mB0QEoODKVxbh+YtoAiHe3y4M9PGCs+wkNDw/3eEU00cK12DZ6gad0RbLjI3xkhEr/ZEZDZkcYg9yHAhl5bmpqoh/6QGnIg8mxIqdAtGDw+6tT0EgUqjeqc5bG5WwsamKzJItHSXD5zx8IJAlgDk4EzEGjZe0m56YnNfb9iwqqUsmL3Cuwgs7ByVDYw78JC5Kv42YqoxA5BxMT2mFsEe37TpYNXlzofU7ma2Duw9DGXWQd4IkTCcBxlyR0I0bfo0TmgO+y7PYG9lIyHPUkENemdozsZcWamqqkqegiEdRhDVYlSRo3mu7iCwTS6ZTALliVyEYjYxYb7oAnR3cNywXjblTCI8oKfgLSY+8WijM9SRl57JruIHLkLMCjmRI+cZBfv5tS2tYQTBPkygGrigrrN77ZiC7/TGyfggSN0+y0oYtOAgqEnBcKcreiibMW7tKcV2Z1RFD9ZvIkSc1EXLUPDP8FX1oyhmqBMqVo8LksrYLDJHQ05+F3YNgl2taSt7uMjQ4e8iZ3/IjFeMnbylDw+cj/RbS520HXsFPbWFm2Pb9pceA9n6GnY=
 
 # The integrated test repository contains large data (using git lfs) and we do not use them here.
@@ -53,7 +53,7 @@ geosx_linux_build: &geosx_linux_build
 
 geosx_osx_build: &geosx_osx_build
   os: osx
-  osx_image: xcode11.2
+  osx_image: xcode12.5
   install:
   - TPL_METADATA_URL=https://www.googleapis.com/storage/v1/b/geosx/o/TPL%2Fosx-${GEOSX_TPL_TAG}.tar
   - TPL_BULK_URL=${TPL_METADATA_URL}?alt=media
@@ -127,6 +127,18 @@ draft_script: &draft_script
       exit 0
     fi
 
+# PR must be assigned to be merged.
+# This script will fail if this is not the case.
+assigned_script: &assigned_script
+  script:
+  # TRAVIS_PULL_REQUEST is false if job is not from a PR
+  - if [[ $TRAVIS_PULL_REQUEST == false ]]; then exit 0; fi;
+  - |
+    is_assigned=$(curl -H "Accept: application/vnd.github.v3+json" \
+        https://api.github.com/repos/$TRAVIS_PULL_REQUEST_SLUG/pulls/$TRAVIS_PULL_REQUEST | \
+        jq ".assignees|length")
+  - if [[ $is_assigned == 0 ]]; then exit 1; else exit 0; fi
+
 return_script: &return_script
   script:
   # Verifies if all the "checks" jobs passed
@@ -149,6 +161,7 @@ jobs:
   - name: code_style
   - name: documentation
   - name: check_submodules
+  - name: check_pr_is_assigned
   include:
   - stage: checks
     name: check_pr_is_not_a_draft
@@ -170,6 +183,9 @@ jobs:
   - stage: checks
     name: check_submodules
     script: scripts/test_submodule_updated.sh
+  - stage: checks
+    name: check_pr_is_assigned
+    <<: *assigned_script
   - stage: builds
     name: Ubuntu18.04_clang8.0.0_cuda10.1.243_debug
     <<: *geosx_linux_build

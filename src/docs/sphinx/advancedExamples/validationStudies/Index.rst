@@ -11,6 +11,8 @@ Validation and Verification Studies
 
    kgdToughnessDominated/Example  
 
+   kgdViscosityDominated/Example 
+
    kirschWellbore/Example	      
 
    edpWellbore/Example
@@ -30,6 +32,8 @@ Validation and Verification Studies
    proppantSlotTest/Example
 
    singleFracCompression/Example
+
+   intersectFrac/Example
 
 
 

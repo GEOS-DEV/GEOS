@@ -147,7 +147,7 @@ bool ProjectionEDFMHelper::onLargerSide( localIndex const faceIdx,
   real64 const areaTolerance = 10.f * std::numeric_limits< real64 >::epsilon();
   real64 faceCenter[ 3 ], faceNormal[ 3 ];
   // compute face center
-  computationalGeometry::Centroid_3DPolygon( m_faceToNodes[faceIdx], m_nodesCoord,
+  computationalGeometry::centroid_3DPolygon( m_faceToNodes[faceIdx], m_nodesCoord,
                                              faceCenter, faceNormal, areaTolerance );
   LvArray::tensorOps::subtract< 3 >( faceCenter, fracCenter );
   return LvArray::tensorOps::AiBi< 3 >( faceCenter, fracNormal ) * signedDistanceCellCenterToFrac > 0;
@@ -256,7 +256,7 @@ void ProjectionEDFMHelper::
   // compute face center and normal
   real64 const areaTolerance = 10.f * std::numeric_limits< real64 >::epsilon();
   real64 faceCenter[ 3 ], faceNormal[ 3 ];
-  real64 faceArea = computationalGeometry::Centroid_3DPolygon( m_faceToNodes[faceIdx], m_nodesCoord,
+  real64 faceArea = computationalGeometry::centroid_3DPolygon( m_faceToNodes[faceIdx], m_nodesCoord,
                                                                faceCenter, faceNormal, areaTolerance );
 
   // get cell center
