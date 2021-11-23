@@ -607,7 +607,7 @@ public:
 
 
   template< typename LAMBDA >
-  void forMeshTargets( Group const & meshBodies, LAMBDA && lambda )
+  void forMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const
   {
     for( auto const & target: m_meshTargets )
     {
@@ -616,13 +616,13 @@ public:
       MeshBody const & meshBody = meshBodies.getGroup<MeshBody>(meshBodyName);
       meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
       {
-        lambda( meshLevel, regionNames );
+        lambda( meshBodyName, meshLevel, regionNames );
       } );
     }
   }
 
   template< typename LAMBDA >
-  void forMeshTargets( Group & meshBodies, LAMBDA && lambda )
+  void forMeshTargets( Group & meshBodies, LAMBDA && lambda ) const
   {
     for( auto const & target: m_meshTargets )
     {
@@ -631,7 +631,7 @@ public:
       MeshBody & meshBody = meshBodies.getGroup<MeshBody>(meshBodyName);
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
       {
-        lambda( meshLevel, regionNames );
+        lambda( meshBodyName, meshLevel, regionNames );
       } );
     }
   }
@@ -702,6 +702,8 @@ protected:
                                  real64 const oldNewtonNorm,
                                  real64 const weakestTol );
 
+  template< typename CONSTITUTIVE_BASE_TYPE >
+  static string getConstitutiveName( ElementSubRegionBase const & );
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
@@ -781,10 +783,25 @@ private:
 
 };
 
+template< typename CONSTITUTIVE_BASE_TYPE >
+string SolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
+{
+  string validName = "NULL";
+  dataRepository::Group const & constitutiveModels =
+    subRegion.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
+
+  constitutiveModels.forSubGroups<CONSTITUTIVE_BASE_TYPE>( [&]( dataRepository::Group const & model )
+  {
+    GEOSX_ERROR_IF( validName!="NULL", "A valid constitutive model was already found." );
+    validName = model.getName();
+  });
+  return validName;
+}
+
 template< typename BASETYPE, typename LOOKUP_TYPE >
 BASETYPE const & SolverBase::getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
 {
-  Group const & constitutiveModels =
+  dataRepository::Group const & constitutiveModels =
     dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
 
   return constitutiveModels.getGroup< BASETYPE >( key );

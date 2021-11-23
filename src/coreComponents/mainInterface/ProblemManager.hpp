@@ -321,7 +321,7 @@ private:
    * Checks all physics solvers for targetRegions and constitutive models to
    * determine the minimum number of quadrature points for each subregion.
    */
-  map< std::pair< string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
+  map< std::tuple< string, string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate
@@ -332,7 +332,7 @@ private:
    */
   void setRegionQuadrature( Group & meshBodies,
                             constitutive::ConstitutiveManager const & constitutiveManager,
-                            map< std::pair< string, string >, localIndex > const & regionQuadrature );
+                            map< std::tuple< string, string, string >, localIndex > const & regionQuadrature );
 
   /// The PhysicsSolverManager
   PhysicsSolverManager * m_physicsSolverManager;
