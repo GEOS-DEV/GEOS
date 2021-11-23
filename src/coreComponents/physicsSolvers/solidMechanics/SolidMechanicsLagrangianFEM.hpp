@@ -180,7 +180,6 @@ public:
   real64 explicitKernelDispatch( MeshLevel & mesh,
                                  arrayView1d< string const > const & targetRegions,
                                  string const & finiteElementName,
-                                 arrayView1d< string const > const & constitutiveNames,
                                  real64 const dt,
                                  std::string const & elementListName );
 
@@ -256,7 +255,7 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
-  arrayView1d< string const > solidMaterialNames() const { return m_solidMaterialNames; }
+//  arrayView1d< string const > solidMaterialNames() const { return m_solidMaterialNames; }
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
@@ -294,7 +293,7 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-  array1d< string > m_solidMaterialNames;
+//  array1d< string > m_solidMaterialNames;
   string m_contactRelationName;
 //  SortedArray< localIndex > m_sendOrReceiveNodes;
 //  SortedArray< localIndex > m_nonSendOrReceiveNodes;
@@ -326,30 +325,34 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   PARAMS && ... params )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NodeManager const & nodeManager = mesh.getNodeManager();
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d<string const> const & regionNames )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
 
-  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+    string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  KERNEL_WRAPPER kernelWrapper( dofNumber,
-                                dofManager.rankOffset(),
-                                localMatrix,
-                                localRhs,
-                                gravityVectorData,
-                                std::forward< PARAMS >( params )... );
+    KERNEL_WRAPPER kernelWrapper( dofNumber,
+                                  dofManager.rankOffset(),
+                                  localMatrix,
+                                  localRhs,
+                                  gravityVectorData,
+                                  std::forward< PARAMS >( params )... );
 
-  m_maxForce = finiteElement::
-                 regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                               CONSTITUTIVE_BASE,
-                                               CellElementSubRegion >( mesh,
-                                                                       targetRegionNames(),
-                                                                       this->getDiscretizationName(),
-                                                                       m_solidMaterialNames,
-                                                                       kernelWrapper );
+    m_maxForce = finiteElement::
+                   regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                                 CONSTITUTIVE_BASE,
+                                                 CellElementSubRegion >( mesh,
+                                                                         regionNames,
+                                                                         this->getDiscretizationName(),
+                                                                         viewKeyStruct::solidMaterialNamesString(),
+                                                                         kernelWrapper );
+  }) ;
 
 
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );

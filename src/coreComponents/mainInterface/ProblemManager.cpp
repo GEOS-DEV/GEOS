@@ -637,7 +637,7 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
     if( solver != nullptr )
     {
       string const discretizationName = solver->getDiscretizationName();
-      arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
+//      arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
 
       FiniteElementDiscretizationManager const &
       feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
