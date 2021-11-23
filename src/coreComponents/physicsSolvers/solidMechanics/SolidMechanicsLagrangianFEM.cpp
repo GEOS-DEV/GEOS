@@ -119,9 +119,9 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
                     " 0 - Infinitesimal Strain \n"
                     " 1 - Finite Strain" );
 
-  registerWrapper( viewKeyStruct::solidMaterialNamesString(), &m_solidMaterialNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "The name of the material that should be used in the constitutive updates" );
+//  registerWrapper( viewKeyStruct::solidMaterialNamesString(), &m_solidMaterialNames ).
+//    setInputFlag( InputFlags::REQUIRED ).
+//    setDescription( "The name of the material that should be used in the constitutive updates" );
 
   registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
     setApplyDefaultValue( viewKeyStruct::noContactRelationNameString() ).
@@ -138,7 +138,7 @@ void SolidMechanicsLagrangianFEM::postProcessInput()
 {
   SolverBase::postProcessInput();
 
-  checkModelNames( m_solidMaterialNames, viewKeyStruct::solidMaterialNamesString() );
+//  checkModelNames( m_solidMaterialNames, viewKeyStruct::solidMaterialNamesString() );
 
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.isSymmetric = true;
@@ -273,11 +273,11 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
     });
   });
   // Validate solid models in target regions
-  domain.forMeshBodies( [&]( MeshBody const & meshBody )
-  {
-    MeshLevel const & meshLevel = meshBody.getMeshLevel( 0 );
-    validateModelMapping< SolidBase >( meshLevel.getElemManager(), m_solidMaterialNames );
-  } );
+//  domain.forMeshBodies( [&]( MeshBody const & meshBody )
+//  {
+//    MeshLevel const & meshLevel = meshBody.getMeshLevel( 0 );
+//    validateModelMapping< SolidBase >( meshLevel.getElemManager(), m_solidMaterialNames );
+//  } );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -295,7 +295,6 @@ template< typename ... PARAMS >
 real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
                                                             arrayView1d< string const > const & targetRegions,
                                                             string const & finiteElementName,
-                                                            arrayView1d< string const > const & constitutiveNames,
                                                             real64 const dt,
                                                             std::string const & elementListName )
 {
@@ -310,7 +309,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
                                            CellElementSubRegion >( mesh,
                                                                    targetRegions,
                                                                    finiteElementName,
-                                                                   constitutiveNames,
+                                                                   viewKeyStruct::solidMaterialNamesString(),
                                                                    kernelFactory );
   }
   else if( m_strainTheory==1 )
@@ -322,7 +321,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
                                            CellElementSubRegion >( mesh,
                                                                    targetRegions,
                                                                    finiteElementName,
-                                                                   constitutiveNames,
+                                                                   viewKeyStruct::solidMaterialNamesString(),
                                                                    kernelFactory );
   }
   else
@@ -533,10 +532,12 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   #define USE_PHYSICS_LOOP
 
-  // updateIntrinsicNodalData(domain);
-
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                    MeshLevel & mesh,
+                                    arrayView1d<string const> const & regionNames )
+  {
   NodeManager & nodes = mesh.getNodeManager();
+  ElementRegionManager & elementRegionManager = mesh.getElemManager();
   Group const & nodeSets = nodes.sets();
 
   SortedArrayView< localIndex const > const &
@@ -550,10 +551,12 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
 
   // save previous constitutive state data in preparation for next timestep
-  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                          CellElementSubRegion & subRegion )
+  elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                     [&]( localIndex const,
+                                                                          CellElementSubRegion & subRegion )
   {
-    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    string const & solidMaterialName = subRegion.template getReference<string>( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     constitutiveRelation.saveConvergedState();
   } );
 
@@ -617,9 +620,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
   explicitKernelDispatch( mesh,
-                          targetRegionNames(),
+                          regionNames,
                           this->getDiscretizationName(),
-                          m_solidMaterialNames,
                           dt,
                           string( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ) );
 
@@ -636,9 +638,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
 
   explicitKernelDispatch( mesh,
-                          targetRegionNames(),
+                          regionNames,
                           this->getDiscretizationName(),
-                          m_solidMaterialNames,
                           dt,
                           string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ) );
 
@@ -650,6 +651,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   parallelDeviceEvents unpackEvents;
   CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
 
+  } );
   return dt;
 }
 
@@ -765,7 +767,11 @@ SolidMechanicsLagrangianFEM::
                      real64 const & dt,
                      DomainPartition & domain )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                    MeshLevel & mesh,
+                                    arrayView1d<string const> const & regionNames )
+  {
   NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView2d< real64 const, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
@@ -824,11 +830,14 @@ SolidMechanicsLagrangianFEM::
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
   constitutiveRelations = elementRegionManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
 
-  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                          CellElementSubRegion & subRegion )
+  elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                     [&]( localIndex const,
+                                                                          CellElementSubRegion & subRegion )
   {
-    SolidBase const & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    string const & solidMaterialName = subRegion.template getReference<string>( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     constitutiveRelation.saveConvergedState();
+  } );
   } );
 
 }
@@ -837,9 +846,13 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
                                                         real64 const & dt,
                                                         DomainPartition & domain )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                    MeshLevel & mesh,
+                                    arrayView1d<string const> const & regionNames )
+  {
   NodeManager & nodeManager = mesh.getNodeManager();
   localIndex const numNodes = nodeManager.size();
+  ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
   arrayView2d< real64, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const uhat  = nodeManager.incrementalDisplacement();
@@ -875,12 +888,15 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
   }
 
   // save (converged) constitutive state data
-  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                          CellElementSubRegion & subRegion )
+  elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                     [&]( localIndex const,
+                                                                          CellElementSubRegion & subRegion )
   {
-    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    string const & solidMaterialName = subRegion.template getReference<string>( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
     constitutiveRelation.saveConvergedState();
   } );
+  });
 
 }
 
