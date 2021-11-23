@@ -349,7 +349,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
-   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
     mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 4 >( PermeabilityBase::viewKeyStruct::dPerm_dDispJumpString(),
                                                                            targetRegionNames(),
                                                                            m_permeabilityModelNames,

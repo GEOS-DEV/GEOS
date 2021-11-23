@@ -171,8 +171,8 @@ struct ConstitutivePassThru< CompressibleSolidBase >
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >
- >::execute( constitutiveRelation,
-                                                                                                               std::forward< LAMBDA >( lambda ) );
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename LAMBDA >
@@ -182,8 +182,8 @@ struct ConstitutivePassThru< CompressibleSolidBase >
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >
- >::execute( constitutiveRelation,
-                                                                                                               std::forward< LAMBDA >( lambda ) );
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
   }
 };
 

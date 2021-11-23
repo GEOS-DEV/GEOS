@@ -40,17 +40,17 @@ SlipDependentPermeability::SlipDependentPermeability( string const & name, Group
     setDescription( "Maximum permeability multiplier." );
 
   registerWrapper( viewKeyStruct::dPerm_dDispJumpString(), &m_dPerm_dDispJump ).
-      setDescription( "Derivative of the permeability w.r.t. the displacement jump." );
+    setDescription( "Derivative of the permeability w.r.t. the displacement jump." );
 
   registerWrapper( viewKeyStruct::initialPermeabilityString(), &m_initialPermeability ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( " initial permeability of the rock." ).
-    setApplyDefaultValue( -1.0 );   // will be overwritten    
+    setApplyDefaultValue( -1.0 );   // will be overwritten
 }
 
 std::unique_ptr< ConstitutiveBase >
 SlipDependentPermeability::deliverClone( string const & name,
-                                                 Group * const parent ) const
+                                         Group * const parent ) const
 {
   return ConstitutiveBase::deliverClone( name, parent );
 }
@@ -71,9 +71,9 @@ void SlipDependentPermeability::initializeState() const
   arrayView3d< real64 const > permeability     = m_permeability;
   arrayView3d< real64 >       initialPermeability = m_initialPermeability;
 
-  forAll< parallelDevicePolicy<> >( permeability.size(0), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( permeability.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-      LvArray::tensorOps::copy<3>( initialPermeability[k][0], permeability[k][0] );
+    LvArray::tensorOps::copy< 3 >( initialPermeability[k][0], permeability[k][0] );
   } );
 }
 

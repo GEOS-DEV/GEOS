@@ -125,7 +125,7 @@ public:
     static constexpr char const * dPerm_dDispJumpString() { return "dPerm_dDispJump"; }
   } viewKeys;
 
-  virtual void initializeState() const 
+  virtual void initializeState() const
   {}
 
 protected:

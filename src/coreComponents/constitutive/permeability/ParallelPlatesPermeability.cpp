@@ -44,7 +44,7 @@ void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group
                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dDispJump.resize( 0, 1, 3, 3);
+  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
 
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

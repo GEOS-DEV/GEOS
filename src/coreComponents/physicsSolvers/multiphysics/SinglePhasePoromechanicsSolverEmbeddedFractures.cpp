@@ -366,12 +366,12 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingSparsityPattern
             // so we only add the coupling with the jumps of the neighbours.
             if( k1 != k0 )
             {
-              for (localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++)
+              for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
               {
                 globalIndex const colIndex = jumpDofNumber[sei[iconn][k1]] + i;
                 pattern.insertNonZero( rowIndex, colIndex );
               }
-              
+
             }
           }
         }
@@ -589,7 +589,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
       subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::hydraulicApertureString() );
 
     arrayView1d< real64 const > const oldHydraulicAperture =
-        subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::aperture0String() );
+      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::aperture0String() );
 
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
@@ -617,7 +617,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
 
     constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
     {
-      typename TYPEOFREF( castedPorousSolid )::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
+      typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
       PoromechanicsEFEMKernels::StateUpdateKernel::
         launch< parallelDevicePolicy<> >( subRegion.size(),
