@@ -588,7 +588,7 @@ public:
     return m_nonlinearSolverParameters;
   }
 
-  arrayView1d< string const > targetRegionNames() const { return m_targetRegionNames; }
+//  arrayView1d< string const > targetRegionNames() const { return m_targetRegionNames; }
 
   virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const
   {
@@ -636,61 +636,61 @@ public:
     }
   }
 
-  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
-  void forTargetRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
-  {
-    mesh.getElemManager().
-      template forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-  }
-
-  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
-  void forTargetRegions( MeshLevel & mesh, LAMBDA && lambda ) const
-  {
-    mesh.getElemManager().
-      template forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-  }
-
-  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
-  void forTargetRegionsComplete( MeshLevel const & mesh, LAMBDA && lambda ) const
-  {
-    mesh.getElemManager().
-      template forElementRegionsComplete< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-  }
-
-  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
-  void forTargetRegionsComplete( MeshLevel & mesh, LAMBDA && lambda ) const
-  {
-    mesh.getElemManager().
-      template forElementRegionsComplete< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-  }
-
-  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forTargetSubRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
-  {
-    mesh.getElemManager().
-      template forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-  }
-
-  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forTargetSubRegions( MeshLevel & mesh, LAMBDA && lambda ) const
-  {
-    mesh.getElemManager().
-      template forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-  }
-
-  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forTargetSubRegionsComplete( MeshLevel const & mesh, LAMBDA && lambda ) const
-  {
-    mesh.getElemManager().
-      template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-  }
-
-  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forTargetSubRegionsComplete( MeshLevel & mesh, LAMBDA && lambda ) const
-  {
-    mesh.getElemManager().
-      template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-  }
+//  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
+//  void forTargetRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
+//  {
+//    mesh.getElemManager().
+//      template forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
+//  }
+//
+//  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
+//  void forTargetRegions( MeshLevel & mesh, LAMBDA && lambda ) const
+//  {
+//    mesh.getElemManager().
+//      template forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
+//  }
+//
+//  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
+//  void forTargetRegionsComplete( MeshLevel const & mesh, LAMBDA && lambda ) const
+//  {
+//    mesh.getElemManager().
+//      template forElementRegionsComplete< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
+//  }
+//
+//  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
+//  void forTargetRegionsComplete( MeshLevel & mesh, LAMBDA && lambda ) const
+//  {
+//    mesh.getElemManager().
+//      template forElementRegionsComplete< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
+//  }
+//
+//  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
+//  void forTargetSubRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
+//  {
+//    mesh.getElemManager().
+//      template forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
+//  }
+//
+//  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
+//  void forTargetSubRegions( MeshLevel & mesh, LAMBDA && lambda ) const
+//  {
+//    mesh.getElemManager().
+//      template forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
+//  }
+//
+//  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
+//  void forTargetSubRegionsComplete( MeshLevel const & mesh, LAMBDA && lambda ) const
+//  {
+//    mesh.getElemManager().
+//      template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
+//  }
+//
+//  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
+//  void forTargetSubRegionsComplete( MeshLevel & mesh, LAMBDA && lambda ) const
+//  {
+//    mesh.getElemManager().
+//      template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
+//  }
 
   string getDiscretizationName() const {return m_discretizationName;}
 
