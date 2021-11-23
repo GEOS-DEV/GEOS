@@ -36,7 +36,7 @@ public:
                                    arrayView4d< real64 > const & dPerm_dDispJump,
                                    real64 const shearDispThreshold,
                                    real64 const maxPermMultiplier,
-                                   arrayView3d< real64 > const & initialPermeability )
+                                   R1Tensor const & initialPermeability )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dDispJump( dPerm_dDispJump ),
     m_shearDispThreshold( shearDispThreshold ),
@@ -46,7 +46,7 @@ public:
 
   GEOSX_HOST_DEVICE
   void compute( real64 const ( &dispJump )[3],
-                arraySlice1d< real64 > const & initialPermeability,
+                R1Tensor const & initialPermeability,
                 arraySlice1d< real64 > const & permeability,
                 arraySlice2d< real64 > const & dPerm_dDispJump ) const;
 
@@ -60,7 +60,7 @@ public:
     GEOSX_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture );
 
     compute( dispJump,
-             m_initialPermeability[k][0],
+             m_initialPermeability,
              m_permeability[k][0],
              m_dPerm_dDispJump[k][0] );
   }
@@ -77,7 +77,7 @@ private:
   real64 m_maxPermMultiplier;
 
   /// Initial permeability tensor
-  arrayView3d< real64 > m_initialPermeability;
+  R1Tensor m_initialPermeability;
 
 };
 
@@ -97,8 +97,6 @@ public:
   static string catalogName() { return "SlipDependentPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
-
-  virtual void initializeState() const override final;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = SlipDependentPermeabilityUpdate;
@@ -122,7 +120,7 @@ public:
     static constexpr char const * dPerm_dDispJumpString() { return "dPerm_dDispJump"; }
     static constexpr char const * shearDispThresholdString() { return "shearDispThreshold"; }
     static constexpr char const * maxPermMultiplierString() { return "maxPermMultiplier"; }
-    static constexpr char const * initialPermeabilityString() { return "iniPermeability"; }
+    static constexpr char const * initialPermeabilityString() { return "initialPermeability"; }
   };
 
 private:
@@ -137,7 +135,7 @@ private:
   real64 m_maxPermMultiplier;
 
   /// Initial permeability tensor
-  array3d< real64 > m_initialPermeability;
+  R1Tensor m_initialPermeability;
 
 };
 
@@ -145,7 +143,7 @@ private:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void SlipDependentPermeabilityUpdate::compute( real64 const ( &dispJump )[3],
-                                               arraySlice1d< real64 > const & initialPermeability,
+                                               R1Tensor const & initialPermeability,
                                                arraySlice1d< real64 > const & permeability,
                                                arraySlice2d< real64 > const & dPerm_dDispJump ) const
 {

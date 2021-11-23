@@ -95,7 +95,7 @@
   </Geometry>
 
   <Events
-    maxTime="1.0">
+    maxTime="1.0e-2">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>  
@@ -244,7 +244,8 @@
     <SlipDependentPermeability
       name="fracturePerm"
       shearDispThreshold="0.05"
-      maxPermMultiplier="100"/>
+      maxPermMultiplier="100"
+      initialPermeability="{1e-15, 1e-15, 1e-15}"/>
 
     <ParallelPlatesPermeability
       name="fracturePerm2"/>  
@@ -264,35 +265,8 @@
 
   <FieldSpecifications>
     <FieldSpecification
-      name="permx"
-      initialCondition="1"
-      component="0"
-      setNames="{ all }"
-      objectPath="ElementRegions/Fracture"
-      fieldName="fracturePerm_permeability"
-      scale="1.0e-15"/>
-
-    <FieldSpecification
-      name="permy"
-      initialCondition="1"
-      component="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Fracture"
-      fieldName="fracturePerm_permeability"
-      scale="1.0e-15"/>
-
-    <FieldSpecification
-      name="permz"
-      initialCondition="1"
-      component="2"
-      setNames="{ all }"
-      objectPath="ElementRegions/Fracture"
-      fieldName="fracturePerm_permeability"
-      scale="1.0e-15"/>
-
-    <FieldSpecification
       name="fracPorosity"
-      initialCondition="1"
+      initialCondition="0"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
       fieldName="fracturePorosity_porosity"

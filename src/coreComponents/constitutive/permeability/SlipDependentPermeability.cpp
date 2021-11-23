@@ -43,9 +43,8 @@ SlipDependentPermeability::SlipDependentPermeability( string const & name, Group
     setDescription( "Derivative of the permeability w.r.t. the displacement jump." );
 
   registerWrapper( viewKeyStruct::initialPermeabilityString(), &m_initialPermeability ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( " initial permeability of the rock." ).
-    setApplyDefaultValue( -1.0 );   // will be overwritten
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( " initial permeability of the fracture." );
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -59,22 +58,9 @@ void SlipDependentPermeability::allocateConstitutiveData( dataRepository::Group 
                                                           localIndex const numConstitutivePointsPerParentIndex )
 {
 // NOTE: enforcing 1 quadrature point
-  m_initialPermeability.resize( 0, 1, 3 );
   m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
 
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-}
-
-
-void SlipDependentPermeability::initializeState() const
-{
-  arrayView3d< real64 const > permeability     = m_permeability;
-  arrayView3d< real64 >       initialPermeability = m_initialPermeability;
-
-  forAll< parallelDevicePolicy<> >( permeability.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-  {
-    LvArray::tensorOps::copy< 3 >( initialPermeability[k][0], permeability[k][0] );
-  } );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, SlipDependentPermeability, string const &, Group * const )
