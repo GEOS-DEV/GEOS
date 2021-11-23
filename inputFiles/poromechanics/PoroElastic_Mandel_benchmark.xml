@@ -25,35 +25,15 @@
   
     <PeriodicEvent
       name="outputs"
-      timeFrequency="5.0e-03"
+      timeFrequency="5.0e-01"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplication0"
-      endTime="1.e-10"
-      forceDt="1.e-10"
-      target="/Solvers/poroSolve"/>
-
-    <PeriodicEvent
-      name="solverApplication1"
-      beginTime="1.e-10"
-      endTime="5.0000000e-03"
-      forceDt="4.9999999e-03"
-      target="/Solvers/poroSolve"/>
-
-    <PeriodicEvent
-      name="solverApplication2"
-      beginTime="5.0e-03"
-      endTime="0.05"
-      forceDt="5.0e-03"
-      target="/Solvers/poroSolve"/>
-   
-    <PeriodicEvent
-      name="solverApplication3"
-      beginTime="0.05"
+      beginTime="0.0"
       endTime="10.0"
-      forceDt="0.01"
-      target="/Solvers/poroSolve"/>
+      forceDt="0.025"
+      target="/Solvers/poroSolve"/> 
 
     <PeriodicEvent
       name="pressureCollection" 
