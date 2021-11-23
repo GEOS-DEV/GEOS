@@ -1,4 +1,3 @@
-
 from threading import Thread
 from queue import Queue
 import uuid
@@ -10,7 +9,8 @@ from time import sleep, time, gmtime
 import inspect
 from utils import *
 
-class SLURMCluster:
+
+class Cluster():
     def __init__(self,
                  name=None,
                  job_name=None,
@@ -40,53 +40,13 @@ class SLURMCluster:
         self.state="Free"
         self.work=None
 
-        header_lines=["#!/usr/bin/bash"]
-        if job_name is not None:
-            header_lines.append("#SBATCH -J %s" % self.job_name)
-
-        if nodes is not None:
-            header_lines.append("#SBATCH -N %d" % self.nodes)
-
-        if cores is not None:
-            header_lines.append("#SBATCH -n %d" % self.cores)
-        else:
-            raise ValueError("You must specify how much cores you want to use")
-
-        if walltime is not None:
-            header_lines.append("#SBATCH -t %s" % self.walltime)
-
-        if directory is not None:
-            header_lines.append("#SBATCH -D  %s" % self.directory)
-
-        if node_name is not None:
-            header_lines.append("#SBATCH -C %s" %self.node_name)
-
-        header_lines.append("#SBATCH -o slurm-%s-%%A.out" %self.job_name)
-        header_lines.append("#SBATCH -e slurm-%s-%%A.err" %self.job_name)
-
-        if extra is not None:
-            header_lines.extend(["SBATCH %s" %arg for arg in extra])
-        if env_extra is not None:
-            header_lines.extend(["module load %s" %arg for arg in env_extra])
-
-        self.header=header_lines
-
-        if python is not None:
-            if python=="$Python3_EXECUTABLE":
-                self.header.append("source /beegfs/jbesset/codes/GEOSX/build-test_module-release/lib/PYGEOSX/bin/activate")
-                self.python="python"
-            else:
-                self.python = python
-        else:
-            self.python = "python"
-
 
     def job_file(self):
         handle, filename = mkstemp(suffix=".sh", dir=os.getcwd())
         with open(filename, "w") as f:
             for line in self.header:
                 f.write(line + "\n")
-        
+
         os.close(handle)
         return filename
 
@@ -115,9 +75,83 @@ class SLURMCluster:
         self.header.append(self.run)
 
 
+
+class SLURMCluster(Cluster):
+    def __init__(self,
+                 name=None,
+                 job_name=None,
+                 nodes=None,
+                 cores=None,
+                 memory=None,
+                 walltime=None,
+                 node_name=None,
+                 job_cpu=None,
+                 directory=None,
+                 node_list=None,
+                 extra=None,
+                 env_extra=None,
+                 python=None):
+
+        super().__init__(name,
+                         job_name,
+                         nodes,
+                         cores,
+                         memory,
+                         walltime,
+                         node_name,
+                         job_cpu,
+                         directory,
+                         node_list,
+                         extra,
+                         env_extra,
+                         python)
+
+        self.type="slurm"
+
+        header_lines=["#!/usr/bin/bash"]
+        if job_name is not None:
+            header_lines.append("#SBATCH -J %s" % self.job_name)
+
+        if nodes is not None:
+            header_lines.append("#SBATCH -N %d" % self.nodes)
+
+        if cores is not None:
+            header_lines.append("#SBATCH -n %d" % self.cores)
+        else:
+            raise ValueError("You must specify how much cores you want to use")
+
+        if walltime is not None:
+            header_lines.append("#SBATCH -t %s" % self.walltime)
+
+        if directory is not None:
+            header_lines.append("#SBATCH -D  %s" % self.directory)
+
+        if node_name is not None:
+            header_lines.append("#SBATCH -C %s" %self.node_name)
+
+        header_lines.append("#SBATCH -o slurm-%s-%%A.out" %self.job_name)
+        header_lines.append("#SBATCH -e slurm-%s-%%A.err" %self.job_name)
+
+        if extra is not None:
+            header_lines.extend(["#SBATCH %s" %arg for arg in extra])
+        if env_extra is not None:
+            header_lines.extend(["module load %s" %arg for arg in env_extra])
+
+        self.header=header_lines
+
+        if python is not None:
+            if python=="$Python3_EXECUTABLE":
+                self.header.append("source /beegfs/jbesset/codes/GEOSX/build-test_module-release/lib/PYGEOSX/bin/activate")
+                self.python="python"
+            else:
+                self.python = python
+        else:
+            self.python = "python"
+
+
     def free(self):
         if self.work is not None:
-            job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).decode().split()
+            job_list = subprocess.check_output("squeue -o %%A -h", shell=True).decode().split()
             if self.work.job_id not in job_list:
                 self.state = "Free"
                 self.header = self.header[:-1]
@@ -127,6 +161,124 @@ class SLURMCluster:
                 return False
         else:
             return True
+
+
+    def getJobsList():
+        job_list = subprocess.check_output("squeue -o %%A -h", shell=True).decode().split()
+        return job_list
+
+
+    def getJobState():
+        status = subprocess.check_output("squeue -j %s -h -o %%t" %self.work.job_id, shell=True).decode().strip()
+        return status
+
+
+    def runJob():
+        output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
+
+
+
+class LSFCluster(Cluster):
+    def __init__(self,
+                 name=None,
+                 job_name=None,
+                 nodes=None,
+                 cores=None,
+                 memory=None,
+                 walltime=None,
+                 node_name=None,
+                 job_cpu=None,
+                 directory=None,
+                 node_list=None,
+                 extra=None,
+                 env_extra=None,
+                 python=None):
+
+        super().__init__(name,
+                         job_name,
+                         nodes,
+                         cores,
+                         memory,
+                         walltime,
+                         node_name,
+                         job_cpu,
+                         directory,
+                         node_list,
+                         extra,
+                         env_extra,
+                         python)
+
+        self.type="lsf"
+
+        header_lines=["#!/usr/bin/bash"]
+        if job_name is not None:
+            header_lines.append("#BSUB -J %s" % self.job_name)
+
+        if nodes is not None:
+            header_lines.append("#BSUB -nnodes %d" % self.nodes)
+
+        if cores is not None:
+            header_lines.append("#BSUB -n %d" % self.cores)
+        else:
+            raise ValueError("You must specify how much cores you want to use")
+
+        if walltime is not None:
+            header_lines.append("#BSUB -W %s" % self.walltime)
+
+        if directory is not None:
+            header_lines.append("#BSUB -cwd  %s" % self.directory)
+
+        if node_name is not None:
+            header_lines.append("#BSUB -clusters %s" %self.node_name)
+
+        header_lines.append("#BSUB -o lsf-%s-%%J.out" %self.job_name)
+        header_lines.append("#BSUB -e lsf-%s-%%J.err" %self.job_name)
+
+        if extra is not None:
+            header_lines.extend(["#BSUB %s" %arg for arg in extra])
+        if env_extra is not None:
+            header_lines.extend(["module load %s" %arg for arg in env_extra])
+
+        self.header=header_lines
+
+        if python is not None:
+            if python=="$Python3_EXECUTABLE":
+                self.header.append("source /beegfs/jbesset/codes/GEOSX/build-test_module-release/lib/PYGEOSX/bin/activate")
+                self.python="python"
+            else:
+                self.python = python
+        else:
+            self.python = "python"
+
+        print(header_lines)
+
+    def free(self):
+        if self.work is not None:
+            job_list = self.getJobsList()
+            if self.work.job_id not in job_list:
+                self.state = "Free"
+                self.header = self.header[:-1]
+                self.run =  ""
+                return True
+            else:
+                return False
+        else:
+            return True
+
+
+    def getJobsList():
+        job_list = subprocess.check_output('bjobs -o "jobid" -h', shell=True).decode().split()
+        return job_list
+
+
+    def getJobState():
+        status = subprocess.check_output('bjobs -J %s -noheader -o "stat:"' %self.work.job_id, shell=True).decode().strip()
+        return status
+
+
+    def runJob():
+        output = subprocess.check_output("/usr/bin/bsub " + bashfile, shell=True)
+
 
 
 class Client:
@@ -198,13 +350,13 @@ class Client:
         while True:
             for cluster in self.cluster:
                 if cluster.free():
-                    future = self.start(func,
-                                        args,
-                                        cores,
-                                        x_partition,
-                                        y_partition,
-                                        z_partition,
-                                        cluster = cluster)
+                    future = self.run(func,
+                                      args,
+                                      cores,
+                                      x_partition,
+                                      y_partition,
+                                      z_partition,
+                                      cluster = cluster)
                     break
             else:
                 sleep(1)
@@ -214,7 +366,7 @@ class Client:
         return future
 
 
-        
+
     def _map(self,
              func,
              args,
@@ -235,14 +387,14 @@ class Client:
             while True:
                 for cluster in self.cluster:
                     if cluster.free():
-                        futures[i] = self.start(func,
-                                                work,
-                                                cores,
-                                                x_partition,
-                                                y_partition,
-                                                z_partition,
-                                                queue = work_queue,
-                                                cluster = cluster)
+                        futures[i] = self.run(func,
+                                              work,
+                                              cores,
+                                              x_partition,
+                                              y_partition,
+                                              z_partition,
+                                              queue = work_queue,
+                                              cluster = cluster)
                         i+=1
                         break
                 else:
@@ -250,23 +402,23 @@ class Client:
                     continue
                 break
 
-        
 
-    def start(self,
-              func,
-              args,
-              cores=None,
-              x_partition=1,
-              y_partition=1,
-              z_partition=1,
-              queue=None,
-              cluster=None):
-        
+
+    def run(self,
+            func,
+            args,
+            cores=None,
+            x_partition=1,
+            y_partition=1,
+            z_partition=1,
+            queue=None,
+            cluster=None):
+
         module   = inspect.getmodule(func).__name__
         key      = module + "-" + func.__name__ + "-" +str(x_partition) + "-" + str(y_partition) + "-" + str(z_partition) + "-" + str(uuid.uuid4())
         jsonfile = args_to_json(args)
         cmd_args = [module, func.__name__, jsonfile, self.output, key]
-        
+
         if cores is not None:
             if cores > cluster.cores:
                 raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
@@ -284,18 +436,17 @@ class Client:
 
         bashfile = cluster.job_file()
 
-        if isinstance(cluster, SLURMCluster):
-            output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
+        output = self.cluster.runJob()
 
         job_id = output.split()[-1].decode()
-
+        cluster.setErrOut(job_id)
         print("Job : " + job_id+ " has been submited")
         os.remove(bashfile)
 
         future = Future(key, output=self.output, cluster=cluster, args=args, job_id=job_id)
         cluster.work = future
         cluster.state = "Working"
-        
+
         return future
 
 
@@ -317,11 +468,11 @@ class Client:
             pass
         else:
             os.mkdir(output)
-        
+
         return output
 
 
-    
+
     def gather(self, futures, retry=False):
         n = len(futures)
         results = [0]*n
@@ -337,7 +488,7 @@ class Client:
 
         return results
 
-    
+
     """
     def retry(future):
         key = future.key.split("-")
@@ -374,28 +525,28 @@ class Future:
         self.cluster=cluster
         self.state="PENDING"
         self.job_id = job_id
-        self.err="slurm-%s-%s.err"%(self.cluster.job_name, self.job_id)
-        self.out="slurm-%s-%s.out"%(self.cluster.job_name, self.job_id)
+        self.err="%s-%s-%s.err"%(self.cluster.type, self.cluster.job_name, self.job_id)
+        self.out="%s-%s-%s.out"%(self.cluster.type, self.cluster.job_name, self.job_id)
 
 
     def result(self):
-        while self.state in ["RUNNING", "PENDING"]: 
+        while self.state in ["RUNNING", "PENDING"]:
             result = self._result()
         return result
 
 
     def _result(self):
-        job_list = subprocess.check_output("squeue -o '%'A -h", shell=True).decode().split()
+        job_list = self.cluster.getJobsList()
         if self.job_id in job_list:
-            status = subprocess.check_output("squeue -j %s -h -o %%t" %self.job_id, shell=True).decode().strip()
-            if status == "PD":
+            status = self.cluster.getJobState()
+            if status in ["PD","PEND"]:
                 sleep(1)
                 return 0
-            elif status == "R":
+            elif status in ["R","RUN"]:
                 self.state = "RUNNING"
                 sleep(1)
                 return 0
-            elif status in ["CG","CD"]:
+            elif status in ["CG","CD","DONE"]:
                 self.state = "COMPLETED"
                 result = self.getResult()
                 print("Job " + self.job_id + " has been completed\n")
@@ -424,17 +575,14 @@ class Future:
                     for line in err.readlines():
                         if line[0] != "[":
                             print(line)
-                        
+
                     result = "err"
             err.close()
             return result
 
-    
+
     def getResult(self):
         with open(self.output, 'r') as f:
             result = f.readlines()
-        
+
         return result
-
-
-        

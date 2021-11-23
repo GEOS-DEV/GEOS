@@ -2,9 +2,9 @@
 #include <Python.h>
 
 // Source includes
-#include "pygeosx.hpp"
+#include "../pygeosx.hpp"
 #include "PySolver.hpp"
-#include "PyGroup.hpp"
+#include "../PyGroup.hpp"
 
 #define VERIFY_NON_NULL_SELF( self ) \
   PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr )
@@ -16,6 +16,8 @@
 namespace geosx
 {
   extern std::unique_ptr< GeosxState > g_state;
+
+  extern bool g_alreadyInitialized;
 
 namespace python
 {
@@ -67,6 +69,8 @@ static int PySolver_init(PySolver *self, PyObject *args, PyObject *kwds)
 {
   GEOSX_UNUSED_VAR( kwds );
 
+  PYTHON_ERROR_IF( !g_alreadyInitialized, PyExc_RuntimeError, "GEOSX must be initialized first. Call pygeosx.initialize().", -1 );
+
   geosx::SolverBase *group=nullptr;
 
   PyObject * unicodePath;
@@ -101,7 +105,6 @@ static int PySolver_init(PySolver *self, PyObject *args, PyObject *kwds)
     {
 
       subEvent = static_cast< geosx::EventBase * >( eventManager.getSubGroups()[currentSubEvent]);
-
       if (subEvent->getEventName() == path)
       {
 	break;
@@ -111,7 +114,7 @@ static int PySolver_init(PySolver *self, PyObject *args, PyObject *kwds)
 	subEvent = nullptr;
       }
     }
-    PYTHON_ERROR_IF( subEvent == nullptr, PyExc_RuntimeError, "Target not found", 1 );
+    PYTHON_ERROR_IF( subEvent == nullptr, PyExc_RuntimeError, "Target not found", -1 );
 
     group = static_cast<geosx::SolverBase*>(subEvent->getEventTarget());
     self->group = group;

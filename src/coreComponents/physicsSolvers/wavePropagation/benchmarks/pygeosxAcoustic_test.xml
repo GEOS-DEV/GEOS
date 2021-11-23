@@ -29,9 +29,9 @@
       xCoords="{ 0, 2000 }"
       yCoords="{ 0, 2000 }"
       zCoords="{ 0, 2000 }"
-      nx="{ 20 }"
-      ny="{ 20 }"
-      nz="{ 10 }"
+      nx="{ 100 }"
+      ny="{ 100 }"
+      nz="{ 50 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
 
@@ -60,6 +60,18 @@
       forceDt="0.05"
       target="/Solvers/acousticSolver"/>
     <!-- generate an output that can be read from VTK -->
+
+    <PeriodicEvent
+      name="waveFieldCollection"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Tasks/waveFieldCollection" />
+
+    <PeriodicEvent
+      name="waveFieldOutput"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/waveFieldOutput" />
 
   </Events>
 
@@ -132,9 +144,19 @@
 
   <Tasks>
     <PackCollection
-      name="pressureCollection"
+      name="waveFieldCollection"
       objectPath="nodeManager"
       fieldName="pressure_np1"/>
+
   </Tasks>
+
+  <Outputs>
+    <TimeHistory
+	name="waveFieldOutput"
+	sources="{/Tasks/waveFieldCollection}"
+	filename="waveField" />
+
+  </Outputs>
+
 
 </Problem>

@@ -1,17 +1,17 @@
 set( python_headers pygeosx.hpp
                     PyGroup.hpp
                     PyWrapper.hpp
-                    PySolver.hpp
-                    PySolver2.hpp
-		    PyWaveSolver.hpp
+                    pysolver/PySolver.hpp
+                    pysolver/PySolver2.hpp
+                    pyhdf5/PyHDF5.hpp
 		    )
 
 set( python_sources pygeosx.cpp
                     PyGroup.cpp
                     PyWrapper.cpp
-                    PySolver.cpp
-                    PySolver2.cpp
-		    PyWaveSolver.cpp
+                    pysolver/PySolver.cpp
+                    pysolver/PySolver2.cpp
+                    pyhdf5/PyHDF5.cpp
 		    )
 
 set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python )

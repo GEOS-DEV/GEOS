@@ -13,10 +13,7 @@
  */
 
 // Source includes
-//#include "PyGroup.hpp"
 
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
-
-//extern std::unique_ptr< geosx::GeosxState > g_state;

@@ -49,6 +49,27 @@ class Acquisition:
                 os.system("mkdir -p " + self.output)
 
 
+    def __repr__(self):
+        string_list = []
+        string_list.append("Acquisition type : " + type(self).__name__ + "\n")
+        string_list.append("Number of shots : " + str(len(self.shots)) + "\n")
+        string_list.append("Acquisition boundaries : " + str(self.boundary) +"\n")
+        if self.limited_aperture == True:
+            string_list.append("Limited aperture \n")
+        else:
+            string_list.append("Full aperture \n")
+        if isinstance(self.velocity_model, int):
+            string_list.append("Homogeneous velocity model \n")
+        else:
+            string_list.append("Heterogeneous velocity model \n")
+
+        rep=""
+        for string in string_list:
+            rep += string
+
+        return rep
+
+
     def acquisition(self,
                     wavelet,
                     source_positions,

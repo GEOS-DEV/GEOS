@@ -21,9 +21,9 @@
 #include "pygeosx.hpp"
 #include "PyGroup.hpp"
 #include "PyWrapper.hpp"
-#include "PySolver.hpp"
-#include "PySolver2.hpp"
-#include "PyWaveSolver.hpp"
+#include "pysolver/PySolver.hpp"
+#include "pysolver/PySolver2.hpp"
+#include "pyhdf5/PyHDF5.hpp"
 #include "mainInterface/initialization.hpp"
 
 #include "LvArray/src/python/PyArray.hpp"
@@ -362,11 +362,14 @@ PyInit_pygeosx()
   import_array();
 
   PyObject* module = PyModule_Create( &pygeosxModuleFunctions );
-  PyObject* submodule = geosx::python::PyInit_pysolver();
+  PyObject* submodule1 = geosx::python::PyInit_pysolver();
+  PyObject* submodule2 = geosx::python::PyInit_pyhdf5();
 
-  Py_INCREF(submodule);
-  PyModule_AddObject( module, "pysolver", submodule );
+  Py_INCREF(submodule1);
+  PyModule_AddObject( module, "pysolver", submodule1 );
 
+  Py_INCREF(submodule2);
+  PyModule_AddObject( module, "pyhdf5", submodule2 );
 
   if( !addExitHandler( module ) )
   {
@@ -389,12 +392,6 @@ PyInit_pygeosx()
   if( !LvArray::python::addTypeToModule( module, geosx::python::getPyWrapperType(), "Wrapper" ) )
   {
     return nullptr;
-  }
-
-
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyWaveSolverType(), "WaveSolver" ) )
-  {
-   return nullptr;
   }
 
   if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolver2Type(), "Solver2" ) )

@@ -20,10 +20,9 @@
 // Source includes
 #include "PyGroup.hpp"
 #include "pygeosx.hpp"
-//#include "PyWrapper.hpp"
-#include "PySolver.hpp"
-#include "PySolver2.hpp"
-#include "PyWaveSolver.hpp"
+#include "PyWrapper.hpp"
+#include "pysolver/PySolver.hpp"
+#include "pysolver/PySolver2.hpp"
 
 #define VERIFY_NON_NULL_SELF( self ) \
   PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr )
