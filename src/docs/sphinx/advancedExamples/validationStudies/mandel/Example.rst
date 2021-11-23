@@ -190,9 +190,9 @@ Initial and boundary conditions
 The next step is to specify fields, including:
 
   - The initial value (the displacements and pore pressure have to be initialized, corresponding to the undrained response),
-  - The boundary conditions (the vertical displacement applied at the top surface and the constraints of the outer boundaries have to be set).
+  - The boundary conditions (the vertical displacement applied at the loaded boundary and the constraints of the outer boundaries have to be set).
 
-In this example,the analytical z-displacement is applied at the top surface (``zpos``) of computational domain to enforce the rigid plate condition. The lateral surface (``xpos``) is traction free and allows drainage. 
+In this example, the analytical z-displacement is applied at the top surface (``zpos``) of computational domain to enforce the rigid plate condition. The lateral surface (``xpos``) is traction free and allows drainage. 
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
@@ -547,8 +547,7 @@ The figure below compares the results from GEOSX (marks) and the corresponding a
         ax[1].grid(True)        
         ax[1].xaxis.set_tick_params(labelsize=fsize)
         ax[1].yaxis.set_tick_params(labelsize=fsize)
-
-        plt.savefig('Mandel.png')   
+ 
         plt.show() 
 
 
