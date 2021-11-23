@@ -69,8 +69,8 @@ public:
                                                   3 >;
 
   /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// maxNumTestSupportPointPerElem and maxNumTrialSupportPointPerElem by definition.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;

@@ -79,11 +79,11 @@ class KernelBase
 public:
   /// Compile time value for the number of test function support points per
   /// element.
-  static constexpr int numTestSupportPointsPerElem  = FE_TYPE::maxSupportPoints;
+  static constexpr int maxNumTestSupportPointsPerElem  = FE_TYPE::maxSupportPoints;
 
   /// Compile time value for the number of trial function support points per
   /// element.
-  static constexpr int numTrialSupportPointsPerElem = FE_TYPE::maxSupportPoints;
+  static constexpr int maxNumTrialSupportPointsPerElem = FE_TYPE::maxSupportPoints;
 
   /// Compile time value for the number of degrees of freedom per test function
   /// support point.

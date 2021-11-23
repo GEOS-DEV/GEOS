@@ -61,8 +61,8 @@ public:
                            NUM_DOF_PER_TEST_SP,
                            NUM_DOF_PER_TRIAL_SP >;
 
-  using Base::numTestSupportPointsPerElem;
-  using Base::numTrialSupportPointsPerElem;
+  using Base::maxNumTestSupportPointsPerElem;
+  using Base::maxNumTrialSupportPointsPerElem;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_elemsToNodes;
@@ -115,11 +115,11 @@ public:
    */
   struct StackVariables : public Base::StackVariables
   {
-    /// The number of rows in the element local jacobian matrix.
-    static constexpr int numRows = numTestSupportPointsPerElem *numDofPerTestSupportPoint;
+    /// The number of rows in the pre-allocated element local jacobian matrix (upper bound for numRows).
+    static constexpr int maxNumRows = maxNumTestSupportPointsPerElem *numDofPerTestSupportPoint;
 
-    /// The number of columns in the element local jacobian matrix.
-    static constexpr int numCols = numTrialSupportPointsPerElem *numDofPerTrialSupportPoint;
+    /// The number of columns in the pre-allocated element local jacobian matrix (upper bound for numCols).
+    static constexpr int maxNumCols = maxNumTrialSupportPointsPerElem *numDofPerTrialSupportPoint;
 
     /**
      * Default constructor
@@ -132,17 +132,23 @@ public:
       localJacobian{ {0.0} }
     {}
 
+    /// The actual number of rows in the element local jacobian matrix (<= maxNumRows).
+    localIndex numRows;
+
+    /// The actual number of columns in the element local jacobian matrix (<= maxNumCols).
+    localIndex numCols;
+
     /// C-array storage for the element local row degrees of freedom.
-    globalIndex localRowDofIndex[numRows];
+    globalIndex localRowDofIndex[maxNumRows];
 
     /// C-array storage for the element local column degrees of freedom.
-    globalIndex localColDofIndex[numCols];
+    globalIndex localColDofIndex[maxNumCols];
 
     /// C-array storage for the element local residual vector.
-    real64 localResidual[numRows];
+    real64 localResidual[maxNumRows];
 
     /// C-array storage for the element local Jacobian matrix.
-    real64 localJacobian[numRows][numCols];
+    real64 localJacobian[maxNumRows][maxNumCols];
 
     /// Stack variables needed for the underlying FEM type
     typename FE_TYPE::StackVariables feStack;
@@ -168,6 +174,8 @@ public:
     m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
     localIndex numTestSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
     localIndex numTrialSupportPoints = numTestSupportPoints;
+    stack.numRows = numTestSupportPoints * numDofPerTestSupportPoint;
+    stack.numCols = numTrialSupportPoints * numDofPerTrialSupportPoint;
     for( localIndex a=0; a<numTestSupportPoints; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes[k][a];

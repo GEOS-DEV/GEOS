@@ -62,8 +62,8 @@ public:
                                                   3 >;
 
   /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// maxNumTestSupportPointPerElem and maxNumTrialSupportPointPerElem by definition.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   static constexpr int numMaxComponents = 3;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -180,7 +180,7 @@ public:
   {
 public:
 
-    static constexpr int numDispDofPerElem =  Base::StackVariables::numRows;
+    static constexpr int numDispDofPerElem =  Base::StackVariables::maxNumRows;
 
     /// Constructor.
     GEOSX_HOST_DEVICE

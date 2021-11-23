@@ -63,8 +63,8 @@ public:
                                                   3 >;
 
   /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// maxNumTestSupportPointPerElem and maxNumTrialSupportPointPerElem by definition.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
   using Base::numDofPerTestSupportPoint;

@@ -77,7 +77,7 @@ public:
   using Base::m_finiteElementSpace;
 
   /// The number of nodes per element.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   /**
    * @brief Constructor
