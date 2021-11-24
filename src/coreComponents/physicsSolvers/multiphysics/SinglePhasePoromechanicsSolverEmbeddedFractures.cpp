@@ -106,19 +106,26 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
                           FlowSolverBase::viewKeyStruct::pressureString(),
                           DofManager::Connector::Elem );
 
-  // Add coupling between fracture pressure and displacement jump
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = meshLevel.getElemManager();
-
-  array1d< string > regions;
-  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region ) {
-    regions.emplace_back( region.getName() );
-  } );
+  map< string, array1d< string > > meshTargets;
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                MeshLevel const & meshLevel,
+                                                arrayView1d<string const> const & regionNames )
+  {
+    array1d< string > regions;
+    ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                    [&]( localIndex const,
+                                                                         SurfaceElementRegion const & region )
+    {
+      regions.emplace_back( region.getName() );
+    });
+    meshTargets[meshBodyName] = std::move( regions );
+  });
 
   dofManager.addCoupling( FlowSolverBase::viewKeyStruct::pressureString(),
                           SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString(),
                           DofManager::Connector::Elem,
-                          regions );
+                          meshTargets );
 }
 
 void SinglePhasePoromechanicsSolverEmbeddedFractures::setupSystem( DomainPartition & domain,
@@ -134,7 +141,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupSystem( DomainPartiti
 
   GEOSX_UNUSED_VAR( setSparsity );
 
-  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
+  dofManager.setDomain( domain );
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
 

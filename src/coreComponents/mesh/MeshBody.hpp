@@ -64,8 +64,24 @@ public:
    * @param [in] level index of the mesh level
    * @return pointer to MeshLevel
    */
+  MeshLevel & getMeshLevel( string const & level )
+  { return m_meshLevels.getGroup< MeshLevel >( level ); }
+
+  /**
+   * @brief Get mesh level
+   * @param [in] level index of the mesh level
+   * @return pointer to const MeshLevel
+   */
+  MeshLevel const & getMeshLevel( string const & level ) const
+  { return m_meshLevels.getGroup< MeshLevel >( level ); }
+
+  /**
+   * @brief Get mesh level
+   * @param [in] level index of the mesh level
+   * @return pointer to MeshLevel
+   */
   MeshLevel & getMeshLevel( localIndex const level )
-  { return m_meshLevels.getGroup< MeshLevel >( intToMeshLevelString(level) ); }
+  { return getMeshLevel( intToMeshLevelString(level) ); }
 
   /**
    * @brief Get mesh level
@@ -73,7 +89,7 @@ public:
    * @return pointer to const MeshLevel
    */
   MeshLevel const & getMeshLevel( localIndex const level ) const
-  { return m_meshLevels.getGroup< MeshLevel >( intToMeshLevelString(level) ); }
+  { return getMeshLevel( intToMeshLevelString(level) ); }
 
 
   template< typename FUNCTION >

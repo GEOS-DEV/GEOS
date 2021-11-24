@@ -931,25 +931,34 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
   m_solidSolver->setupDofs( domain, dofManager );
 
   // restrict coupling to fracture regions only
-  ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-  string_array fractureRegions;
-  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
+  map< string, array1d< string > > meshTargets;
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                MeshLevel const & meshLevel,
+                                                arrayView1d<string const> const & regionNames )
   {
-    fractureRegions.emplace_back( elementRegion.getName() );
-  } );
+    array1d< string > regions;
+    ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                    [&]( localIndex const,
+                                                                         SurfaceElementRegion const & region )
+    {
+      regions.emplace_back( region.getName() );
+    });
+    meshTargets[meshBodyName] = std::move( regions );
+  });
 
   dofManager.addField( viewKeyStruct::tractionString(),
                        DofManager::Location::Elem,
                        3,
-                       fractureRegions );
+                       meshTargets );
   dofManager.addCoupling( viewKeyStruct::tractionString(),
                           viewKeyStruct::tractionString(),
                           DofManager::Connector::Face,
-                          fractureRegions );
+                          meshTargets );
   dofManager.addCoupling( keys::TotalDisplacement,
                           viewKeyStruct::tractionString(),
                           DofManager::Connector::Elem,
-                          fractureRegions );
+                          meshTargets );
 }
 
 void LagrangianContactSolver::assembleSystem( real64 const time,

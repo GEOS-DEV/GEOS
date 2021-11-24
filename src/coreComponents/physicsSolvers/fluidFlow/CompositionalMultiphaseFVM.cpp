@@ -73,7 +73,7 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
                        DofManager::Location::Elem,
                        m_numDofPerCell,
-                       targetRegionNames() );
+                       m_meshTargets );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
