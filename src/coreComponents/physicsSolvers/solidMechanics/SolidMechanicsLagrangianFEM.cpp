@@ -962,6 +962,9 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                                      dofManager.rankOffset(),
                                                                      sparsityPattern );
 
+
+
+
   sparsityPattern.compress();
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
 
