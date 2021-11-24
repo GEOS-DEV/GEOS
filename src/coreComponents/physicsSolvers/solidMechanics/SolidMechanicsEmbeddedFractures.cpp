@@ -285,7 +285,7 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
   }
   else
   {
-    m_solidSolver->setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+    m_solidSolver->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
   }
 }
 
