@@ -80,71 +80,44 @@ static int PyHDF5_init(PyHDF5 *self, PyObject *args, PyObject *kwds)
   geosx::PackCollection *collection=nullptr;
   geosx::TimeHistoryOutput *output=nullptr;
 
-  /*
-  PyObject * unicodePath;
-  if( !PyArg_ParseTuple( args, "U", &unicodePath ) )
-  {
-    return -1;
-  }
+  geosx::EventManager & eventManager = self->pb_manager->getEventManager();
 
-  LvArray::python::PyObjectRef<> asciiPath { PyUnicode_AsASCIIString( unicodePath ) };
-  if( asciiPath == nullptr )
+  eventManager.forSubGroups< geosx::EventBase >( [&]( geosx::EventBase & subEvent )
   {
-    return -1;
-  }
+    subEvent.getTargetReferences();
+  } );
 
-  char const * const path = PyBytes_AsString( asciiPath );
-  if( path == nullptr )
+  geosx::EventBase * subEvent = nullptr;
+  for(int currentSubEvent = 0; currentSubEvent<eventManager.numSubGroups(); ++currentSubEvent )
   {
-    return -1;
-  }
-  */
-  try
-  {
-    geosx::EventManager & eventManager = self->pb_manager->getEventManager();
+    subEvent = static_cast< geosx::EventBase * >( eventManager.getSubGroups()[currentSubEvent]);
+    string const subEventName = subEvent->getEventName();
 
-    eventManager.forSubGroups< geosx::EventBase >( [&]( geosx::EventBase & subEvent )
+    if (subEventName.find("Tasks") > 0 && subEventName.find("Tasks") != std::string::npos)
     {
-      subEvent.getTargetReferences();
-    } );
-
-    geosx::EventBase * subEvent = nullptr;
-    for(int currentSubEvent = 0; currentSubEvent<eventManager.numSubGroups(); ++currentSubEvent )
-    {
-
-      subEvent = static_cast< geosx::EventBase * >( eventManager.getSubGroups()[currentSubEvent]);
-      if (subEvent->getEventName().find("Tasks") > 0 && subEvent->getEventName().find("Tasks") != std::string::npos)// == "/Tasks/"+std::string(path)+"Collection")
-      {
-	collection = static_cast<geosx::PackCollection*>(subEvent->getEventTarget());
-	int firstChar = subEvent->getEventName().find("/", 1) + 1;
-	int lenName = subEvent->getEventName().find("Collection") - firstChar;
-	self->collection.insert( {subEvent->getEventName().substr(firstChar, lenName), collection} );
-      }
-      else if (subEvent->getEventName().find("Outputs") > 0 && subEvent->getEventName().find("Outputs") != std::string::npos)// == "/Outputs/"+std::string(path)+"Output")
-      {
-	output = static_cast<geosx::TimeHistoryOutput*>(subEvent->getEventTarget());
-	int firstChar = subEvent->getEventName().find("/", 1) + 1;
-	int lenName = subEvent->getEventName().find("Output", 2) - firstChar;
-	self->output.insert( {subEvent->getEventName().substr(firstChar, lenName), output} );
-      }
-      else
-      {
-	subEvent = nullptr;
-      }
+      collection = static_cast<geosx::PackCollection*>(subEvent->getEventTarget());
+      int const firstChar = subEventName.find("/", 1) + 1;
+      int const lenName = subEventName.find("Collection") - firstChar;
+      self->collection.insert( {subEventName.substr(firstChar, lenName), collection} );
     }
-    PYTHON_ERROR_IF( self->collection.size() == 0, PyExc_RuntimeError, "Target not found", -1 );
-    PYTHON_ERROR_IF( self->output.size() == 0, PyExc_RuntimeError, "Target not found", -1 );
-
-    return 0;
+    else if (subEventName.find("Outputs") > 0 && subEventName.find("Outputs") != std::string::npos)
+    {
+      output = static_cast<geosx::TimeHistoryOutput*>(subEvent->getEventTarget());
+      int const firstChar = subEventName.find("/", 1) + 1;
+      int const lenName = subEventName.find("Output", 2) - firstChar;
+      self->output.insert( {subEventName.substr(firstChar, lenName), output} );
+    }
+    else
+    {
+      subEvent = nullptr;
+    }
   }
-  catch( std::domain_error const & e )
-  {
-    // If no default return value was specified then this results in a Python exception.
-    PyErr_SetString( PyExc_KeyError, e.what() );
-    return -1;
-  }
+  PYTHON_ERROR_IF( self->collection.size() == 0, PyExc_RuntimeError, "Target not found", -1 );
+  PYTHON_ERROR_IF( self->output.size() == 0, PyExc_RuntimeError, "Target not found", -1 );
 
+  return 0;
 }
+
 
 
 static PyObject * PyHDF5_repr( PyObject * const obj ) noexcept
@@ -173,9 +146,6 @@ static PyObject * PyHDF5_repr( PyObject * const obj ) noexcept
     string const type = LvArray::system::demangle( typeid( *(it->second) ).name() );
     repr += path + " ( " + type + " )";
   }
-  //string const path = pyHDF5->collection->getPath();
-  //string const type = LvArray::system::demangle( typeid( *(pyHDF5->collection) ).name() );
-  //string const repr = path + " ( " + type + " )";
 
   return PyUnicode_FromString( repr.c_str() );
 

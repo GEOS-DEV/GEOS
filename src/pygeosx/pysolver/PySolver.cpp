@@ -91,43 +91,33 @@ static int PySolver_init(PySolver *self, PyObject *args, PyObject *kwds)
     return -1;
   }
 
-  try
+  geosx::EventManager & eventManager = self->pb_manager->getEventManager();
+
+  eventManager.forSubGroups< geosx::EventBase >( [&]( geosx::EventBase & subEvent )
   {
-    geosx::EventManager & eventManager = self->pb_manager->getEventManager();
+    subEvent.getTargetReferences();
+  } );
 
-    eventManager.forSubGroups< geosx::EventBase >( [&]( geosx::EventBase & subEvent )
+  geosx::EventBase * subEvent = nullptr;
+  for(int currentSubEvent = 0; currentSubEvent<eventManager.numSubGroups(); ++currentSubEvent )
+  {
+
+    subEvent = static_cast< geosx::EventBase * >( eventManager.getSubGroups()[currentSubEvent]);
+    if (subEvent->getEventName() == path)
     {
-      subEvent.getTargetReferences();
-    } );
-
-    geosx::EventBase * subEvent = nullptr;
-    for(int currentSubEvent = 0; currentSubEvent<eventManager.numSubGroups(); ++currentSubEvent )
-    {
-
-      subEvent = static_cast< geosx::EventBase * >( eventManager.getSubGroups()[currentSubEvent]);
-      if (subEvent->getEventName() == path)
-      {
-	break;
-      }
-      else
-      {
-	subEvent = nullptr;
-      }
+      break;
     }
-    PYTHON_ERROR_IF( subEvent == nullptr, PyExc_RuntimeError, "Target not found", -1 );
-
-    group = static_cast<geosx::SolverBase*>(subEvent->getEventTarget());
-    self->group = group;
-
-    return 0;
+    else
+    {
+      subEvent = nullptr;
+    }
   }
-  catch( std::domain_error const & e )
-  {
-    // If no default return value was specified then this results in a Python exception.
-    PyErr_SetString( PyExc_KeyError, e.what() );
-    return -1;
-  }
+  PYTHON_ERROR_IF( subEvent == nullptr, PyExc_RuntimeError, "Target not found", -1 );
 
+  group = static_cast<geosx::SolverBase*>(subEvent->getEventTarget());
+  self->group = group;
+
+  return 0;
 }
 
 
