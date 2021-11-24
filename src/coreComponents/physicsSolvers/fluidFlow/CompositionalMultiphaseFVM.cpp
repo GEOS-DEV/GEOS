@@ -92,6 +92,9 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
+  // TODO FRANCOIS: remove the loop below, should not be necessary anymore
+  //                but check impact on CFL and aquifer kernels!
+
   /*
    * Force phase compositions to be moved to device.
    *
@@ -109,69 +112,60 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
    *       Or stop testing through the solver interface and test separate kernels instead.
    *       Finally, the problem should go away when fluid updates are executed on device.
    */
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
-  {
-    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
-    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFrac = fluid.phaseCompFraction();
-    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
-    arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
+  /*
+     forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
+     {
+     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
+     arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFrac = fluid.phaseCompFraction();
+     arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
+     arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp =
+        fluid.dPhaseCompFraction_dGlobalCompFraction();
 
-    arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseMassDens = fluid.phaseMassDensity();
-    arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
-    arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
+     arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseMassDens = fluid.phaseMassDensity();
+     arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
+     arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(),
+     forAll< parallelDevicePolicy<> >( subRegion.size(),
                                       [phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
                                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp]
                                       GEOSX_HOST_DEVICE ( localIndex const )
-    {
+     {
       GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
                         phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp );
-    } );
-  } );
+     } );
+     } );
+   */
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
-    mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
-  elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
   fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
   {
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
-    KernelLaunchSelector1< FluxKernel >( m_numComponents,
-                                         m_numPhases,
-                                         stencilWrapper,
-                                         dofManager.rankOffset(),
-                                         elemDofNumber.toNestedViewConst(),
-                                         m_elemGhostRank.toNestedViewConst(),
-                                         m_pressure.toNestedViewConst(),
-                                         m_deltaPressure.toNestedViewConst(),
-                                         m_permeability.toNestedViewConst(),
-                                         m_dPerm_dPressure.toNestedViewConst(),
-                                         m_gravCoef.toNestedViewConst(),
-                                         m_phaseMob.toNestedViewConst(),
-                                         m_dPhaseMob_dPres.toNestedViewConst(),
-                                         m_dPhaseMob_dCompDens.toNestedViewConst(),
-                                         m_dPhaseVolFrac_dPres.toNestedViewConst(),
-                                         m_dPhaseVolFrac_dCompDens.toNestedViewConst(),
-                                         m_dCompFrac_dCompDens.toNestedViewConst(),
-                                         m_phaseMassDens.toNestedViewConst(),
-                                         m_dPhaseMassDens_dPres.toNestedViewConst(),
-                                         m_dPhaseMassDens_dComp.toNestedViewConst(),
-                                         m_phaseCompFrac.toNestedViewConst(),
-                                         m_dPhaseCompFrac_dPres.toNestedViewConst(),
-                                         m_dPhaseCompFrac_dComp.toNestedViewConst(),
-                                         m_phaseCapPressure.toNestedViewConst(),
-                                         m_dPhaseCapPressure_dPhaseVolFrac.toNestedViewConst(),
-                                         m_capPressureFlag,
-                                         dt,
-                                         localMatrix.toViewConstSizes(),
-                                         localRhs.toView() );
+    bool const isIsothermal = true;
+    FaceBasedAssemblyKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >
+      ( isIsothermal,
+      m_numComponents,
+      m_numPhases,
+      dofManager.rankOffset(),
+      elemDofKey,
+      m_capPressureFlag,
+      getName(),
+      mesh.getElemManager(),
+      stencilWrapper,
+      targetRegionNames(),
+      fluidModelNames(),
+      relPermModelNames(),
+      capPresModelNames(),
+      permeabilityModelNames(),
+      dt,
+      localMatrix.toViewConstSizes(),
+      localRhs.toView() );
   } );
 }
 
