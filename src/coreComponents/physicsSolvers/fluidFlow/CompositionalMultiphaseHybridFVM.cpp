@@ -293,7 +293,7 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
                        DofManager::Location::Elem,
                        m_numDofPerCell,
-                       targetRegionNames() );
+                       m_meshTargets );
 
   dofManager.addCoupling( viewKeyStruct::elemDofFieldString(),
                           viewKeyStruct::elemDofFieldString(),
@@ -303,7 +303,7 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOSX_
   dofManager.addField( viewKeyStruct::faceDofFieldString(),
                        DofManager::Location::Face,
                        1,
-                       targetRegionNames() );
+                       m_meshTargets );
 
   dofManager.addCoupling( viewKeyStruct::faceDofFieldString(),
                           viewKeyStruct::faceDofFieldString(),

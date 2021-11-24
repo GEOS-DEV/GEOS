@@ -457,7 +457,7 @@ void ProppantTransport::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( d
   dofManager.addField( viewKeyStruct::proppantConcentrationString(),
                        DofManager::Location::Elem,
                        m_numDofPerCell,
-                       targetRegionNames() );
+                       m_meshTargets );
 
   dofManager.addCoupling( viewKeyStruct::proppantConcentrationString(),
                           viewKeyStruct::proppantConcentrationString(),
