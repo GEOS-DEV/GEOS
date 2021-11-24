@@ -167,23 +167,30 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
   GEOSX_MARK_FUNCTION;
   m_solidSolver->setupDofs( domain, dofManager );
 
-  MeshLevel const & meshLevel              = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = meshLevel.getElemManager();
-
-  array1d< string > regions;
-  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region ) {
-    regions.emplace_back( region.getName() );
-  } );
+  map< string, array1d< string > > meshTargets;
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                MeshLevel const & meshLevel,
+                                                arrayView1d<string const> const & regionNames )
+  {
+    array1d< string > regions;
+    ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                    [&]( localIndex const,
+                                                                         SurfaceElementRegion const & region )
+    {
+      regions.emplace_back( region.getName() );
+    });
+    meshTargets[meshBodyName] = std::move( regions );
+  });
 
   dofManager.addField( viewKeyStruct::dispJumpString(),
                        DofManager::Location::Elem,
                        3,
-                       regions );
+                       meshTargets );
 
   dofManager.addCoupling( viewKeyStruct::dispJumpString(),
                           viewKeyStruct::dispJumpString(),
-                          DofManager::Connector::Elem,
-                          regions );
+                          DofManager::Connector::Elem );
 }
 
 void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
@@ -197,7 +204,7 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
 
   GEOSX_UNUSED_VAR( setSparsity );
 
-  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
+  dofManager.setDomain( domain );
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
 

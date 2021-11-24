@@ -449,17 +449,26 @@ void HydrofractureSolver::setupDofs( DomainPartition const & domain,
   m_flowSolver->setupDofs( domain, dofManager );
 
   // restrict coupling to fracture regions only (as done originally in setupSystem)
-  ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-  string_array fractureRegions;
-  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
+  map< string, array1d< string > > meshTargets;
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                MeshLevel const & meshLevel,
+                                                arrayView1d<string const> const & regionNames )
   {
-    fractureRegions.emplace_back( elementRegion.getName() );
-  } );
+    array1d< string > regions;
+    ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                    [&]( localIndex const,
+                                                                         SurfaceElementRegion const & region )
+    {
+      regions.emplace_back( region.getName() );
+    });
+    meshTargets[meshBodyName] = std::move( regions );
+  });
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           FlowSolverBase::viewKeyStruct::pressureString(),
                           DofManager::Connector::Elem,
-                          fractureRegions );
+                          meshTargets );
 
 }
 
@@ -477,7 +486,7 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   m_flowSolver->resetViews( mesh );
 
-  dofManager.setMesh( mesh );
+  dofManager.setDomain( domain );
 
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();

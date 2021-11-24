@@ -102,26 +102,26 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 void WellSolverBase::setupDofs( DomainPartition const & domain,
                                 DofManager & dofManager ) const
 {
-  array1d< string > regions;
-
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  map< string, array1d< string > > meshTargets;
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                 MeshLevel const & meshLevel,
                                                 arrayView1d<string const> const & regionNames )
   {
-
+    array1d< string > regions;
     ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
     elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
-                                                                 [&]( localIndex const,
-                                                                      WellElementRegion const & region )
+                                                                    [&]( localIndex const,
+                                                                         WellElementRegion const & region )
     {
       regions.emplace_back( region.getName() );
     });
+    meshTargets[meshBodyName] = std::move( regions );
   });
 
   dofManager.addField( wellElementDofName(),
                        DofManager::Location::Elem,
                        numDofPerWellElement(),
-                       regions );
+                       meshTargets );
 
   dofManager.addCoupling( wellElementDofName(),
                           wellElementDofName(),
