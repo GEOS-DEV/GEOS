@@ -189,15 +189,15 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
   damageSolver.setupSystem( domain,
                             damageSolver.getDofManager(),
                             damageSolver.getLocalMatrix(),
-                            damageSolver.getLocalRhs(),
-                            damageSolver.getLocalSolution(),
+                            damageSolver.getSystemRhs(),
+                            damageSolver.getSystemSolution(),
                             true );
 
   solidSolver.setupSystem( domain,
                            solidSolver.getDofManager(),
                            solidSolver.getLocalMatrix(),
-                           solidSolver.getLocalRhs(),
-                           solidSolver.getLocalSolution() );
+                           solidSolver.getSystemRhs(),
+                           solidSolver.getSystemSolution() );
 
   damageSolver.implicitStepSetup( time_n, dt, domain );
 

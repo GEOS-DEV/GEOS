@@ -131,8 +131,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
 void SinglePhasePoromechanicsSolverEmbeddedFractures::setupSystem( DomainPartition & domain,
                                                                    DofManager & dofManager,
                                                                    CRSMatrix< real64, globalIndex > & localMatrix,
-                                                                   array1d< real64 > & localRhs,
-                                                                   array1d< real64 > & localSolution,
+                                                                   ParallelVector & rhs,
+                                                                   ParallelVector & solution,
                                                                    bool const setSparsity )
 {
   // Add missing couplings ( matrix pressure with displacement jump and jump - displacement )
@@ -174,13 +174,14 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupSystem( DomainPartiti
   addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
 
   // Finally, steal the pattern into a CRS matrix
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localRhs.resize( localMatrix.numRows() );
-  localSolution.resize( localMatrix.numRows() );
-
   localMatrix.setName( this->getName() + "/localMatrix" );
-  localRhs.setName( this->getName() + "/localRhs" );
-  localSolution.setName( this->getName() + "/localSolution" );
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+
+  rhs.setName( this->getName() + "/rhs" );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+
+  solution.setName( this->getName() + "/solution" );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 }
 
 void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
@@ -520,8 +521,8 @@ real64 SinglePhasePoromechanicsSolverEmbeddedFractures::solverStep( real64 const
     setupSystem( domain,
                  m_dofManager,
                  m_localMatrix,
-                 m_localRhs,
-                 m_localSolution );
+                 m_rhs,
+                 m_solution );
 
     implicitStepSetup( time_n, dt, domain );
 

@@ -89,16 +89,16 @@ template< typename BASE >
 void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
                                           DofManager & dofManager,
                                           CRSMatrix< real64, globalIndex > & localMatrix,
-                                          array1d< real64 > & localRhs,
-                                          array1d< real64 > & localSolution,
+                                          ParallelVector & rhs,
+                                          ParallelVector & solution,
                                           bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
   BASE::setupSystem( domain,
                      dofManager,
                      localMatrix,
-                     localRhs,
-                     localSolution,
+                     rhs,
+                     solution,
                      setSparsity );
 
 }

@@ -77,8 +77,8 @@ void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
   m_flowSolver->setupSystem( domain,
                              m_flowSolver->getDofManager(),
                              m_flowSolver->getLocalMatrix(),
-                             m_flowSolver->getLocalRhs(),
-                             m_flowSolver->getLocalSolution() );
+                             m_flowSolver->getSystemRhs(),
+                             m_flowSolver->getSystemSolution() );
 
 
   m_flowSolver->implicitStepSetup( time_n, dt, domain );
@@ -86,8 +86,8 @@ void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
   m_proppantSolver->setupSystem( domain,
                                  m_proppantSolver->getDofManager(),
                                  m_proppantSolver->getLocalMatrix(),
-                                 m_proppantSolver->getLocalRhs(),
-                                 m_proppantSolver->getLocalSolution() );
+                                 m_proppantSolver->getSystemRhs(),
+                                 m_proppantSolver->getSystemSolution() );
 
 
   m_proppantSolver->implicitStepSetup( time_n, dt, domain );
