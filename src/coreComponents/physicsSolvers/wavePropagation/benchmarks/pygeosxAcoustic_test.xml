@@ -29,9 +29,9 @@
       xCoords="{ 0, 2000 }"
       yCoords="{ 0, 2000 }"
       zCoords="{ 0, 2000 }"
-      nx="{ 100 }"
-      ny="{ 100 }"
-      nz="{ 50 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 5 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
 
@@ -66,6 +66,7 @@
       timeFrequency="1.0"
       targetExactTimestep="0"
       target="/Tasks/waveFieldCollection" />
+
 
     <PeriodicEvent
       name="waveFieldOutput"

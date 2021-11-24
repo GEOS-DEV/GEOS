@@ -8,7 +8,7 @@ import numpy as np
 import pygeosx
 from math import ceil
 
-from segyManager import *
+from pyutils import exportToSegy
 import os
 from print import *
 

@@ -1,5 +1,7 @@
 from mpi4py import MPI
 import sys
+import os
+sys.path.append(os.getcwd() + '/..')
 import pygeosx
 from utils import *
 import time

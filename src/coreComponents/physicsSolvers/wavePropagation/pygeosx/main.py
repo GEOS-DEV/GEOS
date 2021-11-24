@@ -3,10 +3,9 @@ Created on 9/02/2021
 
 @author: macpro
 '''
-import asyncio
-from acquisition import EQUISPACEDAcquisition
-from client import Client, SLURMCluster, Future
-from AcousticShot import acoustic_shots
+from seismicUtilities.acquisition import EQUISPACEDAcquisition
+from seismicUtilities.client import Client, SLURMCluster, Future
+from seismicUtilities.AcousticShot import acoustic_shots
 from utils import parse_args
 import time
 
@@ -30,8 +29,8 @@ def main():
     #acq.limitedAperture(2000)
 
     acqs = acq.split(3)
-    
-    cluster = SLURMCluster(job_name="seismicAcquisition", nodes=1, cores=16, 
+
+    cluster = SLURMCluster(job_name="seismicAcquisition", nodes=1, cores=16,
                            env_extra=["physics/geosx_deps","physics/pygeosx"], python="$Python3_EXECUTABLE",
                            node_name="bora", walltime="03:00:00")
 
@@ -39,6 +38,6 @@ def main():
     client.scale(2)
 
     futures = client.map(acoustic_shots, acqs, cores=16, x_partition=8, y_partition=2)
-    
+
 if __name__ == "__main__":
     main()

@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.getcwd() + '/..')
 from threading import Thread
 from queue import Queue
 import uuid

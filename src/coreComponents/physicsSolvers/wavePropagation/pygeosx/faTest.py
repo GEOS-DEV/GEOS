@@ -1,72 +1,16 @@
 import pygeosx
 import sys
-from acquisition import EQUISPACEDAcquisition
-#from print import *
-import segyio
-import numpy as np
-from segyManager import *
+from seismicUtilities.acquisition import EQUISPACEDAcquisition
+from seismicUtilities.segy import exportToSegy
+from seismicUtilities.acoustic import updateSourceAndReceivers, recomputeSourceAndReceivers, resetWaveField, setTimeVariables
 from mpi4py import MPI
-from client import LSFCluster
-
-import h5py
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 
-def recomputeSourceAndReceivers(solver, source, receivers):
-    updateSourceAndReceivers(solver, source, receivers)
-
-    solver.initPostInitialConditions()
-
-
-def updateSourceAndReceivers(solver, source, receivers):
-    src_pos_geosx = solver.get_wrapper("sourceCoordinates").value()
-    src_pos_geosx.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-
-    rcv_pos_geosx = solver.get_wrapper("receiverCoordinates").value()
-    rcv_pos_geosx.set_access_level(pygeosx.pylvarray.RESIZEABLE)
-
-
-    src_pos_geosx.to_numpy()[0] = source.coords
-    rcv_pos_geosx.resize(receivers.n)
-    rcv_pos = [receiver.coords for receiver in receivers.receivers_list]
-    rcv_pos_geosx.to_numpy()[:] = rcv_pos[:]
-
-    solver.postProcessInput()
-
-
-
-def resetWaveField(group):
-    group.get_wrapper("Solvers/acousticSolver/indexSeismoTrace").value()[0] = 0
-    nodeManagerPath = "domain/MeshBodies/mesh/Level0/nodeManager/"
-
-    pressure_nm1 = group.get_wrapper(nodeManagerPath + "pressure_nm1").value()
-    pressure_nm1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-
-    pressure_n = group.get_wrapper(nodeManagerPath + "pressure_n").value()
-    pressure_n.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-
-    pressure_np1 = group.get_wrapper(nodeManagerPath + "pressure_np1").value()
-    pressure_np1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-
-    pressure_geosx = group.get_wrapper("Solvers/acousticSolver/pressureNp1AtReceivers").value()
-    pressure_geosx.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-
-    pressure_nm1.to_numpy()[:] = 0.0
-    pressure_n.to_numpy()[:]   = 0.0
-    pressure_np1.to_numpy()[:] = 0.0
-    pressure_geosx.to_numpy()[:] = 0.0
-
-
-def setTimeVariables(problem, maxTime, dtSeismoTrace):
-    problem.get_wrapper("Events/maxTime").value()[0] = maxTime
-    problem.get_wrapper("/Solvers/acousticSolver/dtSeismoTrace").value()[0] = dtSeismoTrace
-
-
-
 def main():
-
+    #Set acquisition
     acquisition = EQUISPACEDAcquisition(boundary=[[0,2000],[0,2000],[0,2000]],
                                         dt=0.005,
                                         velocity_model=1500,
@@ -97,7 +41,7 @@ def main():
     setTimeVariables(problem, maxTime, dtSeismoTrace)
 
     #Get view on pressure at receivers locations
-    pressure_geosx = acousticSolver.get_wrapper("pressureNp1AtReceivers").value()
+    pressureAtReceivers = acousticSolver.get_wrapper("pressureNp1AtReceivers").value()
 
     #Update source and receivers positions
     updateSourceAndReceivers(acousticSolver, acquisition.shots[0].source, acquisition.shots[0].receivers)
@@ -106,9 +50,6 @@ def main():
     #Loop over the shots
     ishot=0
     for shot in acquisition.shots:
-        if rank == 0:
-            create_segy(shot, "pressure", nsamples, acquisition.output)
-
         if ishot > 0:
             recomputeSourceAndReceivers(acousticSolver, shot.source, shot.receivers)
 
@@ -130,10 +71,11 @@ def main():
 
             i += 1
         #Export pressure at receivers positions to .segy file
-        segyFile = os.path.join(acquisition.output, "pressure_Shot"+ shot.id + ".sgy")
-        export_to_segy(pressure_geosx.to_numpy(),
-                       shot.receivers.receivers_list,
-                       segyFile)
+        exportToSegy(table = pressureAtReceivers.to_numpy(),
+                     shot = shot,
+                     filename = "pressure_Shot"+shot.id,
+                     directory = acquisition.output,
+                     rank = rank)
 
         #Output waveField values
         hdf5.output("waveField", time, dt)
