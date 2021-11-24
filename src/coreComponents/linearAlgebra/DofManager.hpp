@@ -31,6 +31,10 @@ class DomainPartition;
 class MeshLevel;
 class ObjectManagerBase;
 class FluxApproximationBase;
+namespace dataRepository
+{
+class Group;
+}
 
 /**
  * @class DofManager
@@ -649,7 +653,7 @@ private:
   string m_name;
 
   /// Pointer to corresponding MeshLevel
-  MeshLevel * m_mesh = nullptr;
+  dataRepository::Group * m_meshBodies = nullptr;
 
   /// Array of field descriptions
   std::vector< FieldDescription > m_fields;

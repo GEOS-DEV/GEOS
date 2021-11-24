@@ -80,30 +80,43 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
-  MeshLevel & meshLevel = meshBodies.getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
 
-  // loop over the wells
-  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
-                                                               WellElementSubRegion & subRegion )
+  forMeshTargets( meshBodies, [&] ( string const &,
+                                    MeshLevel & meshLevel,
+                                    arrayView1d<string const> const & regionNames )
+  {
+
+    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                                       [&]( localIndex const,
+                                                                           WellElementSubRegion & subRegion )
   {
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
 
     PerforationData * const perforationData = subRegion.getPerforationData();
     perforationData->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
   } );
+  } );
 }
 
 void WellSolverBase::setupDofs( DomainPartition const & domain,
                                 DofManager & dofManager ) const
 {
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
   array1d< string > regions;
-  forTargetRegions< WellElementRegion >( meshLevel, [&]( localIndex const,
-                                                         WellElementRegion const & region )
+
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel const & meshLevel,
+                                                arrayView1d<string const> const & regionNames )
   {
-    regions.emplace_back( region.getName() );
-  } );
+
+    ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion const & region )
+    {
+      regions.emplace_back( region.getName() );
+    });
+  });
 
   dofManager.addField( wellElementDofName(),
                        DofManager::Location::Elem,
