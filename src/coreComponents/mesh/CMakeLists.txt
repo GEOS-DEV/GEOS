@@ -28,6 +28,8 @@ set( mesh_headers
      ObjectManagerBase.hpp
      Perforation.hpp
      PerforationData.hpp
+     ParticleRegion.hpp
+     ParticleSubRegion.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
@@ -81,7 +83,9 @@ set( mesh_sources
      NodeManager.cpp
      ObjectManagerBase.cpp
      Perforation.cpp
-     PerforationData.cpp
+     PerforationData.hpp
+     ParticleRegion.cpp
+     ParticleSubRegion.cpp
      SurfaceElementRegion.cpp
      SurfaceElementSubRegion.cpp
      ToElementRelation.cpp
