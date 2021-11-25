@@ -21,7 +21,6 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
@@ -90,8 +89,6 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
   /*
    * Force phase compositions to be moved to device.
    *
@@ -109,69 +106,78 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
    *       Or stop testing through the solver interface and test separate kernels instead.
    *       Finally, the problem should go away when fluid updates are executed on device.
    */
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel const & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
-    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFrac = fluid.phaseCompFraction();
-    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
-    arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
-
-    arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseMassDens = fluid.phaseMassDensity();
-    arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
-    arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                      [phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
-                                       phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp]
-                                      GEOSX_HOST_DEVICE ( localIndex const )
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
     {
-      GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
-                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp );
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+
+      arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFrac = fluid.phaseCompFraction();
+      arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
+      arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
+
+      arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseMassDens = fluid.phaseMassDensity();
+      arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
+      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                        [phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
+                                         phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp]
+                                        GEOSX_HOST_DEVICE ( localIndex const )
+      {
+        GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
+                          phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp );
+      } );
     } );
-  } );
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
-    mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
-  elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
+    string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
+      mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+    elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
-  fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
-  {
-    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+    fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
-    KernelLaunchSelector1< FluxKernel >( m_numComponents,
-                                         m_numPhases,
-                                         stencilWrapper,
-                                         dofManager.rankOffset(),
-                                         elemDofNumber.toNestedViewConst(),
-                                         m_elemGhostRank.toNestedViewConst(),
-                                         m_pressure.toNestedViewConst(),
-                                         m_deltaPressure.toNestedViewConst(),
-                                         m_permeability.toNestedViewConst(),
-                                         m_dPerm_dPressure.toNestedViewConst(),
-                                         m_gravCoef.toNestedViewConst(),
-                                         m_phaseMob.toNestedViewConst(),
-                                         m_dPhaseMob_dPres.toNestedViewConst(),
-                                         m_dPhaseMob_dCompDens.toNestedViewConst(),
-                                         m_dPhaseVolFrac_dPres.toNestedViewConst(),
-                                         m_dPhaseVolFrac_dCompDens.toNestedViewConst(),
-                                         m_dCompFrac_dCompDens.toNestedViewConst(),
-                                         m_phaseMassDens.toNestedViewConst(),
-                                         m_dPhaseMassDens_dPres.toNestedViewConst(),
-                                         m_dPhaseMassDens_dComp.toNestedViewConst(),
-                                         m_phaseCompFrac.toNestedViewConst(),
-                                         m_dPhaseCompFrac_dPres.toNestedViewConst(),
-                                         m_dPhaseCompFrac_dComp.toNestedViewConst(),
-                                         m_phaseCapPressure.toNestedViewConst(),
-                                         m_dPhaseCapPressure_dPhaseVolFrac.toNestedViewConst(),
-                                         m_capPressureFlag,
-                                         dt,
-                                         localMatrix.toViewConstSizes(),
-                                         localRhs.toView() );
+      KernelLaunchSelector1< FluxKernel >( m_numComponents,
+                                           m_numPhases,
+                                           stencilWrapper,
+                                           dofManager.rankOffset(),
+                                           elemDofNumber.toNestedViewConst(),
+                                           m_elemGhostRank.toNestedViewConst(),
+                                           m_pressure.toNestedViewConst(),
+                                           m_deltaPressure.toNestedViewConst(),
+                                           m_permeability.toNestedViewConst(),
+                                           m_dPerm_dPressure.toNestedViewConst(),
+                                           m_gravCoef.toNestedViewConst(),
+                                           m_phaseMob.toNestedViewConst(),
+                                           m_dPhaseMob_dPres.toNestedViewConst(),
+                                           m_dPhaseMob_dCompDens.toNestedViewConst(),
+                                           m_dPhaseVolFrac_dPres.toNestedViewConst(),
+                                           m_dPhaseVolFrac_dCompDens.toNestedViewConst(),
+                                           m_dCompFrac_dCompDens.toNestedViewConst(),
+                                           m_phaseMassDens.toNestedViewConst(),
+                                           m_dPhaseMassDens_dPres.toNestedViewConst(),
+                                           m_dPhaseMassDens_dComp.toNestedViewConst(),
+                                           m_phaseCompFrac.toNestedViewConst(),
+                                           m_dPhaseCompFrac_dPres.toNestedViewConst(),
+                                           m_dPhaseCompFrac_dComp.toNestedViewConst(),
+                                           m_phaseCapPressure.toNestedViewConst(),
+                                           m_dPhaseCapPressure_dPhaseVolFrac.toNestedViewConst(),
+                                           m_capPressureFlag,
+                                           dt,
+                                           localMatrix.toViewConstSizes(),
+                                           localRhs.toView() );
+    } );
   } );
 }
 
@@ -192,110 +198,125 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
   // Step 1: reset the arrays involved in the computation of CFL numbers
-  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    arrayView2d< real64, compflow::USD_PHASE > const & phaseOutflux =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseOutfluxString() );
-    arrayView2d< real64, compflow::USD_COMP > const & compOutflux =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::componentOutfluxString() );
-    phaseOutflux.zero();
-    compOutflux.zero();
-  } );
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView2d< real64, compflow::USD_PHASE > const & phaseOutflux =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseOutfluxString() );
+      arrayView2d< real64, compflow::USD_COMP > const & compOutflux =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::componentOutfluxString() );
+      phaseOutflux.zero();
+      compOutflux.zero();
+    } );
 
-  // Step 2: compute the total volumetric outflux for each reservoir cell by looping over faces
-  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+    // Step 2: compute the total volumetric outflux for each reservoir cell by looping over faces
+    NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutfluxAccessor =
-    mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >, arrayView2d< real64, compflow::USD_PHASE > >( viewKeyStruct::phaseOutfluxString() );
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutfluxAccessor =
+      mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >, arrayView2d< real64, compflow::USD_PHASE > >( viewKeyStruct::phaseOutfluxString() );
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > const & compOutfluxAccessor =
-    mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >, arrayView2d< real64, compflow::USD_COMP > >( viewKeyStruct::componentOutfluxString() );
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > const & compOutfluxAccessor =
+      mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >, arrayView2d< real64, compflow::USD_COMP > >( viewKeyStruct::componentOutfluxString() );
 
-  fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
-  {
+    fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
+    {
 
-    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
-    KernelLaunchSelector1< CFLFluxKernel >( m_numComponents,
-                                            m_numPhases,
-                                            dt,
-                                            stencilWrapper,
-                                            m_pressure.toNestedViewConst(),
-                                            m_gravCoef.toNestedViewConst(),
-                                            m_permeability.toNestedViewConst(),
-                                            m_dPerm_dPressure.toNestedViewConst(),
-                                            m_phaseVolFrac.toNestedViewConst(),
-                                            m_phaseRelPerm.toNestedViewConst(),
-                                            m_phaseVisc.toNestedViewConst(),
-                                            m_phaseDens.toNestedViewConst(),
-                                            m_phaseMassDens.toNestedViewConst(),
-                                            m_phaseCompFrac.toNestedViewConst(),
-                                            phaseOutfluxAccessor.toNestedView(),
-                                            compOutfluxAccessor.toNestedView() );
+      KernelLaunchSelector1< CFLFluxKernel >( m_numComponents,
+                                              m_numPhases,
+                                              dt,
+                                              stencilWrapper,
+                                              m_pressure.toNestedViewConst(),
+                                              m_gravCoef.toNestedViewConst(),
+                                              m_permeability.toNestedViewConst(),
+                                              m_dPerm_dPressure.toNestedViewConst(),
+                                              m_phaseVolFrac.toNestedViewConst(),
+                                              m_phaseRelPerm.toNestedViewConst(),
+                                              m_phaseVisc.toNestedViewConst(),
+                                              m_phaseDens.toNestedViewConst(),
+                                              m_phaseMassDens.toNestedViewConst(),
+                                              m_phaseCompFrac.toNestedViewConst(),
+                                              phaseOutfluxAccessor.toNestedView(),
+                                              compOutfluxAccessor.toNestedView() );
+    } );
   } );
 
   // Step 3: finalize the (cell-based) computation of the CFL numbers
   real64 localMaxPhaseCFLNumber = 0.0;
   real64 localMaxCompCFLNumber = 0.0;
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseOutflux =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseOutfluxString() );
+      arrayView2d< real64 const, compflow::USD_COMP > const & compOutflux =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::componentOutfluxString() );
 
-    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseOutflux =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseOutfluxString() );
-    arrayView2d< real64 const, compflow::USD_COMP > const & compOutflux =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::componentOutfluxString() );
+      arrayView1d< real64 > const & phaseCFLNumber = subRegion.getReference< array1d< real64 > >( viewKeyStruct::phaseCFLNumberString() );
+      arrayView1d< real64 > const & compCFLNumber = subRegion.getReference< array1d< real64 > >( viewKeyStruct::componentCFLNumberString() );
 
-    arrayView1d< real64 > const & phaseCFLNumber = subRegion.getReference< array1d< real64 > >( viewKeyStruct::phaseCFLNumberString() );
-    arrayView1d< real64 > const & compCFLNumber = subRegion.getReference< array1d< real64 > >( viewKeyStruct::componentCFLNumberString() );
+      arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
 
-    arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
+      arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
+      arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() );
+      arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
 
-    arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
-    arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() );
-    arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
 
-    MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
-    arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
+      string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+      RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
+      arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
+      arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
 
-    RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, m_relPermModelNames[targetIndex] );
-    arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
-    arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
+      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+      CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-    CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+      real64 subRegionMaxPhaseCFLNumber = 0.0;
+      real64 subRegionMaxCompCFLNumber = 0.0;
 
-    real64 subRegionMaxPhaseCFLNumber = 0.0;
-    real64 subRegionMaxCompCFLNumber = 0.0;
+      arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
 
-    arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
+      KernelLaunchSelector2< CFLKernel >( m_numComponents, m_numPhases,
+                                          subRegion.size(),
+                                          volume,
+                                          porosity,
+                                          compDens,
+                                          compFrac,
+                                          phaseVolFrac,
+                                          phaseRelPerm,
+                                          dPhaseRelPerm_dPhaseVolFrac,
+                                          phaseVisc,
+                                          phaseOutflux,
+                                          compOutflux,
+                                          phaseCFLNumber,
+                                          compCFLNumber,
+                                          subRegionMaxPhaseCFLNumber,
+                                          subRegionMaxCompCFLNumber );
 
-    KernelLaunchSelector2< CFLKernel >( m_numComponents, m_numPhases,
-                                        subRegion.size(),
-                                        volume,
-                                        porosity,
-                                        compDens,
-                                        compFrac,
-                                        phaseVolFrac,
-                                        phaseRelPerm,
-                                        dPhaseRelPerm_dPhaseVolFrac,
-                                        phaseVisc,
-                                        phaseOutflux,
-                                        compOutflux,
-                                        phaseCFLNumber,
-                                        compCFLNumber,
-                                        subRegionMaxPhaseCFLNumber,
-                                        subRegionMaxCompCFLNumber );
+      localMaxPhaseCFLNumber = LvArray::math::max( localMaxPhaseCFLNumber, subRegionMaxPhaseCFLNumber );
+      localMaxCompCFLNumber = LvArray::math::max( localMaxCompCFLNumber, subRegionMaxCompCFLNumber );
 
-    localMaxPhaseCFLNumber = LvArray::math::max( localMaxPhaseCFLNumber, subRegionMaxPhaseCFLNumber );
-    localMaxCompCFLNumber = LvArray::math::max( localMaxCompCFLNumber, subRegionMaxCompCFLNumber );
-
+    } );
   } );
 
   real64 const globalMaxPhaseCFLNumber = MpiWrapper::max( localMaxPhaseCFLNumber );
@@ -311,36 +332,43 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   real64 localResidualNorm = 0.0;
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel const & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-    arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & totalDensOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+      arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+      arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
+      arrayView1d< real64 const > const & totalDensOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalDensityOldString() );
 
-    CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+      CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-    arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
+      arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
 
-    real64 subRegionResidualNorm = 0.0;
-    ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                parallelDeviceReduce >( localRhs,
-                                                        rankOffset,
-                                                        numFluidComponents(),
-                                                        dofNumber,
-                                                        elemGhostRank,
-                                                        referencePorosity,
-                                                        volume,
-                                                        totalDensOld,
-                                                        subRegionResidualNorm );
-    localResidualNorm += subRegionResidualNorm;
+      real64 subRegionResidualNorm = 0.0;
+      ResidualNormKernel::launch< parallelDevicePolicy<>,
+                                  parallelDeviceReduce >( localRhs,
+                                                          rankOffset,
+                                                          numFluidComponents(),
+                                                          dofNumber,
+                                                          elemGhostRank,
+                                                          referencePorosity,
+                                                          volume,
+                                                          totalDensOld,
+                                                          subRegionResidualNorm );
+      localResidualNorm += subRegionResidualNorm;
 
+    } );
   } );
 
   // compute global residual norm
@@ -372,61 +400,66 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
 
   localIndex const NC = m_numComponents;
 
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 scalingFactor = 1.0;
 
-  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel const & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-
-    arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
-    arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
-
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
-
-    forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
     {
-      if( elemGhostRank[ei] < 0 )
+      arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+
+      arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
+      arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
+
+      RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
+
+      forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
-        real64 prevTotalDens = 0;
-        for( localIndex ic = 0; ic < NC; ++ic )
+        if( elemGhostRank[ei] < 0 )
         {
-          prevTotalDens += compDens[ei][ic] + dCompDens[ei][ic];
-        }
-
-        // compute the change in component densities and component fractions
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          localIndex const lid = dofNumber[ei] + ic + 1 - rankOffset;
-
-          // compute scaling factor based on relative change in component densities
-          real64 const absCompDensChange = fabs( localSolution[lid] );
-          real64 const maxAbsCompDensChange = maxCompFracChange * prevTotalDens;
-
-          // This actually checks the change in component fraction, using a lagged total density
-          // Indeed we can rewrite the following check as:
-          //    | prevCompDens / prevTotalDens - newCompDens / prevTotalDens | > maxCompFracChange
-          // Note that the total density in the second term is lagged (i.e, we use prevTotalDens)
-          // because I found it more robust than using directly newTotalDens (which can vary also
-          // wildly when the compDens change is large)
-          if( absCompDensChange > maxAbsCompDensChange && absCompDensChange > eps )
+          real64 prevTotalDens = 0;
+          for( localIndex ic = 0; ic < NC; ++ic )
           {
-            minVal.min( maxAbsCompDensChange / absCompDensChange );
+            prevTotalDens += compDens[ei][ic] + dCompDens[ei][ic];
+          }
+
+          // compute the change in component densities and component fractions
+          for( localIndex ic = 0; ic < NC; ++ic )
+          {
+            localIndex const lid = dofNumber[ei] + ic + 1 - rankOffset;
+
+            // compute scaling factor based on relative change in component densities
+            real64 const absCompDensChange = fabs( localSolution[lid] );
+            real64 const maxAbsCompDensChange = maxCompFracChange * prevTotalDens;
+
+            // This actually checks the change in component fraction, using a lagged total density
+            // Indeed we can rewrite the following check as:
+            //    | prevCompDens / prevTotalDens - newCompDens / prevTotalDens | > maxCompFracChange
+            // Note that the total density in the second term is lagged (i.e, we use prevTotalDens)
+            // because I found it more robust than using directly newTotalDens (which can vary also
+            // wildly when the compDens change is large)
+            if( absCompDensChange > maxAbsCompDensChange && absCompDensChange > eps )
+            {
+              minVal.min( maxAbsCompDensChange / absCompDensChange );
+            }
           }
         }
+      } );
+
+      if( minVal.get() < scalingFactor )
+      {
+        scalingFactor = minVal.get();
       }
     } );
-
-    if( minVal.get() < scalingFactor )
-    {
-      scalingFactor = minVal.get();
-    }
   } );
 
   return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
@@ -439,38 +472,43 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   localIndex localCheck = 1;
 
-  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel const & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+      arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
-    arrayView1d< real64 const > const & pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-    arrayView1d< real64 const > const & dPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
-    arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
-    arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
+      arrayView1d< real64 const > const & pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+      arrayView1d< real64 const > const & dPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+      arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
+      arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
 
-    localIndex const subRegionSolutionCheck =
-      SolutionCheckKernel::launch< parallelDevicePolicy<>,
-                                   parallelDeviceReduce >( localSolution,
-                                                           dofManager.rankOffset(),
-                                                           numFluidComponents(),
-                                                           dofNumber,
-                                                           elemGhostRank,
-                                                           pres,
-                                                           dPres,
-                                                           compDens,
-                                                           dCompDens,
-                                                           m_allowCompDensChopping,
-                                                           scalingFactor );
+      localIndex const subRegionSolutionCheck =
+        SolutionCheckKernel::launch< parallelDevicePolicy<>,
+                                     parallelDeviceReduce >( localSolution,
+                                                             dofManager.rankOffset(),
+                                                             numFluidComponents(),
+                                                             dofNumber,
+                                                             elemGhostRank,
+                                                             pres,
+                                                             dPres,
+                                                             compDens,
+                                                             dCompDens,
+                                                             m_allowCompDensChopping,
+                                                             scalingFactor );
 
-    localCheck = std::min( localCheck, subRegionSolutionCheck );
+      localCheck = std::min( localCheck, subRegionSolutionCheck );
+    } );
   } );
 
   return MpiWrapper::min( localCheck, MPI_COMM_GEOSX );
@@ -511,7 +549,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
 
-void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const
+void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -542,7 +580,8 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIn
   arrayView3d< real64 const, compflow::USD_COMP_DC > const dCompFrac_dCompDens =
     dataGroup.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
 
-  MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
+  string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
+  MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
 
   arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens = fluid.phaseDensity();
   arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
@@ -552,7 +591,8 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( Group & dataGroup, localIn
   arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseVisc_dPres = fluid.dPhaseViscosity_dPressure();
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp = fluid.dPhaseViscosity_dGlobalCompFraction();
 
-  RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
+  string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
+  RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
 
   arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
   arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();

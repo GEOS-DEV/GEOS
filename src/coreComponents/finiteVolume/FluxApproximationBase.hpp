@@ -158,24 +158,14 @@ public:
   };
 
   /**
-   * @brief Returns the target region name.
-   * @return the target region name
-   */
-  string_array const & targetRegions() const { return m_targetRegions; }
-  /**
    * @copydoc targetRegions() const
    */
-  string_array & targetRegions()       { return m_targetRegions; }
+  array1d< string > & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
 
-  /**
-   * @brief Returns the coeff model name.
-   * @return the coeff model name
-   */
-  string_array const & coefficientModelNames() const { return m_coefficientModelNames; }
   /**
    * @copydoc coefficientModelNames() const
    */
-  string_array & coefficientModelNames()       { return m_coefficientModelNames; }
+  array1d< string > & coefficientModelNames( string const & meshBodyName ) { return m_coefficientModelNames[meshBodyName]; }
 
 
 protected:
@@ -245,10 +235,10 @@ protected:
   string m_coeffName;
 
   /// names of coefficient models to build the stencil for
-  string_array m_coefficientModelNames;
+  map< string, array1d< string > > m_coefficientModelNames; // TODO: remove
 
   /// names of target regions to build the stencil for
-  string_array m_targetRegions;
+  map< string, array1d< string > > m_targetRegions;
 
   /// relative tolerance
   real64 m_areaRelTol;
