@@ -886,6 +886,32 @@ public:
                                       bool const allowMissingViews = false ) const;
 
   /**
+   * @brief Construct a const view accessor to material data for specified material type.
+   * @tparam MATERIALTYPE base type of material model
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @return ElementViewAccessor that contains VIEWTYPE data. Empty views are returned
+   *         for subregions that don't contain a model derived from MODELTYPE.
+   */
+  template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS >
+  constructMaterialViewAccessor( string const & viewName ) const;
+
+  /**
+   * @brief Construct a const view accessor for material data, assuming array as storage type
+   * @tparam MATERIALTYPE
+   * @tparam T underlying data type
+   * @tparam NDIM number of array dimensions
+   * @tparam PERM layout permutation sequence type
+   * @param viewName view name of the data
+   * @return MaterialViewAccessor that contains the data views. Empty views are returned
+   *         for subregions that don't contain a model derived from MODELTYPE.
+   */
+  template< typename MATERIALTYPE, typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+  constructMaterialArrayViewAccessor( string const & viewName ) const;
+
+  /**
    * @brief Construct a ConstitutiveRelationAccessor.
    * @tparam CONSTITUTIVE_TYPE constitutive type
    * @param cm pointer to ConstitutiveManager
@@ -1439,12 +1465,55 @@ ElementRegionManager::
                                       arrayView1d< string const > const & materialNames,
                                       bool const allowMissingViews ) const
 {
-  return constructMaterialViewAccessor< Array< T, NDIM, PERM >,
-                                        ArrayView< T const, NDIM, getUSD< PERM > >
-                                        >( viewName,
-                                           regionNames,
-                                           materialNames,
-                                           allowMissingViews );
+  return constructMaterialViewAccessor< Array< T, NDIM, PERM >, ArrayView< T const, NDIM, getUSD< PERM > > >( viewName,
+                                                                                                              regionNames,
+                                                                                                              materialNames,
+                                                                                                              allowMissingViews );
+}
+
+template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS >
+ElementRegionManager::ElementViewAccessor< LHS >
+ElementRegionManager::constructMaterialViewAccessor( string const & viewName ) const
+{
+  ElementViewAccessor< LHS > accessor( numRegions() );
+
+  // Resize the accessor to all regions and subregions
+  for( localIndex er = 0; er < numRegions(); ++er )
+  {
+    accessor[er].resize( getRegion( er ).numSubRegions() );
+  }
+
+  subGroupMap const & regionMap = getRegions();
+
+  // Loop only over regions named and populate according to given material names
+  for( localIndex er = 0; er < numRegions(); ++er )
+  {
+    ElementRegionBase const & region = getRegion( er );
+
+    region.forElementSubRegionsIndex( [&]( localIndex const esr,
+                                           ElementSubRegionBase const & subRegion )
+    {
+      dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
+
+      string materialName;
+      constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
+      {
+        GEOSX_ERROR_IF( materialName.empty(), GEOSX_FMT( "Multiple materials of base type {} found in subregion {}/{}: {} and {}",
+                                                         LvArray::system::demangleType< MATERIALTYPE >(),
+                                                         region.getName(), subRegion.getName(), materialName, constitutiveRelation.getName() ) );
+        materialName = constitutiveRelation.getName();
+        accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
+      } );
+    } );
+  }
+  return accessor;
+}
+
+template< typename MATERIALTYPE, typename T, int NDIM, typename PERM >
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+ElementRegionManager::constructMaterialArrayViewAccessor( string const & viewName ) const
+{
+  return constructMaterialViewAccessor< MATERIALTYPE, Array< T, NDIM, PERM >, ArrayView< T const, NDIM, getUSD< PERM > > >( viewName );
 }
 
 template< typename CONSTITUTIVE_TYPE >

@@ -128,29 +128,6 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::getCatalog()
   return catalog;
 }
 
-bool SolverBase::checkModelNames( array1d< string > & modelNames,
-                                  string const & attribute,
-                                  bool const allowEmpty ) const
-{
-  if( allowEmpty && modelNames.empty() )
-  {
-    return false;
-  }
-
-  // We can disable this if we want to be more strict
-  if( modelNames.size() == 1 )
-  {
-    string const singleModelName = modelNames[0];
-    modelNames.resizeDefault( m_targetRegionNames.size(), singleModelName );
-  }
-
-  GEOSX_ERROR_IF_NE_MSG( modelNames.size(), m_targetRegionNames.size(),
-                         GEOSX_FMT( "{}: invalid number of values in attribute '{}' "
-                                    "(expected one model name per target region, or one value for all regions)",
-                                    getName(), attribute ) );
-  return true;
-}
-
 localIndex SolverBase::targetRegionIndex( string const & regionName ) const
 {
   auto const pos = std::find( m_targetRegionNames.begin(), m_targetRegionNames.end(), regionName );

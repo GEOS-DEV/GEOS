@@ -57,23 +57,11 @@ public:
   /// deleted move operator
   FlowSolverBase & operator=( FlowSolverBase && ) = delete;
 
-  /**
-   * @brief default destructor
-   */
-  virtual ~FlowSolverBase() override;
-
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
-
-  arrayView1d< string const > fluidModelNames() const { return m_fluidModelNames; }
-
-  arrayView1d< string const > permeabilityModelNames() const { return m_permeabilityModelNames; }
-
-  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
-
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 
@@ -90,6 +78,7 @@ public:
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
+
     static constexpr char const * pressureString() { return "pressure"; }
     static constexpr char const * deltaPressureString() { return "deltaPressure"; }
     static constexpr char const * deltaVolumeString() { return "deltaVolume"; }
@@ -98,11 +87,9 @@ public:
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
   };
 
-  void updatePorosityAndPermeability( CellElementSubRegion & subRegion,
-                                      localIndex const targetIndex ) const;
+  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
-  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
-                                              localIndex const targetIndex ) const;
+  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
   /**
    * @brief Increment the cumulative flux from each aquifer
@@ -124,22 +111,12 @@ public:
 
 protected:
 
-  virtual void precomputeData( MeshLevel & mesh );
-
-  virtual void postProcessInput() override;
+  virtual void precomputeData( MeshLevel & mesh,
+                               arrayView1d< string const > const & regionNames );
 
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
-
-  /// name of the fluid constitutive model
-  array1d< string > m_fluidModelNames;
-
-  /// name of the solid constitutive model
-  array1d< string > m_solidModelNames;
-
-  /// name of the permeability constituive model
-  array1d< string > m_permeabilityModelNames;
 
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
