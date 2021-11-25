@@ -588,16 +588,6 @@ public:
     return m_nonlinearSolverParameters;
   }
 
-//  arrayView1d< string const > targetRegionNames() const { return m_targetRegionNames; }
-
-  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const
-  {
-    GEOSX_UNUSED_VAR( regionName );
-    GEOSX_ERROR( "SolverBase::getConstitutiveRelations( string const &) should "
-                 "be overridden the solver contains a discretization specification." );
-    return std::vector< string >();
-  }
-
   /**
    * @brief Get position of a given region within solver's target region list
    * @param regionName the region name to find
@@ -711,36 +701,6 @@ protected:
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE & getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key );
 
-  /**
-   * @brief Partially validates constitutive model names input.
-   * @param[in,out] modelNames reference to input array of model names
-   * @param[in] allowEmpty if @p true, empty array is not considered an error
-   * @return flag indicating whether at least one model has been provided
-   *
-   * Checks that number of model names is equal to the number of solver's target regions.
-   * Additionally, currently admits a single-element list, which is interpreted as one model
-   * used for all target regions (the list is resized and populated accordingly).
-   * If @p allowEmpty is true and the input is empty, returns false, which the solver can
-   * interpret as a signal this type of model is disabled for the run (for optional models).
-   */
-  bool checkModelNames( array1d< string > & modelNames,
-                        string const & attribute,
-                        bool const allowEmpty = false ) const;
-
-  /**
-   * @brief Populate array of constitutive model indices from list of model names.
-   * @tparam MODEL_TYPE Base class of constitutive models to check against
-   * @param elemRegionManager reference to element manager
-   * @param modelNames list of model names
-   *
-   * This function is typically called from solver's initializePreSubGroups() method,
-   * after constitutive models have been set up but before they are used.
-   * Looks up each model by name and type in each subregion of target regions.
-   */
-  template< typename MODEL_TYPE = constitutive::ConstitutiveBase >
-  void validateModelMapping( ElementRegionManager const & elemRegionManager,
-                             arrayView1d< string const > const & modelNames ) const;
-
   real64 m_cflFactor;
   real64 m_maxStableDt;
   real64 m_nextDt;
@@ -784,15 +744,14 @@ protected:
 template< typename CONSTITUTIVE_BASE_TYPE >
 string SolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
 {
-  string validName = "NULL";
-  dataRepository::Group const & constitutiveModels =
-    subRegion.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
+  string validName;
+  dataRepository::Group const & constitutiveModels = subRegion.getConstitutiveModels();
 
-  constitutiveModels.forSubGroups<CONSTITUTIVE_BASE_TYPE>( [&]( dataRepository::Group const & model )
+  constitutiveModels.forSubGroups< CONSTITUTIVE_BASE_TYPE >( [&]( dataRepository::Group const & model )
   {
-    GEOSX_ERROR_IF( validName!="NULL", "A valid constitutive model was already found." );
+    GEOSX_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
     validName = model.getName();
-  });
+  } );
   return validName;
 }
 
@@ -812,26 +771,6 @@ BASETYPE & SolverBase::getConstitutiveModel( dataRepository::Group & dataGroup, 
     dataGroup.getGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString() );
 
   return constitutiveModels.getGroup< BASETYPE >( key );
-}
-
-template< typename MODEL_TYPE >
-void SolverBase::validateModelMapping( ElementRegionManager const & elemRegionManager,
-                                       arrayView1d< string const > const & modelNames ) const
-{
-  GEOSX_ERROR_IF_NE( modelNames.size(), m_targetRegionNames.size() );
-
-  for( localIndex k = 0; k < m_targetRegionNames.size(); ++k )
-  {
-    if( elemRegionManager.hasRegion(m_targetRegionNames[k]) )
-    {
-      ElementRegionBase const & region = elemRegionManager.getRegion( m_targetRegionNames[k] );
-      for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
-      {
-        ElementSubRegionBase const & subRegion = region.getSubRegion( esr );
-        subRegion.getConstitutiveModel< MODEL_TYPE >( modelNames[ k ] );
-      }
-    }
-  }
 }
 
 } // namespace geosx

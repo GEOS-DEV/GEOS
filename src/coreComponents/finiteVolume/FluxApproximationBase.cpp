@@ -72,13 +72,8 @@ void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
     {
       // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
-      Group & stencilParentGroup = mesh.hasGroup( groupKeyStruct::stencilMeshGroupString() ) ?
-                                   mesh.getGroup( groupKeyStruct::stencilMeshGroupString() ) :
-                                   mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
-
-      Group & stencilGroup = stencilParentGroup.hasGroup( getName() ) ?
-                             stencilParentGroup.getGroup( getName() ) :
-                             stencilParentGroup.registerGroup( getName() );
+      Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
+      Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
 
       registerCellStencil( stencilGroup );
 

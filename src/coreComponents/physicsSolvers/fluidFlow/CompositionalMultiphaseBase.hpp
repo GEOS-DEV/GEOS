@@ -128,33 +128,33 @@ public:
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param dataGroup the group storing the required fields
    */
-  void updatePhaseVolumeFraction( Group & dataGroup, localIndex const targetIndex ) const;
+  void updatePhaseVolumeFraction( Group & dataGroup ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
+  void updateFluidModel( Group & dataGroup ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param castedRelPerm the group storing the required fields
    */
-  void updateRelPermModel( Group & castedRelPerm, localIndex const targetIndex ) const;
+  void updateRelPermModel( Group & castedRelPerm ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param castedCapPres the group storing the required fields
    */
-  void updateCapPressureModel( Group & castedCapPres, localIndex const targetIndex ) const;
+  void updateCapPressureModel( Group & castedCapPres ) const;
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
-  virtual void updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const = 0;
+  virtual void updatePhaseMobility( Group & dataGroup ) const = 0;
 
-  void updateFluidState( Group & dataGroup, localIndex const targetIndex ) const;
+  void updateFluidState( Group & dataGroup ) const;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -215,10 +215,6 @@ public:
                                    arrayView1d< real64 > const & localRhs ) const;
 
   /**@}*/
-
-  arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
-
-  arrayView1d< string const > capPresModelNames() const { return m_capPressureModelNames; }
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
@@ -302,13 +298,13 @@ public:
    * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
-  void initializeFluidState( MeshLevel & mesh ) const;
+  void initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param domain the domain containing the mesh and fields
    */
-  void backupFields( MeshLevel & mesh ) const;
+  void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -374,21 +370,9 @@ protected:
 
   /**
    * @brief Checks constitutive models for consistency
-   * @param[in] cm reference to the global constitutive model manager
+   * @param[in] domain reference to the domain
    */
-  void validateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
-
-  /**
-   * @brief Checks aquifer boundary condition for consistency
-   * @param[in] cm reference to the global constitutive model manager
-   */
-  void validateAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
-
-  /**
-   * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
-   * @param[in] cm reference to the global constitutive model manager
-   */
-  void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
+  void validateConstitutiveModels( DomainPartition & domain );
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -410,14 +394,8 @@ protected:
   /// flag indicating whether CFL numbers will be computed or not
   integer m_computeCFLNumbers;
 
-  /// name of the rel perm constitutive model
-  array1d< string > m_relPermModelNames;
-
   /// flag to determine whether or not to apply capillary pressure
   integer m_capPressureFlag;
-
-  /// name of the cap pressure constitutive model
-  array1d< string > m_capPressureModelNames;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
@@ -427,6 +405,9 @@ protected:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
+
+  /// name of the fluid constitutive model used as a reference for component/phase description
+  string m_referenceFluidModelName;
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dCompFrac_dCompDens;
 
