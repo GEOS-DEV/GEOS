@@ -19,6 +19,7 @@
 #include "constitutive/fluid/PVTFunctions/BrineEnthalpy.hpp"
 
 #include "functions/FunctionManager.hpp"
+#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 
 namespace geosx
 {
@@ -34,79 +35,150 @@ namespace PVTProps
 namespace
 {
 
-void calculateBrineDensity( PTTableCoordinates const & tableCoords,
-                            real64 const & salinity,
-                            array1d< real64 > const & densities )
+real64 MichaelidesBrineEnthalpy( real64 const & T,
+                                 real64 const & m )
 {
-  // these coefficients come from Phillips et al. (1981), equations (4) and (5), pages 14 and 15
-  constexpr real64 c1 = -9.9595;
-  constexpr real64 c2 = 7.0845;
-  constexpr real64 c3 = 3.9093;
 
-  constexpr real64 a1 = -0.004539;
-  constexpr real64 a2 = -0.0001638;
-  constexpr real64 a3 = 0.00002551;
+  static real64 a[4][3] = {
+    {-9633.6, -4080.0, 286.49},
+    {166.58, 68.577, -4.6856},
+    {-0.90963, -0.36524, 0.0249667},
+    {1.7965e-3, 7.1924e-4, -4.9e-5}
+  };
 
-  constexpr real64 AA = -3.033405;
-  constexpr real64 BB = 10.128163;
-  constexpr real64 CC = -8.750567;
-  constexpr real64 DD = 2.663107;
+  real64 x1, x2, h1, h2, dh;
 
-  localIndex const nPressures = tableCoords.nPressures();
+  x1 = 1000.0 / (1000.0 + 58.44 * m);
+
+  x2 = 58.44 * m  / (1000.0 + 58.44 * m);
+
+
+
+  dh = 0.0;
+
+  for( localIndex i = 0; i < 4; ++i )
+    for( localIndex j = 0; j < 3; ++j )
+    {
+
+      dh += a[i][j] * pow( T, real64( i )) * pow( m, real64( j ));
+
+    }
+
+  dh *= 4.184 / (1000.0 + 58.44 * m);
+
+
+  h1 = 0.12453e-4 * pow( T, 3.0 ) - 0.45137e-2 * pow( T, 2.0 ) + 4.81155 * T - 29.578;
+
+  h2 = (-0.83624e-3 * pow( T, 3.0 ) + 0.16792 * pow( T, 2.0 ) - 25.9293 * T) * 4.184 / 58.44;
+
+  return ( (x1 * h1 + x2 * h2 + m * dh) * 1000.0 );
+}
+
+void calculateBrineEnthalpy( PTTableCoordinates const & tableCoords,
+                             real64 const & m,
+                             array1d< real64 > const & enthalpies )
+{
+
   localIndex const nTemperatures = tableCoords.nTemperatures();
 
-  for( localIndex i = 0; i < nPressures; ++i )
+  for( localIndex i = 0; i < nTemperatures; ++i )
   {
-    real64 const P = tableCoords.getPressure( i ) / 1e5;
-
-    for( localIndex j = 0; j < nTemperatures; ++j )
-    {
-      // see Phillips et al. (1981), equations (4) and (5), pages 14 and 15
-      real64 const x = c1 * exp( a1 * salinity )
-                       + c2 * exp( a2 * tableCoords.getTemperature( j ) )
-                       + c3 * exp( a3 * P );
-      densities[j*nPressures+i] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
-    }
+    real64 const TC = tableCoords.getTemperature( i );
+    enthalpies[i] = MichaelidesBrineEnthalpy( TC, m );
   }
 }
 
-TableFunction const * makeDensityTable( string_array const & inputParams,
-                                        string const & functionName,
-                                        FunctionManager & functionManager )
+TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
+                                            string const & functionName,
+                                            FunctionManager & functionManager )
 {
-  // initialize the (p,T) coordinates
-  PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+  string const tableName = functionName + "_CO2_enthalpy_table";
 
-  // initialize salinity
-  GEOSX_THROW_IF_LT_MSG( inputParams.size(), 9,
-                         GEOSX_FMT( "{}: insufficient number of model parameters", functionName ),
-                         InputError );
-  real64 salinity;
-  try
-  {
-    salinity = stod( inputParams[8] );
-  }
-  catch( std::invalid_argument const & e )
-  {
-    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-  }
-
-  array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  calculateBrineDensity( tableCoords, salinity, densities );
-
-  string const tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );
   }
   else
   {
-    TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    densityTable->setTableCoordinates( tableCoords.getCoords() );
-    densityTable->setTableValues( densities );
-    densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-    return densityTable;
+    // initialize the (p,T) coordinates
+    PTTableCoordinates tableCoords;
+    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+
+    real64 tolerance = 1e-10;
+
+    try
+    {
+      if( inputParams.size() >= 10 )
+      {
+        tolerance = stod( inputParams[9] );
+      }
+    }
+    catch( const std::invalid_argument & e )
+    {
+      GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    }
+
+    array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
+    array1d< real64 > enthalpies( tableCoords.nPressures() * tableCoords.nTemperatures() );
+
+
+    SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, densities );
+
+    //CO2EnthalpyFunction::calculateCO2Enthalpy( pressures, temperatures, densities, enthalpies );
+    enthalpies = densities;
+
+    TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
+    enthalpyTable->setTableCoordinates( tableCoords.getCoords() );
+    enthalpyTable->setTableValues( enthalpies );
+    enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return enthalpyTable;
+  }
+}
+
+TableFunction const * makeBrineEnthalpyTable( string_array const & inputParams,
+                                              string const & functionName,
+                                              FunctionManager & functionManager )
+{
+  string const tableName = functionName + "_brine_enthalpy_table";
+
+  if( functionManager.hasGroup< TableFunction >( tableName ) )
+  {
+    return functionManager.getGroupPointer< TableFunction >( tableName );
+  }
+  else
+  {
+    // initialize the (p,T) coordinates
+    PTTableCoordinates tableCoords;
+    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+
+    // initialize salinity
+    GEOSX_THROW_IF_LT_MSG( inputParams.size(), 9,
+                           GEOSX_FMT( "{}: insufficient number of model parameters", functionName ),
+                           InputError );
+    real64 salinity;
+
+    try
+    {
+      salinity = stod( inputParams[8] );
+    }
+    catch( std::invalid_argument const & e )
+    {
+      GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    }
+
+    array1d< real64 > enthalpies( tableCoords.nTemperatures() );
+    array1d< array1d< real64 > > temperatures;
+    temperatures.resize( 1 );
+    temperatures[0] = tableCoords.getTemperatures();
+
+    calculateBrineEnthalpy( tableCoords, salinity, enthalpies );
+
+
+    TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
+    enthalpyTable->setTableCoordinates( temperatures );
+    enthalpyTable->setTableValues( enthalpies );
+    enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return enthalpyTable;
   }
 }
 
@@ -126,14 +198,18 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
   string const expectedWaterComponentNames[] = { "Water", "water" };
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
-  m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_brineEnthalpyTable = makeBrineEnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
+
+
 
 BrineEnthalpy::KernelWrapper
 BrineEnthalpy::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
-                        *m_brineDensityTable,
+                        *m_CO2EnthalpyTable,
+                        *m_brineEnthalpyTable,
                         m_CO2Index,
                         m_waterIndex );
 }

@@ -23,6 +23,7 @@
 #include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
+#include "constitutive/fluid/PVTFunctions/BrineEnthalpy.hpp"
 #include "constitutive/fluid/PVTFunctions/old/BrineEnthalpyFunction.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
@@ -45,6 +46,9 @@ static const char * pvtLiquidPhillipsTableContent = "DensityFun PhillipsBrineDen
 
 // Temperature is specified in Celcius!!!
 static const char * pvtLiquidOldEnthaplyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 40 300 1 0.2";
+
+//Temperature is specified in Kelvin, should match the range specified in pvtLiquidOldEnthaplyTableContent
+static const char * pvtLiquidEnthaplyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 313.15 573.15 1 0.2";
 
 // the last are set relatively high (1e-4) to increase derivative value and check it properly
 static const char * pvtLiquidEzrokhiTableContent = "DensityFun EzrokhiBrineDensity 2.01e-6 -6.34e-7 1e-4\n"
@@ -970,7 +974,10 @@ public:
   BrineEnthalpyTest()
   {
     writeTableToFile( filename, pvtLiquidOldEnthaplyTableContent );
-    pvtFunction = makeOldPVTFunction< BrineEnthalpyFunction >( filename, key );
+    pvtFunctionOld = makeOldPVTFunction< BrineEnthalpyFunction >( filename, key );
+    writeTableToFile( filename, pvtLiquidEnthaplyTableContent );
+    pvtFunction = makePVTFunction< BrineEnthalpy >( filename, key );
+
   }
 
   ~BrineEnthalpyTest() override
@@ -981,7 +988,8 @@ public:
 protected:
   string const key = "EnthalpyFun";
   string const filename = "pvtliquid.txt";
-  std::unique_ptr< BrineEnthalpyFunction > pvtFunction;
+  std::unique_ptr< BrineEnthalpyFunction > pvtFunctionOld;
+  std::unique_ptr< BrineEnthalpy > pvtFunction;
 };
 
 TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
@@ -1002,8 +1010,15 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
   comp[0] = 0.304; comp[1] = 0.696;
   EvalVarArgs value;
 
-  pvtFunction->evaluation( pressure, temp, comp, value, true );
+  pvtFunctionOld->evaluation( pressure, temp, comp, value, true );
   printf ( "Old BrineEnthalpy value=%lf, d_dP=%lf, d_dT=%lf, d_dcomp[0]=%lf, d_dcomp[1] = %lf\n", value.m_var, value.m_der[0], value.m_der[3], value.m_der[1], value.m_der[2] );
+
+  BrineEnthalpy::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
+  real64 value_enth;
+  array1d< real64 > comp_enth ( 2 );
+  comp_enth[0] = 0.304; comp_enth[1] = 0.696;
+
+  pvtFunctionWrapper.compute( pressure.m_var, temp.m_var, comp_enth.toSliceConst(), value_enth, true );
 
   // real64 const savedValues[] = { 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962, 280.2559694,
   //                                278.9092508, 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962,
