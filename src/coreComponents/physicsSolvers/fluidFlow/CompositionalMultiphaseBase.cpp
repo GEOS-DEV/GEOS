@@ -365,6 +365,12 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition & 
   } );
 }
 
+void CompositionalMultiphaseBase::setFluidNames( ElementSubRegionBase & subRegion ) const
+{
+  string & fluidMaterialName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
+  fluidMaterialName = SolverBase::getConstitutiveName<MultiFluidBase>( subRegion );
+}
+
 void CompositionalMultiphaseBase::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();

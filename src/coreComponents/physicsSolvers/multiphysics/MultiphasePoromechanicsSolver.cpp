@@ -281,13 +281,17 @@ void MultiphasePoromechanicsSolver::applySystemSolution( DofManager const & dofM
 
 void MultiphasePoromechanicsSolver::updateState( DomainPartition & domain )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
-                                                                          auto & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                    MeshLevel & mesh,
+                                    arrayView1d<string const> const & regionNames )
   {
-    m_flowSolver->updateFluidState( subRegion, targetIndex );
-  } );
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+    {
+      m_flowSolver->updateFluidState( subRegion, targetIndex );
+    } );
+
+  });
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanicsSolver, string const &, Group * const )

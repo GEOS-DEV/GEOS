@@ -225,6 +225,20 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
+    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                       [&]( localIndex const,
+                                                                            CellElementSubRegion & subRegion )
+    {
+      string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidNamesString() );
+      solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
+
+      string & fluidMaterialName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
+      fluidMaterialName = SolverBase::getConstitutiveName<FluidBase>( subRegion );
+
+    });
+
+
     resetViews( mesh ); // TODO: won't work with multiple meshes
     precomputeData( mesh, regionNames );
   } );
