@@ -441,6 +441,10 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_totalDensOld;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseMobOld;
 
+private:
+  void setFluidNames( ElementSubRegionBase & subRegion ) const override;
+
+
 };
 
 } // namespace geosx

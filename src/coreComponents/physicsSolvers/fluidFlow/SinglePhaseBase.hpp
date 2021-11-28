@@ -372,6 +372,8 @@ protected:
 
 private:
 
+  virtual void setFluidNames( ElementSubRegionBase & subRegion ) const override;
+
   virtual void resetViewsPrivate( ElementRegionManager const & elemManager );
 
 };

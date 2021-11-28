@@ -136,6 +136,12 @@ SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( Constitutiv
            singleFluid.defaultViscosity() };
 }
 
+void SinglePhaseBase::setFluidNames( ElementSubRegionBase & subRegion ) const
+{
+  string & fluidMaterialName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
+  fluidMaterialName = SolverBase::getConstitutiveName<SingleFluidBase>( subRegion );
+}
+
 void SinglePhaseBase::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
