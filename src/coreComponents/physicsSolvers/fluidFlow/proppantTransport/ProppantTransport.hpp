@@ -262,6 +262,9 @@ private:
   void updateCellBasedFlux( real64 const time_n,
                             DomainPartition & domain );
 
+  void setFluidNames( ElementSubRegionBase & subRegion ) const override;
+
+
   /// views into primary variable fields
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;

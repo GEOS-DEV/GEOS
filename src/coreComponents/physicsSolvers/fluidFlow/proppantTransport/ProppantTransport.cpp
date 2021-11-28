@@ -140,6 +140,13 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
+void ProppantTransport::setFluidNames( ElementSubRegionBase & subRegion ) const
+{
+  string & fluidMaterialName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
+  fluidMaterialName = SolverBase::getConstitutiveName<SlurryFluidBase>( subRegion );
+}
+
+
 void ProppantTransport::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();

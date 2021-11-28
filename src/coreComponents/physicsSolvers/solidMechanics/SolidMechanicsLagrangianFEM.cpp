@@ -925,45 +925,50 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
   GEOSX_MARK_FUNCTION;
   SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const & nodeManager = mesh.getNodeManager();
-  arrayView1d< globalIndex const > const
-  dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
-
   SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
                                                   dofManager.numGlobalDofs(),
                                                   8*8*3*1.2 );
 
-  if( m_contactRelationName != viewKeyStruct::noContactRelationNameString() )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                    MeshLevel & mesh,
+                                    arrayView1d<string const> const & regionNames )
   {
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    array1d< string > allFaceElementRegions;
-    elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elemRegion )
-    {
-      allFaceElementRegions.emplace_back( elemRegion.getName() );
-    } );
 
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    arrayView1d< globalIndex const > const
+    dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
+
+
+    if( m_contactRelationName != viewKeyStruct::noContactRelationNameString() )
+    {
+      ElementRegionManager const & elemManager = mesh.getElemManager();
+      array1d< string > allFaceElementRegions;
+      elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elemRegion )
+      {
+        allFaceElementRegions.emplace_back( elemRegion.getName() );
+      } );
+
+      finiteElement::
+        fillSparsity< FaceElementSubRegion,
+                      SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
+                                                                         allFaceElementRegions,
+                                                                         this->getDiscretizationName(),
+                                                                         dofNumber,
+                                                                         dofManager.rankOffset(),
+                                                                         sparsityPattern );
+
+    }
     finiteElement::
-      fillSparsity< FaceElementSubRegion,
+      fillSparsity< CellElementSubRegion,
                     SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
-                                                                       allFaceElementRegions,
+                                                                       regionNames,
                                                                        this->getDiscretizationName(),
                                                                        dofNumber,
                                                                        dofManager.rankOffset(),
                                                                        sparsityPattern );
 
-  }
-  finiteElement::
-    fillSparsity< CellElementSubRegion,
-                  SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
-                                                                     targetRegionNames(),
-                                                                     this->getDiscretizationName(),
-                                                                     dofNumber,
-                                                                     dofManager.rankOffset(),
-                                                                     sparsityPattern );
 
-
-
+  });
 
   sparsityPattern.compress();
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
