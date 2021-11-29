@@ -182,8 +182,8 @@ void SuiteSparse< LAI >::setup( Matrix const & mat )
   PreconditionerBase< LAI >::setup( mat );
 
   // Choose working rank that will carry out the solve
-  int const rank = MpiWrapper::commRank( mat.getComm() );
-  m_workingRank = MpiWrapper::min( mat.numLocalRows() > 0 ? rank : std::numeric_limits< int >::max(), mat.getComm() );
+  int const rank = MpiWrapper::commRank( mat.comm() );
+  m_workingRank = MpiWrapper::min( mat.numLocalRows() > 0 ? rank : std::numeric_limits< int >::max(), mat.comm() );
 
   SSlong const numGR = LvArray::integerConversion< SSlong >( mat.numGlobalRows() );
   SSlong const numNZ = LvArray::integerConversion< SSlong >( mat.numGlobalNonzeros() );
@@ -209,7 +209,7 @@ void SuiteSparse< LAI >::setup( Matrix const & mat )
   }
 
   // Sync timer to all ranks
-  MpiWrapper::bcast( &m_result.setupTime, 1, m_workingRank, mat.getComm() );
+  MpiWrapper::bcast( &m_result.setupTime, 1, m_workingRank, mat.comm() );
 }
 
 template< typename LAI >
@@ -253,7 +253,7 @@ void SuiteSparse< LAI >::solve( Vector const & rhs,
     Stopwatch timer( m_result.solveTime );
     apply( rhs, sol );
   }
-  MpiWrapper::bcast( &m_result.solveTime, 1, m_workingRank, rhs.getComm() );
+  MpiWrapper::bcast( &m_result.solveTime, 1, m_workingRank, rhs.comm() );
 
   Vector r( rhs );
   matrix().residual( sol, r, r );
@@ -302,7 +302,7 @@ void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose )
 
   m_export->exportVector( b, m_data->rhs );
 
-  if( MpiWrapper::commRank( b.getComm() ) == m_workingRank )
+  if( MpiWrapper::commRank( b.comm() ) == m_workingRank )
   {
     m_data->rhs.move( LvArray::MemorySpace::host, false );
     m_data->sol.move( LvArray::MemorySpace::host, true );
@@ -341,12 +341,12 @@ real64 SuiteSparse< LAI >::estimateConditionNumberBasic() const
     return m_condEst; // used cached result, possibly more accurate
   }
 
-  int const rank = MpiWrapper::commRank( matrix().getComm() );
+  int const rank = MpiWrapper::commRank( matrix().comm() );
   if( rank == m_workingRank )
   {
     m_condEst = 1.0 / m_data->info[UMFPACK_RCOND];
   }
-  MpiWrapper::bcast( &m_condEst, 1, m_workingRank, matrix().getComm() );
+  MpiWrapper::bcast( &m_condEst, 1, m_workingRank, matrix().comm() );
 
   return m_condEst;
 }

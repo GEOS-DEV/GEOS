@@ -84,8 +84,8 @@ void SinglePhasePoromechanicsSolver::setupDofs( DomainPartition const & domain,
 void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
                                                   DofManager & dofManager,
                                                   CRSMatrix< real64, globalIndex > & localMatrix,
-                                                  array1d< real64 > & localRhs,
-                                                  array1d< real64 > & localSolution,
+                                                  ParallelVector & rhs,
+                                                  ParallelVector & solution,
                                                   bool const setSparsity )
 {
   if( m_precond )
@@ -94,7 +94,7 @@ void SinglePhasePoromechanicsSolver::setupSystem( DomainPartition & domain,
   }
 
   // setup monolithic coupled system
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
@@ -155,8 +155,8 @@ real64 SinglePhasePoromechanicsSolver::solverStep( real64 const & time_n,
   setupSystem( domain,
                m_dofManager,
                m_localMatrix,
-               m_localRhs,
-               m_localSolution );
+               m_rhs,
+               m_solution );
 
   implicitStepSetup( time_n, dt, domain );
 
