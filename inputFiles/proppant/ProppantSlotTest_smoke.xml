@@ -36,6 +36,12 @@
     <PeriodicEvent
       name="outputs"
       target="/Outputs/siloOutput"/>
+      
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>  
   </Events>
  
 </Problem>

@@ -63,7 +63,8 @@
       name="SurfaceGen"
       targetRegions="{ Fracture }"
       solidMaterialNames="{ granite }"
-      rockToughness="1e6"/>
+      rockToughness="1e6"
+      mpiCommOrder="1"/>
   </Solvers>
 
 
@@ -290,6 +291,6 @@
       name="siloOutput"/>
 
     <Restart
-      name="sidreRestart"/>
+      name="restartOutput"/>
   </Outputs>
 </Problem>

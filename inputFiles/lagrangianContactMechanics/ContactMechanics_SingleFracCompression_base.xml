@@ -183,6 +183,9 @@
     <TimeHistory
       name="timeHistoryOutput1"
       sources="{/Tasks/displacementJumpCollection}"
-      filename="displacementJump_history" />     
+      filename="displacementJump_history" /> 
+      
+    <Restart
+      name="restartOutput"/>      
     </Outputs>
 </Problem>

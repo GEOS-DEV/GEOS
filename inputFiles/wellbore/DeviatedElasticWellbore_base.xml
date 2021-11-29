@@ -44,11 +44,11 @@
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="1e99"
+      timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/-->
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <!-- SPHINX_FEDiscretization -->
@@ -133,7 +133,7 @@
       plotFileRoot="plot"
       childDirectory="sub"/>
 
-    <!--Restart
-      name="restartOutput"/-->
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>

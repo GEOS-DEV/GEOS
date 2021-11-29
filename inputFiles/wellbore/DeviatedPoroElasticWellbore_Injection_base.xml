@@ -74,11 +74,11 @@
       timeFrequency="7.8"
       target="/Outputs/siloOutput"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="1e99"
+      timeFrequency="39"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/-->
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <!-- SPHINX_FEDiscretization -->

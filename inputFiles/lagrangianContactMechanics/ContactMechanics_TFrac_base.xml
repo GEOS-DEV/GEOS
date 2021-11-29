@@ -233,5 +233,8 @@
       name="displacementOutput"
       sources="{/Tasks/displacementJumpCollection}"
       filename="displacementJump_history" />
+      
+    <Restart
+      name="restartOutput"/>  
   </Outputs>
 </Problem>
