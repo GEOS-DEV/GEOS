@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/solid/SolidBase.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
@@ -231,7 +231,7 @@ public:
    * @param writeArbitraryPolygon
    */
   void writeElementMesh( ElementRegionBase const & elementRegion,
-                         NodeManager const * const nodeManager,
+                         NodeManager const & nodeManager,
                          string const & meshName,
                          const localIndex nnodes,
                          real64 * coords[3],
@@ -248,7 +248,7 @@ public:
    * @param problemTime the current problem time
    * @param isRestart whether or not we want to write restart only data
    */
-  void writeMeshLevel( MeshLevel const * const meshLevel,
+  void writeMeshLevel( MeshLevel const & meshLevel,
                        int const cycleNum,
                        real64 const problemTime,
                        bool const isRestart );
@@ -323,7 +323,7 @@ public:
    * @param isRestart write restart only data
    * @param mask indices to write out to the silo file
    */
-  void writeGroupSilo( dataRepository::Group const * group,
+  void writeGroupSilo( dataRepository::Group const & group,
                        string const & siloDirName,
                        string const & meshname,
                        int const centering,
@@ -653,6 +653,15 @@ public:
     m_plotFileRoot = fileRoot;
   }
 
+  /**
+   * @brief Sets the top-level output directory, under which Silo's output dir is nested
+   * @param path output directory path
+   */
+  void setOutputDirectory( string const & path )
+  {
+    m_siloDirectory = joinPath( path, "siloFiles" );
+  }
+
 private:
 
   /// pointer to the DBfile that this class is working on
@@ -675,7 +684,7 @@ private:
 
   string m_restartFileRoot;
 
-  string const m_siloDirectory = "siloFiles";
+  string m_siloDirectory;
 
   string const m_siloDataSubDirectory = "data";
 

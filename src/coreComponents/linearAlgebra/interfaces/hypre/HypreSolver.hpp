@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -16,74 +16,87 @@
  * @file HypreSolver.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_HYPRESOLVER_HPP_
-#define GEOSX_LINEARALGEBRA_HYPRESOLVER_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPRESOLVER_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_HYPRESOLVER_HPP_
 
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "linearAlgebra/utilities/LinearSolverResult.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
+#include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
+#include "common/LinearSolverBase.hpp"
 
 namespace geosx
 {
 
 class DofManager;
-class HypreVector;
-class HypreMatrix;
+
+/// Forward-declared struct that hosts pointers to preconditioner functions
+struct HypreSolverWrapper;
 
 /**
  * @brief This class creates and provides basic support for Hypre solvers.
  */
-class HypreSolver
+class HypreSolver final : public LinearSolverBase< HypreInterface >
 {
 public:
+
+  /// Alias for base type
+  using Base = LinearSolverBase< HypreInterface >;
 
   /**
    * @brief Solver constructor, with parameter list reference
    * @param[in] parameters structure containing linear solver parameters
    */
-  HypreSolver( LinearSolverParameters parameters );
+  explicit HypreSolver( LinearSolverParameters parameters );
 
   /**
-   * @brief Virtual destructor.
+   * @brief Destructor.
    */
-  virtual ~HypreSolver() = default;
+  virtual ~HypreSolver() override;
 
   /**
-   * @brief Solve system with an iterative solver (HARD CODED PARAMETERS, GMRES).
-   * @param[in,out] mat the matrix
-   * @param[in,out] sol the solution
-   * @param[in,out] rhs the right-hand side
-   * @param dofManager the Degree-of-Freedom manager associated with matrix
-   *
-   * Solve Ax=b with A an HypreMatrix, x and b HypreVector.
+   * @copydoc PreconditionerBase<PetscInterface>::setup
    */
-  void solve( HypreMatrix & mat,
-              HypreVector & sol,
-              HypreVector & rhs,
-              DofManager const * const dofManager = nullptr );
+  virtual void setup( HypreMatrix const & mat ) override;
 
   /**
-   * @brief Get the result of previous solve.
-   * @return struct with last solve stats
+   * @copydoc PreconditionerBase<PetscInterface>::apply
    */
-  LinearSolverResult const & result()
-  {
-    return m_result;
-  }
+  virtual void apply( HypreVector const & src,
+                      HypreVector & dst ) const override;
+
+  /**
+   * @copydoc LinearSolverBase<PetscInterface>::solve
+   */
+  virtual void solve( HypreVector const & rhs,
+                      HypreVector & sol ) const override;
+
+  /**
+   * @copydoc PreconditionerBase<PetscInterface>::clear
+   */
+  virtual void clear() override;
 
 private:
 
-  LinearSolverParameters m_parameters;
-  LinearSolverResult m_result;
+  /**
+   * @brief Perform the solve.
+   * @param rhs right-hand side vector
+   * @param sol solution vector
+   * @return the error code from the hypre call
+   */
+  int doSolve( HypreVector const & rhs, HypreVector & sol ) const;
 
-  void solveDirect( HypreMatrix & mat,
-                    HypreVector & sol,
-                    HypreVector & rhs );
+  using Base::m_params;
+  using Base::m_result;
 
-  void solveKrylov( HypreMatrix & mat,
-                    HypreVector & sol,
-                    HypreVector & rhs,
-                    DofManager const * const dofManager );
+  /// Preconditioner
+  HyprePreconditioner m_precond;
 
+  /// Pointers to hypre functions for the krylov solver
+  std::unique_ptr< HypreSolverWrapper > m_solver;
+
+  /// Time of the most recent SC matrix construction
+  real64 m_componentFilterTime;
+  real64 m_makeRestrictorTime;
+  real64 m_computeAuuTime;
 };
 
 } // end geosx namespace

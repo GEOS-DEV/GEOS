@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -31,10 +31,10 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
 
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  this->registerGroup( viewKeyStruct::elementSubRegions );
+  this->registerGroup( viewKeyStruct::elementSubRegions() );
 
-  registerWrapper( viewKeyStruct::materialListString, &m_materialList )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::materialListString(), &m_materialList ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of materials present in this region" );
 
 }

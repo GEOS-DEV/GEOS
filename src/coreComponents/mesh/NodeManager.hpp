@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,8 +19,7 @@
 #ifndef GEOSX_MESH_NODEMANAGER_HPP_
 #define GEOSX_MESH_NODEMANAGER_HPP_
 
-#include "managers/ObjectManagerBase.hpp"
-#include <string.h>
+#include "mesh/ObjectManagerBase.hpp"
 #include "CellBlockManager.hpp"
 #include "ToElementRelation.hpp"
 
@@ -150,19 +149,19 @@ public:
    * @brief Link the EdgeManager \p edgeManager to the NodeManager, and performs the node-to-edge mapping.
    * @param [in] edgeManager the edgeManager to assign this NodeManager
    */
-  void setEdgeMaps( EdgeManager const * const edgeManager );
+  void setEdgeMaps( EdgeManager const & edgeManager );
 
   /**
    * @brief Link the FaceManager \p faceManager to the NodeManager, and performs the node-to-face mapping.
    * @param [in] faceManager the faceManager to assign this NodeManager
    */
-  void setFaceMaps( FaceManager const * const faceManager );
+  void setFaceMaps( FaceManager const & faceManager );
 
   /**
    * @brief Assign the ElementRegionManager \p elementRegionManager to the NodeManager, and performs the node-to-element mapping
    * @param [in] elementRegionManager the ElementRegionManager to assign this NodeManager
    */
-  void setElementMaps( ElementRegionManager const * const elementRegionManager );
+  void setElementMaps( ElementRegionManager const & elementRegionManager );
 
   /**
    * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.
@@ -247,74 +246,65 @@ public:
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    /// String to access the reference position
-    static constexpr auto referencePositionString       = "ReferencePosition";
+    /// @return String to access the reference position
+    static constexpr char const * referencePositionString() { return "ReferencePosition"; }
 
-    /// String to access the location of the nodes
-    static constexpr auto EmbSurfNodesPositionString = "EmbSurfNodesPosition";
+    /// @return String to access the location of the nodes
+    static constexpr char const * EmbSurfNodesPositionString() { return "EmbSurfNodesPosition"; }
 
-    /// String to access the displacement
-    static constexpr auto totalDisplacementString       = "TotalDisplacement";
+    /// @return String to access the displacement
+    static constexpr char const * totalDisplacementString() { return "TotalDisplacement"; }
 
-    /// String to access the incremental displacement
-    static constexpr auto incrementalDisplacementString = "IncrementalDisplacement";
+    /// @return String to access the incremental displacement
+    static constexpr char const * incrementalDisplacementString() { return "IncrementalDisplacement"; }
 
-    /// String to access the edge map
-    static constexpr auto edgeListString                = "edgeList";
+    /// @return String to access the edge map
+    static constexpr char const * edgeListString() { return "edgeList"; }
 
-    /// String to access the face map
-    static constexpr auto faceListString                = "faceList";
+    /// @return String to access the face map
+    static constexpr char const * faceListString() { return "faceList"; }
 
-    /// String to access the element region map
-    static constexpr auto elementRegionListString       = "elemRegionList";
+    /// @return String to access the element region map
+    static constexpr char const * elementRegionListString() { return "elemRegionList"; }
 
-    /// String to access the element subregion map
-    static constexpr auto elementSubRegionListString    = "elemSubRegionList";
+    /// @return String to access the element subregion map
+    static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
 
-    /// String to access the element map
-    static constexpr auto elementListString             = "elemList";
+    /// @return String to access the element map
+    static constexpr char const * elementListString() { return "elemList"; }
 
-    /// String to access the reference position
-    dataRepository::ViewKey referencePosition       = { referencePositionString };
+    /// Accessor to reference position
+    dataRepository::ViewKey referencePosition       = { referencePositionString() };
 
-    /// String to access the displacement
-    dataRepository::ViewKey totalDisplacement       = { totalDisplacementString };
+    /// Accessor to displacement
+    dataRepository::ViewKey totalDisplacement       = { totalDisplacementString() };
 
-    /// String to access the incremental displacement
-    dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString };
+    /// Accessor to incremental displacement
+    dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString() };
 
-    /// String to access the edge map
-    dataRepository::ViewKey edgeList                = { edgeListString };
+    /// Accessor to edge map
+    dataRepository::ViewKey edgeList                = { edgeListString() };
 
-    /// String to access the face map
-    dataRepository::ViewKey faceList                = { faceListString };
+    /// Accessor to face map
+    dataRepository::ViewKey faceList                = { faceListString() };
 
-    /// String to access the element region map
-    dataRepository::ViewKey elementRegionList       = { elementRegionListString };
+    /// Accessor to element region map
+    dataRepository::ViewKey elementRegionList       = { elementRegionListString() };
 
-    /// String to access the element subregion map
-    dataRepository::ViewKey elementSubRegionList    = { elementSubRegionListString };
+    /// Accessor to element subregion map
+    dataRepository::ViewKey elementSubRegionList    = { elementSubRegionListString() };
 
-    /// String to access the element map
-    dataRepository::ViewKey elementList             = { elementListString };
+    /// Accessor to element map
+    dataRepository::ViewKey elementList             = { elementListString() };
 
-    /// String to access the velocity
+    /// Accessor to velocity
     dataRepository::ViewKey velocity                = { dataRepository::keys::Velocity };
 
-    /// String to access the acceleration
+    /// Accessor to acceleration
     dataRepository::ViewKey acceleration            = { dataRepository::keys::Acceleration };
   }
   /// viewKeys
   viewKeys;
-
-  /**
-   * @brief contains the added group access keys to be bound with class in group hierarchy
-   * @struct groupKeys
-   */
-  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
-  {}
-  /// groupKeys
-  groupKeys;
 
   ///@}
 
@@ -417,20 +407,6 @@ public:
   //END_SPHINX_REFPOS_ACCESS
 
   /**
-   * @brief Return the reference position array  of the nodes of the embedded surfaces.
-   * @return the location of the nodes of the embedded surfaces
-   */
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosition()
-  { return m_embeddedSurfNodesPosition; }
-
-  /**
-   * @brief Return an immutable arrayView of the position.
-   * @return immutable arrayView of the location of the nodes of the embedded surfaces.
-   */
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > embSurfNodesPosition() const
-  { return m_embeddedSurfNodesPosition; }
-
-  /**
    * @brief Get a mutable total displacement array.
    * @return the total displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the total displacement does not exist
@@ -516,9 +492,6 @@ private:
   /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
   //END_SPHINX_REFPOS
-
-  /// reference position of the nodes defining the embedded surfaces
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_embeddedSurfNodesPosition;
 
   /// nodes-to-edges relation
   EdgeMapType m_toEdgesRelation;

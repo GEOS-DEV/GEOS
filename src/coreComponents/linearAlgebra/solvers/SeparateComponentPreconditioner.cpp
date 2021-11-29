@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -40,14 +40,12 @@ template< typename LAI >
 SeparateComponentPreconditioner< LAI >::~SeparateComponentPreconditioner() = default;
 
 template< typename LAI >
-void SeparateComponentPreconditioner< LAI >::compute( Matrix const & mat,
-                                                      DofManager const & dofManager )
+void SeparateComponentPreconditioner< LAI >::setup( Matrix const & mat )
 {
-  Base::compute( mat, dofManager );
-
+  Base::setup( mat );
   // TODO: if matrix structure hasn't changed, can just copy entries into existing m_matSC
-  LAIHelperFunctions::SeparateComponentFilter( mat, m_matSC, m_numComp );
-  m_precond->compute( m_matSC, dofManager );
+  mat.separateComponentFilter( m_matSC, m_numComp );
+  m_precond->setup( m_matSC );
 }
 
 template< typename LAI >

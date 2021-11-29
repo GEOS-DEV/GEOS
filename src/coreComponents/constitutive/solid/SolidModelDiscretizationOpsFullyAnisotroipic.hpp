@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidModelHelperFullyAnisotroipic.hpp
+ * @file SolidModelDiscretizationOpsFullyAnisotroipic.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIAZTIONOPSFULLYANISOTROPIC_HPP_
@@ -27,7 +27,8 @@ namespace constitutive
 {
 
 
-struct SolidModelDiscretizationOpsFullyAnisotroipic : public SolidModelDiscretizationOps
+struct SolidModelDiscretizationOpsFullyAnisotroipic : public SolidModelDiscretizationOps // TODO: spelling error,
+                                                                                         // convert to "General" anyway
 {
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >

@@ -2,146 +2,197 @@
 # Specify all headers
 #
 set( constitutive_headers
-     ConstitutiveManager.hpp
      ConstitutiveBase.hpp
+     ConstitutiveManager.hpp
+     ConstitutivePassThru.hpp
      ConstitutivePassThruHandler.hpp
      ExponentialRelation.hpp
      NullModel.hpp
-     capillaryPressure/CapillaryPressureBase.hpp
-     capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
+     capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/TableCapillaryPressure.hpp     
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
-     contact/ContactRelationBase.hpp
-     contact/Coulomb.hpp
+     capillaryPressure/capillaryPressureSelector.hpp
+     capillaryPressure/layouts.hpp
+     contact/ContactBase.hpp
+     contact/CoulombContact.hpp
+     contact/ContactSelector.hpp
+     contact/FrictionlessContact.hpp
+     fluid/BlackOilFluidBase.hpp	
+     fluid/BlackOilFluid.hpp
+     fluid/CompressibleSinglePhaseFluid.hpp
+     fluid/DeadOilFluid.hpp
+     fluid/MultiFluidBase.hpp
+     fluid/MultiFluidUtils.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
-     fluid/PVTFunctions/BrineCO2DensityFunction.hpp
-     fluid/PVTFunctions/BrineViscosityFunction.hpp
-     fluid/PVTFunctions/CO2SolubilityFunction.hpp
-     fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
+     fluid/PVTOData.hpp
+     fluid/PVTFunctions/PhillipsBrineDensity.hpp
+     fluid/PVTFunctions/PhillipsBrineViscosity.hpp
+     fluid/PVTFunctions/EzrokhiBrineDensity.hpp
+     fluid/PVTFunctions/EzrokhiBrineViscosity.hpp
+     fluid/PVTFunctions/CO2Solubility.hpp
+     fluid/PVTFunctions/FenghourCO2Viscosity.hpp
      fluid/PVTFunctions/FlashModelBase.hpp
      fluid/PVTFunctions/PVTFunctionBase.hpp
-     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp
-     fluid/PVTFunctions/UtilityFunctions.hpp
-     fluid/SingleFluidBase.hpp
-     fluid/singleFluidSelector.hpp
-     fluid/MultiFluidBase.hpp
-     fluid/multiFluidSelector.hpp
-     fluid/MultiFluidUtils.hpp
-     fluid/CompressibleSinglePhaseFluid.hpp
-     fluid/SlurryFluidBase.hpp
-     fluid/slurryFluidSelector.hpp
-     fluid/ProppantSlurryFluid.hpp
+     fluid/PVTFunctions/PVTFunctionHelpers.hpp
+     fluid/PVTFunctions/SpanWagnerCO2Density.hpp
+     fluid/ParticleFluid.hpp
      fluid/ParticleFluidBase.hpp
+     fluid/ProppantSlurryFluid.hpp
+     fluid/SingleFluidBase.hpp
+     fluid/SlurryFluidBase.hpp
+     fluid/layouts.hpp
+     fluid/multiFluidSelector.hpp
      fluid/particleFluidSelector.hpp
-     solid/AuxiliaryFunctionsSpectral.hpp
+     fluid/singleFluidSelector.hpp
+     fluid/slurryFluidSelector.hpp
+     permeability/CarmanKozenyPermeability.hpp
+     permeability/ConstantPermeability.hpp
+     permeability/ParallelPlatesPermeability.hpp
+     permeability/PermeabilityBase.hpp
+     permeability/StrainDependentPermeability.hpp
+     permeability/ProppantPermeability.hpp     
+     relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
+     relativePermeability/BrooksCoreyRelativePermeability.hpp
+     relativePermeability/RelativePermeabilityBase.hpp
+     relativePermeability/RelativePermeabilityInterpolators.hpp
+     relativePermeability/TableRelativePermeability.hpp
+     relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
+     relativePermeability/layouts.hpp
+     relativePermeability/relativePermeabilitySelector.hpp
+     solid/CompressibleSolid.hpp
+     solid/ProppantSolid.hpp
+     solid/CoupledSolidBase.hpp
+     solid/CoupledSolid.hpp
      solid/Damage.hpp
-     solid/DamageVolDev.hpp
      solid/DamageSpectral.hpp
-     solid/LinearElasticAnisotropic.hpp
-     solid/LinearElasticIsotropic.hpp
-     solid/LinearElasticTransverseIsotropic.hpp
-     solid/PoroElastic.hpp
-     solid/PoreVolumeCompressibleSolid.hpp
+     solid/DamageSpectralUtilities.hpp
+     solid/DamageVolDev.hpp
+     solid/DruckerPrager.hpp
+     solid/DruckerPragerExtended.hpp
+     solid/ModifiedCamClay.hpp
+     solid/DelftEgg.hpp
+     solid/ElasticIsotropic.hpp
+     solid/ElasticIsotropicPressureDependent.hpp
+     solid/ElasticTransverseIsotropic.hpp
+     solid/ElasticOrthotropic.hpp
+     solid/InvariantDecompositions.hpp
+     solid/PorousSolid.hpp
+     solid/PropertyConversions.hpp
      solid/SolidBase.hpp
+     solid/SolidInternalEnergy.hpp
      solid/SolidModelDiscretizationOps.hpp
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
-     relativePermeability/RelativePermeabilityBase.hpp
-     relativePermeability/BrooksCoreyRelativePermeability.hpp
-     relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
-     relativePermeability/relativePermeabilitySelector.hpp
-     relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
-     capillaryPressure/CapillaryPressureBase.hpp
-     capillaryPressure/BrooksCoreyCapillaryPressure.hpp
-     capillaryPressure/VanGenuchtenCapillaryPressure.hpp
+     solid/SolidModelDiscretizationOpsOrthotropic.hpp
+     solid/TriaxialDriver.hpp
+     solid/porosity/BiotPorosity.hpp
+     solid/porosity/PorosityBase.hpp
+     solid/porosity/PressurePorosity.hpp
+     solid/porosity/ProppantPorosity.hpp
    )
 #
 # Specify all sources
 #
 set( constitutive_sources
-     ConstitutiveManager.cpp
      ConstitutiveBase.cpp
+     ConstitutiveManager.cpp
      NullModel.cpp
-     capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
+     capillaryPressure/CapillaryPressureBase.cpp
+     capillaryPressure/TableCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
-     contact/ContactRelationBase.cpp
-     contact/Coulomb.cpp
+     contact/ContactBase.cpp
+     contact/CoulombContact.cpp
+     contact/FrictionlessContact.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
-     fluid/MultiPhaseMultiComponentFluid.cpp     
-     fluid/PVTFunctions/BrineCO2DensityFunction.cpp
-     fluid/PVTFunctions/BrineViscosityFunction.cpp 
-     fluid/PVTFunctions/CO2SolubilityFunction.cpp
-     fluid/PVTFunctions/FenghourCO2ViscosityFunction.cpp
-     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp    
-     fluid/PVTFunctions/UtilityFunctions.cpp
-     fluid/SingleFluidBase.cpp
+     fluid/BlackOilFluidBase.cpp
+     fluid/BlackOilFluid.cpp
+     fluid/DeadOilFluid.cpp
      fluid/MultiFluidBase.cpp
-     fluid/CompressibleSinglePhaseFluid.cpp
-     fluid/SlurryFluidBase.cpp
-     fluid/ProppantSlurryFluid.cpp
+     fluid/MultiPhaseMultiComponentFluid.cpp
+     fluid/PVTOData.cpp
+     fluid/PVTFunctions/PhillipsBrineDensity.cpp
+     fluid/PVTFunctions/PhillipsBrineViscosity.cpp
+     fluid/PVTFunctions/EzrokhiBrineDensity.cpp
+     fluid/PVTFunctions/EzrokhiBrineViscosity.cpp
+     fluid/PVTFunctions/CO2Solubility.cpp
+     fluid/PVTFunctions/FenghourCO2Viscosity.cpp
+     fluid/PVTFunctions/SpanWagnerCO2Density.cpp
+     fluid/PVTFunctions/PVTFunctionHelpers.cpp     
+     fluid/ParticleFluid.cpp              
      fluid/ParticleFluidBase.cpp
-     fluid/ParticleFluid.cpp               
-     solid/Damage.cpp
-     solid/DamageVolDev.cpp
-     solid/DamageSpectral.cpp
-     solid/LinearElasticAnisotropic.cpp
-     solid/LinearElasticIsotropic.cpp
-     solid/LinearElasticTransverseIsotropic.cpp
-     solid/PoroElastic.cpp
-     solid/PoreVolumeCompressibleSolid.cpp
-     solid/SolidBase.cpp
-     relativePermeability/RelativePermeabilityBase.cpp
-     relativePermeability/BrooksCoreyRelativePermeability.cpp
+     fluid/ProppantSlurryFluid.cpp
+     fluid/SingleFluidBase.cpp
+     fluid/SlurryFluidBase.cpp
+     permeability/CarmanKozenyPermeability.cpp
+     permeability/ConstantPermeability.cpp
+     permeability/ParallelPlatesPermeability.cpp
+     permeability/PermeabilityBase.cpp
+     permeability/StrainDependentPermeability.cpp
+     permeability/ProppantPermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
+     relativePermeability/BrooksCoreyRelativePermeability.cpp
+     relativePermeability/RelativePermeabilityBase.cpp
+     relativePermeability/TableRelativePermeability.cpp        
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
-     capillaryPressure/CapillaryPressureBase.cpp
-     capillaryPressure/BrooksCoreyCapillaryPressure.cpp
-     capillaryPressure/VanGenuchtenCapillaryPressure.cpp
+     solid/CompressibleSolid.cpp
+     solid/CoupledSolidBase.cpp
+     solid/ProppantSolid.cpp
+     solid/Damage.cpp
+     solid/DamageSpectral.cpp
+     solid/DamageVolDev.cpp
+     solid/DruckerPrager.cpp
+     solid/DruckerPragerExtended.cpp
+     solid/ModifiedCamClay.cpp
+     solid/DelftEgg.cpp
+     solid/ElasticIsotropic.cpp
+     solid/ElasticIsotropicPressureDependent.cpp
+     solid/ElasticTransverseIsotropic.cpp
+     solid/ElasticOrthotropic.cpp
+     solid/PorousSolid.cpp
+     solid/SolidBase.cpp
+     solid/SolidInternalEnergy.cpp
+     solid/TriaxialDriver.cpp
+     solid/porosity/BiotPorosity.cpp
+     solid/porosity/PorosityBase.cpp
+     solid/porosity/PressurePorosity.cpp
+     solid/porosity/ProppantPorosity.cpp
    )
 
-if( BUILD_OBJ_LIBS)
-  set( dependencyList dataRepository)
-else()
-  set( dependencyList common )
-endif()
-
-
+set( dependencyList events dataRepository functions )
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers
          ${constitutive_headers}
-         fluid/MultiFluidPVTPackageWrapper.hpp
          fluid/CompositionalMultiphaseFluid.hpp
-         fluid/BlackOilFluid.hpp
-       )
+         )
+
     set( constitutive_sources
          ${constitutive_sources}
-         fluid/MultiFluidPVTPackageWrapper.cpp
          fluid/CompositionalMultiphaseFluid.cpp
-         fluid/BlackOilFluid.cpp
-       )
-    set( dependencyList ${dependencyList} PVTPackage )
-endif()
+         )
+       
+    add_subdirectory( PVTPackage )
 
-if ( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
+    set( dependencyList ${dependencyList} PVTPackage )
 endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-blt_add_library( NAME                  constitutive
-                 SOURCES               ${constitutive_sources}
-                 HEADERS               ${constitutive_headers}
-                 DEPENDS_ON            ${dependencyList}
-                 OBJECT                ${buildAsObj}
+blt_add_library( NAME       constitutive
+                 SOURCES    ${constitutive_sources}
+                 HEADERS    ${constitutive_headers}
+                 DEPENDS_ON ${dependencyList}
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
                
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 add_subdirectory( unitTests )
 
-geosx_add_code_checks( PREFIX constitutive )
+geosx_add_code_checks( PREFIX constitutive 
+                       EXCLUDES PVTPackage )

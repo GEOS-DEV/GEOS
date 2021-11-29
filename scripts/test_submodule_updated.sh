@@ -11,10 +11,9 @@ git lfs uninstall &> /dev/null
 #git submodule update --init integratedTests
 git submodule update --init src/cmake/blt
 git submodule update --init src/coreComponents/LvArray
-git submodule update --init src/externalComponents/PVTPackage
-git submodule update --init src/externalComponents/PAMELA
+git submodule update --init src/coreComponents/constitutive/PVTPackage
+git submodule update --init src/coreComponents/mesh/PAMELA
 git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
-git submodule update --init src/coreComponents/physicsSolvers/GEOSX_PTP
 
 
 # Initialize PR submodule hashes
@@ -31,7 +30,6 @@ declare -Ar main_branches=(
   ["blt"]="origin/develop"
   ["LvArray"]="origin/develop"
   ["integratedTests"]="origin/develop"
-  ["GEOSX_PTP"]="origin/master"
   ["hdf5_interface"]="origin/master"
   ["PAMELA"]="origin/master"
   ["PVTPackage"]="origin/master"

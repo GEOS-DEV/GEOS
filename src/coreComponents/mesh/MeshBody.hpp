@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -53,21 +53,23 @@ public:
    * @param [in] newLevel index of the new mesh level
    * @return pointer to the created MeshLevel
    */
-  MeshLevel * createMeshLevel( localIndex const newLevel );
+  MeshLevel & createMeshLevel( localIndex const newLevel );
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to MeshLevel
    */
-  MeshLevel * getMeshLevel( localIndex const level ) { return this->getGroup< MeshLevel >( level ); }
+  MeshLevel & getMeshLevel( localIndex const level )
+  { return this->getGroup< MeshLevel >( level ); }
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to const MeshLevel
    */
-  MeshLevel const * getMeshLevel( localIndex const level ) const { return this->getGroup< MeshLevel >( level ); }
+  MeshLevel const & getMeshLevel( localIndex const level ) const
+  { return this->getGroup< MeshLevel >( level ); }
 
   /**
    * @brief Set mesh length scale used to define an absolute length tolerance

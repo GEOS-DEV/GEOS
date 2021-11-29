@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -18,12 +18,13 @@
 #include "ElementRegionManager.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "SurfaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellBlockManager.hpp"
-#include "meshUtilities/MeshManager.hpp"
+#include "mesh/MeshManager.hpp"
+#include "schema/schemaUtilities.hpp"
 
 namespace geosx
 {
@@ -33,7 +34,7 @@ ElementRegionManager::ElementRegionManager( string const & name, Group * const p
   ObjectManagerBase( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL );
-  this->registerGroup< Group >( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
+  this->registerGroup< Group >( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
 }
 
 ElementRegionManager::~ElementRegionManager()
@@ -58,12 +59,11 @@ void ElementRegionManager::resize( integer_array const & numElements,
   localIndex const n_regions = LvArray::integerConversion< localIndex >( regionNames.size());
   for( localIndex reg=0; reg<n_regions; ++reg )
   {
-    ElementRegionBase * elemRegion = this->getRegion( reg );
-    elemRegion->resize( numElements[reg] );
+    this->getRegion( reg ).resize( numElements[reg] );
   }
 }
 
-void ElementRegionManager::SetMaxGlobalIndex()
+void ElementRegionManager::setMaxGlobalIndex()
 {
   forElementSubRegions< ElementSubRegionBase >( [this] ( ElementSubRegionBase const & subRegion )
   {
@@ -84,9 +84,10 @@ Group * ElementRegionManager::createChild( string const & childKey, string const
   GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
   GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
-  Group * const elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup );
-  return elementRegions->registerGroup( childName,
-                                        CatalogInterface::factory( childKey, childName, elementRegions ) );
+
+  Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
+  return &elementRegions.registerGroup( childName,
+                                        CatalogInterface::factory( childKey, childName, &elementRegions ) );
 
 }
 
@@ -126,20 +127,19 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   for( string const & name: names )
   {
-    ElementRegionBase * const elementRegion = getRegion( name );
-    schemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType );
+    schemaUtilities::SchemaConstruction( getRegion( name ), schemaRoot, targetChoiceNode, documentationType );
   }
 }
 
-void ElementRegionManager::generateMesh( Group * const cellBlockManager )
+void ElementRegionManager::generateMesh( Group & cellBlockManager )
 {
   this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
   {
-    elemRegion.generateMesh( cellBlockManager->getGroup( keys::cellBlocks ) );
+    elemRegion.generateMesh( cellBlockManager.getGroup( keys::cellBlocks ) );
   } );
 }
 
-void ElementRegionManager::generateCellToEdgeMaps( FaceManager const * const faceManager )
+void ElementRegionManager::generateCellToEdgeMaps( FaceManager const & faceManager )
 {
   /*
    * Create cell to edges map
@@ -153,13 +153,11 @@ void ElementRegionManager::generateCellToEdgeMaps( FaceManager const * const fac
   {
     FixedOneToManyRelation & cellToEdges = subRegion.edgeList();
     FixedOneToManyRelation const & cellToFaces = subRegion.faceList();
-    InterObjectRelation< ArrayOfArrays< localIndex > > const & faceToEdges = faceManager->edgeList();
+    InterObjectRelation< ArrayOfArrays< localIndex > > const & faceToEdges = faceManager.edgeList();
 
     //loop over the cells
     for( localIndex kc = 0; kc < subRegion.size(); kc++ )
     {
-      // loop over the faces
-      // std::cout << "Element: " << kc << std::endl;
       count = 0;
       for( localIndex kf = 0; kf < subRegion.numFacesPerElement(); kf++ )
       {
@@ -182,7 +180,6 @@ void ElementRegionManager::generateCellToEdgeMaps( FaceManager const * const fac
           }
           if( isUnique )
           {
-            // std::cout << edgeIndex << std::endl;
             cellToEdges( kc, count ) = edgeIndex;
             count++;
           }
@@ -193,7 +190,7 @@ void ElementRegionManager::generateCellToEdgeMaps( FaceManager const * const fac
   } );
 }
 
-void ElementRegionManager::generateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager )
+void ElementRegionManager::generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager )
 {
   this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
   {
@@ -201,14 +198,14 @@ void ElementRegionManager::generateAggregates( FaceManager const * const faceMan
   } );
 }
 
-void ElementRegionManager::generateWells( MeshManager * const meshManager,
-                                          MeshLevel * const meshLevel )
+void ElementRegionManager::generateWells( MeshManager & meshManager,
+                                          MeshLevel & meshLevel )
 {
-  NodeManager * const nodeManager = meshLevel->getNodeManager();
+  NodeManager & nodeManager = meshLevel.getNodeManager();
 
   // get the offsets to construct local-to-global maps for well nodes and elements
-  nodeManager->setMaxGlobalIndex();
-  globalIndex const nodeOffsetGlobal = nodeManager->maxGlobalIndex() + 1;
+  nodeManager.setMaxGlobalIndex();
+  globalIndex const nodeOffsetGlobal = nodeManager.maxGlobalIndex() + 1;
   localIndex const elemOffsetLocal  = this->getNumberOfElements();
   globalIndex const elemOffsetGlobal = MpiWrapper::sum( elemOffsetLocal );
 
@@ -221,38 +218,32 @@ void ElementRegionManager::generateWells( MeshManager * const meshManager,
 
     // get the global well geometry from the well generator
     string const generatorName = wellRegion.getWellGeneratorName();
-    InternalWellGenerator const * const wellGeometry =
-      meshManager->getGroup< InternalWellGenerator >( generatorName );
-
-    GEOSX_ERROR_IF( wellGeometry == nullptr,
-                    "InternalWellGenerator " << generatorName << " not found in well " << wellRegion.getName() );
+    InternalWellGenerator const & wellGeometry =
+      meshManager.getGroup< InternalWellGenerator >( generatorName );
 
     // generate the local data (well elements, nodes, perforations) on this well
     // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
     // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion
-    wellRegion.generateWell( *meshLevel, *wellGeometry, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
+    wellRegion.generateWell( meshLevel, wellGeometry, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
 
     // increment counters with global number of nodes and elements
-    wellElemCount += wellGeometry->getNumElements();
-    wellNodeCount += wellGeometry->getNumNodes();
+    wellElemCount += wellGeometry.getNumElements();
+    wellNodeCount += wellGeometry.getNumNodes();
 
-    string const subRegionName = wellRegion.getSubRegionName();
-    WellElementSubRegion * const
-    subRegion = wellRegion.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
-                  ->getGroup< WellElementSubRegion >( subRegionName );
+    string const & subRegionName = wellRegion.getSubRegionName();
+    WellElementSubRegion &
+    subRegion = wellRegion.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                  .getGroup< WellElementSubRegion >( subRegionName );
 
-    GEOSX_ERROR_IF( subRegion == nullptr,
-                    "Subregion " << subRegionName << " not found in well " << wellRegion.getName() );
+    globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
 
-    globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion->size() );
-
-    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry->getNumElements(),
+    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry.getNumElements(),
                     "Invalid partitioning in well " << subRegionName );
 
   } );
 
   // communicate to rebuild global node info since we modified global ordering
-  nodeManager->setMaxGlobalIndex();
+  nodeManager.setMaxGlobalIndex();
 }
 
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
@@ -282,14 +273,15 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DOPACK >( buffer, this->getName() );
   packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
 
+  parallelDeviceEvents events;
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->getName() );
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->numSubRegions() );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
 
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
@@ -297,23 +289,18 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
       arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DOPACK )
       {
-        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0 );
+        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0, false, events );
       }
       else
       {
-        packedSize += subRegion.packSize( wrapperNames, elemList, 0 );
+        packedSize += subRegion.packSize( wrapperNames, elemList, 0, false, events );
       }
     } );
   }
 
+  waitAllDeviceEvents( events );
   return packedSize;
 }
-//template int ElementRegionManager::PackPrivate<true>( buffer_unit_type * &,
-//                                                      string_array const &,
-//                                                      ElementViewAccessor<arrayView1d<localIndex>> const & ) const;
-//template int ElementRegionManager::PackPrivate<false>( buffer_unit_type * &,
-//                                                      string_array const &,
-//                                                      ElementViewAccessor<arrayView1d<localIndex>> const & ) const;
 
 
 int ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
@@ -337,21 +324,22 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
 
-  GEOSX_ERROR_IF( name!=this->getName(), "Unpacked name ("<<name<<") does not equal object name ("<<this->getName() );
+  GEOSX_ERROR_IF( name != this->getName(), "Unpacked name (" << name << ") does not equal object name (" << this->getName() << ")" );
 
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
 
+  parallelDeviceEvents events;
   for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
   {
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegionBase * const elemRegion = getRegion( regionName );
+    ElementRegionBase & elemRegion = getRegion( regionName );
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase & subRegion )
     {
       string subRegionName;
@@ -360,13 +348,13 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
       /// THIS IS WRONG??
       arrayView1d< localIndex > & elemList = packList[kReg][esr];
 
-      unpackedSize += subRegion.unpack( buffer, elemList, 0 );
+      unpackedSize += subRegion.unpack( buffer, elemList, 0, false, events );
     } );
   }
 
+  waitAllDeviceEvents( events );
   return unpackedSize;
 }
-
 
 int ElementRegionManager::PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
@@ -390,11 +378,11 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->getName() );
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->numSubRegions() );
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
@@ -415,7 +403,6 @@ ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 }
 
 
-
 int
 ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
                                         ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList )
@@ -431,12 +418,12 @@ ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegionBase * const elemRegion = getRegion( regionName );
+    ElementRegionBase & elemRegion = getRegion( regionName );
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
     packList[kReg].resize( numSubRegionsRead );
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase & subRegion )
     {
       string subRegionName;
@@ -487,11 +474,11 @@ ElementRegionManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const * const elemRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->getName() );
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion->numSubRegions() );
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
@@ -535,11 +522,11 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegionBase * const elemRegion = getRegion( regionName );
+    ElementRegionBase & elemRegion = getRegion( regionName );
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
-    elemRegion->forElementSubRegionsIndex< ElementSubRegionBase >(
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const kSubReg, ElementSubRegionBase & subRegion )
     {
       string subRegionName;
@@ -553,6 +540,106 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
 
   return unpackedSize;
 }
+
+int ElementRegionManager::packFracturedElementsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                     string const fractureRegionName ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return packFracturedElementsPrivate< false >( junk, packList, fractureRegionName );
+}
+
+int ElementRegionManager::packFracturedElements( buffer_unit_type * & buffer,
+                                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                 string const fractureRegionName ) const
+{
+  return packFracturedElementsPrivate< true >( buffer, packList, fractureRegionName );
+}
+template< bool DOPACK >
+int
+ElementRegionManager::packFracturedElementsPrivate( buffer_unit_type * & buffer,
+                                                    ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                    string const fractureRegionName ) const
+{
+  int packedSize = 0;
+
+  SurfaceElementRegion const & embeddedSurfaceRegion =
+    this->getRegion< SurfaceElementRegion >( fractureRegionName );
+  EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
+    embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+  arrayView1d< globalIndex const > const embeddedSurfacesLocalToGlobal =
+    embeddedSurfaceSubRegion.localToGlobalMap();
+
+  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
+
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
+
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >(
+      [&]( localIndex const esr, CellElementSubRegion const & subRegion )
+    {
+      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
+
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
+      if( DOPACK )
+      {
+        packedSize += subRegion.packFracturedElements( buffer, elemList, embeddedSurfacesLocalToGlobal );
+      }
+      else
+      {
+        packedSize += subRegion.packFracturedElementsSize( elemList, embeddedSurfacesLocalToGlobal );
+      }
+    } );
+  }
+
+  return packedSize;
+}
+
+int
+ElementRegionManager::unpackFracturedElements( buffer_unit_type const * & buffer,
+                                               ElementReferenceAccessor< localIndex_array > & packList,
+                                               string const fractureRegionName )
+{
+  int unpackedSize = 0;
+
+  SurfaceElementRegion & embeddedSurfaceRegion =
+    this->getRegion< SurfaceElementRegion >( fractureRegionName );
+  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion =
+    embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+  unordered_map< globalIndex, localIndex > embeddedSurfacesGlobalToLocal =
+    embeddedSurfaceSubRegion.globalToLocalMap();
+
+  localIndex numRegionsRead;
+  unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
+
+  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  {
+    string regionName;
+    unpackedSize += bufferOps::Unpack( buffer, regionName );
+
+    ElementRegionBase & elemRegion = getRegion( regionName );
+
+    localIndex numSubRegionsRead;
+    unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
+    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >(
+      [&]( localIndex const kSubReg, CellElementSubRegion & subRegion )
+    {
+      string subRegionName;
+      unpackedSize += bufferOps::Unpack( buffer, subRegionName );
+
+      /// THIS IS WRONG
+      localIndex_array & elemList = packList[kReg][kSubReg];
+      unpackedSize += subRegion.unpackFracturedElements( buffer, elemList, embeddedSurfacesGlobalToLocal );
+    } );
+  }
+
+  return unpackedSize;
+}
+
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ElementRegionManager, string const &, Group * const )
 }

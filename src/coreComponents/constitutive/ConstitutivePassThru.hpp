@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,13 +20,27 @@
 #ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 #define GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
+#include "ConstitutivePassThruHandler.hpp"
 #include "NullModel.hpp"
 #include "solid/DamageVolDev.hpp"
 #include "solid/DamageSpectral.hpp"
-#include "solid/LinearElasticIsotropic.hpp"
-#include "solid/LinearElasticAnisotropic.hpp"
-#include "solid/LinearElasticTransverseIsotropic.hpp"
-#include "solid/PoroElastic.hpp"
+#include "solid/DruckerPrager.hpp"
+#include "solid/DruckerPragerExtended.hpp"
+#include "solid/ModifiedCamClay.hpp"
+#include "solid/DelftEgg.hpp"
+#include "solid/ElasticIsotropic.hpp"
+#include "solid/ElasticIsotropicPressureDependent.hpp"
+#include "solid/ElasticTransverseIsotropic.hpp"
+#include "solid/ElasticOrthotropic.hpp"
+#include "solid/PorousSolid.hpp"
+#include "solid/CompressibleSolid.hpp"
+#include "solid/ProppantSolid.hpp"
+#include "solid/porosity/PressurePorosity.hpp"
+#include "solid/porosity/ProppantPorosity.hpp"
+#include "permeability/ConstantPermeability.hpp"
+#include "permeability/CarmanKozenyPermeability.hpp"
+#include "permeability/ParallelPlatesPermeability.hpp"
+#include "permeability/ProppantPermeability.hpp"
 
 namespace geosx
 {
@@ -52,51 +66,30 @@ template<>
 struct ConstitutivePassThru< SolidBase >
 {
 
+  // NOTE: The switch order here can be fragile if a model derives from another
+  //       model, as the dynamic_cast will also cast to a base version.
+  //       Models should be ordered such that children come before parents.
+  //       For example, DruckerPrager before ElasticIsotropic, DamageVolDev before
+  //       Damage, etc.
+
   template< typename LAMBDA >
   static
-  void execute( ConstitutiveBase * const constitutiveRelation,
-                LAMBDA && lambda )
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
-    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
-
-    if( dynamic_cast< DamageSpectral< LinearElasticIsotropic > * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< DamageSpectral< LinearElasticIsotropic > * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< DamageVolDev< LinearElasticIsotropic > * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< DamageVolDev< LinearElasticIsotropic > * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< LinearElasticIsotropic * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< LinearElasticIsotropic * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< LinearElasticAnisotropic * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< LinearElasticAnisotropic * >( constitutiveRelation) );
-    }
-    else
-    {
-      string name;
-      if( constitutiveRelation !=nullptr )
-      {
-        name = constitutiveRelation->getName();
-      }
-      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
-    }
+    ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
+                                 DamageVolDev< ElasticIsotropic >,
+                                 Damage< ElasticIsotropic >,
+                                 DruckerPragerExtended,
+                                 ModifiedCamClay,
+                                 DelftEgg,
+                                 DruckerPrager,
+                                 ElasticIsotropic,
+                                 ElasticTransverseIsotropic,
+                                 ElasticIsotropicPressureDependent,
+                                 ElasticOrthotropic >::execute( constitutiveRelation,
+                                                                std::forward< LAMBDA >( lambda ) );
   }
 };
-
 
 /**
  * Specialization for the NullModel.
@@ -106,66 +99,17 @@ struct ConstitutivePassThru< NullModel >
 {
   template< typename LAMBDA >
   static
-  void execute( ConstitutiveBase * const constitutiveRelation,
-                LAMBDA && lambda )
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
-    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
-
-    if( dynamic_cast< NullModel * >( constitutiveRelation ) )
+    if( auto * const ptr = dynamic_cast< NullModel * >( &constitutiveRelation ) )
     {
-      lambda( static_cast< NullModel * >( constitutiveRelation ) );
+      lambda( *ptr );
     }
     else
     {
-      string name;
-      if( constitutiveRelation !=nullptr )
-      {
-        name = constitutiveRelation->getName();
-      }
-      GEOSX_ERROR( "ConstitutivePassThru<NullModel>::execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
-
-    }
-  }
-};
-
-
-/**
- * Specialization for the PoroElastic models.
- */
-template<>
-struct ConstitutivePassThru< PoroElasticBase >
-{
-  template< typename LAMBDA >
-  static
-  void execute( ConstitutiveBase * const constitutiveRelation,
-                LAMBDA && lambda )
-  {
-    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
-
-    if( dynamic_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< PoroElastic< LinearElasticTransverseIsotropic > * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< PoroElastic< LinearElasticTransverseIsotropic > * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< PoroElastic< LinearElasticAnisotropic > * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< PoroElastic< LinearElasticAnisotropic > * >( constitutiveRelation) );
-    }
-    else
-    {
-      string name;
-      if( constitutiveRelation !=nullptr )
-      {
-        name = constitutiveRelation->getName();
-      }
-      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
+      GEOSX_ERROR( "ConstitutivePassThru< NullModel >::execute failed. The constitutive relation is named "
+                   << constitutiveRelation.getName() << " with type "
+                   << LvArray::system::demangleType( constitutiveRelation ) );
     }
   }
 };
@@ -177,39 +121,139 @@ template<>
 struct ConstitutivePassThru< DamageBase >
 {
   template< typename LAMBDA >
-  static
-  void execute( ConstitutiveBase * const constitutiveRelation,
-                LAMBDA && lambda )
+  static void execute( ConstitutiveBase & constitutiveRelation,
+                       LAMBDA && lambda )
   {
-    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
+    ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
+                                 DamageVolDev< ElasticIsotropic >,
+                                 Damage< ElasticIsotropic > >::execute( constitutiveRelation,
+                                                                        std::forward< LAMBDA >( lambda ) );
+  }
+};
 
-    if( dynamic_cast< DamageSpectral< LinearElasticIsotropic > * >( constitutiveRelation ) )
+
+/**
+ * Specialization for the PorousSolid models.
+ */
+template<>
+struct ConstitutivePassThru< PorousSolidBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< ModifiedCamClay >,
+                                 PorousSolid< DelftEgg >,
+                                 PorousSolid< DruckerPrager >,
+                                 PorousSolid< ElasticIsotropic >,
+                                 PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
+                                 PorousSolid< ElasticOrthotropic >,
+                                 PorousSolid< DamageSpectral< ElasticIsotropic > >,
+                                 PorousSolid< DamageVolDev< ElasticIsotropic > >,
+                                 PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
+                                                                                       std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
+ * Specialization for the CompressibleSolid models.
+ */
+template<>
+struct ConstitutivePassThru< CompressibleSolidBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+                                 CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
+                                                                                                               std::forward< LAMBDA >( lambda ) );
+  }
+
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+                                 CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
+                                                                                                               std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
+ * Specialization for the ProppantModel.
+ */
+template<>
+struct ConstitutivePassThru< ProppantSolid< ProppantPorosity, ProppantPermeability > >
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    if( auto * const ptr = dynamic_cast< ProppantSolid< ProppantPorosity, ProppantPermeability > * >( &constitutiveRelation ) )
     {
-      lambda( static_cast< DamageSpectral< LinearElasticIsotropic > * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< DamageVolDev< LinearElasticIsotropic > * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< DamageVolDev< LinearElasticIsotropic > * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation) );
+      lambda( *ptr );
     }
     else
     {
-      string name;
-      if( constitutiveRelation !=nullptr )
-      {
-        name = constitutiveRelation->getName();
-      }
-      GEOSX_ERROR( "ConstitutivePassThru<DamgeBase>::execute( "<<
-                   constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name );
+      GEOSX_ERROR( "ConstitutivePassThru< ProppantSolid >::execute failed. The constitutive relation is named "
+                   << constitutiveRelation.getName() << " with type "
+                   << LvArray::system::demangleType( constitutiveRelation ) );
     }
   }
 };
 
-}
-}
+
+/**
+ * Specialization for all CoupledSolid models.
+ */
+template<>
+struct ConstitutivePassThru< CoupledSolidBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+                                 CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< ModifiedCamClay >,
+                                 PorousSolid< DelftEgg >,
+                                 PorousSolid< DruckerPrager >,
+                                 PorousSolid< ElasticIsotropic >,
+                                 PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
+                                 PorousSolid< ElasticOrthotropic >,
+                                 PorousSolid< DamageSpectral< ElasticIsotropic > >,
+                                 PorousSolid< DamageVolDev< ElasticIsotropic > >,
+                                 PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
+                                                                                       std::forward< LAMBDA >( lambda ) );
+  }
+
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+                                 CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< ModifiedCamClay >,
+                                 PorousSolid< DelftEgg >,
+                                 PorousSolid< DruckerPrager >,
+                                 PorousSolid< ElasticIsotropic >,
+                                 PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
+                                 PorousSolid< ElasticOrthotropic >,
+                                 PorousSolid< DamageSpectral< ElasticIsotropic > >,
+                                 PorousSolid< DamageVolDev< ElasticIsotropic > >,
+                                 PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
+                                                                                       std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+} /* namespace constitutive */
+
+} /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_ */

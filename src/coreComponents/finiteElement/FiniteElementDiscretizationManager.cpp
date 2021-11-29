@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -40,7 +40,7 @@ Group * FiniteElementDiscretizationManager::createChild( string const & childKey
 {
   // These objects should probably not be registered on managed group...
   std::unique_ptr< Group > fem = Group::CatalogInterface::factory( childKey, childName, this );
-  return this->registerGroup( childName, std::move( fem ) );
+  return &this->registerGroup( childName, std::move( fem ) );
 }
 
 

@@ -1,0 +1,87 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="./pknViscosityDominated_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 150, 200, 400 }"
+      yCoords="{ 0, 150, 200, 400 }"
+      zCoords="{ -400, -100, -20, 20, 100, 400 }"
+      nx="{ 8, 1, 2 }"
+      ny="{ 8, 1, 2 }"
+      nz="{ 1, 1, 2, 1, 1 }"
+      cellBlockNames="{ cb1 }"/> 
+  </Mesh>
+ 
+  <Geometry> 
+    <Box
+      name="fracture"
+      xMin="{ -4.1, -4.1, -0.1 }"
+      xMax="{ 2.1, 6.1, 0.1 }"/>
+
+    <Box
+      name="source"
+      xMin="{ -2.1, -2.1, -0.1 }"
+      xMax="{ 2.1, 6.1, 0.1 }"/>
+
+    <Box
+      name="core"
+      xMin="{ -500.1, -500.1, -0.1 }"
+      xMax="{ 500.1, 10.1, 0.1 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="20.0"> 
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+ 
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0.0"
+      endTime="1.0"
+      forceDt="0.2000000000001"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="1.0"
+      endTime="3.0"
+      forceDt="0.5"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications3"
+      beginTime="3.0"
+      endTime="8.0"
+      forceDt="1.0"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications4"
+      beginTime="8.0"
+      endTime="20.0"
+      forceDt="2.0"
+      target="/Solvers/hydrofracture"/>    
+  
+    <PeriodicEvent
+      name="outputs2"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent 
+      name="restarts"
+      timeFrequency="20"
+      targetExactTimestep="0"
+      target="/Outputs/sidreRestart" />
+  </Events>
+ 
+</Problem>

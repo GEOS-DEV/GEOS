@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,6 +20,7 @@
 #define GEOSX_MESH_MESHLEVEL_HPP_
 
 #include "NodeManager.hpp"
+#include "EmbeddedSurfaceNodeManager.hpp"
 #include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
@@ -65,7 +66,7 @@ public:
                                integer const depth );
 
 
-  virtual void initializePostInitialConditionsPostSubGroups( Group * const ) override;
+  virtual void initializePostInitialConditionsPostSubGroups() override;
 
   /// @cond DO_NOT_DOCUMENT
 
@@ -86,12 +87,14 @@ public:
     // This key is defined in problem manager:
     static constexpr auto elemManagerString = "ElementRegions";
 
+    static constexpr auto embSurfNodeManagerString = "embeddedSurfacesNodeManager";
     static constexpr auto embSurfEdgeManagerString = "embeddedSurfacesEdgeManager";
 
     dataRepository::GroupKey nodeManager = {nodeManagerString};
     dataRepository::GroupKey edgeManager = {edgeManagerString};
     dataRepository::GroupKey faceManager = {faceManagerString};
     dataRepository::GroupKey elemManager = {elemManagerString};
+    dataRepository::GroupKey embSurfNodeManager = {embSurfNodeManagerString};
     dataRepository::GroupKey embSurfEdgeManager = {embSurfEdgeManagerString};
   } groupKeys;
 
@@ -104,54 +107,81 @@ public:
 
   /**
    * @brief Get the node manager.
-   * @return a pointer to the nodeManager object
+   * @return a reference to the nodeManager object
    */
-  NodeManager const * getNodeManager() const { return &m_nodeManager; }
+  NodeManager const & getNodeManager() const
+  { return m_nodeManager; }
+
   /**
    * @copydoc getNodeManager() const
    */
-  NodeManager * getNodeManager()             { return &m_nodeManager; }
+  NodeManager & getNodeManager()
+  { return m_nodeManager; }
 
   /**
    * @brief Get the edge manager.
-   * @return a pointer to the edgeManager object
+   * @return a reference to the edgeManager object
    */
-  EdgeManager const * getEdgeManager() const { return &m_edgeManager; }
+  EdgeManager const & getEdgeManager() const
+  { return m_edgeManager; }
+
   /**
    * @copydoc getEdgeManager() const
    */
-  EdgeManager * getEdgeManager()             { return &m_edgeManager; }
+  EdgeManager & getEdgeManager()
+  { return m_edgeManager; }
 
   /**
    * @brief Get the face manager.
-   * @return a pointer to the faceManager object
+   * @return a reference to the faceManager object
    */
-  FaceManager const * getFaceManager() const { return &m_faceManager; }
+  FaceManager const & getFaceManager() const
+  { return m_faceManager; }
+
   /**
    * @copydoc getFaceManager() const
    */
-  FaceManager * getFaceManager()             { return &m_faceManager; }
+  FaceManager & getFaceManager()
+  { return m_faceManager; }
 
   /**
    * @brief Get the element region manager.
-   * @return a pointer to the elementRegionManager object
+   * @return a reference to the elementRegionManager object
    */
-  ElementRegionManager const * getElemManager() const { return &m_elementManager; }
+  ElementRegionManager const & getElemManager() const
+  { return m_elementManager; }
+
   /**
    * @copydoc getElemManager() const
    */
-  ElementRegionManager * getElemManager()             { return &m_elementManager; }
+  ElementRegionManager & getElemManager()
+  { return m_elementManager; }
+
+  /**
+   * @brief Get the node Manager of the embedded surfaces grid.
+   * @return a pointer to the EmbeddedSurfaceNodeManager
+   */
+  EmbeddedSurfaceNodeManager const & getEmbSurfNodeManager() const
+  { return m_embSurfNodeManager; }
+
+  /**
+   * @copydoc getEmbSurfNodeManager() const
+   */
+  EmbeddedSurfaceNodeManager & getEmbSurfNodeManager()
+  { return m_embSurfNodeManager; }
 
   /**
    * @brief Get the edge Manager related to the embedded surfaces grid.
    * @return a pointer to the edgeManager related to the embedded surfaces grid
    */
-  EdgeManager const & getEmbdSurfEdgeManager() const { return m_embSurfEdgeManager; }
+  EdgeManager const & getEmbSurfEdgeManager() const
+  { return m_embSurfEdgeManager; }
 
   /**
-   * @copydoc getEmbdSurfEdgeManager() const
+   * @copydoc getEmbSurfEdgeManager() const
    */
-  EdgeManager & getEmbdSurfEdgeManager()             { return m_embSurfEdgeManager; }
+  EdgeManager & getEmbSurfEdgeManager()
+  { return m_embSurfEdgeManager; }
 
   ///@}
 
@@ -165,6 +195,9 @@ private:
   FaceManager m_faceManager;
   /// Manager for element data
   ElementRegionManager m_elementManager;
+
+  ///Manager for embedded surfaces nodes
+  EmbeddedSurfaceNodeManager m_embSurfNodeManager;
   /// Manager for embedded surfaces edge data
   EdgeManager m_embSurfEdgeManager;
 

@@ -27,14 +27,15 @@ set(CMAKE_CUDA_HOST_COMPILER ${MPI_CXX_COMPILER} CACHE STRING "")
 
 # ESSL
 set(ENABLE_ESSL ON CACHE BOOL "")
-set(ESSL_INCLUDE_DIRS /usr/tcetmp/packages/essl/essl-6.2/include CACHE STRING "")
-set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2/lib64/libesslsmpcuda.so
+set(ESSL_INCLUDE_DIRS /usr/tcetmp/packages/essl/essl-6.2.1/include CACHE STRING "")
+set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2.1/lib64/libesslsmpcuda.so
                    /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxlsmp.so
                    /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxlfmath.so
                    /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxlf90_r.so
                    ${CUDA_TOOLKIT_ROOT_DIR}/lib64/libcublas.so
                    ${CUDA_TOOLKIT_ROOT_DIR}/lib64/libcudart.so
-                   ${GEOSX_TPL_ROOT_DIR}/liblapackforesslgeosx.a
+                   /usr/tcetmp/packages/essl/essl-6.2.1/lib64/liblapackforessl.so
+                   /usr/tcetmp/packages/essl/essl-6.2.1/lib64/liblapackforessl_.so
                    /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxl.a
                    CACHE PATH "")
 
@@ -46,10 +47,18 @@ set(SILO_BUILD_TYPE powerpc64-unknown-linux-gnu CACHE STRING "")
 set(GEOSX_BUILD_SHARED_LIBS OFF CACHE BOOL "")
 set(ENABLE_PAMELA ON CACHE BOOL "")
 set(ENABLE_PVTPackage ON CACHE BOOL "")
-set(ENABLE_GEOSX_PTP ON CACHE BOOL "")
 set(ENABLE_PETSC OFF CACHE BOOL "" FORCE )
-set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE )
-set(GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "" FORCE )
+
+
+  
+set( ENABLE_HYPRE_CUDA ON CACHE BOOL "" FORCE )
+if( ENABLE_HYPRE_CUDA )
+    set(ENABLE_TRILINOS OFF CACHE BOOL "" FORCE )
+else()
+    set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE )    
+    set(GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "" FORCE )
+endif()
+
 
 # Documentation
 set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "" FORCE)

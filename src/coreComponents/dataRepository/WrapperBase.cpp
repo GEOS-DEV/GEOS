@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -27,19 +27,18 @@ namespace dataRepository
 
 
 WrapperBase::WrapperBase( string const & name,
-                          Group * const parent ):
+                          Group & parent ):
   m_name( name ),
-  m_parent( parent ),
+  m_parent( &parent ),
   m_sizedFromParent( 1 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_plotLevel( PlotLevel::NOPLOT ),
   m_inputFlag( InputFlags::INVALID ),
+  m_successfulReadFromInput( false ),
   m_description(),
   m_registeringObjects(),
-  m_conduitNode( parent->getConduitNode()[ name ] )
-{
-  GEOSX_ERROR_IF( parent == nullptr, "Cannot have a view with no parent." );
-}
+  m_conduitNode( parent.getConduitNode()[ name ] )
+{}
 
 
 WrapperBase::~WrapperBase()
@@ -52,8 +51,6 @@ void WrapperBase::resize()
 
 void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
 {
-  GEOSX_ERROR_IF( source.m_name != this->m_name,
-                  "Tried to clone wrapper attributes from a wrapper with a different name" );
   m_sizedFromParent = source.m_sizedFromParent;
   m_restart_flags = source.m_restart_flags;
   m_plotLevel  = source.m_plotLevel;
@@ -61,27 +58,26 @@ void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
   m_description = source.m_description;
 }
 
+string WrapperBase::getPath() const
+{
+  // In the Conduit node heirarchy everything begins with 'Problem', we should change it so that
+  // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
+  string const noProblem = m_conduitNode.path().substr( std::strlen( dataRepository::keys::ProblemManager ) - 1 );
+  return noProblem.empty() ? "/" : noProblem;
+}
 
 string WrapperBase::dumpInputOptions( bool const outputHeader ) const
 {
   string rval;
-  char temp[1000] = {0};
   if( outputHeader )
   {
-    sprintf( temp, "  |         name         |  opt/req  | Description \n" );
-    rval.append( temp );
-    sprintf( temp, "  |----------------------|-----------|-----------------------------------------\n" );
-    rval.append( temp );
+    rval.append( "  |         name         |  opt/req  | Description \n" );
+    rval.append( "  |----------------------|-----------|-----------------------------------------\n" );
   }
 
-  if( getInputFlag() == InputFlags::OPTIONAL ||
-      getInputFlag() == InputFlags::REQUIRED )
+  if( getInputFlag() == InputFlags::OPTIONAL || getInputFlag() == InputFlags::REQUIRED )
   {
-    sprintf( temp, "  | %20s | %9s | %s \n",
-             getName().c_str(),
-             InputFlagToString( getInputFlag()).c_str(),
-             getDescription().c_str() );
-    rval.append( temp );
+    rval.append( GEOSX_FMT( "  | {:20} | {:9} | {} \n", getName(), InputFlagToString( getInputFlag() ), getDescription() ) );
   }
 
   return rval;

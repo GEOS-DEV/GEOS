@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -90,9 +90,10 @@ public:
   QuasiStatic( NodeManager const & nodeManager,
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
+               localIndex const targetRegionIndex,
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
-               CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               CONSTITUTIVE_TYPE & inputConstitutiveType,
                arrayView1d< globalIndex const > const & inputDofNumber,
                globalIndex const rankOffset,
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
@@ -101,6 +102,7 @@ public:
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -112,7 +114,7 @@ public:
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-    m_density( inputConstitutiveType->getDensity() )
+    m_density( inputConstitutiveType.getDensity() )
   {}
 
 
@@ -243,29 +245,23 @@ public:
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     real64 strainInc[6] = {0};
+    real64 stress[6] = {0};
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
+
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
-    m_constitutiveUpdate.smallStrain( k, q, strainInc );
-
-    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffnessHelper;
-    m_constitutiveUpdate.setDiscretizationOps( k, q, stiffnessHelper );
-
-    stiffnessHelper.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
-
-    real64 stress[6];
-
-    m_constitutiveUpdate.getStress( k, q, stress );
+    m_constitutiveUpdate.smallStrainUpdate( k, q, strainInc, stress, stiffness );
 
     stressModifier( stress );
-
-    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJ,
-                                     m_gravityVector[1] * m_density( k, q )* detJ,
-                                     m_gravityVector[2] * m_density( k, q )* detJ };
-
     for( localIndex i=0; i<6; ++i )
     {
       stress[i] *= -detJ;
     }
+
+    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJ,
+                                     m_gravityVector[1] * m_density( k, q )* detJ,
+                                     m_gravityVector[2] * m_density( k, q )* detJ };
 
     real64 N[numNodesPerElem];
     FE_TYPE::calcN( q, N );
@@ -274,6 +270,7 @@ public:
                                      N,
                                      gravityForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+    stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
   }
 
   /**
@@ -287,13 +284,15 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
+    // TODO: Does this work if BTDB is non-symmetric?
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
       for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
       {
-        localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
+        localIndex const dof =
+          LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
         if( dof < 0 || dof >= m_matrix.numRows() ) continue;
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localRowDofIndex,
@@ -329,6 +328,13 @@ protected:
 
 };
 
+/// The factory used to construct a QuasiStatic kernel.
+using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
+                                                         arrayView1d< globalIndex const > const &,
+                                                         globalIndex,
+                                                         CRSMatrixView< real64, globalIndex const > const &,
+                                                         arrayView1d< real64 > const &,
+                                                         real64 const (&)[3] >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

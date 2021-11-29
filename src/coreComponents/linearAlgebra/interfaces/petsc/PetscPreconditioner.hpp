@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -16,10 +16,10 @@
  * @file PetscPreconditioner.hpp
  */
 
-#ifndef GEOSX_PETSCPRECONDITIONER_HPP
-#define GEOSX_PETSCPRECONDITIONER_HPP
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCPRECONDITIONER_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_PETSCPRECONDITIONER_HPP_
 
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "common/PreconditionerBase.hpp"
 #include "linearAlgebra/interfaces/petsc/PetscInterface.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
@@ -34,11 +34,6 @@
 /// PETSc preconditioner struct forward declaration
 extern "C" struct _p_PC;
 extern "C" struct _p_MatNullSpace;
-
-/// Preconditioner pointer alias
-using PC = _p_PC *;
-/// Near null space pointer alias
-using MatNullSpace = _p_MatNullSpace *;
 
 ///@}
 
@@ -60,9 +55,6 @@ public:
 
   /// Alias for matrix type
   using Matrix = typename Base::Matrix;
-
-  /// Allow for partial overload of Base::compute()
-  using Base::compute;
 
   /**
    * @brief Constructor.
@@ -86,7 +78,7 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat ) override;
+  virtual void setup( Matrix const & mat ) override;
 
   /**
    * @brief Apply operator to a vector
@@ -99,6 +91,13 @@ public:
 
   virtual void clear() override;
 
+private:
+
+  /// Preconditioner pointer alias
+  using PC = _p_PC *;
+
+public:
+
   /**
    * @brief Access the underlying implementation.
    * @return the wrapped PETSc preconditioner
@@ -107,11 +106,24 @@ public:
 
 private:
 
+  /// Near null space pointer alias
+  using MatNullSpace = _p_MatNullSpace *;
+
+  /**
+   * @brief Setup additional preconditioning matrix if necessary.
+   * @param mat the source matrix
+   * @return reference to the matrix that should be used to setup the main preconditioner
+   */
+  PetscMatrix const & setupPreconditioningMatrix( PetscMatrix const & mat );
+
   /// Parameters for all preconditioners
-  LinearSolverParameters m_parameters;
+  LinearSolverParameters m_params;
 
   /// Pointer to the PETSc implementation
   PC m_precond;
+
+  /// Preconditioning matrix (if different from input matrix)
+  PetscMatrix m_precondMatrix;
 
   /// Pointer to the near null space
   MatNullSpace m_nullsp;
@@ -119,4 +131,4 @@ private:
 
 }
 
-#endif //GEOSX_PETSCPRECONDITIONER_HPP
+#endif //GEOSX_LINEARALGEBRA_INTERFACES_PETSCPRECONDITIONER_HPP_

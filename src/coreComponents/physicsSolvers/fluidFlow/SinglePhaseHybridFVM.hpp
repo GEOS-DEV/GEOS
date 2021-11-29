@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -72,7 +72,7 @@ public:
   static string catalogName()
   { return "SinglePhaseHybridFVM"; }
 
-  virtual void registerDataOnMesh( Group * const MeshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -123,15 +123,6 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
-  /**
-   * @brief assembles the flux terms for all cells
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
   virtual void
   assembleFluxTerms( real64 const time_n,
                      real64 const dt,
@@ -140,6 +131,36 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) override;
 
+  virtual void
+  assemblePoroelasticFluxTerms( real64 const time_n,
+                                real64 const dt,
+                                DomainPartition const & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs,
+                                string const & jumpDofKey ) override final;
+
+  virtual void
+  assembleHydrofracFluxTerms( real64 const time_n,
+                              real64 const dt,
+                              DomainPartition const & domain,
+                              DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs,
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
+
+  virtual void
+  applyAquiferBC( real64 const time,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) const override final;
+
+  virtual void
+  saveAquiferConvergedState( real64 const & time,
+                             real64 const & dt,
+                             DomainPartition & domain ) override;
 
   /**@}*/
 
@@ -147,28 +168,12 @@ public:
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {
     // primary face-based field
-    static constexpr auto deltaFacePressureString = "deltaFacePressure";
+    static constexpr char const * deltaFacePressureString() { return "deltaFacePressure"; }
+  };
 
-  } viewKeysSinglePhaseHybridFVM;
+  virtual void initializePreSubGroups() override;
 
-  viewKeyStruct & viewKeys()
-  { return viewKeysSinglePhaseHybridFVM; }
-
-  viewKeyStruct const & viewKeys() const
-  { return viewKeysSinglePhaseHybridFVM; }
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysSinglePhaseHybridFVM;
-
-  groupKeyStruct & groupKeys()
-  { return groupKeysSinglePhaseHybridFVM; }
-
-  groupKeyStruct const & groupKeys() const
-  { return groupKeysSinglePhaseHybridFVM; }
-
-  virtual void initializePreSubGroups( dataRepository::Group * const rootGroup ) override;
-
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
 

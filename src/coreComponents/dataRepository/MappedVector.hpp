@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -514,11 +514,11 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
         m_constKeyValues[index].second = rawPtr( index );
         m_constValues[index].second = rawPtr( index );
       }
-      else if( source->getTypeId() != m_values[index].second->getTypeId() )
+      else if( typeid( source ) != typeid( m_values[index].second ) )
       {
-        GEOSX_ERROR( "MappedVector::insert(): Tried to insert existing key ("<<keyName<<
-                     ") with a different type without overwrite flag\n"<<" "<<source->getTypeId().name()<<" != "<<
-                     m_values[index].second->getTypeId().name() );
+        GEOSX_ERROR( "MappedVector::insert(): Tried to insert existing key (" << keyName <<
+                     ") with a different type without overwrite flag\n " << " " << LvArray::system::demangleType( source ) <<
+                     " != " << LvArray::system::demangleType( m_values[ index ].second ) );
       }
       else
       {

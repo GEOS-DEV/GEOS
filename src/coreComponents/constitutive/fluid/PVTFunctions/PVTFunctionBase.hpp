@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,66 +19,96 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_
 
-#include "constitutive/fluid/PVTFunctions/UtilityFunctions.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "dataRepository/ObjectCatalog.hpp"
 
 namespace geosx
+{
+
+namespace constitutive
 {
 
 namespace PVTProps
 {
 
-enum class PVTFuncType {UNKNOWN, DENSITY, VISCOSITY};
+enum class PVTFunctionType { UNKNOWN, DENSITY, VISCOSITY };
 
-class PVTFunction
+class PVTFunctionBaseUpdate
 {
 public:
 
-  PVTFunction( string const & name, string_array const & componentNames, real64_array const & componentMolarWeight ):
+  explicit PVTFunctionBaseUpdate( arrayView1d< real64 const > const & componentMolarWeight )
+    : m_componentMolarWeight( componentMolarWeight )
+  {}
+
+  /**
+   * @brief Move the KernelWrapper to the given execution space, optionally touching it.
+   * @param space the space to move the KernelWrapper to
+   * @param touch whether the KernelWrapper should be touched in the new space or not
+   * @note This function exists to enable holding KernelWrapper objects in an ArrayView
+   *       and have their contents properly moved between memory spaces.
+   */
+  virtual void move( LvArray::MemorySpace const space, bool const touch )
+  {
+    m_componentMolarWeight.move( space, touch );
+  }
+
+protected:
+
+  /// Array storing the component molar weights
+  arrayView1d< real64 const > m_componentMolarWeight;
+
+};
+
+class PVTFunctionBase
+{
+
+public:
+
+  PVTFunctionBase( string const & name,
+                   array1d< string > const & componentNames,
+                   array1d< real64 > const & componentMolarWeight )
+    :
     m_functionName( name ),
     m_componentNames( componentNames ),
     m_componentMolarWeight( componentMolarWeight )
   {}
 
-  virtual ~PVTFunction(){}
+  virtual ~PVTFunctionBase() = default;
 
-
-  using CatalogInterface = dataRepository::CatalogInterface< PVTFunction, string_array const &,
-                                                             string_array const &,
-                                                             real64_array const & >;
+  using CatalogInterface = dataRepository::CatalogInterface< PVTFunctionBase,
+                                                             string const &,
+                                                             array1d< string > const &,
+                                                             array1d< string > const &,
+                                                             array1d< real64 > const & >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
   }
+
   virtual string getCatalogName() const = 0;
 
+  string const & functionName() const { return m_functionName; }
 
-  string const & functionName() const
-  {
-    return m_functionName;
-  }
-
-  virtual PVTFuncType functionType() const = 0;
-
-  //phase density/viscosity
-  //input: P, T, phaseCompFraction
-  //output: phase density/viscoty
-
-  virtual void evaluation( EvalVarArgs const & pressure, EvalVarArgs const & temperature, arraySlice1d< EvalVarArgs const > const & phaseComposition,
-                           EvalVarArgs & value, bool useMass = 0 ) const = 0;
+  virtual PVTFunctionType functionType() const = 0;
 
 protected:
 
+  /// Name of the PVT function
   string m_functionName;
-  string_array m_componentNames;
-  real64_array m_componentMolarWeight;
 
+  /// Array storing the name of the components
+  array1d< string > m_componentNames;
+
+  /// Array storing the component molar weights
+  array1d< real64 > m_componentMolarWeight;
 
 };
 
-}
+} // end namespace PVTProps
 
-}
+} // end namespace constitutive
+
+} // end namespace geosx
 
 #endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_PVTFUNCTIONBASE_HPP_

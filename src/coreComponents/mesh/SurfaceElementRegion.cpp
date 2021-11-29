@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -29,13 +29,13 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
   ElementRegionBase( name, parent ),
   m_subRegionType( SurfaceSubRegionType::faceElement )
 {
-  registerWrapper( viewKeyStruct::subRegionTypeString, &m_subRegionType )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setApplyDefaultValue( m_subRegionType )->
+  registerWrapper( viewKeyStruct::subRegionTypeString(), &m_subRegionType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_subRegionType ).
     setDescription( "Type of surface element subregion. Valid options:\n* " + EnumStrings< SurfaceSubRegionType >::concat( "\n* " ) );
 
-  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::defaultApertureString(), &m_defaultAperture ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The default aperture of newly formed surface elements." );
 }
 
@@ -43,27 +43,27 @@ SurfaceElementRegion::~SurfaceElementRegion()
 {}
 
 
-void SurfaceElementRegion::generateMesh( Group * const cellBlocks )
+void SurfaceElementRegion::generateMesh( Group & cellBlocks )
 {
   GEOSX_UNUSED_VAR( cellBlocks );
 
-  Group * const elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
+  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
   if( m_subRegionType == SurfaceSubRegionType::embeddedElement )
   {
-    elementSubRegions->registerGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
+    elementSubRegions.registerGroup< EmbeddedSurfaceSubRegion >( "embeddedSurfaceSubRegion" );
   }
   else if( m_subRegionType == SurfaceSubRegionType::faceElement )
   {
-    elementSubRegions->registerGroup< FaceElementSubRegion >( "faceElementSubRegion" );
+    elementSubRegions.registerGroup< FaceElementSubRegion >( "faceElementSubRegion" );
   }
 }
 
-void SurfaceElementRegion::initializePreSubGroups( Group * const )
+void SurfaceElementRegion::initializePreSubGroups()
 {
   this->forElementSubRegions< SurfaceElementSubRegion >( [&] ( SurfaceElementSubRegion & subRegion )
   {
-    subRegion.getWrapper< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::elementApertureString )->
+    subRegion.getWrapper< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::elementApertureString() ).
       setApplyDefaultValue( m_defaultAperture );
   } );
 }
@@ -83,33 +83,33 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   arrayView2d< localIndex const > const faceToElementSubRegion = faceManager->elementSubRegionList();
   arrayView2d< localIndex const > const faceToElementIndex = faceManager->elementList();
 
-  Group * elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
+  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
-  FaceElementSubRegion * subRegion = elementSubRegions->getGroup< FaceElementSubRegion >( subRegionName );
-  subRegion->resize( subRegion->size() + 1 );
-  rval = subRegion->size() - 1;
+  FaceElementSubRegion & subRegion = elementSubRegions.getGroup< FaceElementSubRegion >( subRegionName );
+  subRegion.resize( subRegion.size() + 1 );
+  rval = subRegion.size() - 1;
 
 
-  arrayView1d< real64 > const ruptureTime = subRegion->getExtrinsicData< extrinsicMeshData::RuptureTime >();
+  arrayView1d< real64 > const ruptureTime = subRegion.getExtrinsicData< extrinsicMeshData::RuptureTime >();
 
   arrayView1d< real64 > const
-  creationMass = subRegion->getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString );
+  creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
 
   arrayView2d< real64 const > const faceCenter = faceManager->faceCenter();
-  arrayView2d< real64 > const elemCenter = subRegion->getElementCenter();
-  arrayView1d< real64 const > const elemArea = subRegion->getElementArea().toViewConst();
+  arrayView2d< real64 > const elemCenter = subRegion.getElementCenter();
+  arrayView1d< real64 const > const elemArea = subRegion.getElementArea().toViewConst();
 
-  arrayView1d< integer > const subRegionGhostRank = subRegion->ghostRank();
+  arrayView1d< integer > const subRegionGhostRank = subRegion.ghostRank();
 
   arrayView1d< integer const > const faceGhostRank = faceManager->ghostRank();
 
-  SurfaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
-  SurfaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
-  FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
+  SurfaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
+  SurfaceElementSubRegion::EdgeMapType & edgeMap = subRegion.edgeList();
+  FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
 
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
 
-  localIndex const kfe = subRegion->size() - 1;
+  localIndex const kfe = subRegion.size() - 1;
   ruptureTime( kfe ) = time_np1;
 
   LvArray::tensorOps::copy< 3 >( elemCenter[ kfe ], faceCenter[ faceIndices[ 0 ] ] );
@@ -117,8 +117,8 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   faceMap[kfe][0] = faceIndices[0];
   faceMap[kfe][1] = faceIndices[1];
   globalIndex const gi = faceManager->localToGlobalMap()[faceIndices[0]];
-  subRegion->localToGlobalMap()[kfe] = gi;
-  subRegion->updateGlobalToLocalMap( kfe );
+  subRegion.localToGlobalMap()[kfe] = gi;
+  subRegion.updateGlobalToLocalMap( kfe );
   subRegionGhostRank[kfe] = faceGhostRank[faceIndices[0]];
 
   // Add the nodes that compose the new FaceElement to the nodeList
@@ -156,7 +156,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   }
 
   // Add the cell region/subregion/index to the faceElementToCells map
-  FixedToManyElementRelation & faceElementsToCells = subRegion->getToCellRelation();
+  FixedToManyElementRelation & faceElementsToCells = subRegion.getToCellRelation();
   for( localIndex ke=0; ke<2; ++ke )
   {
     faceElementsToCells.m_toElementRegion[kfe][ke] = faceToElementRegion[faceIndices[ke]][ke];
@@ -188,7 +188,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   }
 
 
-  subRegion->CalculateElementGeometricQuantities( kfe, faceManager->faceArea() );
+  subRegion.CalculateElementGeometricQuantities( kfe, faceManager->faceArea() );
 
   creationMass[kfe] *= elemArea[kfe];
 
@@ -196,7 +196,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   for( auto const & setIter : faceManager->sets().wrappers() )
   {
     SortedArrayView< localIndex const > const & faceSet = faceManager->sets().getReference< SortedArray< localIndex > >( setIter.first );
-    SortedArray< localIndex > & faceElementSet = subRegion->sets().registerWrapper< SortedArray< localIndex > >( setIter.first )->reference();
+    SortedArray< localIndex > & faceElementSet = subRegion.sets().registerWrapper< SortedArray< localIndex > >( setIter.first ).reference();
     for( localIndex a=0; a<faceMap.size( 0 ); ++a )
     {
       localIndex const faceIndex = faceMap[a][0];

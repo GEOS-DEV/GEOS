@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -35,6 +35,15 @@ namespace constitutive
  */
 struct SolidModelDiscretizationOps
 {
+  /**
+   * @brief Compute upper portion of inner product matrix for solid mechanics, assuming D is symmetric
+   * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
+   * @tparam BASIS_GRADIENT Finite element shape function gradients type
+   * @tparam CBF Callback function
+   * @param gradN Finite Element shape function gradients
+   * @param elementStiffness Local stiffness matrix
+   * @param callbackFunction The callback function
+   */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
             typename CBF >
@@ -43,11 +52,25 @@ struct SolidModelDiscretizationOps
                   real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
                   CBF && callbackFunction );
 
+  /**
+   * @brief Copy upper entries to lower half of inner product matrix
+   * @tparam NUM_SUPPORT_POINTS Number of support points (nodes) for this element
+   * @param elementStiffness Local stiffness matrix
+   */
   template< int NUM_SUPPORT_POINTS >
   GEOSX_HOST_DEVICE
   static
   void fillLowerBTDB( real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
 
+  /**
+   * @brief Compute diagonal of inner product matrix for solid mechanics
+   * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
+   * @tparam BASIS_GRADIENT Finite element shape function gradients type
+   * @tparam CBF Callback function
+   * @param gradN Finite Element shape function gradients
+   * @param diagElementStiffness Local stiffness matrix diagonal
+   * @param callbackFunction The callback function
+   */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
             typename CBF >
@@ -56,6 +79,15 @@ struct SolidModelDiscretizationOps
                  real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS*3],
                  CBF && callbackFunction );
 
+  /**
+   * @brief Compute row-summed diagonal of inner product matrix for solid mechanics
+   * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
+   * @tparam BASIS_GRADIENT Finite element shape function gradients type
+   * @tparam CBF Callback function
+   * @param gradN Finite Element shape function gradients
+   * @param diagSumElementStiffness Local stiffness matrix diagonal
+   * @param callbackFunction The callback function
+   */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
             typename CBF >
@@ -67,6 +99,7 @@ struct SolidModelDiscretizationOps
 };
 
 
+/// @copydoc SolidModelDiscretizationOps::upperBTDB
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT,
           typename CBF >
@@ -90,6 +123,7 @@ void SolidModelDiscretizationOps::upperBTDB( BASIS_GRADIENT const & gradN,
 }
 
 
+/// @copydoc SolidModelDiscretizationOps::fillLowerBTDB
 template< int NUM_SUPPORT_POINTS >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -105,7 +139,7 @@ void SolidModelDiscretizationOps::fillLowerBTDB( real64 ( & elementStiffness )[N
 }
 
 
-
+/// @copydoc SolidModelDiscretizationOps::diagBTDB
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT,
           typename CBF >
@@ -123,6 +157,8 @@ void SolidModelDiscretizationOps::diagBTDB( BASIS_GRADIENT const & gradN,
   }
 }
 
+
+/// @copydoc SolidModelDiscretizationOps::diagRowSumBTDB
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT,
           typename CBF >

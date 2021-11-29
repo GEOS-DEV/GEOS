@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -52,35 +52,23 @@ public:
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;
 
-  ConstitutiveBase *
+  void
   hangConstitutiveRelation( string const & constitutiveRelationInstanceName,
                             dataRepository::Group * const parent,
                             localIndex const numConstitutivePointsPerParentIndex ) const;
 
   ~ConstitutiveManager() override;
 
-  template< typename T = ConstitutiveBase >
-  T const * getConstitutiveRelation( string const & constitutiveRelationInstanceName ) const
+  template< typename T = ConstitutiveBase, typename KEY_TYPE = void >
+  T const & getConstitutiveRelation( KEY_TYPE const & key ) const
   {
-    return this->getGroup< T >( constitutiveRelationInstanceName );
+    return this->getGroup< T >( key );
   }
 
-  template< typename T = ConstitutiveBase >
-  T * getConstitutiveRelation( string const & constitutiveRelationInstanceName )
+  template< typename T = ConstitutiveBase, typename KEY_TYPE = void >
+  T & getConstitutiveRelation( KEY_TYPE const & key )
   {
-    return this->getGroup< T >( constitutiveRelationInstanceName );
-  }
-
-  template< typename T = ConstitutiveBase >
-  T const * getConstitutiveRelation( localIndex const index ) const
-  {
-    return this->getGroup< T >( index );
-  }
-
-  template< typename T = ConstitutiveBase >
-  T * getConstitutiveRelation( localIndex const index )
-  {
-    return this->getGroup< T >( index );
+    return this->getGroup< T >( key );
   }
 
   // template< typename T >
@@ -96,10 +84,8 @@ public:
 
   struct groupKeyStruct
   {
-    static constexpr auto constitutiveModelsString = "ConstitutiveModels";
-  } m_ConstitutiveManagerGroupKeys;
-
-
+    static constexpr auto constitutiveModelsString() { return "ConstitutiveModels"; }
+  };
 };
 
 
@@ -114,10 +100,10 @@ ConstitutiveManager::getConstitutiveData( string const & name,
   rval.resize( relationGroup->numSubGroups() );
   for( localIndex a=0; a<this->getSubGroups().size(); ++a )
   {
-    ConstitutiveBase const * const material = relationGroup->getGroup< ConstitutiveBase >( a );
-    if( material->hasWrapper( name ) )
+    ConstitutiveBase const & material = relationGroup->getGroup< ConstitutiveBase >( a );
+    if( material.hasWrapper( name ) )
     {
-      rval[a] = material->getReference< T >( name );
+      rval[a] = material.getReference< T >( name );
     }
   }
   return rval;
@@ -128,7 +114,7 @@ ConstitutiveManager::getConstitutiveData( string const & name,
 // ConstitutiveManager::GetConstitutiveData( string const & name,
 //                                           dataRepository::Group * const relationGroup )
 // {
-//   return const_cast< ViewAccessor<T> >(const_cast<ConstitutiveManager const *>(this)->
+//   return const_cast< ViewAccessor<T> >(const_cast<ConstitutiveManager const *>(this->
 //                                        GetConstitutiveData<T>( name, relationGroup ) );
 // }
 

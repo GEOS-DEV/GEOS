@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,71 +19,71 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCSOLVER_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSOLVER_HPP_
 
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "linearAlgebra/utilities/LinearSolverResult.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscInterface.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscPreconditioner.hpp"
+#include "common/LinearSolverBase.hpp"
+
+/// Forward declare PETSC's solver struct
+extern "C" struct _p_KSP;
 
 namespace geosx
 {
 
-class DofManager;
-class PetscVector;
-class PetscMatrix;
-
 /**
  * @brief This class creates and provides basic support for PETSc solvers.
  */
-class PetscSolver
+class PetscSolver final : public LinearSolverBase< PetscInterface >
 {
 public:
+
+  /// Alias for base type
+  using Base = LinearSolverBase< PetscInterface >;
 
   /**
    * @brief Solver constructor, with parameter list reference
    * @param[in] parameters structure containing linear solver parameters
    */
-  PetscSolver( LinearSolverParameters parameters );
+  explicit PetscSolver( LinearSolverParameters parameters );
 
   /**
-   * @brief Virtual destructor.
-   *
+   * @brief Destructor.
    */
-  virtual ~PetscSolver() = default;
+  virtual ~PetscSolver();
 
   /**
-   * @brief Solve system with an iterative solver.
-   * @param[in,out] mat the matrix
-   * @param[in,out] sol the solution
-   * @param[in,out] rhs the right-hand side
-   * @param dofManager the Degree-of-Freedom manager associated with matrix
-   *
-   * Solve Ax=b with A an PetscMatrix, x and b PetscVector.
+   * @copydoc PreconditionerBase<PetscInterface>::setup
    */
-  void solve( PetscMatrix & mat,
-              PetscVector & sol,
-              PetscVector & rhs,
-              DofManager const * const dofManager = nullptr );
+  virtual void setup( PetscMatrix const & mat ) override;
 
   /**
-   * @brief Get the result of previous solve.
-   * @return struct with last solve stats
+   * @copydoc PreconditionerBase<PetscInterface>::apply
    */
-  LinearSolverResult const & result()
-  {
-    return m_result;
-  }
+  virtual void apply( PetscVector const & src,
+                      PetscVector & dst ) const override;
+
+  /**
+   * @copydoc LinearSolverBase<PetscInterface>::solve
+   */
+  virtual void solve( PetscVector const & rhs,
+                      PetscVector & sol ) const override;
+
+  /**
+   * @copydoc PreconditionerBase<PetscInterface>::clear
+   */
+  virtual void clear() override;
 
 private:
 
-  LinearSolverParameters m_parameters;
-  LinearSolverResult m_result;
+  using KSP = struct _p_KSP *;
 
-  void solve_direct( PetscMatrix & mat,
-                     PetscVector & sol,
-                     PetscVector & rhs );
+  using Base::m_params;
+  using Base::m_result;
 
-  void solve_krylov( PetscMatrix & mat,
-                     PetscVector & sol,
-                     PetscVector & rhs );
+  /// Preconditioner
+  PetscPreconditioner m_precond;
 
+  /// Krylov solver instance
+  KSP m_solver{};
 };
 
 } // end geosx namespace

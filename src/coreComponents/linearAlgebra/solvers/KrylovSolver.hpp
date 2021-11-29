@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
@@ -27,9 +23,6 @@
 
 namespace geosx
 {
-
-template< typename Vector > class LinearOperator;
-template< typename Vector > class BlockVectorView;
 
 /**
  * @brief Base class for Krylov solvers
@@ -48,7 +41,7 @@ public:
 
   /**
    * @brief Factory method for instantiating Krylov solver objects.
-   * @param parameters solver parameters (only .solverType, .logLevel, .isSymmetric and .krylov fields are used)
+   * @param parameters solver parameters
    * @param matrix linear operator to solve (can be a matrix or a matrix-free operator)
    * @param precond preconditioning operator (must be set up by the user prior to calling solve()/apply())
    * @return an owning pointer to the newly instantiated solver
@@ -59,17 +52,13 @@ public:
 
   /**
    * @brief Constructor.
-   * @param [in] matrix reference to the system matrix.
-   * @param [in] precond reference to the preconditioning operator.
-   * @param [in] tolerance relative residual norm reduction tolerance.
-   * @param [in] maxIterations maximum number of Krylov iterations.
-   * @param [in] verbosity solver verbosity level.
+   * @param [in] params parameters solver parameters
+   * @param [in] matrix reference to the system matrix
+   * @param [in] precond reference to the preconditioning operator
    */
-  KrylovSolver( LinearOperator< Vector > const & matrix,
-                LinearOperator< Vector > const & precond,
-                real64 const tolerance,
-                localIndex const maxIterations,
-                integer const verbosity );
+  KrylovSolver( LinearSolverParameters params,
+                LinearOperator< Vector > const & matrix,
+                LinearOperator< Vector > const & precond );
 
   /**
    * @brief Virtual destructor
@@ -105,9 +94,31 @@ public:
     return m_operator.numGlobalCols();
   }
 
+  virtual localIndex numLocalRows() const override final
+  {
+    return m_operator.numLocalRows();
+  }
+
+  virtual localIndex numLocalCols() const override final
+  {
+    return m_operator.numLocalCols();
+  }
+
+  virtual MPI_Comm comm() const override final
+  {
+    return m_operator.comm();
+  }
+
   /**
-   * @brief Get result of a linear solve.
-   * @return struct containing status and various statistics of the last solve
+   * @brief @return parameters of the solver.
+   */
+  LinearSolverParameters const & parameters() const
+  {
+    return m_params;
+  }
+
+  /**
+   * @brief @return the result of a linear solve.
    */
   LinearSolverResult const & result() const
   {
@@ -121,15 +132,6 @@ public:
   arrayView1d< real64 const > history() const
   {
     return m_residualNorms;
-  }
-
-  /**
-   * @brief Get log level.
-   * @return integer value of the log level
-   */
-  integer getLogLevel() const
-  {
-    return m_logLevel;
   }
 
   /**
@@ -150,7 +152,7 @@ private:
     static VEC createFrom( VEC const & src )
     {
       VEC v;
-      v.createWithLocalSize( src.localSize(), src.getComm() );
+      v.create( src.localSize(), src.comm() );
       return v;
     }
   };
@@ -165,7 +167,7 @@ private:
       BlockVector< VEC > v( src.blockSize() );
       for( localIndex i = 0; i < src.blockSize(); ++i )
       {
-        v.block( i ).createWithLocalSize( src.block( i ).localSize(), src.block( i ).getComm() );
+        v.block( i ).create( src.block( i ).localSize(), src.block( i ).comm() );
       }
       return v;
     }
@@ -192,40 +194,23 @@ protected:
 
   /**
    * @brief Output iteration progress (called by implementations).
-   * @param iter  current iteration number
-   * @param rnorm current residual norm
+   * @note must be called **after** pushing the most recent residual into m_residualNorms
    */
-  void logProgress( localIndex const iter, real64 const rnorm ) const
-  {
-    m_residualNorms[iter] = rnorm;
-    GEOSX_LOG_LEVEL_RANK_0( 2, methodName() << " iteration " << iter << ": residual = " << rnorm );
-  }
+  void logProgress() const;
 
   /**
    * @brief Output convergence result (called by implementations).
    */
-  void logResult() const
-  {
-    GEOSX_LOG_LEVEL_RANK_0( 1, methodName() << ' ' <<
-                            ( m_result.success() ? "converged" : "failed to converge" ) <<
-                            " in " << m_result.numIterations << " iterations " <<
-                            "(" << m_result.solveTime << " s)" );
-  }
+  void logResult() const;
+
+  /// parameters of the solver
+  LinearSolverParameters m_params;
 
   /// reference to the operator to be solved
   LinearOperator< Vector > const & m_operator;
 
   /// reference to the preconditioning operator
   LinearOperator< Vector > const & m_precond;
-
-  /// relative residual norm reduction tolerance
-  real64 m_tolerance;
-
-  /// maximum number of Krylov iterations
-  localIndex m_maxIterations;
-
-  /// solver verbosity level
-  integer m_logLevel;
 
   /// results of a solve
   mutable LinearSolverResult m_result;

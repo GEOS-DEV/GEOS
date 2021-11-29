@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,7 +20,7 @@
 #define GEOSX_MESH_FACEMANAGER_HPP_
 
 #include "ToElementRelation.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 
 namespace geosx
 {
@@ -131,13 +131,13 @@ public:
    * @param[in] nodeManager mesh node manager
    * @param[in] elemManager element manager
    */
-  void buildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
+  void buildFaces( NodeManager & nodeManager, ElementRegionManager & elemManager );
 
   /**
    * @brief Compute faces center, area and normal.
    * @param[in] nodeManager NodeManager associated with the current DomainPartition
    */
-  void computeGeometry( NodeManager const * const nodeManager );
+  void computeGeometry( NodeManager const & nodeManager );
 
   /**
    * @brief Return the number of nodes of the faces with the greatest number of nodes.
@@ -150,8 +150,8 @@ public:
    * @param[in] nodeManager node manager allowing access to face nodes coordinates
    * @param[in] elemManager element manager allowing access to the cell elements
    */
-  void sortAllFaceNodes( NodeManager const * const nodeManager,
-                         ElementRegionManager const * const elemManager );
+  void sortAllFaceNodes( NodeManager const & nodeManager,
+                         ElementRegionManager const & elemManager );
 
   /**
    * @brief Reorder face nodes to be labeled counter-clockwise resulting in outgoing normal.
@@ -169,7 +169,7 @@ public:
    * @brief Flag face and nodes'face with at least one element on the boundary.
    * @param[in] nodeManager manager of mesh nodes
    */
-  void setDomainBoundaryObjects( NodeManager * const nodeManager );
+  void setDomainBoundaryObjects( NodeManager & nodeManager );
 
   /**
    * @brief Flag faces on boundary or external to the DomainPartition.
@@ -260,7 +260,7 @@ public:
    * @param[in] nodeManager mesh nodeManager
    * @param[out] faceToNodes face-to-node map
    */
-  virtual void extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+  virtual void extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
                                                                 std::vector< std::vector< globalIndex > > & faceToNodes ) override;
 
   /**
@@ -275,35 +275,24 @@ public:
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     /// @cond DO_NOT_DOCUMENT
-    static constexpr auto nodeListString              = "nodeList";
-    static constexpr auto edgeListString              = "edgeList";
-    static constexpr auto elementRegionListString     = "elemRegionList";
-    static constexpr auto elementSubRegionListString  = "elemSubRegionList";
-    static constexpr auto elementListString           = "elemList";
-    constexpr static auto faceAreaString = "faceArea";
-    constexpr static auto faceCenterString = "faceCenter";
-    constexpr static auto faceNormalString = "faceNormal";
+    static constexpr char const * nodeListString() { return "nodeList"; }
+    static constexpr char const * edgeListString() { return "edgeList"; }
+    static constexpr char const * elementRegionListString() { return "elemRegionList"; }
+    static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
+    static constexpr char const * elementListString() { return "elemList"; }
+    constexpr static char const * faceAreaString() { return "faceArea"; }
+    constexpr static char const * faceCenterString() { return "faceCenter"; }
+    constexpr static char const * faceNormalString() { return "faceNormal"; }
 
-    dataRepository::ViewKey nodeList              = { nodeListString };
-    dataRepository::ViewKey edgeList              = { edgeListString };
-    dataRepository::ViewKey elementRegionList     = { elementRegionListString };
-    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
-    dataRepository::ViewKey elementList           = { elementListString };
+    dataRepository::ViewKey nodeList              = { nodeListString() };
+    dataRepository::ViewKey edgeList              = { edgeListString() };
+    dataRepository::ViewKey elementRegionList     = { elementRegionListString() };
+    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString() };
+    dataRepository::ViewKey elementList           = { elementListString() };
     /// @endcond
   }
   /// viewKeys
   viewKeys;
-
-
-
-  /**
-   * @struct groupKeyStruct
-   * @brief  contains added group access keys to be bound with class in group hierarchy
-   */
-  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
-  {}
-  /// groupKeys
-  groupKeys;
 
   ///@}
 

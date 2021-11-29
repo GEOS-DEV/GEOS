@@ -23,7 +23,7 @@ Basic Example
 The Internal Mesh Generator allows one to quickly build simple cartesian grids and divide
 them into several regions.  The following attributes are supported in the input block for InternalMesh:
 
-.. include:: /coreComponents/fileIO/schema/docs/InternalMesh.rst
+.. include:: /coreComponents/schema/docs/InternalMesh.rst
 
 
 The following is an example XML ``<mesh>`` block, which will generate a vertical beam with two ``CellBlocks`` (one in red and one in blue in the following picture).
@@ -95,7 +95,7 @@ The following are the two most common scenarios that occur while designing a mes
 
 The following is an example of a mesh block along each dimension, and an image showing the corresponding mesh.  Note that there is a core region of elements with zero bias, and that the transitions between element blocks are smooth.
 
-.. literalinclude:: ../../physicsSolvers/solidMechanics/integratedTests/sedov_with_bias.xml
+.. literalinclude:: ../../../../inputFiles/solidMechanics/sedov_with_bias.xml
   :language: xml
   :start-after: <!-- SPHINX_MESH_BIAS -->
   :end-before: <!-- SPHINX_MESH_BIAS_END -->

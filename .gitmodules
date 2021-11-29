@@ -4,19 +4,16 @@
 [submodule "src/cmake/blt"]
 	path = src/cmake/blt
 	url = ../../LLNL/blt.git
-[submodule "src/externalComponents/PVTPackage"]
-	path = src/externalComponents/PVTPackage
+[submodule "src/coreComponents/constitutive/PVTPackage"]
+	path = src/coreComponents/constitutive/PVTPackage
 	url = ../PVTPackage.git
 [submodule "integratedTests"]
 	path = integratedTests
 	url = ../integratedTests.git
-[submodule "src/externalComponents/PAMELA"]
-	path = src/externalComponents/PAMELA
+[submodule "src/coreComponents/mesh/PAMELA"]
+	path = src/coreComponents/mesh/PAMELA
 	url = ../PAMELA.git
 	shallow = true
 [submodule "src/coreComponents/fileIO/coupling/hdf5_interface"]
 	path = src/coreComponents/fileIO/coupling/hdf5_interface
 	url = ../hdf5_interface.git
-[submodule "src/coreComponents/physicsSolvers/GEOSX_PTP"]
-	path = src/coreComponents/physicsSolvers/GEOSX_PTP
-	url = ../GEOSX_PTP.git

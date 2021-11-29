@@ -3,33 +3,14 @@
 #
 
 set( gtest_geosx_tests
-     testAuxiliaryFunctions.cpp
-     testLinearElasticIsotropic.cpp
-     testLinearElasticAnisotropic.cpp
-     testRelPerm.cpp
-     testCapillaryPressure.cpp 
+     testModifiedCamClay.cpp
+     testDamageUtilities.cpp
+     testDruckerPrager.cpp
+     testElasticIsotropic.cpp
+     testPropertyConversions.cpp
    )
 
-set( dependencyList gtest )
-
-if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core conduit)
-else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} conduit)
-endif()
-
-if( ENABLE_MPI )
-    set( dependencyList ${dependencyList} mpi )
-endif()
-
-if( ENABLE_PVTPackage )
-    set( gtest_geosx_tests ${gtest_geosx_tests} testMultiFluid.cpp )
-    set( dependencyList ${dependencyList} PVTPackage )
-endif()
-
-if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif()
+set( dependencyList gtest constitutive )
 
 if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
@@ -51,3 +32,5 @@ foreach(test ${gtest_geosx_tests})
                 )
 
 endforeach()
+
+

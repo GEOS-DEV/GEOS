@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,9 +20,7 @@
 #include "Damage.hpp"
 #include "DamageVolDev.hpp"
 
-#include "LinearElasticAnisotropic.hpp"
-#include "LinearElasticIsotropic.hpp"
-#include "LinearElasticTransverseIsotropic.hpp"
+#include "ElasticIsotropic.hpp"
 
 namespace geosx
 {
@@ -40,9 +38,9 @@ template< typename BASE >
 DamageVolDev< BASE >::~DamageVolDev()
 {}
 
-typedef DamageVolDev< LinearElasticIsotropic > DamageVolDevLinearElasticIsotropic;
+typedef DamageVolDev< ElasticIsotropic > DamageVolDevElasticIsotropic;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageVolDevLinearElasticIsotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageVolDevElasticIsotropic, string const &, Group * const )
 
 }
 } /* namespace geosx */

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -29,32 +29,30 @@ using namespace dataRepository;
 CellElementRegion::CellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames )->
+  registerWrapper( viewKeyStruct::sourceCellBlockNamesString(), &m_cellBlockNames ).
     setInputFlag( InputFlags::OPTIONAL );
 
-  registerWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio )->
+  registerWrapper( viewKeyStruct::coarseningRatioString(), &m_coarseningRatio ).
     setInputFlag( InputFlags::OPTIONAL );
 }
 
 CellElementRegion::~CellElementRegion()
 {}
 
-
-void CellElementRegion::generateMesh( Group * const cellBlocks )
+void CellElementRegion::generateMesh( Group & cellBlocks )
 {
-  Group * const elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
+  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
   for( string const & cellBlockName : this->m_cellBlockNames )
   {
-    CellElementSubRegion * const subRegion = elementSubRegions->registerGroup< CellElementSubRegion >( cellBlockName );
-    CellBlock * const source = cellBlocks->getGroup< CellBlock >( subRegion->getName() );
-    GEOSX_ERROR_IF( source == nullptr, "Cell block named " + subRegion->getName() + " does not exist" );
-    subRegion->copyFromCellBlock( source );
+    CellElementSubRegion & subRegion = elementSubRegions.registerGroup< CellElementSubRegion >( cellBlockName );
+    CellBlock & source = cellBlocks.getGroup< CellBlock >( subRegion.getName() );
+    subRegion.copyFromCellBlock( source );
   }
 }
 
-void CellElementRegion::generateAggregates( FaceManager const * const faceManager,
-                                            NodeManager const * const GEOSX_UNUSED_PARAM( nodeManager ) )
+void CellElementRegion::generateAggregates( FaceManager const & faceManager,
+                                            NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ) )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -62,14 +60,15 @@ void CellElementRegion::generateAggregates( FaceManager const * const faceManage
   {
     return;
   }
-  Group * elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
-  localIndex regionIndex = getIndexInParent();
-  AggregateElementSubRegion * const aggregateSubRegion =
-    elementSubRegions->registerGroup< AggregateElementSubRegion >( "coarse" );
 
-  arrayView2d< localIndex const > const elemRegionList     = faceManager->elementRegionList();
-  arrayView2d< localIndex const > const elemSubRegionList  = faceManager->elementSubRegionList();
-  arrayView2d< localIndex const > const elemList           = faceManager->elementList();
+  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
+  localIndex regionIndex = getIndexInParent();
+  AggregateElementSubRegion & aggregateSubRegion =
+    elementSubRegions.registerGroup< AggregateElementSubRegion >( "coarse" );
+
+  arrayView2d< localIndex const > const elemRegionList     = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const elemSubRegionList  = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const elemList           = faceManager.elementList();
 
   // Counting the total number of cell and number of vertices
   localIndex nbCellElements = 0;
@@ -100,9 +99,9 @@ void CellElementRegion::generateAggregates( FaceManager const * const faceManage
   array1d< localIndex > offsetSubRegions( this->getSubRegions().size() );
   for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )
   {
-    offsetSubRegions[subRegionIndex] = offsetSubRegions[subRegionIndex - 1] + this->getSubRegion( subRegionIndex )->size();
+    offsetSubRegions[subRegionIndex] = offsetSubRegions[subRegionIndex - 1] + this->getSubRegion( subRegionIndex ).size();
   }
-  for( localIndex kf = 0; kf < faceManager->size(); ++kf )
+  for( localIndex kf = 0; kf < faceManager.size(); ++kf )
   {
     if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex && elemRegionList[kf][0] )
     {
@@ -179,7 +178,7 @@ void CellElementRegion::generateAggregates( FaceManager const * const faceManage
   {
     partsGEOS[fineCellIndex] = LvArray::integerConversion< localIndex >( parts[fineCellIndex] );
   }
-  aggregateSubRegion->createFromFineToCoarseMap( nbAggregates, partsGEOS, aggregateBarycenters );
+  aggregateSubRegion.createFromFineToCoarseMap( nbAggregates, partsGEOS, aggregateBarycenters );
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementRegion, string const &, Group * const )

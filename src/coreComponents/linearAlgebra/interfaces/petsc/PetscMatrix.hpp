@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,8 +20,9 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSPARSEMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
-#include "PetscVector.hpp"
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscVector.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscExport.hpp"
+#include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
 /**
@@ -52,6 +53,9 @@ public:
   /// Compatible vector type
   using Vector = PetscVector;
 
+  /// Associated exporter type
+  using Export = PetscExport;
+
   /// Alias for PETSc matrix struct pointer
   using Mat = struct _p_Mat *;
 
@@ -70,6 +74,26 @@ public:
    * @param[in] src the matrix to be copied
    */
   PetscMatrix( PetscMatrix const & src );
+
+  /**
+   * @brief Move constructor.
+   * @param[in] src the matrix to be copied
+   */
+  PetscMatrix( PetscMatrix && src ) noexcept;
+
+  /**
+   * @brief Copy assignment.
+   * @param src matrix to be copied.
+   * @return the new vector.
+   */
+  PetscMatrix & operator=( PetscMatrix const & src );
+
+  /**
+   * @brief Move assignment.
+   * @param src matrix to be moved from.
+   * @return the new matrix.
+   */
+  PetscMatrix & operator=( PetscMatrix && src ) noexcept;
 
   /**
    * @brief Destructor.
@@ -92,6 +116,8 @@ public:
   using MatrixBase::modifiable;
   using MatrixBase::ready;
   using MatrixBase::residual;
+  using MatrixBase::setDofManager;
+  using MatrixBase::dofManager;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -159,27 +185,15 @@ public:
 
   virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+                    arraySlice2d< real64 const > const & values ) override;
 
   virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
                     arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
+                    arraySlice2d< real64 const > const & values ) override;
 
   virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) override;
-
-  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
-
-  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
-
-  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) override;
+                       arraySlice2d< real64 const > const & values ) override;
 
   virtual void add( globalIndex const * rowIndices,
                     globalIndex const * colIndices,
@@ -198,6 +212,10 @@ public:
                        real64 const * values,
                        localIndex const numRows,
                        localIndex const numCols ) override;
+
+  virtual void insert( arrayView1d< globalIndex const > const & rowIndices,
+                       arrayView1d< globalIndex const > const & colIndices,
+                       arrayView1d< real64 const > const & values ) override;
 
   virtual void apply( PetscVector const & src,
                       PetscVector & dst ) const override;
@@ -236,30 +254,42 @@ public:
   virtual void leftRightScale( PetscVector const & vecLeft,
                                PetscVector const & vecRight ) override;
 
+  virtual void rescaleRows( arrayView1d< globalIndex const > const & rowIndices,
+                            RowSumType const rowSumType ) override;
+
   virtual void transpose( PetscMatrix & dst ) const override;
+
+  virtual void separateComponentFilter( PetscMatrix & dst,
+                                        integer const dofsPerNode ) const override;
 
   virtual real64 clearRow( globalIndex const row,
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) override;
 
   virtual void addEntries( PetscMatrix const & src,
-                           real64 const scale = 1.0,
-                           bool const samePattern = true ) override;
+                           MatrixPatternOp const op,
+                           real64 const scale = 1.0 ) override;
 
-  virtual void addDiagonal( PetscVector const & src ) override;
+  virtual void addDiagonal( PetscVector const & src,
+                            real64 const scale ) override;
+
+  virtual void clampEntries( real64 const lo,
+                             real64 const hi,
+                             bool const excludeDiag ) override;
 
   /**
    * @copydoc MatrixBase<PetscMatrix,PetscVector>::maxRowLength
    */
   virtual localIndex maxRowLength() const override;
 
-  virtual localIndex localRowLength( localIndex localRowIndex ) const override;
+  virtual localIndex rowLength( globalIndex const globalRowIndex ) const override;
 
-  virtual localIndex globalRowLength( globalIndex globalRowIndex ) const override;
-
-  virtual real64 getDiagValue( globalIndex globalRow ) const override;
+  virtual void getRowLengths( arrayView1d< localIndex > const & lengths ) const override;
 
   virtual void extractDiagonal( PetscVector & dst ) const override;
+
+  virtual void getRowSums( PetscVector & dst,
+                           RowSumType const rowSumType ) const override;
 
   virtual void getRowCopy( globalIndex globalRow,
                            arraySlice1d< globalIndex > const & colIndices,
@@ -330,14 +360,21 @@ public:
    */
   virtual real64 normFrobenius() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::normMax
+   */
+  virtual real64 normMax() const override;
+
+  virtual real64 normMax( arrayView1d< globalIndex const > const & m ) const override;
+
   virtual localIndex getLocalRowID( globalIndex const index ) const override;
 
   virtual globalIndex getGlobalRowID( localIndex const index ) const override;
 
   /**
-   * @copydoc MatrixBase<PetscMatrix,PetscVector>::getComm
+   * @copydoc MatrixBase<PetscMatrix,PetscVector>::comm
    */
-  virtual MPI_Comm getComm() const override;
+  virtual MPI_Comm comm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;
 
@@ -361,7 +398,7 @@ public:
 private:
 
   /// Underlying Petsc object.
-  Mat m_mat;
+  Mat m_mat{};
 
   /// Indices of rows to be cleared on next close()
   array1d< globalIndex > m_rowsToClear;

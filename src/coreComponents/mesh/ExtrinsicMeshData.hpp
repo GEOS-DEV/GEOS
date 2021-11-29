@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -16,8 +16,8 @@
  * @file ExtrinsicMeshData.hpp
  */
 
-#ifndef GEOSX_EXTRINSIC_MESH_DATA_HPP_
-#define GEOSX_EXTRINSIC_MESH_DATA_HPP_
+#ifndef GEOSX_MESH_EXTRINSIC_MESH_DATA_HPP_
+#define GEOSX_MESH_EXTRINSIC_MESH_DATA_HPP_
 
 #include "codingUtilities/traits.hpp"
 #include "dataRepository/RestartFlags.hpp"
@@ -35,31 +35,32 @@
  * @param DESCRIPTION A string literal that contains a description of the data for
  *   use in sphinx documentation.
  */
-#define EXTRINSIC_MESH_DATA_TRAIT( NAME,                                           \
-                                   KEY,                                            \
-                                   TYPE,                                           \
-                                   DEFAULT,                                        \
-                                   PLOTLEVEL,                                      \
-                                   RESTARTFLAG,                                    \
-                                   DESCRIPTION )                                   \
-/** @struct NAME                                                                */ \
-/** @brief Trait struct for NAME data                                           */ \
-  struct NAME                                                                      \
-  {                                                                                \
-    /** The key for registration with the data repository.                      */ \
-    static constexpr auto key = KEY;                                               \
-    /** The actual type to be registered.                                       */ \
-    using type = TYPE;                                                             \
-    /** The template type T for registration of a container<T>.                 */ \
-    using dataType = internal::typeHelper_t< TYPE >;                               \
-    /** The dataRepository::DefaultValue for NAME.                              */ \
-    static constexpr dataType defaultValue = DEFAULT;                              \
-    /** The default dataRepository::PlotLevel for NAME.                         */ \
-    static constexpr auto plotLevel = dataRepository::PlotLevel::PLOTLEVEL;        \
-    /** The default dataRepository::RestartFlags for NAME.                      */ \
-    static constexpr auto restartFlag = dataRepository::RestartFlags::RESTARTFLAG; \
-    /** Description of the NAME data for use in sphinx documentation            */ \
-    static constexpr auto description = DESCRIPTION;                               \
+#define EXTRINSIC_MESH_DATA_TRAIT( NAME, \
+                                   KEY, \
+                                   TYPE, \
+                                   DEFAULT, \
+                                   PLOTLEVEL, \
+                                   RESTARTFLAG, \
+                                   DESCRIPTION ) \
+/** @struct NAME */ \
+/** @brief Trait struct for NAME data */ \
+  struct NAME \
+  { \
+    /** @brief @return The key for registration with the data repository. */ \
+    static constexpr char const * key() \
+    { return KEY; } \
+    /** The actual type to be registered. */ \
+    using type = TYPE; \
+    /** The template type T for registration of a container<T>. */ \
+    using dataType = internal::typeHelper_t< TYPE >; \
+    /** The dataRepository::DefaultValue for NAME. */ \
+    static constexpr dataType defaultValue = DEFAULT; \
+    /** The default dataRepository::PlotLevel for NAME. */ \
+    static constexpr dataRepository::PlotLevel plotLevel = dataRepository::PlotLevel::PLOTLEVEL; \
+    /** The default dataRepository::RestartFlags for NAME. */ \
+    static constexpr dataRepository::RestartFlags restartFlag = dataRepository::RestartFlags::RESTARTFLAG; \
+    /** Description of the NAME data for use in sphinx documentation */ \
+    static constexpr char const * description = DESCRIPTION; \
   }
 
 namespace geosx
@@ -96,6 +97,14 @@ EXTRINSIC_MESH_DATA_TRAIT( ParentIndex,
                            LEVEL_2,
                            WRITE_AND_READ,
                            "Index of parent within the mesh object it is registered on." );
+
+EXTRINSIC_MESH_DATA_TRAIT( ParentEdgeIndex,
+                           "parentEdgeIndex",
+                           array1d< localIndex >,
+                           -1,
+                           LEVEL_2,
+                           WRITE_AND_READ,
+                           "Index of parent edge within the mesh object it is registered on." );
 
 EXTRINSIC_MESH_DATA_TRAIT( ChildIndex,
                            "childIndex",
@@ -292,4 +301,4 @@ EXTRINSIC_MESH_DATA_TRAIT( IsFaceSeparable,
 } // namespace extrinsicMeshData
 } // namespace geosx
 
-#endif /* GEOSX_MESH_MESHFIELDS_HPP_ */
+#endif /* GEOSX_MESH_EXTRINSIC_MESH_DATA_HPP_ */

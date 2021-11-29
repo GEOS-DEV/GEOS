@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -247,7 +247,7 @@ public:
   virtual ~SlurryFluidBase() override;
 
   // *** ConstitutiveBase interface
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 3;
@@ -314,37 +314,36 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr char const * componentNamesString() { return "componentNames"; }
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * defaultCompressibilityString() { return "defaultCompressibility"; }
+    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
 
-    static constexpr auto componentNamesString       = "componentNames";
-    static constexpr auto defaultDensityString      = "defaultDensity";
-    static constexpr auto defaultCompressibilityString      = "defaultCompressibility";
-    static constexpr auto defaultViscosityString      = "defaultViscosity";
+    static constexpr char const * densityString() { return "density"; }
+    static constexpr char const * dDens_dPresString() { return "dDens_dPres"; }
+    static constexpr char const * dDens_dProppantConcString() { return "dDens_dProppantConc"; }
+    static constexpr char const * dDens_dCompConcString() { return "dDens_dCompConc"; }
 
-    static constexpr auto densityString      = "density";
-    static constexpr auto dDens_dPresString  = "dDens_dPres";
-    static constexpr auto dDens_dProppantConcString  = "dDens_dProppantConc";
-    static constexpr auto dDens_dCompConcString  = "dDens_dCompConc";
+    static constexpr char const * componentDensityString() { return "componentDensity"; }
+    static constexpr char const * dCompDens_dPresString() { return "dCompDens_dPres"; }
+    static constexpr char const * dCompDens_dCompConcString() { return "dCompDens_dCompConc"; }
 
-    static constexpr auto componentDensityString      = "componentDensity";
-    static constexpr auto dCompDens_dPresString  = "dCompDens_dPres";
-    static constexpr auto dCompDens_dCompConcString  = "dCompDens_dCompConc";
+    static constexpr char const * fluidDensityString() { return "FluidDensity"; }
+    static constexpr char const * dFluidDens_dPresString() { return "dFluidDens_dPres"; }
+    static constexpr char const * dFluidDens_dCompConcString() { return "dFluidDens_dCompConc"; }
 
-    static constexpr auto fluidDensityString      = "FluidDensity";
-    static constexpr auto dFluidDens_dPresString  = "dFluidDens_dPres";
-    static constexpr auto dFluidDens_dCompConcString  = "dFluidDens_dCompConc";
+    static constexpr char const * fluidViscosityString() { return "FluidViscosity"; }
+    static constexpr char const * dFluidVisc_dPresString() { return "dFluidVisc_dPres"; }
+    static constexpr char const * dFluidVisc_dCompConcString() { return "dFluidVisc_dCompConc"; }
 
-    static constexpr auto fluidViscosityString      = "FluidViscosity";
-    static constexpr auto dFluidVisc_dPresString  = "dFluidVisc_dPres";
-    static constexpr auto dFluidVisc_dCompConcString  = "dFluidVisc_dCompConc";
+    static constexpr char const * viscosityString() { return "viscosity"; }
+    static constexpr char const * dVisc_dPresString() { return "dVisc_dPres"; }
+    static constexpr char const * dVisc_dProppantConcString() { return "dVisc_dProppantConc"; }
+    static constexpr char const * dVisc_dCompConcString() { return "dVisc_dCompConc"; }
+    static constexpr char const * flowBehaviorIndexString() { return "flowBehaviorIndex"; }
 
-    static constexpr auto viscosityString    = "viscosity";
-    static constexpr auto dVisc_dPresString  = "dVisc_dPres";
-    static constexpr auto dVisc_dProppantConcString  = "dVisc_dProppantConc";
-    static constexpr auto dVisc_dCompConcString  = "dVisc_dCompConc";
-    static constexpr auto flowBehaviorIndexString   = "flowBehaviorIndex";
-
-    static constexpr auto flowConsistencyIndexString   = "flowConsistencyIndex";
-  } viewKeysSlurryFluidBase;
+    static constexpr char const * flowConsistencyIndexString() { return "flowConsistencyIndex"; }
+  };
 
 protected:
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,9 +19,9 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_VECTORBASE_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_VECTORBASE_HPP_
 
-#include "linearAlgebra/common.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "linearAlgebra/common/common.hpp"
+#include "common/MpiWrapper.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -50,47 +50,6 @@ protected:
 
   /// Alias for VECTOR
   using Vector = VECTOR;
-
-  /**
-   * @name Constructors/destructor/assignment
-   */
-  ///@{
-
-  /**
-   * @brief Constructs a vector in default state
-   */
-  VectorBase()
-    : m_closed( true )
-  {}
-
-  /**
-   * @brief Copy constructor.
-   */
-  VectorBase( VectorBase const & ) = default;
-
-  /**
-   * @brief Move constructor.
-   */
-  VectorBase( VectorBase && ) = default;
-
-  /**
-   * @brief Copy assignment.
-   * @return reference to this object
-   */
-  VectorBase & operator=( VectorBase const & ) = default;
-
-  /**
-   * @brief Move assignment.
-   * @return reference to this object
-   */
-  VectorBase & operator=( VectorBase && ) = default;
-
-  /**
-   * @brief Destructor.
-   */
-  ~VectorBase() = default;
-
-  ///@}
 
   /**
    * @name Status query methods
@@ -127,29 +86,33 @@ protected:
    * @param localSize local number of elements
    * @param comm MPI communicator to use
    *
-   * Create a vector based on local number of elements.  Global size is
-   * the sum across processors.  For specifying a global size and having
-   * automatic partitioning, see createWithGlobalSize().
+   * Create a vector based on local number of elements.
+   * Global size is the sum across processors.
    */
-  virtual void createWithLocalSize( localIndex const localSize, MPI_Comm const & comm ) = 0;
+  virtual void create( localIndex const localSize, MPI_Comm const & comm )
+  {
+    GEOSX_UNUSED_VAR( comm );
+    GEOSX_LAI_ASSERT( closed() );
+    GEOSX_LAI_ASSERT_GE( localSize, 0 );
+    reset();
+
+    // Ideally, resizing to the same size should be a no-op.
+    // But bufferManipulation::resize() always forces a touch in host memory.
+    // We want to avoid moving values to device again in that case.
+    if( m_values.size() != localSize )
+    {
+      m_values.resize( localSize );
+    }
+  }
 
   /**
-   * @brief Create a vector based on global number of elements.
-   * @param globalSize Global number of elements
-   * @param comm MPI communicator to use
-   *
-   * Create a vector based on global number of elements. Every processors
-   * gets the same number of local elements except proc 0, which gets any
-   * remainder elements as well if the split can't be done evenly.
+   * @brief Set a name for the vector (mainly used during various logging).
+   * @param name the name
    */
-  virtual void createWithGlobalSize( globalIndex const globalSize, MPI_Comm const & comm ) = 0;
-
-  /**
-   * @brief Construct parallel vector from a local array.
-   * @param localValues local data to put into vector
-   * @param comm MPI communicator to use
-   */
-  virtual void create( arrayView1d< real64 const > const & localValues, MPI_Comm const & comm ) = 0;
+  void setName( string const & name )
+  {
+    m_values.setName( name );
+  }
 
   ///@}
 
@@ -159,96 +122,51 @@ protected:
   ///@{
 
   /**
-   * @brief Open the vector for modifying entries
+   * @brief Open the vector for modifying entries.
+   * @return an array view to assemble local values into
    */
-  virtual void open() = 0;
+  virtual arrayView1d< real64 > open()
+  {
+    GEOSX_LAI_ASSERT( ready() );
+    m_closed = false;
+    return m_values.toView();
+  }
 
   /**
-   * @brief Assemble vector
+   * @brief Close vector for modification.
    *
-   * Performs parallel communication to scatter assembled entries to appropriate locations
+   * After calling this method, the view obtained via open() should not be used.
    */
   virtual void close() = 0;
 
   /**
-   * @brief Reset the matrix to default state
+   * @brief Notify the vector about external modification through direct data pointer.
+   *
+   * This method MUST be called after any changes to vector values performed through direct pointer access,
+   * so that the underlying Array object can be made aware of external changes in a specific memory space.
+   */
+  virtual void touch() = 0;
+
+  /**
+   * @brief Reset the vector to default state
    */
   virtual void reset()
   {
+    // Clearing the array causes issues on GPU when it is later resized again
+    // (the bug is in bufferManipulation::resize(), which calls buf.data() without
+    // moving the buffer to host, if a capacity increase does not occur, i.e. the new
+    // array size is exactly the same as the one prior to clearing).
+
+    //m_values.clear();
     m_closed = true;
   };
 
   ///@}
 
   /**
-   * @name Add/Set Methods
+   * @name Modification methods
    */
   ///@{
-
-  /**
-   * @brief Set vector value.
-   * @param globalRow global row index
-   * @param value Value to add at given row
-   *
-   * Set vector value at given element.
-   */
-  virtual void set( globalIndex const globalRow,
-                    real64 const value ) = 0;
-
-  /**
-   * @brief Add into vector value.
-   * @param globalRow global row
-   * @param value Values to add in given row
-   *
-   * Add into vector value at given row.
-   */
-  virtual void add( globalIndex const globalRow,
-                    real64 const value ) = 0;
-
-  /**
-   * @brief Set vector values.
-   * @param globalIndices global row indices
-   * @param values Values to add in given rows
-   * @param size Number of elements
-   *
-   * Set vector values at given elements.
-   */
-  virtual void set( globalIndex const * globalIndices,
-                    real64 const * values,
-                    localIndex const size ) = 0;
-
-  /**
-   * @brief Add vector values.
-   * @param globalIndices global row indices
-   * @param values values to add in given rows
-   * @param size number of elements
-   *
-   * Add vector values at given elements.
-   */
-  virtual void add( globalIndex const * globalIndices,
-                    real64 const * values,
-                    localIndex const size ) = 0;
-
-  /**
-   * @brief Set vector values using array1d
-   * @param globalIndices global row indices
-   * @param values values to add in given rows
-   *
-   * Set vector values at given elements.
-   */
-  virtual void set( arraySlice1d< globalIndex const > const & globalIndices,
-                    arraySlice1d< real64 const > const & values ) = 0;
-
-
-  /**
-   * @brief Add into vector values using array1d
-   * @param globalIndices global rows indices
-   * @param values values to add in given rows
-   *
-   * Add into vector values at given rows.
-   */
-  virtual void add( arraySlice1d< globalIndex const > const & globalIndices,
-                    arraySlice1d< real64 const > const & values ) = 0;
 
   /**
    * @brief Set all elements to a constant value.
@@ -259,13 +177,16 @@ protected:
   /**
    * @brief Set vector elements to zero.
    */
-  virtual void zero() = 0;
+  virtual void zero()
+  {
+    set( 0.0 );
+  }
 
   /**
    * @brief Set vector elements to random entries.
    * @param seed the random number seed to use
    */
-  virtual void rand( unsigned const seed = 1984 ) = 0;
+  virtual void rand( unsigned const seed ) = 0;
 
   ///@}
 
@@ -275,10 +196,10 @@ protected:
   ///@{
 
   /**
-   * @brief Multiply all elements by scalingFactor.
-   * @param scalingFactor scaling Factor
+   * @brief Multiply all elements by factor.
+   * @param factor scaling factor
    */
-  virtual void scale( real64 const scalingFactor ) = 0;
+  virtual void scale( real64 const factor ) = 0;
 
   /**
    * @brief Replace vector elements by their reciprocals
@@ -296,6 +217,8 @@ protected:
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
    * @param x vector to copy
+   * @note Unlike copy assignment operator, this method expects both vectors to be created
+   *       and have identical parallel distributions, and never reallocates memory.
    */
   virtual void copy( Vector const & x ) = 0;
 
@@ -318,7 +241,7 @@ protected:
                       real64 const beta ) = 0;
 
   /**
-   * @brief Compute the componentwise multiplication <tt>y</tt> = <tt>v * x</tt>.
+   * @brief Compute the component-wise multiplication <tt>y</tt> = <tt>v * x</tt>.
    * @param x first vector (input)
    * @param y second vector (output)
    */
@@ -370,70 +293,25 @@ protected:
 
   /**
    * @brief Get upper bound of local partition
-   * @brief @return next index after last global row owned by that processor
-   * @note The intention is for [ilower; iupper) to be used as a half-open index range
+   * @return next index after last global row owned by that processor
+   * @note [ v.ilower(); v.iupper() ) is a half-open index range
    */
   virtual globalIndex iupper() const = 0;
 
   /**
-   * @brief Get a value by index.
-   * @param globalRow global row index
-   * @return value at global index @p globalRow
+   * @brief @return a const access view to local vector values
    */
-  virtual real64 get( globalIndex globalRow ) const = 0;
-
-  /**
-   * @brief Get a sequence of values by index.
-   * @param[in] globalIndices array of global row indices
-   * @param[out] values array of vector values
-   */
-  virtual void get( arraySlice1d< globalIndex const > const & globalIndices,
-                    arraySlice1d< real64 > const & values ) const = 0;
-
-  /**
-   * @brief Map a global row index to local row index.
-   * @param[in] globalRow the global row index
-   * @return global row index corresponding to @p globalRow
-   */
-  virtual localIndex getLocalRowID( globalIndex const globalRow ) const = 0;
-
-  /**
-   * @brief Map a local row index to global row index.
-   * @param[in] localRow the local row index
-   * @return global row index corresponding to @p localRow
-   */
-  virtual globalIndex getGlobalRowID( localIndex const localRow ) const = 0;
-
-  /**
-   * @brief Extract a view of the local portion of the array.
-   * @return pointer to local vector data
-   */
-  virtual real64 const * extractLocalVector() const = 0;
-
-  /**
-   * @brief Extract a view of the local portion of the array.
-   * @return pointer to local vector data
-   */
-  virtual real64 * extractLocalVector() = 0;
-
-  /**
-   * @brief Extract local solution by copying into a user-provided array
-   * @param localVector the array view to write to (must be properly sized)
-   */
-  virtual void extract( arrayView1d< real64 > const & localVector ) const
+  arrayView1d< real64 const > values() const
   {
-    real64 const * const data = extractLocalVector();
-    forAll< parallelHostPolicy >( localSize(), [=] ( localIndex const k )
-    {
-      localVector[k] = data[k];
-    } );
+    GEOSX_LAI_ASSERT( ready() );
+    return m_values.toViewConst();
   }
 
   /**
    * @brief Get the communicator used by this vector
    * @return the MPI communicator
    */
-  virtual MPI_Comm getComm() const = 0;
+  virtual MPI_Comm comm() const = 0;
 
   ///@}
 
@@ -471,7 +349,10 @@ protected:
   }
 
   /// Flag indicating whether the vector is closed
-  bool m_closed;
+  bool m_closed = true;
+
+  /// Actual storage for the local vector values
+  array1d< real64 > m_values;
 };
 
 } // namespace geosx

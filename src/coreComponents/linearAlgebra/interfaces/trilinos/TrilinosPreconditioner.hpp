@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -16,21 +16,16 @@
  * @file TrilinosPreconditioner.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSAMG_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSAMG_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_
 
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "common/PreconditionerBase.hpp"
 #include "linearAlgebra/interfaces/trilinos/TrilinosInterface.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 #include <memory>
 
 class Epetra_Operator;
-
-namespace Teuchos
-{
-class ParameterList;
-}
 
 namespace geosx
 {
@@ -50,9 +45,6 @@ public:
 
   /// Alias for matrix type
   using Matrix = typename Base::Matrix;
-
-  /// Allow for partial overload of Base::compute()
-  using Base::compute;
 
   /**
    * @brief Constructor.
@@ -77,7 +69,7 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat ) override;
+  virtual void setup( Matrix const & mat ) override;
 
   /**
    * @brief Apply operator to a vector
@@ -103,16 +95,27 @@ public:
 
 private:
 
+  /**
+   * @brief Setup additional preconditioning matrix if necessary.
+   * @param mat the source matrix
+   * @return reference to the matrix that should be used to setup the main preconditioner
+   */
+  EpetraMatrix const & setupPreconditioningMatrix( EpetraMatrix const & mat );
+
   /// Parameters for all preconditioners
-  LinearSolverParameters m_parameters;
+  LinearSolverParameters m_params;
+
+  /// Preconditioning matrix (if different from input matrix)
+  /// Note: must be declared before (destroyed after) m_precond
+  EpetraMatrix m_precondMatrix;
 
   /// Pointer to the Trilinos implementation
   std::unique_ptr< Epetra_Operator > m_precond;
 
-  /// Trilinos pointer to the near null kernel
+  /// Null space vectors
   array2d< real64 > m_nullSpacePointer;
 };
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSAMG_HPP_
+#endif //GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_

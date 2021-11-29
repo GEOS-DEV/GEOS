@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,72 +19,73 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
 
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "linearAlgebra/utilities/LinearSolverResult.hpp"
+#include "linearAlgebra/interfaces/trilinos/TrilinosInterface.hpp"
+#include "linearAlgebra/interfaces/trilinos/TrilinosPreconditioner.hpp"
+#include "common/LinearSolverBase.hpp"
+
+#include <memory>
+
+class AztecOO;
 
 namespace geosx
 {
 
-class DofManager;
-class EpetraVector;
-class EpetraMatrix;
-
 /**
  * @brief This class creates and provides basic support for AztecOO, Amesos and ML libraries.
  */
-class TrilinosSolver
+class TrilinosSolver final : public LinearSolverBase< TrilinosInterface >
 {
 public:
 
+  /// Alias for base type
+  using Base = LinearSolverBase< TrilinosInterface >;
+
   /**
    * @brief Solver constructor, with parameter list reference
-   *
    * @param[in] parameters structure containing linear solver parameters
    */
-  TrilinosSolver( LinearSolverParameters parameters );
+  explicit TrilinosSolver( LinearSolverParameters parameters );
 
   /**
-   * @brief Virtual destructor.
-   *
+   * @brief Destructor.
    */
-  ~TrilinosSolver();
+  virtual ~TrilinosSolver() override;
 
   /**
-   * @brief Solve system with an iterative solver.
-   * @param[in,out] mat the matrix
-   * @param[in,out] sol the solution
-   * @param[in,out] rhs the right-hand side
-   * @param dofManager the Degree-of-Freedom manager associated with matrix
-   *
-   * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
+   * @copydoc PreconditionerBase<PetscInterface>::setup
    */
-  void solve( EpetraMatrix & mat,
-              EpetraVector & sol,
-              EpetraVector & rhs,
-              DofManager const * const dofManager = nullptr );
+  virtual void setup( EpetraMatrix const & mat ) override;
 
   /**
-   * @brief Get the result of previous solve.
-   * @return struct with last solve stats
+   * @copydoc PreconditionerBase<PetscInterface>::apply
    */
-  LinearSolverResult const & result()
-  {
-    return m_result;
-  }
+  virtual void apply( EpetraVector const & src,
+                      EpetraVector & dst ) const override;
+
+  /**
+   * @copydoc LinearSolverBase<PetscInterface>::solve
+   */
+  virtual void solve( EpetraVector const & rhs,
+                      EpetraVector & sol ) const override;
 
 private:
 
-  LinearSolverParameters m_parameters;
-  LinearSolverResult m_result;
+  /**
+   * @brief Perform the solve.
+   * @param rhs right-hand side vector
+   * @param sol solution vector
+   * @return the error code from the AztecOO call
+   */
+  int doSolve( EpetraVector const & rhs, EpetraVector & sol ) const;
 
-  void solveDirect( EpetraMatrix & mat,
-                    EpetraVector & sol,
-                    EpetraVector & rhs );
+  using Base::m_params;
+  using Base::m_result;
 
-  void solveKrylov( EpetraMatrix & mat,
-                    EpetraVector & sol,
-                    EpetraVector & rhs );
+  /// Preconditioner
+  TrilinosPreconditioner m_precond;
 
+  /// AztecOO solver instance
+  std::unique_ptr< AztecOO > m_solver;
 };
 
 } // end geosx namespace

@@ -15,7 +15,7 @@ basic capabilities of the code.  More detailed descriptions of these capabilitie
 then be found in the User Guide.
 
 For those interested in developing new capabilities in GEOSX, we provide a Developer Guide.
-The code itself is also documented inline using doyxgen.  The Build Guide
+The code itself is also documented inline using doxygen.  The Build Guide
 contains more detailed information about third-party dependencies, the build
 system, and the continuous integration system.  Finally, GEOSX has a self-documenting
 data structure.  The Datastructure Index is an automatically generated list of
@@ -33,6 +33,10 @@ you have suggestions for improving the guides below, please post an issue on our
 
    docs/sphinx/tutorials/Index
 
+   docs/sphinx/basicExamples/Index
+
+   docs/sphinx/advancedExamples/Index
+   
    docs/sphinx/userGuide/Index
 
    docs/sphinx/developerGuide/Index

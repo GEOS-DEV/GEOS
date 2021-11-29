@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -36,8 +36,8 @@ public:
                                          real64 const volFracScale,
                                          arrayView1d< integer const > const & phaseTypes,
                                          arrayView1d< integer const > const & phaseOrder,
-                                         arrayView3d< real64 > const & phaseRelPerm,
-                                         arrayView4d< real64 > const & dPhaseRelPerm_dPhaseVolFrac )
+                                         arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                                         arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
                                       phaseRelPerm,
@@ -48,29 +48,15 @@ public:
     m_volFracScale( volFracScale )
   {}
 
-  /// Default copy constructor
-  BrooksCoreyRelativePermeabilityUpdate( BrooksCoreyRelativePermeabilityUpdate const & ) = default;
-
-  /// Default move constructor
-  BrooksCoreyRelativePermeabilityUpdate( BrooksCoreyRelativePermeabilityUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  BrooksCoreyRelativePermeabilityUpdate & operator=( BrooksCoreyRelativePermeabilityUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  BrooksCoreyRelativePermeabilityUpdate & operator=( BrooksCoreyRelativePermeabilityUpdate && ) = delete;
+  GEOSX_HOST_DEVICE
+  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                        arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                        arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseRelPerm,
-                        arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & phaseVolFraction ) const override
+                       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
   {
     compute( phaseVolFraction,
              m_phaseRelPerm[k][q],
@@ -91,8 +77,6 @@ public:
 
   BrooksCoreyRelativePermeability( string const & name, dataRepository::Group * const parent );
 
-  virtual ~BrooksCoreyRelativePermeability() override;
-
 //START_SPHINX_INCLUDE_00
   static string catalogName() { return "BrooksCoreyRelativePermeability"; }
 
@@ -110,19 +94,12 @@ public:
 //START_SPHINX_INCLUDE_01
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
-    static constexpr auto phaseMinVolumeFractionString = "phaseMinVolumeFraction";
-    static constexpr auto phaseRelPermExponentString   = "phaseRelPermExponent";
-    static constexpr auto phaseRelPermMaxValueString   = "phaseRelPermMaxValue";
-    static constexpr auto volFracScaleString                = "volFracScale";
-
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey phaseMinVolumeFraction = { phaseMinVolumeFractionString };
-    ViewKey phaseRelPermExponent   = { phaseRelPermExponentString };
-    ViewKey phaseRelPermMaxValue   = { phaseRelPermMaxValueString };
-
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
+    static constexpr char const * phaseRelPermExponentString() { return "phaseRelPermExponent"; }
+    static constexpr char const * phaseRelPermMaxValueString() { return "phaseRelPermMaxValue"; }
+    static constexpr char const * volFracScaleString() { return "volFracScale"; }
   } vieKeysBrooksCoreyRelativePermeability;
+//END_SPHINX_INCLUDE_01
 
 protected:
 
@@ -134,28 +111,21 @@ protected:
   array1d< real64 > m_phaseRelPermMaxValue;
 
   real64 m_volFracScale;
+//END_SPHINX_INCLUDE_02
 };
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
+inline void
 BrooksCoreyRelativePermeabilityUpdate::
-  compute( arraySlice1d< real64 const > const & phaseVolFraction,
-           arraySlice1d< real64 > const & phaseRelPerm,
-           arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
+  compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+           arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  localIndex const NP = numPhases();
+  LvArray::forValuesInSlice( dPhaseRelPerm_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
-  for( localIndex ip = 0; ip < NP; ++ip )
-  {
-    for( localIndex jp = 0; jp < NP; ++jp )
-    {
-      dPhaseRelPerm_dPhaseVolFrac[ip][jp] = 0.0;
-    }
-  }
   real64 const satScaleInv = 1.0 / m_volFracScale;
 
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( localIndex ip = 0; ip < numPhases(); ++ip )
   {
     real64 const satScaled = (phaseVolFraction[ip] - m_phaseMinVolumeFraction[ip]) * satScaleInv;
     real64 const exponent  = m_phaseRelPermExponent[ip];

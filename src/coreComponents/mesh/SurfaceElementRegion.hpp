@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,7 @@
 #define GEOSX_MESH_SURFACEELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geosx
 {
@@ -98,7 +98,7 @@ public:
    */
   ///@{
 
-  virtual void generateMesh( Group * ) override;
+  virtual void generateMesh( Group & ) override;
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
@@ -146,19 +146,21 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    /// subRegion type string
-    static constexpr auto subRegionTypeString = "subRegionType";
+    /// @return subRegion type string
+    static constexpr char const * subRegionTypeString() { return "subRegionType"; }
 
-    /// Fracture set string
-    static constexpr auto fractureSetString = "fractureSet";
-    /// Default fracture aperture
-    static constexpr auto defaultApertureString = "defaultAperture";
-    /// Rupture time string
-    static constexpr auto ruptureTimeString = "ruptureTime";
+    /// @return Fracture set string
+    static constexpr char const * fractureSetString() { return "fractureSet"; }
+
+    /// @return Default fracture aperture
+    static constexpr char const * defaultApertureString() { return "defaultAperture"; }
+
+    /// @return Rupture time string
+    static constexpr char const * ruptureTimeString() { return "ruptureTime"; }
   };
 
 protected:
-  virtual void initializePreSubGroups( Group * const ) override;
+  virtual void initializePreSubGroups() override;
 
 private:
 
@@ -168,7 +170,10 @@ private:
 
 };
 
-ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType, "faceElement", "embeddedElement" )
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( SurfaceElementRegion::SurfaceSubRegionType,
+              "faceElement",
+              "embeddedElement" );
 
 } /* namespace geosx */
 

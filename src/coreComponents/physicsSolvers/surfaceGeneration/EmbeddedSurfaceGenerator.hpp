@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -16,25 +16,25 @@
  * @file EmbeddedSurfaceGenerator.hpp
  */
 
-#ifndef SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
-#define SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
+#define GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_
 
-#include "mpiCommunications/NeighborCommunicator.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "managers/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 
 namespace geosx
 {
 
-//struct ModifiedObjectLists
-//{
-//  std::set<localIndex> newNodes;
-//  std::set<localIndex> newEdges;
-//  std::set<localIndex> newFaces;
-//  map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
-//  map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
-//};
+struct NewObjectLists
+{
+  std::set< localIndex > newNodes;
+  std::set< localIndex > newEdges;
+  map< std::pair< localIndex, localIndex >, std::set< localIndex > > newElements;
+
+  void insert( NewObjectLists const & lists );
+};
 
 
 class SpatialPartition;
@@ -62,16 +62,17 @@ public:
 
   static string catalogName() { return "EmbeddedSurfaceGenerator"; }
 
-  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
+  virtual void registerDataOnMesh( Group & MeshBody ) override final;
 
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        dataRepository::Group * domain ) override
+                        DomainPartition & domain ) override
   {
-    solverStep( time_n, dt, cycleNumber, *domain->groupCast< DomainPartition * >());
+    solverStep( time_n, dt, cycleNumber, domain );
+    return false;
   }
 
   /**
@@ -91,48 +92,43 @@ public:
 
 protected:
 
-  /**
-   * @brief xxx
-   * @param[in] ...
-   * @param[in] ...
-   * @param[in] ...
-   * @return ...
-   *
-   */
-  virtual void initializePostSubGroups( Group * const problemManager ) override final;
-  /**
-   * @brief xxx
-   * @param[in] ...
-   * @param[in] ...
-   * @param[in] ...
-   * @return ...
-   *
-   */
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const problemManager ) override final;
-  virtual void postRestartInitialization( Group * const domain ) override final;
+  virtual void initializePostSubGroups() override final;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
 private:
 
   void addToFractureStencil( DomainPartition & domain );
+
+  void setGlobalIndices( ElementRegionManager & elemManager,
+                         EmbeddedSurfaceNodeManager & embSurfNodeManager,
+                         EmbeddedSurfaceSubRegion & embeddedSurfaceSubregion );
+
+  void addEmbeddedElementsToSets( ElementRegionManager const & elemManager,
+                                  EmbeddedSurfaceSubRegion & embeddedSurfaceSubregion );
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto solidMaterialNameString = "solidMaterialNames";
-    constexpr static auto fractureRegionNameString = "fractureRegion";
+    constexpr static char const * solidMaterialNameString() {return "solidMaterialNames"; }
+    constexpr static char const * fractureRegionNameString() {return "fractureRegion"; }
+    constexpr static char const * mpiCommOrderString() { return "mpiCommOrder"; }
+
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
-    constexpr static auto rockToughnessString = "rockToughness";
-  }; //SurfaceGenViewKeys;
+    constexpr static char const * rockToughnessString() {return "rockToughness"; }
+  };
 
   // solid solver name
   array1d< string > m_solidMaterialNames;
   // fracture region name
   string m_fractureRegionName;
+  // Flag for consistent communication ordering
+  int m_mpiCommOrder;
 };
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACEGENERATOR_HPP_ */

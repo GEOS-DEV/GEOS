@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,6 +19,8 @@
 #ifndef GEOSX_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
 #define GEOSX_LINEARALGEBRA_DOFMANAGERHELPERS_HPP
 
+#include "mesh/utilities/MeshMapUtilities.hpp"
+
 namespace geosx
 {
 
@@ -31,8 +33,7 @@ namespace
  * @tparam LOC type of mesh location
  */
 template< DofManager::Location LOC >
-struct MeshHelper
-{};
+struct MeshHelper;
 
 template<>
 struct MeshHelper< DofManager::Location::Node >
@@ -42,9 +43,9 @@ struct MeshHelper< DofManager::Location::Node >
 
   static LocalIndexType constexpr invalid_local_index{ -1 };
 
-  static constexpr auto managerGroupName = MeshLevel::groupStructKeys::nodeManagerString;
-  static constexpr auto mapViewKey = ElementSubRegionBase::viewKeyStruct::nodeListString;
-  static constexpr auto syncObjName = "node";
+  static constexpr char const * managerGroupName() { return MeshLevel::groupStructKeys::nodeManagerString; }
+  static constexpr char const * mapViewKey() { return ElementSubRegionBase::viewKeyStruct::nodeListString(); }
+  static constexpr char const * syncObjName = "node";
 
   template< typename MANAGER >
   using MapType = typename MANAGER::NodeMapType;
@@ -58,9 +59,9 @@ struct MeshHelper< DofManager::Location::Edge >
 
   static LocalIndexType constexpr invalid_local_index{ -1 };
 
-  static constexpr auto managerGroupName = MeshLevel::groupStructKeys::edgeManagerString;
-  static constexpr auto mapViewKey = ElementSubRegionBase::viewKeyStruct::edgeListString;
-  static constexpr auto syncObjName = "edge";
+  static constexpr char const * managerGroupName() { return MeshLevel::groupStructKeys::edgeManagerString; }
+  static constexpr char const * mapViewKey() { return ElementSubRegionBase::viewKeyStruct::edgeListString(); }
+  static constexpr char const * syncObjName = "edge";
 
   template< typename MANAGER >
   using MapType = typename MANAGER::EdgeMapType;
@@ -74,9 +75,9 @@ struct MeshHelper< DofManager::Location::Face >
 
   static LocalIndexType constexpr invalid_local_index{ -1 };
 
-  static constexpr auto managerGroupName = MeshLevel::groupStructKeys::faceManagerString;
-  static constexpr auto mapViewKey = ElementSubRegionBase::viewKeyStruct::faceListString;
-  static constexpr auto syncObjName = "face";
+  static constexpr char const * managerGroupName() { return MeshLevel::groupStructKeys::faceManagerString; }
+  static constexpr char const * mapViewKey() { return ElementSubRegionBase::viewKeyStruct::faceListString(); }
+  static constexpr char const * syncObjName = "face";
 
   template< typename MANAGER >
   using MapType = typename MANAGER::FaceMapType;
@@ -90,13 +91,12 @@ struct MeshHelper< DofManager::Location::Elem >
 
   static LocalIndexType constexpr invalid_local_index{ -1, -1, -1 };
 
-  static constexpr auto managerGroupName = MeshLevel::groupStructKeys::elemManagerString;
+  static constexpr auto managerGroupName() { return MeshLevel::groupStructKeys::elemManagerString; }
   static constexpr auto syncObjName = "elems";
 
   template< typename MANAGER >
   using MapType = typename MANAGER::ElemMapType;
 };
-
 
 /**
  * @brief Compile-time limits on incidence between mesh objects.
@@ -144,202 +144,6 @@ SET_MAX_MESH_INCIDENCE( Elem, Edge, 12 );
 SET_MAX_MESH_INCIDENCE( Elem, Face, 6 );
 
 #undef SET_MAX_MESH_INCIDENCE
-
-template< DofManager::Location LOC, typename MANAGER >
-struct MapTypeHelper
-{
-  using type = typename MeshHelper< LOC >::template MapType< MANAGER >;
-};
-
-// return dummy type if target manager type does not declare a type alias to map to LOC objects
-// this allows all switchyards to compile, but one shouldn't attempt to access a non-existent map
-template< DofManager::Location LOC, typename MANAGER >
-using MapType = typename MapTypeHelper< LOC, MANAGER >::type;
-
-// some helper crust to extract underlying type from InterObjectRelation and the likes
-template< typename T, bool >
-struct BaseTypeHelper
-{
-  using type = T;
-};
-
-template< typename T >
-struct BaseTypeHelper< T, true >
-{
-  using type = typename T::base_type;
-};
-
-HAS_MEMBER_TYPE( base_type );
-
-template< typename MAP >
-using BaseType = typename BaseTypeHelper< MAP, HasMemberType_base_type< MAP > >::type;
-
-/**
- * @brief Helper struct that specializes access to various map types
- * @tparam MAP type of the map
- */
-template< typename MAP >
-struct MapHelperImpl
-{};
-
-template< typename T, typename PERMUTATION >
-struct MapHelperImpl< array2d< T, PERMUTATION > >
-{
-  static localIndex size0( array2d< T, PERMUTATION > const & map )
-  {
-    return map.size( 0 );
-  }
-
-  static localIndex size1( array2d< T, PERMUTATION > const & map, localIndex const GEOSX_UNUSED_PARAM( i0 ) )
-  {
-    return map.size( 1 );
-  }
-
-  static T const & value( array2d< T, PERMUTATION > const & map, localIndex const i0, localIndex const i1 )
-  {
-    return map( i0, i1 );
-  }
-
-  static localIndex size0( arrayView2d<T const, LvArray::typeManipulation::getStrideOneDimension( PERMUTATION {} ) > const & map )
-  {
-    return map.size( 0 );
-  }
-
-  static localIndex size1( arrayView2d<T const, LvArray::typeManipulation::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const GEOSX_UNUSED_PARAM( i0 ) )
-  {
-    return map.size( 1 );
-  }
-
-  static T const & value( arrayView2d<T const, LvArray::typeManipulation::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const i0, localIndex const i1 )
-  {
-    return map( i0, i1 );
-  }
-
-};
-
-template< typename T >
-struct MapHelperImpl< array1d< array1d< T > > >
-{
-  static localIndex size0( array1d< array1d< T > > const & map )
-  {
-    return map.size();
-  }
-
-  static localIndex size1( array1d< array1d< T > > const & map, localIndex const i0 )
-  {
-    return map[i0].size();
-  }
-
-  static T const & value( array1d< array1d< T > > const & map, localIndex const i0, localIndex const i1 )
-  {
-    return map[i0][i1];
-  }
-
-  static localIndex size0( arrayView1d< arrayView1d< T const > const > const & map )
-  {
-    return map.size();
-  }
-
-  static localIndex size1( arrayView1d< arrayView1d< T const >  const > const & map, localIndex const i0 )
-  {
-    return map[i0].size();
-  }
-
-  static T const & value( arrayView1d< arrayView1d< T const > const > const & map, localIndex const i0, localIndex const i1 )
-  {
-    return map[i0][i1];
-  }
-
-};
-
-template< typename T >
-struct MapHelperImpl< ArrayOfArrays< T > >
-{
-  static localIndex size0( ArrayOfArraysView< T const > const & map )
-  {
-    return map.size();
-  }
-
-  static localIndex size1( ArrayOfArraysView< T const > const & map, localIndex const i0 )
-  {
-    return map.sizeOfArray( i0 );
-  }
-
-  static T const & value( ArrayOfArraysView< T const > const & map, localIndex const i0, localIndex const i1 )
-  {
-    return map( i0, i1 );
-  }
-};
-
-template< typename T >
-struct MapHelperImpl< array1d< SortedArray< T > > >
-{
-  static localIndex size0( array1d< SortedArray< T > > const & map )
-  {
-    return map.size();
-  }
-
-  static localIndex size1( array1d< SortedArray< T > > const & map, localIndex const i0 )
-  {
-    return map[i0].size();
-  }
-
-  static T const & value( array1d< SortedArray< T > > const & map, localIndex const i0, localIndex const i1 )
-  {
-    return map[i0][i1];
-  }
-};
-
-template< typename T >
-struct MapHelperImpl< ArrayOfSets< T > >
-{
-  static localIndex size0( ArrayOfSetsView< T const > const & map )
-  {
-    return map.size();
-  }
-
-  static localIndex size1( ArrayOfSetsView< T const > const & map, localIndex const i0 )
-  {
-    return map.sizeOfSet( i0 );
-  }
-
-  static T const & value( ArrayOfSetsView< T const > const & map, localIndex const i0, localIndex const i1 )
-  {
-    return map( i0, i1 );
-  }
-};
-
-template< typename BASETYPE >
-struct MapHelperImpl< ToElementRelation< BASETYPE > >
-{
-  using BaseHelper = MapHelperImpl< BASETYPE >;
-
-  static localIndex size0( ToElementRelation< BASETYPE > const & map )
-  {
-    return BaseHelper::size0( map.m_toElementIndex );
-  }
-
-  static localIndex size1( ToElementRelation< BASETYPE > const & map, localIndex const i0 )
-  {
-    return BaseHelper::size1( map.m_toElementIndex, i0 );
-  }
-
-  static auto value( ToElementRelation< BASETYPE > const & map, localIndex const i0, localIndex const i1 )
-  {
-    return MeshHelper< DofManager::Location::Elem >::LocalIndexType{ BaseHelper::value( map.m_toElementRegion, i0, i1 ),
-                                                                     BaseHelper::value( map.m_toElementSubRegion, i0, i1 ),
-                                                                     BaseHelper::value( map.m_toElementIndex, i0, i1 ) };
-  }
-};
-
-/**
- * @brief Helper struct that specializes access to various map types
- * @tparam MAP type of the map
- *
- * @note We may need to strip off InterObjectRelation and get the underlying map type, hence the extra layer
- */
-template< typename MAP >
-using MapHelper = MapHelperImpl< BaseType< MAP > >;
 
 /**
  * @brief Switchyard for Location (Node/Edge/Face/Elem)
@@ -397,23 +201,21 @@ bool LocationSwitch( DofManager::Location const loc1,
 }
 
 template< DofManager::Location LOC >
-typename MeshHelper< LOC >::ManagerType const & getObjectManager( MeshLevel const * const mesh )
+typename MeshHelper< LOC >::ManagerType const & getObjectManager( MeshLevel const & mesh )
 {
   using ObjectManager = typename MeshHelper< LOC >::ManagerType;
-  GEOSX_ASSERT( mesh != nullptr );
-  ObjectManager const * manager = mesh->getGroup< ObjectManager >( MeshHelper< LOC >::managerGroupName );
-  GEOSX_ASSERT( manager != nullptr );
-  return *manager;
+  return mesh.getGroup< ObjectManager >( MeshHelper< LOC >::managerGroupName() );
 }
 
 template< DofManager::Location LOC >
-typename MeshHelper< LOC >::ManagerType & getObjectManager( MeshLevel * const mesh )
+typename MeshHelper< LOC >::ManagerType & getObjectManager( MeshLevel & mesh )
 {
   using ObjectManager = typename MeshHelper< LOC >::ManagerType;
-  return const_cast< ObjectManager & >( getObjectManager< LOC >( const_cast< MeshLevel const * >( mesh ) ) );
+  return mesh.getGroup< ObjectManager >( MeshHelper< LOC >::managerGroupName() );
 }
 
-ObjectManagerBase const & getObjectManager( DofManager::Location const loc, MeshLevel const * const mesh )
+ObjectManagerBase const & getObjectManager( DofManager::Location const loc,
+                                            MeshLevel const & mesh )
 {
   ObjectManagerBase const * manager = nullptr;
   LocationSwitch( loc, [&]( auto const LOC )
@@ -424,10 +226,18 @@ ObjectManagerBase const & getObjectManager( DofManager::Location const loc, Mesh
   return *manager;
 }
 
-ObjectManagerBase & getObjectManager( DofManager::Location const loc, MeshLevel * const mesh )
+ObjectManagerBase & getObjectManager( DofManager::Location const loc, MeshLevel & mesh )
 {
-  return const_cast< ObjectManagerBase & >( getObjectManager( loc, const_cast< MeshLevel const * >( mesh ) ) );
+  return const_cast< ObjectManagerBase & >( getObjectManager( loc, const_cast< MeshLevel const & >( mesh ) ) );
 }
+
+/**
+ * @brief Helper alias for accessing mesh maps.
+ * @tparam LOC typeof object (location)
+ * @tparam MANAGER type of source object manager
+ */
+template< DofManager::Location LOC, typename MANAGER >
+using MapType = typename MeshHelper< LOC >::template MapType< MANAGER >;
 
 /**
  * @brief A helper struct implementing visitation of mesh objects and connected (adjacent) objects
@@ -437,7 +247,7 @@ ObjectManagerBase & getObjectManager( DofManager::Location const loc, MeshLevel 
  * @tparam VISIT_GHOSTS whether to visit ghosted primary locations
  */
 template< DofManager::Location LOC, DofManager::Location CONN_LOC, bool VISIT_GHOSTS >
-struct MeshLoopHelper;
+struct MeshVisitor;
 
 /**
  * @brief A specialization of MeshLoopHelper used when adjacent objects are NOT needed
@@ -448,12 +258,12 @@ struct MeshLoopHelper;
  * The algorithm will visit objects in order of increasing local index.
  */
 template< DofManager::Location LOC, bool VISIT_GHOSTS >
-struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
+struct MeshVisitor< LOC, LOC, VISIT_GHOSTS >
 {
-  template< typename ... SUBREGIONTYPES, typename LAMBDA >
-  static void visit( MeshLevel * const meshLevel,
+  template< typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
+  static void visit( MeshLevel const & meshLevel,
                      std::vector< string > const & regions,
-                     LAMBDA lambda )
+                     LAMBDA && lambda )
   {
     // derive some useful type aliases
     using ObjectManagerLoc = typename MeshHelper< LOC >::ManagerType;
@@ -463,57 +273,59 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
     arrayView1d< integer const > const & ghostRank = objectManager.ghostRank();
 
     // create an array to track previously visited locations (to avoid multiple visits)
-    array1d< bool > locationsVisited( objectManager.size() );
-    locationsVisited.setValues< serialPolicy >( false );
+    array1d< integer > visited( objectManager.size() );
 
-    // create (and overallocate) an array to collect indicies to visit
-    array1d< localIndex > locationsToVisit{};
-    locationsToVisit.reserve( objectManager.size() );
-
-    meshLevel->getElemManager()->
+    meshLevel.getElemManager().
       forElementSubRegions< SUBREGIONTYPES... >( regions, [&]( localIndex const, auto const & subRegion )
     {
       // derive some more useful, subregion-dependent type aliases
-      using ElementSubRegionType = std::remove_reference_t< decltype( subRegion ) >;
-      using ElemToLocMapType = MapType< LOC, ElementSubRegionType >;
+      using ElemToLocMapType = MapType< LOC, TYPEOFREF( subRegion ) >;
 
       // get access to element-to-location map
       auto const & elemToLocMap =
-        subRegion.template getReference< ElemToLocMapType >( MeshHelper< LOC >::mapViewKey );
+        subRegion.template getReference< ElemToLocMapType >( MeshHelper< LOC >::mapViewKey() ).toViewConst();
 
       // loop over all elements (including ghosts, which may be necessary to access some locally owned locations)
-      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+      forAll< parallelHostPolicy >( subRegion.size(), [=, visited = visited.toView()]( localIndex const ei )
       {
-        // loop over all locations incident on an element
-        for( localIndex a = 0; a < MapHelper< ElemToLocMapType >::size1( elemToLocMap, ei ); ++a )
+        // loop over all locations incident on an element and increment visitation counter
+        for( localIndex a = 0; a < meshMapUtilities::size1( elemToLocMap, ei ); ++a )
         {
-          localIndex const locIdx = MapHelper< ElemToLocMapType >::value( elemToLocMap, ei, a );
-
-          // check if we should visit this location
-          if( ( VISIT_GHOSTS || ghostRank[locIdx] < 0) && !std::exchange( locationsVisited[locIdx], true ) )
+          localIndex const locIdx = meshMapUtilities::value( elemToLocMap, ei, a );
+          if( VISIT_GHOSTS || ghostRank[locIdx] < 0 )
           {
-            locationsToVisit.emplace_back( locIdx );
+            RAJA::atomicInc< parallelHostAtomic >( &visited[locIdx] );
           }
         }
-      }
+      } );
     } );
 
-    // optimize for the common case (e.g. all nodes of the mesh)
-    if( locationsToVisit.size() == objectManager.size() )
+    // turn marker array into a list of indices to visit (this is inherently serial, but fast)
+    array1d< localIndex > locations;
+    locations.reserve( objectManager.size() );
+    for( localIndex i = 0; i < visited.size(); ++i )
     {
-      for( localIndex locIdx = 0; locIdx < objectManager.size(); ++locIdx )
+      if( visited[i] > 0 )
+      {
+        locations.emplace_back( i );
+      }
+    }
+
+    // optimize for the common case (e.g. all nodes of the mesh) to avoid extra memory access
+    if( locations.size() == objectManager.size() )
+    {
+      forAll< POLICY >( objectManager.size(), [=]( localIndex const locIdx )
       {
         lambda( locIdx, locIdx, 0 );
-      }
+      } );
     }
     else
     {
-      // I think this is faster than alternatives, but need to profile
-      std::sort( locationsToVisit.begin(), locationsToVisit.end() );
-      for( localIndex const locIdx : locationsToVisit )
+      forAll< POLICY >( locations.size(), [=, locations = locations.toViewConst()]( localIndex const i )
       {
+        localIndex const locIdx = locations[i];
         lambda( locIdx, locIdx, 0 );
-      }
+      } );
     }
   }
 };
@@ -525,12 +337,12 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
  * @tparam VISIT_GHOSTS whether to visit ghosted primary locations
  */
 template< DofManager::Location LOC, DofManager::Location CONN_LOC, bool VISIT_GHOSTS >
-struct MeshLoopHelper
+struct MeshVisitor
 {
-  template< typename ... SUBREGIONTYPES, typename LAMBDA >
-  static void visit( MeshLevel * const meshLevel,
+  template< typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
+  static void visit( MeshLevel const & meshLevel,
                      std::vector< string > const & regions,
-                     LAMBDA lambda )
+                     LAMBDA && lambda )
   {
     // derive some useful type aliases
     using ObjectManagerLoc = typename MeshHelper< LOC >::ManagerType;
@@ -540,18 +352,19 @@ struct MeshLoopHelper
 
     // get access to location-to-connected map
     auto const & locToConnMap =
-      objectManager.template getReference< LocToConnMapType >( MeshHelper< CONN_LOC >::mapViewKey );
+      objectManager.template getReference< LocToConnMapType >( MeshHelper< CONN_LOC >::mapViewKey() ).toViewConst();
 
     // call the specialized version first, then add an extra loop over connected objects
-    MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >::template visit< SUBREGIONTYPES... >( meshLevel, regions,
-                                                                                   [&]( localIndex const locIdx,
-                                                                                        localIndex const,
-                                                                                        localIndex const )
+    MeshVisitor< LOC, LOC, VISIT_GHOSTS >::
+    template visit< POLICY, SUBREGIONTYPES... >( meshLevel, regions,
+                                                 [=]( localIndex const locIdx,
+                                                      localIndex const,
+                                                      localIndex const )
     {
       // loop over all connected locations
-      for( localIndex b = 0; b < MapHelper< LocToConnMapType >::size1( locToConnMap, locIdx ); ++b )
+      for( localIndex b = 0; b < meshMapUtilities::size1( locToConnMap, locIdx ); ++b )
       {
-        auto const connIdx = MapHelper< LocToConnMapType >::value( locToConnMap, locIdx, b );
+        auto const connIdx = meshMapUtilities::value( locToConnMap, locIdx, b );
         lambda( locIdx, connIdx, b );
       }
     } );
@@ -567,40 +380,41 @@ struct MeshLoopHelper
  *       map types in that they are stored in data repository as three separate arrays.
  */
 template< DofManager::Location LOC, bool VISIT_GHOSTS >
-struct MeshLoopHelper< LOC, DofManager::Location::Elem, VISIT_GHOSTS >
+struct MeshVisitor< LOC, DofManager::Location::Elem, VISIT_GHOSTS >
 {
-  template< typename ... SUBREGIONTYPES, typename LAMBDA >
-  static void visit( MeshLevel * const meshLevel,
+  template< typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
+  static void visit( MeshLevel const & meshLevel,
                      std::vector< string > const & regions,
-                     LAMBDA lambda )
+                     LAMBDA && lambda )
   {
     // derive some useful type aliases
     using ObjectManagerLoc = typename MeshHelper< LOC >::ManagerType;
-    using ToElemMapType = BaseType< MapType< DofManager::Location::Elem, ObjectManagerLoc > >;
+    using ToElemMapType = typename MapType< DofManager::Location::Elem, ObjectManagerLoc >::base_type;
 
     // get mesh object manager for LOC to access maps
     ObjectManagerLoc const & objectManager = getObjectManager< LOC >( meshLevel );
 
     // access to location-to-element map
     auto const & elemRegionList =
-      objectManager.template getReference< ToElemMapType >( ObjectManagerLoc::viewKeyStruct::elementRegionListString );
+      objectManager.template getReference< ToElemMapType >( ObjectManagerLoc::viewKeyStruct::elementRegionListString() ).toViewConst();
     auto const & elemSubRegionList =
-      objectManager.template getReference< ToElemMapType >( ObjectManagerLoc::viewKeyStruct::elementSubRegionListString );
+      objectManager.template getReference< ToElemMapType >( ObjectManagerLoc::viewKeyStruct::elementSubRegionListString() ).toViewConst();
     auto const & elemIndexList =
-      objectManager.template getReference< ToElemMapType >( ObjectManagerLoc::viewKeyStruct::elementListString );
+      objectManager.template getReference< ToElemMapType >( ObjectManagerLoc::viewKeyStruct::elementListString() ).toViewConst();
 
     // call the specialized version first, then add an extra loop over connected elements
-    MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >::template visit< SUBREGIONTYPES... >( meshLevel, regions,
-                                                                                   [&]( localIndex const locIdx,
-                                                                                        localIndex const,
-                                                                                        localIndex const )
+    MeshVisitor< LOC, LOC, VISIT_GHOSTS >::
+    template visit< POLICY, SUBREGIONTYPES... >( meshLevel, regions,
+                                                 [=]( localIndex const locIdx,
+                                                      localIndex const,
+                                                      localIndex const )
     {
       // loop over all connected locations
-      for( localIndex b = 0; b < MapHelper< ToElemMapType >::size1( elemIndexList, locIdx ); ++b )
+      for( localIndex b = 0; b < meshMapUtilities::size1( elemIndexList, locIdx ); ++b )
       {
-        localIndex const er  = MapHelper< ToElemMapType >::value( elemRegionList, locIdx, b );
-        localIndex const esr = MapHelper< ToElemMapType >::value( elemSubRegionList, locIdx, b );
-        localIndex const ei  = MapHelper< ToElemMapType >::value( elemIndexList, locIdx, b );
+        localIndex const er  = meshMapUtilities::value( elemRegionList, locIdx, b );
+        localIndex const esr = meshMapUtilities::value( elemSubRegionList, locIdx, b );
+        localIndex const ei  = meshMapUtilities::value( elemIndexList, locIdx, b );
 
         if( er >= 0 && esr >= 0 && ei >= 0 )
         {
@@ -620,14 +434,14 @@ struct MeshLoopHelper< LOC, DofManager::Location::Elem, VISIT_GHOSTS >
  *       map types, so the correct map type must be derived within the subregion loop
  */
 template< DofManager::Location CONN_LOC, bool VISIT_GHOSTS >
-struct MeshLoopHelper< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
+struct MeshVisitor< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
 {
-  template< typename ... SUBREGIONTYPES, typename LAMBDA >
-  static void visit( MeshLevel * const meshLevel,
+  template< typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
+  static void visit( MeshLevel const & meshLevel,
                      std::vector< string > const & regions,
-                     LAMBDA lambda )
+                     LAMBDA && lambda )
   {
-    meshLevel->getElemManager()->
+    meshLevel.getElemManager().
       forElementSubRegionsComplete< SUBREGIONTYPES... >( regions, [&]( localIndex const,
                                                                        localIndex const er,
                                                                        localIndex const esr,
@@ -639,23 +453,23 @@ struct MeshLoopHelper< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
 
       // get access to element-to-location map
       auto const & elemToConnMap =
-        subRegion.template getReference< ElemToConnMapType >( MeshHelper< CONN_LOC >::mapViewKey );
+        subRegion.template getReference< ElemToConnMapType >( MeshHelper< CONN_LOC >::mapViewKey() ).toViewConst();
 
-      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
-      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+      forAll< POLICY >( subRegion.size(), [=]( localIndex const ei )
       {
-        if( VISIT_GHOSTS || elemGhostRank[ei] < 0 )
+        if( VISIT_GHOSTS || ghostRank[ei] < 0 )
         {
           auto const elemIdx = MeshHelper< DofManager::Location::Elem >::LocalIndexType{ er, esr, ei };
 
-          for( localIndex a = 0; a < MapHelper< ElemToConnMapType >::size1( elemToConnMap, ei ); ++a )
+          for( localIndex a = 0; a < meshMapUtilities::size1( elemToConnMap, ei ); ++a )
           {
-            localIndex const locIdx = MapHelper< ElemToConnMapType >::value( elemToConnMap, ei, a );
+            localIndex const locIdx = meshMapUtilities::value( elemToConnMap, ei, a );
             lambda( elemIdx, locIdx, a );
           }
         }
-      }
+      } );
     } );
   }
 };
@@ -665,31 +479,30 @@ struct MeshLoopHelper< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
  * @tparam VISIT_GHOSTS whether to visit ghosted elements
  */
 template< bool VISIT_GHOSTS >
-struct MeshLoopHelper< DofManager::Location::Elem, DofManager::Location::Elem, VISIT_GHOSTS >
+struct MeshVisitor< DofManager::Location::Elem, DofManager::Location::Elem, VISIT_GHOSTS >
 {
-  template< typename ... SUBREGIONTYPES, typename LAMBDA >
-  static void visit( MeshLevel * const meshLevel,
+  template< typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
+  static void visit( MeshLevel const & meshLevel,
                      std::vector< string > const & regions,
                      LAMBDA && lambda )
   {
-    meshLevel->getElemManager()->
+    meshLevel.getElemManager().
       forElementSubRegionsComplete< SUBREGIONTYPES... >( regions, [&]( localIndex const,
                                                                        localIndex const er,
                                                                        localIndex const esr,
                                                                        ElementRegionBase const &,
                                                                        ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-      localIndex const numElems = subRegion.size();
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
-      for( localIndex ei = 0; ei < numElems; ++ei )
+      forAll< POLICY >( subRegion.size(), [=]( localIndex const ei )
       {
-        if( VISIT_GHOSTS || elemGhostRank[ei] < 0 )
+        if( VISIT_GHOSTS || ghostRank[ei] < 0 )
         {
           auto const elemIdx = MeshHelper< DofManager::Location::Elem >::LocalIndexType{ er, esr, ei };
           lambda( elemIdx, elemIdx, 0 );
         }
-      }
+      } );
     } );
   }
 };
@@ -717,30 +530,29 @@ struct MeshLoopHelper< DofManager::Location::Elem, DofManager::Location::Elem, V
  *       Similarly, while primary loop is limited to @p regions, adjacent locations may not belong.
  */
 template< DofManager::Location LOC, DofManager::Location CONN_LOC, bool VISIT_GHOSTS,
-          typename ... SUBREGIONTYPES, typename LAMBDA >
-void forMeshLocation( MeshLevel * const mesh,
+          typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
+void forMeshLocation( MeshLevel const & mesh,
                       std::vector< string > const & regions,
                       LAMBDA && lambda )
 {
-  MeshLoopHelper< LOC, CONN_LOC, VISIT_GHOSTS >::template visit< SUBREGIONTYPES... >( mesh,
-                                                                                      regions,
-                                                                                      std::forward< LAMBDA >( lambda ) );
+  MeshVisitor< LOC, CONN_LOC, VISIT_GHOSTS >::
+  template visit< POLICY, SUBREGIONTYPES... >( mesh,
+                                               regions,
+                                               std::forward< LAMBDA >( lambda ) );
 }
 
 /**
  * @brief A shortcut for forMeshLocation with CONN_LOC == LOC
  */
 template< DofManager::Location LOC, bool VISIT_GHOSTS,
-          typename ... SUBREGIONTYPES, typename LAMBDA >
-void forMeshLocation( MeshLevel * const mesh,
+          typename POLICY, typename ... SUBREGIONTYPES, typename LAMBDA >
+void forMeshLocation( MeshLevel const & mesh,
                       std::vector< string > const & regions,
                       LAMBDA && lambda )
 {
-  forMeshLocation< LOC, LOC, VISIT_GHOSTS, SUBREGIONTYPES... >( mesh,
-                                                                regions,
-                                                                [&]( auto const locIdx,
-                                                                     auto const,
-                                                                     auto const )
+  forMeshLocation< LOC, LOC, VISIT_GHOSTS, POLICY, SUBREGIONTYPES... >( mesh,
+                                                                        regions,
+                                                                        [=]( auto const locIdx, auto, auto )
   {
     lambda( locIdx );
   } );
@@ -753,68 +565,91 @@ void forMeshLocation( MeshLevel * const mesh,
  * @tparam SUBREGIONTYPES types of subregions to include in counting
  * @param mesh the mesh level to use
  * @param regions a list of region names (assumed to be unique)
- * @return
+ * @return number of mesh objects adjacent to given regions
  */
 template< DofManager::Location LOC, bool VISIT_GHOSTS, typename ... SUBREGIONTYPES >
-localIndex countMeshObjects( MeshLevel * const mesh,
+localIndex countMeshObjects( MeshLevel const & mesh,
+                             std::vector< string > const & regions )
+{
+  using countPolicy = parallelHostPolicy;
+  RAJA::ReduceSum< ReducePolicy< countPolicy >, localIndex > count( 0 );
+  forMeshLocation< LOC, VISIT_GHOSTS, countPolicy, SUBREGIONTYPES... >( mesh, regions, [=]( auto )
+  {
+    count += 1;
+  } );
+  return count.get();
+}
+
+/**
+ * @brief Count objects of given type within a set of regions
+ * @tparam VISIT_GHOSTS whether ghosted objects should be counted
+ * @tparam SUBREGIONTYPES types of subregions to include in counting
+ * @param mesh the mesh level to use
+ * @param regions a list of region names (assumed to be unique)
+ * @param loc type of mesh objects (locations)
+ * @return number of mesh objects adjacent to given regions
+ */
+template< bool VISIT_GHOSTS, typename ... SUBREGIONTYPES >
+localIndex countMeshObjects( DofManager::Location const location,
+                             MeshLevel const & mesh,
                              std::vector< string > const & regions )
 {
   localIndex count = 0;
-  forMeshLocation< LOC, VISIT_GHOSTS, SUBREGIONTYPES... >( mesh, regions,
-                                                           [&]( auto const GEOSX_UNUSED_PARAM( connIdx ) )
+  bool const success = LocationSwitch( location, [&]( auto const loc )
   {
-    ++count;
+    DofManager::Location constexpr LOC = decltype(loc)::value;
+    count = countMeshObjects< LOC, VISIT_GHOSTS, SUBREGIONTYPES... >( mesh, regions );
   } );
+  GEOSX_ERROR_IF( !success, "Invalid location type: " << static_cast< int >( location ) );
   return count;
 }
 
 /**
  * @brief This template abstracts some differences between index arrays that live
  *        on elements vs other mesh objects: (de)registration, value access, etc.
+ * @tparam T type of index value
  * @tparam LOC target location
  */
-template< typename INDEX, DofManager::Location LOC >
-struct IndexArrayHelper
+template< typename T, DofManager::Location LOC >
+struct ArrayHelper
 {
-  using IndexType = localIndex;
-  using ArrayType = array1d< std::remove_const_t< INDEX > >;
-  using ViewType = arrayView1d< INDEX >;
-  using Accessor = ViewType const;
-  using Mesh = add_const_if_t< MeshLevel, std::is_const< INDEX >::value >;
+  using ArrayType = array1d< std::remove_const_t< T > >;
+  using ViewType = arrayView1d< T >;
+  using Accessor = ViewType;
 
   template< typename ... SUBREGIONTYPES >
   static void
-  create( Mesh * const mesh,
+  create( MeshLevel & mesh,
           string const & key,
           string const & description,
           std::vector< string > const & GEOSX_UNUSED_PARAM( regions ) )
   {
     ObjectManagerBase & baseManager = getObjectManager< LOC >( mesh );
-    baseManager.registerWrapper< ArrayType >( key )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setRestartFlags( dataRepository::RestartFlags::NO_WRITE )->
+    baseManager.registerWrapper< ArrayType >( key ).
+      setApplyDefaultValue( -1 ).
+      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
+      setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
       setDescription( description );
   }
 
-  static Accessor get( Mesh * const mesh, string const & key )
+  static Accessor get( add_const_if_t< MeshLevel, std::is_const< T >::value > & mesh, string const & key )
   {
     return getObjectManager< LOC >( mesh ).template getReference< ArrayType >( key );
   }
 
-  static inline INDEX value( Accessor & indexArray, typename MeshHelper< LOC >::LocalIndexType const i )
+  static inline T value( Accessor const & indexArray, typename MeshHelper< LOC >::LocalIndexType const i )
   {
     return indexArray[i];
   }
 
-  static inline INDEX & reference( Accessor & indexArray, typename MeshHelper< LOC >::LocalIndexType const i )
+  static inline T & reference( Accessor const & indexArray, typename MeshHelper< LOC >::LocalIndexType const i )
   {
     return indexArray[i];
   }
 
   template< typename ... SUBREGIONTYPES >
   static void
-  remove( Mesh * const mesh,
+  remove( MeshLevel & mesh,
           string const & key,
           std::vector< string > const & GEOSX_UNUSED_PARAM( regions ) )
   {
@@ -823,43 +658,41 @@ struct IndexArrayHelper
 };
 
 /**
- * @brief Specialized version of IndexArrayHelper for elements.
+ * @brief Specialized version of ArrayHelper for element-based arrays.
+ * @tparam T type of index value
  */
-template< typename INDEX >
-struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
+template< typename T >
+struct ArrayHelper< T, DofManager::Location::Elem >
 {
-  using IndexType = INDEX;
-  using ArrayType = array1d< std::remove_const_t< INDEX > >;
-  using ViewType = arrayView1d< INDEX >;
-  using Accessor = ElementRegionManager::ElementViewAccessor< ViewType > const;
-  using Mesh = add_const_if_t< MeshLevel, std::is_const< INDEX >::value >;
+  using ArrayType = array1d< std::remove_const_t< T > >;
+  using ViewType = arrayView1d< T >;
+  using Accessor = ElementRegionManager::ElementViewAccessor< ViewType >;
 
   template< typename ... SUBREGIONTYPES >
   static void
-  create( Mesh * const mesh,
+  create( MeshLevel & mesh,
           string const & key,
           string const & description,
           std::vector< string > const & regions )
   {
-    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions,
-                                                                                [&]( localIndex const,
-                                                                                     auto & subRegion )
+    mesh.getElemManager().template forElementSubRegions< SUBREGIONTYPES... >( regions,
+                                                                              [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
-      subRegion.template registerWrapper< ArrayType >( key )->
-        setApplyDefaultValue( -1 )->
-        setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-        setRestartFlags( dataRepository::RestartFlags::NO_WRITE )->
+      subRegion.registerWrapper< ArrayType >( key ).
+        setApplyDefaultValue( -1 ).
+        setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
+        setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
         setDescription( description );
     } );
   }
 
-  static Accessor get( Mesh * const mesh, string const & key )
+  static Accessor get( add_const_if_t< MeshLevel, std::is_const< T >::value > & mesh, string const & key )
   {
-    return mesh->getElemManager()->template constructViewAccessor< ArrayType, ViewType >( key );
+    return mesh.getElemManager().template constructViewAccessor< ArrayType, ViewType >( key );
   }
 
-  static inline INDEX value( Accessor & indexArray,
-                             MeshHelper< DofManager::Location::Elem >::LocalIndexType const & e )
+  static inline T value( Accessor const & indexArray,
+                         MeshHelper< DofManager::Location::Elem >::LocalIndexType const & e )
   {
     if( indexArray[std::get< 0 >( e )].empty() || indexArray[std::get< 0 >( e )][std::get< 1 >( e )].empty() )
     {
@@ -868,21 +701,20 @@ struct IndexArrayHelper< INDEX, DofManager::Location::Elem >
     return indexArray[std::get< 0 >( e )][std::get< 1 >( e )][std::get< 2 >( e )];
   }
 
-  static inline INDEX & reference( Accessor & indexArray,
-                                   MeshHelper< DofManager::Location::Elem >::LocalIndexType const & e )
+  static inline T & reference( Accessor const & indexArray,
+                               MeshHelper< DofManager::Location::Elem >::LocalIndexType const & e )
   {
     return indexArray[std::get< 0 >( e )][std::get< 1 >( e )][std::get< 2 >( e )];
   }
 
   template< typename ... SUBREGIONTYPES >
   static void
-  remove( Mesh * const mesh,
+  remove( MeshLevel & mesh,
           string const & key,
           std::vector< string > const & regions )
   {
-    mesh->getElemManager()->template forElementSubRegions< SUBREGIONTYPES... >( regions,
-                                                                                [&]( localIndex const,
-                                                                                     ElementSubRegionBase & subRegion )
+    mesh.getElemManager().template forElementSubRegions< SUBREGIONTYPES... >( regions,
+                                                                              [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
       subRegion.deregisterWrapper( key );
     } );

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,269 +20,123 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_SUITESPARSE_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/LinearSolverBase.hpp"
+#include "common/PreconditionerBase.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/utilities/LinearSolverResult.hpp"
 
-#include <umfpack.h>
+#include <memory>
 
 namespace geosx
 {
 
-/**
- * SuiteSparse integer definition
- */
-using SSInt = SuiteSparse_long;
+/// Forward declaration for SuiteSparse data struct
+struct SuiteSparseData;
 
 /**
- * @brief Convert GEOSX globalIndex value to SuiteSparse int
- * @param index the input value
- * @return the converted value
+ * @brief Wrapper for UMFPACK direct solver from SuiteSparse package.
+ * @tparam LAI type of linear algebra interface
  */
-inline SSInt toSuiteSparse_Int( globalIndex const index )
+template< typename LAI >
+class SuiteSparse final : public LinearSolverBase< LAI >
 {
-  return LvArray::integerConversion< SSInt >( index );
-}
-
-/**
- * @class SuiteSparse
- * @brief This class provides an interface for UMFPACK direct solver from
- *        SuiteSparse linear algebra package.
- */
-class SuiteSparse
-{
-
 public:
 
-  /**
-   * @brief Constructor
-   */
-  SuiteSparse();
+  /// Alias for base type
+  using Base = LinearSolverBase< LAI >;
+
+  /// Alias for vector type
+  using Vector = typename PreconditionerBase< LAI >::Vector;
+
+  /// Alias for matrix type
+  using Matrix = typename PreconditionerBase< LAI >::Matrix;
 
   /**
    * @brief Constructor with parameters
    * @param[in] params the linear solver parameters
    */
-  SuiteSparse( LinearSolverParameters const & params );
+  SuiteSparse( LinearSolverParameters params );
 
   /**
    * @brief Destructor
    */
-  ~SuiteSparse();
+  virtual ~SuiteSparse() override;
+
+  using Base::ready;
+  using Base::matrix;
 
   /**
-   * @brief Creates the SuiteSparse data structure
-   * @param[in] params the linear solver parameters
+   * @brief Compute the preconditioner from a matrix.
+   * @param mat the matrix to precondition.
    */
-  void create( LinearSolverParameters const & params );
+  virtual void setup( Matrix const & mat ) override;
 
   /**
-   * @brief Factorizes a linear system with SuiteSparse
-   * @return info error code
+   * @brief Apply operator to a vector, <tt>dst = this(src)</tt>.
+   * @param src input vector
+   * @param dst output vector
+   *
+   * @warning @p src and @p dst cannot alias the same vector.
    */
-  int setup();
+  virtual void apply( Vector const & src, Vector & dst ) const override;
 
   /**
-   * @brief Solves a linear system with SuiteSparse (matrix has already been factorized)
-   * @param[in] b the right-hand side
-   * @param[out] x the solution
-   * @param[in] transpose whether to solve for the original or the transpose matrix
-   * @return info error code
+   * @brief Apply transpose operator to a vector, <tt>dst = this^T(src)</tt>.
+   * @param src input vector
+   * @param dst output vector
+   *
+   * @warning @p src and @p dst cannot alias the same vector (some implementations may allow this).
    */
-  int solveWorkingRank( real64 * b, real64 * x, bool transpose = false );
+  void applyTranspose( Vector const & src, Vector & dst ) const;
 
   /**
-   * @brief Sycronizes times across ranks
+   * @brief Clean up the preconditioner setup.
    */
-  void syncTimes();
+  virtual void clear() override;
 
   /**
-   * @brief Estimates the condition number of the matrix
-   * @return the estimated condition number
+   * @brief Solve the system with a particular rhs
+   * @param [in] rhs system right hand side
+   * @param [out] sol system solution
    */
-  real64 condEst() const;
-
-  /**
-   * @brief Estimates the relative tolerance for the matrix
-   * @return the relative tolerance (condEst * eps)
-   */
-  real64 relativeTolerance() const;
-
-  /**
-   * @brief Deallocates a SuiteSparse data structure
-   */
-  void destroy();
-
-  /**
-   * @brief Sets the working rank
-   * @param[in] workingRank the working rank
-   */
-  void setWorkingRank( int const workingRank );
-
-  /**
-   * @brief Returns the working rank
-   * @return the working rank
-   */
-  int workingRank() const;
-
-  /**
-   * @brief Sets the working rank in the sub-communicator
-   * @param[in] subCommWorkingRank the working rank in the sub-communicator
-   */
-  void setSubCommWorkingRank( int const subCommWorkingRank );
-
-  /**
-   * @brief Returns the working rank in the sub-communicator
-   * @return the working rank in the sub-communicator
-   */
-  int subCommWorkingRank() const;
-
-  /**
-   * @brief Sets the communicator
-   * @param[in] comm the MPI communicator
-   */
-  void setComm( MPI_Comm const comm );
-
-  /**
-   * @brief Returns the communicator
-   * @return the communicator
-   */
-  MPI_Comm getComm() const;
-
-  /**
-   * @brief Sets the subcommunicator
-   * @param[in] subComm the MPI subcommunicator
-   */
-  void setSubComm( MPI_Comm const subComm );
-
-  /**
-   * @brief Returns the subcommunicator
-   * @return the subcommunicator
-   */
-  MPI_Comm getSubComm() const;
-
-  /**
-   * @brief Returns the number of rows
-   * @returns the number of rows
-   */
-  SSInt numRows() const;
-
-  /**
-   * @brief Returns the number of columns
-   * @return the number of columns
-   */
-  SSInt numCols() const;
-
-  /**
-   * @brief Returns the number of non zeros
-   * @return the number of non zeros
-   */
-  SSInt nonZeros() const;
-
-  /**
-   * @brief Allocate the internal data storage arrays
-   * @param[in] numRows the number of rows
-   * @param[in] numCols the number of columns
-   * @param[in] nonZeros the number of non zeros
-   */
-  void resize( SSInt const numRows, SSInt const numCols, SSInt const nonZeros );
-
-  /**
-   * @brief Returns the array with the row pointers
-   * @return the array with the row pointers
-   */
-  arrayView1d< SSInt > rowPtr();
-
-  /**
-   * @brief Returns the array with the column indices
-   * @return the array with the column indices
-   */
-  arrayView1d< SSInt > colIndices();
-
-  /**
-   * @brief Returns the array with the matrix values
-   * @return the array with the matrix values
-   */
-  arrayView1d< real64 > values();
-
-  /**
-   * @brief Provides the setup time
-   * @return the setup time
-   */
-  real64 setupTime() const;
-
-  /**
-   * @brief Provides the solve time
-   * @return the solve time
-   */
-  real64 solveTime() const;
-
-  /**
-   * @brief Returns the precision tolarance used in SuiteSparse class
-   * @return the precision tolerance used in SuiteSparse class
-   */
-  real64 precisionTolerance() const;
+  virtual void solve( Vector const & rhs, Vector & sol ) const override;
 
 private:
 
-  /// log level
-  integer m_logLevel;
+  using Base::m_params;
+  using Base::m_result;
 
-  /// number of rows
-  SSInt m_numRows;
+  /**
+   * @brief Perform the actual solution using LU factors.
+   * @param b the rhs vector
+   * @param x the solution vector
+   * @param transpose whether to do a regular or a transpose solve
+   */
+  void doSolve( Vector const & b, Vector & x, bool transpose ) const;
 
-  /// number of columns
-  SSInt m_numCols;
+  /**
+   * @brief Estimates the condition number of the matrix using LU factors.
+   * @return the estimated condition number
+   */
+  real64 estimateConditionNumberBasic() const;
 
-  /// number of entries
-  SSInt m_nonZeros;
+  /**
+   * @brief Estimates the condition number of the matrix with Arnoldi iteration.
+   * @return the estimated condition number
+   */
+  real64 estimateConditionNumberAdvanced() const;
 
-  /// row pointers
-  array1d< SSInt > m_rowPtr;
+  /// Internal SuiteSparse data
+  std::unique_ptr< SuiteSparseData > m_data;
 
-  /// column indices
-  array1d< SSInt > m_colIndices;
-
-  /// values
-  array1d< real64 > m_values;
-
-  /// data structure to gather various info
-  real64 m_Info[UMFPACK_INFO];
-
-  /// SuiteSparse options
-  real64 m_Control[UMFPACK_CONTROL];
-
-  /// pointer to the symbolic factorization
-  void * m_Symbolic;
-
-  /// pointer to the numeric factorization
-  void * m_Numeric;
-
-  /// MPI communicator
-  MPI_Comm m_comm;
-
-  /// MPI sub-communicator for ranks that have parts of the matrix
-  MPI_Comm m_subComm;
-
-  /// flag to check if the sub-communicator is used
-  bool m_usingSubComm;
-
-  /// MPI rank carring out the solution
+  /// MPI rank carrying out the solution
   int m_workingRank;
 
-  /// MPI rank carring out the solution in the sub-communicator
-  int m_subCommWorkingRank;
+  /// The export object used to gather/scatter matrices and vectors
+  std::unique_ptr< typename Matrix::Export > m_export;
 
   /// condition number estimation
-  real64 m_condEst;
-
-  /// setup time
-  real64 m_setupTime;
-
-  /// solve time
-  real64 m_solveTime;
-
-  /// Add two orders of magnitude to allow small error in condition number estimate
-  real64 const m_precisionTolerance = 100.0 * std::numeric_limits< real64 >::epsilon();
-
+  mutable real64 m_condEst;
 };
 
 }

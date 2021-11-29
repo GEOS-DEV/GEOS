@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -38,26 +38,14 @@ CellBlockManager::~CellBlockManager()
 }
 
 void CellBlockManager::resize( integer_array const & numElements,
-                               string_array const & regionNames,
-                               string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
+                               string_array const & regionNames )
 {
   localIndex const numRegions = LvArray::integerConversion< localIndex >( regionNames.size());
-//  Group * elementRegions = this->GetGroup(keys::cellBlocks);
   for( localIndex reg=0; reg<numRegions; ++reg )
   {
-    CellBlock * elemRegion = this->getRegion( regionNames[reg] );
-    elemRegion->resize( numElements[reg] );
+    this->getRegion( regionNames[reg] ).resize( numElements[reg] );
   }
 }
-
-
-//CellBlock & CellBlockManager::CreateRegion( string const & regionName,
-//                                             string const & elementType,
-//                                             integer const & numElements )
-//{
-////  ElementRegion * elemRegion = elementRegions.registerGroup( regionNames );
-////  elemRegion->resize(numElements);
-//}
 
 Group * CellBlockManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {

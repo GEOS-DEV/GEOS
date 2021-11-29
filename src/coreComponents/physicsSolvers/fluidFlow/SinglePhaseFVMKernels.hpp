@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,12 +19,15 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
 
+
 #include "common/DataTypes.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 
 namespace geosx
 {
@@ -32,95 +35,9 @@ namespace geosx
 namespace SinglePhaseFVMKernels
 {
 
+using namespace FluxKernelsHelper;
+
 /******************************** FluxKernel ********************************/
-
-/**
- * @struct Structure to contain helper functions for the FluxKernel struct.
- */
-struct FluxKernelHelper
-{
-
-  /**
-   * @tparam INTEGRATION_OPTION This specifies the choice of integration rule for the aperture term
-   *         in a lubrication permeability.
-   * @param[in] aper0 The beginning of step aperture
-   * @param[in] aper The current approximation to the end of step aperture
-   * @param[out] aperTerm The resulting
-   * @param[out] dAperTerm_dAper
-   *
-   * Typically in lubrication theory, the permeabilty involves a \f$ aperture^3 \f$ term. The
-   * flow residual equation assumes a constant value for all parameters over \f$ dt \f$, which
-   * may introduce significant errors given the highly nonlinear nature of the cubic aperture term.
-   * The template parameter provides options:
-   *  - (0) Forward Euler. This results in no non-linearity since the beginning of step aperture
-   *    does not change.
-   *  - (1) Exact/Simpson's Rule. This is the result of taking
-   *    \f$ \int_{0}^{1} (aperture0 + (aperture-aperture0)x)x^3 dx \f$. This results
-   *    in a cubic non-linearity in the resulting set of equations.
-   *  .
-   *  @note The use of option (1) does not imply that the time integration of the residual
-   *        equation is exact, or applying Simpson's Rule. It only means that the integral of
-   *        the cubic aperture term in the permeablity is exact. All other components of the
-   *        residual equation are assumed constant over the integral, or use a backward
-   *        Euler as the case may be. Also, we omit the use of a backward Euler option as
-   *        it offers no benefit over the exact integration.
-   */
-  template< int INTEGRATION_OPTION >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void apertureForPermeablityCalculation( real64 const aper0,
-                                                 real64 const aper,
-                                                 real64 & aperTerm,
-                                                 real64 & dAperTerm_dAper );
-
-
-};
-
-template<>
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void FluxKernelHelper::apertureForPermeablityCalculation< 0 >( real64 const aper0,
-                                                               real64 const,
-                                                               real64 & aperTerm,
-                                                               real64 & dAperTerm_dAper )
-{
-  aperTerm = aper0*aper0*aper0;
-  dAperTerm_dAper = 0.0;
-}
-
-template<>
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void FluxKernelHelper::apertureForPermeablityCalculation< 1 >( real64 const aper0,
-                                                               real64 const aper,
-                                                               real64 & aperTerm,
-                                                               real64 & dAperTerm_dAper )
-{
-  aperTerm = 0.25 * ( aper0*aper0*aper0 +
-                      aper0*aper0*aper +
-                      aper0*aper*aper +
-                      aper*aper*aper );
-
-  dAperTerm_dAper = 0.25 * ( aper0*aper0 +
-                             2*aper0*aper +
-                             3*aper*aper );
-
-
-  //printf( "aper0, aper, Kf = %4.2e, %4.2e, %4.2e \n", aper0, aper, aperTerm );
-}
-
-
-template<>
-inline void
-FluxKernelHelper::apertureForPermeablityCalculation< 2 >( real64 const,
-                                                          real64 const aper,
-                                                          real64 & aperTerm,
-                                                          real64 & dAperTerm_dAper )
-{
-  aperTerm = aper*aper*aper;
-  dAperTerm_dAper = 3.0*aper*aper;
-}
-
 
 struct FluxKernel
 {
@@ -133,6 +50,7 @@ struct FluxKernel
    */
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
 
   /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.
@@ -147,50 +65,122 @@ struct FluxKernel
    * @param[in] dDens_dPres The change in material density for each element
    * @param[in] mob The fluid mobility in each element
    * @param[in] dMob_dPres The derivative of mobility wrt pressure in each element
-   * @param[out] jacobian The linear system matrix
-   * @param[out] residual The linear system residual
+   * @param[in] permeability
+   * @param[in] dPerm_dPres The derivative of permeability wrt pressure in each element
+   * @param[out] localMatrix The linear system matrix
+   * @param[out] localRhs The linear system residual
    */
-  template< typename STENCIL_TYPE >
+  template< typename STENCILWRAPPER_TYPE >
   static void
-    launch( STENCIL_TYPE const & stencil,
-            real64 const dt,
-            globalIndex const rankOffset,
-            ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
-            ElementViewConst< arrayView1d< integer const > > const & ghostRank,
-            ElementViewConst< arrayView1d< real64 const > > const & pres,
-            ElementViewConst< arrayView1d< real64 const > > const & dPres,
-            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-            ElementViewConst< arrayView2d< real64 const > > const & dens,
-            ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-            ElementViewConst< arrayView1d< real64 const > > const & mob,
-            ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
-            ElementViewConst< arrayView1d< real64 const > > const & aperture0,
-            ElementViewConst< arrayView1d< real64 const > > const & aperture,
-            ElementViewConst< arrayView2d< real64 const > > const & transTMultiplier,
-            R1Tensor const & gravityVector,
-            real64 const meanPermCoeff,
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-            ElementViewConst< arrayView1d< real64 const > > const & s,
-            ElementViewConst< arrayView1d< real64 const > > const & dSdAper,
-#endif
-            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-            arrayView1d< real64 > const & localRhs,
-            CRSMatrixView< real64, localIndex const > const & dR_dAper );
+  launch( STENCILWRAPPER_TYPE const & stencilWrapper,
+          real64 const dt,
+          globalIndex const rankOffset,
+          ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+          ElementViewConst< arrayView1d< real64 const > > const & pres,
+          ElementViewConst< arrayView1d< real64 const > > const & dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView2d< real64 const > > const & dens,
+          ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & mob,
+          ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+          ElementViewConst< arrayView3d< real64 const > > const & permeability,
+          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs )
+  {
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
+    constexpr localIndex MAX_NUM_ELEMS     = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
+    constexpr localIndex MAX_STENCIL_SIZE  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
+
+    forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [stencilWrapper, dt, rankOffset, dofNumber, ghostRank,
+                                                              pres, dPres, gravCoef, dens, dDens_dPres, mob,
+                                                              dMob_dPres, permeability, dPerm_dPres,
+                                                              seri, sesri, sei, localMatrix, localRhs] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    {
+      localIndex const stencilSize = stencilWrapper.stencilSize( iconn );
+      localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
+
+      // working arrays
+      stackArray1d< globalIndex, MAX_NUM_ELEMS > dofColIndices( stencilSize );
+      stackArray1d< real64, MAX_NUM_ELEMS > localFlux( numFluxElems );
+      stackArray2d< real64, MAX_NUM_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, stencilSize );
+
+
+      // compute transmissibility
+      real64 transmissibility[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+      real64 dTrans_dPres[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+
+      stencilWrapper.computeWeights( iconn,
+                                     permeability,
+                                     dPerm_dPres,
+                                     transmissibility,
+                                     dTrans_dPres );
+
+      compute( numFluxElems,
+               seri[iconn],
+               sesri[iconn],
+               sei[iconn],
+               transmissibility,
+               dTrans_dPres,
+               pres,
+               dPres,
+               gravCoef,
+               dens,
+               dDens_dPres,
+               mob,
+               dMob_dPres,
+               dt,
+               localFlux,
+               localFluxJacobian );
+
+
+      // extract DOF numbers
+      for( localIndex i = 0; i < stencilSize; ++i )
+      {
+        dofColIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+
+      }
+
+      for( localIndex i = 0; i < numFluxElems; ++i )
+      {
+
+        if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
+        {
+          globalIndex const globalRow = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+          localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
+          GEOSX_ASSERT_GE( localRow, 0 );
+          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
+                                                                            dofColIndices.data(),
+                                                                            localFluxJacobian[i].dataIfContiguous(),
+                                                                            stencilSize );
+
+        }
+      }
+
+    } );
+  }
 
   /**
-   * @brief Compute flux and its derivatives for a given connection
+   * @brief Compute flux and its derivatives for a given tpfa connector.
    *
-   * This is a general version that assumes different element regions.
-   * See below for a specialized version for fluxes within a region.
+   *
    */
+  template< localIndex MAX_NUM_OF_CONNECTIONS >
   GEOSX_HOST_DEVICE
   static void
-  compute( localIndex const stencilSize,
+  compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           arraySlice1d< real64 const > const & stencilWeights,
+           real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
+           real64 const (&dTrans_dPres)[MAX_NUM_OF_CONNECTIONS][2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -200,63 +190,53 @@ struct FluxKernel
            ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
            real64 const dt,
            arraySlice1d< real64 > const & flux,
-           arraySlice2d< real64 > const & fluxJacobian );
+           arraySlice2d< real64 > const & fluxJacobian )
+  {
 
-  /**
-   * @brief Compute flux and its derivatives for a given connection
-   *.
-   * This is a specialized version for fluxes within the same region.
-   * See above for a general version.
-   */
-  GEOSX_HOST_DEVICE
-  static void
-  compute( localIndex const stencilSize,
-           arraySlice1d< localIndex const > const &,
-           arraySlice1d< localIndex const > const &,
-           arraySlice1d< localIndex const > const & sei,
-           arraySlice1d< real64 const > const & stencilWeights,
-           arrayView1d< real64 const > const & pres,
-           arrayView1d< real64 const > const & dPres,
-           arrayView1d< real64 const > const & gravCoef,
-           arrayView2d< real64 const > const & dens,
-           arrayView2d< real64 const > const & dDens_dPres,
-           arrayView1d< real64 const > const & mob,
-           arrayView1d< real64 const > const & dMob_dPres,
-           real64 const dt,
-           arraySlice1d< real64 > const & flux,
-           arraySlice2d< real64 > const & fluxJacobian );
+    localIndex k[2];
+    localIndex connectionIndex = 0;;
+    for( k[0]=0; k[0]<numFluxElems; ++k[0] )
+    {
+      for( k[1]=k[0]+1; k[1]<numFluxElems; ++k[1] )
+      {
+        real64 fluxVal = 0.0;
+        real64 dFlux_dTrans = 0.0;
+        real64 const trans[2] = {transmissibility[connectionIndex][0], transmissibility[connectionIndex][1]};
+        real64 const dTrans[2] = { dTrans_dPres[connectionIndex][0], dTrans_dPres[connectionIndex][1] };
+        real64 dFlux_dP[2] = {0.0, 0.0};
+        localIndex const regionIndex[2]    = {seri[k[0]], seri[k[1]]};
+        localIndex const subRegionIndex[2] = {sesri[k[0]], sesri[k[1]]};
+        localIndex const elementIndex[2]   = {sei[k[0]], sei[k[1]]};
 
-  /**
-   * @brief Compute flux and its derivatives for a given multi-element connector.
-   *
-   * This is a specialized version that flux in a single region, and uses
-   * element pairing instead of a proper junction.
-   */
-  GEOSX_HOST_DEVICE
-  static void
-    computeJunction( localIndex const numFluxElems,
-                     arraySlice1d< localIndex const > const & stencilElementIndices,
-                     arraySlice1d< real64 const > const & stencilWeights,
-                     arrayView1d< real64 const > const & pres,
-                     arrayView1d< real64 const > const & dPres,
-                     arrayView1d< real64 const > const & gravCoef,
-                     arrayView2d< real64 const > const & dens,
-                     arrayView2d< real64 const > const & dDens_dPres,
-                     arrayView1d< real64 const > const & mob,
-                     arrayView1d< real64 const > const & dMob_dPres,
-                     arrayView1d< real64 const > const & aperture0,
-                     arrayView1d< real64 const > const & aperture,
-                     real64 const meanPermCoeff,
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                     arrayView1d< real64 const > const & GEOSX_GEOSX_UNUSED_PARAM( s ),
-                     arrayView1d< real64 const > const & GEOSX_GEOSX_UNUSED_PARAM( dSdAper ),
-#endif
-                     real64 const dt,
-                     arraySlice1d< real64 > const & flux,
-                     arraySlice2d< real64 > const & fluxJacobian,
-                     arraySlice2d< real64 > const & dFlux_dAperture );
+
+        computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
+                                trans,
+                                dTrans,
+                                pres,
+                                dPres,
+                                gravCoef,
+                                dens,
+                                dDens_dPres,
+                                mob,
+                                dMob_dPres,
+                                fluxVal,
+                                dFlux_dP,
+                                dFlux_dTrans );
+
+        // populate local flux vector and derivatives
+        flux[k[0]] +=  dt * fluxVal;
+        flux[k[1]] -=  dt * fluxVal;
+
+        fluxJacobian[k[0]][k[0]] += dt * dFlux_dP[0];
+        fluxJacobian[k[0]][k[1]] += dt * dFlux_dP[1];
+        fluxJacobian[k[1]][k[0]] -= dt * dFlux_dP[0];
+        fluxJacobian[k[1]][k[1]] -= dt * dFlux_dP[1];
+
+        connectionIndex++;
+      }
+    }
+  }
 };
-
 
 struct FaceDirichletBCKernel
 {
@@ -382,6 +362,122 @@ struct FaceDirichletBCKernel
     } );
   }
 };
+
+/******************************** AquiferBCKernel ********************************/
+
+/**
+ * @brief Functions to assemble aquifer boundary condition contributions to residual and Jacobian
+ */
+struct AquiferBCKernel
+{
+
+  /**
+   * @brief The type for element-based data. Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewConstAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  GEOSX_HOST_DEVICE
+  static void
+  compute( real64 const & aquiferVolFlux,
+           real64 const & dAquiferVolFlux_dPres,
+           real64 const & aquiferDens,
+           real64 const & dens,
+           real64 const & dDens_dPres,
+           real64 const & dt,
+           real64 & localFlux,
+           real64 & localFluxJacobian )
+  {
+    if( aquiferVolFlux > 0 ) // aquifer is upstream
+    {
+      localFlux -= dt * aquiferVolFlux * aquiferDens;
+      localFluxJacobian -= dt * dAquiferVolFlux_dPres * aquiferDens;
+    }
+    else // reservoir is upstream
+    {
+      localFlux -= dt * aquiferVolFlux * dens;
+      localFluxJacobian -= dt * (dAquiferVolFlux_dPres * dens + aquiferVolFlux * dDens_dPres);
+    }
+  }
+
+  static void
+  launch( BoundaryStencil const & stencil,
+          globalIndex const rankOffset,
+          ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+          AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
+          real64 const & aquiferDens,
+          ElementViewConst< arrayView1d< real64 const > > const & pres,
+          ElementViewConst< arrayView1d< real64 const > > const & dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView2d< real64 const > > const & dens,
+          ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+          real64 const & timeAtBeginningOfStep,
+          real64 const & dt,
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs )
+  {
+    using Order = BoundaryStencil::Order;
+
+    BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+    BoundaryStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+    BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
+    BoundaryStencil::WeightContainerViewConstType const & weight = stencil.getWeights();
+
+    forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    {
+
+      // working variables
+      real64 localFlux = 0.0;
+      real64 localFluxJacobian = 0.0;
+
+      localIndex const er  = seri( iconn, Order::ELEM );
+      localIndex const esr = sesri( iconn, Order::ELEM );
+      localIndex const ei  = sefi( iconn, Order::ELEM );
+      real64 const areaFraction = weight( iconn, Order::ELEM );
+
+      // compute the aquifer influx rate using the pressure influence function and the aquifer props
+      real64 dAquiferVolFlux_dPres = 0.0;
+      real64 const aquiferVolFlux = aquiferBCWrapper.compute( timeAtBeginningOfStep,
+                                                              dt,
+                                                              pres[er][esr][ei],
+                                                              dPres[er][esr][ei],
+                                                              gravCoef[er][esr][ei],
+                                                              areaFraction,
+                                                              dAquiferVolFlux_dPres );
+
+      // compute the phase/component aquifer flux
+      AquiferBCKernel::compute( aquiferVolFlux,
+                                dAquiferVolFlux_dPres,
+                                aquiferDens,
+                                dens[er][esr][ei][0],
+                                dDens_dPres[er][esr][ei][0],
+                                dt,
+                                localFlux,
+                                localFluxJacobian );
+
+      // Add to residual/jacobian
+      if( ghostRank[er][esr][ei] < 0 )
+      {
+        globalIndex const globalRow = dofNumber[er][esr][ei];
+        localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
+        GEOSX_ASSERT_GE( localRow, 0 );
+        GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux );
+        localMatrix.addToRow< parallelDeviceAtomic >( localRow,
+                                                      &dofNumber[er][esr][ei],
+                                                      &localFluxJacobian,
+                                                      1 );
+      }
+    } );
+  }
+
+};
+
 
 } // namespace SinglePhaseFVMKernels
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,8 +21,8 @@
 
 #include "linearAlgebra/interfaces/trilinos/EpetraVector.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraMatrix.hpp"
-#include "linearAlgebra/interfaces/trilinos/TrilinosSolver.hpp"
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "linearAlgebra/common/PreconditionerBase.hpp"
+#include "linearAlgebra/common/LinearSolverBase.hpp"
 
 #include <memory>
 
@@ -36,17 +36,22 @@ namespace geosx
 struct TrilinosInterface
 {
   /**
-   * @brief Initializes the MPI environment for the Trilinos library
-   *
-   * @param[in] argc standard argc as in any C main
-   * @param[in] argv standard argv as in any C main
+   * @brief Initializes the Trilinos library.
    */
-  static void initialize( int & argc, char * * & argv );
+  static void initialize();
 
   /**
-   * @brief Finalizes the MPI environment for the Trilinos library
+   * @brief Finalizes the Trilinos library.
    */
   static void finalize();
+
+  /**
+   * @brief Create a petsc-based solver object.
+   * @param params the preconditioner parameters
+   * @return owning pointer to the newly created solver
+   */
+  static std::unique_ptr< LinearSolverBase< TrilinosInterface > >
+  createSolver( LinearSolverParameters params );
 
   /**
    * @brief Create a Trilinos-based preconditioner object.
@@ -70,8 +75,6 @@ struct TrilinosInterface
   using ParallelMatrix = EpetraMatrix;
   /// Alias for EpetraVector
   using ParallelVector = EpetraVector;
-  /// Alias for TrilinosSolver
-  using LinearSolver   = TrilinosSolver;
 };
 
 } /* namespace geosx */

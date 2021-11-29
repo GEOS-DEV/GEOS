@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -18,13 +18,11 @@
 #include "CellElementSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
 #include "WellElementSubRegion.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include "EmbeddedSurfaceSubRegion.hpp"
 
 namespace geosx
 {
-
-class StableTimeStep;
 
 class FaceManager;
 
@@ -79,7 +77,7 @@ public:
    * @brief Generate mesh.
    * @param cellBlocks cell blocks where the mesh is generated
    */
-  virtual void generateMesh( Group * const cellBlocks )
+  virtual void generateMesh( Group & cellBlocks )
   {
     GEOSX_UNUSED_VAR( cellBlocks );
     GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called." );
@@ -97,7 +95,7 @@ public:
    */
   subGroupMap & getSubRegions()
   {
-    return getGroup( viewKeyStruct::elementSubRegions )->getSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
   }
 
   /**
@@ -106,51 +104,30 @@ public:
    */
   subGroupMap const & getSubRegions() const
   {
-    return getGroup( viewKeyStruct::elementSubRegions )->getSubGroups();
+    return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
   }
 
 
   /**
-   * @brief Get a pointer to a subregion by specifying its name.
+   * @brief Get a reference to a subregion.
    * @tparam SUBREGIONTYPE the type that will be used to attempt casting the subregion
-   * @param regionName the name of the subregion
-   * @return a pointer to the subregion
-   * @note
+   * @tparam KEY_TYPE The type of the key used to lookup the subregion.
+   * @param key The key to the subregion.
+   * @return A reference to the subregion
    */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE const * getSubRegion( string const & regionName ) const
+  template< typename SUBREGIONTYPE=ElementSubRegionBase, typename KEY_TYPE=void >
+  SUBREGIONTYPE const & getSubRegion( KEY_TYPE const & key ) const
   {
-    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( regionName );
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroup< SUBREGIONTYPE >( key );
   }
 
   /**
-   * @copydoc getSubRegion( string const & regionName ) const
+   * @copydoc getSubRegion( KEY_TYPE const & key ) const
    */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE * getSubRegion( string const & regionName )
+  template< typename SUBREGIONTYPE=ElementSubRegionBase, typename KEY_TYPE=void >
+  SUBREGIONTYPE & getSubRegion( KEY_TYPE const & key )
   {
-    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( regionName );
-  }
-
-  /**
-   * @brief Get a pointer to a subregion by specifying its index.
-   * @tparam SUBREGIONTYPE the type that will be used to attempt casting the subregion
-   * @param index the index of the subregion
-   * @return a pointer to the subregion
-   */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE const * getSubRegion( localIndex const & index ) const
-  {
-    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( index );
-  }
-
-  /**
-   * @copydoc getSubRegion( localIndex const & index ) const
-   */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase >
-  SUBREGIONTYPE * getSubRegion( localIndex const & index )
-  {
-    return this->getGroup( viewKeyStruct::elementSubRegions )->getGroup< SUBREGIONTYPE >( index );
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroup< SUBREGIONTYPE >( key );
   }
 
   /**
@@ -159,7 +136,7 @@ public:
    */
   localIndex numSubRegions() const
   {
-    return this->getGroup( viewKeyStruct::elementSubRegions )->getSubGroups().size();
+    return this->getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups().size();
   }
 
   /**
@@ -237,8 +214,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    Group const * const elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
-    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+    this->getGroup( viewKeyStruct::elementSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
 /**
@@ -247,8 +223,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    Group * const elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions );
-    elementSubRegions->forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+    this->getGroup( viewKeyStruct::elementSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
 /**
@@ -284,7 +259,7 @@ public:
   {
     for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
     {
-      ElementSubRegionBase const & subRegion = *this->getSubRegion( esr );
+      ElementSubRegionBase const & subRegion = this->getSubRegion( esr );
       applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
       {
         lambda( esr, castedSubRegion );
@@ -300,7 +275,7 @@ public:
   {
     for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
     {
-      ElementSubRegionBase & subRegion = *this->getSubRegion( esr );
+      ElementSubRegionBase & subRegion = this->getSubRegion( esr );
       applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
       {
         lambda( esr, castedSubRegion );
@@ -310,20 +285,17 @@ public:
 
   ///@}
 
-/**
- * @brief Struct to serve as a container for variable strings and keys.
- * @struct viewKeyStruct
- */
+  /**
+   * @brief Struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
-    /// String key for the material list
-    static constexpr auto materialListString = "materialList";
-    /// String key for the element subregions
-    static constexpr auto elementSubRegions = "elementSubRegions";
+    /// @return String key for the material list
+    static constexpr char const * materialListString() { return "materialList"; }
+    /// @return String key for the element subregions
+    static constexpr char const * elementSubRegions() { return "elementSubRegions"; }
   };
-
-
-protected:
 
 private:
 
@@ -355,8 +327,7 @@ string_array ElementRegionBase::getConstitutiveNames() const
   string_array rval;
   for( string const & matName : m_materialList )
   {
-    Group const * const matModel = this->getSubRegion( 0 )->getConstitutiveModels()->getGroup( matName );
-    if( dynamic_cast< CONSTITUTIVE_TYPE const * >( matModel ) != nullptr )
+    if( this->getSubRegion( 0 ).getConstitutiveModels().hasGroup< CONSTITUTIVE_TYPE >( matName ) )
     {
       rval.emplace_back( matName );
     }

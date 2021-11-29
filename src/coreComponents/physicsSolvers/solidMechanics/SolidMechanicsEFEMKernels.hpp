@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -79,9 +79,10 @@ public:
   QuasiStatic( NodeManager const & nodeManager,
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
+               localIndex const targetRegionIndex,
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
-               CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               CONSTITUTIVE_TYPE & inputConstitutiveType,
                EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
                arrayView1d< globalIndex const > const & uDofNumber,
                arrayView1d< globalIndex const > const & wDofNumber,
@@ -92,6 +93,7 @@ public:
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -102,6 +104,8 @@ public:
           inputGravityVector ),
     m_wDofNumber( wDofNumber ),
     m_w( embeddedSurfSubRegion.displacementJump() ),
+    m_tractionVec( embeddedSurfSubRegion.tractionVector() ),
+    m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump() ),
     m_nVec( embeddedSurfSubRegion.getNormalVector() ),
     m_tVec1( embeddedSurfSubRegion.getTangentVector1() ),
     m_tVec2( embeddedSurfSubRegion.getTangentVector2() ),
@@ -184,6 +188,13 @@ public:
 
     /// local nodal coordinates
     real64 X[ numNodesPerElem ][ 3 ];
+
+    /// Stack storage for the traction
+    real64 tractionVec[3];
+
+    /// Stack storage for the derivative of the traction
+    real64 dTractiondw[3][3];
+
   };
   //***************************************************************************
 
@@ -259,6 +270,11 @@ public:
       stack.jumpEqnRowIndices[i] = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
       stack.jumpColIndices[i]    = m_wDofNumber[embSurfIndex] + i;
       stack.wLocal[ i ] = m_w[ embSurfIndex ][i];
+      stack.tractionVec[ i ] = m_tractionVec[ embSurfIndex ][i] * m_surfaceArea[embSurfIndex];
+      for( int ii=0; ii < 3; ++ii )
+      {
+        stack.dTractiondw[ i ][ ii ] = m_dTraction_dJump[embSurfIndex][i][ii] * m_surfaceArea[embSurfIndex];
+      }
     }
   }
 
@@ -328,7 +344,10 @@ public:
 
     int Heaviside[ numNodesPerElem ];
 
-    m_constitutiveUpdate.getStiffness( k, q, stack.constitutiveStiffness );
+    // TODO: asking for the stiffness here will only work for elastic models.  most other models
+    //       need to know the strain increment to compute the current stiffness value.
+
+    m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
 
     SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
                                                                                   stack.X,
@@ -385,12 +404,9 @@ public:
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.uLocal );
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
 
-    // Evaluate tranction
-    real64 tractionVec[3], dTractiondw[3][3], contactCoeff = 1.0e15;
-    SolidMechanicsEFEMKernelsHelper::computeTraction( stack.wLocal, contactCoeff, tractionVec, dTractiondw );
-    LvArray::tensorOps::add< 3 >( stack.localRw, tractionVec );
-    LvArray::tensorOps::scale< 3, 3 >( dTractiondw, -1 );
-    LvArray::tensorOps::add< 3, 3 >( stack.localKww, dTractiondw );
+    // Add traction contribution tranction
+    LvArray::tensorOps::scaledAdd< 3 >( stack.localRw, stack.tractionVec, -1 );
+    LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, stack.dTractiondw, -1 );
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
@@ -437,6 +453,10 @@ protected:
 
   arrayView2d< real64 const > const m_w;
 
+  arrayView2d< real64 const > const m_tractionVec;
+
+  arrayView3d< real64 const > const m_dTraction_dJump;
+
   arrayView2d< real64 const > const m_nVec;
 
   arrayView2d< real64 const > const m_tVec1;
@@ -453,6 +473,51 @@ protected:
 
   ArrayOfArraysView< localIndex const > const m_cellsToEmbeddedSurfaces;
 };
+
+/// The factory used to construct a QuasiStatic kernel.
+using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
+                                                         EmbeddedSurfaceSubRegion const &,
+                                                         arrayView1d< globalIndex const > const &,
+                                                         arrayView1d< globalIndex const > const &,
+                                                         globalIndex const,
+                                                         CRSMatrixView< real64, globalIndex const > const &,
+                                                         arrayView1d< real64 > const &,
+                                                         real64 const (&) [3] >;
+
+
+/**
+ * @brief A struct to update fracture traction
+ */
+struct StateUpdateKernel
+{
+
+  /**
+   * @brief Launch the kernel function doing fracture traction updates
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
+   * @param[in] size the size of the subregion
+   * @param[in] contactWrapper the wrapper implementing the contact relationship
+   * @param[in] jump the displacement jump
+   * @param[out] fractureTraction the fracture traction
+   * @param[out] dFractureTraction_dJump the derivative of the fracture traction wrt displacement jump
+   */
+  template< typename POLICY, typename CONTACT_WRAPPER >
+  static void
+  launch( localIndex const size,
+          CONTACT_WRAPPER const & contactWrapper,
+          arrayView2d< real64 const > const & oldJump,
+          arrayView2d< real64 const > const & jump,
+          arrayView2d< real64 > const & fractureTraction,
+          arrayView3d< real64 > const & dFractureTraction_dJump )
+  {
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      contactWrapper.computeTraction( k, oldJump[k], jump[k], fractureTraction[k], dFractureTraction_dJump[k] );
+    } );
+  }
+
+};
+
 
 } // namespace SolidMechanicsEFEMKernels
 

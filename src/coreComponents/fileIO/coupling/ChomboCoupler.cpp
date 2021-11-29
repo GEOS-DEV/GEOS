@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-ChomboCoupler::ChomboCoupler( MPI_Comm const comm, const std::string & outputPath, const std::string & inputPath, MeshLevel & mesh ):
+ChomboCoupler::ChomboCoupler( MPI_Comm const comm, const string & outputPath, const string & inputPath, MeshLevel & mesh ):
   m_comm( comm ),
   m_outputPath( outputPath ),
   m_inputPath( inputPath ),
@@ -36,18 +36,18 @@ ChomboCoupler::ChomboCoupler( MPI_Comm const comm, const std::string & outputPat
   m_mesh( mesh ),
   m_counter( 0 )
 {
-  m_mesh.getFaceManager()->registerWrapper< array1d< real64 > >( "ChomboPressure" );
+  m_mesh.getFaceManager().registerWrapper< array1d< real64 > >( "ChomboPressure" );
 }
 
 void ChomboCoupler::write( double dt )
 {
   ++m_counter;
-  FaceManager const * const faces = m_mesh.getFaceManager();
-  ElementRegionManager const * const elemRegionManager = m_mesh.getElemManager();
+  FaceManager const & faces = m_mesh.getFaceManager();
+  ElementRegionManager const & elemRegionManager = m_mesh.getElemManager();
 
 
-  ArrayOfArraysView< localIndex const > const & face_connectivity = faces->nodeList().toViewConst();
-  FaceManager::ElemMapType const & toElementRelation = faces->toElementRelation();
+  ArrayOfArraysView< localIndex const > const & face_connectivity = faces.nodeList().toViewConst();
+  FaceManager::ElemMapType const & toElementRelation = faces.toElementRelation();
   arrayView2d< localIndex const > const & faceToElementRegionIndex = toElementRelation.m_toElementRegion.toViewConst();
 
   localIndex const n_faces = face_connectivity.size();
@@ -62,12 +62,12 @@ void ChomboCoupler::write( double dt )
     }
   }
 
-  arrayView1d< integer const > const & ruptureState = faces->getExtrinsicData< extrinsicMeshData::RuptureState >();
-  arrayView1d< integer const > const & ghostRank = faces->ghostRank();
+  arrayView1d< integer const > const & ruptureState = faces.getExtrinsicData< extrinsicMeshData::RuptureState >();
+  arrayView1d< integer const > const & ghostRank = faces.ghostRank();
 
   localIndex voidRegionIndex = -1;
-  elemRegionManager->forElementRegionsComplete( [&]( localIndex const elemRegionIndex,
-                                                     ElementRegionBase const & elemRegion )
+  elemRegionManager.forElementRegionsComplete( [&]( localIndex const elemRegionIndex,
+                                                    ElementRegionBase const & elemRegion )
   {
     if( elemRegion.getName() == "void" )
     {
@@ -88,7 +88,7 @@ void ChomboCoupler::write( double dt )
 
   /* Build the face FieldMap. */
   FieldMap_in face_fields;
-  real64 const * pressure_ptr = faces->getReference< real64_array >( "ChomboPressure" ).data();
+  real64 const * pressure_ptr = faces.getReference< real64_array >( "ChomboPressure" ).data();
   face_fields["Pressure"] = std::make_tuple( H5T_NATIVE_DOUBLE, 1, pressure_ptr );
 
   /* Build the node FieldMap. */
@@ -118,15 +118,15 @@ void ChomboCoupler::read( bool usePressures )
   {
     GEOSX_LOG_RANK_0( "Reading pressures..." );
 
-    FaceManager * const faces = m_mesh.getFaceManager();
-    NodeManager * const nodes = m_mesh.getNodeManager();
+    FaceManager & faces = m_mesh.getFaceManager();
+    NodeManager & nodes = m_mesh.getNodeManager();
 
-    const localIndex n_faces = faces->size();
-    const localIndex n_nodes = nodes->size();
+    const localIndex n_faces = faces.size();
+    const localIndex n_nodes = nodes.size();
 
     /* Build the face FieldMap. */
     FieldMap_out face_fields;
-    real64 * pressure_ptr = faces->getReference< real64_array >( "ChomboPressure" ).data();
+    real64 * pressure_ptr = faces.getReference< real64_array >( "ChomboPressure" ).data();
     face_fields["Pressure"] = std::make_tuple( H5T_NATIVE_DOUBLE, 1, pressure_ptr );
 
     FieldMap_out node_fields;
@@ -136,7 +136,7 @@ void ChomboCoupler::read( bool usePressures )
                       m_face_offset, m_n_faces_written, n_faces, face_fields,
                       m_node_offset, m_n_nodes_written, n_nodes, node_fields );
 
-    arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & reference_pos = nodes->referencePosition();
+    arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & reference_pos = nodes.referencePosition();
     for( localIndex i = 0; i < n_nodes; ++i )
     {
       for( localIndex j = 0; j < 3; ++j )
@@ -156,11 +156,11 @@ void ChomboCoupler::read( bool usePressures )
 
 void ChomboCoupler::copyNodalData()
 {
-  NodeManager const * const nodes = m_mesh.getNodeManager();
-  localIndex const numNodes = nodes->size();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePos = nodes->referencePosition();
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodes->totalDisplacement();
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & velocity = nodes->velocity();
+  NodeManager const & nodes = m_mesh.getNodeManager();
+  localIndex const numNodes = nodes.size();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePos = nodes.referencePosition();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodes.totalDisplacement();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & velocity = nodes.velocity();
 
   GEOSX_ERROR_IF_NE( referencePos.size( 0 ), numNodes );
   GEOSX_ERROR_IF_NE( referencePos.size( 1 ), 3 );

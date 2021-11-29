@@ -26,9 +26,9 @@ Who develops GEOSX?
 GEOSX is an open source project and is developed by a community of researchers at
 several institutions.  The bulk of the code has been written by contributors from
 three main organizations:
-  - Lawrence Livermore National Laboratory
-  - Stanford University
-  - Total, S.A.
+  - Lawrence Livermore National Laboratory,
+  - Stanford University,
+  - TotalEnergies.
 
 See our
 [authors](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/Contributors.html)

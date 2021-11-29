@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -79,14 +79,16 @@ public:
   ExplicitFiniteStrain( NodeManager & nodeManager,
                         EdgeManager const & edgeManager,
                         FaceManager const & faceManager,
+                        localIndex const targetRegionIndex,
                         SUBREGION_TYPE const & elementSubRegion,
                         FE_TYPE const & finiteElementSpace,
-                        CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                         real64 const dt,
                         string const & elementListName ):
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -185,21 +187,22 @@ public:
     real64 Dadt[ 6 ];
     HughesWinget( Rot, Dadt, Ldt );
 
-    m_constitutiveUpdate.hypoElastic( k, q, Dadt, Rot );
+    real64 stress[ 6 ] = { };
+    m_constitutiveUpdate.hypoUpdate_StressOnly( k, q, Dadt, Rot, stress );
 
     real64 P[ 3 ][ 3 ];
-    LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, m_constitutiveUpdate.m_stress[k][q].toSliceConst(), fInv );
+    LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
     LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
     FE_TYPE::plusGradNajAij( dNdX, P, stack.fLocal );
-
   }
-
-
-
 };
 #undef UPDATE_STRESS
 
+/// The factory used to construct a ExplicitFiniteStrain kernel.
+using ExplicitFiniteStrainFactory = finiteElement::KernelFactory< ExplicitFiniteStrain,
+                                                                  real64,
+                                                                  string const & >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

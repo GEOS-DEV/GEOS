@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -12,10 +12,9 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/*
- * LAIHelperFunctions.hpp
+/**
+ * @file LAIHelperFunctions.hpp
  */
-
 
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
 #define GEOSX_LINEARALGEBRA_UTILITIES_LAIHELPERFUNCTIONS_HPP_
@@ -33,45 +32,143 @@ namespace LAIHelperFunctions
 {
 
 /**
- * @brief Create a permutation matrix for a given nodal variable.
- * @param[in]  nodeManager       the node manager
- * @param[in]  nRows             number of local rows in the matrix
- * @param[in]  nCols             number of local columns in the matrix
- * @param[in]  nDofPerNode       number of degrees-of-freedom per node
- * @param[in]  dofKey            DofManager key used to access dof index array
- * @param[out] permutationMatrix the target matrix
+ * @brief Create an identity matrix.
+ * @tparam MATRIX type of matrix
+ * @param n local size of the square identity matrix
+ * @param comm MPI communicator
+ * @param mat the output matrix
  */
-void CreatePermutationMatrix( NodeManager const * const nodeManager,
-                              localIndex const nRows,
-                              localIndex const nCols,
-                              int const nDofPerNode,
-                              string const dofKey,
-                              ParallelMatrix & permutationMatrix );
+template< typename MATRIX >
+void makeIdentity( localIndex const n,
+                   MPI_Comm const & comm,
+                   MATRIX & mat )
+{
+  mat.createWithLocalSize( n, 1, comm );
+  mat.open();
+  for( globalIndex i = mat.ilower(); i < mat.iupper(); ++i )
+  {
+    mat.insert( i, i, 1.0 );
+  }
+  mat.close();
+}
 
 /**
  * @brief Create a permutation matrix for a given nodal variable.
- * @param[in]  elemManager       the element region manager
- * @param[in]  nRows             number of local rows in the matrix
- * @param[in]  nCols             number of local columns in the matrix
+ * @tparam     MATRIX            the parallel matrix type
+ * @param[in]  nodeManager       the node manager
  * @param[in]  nDofPerNode       number of degrees-of-freedom per node
  * @param[in]  dofKey            DofManager key used to access dof index array
  * @param[out] permutationMatrix the target matrix
  */
-void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
-                              localIndex const nRows,
-                              localIndex const nCols,
+template< typename MATRIX >
+void createPermutationMatrix( NodeManager const & nodeManager,
                               int const nDofPerNode,
-                              string const DofKey,
-                              ParallelMatrix & permutationMatrix );
+                              string const & dofKey,
+                              MATRIX & permutationMatrix )
+{
+  /* Crates a permutation matrix for a given nodal variable specified by the DofKey.
+   * It consider that nDofPerNode dofs are associated with each node (e.g., nDofPerNode = 3 for the displacement).
+   *
+   * The permutation matrix maps from the dofs ordering set by the DOFManager to the ordering based on the global
+   * indexes of the nodes.
+   */
+
+  localIndex const numLocalRows = nodeManager.getNumberOfLocalIndices() * nDofPerNode;
+  permutationMatrix.createWithLocalSize( numLocalRows, numLocalRows, 1, MPI_COMM_GEOSX );
+
+  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  arrayView1d< globalIndex const > const & localToGlobal = nodeManager.localToGlobalMap();
+
+  permutationMatrix.open();
+  for( localIndex a = 0; a < nodeManager.size(); ++a )
+  {
+    if( dofNumber[a] >= 0 )
+    {
+      for( int d = 0; d < nDofPerNode; ++d )
+      {
+        globalIndex const rowIndex    = localToGlobal[a] * nDofPerNode + d;
+        globalIndex const columnIndex = dofNumber[a] + d;
+        permutationMatrix.insert( rowIndex, columnIndex, 1.0 );
+      }
+    }
+  }
+  permutationMatrix.close();
+  permutationMatrix.set( 1.0 );
+}
+
+/**
+ * @brief Create a permutation matrix for a given cell-centered variable.
+ * @tparam     MATRIX            the parallel matrix type
+ * @param[in]  elemManager       the element region manager
+ * @param[in]  nDofPerCell       number of degrees-of-freedom per node
+ * @param[in]  dofKey            DofManager key used to access dof index array
+ * @param[out] permutationMatrix the target matrix
+ */
+template< typename MATRIX >
+void createPermutationMatrix( ElementRegionManager const & elemManager,
+                              int const nDofPerCell,
+                              string const & dofKey,
+                              MATRIX & permutationMatrix )
+{
+  /* Crates a permutation matrix for a given cell centered variable specified by the DofKey.
+   * It consider that nDofPerCell dofs are associated with each cell (e.g., nDofPerCell = 3 for the displacement).
+   *
+   * The permutation matrix maps from the dofs ordering set by the DOFManager to the ordering based on the global
+   * indexes of the cells.
+   */
+
+  // Create permutation matrix
+  localIndex numLocalRows = 0;
+  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & elementSubRegion )
+  {
+    if( elementSubRegion.hasWrapper( dofKey ) )
+    {
+      numLocalRows += elementSubRegion.getNumberOfLocalIndices() * nDofPerCell;
+    }
+  } );
+  permutationMatrix.createWithLocalSize( numLocalRows, numLocalRows, 1, MPI_COMM_GEOSX );
+
+  permutationMatrix.open();
+  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & elementSubRegion )
+  {
+    localIndex const numElems = elementSubRegion.size();
+    arrayView1d< globalIndex const > const & dofNumber = elementSubRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< globalIndex const > const & localToGlobal = elementSubRegion.localToGlobalMap();
+
+    for( localIndex k = 0; k < numElems; ++k )
+    {
+      if( dofNumber[k] >= 0 )
+      {
+        for( int d = 0; d < nDofPerCell; ++d )
+        {
+          globalIndex const rowIndex    = localToGlobal[k] * nDofPerCell + d;
+          globalIndex const columnIndex = dofNumber[k] + d;
+          permutationMatrix.insert( rowIndex, columnIndex, 1.0 );
+        }
+      }
+    }
+  } );
+  permutationMatrix.close();
+  permutationMatrix.set( 1.0 );
+}
 
 /**
  * @brief Permute a vector.
+ * @tparam    VECTOR            the parallel vector type
+ * @tparam    MATRIX            the parallel matrix type
  * @param[in] vector            the source vector
  * @param[in] permutationMatrix the permutation matrix
  * @return the permuted vector
  */
-ParallelVector PermuteVector( ParallelVector const & vector,
-                              ParallelMatrix const & permutationMatrix );
+template< typename VECTOR, typename MATRIX >
+VECTOR permuteVector( VECTOR const & vector,
+                      MATRIX const & permutationMatrix )
+{
+  VECTOR permutedVector;
+  permutedVector.create( vector.localSize(), permutationMatrix.comm() );
+  permutationMatrix.apply( vector, permutedVector );
+  return permutedVector;
+}
 
 /**
  * @brief Permute rows and columns of a square matrix.
@@ -79,8 +176,14 @@ ParallelVector PermuteVector( ParallelVector const & vector,
  * @param[in] permutationMatrix permutation matrix
  * @return the permuted matrix
  */
-ParallelMatrix PermuteMatrix( ParallelMatrix const & matrix,
-                              ParallelMatrix const & permutationMatrix );
+template< typename MATRIX >
+MATRIX permuteMatrix( MATRIX const & matrix,
+                      MATRIX const & permutationMatrix )
+{
+  MATRIX permutedMatrix;
+  matrix.multiplyRARt( permutationMatrix, permutedMatrix );
+  return matrix;
+}
 
 /**
  * Permute rows and columns of a rectangular matrix
@@ -89,89 +192,37 @@ ParallelMatrix PermuteMatrix( ParallelMatrix const & matrix,
  * @param[in] permutationMatrixRight right permutation matrix
  * @return the permuted matrix
  */
-ParallelMatrix PermuteMatrix( ParallelMatrix const & matrix,
-                              ParallelMatrix const & permutationMatrixLeft,
-                              ParallelMatrix const & permutationMatrixRight );
-
-void PrintPermutedVector( ParallelVector const & vector,
-                          ParallelMatrix const & permuationMatrix,
-                          std::ostream & os );
-
-
-void PrintPermutedMatrix( ParallelMatrix const & matrix,
-                          ParallelMatrix const & permutationMatrix,
-                          std::ostream & os );
-
-void PrintPermutedMatrix( ParallelMatrix const & matrix,
-                          ParallelMatrix const & permutationMatrixLeft,
-                          ParallelMatrix const & permutationMatrixRight,
-                          std::ostream & os );
-
-/**
- * @brief Apply a separate component approximation (filter) to a matrix.
- * @tparam MATRIX the type of matrices
- * @param src         the source matrix
- * @param dst         the target (filtered) matrix
- * @param dofsPerNode number of degrees-of-freedom per node
- */
 template< typename MATRIX >
-void SeparateComponentFilter( MATRIX const & src,
-                              MATRIX & dst,
-                              const localIndex dofsPerNode )
+MATRIX permuteMatrix( MATRIX const & matrix,
+                      MATRIX const & permutationMatrixLeft,
+                      MATRIX const & permutationMatrixRight )
 {
-  GEOSX_ERROR_IF( dofsPerNode < 2, "Function requires dofsPerNode > 1" );
-
-  const localIndex localRows  = src.numLocalRows();
-  const localIndex maxEntries = src.maxRowLength();
-  const localIndex maxDstEntries = maxEntries / dofsPerNode;
-
-  dst.createWithLocalSize( localRows, maxEntries, MPI_COMM_WORLD );
-  dst.open();
-
-  array1d< real64 > srcValues;
-  array1d< real64 > dstValues( maxDstEntries );
-
-  array1d< globalIndex > srcIndices;
-  array1d< globalIndex > dstIndices( maxDstEntries );
-
-  for( globalIndex row=src.ilower(); row<src.iupper(); ++row )
-  {
-    const globalIndex rowComponent = row % dofsPerNode;
-    const localIndex rowLength = src.globalRowLength( row );
-    srcIndices.resize( rowLength );
-    srcValues.resize( rowLength );
-
-    src.getRowCopy( row, srcIndices, srcValues );
-
-    localIndex k=0;
-    for( localIndex col=0; col<rowLength; ++col )
-    {
-      const globalIndex colComponent = srcIndices[col] % dofsPerNode;
-      if( rowComponent == colComponent )
-      {
-        dstValues[k] = srcValues[col];
-        dstIndices[k] = srcIndices[col];
-        k++;
-      }
-    }
-    dst.insert( row, dstIndices.data(), dstValues.data(), k );
-  }
-  dst.close();
+  MATRIX permutedMatrix;
+  matrix.multiplyRAP( permutationMatrixLeft, permutationMatrixRight, permutedMatrix );
+  return matrix;
 }
 
+/**
+ * @brief Computes rigid body modes
+ * @tparam VECTOR output vector type
+ * @param mesh the mesh
+ * @param dofManager the degree-of-freedom manager
+ * @param selection list of field names
+ * @param rigidBodyModes the output array of linear algebra vectors containing RBMs
+ */
 template< typename VECTOR >
-void ComputeRigidBodyModes( MeshLevel const & mesh,
+void computeRigidBodyModes( MeshLevel const & mesh,
                             DofManager const & dofManager,
                             std::vector< string > const & selection,
                             array1d< VECTOR > & rigidBodyModes )
 {
-  NodeManager const & nodeManager = *mesh.getNodeManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
   localIndex numComponents = 0;
-  array1d< globalIndex > globalNodeList;
+  array1d< localIndex > globalNodeList;
   for( localIndex k = 0; k < LvArray::integerConversion< localIndex >( selection.size() ); ++k )
   {
-    if( dofManager.getLocation( selection[k] ) == DofManager::Location::Node )
+    if( dofManager.location( selection[k] ) == DofManager::Location::Node )
     {
       string const & dispDofKey = dofManager.getKey( selection[k] );
       arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -184,12 +235,13 @@ void ComputeRigidBodyModes( MeshLevel const & mesh,
       {
         if( dofNumber[i] >= globalOffset && ( dofNumber[i] - globalOffset ) < numLocalDofs )
         {
-          globalNodeList.emplace_back( ( dofNumber[i]-globalOffset )/numComponentsField );
+          globalNodeList.emplace_back( LvArray::integerConversion< localIndex >( dofNumber[i] - globalOffset ) / numComponentsField );
         }
       }
     }
   }
   localIndex const numNodes = globalNodeList.size();
+  arrayView1d< localIndex const > globalNodeListView = globalNodeList.toViewConst();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
@@ -197,81 +249,93 @@ void ComputeRigidBodyModes( MeshLevel const & mesh,
   rigidBodyModes.resize( numRidigBodyModes );
   for( localIndex k = 0; k < numComponents; ++k )
   {
-    rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
-    rigidBodyModes[k].open();
-    for( localIndex i = 0; i < numNodes; ++i )
+    rigidBodyModes[k].create( numNodes * numComponents, MPI_COMM_GEOSX );
+    arrayView1d< real64 > const values = rigidBodyModes[k].open();
+    forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
     {
-      rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+k ), 1.0 );
-    }
+      values[numComponents * i + k] = 1.0;
+    } );
     rigidBodyModes[k].close();
-    rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+    rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
   }
   switch( numComponents )
   {
     case 2:
     {
       localIndex const k = 2;
-      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
-      rigidBodyModes[k].open();
-      for( localIndex i = 0; i < numNodes; ++i )
+      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
       {
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+0 ), -nodePosition[globalNodeList[i]][1] );
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+1 ), +nodePosition[globalNodeList[i]][0] );
+        arrayView1d< real64 > const values = rigidBodyModes[k].open();
+        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
+        {
+          values[numComponents * i + 0] = -nodePosition[globalNodeListView[i]][1];
+          values[numComponents * i + 1] = +nodePosition[globalNodeListView[i]][0];
+        } );
+        rigidBodyModes[k].close();
       }
-      rigidBodyModes[k].close();
+
       for( localIndex j = 0; j < k; ++j )
       {
         rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
       }
-      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
       break;
     }
     case 3:
     {
       localIndex k = 3;
-      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
-      rigidBodyModes[k].open();
-      for( localIndex i = 0; i < numNodes; ++i )
+      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
       {
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+0 ), +nodePosition[globalNodeList[i]][1] );
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+1 ), -nodePosition[globalNodeList[i]][0] );
+        arrayView1d< real64 > const values = rigidBodyModes[k].open();
+        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
+        {
+          values[numComponents * i + 0] = +nodePosition[globalNodeListView[i]][1];
+          values[numComponents * i + 1] = -nodePosition[globalNodeListView[i]][0];
+        } );
+        rigidBodyModes[k].close();
       }
-      rigidBodyModes[k].close();
+
       for( localIndex j = 0; j < k; ++j )
       {
         rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
       }
-      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
 
       ++k;
-      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
-      rigidBodyModes[k].open();
-      for( localIndex i = 0; i < numNodes; ++i )
+      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
       {
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+1 ), -nodePosition[globalNodeList[i]][2] );
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+2 ), +nodePosition[globalNodeList[i]][1] );
+        arrayView1d< real64 > const values = rigidBodyModes[k].open();
+        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
+        {
+          values[numComponents * i + 1] = -nodePosition[globalNodeListView[i]][2];
+          values[numComponents * i + 2] = +nodePosition[globalNodeListView[i]][1];
+        } );
+        rigidBodyModes[k].close();
       }
-      rigidBodyModes[k].close();
+
       for( localIndex j = 0; j < k; ++j )
       {
         rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
       }
-      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
 
       ++k;
-      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
-      rigidBodyModes[k].open();
-      for( localIndex i = 0; i < numNodes; ++i )
+      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
       {
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+0 ), +nodePosition[globalNodeList[i]][2] );
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+2 ), -nodePosition[globalNodeList[i]][0] );
+        arrayView1d< real64 > const values = rigidBodyModes[k].open();
+        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
+        {
+          values[numComponents * i + 0] = +nodePosition[globalNodeListView[i]][2];
+          values[numComponents * i + 2] = -nodePosition[globalNodeListView[i]][0];
+        } );
+        rigidBodyModes[k].close();
       }
-      rigidBodyModes[k].close();
+
       for( localIndex j = 0; j < k; ++j )
       {
         rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
       }
-      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
       break;
     }
     default:

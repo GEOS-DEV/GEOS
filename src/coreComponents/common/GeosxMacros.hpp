@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -75,7 +75,7 @@ GEOSX_HOST_DEVICE inline constexpr
 void i_g_n_o_r_e( ARGS const & ... ) {}
 
 /// Mark an unused variable and silence compiler warnings.
-#define GEOSX_UNUSED_VAR( ... ) i_g_n_o_r_e( __VA_ARGS__ );
+#define GEOSX_UNUSED_VAR( ... ) i_g_n_o_r_e( __VA_ARGS__ )
 
 /// Mark a debug variable and silence compiler warnings.
 #define GEOSX_DEBUG_VAR( ... ) GEOSX_UNUSED_VAR( __VA_ARGS__ )
@@ -99,5 +99,11 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 
 /// Doxygen can't parse a `decltype( auto )` return type, using this gets around that.
 #define GEOSX_DECLTYPE_AUTO_RETURN decltype( auto )
+
+/// Macro to concatenate two tokens (low level)
+#define GEOSX_CONCAT_IMPL( A, B ) A ## B
+
+/// Macro to concatenate two tokens (user level)
+#define GEOSX_CONCAT( A, B ) GEOSX_CONCAT_IMPL( A, B )
 
 #endif // GEOSX_COMMON_GEOSXMACROS_HPP_

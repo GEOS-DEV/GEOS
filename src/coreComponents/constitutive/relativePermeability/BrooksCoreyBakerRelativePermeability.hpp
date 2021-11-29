@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,6 +20,7 @@
 #define GEOSX_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
 
 namespace geosx
 {
@@ -38,8 +39,8 @@ public:
                                               real64 const volFracScale,
                                               arrayView1d< integer const > const & phaseTypes,
                                               arrayView1d< integer const > const & phaseOrder,
-                                              arrayView3d< real64 > const & phaseRelPerm,
-                                              arrayView4d< real64 > const & dPhaseRelPerm_dPhaseVolFrac )
+                                              arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                                              arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
                                       phaseRelPerm,
@@ -52,29 +53,15 @@ public:
     m_volFracScale( volFracScale )
   {}
 
-  /// Default copy constructor
-  BrooksCoreyBakerRelativePermeabilityUpdate( BrooksCoreyBakerRelativePermeabilityUpdate const & ) = default;
-
-  /// Default move constructor
-  BrooksCoreyBakerRelativePermeabilityUpdate( BrooksCoreyBakerRelativePermeabilityUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  BrooksCoreyBakerRelativePermeabilityUpdate & operator=( BrooksCoreyBakerRelativePermeabilityUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  BrooksCoreyBakerRelativePermeabilityUpdate & operator=( BrooksCoreyBakerRelativePermeabilityUpdate && ) = delete;
+  GEOSX_HOST_DEVICE
+  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                        arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                        arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseRelPerm,
-                        arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & phaseVolFraction ) const override
+                       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
   {
     compute( phaseVolFraction,
              m_phaseRelPerm[k][q],
@@ -106,34 +93,6 @@ private:
                                real64 & relPerm,
                                real64 & dRelPerm_dVolFrac );
 
-  /**
-   * @brief Interpolate the two-phase relperms to compute the three-phase relperm
-   * @param[in] shiftedWaterVolFrac
-   * @param[in] gasVolFrac
-   * @param[out] threePhaseRelPerm
-   * @param[out] dThreePhaseRelPerm_dVolFrac
-   * @param[in] relPerm_wo
-   * @param[in] dRelPerm_wo_dOilVolFrac
-   * @param[in] relPerm_go
-   * @param[in] dRelPerm_go_dOilVolFrac
-   *
-   * This function interpolates the two-phase relperms to compute the three-phase relperm
-   * The interpolation is based on the modified Baker method, also used as default in Eclipse
-   * Reference: Eclipse technical description and PetroWiki
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void
-  interpolateTwoPhaseRelPerms( real64 const & shiftedWaterVolFrac,
-                               real64 const & gasVolFrac,
-                               arraySlice1d< integer const > const & phaseOrder,
-                               real64 const & relPerm_wo,
-                               real64 const & dRelPerm_wo_dOilVolFrac,
-                               real64 const & relPerm_go,
-                               real64 const & dRelPerm_go_dOilVolFrac,
-                               real64 & threePhaseRelPerm,
-                               arraySlice1d< real64 > const & dThreePhaseRelPerm_dVolFrac );
-
   arrayView1d< real64 const > m_phaseMinVolumeFraction;
 
   arrayView1d< real64 const > m_waterOilRelPermExponent;
@@ -151,8 +110,6 @@ public:
 
   BrooksCoreyBakerRelativePermeability( string const & name, dataRepository::Group * const parent );
 
-  virtual ~BrooksCoreyBakerRelativePermeability() override;
-
   static string catalogName() { return "BrooksCoreyBakerRelativePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -168,13 +125,13 @@ public:
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
-    static constexpr auto phaseMinVolumeFractionString  = "phaseMinVolumeFraction";
-    static constexpr auto waterOilRelPermExponentString = "waterOilRelPermExponent";
-    static constexpr auto waterOilRelPermMaxValueString = "waterOilRelPermMaxValue";
-    static constexpr auto gasOilRelPermExponentString   = "gasOilRelPermExponent";
-    static constexpr auto gasOilRelPermMaxValueString   = "gasOilRelPermMaxValue";
-    static constexpr auto volFracScaleString            = "volFracScale";
-  } viewKeysBrooksCoreyBakerRelativePermeability;
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
+    static constexpr char const * waterOilRelPermExponentString() { return "waterOilRelPermExponent"; }
+    static constexpr char const * waterOilRelPermMaxValueString() { return "waterOilRelPermMaxValue"; }
+    static constexpr char const * gasOilRelPermExponentString() { return "gasOilRelPermExponent"; }
+    static constexpr char const * gasOilRelPermMaxValueString() { return "gasOilRelPermMaxValue"; }
+    static constexpr char const * volFracScaleString() { return "volFracScale"; }
+  };
 
 protected:
 
@@ -195,54 +152,47 @@ protected:
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
+inline void
 BrooksCoreyBakerRelativePermeabilityUpdate::
-  compute( arraySlice1d< real64 const > const & phaseVolFraction,
-           arraySlice1d< real64 > const & phaseRelPerm,
-           arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const
+  compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+           arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  localIndex const NP = numPhases();
-
-  for( localIndex ip = 0; ip < NP; ++ip )
-  {
-    for( localIndex jp = 0; jp < NP; ++jp )
-    {
-      dPhaseRelPerm_dPhaseVolFrac[ip][jp] = 0.0;
-    }
-  }
+  LvArray::forValuesInSlice( dPhaseRelPerm_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
   real64 const volFracScaleInv = 1.0 / m_volFracScale;
-  integer const ip_water = m_phaseOrder[RelativePermeabilityBase::PhaseType::WATER];
-  integer const ip_oil   = m_phaseOrder[RelativePermeabilityBase::PhaseType::OIL];
-  integer const ip_gas   = m_phaseOrder[RelativePermeabilityBase::PhaseType::GAS];
+  using PT = RelativePermeabilityBase::PhaseType;
+  integer const ipWater = m_phaseOrder[PT::WATER];
+  integer const ipOil   = m_phaseOrder[PT::OIL];
+  integer const ipGas   = m_phaseOrder[PT::GAS];
 
   real64 oilRelPerm_wo = 0; // oil rel perm using two-phase gas-oil data
   real64 dOilRelPerm_wo_dOilVolFrac = 0; // derivative w.r.t to So
   real64 oilRelPerm_go = 0; // oil rel perm using two-phase gas-oil data
   real64 dOilRelPerm_go_dOilVolFrac = 0; // derivative w.r.t to So
 
-  // this function assumes that the oil phase can always be present (i.e., ip_oil > 0)
+  // this function assumes that the oil phase can always be present (i.e., ipOil > 0)
 
   // 1) Water and oil phase relative permeabilities using water-oil data
-  if( ip_water >= 0 )
+  if( ipWater >= 0 )
   {
-    real64 const scaledWaterVolFrac = (phaseVolFraction[ip_water] - m_phaseMinVolumeFraction[ip_water]) * volFracScaleInv;
-    real64 const scaledOilVolFrac   = (phaseVolFraction[ip_oil]   - m_phaseMinVolumeFraction[ip_oil])   * volFracScaleInv;
+    real64 const scaledWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]) * volFracScaleInv;
+    real64 const scaledOilVolFrac   = (phaseVolFraction[ipOil]   - m_phaseMinVolumeFraction[ipOil])   * volFracScaleInv;
 
-    real64 const waterExponent = m_waterOilRelPermExponent[RelativePermeabilityBase::WaterOilPairPhaseType::WATER];
-    real64 const waterMaxValue = m_waterOilRelPermMaxValue[RelativePermeabilityBase::WaterOilPairPhaseType::WATER];
+    using WOPT = RelativePermeabilityBase::WaterOilPairPhaseType;
+    real64 const waterExponent = m_waterOilRelPermExponent[WOPT::WATER];
+    real64 const waterMaxValue = m_waterOilRelPermMaxValue[WOPT::WATER];
 
     // water rel perm
     evaluateBrooksCoreyFunction( scaledWaterVolFrac,
                                  volFracScaleInv,
                                  waterExponent,
                                  waterMaxValue,
-                                 phaseRelPerm[ip_water],
-                                 dPhaseRelPerm_dPhaseVolFrac[ip_water][ip_water] );
+                                 phaseRelPerm[ipWater],
+                                 dPhaseRelPerm_dPhaseVolFrac[ipWater][ipWater] );
 
-    real64 const oilExponent_wo = m_waterOilRelPermExponent[RelativePermeabilityBase::WaterOilPairPhaseType::OIL];
-    real64 const oilMaxValue_wo = m_waterOilRelPermMaxValue[RelativePermeabilityBase::WaterOilPairPhaseType::OIL];
+    real64 const oilExponent_wo = m_waterOilRelPermExponent[WOPT::OIL];
+    real64 const oilMaxValue_wo = m_waterOilRelPermMaxValue[WOPT::OIL];
 
     // oil rel perm
     evaluateBrooksCoreyFunction( scaledOilVolFrac,
@@ -255,24 +205,25 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
 
 
   // 2) Gas and oil phase relative permeabilities using gas-oil data
-  if( ip_gas >= 0 )
+  if( ipGas >= 0 )
   {
-    real64 const scaledGasVolFrac = (phaseVolFraction[ip_gas] - m_phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
-    real64 const scaledOilVolFrac = (phaseVolFraction[ip_oil] - m_phaseMinVolumeFraction[ip_oil]) * volFracScaleInv;
+    real64 const scaledGasVolFrac = (phaseVolFraction[ipGas] - m_phaseMinVolumeFraction[ipGas]) * volFracScaleInv;
+    real64 const scaledOilVolFrac = (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[ipOil]) * volFracScaleInv;
 
-    real64 const gasExponent = m_gasOilRelPermExponent[RelativePermeabilityBase::GasOilPairPhaseType::GAS];
-    real64 const gasMaxValue = m_gasOilRelPermMaxValue[RelativePermeabilityBase::GasOilPairPhaseType::GAS];
+    using GOPT = RelativePermeabilityBase::GasOilPairPhaseType;
+    real64 const gasExponent = m_gasOilRelPermExponent[GOPT::GAS];
+    real64 const gasMaxValue = m_gasOilRelPermMaxValue[GOPT::GAS];
 
     // gas rel perm
     evaluateBrooksCoreyFunction( scaledGasVolFrac,
                                  volFracScaleInv,
                                  gasExponent,
                                  gasMaxValue,
-                                 phaseRelPerm[ip_gas],
-                                 dPhaseRelPerm_dPhaseVolFrac[ip_gas][ip_gas] );
+                                 phaseRelPerm[ipGas],
+                                 dPhaseRelPerm_dPhaseVolFrac[ipGas][ipGas] );
 
-    real64 const oilExponent_go = m_gasOilRelPermExponent[RelativePermeabilityBase::GasOilPairPhaseType::OIL];
-    real64 const oilMaxValue_go = m_gasOilRelPermMaxValue[RelativePermeabilityBase::GasOilPairPhaseType::OIL];
+    real64 const oilExponent_go = m_gasOilRelPermExponent[GOPT::OIL];
+    real64 const oilMaxValue_go = m_gasOilRelPermMaxValue[GOPT::OIL];
 
     // oil rel perm
     evaluateBrooksCoreyFunction( scaledOilVolFrac,
@@ -287,31 +238,32 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
   // 3) Compute the "three-phase" oil relperm
 
   // if no gas, use water-oil data
-  if( ip_gas < 0 )
+  if( ipGas < 0 )
   {
-    phaseRelPerm[ip_oil] = oilRelPerm_wo;
-    dPhaseRelPerm_dPhaseVolFrac[ip_oil][ip_oil] = dOilRelPerm_wo_dOilVolFrac;
+    phaseRelPerm[ipOil] = oilRelPerm_wo;
+    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_wo_dOilVolFrac;
   }
   // if no water, use gas-oil data
-  else if( ip_water < 0 )
+  else if( ipWater < 0 )
   {
-    phaseRelPerm[ip_oil] = oilRelPerm_go;
-    dPhaseRelPerm_dPhaseVolFrac[ip_oil][ip_oil] = dOilRelPerm_go_dOilVolFrac;
+    phaseRelPerm[ipOil] = oilRelPerm_go;
+    dPhaseRelPerm_dPhaseVolFrac[ipOil][ipOil] = dOilRelPerm_go_dOilVolFrac;
   }
   // if water and oil and gas can be present, use saturation-weighted interpolation
   else
   {
-    real64 const shiftedWaterVolFrac = (phaseVolFraction[ip_water] - m_phaseMinVolumeFraction[ip_water]);
+    real64 const shiftedWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]);
 
-    interpolateTwoPhaseRelPerms( shiftedWaterVolFrac,
-                                 phaseVolFraction[ip_gas],
-                                 m_phaseOrder,
-                                 oilRelPerm_wo,
-                                 dOilRelPerm_wo_dOilVolFrac,
-                                 oilRelPerm_go,
-                                 dOilRelPerm_go_dOilVolFrac,
-                                 phaseRelPerm[ip_oil],
-                                 dPhaseRelPerm_dPhaseVolFrac[ip_oil] );
+    // TODO: change name of the class and add template to choose interpolation
+    relpermInterpolators::Baker::compute( shiftedWaterVolFrac,
+                                          phaseVolFraction[ipGas],
+                                          m_phaseOrder,
+                                          oilRelPerm_wo,
+                                          dOilRelPerm_wo_dOilVolFrac,
+                                          oilRelPerm_go,
+                                          dOilRelPerm_go_dOilVolFrac,
+                                          phaseRelPerm[ipOil],
+                                          dPhaseRelPerm_dPhaseVolFrac[ipOil] );
   }
 }
 
@@ -342,63 +294,6 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
     relPerm = (scaledVolFrac <= 0.0) ? 0.0 : maxValue;
   }
 }
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-BrooksCoreyBakerRelativePermeabilityUpdate::
-  interpolateTwoPhaseRelPerms( real64 const & shiftedWaterVolFrac,
-                               real64 const & gasVolFrac,
-                               arraySlice1d< integer const > const & phaseOrder,
-                               real64 const & relPerm_wo,
-                               real64 const & dRelPerm_wo_dOilVolFrac,
-                               real64 const & relPerm_go,
-                               real64 const & dRelPerm_go_dOilVolFrac,
-                               real64 & threePhaseRelPerm,
-                               arraySlice1d< real64 > const & dThreePhaseRelPerm_dVolFrac )
-{
-  integer const ip_water = phaseOrder[RelativePermeabilityBase::PhaseType::WATER];
-  integer const ip_oil   = phaseOrder[RelativePermeabilityBase::PhaseType::OIL];
-  integer const ip_gas   = phaseOrder[RelativePermeabilityBase::PhaseType::GAS];
-
-  // if water phase is immobile, then use the two-phase gas-oil data only
-  if( shiftedWaterVolFrac < LvArray::NumericLimits< real64 >::epsilon )
-  {
-    threePhaseRelPerm = relPerm_go;
-    dThreePhaseRelPerm_dVolFrac[ip_oil] = dRelPerm_go_dOilVolFrac;
-  }
-  // if gas phase is immobile, then use the two-phase water-oil data only
-  else if( gasVolFrac < LvArray::NumericLimits< real64 >::epsilon )
-  {
-    threePhaseRelPerm = relPerm_wo;
-    dThreePhaseRelPerm_dVolFrac[ip_oil] = dRelPerm_wo_dOilVolFrac;
-  }
-  // if both the water phase and the gas phase are mobile,
-  // then use a saturation-weighted interpolation of the two-phase oil rel perms
-  else
-  {
-    real64 const sumRelPerm = (shiftedWaterVolFrac * relPerm_wo
-                               + gasVolFrac   * relPerm_go);
-    real64 const dSumRelPerm_dWaterVolFrac = relPerm_wo;
-    real64 const dSumRelPerm_dOilVolFrac   = shiftedWaterVolFrac * dRelPerm_wo_dOilVolFrac
-                                             + gasVolFrac   * dRelPerm_go_dOilVolFrac;
-    real64 const dSumRelPerm_dGasVolFrac   = relPerm_go;
-
-
-    real64 const sumVolFrac    = shiftedWaterVolFrac + gasVolFrac;
-    real64 const sumVolFracInv = 1 / sumVolFrac; // div by 0 handled by the if statement above
-    real64 const dSumVolFracInv_dWaterVolFrac = -sumVolFracInv * sumVolFracInv;
-    real64 const dSumVolFracInv_dGasVolFrac   = dSumVolFracInv_dWaterVolFrac;
-
-    threePhaseRelPerm = sumRelPerm * sumVolFracInv; // three-phase oil rel perm
-    dThreePhaseRelPerm_dVolFrac[ip_water] = dSumRelPerm_dWaterVolFrac * sumVolFracInv  // derivative w.r.t. Sw
-                                            + sumRelPerm                * dSumVolFracInv_dWaterVolFrac;
-    dThreePhaseRelPerm_dVolFrac[ip_oil]   = dSumRelPerm_dOilVolFrac   * sumVolFracInv; // derivative w.r.t. So
-    dThreePhaseRelPerm_dVolFrac[ip_gas]   = dSumRelPerm_dGasVolFrac   * sumVolFracInv  // derivative w.r.t. Sg
-                                            + sumRelPerm                * dSumVolFracInv_dGasVolFrac;
-  }
-}
-
 
 } // namespace constitutive
 

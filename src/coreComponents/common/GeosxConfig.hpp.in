@@ -8,16 +8,7 @@
 #ifndef GEOSX_COMMON_CONFIG_HPP
 #define GEOSX_COMMON_CONFIG_HPP
 
-/// GEOSX major version number
-#define GEOSX_VERSION_MAJOR @GEOSX_VERSION_MAJOR@
-/// GEOSX minor version number
-#define GEOSX_VERSION_MINOR @GEOSX_VERSION_MINOR@
-/// GEOSX patch version number
-#define GEOSX_VERSION_PATCH @GEOSX_VERSION_PATCH@
-/// GEOSX full version number string
-#define GEOSX_VERSION_FULL  "@GEOSX_VERSION_FULL@"
-
-/// Enables floating point execptions
+/// Enables floating point exceptions
 #cmakedefine GEOSX_USE_FPE
 
 /// Enables bounds check in LvArray classes (CMake option ARRAY_BOUNDS_CHECK)
@@ -41,11 +32,11 @@
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #cmakedefine GEOSX_USE_CUDA
 
-/// Enables use of Python (CMake option ENABLE_PYTHON)
-#cmakedefine GEOSX_USE_PYTHON
+/// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
+#cmakedefine GEOSX_USE_PVTPackage
 
-/// Enables use of GEOSX PTP module (CMake option ENABLE_GEOSX_PTP)
-#cmakedefine USE_GEOSX_PTP
+/// Enables use of Python (CMake option ENABLE_PYTHON)
+#cmakedefine GEOSX_USE_PYGEOSX
 
 /// Enables use of RAJA (CMake option ENABLE_RAJA)
 #cmakedefine GEOSX_USE_RAJA
@@ -65,6 +56,9 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #cmakedefine GEOSX_USE_HYPRE
 
+/// Macro defined when using cuda in HYPRE  (CMake option ENABLE_HYPRE_CUDA)
+#cmakedefine GEOSX_USE_HYPRE_CUDA
+
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOSX_USE_PETSC
 
@@ -77,6 +71,7 @@
 /// Macro defined when PETSc interface is selected
 #cmakedefine GEOSX_LA_INTERFACE_PETSC
 
+
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #cmakedefine FORTRAN_MANGLE_NO_UNDERSCORE
 
@@ -85,6 +80,18 @@
 
 /// CMake option CMAKE_BUILD_TYPE
 #cmakedefine GEOSX_CMAKE_BUILD_TYPE @GEOSX_CMAKE_BUILD_TYPE@
+
+/// The type that localIndex will be aliased to.
+#define GEOSX_LOCALINDEX_TYPE @GEOSX_LOCALINDEX_TYPE@
+
+/// An integer flag representing the type that localIndex will be aliased to.
+#define GEOSX_LOCALINDEX_TYPE_FLAG @GEOSX_LOCALINDEX_TYPE_FLAG@
+
+/// The type that globalIndex will be aliased to.
+#define GEOSX_GLOBALINDEX_TYPE @GEOSX_GLOBALINDEX_TYPE@
+
+/// An integer flag representing the type that globalIndex will be aliased to.
+#define GEOSX_GLOBALINDEX_TYPE_FLAG @GEOSX_GLOBALINDEX_TYPE_FLAG@
 
 #endif  /* GEOSX_CONFIG_HPP */
 

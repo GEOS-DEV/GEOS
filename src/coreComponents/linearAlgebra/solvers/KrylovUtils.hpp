@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,23 +20,19 @@
 
 #include "codingUtilities/Utilities.hpp"
 
-/// Tolerance for division by zero in Krylov solvers
-#define GEOSX_KRYLOV_MIN_DIV ::LvArray::NumericLimits< real64 >::epsilon
-
-#ifndef GEOSX_KRYLOV_BREAKDOWN_IF_ZERO
 /**
  * @brief Exit solver iteration and report a breakdown if value too close to zero.
  * @param VAR the variable or expression
  */
 #define GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( VAR ) \
-  do { \
-    if( isZero( VAR, GEOSX_KRYLOV_MIN_DIV ) ) \
-    { \
-      GEOSX_LOG_LEVEL_RANK_0( 1, "Breakdown in " << methodName() << ": " << #VAR << " = " << VAR ); \
-      m_result.status = LinearSolverResult::Status::Breakdown; \
-      break; \
-    } \
-  } while( false )
-#endif
+  if( isZero( VAR, 0.0 ) )                  \
+  {                                         \
+    if( m_params.logLevel >= 1 )            \
+    {                                       \
+      GEOSX_LOG_RANK_0( "Breakdown in " << methodName() << ": " << #VAR << " = " << VAR ); \
+    }                                       \
+    m_result.status = LinearSolverResult::Status::Breakdown; \
+    break;                                  \
+  }                                         \
 
 #endif //GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_

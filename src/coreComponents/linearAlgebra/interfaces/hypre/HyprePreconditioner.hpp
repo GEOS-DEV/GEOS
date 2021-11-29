@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -16,39 +16,26 @@
  * @file HyprePreconditioner.hpp
  */
 
-#ifndef GEOSX_HYPREPRECONDITIONER_HPP
-#define GEOSX_HYPREPRECONDITIONER_HPP
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREPRECONDITIONER_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREPRECONDITIONER_HPP_
 
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "common/PreconditionerBase.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
 #include <memory>
 
-/**
- * @name Hypre forward declarations.
- *
- * Forward declare hypre's solver structs and pointer aliases in order
- * to avoid including hypre headers and leaking into the rest of GEOSX.
- */
-///@{
-
-/// Hypre solver struct forward declaration
-extern "C" struct hypre_Solver_struct;
-
-/// Solver pointer alias
-using HYPRE_Solver = hypre_Solver_struct *;
-
-///@}
-
 namespace geosx
 {
 
-/// Forward-declared struct that hosts preconditioner auxiliary data
-struct HyprePrecAuxData;
-
 /// Forward-declared struct that hosts pointers to preconditioner functions
-struct HyprePrecFuncs;
+struct HyprePrecWrapper;
+
+/// Forward-declared struct that hosts preconditioner MGR data
+struct HypreMGRData;
+
+/// Forward-declared struct that hosts null space data
+struct HypreNullSpace;
 
 /**
  * @brief Wrapper around hypre-based preconditioners.
@@ -60,32 +47,22 @@ public:
   /// Alias for base type
   using Base = PreconditionerBase< HypreInterface >;
 
-  /// Alias for vector type
-  using Vector = typename Base::Vector;
-
-  /// Alias for matrix type
-  using Matrix = typename Base::Matrix;
-
-  /// Allow for partial overload of Base::compute()
-  using Base::compute;
+  /// Allow for partial overload of Base::setup()
+  using Base::setup;
 
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
-   * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
-  explicit HyprePreconditioner( LinearSolverParameters params,
-                                DofManager const * const dofManager = nullptr );
+  explicit HyprePreconditioner( LinearSolverParameters params );
 
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
    * @param nearNullKernel the user-provided near null kernel
-   * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
   HyprePreconditioner( LinearSolverParameters params,
-                       array1d< HypreVector > const & nearNullKernel,
-                       DofManager const * const dofManager = nullptr );
+                       arrayView1d< HypreVector > const & nearNullKernel );
 
   /**
    * @brief Destructor.
@@ -93,15 +70,10 @@ public:
   virtual ~HyprePreconditioner() override;
 
   /**
-   * @brief Create the preconditioner from the input parameters.
-   */
-  void create();
-
-  /**
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat ) override;
+  virtual void setup( Matrix const & mat ) override;
 
   /**
    * @brief Apply operator to a vector
@@ -116,55 +88,72 @@ public:
 
   /**
    * @brief Access the underlying implementation.
-   * @return reference to hypre preconditioner
-   */
-  HYPRE_Solver const & unwrapped() const;
-
-  /**
-   * @brief Access the underlying implementation.
    * @return reference to container of preconditioner functions.
    *
    * Intended for use by HypreSolver.
    */
-  HyprePrecFuncs const & unwrappedFuncs() const;
+  HyprePrecWrapper const & unwrapped() const;
+
+  /**
+   * @brief @return time spent setting up separate component matrix.
+   */
+  real64 componentFilterTime() const
+  {
+    return m_componentFilterTime;
+  }
+
+  /// @return time to construct restrictor matrix.
+  real64 makeRestrictorTime() const
+  {
+    return m_makeRestrictorTime;
+  }
+
+  /// @return time to apply restrictor matrix.
+  real64 computeAuuTime() const
+  {
+    return m_computeAuuTime;
+  }
 
 private:
 
-  void createHyprePreconditioner( DofManager const * const dofManager );
+  /**
+   * @brief Create the preconditioner object.
+   * @param dofManager (optional) pointer to DofManager for the linear system
+   */
+  void create( DofManager const * const dofManager );
 
-  void createAMG();
-
-  void createMGR( DofManager const * const dofManager );
-
-  void createILU();
-
-  void createILUT();
+  /**
+   * @brief Setup additional preconditioning matrix if necessary.
+   * @param mat the source matrix
+   * @return reference to the matrix that should be used to setup the main preconditioner
+   */
+  HypreMatrix const & setupPreconditioningMatrix( HypreMatrix const & mat );
 
   /// Parameters for all preconditioners
-  LinearSolverParameters m_parameters;
+  LinearSolverParameters m_params;
 
-  /// Pointer to the Hypre implementation
-  HYPRE_Solver m_precond;
+  /// Preconditioning matrix (if different from input matrix)
+  HypreMatrix m_precondMatrix;
 
-  /// Pointer to the auxillary preconditioner used in MGR
-  HYPRE_Solver aux_precond;
+  /// Pointers to hypre preconditioner and corresponding functions
+  std::unique_ptr< HyprePrecWrapper > m_precond;
 
-  /// Pointers to hypre functions to setup/solve/destroy preconditioner
-  std::unique_ptr< HyprePrecFuncs > m_functions;
+  /// MGR-specific data
+  std::unique_ptr< HypreMGRData > m_mgrData;
 
-  /// Pointer to preconditioner auxiliary data
-  std::unique_ptr< HyprePrecAuxData > m_auxData;
+  /// Null space vectors
+  std::unique_ptr< HypreNullSpace > m_nullSpace;
 
-  /// Pointer to Degrees of Freedom manager
-  DofManager const * const m_dofManager;
+  /// Timing of separate component matrix construction
+  real64 m_componentFilterTime = 0.0;
 
-  /// Bool to check if the preconditioner is ready to be computed
-  bool m_ready;
+  /// Timing of the restrictor matrix construction
+  real64 m_makeRestrictorTime = 0.0;
 
-  /// Pointer to external data structure storing the near null kernel
-  array1d< HypreVector > const * m_nearNullKernel;
+  /// Timing of the cost of applying the restrictor matrix to the system
+  real64 m_computeAuuTime = 0.0;
 };
 
 }
 
-#endif //GEOSX_HYPREPRECONDITIONER_HPP
+#endif //GEOSX_LINEARALGEBRA_INTERFACES_HYPREPRECONDITIONER_HPP_

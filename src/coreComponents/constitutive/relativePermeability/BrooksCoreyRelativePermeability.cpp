@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -34,71 +34,76 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
                                                                   Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Minimum volume fraction value for each phase" );
 
-  registerWrapper( viewKeyStruct::phaseRelPermExponentString, &m_phaseRelPermExponent )->
-    setApplyDefaultValue( 1.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "MinimumRel perm power law exponent for each phase" );
+  registerWrapper( viewKeyStruct::phaseRelPermExponentString(), &m_phaseRelPermExponent ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Minimum relative permeability power law exponent for each phase" );
 
 
-  registerWrapper( viewKeyStruct::phaseRelPermMaxValueString, &m_phaseRelPermMaxValue )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Maximum rel perm value for each phase" );
+  registerWrapper( viewKeyStruct::phaseRelPermMaxValueString(), &m_phaseRelPermMaxValue ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Maximum relative permeability value for each phase" );
 
-  registerWrapper( viewKeyStruct::volFracScaleString, &m_volFracScale )->
-    setApplyDefaultValue( 1.0 )->
-    setDescription( "Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions." );
+  registerWrapper( viewKeyStruct::volFracScaleString(), &m_volFracScale ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "Factor used to scale the phase relative permeability, defined as: one minus the sum of the phase minimum volume fractions." );
 
 }
-
-BrooksCoreyRelativePermeability::~BrooksCoreyRelativePermeability()
-{}
-
 
 void BrooksCoreyRelativePermeability::postProcessInput()
 {
   RelativePermeabilityBase::postProcessInput();
 
-  localIndex const NP = numFluidPhases();
-
-  #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
-    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-    { \
-      GEOSX_ERROR( "BrooksCoreyRelativePermeability: invalid number of entries in " \
-                   << (attr) << " attribute (" \
-                   << (data).size() << "given, " \
-                   << (expected) << " expected)" ); \
-    }
-
-  COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
-  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermExponent, NP, viewKeyStruct::phaseRelPermExponentString )
-  COREY_CHECK_INPUT_LENGTH( m_phaseRelPermMaxValue, NP, viewKeyStruct::phaseRelPermMaxValueString )
-
-#undef COREY_CHECK_INPUT_LENGTH
+  auto const checkInputSize = [&]( auto const & array, auto const & attribute )
+  {
+    GEOSX_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
+                           GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                           InputError );
+  };
+  checkInputSize( m_phaseMinVolumeFraction, viewKeyStruct::phaseMinVolumeFractionString() );
+  checkInputSize( m_phaseRelPermExponent, viewKeyStruct::phaseRelPermExponentString() );
+  checkInputSize( m_phaseRelPermMaxValue, viewKeyStruct::phaseRelPermMaxValueString() );
 
   m_volFracScale = 1.0;
-  for( localIndex ip = 0; ip < NP; ++ip )
+  for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
-    GEOSX_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
-                    "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
+    auto const errorMsg = [&]( auto const & attribute )
+    {
+      return GEOSX_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
+    };
+
+    GEOSX_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
+                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
+                           InputError );
+    GEOSX_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
+                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
+                           InputError );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
-    GEOSX_ERROR_IF( m_phaseRelPermExponent[ip] < 0.0,
-                    "BrooksCoreyRelativePermeability: invalid exponent value: " << m_phaseRelPermExponent[ip] );
-
-    GEOSX_ERROR_IF( m_phaseRelPermMaxValue[ip] < 0.0 || m_phaseRelPermMaxValue[ip] > 1.0,
-                    "BrooksCoreyRelativePermeability: invalid maximum value: " << m_phaseRelPermMaxValue[ip] );
+    GEOSX_THROW_IF_LT_MSG( m_phaseRelPermExponent[ip], 0.0,
+                           errorMsg( viewKeyStruct::phaseRelPermExponentString() ),
+                           InputError );
+    GEOSX_THROW_IF_LT_MSG( m_phaseRelPermMaxValue[ip], 0.0,
+                           errorMsg( viewKeyStruct::phaseRelPermMaxValueString() ),
+                           InputError );
+    GEOSX_THROW_IF_GT_MSG( m_phaseRelPermMaxValue[ip], 1.0,
+                           errorMsg( viewKeyStruct::phaseRelPermMaxValueString() ),
+                           InputError );
   }
 
-  GEOSX_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0" );
+  GEOSX_THROW_IF_LT_MSG( m_volFracScale, 0.0,
+                         GEOSX_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
+                         InputError );
 }
 
-BrooksCoreyRelativePermeability::KernelWrapper BrooksCoreyRelativePermeability::createKernelWrapper()
+BrooksCoreyRelativePermeability::KernelWrapper
+BrooksCoreyRelativePermeability::createKernelWrapper()
 {
   return KernelWrapper( m_phaseMinVolumeFraction,
                         m_phaseRelPermExponent,

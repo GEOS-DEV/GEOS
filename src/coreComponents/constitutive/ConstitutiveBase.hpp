@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -47,7 +47,7 @@ public:
   ConstitutiveBase( string const & name,
                     Group * const parent );
 
-  virtual ~ConstitutiveBase() override;
+  virtual ~ConstitutiveBase() override = default;
 
   /**
    * @brief create a clone of this constitutive model
@@ -59,16 +59,9 @@ public:
                                                             Group * const parent ) const;
 
 
-  virtual void stateUpdatePointPressure( real64 const & GEOSX_UNUSED_PARAM( pres ),
-                                         localIndex const GEOSX_UNUSED_PARAM( k ),
-                                         localIndex const GEOSX_UNUSED_PARAM( q ) ) {}
-
-  virtual void stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
-                                         arrayView1d< real64 const > const & dPres )
-  {
-    GEOSX_UNUSED_VAR( pres )
-    GEOSX_UNUSED_VAR( dPres )
-  }
+  /// Save state data in preparation for next timestep
+  virtual void saveConvergedState() const
+  {}
 
   /**
    * @name Static Factory Catalog members and functions
@@ -90,40 +83,38 @@ public:
    */
   virtual string getCatalogName() const = 0;
 
+  /**
+   * @brief Get full name of the model.
+   * @return full name, consisting of XML (catalog) name and actual model name
+   */
+  string getFullName() const { return getCatalogName() + " " + getName(); }
+
   ///@}
 
   /**
    * @brief Allocate constitutive data and make views to data on parent objects
-   * @param[in] parent pointer to the group that holds the constitutive relation
+   * @param[in] parent reference to the group that holds the constitutive relation
    * @param[in] numConstitutivePointsPerParentIndex number of quadrature points
    *
    * This function does 2 things:
    *   1) Allocate data according to the size of parent and numConstitutivePointsPerParentIndex
    *   2) Create wrappers to the constitutive data in the parent for easier access
    */
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
-  {
-    static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
-    static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
-
-  };
+  {};
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
+
+  virtual std::vector< string > getSubRelationNames() const { return {}; }
 
 protected:
 
 private:
+
   localIndex m_numQuadraturePoints;
-  Group * m_constitutiveDataGroup = nullptr;
-
-  ConstitutiveBase( ConstitutiveBase const & ) = delete;
-  ConstitutiveBase( ConstitutiveBase && ) = delete;
-  ConstitutiveBase const & operator=( ConstitutiveBase const & ) = delete;
-  ConstitutiveBase const & operator=( ConstitutiveBase && ) = delete;
-
 };
 
 

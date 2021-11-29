@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -24,14 +24,15 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
-#include "managers/DomainPartition.hpp"
+#include "constitutive/contact/ContactBase.hpp"
+#include "constitutive/NullModel.hpp"
+#include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "mpiCommunications/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include <iostream>
 
@@ -249,6 +250,7 @@ SiloFile::SiloFile():
   m_driver( DB_HDF5 ),
   m_plotFileRoot( "plot" ),
   m_restartFileRoot( "restart" ),
+  m_siloDirectory( "siloFiles" ),
   m_fileName(),
   m_baseFileName(),
   m_emptyMeshes(),
@@ -281,19 +283,7 @@ void SiloFile::makeSiloDirectories()
 
   if( rank==0 )
   {
-    struct stat sb;
-
-    if( !( stat( m_siloDirectory.c_str(), &sb ) == 0 && S_ISDIR( sb.st_mode ) ) )
-    {
-      mode_t nMode = 0733;
-      mkdir( m_siloDirectory.c_str(), nMode );
-    }
-
-    if( !( stat( (m_siloDirectory +"/"+ m_siloDataSubDirectory).c_str(), &sb ) == 0 && S_ISDIR( sb.st_mode ) ) )
-    {
-      mode_t nMode = 0733;
-      mkdir((m_siloDirectory +"/"+ m_siloDataSubDirectory).c_str(), nMode );
-    }
+    makeDirsForPath( joinPath( m_siloDirectory, m_siloDataSubDirectory ) );
   }
 }
 
@@ -356,44 +346,27 @@ void SiloFile::waitForBatonWrite( int const domainNumber,
   MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
 #endif
   int const groupRank = PMPIO_GroupRank( m_baton, rank );
-  char fileName[200] = { 0 };
-  char baseFileName[200] = { 0 };
-  char dirName[200] = { 0 };
-
-
 
   if( isRestart )
   {
     // The integrated test repo does not use the eventProgress indicator, so skip it for now
-    sprintf( baseFileName, "%s_%06d", m_restartFileRoot.c_str(), cycleNum );
-    sprintf( fileName, "%s%s%s_%06d.%03d",
-             m_siloDataSubDirectory.c_str(), "/", m_restartFileRoot.c_str(), cycleNum, groupRank );
+    m_baseFileName = GEOSX_FMT( "{}_{:06}", m_restartFileRoot, cycleNum );
+    m_fileName = GEOSX_FMT( "{}_{:06}.{:03}", m_restartFileRoot, cycleNum, groupRank );
   }
   else
   {
-    sprintf( baseFileName, "%s_%06d%02d",
-             m_plotFileRoot.c_str(),
-             cycleNum,
-             eventCounter );
-
-    sprintf( fileName,
-             "%s_%06d%02d.%03d",
-             m_plotFileRoot.c_str(),
-             cycleNum,
-             eventCounter,
-             groupRank );
+    m_baseFileName = GEOSX_FMT( "{}_{:06}{:02}", m_plotFileRoot, cycleNum, eventCounter );
+    m_fileName = GEOSX_FMT( "{}_{:06}{:02}.{:03}", m_plotFileRoot.c_str(), cycleNum, eventCounter, groupRank );
   }
-  sprintf( dirName, "domain_%05d", domainNumber );
+  string const dirName = GEOSX_FMT( "domain_{:05}", domainNumber );
 
-  string dataFilePathAndName = m_siloDirectory + "/" + m_siloDataSubDirectory + "/" + fileName;
-  m_dbFilePtr = static_cast< DBfile * >( PMPIO_WaitForBaton( m_baton, dataFilePathAndName.c_str(), dirName ) );
-
-  m_fileName = fileName;
-  m_baseFileName = baseFileName;
+  string const dataFileFullPath = joinPath( m_siloDirectory, m_siloDataSubDirectory, m_fileName );
+  m_dbFilePtr = static_cast< DBfile * >( PMPIO_WaitForBaton( m_baton, dataFileFullPath.c_str(), dirName.c_str() ) );
 
   if( rank==0 )
   {
-    m_dbBaseFilePtr = DBCreate( (m_siloDirectory + "/"+ m_baseFileName).c_str(), DB_CLOBBER, DB_LOCAL, nullptr, DB_HDF5 );
+    string const baseFileFullPath = joinPath( m_siloDirectory, m_baseFileName );
+    m_dbBaseFilePtr = DBCreate( baseFileFullPath.c_str(), DB_CLOBBER, DB_LOCAL, nullptr, DB_HDF5 );
 //    m_dbBaseFilePtr = DBOpen( m_baseFileName.c_str(), DB_HDF5, DB_APPEND );
   }
 }
@@ -407,33 +380,27 @@ void SiloFile::waitForBaton( int const domainNumber, string const & restartFileN
   MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
 #endif
   int const groupRank = PMPIO_GroupRank( m_baton, rank );
-  char fileName[200] = { 0 };
-  char baseFileName[200] = { 0 };
-  char dirName[200] = { 0 };
 
-
-  sprintf( baseFileName, "%s", restartFileName.c_str());
+  m_baseFileName = restartFileName;
   if( groupRank == 0 )
-    sprintf( fileName, "%s", restartFileName.c_str());
+  {
+    m_fileName = restartFileName;
+  }
   else
   {
-    if( m_siloDirectory.empty())
+    if( m_siloDirectory.empty() )
     {
-      sprintf( fileName, "%s.%03d", restartFileName.c_str(), groupRank );
+      m_fileName = GEOSX_FMT( "{}.{:03}", restartFileName, groupRank );
     }
     else
     {
-      sprintf( fileName, "%s%s%s.%03d", m_siloDirectory.c_str(), "/", restartFileName.c_str(), groupRank );
+      m_fileName = GEOSX_FMT( "{}/{}.{:03}", m_siloDirectory, restartFileName, groupRank );
     }
-
   }
 
-  sprintf( dirName, "domain_%05d", domainNumber );
+  string const dirName = GEOSX_FMT( "domain_{:05}", domainNumber );
 
-  m_dbFilePtr = (DBfile *) PMPIO_WaitForBaton( m_baton, fileName, dirName );
-
-  m_fileName = fileName;
-  m_baseFileName = baseFileName;
+  m_dbFilePtr = (DBfile *) PMPIO_WaitForBaton( m_baton, m_fileName.c_str(), dirName.c_str() );
 }
 /**
  *
@@ -851,7 +818,6 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
 
       array1d< string > vBlockNames( size );
       std::vector< char * > BlockNames( size );
-      char tempBuffer[1024];
       char currentDirectory[256];
 
       DBGetDir( m_dbBaseFilePtr, currentDirectory );
@@ -862,16 +828,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
         int groupRank = PMPIO_GroupRank( m_baton, i );
 
         /* this mesh block is another file */
-        sprintf( tempBuffer,
-                 "%s%s%s.%03d:/domain_%05d/%s",
-                 m_siloDataSubDirectory.c_str(),
-                 "/",
-                 m_baseFileName.c_str(),
-                 groupRank,
-                 i,
-                 name.c_str() );
-
-        vBlockNames[i] = tempBuffer;
+        vBlockNames[i] = GEOSX_FMT( "{}/{}.{:03}:/domain_{:05}/{}", m_siloDataSubDirectory, m_baseFileName, groupRank, i, name );
         BlockNames[i] = const_cast< char * >( vBlockNames[i].c_str() );
       }
 
@@ -915,10 +872,9 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
     std::set< std::pair< string, WrapperBase const * > > fieldNames;
     for( localIndex matI=0; matI<nmat; ++matI )
     {
-      Group const * const
-      constitutiveModel = elemRegion.getSubRegion( 0 )->getConstitutiveModels()->getGroup( regionMaterialList[matI] );
+      Group const & constitutiveModel = elemRegion.getSubRegion( 0 ).getConstitutiveModel( regionMaterialList[matI] );
 
-      for( auto const & wrapperIter : constitutiveModel->wrappers() )
+      for( auto const & wrapperIter : constitutiveModel.wrappers() )
       {
         auto const & wrapper = wrapperIter.second;
 
@@ -1212,7 +1168,7 @@ void SiloFile::clearEmptiesFromMultiObjects( int const cycleNum )
 
 }
 
-void SiloFile::writeGroupSilo( Group const * group,
+void SiloFile::writeGroupSilo( Group const & group,
                                string const & siloDirName,
                                string const & meshname,
                                int const centering,
@@ -1239,7 +1195,7 @@ void SiloFile::writeGroupSilo( Group const * group,
   }
 
   writeWrappersToSilo< real64 >( meshname,
-                                 group->wrappers(),
+                                 group.wrappers(),
                                  centering,
                                  cycleNum,
                                  problemTime,
@@ -1260,10 +1216,11 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
                                        real64 const problemTime,
                                        bool const isRestart )
 {
+  // TODO: This is a hack.
+  conduit::Node conduitNode;
+  dataRepository::Group fakeGroup( elemRegion.getName(), conduitNode );
 
   localIndex numElems = 0;
-  dataRepository::Group fakeGroup( elemRegion.getName(), nullptr );
-  fakeGroup.setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
   std::vector< std::map< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
@@ -1274,31 +1231,22 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 
     for( auto const & wrapperIter : subRegion.wrappers() )
     {
-      WrapperBase const * const wrapper = wrapperIter.second;
+      WrapperBase const & wrapper = *wrapperIter.second;
 
-      if( wrapper->getPlotLevel() < m_plotLevel )
+      if( wrapper.getPlotLevel() < m_plotLevel )
       {
         // the field name is the key to the map
-        string const fieldName = wrapper->getName();
+        string const & fieldName = wrapper.getName();
+        viewPointers[esr][fieldName] = &wrapper;
 
-        viewPointers[esr][fieldName] = wrapper;
-
-        std::type_info const & typeID = wrapper->getTypeId();
-
-        rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
-                                        false,
-                                        [&]( auto array, auto GEOSX_UNUSED_PARAM( Type ) )->void
+        types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
         {
-          typedef decltype( array ) arrayType;
-          Wrapper< arrayType > const &
-          sourceWrapper = Wrapper< arrayType >::cast( *wrapper );
-          traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference();
+          using ArrayType = decltype( array );
+          Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( wrapper );
+          Wrapper< ArrayType > & newWrapper = fakeGroup.registerWrapper< ArrayType >( fieldName );
 
-          Wrapper< arrayType > * const
-          newWrapper = fakeGroup.registerWrapper< arrayType >( fieldName );
-          newWrapper->setPlotLevel( PlotLevel::LEVEL_0 );
-          arrayType & newarray = newWrapper->reference();
-          newarray.resize( arrayType::NDIM, sourceArray.dims() );
+          newWrapper.setPlotLevel( PlotLevel::LEVEL_0 );
+          newWrapper.reference().resize( ArrayType::NDIM, sourceWrapper.reference().dims() );
         } );
       }
     }
@@ -1308,35 +1256,31 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 
   for( auto & wrapperIter : fakeGroup.wrappers() )
   {
-    WrapperBase * const wrapper = wrapperIter.second;
-    string const fieldName = wrapper->getName();
-    std::type_info const & typeID = wrapper->getTypeId();
+    WrapperBase & wrapper = *wrapperIter.second;
+    string const & fieldName = wrapper.getName();
 
-    rtTypes::applyArrayTypeLambda2( rtTypes::typeID( typeID ),
-                                    false,
-                                    [&]( auto array, auto GEOSX_UNUSED_PARAM( scalar ) )
+    types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
     {
-      typedef decltype( array ) arrayType;
-      Wrapper< arrayType > & wrapperT = Wrapper< arrayType >::cast( *wrapper );
-      arrayType & targetArray = wrapperT.reference();
+      using ArrayType = decltype( array );
+      Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
+      ArrayType & targetArray = wrapperT.reference();
 
       localIndex counter = 0;
-      elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
-        [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
+      elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >( [&]( localIndex const esr,
+                                                                         ElementSubRegionBase const & subRegion )
       {
         // check if the field actually exists / plotted on the current subregion
         if( viewPointers[esr].count( fieldName ) > 0 )
         {
-          Wrapper< arrayType > const &
-          sourceWrapper = Wrapper< arrayType >::cast( *(viewPointers[esr][fieldName]));
-          traits::ViewTypeConst< arrayType > const sourceArray = sourceWrapper.reference().toViewConst();
+          auto const & sourceWrapper = Wrapper< std::remove_reference_t< decltype( targetArray ) > >::cast( *( viewPointers[esr].at( fieldName ) ) );
+          auto const sourceArray = sourceWrapper.reference().toViewConst();
 
-          localIndex const offset = counter * targetArray.strides()[ 0 ];
+          localIndex const offset = counter * targetArray.strides()[0];
           GEOSX_ERROR_IF_GT( sourceArray.size(), targetArray.size() - offset );
 
           for( localIndex i = 0; i < sourceArray.size(); ++i )
           {
-            targetArray.data()[ i + offset ] = sourceArray.data()[ i ];
+            targetArray.data()[i + offset] = sourceArray.data()[i];
           }
 
           counter += sourceArray.size( 0 );
@@ -1349,7 +1293,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
     } );
   }
 
-  writeGroupSilo( &fakeGroup,
+  writeGroupSilo( fakeGroup,
                   siloDirName,
                   meshName,
                   DB_ZONECENT,
@@ -1368,7 +1312,7 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
                                      bool const isRestart )
 {
 
-  MeshLevel const * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   writeMeshLevel( mesh, cycleNum, problemTime, isRestart );
 
   if( isRestart )
@@ -1378,9 +1322,42 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
 
 }
 
+static std::vector< int > getSiloNodeOrdering( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Line:          return { 0, 1 };
+    case ElementType::Triangle:      return { 0, 1, 2 };
+    case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
+    case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
+    case ElementType::Tetrahedron:    return { 1, 0, 2, 3 };
+    case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
+    case ElementType::Prism:         return { 1, 0, 2, 3, 5, 4, 0, 0 };
+    case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
+  }
+  return {};
+}
+
+static int toSiloShapeType( ElementType const elementType )
+{
+  switch( elementType )
+  {
+    case ElementType::Line:          return DB_ZONETYPE_BEAM;
+    case ElementType::Triangle:      return DB_ZONETYPE_TRIANGLE;
+    case ElementType::Quadrilateral: return DB_ZONETYPE_QUAD;
+    case ElementType::Polygon:       return DB_ZONETYPE_POLYGON;
+    case ElementType::Tetrahedron:    return DB_ZONETYPE_TET;
+    case ElementType::Pyramid:       return DB_ZONETYPE_PYRAMID;
+    case ElementType::Prism:         return DB_ZONETYPE_PRISM;
+    case ElementType::Hexahedron:    return DB_ZONETYPE_HEX;
+    case ElementType::Polyhedron:    return DB_ZONETYPE_POLYHEDRON;
+  }
+  return -1;
+}
 
 void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
-                                 NodeManager const * const nodeManager,
+                                 NodeManager const & nodeManager,
                                  string const & meshName,
                                  const localIndex numNodes,
                                  real64 * coords[3],
@@ -1403,9 +1380,9 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
   {
     array1d< localIndex * > meshConnectivity( numElementShapes );
     array1d< globalIndex * > globalElementNumbers( numElementShapes );
-    array1d< integer > shapecnt( numElementShapes );
-    array1d< integer > shapetype( numElementShapes );
-    array1d< integer > shapesize( numElementShapes );
+    array1d< int > shapecnt( numElementShapes );
+    array1d< int > shapetype( numElementShapes );
+    array1d< int > shapesize( numElementShapes );
     array1d< char > ghostZoneFlag;
 
 
@@ -1423,13 +1400,10 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
       elementToNodeMap[count].resize( elementSubRegion.size(), elementSubRegion.numNodesPerElement( 0 ) );
 
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-
-
-      string const & elementType = elementSubRegion.getElementTypeString();
-      std::vector< int > const & nodeOrdering = elementSubRegion.getVTKNodeOrdering();
+      std::vector< int > const nodeOrdering = getSiloNodeOrdering( elementSubRegion.getElementType() );
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
-        integer numNodesPerElement = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( k ));
+        integer const numNodesPerElement = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( k ) );
         for( localIndex a = 0; a < numNodesPerElement; ++a )
         {
           elementToNodeMap[count]( k, a ) = elemsToNodes[k][nodeOrdering[a]];
@@ -1447,45 +1421,17 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
 
       meshConnectivity[count] = elementToNodeMap[count].data();
 
-      //        globalElementNumbers[count] = elementRegion.localToGlobalMap().data();
-      shapecnt[count] = static_cast< int >(elementSubRegion.size());
-
-
-      if( !elementType.compare( 0, 4, "C3D8" ) )
-      {
-        shapetype[count] = DB_ZONETYPE_HEX;
-      }
-      else if( !elementType.compare( 0, 4, "C3D4" ) )
-      {
-        shapetype[count] = DB_ZONETYPE_TET;
-      }
-      else if( !elementType.compare( 0, 4, "C3D6" ) )
-      {
-        shapetype[count] = DB_ZONETYPE_PRISM;
-        writeArbitraryPolygon = true;
-      }
-      else if( !elementType.compare( 0, 4, "C3D5" ) )
-      {
-        shapetype[count] = DB_ZONETYPE_PYRAMID;
-        writeArbitraryPolygon = true;
-      }
-      else if( !elementType.compare( 0, 4, "BEAM" ) )
-      {
-        shapetype[count] = DB_ZONETYPE_BEAM;
-      }
+      // globalElementNumbers[count] = elementRegion.localToGlobalMap().data();
+      shapecnt[count] = static_cast< int >( elementSubRegion.size() );
+      shapetype[count] = toSiloShapeType( elementSubRegion.getElementType() );
       shapesize[count] = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( 0 ) );
+      writeArbitraryPolygon = writeArbitraryPolygon || shapetype[count] == DB_ZONETYPE_PRISM || shapetype[count] == DB_ZONETYPE_PYRAMID;
       ++count;
     } );
 
     string_array
       regionSolidMaterialList = elementRegion.getConstitutiveNames< constitutive::SolidBase >();
-    string_array const
-    regionSolidMaterialList2 = elementRegion.getConstitutiveNames< constitutive::PoreVolumeCompressibleSolid >();
 
-    for( string const & entry : regionSolidMaterialList2 )
-    {
-      regionSolidMaterialList.emplace_back( entry );
-    }
     localIndex const numSolids = regionSolidMaterialList.size();
 
     string_array regionFluidMaterialList = elementRegion.getConstitutiveNames< constitutive::SingleFluidBase >();
@@ -1498,11 +1444,16 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     localIndex const numFluids = regionFluidMaterialList.size();
 
     string_array
-      fractureContactMaterialList = elementRegion.getConstitutiveNames< constitutive::ContactRelationBase >();
+      fractureContactMaterialList = elementRegion.getConstitutiveNames< constitutive::ContactBase >();
 
     localIndex const numContacts = fractureContactMaterialList.size();
 
-    if( numSolids + numFluids + numContacts > 0 )
+    string_array
+      nullModelMaterialList = elementRegion.getConstitutiveNames< constitutive::NullModel >();
+
+    localIndex const numNullModels = nullModelMaterialList.size();
+
+    if( numSolids + numFluids + numContacts + numNullModels > 0 )
     {
       writeMeshObject( meshName,
                        numNodes,
@@ -1613,24 +1564,24 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
   }
 }
 
-void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
+void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
                                int const cycleNum,
                                real64 const problemTime,
                                bool const isRestart )
 {
 
-  NodeManager const * const nodeManager = meshLevel->getNodeManager();
-  localIndex const numNodes = nodeManager->size();
+  NodeManager const & nodeManager = meshLevel.getNodeManager();
+  localIndex const numNodes = nodeManager.size();
 
 
   string const ghostNodeName = "ghostNodeFlag";
   string const ghostZoneName = "ghostZoneFlag";
 
-  arrayView1d< integer const > const & nodeGhostRank = nodeManager->ghostRank();
+  arrayView1d< integer const > const & nodeGhostRank = nodeManager.ghostRank();
   array1d< char > ghostNodeFlag( nodeGhostRank.size() );
   array1d< char > ghostZoneFlag;
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition = nodeManager->referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition = nodeManager.referencePosition();
 
   bool writeArbitraryPolygon( false );
   string const meshName( "MeshLevel" );
@@ -1652,9 +1603,9 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
     }
   }
 
-  if( nodeManager->hasWrapper( keys::TotalDisplacement ) )
+  if( nodeManager.hasWrapper( keys::TotalDisplacement ) )
   {
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement = nodeManager->totalDisplacement();
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & totalDisplacement = nodeManager.totalDisplacement();
     for( localIndex a = 0; a < numNodes; ++a )
     {
       xcoords[a] += totalDisplacement( a, 0 );
@@ -1669,17 +1620,17 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
 
 
 
-  ElementRegionManager const * const elementManager = meshLevel->getElemManager();
-  elementManager->forElementRegions( [&]( ElementRegionBase const & elemRegion )
+  ElementRegionManager const & elementManager = meshLevel.getElemManager();
+  elementManager.forElementRegions( [&]( ElementRegionBase const & elemRegion )
   {
-    string const regionName = elemRegion.getName();
+    string const & regionName = elemRegion.getName();
 
     writeElementMesh( elemRegion,
                       nodeManager,
                       regionName,
                       numNodes,
                       coords,
-                      nodeManager->localToGlobalMap().data(),
+                      nodeManager.localToGlobalMap().data(),
                       ghostNodeFlag.data(),
                       cycleNum,
                       problemTime,
@@ -1689,9 +1640,9 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
 
   if( m_writeFaceMesh )
   {
-    FaceManager const * const faceManager = meshLevel->getFaceManager();
-    localIndex const numFaces = faceManager->size();
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
+    FaceManager const & faceManager = meshLevel.getFaceManager();
+    localIndex const numFaces = faceManager.size();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
     // face mesh
     const string facemeshName( "face_mesh" );
@@ -1722,7 +1673,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
 
         faceConnectivity[0] = faceToNodeMapCopy[0].data();
 
-        globalFaceNumbers[0] = faceManager->localToGlobalMap().data();
+        globalFaceNumbers[0] = faceManager.localToGlobalMap().data();
         fshapecnt[0] = numFaces;
         fshapetype[0] = dbZoneType;
         fshapesize[0] = 0;
@@ -1730,7 +1681,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
       int lnodelist = faceToNodeMapCopy[0].size();
 
       writePolygonMeshObject( facemeshName, numNodes, coords,
-                              nodeManager->localToGlobalMap().data(), numFaceTypes,
+                              nodeManager.localToGlobalMap().data(), numFaceTypes,
                               fshapecnt.data(), faceConnectivity.data(), globalFaceNumbers.data(),
                               nullptr, fshapetype.data(), fshapesize.data(), cycleNum, problemTime, lnodelist );
 
@@ -1777,7 +1728,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
 
         faceConnectivity[faceType] = faceToNodeMapCopy[faceType].data();
 
-        globalFaceNumbers[faceType] = faceManager->localToGlobalMap().data();
+        globalFaceNumbers[faceType] = faceManager.localToGlobalMap().data();
         fshapecnt[faceType] = numFaces;
         fshapetype[faceType] = dbZoneType;
         fshapesize[faceType] = numNodesPerFace;
@@ -1786,7 +1737,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
       writeMeshObject( facemeshName,
                        numNodes,
                        coords,
-                       nodeManager->localToGlobalMap().data(),
+                       nodeManager.localToGlobalMap().data(),
                        nullptr,
                        nullptr,
                        numFaceTypes,
@@ -1814,12 +1765,11 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
   if( m_writeEdgeMesh )
   {
     // write edges
-    FaceManager const * const faceManager = meshLevel->getFaceManager();
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
+    FaceManager const & faceManager = meshLevel.getFaceManager();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-    EdgeManager const * const edgeManager = meshLevel->getEdgeManager();
-    localIndex const numEdges = edgeManager->size();
-
+    EdgeManager const & edgeManager = meshLevel.getEdgeManager();
+    localIndex const numEdges = edgeManager.size();
 
     const string edgeMeshName( "edge_mesh" );
 
@@ -1846,18 +1796,18 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
         {
           if( faceToNodeMap.sizeOfArray( 0 ) == 2 && a > 0 )
           {
-            edgeToNodeMap[edgeType][k][a] = edgeManager->nodeList()[k][0];
+            edgeToNodeMap[edgeType][k][a] = edgeManager.nodeList()[k][0];
           }
           else
           {
-            edgeToNodeMap[edgeType][k][a] = edgeManager->nodeList()[k][a];
+            edgeToNodeMap[edgeType][k][a] = edgeManager.nodeList()[k][a];
           }
         }
       }
 
       edgeConnectivity[edgeType] = edgeToNodeMap[edgeType].data();
 
-      globalEdgeNumbers[edgeType] = edgeManager->localToGlobalMap().data();
+      globalEdgeNumbers[edgeType] = edgeManager.localToGlobalMap().data();
       eshapecnt[edgeType] = numEdges;
       eshapetype[edgeType] = dbZoneType;
       eshapesize[edgeType] = numNodesPerEdge;
@@ -1866,7 +1816,7 @@ void SiloFile::writeMeshLevel( MeshLevel const * const meshLevel,
     writeMeshObject( edgeMeshName,
                      numNodes,
                      coords,
-                     nodeManager->localToGlobalMap().data(),
+                     nodeManager.localToGlobalMap().data(),
                      nullptr,
                      nullptr,
                      numEdgeTypes,
@@ -2044,7 +1994,7 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
     if( wrapper->getPlotLevel() <= m_plotLevel )
     {
       // the field name is the key to the map
-      string const fieldName = wrapper->getName();
+      string const & fieldName = wrapper->getName();
 
       std::type_info const & typeID = wrapper->getTypeId();
 
@@ -2093,12 +2043,6 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
         this->writeDataField< real64 >( meshname.c_str(), fieldName,
                                         wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
-      if( typeID==typeid(r1_array) )
-      {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< r1_array > const & >( *wrapper );
-        this->writeDataField< real64 >( meshname.c_str(), fieldName,
-                                        wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
-      }
       if( typeID==typeid(integer_array) )
       {
         auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< integer_array > const & >( *wrapper );
@@ -2141,7 +2085,6 @@ void SiloFile::writeMultiXXXX( const DBObjectType type,
   string_array vBlockNames( size );
   array1d< char * > BlockNames( size );
   array1d< int > blockTypes( size );
-  char tempBuffer[1024];
   char currentDirectory[256];
 
   DBGetDir( m_dbBaseFilePtr, currentDirectory );
@@ -2156,18 +2099,7 @@ void SiloFile::writeMultiXXXX( const DBObjectType type,
 
   for( int i = 0; i < size; ++i )
   {
-
-    sprintf( tempBuffer,
-             "%s%s%s.%03d:/domain_%05d%s/%s",
-             m_siloDataSubDirectory.c_str(),
-             "/",
-             m_baseFileName.c_str(),
-             groupRank( i ),
-             i,
-             multiRootString.c_str(),
-             name.c_str());
-
-    vBlockNames[i] = tempBuffer;
+    vBlockNames[i] = GEOSX_FMT( "{}/{}.{:03}:/domain_{:05}{}/{}", m_siloDataSubDirectory, m_baseFileName, groupRank( i ), i, multiRootString, name );
     BlockNames[i] = const_cast< char * >( vBlockNames[i].c_str() );
     blockTypes[i] = type;
   }
@@ -2216,6 +2148,7 @@ void SiloFile::writeDataField( string const & meshName,
   string_array varnamestring( nvars );
   array1d< array1d< OUTTYPE > > castedField( nvars );
 
+  field.move( LvArray::MemorySpace::host );
 
   for( int i = 0; i < nvars; ++i )
   {
@@ -2227,10 +2160,10 @@ void SiloFile::writeDataField( string const & meshName,
     {
       castedField[i].resize( nels );
       vars[i] = static_cast< void * >( (castedField[i]).data() );
-      for( int k = 0; k < nels; ++k )
-      {
-        castedField[i][k] = SiloFileUtilities::CastField< OUTTYPE >( field[k], i );
-      }
+      forAll< serialPolicy >( nels, [=, &castedField] GEOSX_HOST ( localIndex const k )
+        {
+          castedField[i][k] = SiloFileUtilities::CastField< OUTTYPE >( field[k], i );
+        } );
     }
   }
 
@@ -2341,6 +2274,7 @@ void SiloFile::writeDataField( string const & meshName,
 {
   int const primaryDimIndex = 0;
   int const secondaryDimIndex = 1;
+  field.move( LvArray::MemorySpace::host );
 
   localIndex const npts = field.size( primaryDimIndex );
   localIndex const nvar = field.size( secondaryDimIndex );
@@ -2379,6 +2313,7 @@ void SiloFile::writeDataField( string const & meshName,
   int const primaryDimIndex = 0;
   int const secondaryDimIndex1 = 1;
   int const secondaryDimIndex2 = 2;
+  field.move( LvArray::MemorySpace::host );
 
   localIndex const npts  = field.size( primaryDimIndex );
   localIndex const nvar1 = field.size( secondaryDimIndex1 );
@@ -2471,6 +2406,8 @@ void SiloFile::writeDataField( string const & meshName,
                                string const & multiRoot )
 {
   int nvars = 1;
+  field.move( LvArray::MemorySpace::host );
+
   for( int i=1; i<NDIM; ++i )
   {
     nvars *= field.size( i );
@@ -2618,15 +2555,11 @@ void SiloFile::writeMaterialDataField2d( string const & meshName,
     fieldData[esr].resize( nmat );
     for( int matIndex=0; matIndex<nmat; ++matIndex )
     {
-      Group const * const
-      constitutiveModel = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] );
+      Group const & constitutiveModel = subRegion.getConstitutiveModel( materialNames[matIndex] );
 
-      dataRepository::Wrapper< array2d< TYPE > > const * const
-      wrapper = constitutiveModel->getWrapper< array2d< TYPE > >( fieldName );
-
-      if( wrapper != nullptr )
+      if( constitutiveModel.hasWrapper( fieldName ) )
       {
-        arrayView2d< TYPE const > const & fieldView = wrapper->reference();
+        arrayView2d< TYPE const > const & fieldView = constitutiveModel.getReference< array2d< TYPE > >( fieldName );
 
         fieldData[esr][matIndex].resize( fieldView.size( 0 ), 1 );
         field[esr][matIndex] = fieldData[esr][matIndex].toViewConst();
@@ -2913,7 +2846,7 @@ void SiloFile::writeMaterialDataField3d( string const & meshName,
     for( localIndex matIndex = 0; matIndex<numMat; ++matIndex )
     {
       arrayView3d< TYPE const > const &
-      fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array3d< TYPE > >( fieldName );
+      fieldData = subRegion.getConstitutiveModel( materialNames[matIndex] ).getReference< array3d< TYPE > >( fieldName );
       if( fieldData.size() > 0 )
       {
         fieldCopy[esr][matIndex].resize( fieldData.size( 0 ), fieldData.size( 1 ) );
@@ -2932,7 +2865,7 @@ void SiloFile::writeMaterialDataField3d( string const & meshName,
       for( localIndex matIndex = 0; matIndex < numMat; ++matIndex )
       {
         arrayView3d< TYPE const > const &
-        fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array3d< TYPE > >( fieldName );
+        fieldData = subRegion.getConstitutiveModel( materialNames[matIndex] ).getReference< array3d< TYPE > >( fieldName );
 
         if( fieldData.size() > 0 && ivar < fieldData.size( 2 ))
         {
@@ -3019,7 +2952,7 @@ void SiloFile::writeMaterialDataField4d( string const & meshName,
     for( localIndex matIndex = 0; matIndex<numMat; ++matIndex )
     {
       arrayView4d< TYPE const > const &
-      fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array4d< TYPE > >( fieldName );
+      fieldData = subRegion.getConstitutiveModel( materialNames[matIndex] ).getReference< array4d< TYPE > >( fieldName );
       if( fieldData.size() > 0 )
       {
         fieldCopy[esr][matIndex].resize( fieldData.size( 0 ), fieldData.size( 1 ) );
@@ -3041,7 +2974,7 @@ void SiloFile::writeMaterialDataField4d( string const & meshName,
         for( localIndex matIndex = 0; matIndex < numMat; ++matIndex )
         {
           arrayView4d< TYPE const > const &
-          fieldData = subRegion.getConstitutiveModels()->getGroup( materialNames[matIndex] )->getReference< array4d< TYPE > >( fieldName );
+          fieldData = subRegion.getConstitutiveModel( materialNames[matIndex] ).getReference< array4d< TYPE > >( fieldName );
 
           if( fieldData.size() > 0 && ivar < fieldData.size( 2 ) && jvar < fieldData.size( 3 ))
           {

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -157,13 +157,13 @@ public:
   SingleFluidBase( string const & name, Group * const parent );
 
   /**
-   * @brief Destructor.
+   * @brief Save the current density into the initial density (needed for single-phase poromechanics)
    */
-  virtual ~SingleFluidBase() override;
+  void initializeState() const;
 
   // *** ConstitutiveBase interface
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** SingleFluid-specific interface
@@ -173,6 +173,8 @@ public:
 
   arrayView2d< real64 > dDensity_dPressure() { return m_dDensity_dPressure; }
   arrayView2d< real64 const > dDensity_dPressure() const { return m_dDensity_dPressure; }
+
+  arrayView2d< real64 const > initialDensity() const { return m_initialDensity; }
 
   arrayView2d< real64 > viscosity() { return m_viscosity; }
   arrayView2d< real64 const > viscosity() const { return m_viscosity; }
@@ -187,14 +189,15 @@ public:
 
   struct viewKeyStruct
   {
-    static constexpr auto defaultDensityString = "defaultDensity";
-    static constexpr auto densityString        = "density";
-    static constexpr auto dDens_dPresString    = "dDensity_dPressure";
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * densityString() { return "density"; }
+    static constexpr char const * dDens_dPresString() { return "dDensity_dPressure"; }
+    static constexpr char const * initialDensityString() { return "initialDensity"; }
 
-    static constexpr auto defaultViscosityString = "defaultViscosity";
-    static constexpr auto viscosityString        = "viscosity";
-    static constexpr auto dVisc_dPresString      = "dViscosity_dPressure";
-  } viewKeysSingleFluidBase;
+    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
+    static constexpr char const * viscosityString() { return "viscosity"; }
+    static constexpr char const * dVisc_dPresString() { return "dViscosity_dPressure"; }
+  };
 
 protected:
 
@@ -205,6 +208,8 @@ protected:
 
   array2d< real64 > m_density;
   array2d< real64 > m_dDensity_dPressure;
+
+  array2d< real64 > m_initialDensity;
 
   array2d< real64 > m_viscosity;
   array2d< real64 > m_dViscosity_dPressure;

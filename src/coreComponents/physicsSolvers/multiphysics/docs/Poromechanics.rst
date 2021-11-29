@@ -32,7 +32,7 @@ The fluid mass conservation equation is expressed in terms of pore pressure and 
 
 where :math:`M` is the Biot's modulus and :math:`K_{dr}` is the drained bulk modulus.
 
-Unlike the conventional reservoir model that uses Lagrange’s porosity, in the coupled geomechanics and flow model, Euler’s porosity :math:`\phi` is adopted so the porosity variation is derived as:
+Unlike the conventional reservoir model that uses Lagranges porosity, in the coupled geomechanics and flow model, Eulers porosity :math:`\phi` is adopted so the porosity variation is derived as:
 
 .. math::
     \partial \phi = \left( \frac{b-\phi}{K_s}\right) \partial p + \left( b-\phi \right) \partial \epsilon_v
@@ -48,15 +48,15 @@ In the main solver, it requires the specification of solidSolverName, fluidSolve
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/Poroelastic.rst
+.. include:: /coreComponents/schema/docs/SinglePhasePoromechanics.rst
 
 * ``couplingTypeOption``: defines the coupling scheme.
 
-The solid constitutive model used here is PoroLinearElasticIsotropic, which derives from LinearElasticIsotropic and includes an additional parameter: Biot's coefficient. The fluid constitutive model is the same as SinglePhaseFlow solver. For the parameter setup of each individual solver, please refer to the guideline of the specific solver.
+The solid constitutive model used here is PoroLinearElasticIsotropic, which derives from ElasticIsotropic and includes an additional parameter: Biot's coefficient. The fluid constitutive model is the same as SinglePhaseFlow solver. For the parameter setup of each individual solver, please refer to the guideline of the specific solver.
 
 An example of a valid XML block for the constitutive model is given here:
 
-.. literalinclude:: ../integratedTests/poroElastic_Terzaghi.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
@@ -64,7 +64,7 @@ An example of a valid XML block for the constitutive model is given here:
 Example
 ===========================================
 
-.. literalinclude:: ../integratedTests/poroElastic_Terzaghi.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
   :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->

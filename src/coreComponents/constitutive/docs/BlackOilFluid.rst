@@ -83,13 +83,17 @@ In order to use the model, GEOSX must be built with ``-DENABLE_PVTPACKAGE=ON`` (
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/BlackOilFluid.rst
+.. include:: ../../../coreComponents/schema/docs/BlackOilFluid.rst
 
 Supported phase names are:
 
-* oil
-* gas
-* water
+===== ===========
+Value Comment
+===== ===========
+oil   Oil phase
+gas   Gas phase
+water Water phase
+===== ===========
 
 Example
 =========================
@@ -99,10 +103,10 @@ Example
   <Constitutive>
     <BlackOilFluid name="fluid1"
                    fluidType="LiveOil"
-                   phaseNames="oil gas water"
-                   surfaceDensities="800.0 0.9907 1022.0"
-                   componentMolarWeight="114e-3 16e-3 18e-3"
-                   tableFiles="pvto.txt pvtg.txt pvtw.txt"/>
+                   phaseNames="{ oil, gas, water }"
+                   surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
+                   componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
+                   tableFiles="{ pvto.txt, pvtg.txt, pvtw.txt }"/>
   </Constitutive>
 
 

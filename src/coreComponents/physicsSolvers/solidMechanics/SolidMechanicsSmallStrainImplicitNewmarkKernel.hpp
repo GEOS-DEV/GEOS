@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -82,9 +82,10 @@ public:
   ImplicitNewmark( NodeManager const & nodeManager,
                    EdgeManager const & edgeManager,
                    FaceManager const & faceManager,
+                   localIndex const targetRegionIndex,
                    SUBREGION_TYPE const & elementSubRegion,
                    FE_TYPE const & finiteElementSpace,
-                   CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                   CONSTITUTIVE_TYPE & inputConstitutiveType,
                    arrayView1d< globalIndex const > const & inputDofNumber,
                    globalIndex const rankOffset,
                    CRSMatrixView< real64, globalIndex const > const & inputMatrix,
@@ -98,6 +99,7 @@ public:
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -288,6 +290,19 @@ protected:
   real64 const m_dt;
 
 };
+
+/// The factory used to construct a ImplicitNewmark kernel.
+using ImplicitNewmarkFactory = finiteElement::KernelFactory< ImplicitNewmark,
+                                                             arrayView1d< globalIndex const > const &,
+                                                             globalIndex,
+                                                             CRSMatrixView< real64, globalIndex const > const &,
+                                                             arrayView1d< real64 > const &,
+                                                             real64 const (&)[3],
+                                                             real64,
+                                                             real64,
+                                                             real64,
+                                                             real64,
+                                                             real64 >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

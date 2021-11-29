@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,7 @@
 #define GEOSX_DATAREPOSITORY_GROUP_HPP_
 
 #include "InputFlags.hpp"
-#include "dataRepository/ObjectCatalog.hpp"
+#include "ObjectCatalog.hpp"
 #include "MappedVector.hpp"
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
@@ -33,13 +33,6 @@
 /// macro definition to enable/disable char * lookups
 #define NOCHARTOSTRING_KEYLOOKUP 0
 #endif
-
-// Forward declaration of conduit::Node
-namespace conduit
-{
-class Node;
-}
-
 
 /**
  * namespace to encapsulate GEOSX
@@ -85,19 +78,26 @@ public:
 
   /**
    * @brief Constructor
-   *
-   * @param[in] name the name of this object manager
-   * @param[in] parent the parent Group
+   * @param name The name of this Group.
+   * @param parent The parent Group.
    */
   explicit Group( string const & name,
                   Group * const parent );
 
+  /**
+   * @brief Constructor
+   * @param name The name of this Group.
+   * @param rootNode The root node of the data repository.
+   * @note This Group will not have a parent group.
+   */
+  explicit Group( string const & name,
+                  conduit::Node & rootNode );
 
   /**
    * @brief Move constructor
    * @param[in] source source Group
    */
-  Group( Group && source );
+  Group( Group && source ) = default;
 
   /**
    * @brief Destructor, deletes all Groups and Wrappers owned by this Group
@@ -114,10 +114,6 @@ public:
    */
   Group( Group const & ) = delete;
 
-  /**
-   * @brief Deleted move constructor.
-   */
-  Group( Group const && ) = delete;
 
   /**
    * @brief Deleted copy assignment operator.
@@ -158,25 +154,6 @@ public:
   ///@{
 
   /**
-   * @brief Get typeid for current group
-   * @return @p typeid(*this)
-   */
-  virtual const std::type_info & getTypeId() const
-  {
-    return typeid(*this);
-  }
-
-  /**
-   * @brief Check a type_info against the type_info of this Group
-   * @param typeToCheck value to check against
-   * @return true of types are the same, false if not
-   */
-  bool checkTypeId( std::type_info const & typeToCheck ) const
-  {
-    return typeToCheck == getTypeId();
-  }
-
-  /**
    * @brief Prints the data hierarchy recursively.
    * @param[in] indent The level of indentation to add to this level of output.
    */
@@ -206,7 +183,11 @@ public:
    * Registers a Group or class derived from Group as a subgroup of this Group and takes ownership.
    */
   template< typename T = Group >
-  T * registerGroup( string const & name, std::unique_ptr< T > newObject );
+  T & registerGroup( string const & name, std::unique_ptr< T > newObject )
+  {
+    newObject->m_parent = this;
+    return dynamicCast< T & >( *m_subGroups.insert( name, newObject.release(), true ) );
+  }
 
   /**
    * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
@@ -219,8 +200,9 @@ public:
    * Registers a Group or class derived from Group as a subgroup of this Group but does not take ownership.
    */
   template< typename T = Group >
-  T * registerGroup( string const & name,
-                     T * newObject );
+  T & registerGroup( string const & name, T * newObject )
+  { return dynamicCast< T & >( *m_subGroups.insert( name, newObject, false ) ); }
+
 
   /**
    * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
@@ -232,26 +214,24 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T * registerGroup( string const & name )
-  {
-    return registerGroup< T >( name, std::move( std::make_unique< T >( name, this )) );
-  }
+  T & registerGroup( string const & name )
+  { return registerGroup< T >( name, std::move( std::make_unique< T >( name, this ) ) ); }
 
   /**
    * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
-   * @param[in,out] keyIndex A KeyIndexT object that will be used to specify the name of
-   *                         the new group. The index of the KeyIndex will also be set.
-   * @return                 A pointer to the newly registered Group.
+   * @param keyIndex A KeyIndexT object that will be used to specify the name of
+   *   the new group. The index of the KeyIndex will also be set.
+   * @return A pointer to the newly registered Group, or @c nullptr if no group was registered.
    *
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T * registerGroup( subGroupMap::KeyIndex const & keyIndex )
+  T & registerGroup( subGroupMap::KeyIndex const & keyIndex )
   {
-    T * rval = registerGroup< T >( keyIndex.key(), std::move( std::make_unique< T >( keyIndex.key(), this )) );
-    keyIndex.setIndex( this->m_subGroups.getIndex( keyIndex.key()) );
+    T & rval = registerGroup< T >( keyIndex.key(), std::move( std::make_unique< T >( keyIndex.key(), this )) );
+    keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key()) );
     return rval;
   }
 
@@ -267,7 +247,7 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group, typename TBASE = Group >
-  T * registerGroup( string const & name, string const & catalogName )
+  T & registerGroup( string const & name, string const & catalogName )
   {
     std::unique_ptr< TBASE > newGroup = TBASE::CatalogInterface::Factory( catalogName, name, this );
     return registerGroup< T >( name, std::move( newGroup ) );
@@ -293,59 +273,6 @@ public:
 
   //END_SPHINX_INCLUDE_REGISTER_GROUP
 
-  /**
-   * @name Group type-casting methods
-   */
-  ///@{
-
-  /**
-   * @brief       Downcast a Group *
-   * @tparam T    Pointer type to downcast into
-   * @param group A pointer the group to be casted
-   * @return      A pointer to @p T that refers to the @p group
-   */
-  template< typename T >
-  static T groupCast( Group * group )
-  {
-    return dynamicCast< T >( group );
-  }
-
-  /**
-   * @brief       Downcast a Group const *
-   * @tparam T    Pointer type to downcast into
-   * @param group A pointer the group to be casted
-   * @return      A pointer to @p T that refers to the @p group
-   */
-  template< typename T >
-  static T groupCast( Group const * group )
-  {
-    return dynamicCast< T >( group );
-  }
-
-  /**
-   * @brief       Downcast this Group
-   * @tparam T    Pointer type to downcast into
-   * @return      A pointer to \p T that refers to this object
-   */
-  template< typename T >
-  T groupCast()
-  {
-    return dynamicCast< T >( this );
-  }
-
-  /**
-   * @brief       Downcast this Group
-   * @tparam T    Pointer type to downcast into
-   * @return      A pointer to \p T that refers to this object
-   */
-  template< typename T >
-  T groupCast() const
-  {
-    return dynamicCast< T >( this );
-  }
-
-  ///@}
-
   //START_SPHINX_INCLUDE_GET_GROUP
   /**
    * @name Sub-group retrieval methods.
@@ -365,95 +292,49 @@ public:
   ///@{
 
   /**
-   * @brief Retrieve a sub-group from the current Group using an index.
-   * @tparam T type of subgroup
-   * @param[in] index the integral index of the group to retrieve.
-   * @return A pointer to @p T that refers to the sub-group
+   * @brief Return a pointer to a sub-group of the current Group.
+   * @tparam T The type of subgroup.
+   * @tparam KEY The type of the lookup.
+   * @param key The key used to perform the lookup.
+   * @return A pointer to @p T that refers to the sub-group, if the Group does not exist or it
+   *   has an incompatible type a @c nullptr is returned.
    */
-  template< typename T = Group >
-  T * getGroup( localIndex index )
+  template< typename T = Group, typename KEY = void >
+  T * getGroupPointer( KEY const & key )
+  { return dynamicCast< T * >( m_subGroups[ key ] ); }
+
+  /**
+   * @copydoc getGroupPointer(KEY const &)
+   */
+  template< typename T = Group, typename KEY = void >
+  T const * getGroupPointer( KEY const & key ) const
+  { return dynamicCast< T const * >( m_subGroups[ key ] ); }
+
+  /**
+   * @brief Return a reference to a sub-group of the current Group.
+   * @tparam T The type of subgroup.
+   * @tparam KEY The type of the lookup.
+   * @param key The key used to perform the lookup.
+   * @return A reference to @p T that refers to the sub-group.
+   * @throw std::domain_error If the Group does not exist is thrown.
+   */
+  template< typename T = Group, typename KEY = void >
+  T & getGroup( KEY const & key )
   {
-    return groupCast< T * >( m_subGroups[index] );
+    Group * const child = m_subGroups[ key ];
+    GEOSX_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    return dynamicCast< T & >( *child );
   }
 
   /**
-   * @copydoc getGroup(localIndex)
+   * @copydoc getGroup( KEY const & )
    */
-  template< typename T = Group >
-  T const * getGroup( localIndex index ) const
+  template< typename T = Group, typename KEY = void >
+  T const & getGroup( KEY const & key ) const
   {
-    return groupCast< T const * >( m_subGroups[index] );
-  }
-
-  /**
-   * @brief Retrieve a sub-group from the current Group using a string.
-   * @tparam T type of subgroup
-   * @param[in] name the name/key of the group lookup and retrieve.
-   * @return A pointer to @p T that refers to the sub-group
-   */
-  template< typename T = Group >
-  T * getGroup( string const & name )
-  {
-    return groupCast< T * >( m_subGroups[name] );
-  }
-
-  /**
-   * @copydoc getGroup(string const &)
-   */
-  template< typename T = Group >
-  T const * getGroup( string const & name ) const
-  { return groupCast< T const * >( m_subGroups[name] ); }
-
-  /**
-   * @brief @return Return a reference to the Group @p name.
-   * @tparam The type to return.
-   * @param key The name of the group to retrieve.
-   * @note Will abort if the group doesn't exist.
-   */
-  template< typename T = Group >
-  T & getGroupReference( string const & key )
-  { return dynamicCast< T & >( *m_subGroups[ key ] ); }
-
-  /**
-   * @copydoc getGroupReference( string const & )
-   */
-  template< typename T = Group >
-  T const & getGroupReference( string const & key ) const
-  { return dynamicCast< T const & >( *m_subGroups[ key ] ); }
-
-  /**
-   * @copydoc getGroupReference( string const & )
-   */
-  template< typename T = Group >
-  T & getGroupReference( subGroupMap::KeyIndex const & key )
-  { return dynamicCast< T & >( *m_subGroups[key] ); }
-
-  /**
-   * @copydoc getGroupReference( string const & )
-   */
-  template< typename T = Group >
-  T const & getGroupReference( subGroupMap::KeyIndex const & key ) const
-  { return dynamicCast< T const & >( *m_subGroups[key] ); }
-
-  /**
-   * @brief Retrieve a sub-group from the current Group using a KeyIndexT.
-   * @tparam T type of subgroup
-   * @param[in] key the KeyIndex to use for the lookup
-   * @return A pointer to @p T that refers to the sub-group
-   */
-  template< typename T = Group >
-  T * getGroup( subGroupMap::KeyIndex const & key )
-  {
-    return groupCast< T * >( m_subGroups[key] );
-  }
-
-  /**
-   * @copydoc getGroup(subGroupMap::KeyIndex const & key)
-   */
-  template< typename T = Group >
-  T const * getGroup( subGroupMap::KeyIndex const & key ) const
-  {
-    return groupCast< T const * >( m_subGroups[key] );
+    Group const * const child = m_subGroups[ key ];
+    GEOSX_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    return dynamicCast< T const & >( *child );
   }
 
   /**
@@ -462,19 +343,19 @@ public:
    * @param[in] path a unix-style string (absolute, relative paths valid)
    *                 to lookup the Group to return. Absolute paths search
    *                 from the tree root, while relative - from current group.
-   * @return A pointer to @p T that refers to the sub-group
+   * @return A reference to @p T that refers to the sub-group.
+   * @throw std::domain_error If the Group doesn't exist.
    */
   template< typename T = Group >
-  T * getGroupByPath( string const & path )
-  {
-    return const_cast< T * >(const_cast< Group const * >(this)->getGroupByPath< T >( path ));
-  }
+  T & getGroupByPath( string const & path )
+  { return dynamicCast< T & >( const_cast< Group & >( getBaseGroupByPath( path ) ) ); }
 
   /**
    * @copydoc getGroupByPath(string const &)
    */
   template< typename T = Group >
-  T const * getGroupByPath( string const & path ) const;
+  T const & getGroupByPath( string const & path ) const
+  { return dynamicCast< T const & >( getBaseGroupByPath( path ) ); }
 
   //END_SPHINX_INCLUDE_GET_GROUP
 
@@ -483,18 +364,14 @@ public:
    * @return a reference to the sub-group map.
    */
   subGroupMap & getSubGroups()
-  {
-    return m_subGroups;
-  }
+  { return m_subGroups; }
 
   /**
    * @brief Get the subgroups object
    * @return a reference to const that points to the sub-group map.
    */
   subGroupMap const & getSubGroups() const
-  {
-    return m_subGroups;
-  }
+  { return m_subGroups; }
 
   /**
    * @brief return the number of sub groups in this Group
@@ -507,10 +384,9 @@ public:
    * @param name the name of sub-group to search for
    * @return @p true if sub-group exists, @p false otherwise
    */
+  template< typename T = Group >
   bool hasGroup( string const & name ) const
-  {
-    return (m_subGroups[name] != nullptr);
-  }
+  { return dynamicCast< T const * >( m_subGroups[ name ] ) != nullptr; }
 
   ///@}
 
@@ -590,7 +466,7 @@ public:
    * @param[in] lambda  the functor to call on subgroups
    */
   template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
-  void forSubGroups( LAMBDA lambda )
+  void forSubGroups( LAMBDA && lambda )
   {
     for( auto & subGroupIter : m_subGroups )
     {
@@ -602,10 +478,10 @@ public:
   }
 
   /**
-   * @copydoc forSubGroups(LAMBDA)
+   * @copydoc forSubGroups(LAMBDA &&)
    */
   template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
-  void forSubGroups( LAMBDA lambda ) const
+  void forSubGroups( LAMBDA && lambda ) const
   {
     for( auto const & subGroupIter : m_subGroups )
     {
@@ -617,7 +493,7 @@ public:
   }
 
   /**
-   * @copybrief forSubGroups(LAMBDA)
+   * @copybrief forSubGroups(LAMBDA &&)
    * @tparam GROUPTYPE        the first type that will be used in the attempted casting of group.
    * @tparam GROUPTYPES       a variadic list of types that will be used in the attempted casting of group.
    * @tparam LOOKUP_CONTAINER type of container of subgroup lookup keys (names or indices), must support range-based for
@@ -628,12 +504,12 @@ public:
    * @param[in] lambda        the functor to call
    */
   template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
-  void forSubGroups( LOOKUP_CONTAINER const & subGroupKeys, LAMBDA lambda )
+  void forSubGroups( LOOKUP_CONTAINER const & subGroupKeys, LAMBDA && lambda )
   {
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *getGroup( subgroup ), [&]( auto & castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
       {
         lambda( counter, castedSubGroup );
       } );
@@ -642,7 +518,7 @@ public:
   }
 
   /**
-   * @copybrief forSubGroups(LAMBDA)
+   * @copybrief forSubGroups(LAMBDA &&)
    * @tparam GROUPTYPE        the first type that will be used in the attempted casting of group.
    * @tparam GROUPTYPES       a variadic list of types that will be used in the attempted casting of group.
    * @tparam LOOKUP_CONTAINER type of container of subgroup lookup keys (names or indices), must support range-based for
@@ -653,12 +529,12 @@ public:
    * @param[in] lambda        the functor to call
    */
   template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
-  void forSubGroups( LOOKUP_CONTAINER const & subGroupKeys, LAMBDA lambda ) const
+  void forSubGroups( LOOKUP_CONTAINER const & subGroupKeys, LAMBDA && lambda ) const
   {
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *getGroup( subgroup ), [&]( auto const & castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto const & castedSubGroup )
       {
         lambda( counter, castedSubGroup );
       } );
@@ -685,7 +561,7 @@ public:
    * @param[in] lambda  the functor to call
    */
   template< typename LAMBDA >
-  void forWrappers( LAMBDA lambda )
+  void forWrappers( LAMBDA && lambda )
   {
     for( auto & wrapperIter : m_wrappers )
     {
@@ -694,10 +570,10 @@ public:
   }
 
   /**
-   * @copydoc forWrappers(LAMBDA)
+   * @copydoc forWrappers(LAMBDA &&)
    */
   template< typename LAMBDA >
-  void forWrappers( LAMBDA lambda ) const
+  void forWrappers( LAMBDA && lambda ) const
   {
     for( auto const & wrapperIter : m_wrappers )
     {
@@ -713,7 +589,7 @@ public:
    * @param[in] lambda  the functor to call
    */
   template< typename TYPE, typename ... TYPES, typename LAMBDA >
-  void forWrappers( LAMBDA lambda )
+  void forWrappers( LAMBDA && lambda )
   {
     for( auto & wrapperIter : m_wrappers )
     {
@@ -730,7 +606,7 @@ public:
    * @param[in] lambda  the functor to call
    */
   template< typename TYPE, typename ... TYPES, typename LAMBDA >
-  void forWrappers( LAMBDA lambda ) const
+  void forWrappers( LAMBDA && lambda ) const
   {
     for( auto const & wrapperIter : m_wrappers )
     {
@@ -749,8 +625,8 @@ public:
 
   /**
    * @brief Run initialization functions on this and all subgroups.
-   * @param[in] group A group that is passed in to the initialization functions
-   *                  in order to facilitate the initialization.
+   * @param[in] root A group that is passed in to the initialization functions
+   *   in order to facilitate the initialization.
    *
    * This function will first call initializePreSubGroups() on this Group, then
    * loop over all subgroups and call Initialize() on them, then
@@ -759,7 +635,7 @@ public:
    * @note The order in which the sub-Groups are iterated over is defined by
    * InitializationOrder().
    */
-  void initialize( Group * const group );
+  void initialize();
 
   /**
    * @brief Sets the initialization order for sub-Groups.
@@ -776,8 +652,6 @@ public:
   /**
    * @brief Initialization routine to be called after calling
    *        ApplyInitialConditions().
-   * @param[in] group A group that is passed in to the initialization functions
-   *                  in order to facilitate the initialization.
    *
    * This function provides a capability for post-initial condition problem
    * initialization. First the InitializePostInitialConditions_PreSubGroups()
@@ -789,16 +663,15 @@ public:
    * @note The order in which the sub-Groups are iterated over is defined by
    * InitializationOrder().
    */
-  void initializePostInitialConditions( Group * const group );
+  void initializePostInitialConditions();
 
   /**
    * @brief Initialization routine to be called after calling reading a restart file.
-   * @param domain the physical domain
    *
    * This functions recurses and calls postRestartInitialization() on nested sub-groups
    * at any depth, providing a capability to add custom post-restart initialization.
    */
-  void postRestartInitializationRecursive( Group * const domain );
+  void postRestartInitializationRecursive();
 
   /**
    * @brief Recursively read values using ProcessInputFile() from the input
@@ -825,54 +698,53 @@ public:
    * @brief Create and register a Wrapper around a new object.
    * @tparam T The type of the object allocated.
    * @tparam TBASE The type of the object that the Wrapper holds.
-   * @param[in]  name the name of the wrapper to use as a string key
+   * @param[in] name the name of the wrapper to use as a string key
    * @param[out] rkey a pointer to a index type that will be filled with the new
-   *             Wrapper index in this Group
-   * @return     a pointer to the newly registered/created Wrapper
+   *   Wrapper index in this Group
+   * @return A reference to the newly registered/created Wrapper
    */
   template< typename T, typename TBASE=T >
-  Wrapper< TBASE > * registerWrapper( string const & name,
+  Wrapper< TBASE > & registerWrapper( string const & name,
                                       wrapperMap::KeyIndex::index_type * const rkey = nullptr );
 
   /**
    * @copybrief registerWrapper(string const &,wrapperMap::KeyIndex::index_type * const)
-   * @tparam     T the type of the wrapped object
+   * @tparam T the type of the wrapped object
    * @tparam TBASE the base type to cast the returned wrapper to
    * @param[in] viewKey The KeyIndex that contains the name of the new Wrapper.
-   * @return            a pointer to the newly registered/created Wrapper
+   * @return A reference to the newly registered/created Wrapper
    */
   template< typename T, typename TBASE=T >
-  Wrapper< TBASE > * registerWrapper( Group::wrapperMap::KeyIndex const & viewKey );
+  Wrapper< TBASE > & registerWrapper( Group::wrapperMap::KeyIndex const & viewKey );
 
   /**
    * @brief Register a Wrapper around a given object and take ownership.
    * @tparam T the type of the wrapped object
-   * @param[in] name      the name of the wrapper to use as a string key
+   * @param[in] name the name of the wrapper to use as a string key
    * @param[in] newObject an owning pointer to the object that is being registered
-   * @return              a pointer to the newly registered/created Wrapper
+   * @return A reference to the newly registered/created Wrapper
    */
   template< typename T >
-  Wrapper< T > * registerWrapper( string const & name,
-                                  std::unique_ptr< T > newObject );
+  Wrapper< T > & registerWrapper( string const & name, std::unique_ptr< T > newObject );
 
   /**
    * @brief Register a Wrapper around an existing object, does not take ownership of the object.
    * @tparam T the type of the wrapped object
-   * @param[in] name          the name of the wrapper to use as a string key
-   * @param[in] newObject     a pointer to the object that is being registered
-   * @return                  a pointer to the newly registered/created Wrapper
+   * @param[in] name the name of the wrapper to use as a string key
+   * @param[in] newObject a pointer to the object that is being registered
+   * @return A reference to the newly registered/created Wrapper
    */
   template< typename T >
-  Wrapper< T > * registerWrapper( string const & name,
+  Wrapper< T > & registerWrapper( string const & name,
                                   T * newObject );
 
   /**
    * @brief Register and take ownership of an existing Wrapper.
-   * @param name    the name of the wrapper to use as a string key
-   * @param wrapper a pointer to the an existing wrapper.
-   * @return        an un-typed pointer to the newly registered/created wrapper
+   * @param name The name of the wrapper to use as a string key
+   * @param wrapper A pointer to the an existing wrapper.
+   * @return An un-typed pointer to the newly registered/created wrapper
    */
-  WrapperBase * registerWrapper( string const & name,
+  WrapperBase & registerWrapper( string const & name,
                                  std::unique_ptr< WrapperBase > wrapper );
 
   /**
@@ -918,7 +790,12 @@ public:
    */
   virtual void setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                     xmlWrapper::xmlNode schemaParent,
-                                    integer documentationType );
+                                    integer documentationType )
+  {
+    GEOSX_UNUSED_VAR( schemaRoot );
+    GEOSX_UNUSED_VAR( schemaParent );
+    GEOSX_UNUSED_VAR( documentationType );
+  }
 
   ///@}
 
@@ -931,7 +808,7 @@ public:
    * @brief Calls RegisterDataOnMesh() recursively.
    * @param[in,out] meshBodies the group of MeshBody objects to register data on.
    */
-  virtual void registerDataOnMeshRecursive( Group * const meshBodies );
+  virtual void registerDataOnMeshRecursive( Group & meshBodies );
 
   /**
    * @brief Register data on mesh entities.
@@ -940,7 +817,10 @@ public:
    * This function is used to register data on mesh entities such as the NodeManager,
    * FaceManager...etc.
    */
-  virtual void registerDataOnMesh( Group * const meshBodies );
+  virtual void registerDataOnMesh( Group & meshBodies )
+  {
+    GEOSX_UNUSED_VAR( meshBodies );
+  }
 
   ///@}
 
@@ -953,35 +833,46 @@ public:
    * @brief Get the size required to pack a list of wrappers.
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
    * @return                 the size of the buffer required to pack the wrappers.
    */
   virtual localIndex packSize( string_array const & wrapperNames,
                                integer const recursive,
-                               bool on_device = false ) const;
+                               bool onDevice,
+                               parallelDeviceEvents & events ) const;
 
   /**
    * @brief Get the size required to pack a list of indices within a list of wrappers.
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] packList     the list of indices to pack
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
    * @return                 the size of the buffer required to pack the wrapper indices.
    */
   virtual localIndex packSize( string_array const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive,
-                               bool on_device = false ) const;
+                               bool onDevice,
+                               parallelDeviceEvents & events ) const;
 
   /**
    * @brief Pack a list of wrappers to a buffer.
    * @param[in,out] buffer   the buffer that will be packed.
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
    * @return                 the size of data packed to the buffer.
    *
    * This function takes in a reference to a pointer @p buffer, and packs data specified by
@@ -993,7 +884,8 @@ public:
   virtual localIndex pack( buffer_unit_type * & buffer,
                            string_array const & wrapperNames,
                            integer const recursive,
-                           bool on_device = false ) const;
+                           bool onDevice,
+                           parallelDeviceEvents & events ) const;
 
   /**
    * @brief Pack a list of indices within a list of wrappers.
@@ -1001,8 +893,11 @@ public:
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] packList     the list of indices to pack
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
    * @return                 the size of data packed to the buffer.
    *
    * This function takes in a reference to a pointer @p buffer, and packs data specified by
@@ -1014,15 +909,19 @@ public:
                            string_array const & wrapperNames,
                            arrayView1d< localIndex const > const & packList,
                            integer const recursive,
-                           bool on_device = false ) const;
+                           bool onDevice,
+                           parallelDeviceEvents & events ) const;
 
   /**
    * @brief Unpack a buffer.
    * @param[in,out] buffer   the buffer to unpack
    * @param[in,out] packList the list of indices that will be unpacked.
    * @param[in] recursive    whether or not to perform a recursive unpack.
-   * @param[in] on_device    whether to use device-based packing functions
+   * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
    * @return                 the number of bytes unpacked.
    *
    * This function takes a reference to a pointer to const buffer type, and
@@ -1034,7 +933,8 @@ public:
   virtual localIndex unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
-                             bool on_device = false );
+                             bool onDevice,
+                             parallelDeviceEvents & events );
 
   ///@}
 
@@ -1051,46 +951,30 @@ public:
   ///@{
 
   /**
-   * @brief Retrieve a WrapperBase stored in this group.
-   * @param[in] index an integral lookup value used to search the collection of wrappers.
-   * @return          a pointer to the WrapperBase that resulted from the lookup.
+   * @brief Return a reference to a WrapperBase stored in this group.
+   * @tparam KEY The lookup type.
+   * @param key The value used to lookup the wrapper.
+   * @return A reference to the WrapperBase that resulted from the lookup.
+   * @throw std::domain_error if the wrapper doesn't exist.
    */
-  WrapperBase const * getWrapperBase( indexType const index ) const
-  { return m_wrappers[index]; }
+  template< typename KEY >
+  WrapperBase const & getWrapperBase( KEY const & key ) const
+  {
+    WrapperBase const * const wrapper = m_wrappers[ key ];
+    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    return *wrapper;
+  }
 
   /**
-   * @copydoc getWrapperBase(indexType const) const
+   * @copydoc getWrapperBase(KEY const &) const
    */
-  WrapperBase * getWrapperBase( indexType const index )
-  { return m_wrappers[index]; }
-
-  /**
-   * @brief Retrieve a WrapperBase stored in this group.
-   * @param[in] name a string lookup value used to search the collection of wrappers.
-   * @return         a pointer to the WrapperBase that resulted from the lookup.
-   */
-  WrapperBase const * getWrapperBase( string const & name ) const
-  { return m_wrappers[name]; }
-
-  /**
-   * @copydoc getWrapperBase(string const &) const
-   */
-  WrapperBase * getWrapperBase( string const & name )
-  { return m_wrappers[name]; }
-
-  /**
-   * @brief Retrieve a WrapperBase stored in this group.
-   * @param[in] keyIndex a KeyIndex lookup value used to search the collection of wrappers.
-   * @return             a pointer to the WrapperBase that resulted from the lookup.
-   */
-  WrapperBase const * getWrapperBase( wrapperMap::KeyIndex const & keyIndex ) const
-  { return m_wrappers[keyIndex]; }
-
-  /**
-   * @copydoc getWrapperBase(wrapperMap::KeyIndex const &) const
-   */
-  WrapperBase * getWrapperBase( wrapperMap::KeyIndex const & keyIndex )
-  { return m_wrappers[keyIndex]; }
+  template< typename KEY >
+  WrapperBase & getWrapperBase( KEY const & key )
+  {
+    WrapperBase * const wrapper = m_wrappers[ key ];
+    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    return *wrapper;
+  }
 
   /**
    * @brief
@@ -1098,26 +982,27 @@ public:
    * @return
    */
   indexType getWrapperIndex( string const & name ) const
-  {
-    return m_wrappers.getIndex( name );
-  }
+  { return m_wrappers.getIndex( name ); }
 
   /**
    * @brief Get access to the internal wrapper storage.
    * @return a reference to wrapper map
    */
   wrapperMap const & wrappers() const
-  {
-    return m_wrappers;
-  }
+  { return m_wrappers; }
 
   /**
    * @copydoc wrappers() const
    */
   wrapperMap & wrappers()
-  {
-    return m_wrappers;
-  }
+  { return m_wrappers; }
+
+  /**
+   * @brief Return the number of wrappers.
+   * @return The number of wrappers.
+   */
+  indexType numWrappers() const
+  { return m_wrappers.size(); }
 
   ///@}
 
@@ -1142,46 +1027,51 @@ public:
    */
   template< typename LOOKUP_TYPE >
   bool hasWrapper( LOOKUP_TYPE const & lookup ) const
-  {
-    return (m_wrappers[lookup] != nullptr);
-  }
+  { return m_wrappers[ lookup ] != nullptr; }
 
   /**
    * @brief Retrieve a Wrapper stored in this group.
-   * @tparam T           the object type contained in the Wrapper
+   * @tparam T the object type contained in the Wrapper
    * @tparam LOOKUP_TYPE the type of key used to perform the lookup
    * @param[in] index    a lookup value used to search the collection of wrappers
-   * @return             A pointer to the Wrapper<T> that resulted from the lookup
+   * @return A reference to the Wrapper<T> that resulted from the lookup.
+   * @throw std::domain_error if the Wrapper doesn't exist.
    */
   template< typename T, typename LOOKUP_TYPE >
-  Wrapper< T > const * getWrapper( LOOKUP_TYPE const & index ) const
+  Wrapper< T > const & getWrapper( LOOKUP_TYPE const & index ) const
   {
-    return dynamicCast< Wrapper< T > const * >( m_wrappers[index] );
+    WrapperBase const & wrapper = getWrapperBase( index );
+    return dynamicCast< Wrapper< T > const & >( wrapper );
   }
 
   /**
    * @copydoc getWrapper(LOOKUP_TYPE const &) const
    */
   template< typename T, typename LOOKUP_TYPE >
-  Wrapper< T > * getWrapper( LOOKUP_TYPE const & index )
-  { return const_cast< Wrapper< T > * >( const_cast< Group const * >(this)->getWrapper< T >( index ) ); }
+  Wrapper< T > & getWrapper( LOOKUP_TYPE const & index )
+  {
+    WrapperBase & wrapper = getWrapperBase( index );
+    return dynamicCast< Wrapper< T > & >( wrapper );
+  }
 
   /**
    * @brief Retrieve a Wrapper stored in this group.
-   * @tparam T      the object type contained in the Wrapper
-   * @param[in] key a string lookup value used to search the collection of wrappers
-   * @return        a pointer to the Wrapper<T> that resulted from the lookup
+   * @tparam T the object type contained in the Wrapper
+   * @tparam LOOKUP_TYPE the type of key used to perform the lookup
+   * @param[in] index a lookup value used to search the collection of wrappers
+   * @return A pointer to the Wrapper<T> that resulted from the lookup, if the Wrapper
+   *   doesn't exist or has a different type a @c nullptr is returned.
    */
-  template< typename T >
-  Wrapper< T > const * getWrapper( char const * const key ) const
-  { return getWrapper< T >( string( key ) ); }
+  template< typename T, typename LOOKUP_TYPE >
+  Wrapper< T > const * getWrapperPointer( LOOKUP_TYPE const & index ) const
+  { return dynamicCast< Wrapper< T > const * >( m_wrappers[ index ] ); }
 
   /**
-   * @copydoc getWrapper(char const * const) const
+   * @copydoc getWrapperPointer(LOOKUP_TYPE const &) const
    */
-  template< typename T >
-  Wrapper< T > * getWrapper( char const * const key )
-  { return getWrapper< T >( string( key ) ); }
+  template< typename T, typename LOOKUP_TYPE >
+  Wrapper< T > * getWrapperPointer( LOOKUP_TYPE const & index )
+  { return dynamicCast< Wrapper< T > * >( m_wrappers[ index ] ); }
 
   ///@}
 
@@ -1198,71 +1088,24 @@ public:
 
   /**
    * @brief Look up a wrapper and get reference to wrapped object.
-   * @tparam T           return value type
+   * @tparam T return value type
    * @tparam WRAPPEDTYPE wrapped value type (by default, same as return)
    * @tparam LOOKUP_TYPE type of value used for wrapper lookup
    * @param lookup       value for wrapper lookup
-   * @return             reference to @p T
-   *
-   * @note An error will be raised if wrapper does not exist or type cast is invalid.
+   * @return reference to @p T
+   * @throw A std::domain_error if the Wrapper does not exist.
    */
   template< typename T, typename LOOKUP_TYPE >
   GEOSX_DECLTYPE_AUTO_RETURN
   getReference( LOOKUP_TYPE const & lookup ) const
-  {
-    Wrapper< T > const * const wrapper = getWrapper< T >( lookup );
-    if( wrapper == nullptr )
-    {
-      if( hasWrapper( lookup ) )
-      {
-        GEOSX_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
-      }
-      GEOSX_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
-    }
-
-    return wrapper->reference();
-  }
+  { return getWrapper< T >( lookup ).reference(); }
 
   /**
    * @copydoc getReference(LOOKUP_TYPE const &) const
    */
   template< typename T, typename LOOKUP_TYPE >
-  T &
-  getReference( LOOKUP_TYPE const & lookup )
-  {
-    Wrapper< T > * const wrapper = getWrapper< T >( lookup );
-    if( wrapper == nullptr )
-    {
-      if( hasWrapper( lookup ) )
-      {
-        GEOSX_ERROR( "call to getWrapper results in nullptr but a view exists. Most likely given the incorrect type. lookup : " << lookup );
-      }
-      GEOSX_ERROR( "call to getWrapper results in nullptr and a view does not exist. lookup : " << lookup );
-    }
-
-    return wrapper->reference();
-  }
-
-  /**
-   * @copybrief getReference(LOOKUP_TYPE const &) const
-   * @tparam T           return value type
-   * @tparam WRAPPEDTYPE wrapped value type (by default, same as return)
-   * @param name         name of the wrapper
-   * @return             reference to @p T
-   *
-   * @note An error will be raised if wrapper does not exist or type cast is invalid.
-   */
-  template< typename T >
-  GEOSX_DECLTYPE_AUTO_RETURN
-  getReference( char const * const name ) const
-  { return getReference< T >( string( name ) ); }
-
-  /**
-   * @copydoc getReference(char const * const) const
-   */
-  template< typename T >
-  T & getReference( char const * const name )
-  { return getReference< T >( string( name ) ); }
+  T & getReference( LOOKUP_TYPE const & lookup )
+  { return getWrapper< T >( lookup ).reference(); }
 
   //END_SPHINX_INCLUDE_GET_WRAPPER
 
@@ -1290,18 +1133,14 @@ public:
    * @return capacity of this group
    */
   inline localIndex capacity() const
-  {
-    return m_capacity;
-  }
+  { return m_capacity; }
 
   /**
    * @brief Get the "size" of the group, which determines the number of elements in resizable wrappers.
    * @return size of this group
    */
   inline localIndex size() const
-  {
-    return m_size;
-  }
+  { return m_size; }
 
   /// @}
 
@@ -1314,49 +1153,58 @@ public:
    * @brief Get group name.
    * @return group name
    */
-  inline const string getName() const
-  {
-    return m_name;
-  }
+  inline string const & getName() const
+  { return m_name; }
+
+  /**
+   * @brief Return the path of this Group in the data repository.
+   * @return The path of this group in the data repository.
+   */
+  string getPath() const;
 
   /**
    * @brief Access the group's parent.
-   * @return pointer to parent Group
+   * @return reference to parent Group
+   * @throw std::domain_error if the Group doesn't have a parent.
    */
-  Group * getParent()             { return m_parent; }
+  Group & getParent()
+  {
+    GEOSX_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    return *m_parent;
+  }
 
   /**
    * @copydoc getParent()
    */
-  Group const * getParent() const { return m_parent; }
+  Group const & getParent() const
+  {
+    GEOSX_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    return *m_parent;
+  }
 
   /**
    * @brief Get the group's index withing its parent group
    * @return integral index of current group within its parent
    */
   localIndex getIndexInParent() const
-  {
-    return m_parent->getSubGroups().getIndex( this->m_name );
-  }
+  { return m_parent->getSubGroups().getIndex( m_name ); }
 
   /**
    * @brief Check whether this Group is resized when its parent is resized.
    * @return @p true if Group is resized with parent group, @p false otherwise
    */
   integer sizedFromParent() const
-  {
-    return m_sizedFromParent;
-  }
+  { return m_sizedFromParent; }
 
   /**
    * @brief Set whether this wrapper is resized when its parent is resized.
    * @param val an int that is converted into a bool
    * @return a pointer to this Group
    */
-  Group * setSizedFromParent( int val )
+  Group & setSizedFromParent( int val )
   {
     m_sizedFromParent = val;
-    return this;
+    return *this;
   }
   /**
    * @brief Get flags that control restart output of this group.
@@ -1385,18 +1233,33 @@ public:
   ///@}
 
   /**
+   * @brief Register a callback function on the group
+   * @param func the function to register
+   * @param funcType the type of the function to register
+   * @return true if successful, false else
+   */
+  virtual bool registerCallback( void * func, const std::type_info & funcType )
+  {
+    GEOSX_UNUSED_VAR( func );
+    GEOSX_UNUSED_VAR( funcType );
+    return false;
+  }
+
+  /**
    * @name Restart output methods
    */
   ///@{
 
   /**
-   * @brief Get the Conduit node object associated with this group
-   * @return reference to inner conduit::Node member
+   * @brief Return the Conduit node object associated with this group.
+   * @return The Conduit node object associated with this group.
    */
   conduit::Node & getConduitNode()
-  {
-    return m_conduitNode;
-  }
+  { return m_conduitNode; }
+
+  /// @copydoc getConduitNode()
+  conduit::Node const & getConduitNode() const
+  { return m_conduitNode; }
 
   /**
    * @brief Register the group and its wrappers with Conduit.
@@ -1438,62 +1301,45 @@ protected:
 
   /**
    * @brief Called by Initialize() prior to initializing sub-Groups.
-   * @param[in] group A group that is passed in to the initialization functions
-   *                  in order to facilitate the initialization.
    */
-  virtual void initializePreSubGroups( Group * const group )
-  {
-    GEOSX_UNUSED_VAR( group );
-  }
+  virtual void initializePreSubGroups()
+  {}
 
   /**
    * @brief Called by Initialize() after to initializing sub-Groups.
-   * @param[in] group A group that is passed in to the initialization functions
-   *                  in order to facilitate the initialization.
    */
-  virtual void initializePostSubGroups( Group * const group )
-  {
-    GEOSX_UNUSED_VAR( group );
-  }
+  virtual void initializePostSubGroups()
+  {}
 
   /**
    * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
-   * @param[in] group A group that is passed in to the initialization functions
-   *                  in order to facilitate the initialization.
    */
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const group )
-  {
-    GEOSX_UNUSED_VAR( group );
-  }
+  virtual void initializePostInitialConditionsPreSubGroups()
+  {}
 
   /**
    * @brief Called by InitializePostInitialConditions() after to initializing sub-Groups.
-   * @param[in] group A group that is passed in to the initialization functions
-   *                  in order to facilitate the initialization.
    */
-  virtual void initializePostInitialConditionsPostSubGroups( Group * const group )
-  {
-    GEOSX_UNUSED_VAR( group );
-  }
+  virtual void initializePostInitialConditionsPostSubGroups()
+  {}
 
   /**
    * @brief Performs initialization required after reading from a restart file.
-   * @param domain A pointer to the domain partition.
    */
-  virtual void postRestartInitialization( Group * const domain )
-  {
-    GEOSX_UNUSED_VAR( domain );
-  }
+  virtual void postRestartInitialization()
+  {}
 
   ///@}
 
 private:
   /**
    * @brief Read values from the input file and put them into the
-   *        wrapped values for this group.
+   *   wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
   virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
+
+  Group const & getBaseGroupByPath( string const & path ) const;
 
   //START_SPHINX_INCLUDE_02
   /// The parent Group that contains "this" Group in its "sub-Group" collection.
@@ -1544,33 +1390,15 @@ using GroupKey = Group::subGroupMap::KeyIndex;
  */
 using ViewKey = Group::wrapperMap::KeyIndex;
 
-
-
-template< typename T >
-T * Group::registerGroup( string const & name,
-                          std::unique_ptr< T > newObject )
-{
-  newObject->m_parent = this;
-  return dynamicCast< T * >( m_subGroups.insert( name, newObject.release(), true ) );
-}
-
-
-template< typename T >
-T * Group::registerGroup( string const & name,
-                          T * newObject )
-{
-  return dynamicCast< T * >( m_subGroups.insert( name, newObject, false ) );
-}
-
 // Doxygen bug - sees this as a separate function
 /// @cond DO_NOT_DOCUMENT
 template< typename T, typename TBASE >
-Wrapper< TBASE > * Group::registerWrapper( string const & name,
+Wrapper< TBASE > & Group::registerWrapper( string const & name,
                                            ViewKey::index_type * const rkey )
 {
   std::unique_ptr< TBASE > newObj = std::make_unique< T >();
   m_wrappers.insert( name,
-                     new Wrapper< TBASE >( name, this, std::move( newObj ) ),
+                     new Wrapper< TBASE >( name, *this, std::move( newObj ) ),
                      true );
 
   if( rkey != nullptr )
@@ -1578,20 +1406,20 @@ Wrapper< TBASE > * Group::registerWrapper( string const & name,
     *rkey = m_wrappers.getIndex( name );
   }
 
-  Wrapper< TBASE > * const rval = getWrapper< TBASE >( name );
-  if( rval->sizedFromParent() == 1 )
+  Wrapper< TBASE > & rval = getWrapper< TBASE >( name );
+  if( rval.sizedFromParent() == 1 )
   {
-    rval->resize( this->size());
+    rval.resize( size());
   }
   return rval;
 }
 /// @endcond
 
 template< typename T, typename TBASE >
-Wrapper< TBASE > * Group::registerWrapper( ViewKey const & viewKey )
+Wrapper< TBASE > & Group::registerWrapper( ViewKey const & viewKey )
 {
   ViewKey::index_type index;
-  Wrapper< TBASE > * const rval = registerWrapper< T, TBASE >( viewKey.key(), &index );
+  Wrapper< TBASE > & rval = registerWrapper< T, TBASE >( viewKey.key(), &index );
   viewKey.setIndex( index );
 
   return rval;
@@ -1599,88 +1427,35 @@ Wrapper< TBASE > * Group::registerWrapper( ViewKey const & viewKey )
 
 
 template< typename T >
-Wrapper< T > * Group::registerWrapper( string const & name,
+Wrapper< T > & Group::registerWrapper( string const & name,
                                        std::unique_ptr< T > newObject )
 {
   m_wrappers.insert( name,
-                     new Wrapper< T >( name, this, std::move( newObject ) ),
+                     new Wrapper< T >( name, *this, std::move( newObject ) ),
                      true );
 
-  Wrapper< T > * const rval = getWrapper< T >( name );
-  if( rval->sizedFromParent() == 1 )
+  Wrapper< T > & rval = getWrapper< T >( name );
+  if( rval.sizedFromParent() == 1 )
   {
-    rval->resize( this->size());
+    rval.resize( size());
   }
   return rval;
 }
 
-
-
 template< typename T >
-Wrapper< T > * Group::registerWrapper( string const & name,
+Wrapper< T > & Group::registerWrapper( string const & name,
                                        T * newObject )
 {
   m_wrappers.insert( name,
-                     new Wrapper< T >( name, this, newObject ),
+                     new Wrapper< T >( name, *this, newObject ),
                      true );
 
-  Wrapper< T > * const rval = getWrapper< T >( name );
-  if( rval->sizedFromParent() == 1 )
+  Wrapper< T > & rval = getWrapper< T >( name );
+  if( rval.sizedFromParent() == 1 )
   {
-    rval->resize( this->size());
+    rval.resize( size());
   }
   return rval;
-}
-
-template< typename T >
-T const * Group::getGroupByPath( string const & path ) const
-{
-  // needed for getting root correctly with GetGroupByPath("/");
-  if( path.empty())
-  {
-    return groupCast< T const * >( this );
-  }
-
-  size_t directoryMarker = path.find( '/' );
-
-  if( directoryMarker == string::npos )
-  {
-    // Target should be a child of this group
-    return this->getGroup< T >( path );
-  }
-  else
-  {
-    // Split the path
-    string const child = path.substr( 0, directoryMarker );
-    string const subPath = path.substr( directoryMarker+1, path.size());
-
-    if( directoryMarker == 0 )            // From root
-    {
-      if( this->getParent() == nullptr )  // At root
-      {
-        return this->getGroupByPath< T >( subPath );
-      }
-      else                               // Not at root
-      {
-        return this->getParent()->getGroupByPath< T >( path );
-      }
-    }
-    else if( child[0] == '.' )
-    {
-      if( child[1] == '.' )               // '../' = Reverse path
-      {
-        return this->getParent()->getGroupByPath< T >( subPath );
-      }
-      else                               // './' = This path
-      {
-        return this->getGroupByPath< T >( subPath );
-      }
-    }
-    else
-    {
-      return m_subGroups[child]->getGroupByPath< T >( subPath );
-    }
-  }
 }
 
 } /* end namespace dataRepository */

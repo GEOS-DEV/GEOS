@@ -1,5 +1,5 @@
 message("adding optionparser library")
-#blt_register_library( 
+#blt_import_library( 
 #    NAME optionparser
 #    INCLUDES optionparser/optionparser.h
 #    TREAT_INCLUDES_AS_SYSTEM ON

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,10 +19,11 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
-#include "common/EnumStrings.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 #include "SolidMechanicsLagrangianFEMKernels.hpp"
@@ -76,9 +77,9 @@ public:
    */
   static string catalogName() { return "SolidMechanics_LagrangianFEM"; }
 
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
-  virtual void registerDataOnMesh( Group * const MeshBody ) override final;
+  virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
@@ -114,8 +115,8 @@ public:
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
+               ParallelVector & rhs,
+               ParallelVector & solution,
                bool const setSparsity = false ) override;
 
   virtual void
@@ -138,6 +139,12 @@ public:
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
+  virtual void updateState( DomainPartition & domain ) override final
+  {
+    // There should be nothing to update
+    GEOSX_UNUSED_VAR( domain );
+  };
+
   virtual void applyBoundaryConditions( real64 const time,
                                         real64 const dt,
                                         DomainPartition & domain,
@@ -152,8 +159,6 @@ public:
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  void resetStressToBeginningOfStep( DomainPartition & domain );
-
   virtual void implicitStepComplete( real64 const & time,
                                      real64 const & dt,
                                      DomainPartition & domain ) override;
@@ -162,9 +167,7 @@ public:
 
 
   template< typename CONSTITUTIVE_BASE,
-            template< typename SUBREGION_TYPE,
-                      typename CONSTITUTIVE_TYPE,
-                      typename FE_TYPE > class KERNEL_TEMPLATE,
+            typename KERNEL_WRAPPER,
             typename ... PARAMS >
   void assemblyLaunch( DomainPartition & domain,
                        DofManager const & dofManager,
@@ -174,7 +177,12 @@ public:
 
 
   template< typename ... PARAMS >
-  real64 explicitKernelDispatch( PARAMS && ... params );
+  real64 explicitKernelDispatch( MeshLevel & mesh,
+                                 arrayView1d< string const > const & targetRegions,
+                                 string const & finiteElementName,
+                                 arrayView1d< string const > const & constitutiveNames,
+                                 real64 const dt,
+                                 std::string const & elementListName );
 
   /**
    * Applies displacement boundary conditions to the system for implicit time integration
@@ -191,10 +199,10 @@ public:
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                     arrayView1d< real64 > const & localRhs );
 
-  void crsApplyTractionBC( real64 const time,
-                           DofManager const & dofManager,
-                           DomainPartition & domain,
-                           arrayView1d< real64 > const & localRhs );
+  void applyTractionBC( real64 const time,
+                        DofManager const & dofManager,
+                        DomainPartition & domain,
+                        arrayView1d< real64 > const & localRhs );
 
   void applyChomboPressure( DofManager const & dofManager,
                             DomainPartition & domain,
@@ -213,56 +221,46 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    static constexpr auto vTildeString = "velocityTilde";
-    static constexpr auto uhatTildeString = "uhatTilde";
-    static constexpr auto cflFactorString = "cflFactor";
-    static constexpr auto newmarkGammaString = "newmarkGamma";
-    static constexpr auto newmarkBetaString = "newmarkBeta";
-    static constexpr auto massDampingString = "massDamping";
-    static constexpr auto stiffnessDampingString = "stiffnessDamping";
-    static constexpr auto useVelocityEstimateForQSString = "useVelocityForQS";
-    static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
-    static constexpr auto maxNumResolvesString = "maxNumResolves";
-    static constexpr auto strainTheoryString = "strainTheory";
-    static constexpr auto solidMaterialNamesString = "solidMaterialNames";
-    static constexpr auto stress_n = "beginningOfStepStress";
-    static constexpr auto forceExternal = "externalForce";
-    static constexpr auto contactRelationNameString = "contactRelationName";
-    static constexpr auto noContactRelationNameString = "NOCONTACT";
-    static constexpr auto contactForceString = "contactForce";
-    static constexpr auto maxForce = "maxForce";
-    static constexpr auto elemsAttachedToSendOrReceiveNodes = "elemsAttachedToSendOrReceiveNodes";
-    static constexpr auto elemsNotAttachedToSendOrReceiveNodes = "elemsNotAttachedToSendOrReceiveNodes";
-    static constexpr auto effectiveStress = "effectiveStress";
+    static constexpr char const * vTildeString() { return "velocityTilde"; }
+    static constexpr char const * uhatTildeString() { return "uhatTilde"; }
+    static constexpr char const * cflFactorString() { return "cflFactor"; }
+    static constexpr char const * newmarkGammaString() { return "newmarkGamma"; }
+    static constexpr char const * newmarkBetaString() { return "newmarkBeta"; }
+    static constexpr char const * massDampingString() { return "massDamping"; }
+    static constexpr char const * stiffnessDampingString() { return "stiffnessDamping"; }
+    static constexpr char const * useVelocityEstimateForQSString() { return "useVelocityForQS"; }
+    static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }
+    static constexpr char const * maxNumResolvesString() { return "maxNumResolves"; }
+    static constexpr char const * strainTheoryString() { return "strainTheory"; }
+    static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
+    static constexpr char const * forceExternalString() { return "externalForce"; }
+    static constexpr char const * contactRelationNameString() { return "contactRelationName"; }
+    static constexpr char const * noContactRelationNameString() { return "NOCONTACT"; }
+    static constexpr char const * contactForceString() { return "contactForce"; }
+    static constexpr char const * maxForceString() { return "maxForce"; }
+    static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
+    static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
 
-    dataRepository::ViewKey vTilde = { vTildeString };
-    dataRepository::ViewKey uhatTilde = { uhatTildeString };
-    dataRepository::ViewKey newmarkGamma = { newmarkGammaString };
-    dataRepository::ViewKey newmarkBeta = { newmarkBetaString };
-    dataRepository::ViewKey massDamping = { massDampingString };
-    dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString };
-    dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString };
-    dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString };
+    dataRepository::ViewKey vTilde = { vTildeString() };
+    dataRepository::ViewKey uhatTilde = { uhatTildeString() };
+    dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
+    dataRepository::ViewKey newmarkBeta = { newmarkBetaString() };
+    dataRepository::ViewKey massDamping = { massDampingString() };
+    dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString() };
+    dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString() };
+    dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
-
-  struct groupKeyStruct
-  {} solidMechanicsGroupKeys;
 
   arrayView1d< string const > solidMaterialNames() const { return m_solidMaterialNames; }
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
-    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodes );
+    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() );
   }
 
   SortedArray< localIndex > & getElemsNotAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
-    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes );
-  }
-
-  void setEffectiveStress( integer const input )
-  {
-    m_effectiveStress = input;
+    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() );
   }
 
   real64 & getMaxForce() { return m_maxForce; }
@@ -280,7 +278,7 @@ public:
 protected:
   virtual void postProcessInput() override final;
 
-  virtual void initializePostInitialConditionsPreSubGroups( dataRepository::Group * const problemManager ) override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
@@ -298,19 +296,15 @@ protected:
   SortedArray< localIndex > m_targetNodes;
   MPI_iCommData m_iComm;
 
-  /// Indicates whether or not to use effective stress when integrating the
-  /// stress divergence in the kernels. This means calling the poroelastic
-  /// variant of the solid mechanics kernels.
-  integer m_effectiveStress;
-
-  SolidMechanicsLagrangianFEM();
-
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
 
 };
 
-ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption, "QuasiStatic", "ImplicitDynamic", "ExplicitDynamic" )
+ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
+              "QuasiStatic",
+              "ImplicitDynamic",
+              "ExplicitDynamic" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************
@@ -318,9 +312,7 @@ ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption, "QuasiStatic",
 
 
 template< typename CONSTITUTIVE_BASE,
-          template< typename SUBREGION_TYPE,
-                    typename CONSTITUTIVE_TYPE,
-                    typename FE_TYPE > class KERNEL_TEMPLATE,
+          typename KERNEL_WRAPPER,
           typename ... PARAMS >
 void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   DofManager const & dofManager,
@@ -329,38 +321,33 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   PARAMS && ... params )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *(domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NodeManager const & nodeManager = *(mesh.getNodeManager());
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  resetStressToBeginningOfStep( domain );
-
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+  KERNEL_WRAPPER kernelWrapper( dofNumber,
+                                dofManager.rankOffset(),
+                                localMatrix,
+                                localRhs,
+                                gravityVectorData,
+                                std::forward< PARAMS >( params )... );
 
   m_maxForce = finiteElement::
                  regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                                CONSTITUTIVE_BASE,
-                                               CellElementSubRegion,
-                                               KERNEL_TEMPLATE >( mesh,
-                                                                  targetRegionNames(),
-                                                                  this->getDiscretizationName(),
-                                                                  m_solidMaterialNames,
-                                                                  dofNumber,
-                                                                  dofManager.rankOffset(),
-                                                                  localMatrix,
-                                                                  localRhs,
-                                                                  gravityVectorData,
-                                                                  std::forward< PARAMS >( params )... );
+                                               CellElementSubRegion >( mesh,
+                                                                       targetRegionNames(),
+                                                                       this->getDiscretizationName(),
+                                                                       m_solidMaterialNames,
+                                                                       kernelWrapper );
 
 
-  applyContactConstraint( dofManager,
-                          domain,
-                          localMatrix,
-                          localRhs );
-
+  applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }
 
 } /* namespace geosx */

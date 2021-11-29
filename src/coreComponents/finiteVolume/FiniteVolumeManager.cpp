@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -22,7 +22,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -44,12 +44,12 @@ Group * FiniteVolumeManager::createChild( string const & childKey, string const 
   if( childKey == HybridMimeticDiscretization::catalogName() )
   {
     std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
-    return this->registerGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
+    return &this->registerGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
   }
   else
   {
     std::unique_ptr< FluxApproximationBase > approx = FluxApproximationBase::CatalogInterface::factory( childKey, childName, this );
-    return this->registerGroup< FluxApproximationBase >( childName, std::move( approx ));
+    return &this->registerGroup< FluxApproximationBase >( childName, std::move( approx ));
   }
 }
 
@@ -73,22 +73,22 @@ void FiniteVolumeManager::expandObjectCatalogs()
 
 FluxApproximationBase const & FiniteVolumeManager::getFluxApproximation( string const & name ) const
 {
-  return getGroupReference< FluxApproximationBase >( name );
+  return getGroup< FluxApproximationBase >( name );
 }
 
 FluxApproximationBase & FiniteVolumeManager::getFluxApproximation( string const & name )
 {
-  return getGroupReference< FluxApproximationBase >( name );
+  return getGroup< FluxApproximationBase >( name );
 }
 
 HybridMimeticDiscretization const & FiniteVolumeManager::getHybridMimeticDiscretization( string const & name ) const
 {
-  return getGroupReference< HybridMimeticDiscretization >( name );
+  return getGroup< HybridMimeticDiscretization >( name );
 }
 
 HybridMimeticDiscretization & FiniteVolumeManager::getHybridMimeticDiscretization( string const & name )
 {
-  return getGroupReference< HybridMimeticDiscretization >( name );
+  return getGroup< HybridMimeticDiscretization >( name );
 }
 
 

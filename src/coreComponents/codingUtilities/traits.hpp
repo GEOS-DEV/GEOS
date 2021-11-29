@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -40,6 +40,24 @@ namespace traits
  * @tparam CLASS The type to test.
  */
 HAS_MEMBER_FUNCTION( data, void const *, );
+
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_begin< @p CLASS >
+ *        that is true iff the method @p CLASS ::begin() exists and the return value is convertable to a pointer.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION_NO_RTYPE( begin, );
+
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_end< @p CLASS >
+ *        that is true iff the method @p CLASS ::end() exists and the return value is convertable to a pointer.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION_NO_RTYPE( end, );
+
+/// True iff @p T is a range-like type, i.e. has begin() and end() member functions
+template< typename T >
+constexpr bool is_range_like = HasMemberFunction_begin< T > && HasMemberFunction_end< T >;
 
 /**
  * @brief Defines a static constexpr bool HasMemberFunction_move< @p CLASS >
@@ -172,20 +190,21 @@ constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || trait
 
 /// True if T is a Tensor class.
 template< typename T >
-constexpr bool is_tensorT = std::is_same< std::remove_const_t< T >, R1Tensor >::value;
+constexpr bool is_tensorT = std::is_same< std::remove_const_t< T >, R1Tensor >::value ||
+                            std::is_same< std::remove_const_t< T >, R2SymTensor >::value;
 
 /// True of T has operator=() defined.
-template< typename _T >
+template< typename T >
 struct hasCopyAssignmentOperatorImpl
 {
 private:
-  template< typename T > static constexpr auto test( int )->decltype( T()=T(), bool () )
+  template< typename U > static constexpr auto test( int )->decltype( std::declval< U >()=std::declval< U >(), bool () )
   { return true; }
 
-  template< typename T > static constexpr auto test( ... )->bool
+  template< typename U > static constexpr auto test( ... )->bool
   { return false; }
 public:
-  static constexpr bool value = test< _T >( 0 );
+  static constexpr bool value = test< T >( 0 );
 };
 /// True if T has operator= defined, or it is arithmetic or an enum.
 template< typename T >

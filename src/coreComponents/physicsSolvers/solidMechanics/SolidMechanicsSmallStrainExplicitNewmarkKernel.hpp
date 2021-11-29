@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -35,7 +35,6 @@ namespace SolidMechanicsLagrangianFEMKernels
 /// state to integral for nodalforces.
 /// If UPDATE_STRESS 2 then velocity*dt is used to update material stress state
 #define UPDATE_STRESS 2
-
 
 /**
  * @brief Implements kernels for solving the equations of motion using the
@@ -91,6 +90,7 @@ public:
    * @param nodeManager Reference to the NodeManager object.
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
+   * @param targetRegionIndex Index of the region the subregion belongs to.
    * @param dt The time interval for the step.
    * @param elementListName The name of the entry that holds the list of
    *   elements to be processed during this kernel launch.
@@ -98,9 +98,10 @@ public:
   ExplicitSmallStrain( NodeManager & nodeManager,
                        EdgeManager const & edgeManager,
                        FaceManager const & faceManager,
+                       localIndex const targetRegionIndex,
                        SUBREGION_TYPE const & elementSubRegion,
                        FE_TYPE const & finiteElementSpace,
-                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                       CONSTITUTIVE_TYPE & inputConstitutiveType,
                        real64 const dt,
                        string const & elementListName ):
     Base( elementSubRegion,
@@ -115,6 +116,7 @@ public:
   {
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
+    GEOSX_UNUSED_VAR( targetRegionIndex );
   }
 
   //*****************************************************************************
@@ -204,17 +206,19 @@ public:
 
     real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
-    m_constitutiveUpdate.smallStrain( k, q, strain );
+    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
 #else
-    m_constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal );
+    m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
 #endif
 
     for( localIndex c = 0; c < 6; ++c )
     {
 #if UPDATE_STRESS == 2
-      stressLocal[ c ] =  -m_constitutiveUpdate.m_stress( k, q, c ) * detJ;
+      stressLocal[ c ] *= -detJ;
 #elif UPDATE_STRESS == 1
-      stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_stress( k, q, c ) ) * detJ;
+      stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ; // TODO: decide on
+                                                                                                     // initial stress
+                                                                                                     // strategy
 #else
       stressLocal[ c ] *= -detJ;
 #endif
@@ -231,17 +235,19 @@ public:
 
     real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
-    m_constitutiveUpdate.SmallStrain( k, q, strain );
+    m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, strain, stressLocal );
 #else
-    m_constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal );
+    m_constitutiveUpdate.smallStrainNoStateUpdate_StressOnly( k, q, strain, stressLocal );
 #endif
 
     for( localIndex c = 0; c < 6; ++c )
     {
 #if UPDATE_STRESS == 2
-      stressLocal[ c ] =  m_constitutiveUpdate.m_stress( k, q, c ) * detJ;
+      stressLocal[ c ] *= detJ;
 #elif UPDATE_STRESS == 1
-      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_stress( k, q, c ) ) * DETJ;
+      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ; // TODO: decide on
+                                                                                                    // initial stress
+                                                                                                    // strategy
 #else
       stressLocal[ c ] *= DETJ;
 #endif
@@ -332,6 +338,11 @@ protected:
 
 };
 #undef UPDATE_STRESS
+
+/// The factory used to construct a ExplicitSmallStrain kernel.
+using ExplicitSmallStrainFactory = finiteElement::KernelFactory< ExplicitSmallStrain,
+                                                                 real64,
+                                                                 string const & >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -25,62 +25,7 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
-
-
-
-#if defined(__APPLE__)
-/// Use camp::tuple to hold constructor params.
-#define CONSTRUCTOR_PARAM_OPTION 2
-#else
-/// Use std::tuple to hold constructor params.
-#define CONSTRUCTOR_PARAM_OPTION 1
-#endif
-
-#if CONSTRUCTOR_PARAM_OPTION==1
-namespace std
-{
-namespace detail
-{
-/**
- * @brief Implementation of std::make_from_tuple()
- * @tparam T
- * @tparam Tuple
- * @tparam I
- * @tparam T
- * @tparam Tuple
- * @tparam I
- * @param t
- * @param
- * @return
- */
-template< class T, class Tuple, std::size_t... I >
-constexpr T make_from_tuple_impl( Tuple && t, std::index_sequence< I... > )
-{
-  return T( std::get< I >( std::forward< Tuple >( t ))... );
-}
-} // namespace detail
-
-/**
- * @brief Implementation of std::make_from_tuple()
- * @tparam T
- * @tparam Tuple
- * @tparam T
- * @tparam Tuple
- * @param t
- * @return
- */
-template< class T, class Tuple >
-constexpr T make_from_tuple( Tuple && t )
-{
-  return detail::make_from_tuple_impl< T >( std::forward< Tuple >( t ),
-                                            std::make_index_sequence< std::tuple_size< std::remove_reference_t< Tuple > >::value >{} );
-}
-
-}
-#elif CONSTRUCTOR_PARAM_OPTION==2
-  #include "camp/camp.hpp"
-#endif
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -161,10 +106,10 @@ public:
    */
   KernelBase( SUBREGION_TYPE const & elementSubRegion,
               FE_TYPE const & finiteElementSpace,
-              CONSTITUTIVE_TYPE * const inputConstitutiveType ):
+              CONSTITUTIVE_TYPE & inputConstitutiveType ):
     m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
     m_elemGhostRank( elementSubRegion.ghostRank() ),
-    m_constitutiveUpdate( inputConstitutiveType->createKernelUpdates() ),
+    m_constitutiveUpdate( inputConstitutiveType.createKernelUpdates() ),
     m_finiteElementSpace( finiteElementSpace )
   {}
 
@@ -313,6 +258,75 @@ protected:
   FE_TYPE const & m_finiteElementSpace;
 };
 
+/**
+ * @class KernelFactory
+ * @brief Used to forward arguments to a class that implements the KernelBase interface.
+ * @tparam KERNEL_TYPE The template class to construct, should implement the KernelBase interface.
+ * @tparam ARGS The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
+ */
+template< template< typename SUBREGION_TYPE,
+                    typename CONSTITUTIVE_TYPE,
+                    typename FE_TYPE > class KERNEL_TYPE,
+          typename ... ARGS >
+class KernelFactory
+{
+public:
+
+  /**
+   * @brief Initialize the factory.
+   * @param args The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
+   */
+  KernelFactory( ARGS ... args ):
+    m_args( args ... )
+  {}
+
+  /**
+   * @brief Create a new kernel with the given standard arguments.
+   * @tparam SUBREGION_TYPE The type of @p elementSubRegion.
+   * @tparam CONSTITUTIVE_TYPE The type of @p inputConstitutiveType.
+   * @tparam FE_TYPE The type of @p finiteElementSpace.
+   * @param nodeManager The node manager.
+   * @param edgeManager The edge manager.
+   * @param faceManager The face manager.
+   * @param targetRegionIndex The target region index.
+   * @param elementSubRegion The subregion to execute on.
+   * @param finiteElementSpace The finite element space.
+   * @param inputConstitutiveType The constitutive relation.
+   * @return A new kernel constructed with the given arguments and @c ARGS.
+   */
+  template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
+  KERNEL_TYPE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > createKernel(
+    NodeManager & nodeManager,
+    EdgeManager const & edgeManager,
+    FaceManager const & faceManager,
+    localIndex const targetRegionIndex,
+    SUBREGION_TYPE const & elementSubRegion,
+    FE_TYPE const & finiteElementSpace,
+    CONSTITUTIVE_TYPE & inputConstitutiveType )
+  {
+    camp::tuple< NodeManager &,
+                 EdgeManager const &,
+                 FaceManager const &,
+                 localIndex const,
+                 SUBREGION_TYPE const &,
+                 FE_TYPE const &,
+                 CONSTITUTIVE_TYPE & > standardArgs { nodeManager,
+                                                      edgeManager,
+                                                      faceManager,
+                                                      targetRegionIndex,
+                                                      elementSubRegion,
+                                                      finiteElementSpace,
+                                                      inputConstitutiveType };
+
+    auto allArgs = camp::tuple_cat_pair( standardArgs, m_args );
+    return camp::make_from_tuple< KERNEL_TYPE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > >( allArgs );
+  }
+
+private:
+  /// The arguments to append to the standard kernel constructor arguments.
+  camp::tuple< ARGS ... > m_args;
+};
+
 
 //*****************************************************************************
 //*****************************************************************************
@@ -320,123 +334,85 @@ protected:
 
 //START_regionBasedKernelApplication
 /**
- * @brief Performs a loop over specific regions (by type and name) and calls
- *        a kernel launch on the subregions with compile time knowledge of
- *        sub-loop bounds such as number of nodes and quadrature points per
- *        element.
+ * @brief Performs a loop over specific regions (by type and name) and calls a kernel launch on the subregions
+ *   with compile time knowledge of sub-loop bounds such as number of nodes and quadrature points per element.
  * @tparam POLICY The RAJA launch policy to pass to the kernel launch.
- * @tparam CONSTITUTIVE_BASE The common base class for constitutive
- *                           pass-thru/dispatch which gives the kernel launch
- *                           compile time knowledge of the constitutive model.
- *                           This is achieved through a call to the
- *                           ConstitutivePassThru function which
- *                           should have a specialization for CONSTITUTIVE_BASE
- *                           implemented in order to perform the compile time
- *                           dispatch.
- * @tparam REGION_TYPE The type of region to loop over. TODO make this a
- *                     parameter pack?
- * @tparam KERNEL_TEMPLATE The type of template for the physics kernel, which
- *                         conforms to the interface specified by KernelBase.
- * @tparam KERNEL_CONSTRUCTOR_PARAMS The template parameter pack to hold the
- *                                   parameter pack (i.e. custom) parameters
- *                                   that are sent to the constructor for the
- *                                   @p KERNEL_TEMPLATE.
+ * @tparam CONSTITUTIVE_BASE The common base class for constitutive pass-thru/dispatch which gives the kernel
+ *   launch compile time knowledge of the constitutive model. This is achieved through a call to the
+ *   ConstitutivePassThru function which should have a specialization for CONSTITUTIVE_BASE implemented in
+ *   order to perform the compile time dispatch.
+ * @tparam SUBREGION_TYPE The type of subregion to loop over. TODO make this a parameter pack?
+ * @tparam KERNEL_FACTORY The type of @p kernelFactory, typically an instantiation of @c KernelFactory, and
+ *   must adhere to that interface.
  * @param mesh The MeshLevel object.
- * @param targetRegions The names of the target regions(of type @p REGION_TYPE)
- *                      to apply the @p KERNEL_TEMPLATE.
+ * @param targetRegions The names of the target regions(of type @p SUBREGION_TYPE) to apply the @p KERNEL_TEMPLATE.
  * @param finiteElementName The name of the finite element.
- * @param constitutiveNames The names of the constitutive models present in the
- *                          Region.
- * @param kernelConstructorParams The parameter list for corresponding to the
- *                                parameter @p KERNEL_CONSTRUCTOR_PARAMS that
- *                                are passed to the @p KERNEL_TEMPLATE
- *                                constructor.
- * @return The maximum contribution to the residual, which may be used to scale
- *         the residual.
+ * @param constitutiveNames The names of the constitutive models present in the region.
+ * @param kernelFactory The object used to construct the kernel.
+ * @return The maximum contribution to the residual, which may be used to scale the residual.
  *
- * Loops over all regions Applies/Launches a kernel specified by the @p KERNEL_TEMPLATE through
+ * @details Loops over all regions Applies/Launches a kernel specified by the @p KERNEL_TEMPLATE through
  * #::geosx::finiteElement::KernelBase::kernelLaunch().
  */
 template< typename POLICY,
           typename CONSTITUTIVE_BASE,
-          typename REGION_TYPE,
-          template< typename SUBREGION_TYPE,
-                    typename CONSTITUTIVE_TYPE,
-                    typename FE_TYPE > class KERNEL_TEMPLATE,
-          typename ... KERNEL_CONSTRUCTOR_PARAMS >
+          typename SUBREGION_TYPE,
+          typename KERNEL_FACTORY >
 static
 real64 regionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & targetRegions,
                                      string const & finiteElementName,
                                      arrayView1d< string const > const & constitutiveNames,
-                                     KERNEL_CONSTRUCTOR_PARAMS && ... kernelConstructorParams )
+                                     KERNEL_FACTORY & kernelFactory )
 {
   GEOSX_MARK_FUNCTION;
   // save the maximum residual contribution for scaling residuals for convergence criteria.
   real64 maxResidualContribution = 0;
 
-  NodeManager & nodeManager = *(mesh.getNodeManager());
-  EdgeManager & edgeManager = *(mesh.getEdgeManager());
-  FaceManager & faceManager = *(mesh.getFaceManager());
-  ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
+  NodeManager & nodeManager = mesh.getNodeManager();
+  EdgeManager & edgeManager = mesh.getEdgeManager();
+  FaceManager & faceManager = mesh.getFaceManager();
+  ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
-
-  // Create a tuple that contains the kernelConstructorParams, as the lambda does not properly catch the parameter pack
-  // until c++20
-#if CONSTRUCTOR_PARAM_OPTION==1
-  std::tuple< KERNEL_CONSTRUCTOR_PARAMS &... > kernelConstructorParamsTuple = std::forward_as_tuple( kernelConstructorParams ... );
-#elif CONSTRUCTOR_PARAM_OPTION==2
-  camp::tuple< KERNEL_CONSTRUCTOR_PARAMS &... > kernelConstructorParamsTuple = camp::forward_as_tuple( kernelConstructorParams ... );
-#endif
-
-
-  // Loop over all sub-regions in regiongs of type REGION_TYPE, that are listed in the targetRegions array.
-  elementRegionManager.forElementSubRegions< REGION_TYPE >( targetRegions,
-                                                            [&constitutiveNames,
-                                                             &maxResidualContribution,
-                                                             &nodeManager,
-                                                             &edgeManager,
-                                                             &faceManager,
-                                                             &kernelConstructorParamsTuple,
-                                                             &finiteElementName]
-                                                              ( localIndex const targetRegionIndex, auto & elementSubRegion )
+  // Loop over all sub-regions in regions of type SUBREGION_TYPE, that are listed in the targetRegions array.
+  elementRegionManager.forElementSubRegions< SUBREGION_TYPE >( targetRegions,
+                                                               [&constitutiveNames,
+                                                                &maxResidualContribution,
+                                                                &nodeManager,
+                                                                &edgeManager,
+                                                                &faceManager,
+                                                                &kernelFactory,
+                                                                &finiteElementName]
+                                                                 ( localIndex const targetRegionIndex, auto & elementSubRegion )
   {
     localIndex const numElems = elementSubRegion.size();
-
-    // Create an alias for the type of subregion we are in, which is now known at compile time.
-    typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
 
     // Get the constitutive model...and allocate a null constitutive model if required.
     constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
     constitutive::NullModel * nullConstitutiveModel = nullptr;
     if( targetRegionIndex <= constitutiveNames.size()-1 )
     {
-      constitutiveRelation = elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
+      constitutiveRelation = &elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
     }
     else
     {
-      nullConstitutiveModel = elementSubRegion.template registerGroup< constitutive::NullModel >( "nullModelGroup" );
+      nullConstitutiveModel = &elementSubRegion.template registerGroup< constitutive::NullModel >( "nullModelGroup" );
       constitutiveRelation = nullConstitutiveModel;
     }
 
     // Call the constitutive dispatch which converts the type of constitutive model into a compile time constant.
-    constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::execute( constitutiveRelation,
+    constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::execute( *constitutiveRelation,
                                                                       [&maxResidualContribution,
                                                                        &nodeManager,
                                                                        &edgeManager,
                                                                        &faceManager,
-                                                                       &kernelConstructorParamsTuple,
+                                                                       targetRegionIndex,
+                                                                       &kernelFactory,
                                                                        &elementSubRegion,
                                                                        &finiteElementName,
                                                                        numElems]
-                                                                        ( auto * const castedConstitutiveRelation )
+                                                                        ( auto & castedConstitutiveRelation )
     {
-      // Create an alias for the type of constitutive model.
-      using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
-
-
-      string const elementTypeString = elementSubRegion.getElementTypeString();
-
       FiniteElementBase &
       subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
 
@@ -445,56 +421,26 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                   &nodeManager,
                                   &edgeManager,
                                   &faceManager,
-                                  &kernelConstructorParamsTuple,
+                                  targetRegionIndex,
+                                  &kernelFactory,
                                   &elementSubRegion,
-                                  &numElems,
+                                  numElems,
                                   &castedConstitutiveRelation] ( auto const finiteElement )
       {
-        using FE_TYPE = TYPEOFREF( finiteElement );
+        auto kernel = kernelFactory.createKernel( nodeManager,
+                                                  edgeManager,
+                                                  faceManager,
+                                                  targetRegionIndex,
+                                                  elementSubRegion,
+                                                  finiteElement,
+                                                  castedConstitutiveRelation );
 
-        // Define an alias for the kernel type for easy use.
-        using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
-                                             CONSTITUTIVE_TYPE,
-                                             FE_TYPE >;
-
-        // 1) Combine the tuple containing the physics kernel specific constructor parameters with
-        // the parameters common to all phsyics kernels that use this interface,
-        // 2) Instantiate the kernel.
-        // note: have two options, using std::tuple and camp::tuple. Due to a bug in the OSX
-        // implementation of std::tuple_cat, we must use camp on OSX. In the future, we should
-        // only use one option...most likely camp since we can easily fix bugs.
-#if CONSTRUCTOR_PARAM_OPTION==1
-        auto temp = std::forward_as_tuple( nodeManager,
-                                           edgeManager,
-                                           faceManager,
-                                           elementSubRegion,
-                                           finiteElement,
-                                           castedConstitutiveRelation );
-
-        auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
-                                                                  kernelConstructorParamsTuple );
-
-        KERNEL_TYPE kernelComponent = std::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
-
-#elif CONSTRUCTOR_PARAM_OPTION==2
-        auto temp = camp::forward_as_tuple( nodeManager,
-                                            edgeManager,
-                                            faceManager,
-                                            elementSubRegion,
-                                            finiteElement,
-                                            castedConstitutiveRelation );
-        auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair( temp,
-                                                                        kernelConstructorParamsTuple );
-        KERNEL_TYPE kernelComponent = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
-
-#endif
+        using KERNEL_TYPE = decltype( kernel );
 
         // Call the kernelLaunch function, and store the maximum contribution to the residual.
         maxResidualContribution =
           std::max( maxResidualContribution,
-                    KERNEL_TYPE::template kernelLaunch< POLICY,
-                                                        KERNEL_TYPE >( numElems,
-                                                                       kernelComponent ) );
+                    KERNEL_TYPE::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernel ) );
       } );
     } );
 

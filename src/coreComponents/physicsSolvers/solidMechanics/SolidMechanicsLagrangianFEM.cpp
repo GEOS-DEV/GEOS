@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -17,7 +17,6 @@
  */
 
 #include "SolidMechanicsLagrangianFEM.hpp"
-#include "SolidMechanicsPoroElasticKernel.hpp"
 #include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
 #include "SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
 #include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
@@ -26,17 +25,20 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/contact/ContactBase.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "managers/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/NumericalMethodsManager.hpp"
+#include "LvArray/src/output.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 
 namespace geosx
@@ -62,79 +64,73 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_sendOrReceiveNodes(),
   m_nonSendOrReceiveNodes(),
   m_targetNodes(),
-  m_iComm(),
-  m_effectiveStress( 0 )
+  m_iComm( CommunicationTools::getInstance().getCommID() )
 {
   m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
   m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
   m_targetNodes.setName( "SolidMechanicsLagrangianFEM::m_targetNodes" );
 
-  registerWrapper( viewKeyStruct::newmarkGammaString, &m_newmarkGamma )->
-    setApplyDefaultValue( 0.5 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value of :math:`\\gamma` in the Newmark Method for Implicit Dynamic time integration option" );
 
-  registerWrapper( viewKeyStruct::newmarkBetaString, &m_newmarkBeta )->
-    setApplyDefaultValue( 0.25 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::newmarkBetaString(), &m_newmarkBeta ).
+    setApplyDefaultValue( 0.25 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value of :math:`\\beta` in the Newmark Method for Implicit Dynamic time integration option. "
                     "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing." );
 
-  registerWrapper( viewKeyStruct::massDampingString, &m_massDamping )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::massDampingString(), &m_massDamping ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value of mass based damping coefficient. " );
 
-  registerWrapper( viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping )->
-    setApplyDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::stiffnessDampingString(), &m_stiffnessDamping ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value of stiffness based damping coefficient. " );
 
-  registerWrapper( viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setApplyDefaultValue( m_timeIntegrationOption )->
+  registerWrapper( viewKeyStruct::timeIntegrationOptionString(), &m_timeIntegrationOption ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_timeIntegrationOption ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
-  registerWrapper( viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS )->
-    setApplyDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::useVelocityEstimateForQSString(), &m_useVelocityEstimateForQS ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to indicate the use of the incremental displacement from the previous step as an "
                     "initial estimate for the incremental displacement of the current step." );
 
-  registerWrapper( viewKeyStruct::maxNumResolvesString, &m_maxNumResolves )->
-    setApplyDefaultValue( 10 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::maxNumResolvesString(), &m_maxNumResolves ).
+    setApplyDefaultValue( 10 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value to indicate how many resolves may be executed after some other event is executed. "
                     "For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. "
                     "However if a new surface is generated, then the mechanics solve must be executed again due to the "
                     "change in topology." );
 
-  registerWrapper( viewKeyStruct::strainTheoryString, &m_strainTheory )->
-    setApplyDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::strainTheoryString(), &m_strainTheory ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Indicates whether or not to use "
                     "`Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or "
                     "`Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:\n"
                     " 0 - Infinitesimal Strain \n"
                     " 1 - Finite Strain" );
 
-  registerWrapper( viewKeyStruct::solidMaterialNamesString, &m_solidMaterialNames )->
-    setInputFlag( InputFlags::REQUIRED )->
+  registerWrapper( viewKeyStruct::solidMaterialNamesString(), &m_solidMaterialNames ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "The name of the material that should be used in the constitutive updates" );
 
-  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName )->
-    setApplyDefaultValue( viewKeyStruct::noContactRelationNameString )->
-    setInputFlag( InputFlags::OPTIONAL )->
+  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
+    setApplyDefaultValue( viewKeyStruct::noContactRelationNameString() ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
-  registerWrapper( viewKeyStruct::maxForce, &m_maxForce )->
-    setInputFlag( InputFlags::FALSE )->
+  registerWrapper( viewKeyStruct::maxForceString(), &m_maxForce ).
+    setInputFlag( InputFlags::FALSE ).
     setDescription( "The maximum force contribution in the problem domain." );
-
-  registerWrapper( viewKeyStruct::effectiveStress, &m_effectiveStress )->
-    setApplyDefaultValue( 0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Apply fluid pressure to produce effective stress when integrating stress." );
 
 }
 
@@ -142,7 +138,7 @@ void SolidMechanicsLagrangianFEM::postProcessInput()
 {
   SolverBase::postProcessInput();
 
-  checkModelNames( m_solidMaterialNames, viewKeyStruct::solidMaterialNamesString );
+  checkModelNames( m_solidMaterialNames, viewKeyStruct::solidMaterialNamesString() );
 
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.isSymmetric = true;
@@ -156,240 +152,160 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 }
 
 
-void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group * const MeshBodies )
+void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 {
-  for( auto & mesh : MeshBodies->getSubGroups() )
+  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    NodeManager * const nodes = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
+    NodeManager & nodes = meshBody.getMeshLevel( 0 ).getNodeManager();
 
-    nodes->registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement )->
-      setPlotLevel( PlotLevel::LEVEL_0 )->
-      setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the total displacements on the nodes." )->
+    nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setRegisteringObjects( this->getName()).
+      setDescription( "An array that holds the total displacements on the nodes." ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( keys::IncrementalDisplacement )->
-      setPlotLevel( PlotLevel::LEVEL_3 )->
-      setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the incremental displacements for the current time step on the nodes." )->
+    nodes.registerWrapper< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( keys::IncrementalDisplacement ).
+      setPlotLevel( PlotLevel::LEVEL_3 ).
+      setRegisteringObjects( this->getName()).
+      setDescription( "An array that holds the incremental displacements for the current time step on the nodes." ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64, nodes::VELOCITY_PERM > >( keys::Velocity )->
-      setPlotLevel( PlotLevel::LEVEL_0 )->
-      setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the current velocity on the nodes." )->
+    nodes.registerWrapper< array2d< real64, nodes::VELOCITY_PERM > >( keys::Velocity ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setRegisteringObjects( this->getName()).
+      setDescription( "An array that holds the current velocity on the nodes." ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64, nodes::ACCELERATION_PERM > >( keys::Acceleration )->
-      setPlotLevel( PlotLevel::LEVEL_1 )->
-      setRegisteringObjects( this->getName())->
+    nodes.registerWrapper< array2d< real64, nodes::ACCELERATION_PERM > >( keys::Acceleration ).
+      setPlotLevel( PlotLevel::LEVEL_1 ).
+      setRegisteringObjects( this->getName()).
       setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
-                      "to hold the summation of nodal forces resulting from the governing equations." )->
+                      "to hold the summation of nodal forces resulting from the governing equations." ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::forceExternal )->
-      setPlotLevel( PlotLevel::LEVEL_0 )->
-      setRegisteringObjects( this->getName())->
+    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::forceExternalString() ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setRegisteringObjects( this->getName()).
       setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
-                      " conditions as well as coupling forces such as hydraulic forces." )->
+                      " conditions as well as coupling forces such as hydraulic forces." ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array1d< real64 > >( keys::Mass )->
-      setPlotLevel( PlotLevel::LEVEL_0 )->
-      setRegisteringObjects( this->getName())->
+    nodes.registerWrapper< array1d< real64 > >( keys::Mass ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setRegisteringObjects( this->getName()).
       setDescription( "An array that holds the mass on the nodes." );
 
-    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::vTildeString )->
-      setPlotLevel( PlotLevel::NOPLOT )->
-      setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the velocity predictors on the nodes." )->
+    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::vTildeString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRegisteringObjects( this->getName()).
+      setDescription( "An array that holds the velocity predictors on the nodes." ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::uhatTildeString )->
-      setPlotLevel( PlotLevel::NOPLOT )->
-      setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the incremental displacement predictors on the nodes." )->
+    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::uhatTildeString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRegisteringObjects( this->getName()).
+      setDescription( "An array that holds the incremental displacement predictors on the nodes." ).
       reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::contactForceString )->
-      setPlotLevel( PlotLevel::LEVEL_0 )->
-      setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the contact force." )->
+    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::contactForceString() ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setRegisteringObjects( this->getName()).
+      setDescription( "An array that holds the contact force." ).
       reference().resizeDimension< 1 >( 3 );
 
-    ElementRegionManager * const
-    elementRegionManager = mesh.second->groupCast< MeshBody * >()->getMeshLevel( 0 )->getElemManager();
-    elementRegionManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    ElementRegionManager &
+    elementRegionManager = meshBody.getMeshLevel( 0 ).getElemManager();
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n )->
-        setPlotLevel( PlotLevel::NOPLOT )->
-        setRestartFlags( RestartFlags::NO_WRITE )->
-        setRegisteringObjects( this->getName())->
-        setDescription( "Array to hold the beginning of step stress for implicit problem rewinds" )->
-        reference().resizeDimension< 2 >( 6 );
-
-      subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodes )->
-        setPlotLevel( PlotLevel::NOPLOT )->
+      subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes )->
-        setPlotLevel( PlotLevel::NOPLOT )->
+      subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE );
     } );
 
-  }
+  } );
 }
 
 
-void SolidMechanicsLagrangianFEM::initializePreSubGroups( Group * const rootGroup )
+void SolidMechanicsLagrangianFEM::initializePreSubGroups()
 {
-  SolverBase::initializePreSubGroups( rootGroup );
+  SolverBase::initializePreSubGroups();
 
-  DomainPartition * domain = rootGroup->getGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   // Validate solid models in target regions
-  for( auto & mesh : domain->getMeshBodies()->getSubGroups() )
+  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
   {
-    MeshLevel & meshLevel = *Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    validateModelMapping< SolidBase >( *meshLevel.getElemManager(), m_solidMaterialNames );
+    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    validateModelMapping< SolidBase >( meshLevel.getElemManager(), m_solidMaterialNames );
   }
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
-  FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_ERROR_IF( feDiscretization == nullptr, getName() << ": FE discretization not found: " << m_discretizationName );
+  FiniteElementDiscretization const &
+  feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( m_discretizationName );
+  GEOSX_UNUSED_VAR( feDiscretization );
 }
 
 
 
 template< typename ... PARAMS >
-real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( PARAMS && ... params )
+real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
+                                                            arrayView1d< string const > const & targetRegions,
+                                                            string const & finiteElementName,
+                                                            arrayView1d< string const > const & constitutiveNames,
+                                                            real64 const dt,
+                                                            std::string const & elementListName )
 {
   GEOSX_MARK_FUNCTION;
   real64 rval = 0;
   if( m_strainTheory==0 )
   {
+    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
-                                           CellElementSubRegion,
-                                           SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrain >( std::forward< PARAMS >( params )... );
+                                           CellElementSubRegion >( mesh,
+                                                                   targetRegions,
+                                                                   finiteElementName,
+                                                                   constitutiveNames,
+                                                                   kernelFactory );
   }
   else if( m_strainTheory==1 )
   {
+    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
-                                           CellElementSubRegion,
-                                           SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain >( std::forward< PARAMS >( params )... );
+                                           CellElementSubRegion >( mesh,
+                                                                   targetRegions,
+                                                                   finiteElementName,
+                                                                   constitutiveNames,
+                                                                   kernelFactory );
   }
   else
   {
     GEOSX_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
   }
+
   return rval;
 }
 
 
-void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * const domain )
+void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager & nodes = *mesh.getNodeManager();
-  //FaceManager * const faceManager = mesh->getFaceManager();
+  NodeManager & nodes = mesh.getNodeManager();
 
-  ElementRegionManager const & elementRegionManager = *mesh.getElemManager();
-
-  arrayView1d< real64 > & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
-  mass.setValues< serialPolicy >( 0.0 );
-
-  arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
-
-  // to fill m_sendOrReceiveNodes and m_nonSendOrReceiveNodes, we first insert
-  // the nodes one-by-one in the following std::sets. Then, when all the nodes
-  // have been collected, we do a batch insertion into m_sendOrReceiveNodes and
-  // m_nonSendOrReceiveNodes
-  std::set< localIndex > tmpSendOrReceiveNodes;
-  std::set< localIndex > tmpNonSendOrReceiveNodes;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
-  rho = elementRegionManager.constructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
-                                                                                                              targetRegionNames(),
-                                                                                                              solidMaterialNames() );
-
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const er,
-                                       ElementRegionBase const & elemRegion )
-  {
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
-                                                                       CellElementSubRegion const & elementSubRegion )
-    {
-      arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName() );
-      finiteElement::dispatch3D( fe,
-                                 [&] ( auto const finiteElement )
-      {
-        using FE_TYPE = TYPEOFREF( finiteElement );
-
-        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-        real64 N[numNodesPerElem];
-        for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
-        {
-          real64 elemMass = 0;
-          for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-          {
-            elemMass += rho[er][esr][k][q] * detJ[k][q];
-            FE_TYPE::calcN( q, N );
-
-            for( localIndex a=0; a< numNodesPerElem; ++a )
-            {
-              mass[elemsToNodes[k][a]] += rho[er][esr][k][q] * detJ[k][q] * N[a];
-            }
-          }
-
-
-          for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
-          {
-            if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
-            {
-              tmpSendOrReceiveNodes.insert( elemsToNodes[k][a] );
-            }
-            else
-            {
-              tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
-            }
-          }
-        }
-      } );
-    } );
-  } );
-  m_sendOrReceiveNodes.insert( tmpSendOrReceiveNodes.begin(),
-                               tmpSendOrReceiveNodes.end() );
-  m_nonSendOrReceiveNodes.insert( tmpNonSendOrReceiveNodes.begin(),
-                                  tmpNonSendOrReceiveNodes.end() );
-  m_targetNodes = m_sendOrReceiveNodes;
-  m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
-                        m_nonSendOrReceiveNodes.end() );
-}
-
-void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups( Group * const problemManager )
-{
-  DomainPartition * domain = problemManager->getGroup< DomainPartition >( keys::domain );
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-
-  NodeManager & nodes = *mesh.getNodeManager();
-
-  ElementRegionManager & elementRegionManager = *mesh.getElemManager();
+  ElementRegionManager & elementRegionManager = mesh.getElemManager();
 
   arrayView1d< real64 > & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
 
@@ -443,10 +359,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups( G
         real64 N[numNodesPerElem];
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
         {
-          real64 elemMass = 0;
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
-            elemMass += rho[er][esr][k][q] * detJ[k][q];
             FE_TYPE::calcN( q, N );
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
@@ -506,7 +420,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
 
-  SolverBase * const surfaceGenerator =  this->getParent()->getGroup< SolverBase >( "SurfaceGen" );
+  SolverBase * const surfaceGenerator = this->getParent().getGroupPointer< SolverBase >( "SurfaceGen" );
 
   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
   {
@@ -526,19 +440,13 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves; ++solveIter )
     {
-      setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
-
-      if( solveIter>0 )
-      {
-        resetStressToBeginningOfStep( domain );
-      }
+      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
 
       dtReturn = nonlinearImplicitStep( time_n,
                                         dt,
                                         cycleNumber,
                                         domain );
 
-//      updateStress( domain );
       if( surfaceGenerator!=nullptr )
       {
         if( surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
@@ -577,10 +485,18 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
   // updateIntrinsicNodalData(domain);
 
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager & nodes = *mesh.getNodeManager();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager & nodes = mesh.getNodeManager();
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  // save previous constitutive state data in preparation for next timestep
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & subRegion )
+  {
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    constitutiveRelation.saveConvergedState();
+  } );
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
   arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
@@ -593,25 +509,28 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   fieldNames["node"].emplace_back( keys::Velocity );
   fieldNames["node"].emplace_back( keys::Acceleration );
 
-  CommunicationTools::synchronizePackSendRecvSizes( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
+  m_iComm.resize( domain.getNeighbors().size() );
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
 
-  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Acceleration );
+  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
 
-  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
+  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
   //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
   SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
 
   fsManager.applyFieldValue( time_n + dt,
-                             &domain, "nodeManager",
-                             NodeManager::viewKeyStruct::totalDisplacementString,
-                             [&]( FieldSpecificationBase const * const bc,
+                             domain, "nodeManager",
+                             NodeManager::viewKeyStruct::totalDisplacementString(),
+                             [&]( FieldSpecificationBase const & bc,
                                   SortedArrayView< localIndex const > const & targetSet )
   {
-    integer const component = bc->getComponent();
+    integer const component = bc.getComponent();
+    GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+
     forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                             [=] GEOSX_DEVICE ( localIndex const i )
     {
@@ -619,10 +538,12 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
       vel( a, component ) = u( a, component );
     } );
   },
-                             [&]( FieldSpecificationBase const * const bc,
+                             [&]( FieldSpecificationBase const & bc,
                                   SortedArrayView< localIndex const > const & targetSet )
   {
-    integer const component = bc->getComponent();
+    integer const component = bc.getComponent();
+    GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+
     forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                             [=] GEOSX_DEVICE ( localIndex const i )
     {
@@ -639,28 +560,34 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                           this->getDiscretizationName(),
                           m_solidMaterialNames,
                           dt,
-                          string( viewKeyStruct::elemsAttachedToSendOrReceiveNodes ) );
+                          string( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ) );
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
 
-  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
+  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
-  CommunicationTools::synchronizePackSendRecv( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
+  parallelDeviceEvents packEvents;
+  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
+
+  waitAllDeviceEvents( packEvents );
+
+  CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
 
   explicitKernelDispatch( mesh,
                           targetRegionNames(),
                           this->getDiscretizationName(),
                           m_solidMaterialNames,
                           dt,
-                          string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ) );
+                          string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ) );
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
+  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
-  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
-
-  CommunicationTools::synchronizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
+  // this includes  a device sync after launching all the unpacking kernels
+  parallelDeviceEvents unpackEvents;
+  CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
 
   return dt;
 }
@@ -676,110 +603,61 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
   GEOSX_MARK_FUNCTION;
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
   fsManager.apply( time,
-                   &domain,
+                   domain,
                    "nodeManager",
                    keys::TotalDisplacement,
-                   [&]( FieldSpecificationBase const * const bc,
+                   [&]( FieldSpecificationBase const & bc,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
-                        Group * const targetGroup,
+                        Group & targetGroup,
                         string const fieldName )
   {
-    bc->applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                        parallelDevicePolicy< 32 > >( targetSet,
-                                                                      time,
-                                                                      targetGroup,
-                                                                      fieldName,
-                                                                      dofKey,
-                                                                      dofManager.rankOffset(),
-                                                                      localMatrix,
-                                                                      localRhs );
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                       parallelDevicePolicy< 32 > >( targetSet,
+                                                                     time,
+                                                                     targetGroup,
+                                                                     fieldName,
+                                                                     dofKey,
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
   } );
 }
 
-void SolidMechanicsLagrangianFEM::crsApplyTractionBC( real64 const time,
-                                                      DofManager const & dofManager,
-                                                      DomainPartition & domain,
-                                                      arrayView1d< real64 > const & localRhs )
+void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
+                                                   DofManager const & dofManager,
+                                                   DomainPartition & domain,
+                                                   arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  FunctionManager const & functionManager = FunctionManager::instance();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  FaceManager const & faceManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getFaceManager();
-  NodeManager const & nodeManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
-
-  arrayView1d< real64 const > const faceArea  = faceManager.getReference< real64_array >( "faceArea" );
-  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
+  NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d< globalIndex const > const blockLocalDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
   globalIndex const dofRankOffset = dofManager.rankOffset();
 
-  fsManager.apply( time,
-                   &domain,
-                   "faceManager",
-                   string( "Traction" ),
-                   [&]( FieldSpecificationBase const * const bc,
-                        string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group * const,
-                        string const & )
+  fsManager.apply< TractionBoundaryCondition >( time,
+                                                domain,
+                                                "faceManager",
+                                                TractionBoundaryCondition::catalogName(),
+                                                [&]( TractionBoundaryCondition const & bc,
+                                                     string const &,
+                                                     SortedArrayView< localIndex const > const & targetSet,
+                                                     Group &,
+                                                     string const & )
   {
-    string const & functionName = bc->getFunctionName();
-
-    globalIndex_array nodeDOF;
-    real64_array nodeRHS;
-    integer const component = bc->getComponent();
-
-
-    if( functionName.empty() || functionManager.getGroupReference< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
-    {
-      real64 value = bc->getScale();
-      if( !functionName.empty() )
-      {
-        FunctionBase const & function = functionManager.getGroupReference< FunctionBase >( functionName );
-        value *= function.evaluate( &time );
-      }
-
-      forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-      {
-        localIndex const kf = targetSet[ i ];
-        localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-        for( localIndex a=0; a<numNodes; ++a )
-        {
-          localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component - dofRankOffset;
-          if( dof < 0 || dof >= localRhs.size() )
-            continue;
-          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[ dof ], value * faceArea[kf] / numNodes );
-        }
-      } );
-    }
-    else
-    {
-      FunctionBase const & function = functionManager.getGroupReference< FunctionBase >( functionName );
-      array1d< real64 > resultsArray( targetSet.size() );
-      resultsArray.setName( "SolidMechanicsLagrangianFEM::TractionBC function results" );
-      function.evaluate( &faceManager, time, targetSet, resultsArray );
-      arrayView1d< real64 const > const results = resultsArray;
-
-      forAll< parallelDevicePolicy< 32 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-      {
-        localIndex const kf = targetSet[ i ];
-        localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-        for( localIndex a=0; a<numNodes; ++a )
-        {
-          localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component - dofRankOffset;
-          if( dof < 0 || dof >= localRhs.size() )
-            continue;
-          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[ dof ], results[ kf ] * faceArea[kf] / numNodes );
-        }
-      } );
-    }
+    bc.launch( time,
+               blockLocalDofNumber,
+               dofRankOffset,
+               faceManager,
+               targetSet,
+               localRhs );
   } );
 }
 
@@ -787,9 +665,9 @@ void SolidMechanicsLagrangianFEM::applyChomboPressure( DofManager const & dofMan
                                                        DomainPartition & domain,
                                                        arrayView1d< real64 > const & localRhs )
 {
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  FaceManager & faceManager = *mesh.getFaceManager();
-  NodeManager & nodeManager = *mesh.getNodeManager();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  FaceManager & faceManager = mesh.getFaceManager();
+  NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView1d< real64 const > const faceArea  = faceManager.faceArea();
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
@@ -826,8 +704,8 @@ SolidMechanicsLagrangianFEM::
                      real64 const & dt,
                      DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager & nodeManager = *mesh.getNodeManager();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView2d< real64 const, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
   arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const uhat = nodeManager.incrementalDisplacement();
@@ -838,8 +716,8 @@ SolidMechanicsLagrangianFEM::
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
     arrayView2d< real64 const, nodes::ACCELERATION_USD > const a_n = nodeManager.acceleration();
-    arrayView1d< R1Tensor > const vtilde = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.vTilde );
-    arrayView1d< R1Tensor > const uhatTilde = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.uhatTilde );
+    arrayView2d< real64 > const vtilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.vTilde );
+    arrayView2d< real64 > const uhatTilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.uhatTilde );
 
     real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
@@ -880,38 +758,17 @@ SolidMechanicsLagrangianFEM::
     }
   }
 
-  ElementRegionManager * const elementRegionManager = mesh.getElemManager();
-  ConstitutiveManager * const constitutiveManager = domain.getConstitutiveManager();
+  ElementRegionManager & elementRegionManager = mesh.getElemManager();
+  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-  constitutiveRelations = elementRegionManager->constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
+  constitutiveRelations = elementRegionManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
 
   forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                           CellElementSubRegion & subRegion )
   {
     SolidBase const & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
-
-    arrayView3d< real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
-
-    array3d< real64, solid::STRESS_PERMUTATION > &
-    stress_n = subRegion.getReference< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n );
-    // TODO: eliminate
-    stress_n.resize( stress.size( 0 ), stress.size( 1 ), 6 );
-
-    arrayView3d< real64, solid::STRESS_USD > const vstress_n = stress_n;
-
-    forAll< parallelDevicePolicy<> >( stress.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex a=0; a<stress.size( 1 ); ++a )
-      {
-        for( localIndex i=0; i<6; ++i )
-        {
-          vstress_n( k, a, i ) = stress( k, a, i );
-        }
-      }
-    } );
+    constitutiveRelation.saveConvergedState();
   } );
-
-
 
 }
 
@@ -919,8 +776,8 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
                                                         real64 const & dt,
                                                         DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager & nodeManager = *mesh.getNodeManager();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager & nodeManager = mesh.getNodeManager();
   localIndex const numNodes = nodeManager.size();
 
   arrayView2d< real64, nodes::VELOCITY_USD > const v_n = nodeManager.velocity();
@@ -929,8 +786,8 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
   if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
     arrayView2d< real64, nodes::ACCELERATION_USD > const a_n = nodeManager.acceleration();
-    arrayView1d< R1Tensor const > const vtilde    = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.vTilde );
-    arrayView1d< R1Tensor const > const uhatTilde = nodeManager.getReference< r1_array >( solidMechanicsViewKeys.uhatTilde );
+    arrayView2d< real64 const > const vtilde    = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.vTilde );
+    arrayView2d< real64 const > const uhatTilde = nodeManager.getReference< array2d< real64 > >( solidMechanicsViewKeys.uhatTilde );
     real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
 
@@ -955,6 +812,15 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOSX_UNU
       }
     } );
   }
+
+  // save (converged) constitutive state data
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & subRegion )
+  {
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+    constitutiveRelation.saveConvergedState();
+  } );
+
 }
 
 void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
@@ -975,15 +841,15 @@ void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
 void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                DofManager & dofManager,
                                                CRSMatrix< real64, globalIndex > & localMatrix,
-                                               array1d< real64 > & localRhs,
-                                               array1d< real64 > & localSolution,
+                                               ParallelVector & rhs,
+                                               ParallelVector & solution,
                                                bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
-  MeshLevel & mesh = *(domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
-  NodeManager const & nodeManager = *(mesh.getNodeManager());
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
   arrayView1d< globalIndex const > const
   dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
 
@@ -991,9 +857,9 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                   dofManager.numGlobalDofs(),
                                                   8*8*3*1.2 );
 
-  if( m_contactRelationName != viewKeyStruct::noContactRelationNameString )
+  if( m_contactRelationName != viewKeyStruct::noContactRelationNameString() )
   {
-    ElementRegionManager const & elemManager = *mesh.getElemManager();
+    ElementRegionManager const & elemManager = mesh.getElemManager();
     array1d< string > allFaceElementRegions;
     elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elemRegion )
     {
@@ -1034,43 +900,30 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
 {
   GEOSX_MARK_FUNCTION;
 
-  localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
-  localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
+  localMatrix.zero();
+  localRhs.zero();
 
-  if( m_effectiveStress==1 )
+  if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
     GEOSX_UNUSED_VAR( dt );
-    assemblyLaunch< constitutive::PoroElasticBase,
-                    SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( domain,
+    assemblyLaunch< constitutive::SolidBase,
+                    SolidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
+                                                                              dofManager,
+                                                                              localMatrix,
+                                                                              localRhs );
+  }
+  else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
+  {
+    assemblyLaunch< constitutive::SolidBase,
+                    SolidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
                                                                                   dofManager,
                                                                                   localMatrix,
-                                                                                  localRhs );
-
-  }
-  else
-  {
-    if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
-    {
-      GEOSX_UNUSED_VAR( dt );
-      assemblyLaunch< constitutive::SolidBase,
-                      SolidMechanicsLagrangianFEMKernels::QuasiStatic >( domain,
-                                                                         dofManager,
-                                                                         localMatrix,
-                                                                         localRhs );
-    }
-    else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
-    {
-      assemblyLaunch< constitutive::SolidBase,
-                      SolidMechanicsLagrangianFEMKernels::ImplicitNewmark >( domain,
-                                                                             dofManager,
-                                                                             localMatrix,
-                                                                             localRhs,
-                                                                             m_newmarkGamma,
-                                                                             m_newmarkBeta,
-                                                                             m_massDamping,
-                                                                             m_stiffnessDamping,
-                                                                             dt );
-    }
+                                                                                  localRhs,
+                                                                                  m_newmarkGamma,
+                                                                                  m_newmarkBeta,
+                                                                                  m_massDamping,
+                                                                                  m_stiffnessDamping,
+                                                                                  dt );
   }
 
   if( getLogLevel() >= 2 )
@@ -1093,41 +946,42 @@ SolidMechanicsLagrangianFEM::
                            arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  FaceManager & faceManager = *mesh.getFaceManager();
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FaceManager & faceManager = mesh.getFaceManager();
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
   fsManager.apply( time_n + dt,
-                   &domain,
+                   domain,
                    "nodeManager",
                    keys::Force,
-                   [&]( FieldSpecificationBase const * const bc,
+                   [&]( FieldSpecificationBase const & bc,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
-                        Group * const targetGroup,
+                        Group & targetGroup,
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc->applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                        parallelDevicePolicy< 32 > >( targetSet,
-                                                                      time_n + dt,
-                                                                      targetGroup,
-                                                                      keys::TotalDisplacement, // TODO fix use of dummy
-                                                                                               // name
-                                                                      dofKey,
-                                                                      dofManager.rankOffset(),
-                                                                      localMatrix,
-                                                                      localRhs );
+    bc.applyBoundaryConditionToSystem< FieldSpecificationAdd,
+                                       parallelDevicePolicy< 32 > >( targetSet,
+                                                                     time_n + dt,
+                                                                     targetGroup,
+                                                                     keys::TotalDisplacement, // TODO fix use of
+                                                                     // dummy
+                                                                     // name
+                                                                     dofKey,
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
   } );
 
-  crsApplyTractionBC( time_n + dt, dofManager, domain, localRhs );
+  applyTractionBC( time_n + dt, dofManager, domain, localRhs );
 
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
-    fsManager.applyFieldValue( time_n, &domain, "faceManager", "ChomboPressure" );
-    applyChomboPressure( dofManager, domain, m_localRhs );
+    fsManager.applyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
+    applyChomboPressure( dofManager, domain, localRhs );
   }
 
   applyDisplacementBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
@@ -1141,8 +995,8 @@ SolidMechanicsLagrangianFEM::
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager const & nodeManager = *mesh.getNodeManager();
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
   arrayView1d< globalIndex const > const dofNumber =
     nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( keys::TotalDisplacement ) );
@@ -1205,13 +1059,8 @@ SolidMechanicsLagrangianFEM::
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    char output[200] = {0};
-    sprintf( output,
-             "( RSolid ) = (%4.2e) ; ",
-             residual );
-    std::cout<<output;
+    std::cout << GEOSX_FMT( "( RSolid ) = ( {:4.2e} ) ; ", residual );
   }
-
 
   return residual;
 }
@@ -1239,10 +1088,10 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
   fieldNames["node"].emplace_back( keys::TotalDisplacement );
 
-  CommunicationTools::synchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain.getNeighbors(),
-                                         true );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
 }
 
 void SolidMechanicsLagrangianFEM::solveSystem( DofManager const & dofManager,
@@ -1257,8 +1106,8 @@ void SolidMechanicsLagrangianFEM::solveSystem( DofManager const & dofManager,
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager & nodeManager = *mesh.getNodeManager();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & incdisp  = nodeManager.incrementalDisplacement();
   arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & disp = nodeManager.totalDisplacement();
@@ -1272,36 +1121,6 @@ void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition &
       incdisp( a, i ) = 0.0;
     }
   } );
-
-  resetStressToBeginningOfStep( domain );
-}
-
-void SolidMechanicsLagrangianFEM::resetStressToBeginningOfStep( DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-
-  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                          CellElementSubRegion & subRegion )
-  {
-    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
-
-    arrayView3d< real64, solid::STRESS_USD > const & stress = constitutiveRelation.getStress();
-
-    arrayView3d< real64 const, solid::STRESS_USD > const &
-    stress_n = subRegion.getReference< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n );
-
-    forAll< parallelDevicePolicy<> >( stress.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex a=0; a<stress.size( 1 ); ++a )
-      {
-        for( localIndex i = 0; i < 6; ++i )
-        {
-          stress( k, a, i ) = stress_n( k, a, i );
-        }
-      }
-    } );
-  } );
 }
 
 
@@ -1312,38 +1131,36 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 {
   GEOSX_MARK_FUNCTION;
 
-  if( m_contactRelationName != viewKeyStruct::noContactRelationNameString )
+  if( m_contactRelationName != viewKeyStruct::noContactRelationNameString() )
   {
-    MeshLevel * const mesh = domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-    FaceManager const * const faceManager = mesh->getFaceManager();
-    NodeManager * const nodeManager = mesh->getNodeManager();
-    ElementRegionManager * const elemManager = mesh->getElemManager();
+    MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+    FaceManager const & faceManager = mesh.getFaceManager();
+    NodeManager & nodeManager = mesh.getNodeManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
 
 
-    ConstitutiveManager const * const
+    ConstitutiveManager const &
     constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
-    ContactRelationBase const * const
-    contactRelation = constitutiveManager->getGroup< ContactRelationBase >( m_contactRelationName );
+    ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
+    real64 const contactStiffness = contact.stiffness();
 
-    real64 const contactStiffness = contactRelation->stiffness();
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager.totalDisplacement();
+    arrayView2d< real64 > const fc = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::contactForceString() );
+    fc.zero();
 
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager->totalDisplacement();
-    arrayView2d< real64 > const fc = nodeManager->getReference< array2d< real64 > >( viewKeyStruct::contactForceString );
-    fc.setValues< serialPolicy >( 0 );
-
-    arrayView2d< real64 const > const faceNormal = faceManager->faceNormal();
-    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager->nodeList().toViewConst();
+    arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
+    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     string const dofKey = dofManager.getKey( keys::TotalDisplacement );
-    arrayView1d< globalIndex > const nodeDofNumber = nodeManager->getReference< globalIndex_array >( dofKey );
+    arrayView1d< globalIndex > const nodeDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
     globalIndex const rankOffset = dofManager.rankOffset();
 
     // TODO: this bound may need to change
     constexpr localIndex maxNodexPerFace = 4;
     constexpr localIndex maxDofPerElem = maxNodexPerFace * 3 * 2;
 
-    elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       arrayView1d< real64 > const area = subRegion.getElementArea();
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
@@ -1424,86 +1241,10 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
                                                        arrayView1d< real64 const > const & localSolution )
 {
   GEOSX_MARK_FUNCTION;
-  real64 scalingFactor = 1.0;
 
-  GEOSX_UNUSED_VAR( domain )
-  GEOSX_UNUSED_VAR( dofManager )
-  GEOSX_UNUSED_VAR( localSolution )
+  GEOSX_UNUSED_VAR( domain, dofManager, localSolution );
 
-//  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-//  FaceManager const * const faceManager = mesh->getFaceManager();
-//  NodeManager const * const nodeManager = mesh->getNodeManager();
-//  ElementRegionManager const * const elemManager = mesh->getElemManager();
-//
-//
-//  arrayView1d<R1Tensor const> const & u = nodeManager->getReference< array1d<R1Tensor> >( keys::TotalDisplacement );
-//
-//  arrayView1d<R1Tensor const> const & faceNormal = faceManager->faceNormal();
-//  array1d<localIndex_array> const & facesToNodes = faceManager->nodeList();
-//
-//  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
-//  arrayView1d<globalIndex> const & nodeDofNumber = nodeManager->getReference<globalIndex_array>( dofKey );
-//
-//  globalIndex const rankOffset = dofManager.rankOffset();
-//
-//  elemManager->forElementSubRegions<FaceElementSubRegion>([&]( FaceElementSubRegion const * const subRegion )->void
-//  {
-//      arrayView1d<integer const> const & ghostRank = subRegion->ghostRank();
-//      arrayView1d<real64 const > const & area = subRegion->getElementArea();
-//      arrayView2d< localIndex const > const & elemsToFaces = subRegion->faceList();
-//
-//      RAJA::ReduceMin<RAJA::seq_reduce, real64> newScaleFactor(1.0);
-//      forAll<serialPolicy>( subRegion->size(), [=] ( localIndex const kfe )
-//      {
-//
-//        if( ghostRank[kfe] < 0 )
-//        {
-//          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
-//          Nbar -= faceNormal[elemsToFaces[kfe][1]];
-//          Nbar.Normalize();
-//
-//          localIndex const kf0 = elemsToFaces[kfe][0];
-//          localIndex const kf1 = elemsToFaces[kfe][1];
-//          localIndex const numNodesPerFace=facesToNodes[kf0].size();
-//          localIndex const * const nodelist0 = facesToNodes[kf0];
-//          localIndex const * const nodelist1 = facesToNodes[kf1];
-//
-//          for( localIndex a=0 ; a<numNodesPerFace ; ++a )
-//          {
-//            R1Tensor penaltyForce = Nbar;
-//            localIndex const node0 = facesToNodes[kf0][a];
-//            localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
-//
-//            localIndex const lid0 = nodeDofNumber[node0] - rankOffset;
-//            localIndex const lid1 = nodeDofNumber[node1] - rankOffset;
-//            GEOSX_ASSERT( lid0 >= 0 && lid1 >=0 ); // since vectors are partitioned same as the mesh
-//
-//            R1Tensor gap = u[node1];
-//            gap -= u[node0];
-//            real64 const gapNormal = Dot(gap,Nbar);
-//
-//            R1Tensor deltaGap ;
-//            for( int i=0 ; i<3 ; ++i )
-//            {
-//              deltaGap[i] = localSolution[lid1] - localSolution[lid0];
-//            }
-//            real64 const deltaGapNormal = Dot( deltaGap, Nbar );
-//
-//            if( ( gapNormal + deltaGapNormal ) * gapNormal < 0 )
-//            {
-//              newScaleFactor.min( - gapNormal / deltaGapNormal * 1.05 );
-//              newScaleFactor.min( 1.0 );
-//              std::cout<< "gapNormal, deltaGapNormal, scaleFactor, newGap = "<<
-//                  gapNormal<<", "<<deltaGapNormal<<", "<<newScaleFactor.get()<<",
-// "<<gapNormal+newScaleFactor.get()*deltaGapNormal<<std::endl;
-//            }
-//          }
-//        }
-//      });
-//      scalingFactor = newScaleFactor.get();
-//  });
-
-  return scalingFactor;
+  return 1.0;
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )

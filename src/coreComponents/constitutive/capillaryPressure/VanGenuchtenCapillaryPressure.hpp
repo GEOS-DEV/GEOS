@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -38,8 +38,8 @@ public:
                                        real64 const volFracScale,
                                        arrayView1d< integer const > const & phaseTypes,
                                        arrayView1d< integer const > const & phaseOrder,
-                                       arrayView3d< real64 > const & phaseCapPressure,
-                                       arrayView4d< real64 > const & dPhaseCapPressure_dPhaseVolFrac )
+                                       arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPressure,
+                                       arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPressure_dPhaseVolFrac )
     : CapillaryPressureBaseUpdate( phaseTypes,
                                    phaseOrder,
                                    phaseCapPressure,
@@ -51,29 +51,15 @@ public:
     m_volFracScale( volFracScale )
   {}
 
-  /// Default copy constructor
-  VanGenuchtenCapillaryPressureUpdate( VanGenuchtenCapillaryPressureUpdate const & ) = default;
-
-  /// Default move constructor
-  VanGenuchtenCapillaryPressureUpdate( VanGenuchtenCapillaryPressureUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  VanGenuchtenCapillaryPressureUpdate & operator=( VanGenuchtenCapillaryPressureUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  VanGenuchtenCapillaryPressureUpdate & operator=( VanGenuchtenCapillaryPressureUpdate && ) = delete;
+  GEOSX_HOST_DEVICE
+  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                        arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const override;
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseCapPres,
-                        arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const override;
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & phaseVolFraction ) const override
+                       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
   {
     compute( phaseVolFraction,
              m_phaseCapPressure[k][q],
@@ -108,8 +94,6 @@ public:
   VanGenuchtenCapillaryPressure( string const & name,
                                  dataRepository::Group * const parent );
 
-  virtual ~VanGenuchtenCapillaryPressure() override;
-
   static string catalogName() { return "VanGenuchtenCapillaryPressure"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -125,13 +109,12 @@ public:
 
   struct viewKeyStruct : CapillaryPressureBase::viewKeyStruct
   {
-    static constexpr auto phaseMinVolumeFractionString      = "phaseMinVolumeFraction";
-    static constexpr auto phaseCapPressureExponentInvString = "phaseCapPressureExponentInv";
-    static constexpr auto phaseCapPressureMultiplierString  = "phaseCapPressureMultiplier";
-    static constexpr auto capPressureEpsilonString          = "capPressureEpsilon";
-    static constexpr auto volFracScaleString                = "volFracScale";
-
-  } viewKeysVanGenuchtenCapillaryPressure;
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
+    static constexpr char const * phaseCapPressureExponentInvString() { return "phaseCapPressureExponentInv"; }
+    static constexpr char const * phaseCapPressureMultiplierString() { return "phaseCapPressureMultiplier"; }
+    static constexpr char const * capPressureEpsilonString() { return "capPressureEpsilon"; }
+    static constexpr char const * volFracScaleString() { return "volFracScale"; }
+  };
 
 protected:
 
@@ -146,22 +129,13 @@ protected:
 };
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
+inline void
 VanGenuchtenCapillaryPressureUpdate::
-  compute( arraySlice1d< real64 const > const & phaseVolFraction,
-           arraySlice1d< real64 > const & phaseCapPres,
-           arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const
+  compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+           arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+           arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
 {
-  localIndex const NP = numPhases();
-
-  for( localIndex ip = 0; ip < NP; ++ip )
-  {
-    for( localIndex jp = 0; jp < NP; ++jp )
-    {
-      dPhaseCapPres_dPhaseVolFrac[ip][jp] = 0.0;
-    }
-  }
+  LvArray::forValuesInSlice( dPhaseCapPres_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
   // the VanGenuchten model does not support volFracScaled = 0 and = 1
   // hence we need an epsilon value to avoid a division by zero

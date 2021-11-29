@@ -1,26 +1,17 @@
-
 #
 # Specify all headers
 #
-set(math_headers
-  	interpolation/Interpolation.hpp
-   )
+set( math_headers
+  	 interpolation/Interpolation.hpp
+	 extrapolation/Extrapolation.hpp)
 
-#
-# Specify all sources
-#
-#set(geosx_core_sources
-#  ${geosx_core_sources}
-#    PARENT_SCOPE )
-
-
-blt_add_library( NAME                  math
+blt_add_library( NAME         math
                  SOURCES               
-                 HEADERS               ${math_headers}
+                 HEADERS      ${math_headers}
                  DEPENDS_ON            
                  SHARED FALSE
                )
                
-target_include_directories( math INTERFACE ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories( math INTERFACE ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks(PREFIX math )
+geosx_add_code_checks( PREFIX math )

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidModelHelperTransverseIsotropic.hpp
+ * @file SolidModelDiscretizationOpsTransverseIsotropic.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPSTRANSVERSEISOTROPIC_HPP_
@@ -26,9 +26,10 @@ namespace geosx
 namespace constitutive
 {
 
-
+/// Transverse isotropic implementation of discOps concept
 struct SolidModelDiscretizationOpsTransverseIsotropic : public SolidModelDiscretizationOps
 {
+  /// @copydoc SolidModelDiscretizationOpsIsotropic::upperBTDB
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
@@ -36,6 +37,7 @@ struct SolidModelDiscretizationOpsTransverseIsotropic : public SolidModelDiscret
                   real64 const & detJxW,
                   real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
 
+  /// @copydoc SolidModelDiscretizationOpsIsotropic::diagBTDB
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
@@ -43,6 +45,7 @@ struct SolidModelDiscretizationOpsTransverseIsotropic : public SolidModelDiscret
                  real64 const & detJxW,
                  real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
+  /// @copydoc SolidModelDiscretizationOpsIsotropic::diagRowSumBTDB
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
@@ -50,6 +53,7 @@ struct SolidModelDiscretizationOpsTransverseIsotropic : public SolidModelDiscret
                        real64 const & detJxW,
                        real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
+  /// @copydoc SolidModelDiscretizationOpsIsotropic::scaleParams
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void scaleParams( real64 const scale )
@@ -61,11 +65,11 @@ struct SolidModelDiscretizationOpsTransverseIsotropic : public SolidModelDiscret
     m_c66 *= scale;
   }
 
-  real64 m_c11;
-  real64 m_c13;
-  real64 m_c33;
-  real64 m_c44;
-  real64 m_c66;
+  real64 m_c11; ///< (1,1) element of TI stiffness matrix
+  real64 m_c13; ///< (1,3) element of TI stiffness matrix
+  real64 m_c33; ///< (3,3) element of TI stiffness matrix
+  real64 m_c44; ///< (4,4) element of TI stiffness matrix
+  real64 m_c66; ///< (6,6) element of TI stiffness matrix
 };
 
 #if __GNUC__

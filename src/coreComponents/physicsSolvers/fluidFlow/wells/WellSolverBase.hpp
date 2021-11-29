@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -26,10 +26,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
 class DomainPartition;
 class WellControls;
 class WellElementSubRegion;
@@ -159,7 +155,7 @@ public:
    */
   /**@{*/
 
-  virtual void registerDataOnMesh( Group * const meshBodies ) override;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
@@ -203,17 +199,25 @@ public:
                                   arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
-   * @brief assembles the volume balance terms for all well elements
-   * @param time_n previous time value
-   * @param dt time step
+   * @brief assembles the accumulation term for all the well elements
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleVolumeBalanceTerms( real64 const time_n,
-                                           real64 const dt,
-                                           DomainPartition const & domain,
+  virtual void assembleAccumulationTerms( DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) = 0;
+
+  /**
+   * @brief assembles the volume balance terms for all well elements
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleVolumeBalanceTerms( DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs ) = 0;
@@ -225,22 +229,28 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void formPressureRelations( DomainPartition const & domain,
-                                      DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs ) = 0;
+  virtual void assemblePressureRelations( DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  virtual void updateStateAll( DomainPartition & domain );
+  virtual void updateState( DomainPartition & domain ) override;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param well the well containing all the primary and dependent fields
    */
-  virtual void updateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
+  virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
+
+  /**
+   * @brief Backup current values of all constitutive fields that participate in the accumulation term
+   * @param mesh reference to the mesh
+   */
+  virtual void backupFields( MeshLevel & mesh ) const = 0;
 
   arrayView1d< string const > const fluidModelNames() const { return m_fluidModelNames; }
 
@@ -249,15 +259,11 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // gravity term precomputed values
-    static constexpr auto gravityCoefString = FlowSolverBase::viewKeyStruct::gravityCoefString;
+    static constexpr char const * gravityCoefString() { return FlowSolverBase::viewKeyStruct::gravityCoefString(); }
 
     // misc inputs
-    static constexpr auto fluidNamesString  = "fluidNames";
-
-  } viewKeysWellSolverBase;
-
-  struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysWellSolverBase;
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
+  };
 
 private:
 
@@ -270,9 +276,9 @@ private:
 protected:
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePreSubGroups() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups( Group * const rootGroup ) override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -298,10 +304,13 @@ protected:
   array1d< string > m_fluidModelNames;
 
   /// the number of Degrees of Freedom per well element
-  localIndex m_numDofPerWellElement;
+  integer m_numDofPerWellElement;
 
   /// the number of Degrees of Freedom per reservoir element
-  localIndex m_numDofPerResElement;
+  integer m_numDofPerResElement;
+
+  // copy of the current time saved in this class for time-dependent
+  real64 m_currentTime;
 
   /// copy of the time step size saved in this class for residual normalization
   real64 m_currentDt;

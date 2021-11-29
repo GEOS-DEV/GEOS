@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -80,19 +80,18 @@ struct conduitTypeInfo< T, std::enable_if_t< std::is_enum< T >::value > > : publ
 
 // Tensor types
 CONDUIT_TYPE_INFO( R1Tensor, CONDUIT_NATIVE_DOUBLE );
+CONDUIT_TYPE_INFO( R2SymTensor, CONDUIT_NATIVE_DOUBLE );
 
 } // namespace internal
 
 template< typename T >
 using conduitTypeInfo = internal::conduitTypeInfo< std::remove_const_t< std::remove_pointer_t< T > > >;
 
-extern conduit::Node rootConduitNode;
-
 string writeRootFile( conduit::Node & root, string const & rootPath );
 
-void writeTree( string const & path );
+void writeTree( string const & path, conduit::Node & root );
 
-void loadTree( string const & path );
+void loadTree( string const & path, conduit::Node & root );
 
 } // namespace dataRepository
 } // namespace geosx

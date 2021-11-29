@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -23,7 +23,7 @@
 #include "FaceManager.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -36,25 +36,25 @@ EdgeManager::EdgeManager( string const & name,
   m_fractureConnectorsEdgesToEdges(),
   m_fractureConnectorEdgesToFaceElements()
 {
-  this->registerWrapper( viewKeyStruct::nodeListString, &this->m_toNodesRelation );
-  this->registerWrapper( viewKeyStruct::faceListString, &this->m_toFacesRelation );
+  this->registerWrapper( viewKeyStruct::nodeListString(), &this->m_toNodesRelation );
+  this->registerWrapper( viewKeyStruct::faceListString(), &this->m_toFacesRelation );
 
   m_toNodesRelation.resize( 0, 2 );
 
-  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString, &m_edgesToFractureConnectorsEdges )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of edge local indices to the fracture connector local indices." )->
+  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString(), &m_edgesToFractureConnectorsEdges ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "A map of edge local indices to the fracture connector local indices." ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString, &m_fractureConnectorsEdgesToEdges )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of fracture connector local indices to edge local indices." )->
+  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString(), &m_fractureConnectorsEdgesToEdges ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "A map of fracture connector local indices to edge local indices." ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString,
-                   &m_fractureConnectorEdgesToFaceElements )->
-    setPlotLevel( PlotLevel::NOPLOT )->
-    setDescription( "A map of fracture connector local indices face element local indices" )->
+  registerWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString(),
+                   &m_fractureConnectorEdgesToFaceElements ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "A map of fracture connector local indices face element local indices" ).
     setSizedFromParent( 0 );
 
 }
@@ -397,16 +397,16 @@ void populateMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowestN
   } );
 }
 
-void EdgeManager::buildEdges( FaceManager * const faceManager, NodeManager * const nodeManager )
+void EdgeManager::buildEdges( NodeManager & nodeManager, FaceManager & faceManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  localIndex const numNodes = nodeManager->size();
+  localIndex const numNodes = nodeManager.size();
 
-  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  faceManager->edgeList().setRelatedObject( this );
-  ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager->edgeList();
+  faceManager.edgeList().setRelatedObject( *this );
+  ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager.edgeList();
 
   m_toNodesRelation.setRelatedObject( nodeManager );
   m_toFacesRelation.setRelatedObject( faceManager );
@@ -431,7 +431,7 @@ void EdgeManager::buildEdges( FaceManager * const faceManager, NodeManager * con
                 m_toNodesRelation );
 
   // make sets from nodesets
-  auto const & nodeSets = nodeManager->sets().wrappers();
+  auto const & nodeSets = nodeManager.sets().wrappers();
   for( int i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
@@ -444,7 +444,7 @@ void EdgeManager::buildEdges( FaceManager * const faceManager, NodeManager * con
   {
     auto const & setWrapper = nodeSets[i];
     string const & setName = setWrapper->getName();
-    SortedArrayView< localIndex const > const targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
+    SortedArrayView< localIndex const > const targetSet = nodeManager.sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
     constructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
   } );
 
@@ -476,25 +476,20 @@ void EdgeManager::buildEdges( localIndex const numNodes,
 }
 
 
-void EdgeManager::setDomainBoundaryObjects( ObjectManagerBase const * const referenceObject )
+void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 {
-  referenceObject->checkTypeId( typeid( NodeManager ) );
-
-  // cast the referenceObject into a faceManager
-  FaceManager const * const faceManager = Group::groupCast< const FaceManager * >( referenceObject );
-
   // get the "isDomainBoundary" field from the faceManager. This should have
   // been set already!
-  arrayView1d< integer const > const & isFaceOnDomainBoundary = faceManager->getDomainBoundaryIndicator();
+  arrayView1d< integer const > const & isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();
 
   // get the "isDomainBoundary" field from for *this, and set it to zero
   arrayView1d< integer > const & isEdgeOnDomainBoundary = this->getDomainBoundaryIndicator();
-  isEdgeOnDomainBoundary.setValues< serialPolicy >( 0 );
+  isEdgeOnDomainBoundary.zero();
 
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager->edgeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
 
   // loop through all faces
-  for( localIndex kf=0; kf<faceManager->size(); ++kf )
+  for( localIndex kf=0; kf<faceManager.size(); ++kf )
   {
     // check to see if the face is on a domain boundary
     if( isFaceOnDomainBoundary[kf] == 1 )
@@ -532,19 +527,19 @@ bool EdgeManager::hasNode( const localIndex edgeID, const localIndex nodeID ) co
 //  return(val);
 //}
 
-void EdgeManager::setIsExternal( FaceManager const * const faceManager )
+void EdgeManager::setIsExternal( FaceManager const & faceManager )
 {
-  // get the "isExternal" field from the faceManager->..This should have been
+  // get the "isExternal" field from the faceManager...This should have been
   // set already!
-  arrayView1d< integer const > const & isExternalFace = faceManager->isExternal();
+  arrayView1d< integer const > const & isExternalFace = faceManager.isExternal();
 
-  ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager.edgeList().toViewConst();
 
   // get the "isExternal" field from for *this, and set it to zero
-  m_isExternal.setValues< serialPolicy >( 0 );
+  m_isExternal.zero();
 
   // loop through all faces
-  for( localIndex kf=0; kf<faceManager->size(); ++kf )
+  for( localIndex kf=0; kf<faceManager.size(); ++kf )
   {
     // check to see if the face is on a domain boundary
     if( isExternalFace[kf] == 1 )
@@ -560,11 +555,10 @@ void EdgeManager::setIsExternal( FaceManager const * const faceManager )
 }
 
 
-void EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+void EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
                                                                    std::vector< std::vector< globalIndex > > & globalEdgeNodes )
 {
   GEOSX_MARK_FUNCTION;
-  nodeManager->checkTypeId( typeid( NodeManager ) );
 
   localIndex const numEdges = size();
 
@@ -583,7 +577,7 @@ void EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
       for( localIndex a = 0; a < 2; ++a )
       {
-        curEdgeGlobalNodes[ a ]= nodeManager->localToGlobalMap()( edgeNodes[ edgeID ][ a ] );
+        curEdgeGlobalNodes[ a ]= nodeManager.localToGlobalMap()( edgeNodes[ edgeID ][ a ] );
       }
 
       std::sort( curEdgeGlobalNodes.begin(), curEdgeGlobalNodes.end() );
@@ -637,26 +631,6 @@ void EdgeManager::connectivityFromGlobalToLocal( const SortedArray< localIndex >
 
 }
 
-void EdgeManager::addToEdgeToFaceMap( FaceManager const * const faceManager,
-                                      arrayView1d< localIndex const > const & newFaceIndices )
-{
-  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager->edgeList().toViewConst();
-
-  // loop over all faces in list
-  for( localIndex const newFaceIndex : newFaceIndices )
-  {
-
-    // now iterate over the faceToEdgeMap (i.e. all nodes in the faceToNodeMap)
-    localIndex const numEdges = faceToEdgeMap.sizeOfArray( newFaceIndex );
-    for( localIndex a = 0; a < numEdges; ++a )
-    {
-      // enter the value of the face index into the nodeToFace map
-      localIndex const edgeID = faceToEdgeMap( newFaceIndex, a );
-      m_toFacesRelation.insertIntoSet( edgeID, newFaceIndex );
-    }
-  }
-}
-
 localIndex EdgeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
@@ -677,7 +651,7 @@ localIndex EdgeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
   arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
   arrayView1d< globalIndex const > faceLocalToGlobal = faceList().relatedObjectLocalToGlobal();
 
-  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString ) );
+  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            m_toNodesRelation.base().toViewConst(),
                                            m_unmappedGlobalIndicesInToNodes,
@@ -686,7 +660,7 @@ localIndex EdgeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                            nodeLocalToGlobal );
 
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString ) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString() ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
                                            m_toFacesRelation.base().toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToFaces,
@@ -710,7 +684,7 @@ localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString );
+  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
@@ -721,7 +695,7 @@ localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
-  GEOSX_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString );
+  GEOSX_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,

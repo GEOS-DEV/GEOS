@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -13,12 +13,13 @@
  */
 
 /**
- * @file SolidModelHelperIsotropic.hpp
+ * @file SolidModelDiscretizationOpsIsotropic.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPSISOTROPIC_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPSISOTROPIC_HPP_
 
+#include "PropertyConversions.hpp"
 #include "SolidModelDiscretizationOps.hpp"
 
 namespace geosx
@@ -26,9 +27,17 @@ namespace geosx
 namespace constitutive
 {
 
-
+/// Isotropic implementation of the DiscOps concept
 struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
 {
+  /**
+   * @brief Compute upper portion of inner product matrix for solid mechanics, assuming D is symmetric
+   * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
+   * @tparam BASIS_GRADIENT Finite element shape function gradients type
+   * @param gradN Finite Element shape function gradients
+   * @param detJxW Element transformation determinant times the quadrature weight
+   * @param elementStiffness Local stiffness matrix
+   */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
@@ -36,6 +45,14 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
                   real64 const & detJxW,
                   real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
 
+  /**
+   * @brief Compute diagonal of inner product matrix for solid mechanics
+   * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
+   * @tparam BASIS_GRADIENT Finite element shape function gradients type
+   * @param gradN Finite Element shape function gradients
+   * @param detJxW Element transformation determinant times the quadrature weight
+   * @param diagElementStiffness Local stiffness matrix diagonal
+   */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
@@ -43,6 +60,14 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
                  real64 const & detJxW,
                  real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
+  /**
+   * @brief Compute row sum diagonal of inner product matrix for solid mechanics
+   * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
+   * @tparam BASIS_GRADIENT Finite element shape function gradients type
+   * @param gradN Finite Element shape function gradients
+   * @param detJxW Element transformation determinant times the quadrature weight
+   * @param diagSumElementStiffness Local stiffness matrix diagonal
+   */
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOSX_HOST_DEVICE
@@ -50,16 +75,20 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
                        real64 const & detJxW,
                        real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] );
 
+  /**
+   * Scale stiffness parameters by a constant
+   * @param scale Scaling constant
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void scaleParams( real64 const scale )
   {
-    m_lambda *= scale;
+    m_bulkModulus *= scale;
     m_shearModulus *= scale;
   }
 
-  real64 m_lambda;
-  real64 m_shearModulus;
+  real64 m_bulkModulus;   ///< Bulk modulus
+  real64 m_shearModulus;  ///< Shear modulus
 };
 
 #if __GNUC__
@@ -75,9 +104,12 @@ void SolidModelDiscretizationOpsIsotropic::upperBTDB( BASIS_GRADIENT const & gra
                                                       real64 const & detJxW,
                                                       real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
 {
-  real64 const lambda2G = ( 2 * m_shearModulus + m_lambda ) * detJxW;
-  real64 const lambda = this->m_lambda * detJxW;
   real64 const G = this->m_shearModulus * detJxW;
+  real64 const K = this->m_bulkModulus * detJxW;
+
+  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda2G = lambda + 2*G;
+
   SolidModelDiscretizationOps::upperBTDB< NUM_SUPPORT_POINTS >( gradN,
                                                                 elementStiffness,
                                                                 [ lambda,
@@ -109,9 +141,11 @@ void SolidModelDiscretizationOpsIsotropic::diagBTDB( BASIS_GRADIENT const & grad
                                                      real64 const & detJxW,
                                                      real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
 {
-  real64 const lambda2G = ( 2 * m_shearModulus + m_lambda ) * detJxW;
-  real64 const lambda = this->m_lambda * detJxW;
   real64 const G = this->m_shearModulus * detJxW;
+  real64 const K = this->m_bulkModulus * detJxW;
+
+  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda2G = lambda + 2*G;
 
   SolidModelDiscretizationOps::diagBTDB< NUM_SUPPORT_POINTS >( gradN,
                                                                diagElementStiffness,
@@ -138,9 +172,12 @@ void SolidModelDiscretizationOpsIsotropic::diagRowSumBTDB( BASIS_GRADIENT const 
                                                            real64 const & detJxW,
                                                            real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )
 {
-  real64 const lambda2G = ( 2 * m_shearModulus + m_lambda ) * detJxW;
-  real64 const lambda = this->m_lambda * detJxW;
   real64 const G = this->m_shearModulus * detJxW;
+  real64 const K = this->m_bulkModulus * detJxW;
+
+  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda2G = lambda + 2*G;
+
   SolidModelDiscretizationOps::diagRowSumBTDB< NUM_SUPPORT_POINTS >( gradN,
                                                                      diagSumElementStiffness,
                                                                      [ lambda,

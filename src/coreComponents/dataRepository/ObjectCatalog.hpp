@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -26,12 +26,13 @@
  */
 
 #include "common/Logger.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 #include "LvArray/src/system.hpp"
 
-#include <unordered_map>
-
 #include <iostream>
+#include <list>
 #include <memory>
+#include <unordered_map>
 
 #ifndef OBJECTCATALOGVERBOSE
 /**
@@ -145,16 +146,59 @@ public:
   }
 
   /**
+   * @brief Returns the product keys of the catalog. Keys are sorted in alphabetical order, case insensitive.
+   * @return An STL container.
+   */
+  static std::list< typename CatalogType::key_type > getKeys()
+  {
+    std::list< typename CatalogType::key_type > keys;
+    for( typename CatalogType::value_type const & pair: getCatalog() )
+    {
+      keys.push_back( pair.first );
+    }
+    auto const cmp = []( string const & a,
+                         string const & b ) -> bool
+    {
+      return stringutilities::toLower( a ) < stringutilities::toLower( b );
+    };
+    keys.sort( cmp );
+
+    return keys;
+  }
+
+  /**
    * @brief Static method to create a new object that derives from BASETYPE
-   * @param[in] objectTypeName the key to the catalog entry that is able to create
-   * the correct type.
+   * @param[in] objectTypeName the key to the catalog entry that is able to create the correct type.
    * @param args these are the arguments to the constructor of the target type
    * @return passes a unique_ptr<BASETYPE> to the newly allocated class.
+   *
+   * @note The simulation is killed if the builder is not found.
    */
   //START_SPHINX_2
-  static std::unique_ptr< BASETYPE > factory( std::string const & objectTypeName, ARGS... args )
+  static std::unique_ptr< BASETYPE > factory( std::string const & objectTypeName,
+                                              ARGS... args )
   {
-    return getCatalog().at( objectTypeName ).get()->allocate( args ... );
+    // We stop the simulation if the product is not found
+    if( !hasKeyName( objectTypeName ) )
+    {
+      std::list< typename CatalogType::key_type > keys = getKeys();
+      string const tmp = stringutilities::join( keys.cbegin(), keys.cend(), ",\n" );
+
+      string errorMsg = "Could not find keyword \"" + objectTypeName + "\" in this context. ";
+      errorMsg += "Please be sure that all your keywords are properly spelled or that input file parameters have not changed.\n";
+      errorMsg += "All available keys are: [\n" + tmp + "\n]";
+      GEOSX_ERROR( errorMsg );
+    }
+
+    // We also stop the simulation if the builder is not here.
+    CatalogInterface< BASETYPE, ARGS... > const * builder = getCatalog().at( objectTypeName ).get();
+    if( builder == nullptr )
+    {
+      const string errorMsg = "\"" + objectTypeName + "\" could be found. But the builder is invalid.\n";
+      GEOSX_ERROR( errorMsg );
+    }
+
+    return builder->allocate( args ... );
   }
   //STOP_SPHINX
 
@@ -171,8 +215,8 @@ public:
   template< typename TYPE >
   static TYPE & catalogCast( BASETYPE & object )
   {
-    std::string castedName = TYPE::catalogName();
-    std::string objectName = object.getName();
+    std::string const & castedName = TYPE::catalogName();
+    std::string const & objectName = object.getName();
 
     if( castedName != objectName )
     {
@@ -460,8 +504,8 @@ public:
   template< typename TYPE >
   static TYPE & catalogCast( BASETYPE & object )
   {
-    std::string castedName = TYPE::catalogName();
-    std::string objectName = object.getName();
+    std::string const & castedName = TYPE::catalogName();
+    std::string const & objectName = object.getName();
 
     if( castedName != objectName )
     {

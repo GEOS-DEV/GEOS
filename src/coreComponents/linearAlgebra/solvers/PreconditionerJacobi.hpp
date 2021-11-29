@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -15,8 +15,8 @@
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
 #define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
 
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
-#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+#include "linearAlgebra/common/LinearOperator.hpp"
+#include "linearAlgebra/common/PreconditionerBase.hpp"
 
 namespace geosx
 {
@@ -43,24 +43,12 @@ public:
    * @brief Compute the preconditioner from a matrix.
    * @param mat the matrix to precondition.
    */
-  virtual void compute( Matrix const & mat ) override
+  virtual void setup( Matrix const & mat ) override
   {
     GEOSX_LAI_ASSERT( mat.ready() );
-    m_diagInv.createWithLocalSize( mat.numLocalRows(), mat.getComm() );
+    m_diagInv.createWithLocalSize( mat.numLocalRows(), mat.comm() );
     mat.extractDiagonal( m_diagInv );
     m_diagInv.reciprocal();
-  }
-
-  /**
-   * @brief Compute the preconditioner from a matrix
-   * @param mat the matrix to precondition
-   * @param dofManager the Degree-of-Freedom manager associated with matrix
-   */
-  virtual void compute( Matrix const & mat,
-                        DofManager const & dofManager ) override
-  {
-    GEOSX_UNUSED_VAR( dofManager );
-    compute( mat );
   }
 
   /**

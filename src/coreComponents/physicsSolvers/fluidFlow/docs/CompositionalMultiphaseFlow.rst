@@ -105,9 +105,8 @@ Primary Variables
 The variable formulation implemented in GEOSX is a global variable formulation based on
 :math:`n_c+1` primary variables, namely, one pressure, :math:`p`, and
 :math:`n_c` component densities, :math:`\rho_c`.
-By default, we use molar component densities. A flag discussed in the section
-:ref:`usage` can be used to select mass component densities instead of molar component
-densities.
+By default, we use molar component densities.
+A flag discussed in the section :ref:`parameters` can be used to select mass component densities instead of molar component densities.
 
 =========================== ===========================
 Number of primary variables Variable type
@@ -183,16 +182,16 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow.rst
+.. include:: /coreComponents/schema/docs/CompositionalMultiphaseFVM.rst
 
 .. _input_example:
 
 Example
 =========================
 
-.. literalinclude:: ../integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
    :language: xml
    :start-after: <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
    :end-before: <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->
 
-We refer the reader to :ref:`this page <TutorialCompositionalMultiphaseFlow>` for a complete tutorial illustrating the use of this solver.
+We refer the reader to :ref:`TutorialDeadOilBottomLayersSPE10` for a complete tutorial illustrating the use of this solver.

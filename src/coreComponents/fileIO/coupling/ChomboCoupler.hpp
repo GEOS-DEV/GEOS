@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -39,7 +39,7 @@ public:
    * @param inputPath filename The name of the file to read from.
    * @param mesh The mesh to communicate.
    */
-  ChomboCoupler( MPI_Comm const comm, const std::string & outputPath, const std::string & inputPath, MeshLevel & mesh );
+  ChomboCoupler( MPI_Comm const comm, const string & outputPath, const string & inputPath, MeshLevel & mesh );
 
   /**
    * @brief Write data to file.
@@ -65,9 +65,9 @@ private:
   /// The MPI communicator used to read and write the file.
   MPI_Comm const m_comm;
   /// The path to write the file to.
-  std::string const m_outputPath;
+  string const m_outputPath;
   /// The path to read from.
-  std::string const m_inputPath;
+  string const m_inputPath;
   /// The global face offset.
   std::int64_t m_face_offset;
   /// The local number of faces written.

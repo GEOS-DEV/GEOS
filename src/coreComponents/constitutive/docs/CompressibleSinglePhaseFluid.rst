@@ -36,7 +36,7 @@ The model is represented by ``<CompressibleSinglePhaseFluid>`` node in the input
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/CompressibleSinglePhaseFluid.rst
+.. include:: ../../../coreComponents/schema/docs/CompressibleSinglePhaseFluid.rst
 
 Example
 =========================

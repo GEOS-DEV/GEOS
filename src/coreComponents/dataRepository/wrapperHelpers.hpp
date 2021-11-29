@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -30,7 +30,12 @@
 #include "ConduitRestart.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
+#include "common/Span.hpp"
 #include "codingUtilities/traits.hpp"
+
+#if defined(GEOSX_USE_PYGEOSX)
+#include "LvArray/src/python/python.hpp"
+#endif
 
 // TPL includes
 #include <conduit.hpp>
@@ -94,7 +99,47 @@ real64 const * getPointerToComponent( R1Tensor const & var, int const component 
 
 } // namespace internal
 
+template< typename T >
+class ArrayDimLabels
+{
+public:
 
+  void set( integer const, Span< string const > )
+  {
+    GEOSX_ERROR( "Dimension labels are only available in Array wrappers" );
+  }
+
+  Span< string const > get( integer const ) const
+  {
+    GEOSX_ERROR( "Dimension labels are only available in Array wrappers" );
+    return {};
+  }
+};
+
+template< typename T, int NDIM, typename PERM >
+class ArrayDimLabels< Array< T, NDIM, PERM > >
+{
+public:
+
+  void set( integer const dim, Span< string const > labels )
+  {
+    GEOSX_ERROR_IF_LT( dim, 0 );
+    GEOSX_ERROR_IF_GE( dim, NDIM );
+    m_values[dim].resize( labels.size() );
+    std::copy( labels.begin(), labels.end(), m_values[dim].begin() );
+  }
+
+  Span< string const > get( integer const dim ) const
+  {
+    GEOSX_ERROR_IF_LT( dim, 0 );
+    GEOSX_ERROR_IF_GE( dim, NDIM );
+    return { m_values[dim].begin(), m_values[dim].end() };
+  }
+
+private:
+
+  string_array m_values[NDIM]{};
+};
 
 template< typename T >
 inline std::enable_if_t< traits::HasMemberFunction_size< T >, localIndex >
@@ -362,7 +407,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
   node[ "__values__" ].set_external( dtype, ptr );
 
   // Create a copy of the dimensions
-  localIndex temp[ NDIM + 1 ];
+  camp::idx_t temp[ NDIM + 1 ];
   for( int i = 0; i < NDIM; ++i )
   {
     temp[ i ] = var.size( i );
@@ -378,7 +423,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
   }
 
   // push the dimensions into the node
-  conduit::DataType const dimensionType( conduitTypeInfo< localIndex >::id, totalNumDimensions );
+  conduit::DataType const dimensionType( conduitTypeInfo< camp::idx_t >::id, totalNumDimensions );
   node[ "__dimensions__" ].set( dimensionType, temp );
 
   // Create a copy of the permutation
@@ -428,7 +473,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   // Now pull out the dimensions and resize the array.
   conduit::Node const & dimensionNode = node.fetch_child( "__dimensions__" );
   GEOSX_ERROR_IF_NE( dimensionNode.dtype().number_of_elements(), totalNumDimensions );
-  localIndex const * const dims = dimensionNode.value();
+  camp::idx_t const * const dims = dimensionNode.value();
 
   if( hasImplicitDimension )
   {
@@ -476,7 +521,7 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
     GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), totalNumberOfComponents );
   }
 
-  var.move( LvArray::MemorySpace::CPU, false );
+  var.move( LvArray::MemorySpace::host, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
@@ -544,7 +589,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
     GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), numComponentsPerValue * var.size() / var.size( 0 ) );
   }
 
-  var.move( LvArray::MemorySpace::CPU, false );
+  var.move( LvArray::MemorySpace::host, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
@@ -623,7 +668,35 @@ std::unique_ptr< int > averageOverSecondDim( T const & )
   return std::unique_ptr< int >( nullptr );
 }
 
+template< typename T, int NDIM, int USD >
+int numArrayDims( ArrayView< T const, NDIM, USD > const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return NDIM;
+}
 
+template< typename T >
+int numArrayDims( T const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return 0;
+}
+
+template< typename T, int NDIM, int USD >
+localIndex numArrayComp( ArrayView< T const, NDIM, USD > const & var )
+{
+  return LvArray::indexing::multiplyAll< NDIM - 1 >( var.dims() + 1 );
+}
+
+template< typename T >
+localIndex numArrayComp( ArrayView< T const, 1, 0 > const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return 1;
+}
+
+template< typename T >
+localIndex numArrayComp( T const & GEOSX_UNUSED_PARAM( var ) )
+{
+  return 0;
+}
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
@@ -648,65 +721,67 @@ UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
 
 template< bool DO_PACKING, typename T >
 inline std::enable_if_t< bufferOps::is_container< T > || bufferOps::can_memcpy< T >, localIndex >
-PackDevice( buffer_unit_type * & buffer, T const & var )
-{ return bufferOps::PackDevice< DO_PACKING >( buffer, var ); }
+PackDevice( buffer_unit_type * & buffer, T const & var, parallelDeviceEvents & events )
+{ return bufferOps::PackDevice< DO_PACKING >( buffer, var, events ); }
 
 
 template< bool DO_PACKING, typename T >
 inline std::enable_if_t< !bufferOps::is_container< T > && !bufferOps::can_memcpy< T >, localIndex >
-PackDevice( buffer_unit_type * &, T const & )
+PackDevice( buffer_unit_type * &, T const &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Cannot pack " << LvArray::system::demangleType< T >() << " on device." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
+               ") on device but type is not packable on device." );
   return 0;
 }
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-PackByIndexDevice( buffer_unit_type * & buffer, T const & var, IDX & idx )
-{ return bufferOps::PackByIndexDevice< DO_PACKING >( buffer, var, idx ); }
+PackByIndexDevice( buffer_unit_type * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
+{ return bufferOps::PackByIndexDevice< DO_PACKING >( buffer, var, idx, events ); }
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-PackByIndexDevice( buffer_unit_type * &, T const &, IDX & )
+PackByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable by index." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
+               ") on device but type is not packable by index." );
   return 0;
 }
 
 template< typename T >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackDevice( buffer_unit_type const * & buffer, T const & var )
-{ return bufferOps::UnpackDevice( buffer, var ); }
+UnpackDevice( buffer_unit_type const * & buffer, T const & var, parallelDeviceEvents & events )
+{ return bufferOps::UnpackDevice( buffer, var, events ); }
 
 template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDevice( buffer_unit_type const * &, T const & )
+UnpackDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 { return 0; }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx )
-{ return bufferOps::UnpackByIndexDevice( buffer, var, idx ); }
+UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
+{ return bufferOps::UnpackByIndexDevice( buffer, var, idx, events ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX & )
+UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents & )
 { return 0; }
 
 
 template< bool DO_PACKING, typename T >
 localIndex
-PackDataDevice( buffer_unit_type * & buffer, T const & var )
-{ return bufferOps::PackDataDevice< DO_PACKING >( buffer, var ); }
+PackDataDevice( buffer_unit_type * & buffer, T const & var, parallelDeviceEvents & events )
+{ return bufferOps::PackDataDevice< DO_PACKING >( buffer, var, events ); }
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-PackDataByIndexDevice( buffer_unit_type * & buffer, T const & var, IDX & idx )
-{ return bufferOps::PackDataByIndexDevice< DO_PACKING >( buffer, var, idx ); }
+PackDataByIndexDevice( buffer_unit_type * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
+{ return bufferOps::PackDataByIndexDevice< DO_PACKING >( buffer, var, idx, events ); }
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-PackDataByIndexDevice( buffer_unit_type * &, T const &, IDX & )
+PackDataByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents & )
 {
   GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable by index." );
   return 0;
@@ -714,23 +789,36 @@ PackDataByIndexDevice( buffer_unit_type * &, T const &, IDX & )
 
 template< typename T >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackDataDevice( buffer_unit_type const * & buffer, T const & var )
-{ return bufferOps::UnpackDataDevice( buffer, var ); }
+UnpackDataDevice( buffer_unit_type const * & buffer, T const & var, parallelDeviceEvents & events )
+{ return bufferOps::UnpackDataDevice( buffer, var, events ); }
 
 template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDataDevice( buffer_unit_type const * &, T const & )
+UnpackDataDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 { return 0; }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx )
-{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx ); }
+UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
+{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx, events ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX & )
+UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents & )
 { return 0; }
+#if defined(GEOSX_USE_PYGEOSX)
+
+template< typename T >
+inline std::enable_if_t< LvArray::python::CanCreate< T >, PyObject * >
+createPythonObject( T & object )
+{ return LvArray::python::create( object ); }
+
+template< typename T >
+inline std::enable_if_t< !LvArray::python::CanCreate< T >, PyObject * >
+createPythonObject( T & )
+{ return nullptr; }
+
+#endif
 
 } // namespace WrapperHelpers
 } // namespace dataRepository

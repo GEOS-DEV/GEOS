@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -252,8 +252,8 @@ void CalculateFBHourGlassModes( const array1d< R1Tensor > & xpos,
     {-1, 1, 1, -1, 1, -1, -1, 1}
   };
 
-  static R1Tensor temp;
-  static R1Tensor xGamma;
+  R1Tensor temp;
+  R1Tensor xGamma;
 
 
   // compute the hourglass modes

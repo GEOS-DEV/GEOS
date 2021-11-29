@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -49,9 +49,9 @@ localIndex Pack( buffer_unit_type * & buffer,
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
       {
-        ElementRegionBase const * const elemRegion = elementRegionManager->getRegion( elemRegionIndex );
-        ElementSubRegionBase const * const elemSubRegion = elemRegion->getSubRegion( elemSubRegionIndex );
-        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemSubRegion->localToGlobalMap()[elemIndex] );
+        ElementRegionBase const & elemRegion = elementRegionManager->getRegion( elemRegionIndex );
+        ElementSubRegionBase const & elemSubRegion = elemRegion.getSubRegion( elemSubRegionIndex );
+        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemSubRegion.localToGlobalMap()[elemIndex] );
       }
       else
       {
@@ -118,10 +118,10 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 )
       {
-        ElementRegionBase const * const elemRegion = elementRegionManager->getRegion( elemRegionIndex );
-        ElementSubRegionBase const * const elemSubRegion = elemRegion->getSubRegion( elemSubRegionIndex );
+        ElementRegionBase const & elemRegion = elementRegionManager->getRegion( elemRegionIndex );
+        ElementSubRegionBase const & elemSubRegion = elemRegion.getSubRegion( elemSubRegionIndex );
 
-        localIndex localElementIndex = softMapLookup( elemSubRegion->globalToLocalMap(),
+        localIndex localElementIndex = softMapLookup( elemSubRegion.globalToLocalMap(),
                                                       globalElementIndex,
                                                       localIndex( -1 ) );
         if( localElementIndex!=-1 )
@@ -179,9 +179,9 @@ localIndex Pack( buffer_unit_type * & buffer,
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
       {
-        ElementRegionBase const * const elemRegion = elementRegionManager->getRegion( elemRegionIndex );
-        ElementSubRegionBase const * const elemSubRegion = elemRegion->getSubRegion( elemSubRegionIndex );
-        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemSubRegion->localToGlobalMap()[elemIndex] );
+        ElementRegionBase const & elemRegion = elementRegionManager->getRegion( elemRegionIndex );
+        ElementSubRegionBase const & elemSubRegion = elemRegion.getSubRegion( elemSubRegionIndex );
+        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemSubRegion.localToGlobalMap()[elemIndex] );
       }
       else
       {
@@ -235,13 +235,11 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 
       if( recvElemRegionIndex!=-1 && recvElemSubRegionIndex!=-1 && globalElementIndex!=-1 )
       {
-        ElementRegionBase const * const
-        elemRegion = elementRegionManager->getRegion( recvElemRegionIndex );
+        ElementRegionBase const & elemRegion = elementRegionManager->getRegion( recvElemRegionIndex );
 
-        ElementSubRegionBase const * const
-        elemSubRegion = elemRegion->getSubRegion( recvElemSubRegionIndex );
+        ElementSubRegionBase const & elemSubRegion = elemRegion.getSubRegion( recvElemSubRegionIndex );
 
-        localIndex const recvElemIndex = softMapLookup( elemSubRegion->globalToLocalMap(),
+        localIndex const recvElemIndex = softMapLookup( elemSubRegion.globalToLocalMap(),
                                                         globalElementIndex,
                                                         localIndex( -1 ) );
 

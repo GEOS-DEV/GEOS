@@ -4,7 +4,11 @@
 
 macro(find_and_register)
     set(singleValueArgs NAME HEADER)
-    set(multiValueArgs INCLUDE_DIRECTORIES LIBRARY_DIRECTORIES LIBRARIES DEPENDS)
+    set(multiValueArgs INCLUDE_DIRECTORIES 
+                       LIBRARY_DIRECTORIES
+                       LIBRARIES 
+                       EXTRA_LIBRARIES 
+                       DEPENDS )
 
     ## parse the arguments
     cmake_parse_arguments(arg
@@ -47,9 +51,9 @@ macro(find_and_register)
                        PATHS ${arg_LIBRARY_DIRECTORIES}
                        REQUIRED ON)
 
-    blt_register_library(NAME ${arg_NAME}
+    blt_import_library(NAME ${arg_NAME}
                          INCLUDES ${${arg_NAME}_INCLUDE_DIR}
-                         LIBRARIES ${${arg_NAME}_LIBRARIES}
+                         LIBRARIES ${${arg_NAME}_LIBRARIES} ${arg_EXTRA_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON
                          DEPENDS_ON ${arg_DEPENDS})
 
@@ -64,11 +68,11 @@ set(thirdPartyLibs "")
 
 include(cmake/thirdparty/FindMathLibraries.cmake)
 
-blt_register_library(NAME blas
+blt_import_library(NAME blas
                      TREAT_INCLUDES_AS_SYSTEM ON
                      LIBRARIES ${BLAS_LIBRARIES})
 
-blt_register_library(NAME lapack
+blt_import_library(NAME lapack
                      DEPENDS_ON blas
                      TREAT_INCLUDES_AS_SYSTEM ON
                      LIBRARIES ${LAPACK_LIBRARIES})
@@ -79,7 +83,7 @@ blt_register_library(NAME lapack
 if(ENABLE_MKL)
     message(STATUS "Using Intel MKL")
 
-    blt_register_library(NAME mkl
+    blt_import_library(NAME mkl
                          INCLUDES ${MKL_INCLUDE_DIRS}
                          LIBRARIES ${MKL_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
@@ -93,7 +97,7 @@ if(ENABLE_MKL)
 elseif(ENABLE_ESSL)
     message(STATUS "Using up IBM ESSL")
 
-    blt_register_library(NAME essl
+    blt_import_library(NAME essl
                          INCLUDES ${ESSL_INCLUDE_DIRS}
                          LIBRARIES ${ESSL_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
@@ -116,12 +120,16 @@ if(DEFINED HDF5_DIR)
     set(HDF5_NO_FIND_PACKAGE_CONFIG_FILE ON)
     include(FindHDF5)
 
-    blt_register_library(NAME hdf5
-                         INCLUDES ${HDF5_INCLUDE_DIRS}
-                         LIBRARIES ${HDF5_LIBRARIES}
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+    # On some platforms (Summit) HDF5 lists /usr/include in it's list of include directories.
+    # When this happens you can get really opaque include errors. 
+    list(REMOVE_ITEM HDF5_INCLUDE_DIRS /usr/include)
 
-    set(ENABLE_HDF5 ON CACHE BOOL "" FORCE)
+    blt_import_library(NAME hdf5
+                       INCLUDES ${HDF5_INCLUDE_DIRS}
+                       LIBRARIES ${HDF5_LIBRARIES}
+                       TREAT_INCLUDES_AS_SYSTEM ON)
+
+    set(ENABLE_HDF5 ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hdf5)
 else()
     message(FATAL_ERROR "GEOSX requires hdf5, set HDF5_DIR to the hdf5 installation directory.")
@@ -137,7 +145,27 @@ if(DEFINED CONDUIT_DIR)
                  PATHS ${CONDUIT_DIR}/lib/cmake
                  NO_DEFAULT_PATH)
 
-    set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit )
+    set(CONDUIT_TARGETS conduit conduit_relay conduit_blueprint)
+    foreach(targetName ${CONDUIT_TARGETS} )
+        get_target_property(includeDirs 
+                            ${targetName}
+                            INTERFACE_INCLUDE_DIRECTORIES)
+                             
+        set_property(TARGET ${targetName} 
+                     APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                     ${includeDirs})
+    endforeach()
+
+    # Conduit uses our HDF5 and we need to propagate the above fix.
+    get_target_property(CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES conduit_relay INTERFACE_INCLUDE_DIRECTORIES)
+    list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES /usr/include)
+    set_target_properties(conduit_relay PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES})
+
+    get_target_property(CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES conduit_relay INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+    list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES /usr/include)
+    set_target_properties(conduit_relay PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES})
+
+    set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit)
 else()
     message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
 endif()
@@ -155,7 +183,7 @@ if(DEFINED SILO_DIR)
                       LIBRARIES siloh5
                       DEPENDS hdf5)
 
-    set(ENABLE_SILO ON CACHE BOOL "" FORCE)
+    set(ENABLE_SILO ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} silo)
 else()
     message(FATAL_ERROR "GEOSX requires Silo, set SILO_DIR to the Silo installation directory.")
@@ -171,7 +199,7 @@ if(DEFINED PUGIXML_DIR)
                  PATHS ${PUGIXML_DIR}
                  NO_DEFAULT_PATH)
 
-    set(ENABLE_PUGIXML ON CACHE BOOL "" FORCE)
+    set(ENABLE_PUGIXML ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} pugixml)
 else()
     message(FATAL_ERROR "GEOSX requires pugixml, set PUGIXML_DIR to the pugixml installation directory.")
@@ -191,7 +219,7 @@ if(DEFINED RAJA_DIR)
     set_target_properties(RAJA
                           PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
 
-    set(ENABLE_RAJA ON CACHE BOOL "" FORCE)
+    set(ENABLE_RAJA ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} RAJA )
 else()
     message(FATAL_ERROR "GEOSX requires RAJA, set RAJA_DIR to the RAJA installation directory.")
@@ -207,7 +235,7 @@ if(DEFINED UMPIRE_DIR)
                  PATHS ${UMPIRE_DIR}
                  NO_DEFAULT_PATH)
 
-    set(ENABLE_UMPIRE ON CACHE BOOL "" FORCE)
+    set(ENABLE_UMPIRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} umpire)
 else()
     message(FATAL_ERROR "GEOSX requires Umpire, set UMPIRE_DIR to the Umpire installation directory.")
@@ -227,7 +255,7 @@ if(DEFINED CHAI_DIR)
     set_target_properties(chai
                           PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CHAI_INCLUDE_DIRS}")
 
-    set(ENABLE_CHAI ON CACHE BOOL "" FORCE)
+    set(ENABLE_CHAI ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} chai)
 else()
     message(FATAL_ERROR "GEOSX requires CHAI, set CHAI_DIR to the CHAI installation directory.")
@@ -240,15 +268,17 @@ if(DEFINED ADIAK_DIR)
     message(STATUS "ADIAK_DIR = ${ADIAK_DIR}")
 
     find_package(adiak REQUIRED
-                 PATHS ${ADIAK_DIR}/lib/cmake/adiak
+                 PATHS ${ADIAK_DIR}
                  NO_DEFAULT_PATH)
 
-    blt_register_library(NAME adiak
-                         INCLUDES ${adiak_INCLUDE_DIRS}
-                         LIBRARIES ${adiak_LIBRARIES}
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+    set_property(TARGET adiak
+                 APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                 ${adiak_INCLUDE_DIR} )
+    set_property(TARGET adiak
+                 APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+                 ${adiak_INCLUDE_DIR} )
 
-    set(ENABLE_ADIAK ON CACHE BOOL "" FORCE)
+    set(ENABLE_ADIAK ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} adiak)
 else()
     if(ENABLE_ADIAK)
@@ -269,12 +299,15 @@ if(DEFINED CALIPER_DIR)
                  PATHS ${CALIPER_DIR}
                  NO_DEFAULT_PATH)
 
-    blt_register_library(NAME caliper
-                         INCLUDES ${caliper_INCLUDE_PATH}
-                         LIBRARIES caliper
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+    set_property(TARGET caliper
+                 APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                 ${caliper_INCLUDE_PATH} )
 
-    set(ENABLE_CALIPER ON CACHE BOOL "" FORCE)
+    set_property(TARGET caliper
+                 APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
+                 ${caliper_INCLUDE_PATH} )
+
+    set(ENABLE_CALIPER ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} caliper)
 else()
     if(ENABLE_CALIPER)
@@ -297,7 +330,7 @@ if(DEFINED MATHPRESSO_DIR)
                       HEADER mathpresso/mathpresso.h
                       LIBRARIES mathpresso)
 
-    set(ENABLE_MATHPRESSO ON CACHE BOOL "" FORCE)
+    set(ENABLE_MATHPRESSO ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} mathpresso)
 else()
     if(ENABLE_MATHPRESSO)
@@ -320,7 +353,7 @@ if(DEFINED METIS_DIR)
                       HEADER metis.h
                       LIBRARIES metis)
 
-    set(ENABLE_METIS ON CACHE BOOL "" FORCE)
+    set(ENABLE_METIS ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} metis)
 else()
     if(ENABLE_METIS)
@@ -344,7 +377,7 @@ if(DEFINED PARMETIS_DIR)
                       LIBRARIES parmetis
                       DEPENDS metis)
 
-    set(ENABLE_PARMETIS ON CACHE BOOL "" FORCE)
+    set(ENABLE_PARMETIS ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} parmetis)
 else()
     if(ENABLE_PARMETIS)
@@ -368,7 +401,7 @@ if(DEFINED SUPERLU_DIST_DIR)
                       LIBRARIES superlu_dist
                       DEPENDS parmetis blas lapack)
 
-    set(ENABLE_SUPERLU_DIST ON CACHE BOOL "" FORCE)
+    set(ENABLE_SUPERLU_DIST ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} superlu_dist)
 else()
     if(ENABLE_SUPERLU_DIST)
@@ -392,7 +425,7 @@ if(DEFINED SUITESPARSE_DIR)
                       LIBRARIES umfpack
                       DEPENDS blas lapack)
 
-    set(ENABLE_SUITESPARSE ON CACHE BOOL "" FORCE)
+    set(ENABLE_SUITESPARSE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} suitesparse)
 else()
     if(ENABLE_SUITESPARSE)
@@ -406,17 +439,31 @@ endif()
 ################################
 # HYPRE
 ################################
-if(DEFINED HYPRE_DIR)
+if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
+
+    if( ENABLE_HYPRE_CUDA )
+        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY} )
+    endif()
 
     find_and_register(NAME hypre
                       INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
-                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
+                      LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib 
                       HEADER HYPRE.h
                       LIBRARIES HYPRE
+                      EXTRA_LIBRARIES ${EXTRA_LIBS}
                       DEPENDS blas lapack superlu_dist)
 
-    set(ENABLE_HYPRE ON CACHE BOOL "" FORCE)
+    # if( ENABLE_CUDA AND ( NOT ENABLE_HYPRE_CUDA ) )
+    #   set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
+    #   if( GEOSX_LA_INTERFACE STREQUAL "Hypre")
+    #     message( FATAL_ERROR "Hypre LAI selected, but ENABLE_HYPRE_CUDA not ON while ENABLE_CUDA is ON.")
+    #   endif()
+    # else()
+    #   set(ENABLE_HYPRE ON CACHE BOOL "")
+    # endif()
+    
+    set(ENABLE_HYPRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hypre)
 else()
     if(ENABLE_HYPRE)
@@ -430,7 +477,7 @@ endif()
 ################################
 # TRILINOS
 ################################
-if(DEFINED TRILINOS_DIR)
+if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
   
     include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
@@ -438,13 +485,17 @@ if(DEFINED TRILINOS_DIR)
     list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
 
-    blt_register_library(NAME trilinos
+    blt_import_library(NAME trilinos
                          DEPENDS_ON ${TRILINOS_DEPENDS}
                          INCLUDES ${Trilinos_INCLUDE_DIRS} 
                          LIBRARIES ${Trilinos_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON)
 
-    set(ENABLE_TRILINOS ON CACHE BOOL "" FORCE)
+    # This conditional is due to the lack of mixedInt support on hypre GPU.
+    # This can be removed when support is added into hypre.
+    if( NOT ENABLE_HYPRE_CUDA )
+        set(ENABLE_TRILINOS ON CACHE BOOL "")
+    endif()
     set(thirdPartyLibs ${thirdPartyLibs} trilinos)
 else()
     if(ENABLE_TRILINOS)
@@ -458,7 +509,7 @@ endif()
 ###############################
 # PETSC
 ###############################
-if(DEFINED PETSC_DIR)
+if(DEFINED PETSC_DIR AND ENABLE_PETSC)
     message(STATUS "PETSC_DIR = ${PETSC_DIR}")
 
     find_and_register(NAME petsc
@@ -468,7 +519,7 @@ if(DEFINED PETSC_DIR)
                       LIBRARIES petsc
                       DEPENDS metis superlu_dist blas lapack)
 
-    set(ENABLE_PETSC ON CACHE BOOL "" FORCE)
+    set(ENABLE_PETSC ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} petsc)
 else()
     if(ENABLE_PETSC)
@@ -488,18 +539,45 @@ if(DEFINED VTK_DIR)
                  PATHS ${VTK_DIR}
                  NO_DEFAULT_PATH)
 
+    set( VTK_TARGETS VTK::WrappingTools VTK::WrapHierarchy VTK::WrapPython VTK::WrapPythonInit VTK::ParseJava VTK::WrapJava VTK::loguru VTK::kwiml VTK::vtksys VTK::utf8 VTK::CommonCore VTK::CommonMath VTK::CommonTransforms VTK::CommonMisc VTK::CommonSystem VTK::CommonDataModel VTK::CommonExecutionModel VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::IOCore VTK::expat VTK::IOXMLParser VTK::IOXML )
+    foreach( targetName ${VTK_TARGETS} )
+
+        get_target_property( includeDirs ${targetName}  INTERFACE_INCLUDE_DIRECTORIES)
+    
+        set_property(TARGET ${targetName} 
+                     APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                     ${includeDirs})
+    endforeach()
+    
+    set(ENABLE_VTK ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} vtk)
 else()
     if(ENABLE_VTK)
         message(WARNING "ENABLE_VTK is ON but VTK_DIR isn't defined.")
     endif()
 
-    set(ENABLE_VTK OFF CACHE BOOL "" FORCE)
+    set(ENABLE_VTK OFF CACHE BOOL "")
     message(STATUS "Not using VTK")
 endif()
 
 ################################
-# unsrustify
+# FMT
+################################
+if(DEFINED FMT_DIR)
+    message(STATUS "FMT_DIR = ${FMT_DIR}")
+
+    find_package(fmt REQUIRED
+                 PATHS ${FMT_DIR}
+                 NO_DEFAULT_PATH)
+
+    set(ENABLE_FMT ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt)
+else()
+    message(FATAL_ERROR "GEOSX requires {fmt}, set FMT_DIR to the {fmt} installation directory.")
+endif()
+
+################################
+# uncrustify
 ################################
 if(UNCRUSTIFY_FOUND)
     message(STATUS "UNCRUSTIFY_EXECUTABLE = ${UNCRUSTIFY_EXECUTABLE}")
@@ -517,6 +595,38 @@ if(UNCRUSTIFY_FOUND)
     endif()
 else()
     message(STATUS "Not using uncrustify.")
+endif()
+
+################################
+# doxygen
+################################
+if(DOXYGEN_FOUND)
+    message(STATUS "DOXYGEN_EXECUTABLE = ${DOXYGEN_EXECUTABLE}")
+else()
+    message(STATUS "Not using doxygen.")
+endif()
+
+################################
+# Python
+################################
+if(ENABLE_PYGEOSX)
+    message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
+    find_package(Python3 REQUIRED
+                 COMPONENTS Development NumPy)
+
+    message(STATUS "Python3_INCLUDE_DIRS = ${Python3_INCLUDE_DIRS}")
+    message(STATUS "Python3_LIBRARY_DIRS = ${Python3_LIBRARY_DIRS}")
+    message(STATUS "Python3_NumPy_INCLUDE_DIRS = ${Python3_NumPy_INCLUDE_DIRS}")
+
+    if(DEFINED ENABLE_PYLVARRAY AND NOT ENABLE_PYLVARRAY)
+        message(FATAL_ERROR "Cannot build pygeosx without pylvarray")
+    else()
+        set(ENABLE_PYLVARRAY ON CACHE BOOL "")
+    endif()
+
+    set(thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy)
+else()
+    message(STATUS "Not building pygeosx.")
 endif()
 
 ################################

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -17,7 +17,7 @@
 
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/InterObjectRelation.hpp"
-#include "meshUtilities/PerforationData.hpp"
+#include "mesh/PerforationData.hpp"
 
 namespace geosx
 {
@@ -95,7 +95,7 @@ public:
                                                     FaceManager const & ) override
   {}
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
+  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
   ///@}
 
@@ -281,46 +281,41 @@ public:
 
   ///@}
 
-  /// @cond DO_NOT_DOCUMENT
-  void debugWellElementSubRegionsAfterSetupCommunications() const;
-  /// @endcond
-
   /**
    * @brief Struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
    */
   struct viewKeyStruct : public ElementSubRegionBase::viewKeyStruct
   {
-    /// String key for the well control name
-    static constexpr auto wellControlsString               = "wellControlsName";
-    /// String key for the well element-to-node list
-    static constexpr auto wellNodeListString               = "nodeList";
-    /// String key for the local indices of the next well element (used in solvers)
-    static constexpr auto nextWellElementIndexString       = "nextWellElementIndex";
-    /// String key for the global indices of the next well element (to reconstruct maps)
-    static constexpr auto nextWellElementIndexGlobalString = "nextWellElementIndexGlobal";
-    /// String key for the top well element index
-    static constexpr auto topWellElementIndexString        = "topWellElementIndex";
-    /// String key for the rank owning the top element
-    static constexpr auto topRankString                    = "topRank";
-    /// String key for the well radius
-    static constexpr auto radiusString                     = "radius";
+    /// @return String key for the well control name
+    static constexpr char const * wellControlsString() { return "wellControlsName"; }
+    /// @return String key for the well element-to-node list
+    static constexpr char const * wellNodeListString() { return "nodeList"; }
+    /// @return String key for the local indices of the next well element (used in solvers)
+    static constexpr char const * nextWellElementIndexString() { return "nextWellElementIndex"; }
+    /// @return String key for the global indices of the next well element (to reconstruct maps)
+    static constexpr char const * nextWellElementIndexGlobalString() { return "nextWellElementIndexGlobal"; }
+    /// @return String key for the top well element index
+    static constexpr char const * topWellElementIndexString() { return "topWellElementIndex"; }
+    /// @return String key for the rank owning the top element
+    static constexpr char const * topRankString() { return "topRank"; }
+    /// @return String key for the well radius
+    static constexpr char const * radiusString() { return "radius"; }
 
     /// ViewKey for the well control name
-    dataRepository::ViewKey wellControlsName     = { wellControlsString };
+    dataRepository::ViewKey wellControlsName     = { wellControlsString() };
     /// ViewKey for the well element-to-node list
-    dataRepository::ViewKey wellNodeList         = { wellNodeListString };
+    dataRepository::ViewKey wellNodeList         = { wellNodeListString() };
     /// ViewKey for the local indices of the next well element (used in solvers)
-    dataRepository::ViewKey nextWellElementIndex = { nextWellElementIndexString };
+    dataRepository::ViewKey nextWellElementIndex = { nextWellElementIndexString() };
     /// ViewKey for the global indices of the next well element (to reconstruct maps)
-    dataRepository::ViewKey nextWellElementIndexGlobal = { nextWellElementIndexGlobalString };
+    dataRepository::ViewKey nextWellElementIndexGlobal = { nextWellElementIndexGlobalString() };
     /// ViewKey for the top well element index
-    dataRepository::ViewKey topWellElementIndex = { topWellElementIndexString };
+    dataRepository::ViewKey topWellElementIndex = { topWellElementIndexString() };
     /// ViewKey for the rank owning the top element
-    dataRepository::ViewKey topRank            = { topRankString };
+    dataRepository::ViewKey topRank            = { topRankString() };
     /// ViewKey for the well radius
-    dataRepository::ViewKey radius             = { radiusString };
-
+    dataRepository::ViewKey radius             = { radiusString() };
   }
   /// ViewKey struct for the WellElementSubRegion class
   viewKeysWellElementSubRegion;
@@ -331,11 +326,11 @@ public:
    */
   struct groupKeyStruct : public ElementSubRegionBase::groupKeyStruct
   {
-    /// String key for the PerforationData object
-    static constexpr auto perforationDataString = "wellElementSubRegion";
+    /// @return String key for the PerforationData object
+    static constexpr char const * perforationDataString() { return "wellElementSubRegion"; }
 
     /// GroupKey for the PerforationData object
-    dataRepository::GroupKey perforationData = { perforationDataString };
+    dataRepository::GroupKey perforationData = { perforationDataString() };
 
   }
   /// groupKey struct for the WellElementSubRegion class
@@ -417,14 +412,6 @@ private:
    * The function WellElementSubRegion::ConstructSubRegionLocalElementMaps must have been called before this function
    */
   void updateNodeManagerNodeToElementMap( MeshLevel & mesh );
-
-  /// @cond DO_NOT_DOCUMENT
-  void debugNodeManager( MeshLevel const & mesh ) const;
-  /// @endcond
-
-  /// @cond DO_NOT_DOCUMENT
-  void debugWellElementSubRegions( arrayView1d< integer const > const & wellElemStatus, globalIndex elemOffsetGlobal ) const;
-  /// @endcond
 
   /**
    * @brief Pack element-to-node and element-to-face maps

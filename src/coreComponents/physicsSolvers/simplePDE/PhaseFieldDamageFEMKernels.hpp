@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -89,9 +89,10 @@ public:
   PhaseFieldDamageKernel( NodeManager const & nodeManager,
                           EdgeManager const & edgeManager,
                           FaceManager const & faceManager,
+                          localIndex const targetRegionIndex,
                           SUBREGION_TYPE const & elementSubRegion,
                           FE_TYPE const & finiteElementSpace,
-                          CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                          CONSTITUTIVE_TYPE & inputConstitutiveType,
                           arrayView1d< globalIndex const > const & inputDofNumber,
                           globalIndex const rankOffset,
                           CRSMatrixView< real64, globalIndex const > const & inputMatrix,
@@ -101,6 +102,7 @@ public:
     Base( nodeManager,
           edgeManager,
           faceManager,
+          targetRegionIndex,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -184,7 +186,7 @@ public:
                               StackVariables & stack ) const
   {
 
-    real64 const strainEnergyDensity = m_constitutiveUpdate.calculateActiveStrainEnergyDensity( k, q );
+    real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
@@ -285,6 +287,13 @@ protected:
 
 };
 
+using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDamageKernel,
+                                                                    arrayView1d< globalIndex const > const &,
+                                                                    globalIndex,
+                                                                    CRSMatrixView< real64, globalIndex const > const &,
+                                                                    arrayView1d< real64 > const &,
+                                                                    string const &,
+                                                                    int >;
 
 } // namespace geosx
 

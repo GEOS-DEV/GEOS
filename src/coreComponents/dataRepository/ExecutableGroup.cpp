@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -24,7 +24,7 @@ namespace geosx
 void ExecutableGroup::signalToPrepareForExecution( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                    real64 const GEOSX_UNUSED_PARAM( dt ),
                                                    integer const GEOSX_UNUSED_PARAM( cycle ),
-                                                   dataRepository::Group *
+                                                   DomainPartition &
                                                    GEOSX_UNUSED_PARAM( domain ) )
 {}
 
@@ -32,7 +32,7 @@ void ExecutableGroup::cleanup( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                                integer const GEOSX_UNUSED_PARAM( eventCounter ),
                                real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                               dataRepository::Group * GEOSX_UNUSED_PARAM( domain ) )
+                               DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
 }

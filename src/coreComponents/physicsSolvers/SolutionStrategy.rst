@@ -88,4 +88,4 @@ All parameters defining the behavior of the nonlinear solver and determining the
 timestep size requested by the physics solver are defined in the NonlinearSolverParameters
 and are presented in the following table.
 
-.. include:: /coreComponents/fileIO/schema/docs/NonlinearSolverParameters.rst
+.. include:: /coreComponents/schema/docs/NonlinearSolverParameters.rst

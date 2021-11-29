@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,14 +19,16 @@
 #ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 #define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ElementType.hpp"
+#include "mesh/ObjectManagerBase.hpp"
+
 namespace geosx
 {
 
 class NodeManager;
 class FaceManager;
 class MeshLevel;
-class DomainPartition;
+
 namespace constitutive
 {
 class ConstitutiveBase;
@@ -84,7 +86,7 @@ public:
    * faceManager, and (if needed) edgeManager to, respectively, the node list, face list, and
    * edge list of the subregion.
    */
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) = 0;
+  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) = 0;
 
   /**
    * @brief Call ObjectManagerBase::fixUpDownMaps for the connectivity maps needed by
@@ -193,14 +195,14 @@ public:
    * @brief Get the group in which the constitutive models of this subregion are registered.
    * @return a pointer to the const group in which the constitutive models are registered
    */
-  dataRepository::Group const * getConstitutiveModels() const
-  { return &m_constitutiveModels; }
+  dataRepository::Group const & getConstitutiveModels() const
+  { return m_constitutiveModels; }
 
   /**
    * @copydoc getConstitutiveModels() const
    */
-  dataRepository::Group * getConstitutiveModels()
-  { return &m_constitutiveModels; }
+  dataRepository::Group & getConstitutiveModels()
+  { return m_constitutiveModels; }
 
   /**
    * @brief Get a pointer to the constitutive model.
@@ -209,40 +211,30 @@ public:
    * @return A pointer to the constitutive model.
    */
   template< typename T = constitutive::ConstitutiveBase >
-  T const * getConstitutiveModel( string const & name ) const
-  {
-    return m_constitutiveModels.getGroup< T >( name );
-  }
+  T const & getConstitutiveModel( string const & name ) const
+  { return m_constitutiveModels.getGroup< T >( name ); }
 
   /**
    * @copydoc getConstitutiveModel( string const & ) const
    */
   template< typename T = constitutive::ConstitutiveBase >
-  T * getConstitutiveModel( string const & name )
-  {
-    return m_constitutiveModels.getGroup< T >( name );
-  }
+  T & getConstitutiveModel( string const & name )
+  { return m_constitutiveModels.getGroup< T >( name ); }
 
 
   /**
    * @brief Get the type of element in this subregion.
-   * @return a string specifying the type of element in this subregion
-   *
-   * See class FiniteElementBase for possible element type.
+   * @return the type of element in this subregion
    */
-  virtual string getElementTypeString() const { return m_elementTypeString; }
+  ElementType getElementType() const
+  { return m_elementType; }
 
   /**
    * @brief Set the type of element in this subregion.
-   * @param[in] elementType a string specifying the element type
+   * @param[in] elementType the element type
    */
-  virtual void setElementType( string const & elementType );
-
-  /**
-   * @brief Get the VTK ordering for this subregion.
-   * @return the VTK node ordering
-   */
-  std::vector< int > getVTKNodeOrdering() const;
+  virtual void setElementType( ElementType const elementType )
+  { m_elementType = elementType; }
 
   ///@}
 
@@ -252,23 +244,22 @@ public:
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-
-    /// String key for the number of nodes per element in this subregion.
-    static constexpr auto numNodesPerElementString = "numNodesPerElement";
-    /// String key for the element-to-node relation
-    static constexpr auto nodeListString           = "nodeList";
-    /// String key for the number of edges per element in this subregion.
-    static constexpr auto numEdgesPerElementString = "numEdgesPerElement";
-    /// String key for the element-to-edge relation
-    static constexpr auto edgeListString           = "edgeList";
-    /// String key for the number of faces per element in this subregion.
-    static constexpr auto numFacesPerElementString = "numFacesPerElement";
-    /// String key for the element-to-face relation
-    static constexpr auto faceListString           = "faceList";
-    /// String key for the member level field for the element center.
-    static constexpr auto elementCenterString      = "elementCenter";
-    /// String key for the member level field for the element volume.
-    static constexpr auto elementVolumeString      = "elementVolume";
+    /// @return String key for the number of nodes per element in this subregion.
+    static constexpr char const * numNodesPerElementString() { return "numNodesPerElement"; }
+    /// @return String key for the element-to-node relation
+    static constexpr char const * nodeListString() { return "nodeList"; }
+    /// @return String key for the number of edges per element in this subregion.
+    static constexpr char const * numEdgesPerElementString() { return "numEdgesPerElement"; }
+    /// @return String key for the element-to-edge relation
+    static constexpr char const * edgeListString() { return "edgeList"; }
+    /// @return String key for the number of faces per element in this subregion.
+    static constexpr char const * numFacesPerElementString() { return "numFacesPerElement"; }
+    /// @return String key for the element-to-face relation
+    static constexpr char const * faceListString() { return "faceList"; }
+    /// @return String key for the member level field for the element center.
+    static constexpr char const * elementCenterString() { return "elementCenter"; }
+    /// @return String key for the member level field for the element volume.
+    static constexpr char const * elementVolumeString() { return "elementVolume"; }
   };
 
   /**
@@ -277,8 +268,8 @@ public:
    */
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    /// String key for the group in which the constitutive models of this subregion are registered.
-    static constexpr auto constitutiveModelsString = "ConstitutiveModels";
+    /// @return String key for the group in which the constitutive models of this subregion are registered.
+    static constexpr auto constitutiveModelsString() { return "ConstitutiveModels"; }
   };
 
 private:
@@ -305,9 +296,7 @@ protected:
   array1d< real64 > m_elementVolume;
 
   /// Type of element in this subregion.
-  string m_elementTypeString;
-
-  /// Type of element in this subregion.
+  ElementType m_elementType;
 };
 
 

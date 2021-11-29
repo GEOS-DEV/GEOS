@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,8 +19,10 @@
 #ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
 #define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSUREBASE_HPP
 
+#include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "constitutive/capillaryPressure/layouts.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -51,61 +53,53 @@ public:
    * @return number of phases
    */
   GEOSX_HOST_DEVICE
-  localIndex numPhases() const { return m_phaseTypes.size(); }
+  integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseTypes.size() ); }
 
 protected:
 
   CapillaryPressureBaseUpdate( arrayView1d< integer const > const & phaseTypes,
                                arrayView1d< integer const > const & phaseOrder,
-                               arrayView3d< real64 > const & phaseCapPressure,
-                               arrayView4d< real64 > const & dPhaseCapPressure_dPhaseVolFrac )
+                               arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPressure,
+                               arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPressure_dPhaseVolFrac )
     : m_phaseTypes( phaseTypes ),
     m_phaseOrder( phaseOrder ),
     m_phaseCapPressure( phaseCapPressure ),
     m_dPhaseCapPressure_dPhaseVolFrac( dPhaseCapPressure_dPhaseVolFrac )
   {}
 
-  /// Default copy constructor
-  CapillaryPressureBaseUpdate( CapillaryPressureBaseUpdate const & ) = default;
-
-  /// Default move constructor
-  CapillaryPressureBaseUpdate( CapillaryPressureBaseUpdate && ) = default;
-
-  /// Deleted copy assignment operator
-  CapillaryPressureBaseUpdate & operator=( CapillaryPressureBaseUpdate const & ) = delete;
-
-  /// Deleted move assignment operator
-  CapillaryPressureBaseUpdate & operator=( CapillaryPressureBaseUpdate && ) = delete;
-
   arrayView1d< integer const > m_phaseTypes;
   arrayView1d< integer const > m_phaseOrder;
 
-  arrayView3d< real64 > m_phaseCapPressure;
-  arrayView4d< real64 > m_dPhaseCapPressure_dPhaseVolFrac;
+  arrayView3d< real64, cappres::USD_CAPPRES > m_phaseCapPressure;
+  arrayView4d< real64, cappres::USD_CAPPRES_DS > m_dPhaseCapPressure_dPhaseVolFrac;
 
 private:
 
   GEOSX_HOST_DEVICE
-  virtual void compute( arraySlice1d< real64 const > const & phaseVolFraction,
-                        arraySlice1d< real64 > const & phaseCapPres,
-                        arraySlice2d< real64 > const & dPhaseCapPres_dPhaseVolFrac ) const = 0;
+  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                        arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const = 0;
 
   GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & phaseVolFraction ) const = 0;
+                       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const = 0;
 };
 
 class CapillaryPressureBase : public ConstitutiveBase
 {
 public:
 
+  static constexpr integer MAX_NUM_PHASES = 3;
+
   struct PhaseType
   {
-    static constexpr integer OIL            = 0;
-    static constexpr integer GAS            = 1;
-    static constexpr integer WATER          = 2;
-    static constexpr integer MAX_NUM_PHASES = 3;
+    enum : integer
+    {
+      OIL            = 0,
+      GAS            = 1,
+      WATER          = 2,
+    };
   };
 
   // choose the reference pressure to be the oil pressure for all models
@@ -114,31 +108,27 @@ public:
   CapillaryPressureBase( string const & name,
                          dataRepository::Group * const parent );
 
-  virtual ~CapillaryPressureBase() override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  localIndex numFluidPhases() const { return m_phaseNames.size(); }
+  integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
 
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
-  arrayView3d< real64 const > phaseCapPressure() const { return m_phaseCapPressure; }
-  arrayView4d< real64 const > dPhaseCapPressure_dPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
+  arrayView3d< real64 const, cappres::USD_CAPPRES > phaseCapPressure() const { return m_phaseCapPressure; }
+  arrayView4d< real64 const, cappres::USD_CAPPRES_DS > dPhaseCapPressure_dPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto phaseNamesString = "phaseNames";
-    static constexpr auto phaseTypesString = "phaseTypes";
-    static constexpr auto phaseOrderString = "phaseOrder";
+    static constexpr char const * phaseNamesString() { return "phaseNames"; }
+    static constexpr char const * phaseTypesString() { return "phaseTypes"; }
+    static constexpr char const * phaseOrderString() { return "phaseOrder"; }
 
-    static constexpr auto phaseCapPressureString                    = "phaseCapPressure";                    // Pc_p
-    static constexpr auto dPhaseCapPressure_dPhaseVolFractionString = "dPhaseCapPressure_dPhaseVolFraction"; // dPc_p/dS_p
-  } viewKeysCapillaryPressureBase;
+    static constexpr char const * phaseCapPressureString() { return "phaseCapPressure"; }
+    static constexpr char const * dPhaseCapPressure_dPhaseVolFractionString() { return "dPhaseCapPressure_dPhaseVolFraction"; }
+  };
 
-protected:
-
-  virtual void postProcessInput() override;
+private:
 
   /**
    * @brief Function called internally to resize member arrays
@@ -146,6 +136,15 @@ protected:
    * @param numPts secondary dimension (e.g. number of gauss points per cell)
    */
   void resizeFields( localIndex const size, localIndex const numPts );
+
+  /**
+   * @brief Called internally to set array dim labels.
+   */
+  void setLabels();
+
+protected:
+
+  virtual void postProcessInput() override;
 
   // phase names read from input
   string_array m_phaseNames;
@@ -155,8 +154,8 @@ protected:
   array1d< integer > m_phaseOrder;
 
   // output quantities
-  array3d< real64 >  m_phaseCapPressure;
-  array4d< real64 >  m_dPhaseCapPressure_dPhaseVolFrac;
+  array3d< real64, cappres::LAYOUT_CAPPRES >  m_phaseCapPressure;
+  array4d< real64, cappres::LAYOUT_CAPPRES_DS >  m_dPhaseCapPressure_dPhaseVolFrac;
 
 };
 

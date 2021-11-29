@@ -1,6 +1,8 @@
 #
 # Performance portability
 #
+message("GEOSX_TPL_DIR=${GEOSX_TPL_DIR}")
+
 if(EXISTS ${GEOSX_TPL_DIR}/raja)
   set(RAJA_DIR ${GEOSX_TPL_DIR}/raja CACHE PATH "" FORCE)
 endif()
@@ -18,7 +20,7 @@ if(EXISTS ${GEOSX_TPL_DIR}/hdf5)
 endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/conduit)
-set(CONDUIT_DIR ${GEOSX_TPL_DIR}/conduit CACHE PATH "" FORCE)
+  set(CONDUIT_DIR ${GEOSX_TPL_DIR}/conduit CACHE PATH "" FORCE)
 endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/silo)
@@ -39,6 +41,10 @@ endif()
 
 if(EXISTS ${GEOSX_TPL_DIR}/vtk)
   set(VTK_DIR ${GEOSX_TPL_DIR}/vtk CACHE PATH "" FORCE)
+endif()
+
+if(EXISTS ${GEOSX_TPL_DIR}/fmt)
+  set(FMT_DIR ${GEOSX_TPL_DIR}/fmt CACHE PATH "" FORCE)
 endif()
 
 #
@@ -64,7 +70,7 @@ if(EXISTS ${GEOSX_TPL_DIR}/trilinos)
   set(TRILINOS_DIR ${GEOSX_TPL_DIR}/trilinos CACHE PATH "" FORCE)
 endif()
 
-if(EXISTS ${GEOSX_TPL_DIR}/hypre AND (NOT DEFINED ENABLE_HYPRE OR ENABLE_HYPRE))
+if(EXISTS ${GEOSX_TPL_DIR}/hypre)
   set(HYPRE_DIR ${GEOSX_TPL_DIR}/hypre CACHE PATH "" FORCE)
 endif()
 
@@ -77,6 +83,10 @@ endif()
 #
 if(EXISTS ${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify)
   set(UNCRUSTIFY_EXECUTABLE ${GEOSX_TPL_DIR}/uncrustify/bin/uncrustify CACHE PATH "" FORCE)
+endif()
+
+if(EXISTS ${GEOSX_TPL_DIR}/doxygen/bin/doxygen)
+  set(DOXYGEN_EXECUTABLE ${GEOSX_TPL_DIR}/doxygen/bin/doxygen CACHE PATH "" FORCE)
 endif()
 
 #

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,10 +19,15 @@
 #include "SinglePhaseHybridFVM.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
-#include "mpiCommunications/CommunicationTools.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -44,55 +49,53 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
 
   // one cell-centered dof per cell
   m_numDofPerCell = 1;
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM;
 
 }
 
 
-void SinglePhaseHybridFVM::registerDataOnMesh( Group * const MeshBodies )
+void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 {
 
   // 1) Register the cell-centered data
-  SinglePhaseBase::registerDataOnMesh( MeshBodies );
+  SinglePhaseBase::registerDataOnMesh( meshBodies );
 
   // 2) Register the face data
-  for( auto & mesh : MeshBodies->getSubGroups() )
+  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel * const meshLevel = Group::groupCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    FaceManager * const faceManager = meshLevel->getFaceManager();
+    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
+    FaceManager & faceManager = meshLevel.getFaceManager();
 
     // primary variables: face pressures changes
-    faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::deltaFacePressureString )->
-      setPlotLevel( PlotLevel::LEVEL_0 )->
-      setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the accumulated pressure updates at the faces." );
-
-  }
+    faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() ).
+      setRestartFlags( RestartFlags::NO_WRITE );
+  } );
 }
 
-void SinglePhaseHybridFVM::initializePreSubGroups( Group * const rootGroup )
+void SinglePhaseHybridFVM::initializePreSubGroups()
 {
-  SinglePhaseBase::initializePreSubGroups( rootGroup );
+  SinglePhaseBase::initializePreSubGroups();
 
-  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  if( fvManager.getGroup< HybridMimeticDiscretization >( m_discretizationName ) == nullptr )
-  {
-    GEOSX_ERROR( "The HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM" );
-  }
+  GEOSX_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
+                  catalogName() << " " << getName() <<
+                  ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
+                  InputError );
 }
 
-void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups( Group * const rootGroup )
+void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 {
   GEOSX_MARK_FUNCTION;
 
-  SinglePhaseBase::initializePostInitialConditionsPreSubGroups( rootGroup );
+  SinglePhaseBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = *rootGroup->getGroup< DomainPartition >( keys::domain );
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = *mesh.getElemManager();
-  FaceManager const & faceManager = *mesh.getFaceManager();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
@@ -106,9 +109,9 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups( Group * 
 
   // check that multipliers are stricly larger than 0, which would work with SinglePhaseFVM, but not with SinglePhaseHybridFVM.
   // To deal with a 0 multiplier, we would just have to skip the corresponding face in the FluxKernel
-  string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString );
+  string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
   arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString );
+    faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString() );
 
   RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
   forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
@@ -116,8 +119,34 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups( Group * 
     minVal.min( transMultiplier[iface] );
   } );
 
-  GEOSX_ERROR_IF_LE_MSG( minVal.get(), 0.0,
-                         "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0" );
+  GEOSX_THROW_IF_LE_MSG( minVal.get(), 0.0,
+                         catalogName() << " " << getName() <<
+                         "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                         std::runtime_error );
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  fsManager.apply( 0.0,
+                   domain,
+                   "faceManager",
+                   FlowSolverBase::viewKeyStruct::pressureString(),
+                   [&] ( FieldSpecificationBase const & bc,
+                         string const &,
+                         SortedArrayView< localIndex const > const &,
+                         Group &,
+                         string const & )
+  {
+    GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
+                      "A face Dirichlet boundary condition named " << bc.getName() << " was requested in the XML file. \n"
+                                                                                      "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
+
+  } );
+
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
+  {
+    GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
+                      "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
+                                                                                "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
+  } );
 
 }
 
@@ -131,15 +160,15 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
   SinglePhaseBase::implicitStepSetup( time_n, dt, domain );
 
   // setup the face fields
-  MeshLevel & meshLevel     = *domain.getMeshBodies()->getGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  FaceManager & faceManager = *meshLevel.getFaceManager();
+  MeshLevel & meshLevel     = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  FaceManager & faceManager = meshLevel.getFaceManager();
 
   // get the accumulated pressure updates
   arrayView1d< real64 > const & dFacePres =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
@@ -152,19 +181,18 @@ void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
   SinglePhaseBase::implicitStepComplete( time_n, dt, domain );
 
   // increment the face fields
-  MeshLevel & meshLevel     = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  FaceManager & faceManager = *meshLevel.getFaceManager();
+  MeshLevel & meshLevel     = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  FaceManager & faceManager = meshLevel.getFaceManager();
 
   // get the face-based pressures
   arrayView1d< real64 > const & facePres =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString() );
   arrayView1d< real64 > const & dFacePres =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
   {
     facePres[iface] += dFacePres[iface];
-    dFacePres[iface] = 0.0;
   } );
 }
 
@@ -175,28 +203,29 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   // setup the connectivity of elem fields
   // we need Connectivity::Face because of the two-point upwinding
   // in AssembleOneSidedMassFluxes
-  dofManager.addField( viewKeyStruct::pressureString,
+  dofManager.addField( viewKeyStruct::pressureString(),
                        DofManager::Location::Elem,
+                       1,
                        targetRegionNames() );
 
-  dofManager.addCoupling( viewKeyStruct::pressureString,
-                          viewKeyStruct::pressureString,
+  dofManager.addCoupling( viewKeyStruct::pressureString(),
+                          viewKeyStruct::pressureString(),
                           DofManager::Connector::Face );
 
   // setup the connectivity of face fields
-  dofManager.addField( viewKeyStruct::facePressureString,
+  dofManager.addField( viewKeyStruct::facePressureString(),
                        DofManager::Location::Face,
+                       1,
                        targetRegionNames() );
 
-  dofManager.addCoupling( viewKeyStruct::facePressureString,
-                          viewKeyStruct::facePressureString,
+  dofManager.addCoupling( viewKeyStruct::facePressureString(),
+                          viewKeyStruct::facePressureString(),
                           DofManager::Connector::Elem );
 
   // setup coupling between pressure and face pressure
-  dofManager.addCoupling( viewKeyStruct::facePressureString,
-                          viewKeyStruct::pressureString,
-                          DofManager::Connector::Elem,
-                          true );
+  dofManager.addCoupling( viewKeyStruct::facePressureString(),
+                          viewKeyStruct::pressureString(),
+                          DofManager::Connector::Elem );
 }
 
 void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -208,15 +237,15 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh          = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager const & nodeManager = *mesh.getNodeManager();
-  FaceManager const & faceManager = *mesh.getFaceManager();
+  MeshLevel const & mesh          = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
   MimeticInnerProductBase const & mimeticInnerProductBase =
-    hmDiscretization.getReference< MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString );
+    hmDiscretization.getReference< MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
 
   // node data (for transmissibility computation)
 
@@ -225,31 +254,31 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   // face data
 
   // get the face-based DOF numbers for the assembly
-  string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
+  string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString() );
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
   arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
 
   // get the element dof numbers for the assembly
-  string const & elemDofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  string const & elemDofKey = dofManager.getKey( viewKeyStruct::pressureString() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
-    mesh.getElemManager()->constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+    mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
   elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
   // get the face-centered pressures
   arrayView1d< real64 const > const & facePres =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString() );
   arrayView1d< real64 const > const & dFacePres =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // get the face-centered depth
   arrayView1d< real64 const > const & faceGravCoef =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
 
   // get the face-centered transMultiplier
-  string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString );
+  string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
   arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString );
+    faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString() );
 
   // get the face-to-nodes connectivity for the transmissibility calculation
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
@@ -259,7 +288,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
 
   // tolerance for transmissibility calculation
-  real64 const lengthTolerance = domain.getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol;
+  real64 const lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * m_areaRelTol;
 
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh,
                                                        [&]( localIndex const targetIndex,
@@ -271,6 +300,9 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     SingleFluidBase const & fluid =
       getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
+    PermeabilityBase const & permeabilityModel =
+      getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
+
     mimeticInnerProductDispatch( mimeticInnerProductBase,
                                  [&] ( auto const mimeticInnerProduct )
     {
@@ -281,6 +313,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                                    esr,
                                                    subRegion,
                                                    fluid,
+                                                   permeabilityModel,
                                                    m_regionFilter.toViewConst(),
                                                    nodePosition,
                                                    elemRegionList,
@@ -305,6 +338,43 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   } );
 }
 
+void SinglePhaseHybridFVM::assemblePoroelasticFluxTerms( real64 const time_n,
+                                                         real64 const dt,
+                                                         DomainPartition const & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         arrayView1d< real64 > const & localRhs,
+                                                         string const & jumpDofKey )
+{
+  GEOSX_UNUSED_VAR ( jumpDofKey );
+
+  assembleFluxTerms( time_n,
+                     dt,
+                     domain,
+                     dofManager,
+                     localMatrix,
+                     localRhs );
+}
+
+void SinglePhaseHybridFVM::assembleHydrofracFluxTerms( real64 const time_n,
+                                                       real64 const dt,
+                                                       DomainPartition const & domain,
+                                                       DofManager const & dofManager,
+                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                       arrayView1d< real64 > const & localRhs,
+                                                       CRSMatrixView< real64, localIndex const > const & dR_dAper )
+{
+  GEOSX_UNUSED_VAR ( time_n );
+  GEOSX_UNUSED_VAR ( dt );
+  GEOSX_UNUSED_VAR ( domain );
+  GEOSX_UNUSED_VAR ( dofManager );
+  GEOSX_UNUSED_VAR ( localMatrix );
+  GEOSX_UNUSED_VAR ( localRhs );
+  GEOSX_UNUSED_VAR ( dR_dAper );
+
+  GEOSX_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
+}
+
 void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
                                                     real64 const dt,
                                                     DomainPartition & domain,
@@ -317,21 +387,42 @@ void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
   SinglePhaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 
+void SinglePhaseHybridFVM::applyAquiferBC( real64 const time,
+                                           real64 const dt,
+                                           DomainPartition & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
+}
+
+void SinglePhaseHybridFVM::saveAquiferConvergedState( real64 const & time,
+                                                      real64 const & dt,
+                                                      DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( time, dt, domain );
+}
+
 
 real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & domain,
                                                     DofManager const & dofManager,
                                                     arrayView1d< real64 const > const & localRhs )
 {
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  FaceManager const & faceManager = *mesh.getFaceManager();
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  FaceManager const & faceManager = mesh.getFaceManager();
 
   // here we compute the cell-centered residual norm in the derived class
   // to avoid duplicating a synchronization point
 
   // get a view into local residual vector
 
-  string const elemDofKey = dofManager.getKey( viewKeyStruct::pressureString );
-  string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
+  string const elemDofKey = dofManager.getKey( viewKeyStruct::pressureString() );
+  string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -347,24 +438,30 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
   localIndex subRegionCounter = 0;
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                  ElementSubRegionBase const & subRegion )
+                                  auto const & subRegion )
   {
 
-    arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
+    arrayView1d< globalIndex const > const & elemDofNumber = subRegion.template getReference< array1d< globalIndex > >( elemDofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-    arrayView1d< real64 const > const & refPoro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
+    arrayView1d< real64 const > const & densOld = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
 
-    SinglePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                                        parallelDeviceReduce >( localRhs,
-                                                                                rankOffset,
-                                                                                elemDofNumber,
-                                                                                elemGhostRank,
-                                                                                refPoro,
-                                                                                volume,
-                                                                                densOld,
-                                                                                localResidualNorm );
+    ConstitutiveBase const & solidModel = subRegion.template getConstitutiveModel< ConstitutiveBase >( m_solidModelNames[targetIndex] );
+
+    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &localResidualNorm] ( auto & castedSolidModel )
+    {
+      arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
+
+      SinglePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
+                                                          parallelDeviceReduce >( localRhs,
+                                                                                  rankOffset,
+                                                                                  elemDofNumber,
+                                                                                  elemGhostRank,
+                                                                                  volume,
+                                                                                  densOld,
+                                                                                  porosityOld,
+                                                                                  localResidualNorm );
+    } );
 
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     defaultViscosity += fluid.defaultViscosity();
@@ -421,13 +518,13 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
                                                 arrayView1d< real64 const > const & localSolution,
                                                 real64 const scalingFactor )
 {
-  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  FaceManager const & faceManager = *mesh.getFaceManager();
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  FaceManager const & faceManager = mesh.getFaceManager();
 
   localIndex localCheck = 1;
 
-  string const elemDofKey = dofManager.getKey( viewKeyStruct::pressureString );
-  string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
+  string const elemDofKey = dofManager.getKey( viewKeyStruct::pressureString() );
+  string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -440,9 +537,9 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
       subRegion.ghostRank();
 
     arrayView1d< real64 const > const & pres =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
     arrayView1d< real64 const > const & dPres =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
     localIndex const subRegionSolutionCheck =
       SinglePhaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
@@ -466,9 +563,9 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 
   arrayView1d< real64 const > const & facePres =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString() );
   arrayView1d< real64 const > const & dFacePres =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   localIndex const faceSolutionCheck =
     SinglePhaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
@@ -494,7 +591,7 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
                                                 real64 const scalingFactor,
                                                 DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // here we apply the cell-centered update in the derived class
   // to avoid duplicating a synchronization point
@@ -502,34 +599,25 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
   // 1. apply the cell-centered update
 
   dofManager.addVectorToField( localSolution,
-                               viewKeyStruct::pressureString,
-                               viewKeyStruct::deltaPressureString,
+                               viewKeyStruct::pressureString(),
+                               viewKeyStruct::deltaPressureString(),
                                scalingFactor );
 
   // 2. apply the face-based update
 
   dofManager.addVectorToField( localSolution,
-                               viewKeyStruct::facePressureString,
-                               viewKeyStruct::deltaFacePressureString,
+                               viewKeyStruct::facePressureString(),
+                               viewKeyStruct::deltaFacePressureString(),
                                scalingFactor );
 
   // 3. synchronize
 
   // the tags in fieldNames have to match the tags used in NeighborCommunicator.cpp
   std::map< string, string_array > fieldNames;
-  fieldNames["face"].emplace_back( string( viewKeyStruct::deltaFacePressureString ) );
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
+  fieldNames["face"].emplace_back( string( viewKeyStruct::deltaFacePressureString() ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString() ) );
 
-  CommunicationTools::synchronizeFields( fieldNames,
-                                         &mesh,
-                                         domain.getNeighbors(),
-                                         true );
-
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                  ElementSubRegionBase & subRegion )
-  {
-    updateState( subRegion, targetIndex );
-  } );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
 
 
@@ -539,15 +627,15 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
   SinglePhaseBase::resetStateToBeginningOfStep( domain );
 
   // 2. Reset the face-based fields
-  MeshLevel & mesh          = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  FaceManager & faceManager = *mesh.getFaceManager();
+  MeshLevel & mesh          = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  FaceManager & faceManager = mesh.getFaceManager();
 
   // get the accumulated face pressure updates
   arrayView1d< real64 > const & dFacePres =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
+  dFacePres.zero();
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, string const &, Group * const )

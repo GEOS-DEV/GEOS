@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,7 +20,7 @@
 #define GEOSX_MESH_EDGEMANAGER_HPP_
 
 #include "InterObjectRelation.hpp"
-#include "managers/ObjectManagerBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include "ToElementRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -109,21 +109,21 @@ public:
    * @brief Set the node of the domain boundary object.
    * @param[in] referenceObject the reference of the face manager.
    */
-  void setDomainBoundaryObjects( const ObjectDataStructureBaseT * const referenceObject = nullptr );
+  void setDomainBoundaryObjects( FaceManager const & referenceObject );
 
   /**
    * @brief Set external edges.
    * @details external edges are the edges on the faces which are external
    * @param[in] faceManager the face manager to obtain external face
    */
-  void setIsExternal( FaceManager const * const faceManager );
+  void setIsExternal( FaceManager const & faceManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.
-   * @param[in] faceManager manager of all faces in the DomainPartition
    * @param[in] nodeManager manager of all nodes in the DomainPartition
+   * @param[in] faceManager manager of all faces in the DomainPartition
    */
-  void buildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
+  void buildEdges( NodeManager & nodeManager, FaceManager & faceManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.
@@ -144,7 +144,7 @@ public:
    * [ [global_index_node_0_edge_0, global_index_node1_edge_0], [global_index_node_0_edge_1, global_index_node1_edge_1] ....]
    */
   virtual void
-  extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+  extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager const & nodeManager,
                                                    std::vector< std::vector< globalIndex > > & globalEdgeNodes ) override;
 
   /**
@@ -210,14 +210,6 @@ public:
                                       const map< globalIndex, localIndex > & faceGlobalToLocal );
 
   /**
-   * @brief Add new faces to the faces to edges map.
-   * @param[in] faceManager the FaceManager
-   * @param[in] newFaceIndices the new face indices to be added
-   */
-  void addToEdgeToFaceMap( FaceManager const * const faceManager,
-                           arrayView1d< localIndex const > const & newFaceIndices );
-
-  /**
    * @brief Split an edge (separate its two extremity nodes)
    * @param[in] indexToSplit Index of the edge to split
    * @param[in] parentNodeIndex index of the parent node
@@ -273,34 +265,24 @@ public:
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     /// @cond DO_NOT_DOCUMENT
-    static constexpr auto nodeListString              = "nodeList";
-    static constexpr auto faceListString              = "faceList";
-    static constexpr auto elementRegionListString     = "elemRegionList";
-    static constexpr auto elementSubRegionListString  = "elemSubRegionList";
-    static constexpr auto elementListString           = "elemList";
-    static constexpr auto edgesTofractureConnectorsEdgesString = "edgesToFractureConnectors";
-    static constexpr auto fractureConnectorEdgesToEdgesString = "fractureConnectorsToEdges";
-    static constexpr auto fractureConnectorsEdgesToFaceElementsIndexString = "fractureConnectorsToElementIndex";
+    static constexpr char const * nodeListString() { return "nodeList"; }
+    static constexpr char const * faceListString() { return "faceList"; }
+    static constexpr char const * elementRegionListString() { return "elemRegionList"; }
+    static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
+    static constexpr char const * elementListString() { return "elemList"; }
+    static constexpr char const * edgesTofractureConnectorsEdgesString() { return "edgesToFractureConnectors"; }
+    static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
+    static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
 
-    dataRepository::ViewKey nodesList             = { nodeListString };
-    dataRepository::ViewKey faceList              = { faceListString };
-    dataRepository::ViewKey elementRegionList     = { elementRegionListString };
-    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
-    dataRepository::ViewKey elementList           = { elementListString };
+    dataRepository::ViewKey nodesList             = { nodeListString() };
+    dataRepository::ViewKey faceList              = { faceListString() };
+    dataRepository::ViewKey elementRegionList     = { elementRegionListString() };
+    dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString() };
+    dataRepository::ViewKey elementList           = { elementListString() };
     /// @endcond
   }
   /// viewKeys
   viewKeys;
-
-
-  /**
-   * @struct groupKeyStruct
-   * @brief Container of keys needed to access the data of the class member
-   */
-  struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
-  {}
-  /// groupKeys
-  groupKeys;
 
   ///}@
 

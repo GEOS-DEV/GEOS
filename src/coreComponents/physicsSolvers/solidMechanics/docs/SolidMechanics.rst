@@ -52,7 +52,7 @@ The `SolidMechanics_LagrangianFEM` solves the equations of motion as given by
    T_{ij,j} + \rho(b_{i}-\ddot{x}_{i}) = 0,
 
 which is a 3-dimensional expression for the well known expression of Newtons Second Law (:math:`F = m a`).
-These equations of motion are discritized using the Finite Element Method,
+These equations of motion are discretized using the Finite Element Method,
 which leads to a discrete set of residual equations:
 
 .. math::
@@ -195,18 +195,18 @@ Parameters
 In the preceding XML block, The `SolidMechanics_LagrangianFEM` is specified by the title of the subblock of the `Solvers` block.
 The following attributes are supported in the input block for `SolidMechanics_LagrangianFEM`:
 
-.. include:: /coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM.rst
+.. include:: /coreComponents/schema/docs/SolidMechanics_LagrangianFEM.rst
 
 The following data are allocated and used by the solver:
 
-.. include:: /coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM_other.rst
+.. include:: /coreComponents/schema/docs/SolidMechanics_LagrangianFEM_other.rst
 
 Example
 =========================
 
 An example of a valid XML block is given here:
 
-.. literalinclude:: ../integratedTests/sedov.xml
+.. literalinclude:: ../../../../../inputFiles/solidMechanics/sedov.xml
   :language: xml
   :start-after: <!-- SPHINX_SOLID_MECHANICS_SOLVER -->
   :end-before: <!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->

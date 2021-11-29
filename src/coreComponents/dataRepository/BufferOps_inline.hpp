@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -12,16 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
-#define DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
+#ifndef GEOSX_DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
+#define GEOSX_DATAREPOSITORY_BUFFEROPS_INLINE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
 #include "LvArray/src/limits.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 #include <type_traits>
 
@@ -36,12 +35,11 @@ typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
 Pack( buffer_unit_type * & buffer, T const & var )
 {
   localIndex const sizeOfPackedChars = sizeof(T);
-  static_if( DO_PACKING )
+  if( DO_PACKING )
   {
     memcpy( buffer, &var, sizeOfPackedChars );
     buffer += sizeOfPackedChars;
   }
-  end_static_if
   return sizeOfPackedChars;
 }
 
@@ -52,12 +50,11 @@ Pack( buffer_unit_type * & buffer, T const * const GEOSX_RESTRICT var, INDEX_TYP
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
   sizeOfPackedChars += length * sizeof(T);
-  static_if( DO_PACKING )
+  if( DO_PACKING )
   {
     memcpy( buffer, var, length * sizeof(T) );
     buffer += length * sizeof(T);
   }
-  end_static_if
 
   return sizeOfPackedChars;
 }
@@ -86,14 +83,13 @@ localIndex Pack( buffer_unit_type * & buffer, const string & var )
   const string::size_type varSize = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, varSize );
 
-  static_if( DO_PACKING )
+  if( DO_PACKING )
   {
     memcpy( buffer, var.data(), varSize );
     buffer += varSize;
   }
-  end_static_if
 
-    sizeOfPackedChars += varSize;
+  sizeOfPackedChars += varSize;
   return sizeOfPackedChars;
 }
 
@@ -198,12 +194,11 @@ PackPointer( buffer_unit_type * & buffer, T const * const GEOSX_RESTRICT var, IN
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   sizeOfPackedChars += length * sizeof(T);
-  static_if( DO_PACKING )
+  if( DO_PACKING )
   {
     memcpy( buffer, var, length * sizeof(T) );
     buffer += length * sizeof(T);
   }
-  end_static_if
   return sizeOfPackedChars;
 }
 
@@ -231,7 +226,7 @@ PackArray( buffer_unit_type * & buffer,
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   sizeOfPackedChars += length * sizeof(T);
-  static_if( DO_PACKING )
+  if( DO_PACKING )
   {
     T * const GEOSX_RESTRICT buffer_T = reinterpret_cast< T * >( buffer );
     for( INDEX_TYPE i = 0; i < length; ++i )
@@ -240,7 +235,6 @@ PackArray( buffer_unit_type * & buffer,
     }
     buffer += length * sizeof(T);
   }
-  end_static_if
   return sizeOfPackedChars;
 }
 
@@ -788,6 +782,31 @@ template< bool DO_PACKING >
 localIndex Pack( buffer_unit_type * & buffer,
                  SortedArrayView< localIndex const > const & var,
                  arrayView1d< localIndex const > const & packList,
+                 arraySlice1d< globalIndex const > const & localToGlobal )
+{
+  localIndex length = 0;
+  for( auto a : packList )
+  {
+    length += var.count( a );
+  }
+
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+
+  for( localIndex a=0; a< packList.size(); ++a )
+  {
+    if( var.count( packList[ a ] ) )
+    {
+      sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[packList[a]] );
+    }
+  }
+
+  return sizeOfPackedChars;
+}
+
+template< bool DO_PACKING >
+localIndex Pack( buffer_unit_type * & buffer,
+                 SortedArrayView< localIndex const > const & var,
+                 arrayView1d< localIndex const > const & packList,
                  SortedArrayView< globalIndex const > const & unmappedGlobalIndices,
                  arraySlice1d< globalIndex const > const & localToGlobal )
 {
@@ -873,7 +892,7 @@ localIndex Pack( buffer_unit_type * & buffer,
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   sizeOfPackedChars += length*sizeof(globalIndex);
 
-  static_if( DO_PACKING )
+  if( DO_PACKING )
   {
     globalIndex * const buffer_GI = reinterpret_cast< globalIndex * >(buffer);
     for( localIndex a=0; a<length; ++a )
@@ -890,7 +909,6 @@ localIndex Pack( buffer_unit_type * & buffer,
 
     buffer += length * sizeof(globalIndex);
   }
-  end_static_if
 
   return sizeOfPackedChars;
 }

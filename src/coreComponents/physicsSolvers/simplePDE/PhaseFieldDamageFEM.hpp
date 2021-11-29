@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,7 @@
 
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
 struct stabledt
@@ -51,7 +51,7 @@ public:
     return "PhaseFieldDamageFEM";
   }
 
-  virtual void registerDataOnMesh( Group * const MeshBodies ) override final;
+  virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -70,13 +70,6 @@ public:
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
-
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
-                            bool const setSparsity ) override;
 
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
@@ -106,6 +99,8 @@ public:
                                     arrayView1d< real64 const > const & localSolution,
                                     real64 const scalingFactor,
                                     DomainPartition & domain ) override;
+
+  virtual void updateState( DomainPartition & domain ) override final;
 
   virtual void
   implicitStepSetup( real64 const &,
@@ -137,15 +132,12 @@ public:
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
 //    static constexpr auto coeffFieldName = "coeffFieldName";
-    static constexpr auto coeffName = "coeffField";
-    static constexpr auto localDissipationOption = "localDissipation";
-    static constexpr auto solidModelNamesString = "solidMaterialNames";
+    static constexpr char const * coeffNameString() { return "coeffField"; }
+    static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
+    static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
-    dataRepository::ViewKey timeIntegrationOption =
-    { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName =
-    { "fieldName" };
-
+    dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
+    dataRepository::ViewKey fieldVarName = { "fieldName" };
   } PhaseFieldDamageFEMViewKeys;
 
   inline ParallelVector const * getSolution() const

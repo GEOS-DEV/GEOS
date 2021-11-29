@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_SEPARATECOMPONENTPRECONDITIONER_HPP_
 #define GEOSX_LINEARALGEBRA_SOLVERS_SEPARATECOMPONENTPRECONDITIONER_HPP_
 
-#include "PreconditionerBase.hpp"
+#include "linearAlgebra/common/PreconditionerBase.hpp"
 
 #include <memory>
 
@@ -57,9 +57,7 @@ public:
    */
   virtual ~SeparateComponentPreconditioner() override;
 
-  using PreconditionerBase< LAI >::compute;
-
-  virtual void compute( Matrix const & mat, DofManager const & dofManager ) override;
+  virtual void setup( Matrix const & mat ) override;
 
   /**
    * @brief Apply operator to a vector
@@ -72,12 +70,22 @@ public:
 
   virtual void clear() override;
 
-  /**
-   * @brief Access the preconditioning matrix.
-   * @return reference to the filtered matrix
-   */
-  Matrix const & getPrecondMatrix() const
+  virtual bool hasPreconditionerMatrix() const override
   {
+    return m_precond->hasPreconditionerMatrix();
+  }
+
+  virtual Matrix const & preconditionerMatrix() const override
+  {
+    return m_precond->preconditionerMatrix();
+  }
+
+  /**
+   * @brief @return reference to the filtered matrix
+   */
+  Matrix const & separateComponentMatrix() const
+  {
+    GEOSX_LAI_ASSERT( Base::ready() );
     return m_matSC;
   }
 
@@ -85,7 +93,7 @@ public:
    * @brief Access to the nested preconditioner.
    * @return reference to the preconditioner passed at construction
    */
-  PreconditionerBase< LAI > const & getNestedPrecond() const
+  PreconditionerBase< LAI > const & innerPrecond() const
   {
     return *m_precond;
   }

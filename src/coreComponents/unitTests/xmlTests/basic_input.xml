@@ -32,7 +32,6 @@
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1"
       target="/Outputs/siloOutput"/>
   </Events>
 
@@ -53,7 +52,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <LinearElasticIsotropic
+    <ElasticIsotropic
       name="shale"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
@@ -106,15 +105,13 @@
   <Outputs>
     <Silo
       name="siloOutput"
-      parallelThreads="1"
-      plotFileRoot="plot"
       childDirectory="sub"/>
   </Outputs>
 
   <Geometry>
     <Box
       name="perf"
-      xMin="0, 0, 0"
-      xMax="1, 1, 1"/>
+      xMin="{ 0, 0, 0 }"
+      xMax="{ 1, 1, 1 }"/>
   </Geometry>
 </Problem>

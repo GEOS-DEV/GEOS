@@ -207,11 +207,11 @@ Like any solver, time stepping is driven by events, see :ref:`EventManager`.
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/ProppantTransport.rst
+.. include:: /coreComponents/schema/docs/ProppantTransport.rst
 
 In particular:
 
-* ``discretization`` must point to a Finite Volume flux approximation scheme defined in the Numerical Methods section of the input file (see :ref:`FiniteVolumeDiscretization`)
+* ``discretization`` must point to a Finite Volume flux approximation scheme defined in the Numerical Methods section of the input file (see :ref:`FiniteVolume`)
 * ``proppantName`` must point to a particle fluid model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
 * ``fluidName`` must point to a slurry fluid model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
 * ``solidName`` must point to a solid mechanics model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
@@ -226,7 +226,7 @@ must be prescribed on these fields on cell or face sets of interest. For static 
 In addition, the solver declares a scalar field named ``referencePorosity`` and a vector field
 named ``permeability``, that contains principal values of the symmetric rank-2 permeability tensor
 (tensor axis are assumed aligned with the global coordinate system).
-These fields must be populated via :ref:`FieldSpecification` section and ``permeability`` should
+These fields must be populated via :ref:`XML_FieldSpecification` section and ``permeability`` should
 be supplied as the value of ``coefficientName`` attribute of the flux approximation scheme used.
 
 Example
@@ -234,21 +234,21 @@ Example
 
 First, we specify the proppant transport solver itself and apply it to the fracture region:
 
-.. literalinclude:: /coreComponents/physicsSolvers/multiphysics/integratedTests/FlowProppantTransport_2d.xml
+.. literalinclude:: ../../../../../inputFiles/proppant/FlowProppantTransport2d_base.xml
   :language: xml
   :start-after: <!-- SPHINX_PROPPANT_TRANSPORT_SOLVER_BEGIN -->
   :end-before: <!-- SPHINX_PROPPANT_TRANSPORT_SOLVER_END -->
 
 Then, we specify a compatible flow solver (currently a specialized ``SinglePhaseProppantFVM`` solver must be used):
 
-.. literalinclude:: /coreComponents/physicsSolvers/multiphysics/integratedTests/FlowProppantTransport_2d.xml
+.. literalinclude:: ../../../../../inputFiles/proppant/FlowProppantTransport2d_base.xml
   :language: xml
   :start-after: <!-- SPHINX_PROPPANT_FLOW_SOLVER_BEGIN -->
   :end-before: <!-- SPHINX_PROPPANT_FLOW_SOLVER_END -->
 
 Finally, we couple them through a coupled solver that references the two above:
 
-.. literalinclude:: /coreComponents/physicsSolvers/multiphysics/integratedTests/FlowProppantTransport_2d.xml
+.. literalinclude:: ../../../../../inputFiles/proppant/FlowProppantTransport2d_base.xml
   :language: xml
   :start-after: <!-- SPHINX_PROPPANT_COUPLED_SOLVER_BEGIN -->
   :end-before: <!-- SPHINX_PROPPANT_COUPLED_SOLVER_END -->

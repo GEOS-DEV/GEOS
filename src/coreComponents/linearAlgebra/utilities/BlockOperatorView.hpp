@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,8 +20,9 @@
 #define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
 
 #include "codingUtilities/SFINAE_Macros.hpp"
-#include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
+#include "common/traits.hpp"
 
 namespace geosx
 {
@@ -71,14 +72,6 @@ public:
 
   ///@}
 
-private:
-
-  HAS_MEMBER_FUNCTION( numLocalRows, localIndex, );
-  HAS_MEMBER_FUNCTION( numLocalCols, localIndex, );
-  HAS_MEMBER_FUNCTION_NO_RTYPE( applyTranspose, std::declval< Vector const & >(), std::declval< Vector & >() );
-
-public:
-
   /**
    * @name LinearOperator interface
    */
@@ -119,7 +112,7 @@ public:
    * @note This method only exists if the underlying operator type has it.
    */
   template< typename OP = OPERATOR >
-  std::enable_if_t< HasMemberFunction_applyTranspose< OP > >
+  std::enable_if_t< traits::VectorBasedTraits< Vector >::template HasMemberFunction_applyTranspose< OP > >
   applyTranspose( BlockVectorView< VECTOR > const & src,
                   BlockVectorView< VECTOR > & dst ) const
   {
@@ -161,9 +154,7 @@ public:
    * @return Number of local rows in the operator.
    * @note Method only exists if the underlying operator type has it.
    */
-  template< typename OP = OPERATOR >
-  std::enable_if_t< HasMemberFunction_numLocalRows< OP >, localIndex >
-  numLocalRows() const
+  virtual localIndex numLocalRows() const override
   {
     return computeRowSize( []( OPERATOR const & block ) { return block.numLocalRows(); } );
   }
@@ -173,11 +164,21 @@ public:
    * @return Number of local columns in the operator.
    * @note Method only exists if the underlying operator type has it.
    */
-  template< typename OP = OPERATOR >
-  std::enable_if_t< HasMemberFunction_numLocalCols< OP >, localIndex >
-  numLocalCols() const
+  virtual localIndex numLocalCols() const override
   {
     return computeColSize( []( OPERATOR const & block ) { return block.numLocalCols(); } );
+  }
+
+  /**
+   * @brief Get the MPI communicator the matrix was created with
+   * @return MPI communicator passed in @p create...()
+   *
+   * @note when build without MPI, may return anything
+   *       (MPI_Comm will be a mock type defined in MpiWrapper)
+   */
+  virtual MPI_Comm comm() const override
+  {
+    return m_operators( 0, 0 )->comm();
   }
 
   ///@}

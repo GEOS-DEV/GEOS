@@ -127,14 +127,14 @@ Parameters
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/CompositionalMultiphaseWell.rst
+.. include:: /coreComponents/schema/docs/CompositionalMultiphaseWell.rst
 
 .. _well_input_example:
 
 Example
 =========================
 
-.. literalinclude:: ../integratedTests/compositionalMultiphaseWell/compositional_multiphase_wells_2d.xml
+.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseWell/compositional_multiphase_wells_2d.xml
   :language: xml
   :start-after: <!-- SPHINX_COMP_WELL_SOLVER -->
   :end-before: <!-- SPHINX_COMP_WELL_SOLVER_END -->

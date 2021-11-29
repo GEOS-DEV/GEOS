@@ -2,13 +2,13 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0, 0.0, 0.0">
+    gravityVector="{ 0.0, 0.0, 0.0 }">
     <SinglePhaseFVM
       name="flowSolver"
-      logLevel="0"
       discretization="tpfa"
       fluidNames="{ water }"
       solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
       targetRegions="{ Region2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -17,8 +17,7 @@
         solverType="gmres"
         krylovTol="1.0"
         krylovMaxIter="1"
-        preconditionerType="amg"
-        logLevel="0"/>
+        preconditionerType="amg"/>
     </SinglePhaseFVM>
   </Solvers>
 
@@ -38,13 +37,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin="-0.0001, -0.01, -0.01"
-      xMax=" 0.0001, 1.01, 1.01"/>
+      xMin="{ -0.0001, -0.01, -0.01 }"
+      xMax="{ 0.0001, 1.01, 1.01 }"/>
 
     <Box
       name="sink"
-      xMin=" 9.9999, -0.01, -0.01"
-      xMax="10.0001, 1.01, 1.01"/>
+      xMin="{ 9.9999, -0.01, -0.01 }"
+      xMax="{ 10.0001, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
@@ -71,7 +70,8 @@
       <TwoPointFluxApproximation
         name="tpfa"
         fieldName="pressure"
-        coefficientName="permeability"/>
+        coefficientName="permeability"
+        coefficientModelNames="{ rockPerm }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -88,15 +88,27 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      referenceDensity="1000"
       compressibility="0.0"
-      referenceViscosity="0.001"
       viscosibility="0.0"/>
 
-    <PoreVolumeCompressibleSolid
+    <CompressibleSolidConstantPermeability
       name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
       referencePressure="0.0"
       compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-15 }"/>
   </Constitutive>
 
   <Functions>
@@ -104,46 +116,10 @@
       name="solution"
       inputVarNames="{ elementCenter }"
       coordinateFiles="{ tables/x.tab, tables/y.tab, tables/z.tab }"
-      voxelFile="tables/v.tab"
-      interpolation="linear"/>
+      voxelFile="tables/v.tab"/>
   </Functions>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="permx"
-      component="0"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="permeability"
-      scale="1.0e-12"/>
-
-    <FieldSpecification
-      name="permy"
-      component="1"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="permeability"
-      scale="1.0e-12"/>
-
-    <FieldSpecification
-      name="permz"
-      component="2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="permeability"
-      scale="1.0e-15"/>
-
-    <FieldSpecification
-      name="referencePorosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Region2/cb1"
-      fieldName="referencePorosity"
-      scale="0.1"/>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -68,33 +68,59 @@ public:
   /// Keys appearing in XML
   struct viewKeyStruct
   {
-    static constexpr auto solverTypeString         = "solverType";         ///< Solver type key
-    static constexpr auto preconditionerTypeString = "preconditionerType"; ///< Preconditioner type key
-    static constexpr auto stopIfErrorString        = "stopIfError";        ///< stop if error key
+    /// Solver type key
+    static constexpr char const * solverTypeString() { return "solverType"; }
+    /// Preconditioner type key
+    static constexpr char const * preconditionerTypeString() { return "preconditionerType"; }
+    /// stop if error key
+    static constexpr char const * stopIfErrorString() { return "stopIfError"; }
 
-    static constexpr auto directCheckResidualString = "directCheckResidual";  ///< direct solver check residual key
-    static constexpr auto directEquilString         = "directEquil";          ///< direct solver equilibrate key
-    static constexpr auto directColPermString       = "directColPerm";        ///< direct solver columns permutation key
-    static constexpr auto directRowPermString       = "directRowPerm";        ///< direct solver rows permutation key
-    static constexpr auto directReplTinyPivotString = "directReplTinyPivot";  ///< direct solver replace tiny pivot key
-    static constexpr auto directIterRefString       = "directIterRef";        ///< direct solver iterative refinement key
-    static constexpr auto directParallelString      = "directParallel";       ///< direct solver parallelism key
+    /// direct solver check residual key
+    static constexpr char const * directCheckResidualString() { return "directCheckResidual"; }
+    /// direct solver equilibrate key
+    static constexpr char const * directEquilString() { return "directEquil"; }
+    /// direct solver columns permutation key
+    static constexpr char const * directColPermString() { return "directColPerm"; }
+    /// direct solver rows permutation key
+    static constexpr char const * directRowPermString() { return "directRowPerm"; }
+    /// direct solver replace tiny pivot key
+    static constexpr char const * directReplTinyPivotString() { return "directReplTinyPivot"; }
+    /// direct solver iterative refinement key
+    static constexpr char const * directIterRefString() { return "directIterRef"; }
+    /// direct solver parallelism key
+    static constexpr char const * directParallelString() { return "directParallel"; }
 
-    static constexpr auto krylovMaxIterString     = "krylovMaxIter";     ///< Krylov max iterations key
-    static constexpr auto krylovMaxRestartString  = "krylovMaxRestart";  ///< Krylov max iterations key
-    static constexpr auto krylovTolString         = "krylovTol";         ///< Krylov tolerance key
-    static constexpr auto krylovAdaptiveTolString = "krylovAdaptiveTol"; ///< Krylov adaptive tolerance key
-    static constexpr auto krylovWeakTolString     = "krylovWeakestTol";  ///< Krylov weakest tolerance key
+    /// Krylov max iterations key
+    static constexpr char const * krylovMaxIterString() { return "krylovMaxIter"; }
+    /// Krylov max iterations key
+    static constexpr char const * krylovMaxRestartString() { return "krylovMaxRestart"; }
+    /// Krylov tolerance key
+    static constexpr char const * krylovTolString() { return "krylovTol"; }
+    /// Krylov adaptive tolerance key
+    static constexpr char const * krylovAdaptiveTolString() { return "krylovAdaptiveTol"; }
+    /// Krylov weakest tolerance key
+    static constexpr char const * krylovWeakTolString() { return "krylovWeakestTol"; }
 
-    static constexpr auto amgNumSweepsString     = "amgNumSweeps";       ///< AMG number of sweeps key
-    static constexpr auto amgSmootherString      = "amgSmootherType";    ///< AMG smoother type key
-    static constexpr auto amgCoarseString        = "amgCoarseSolver";    ///< AMG coarse solver key
-    static constexpr auto amgThresholdString     = "amgThreshold";       ///< AMG threshold key
-    static constexpr auto amgNullSpaceTypeString = "amgNullSpaceType";   ///< AMG near null space type key
+    /// AMG number of sweeps key
+    static constexpr char const * amgNumSweepsString() { return "amgNumSweeps"; }
+    /// AMG smoother type key
+    static constexpr char const * amgSmootherString() { return "amgSmootherType"; }
+    /// AMG coarse solver key
+    static constexpr char const * amgCoarseString() { return "amgCoarseSolver"; }
+    /// AMG threshold key
+    static constexpr char const * amgThresholdString() { return "amgThreshold"; }
+    /// AMG near null space type key
+    static constexpr char const * amgNullSpaceTypeString() { return "amgNullSpaceType"; }
 
-    static constexpr auto iluFillString      = "iluFill";       ///< ILU fill key
-    static constexpr auto iluThresholdString = "iluThreshold";  ///< ILU threshold key
-  } viewKeys;
+    static constexpr char const * amgCoarseningString()         { return "amgCoarseningType";           } ///< AMG coarsening key
+    static constexpr char const * amgInterpolationString()      { return "amgInterpolationType";        }   ///< AMG interpolation key
+    static constexpr char const * amgNumFunctionsString()       { return "amgNumFunctions";             }   ///< AMG threshold key
+    static constexpr char const * amgAggresiveNumLevelsString() { return "amgAggresiveCoarseningLevels";}             ///< AMG threshold key
+    /// ILU fill key
+    static constexpr char const * iluFillString() { return "iluFill"; }
+    /// ILU threshold key
+    static constexpr char const * iluThresholdString() { return "iluThreshold"; }
+  };
 
 private:
 

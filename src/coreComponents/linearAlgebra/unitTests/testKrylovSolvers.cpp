@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -16,16 +16,13 @@
  * @file testKrylovSolvers.cpp
  */
 
-#include <gtest/gtest.h>
-
-#include "testLinearAlgebraUtils.hpp"
-
 #include "common/DataTypes.hpp"
-#include "managers/initialization.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/utilities/BlockOperatorWrapper.hpp"
 #include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
+#include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
+#include "linearAlgebra/utilities/BlockOperatorWrapper.hpp"
+
+#include <gtest/gtest.h>
 
 using namespace geosx;
 
@@ -84,7 +81,7 @@ protected:
 
   void test( LinearSolverParameters const & params )
   {
-    sol_true.rand();
+    sol_true.rand( 1984 );
     sol_comp.zero();
     matrix.apply( sol_true, rhs_true );
 
@@ -95,9 +92,10 @@ protected:
     EXPECT_TRUE( solver->result().success() );
 
     // Check that solution is within epsilon of true
-    sol_comp.axpy( -1.0, sol_true );
+    VECTOR sol_diff( sol_comp );
+    sol_diff.axpy( -1.0, sol_true );
     real64 const relTol = cond_est * params.krylov.relTolerance;
-    EXPECT_LT( sol_comp.norm2() / sol_true.norm2(), relTol );
+    EXPECT_LT( sol_diff.norm2() / sol_true.norm2(), relTol );
   }
 };
 
@@ -125,13 +123,13 @@ protected:
   {
     // Compute matrix and preconditioner
     globalIndex constexpr n = 100;
-    compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
-    this->precond.compute( this->matrix );
+    geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
+    this->precond.setup( this->matrix );
 
     // Set up vectors
-    this->sol_true.createWithGlobalSize( this->matrix.numGlobalCols(), MPI_COMM_GEOSX );
-    this->sol_comp.createWithGlobalSize( this->matrix.numGlobalCols(), MPI_COMM_GEOSX );
-    this->rhs_true.createWithGlobalSize( this->matrix.numGlobalRows(), MPI_COMM_GEOSX );
+    this->sol_true.create( this->matrix.numLocalCols(), MPI_COMM_GEOSX );
+    this->sol_comp.create( this->matrix.numLocalCols(), MPI_COMM_GEOSX );
+    this->rhs_true.create( this->matrix.numLocalRows(), MPI_COMM_GEOSX );
 
     // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
     this->cond_est = 1.5 * 4.0 * n * n / std::pow( M_PI, 2 );
@@ -198,7 +196,7 @@ protected:
   void SetUp() override
   {
     globalIndex constexpr n = 100;
-    compute2DLaplaceOperator( MPI_COMM_GEOSX, n, laplace2D );
+    geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, laplace2D );
 
     // We are going to assembly the following dummy system
     // [L 0] [x_true] = [b_0]
@@ -207,7 +205,7 @@ protected:
     this->matrix.set( 1, 1, laplace2D );
 
     // Set up block identity preconditioning operator
-    identity.compute( laplace2D );
+    identity.setup( laplace2D );
     this->precond.set( 0, 0, identity );
     this->precond.set( 1, 1, identity );
 
@@ -218,9 +216,9 @@ protected:
 
     for( localIndex i = 0; i < 2; ++i )
     {
-      this->sol_true.block( i ).createWithGlobalSize( laplace2D.numGlobalCols(), MPI_COMM_GEOSX );
-      this->sol_comp.block( i ).createWithGlobalSize( laplace2D.numGlobalCols(), MPI_COMM_GEOSX );
-      this->rhs_true.block( i ).createWithGlobalSize( laplace2D.numGlobalRows(), MPI_COMM_GEOSX );
+      this->sol_true.block( i ).create( laplace2D.numLocalCols(), MPI_COMM_GEOSX );
+      this->sol_comp.block( i ).create( laplace2D.numLocalCols(), MPI_COMM_GEOSX );
+      this->rhs_true.block( i ).create( laplace2D.numLocalRows(), MPI_COMM_GEOSX );
     }
 
     // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
@@ -265,9 +263,6 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, KrylovSolverBlockTest, PetscInterface, );
 
 int main( int argc, char * * argv )
 {
-  ::testing::InitGoogleTest( &argc, argv );
-  geosx::basicSetup( argc, argv );
-  int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
-  return result;
+  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  return RUN_ALL_TESTS();
 }

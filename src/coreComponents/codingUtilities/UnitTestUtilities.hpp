@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -16,8 +16,8 @@
  * @file UnitTestUtilities.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP
-#define GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP
+#ifndef GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP_
+#define GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP_
 
 #include "gtest/gtest.h"
 
@@ -41,14 +41,14 @@
 #define SKIP_TEST_IN_SERIAL( REASON ) \
   do \
   { \
-    int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX ); \
+    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
     SKIP_TEST_IF( mpiSize == 1, REASON ); \
   } while(0)
 
 #define SKIP_TEST_IN_PARALLEL( REASON ) \
   do \
   { \
-    int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX ); \
+    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
     SKIP_TEST_IF( mpiSize > 1, REASON ); \
   } while(0)
 
@@ -58,7 +58,7 @@ namespace geosx
 namespace testing
 {
 
-constexpr real64 DEFAULT_ABS_TOL = 1E-13;
+constexpr real64 DEFAULT_ABS_TOL = 1E-12;
 constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
 
 ::testing::AssertionResult checkRelativeErrorFormat( const char *, const char *, const char *, const char *,
@@ -71,7 +71,9 @@ constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
     return ::testing::AssertionFailure() << std::scientific << std::setprecision( 5 )
                                          << " relative error: " << delta / value
                                          << " (" << v1 << " vs " << v2 << "),"
-                                         << " exceeds " << relTol << std::endl;
+                                         << " exceeds " << relTol <<". "
+                                         << " absolute error: " << delta << " exeeds "
+                                         << absTol <<std::endl;
   }
   return ::testing::AssertionSuccess();
 }
@@ -160,12 +162,12 @@ void compareMatrices( MATRIX const & matrix1,
   // check the accuracy across local rows
   for( globalIndex i = matrix1.ilower(); i < matrix1.iupper(); ++i )
   {
-    indices1.resize( matrix1.globalRowLength( i ) );
-    values1.resize( matrix1.globalRowLength( i ) );
+    indices1.resize( matrix1.rowLength( i ) );
+    values1.resize( matrix1.rowLength( i ) );
     matrix1.getRowCopy( i, indices1, values1 );
 
-    indices2.resize( matrix2.globalRowLength( i ) );
-    values2.resize( matrix2.globalRowLength( i ) );
+    indices2.resize( matrix2.rowLength( i ) );
+    values2.resize( matrix2.rowLength( i ) );
     matrix2.getRowCopy( i, indices2, values2 );
 
     compareMatrixRow( i, relTol, absTol,
@@ -183,8 +185,8 @@ void compareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & mat
   ASSERT_EQ( matrix1.numRows(), matrix2.numRows() );
   ASSERT_EQ( matrix1.numColumns(), matrix2.numColumns() );
 
-  matrix1.move( LvArray::MemorySpace::CPU, false );
-  matrix2.move( LvArray::MemorySpace::CPU, false );
+  matrix1.move( LvArray::MemorySpace::host, false );
+  matrix2.move( LvArray::MemorySpace::host, false );
 
   // check the accuracy across local rows
   for( localIndex i = 0; i < matrix1.numRows(); ++i )
@@ -199,4 +201,4 @@ void compareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & mat
 
 } // namespace geosx
 
-#endif //GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP
+#endif //GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP_

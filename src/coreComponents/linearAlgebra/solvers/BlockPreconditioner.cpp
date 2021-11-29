@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -47,7 +47,7 @@ BlockPreconditioner< LAI >::~BlockPreconditioner() = default;
 template< typename LAI >
 void BlockPreconditioner< LAI >::reinitialize( Matrix const & mat, DofManager const & dofManager )
 {
-  MPI_Comm const & comm = mat.getComm();
+  MPI_Comm const & comm = mat.comm();
 
   if( m_blockDofs[1].empty() )
   {
@@ -58,8 +58,8 @@ void BlockPreconditioner< LAI >::reinitialize( Matrix const & mat, DofManager co
   {
     dofManager.makeRestrictor( m_blockDofs[i], comm, false, m_restrictors[i] );
     dofManager.makeRestrictor( m_blockDofs[i], comm, true, m_prolongators[i] );
-    m_rhs( i ).createWithLocalSize( m_restrictors[i].numLocalRows(), comm );
-    m_sol( i ).createWithLocalSize( m_restrictors[i].numLocalRows(), comm );
+    m_rhs( i ).create( m_restrictors[i].numLocalRows(), comm );
+    m_sol( i ).create( m_restrictors[i].numLocalRows(), comm );
   }
 }
 
@@ -86,7 +86,7 @@ void BlockPreconditioner< LAI >::applyBlockScaling()
   {
     if( m_scalingOption == BlockScalingOption::FrobeniusNorm )
     {
-      real64 norms[2] = { m_matBlocks( 0, 0 ).normFrobenius(), m_matBlocks( 1, 1 ).normFrobenius() };
+      real64 const norms[2] = { m_matBlocks( 0, 0 ).normFrobenius(), m_matBlocks( 1, 1 ).normFrobenius() };
       m_scaling[0] = std::min( norms[1] / norms[0], 1.0 );
       m_scaling[1] = std::min( norms[0] / norms[1], 1.0 );
     }
@@ -118,7 +118,7 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
       m_matBlocks( 0, 1 ).leftScale( m_rhs( 0 ) );
       Matrix mat11;
       m_matBlocks( 1, 0 ).multiply( m_matBlocks( 0, 1 ), mat11 );
-      m_matBlocks( 1, 1 ).addEntries( mat11, -1.0 );
+      m_matBlocks( 1, 1 ).addEntries( mat11, MatrixPatternOp::Restrict, -1.0 );
       // Restore original scaling
       m_rhs( 0 ).reciprocal();
       m_matBlocks( 0, 1 ).leftScale( m_rhs( 0 ) );
@@ -130,7 +130,7 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
       m_matBlocks( 0, 1 ).apply( m_sol( 1 ), m_rhs( 0 ) );
       m_solvers[0]->apply( m_rhs( 0 ), m_sol( 0 ) );
       m_matBlocks( 1, 0 ).apply( m_sol( 0 ), m_rhs( 1 ) );
-      m_matBlocks( 1, 1 ).addDiagonal( m_rhs( 1 ) );
+      m_matBlocks( 1, 1 ).addDiagonal( m_rhs( 1 ), 1.0 );
       break;
     }
     case SchurComplementOption::FirstBlockUserDefined:
@@ -138,7 +138,7 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
       Matrix const & prec00 = m_solvers[0]->preconditionerMatrix();
       Matrix mat11;
       prec00.multiplyRAP( m_matBlocks( 1, 0 ), m_matBlocks( 0, 1 ), mat11 );
-      m_matBlocks( 1, 1 ).addEntries( mat11, -1.0, false );
+      m_matBlocks( 1, 1 ).addEntries( mat11, MatrixPatternOp::Extend, -1.0 );
       break;
     }
     default:
@@ -149,9 +149,11 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
 }
 
 template< typename LAI >
-void BlockPreconditioner< LAI >::compute( Matrix const & mat,
-                                          DofManager const & dofManager )
+void BlockPreconditioner< LAI >::setup( Matrix const & mat )
 {
+  // Check that DofManager is available
+  GEOSX_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "BlockPreconditioner requires a DofManager" );
+
   // Check that user has set block solvers
   GEOSX_LAI_ASSERT( m_solvers[0] != nullptr );
   GEOSX_LAI_ASSERT( m_solvers[1] != nullptr );
@@ -163,12 +165,12 @@ void BlockPreconditioner< LAI >::compute( Matrix const & mat,
                        mat.numGlobalRows() != this->numGlobalRows() ||
                        mat.numGlobalCols() != this->numGlobalRows();
 
-  Base::compute( mat, dofManager );
+  Base::setup( mat );
 
   // If the matrix size/structure has changed, need to resize internal LA objects and recompute restrictors.
   if( newSize )
   {
-    reinitialize( mat, dofManager );
+    reinitialize( mat, *mat.dofManager() );
   }
 
   // Extract diagonal blocks
@@ -183,9 +185,9 @@ void BlockPreconditioner< LAI >::compute( Matrix const & mat,
   }
 
   applyBlockScaling();
-  m_solvers[0]->compute( m_matBlocks( 0, 0 ), dofManager );
+  m_solvers[0]->setup( m_matBlocks( 0, 0 ) );
   computeSchurComplement();
-  m_solvers[1]->compute( m_matBlocks( 1, 1 ), dofManager );
+  m_solvers[1]->setup( m_matBlocks( 1, 1 ) );
 }
 
 template< typename LAI >

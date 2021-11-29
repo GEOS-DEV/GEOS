@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -22,6 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
+#include "mesh/ElementType.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "FiniteElementDispatch.hpp"
 
@@ -31,7 +32,6 @@ namespace geosx
 
 class NodeManager;
 class CellBlockManager;
-class ElementSubRegionBase;
 
 // TODO remove when these quantities are placed inside the FiniteElementBase
 // class.
@@ -81,14 +81,14 @@ public:
    *   instantiation.
    */
   std::unique_ptr< finiteElement::FiniteElementBase >
-  factory( string const & parentElementShape ) const;
+  factory( ElementType const parentElementShape ) const;
 
 private:
 
   struct viewKeyStruct
   {
-    static constexpr auto orderString = "order";
-    static constexpr auto formulationString = "formulation";
+    static constexpr char const * orderString() { return "order"; }
+    static constexpr char const * formulationString() { return "formulation"; }
   };
 
   /// The order of the finite element basis
@@ -114,8 +114,6 @@ FiniteElementDiscretization::
   array4d< real64 > & dNdX = elementSubRegion->dNdX();
   array2d< real64 > & detJ = elementSubRegion->detJ();
   auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
-
-  string const elementTypeString = elementSubRegion->getElementTypeString();
 
   constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
   constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;

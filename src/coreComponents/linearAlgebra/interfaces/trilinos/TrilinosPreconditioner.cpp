@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -13,7 +13,7 @@
  */
 
 /**
- * @file PreconditionerAMG.cpp
+ * @file TrilinosPreconditioner.cpp
  */
 
 #include "TrilinosPreconditioner.hpp"
@@ -21,7 +21,7 @@
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 #include <Epetra_Operator.h>
-#include <Epetra_FEVector.h>
+#include <Epetra_Vector.h>
 #include <Epetra_FECrsMatrix.h>
 #include <ml_MultiLevelPreconditioner.h>
 #include <Ifpack.h>
@@ -31,12 +31,12 @@ namespace geosx
 
 TrilinosPreconditioner::TrilinosPreconditioner( LinearSolverParameters params )
   : Base{},
-  m_parameters( std::move( params ) ),
+  m_params( std::move( params ) ),
   m_precond{},
   m_nullSpacePointer{}
 {}
 
-void ConvertRigidBodyModes( array1d< EpetraVector > const & nearNullKernel,
+void convertRigidBodyModes( array1d< EpetraVector > const & nearNullKernel,
                             array2d< real64 > & nullSpacePointer )
 {
   if( nearNullKernel.empty() )
@@ -51,10 +51,11 @@ void ConvertRigidBodyModes( array1d< EpetraVector > const & nearNullKernel,
     nullSpacePointer.resize( numRBM, size );
     for( localIndex k = 0; k < numRBM; ++k )
     {
-      for( localIndex j = 0; j < size; ++j )
+      arrayView1d< real64 const > const values = nearNullKernel[k].values();
+      forAll< parallelHostPolicy >( size, [k, values, nsp = nullSpacePointer.toView()]( localIndex const j )
       {
-        nullSpacePointer( k, j ) = nearNullKernel[k].get( nearNullKernel[k].getGlobalRowID( j ) );
-      }
+        nsp( k, j ) = values[j];
+      } );
     }
   }
 }
@@ -62,13 +63,13 @@ void ConvertRigidBodyModes( array1d< EpetraVector > const & nearNullKernel,
 TrilinosPreconditioner::TrilinosPreconditioner( LinearSolverParameters params,
                                                 array1d< Vector > const & nearNullKernel )
   : Base{},
-  m_parameters( std::move( params ) ),
+  m_params( std::move( params ) ),
   m_precond{},
   m_nullSpacePointer{}
 {
-  if( m_parameters.amg.nullSpaceType == "rigidBodyModes" )
+  if( m_params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
   {
-    ConvertRigidBodyModes( nearNullKernel, m_nullSpacePointer );
+    convertRigidBodyModes( nearNullKernel, m_nullSpacePointer );
   }
 }
 
@@ -78,53 +79,73 @@ TrilinosPreconditioner::~TrilinosPreconditioner() = default;
 namespace
 {
 
-string const & getMLCycleType( string const & value )
+string getMLCycleType( LinearSolverParameters::AMG::CycleType const & value )
 {
-  static std::map< string, string > const optionMap =
+  static std::map< LinearSolverParameters::AMG::CycleType, string > const optionMap =
   {
-    { "V", "MGV" },
-    { "W", "MGW" },
+    { LinearSolverParameters::AMG::CycleType::V, "MGV" },
+    { LinearSolverParameters::AMG::CycleType::W, "MGW" },
   };
 
   GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML cycle option: " << value );
   return optionMap.at( value );
 }
 
-string const & getMLSmootherType( string const & value )
+string getMLSmootherType( LinearSolverParameters::AMG::SmootherType const & value )
 {
-  static std::map< string, string > const optionMap =
+  static std::map< LinearSolverParameters::AMG::SmootherType, string > const optionMap =
   {
-    { "jacobi", "Jacobi" },
-    { "blockJacobi", "block Jacobi" },
-    { "gaussSeidel", "Gauss-Seidel" },
-    { "blockGaussSeidel", "block Gauss-Seidel" },
-    { "chebyshev", "Chebyshev" },
-    { "icc", "IC" },
-    { "ilu", "ILU" },
-    { "ilut", "ILUT" },
+    { LinearSolverParameters::AMG::SmootherType::default_, "Chebyshev" },
+    { LinearSolverParameters::AMG::SmootherType::jacobi, "Jacobi" },
+    { LinearSolverParameters::AMG::SmootherType::l1jacobi, "Jacobi" },
+    { LinearSolverParameters::AMG::SmootherType::fgs, "Gauss-Seidel" },
+    { LinearSolverParameters::AMG::SmootherType::bgs, "Gauss-Seidel" },
+    { LinearSolverParameters::AMG::SmootherType::sgs, "symmetric Gauss-Seidel" },
+    { LinearSolverParameters::AMG::SmootherType::l1sgs, "symmetric Gauss-Seidel" },
+    { LinearSolverParameters::AMG::SmootherType::chebyshev, "Chebyshev" },
+    { LinearSolverParameters::AMG::SmootherType::ic0, "IC" },
+    { LinearSolverParameters::AMG::SmootherType::ilu0, "ILU" },
+    { LinearSolverParameters::AMG::SmootherType::ilut, "ILUT" },
   };
 
   GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML smoother option: " << value );
   return optionMap.at( value );
 }
 
-string const & getMLCoarseType( string const & value )
+string getMLCoarseType( LinearSolverParameters::AMG::CoarseType const & value )
 {
-  static std::map< string, string > const optionMap =
+  static std::map< LinearSolverParameters::AMG::CoarseType, string > const optionMap =
   {
-    { "jacobi", "Jacobi" },
-    { "gaussSeidel", "Gauss-Seidel" },
-    { "blockGaussSeidel", "block Gauss-Seidel" },
-    { "chebyshev", "Chebyshev" },
-    { "direct", "Amesos-KLU"},
+    { LinearSolverParameters::AMG::CoarseType::default_, "Amesos-KLU" },
+    { LinearSolverParameters::AMG::CoarseType::jacobi, "Jacobi" },
+    { LinearSolverParameters::AMG::CoarseType::l1jacobi, "Jacobi" },
+    { LinearSolverParameters::AMG::CoarseType::fgs, "Gauss-Seidel" },
+    { LinearSolverParameters::AMG::CoarseType::bgs, "Gauss-Seidel" },
+    { LinearSolverParameters::AMG::CoarseType::sgs, "symmetric Gauss-Seidel" },
+    { LinearSolverParameters::AMG::CoarseType::l1sgs, "symmetric Gauss-Seidel" },
+    { LinearSolverParameters::AMG::CoarseType::chebyshev, "Chebyshev" },
+    { LinearSolverParameters::AMG::CoarseType::direct, "Amesos-KLU"},
   };
 
   GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML coarse solver option: " << value );
   return optionMap.at( value );
 }
 
+string getMLPreOrPostSmoothingType( LinearSolverParameters::AMG::PreOrPost const & value )
+{
+  static std::map< LinearSolverParameters::AMG::PreOrPost, string > const optionMap =
+  {
+    { LinearSolverParameters::AMG::PreOrPost::pre, "pre" },
+    { LinearSolverParameters::AMG::PreOrPost::post, "post" },
+    { LinearSolverParameters::AMG::PreOrPost::both, "both" }
+  };
+
+  GEOSX_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML smoothing direction option: " << value );
+  return optionMap.at( value );
+}
+
 std::unique_ptr< Epetra_Operator >
-CreateMLOperator( LinearSolverParameters const & params,
+createMLOperator( LinearSolverParameters const & params,
                   Epetra_RowMatrix const & matrix,
                   array2d< real64 > const & nullSpacePointer )
 {
@@ -139,14 +160,14 @@ CreateMLOperator( LinearSolverParameters const & params,
   list.set( "smoother: sweeps", params.amg.numSweeps );
   list.set( "prec type", getMLCycleType( params.amg.cycleType ) );
   list.set( "smoother: type", getMLSmootherType( params.amg.smootherType ) );
-  list.set( "smoother: pre or post", params.amg.preOrPostSmoothing );
+  list.set( "smoother: pre or post", getMLPreOrPostSmoothingType( params.amg.preOrPostSmoothing ) );
   list.set( "coarse: type", getMLCoarseType( params.amg.coarseType ) );
 
-  if( params.amg.nullSpaceType == "constantModes" )
+  if( params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::constantModes )
   {
     list.set( "null space: type", "default vectors" );
   }
-  else if( params.amg.nullSpaceType == "rigidBodyModes" && nullSpacePointer.size( 0 ) > 0 )
+  else if( params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes && !nullSpacePointer.empty() )
   {
     // Add user-defined null space / rigid body mode support
     list.set( "null space: type", "pre-computed" );
@@ -166,11 +187,14 @@ Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerTy
   {
     { LinearSolverParameters::PreconditionerType::iluk, Ifpack::ILU },
     { LinearSolverParameters::PreconditionerType::ilut, Ifpack::ILUT },
-    { LinearSolverParameters::PreconditionerType::icc, Ifpack::IC },
+    { LinearSolverParameters::PreconditionerType::ic, Ifpack::IC },
     { LinearSolverParameters::PreconditionerType::ict, Ifpack::ICT },
+    { LinearSolverParameters::PreconditionerType::chebyshev, Ifpack::CHEBYSHEV },
     { LinearSolverParameters::PreconditionerType::jacobi, Ifpack::POINT_RELAXATION },
-    { LinearSolverParameters::PreconditionerType::gs, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::fgs, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::bgs, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::sgs, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::direct, Ifpack::AMESOS }
   };
 
   GEOSX_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
@@ -181,7 +205,7 @@ string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const
   static std::map< LinearSolverParameters::PreconditionerType, string > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::jacobi, "Jacobi" },
-    { LinearSolverParameters::PreconditionerType::gs, "Gauss-Seidel" },
+    { LinearSolverParameters::PreconditionerType::fgs, "Gauss-Seidel" },
     { LinearSolverParameters::PreconditionerType::sgs, "symmetric Gauss-Seidel" },
   };
 
@@ -190,22 +214,41 @@ string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const
 }
 
 std::unique_ptr< Epetra_Operator >
-CreateIfpackOperator( LinearSolverParameters const & params, Epetra_RowMatrix const & matrix )
+createIfpackOperator( LinearSolverParameters const & params,
+                      Epetra_RowMatrix const & matrix )
 {
   Ifpack::EPrecType const type = getIfpackPrecondType( params.preconditionerType );
   std::unique_ptr< Ifpack_Preconditioner > precond( Ifpack::Create( type,
                                                                     const_cast< Epetra_RowMatrix * >( &matrix ),
                                                                     params.dd.overlap ) );
   Teuchos::ParameterList list;
-  if( type == Ifpack::POINT_RELAXATION )
+  switch( type )
   {
-    list.set( "relaxation: type", getIfpackRelaxationType( params.preconditionerType ) );
-  }
-  else
-  {
-    list.set( "fact: level-of-fill", params.ilu.fill );
-    list.set( "fact: ilut level-of-fill", std::max( real64( params.ilu.fill ), 1.0 ) );
-    list.set( "fact: ict level-of-fill", std::max( real64( params.ilu.fill ), 1.0 ) );
+    case Ifpack::POINT_RELAXATION:
+    {
+      list.set( "relaxation: type", getIfpackRelaxationType( params.preconditionerType ) );
+      break;
+    }
+    case Ifpack::ILU:
+    case Ifpack::IC:
+    {
+      list.set( "fact: level-of-fill", params.ifact.fill );
+      break;
+    }
+    case Ifpack::ILUT:
+    {
+      list.set( "fact: ilut level-of-fill", std::max( real64( params.ifact.fill ), 1.0 ) );
+      break;
+    }
+    case Ifpack::ICT:
+    {
+      list.set( "fact: ict level-of-fill", std::max( real64( params.ifact.fill ), 1.0 ) );
+      break;
+    }
+    default:
+    {
+      break;
+    }
   }
 
   GEOSX_LAI_CHECK_ERROR( precond->SetParameters( list ) );
@@ -216,31 +259,44 @@ CreateIfpackOperator( LinearSolverParameters const & params, Epetra_RowMatrix co
 
 } // namespace
 
-
-void TrilinosPreconditioner::compute( Matrix const & mat )
+EpetraMatrix const & TrilinosPreconditioner::setupPreconditioningMatrix( EpetraMatrix const & mat )
 {
-  Base::compute( mat );
+  if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg && m_params.amg.separateComponents )
+  {
+    mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
+    return m_precondMatrix;
+  }
+  return mat;
+}
+
+void TrilinosPreconditioner::setup( Matrix const & mat )
+{
+  EpetraMatrix const & precondMat = setupPreconditioningMatrix( mat );
+  Base::setup( precondMat );
 
   // To be able to use Trilinos solvers we need to disable floating point exceptions
   // In particular, we want to avoid a ML FPE crashes on Mac
   LvArray::system::FloatingPointExceptionGuard guard;
 
-  switch( m_parameters.preconditionerType )
+  switch( m_params.preconditionerType )
   {
     case LinearSolverParameters::PreconditionerType::amg:
     {
-      m_precond = CreateMLOperator( m_parameters, mat.unwrapped(), m_nullSpacePointer );
+      m_precond = createMLOperator( m_params, precondMat.unwrapped(), m_nullSpacePointer );
       break;
     }
     case LinearSolverParameters::PreconditionerType::jacobi:
-    case LinearSolverParameters::PreconditionerType::gs:
+    case LinearSolverParameters::PreconditionerType::fgs:
+    case LinearSolverParameters::PreconditionerType::bgs:
     case LinearSolverParameters::PreconditionerType::sgs:
+    case LinearSolverParameters::PreconditionerType::chebyshev:
     case LinearSolverParameters::PreconditionerType::iluk:
     case LinearSolverParameters::PreconditionerType::ilut:
-    case LinearSolverParameters::PreconditionerType::icc:
+    case LinearSolverParameters::PreconditionerType::ic:
     case LinearSolverParameters::PreconditionerType::ict:
+    case LinearSolverParameters::PreconditionerType::direct:
     {
-      m_precond = CreateIfpackOperator( m_parameters, mat.unwrapped() );
+      m_precond = createIfpackOperator( m_params, precondMat.unwrapped() );
       break;
     }
     case LinearSolverParameters::PreconditionerType::none:
@@ -250,7 +306,7 @@ void TrilinosPreconditioner::compute( Matrix const & mat )
     }
     default:
     {
-      GEOSX_ERROR( "Preconditioner type not supported in Trilinos interface: " << m_parameters.preconditionerType );
+      GEOSX_ERROR( "Preconditioner type not supported in Trilinos interface: " << m_params.preconditionerType );
     }
   }
 }
@@ -272,6 +328,7 @@ void TrilinosPreconditioner::apply( Vector const & src,
   {
     GEOSX_LAI_ASSERT( m_precond );
     m_precond->ApplyInverse( src.unwrapped(), dst.unwrapped() );
+    dst.touch();
   }
 }
 

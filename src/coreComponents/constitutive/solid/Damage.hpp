@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -41,14 +41,21 @@
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
-#define QUADRATIC_DISSIPATION 0
-#define LORENTZ 0
+
 #include "constitutive/solid/SolidBase.hpp"
 
 namespace geosx
 {
 namespace constitutive
 {
+
+// DAMAGE MODEL UPDATES
+//
+// NOTE: This model uses the m_newStress array to represent the stress in an
+//       elastic, "undamaged" configuration.  We then scale the results
+//       by the damage factor whenever the true stress is requested through an update
+//       function.  The developer should be very cautious if accessing the stress
+//       directly through an arrayView, as it does not represent the true stress.
 
 template< typename UPDATE_BASE >
 class DamageUpdates : public UPDATE_BASE
@@ -69,61 +76,19 @@ public:
     m_criticalStrainEnergy( inputcriticalStrainEnergy )
   {}
 
+  using DiscretizationOps = typename UPDATE_BASE::DiscretizationOps;
 
-  using UPDATE_BASE::setDiscretizationOps;
-  using UPDATE_BASE::getStiffness;
-  using UPDATE_BASE::smallStrainNoState;
-  using UPDATE_BASE::smallStrain;
-  using UPDATE_BASE::hypoElastic;
-  using UPDATE_BASE::hyperElastic;
+  using UPDATE_BASE::smallStrainNoStateUpdate;
+  using UPDATE_BASE::smallStrainUpdate;
+  using UPDATE_BASE::smallStrainNoStateUpdate_StressOnly;
+  using UPDATE_BASE::smallStrainUpdate_StressOnly;
+  using UPDATE_BASE::hypoUpdate;
+  using UPDATE_BASE::hypoUpdate_StressOnly;
+  using UPDATE_BASE::hyperUpdate;
+  using UPDATE_BASE::hyperUpdate_StressOnly;
+  using UPDATE_BASE::saveConvergedState;
 
-  //Quasi-Quadratic Lorentz Degradation Function
-  #if LORENTZ
-
-  //Lorentz type Degradation Function
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationValue( localIndex const k,
-                                      localIndex const q ) const override
-  {
-    #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
-    #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    #endif
-    real64 p = 1;
-    return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
-  }
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationDerivative( real64 const d ) const override
-  {
-    #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
-    #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    #endif
-    real64 p = 1;
-    return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
-  }
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  virtual real64 GetDegradationSecondDerivative( real64 const d ) const override
-  {
-    #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
-    #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
-    #endif
-    real64 p = 1;
-    return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
-  }
-
-  #else
-  //Standard Quadratic Degradation Function
+  //Standard quadratic degradation functions
 
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
@@ -133,6 +98,7 @@ public:
     return (1 - m_damage( k, q ))*(1 - m_damage( k, q ));
   }
 
+
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const
@@ -140,52 +106,38 @@ public:
     return -2*(1 - d);
   }
 
+
   GEOSX_FORCE_INLINE
   GEOSX_HOST_DEVICE
   virtual real64 getDegradationSecondDerivative( real64 const d ) const
   {
-    GEOSX_UNUSED_VAR( d )
+    GEOSX_UNUSED_VAR( d );
     return 2.0;
   }
-  #endif
 
-  //the only modification here is to multiply all entries of c by g(d)
-  GEOSX_FORCE_INLINE
+
   GEOSX_HOST_DEVICE
-  virtual void getStiffness( localIndex const k,
-                             localIndex const q,
-                             real64 (& c)[6][6] ) const override
+  virtual void smallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  real64 const ( &strainIncrement )[6],
+                                  real64 ( & stress )[6],
+                                  DiscretizationOps & stiffness ) const override
   {
-    UPDATE_BASE::getStiffness( k, q, c );
-    real64 const damageFactor = getDegradationValue( k, q );
-    for( localIndex i=0; i<6; ++i )
-    {
-      for( localIndex j=0; j<6; ++j )
-      {
-        c[i][j] *= damageFactor;
-      }
-    }
-
-  }
-
-  GEOSX_FORCE_INLINE
-  GEOSX_HOST_DEVICE
-  void setDiscretizationOps( localIndex const k,
-                             localIndex const q,
-                             typename UPDATE_BASE::DiscretizationOps & discOps ) const
-  {
-    UPDATE_BASE::setDiscretizationOps( k, q, discOps );
-    real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
-    discOps.scaleParams( damageFactor );
+    UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
+    real64 factor = getDegradationValue( k, q );
+    LvArray::tensorOps::scale< 6 >( stress, factor );
+    stiffness.scaleParams( factor );
   }
 
 
-  //the only modification here is to enforce the monotonicity of the active SED (history approach from Miehe's paper)
+  // TODO: The code below assumes the strain energy density will never be
+  //       evaluated in a non-converged / garbage configuration.
+
   GEOSX_HOST_DEVICE
-  virtual real64 calculateActiveStrainEnergyDensity( localIndex const k,
-                                                     localIndex const q ) const
+  virtual real64 getStrainEnergyDensity( localIndex const k,
+                                         localIndex const q ) const override
   {
-    real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity( k, q );
+    real64 const sed = SolidBaseUpdates::getStrainEnergyDensity( k, q );
 
     if( sed > m_strainEnergyDensity( k, q ) )
     {
@@ -193,24 +145,6 @@ public:
     }
 
     return m_strainEnergyDensity( k, q );
-  }
-
-  //just multiply all entries of the stress tensor by g(d)
-  GEOSX_HOST_DEVICE
-  virtual void getStress( localIndex const k,
-                          localIndex const q,
-                          real64 (& stress)[6] ) const override
-  {
-    //no tension-compression assymmetry
-    real64 const damageFactor = getDegradationValue( k, q );
-
-    stress[0] = this->m_stress( k, q, 0 ) * damageFactor;
-    stress[1] = this->m_stress( k, q, 1 ) * damageFactor;
-    stress[2] = this->m_stress( k, q, 2 ) * damageFactor;
-    stress[3] = this->m_stress( k, q, 3 ) * damageFactor;
-    stress[4] = this->m_stress( k, q, 4 ) * damageFactor;
-    stress[5] = this->m_stress( k, q, 5 ) * damageFactor;
-
   }
 
   GEOSX_HOST_DEVICE
@@ -240,7 +174,6 @@ public:
   real64 const m_lengthScale;
   real64 const m_criticalFractureEnergy;
   real64 const m_criticalStrainEnergy;
-
 };
 
 
@@ -259,17 +192,16 @@ public:
   Damage( string const & name, dataRepository::Group * const parent );
   virtual ~Damage() override = default;
 
-
   static string catalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void postProcessInput() override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 
-  KernelWrapper createKernelUpdates()
+  KernelWrapper createKernelUpdates() const
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
                                                                        m_strainEnergyDensity.toView(),
@@ -280,15 +212,14 @@ public:
 
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
-    static constexpr auto damageString =  "damage";
-    static constexpr auto strainEnergyDensityString =  "strainEnergyDensity";
+    static constexpr char const * damageString() { return "damage"; }
+    static constexpr char const * strainEnergyDensityString() { return "strainEnergyDensity"; }
     /// string/key for regularization length
-    static constexpr auto lengthScaleString  = "lengthScale";
+    static constexpr char const * lengthScaleString() { return "lengthScale"; }
     /// string/key for Gc
-    static constexpr auto criticalFractureEnergyString = "criticalFractureEnergy";
+    static constexpr char const * criticalFractureEnergyString() { return "criticalFractureEnergy"; }
     /// string/key for sigma_c
-    static constexpr auto criticalStrainEnergyString = "criticalStrainEnergy";
-
+    static constexpr char const * criticalStrainEnergyString() { return "criticalStrainEnergy"; }
   };
 
 
