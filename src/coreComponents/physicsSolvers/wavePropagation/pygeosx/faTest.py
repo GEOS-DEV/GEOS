@@ -24,12 +24,12 @@ def main():
                                         receivers_depth = 1951)
 
     acquisition.add_xml(sys.argv[2])
-    acquisition.calculDt()
+    #acquisition.calculDt()
 
     #Initialize GEOSX, get Acoustic Solver, get HDF5 Outputs
     problem = pygeosx.initialize(rank, sys.argv)
     acousticSolver = pygeosx.pysolver.Solver("/Solvers/acousticSolver")
-    hdf5 = pygeosx.pyhdf5.HDF5()
+    #hdf5 = pygeosx.pyhdf5.HDF5()
 
     #Set time variables
     maxTime = 2.0
@@ -67,18 +67,18 @@ def main():
             time += dt
 
             #Collect waveField values
-            hdf5.collect("waveField", time, dt)
+            #hdf5.collect("waveField", time, dt)
 
             i += 1
         #Export pressure at receivers positions to .segy file
-        exportToSegy(table = pressureAtReceivers.to_numpy(),
-                     shot = shot,
-                     filename = "pressure_Shot"+shot.id,
-                     directory = acquisition.output,
-                     rank = rank)
+        #exportToSegy(table = pressureAtReceivers.to_numpy(),
+        #             shot = shot,
+        #             filename = "pressure_Shot"+shot.id,
+        #             directory = acquisition.output,
+        #             rank = rank)
 
         #Output waveField values
-        hdf5.output("waveField", time, dt)
+        #hdf5.output("waveField", time, dt)
 
         shot.flag = "Done"
         resetWaveField(problem)

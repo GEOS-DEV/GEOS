@@ -11,6 +11,7 @@ rank = comm.Get_rank()
 
 def main():
     #Set acquisition
+
     acquisition = EQUISPACEDAcquisition(boundary=[[0,2000],[0,2000],[0,2000]],
                                         dt=0.005,
                                         velocity_model=1500,
@@ -18,33 +19,52 @@ def main():
                                         end_source_pos      = [1501, 1001],
                                         start_receivers_pos = [[21, 1001]],
                                         end_receivers_pos   = [[1951, 1001]],
-                                        number_of_sources   = 1,
-                                        number_of_receivers = 50,
+                                        number_of_sources   = 2,
+                                        number_of_receivers = 100,
                                         source_depth = 1901,
                                         receivers_depth = 1951)
-
+    """
+    acquisition = EQUISPACEDAcquisition(boundary=[[0,13520],[0,13520],[0,4200]],
+                                dt=0.002,
+                                velocity_model="/home/julien/codes/SEP_REDUCE_Model/338x338x105_velModel.geos",
+                                start_source_pos    = [7001, 7001],
+                                end_source_pos      = [12001, 7001],
+                                start_receivers_pos = [[21, 7001]],
+                                end_receivers_pos   = [[13501, 7001]],
+                                number_of_sources   = 1,
+                                number_of_receivers = 676,
+                                source_depth = 4099,
+                                receivers_depth = 4149)
+    """
     acquisition.add_xml(sys.argv[2])
     acquisition.limitedAperture(500)
     acquisition.calculDt()
 
 
-    maxTime = 1.0
+    maxTime = 2.0
     outputSeismoTraceInterval = 5
     outputWaveFieldInterval = 100
 
+
+    result = acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acquisition, rank=rank)
+
+
+
+def acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acquisition, geosx_args=sys.argv, rank=0):
     #Loop over the shots
+    segyList = []
     ishot=0
     for shot in acquisition.shots:
-
+        geosx_args[2] = shot.xml
         dt = shot.dt
         dtSeismoTrace = dt * outputSeismoTraceInterval
         nsamples = int(maxTime/(dt*outputSeismoTraceInterval))+1
 
         #Initialize GEOSX, get Acoustic Solver, get HDF5 Outputs
         if ishot == 0:
-            problem = pygeosx.initialize(rank, sys.argv)
+            problem = pygeosx.initialize(rank, geosx_args)
         else:
-            problem = pygeosx.reinit(sys.argv)
+            problem = pygeosx.reinit(geosx_args)
 
         acousticSolver = pygeosx.pysolver.Solver("/Solvers/acousticSolver")
         hdf5 = pygeosx.pyhdf5.HDF5()
@@ -79,6 +99,7 @@ def main():
                      filename = "pressure_Shot"+shot.id,
                      directory = acquisition.output,
                      rank = rank)
+        segyList.append("pressure_Shot"+shot.id)
 
         #Output waveField values
         hdf5.output("waveField", time, dt)
@@ -93,6 +114,7 @@ def main():
 
     pygeosx._finalize()
 
+    return segyList
 
 
 if __name__ == "__main__":

@@ -5,7 +5,8 @@ Created on 9/02/2021
 '''
 from seismicUtilities.acquisition import EQUISPACEDAcquisition
 from seismicUtilities.client import Client, SLURMCluster, Future
-from seismicUtilities.AcousticShot import acoustic_shots
+#from seismicUtilities.AcousticShot import acoustic_shots
+from laTest import acousticShot
 from utils import parse_args
 import time
 
@@ -26,7 +27,7 @@ def main():
 
 
     acq.add_xml(args.xml)
-    #acq.limitedAperture(2000)
+    acq.limitedAperture(2000)
 
     acqs = acq.split(3)
 
@@ -37,7 +38,16 @@ def main():
     client = Client(cluster)
     client.scale(2)
 
-    futures = client.map(acoustic_shots, acqs, cores=16, x_partition=8, y_partition=2)
+
+    maxTime = 2.0
+    outputSeismoTraceInterval = 5
+    outputWaveFieldInterval = 100
+
+    args = []
+    for acq in acqs:
+        args.append((maxTime, outputSeismoTraceInterval, outputWaveFieldInterval,))
+
+    futures = client.map(acousticShot, args, cores=16, x_partition=8, y_partition=2)
 
 if __name__ == "__main__":
     main()
