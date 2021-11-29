@@ -65,16 +65,52 @@ struct HyprePrecWrapper
 namespace hypre
 {
 
+/**
+ * @brief @return Hypre memory location corresponding to a given LvArray memory space
+ * @param space the space
+ */
+constexpr HYPRE_MemoryLocation getHypreMemoryLocation( LvArray::MemorySpace const space )
+{
+  switch( space )
+  {
+    case LvArray::MemorySpace::host: return HYPRE_MEMORY_HOST;
+#ifdef GEOSX_USE_HYPRE_CUDA
+    case LvArray::MemorySpace::cuda: return HYPRE_MEMORY_DEVICE;
+#endif
+    default: return HYPRE_MEMORY_HOST;
+  }
+}
+
+/**
+ * @brief @return LvArray memory space corresponding to hypre's memory location
+ * @param location the location
+ */
+constexpr LvArray::MemorySpace getLvArrayMemorySpace( HYPRE_MemoryLocation const location )
+{
+  switch( location )
+  {
+    case HYPRE_MEMORY_HOST: return LvArray::MemorySpace::host;
+#ifdef GEOSX_USE_HYPRE_CUDA
+    case HYPRE_MEMORY_DEVICE: return LvArray::MemorySpace::cuda;
+#endif
+    default: return LvArray::MemorySpace::host;
+  }
+}
+
 #ifdef GEOSX_USE_HYPRE_CUDA
 /// Execution policy for operations on hypre data
 using execPolicy = parallelDevicePolicy<>;
 /// Memory space used by hypre matrix/vector objects
 constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::cuda;
+/// Memory location used by hypre matrix/vector objects
+constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_DEVICE;
 #else
 /// Execution policy for operations on hypre data
 using execPolicy = parallelHostPolicy;
 /// Memory space used by hypre matrix/vector objects
 constexpr LvArray::MemorySpace memorySpace = LvArray::MemorySpace::host;
+/// Memory location used by hypre matrix/vector objects
+constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 #endif
 
 // Check matching requirements on index/value types between GEOSX and Hypre
@@ -141,6 +177,16 @@ inline HYPRE_BigInt const * toHypreBigInt( geosx::globalIndex const * const inde
 {
   return reinterpret_cast< HYPRE_BigInt const * >(index);
 }
+
+/**
+ * @brief Gather a parallel vector on a every rank
+ * @param vec the vector to gather
+ * @return A newly allocated serial vector (may be null on ranks that don't have any elements)
+ *
+ * This is a wrapper around hypre_ParVectorToVectorAll() that works for both host-based
+ * and device-based vectors without relying on Unified Memory.
+ */
+HYPRE_Vector parVectorToVectorAll( HYPRE_ParVector const vec );
 
 /**
  * @brief Dummy function that does nothing but conform to hypre's signature for preconditioner setup/apply functions.

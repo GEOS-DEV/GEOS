@@ -51,22 +51,6 @@ void SinglePhaseReservoir::initializePostInitialConditionsPreSubGroups()
   }
 }
 
-void SinglePhaseReservoir::setupSystem( DomainPartition & domain,
-                                        DofManager & dofManager,
-                                        CRSMatrix< real64, globalIndex > & localMatrix,
-                                        array1d< real64 > & localRhs,
-                                        array1d< real64 > & localSolution,
-                                        bool const setSparsity )
-{
-  ReservoirSolverBase::setupSystem( domain,
-                                    dofManager,
-                                    localMatrix,
-                                    localRhs,
-                                    localSolution,
-                                    setSparsity );
-}
-
-
 void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & domain,
                                                        DofManager const & dofManager,
                                                        SparsityPatternView< globalIndex > const & pattern ) const

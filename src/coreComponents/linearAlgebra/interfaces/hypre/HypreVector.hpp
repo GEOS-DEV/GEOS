@@ -29,11 +29,11 @@
  */
 ///@{
 
-/// IJVector struct forward declaration
-extern "C" struct hypre_IJVector_struct;
-
-/// ParVector struct forward definition
-extern "C" struct hypre_ParVector_struct;
+extern "C"
+{
+/// ParVector struct forward declaration
+struct hypre_ParVector_struct;
+}
 
 ///@}
 
@@ -49,12 +49,6 @@ namespace geosx
 class HypreVector final : private VectorBase< HypreVector >
 {
 public:
-
-  /// IJVector pointer alias
-  using HYPRE_IJVector = hypre_IJVector_struct *;
-
-  /// ParVector pointer alias
-  using HYPRE_ParVector = hypre_ParVector_struct *;
 
   /**
    * @name Constructor/Destructor Methods
@@ -105,53 +99,28 @@ public:
    */
   ///@{
 
+  using VectorBase::setName;
   using VectorBase::closed;
   using VectorBase::ready;
-  using VectorBase::extract;
+  using VectorBase::open;
+  using VectorBase::zero;
+  using VectorBase::values;
 
   /**
    * @copydoc VectorBase<HypreVector>::created
    */
   virtual bool created() const override;
 
-  virtual void createWithLocalSize( localIndex const localSize,
-                                    MPI_Comm const & comm ) override;
-
-  virtual void createWithGlobalSize( globalIndex const globalSize,
-                                     MPI_Comm const & comm ) override;
-
-  virtual void create( arrayView1d< real64 const > const & localValues,
+  virtual void create( localIndex const localSize,
                        MPI_Comm const & comm ) override;
-
-  virtual void open() override;
 
   virtual void close() override;
 
+  virtual void touch() override;
+
   virtual void reset() override;
 
-  virtual void set( globalIndex const globalRowIndex,
-                    real64 const value ) override;
-
-  virtual void add( globalIndex const globalRowIndex,
-                    real64 const value ) override;
-
-  virtual void set( globalIndex const * globalRowIndices,
-                    real64 const * values,
-                    localIndex size ) override;
-
-  virtual void add( globalIndex const * globalRowIndices,
-                    real64 const * values,
-                    localIndex const size ) override;
-
-  virtual void set( arraySlice1d< globalIndex const > const & globalRowIndices,
-                    arraySlice1d< real64 const > const & values ) override;
-
-  virtual void add( arraySlice1d< globalIndex const > const & globalRowIndices,
-                    arraySlice1d< real64 const > const & values ) override;
-
   virtual void set( real64 const value ) override;
-
-  virtual void zero() override;
 
   virtual void rand( unsigned const seed ) override;
 
@@ -208,34 +177,10 @@ public:
    */
   virtual globalIndex iupper() const override;
 
-  virtual real64 get( globalIndex globalRow ) const override;
-
-  virtual void get( arraySlice1d< globalIndex const > const & globalRowIndices,
-                    arraySlice1d< real64 > const & values ) const override;
-
-  virtual localIndex getLocalRowID( globalIndex const globalRowIndex ) const override;
-
-  virtual globalIndex getGlobalRowID( localIndex const localRowIndex ) const override;
-
   /**
-   * @copydoc VectorBase<HypreVector>::extractLocalVector
+   * @copydoc VectorBase<HypreVector>::comm
    */
-  virtual real64 const * extractLocalVector() const override;
-
-  /**
-   * @copydoc VectorBase<HypreVector>::extractLocalVector
-   */
-  virtual real64 * extractLocalVector() override;
-
-  /**
-   * @copydoc VectorBase<HypreVector>::extract
-   */
-  virtual void extract( arrayView1d< real64 > const & localVector ) const override;
-
-  /**
-   * @copydoc VectorBase<HypreVector>::getComm
-   */
-  virtual MPI_Comm getComm() const override;
+  virtual MPI_Comm comm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;
 
@@ -244,29 +189,25 @@ public:
 
   ///@}
 
+private:
+
+  /// ParVector pointer alias
+  using HYPRE_ParVector = struct hypre_ParVector_struct *;
+
+public:
+
   /**
    * @brief Returns a pointer to the implementation.
    * @return the underlying HYPRE_ParVector object.
    */
   HYPRE_ParVector const & unwrapped() const;
 
-  /**
-   * @brief Returns a pointer to the implementation.
-   * @return the underlying HYPRE_IJVector object.
-   */
-  HYPRE_IJVector const & unwrappedIJ() const;
-
 private:
-
-  /**
-   * Pointer to underlying HYPRE_IJVector type.
-   */
-  HYPRE_IJVector m_ij_vector;
 
   /**
    * Pointer to underlying HYPRE_ParVector type.
    */
-  HYPRE_ParVector m_par_vector;
+  HYPRE_ParVector m_vec;
 
 };
 
