@@ -39,6 +39,13 @@ class LagrangeBasis5GL
 {
 public:
 
+
+  static constexpr real64 sqrt_7_ = 2.64575131106459059;
+  static constexpr real64 sqrt__7_plus_2sqrt7__ = 3.50592393273573196;
+  static constexpr real64 sqrt__7_mins_2sqrt7__ = 1.30709501485960033;
+
+  static constexpr real64 sqrt_inv21 = 0.218217890235992381;
+
   /**
    * @brief Calculate the parent coordinates for the xi0 direction, given the
    *   linear index of a support point. Here we hardcode GL points at order 5.
@@ -59,19 +66,19 @@ public:
       break;
 
       case 1:
-        result = -sqrt((1.0/21.0)*(7.0+2.0*sqrt(7.0)));
+        result = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
         break;
 
       case 2:
-        result = -sqrt((1.0/21.0)*(7.0-2.0*sqrt(7.0)));
+        result = -sqrt_inv21*sqrt__7_mins_2sqrt7__;
         break;
 
       case 3:
-        result = sqrt((1.0/21.0)*(7.0-2.0*sqrt(7.0)));
+        result = sqrt_inv21*sqrt__7_mins_2sqrt7__;
         break;
 
       case 4:
-        result = sqrt((1.0/21.0)*(7.0+2.0*sqrt(7.0)));
+        result = sqrt_inv21*sqrt__7_plus_2sqrt7__;
         break;
 
       case 5:
@@ -170,7 +177,7 @@ public:
     real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
     real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
 
-    return ((21.0/16.0)*sqrt(7.0-sqrt(7.0)/2.0))*(xi*xi*xi*xi*xi-lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi+lambda4*(lambda3*lambda3+1)*xi*xi+
+    return ((21.0/16.0)*sqrt(7.0-sqrt_7_/2.0))*(xi*xi*xi*xi*xi-lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi+lambda4*(lambda3*lambda3+1)*xi*xi+
            lambda3*lambda3*xi-lambda4*lambda3*lambda3);
   }
 
@@ -189,7 +196,7 @@ public:
     real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
     real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
 
-    return ((-21.0/16.0)*sqrt(7.0+sqrt(7.0)/2.0))*(xi*xi*xi*xi*xi-lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi+lambda3*(lambda4*lambda4+1)*xi*xi+
+    return ((-21.0/16.0)*sqrt(7.0+sqrt_7_/2.0))*(xi*xi*xi*xi*xi-lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi+lambda3*(lambda4*lambda4+1)*xi*xi+
            lambda4*lambda4*xi-lambda3*lambda4*lambda4);
   }
 
@@ -208,7 +215,7 @@ public:
     real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
     real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
 
-    return ((21.0/16.0)*sqrt(7.0+sqrt(7.0)/2.0))*(xi*xi*xi*xi*xi+lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi-lambda3*(lambda4*lambda4+1)*xi*xi+
+    return ((21.0/16.0)*sqrt(7.0+sqrt_7_/2.0))*(xi*xi*xi*xi*xi+lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi-lambda3*(lambda4*lambda4+1)*xi*xi+
            lambda4*lambda4*xi+lambda3*lambda4*lambda4);
   }
 
@@ -227,7 +234,7 @@ public:
     real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
     real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
 
-    return ((-21.0/16.0)*sqrt(7.0-sqrt(7.0)/2.0))*(xi*xi*xi*xi*xi+lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi-lambda4*(lambda3*lambda3+1)*xi*xi+
+    return ((-21.0/16.0)*sqrt(7.0-sqrt_7_/2.0))*(xi*xi*xi*xi*xi+lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi-lambda4*(lambda3*lambda3+1)*xi*xi+
            lambda3*lambda3*xi+lambda4*lambda3*lambda3);
   }
 
@@ -332,7 +339,7 @@ public:
     real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
     real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
 
-    return (21.0/16.0)*sqrt(7.0-sqrt(7.0)/2.0)*(5.0*xi*xi*xi*xi-4.0*lambda4*xi*xi*xi-3.0*(lambda3*lambda3+1.0)*xi*xi+2.0*lambda4*(lambda3*lambda3+1.0)*xi+lambda3*lambda3);
+    return (21.0/16.0)*sqrt(7.0-sqrt_7_/2.0)*(5.0*xi*xi*xi*xi-4.0*lambda4*xi*xi*xi-3.0*(lambda3*lambda3+1.0)*xi*xi+2.0*lambda4*(lambda3*lambda3+1.0)*xi+lambda3*lambda3);
 
   }
 
@@ -350,7 +357,7 @@ public:
     real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
     real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
 
-    return (-21.0/16.0)*sqrt(7.0+sqrt(7.0)/2.0)*(5.0*xi*xi*xi*xi-4.0*lambda3*xi*xi*xi-3.0*(lambda4*lambda4+1.0)*xi*xi+2.0*lambda3*(lambda4*lambda4+1.0)*xi+lambda4*lambda4);
+    return (-21.0/16.0)*sqrt(7.0+sqrt_7_/2.0)*(5.0*xi*xi*xi*xi-4.0*lambda3*xi*xi*xi-3.0*(lambda4*lambda4+1.0)*xi*xi+2.0*lambda3*(lambda4*lambda4+1.0)*xi+lambda4*lambda4);
 
   }
 
@@ -368,7 +375,7 @@ public:
     real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
     real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
 
-    return (21.0/16.0)*sqrt(7.0+sqrt(7.0)/2.0)*(5.0*xi*xi*xi*xi+4.0*lambda3*xi*xi*xi-3.0*(lambda4*lambda4+1.0)*xi*xi-2*lambda3*(lambda4*lambda4+1.0)*xi+lambda4*lambda4);
+    return (21.0/16.0)*sqrt(7.0+sqrt_7_/2.0)*(5.0*xi*xi*xi*xi+4.0*lambda3*xi*xi*xi-3.0*(lambda4*lambda4+1.0)*xi*xi-2*lambda3*(lambda4*lambda4+1.0)*xi+lambda4*lambda4);
 
   }
 
@@ -386,7 +393,7 @@ public:
     real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
     real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
 
-    return (-21.0/16.0)*sqrt(7.0-sqrt(7.0)/2.0)*(5.0*xi*xi*xi*xi+4.0*lambda4*xi*xi*xi-3.0*(lambda3*lambda3+1.0)*xi*xi-2.0*lambda4*(lambda3*lambda3+1.0)*xi+lambda3*lambda3);
+    return (-21.0/16.0)*sqrt(7.0-sqrt_7_/2.0)*(5.0*xi*xi*xi*xi+4.0*lambda4*xi*xi*xi-3.0*(lambda3*lambda3+1.0)*xi*xi-2.0*lambda4*(lambda3*lambda3+1.0)*xi+lambda3*lambda3);
 
   }
 
