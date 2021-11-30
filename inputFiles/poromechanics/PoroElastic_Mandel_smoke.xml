@@ -23,10 +23,17 @@
   <Events
     maxTime="0.1">
   
-     <PeriodicEvent
+    <PeriodicEvent
       name="outputs"
       timeFrequency="5.0e-01"
       target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5.0e-01"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"
+    />
 
     <PeriodicEvent
       name="solverApplication0"
