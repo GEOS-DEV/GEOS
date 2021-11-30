@@ -1019,6 +1019,7 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
   comp_enth[0] = 0.304; comp_enth[1] = 0.696;
 
   pvtFunctionWrapper.compute( pressure.m_var, temp.m_var, comp_enth.toSliceConst(), value_enth, true );
+  printf ( "BrineEnthalpy value=%lf\n", value_enth );
 
   // real64 const savedValues[] = { 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962, 280.2559694,
   //                                278.9092508, 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962,

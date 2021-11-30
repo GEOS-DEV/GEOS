@@ -20,6 +20,8 @@
 
 #include "functions/FunctionManager.hpp"
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
+#include "constitutive/fluid/PVTFunctions/CO2Enthalpy.hpp"
+
 
 namespace geosx
 {
@@ -124,8 +126,7 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
 
     SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, densities );
 
-    //CO2EnthalpyFunction::calculateCO2Enthalpy( pressures, temperatures, densities, enthalpies );
-    enthalpies = densities;
+    CO2Enthalpy::calculateCO2Enthalpy( tableCoords, densities, enthalpies );
 
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     enthalpyTable->setTableCoordinates( tableCoords.getCoords() );
