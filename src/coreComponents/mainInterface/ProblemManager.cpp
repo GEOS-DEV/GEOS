@@ -569,7 +569,7 @@ void ProblemManager::generateMesh()
 
 
   // clone mesh level
-  meshBody.createMeshLevel( 1 );
+  meshBody.createMeshLevel( 1, 0 );
 
 }
 

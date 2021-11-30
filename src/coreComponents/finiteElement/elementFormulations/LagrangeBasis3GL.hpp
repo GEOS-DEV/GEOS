@@ -41,6 +41,8 @@ public:
     /// The number of support points for the basis
     constexpr static localIndex numSupportPoints = 4;
 
+    constexpr static real64 sqrt5 = 2.2360679774997897;
+
     /**
      * @brief Calculate the parent coordinates for the xi0 direction, given the
      *   linear index of a support point.
@@ -61,10 +63,10 @@ public:
             result = -1.0;
             break;
         case 1:
-            result = -1.0/sqrt(5.0);
+            result = -1.0/sqrt5;
             break;
         case 2:
-            result = 1.0/sqrt(5.0);
+            result = 1.0/sqrt5;
             break;
         case 3:
             result = 1.0;
@@ -135,7 +137,7 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 value1( const real64 xi )
   {
-    return (5.0*sqrt(5.0)/8.0)*(xi*xi*xi-(1.0/sqrt(5.0))*xi*xi-xi+1.0/sqrt(5.0));
+    return (5.0*sqrt5/8.0)*(xi*xi*xi-(1.0/sqrt5)*xi*xi-xi+1.0/sqrt5);
   }
 
   /**
@@ -147,7 +149,7 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 value2( const real64 xi )
   {
-    return -(5.0*sqrt(5.0)/8.0)*(xi*xi*xi+(1.0/sqrt(5.0))*xi*xi-xi-1.0/sqrt(5.0));
+    return -(5.0*sqrt5/8.0)*(xi*xi*xi+(1.0/sqrt5)*xi*xi-xi-1.0/sqrt5);
   }
 
   /**
@@ -221,7 +223,7 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 gradient1( const real64 xi )
   {
-    return (5.0*sqrt(5.0)/8.0)*(3.0*xi*xi-(2.0/sqrt(5.0))*xi-1.0);
+    return (5.0*sqrt5/8.0)*(3.0*xi*xi-(2.0/sqrt5)*xi-1.0);
   }
 
   /**
@@ -234,7 +236,7 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 gradient2( const real64 xi )
   {
-    return -(5.0*sqrt(5.0)/8.0)*(3.0*xi*xi+(2.0/sqrt(5.0))*xi-1.0);
+    return -(5.0*sqrt5/8.0)*(3.0*xi*xi+(2.0/sqrt5)*xi-1.0);
   }
 
   /**

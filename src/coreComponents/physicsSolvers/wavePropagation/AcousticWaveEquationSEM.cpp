@@ -107,7 +107,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
 
-    MeshLevel & meshLevel =  meshBody.getMeshLevel( 0 );
+    MeshLevel & meshLevel =  meshBody.getMeshLevel( 1 );
 
     NodeManager & nodeManager = meshLevel.getNodeManager();
 
@@ -309,7 +309,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 1 );
 
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );
@@ -387,8 +387,8 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
-  FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
-  NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
+  FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 1 ).getFaceManager();
+  NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 1 ).getNodeManager();
 
   arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
   arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
@@ -466,7 +466,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 1 );
 
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -516,7 +516,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   CommunicationTools & syncFields = CommunicationTools::getInstance();
   syncFields.synchronizeFields( fieldNames,
-                                domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                domain.getMeshBody( 0 ).getMeshLevel( 1 ),
                                 domain.getNeighbors(),
                                 true );
 

@@ -65,6 +65,14 @@ MeshLevel::MeshLevel( string const & name,
   MeshLevel( name, parent )
 {
 
+//  {
+//  Group & thisGroup = *this;
+//  Group const & sourceGroup = source;
+//  thisGroup = sourceGroup;
+//  this->getParent( parent );
+//
+//  }
+
   localIndex numNodes = source.m_nodeManager.size();
   // find out how many node there must be on this rank
   m_nodeManager.resize(numNodes);
@@ -105,6 +113,9 @@ MeshLevel::MeshLevel( string const & name,
           elemsToNodesNew(k,a) = elemsToNodesSource(k,a); // need the logic to map to the nodes here
         }
       }
+
+
+
     });
   });
 }

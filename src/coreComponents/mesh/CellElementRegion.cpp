@@ -41,7 +41,7 @@ CellElementRegion::~CellElementRegion()
 
 void CellElementRegion::generateMesh( Group & cellBlocks )
 {
-  Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
+  Group & elementSubRegions = this->getSubRegions();
 
   for( string const & cellBlockName : this->m_cellBlockNames )
   {

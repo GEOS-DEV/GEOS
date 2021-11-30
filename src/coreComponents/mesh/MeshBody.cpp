@@ -46,13 +46,14 @@ MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
 
 MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel, localIndex const sourceLevel )
 {
-  MeshLevel & newMeshLevel = createMeshLevel( newLevel );
   string const sourceName = "Level" + std::to_string(sourceLevel);
+  string const newName = "Level" + std::to_string(newLevel);
   MeshLevel const & sourceMeshLevel = this->getGroupByPath<MeshLevel>( sourceName );
 
+//  MeshLevel newMeshLevel( newName, this, sourceMeshLevel, 1 );
 
 
-  return newMeshLevel;
+  return this->registerGroup( newName, std::make_unique<MeshLevel>( newName, this, sourceMeshLevel, 1  ) );
 }
 
 
