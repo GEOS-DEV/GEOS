@@ -45,7 +45,7 @@ or_die python scripts/config-build.py \
               -bt ${CMAKE_BUILD_TYPE} \
               -bp ${GEOSX_BUILD_DIR} \
               -ip ${GEOSX_DIR} \
-              -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--use-hwthread-cpus"
+              -DBLT_MPI_COMMAND_APPEND=\"--allow-run-as-root;--use-hwthread-cpus\"
 
 or_die cd ${GEOSX_BUILD_DIR}
 
