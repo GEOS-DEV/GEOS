@@ -71,7 +71,7 @@ fi
 
 # Unit tests (excluding previously ran checks)
 if [[ "$*" != *--disable-unit-tests* ]]; then
-  or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
+  or_die ctest --verbose -E "testUncrustifyCheck|testDoxygenCheck"
 fi
 
 exit 0
