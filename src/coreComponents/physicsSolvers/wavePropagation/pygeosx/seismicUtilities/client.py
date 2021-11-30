@@ -56,7 +56,7 @@ class Cluster():
 
     def _add_job_to_script(self, cores):
         if cores > 1:
-            self.run = "mpirun -np %d --map-by node %s wrapper.py " %(cores, self.python)
+            self.run = "mpirun -np %d --map-by node %s seismicUtilities/wrapper.py " %(cores, self.python)
         else:
             self.run = "%s wrapper.py " %self.python
 
@@ -76,6 +76,10 @@ class Cluster():
 
     def finalize_script(self):
         self.header.append(self.run)
+
+    def setErrOut(self, job_id):
+        self.err = "%s-%s-%s.err"%(cluster.type, cluster.job_name, job_id)
+        self.out = "%s-%s-%s.out"%(cluster.type, cluster.job_name, job_id)
 
 
 
@@ -166,17 +170,17 @@ class SLURMCluster(Cluster):
             return True
 
 
-    def getJobsList():
+    def getJobsList(self):
         job_list = subprocess.check_output("squeue -o %%A -h", shell=True).decode().split()
         return job_list
 
 
-    def getJobState():
+    def getJobState(self):
         status = subprocess.check_output("squeue -j %s -h -o %%t" %self.work.job_id, shell=True).decode().strip()
         return status
 
 
-    def runJob():
+    def runJob(self):
         output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
 
 
@@ -269,17 +273,17 @@ class LSFCluster(Cluster):
             return True
 
 
-    def getJobsList():
+    def getJobsList(self):
         job_list = subprocess.check_output('bjobs -o "jobid" -h', shell=True).decode().split()
         return job_list
 
 
-    def getJobState():
+    def getJobState(self):
         status = subprocess.check_output('bjobs -J %s -noheader -o "stat:"' %self.work.job_id, shell=True).decode().strip()
         return status
 
 
-    def runJob():
+    def runJob(self):
         output = subprocess.check_output("/usr/bin/bsub " + bashfile, shell=True)
 
 
@@ -439,7 +443,7 @@ class Client:
 
         bashfile = cluster.job_file()
 
-        output = self.cluster.runJob()
+        output = cluster.runJob(bashfile)
 
         job_id = output.split()[-1].decode()
         cluster.setErrOut(job_id)
@@ -491,26 +495,6 @@ class Client:
 
         return results
 
-
-    """
-    def retry(future):
-        key = future.key.split("-")
-
-        module = importlib.import_module(key[0])
-        func = getattr(module, key[1])
-        x_partition = int(key[2])
-        y_partition = int(key[3])
-        z_partition = int(key[4])
-        core = x_partition * y_partition * z_partition
-
-        future = self.submit(func,
-                             param,
-                             cores,
-                             x_partition,
-                             y_partition,
-                             z_partition)
-        return future
-    """
 
 
 
