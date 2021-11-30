@@ -53,8 +53,8 @@ public:
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
+                            ParallelVector & rhs,
+                            ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
   virtual void
@@ -117,7 +117,7 @@ public:
 
   void applyTractionBC( real64 const time_n,
                         real64 const dt,
-                        DomainPartition & domain );                       
+                        DomainPartition & domain );
 
 protected:
 

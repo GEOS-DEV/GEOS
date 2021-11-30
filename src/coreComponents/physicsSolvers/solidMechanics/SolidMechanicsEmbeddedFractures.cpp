@@ -128,7 +128,8 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   array1d< string > regions;
-  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region ) {
+  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
+  {
     regions.emplace_back( region.getName() );
   } );
 
@@ -146,8 +147,8 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
 void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
                                                    DofManager & dofManager,
                                                    CRSMatrix< real64, globalIndex > & localMatrix,
-                                                   array1d< real64 > & localRhs,
-                                                   array1d< real64 > & localSolution,
+                                                   ParallelVector & rhs,
+                                                   ParallelVector & solution,
                                                    bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
@@ -188,13 +189,13 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
 
   // Finally, steal the pattern into a CRS matrix
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localRhs.resize( localMatrix.numRows() );
-  localSolution.resize( localMatrix.numRows() );
-
   localMatrix.setName( this->getName() + "/localMatrix" );
-  localRhs.setName( this->getName() + "/localRhs" );
-  localSolution.setName( this->getName() + "/localSolution" );
 
+  rhs.setName( this->getName() + "/rhs" );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+
+  solution.setName( this->getName() + "/solution" );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 }
 
 void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,

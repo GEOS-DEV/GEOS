@@ -62,7 +62,7 @@ public:
     constexpr static char const * tractionString() { return "traction"; }
 
     constexpr static char const * fractureStateString() { return "fractureState"; }
-  
+
     constexpr static char const * oldFractureStateString() { return "oldFractureState"; }
   };
 

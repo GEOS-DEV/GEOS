@@ -796,8 +796,8 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
 
   // Create prolongation and restriction to 2 out of 3 components
   Matrix R, P;
-  dofManager.makeRestrictor( selection, A.getComm(), false, R );
-  dofManager.makeRestrictor( selection, A.getComm(), true, P );
+  dofManager.makeRestrictor( selection, A.comm(), false, R );
+  dofManager.makeRestrictor( selection, A.comm(), true, P );
 
   // Compute the sub-matrix via PtAP
   Matrix Asub_PtAP;

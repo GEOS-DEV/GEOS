@@ -57,8 +57,8 @@ public:
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
+               ParallelVector & rhs,
+               ParallelVector & solution,
                bool const setSparsity = true ) override;
 
   virtual void
@@ -125,8 +125,8 @@ public:
               DomainPartition & domain,
               DofManager const & dofManager,
               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-              arrayView1d< real64 > const & localRhs,
-              arrayView1d< real64 const > const & localSolution,
+              ParallelVector & rhs,
+              ParallelVector & solution,
               real64 const scaleFactor,
               real64 & lastResidual ) override;
 
