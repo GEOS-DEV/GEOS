@@ -31,18 +31,21 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
-# The -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root option is added for openmpi
-# which prevents from running as root user by default.
-# And by default, you are root in a docker container.
-# Using this option therefore offers a minimal and convenient way
-# to run the unit tests.
+# The -DBLT_MPI_COMMAND_APPEND:STRING="--allow-run-as-root --use-hwthread-cpus" option is added for openmpi.
+# 
+# OpenMPI prevents from running as `root` user by default.
+# And by default user is `root` in a docker container.
+# Using this option therefore offers a minimal and convenient way to run the unit tests.
+#
+# The option `--use-hwthread-cpus` tells OpenMPI to discover the number of hardware threads on the node,
+# and use that as the number of slots available. (There is a distinction between threads and cores).
 GEOSX_BUILD_DIR=/tmp/build
 or_die python scripts/config-build.py \
               -hc ${HOST_CONFIG} \
               -bt ${CMAKE_BUILD_TYPE} \
               -bp ${GEOSX_BUILD_DIR} \
               -ip ${GEOSX_DIR} \
-              -DBLT_MPI_COMMAND_APPEND:STRING=--allow-run-as-root
+              -DBLT_MPI_COMMAND_APPEND:STRING="--allow-run-as-root --use-hwthread-cpus"
 
 or_die cd ${GEOSX_BUILD_DIR}
 
