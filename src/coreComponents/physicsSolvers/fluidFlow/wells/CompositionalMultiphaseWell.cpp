@@ -443,25 +443,11 @@ void CompositionalMultiphaseWell::updateComponentFraction( WellElementSubRegion 
 {
   GEOSX_MARK_FUNCTION;
 
-  // outputs
-  arrayView2d< real64, compflow::USD_COMP > const & compFrac =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() );
-  arrayView3d< real64, compflow::USD_COMP_DC > const & dCompFrac_dCompDens =
-    subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
-
-  // inputs
-  arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
-  arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
-
-  CompositionalMultiphaseBaseKernels::KernelLaunchSelector1< CompositionalMultiphaseBaseKernels::ComponentFractionKernel
-                                                             >( numFluidComponents(),
-                                                                subRegion.size(),
-                                                                compDens,
-                                                                dCompDens,
-                                                                compFrac,
-                                                                dCompFrac_dCompDens );
+  CompositionalMultiphaseBaseKernels::
+    ComponentFractionKernelFactory::
+    createAndLaunch< parallelDevicePolicy<> >
+    ( m_numComponents,
+    subRegion );
 
 }
 
@@ -759,94 +745,34 @@ void CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegio
 {
   GEOSX_MARK_FUNCTION;
 
-  // outputs
-
-  arrayView2d< real64, compflow::USD_PHASE > const & phaseVolFrac =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
-  arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dPres =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
-  arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens =
-    subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
-
-  // inputs
-
-  arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens =
-    subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
-  arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
-  arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
-
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseFrac = fluid.phaseFraction();
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseFrac_dPres = fluid.dPhaseFraction_dPressure();
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp = fluid.dPhaseFraction_dGlobalCompFraction();
+  bool const isIsothermal = true;
+  CompositionalMultiphaseBaseKernels::
+    PhaseVolumeFractionKernelFactory::
+    createAndLaunch< parallelDevicePolicy<> >
+    ( isIsothermal,
+    m_numComponents,
+    m_numPhases,
+    subRegion,
+    fluid );
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens = fluid.phaseDensity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
-
-  CompositionalMultiphaseBaseKernels::KernelLaunchSelector2< CompositionalMultiphaseBaseKernels::PhaseVolumeFractionKernel
-                                                             >( numFluidComponents(), numFluidPhases(),
-                                                                subRegion.size(),
-                                                                compDens,
-                                                                dCompDens,
-                                                                dCompFrac_dCompDens,
-                                                                phaseDens,
-                                                                dPhaseDens_dPres,
-                                                                dPhaseDens_dComp,
-                                                                phaseFrac,
-                                                                dPhaseFrac_dPres,
-                                                                dPhaseFrac_dComp,
-                                                                phaseVolFrac,
-                                                                dPhaseVolFrac_dPres,
-                                                                dPhaseVolFrac_dCompDens );
 }
 
 void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion & subRegion, localIndex const targetIndex ) const
 {
-  // outputs
-
-  arrayView1d< real64 > const & totalMassDens =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalMassDensityString() );
-  arrayView1d< real64 > const & dTotalMassDens_dPres =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::dTotalMassDensity_dPressureString() );
-  arrayView2d< real64, compflow::USD_FLUID_DC > const & dTotalMassDens_dCompDens =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_FLUID_DC > >( viewKeyStruct::dTotalMassDensity_dGlobalCompDensityString() );
-
-  // inputs
-
-  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
-  arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres =
-    subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens =
-    subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
-
-  arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens =
-    subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
+  GEOSX_MARK_FUNCTION;
 
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseMassDens = fluid.phaseMassDensity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
-
-  CompositionalMultiphaseBaseKernels::
-    KernelLaunchSelector2< TotalMassDensityKernel >( numFluidComponents(),
-                                                     numFluidPhases(),
-                                                     subRegion.size(),
-                                                     phaseVolFrac,
-                                                     dPhaseVolFrac_dPres,
-                                                     dPhaseVolFrac_dCompDens,
-                                                     dCompFrac_dCompDens,
-                                                     phaseMassDens,
-                                                     dPhaseMassDens_dPres,
-                                                     dPhaseMassDens_dComp,
-                                                     totalMassDens,
-                                                     dTotalMassDens_dPres,
-                                                     dTotalMassDens_dCompDens );
+  bool const isIsothermal = true;
+  TotalMassDensityKernelFactory::
+    createAndLaunch< parallelDevicePolicy<> >
+    ( isIsothermal,
+    m_numComponents,
+    m_numPhases,
+    subRegion,
+    fluid );
 
 }
 

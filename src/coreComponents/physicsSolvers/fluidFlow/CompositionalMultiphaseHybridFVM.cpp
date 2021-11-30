@@ -890,58 +890,19 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( Group & dataGroup, l
 {
   GEOSX_MARK_FUNCTION;
 
-  // note that the phase mobility computed here does NOT include phase density
-
-  // outputs
-
-  arrayView2d< real64, compflow::USD_PHASE > const phaseMob =
-    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseMobilityString() );
-
-  arrayView2d< real64, compflow::USD_PHASE > const dPhaseMob_dPres =
-    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseMobility_dPressureString() );
-
-  arrayView3d< real64, compflow::USD_PHASE_DC > const dPhaseMob_dComp =
-    dataGroup.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseMobility_dGlobalCompDensityString() );
-
-  // inputs
-
-  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
-
-  arrayView2d< real64 const, compflow::USD_PHASE > const dPhaseVolFrac_dPres =
-    dataGroup.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
-
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > const dPhaseVolFrac_dComp =
-    dataGroup.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
-
-  arrayView3d< real64 const, compflow::USD_COMP_DC > const dCompFrac_dCompDens =
-    dataGroup.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
-
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
-
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseVisc_dPres = fluid.dPhaseViscosity_dPressure();
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp = fluid.dPhaseViscosity_dGlobalCompFraction();
-
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
 
-  arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
-  arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
-
-  KernelLaunchSelector2< PhaseMobilityKernel >( m_numComponents, m_numPhases,
-                                                dataGroup.size(),
-                                                dCompFrac_dCompDens,
-                                                phaseVisc,
-                                                dPhaseVisc_dPres,
-                                                dPhaseVisc_dComp,
-                                                phaseRelPerm,
-                                                dPhaseRelPerm_dPhaseVolFrac,
-                                                phaseVolFrac,
-                                                dPhaseVolFrac_dPres,
-                                                dPhaseVolFrac_dComp,
-                                                phaseMob,
-                                                dPhaseMob_dPres,
-                                                dPhaseMob_dComp );
+  bool const isIsothermal = true;
+  CompositionalMultiphaseHybridFVMKernels::
+    PhaseMobilityKernelFactory::
+    createAndLaunch< parallelDevicePolicy<> >
+    ( isIsothermal,
+    m_numComponents,
+    m_numPhases,
+    dataGroup,
+    fluid,
+    relperm );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseHybridFVM, std::string const &, Group * const )

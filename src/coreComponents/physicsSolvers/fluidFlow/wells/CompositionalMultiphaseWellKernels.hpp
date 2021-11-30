@@ -22,6 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
@@ -439,38 +440,165 @@ struct RateInitializationKernel
 
 /******************************** TotalMassDensityKernel ****************************/
 
-struct TotalMassDensityKernel
+/**
+ * @class TotalMassDensityKernel
+ * @tparam NUM_COMP number of fluid components
+ * @tparam NUM_PHASE number of fluid phases
+ * @brief Define the interface for the property kernel in charge of computing the total mass density
+ */
+template< localIndex NUM_COMP, localIndex NUM_PHASE >
+class TotalMassDensityKernel : public CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
+public:
 
-  template< localIndex NC, localIndex NP >
+  using Base = CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  using keys = CompositionalMultiphaseWell::viewKeyStruct;
+
+  using Base::numComp;
+
+  /// Compile time value for the number of phases
+  static constexpr localIndex numPhase = NUM_PHASE;
+
+  /**
+   * @brief Constructor
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  TotalMassDensityKernel( dataRepository::Group & subRegion,
+                          MultiFluidBase const & fluid )
+    : Base( subRegion ),
+    m_phaseVolFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionString() ) ),
+    m_dPhaseVolFrac_dPres( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dPressureString() ) ),
+    m_dPhaseVolFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() ) ),
+    m_dCompFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() ) ),
+    m_phaseMassDens( fluid.phaseMassDensity() ),
+    m_dPhaseMassDens_dPres( fluid.dPhaseMassDensity_dPressure() ),
+    m_dPhaseMassDens_dComp( fluid.dPhaseMassDensity_dGlobalCompFraction() ),
+    m_totalMassDens( subRegion.getReference< array1d< real64 > >( keys::totalMassDensityString() ) ),
+    m_dTotalMassDens_dPres( subRegion.getReference< array1d< real64 > >( keys::dTotalMassDensity_dPressureString() ) ),
+    m_dTotalMassDens_dCompDens( subRegion.getReference< array2d< real64, compflow::LAYOUT_FLUID_DC > >( keys::dTotalMassDensity_dGlobalCompDensityString() ) )
+  {}
+
+  /**
+   * @brief Compute the total mass density in an element
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[in] totalMassDensityKernelOp the function used to customize the kernel
+   */
+  template< typename FUNC = CompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
-  static void
-  compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
-           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dCompDens,
-           arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseMassDens,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseMassDens_dPres,
-           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseMassDens_dComp,
-           real64 & totalMassDens,
-           real64 & dTotalMassDens_dPres,
-           arraySlice1d< real64, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDens );
+  void compute( localIndex const ei,
+                FUNC && totalMassDensityKernelOp = CompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+  {
+    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
+    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
+    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens = m_dPhaseVolFrac_dCompDens[ei];
+    arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseMassDens = m_phaseMassDens[ei][0];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > dPhaseMassDens_dPres = m_dPhaseMassDens_dPres[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseMassDens_dComp = m_dPhaseMassDens_dComp[ei][0];
+    real64 & totalMassDens = m_totalMassDens[ei];
+    real64 & dTotalMassDens_dPres = m_dTotalMassDens_dPres[ei];
+    arraySlice1d< real64, compflow::USD_FLUID_DC - 1 > dTotalMassDens_dCompDens = m_dTotalMassDens_dCompDens[ei];
 
-  template< localIndex NC, localIndex NP >
-  static void
-  launch( localIndex const size,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & dWellElemPhaseVolFrac_dPres,
-          arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dWellElemPhaseVolFrac_dCompDens,
-          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseMassDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dWellElemPhaseMassDens_dPres,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dWellElemPhaseMassDens_dComp,
-          arrayView1d< real64 > const & wellElemTotalMassDens,
-          arrayView1d< real64 > const & dWellElemTotalMassDens_dPres,
-          arrayView2d< real64, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens );
+    real64 dMassDens_dC[numComp]{};
+
+    totalMassDens = 0.0;
+    dTotalMassDens_dPres = 0.0;
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      dTotalMassDens_dCompDens[ic] = 0.0;
+    }
+
+    for( integer ip = 0; ip < numPhase; ++ip )
+    {
+      totalMassDens += phaseVolFrac[ip] * phaseMassDens[ip];
+      dTotalMassDens_dPres += dPhaseVolFrac_dPres[ip] * phaseMassDens[ip]
+                              + phaseVolFrac[ip] * dPhaseMassDens_dPres[ip];
+
+      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseMassDens_dComp[ip], dMassDens_dC );
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        dTotalMassDens_dCompDens[ic] += dPhaseVolFrac_dCompDens[ip][ic] * phaseMassDens[ip]
+                                        + phaseVolFrac[ip] * dMassDens_dC[ic];
+      }
+
+      totalMassDensityKernelOp( ip, totalMassDens, dTotalMassDens_dPres, dTotalMassDens_dCompDens );
+    }
+  }
+
+protected:
+
+  // inputs
+
+  /// Views on phase volume fractions
+  arrayView2d< real64 const, compflow::USD_PHASE > m_phaseVolFrac;
+  arrayView2d< real64 const, compflow::USD_PHASE > m_dPhaseVolFrac_dPres;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dPhaseVolFrac_dCompDens;
+  arrayView3d< real64 const, compflow::USD_COMP_DC > m_dCompFrac_dCompDens;
+
+  /// Views on phase mass densities
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseMassDens;
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseMassDens_dPres;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseMassDens_dComp;
+
+  // outputs
+
+  /// Views on total mass densities
+  arrayView1d< real64 > m_totalMassDens;
+  arrayView1d< real64 > m_dTotalMassDens_dPres;
+  arrayView2d< real64, compflow::USD_FLUID_DC > m_dTotalMassDens_dCompDens;
 
 };
+
+/**
+ * @class TotalMassDensityKernelFactory
+ */
+class TotalMassDensityKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] isIsothermal flag specifying whether the assembly is isothermal or non-isothermal
+   * @param[in] numComp the number of fluid components
+   * @param[in] numPhase the number of fluid phases
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( bool const isIsothermal,
+                   localIndex const numComp,
+                   localIndex const numPhase,
+                   dataRepository::Group & subRegion,
+                   MultiFluidBase const & fluid )
+  {
+    if( !isIsothermal )
+    { GEOSX_ERROR( "CompositionalMultiphaseBase: Thermal simulation is not supported yet: " ); }
+
+    if( numPhase == 2 )
+    {
+      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        localIndex constexpr NUM_COMP = NC();
+        TotalMassDensityKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
+        TotalMassDensityKernel< NUM_COMP, 2 >::template launch< POLICY, TotalMassDensityKernel< NUM_COMP, 2 > >( subRegion.size(), kernel );
+      } );
+    }
+    else if( numPhase == 3 )
+    {
+      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        localIndex constexpr NUM_COMP = NC();
+        TotalMassDensityKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
+        TotalMassDensityKernel< NUM_COMP, 3 >::template launch< POLICY, TotalMassDensityKernel< NUM_COMP, 3 > >( subRegion.size(), kernel );
+      } );
+    }
+  }
+};
+
 
 /******************************** ResidualNormKernel ********************************/
 

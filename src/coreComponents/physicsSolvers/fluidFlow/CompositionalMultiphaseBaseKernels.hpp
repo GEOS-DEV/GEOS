@@ -24,11 +24,9 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/layouts.hpp"
 #include "functions/TableFunction.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-#include "mesh/ElementRegionManager.hpp"
 
 
 namespace geosx
@@ -41,94 +39,440 @@ using namespace constitutive;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
+/******************************** PropertyKernelBase ********************************/
+
+/**
+ * @brief Internal struct to provide no-op defaults used in the inclusion
+ *   of lambda functions into kernel component functions.
+ * @struct NoOpFuncs
+ */
+struct NoOpFunc
+{
+  template< typename ... Ts >
+  GEOSX_HOST_DEVICE
+  constexpr void
+  operator()( Ts && ... ) const {}
+};
+
+/**
+ * @class PropertyKernelBase
+ * @tparam NUM_COMP number of fluid components
+ * @brief Define the base interface for the property update kernels
+ */
+template< localIndex NUM_COMP >
+class PropertyKernelBase
+{
+public:
+
+  /// Compile time value for the number of components
+  static constexpr localIndex numComp = NUM_COMP;
+
+  /**
+   * @brief Constructor
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  PropertyKernelBase( dataRepository::Group & subRegion )
+  { GEOSX_UNUSED_VAR( subRegion ); }
+
+  /**
+   * @brief Compute the property in an element
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[in] phaseVolFractionKernelOp the function used to customize the kernel
+   */
+  template< typename FUNC = NoOpFunc >
+  GEOSX_HOST_DEVICE
+  void compute( localIndex const ei,
+                FUNC && kernelOp = NoOpFunc{} ) const
+  { GEOSX_UNUSED_VAR( ei, kernelOp ); }
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElems the number of elements
+   * @param[inout] kernelComponent the kernel component providing access to the compute function
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      kernelComponent.compute( ei );
+    } );
+  }
+
+  /**
+   * @brief Performs the kernel launch on a sorted array
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] targetSet the indices of the elements in which we compute the property
+   * @param[inout] kernelComponent the kernel component providing access to the compute function
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( SortedArrayView< localIndex const > const & targetSet,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    {
+      localIndex const ei = targetSet[ i ];
+      kernelComponent.compute( ei );
+    } );
+  }
+
+};
+
 /******************************** ComponentFractionKernel ********************************/
 
 /**
- * @brief Functions to compute component fractions from global component densities (mass or molar)
+ * @class ComponentFractionKernel
+ * @tparam NUM_COMP number of fluid components
+ * @brief Define the interface for the update kernel in charge of computing the phase volume fractions
  */
-struct ComponentFractionKernel
+template< localIndex NUM_COMP >
+class ComponentFractionKernel : public PropertyKernelBase< NUM_COMP >
 {
-  template< localIndex NC >
+public:
+
+  using Base = PropertyKernelBase< NUM_COMP >;
+  using keys = CompositionalMultiphaseBase::viewKeyStruct;
+
+  using Base::numComp;
+
+  /**
+   * @brief Constructor
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  ComponentFractionKernel( dataRepository::Group & subRegion )
+    : Base( subRegion ),
+    m_compDens( subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( keys::globalCompDensityString() ) ),
+    m_dCompDens( subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( keys::deltaGlobalCompDensityString() ) ),
+    m_compFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( keys::globalCompFractionString() ) ),
+    m_dCompFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() ) )
+  {}
+
+  /**
+   * @brief Compute the phase volume fractions in an element
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[in] phaseVolFractionKernelOp the function used to customize the kernel
+   */
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
-  static void
-  compute( arraySlice1d< real64 const, compflow::USD_COMP - 1 > compDens,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > dCompDens,
-           arraySlice1d< real64, compflow::USD_COMP - 1 > compFrac,
-           arraySlice2d< real64, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens );
+  void compute( localIndex const ei,
+                FUNC && compFractionKernelOp = NoOpFunc{} ) const
+  {
+    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compDens = m_compDens[ei];
+    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompDens = m_dCompDens[ei];
+    arraySlice1d< real64, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
+    arraySlice2d< real64, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
 
-  template< localIndex NC >
-  static void
-  launch( localIndex const size,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
-          arrayView2d< real64, compflow::USD_COMP > const & compFrac,
-          arrayView3d< real64, compflow::USD_COMP_DC > const & dCompFrac_dCompDens );
+    real64 totalDensity = 0.0;
 
-  template< localIndex NC >
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      totalDensity += compDens[ic] + dCompDens[ic];
+    }
+
+    real64 const totalDensityInv = 1.0 / totalDensity;
+
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      compFrac[ic] = (compDens[ic] + dCompDens[ic]) * totalDensityInv;
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        dCompFrac_dCompDens[ic][jc] = -compFrac[ic] * totalDensityInv;
+      }
+      dCompFrac_dCompDens[ic][ic] += totalDensityInv;
+    }
+
+    compFractionKernelOp( compFrac, dCompFrac_dCompDens );
+  }
+
+protected:
+
+  // inputs
+
+  // Views on component densities
+  arrayView2d< real64 const, compflow::USD_COMP > m_compDens;
+  arrayView2d< real64 const, compflow::USD_COMP > m_dCompDens;
+
+  // outputs
+
+  // Views on component fraction
+  arrayView2d< real64, compflow::USD_COMP > m_compFrac;
+  arrayView3d< real64, compflow::USD_COMP_DC > m_dCompFrac_dCompDens;
+
+};
+
+namespace internal
+{
+
+template< typename T, typename LAMBDA >
+void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
+{
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
+
+  switch( value )
+  {
+    case 1:
+    { lambda( std::integral_constant< T, 1 >() ); return; }
+    case 2:
+    { lambda( std::integral_constant< T, 2 >() ); return; }
+    case 3:
+    { lambda( std::integral_constant< T, 3 >() ); return; }
+    case 4:
+    { lambda( std::integral_constant< T, 4 >() ); return; }
+    case 5:
+    { lambda( std::integral_constant< T, 5 >() ); return; }
+    default:
+    { GEOSX_ERROR( "Unsupported number of components: " << value ); }
+  }
+}
+
+} // namespace internal
+
+
+/**
+ * @class ComponentFractionKernelFactory
+ */
+class ComponentFractionKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numComp the number of fluid components
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  template< typename POLICY >
   static void
-  launch( SortedArrayView< localIndex const > const & targetSet,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
-          arrayView2d< real64, compflow::USD_COMP > const & compFrac,
-          arrayView3d< real64, compflow::USD_COMP_DC > const & dCompFrac_dCompDens );
+  createAndLaunch( localIndex const numComp,
+                   dataRepository::Group & subRegion )
+  {
+    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+    {
+      localIndex constexpr NUM_COMP = NC();
+      ComponentFractionKernel< NUM_COMP > kernel( subRegion );
+      ComponentFractionKernel< NUM_COMP >::template launch< POLICY, ComponentFractionKernel< NUM_COMP > >( subRegion.size(), kernel );
+    } );
+  }
+
 };
 
 /******************************** PhaseVolumeFractionKernel ********************************/
 
 /**
- * @brief Functions to compute phase volume fractions (saturations) and derivatives
+ * @class PhaseVolumeFractionKernel
+ * @tparam NUM_COMP number of fluid components
+ * @tparam NUM_PHASE number of fluid phases
+ * @brief Define the interface for the property kernel in charge of computing the phase volume fractions
  */
-struct PhaseVolumeFractionKernel
+template< localIndex NUM_COMP, localIndex NUM_PHASE >
+class PhaseVolumeFractionKernel : public PropertyKernelBase< NUM_COMP >
 {
-  template< localIndex NC, localIndex NP >
+public:
+
+  using Base = PropertyKernelBase< NUM_COMP >;
+  using keys = CompositionalMultiphaseBase::viewKeyStruct;
+
+  using Base::numComp;
+
+  /// Compile time value for the number of phases
+  static constexpr localIndex numPhase = NUM_PHASE;
+
+  /**
+   * @brief Constructor
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  PhaseVolumeFractionKernel( dataRepository::Group & subRegion,
+                             MultiFluidBase const & fluid )
+    : Base( subRegion ),
+    m_phaseVolFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionString() ) ),
+    m_dPhaseVolFrac_dPres( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dPressureString() ) ),
+    m_dPhaseVolFrac_dComp( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() ) ),
+    m_compDens( subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( keys::globalCompDensityString() ) ),
+    m_dCompDens( subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( keys::deltaGlobalCompDensityString() ) ),
+    m_dCompFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() ) ),
+    m_phaseFrac( fluid.phaseFraction() ),
+    m_dPhaseFrac_dPres( fluid.dPhaseFraction_dPressure() ),
+    m_dPhaseFrac_dComp( fluid.dPhaseFraction_dGlobalCompFraction() ),
+    m_phaseDens( fluid.phaseDensity() ),
+    m_dPhaseDens_dPres( fluid.dPhaseDensity_dPressure() ),
+    m_dPhaseDens_dComp( fluid.dPhaseDensity_dGlobalCompFraction() )
+  {}
+
+  /**
+   * @brief Compute the phase volume fractions in an element
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[in] phaseVolFractionKernelOp the function used to customize the kernel
+   */
+  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
-  static void
-  compute( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & compDens,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & dCompDens,
-           arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseDens,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseDens_dPres,
-           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseDens_dComp,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseFrac,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseFrac_dPres,
-           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseFrac_dComp,
-           arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFrac,
-           arraySlice1d< real64, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dComp );
+  void compute( localIndex const ei,
+                FUNC && phaseVolFractionKernelOp = NoOpFunc{} ) const
+  {
+    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compDens = m_compDens[ei];
+    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompDens = m_dCompDens[ei];
+    arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseDens = m_phaseDens[ei][0];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const dPhaseDens_dPres = m_dPhaseDens_dPres[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens_dComp = m_dPhaseDens_dComp[ei][0];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseFrac = m_phaseFrac[ei][0];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const dPhaseFrac_dPres = m_dPhaseFrac_dPres[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseFrac_dComp = m_dPhaseFrac_dComp[ei][0];
+    arraySlice1d< real64, compflow::USD_PHASE - 1 > const phaseVolFrac = m_phaseVolFrac[ei];
+    arraySlice1d< real64, compflow::USD_PHASE - 1 > const dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
+    arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac_dComp = m_dPhaseVolFrac_dComp[ei];
 
-  template< localIndex NC, localIndex NP >
-  static void
-  launch( localIndex const size,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
-          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseFrac,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseFrac_dPres,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp,
-          arrayView2d< real64, compflow::USD_PHASE > const & phaseVolFrac,
-          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp );
+    real64 work[numComp]{};
 
-  template< localIndex NC, localIndex NP >
-  static void
-  launch( SortedArrayView< localIndex const > const & targetSet,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
-          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseFrac,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseFrac_dPres,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp,
-          arrayView2d< real64, compflow::USD_PHASE > const & phaseVolFrac,
-          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp );
+    // compute total density from component partial densities
+    real64 totalDensity = 0.0;
+    real64 const dTotalDens_dCompDens = 1.0;
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      totalDensity += compDens[ic] + dCompDens[ic];
+    }
+
+    for( integer ip = 0; ip < numPhase; ++ip )
+    {
+
+      // set the saturation to zero if the phase is absent
+      bool const phaseExists = (phaseFrac[ip] > 0);
+      if( !phaseExists )
+      {
+        phaseVolFrac[ip] = 0.;
+        dPhaseVolFrac_dPres[ip] = 0.;
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          dPhaseVolFrac_dComp[ip][jc] = 0.;
+        }
+        continue;
+      }
+
+      // Expression for volume fractions: S_p = (nu_p / rho_p) * rho_t
+      real64 const phaseDensInv = 1.0 / phaseDens[ip];
+
+      // compute saturation and derivatives except multiplying by the total density
+      phaseVolFrac[ip] = phaseFrac[ip] * phaseDensInv;
+
+      dPhaseVolFrac_dPres[ip] =
+        (dPhaseFrac_dPres[ip] - phaseVolFrac[ip] * dPhaseDens_dPres[ip]) * phaseDensInv;
+
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        dPhaseVolFrac_dComp[ip][jc] =
+          (dPhaseFrac_dComp[ip][jc] - phaseVolFrac[ip] * dPhaseDens_dComp[ip][jc]) * phaseDensInv;
+      }
+
+      // apply chain rule to convert derivatives from global component fractions to densities
+      applyChainRuleInPlace( numComp, dCompFrac_dCompDens, dPhaseVolFrac_dComp[ip], work );
+
+      // call the lambda in the phase loop to allow the reuse of the phaseVolFrac and totalDensity
+      // possible use: assemble the derivatives wrt temperature
+      phaseVolFractionKernelOp( ip, phaseVolFrac[ip], totalDensity );
+
+      // now finalize the computation by multiplying by total density
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        dPhaseVolFrac_dComp[ip][jc] *= totalDensity;
+        dPhaseVolFrac_dComp[ip][jc] += phaseVolFrac[ip] * dTotalDens_dCompDens;
+      }
+
+      phaseVolFrac[ip] *= totalDensity;
+      dPhaseVolFrac_dPres[ip] *= totalDensity;
+    }
+  }
+
+protected:
+
+  // outputs
+
+  /// Views on phase volume fractions
+  arrayView2d< real64, compflow::USD_PHASE > m_phaseVolFrac;
+  arrayView2d< real64, compflow::USD_PHASE > m_dPhaseVolFrac_dPres;
+  arrayView3d< real64, compflow::USD_PHASE_DC > m_dPhaseVolFrac_dComp;
+
+  // inputs
+
+  /// Views on component densities
+  arrayView2d< real64 const, compflow::USD_COMP > m_compDens;
+  arrayView2d< real64 const, compflow::USD_COMP > m_dCompDens;
+  arrayView3d< real64 const, compflow::USD_COMP_DC > m_dCompFrac_dCompDens;
+
+  /// Views on phase fractions
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseFrac;
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseFrac_dPres;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseFrac_dComp;
+
+  /// Views on phase densities
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseDens;
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseDens_dPres;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseDens_dComp;
+
 };
 
+/**
+ * @class PhaseVolumeFractionKernelFactory
+ */
+class PhaseVolumeFractionKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] isIsothermal flag specifying whether the assembly is isothermal or non-isothermal
+   * @param[in] numComp the number of fluid components
+   * @param[in] numPhase the number of fluid phases
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( bool const isIsothermal,
+                   localIndex const numComp,
+                   localIndex const numPhase,
+                   dataRepository::Group & subRegion,
+                   MultiFluidBase const & fluid )
+  {
+    if( !isIsothermal )
+    { GEOSX_ERROR( "CompositionalMultiphaseBase: Thermal simulation is not supported yet: " ); }
+
+    if( numPhase == 2 )
+    {
+      internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        localIndex constexpr NUM_COMP = NC();
+        PhaseVolumeFractionKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
+        PhaseVolumeFractionKernel< NUM_COMP, 2 >::template launch< POLICY, PhaseVolumeFractionKernel< NUM_COMP, 2 > >( subRegion.size(), kernel );
+      } );
+    }
+    else if( numPhase == 3 )
+    {
+      internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        localIndex constexpr NUM_COMP = NC();
+        PhaseVolumeFractionKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
+        PhaseVolumeFractionKernel< NUM_COMP, 3 >::template launch< POLICY, PhaseVolumeFractionKernel< NUM_COMP, 3 > >( subRegion.size(), kernel );
+      } );
+    }
+  }
+};
 
 /******************************** FluidUpdateKernel ********************************/
 
@@ -282,21 +626,6 @@ struct CapillaryPressureUpdateKernel
 /******************************** ElementBasedAssemblyKernel ********************************/
 
 /**
- * @brief Internal struct to provide no-op defaults used in the inclusion
- *   of lambda functions into kernel component functions.
- * @struct NoOpFuncs
- */
-struct NoOpFunc
-{
-  template< typename ... Ts >
-  GEOSX_HOST_DEVICE
-  constexpr void
-  operator()( Ts && ... ) const {}
-};
-
-
-
-/**
  * @class ElementBasedAssemblyKernel
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_DOF number of degrees of freedom
@@ -306,6 +635,8 @@ template< localIndex NUM_COMP, localIndex NUM_DOF >
 class ElementBasedAssemblyKernel
 {
 public:
+
+  using keys = CompositionalMultiphaseBase::viewKeyStruct;
 
   /// Compile time value for the number of components
   static constexpr localIndex numComp = NUM_COMP;
@@ -343,16 +674,16 @@ public:
     m_porosityOld( solid.getOldPorosity() ),
     m_porosityNew( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
-    m_dCompFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( CompositionalMultiphaseBase::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() ) ),
-    m_phaseVolFracOld( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionOldString() ) ),
-    m_phaseVolFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionString() ) ),
-    m_dPhaseVolFrac_dPres( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString() ) ),
-    m_dPhaseVolFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() ) ),
-    m_phaseDensOld( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( CompositionalMultiphaseBase::viewKeyStruct::phaseDensityOldString() ) ),
+    m_dCompFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() ) ),
+    m_phaseVolFracOld( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionOldString() ) ),
+    m_phaseVolFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionString() ) ),
+    m_dPhaseVolFrac_dPres( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dPressureString() ) ),
+    m_dPhaseVolFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() ) ),
+    m_phaseDensOld( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseDensityOldString() ) ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens_dPres( fluid.dPhaseDensity_dPressure() ),
     m_dPhaseDens_dComp( fluid.dPhaseDensity_dGlobalCompFraction() ),
-    m_phaseCompFracOld( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_COMP > >( CompositionalMultiphaseBase::viewKeyStruct::phaseComponentFractionOldString() ) ),
+    m_phaseCompFracOld( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_COMP > >( keys::phaseComponentFractionOldString() ) ),
     m_phaseCompFrac( fluid.phaseCompFraction() ),
     m_dPhaseCompFrac_dPres( fluid.dPhaseCompFraction_dPressure() ),
     m_dPhaseCompFrac_dComp( fluid.dPhaseCompFraction_dGlobalCompFraction() ),
@@ -666,34 +997,6 @@ protected:
   arrayView1d< real64 > const m_localRhs;
 
 };
-
-namespace internal
-{
-
-template< typename T, typename LAMBDA >
-void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
-
-  switch( value )
-  {
-    case 1:
-    { lambda( std::integral_constant< T, 1 >() ); return; }
-    case 2:
-    { lambda( std::integral_constant< T, 2 >() ); return; }
-    case 3:
-    { lambda( std::integral_constant< T, 3 >() ); return; }
-    case 4:
-    { lambda( std::integral_constant< T, 4 >() ); return; }
-    case 5:
-    { lambda( std::integral_constant< T, 5 >() ); return; }
-    default:
-    { GEOSX_ERROR( "Unsupported number of components: " << value ); }
-  }
-}
-
-} // namespace internal
-
 
 /**
  * @class ElementBasedAssemblyKernelFactory
