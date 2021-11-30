@@ -31,7 +31,7 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
-# The -DBLT_MPI_COMMAND_APPEND='--allow-run-as-root;--use-hwthread-cpus' option is added for OpenMPI.
+# The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--use-hwthread-cpus" option is added for OpenMPI.
 #
 # OpenMPI prevents from running as `root` user by default.
 # And by default user is `root` in a docker container.
@@ -45,7 +45,7 @@ or_die python scripts/config-build.py \
               -bt ${CMAKE_BUILD_TYPE} \
               -bp ${GEOSX_BUILD_DIR} \
               -ip ${GEOSX_DIR} \
-              -DBLT_MPI_COMMAND_APPEND='--allow-run-as-root;--use-hwthread-cpus'
+              -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--use-hwthread-cpus"'
 
 or_die cd ${GEOSX_BUILD_DIR}
 
