@@ -38,10 +38,23 @@ MeshBody::~MeshBody()
 
 
 
-MeshLevel & MeshBody::createMeshLevel( localIndex const GEOSX_UNUSED_PARAM( newLevel ) )
+MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
 {
-  return this->registerGroup< MeshLevel >( "Level0" );
+  string const name = "Level" + std::to_string(newLevel);
+  return this->registerGroup< MeshLevel >( name );
 }
+
+MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel, localIndex const sourceLevel )
+{
+  MeshLevel & newMeshLevel = createMeshLevel( newLevel );
+  string const sourceName = "Level" + std::to_string(sourceLevel);
+  MeshLevel const & sourceMeshLevel = this->getGroupByPath<MeshLevel>( sourceName );
+
+
+
+  return newMeshLevel;
+}
+
 
 void MeshBody::setGlobalLengthScale( real64 scale )
 {

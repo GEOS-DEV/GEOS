@@ -55,6 +55,8 @@ public:
    */
   MeshLevel & createMeshLevel( localIndex const newLevel );
 
+  MeshLevel & createMeshLevel( localIndex const newLevel, localIndex const sourceLevel );
+
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level

@@ -47,6 +47,13 @@ public:
    */
   MeshLevel( string const & name,
              Group * const parent );
+
+
+  MeshLevel( string const & name,
+             Group * const parent,
+             MeshLevel const & source,
+             int const order );
+
   virtual ~MeshLevel() override;
 
   /**
@@ -67,6 +74,7 @@ public:
 
 
   virtual void initializePostInitialConditionsPostSubGroups() override;
+
 
   /// @cond DO_NOT_DOCUMENT
 

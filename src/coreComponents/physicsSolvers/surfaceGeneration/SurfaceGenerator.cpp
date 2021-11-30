@@ -1923,7 +1923,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
       string const & elemRegionName = elemRegion.getName();
 
       localIndex const regionIndex = elementManager.getRegions().getIndex( elemRegionName );
-      localIndex const subRegionIndex = elemRegion.getSubRegions().getIndex( elemSubRegion.getName() );
+      localIndex const subRegionIndex = elemRegion.getSubRegions().getSubGroupIndex( elemSubRegion.getName() );
       const localIndex elemIndex = elem.second;
 
       modifiedObjects.modifiedElements[{regionIndex, subRegionIndex}].insert( elemIndex );

@@ -1189,6 +1189,8 @@ public:
   localIndex getIndexInParent() const
   { return m_parent->getSubGroups().getIndex( m_name ); }
 
+  localIndex getSubGroupIndex( keyType const & key) const;
+
   /**
    * @brief Check whether this Group is resized when its parent is resized.
    * @return @p true if Group is resized with parent group, @p false otherwise

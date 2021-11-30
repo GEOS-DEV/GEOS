@@ -623,5 +623,11 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
   return *currentGroup;
 }
 
+localIndex Group::getSubGroupIndex( keyType const & key) const
+{
+  return getSubGroups().getIndex( key );
+}
+
+
 } /* end namespace dataRepository */
 } /* end namespace geosx  */

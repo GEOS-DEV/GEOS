@@ -568,7 +568,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
+  MeshLevel & meshLevel0 = meshBody.createMeshLevel( 0 );
   NodeManager & nodeManager = meshLevel0.getNodeManager();
 
   // Make sure that the node manager fields are initialized

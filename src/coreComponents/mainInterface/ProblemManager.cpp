@@ -566,6 +566,11 @@ void ProblemManager::generateMesh()
   domain.setupCommunications( useNonblockingMPI );
   faceManager.setIsExternal();
   edgeManager.setIsExternal( faceManager );
+
+
+  // clone mesh level
+  meshBody.createMeshLevel( 1 );
+
 }
 
 

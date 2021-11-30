@@ -57,6 +57,60 @@ MeshLevel::MeshLevel( string const & name,
   registerWrapper< integer >( viewKeys.meshLevel );
 }
 
+
+MeshLevel::MeshLevel( string const & name,
+                      Group * const parent,
+                      MeshLevel const & source,
+                      int const order ):
+  MeshLevel( name, parent )
+{
+
+  localIndex numNodes = source.m_nodeManager.size();
+  // find out how many node there must be on this rank
+  m_nodeManager.resize(numNodes);
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager.referencePosition();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager.referencePosition().toView();
+
+  // fill coordinate locations here??
+  forAll<parallelDevicePolicy<>>( m_nodeManager.size(),
+                                  [=]( localIndex const a )
+  {
+    for( localIndex i=0; i<3; ++i )
+    {
+      refPosNew(a,i) = refPosSource(a,i); // this needs to be another loop with a linear combination of values.
+    }
+  });
+
+  source.m_elementManager.forElementRegions<CellElementRegion>([&]( CellElementRegion const & sourceRegion )
+  {
+    CellElementRegion * const region = dynamic_cast<CellElementRegion *>( m_elementManager.createChild( sourceRegion.getCatalogName(),
+                                                                                                        sourceRegion.getName() ) );
+    sourceRegion.forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion const & sourceSubRegion )
+    {
+
+      CellElementSubRegion & newSubRegion = region->getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
+
+
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
+      array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodesNew = sourceSubRegion.nodeList();
+
+      localIndex const numNodesPerElem = 8;// change to pow( 2+( order>1 ? order-1 : 0 ), 3 );
+      elemsToNodesNew.resize( elemsToNodesNew.size(0), numNodesPerElem );
+
+      for( localIndex k=0; k<newSubRegion.size(); ++k )
+      {
+        for( localIndex a=0; a<numNodesPerElem; ++a )
+        {
+          elemsToNodesNew(k,a) = elemsToNodesSource(k,a); // need the logic to map to the nodes here
+        }
+      }
+    });
+  });
+}
+
+
+
 MeshLevel::~MeshLevel()
 {}
 
