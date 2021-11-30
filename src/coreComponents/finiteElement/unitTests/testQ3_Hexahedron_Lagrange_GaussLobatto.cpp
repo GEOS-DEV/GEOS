@@ -123,7 +123,7 @@ void testKernelDriver()
       for( localIndex j=0; j<4; ++j )
       {
           for( localIndex i=0; i<4; ++i )
-          {   
+          {
               for (localIndex l=0; l<4; ++l )
               {
               gradNxtest[i+4*j+16*k][l+4*j+16*k]=gradNxtest[i][l];
@@ -182,13 +182,19 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 
 
 using namespace geosx;
+//int main( int argc, char * argv[] )
+//{
+//  testing::InitGoogleTest();
+//
+//
+//  int const result = RUN_ALL_TESTS();
+//
+//
+//  return result;
+//}
 int main( int argc, char * argv[] )
 {
-  testing::InitGoogleTest();
-
-
+  ::testing::InitGoogleTest( &argc, argv );
   int const result = RUN_ALL_TESTS();
-
-
   return result;
 }

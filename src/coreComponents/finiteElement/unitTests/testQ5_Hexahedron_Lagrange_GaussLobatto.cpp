@@ -42,7 +42,7 @@ void testKernelDriver()
   arrayView2d< real64 > const & viewN = arrN;
   arrayView3d< real64 > const & viewdNdX = arrdNdX;
 
-  
+
   forAll< POLICY >( 1,
                     [=] GEOSX_HOST_DEVICE ( localIndex const )
   {
@@ -101,7 +101,7 @@ void testKernelDriver()
           }
       }
   }
-  
+
   real64 gradNxtest[numNodes][numQuadraturePoints] = {{0}};
   real64 gradNytest[numNodes][numQuadraturePoints] = {{0}};
   real64 gradNztest[numNodes][numQuadraturePoints] = {{0}};
@@ -130,7 +130,7 @@ void testKernelDriver()
   gradNxtest[3][2]=-gradNxtest[2][3];
   gradNxtest[3][4]=-gradNxtest[2][1];
   gradNxtest[3][5]=-gradNxtest[2][0];
- 
+
   gradNxtest[4][0]=-gradNxtest[1][5];
   gradNxtest[4][1]=-gradNxtest[1][4];
   gradNxtest[4][2]=-gradNxtest[1][3];
@@ -149,7 +149,7 @@ void testKernelDriver()
       for( localIndex j=0; j<6; ++j )
       {
           for( localIndex i=0; i<6; ++i )
-          {   
+          {
               for (localIndex l=0; l<6; ++l )
               {
                 gradNxtest[i+6*j+36*k][l+6*j+36*k]=gradNxtest[i][l];
@@ -166,27 +166,27 @@ void testKernelDriver()
   }
 
     forAll< POLICY >( 1,
-                    [=] GEOSX_HOST_DEVICE ( localIndex const )                   
-  { 
-  
+                    [=] GEOSX_HOST_DEVICE ( localIndex const )
+  {
+
   for( localIndex q=0; q<numQuadraturePoints; ++q )
-  { 
-    
+  {
+
     real64 dNdX[numNodes][3] = {{0}};
-    
+
     viewDetJ[q] = Q5_Hexahedron_Lagrange_GaussLobatto::calcGradN( q,
                                                                   xCoords,
                                                                   dNdX );
 
     for( localIndex a=0; a<numNodes; ++a )
-    {         
+    {
        for( int i = 0; i < 3; ++i )
           {
             if (abs(dNdX[a][i])<1e-9)
             {
               viewdNdX(q,a,i)=0;
             }
-            else 
+            else
             {
               viewdNdX( q, a,i ) = dNdX[a][i];
             }
@@ -194,11 +194,11 @@ void testKernelDriver()
       EXPECT_FLOAT_EQ( gradNxtest[a][q], viewdNdX(q, a, 0) );
       EXPECT_FLOAT_EQ( gradNytest[a][q], viewdNdX(q, a, 1) );
       EXPECT_FLOAT_EQ( gradNztest[a][q], viewdNdX(q, a, 2) );
-    } 
+    }
   }
  } );
 
-}  
+}
 
 #ifdef USE_CUDA
 TEST( FiniteElementShapeFunctions, testKernelCuda )
@@ -214,11 +214,18 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 
 
 using namespace geosx;
+//int main( int argc, char * argv[] )
+//{
+//  testing::InitGoogleTest();
+//
+//  int const result = RUN_ALL_TESTS();
+//
+//  return result;
+//}
+//
 int main( int argc, char * argv[] )
 {
-  testing::InitGoogleTest();
-
+  ::testing::InitGoogleTest( &argc, argv );
   int const result = RUN_ALL_TESTS();
-
   return result;
 }
