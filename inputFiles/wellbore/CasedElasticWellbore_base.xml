@@ -1,28 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <!-- SPHINX_Gravity -->
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <!-- SPHINX_GravityEnd -->
-    <!-- SPHINX_SolidMechanicsSolver -->
-    <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      logLevel="0"
-      targetRegions="{ casing, cement, rock }"
-      solidMaterialNames="{ casing, cement, rock }">
-      <!-- SPHINX_SolidMechanicsSolverEnd -->
-      <NonlinearSolverParameters
-        newtonTol="1.0e-9"
-        newtonMaxIter="8"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        directParallel="0"
-        logLevel="0"/>
-    </SolidMechanicsLagrangianSSLE>
-  </Solvers>
 
   <Events
     maxTime="1.0">
