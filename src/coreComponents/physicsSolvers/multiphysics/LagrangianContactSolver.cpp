@@ -180,7 +180,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    if( subRegion.hasWrapper( m_tractionKey ) )
+    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
     {
       arrayView2d< real64 > const &
       deltaTraction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaTractionString() );
@@ -268,7 +268,7 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    if( subRegion.hasWrapper( m_tractionKey ) )
+    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
@@ -385,7 +385,7 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    if( subRegion.hasWrapper( m_tractionKey ) )
+    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
     {
       arrayView2d< real64 > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
       arrayView2d< real64 > const & deltaTraction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaTractionString() );
@@ -427,7 +427,7 @@ void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & dom
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    if( subRegion.hasWrapper( m_tractionKey ) )
+    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
     {
       arrayView3d< real64 > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
@@ -1353,7 +1353,7 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
   surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
   SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
   FaceElementSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
-  GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( m_tractionKey ), "The fracture subregion must contain traction field." );
+  GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( viewKeyStruct::tractionString() ), "The fracture subregion must contain traction field." );
   arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
   GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
