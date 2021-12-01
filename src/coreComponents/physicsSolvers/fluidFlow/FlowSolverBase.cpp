@@ -143,7 +143,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::aperture0String() ).
         setDefaultValue( faceRegion.getDefaultAperture() );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::effectiveApertureString() ).
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::hydraulicApertureString() ).
         setApplyDefaultValue( faceRegion.getDefaultAperture() ).
         setPlotLevel( PlotLevel::LEVEL_0 );
     } );
@@ -280,7 +280,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
   arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-  arrayView1d< real64 const > const newHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
+  arrayView1d< real64 const > const newHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::hydraulicApertureString() );
   arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct:: viewKeyStruct::aperture0String() );
 
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );

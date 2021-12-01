@@ -505,7 +505,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
     dofManager.setSparsityPattern( localPattern );
     CRSMatrix< real64, globalIndex > localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
-    pattern.create( localMatrix.toViewConst(), MPI_COMM_GEOSX );
+    pattern.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
     pattern.set( 1.0 );
   }
 
@@ -543,7 +543,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
                            f2.components,
                            localPatternExpected );
   }
-  patternExpected.create( localPatternExpected.toViewConst(), MPI_COMM_GEOSX );
+  patternExpected.create( localPatternExpected.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
   // Compare the sparsity patterns
   pattern.set( 1.0 );
@@ -790,14 +790,14 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
     dofManager.setSparsityPattern( localPattern );
     CRSMatrix< real64, globalIndex > localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
-    A.create( localMatrix.toViewConst(), MPI_COMM_GEOSX );
+    A.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
     A.set( 1.0 );
   }
 
   // Create prolongation and restriction to 2 out of 3 components
   Matrix R, P;
-  dofManager.makeRestrictor( selection, A.getComm(), false, R );
-  dofManager.makeRestrictor( selection, A.getComm(), true, P );
+  dofManager.makeRestrictor( selection, A.comm(), false, R );
+  dofManager.makeRestrictor( selection, A.comm(), true, P );
 
   // Compute the sub-matrix via PtAP
   Matrix Asub_PtAP;
@@ -842,7 +842,7 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
     dofManager.setSparsityPattern( localPattern );
     CRSMatrix< real64, globalIndex > localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
-    B.create( localMatrix.toViewConst(), MPI_COMM_GEOSX );
+    B.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
     B.set( 1.0 );
   }
 

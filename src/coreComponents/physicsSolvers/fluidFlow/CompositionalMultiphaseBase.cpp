@@ -886,7 +886,7 @@ real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
   static bool systemSetupDone = false;
   if( !systemSetupDone )
   {
-    setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
     systemSetupDone = true;
   }
 
@@ -987,10 +987,10 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOSX_UNUSED_PARA
 {
   GEOSX_MARK_FUNCTION;
 
-  assembleAccumulationTerms( domain,
-                             dofManager,
-                             localMatrix,
-                             localRhs );
+  assembleAccumulationAndVolumeBalanceTerms( domain,
+                                             dofManager,
+                                             localMatrix,
+                                             localRhs );
 
   assembleFluxTerms( dt,
                      domain,
@@ -998,17 +998,13 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOSX_UNUSED_PARA
                      localMatrix,
                      localRhs );
 
-  assembleVolumeBalanceTerms( domain,
-                              dofManager,
-                              localMatrix,
-                              localRhs );
 
 }
 
-void CompositionalMultiphaseBase::assembleAccumulationTerms( DomainPartition & domain,
-                                                             DofManager const & dofManager,
-                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                             arrayView1d< real64 > const & localRhs ) const
+void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( DomainPartition & domain,
+                                                                             DofManager const & dofManager,
+                                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                             arrayView1d< real64 > const & localRhs ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1019,115 +1015,23 @@ void CompositionalMultiphaseBase::assembleAccumulationTerms( DomainPartition & d
                             ElementSubRegionBase const & subRegion )
   {
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-
-    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-
-    arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-
-    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
-    arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
-    arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens =
-      subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
-    arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens =
-      subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() );
-    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFracOld =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionOldString() );
-    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseDensOld =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseDensityOldString() );
-    arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & phaseCompFracOld =
-      subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_COMP > >( viewKeyStruct::phaseComponentFractionOldString() );
-
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
-    arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens = fluid.phaseDensity();
-    arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
-    arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
-    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFrac = fluid.phaseCompFraction();
-    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
-    arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
+    CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
-    CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+    bool const isIsothermal = true;
+    ElementBasedAssemblyKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >
+      ( isIsothermal,
+      m_numComponents,
+      m_numPhases,
+      dofManager.rankOffset(),
+      dofKey,
+      subRegion,
+      fluid,
+      solid,
+      localMatrix,
+      localRhs );
 
-
-    arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
-    arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
-    arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
-
-    KernelLaunchSelector1< AccumulationKernel >( m_numComponents,
-                                                 m_numPhases,
-                                                 subRegion.size(),
-                                                 dofManager.rankOffset(),
-                                                 dofNumber,
-                                                 elemGhostRank,
-                                                 volume,
-                                                 porosityOld,
-                                                 porosity,
-                                                 dPoro_dPres,
-                                                 dCompFrac_dCompDens,
-                                                 phaseVolFracOld,
-                                                 phaseVolFrac,
-                                                 dPhaseVolFrac_dPres,
-                                                 dPhaseVolFrac_dCompDens,
-                                                 phaseDensOld,
-                                                 phaseDens,
-                                                 dPhaseDens_dPres,
-                                                 dPhaseDens_dComp,
-                                                 phaseCompFracOld,
-                                                 phaseCompFrac,
-                                                 dPhaseCompFrac_dPres,
-                                                 dPhaseCompFrac_dComp,
-                                                 localMatrix,
-                                                 localRhs );
-  } );
-}
-
-void CompositionalMultiphaseBase::assembleVolumeBalanceTerms( DomainPartition const & domain,
-                                                              DofManager const & dofManager,
-                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                              arrayView1d< real64 > const & localRhs ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
-  {
-    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-
-    arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
-    arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseVolumeFraction_dPressureString() );
-    arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens =
-      subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() );
-
-    localIndex numComponents = m_numComponents;
-    localIndex numPhases     = m_numPhases;
-
-    CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
-
-    arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
-    arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
-
-    KernelLaunchSelector2< VolumeBalanceKernel >( numComponents, numPhases,
-                                                  subRegion.size(),
-                                                  dofManager.rankOffset(),
-                                                  dofNumber,
-                                                  elemGhostRank,
-                                                  volume,
-                                                  porosity,
-                                                  dPoro_dPres,
-                                                  phaseVolFrac,
-                                                  dPhaseVolFrac_dPres,
-                                                  dPhaseVolFrac_dCompDens,
-                                                  localMatrix.toViewConstSizes(),
-                                                  localRhs.toView() );
   } );
 }
 

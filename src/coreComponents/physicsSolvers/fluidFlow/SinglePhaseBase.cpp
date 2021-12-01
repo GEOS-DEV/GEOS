@@ -251,7 +251,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       ConstitutiveBase & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
       real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
 
-      subRegion.getWrapper< real64_array >( viewKeyStruct::effectiveApertureString() ).
+      subRegion.getWrapper< real64_array >( viewKeyStruct::hydraulicApertureString() ).
         setApplyDefaultValue( region.getDefaultAperture() );
 
       subRegion.getWrapper< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() ).
@@ -453,7 +453,7 @@ real64 SinglePhaseBase::solverStep( real64 const & time_n,
   real64 dt_return;
 
   // setup dof numbers and linear system
-  setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
 
   implicitStepSetup( time_n, dt, domain );
 
@@ -469,8 +469,8 @@ real64 SinglePhaseBase::solverStep( real64 const & time_n,
 void SinglePhaseBase::setupSystem( DomainPartition & domain,
                                    DofManager & dofManager,
                                    CRSMatrix< real64, globalIndex > & localMatrix,
-                                   array1d< real64 > & localRhs,
-                                   array1d< real64 > & localSolution,
+                                   ParallelVector & rhs,
+                                   ParallelVector & solution,
                                    bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
@@ -479,8 +479,8 @@ void SinglePhaseBase::setupSystem( DomainPartition & domain,
   SolverBase::setupSystem( domain,
                            dofManager,
                            localMatrix,
-                           localRhs,
-                           localSolution,
+                           rhs,
+                           solution,
                            setSparsity );
 }
 
@@ -509,7 +509,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
   forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                           FaceElementSubRegion & subRegion )
   {
-    arrayView1d< real64 const > const aper = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
+    arrayView1d< real64 const > const aper = subRegion.getReference< array1d< real64 > >( viewKeyStruct::hydraulicApertureString() );
     arrayView1d< real64 > const aper0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::aperture0String() );
 
     aper0.setValues< parallelDevicePolicy<> >( aper );
