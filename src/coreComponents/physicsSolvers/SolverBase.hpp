@@ -667,32 +667,32 @@ public:
    * This function provides capability to post process input values prior to
    * any other initialization operations.
    */
-  virtual void postProcessInput(){}
+  virtual void postProcessInput() override {}
 
   /**
    * @brief Called by Initialize() prior to initializing sub-Groups.
    */
-  virtual void initializePreSubGroups(){};
+  virtual void initializePreSubGroups() override {};
 
   /**
    * @brief Called by Initialize() after to initializing sub-Groups.
    */
-  virtual void initializePostSubGroups(){};
+  virtual void initializePostSubGroups() override {};
 
   /**
    * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
    */
-  virtual void initializePostInitialConditionsPreSubGroups(){}
+  virtual void initializePostInitialConditionsPreSubGroups() override {}
 
   /**
    * @brief Called by InitializePostInitialConditions() after to initializing sub-Groups.
    */
-  virtual void initializePostInitialConditionsPostSubGroups(){};
+  virtual void initializePostInitialConditionsPostSubGroups() override {};
 
   /**
    * @brief Performs initialization required after reading from a restart file.
    */
-  virtual void postRestartInitialization(){};
+  virtual void postRestartInitialization() override {};
 
 
 

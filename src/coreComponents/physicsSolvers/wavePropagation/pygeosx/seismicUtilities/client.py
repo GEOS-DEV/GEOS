@@ -54,12 +54,11 @@ class Cluster():
         return filename
 
 
-    def _add_job_to_script(self, cores):
-        if cores > 1:
-            self.run = "mpirun -np %d --map-by node %s seismicUtilities/wrapper.py " %(cores, self.python)
-        else:
-            self.run = "%s wrapper.py " %self.python
-
+    def _add_job_to_script(self, cores, cmd):
+        if cmd == "srun":
+            self.run = "srun -n %d %s seismicUtilities/wrapper.py " %(cores, self.python)
+        elif cmd == "mpi":
+            self.run = "mpirun -np %d %s seismicUtilities/wrapper.py " %(cores, self.python)
 
     def _add_xml_to_cmd(self, xml):
         self.run += "-i %s" %xml + " "
@@ -78,8 +77,8 @@ class Cluster():
         self.header.append(self.run)
 
     def setErrOut(self, job_id):
-        self.err = "%s-%s-%s.err"%(cluster.type, cluster.job_name, job_id)
-        self.out = "%s-%s-%s.out"%(cluster.type, cluster.job_name, job_id)
+        self.err = "%s-%s-%s.err"%(self.type, self.job_name, job_id)
+        self.out = "%s-%s-%s.out"%(self.type, self.job_name, job_id)
 
 
 
@@ -180,9 +179,9 @@ class SLURMCluster(Cluster):
         return status
 
 
-    def runJob(self):
+    def runJob(self, bashfile):
         output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
-
+        return output
 
 
 class LSFCluster(Cluster):
@@ -300,6 +299,7 @@ class Client:
     def submit(self,
                func,
                arg,
+               cmd="srun",
                cores=None,
                x_partition=1,
                y_partition=1,
@@ -310,6 +310,7 @@ class Client:
         thread = Thread(target = self._map,
                         args = (func,
                                 args,
+                                cmd,
                                 cores,
                                 x_partition,
                                 y_partition,
@@ -324,6 +325,7 @@ class Client:
     def map(self,
             func,
             args,
+            cmd="srun",
             cores=None,
             x_partition=1,
             y_partition=1,
@@ -334,6 +336,7 @@ class Client:
         thread = Thread(target = self._map,
                         args = (func,
                                 args,
+                                cmd,
                                 cores,
                                 x_partition,
                                 y_partition,
@@ -348,6 +351,7 @@ class Client:
     def _submit(self,
                 func,
                 args,
+                cmd,
                 cores=None,
                 x_partition=1,
                 y_partition=1,
@@ -359,6 +363,7 @@ class Client:
                 if cluster.free():
                     future = self.run(func,
                                       args,
+                                      cmd,
                                       cores,
                                       x_partition,
                                       y_partition,
@@ -377,6 +382,7 @@ class Client:
     def _map(self,
              func,
              args,
+             cmd,
              cores=None,
              x_partition=1,
              y_partition=1,
@@ -396,6 +402,7 @@ class Client:
                     if cluster.free():
                         futures[i] = self.run(func,
                                               work,
+                                              cmd,
                                               cores,
                                               x_partition,
                                               y_partition,
@@ -414,6 +421,7 @@ class Client:
     def run(self,
             func,
             args,
+            cmd,
             cores=None,
             x_partition=1,
             y_partition=1,
@@ -430,7 +438,7 @@ class Client:
             if cores > cluster.cores:
                 raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
             else:
-                cluster._add_job_to_script(cores)
+                cluster._add_job_to_script(cores, cmd)
                 if x_partition*y_partition*z_partition != cores:
                     raise ValueError("Partition x y z must match x*y*z=cores")
                 else:

@@ -1,12 +1,11 @@
 from mpi4py import MPI
 import sys
 import os
-import pygeosx
+sys.path.append(os.getcwd() + "/..")
 import time
 import importlib
 import json
 from munch import munchify
-
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -36,9 +35,9 @@ for k, v in dict_args.items():
     else:
         args.append(munchify(v))
 
-geosx_argv = [sys.argv[0], "-i", ""]
+geosx_args = [sys.argv[0], "-i", ""]
 for arg in sys.argv[1:-5]:
-    geosx_argv.append(arg)
+    geosx_args.append(arg)
 
 args.append(geosx_args)
 args.append(rank)
