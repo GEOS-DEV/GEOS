@@ -42,7 +42,9 @@
       <NonlinearSolverParameters
         newtonMaxIter="40"/>
       <LinearSolverParameters
-        logLevel="2"/>
+        logLevel="0"
+        solverType="direct"
+        directParallel="0"/>
     </SinglePhasePoromechanics>
 
     <!-- SPHINX_SolidMechanicsSolver -->
