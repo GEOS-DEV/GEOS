@@ -48,7 +48,7 @@ public:
  * @param[in] parent the parent Group pointer for the MeshGenerator object
  */
   VTKMeshGenerator( const string & name,
-                       Group * const parent );
+                    Group * const parent );
 
   ~VTKMeshGenerator() override = default;
 
@@ -82,14 +82,14 @@ private:
    *
    * Please note that this mesh generator works only with a number of MPI processes than
    * can be decomposed into a power of 2.
-   * 
+   *
    * - If a .vtu of .vtk file is used, the root MPI process will load it.
    *   The mesh will be then redistribute among all the avaible MPI processes
    * - If a .pvtu file is used, it means that the mesh is pre-partionned in the file system.
    *   The available MPI processes will load the pre-partionned mesh. The mesh will be then
    *   redistributed among ALL the available MPI processes.
    *
-   * The properties on the mesh will be also and redistributed. The only compatible typs are double and float. 
+   * The properties on the mesh will be also and redistributed. The only compatible typs are double and float.
    * The properties can be multi-dimensional.$
    * The name of the properties has to have the right name in order to be used by GEOSX. For instance,
    * the property that stored the input porosity in GEOSX is named "referencePorosity", so the mesh has to have
@@ -103,7 +103,7 @@ private:
    * and hexahedron, three CellBlocks will be created names 1_tetrahedron, 1_wedges and 1_hexahedron.
    * The ElementRegions have to be be defined in the XML file.
    *
-   * The pointsets of surface are defined in the same way, using the same property names "attribute" defined in the 
+   * The pointsets of surface are defined in the same way, using the same property names "attribute" defined in the
    * input mesh. The pointsets will hold a name that is just the attribute index. For instance, if a mesh has three
    * surfaces of interest, with triangles and/or quads holding an attribute value of 1, 2 or 3, three pointsets named
    * "1", "2" and "3" will be instantiated by this method
@@ -128,10 +128,10 @@ private:
   /// Path to the mesh file
   Path m_filePath;
 
-  std::map<int, std::vector<vtkIdType>> m_regionsHex;
-  std::map<int, std::vector<vtkIdType>> m_regionsTetra;
-  std::map<int, std::vector<vtkIdType>> m_regionsWedges;
-  std::map<int, std::vector<vtkIdType>> m_regionsPyramids;
+  std::map< int, std::vector< vtkIdType > > m_regionsHex;
+  std::map< int, std::vector< vtkIdType > > m_regionsTetra;
+  std::map< int, std::vector< vtkIdType > > m_regionsWedges;
+  std::map< int, std::vector< vtkIdType > > m_regionsPyramids;
 
   std::vector< vtkDataArray * > m_arraysToBeImported;
 };

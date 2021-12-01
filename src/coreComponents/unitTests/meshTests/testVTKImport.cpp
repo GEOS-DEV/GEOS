@@ -26,7 +26,7 @@
 using namespace geosx;
 using namespace geosx::dataRepository;
 
-void TestMeshImport( string const & meshFilePath)
+void TestMeshImport( string const & meshFilePath )
 {
   conduit::Node node;
   Group root( "root", node );
@@ -79,7 +79,7 @@ void TestMeshImport( string const & meshFilePath)
 }
 TEST( VTKImport, testVTK )
 {
-  TestMeshImport( vtkFilePath);
+  TestMeshImport( vtkFilePath );
 }
 
 TEST( VTKImport, testVTU )
@@ -89,7 +89,7 @@ TEST( VTKImport, testVTU )
 
 TEST( VTKImport, testPVTU )
 {
-  TestMeshImport( pvtuFilePath);
+  TestMeshImport( pvtuFilePath );
 }
 
 int main( int argc, char * * argv )

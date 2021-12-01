@@ -357,11 +357,11 @@ public:
    */
   template< typename T_SEND, typename T_RECV >
   static int allgatherv( T_SEND const * sendbuf,
-                        int sendcount,
-                        T_RECV * recvbuf,
-                        int * recvcounts,
-                        int * displacements,
-                        MPI_Comm comm );
+                         int sendcount,
+                         T_RECV * recvbuf,
+                         int * recvcounts,
+                         int * displacements,
+                         MPI_Comm comm );
 
   /**
    * @brief Convenience function for MPI_Allgather.
@@ -637,11 +637,11 @@ int MpiWrapper::allgather( T_SEND const * const sendbuf,
 
 template< typename T_SEND, typename T_RECV >
 int MpiWrapper::allgatherv( T_SEND const * const sendbuf,
-                           int sendcount,
-                           T_RECV * const recvbuf,
-                           int * recvcounts,
-                           int * displacements,
-                           MPI_Comm MPI_PARAM( comm ) )
+                            int sendcount,
+                            T_RECV * const recvbuf,
+                            int * recvcounts,
+                            int * displacements,
+                            MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   return MPI_Allgatherv( sendbuf, sendcount, getMpiType< T_SEND >(), recvbuf, recvcounts, displacements, getMpiType< T_RECV >(), comm );
