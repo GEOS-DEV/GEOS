@@ -654,7 +654,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                  feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
+//                  feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
                                                                                              subRegion.getName() ) ];

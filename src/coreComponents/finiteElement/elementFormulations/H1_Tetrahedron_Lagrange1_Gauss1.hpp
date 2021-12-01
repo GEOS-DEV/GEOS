@@ -47,6 +47,9 @@ namespace finiteElement
 class H1_Tetrahedron_Lagrange1_Gauss1 final : public FiniteElementBase
 {
 public:
+
+  using BASIS = LagrangeBasis1;
+
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 4;
   /// The maximum number of support points per element.
@@ -120,6 +123,11 @@ public:
   static void setupStack( localIndex const & cellIndex,
                           MeshData const & meshData,
                           StackVariables & stack );
+
+
+  GEOSX_HOST_DEVICE
+  static void calcN( real64 const (& coords)[3],
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -275,6 +283,25 @@ H1_Tetrahedron_Lagrange1_Gauss1::
 }
 
 //*************************************************************************************************
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+H1_Tetrahedron_Lagrange1_Gauss1::
+  calcN( real64 const (& coords)[3],
+         real64 (& N)[numNodes] )
+{
+  real64 const r = coords[0];
+  real64 const s = coords[1];
+  real64 const t = coords[2];
+
+  // single quadrature point (centroid), i.e.  r = s = t = 1/4
+  N[0] = 1 - r - s - t;
+  N[1] = r;
+  N[2] = s;
+  N[3] = t;
+}
+
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE

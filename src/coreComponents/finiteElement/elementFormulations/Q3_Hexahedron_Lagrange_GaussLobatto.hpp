@@ -89,6 +89,9 @@ namespace finiteElement
 class Q3_Hexahedron_Lagrange_GaussLobatto final : public FiniteElementBase
 {
 public:
+
+  using BASIS = LagrangeBasis3GL;
+
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = LagrangeBasis3GL::TensorProduct3D::numSupportPoints;
 
@@ -110,6 +113,13 @@ public:
   virtual localIndex getNumSupportPoints() const override
   {
     return numNodes;
+  }
+
+  GEOSX_HOST_DEVICE
+  static void calcN( real64 const (& coords)[3],
+                     real64 ( &N )[numNodes] )
+  {
+    LagrangeBasis3GL::TensorProduct3D::value( coords, N );
   }
 
   /**

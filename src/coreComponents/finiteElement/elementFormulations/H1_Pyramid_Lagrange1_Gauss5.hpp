@@ -56,6 +56,9 @@ namespace finiteElement
 class H1_Pyramid_Lagrange1_Gauss5 final : public FiniteElementBase
 {
 public:
+
+  using BASIS = LagrangeBasis1;
+
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 5;
   /// The maximum number of support points per element.
@@ -128,6 +131,11 @@ public:
   static void setupStack( localIndex const & cellIndex,
                           MeshData const & meshData,
                           StackVariables & stack );
+
+
+  GEOSX_HOST_DEVICE
+  static void calcN( real64 const (& coords)[3],
+                     real64 ( &N )[numNodes] );
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -500,6 +508,21 @@ H1_Pyramid_Lagrange1_Gauss5::
 }
 
 //*************************************************************************************************
+
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+H1_Pyramid_Lagrange1_Gauss5::
+  calcN( real64 const (& xi)[3],
+         real64 ( & N )[numNodes] )
+{
+  N[0] = 0.125*( 1.0 - xi[0] ) * ( 1.0 - xi[1] ) * ( 1.0 - xi[2] );
+  N[1] = 0.125*( 1.0 + xi[0] ) * ( 1.0 - xi[1] ) * ( 1.0 - xi[2] );
+  N[2] = 0.125*( 1.0 - xi[0] ) * ( 1.0 + xi[1] ) * ( 1.0 - xi[2] );
+  N[3] = 0.125*( 1.0 + xi[0] ) * ( 1.0 + xi[1] ) * ( 1.0 - xi[2] );
+  N[4] = 0.5*( 1.0 + xi[2] );
+}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE

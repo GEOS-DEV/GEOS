@@ -48,6 +48,9 @@ namespace finiteElement
 class H1_TriangleFace_Lagrange1_Gauss1 final : public FiniteElementBase
 {
 public:
+
+  using BASIS = LagrangeBasis1;
+
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 3;
   /// The maximum number of support points per element.
@@ -120,6 +123,12 @@ public:
   static void setupStack( localIndex const & cellIndex,
                           MeshData const & meshData,
                           StackVariables & stack );
+
+
+  GEOSX_HOST_DEVICE
+  static void calcN( real64 const (& coords)[2],
+                     real64 ( &N )[numNodes] );
+
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -206,6 +215,23 @@ void H1_TriangleFace_Lagrange1_Gauss1::
   addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
                             MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
 {}
+
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+H1_TriangleFace_Lagrange1_Gauss1::
+calcN( real64 const (& coords)[2],
+                   real64 ( &N )[numNodes] )
+{
+  real64 const r  = coords[0];
+  real64 const s  = coords[1];
+
+  N[0] = 1.0 - r - s;
+  N[1] = r;
+  N[2] = s;
+}
+
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE

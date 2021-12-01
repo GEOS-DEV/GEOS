@@ -150,6 +150,16 @@ public:
                           MeshData const & meshData,
                           StackVariables & stack );
 
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (& coords)[3],
+                     real64 (& N)[numNodes] )
+  {
+    LagrangeBasis1::TensorProduct3D::value( coords, N );
+  }
+
+
   /**
    * @brief Calculate shape functions values for each support point at a
    *   quadrature point.

@@ -53,6 +53,9 @@ namespace finiteElement
 class H1_Wedge_Lagrange1_Gauss6 final : public FiniteElementBase
 {
 public:
+
+  using BASIS = LagrangeBasis1;
+
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 6;
   /// The maximum number of support points per element.
@@ -125,6 +128,12 @@ public:
   static void setupStack( localIndex const & cellIndex,
                           MeshData const & meshData,
                           StackVariables & stack );
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( real64 const (& coords)[3],
+                     real64 (& N)[numNodes] );
+
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -464,6 +473,26 @@ H1_Wedge_Lagrange1_Gauss6::
 }
 
 //*************************************************************************************************
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
+H1_Wedge_Lagrange1_Gauss6::calcN( real64 const (& coords)[3],
+            real64 (& N)[numNodes] )
+{
+  real64 const r  = coords[0];
+  real64 const s  = coords[1];
+  real64 const xi = coords[2];
+
+  N[0] = 0.5*( 1.0 - r - s ) * ( 1.0 - xi );
+  N[1] = 0.5*( 1.0 - r - s ) * ( 1.0 + xi );
+  N[2] = 0.5* r * ( 1.0 - xi );
+  N[3] = 0.5* r * ( 1.0 + xi );
+  N[4] = 0.5* s * ( 1.0 - xi );
+  N[5] = 0.5* s * ( 1.0 + xi );
+
+}
+
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
