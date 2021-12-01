@@ -269,6 +269,7 @@ public:
     static constexpr char const * dofFieldString() { return "compositionalWellVars"; }
 
     // inputs
+
     static constexpr char const * temperatureString() { return "wellTemperature"; }
 
     static constexpr char const * deltaTemperatureString() { return "deltaWellTemperature"; }
@@ -441,6 +442,8 @@ private:
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPres;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPres;
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resTemp;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_COMP > > m_resCompDens;
 

@@ -77,6 +77,7 @@ char const * xmlInput =
   "                      control=\"totalVolRate\" \n"
   "                      targetBHP=\"6e7\"\n"
   "                      targetTotalRate=\"1e-5\" \n"
+  "                      injectionTemperature=\"297.15\"\n"
   "                      injectionStream=\"{0.1, 0.1, 0.1, 0.7}\"/>\n"
   "    </CompositionalMultiphaseWell>\n"
   "  </Solvers>\n"
@@ -215,7 +216,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
   localIndex const NC = flowSolver.numFluidComponents();
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
-  array1d< real64 > const & residual = solver.getLocalRhs();
+  array1d< real64 > residual( jacobian.numRows() );
   DofManager const & dofManager = solver.getDofManager();
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
@@ -479,8 +480,8 @@ protected:
     solver->setupSystem( domain,
                          solver->getDofManager(),
                          solver->getLocalMatrix(),
-                         solver->getLocalRhs(),
-                         solver->getLocalSolution() );
+                         solver->getSystemRhs(),
+                         solver->getSystemSolution() );
 
     solver->implicitStepSetup( time, dt, domain );
   }

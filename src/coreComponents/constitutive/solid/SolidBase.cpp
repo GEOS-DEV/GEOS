@@ -48,16 +48,6 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
     setApplyDefaultValue( -1 ). // will be overwritten
     setDescription( "Material Density" );
 
-  // TODO: remove
-  registerWrapper( viewKeyStruct::internalEnergyString(), &m_internalEnergy ).
-    setApplyDefaultValue( 0 ). // default to zero
-    setDescription( "Internal energy." );
-
-  // TODO: remove
-  registerWrapper( viewKeyStruct::dInternalEnergy_dTemperatureString(), &m_dInternalEnergy_dTemperature ).
-    setApplyDefaultValue( 0 ). // default to zero
-    setDescription( "Derivative of the internal energy w.r.t. temperature." );
-
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default Material Density" );
@@ -82,10 +72,6 @@ void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,
 
   m_newStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_oldStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
-
-  // TODO: remove
-  m_internalEnergy.resize( 0, numConstitutivePointsPerParentIndex );
-  m_dInternalEnergy_dTemperature.resize( 0, numConstitutivePointsPerParentIndex );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

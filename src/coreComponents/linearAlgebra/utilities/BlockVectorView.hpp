@@ -92,7 +92,7 @@ public:
    * @brief Set vector elements to random entries.
    * @param seed the random seed to use
    */
-  void rand( unsigned const seed = 1984 );
+  void rand( unsigned const seed );
 
   /**
    * @brief Dot product.

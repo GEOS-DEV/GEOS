@@ -613,10 +613,6 @@ public:
     static constexpr char const * oldStressString() { return "oldStress"; }            ///< Old stress key
     static constexpr char const * densityString() { return "density"; }                ///< Density key
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
-
-    // TODO: remove
-    static constexpr char const * internalEnergyString() { return "internalEnergy"; }
-    static constexpr char const * dInternalEnergy_dTemperatureString() { return "dInternalEnergy_dTemperature"; }
   };
 
 
@@ -679,14 +675,6 @@ public:
     return m_density;
   }
 
-  // TODO: remove
-
-  /// Const/non-mutable accessor for internal energy
-  arrayView2d< real64 const > getInternalEnergy() const { return m_internalEnergy; }
-
-  /// Const/non-mutable accessor for internal energy
-  arrayView2d< real64 const > getDinternalEnergy_dTemperature() const { return m_dInternalEnergy_dTemperature; }
-
   ///@}
 
 protected:
@@ -702,14 +690,6 @@ protected:
 
   /// The material density at a quadrature point.
   array2d< real64 > m_density;
-
-  /// TODO: remove
-  /// The material internal energy
-  array2d< real64 > m_internalEnergy;
-
-  /// TODO: remove
-  /// The material internal Energy as a function of the temperature
-  array2d< real64 > m_dInternalEnergy_dTemperature;
 
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;

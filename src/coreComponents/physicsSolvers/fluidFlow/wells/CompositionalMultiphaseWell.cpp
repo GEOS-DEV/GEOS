@@ -136,11 +136,10 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       setRestartFlags( RestartFlags::NO_WRITE );
 
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString() ).
-      setApplyDefaultValue( 297.15 ). // TODO: will be fixed by hydrostatic PR
       setPlotLevel( PlotLevel::LEVEL_0 );
 
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaTemperatureString() ).
-      setApplyDefaultValue( 0 ). // TODO: will be fixed by hydrostatic PR
+      setApplyDefaultValue( 0 ).
       setRestartFlags( RestartFlags::NO_WRITE );
 
     // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
@@ -413,16 +412,20 @@ void CompositionalMultiphaseWell::initializePreSubGroups()
   WellSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
-  validateConstitutiveModels( meshLevel, cm );
+  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
+  {
+    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
-  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
-  validateModelMapping< MultiFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
-  validateModelMapping< RelativePermeabilityBase >( meshLevel.getElemManager(), m_relPermModelNames );
-  validateInjectionStreams( meshLevel );
-  validateWellConstraints( meshLevel, fluid0 );
+    validateConstitutiveModels( meshLevel, cm );
+
+    MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+    validateModelMapping< MultiFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
+    validateModelMapping< RelativePermeabilityBase >( meshLevel.getElemManager(), m_relPermModelNames );
+    validateInjectionStreams( meshLevel );
+    validateWellConstraints( meshLevel, fluid0 );
+  }
 }
 
 void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
@@ -737,8 +740,10 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
 
   arrayView1d< real64 const > const & pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
   arrayView1d< real64 const > const & dPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+
   arrayView1d< real64 const > const temp = subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
   arrayView1d< real64 const > const dTemp = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaTemperatureString() );
+
   arrayView2d< real64 const, compflow::USD_COMP > const & compFrac =
     subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() );
 
@@ -902,8 +907,10 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
     // get well primary variables on well elements
     arrayView1d< real64 > const & wellElemPressure =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-    arrayView1d< real64 const > const & wellElemTemp =
+
+    arrayView1d< real64 > const & wellElemTemp =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
+
     arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
     arrayView1d< real64 > const & connRate =
@@ -926,23 +933,25 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
     // 1) Loop over all perforations to compute an average mixture density and component fraction
     // 2) Initialize the reference pressure
     // 3) Estimate the pressures in the well elements using the average density
-    PresCompFracInitializationKernel::launch( perforationData.size(),
-                                              subRegion.size(),
-                                              numComp,
-                                              numPhase,
-                                              perforationData.getNumPerforationsGlobal(),
-                                              wellControls,
-                                              0.0, // initialization done at t = 0
-                                              m_resPres.toNestedViewConst(),
-                                              m_resCompDens.toNestedViewConst(),
-                                              m_resPhaseVolFrac.toNestedViewConst(),
-                                              m_resPhaseMassDens.toNestedViewConst(),
-                                              resElementRegion,
-                                              resElementSubRegion,
-                                              resElementIndex,
-                                              wellElemGravCoef,
-                                              wellElemPressure,
-                                              wellElemCompFrac );
+    PresTempCompFracInitializationKernel::launch( perforationData.size(),
+                                                  subRegion.size(),
+                                                  numComp,
+                                                  numPhase,
+                                                  perforationData.getNumPerforationsGlobal(),
+                                                  wellControls,
+                                                  0.0, // initialization done at t = 0
+                                                  m_resPres.toNestedViewConst(),
+                                                  m_resTemp.toNestedViewConst(),
+                                                  m_resCompDens.toNestedViewConst(),
+                                                  m_resPhaseVolFrac.toNestedViewConst(),
+                                                  m_resPhaseMassDens.toNestedViewConst(),
+                                                  resElementRegion,
+                                                  resElementSubRegion,
+                                                  resElementIndex,
+                                                  wellElemGravCoef,
+                                                  wellElemPressure,
+                                                  wellElemTemp,
+                                                  wellElemCompFrac );
 
     // get well secondary variables on well elements
     MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
@@ -1631,6 +1640,10 @@ void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
     m_deltaResPres =
       elemManager.constructArrayViewAccessor< real64, 1 >( keys::deltaPressureString() );
     m_deltaResPres.setName( getName() + "/accessors/" + keys::deltaPressureString() );
+
+    m_resTemp.clear();
+    m_resTemp = elemManager.constructArrayViewAccessor< real64, 1 >( keys::temperatureString() );
+    m_resTemp.setName( getName() + "/accessors/" + keys::temperatureString() );
 
     m_resCompDens.clear();
     m_resCompDens =
