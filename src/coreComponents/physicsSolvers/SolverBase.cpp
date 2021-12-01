@@ -467,14 +467,14 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       resetConfigurationToBeginningOfStep( domain );
     }
 
-    // keep residual from previous iteration in case we need to do a line search
-    real64 lastResidual = 1e99;
-    integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-    real64 scaleFactor = 1.0;
-
     // Configuration loop
     for( configurationLoopIter = 0; configurationLoopIter < maxConfigurationIter; ++configurationLoopIter )
     {
+      // keep residual from previous iteration in case we need to do a line search
+      real64 lastResidual = 1e99;
+      integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+      real64 scaleFactor = 1.0;
+
       // main Newton loop
       for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
       {
@@ -501,7 +501,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
                                    domain,
                                    m_dofManager,
                                    m_localMatrix.toViewConstSizes(),
-                                   localRhs.);
+                                   localRhs );
 
           m_rhs.close();
 
@@ -610,7 +610,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         updateState( domain );
 
         lastResidual = residualNorm;
-      } //
+      } // end of Newton's loop 
 
       if( isNewtonConverged )
       {

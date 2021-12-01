@@ -112,12 +112,6 @@ public:
                 integer const cycleNumber,
                 DomainPartition & domain ) override;
 
-  virtual real64
-  nonlinearImplicitStep( real64 const & time_n,
-                         real64 const & dt,
-                         integer const cycleNumber,
-                         DomainPartition & domain ) override;
-
   virtual bool
   lineSearch( real64 const & time_n,
               real64 const & dt,
@@ -174,13 +168,7 @@ private:
 
   localIndex m_contactRelationFullIndex;
 
-  integer m_activeSetMaxIter;
-
-  integer m_activeSetIter = 0;
-
   real64 const m_slidingCheckTolerance = 0.05;
-
-  string const m_tractionKey = viewKeyStruct::tractionString();
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
 
@@ -188,22 +176,11 @@ private:
 
 public:
 
-  void initializeFractureState( MeshLevel & mesh,
-                                string const & fieldName ) const;
-
   void setFractureStateForElasticStep( DomainPartition & domain ) const;
 
-  bool updateFractureState( DomainPartition & domain ) const;
-
-  void synchronizeFractureState( DomainPartition & domain ) const;
+  virtual bool updateConfiguration( DomainPartition & domain ) override;
 
   bool isFractureAllInStickCondition( DomainPartition const & domain ) const;
-
-  void computeFractureStateStatistics( DomainPartition const & domain,
-                                       globalIndex & numStick,
-                                       globalIndex & numSlip,
-                                       globalIndex & numOpen,
-                                       bool printAll = false ) const;
 
   void computeRotationMatrices( DomainPartition & domain ) const;
 
@@ -216,15 +193,6 @@ public:
 
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static bool compareFractureStates( integer const state0,
-                                     integer const state1 )
-  {
-    return state0 == state1
-           || ( state0 == FractureState::NEW_SLIP && state1 == FractureState::SLIP )
-           || ( state0 == FractureState::SLIP && state1 == FractureState::NEW_SLIP );
-  }
 };
 
 } /* namespace geosx */

@@ -595,6 +595,12 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
   } );
 }
 
+bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )
+{
+  GEOSX_UNUSED_VAR(domain);
+  return true;
+}
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, string const &, Group * const )
 } /* namespace geosx */

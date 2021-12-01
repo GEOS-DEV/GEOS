@@ -63,17 +63,11 @@ constexpr integer LagrangianContactSolver::FractureState::OPEN;
 LagrangianContactSolver::LagrangianContactSolver( const string & name,
                                                   Group * const parent ):
   ContactSolverBase( name, parent ),
-  m_stabilizationName(),
-  m_activeSetMaxIter()
+  m_stabilizationName()
 {
   registerWrapper( viewKeyStruct::stabilizationNameString(), &m_stabilizationName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
-
-  registerWrapper( viewKeyStruct::activeSetMaxIterString(), &m_activeSetMaxIter ).
-    setApplyDefaultValue( 10 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum number of iteration for the active set strategy in the lagrangian contact solver" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -481,271 +475,6 @@ real64 LagrangianContactSolver::explicitStep( real64 const & GEOSX_UNUSED_PARAM(
   return dt;
 }
 
-real64 LagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
-                                                       real64 const & dt,
-                                                       integer const cycleNumber,
-                                                       DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  // dt may be cut during the course of this step, so we are keeping a local
-  // value to track the achieved dt for this step.
-  real64 stepDt = dt;
-
-  integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
-  integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
-  real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
-
-  integer const maxNumberDtCuts = m_nonlinearSolverParameters.m_maxTimeStepCuts;
-  real64 const dtCutFactor = m_nonlinearSolverParameters.m_timeStepCutFactor;
-
-  bool const allowNonConverged = m_nonlinearSolverParameters.m_allowNonConverged > 0;
-
-  integer & dtAttempt = m_nonlinearSolverParameters.m_numdtAttempts;
-
-  // a flag to denote whether we have converged
-  bool isNewtonConverged = false;
-
-  bool isActiveSetConverged = false;
-
-  // outer loop attempts to apply full timestep, and manages timestep cut if required.
-  for( dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
-  {
-    // reset the solver state, since we are restarting the time step
-    if( dtAttempt > 0 )
-    {
-      resetStateToBeginningOfStep( domain );
-      globalIndex numStick, numSlip, numOpen;
-      computeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
-    }
-
-    bool useElasticStep = !isFractureAllInStickCondition( domain );
-
-    integer & activeSetIter = m_activeSetIter;
-    for( activeSetIter = 0; activeSetIter < m_activeSetMaxIter; ++activeSetIter )
-    {
-      // *******************************
-      // Newton loop: begin
-      // *******************************
-      isNewtonConverged = false;
-      // keep residual from previous iteration in case we need to do a line search
-      real64 lastResidual = 1e99;
-      integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-      real64 scaleFactor = 1.0;
-
-      // main Newton loop
-      bool computeResidual = true;
-      for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
-      {
-        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Attempt: {:2}, ActiveSetIter: {:2} ; NewtonIter: {:2} ; ", dtAttempt, activeSetIter, newtonIter ) );
-
-        // zero out matrix/rhs before assembly
-        m_localMatrix.zero();
-        m_rhs.zero();
-
-        {
-          arrayView1d< real64 > const localRhs = m_rhs.open();
-
-          // call assemble to fill the matrix and the rhs
-          assembleSystem( time_n,
-                          stepDt,
-                          domain,
-                          m_dofManager,
-                          m_localMatrix.toViewConstSizes(),
-                          localRhs );
-
-          // apply boundary conditions to system
-          applyBoundaryConditions( time_n,
-                                   stepDt,
-                                   domain,
-                                   m_dofManager,
-                                   m_localMatrix.toViewConstSizes(),
-                                   localRhs );
-
-          m_rhs.close();
-        }
-        // TODO: maybe add scale function here?
-        // Scale()
-
-        real64 residualNorm;
-        // get residual norm
-        if( computeResidual )
-        {
-          residualNorm = calculateResidualNorm( domain, m_dofManager, m_rhs.values() );
-        }
-        else
-        {
-          residualNorm = lastResidual;
-        }
-
-        if( getLogLevel() >= 1 && logger::internal::rank==0 )
-        {
-          if( newtonIter!=0 )
-          {
-            std::cout << GEOSX_FMT( "Last LinSolve(iter,tol) = ({:4}, {:4.2e}) ; ",
-                                    m_linearSolverResult.numIterations,
-                                    m_linearSolverResult.residualReduction );
-          }
-          std::cout << std::endl;
-        }
-
-        // if the residual norm is less than the Newton tolerance we denote that we have
-        // converged and break from the Newton loop immediately.
-        if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
-        {
-          isNewtonConverged = true;
-          break;
-        }
-
-        // if using adaptive Krylov tolerance scheme, update tolerance.
-        LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
-        if( krylovParams.useAdaptiveTol )
-        {
-          krylovParams.relTolerance = eisenstatWalker( residualNorm, lastResidual, krylovParams.weakestTol );
-        }
-
-        // Compose parallel LA matrix/rhs out of local LA matrix/rhs
-        m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
-
-        // Output the linear system matrix/rhs for debugging purposes
-        debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
-
-        // Solve the linear system
-        solveSystem( m_dofManager, m_matrix, m_rhs, m_solution );
-
-        // Output the linear system solution for debugging purposes
-        debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
-
-        scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
-
-        // do line search in case residual has increased
-        if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None && newtonIter > 0 )
-        {
-          bool lineSearchSuccess = lineSearch( time_n,
-                                               stepDt,
-                                               cycleNumber,
-                                               domain,
-                                               m_dofManager,
-                                               m_localMatrix.toViewConstSizes(),
-                                               m_rhs,
-                                               m_solution,
-                                               scaleFactor,
-                                               residualNorm );
-
-          if( !lineSearchSuccess )
-          {
-            if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Attempt )
-            {
-              GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Accepting iteration." );
-            }
-            else if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Require )
-            {
-              // if line search failed, then break out of the main Newton loop. Timestep will be cut.
-              GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Exiting Newton Loop." );
-              break;
-            }
-          }
-          // Residual norm already computed in line search and stored in "residualNorm"
-          computeResidual = false;
-        }
-        else
-        {
-          // apply the system solution to the fields/variables
-          applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, domain );
-          // Need to compute the residual norm
-          computeResidual = true;
-        }
-
-        if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
-        {
-          // TODO try chopping (similar to line search)
-          GEOSX_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
-          break;
-        }
-
-        lastResidual = residualNorm;
-      }
-      // *******************************
-      // Newton loop: end
-      // *******************************
-
-      // *******************************
-      // Active set check: begin
-      // *******************************
-      bool const isPreviousFractureStateValid = updateFractureState( domain );
-      GEOSX_LOG_LEVEL_RANK_0( 1, "active set flag: " << std::boolalpha << isPreviousFractureStateValid );
-
-      if( getLogLevel() >= 1 )
-      {
-        globalIndex numStick, numSlip, numOpen;
-        computeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
-      }
-      // *******************************
-      // Active set check: end
-      // *******************************
-
-      GEOSX_LOG_LEVEL_RANK_0( 1, "isPreviousFractureStateValid: " << std::boolalpha << isPreviousFractureStateValid <<
-                              " | isNewtonConverged: " << isNewtonConverged << " | useElasticStep: " << useElasticStep );
-      if( isNewtonConverged )
-      {
-        isActiveSetConverged = isPreviousFractureStateValid;
-        if( isActiveSetConverged )
-        {
-          break;
-        }
-      }
-      else if( useElasticStep )
-      {
-        GEOSX_LOG_LEVEL_RANK_0( 1, "Trying with an elastic step" );
-        useElasticStep = false;
-        resetStateToBeginningOfStep( domain );
-        setFractureStateForElasticStep( domain );
-      }
-      else
-      {
-        GEOSX_LOG_LEVEL_RANK_0( 1, "Newton did not converge in active set loop" );
-        break;
-      }
-    }
-    if( !isNewtonConverged )
-    {
-      // cut timestep, go back to beginning of step and restart the Newton loop
-      stepDt *= dtCutFactor;
-      GEOSX_LOG_LEVEL_RANK_0 ( 1, "New dt = " <<  stepDt );
-    }
-    if( isActiveSetConverged )
-    {
-      break;
-    }
-  }
-
-  if( !isNewtonConverged )
-  {
-    GEOSX_LOG_RANK_0( "Convergence not achieved." );
-
-    if( allowNonConverged )
-    {
-      GEOSX_LOG_RANK_0( "The accepted solution may be inaccurate." );
-    }
-    else
-    {
-      GEOSX_ERROR( "Nonconverged solutions not allowed. Terminating..." );
-    }
-  }
-
-  if( !isActiveSetConverged )
-  {
-    // GEOSX_ERROR( "Active set did not reach a solution. Terminating..." );
-    GEOSX_LOG_RANK_0( "Active set did not reach a solution in " << m_activeSetIter << " iterations." );
-  }
-  else
-  {
-    GEOSX_LOG_RANK_0( "Number of active set iterations: " << m_activeSetIter );
-  }
-
-  // return the achieved timestep
-  return stepDt;
-}
-
 bool LagrangianContactSolver::lineSearch( real64 const & time_n,
                                           real64 const & dt,
                                           integer const GEOSX_UNUSED_PARAM( cycleNumber ),
@@ -1120,7 +849,7 @@ void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain 
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    if( subRegion.hasWrapper( m_tractionKey ) )
+    if( subRegion.hasWrapper(  viewKeyStruct::tractionString() ) )
     {
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
@@ -1237,7 +966,7 @@ void LagrangianContactSolver::
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {
-    if( subRegion.hasWrapper( m_tractionKey ) )
+    if( subRegion.hasWrapper(  viewKeyStruct::tractionString() ) )
     {
       arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
       arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
@@ -1372,7 +1101,7 @@ void LagrangianContactSolver::
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {
-    if( subRegion.hasWrapper( m_tractionKey ) )
+    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
     {
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
@@ -2040,22 +1769,6 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
   computeFaceDisplacementJump( domain );
 }
 
-void LagrangianContactSolver::initializeFractureState( MeshLevel & mesh,
-                                                       string const & fieldName ) const
-{
-  GEOSX_MARK_FUNCTION;
-  ElementRegionManager & elemManager = mesh.getElemManager();
-
-  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-  {
-    if( subRegion.hasWrapper( m_tractionKey ) )
-    {
-      arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( fieldName );
-      fractureState.setValues< parallelHostPolicy >( FractureState::STICK );
-    }
-  } );
-}
-
 void LagrangianContactSolver::setFractureStateForElasticStep( DomainPartition & domain ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -2065,7 +1778,7 @@ void LagrangianContactSolver::setFractureStateForElasticStep( DomainPartition & 
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    if( subRegion.hasWrapper( m_tractionKey ) )
+    if( subRegion.hasWrapper(  viewKeyStruct::tractionString() ) )
     {
       arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -2079,7 +1792,7 @@ void LagrangianContactSolver::setFractureStateForElasticStep( DomainPartition & 
   } );
 }
 
-bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) const
+bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -2090,7 +1803,7 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    if( subRegion.hasWrapper( m_tractionKey ) )
+    if( subRegion.hasWrapper(  viewKeyStruct::tractionString() ) )
     {
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
@@ -2197,119 +1910,11 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
   return globalCheckActiveSet;
 }
 
-void LagrangianContactSolver::synchronizeFractureState( DomainPartition & domain ) const
-{
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString() ) );
-
-  CommunicationTools::getInstance().synchronizeFields( fieldNames,
-                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                       domain.getNeighbors(),
-                                                       true );
-}
-
 bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition const & domain ) const
 {
   globalIndex numStick, numSlip, numOpen;
   computeFractureStateStatistics( domain, numStick, numSlip, numOpen, false );
   return ( ( numSlip + numOpen ) == 0 );
-}
-
-void LagrangianContactSolver::computeFractureStateStatistics( DomainPartition const & domain,
-                                                              globalIndex & numStick,
-                                                              globalIndex & numSlip,
-                                                              globalIndex & numOpen,
-                                                              bool printAll ) const
-{
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = mesh.getElemManager();
-
-  array1d< localIndex > localCounter( 3 );
-
-  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
-  {
-    if( subRegion.hasWrapper( m_tractionKey ) )
-    {
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
-//      arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >(
-// viewKeyStruct::tractionString );
-
-      RAJA::ReduceSum< parallelHostReduce, localIndex > stickCount( 0 ), slipCount( 0 ), openCount( 0 );
-      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
-      {
-        if( ghostRank[kfe] < 0 )
-        {
-          switch( fractureState[kfe] )
-          {
-            case FractureState::STICK:
-              {
-                stickCount += 1;
-                break;
-              }
-            case FractureState::NEW_SLIP:
-            case FractureState::SLIP:
-              {
-                slipCount += 1;
-                break;
-              }
-            case FractureState::OPEN:
-              {
-                openCount += 1;
-                break;
-              }
-          }
-          if( printAll )
-          {
-//            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
-//                                                   << " state <"
-//                                                   << FractureStateToString( fractureState[kfe] )
-//                                                   << ">" );
-          }
-        }
-      } );
-
-      localCounter[0] += stickCount.get();
-      localCounter[1] += slipCount.get();
-      localCounter[2] += openCount.get();
-    }
-  } );
-
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
-
-  array1d< globalIndex > globalCounter( 3*size );
-
-  // Everything is done on rank 0
-  MpiWrapper::gather( localCounter.data(),
-                      3,
-                      globalCounter.data(),
-                      3,
-                      0,
-                      MPI_COMM_GEOSX );
-
-  array1d< globalIndex > totalCounter( 3 );
-
-  if( rank == 0 )
-  {
-    for( int r = 0; r < size; ++r )
-    {
-      // sum across all ranks
-      totalCounter[0] += globalCounter[3*r];
-      totalCounter[1] += globalCounter[3*r+1];
-      totalCounter[2] += globalCounter[3*r+2];
-    }
-  }
-
-  MpiWrapper::bcast( totalCounter.data(), 3, 0, MPI_COMM_GEOSX );
-
-  numStick = totalCounter[0];
-  numSlip  = totalCounter[1];
-  numOpen  = totalCounter[2];
-
-  GEOSX_LOG_RANK_0( GEOSX_FMT( " Number of element for each fracture state:"
-                               " stick: {:12} | slip:  {:12} | open:  {:12}",
-                               numStick, numSlip, numOpen ) );
 }
 
 void LagrangianContactSolver::setNextDt( real64 const & currentDt,

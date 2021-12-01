@@ -70,6 +70,12 @@ public:
 
   string const & getFractureRegionName() const { return m_fractureRegionName; }
 
+  void computeFractureStateStatistics( DomainPartition const & domain,
+                                       globalIndex & numStick,
+                                       globalIndex & numSlip,
+                                       globalIndex & numOpen,
+                                       bool printAll = false ) const;
+
 protected:
 
   virtual void postProcessInput() override;
@@ -116,6 +122,21 @@ protected:
     }
     return stringState;
   }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static bool compareFractureStates( integer const state0,
+                                     integer const state1 )
+  {
+    return state0 == state1
+           || ( state0 == FractureState::NEW_SLIP && state1 == FractureState::SLIP )
+           || ( state0 == FractureState::SLIP && state1 == FractureState::NEW_SLIP );
+  }
+
+  void initializeFractureState( MeshLevel & mesh,
+                                string const & fieldName ) const;
+                                
+  void synchronizeFractureState( DomainPartition & domain ) const;
 
   /// Solid mechanics solver name
   string m_solidSolverName;

@@ -106,16 +106,33 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
             setPlotLevel( PlotLevel::LEVEL_0 ).
             setRegisteringObjects( this->getName()).
             setDescription( "An array that holds the fracture state." );
-          // initializeFractureState( meshLevel, viewKeyStruct::fractureStateString() );
+          initializeFractureState( meshLevel, viewKeyStruct::fractureStateString() );
 
           subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::oldFractureStateString() ).
             setPlotLevel( PlotLevel::NOPLOT ).
             setRegisteringObjects( this->getName()).
             setDescription( "An array that holds the fracture state." );
-          // initializeFractureState( meshLevel, viewKeyStruct::oldFractureStateString() );
+          initializeFractureState( meshLevel, viewKeyStruct::oldFractureStateString() );
 
         } );
       } );
+    }
+  } );
+}
+
+
+void ContactSolverBase::initializeFractureState( MeshLevel & mesh,
+                                                 string const & fieldName ) const
+{
+  GEOSX_MARK_FUNCTION;
+  ElementRegionManager & elemManager = mesh.getElemManager();
+
+  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+  {
+    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
+    {
+      arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( fieldName );
+      fractureState.setValues< parallelHostPolicy >( FractureState::STICK );
     }
   } );
 }
@@ -134,8 +151,8 @@ real64 ContactSolverBase::solverStep( real64 const & time_n,
   setupSystem( domain,
                m_dofManager,
                m_localMatrix,
-               m_localRhs,
-               m_localSolution );
+               m_rhs,
+               m_solution );
 
   // currently the only method is implicit time integration
   dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
@@ -146,5 +163,111 @@ real64 ContactSolverBase::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
+void ContactSolverBase::computeFractureStateStatistics( DomainPartition const & domain,
+                                                        globalIndex & numStick,
+                                                        globalIndex & numSlip,
+                                                        globalIndex & numOpen,
+                                                        bool printAll ) const
+{
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  array1d< localIndex > localCounter( 3 );
+
+  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
+  {
+    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
+    {
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+
+      RAJA::ReduceSum< parallelHostReduce, localIndex > stickCount( 0 ), slipCount( 0 ), openCount( 0 );
+      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      {
+        if( ghostRank[kfe] < 0 )
+        {
+          switch( fractureState[kfe] )
+          {
+            case FractureState::STICK:
+              {
+                stickCount += 1;
+                break;
+              }
+            case FractureState::NEW_SLIP:
+            case FractureState::SLIP:
+              {
+                slipCount += 1;
+                break;
+              }
+            case FractureState::OPEN:
+              {
+                openCount += 1;
+                break;
+              }
+          }
+          if( printAll )
+          {
+//            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
+//                                                   << " state <"
+//                                                   << FractureStateToString( fractureState[kfe] )
+//                                                   << ">" );
+          }
+        }
+      } );
+
+      localCounter[0] += stickCount.get();
+      localCounter[1] += slipCount.get();
+      localCounter[2] += openCount.get();
+    }
+  } );
+
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
+
+  array1d< globalIndex > globalCounter( 3*size );
+
+  // Everything is done on rank 0
+  MpiWrapper::gather( localCounter.data(),
+                      3,
+                      globalCounter.data(),
+                      3,
+                      0,
+                      MPI_COMM_GEOSX );
+
+  array1d< globalIndex > totalCounter( 3 );
+
+  if( rank == 0 )
+  {
+    for( int r = 0; r < size; ++r )
+    {
+      // sum across all ranks
+      totalCounter[0] += globalCounter[3*r];
+      totalCounter[1] += globalCounter[3*r+1];
+      totalCounter[2] += globalCounter[3*r+2];
+    }
+  }
+
+  MpiWrapper::bcast( totalCounter.data(), 3, 0, MPI_COMM_GEOSX );
+
+  numStick = totalCounter[0];
+  numSlip  = totalCounter[1];
+  numOpen  = totalCounter[2];
+
+  GEOSX_LOG_RANK_0( GEOSX_FMT( " Number of element for each fracture state:"
+                               " stick: {:12} | slip:  {:12} | open:  {:12}",
+                               numStick, numSlip, numOpen ) );
+}
+
+
+void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) const
+{
+  std::map< string, string_array > fieldNames;
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString() ) );
+
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
+}
 
 } /* namespace geosx */

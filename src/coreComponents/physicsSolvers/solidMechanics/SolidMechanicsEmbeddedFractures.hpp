@@ -119,6 +119,9 @@ public:
                         real64 const dt,
                         DomainPartition & domain );
 
+
+virtual bool updateConfiguration( DomainPartition & domain ) override final;                       
+
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
