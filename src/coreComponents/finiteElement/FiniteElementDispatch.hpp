@@ -58,6 +58,10 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr4 );
   }
+  else if( auto const * const ptr5 = dynamic_cast< Q3_Hexahedron_Lagrange_GaussLobatto const * >(&input) )
+  {
+    lambda( *ptr5 );
+  }
   else
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );

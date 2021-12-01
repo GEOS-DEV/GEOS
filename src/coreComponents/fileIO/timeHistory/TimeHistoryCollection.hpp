@@ -203,7 +203,7 @@ protected:
       string_array const targetTokens = stringutilities::tokenize( objectPath, "/" );
       localIndex const targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
-      dataRepository::Group const * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );
+      dataRepository::Group const * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 1 );
       for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )
       {
         dataRepository::Group const * elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );

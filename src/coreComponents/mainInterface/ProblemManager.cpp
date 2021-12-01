@@ -626,9 +626,9 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
       for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
       {
         MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
-        for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
+//        for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
         {
-          MeshLevel & meshLevel = meshBody.getMeshLevel( b );
+          MeshLevel & meshLevel = meshBody.getMeshLevel( 1 );
           NodeManager & nodeManager = meshLevel.getNodeManager();
           ElementRegionManager & elemManager = meshLevel.getElemManager();
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();

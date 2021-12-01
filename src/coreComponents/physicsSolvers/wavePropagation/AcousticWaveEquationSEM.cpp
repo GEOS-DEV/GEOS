@@ -359,22 +359,21 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         localIndex const numNodesPerFace = 4;
 
-        AcousticWaveEquationSEMKernels::
-          MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
-        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
-          ( elementSubRegion.size(),
-          numFacesPerElem,
-          numNodesPerFace,
-          X,
-          elemsToNodes,
-          elemsToFaces,
-          facesToNodes,
-          facesDomainBoundaryIndicator,
-          freeSurfaceFaceIndicator,
-          faceNormal,
-          velocity,
-          mass,
-          damping );
+        AcousticWaveEquationSEMKernels::MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
+
+        kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                              numFacesPerElem,
+                                                              numNodesPerFace,
+                                                              X,
+                                                              elemsToNodes,
+                                                              elemsToFaces,
+                                                              facesToNodes,
+                                                              facesDomainBoundaryIndicator,
+                                                              freeSurfaceFaceIndicator,
+                                                              faceNormal,
+                                                              velocity,
+                                                              mass,
+                                                              damping );
       } );
     } );
   } );

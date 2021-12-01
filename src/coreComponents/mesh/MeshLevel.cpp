@@ -70,8 +70,8 @@ MeshLevel::MeshLevel( string const & name,
 //  Group const & sourceGroup = source;
 //  thisGroup = sourceGroup;
 //  this->getParent( parent );
-//
 //  }
+
 
   localIndex numNodes = source.m_nodeManager.size();
   // find out how many node there must be on this rank
@@ -98,7 +98,9 @@ MeshLevel::MeshLevel( string const & name,
     {
 
       CellElementSubRegion & newSubRegion = region->getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
+      newSubRegion.setElementType( sourceSubRegion.getElementType() );
 
+      newSubRegion.resize( sourceSubRegion.size() );
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodesNew = sourceSubRegion.nodeList();
