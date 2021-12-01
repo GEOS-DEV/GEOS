@@ -608,7 +608,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                      string const & )
   {
     BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-    if( bc.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    if( bc.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
       globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
       string const logMessage = string( "CompositionalMultiphaseFVM {}: at time {}s, " )

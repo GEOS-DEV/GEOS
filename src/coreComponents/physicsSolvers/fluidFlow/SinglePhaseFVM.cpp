@@ -453,7 +453,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                          string const & )
   {
     BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-    if( fs.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
       globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
       GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::faceBcLogMessage,
@@ -543,7 +543,7 @@ void SinglePhaseFVM< BASE >::applyAquiferBC( real64 const time,
                                                      string const & )
   {
     BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-    if( bc.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    if( bc.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
       globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
       GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::faceBcLogMessage,

@@ -1086,7 +1086,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                         Group & subRegion,
                         string const & )
   {
-    if( fs.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
       GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
@@ -1290,7 +1290,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
                         Group & subRegion,
                         string const & )
   {
-    if( fs.getLogLevel() >= 2 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
       GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
