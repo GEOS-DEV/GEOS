@@ -1,5 +1,4 @@
 language: minimal
-dist: focal
 
 env:
   global:
