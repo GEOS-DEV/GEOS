@@ -234,12 +234,12 @@ public:
    * @param[in] a the index of the node in the element
    * @return a reference to the local index of the node
    */
-  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation( k, a ); }
+  localIndex & nodeList( localIndex k, localIndex a ) { return m_toNodesRelation( k, a ); }
 
   /**
    * @copydoc nodeList( localIndex const k, localIndex a )
    */
-  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
+  localIndex const & nodeList( localIndex k, localIndex a ) const { return m_toNodesRelation( k, a ); }
 
   /**
    * @brief Get the element-to-edge map.
@@ -262,6 +262,14 @@ public:
    * @copydoc faceList()
    */
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+
+  /**
+   * @brief Get the local index of the a-th face of the k-th element.
+   * @param[in] k the index of the element
+   * @param[in] a the index of the face in the element
+   * @return a const reference to the local index of the face
+   */
+  localIndex const & faceList( localIndex k, localIndex a ) const { return m_toFacesRelation( k, a ); }
 
   /**
    * @brief @return The array of shape function derivatives.

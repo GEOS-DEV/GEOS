@@ -71,15 +71,15 @@ void FaceManager::resize( localIndex const newSize )
 
 /**
  * @brief Populates the face to element region and face to element subregion mappings.
- * @param [in] elementMgr the ElementRegionManager associated with this mesh level. Regions and subregions come from it.
- * @param [in] f2e the face to element maps (on face may belong to up to 2 elements).
- * @param [in,out] f2er the face to element region map (on face may belong to up to 2 regions).
- * @param [in,out] f2esr the face to element subregion map (on face may belong to up to 2 sub-regions).
+ * @param [in] elementRegionMgr The ElementRegionManager associated with this mesh level. Regions and subregions come from it.
+ * @param [in] f2e The face to element maps (on face may belong to up to 2 elements).
+ * @param [in,out] f2er The face to element region map (on face may belong to up to 2 regions).
+ * @param [in,out] f2esr The face to element subregion map (on face may belong to up to 2 sub-regions).
  *
  * @warning @p f2er and @p f2esr need to have the correct dimensions (numFaces, 2). Values are all overwritten.
  * @note When a face only points to single one region/sub-region, the second element will equal -1.
  */
-void populateRegions( ElementRegionManager const & elementMgr,
+void populateRegions( ElementRegionManager const & elementRegionMgr,
                       arrayView2d< localIndex const > const & f2e,
                       arrayView2d< localIndex > const & f2er,
                       arrayView2d< localIndex > const & f2esr )
@@ -89,40 +89,59 @@ void populateRegions( ElementRegionManager const & elementMgr,
   GEOSX_ERROR_IF_NE( 2, f2er.size( 1 ) );
   GEOSX_ERROR_IF_NE( 2, f2esr.size( 1 ) );
 
+  // -1 is a dummy value meaning there is no region or sub-region associated.
+  // It is possible that a face belongs to one unique region and sub-region.
+  // But the array has length 2 so in that case we put 0.
   f2er.setValues< serialPolicy >( -1 );
   f2esr.setValues< serialPolicy >( -1 );
 
-  for( typename dataRepository::indexType er = 0; er < elementMgr.numRegions(); ++er )
+  // The algorithm is equivalent to the algorithm described
+  // in the `populateRegions` in the `NodeManager.cpp` file.
+  // Please refer to this implementation for thorough explanations.
+  //
+  // Since the algorithm is quite short, and because of slight variations
+  // (e.g. the different allocation between faces with a ),
+  // I considered acceptable to duplicate it a bit.
+  // This is surely disputable
+
+  // This function `f` will be applied on every sub-region.
+  auto f = [&f2e, &f2er, &f2esr]( localIndex er,
+                                  localIndex esr,
+                                  ElementRegionBase const &,
+                                  CellElementSubRegion const & subRegion )
   {
-    ElementRegionBase const & elementRegion = elementMgr.getRegion( er );
-
-    // loop over all the subregions
-    elementRegion.forElementSubRegionsIndex< CellElementSubRegion >(
-      [&]( localIndex const esr, CellElementSubRegion const & subRegion )
+    for( localIndex iElement = 0; iElement < subRegion.size(); ++iElement )
     {
-      FixedOneToManyRelation const & elementToFaces = subRegion.faceList();
-      for( localIndex iElement = 0; iElement < subRegion.size(); ++iElement )
+      for( localIndex iFaceLoc = 0; iFaceLoc < subRegion.numFacesPerElement(); ++iFaceLoc )
       {
-        for( localIndex iFace = 0; iFace < subRegion.numFacesPerElement(); ++iFace )
-        {
-          // There is an implicit convention here.
-          // The face to element mappings (f2e) binds a face index to two elements indices (possibly being -1),
-          // like `iFace -> (e0, e1)`.The face to regions (f2r) and sub-regions (f2sr)
-          // respectively bind face index to the regions/sub-regions: `iFace -> (er0, er1)` and `iFace -> (esr0, esr1)`.
-          // It is assumed in the code that triplets (`e0`, `er0`, `esr0`) and (`e1`, `er1`, `esr1`) are consistent.
-          // `e0` should belong to both `er0` and `esr0`. Same for index 1.
-          // Any mismatch will probably result in a bug.
+        // iFaceLoc is the node index in the referential of each cell (0 to 5 for a cube, e.g.).
+        // While iFace is the global index of the node.
+        localIndex const & iFace = subRegion.faceList( iElement, iFaceLoc );
 
-          localIndex const & faceId = elementToFaces( iElement, iFace );
-          GEOSX_ERROR_IF( f2e( faceId, 0 ) != iElement && f2e( faceId, 1 ) != iElement,
-                          "No region/subregion could be defined for face " << iFace << " of element " << iElement << "." );
-          localIndex const i = f2e( faceId, 0 ) == iElement ? 0 : 1;
-          f2esr( faceId, i ) = esr;
-          f2er( faceId, i ) = er;
+        // In standard meshes, a face always belongs to 2 elements.
+        localIndex const numElementsLoc = f2e[iFace].size();
+        for( localIndex iElementLoc = 0; iElementLoc < numElementsLoc; ++iElementLoc )
+        {
+          // We only consider the elements that match the mapping.
+          if( f2e( iFace, iElementLoc ) != iElement )
+          { continue; }
+
+          // Here we fill the mapping iff it has not already been inserted.
+          if( f2er( iFace, iElementLoc ) < 0 or f2esr( iFace, iElementLoc ) < 0 )
+          {
+            f2er( iFace, iElementLoc ) = er;
+            f2esr( iFace, iElementLoc ) = esr;
+
+            // We only want to insert one unique index that has not been inserted,
+            // so we quit the loop on indices here.
+            break;
+          }
         }
       }
-    } );
-  }
+    }
+  };
+
+  elementRegionMgr.forElementSubRegionsComplete< CellElementSubRegion >( f );
 }
 
 void FaceManager::buildFaces( CellBlockManagerABC const & cellBlockManager,
@@ -261,13 +280,24 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 
   ArrayOfArraysView< localIndex > const & faceToNodeMap = nodeList().toView();
 
-  forAll< parallelHostPolicy >( size(), [&]( localIndex const kf )
+  forAll< parallelHostPolicy >( size(), [&]( localIndex const iFace )
   {
-    ElementRegionBase const & elemRegion = elemManager.getRegion( elemRegionList[kf][0] );
-    CellElementSubRegion const & subRegion = elemRegion.getSubRegion< CellElementSubRegion >( elemSubRegionList[kf][0] );
-    localIndex const numFaceNodes = faceToNodeMap.sizeOfArray( kf );
-    arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
-    sortFaceNodes( X, elemCenter[ elemList( kf, 0 ) ], faceToNodeMap[ kf ], numFaceNodes );
+    // The face should be connected to at least one element.
+    if( elemList( iFace, 0 ) == -1 and elemList( iFace, 1 ) == -1 )
+    {
+      GEOSX_ERROR( "Face " << iFace << " does not seem connected to any element." );
+    }
+    else
+    {
+      // Take the first defined face-to-(elt/region/sub region) to sorting direction.
+      const auto iElemLoc = elemList( iFace, 0 ) > -1 ? 0 : 1;
+
+      ElementRegionBase const & elemRegion = elemManager.getRegion( elemRegionList[iFace][iElemLoc] );
+      CellElementSubRegion const & subRegion = elemRegion.getSubRegion< CellElementSubRegion >( elemSubRegionList[iFace][iElemLoc] );
+      localIndex const numFaceNodes = faceToNodeMap.sizeOfArray( iFace );
+      arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+      sortFaceNodes( X, elemCenter[elemList( iFace, iElemLoc )], faceToNodeMap[iFace], numFaceNodes );
+    }
   } );
 }
 

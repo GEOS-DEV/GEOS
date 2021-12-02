@@ -99,7 +99,110 @@ void NodeManager::setFaceMaps( CellBlockManagerABC const & cellBlockManager, Fac
   m_toFacesRelation.setRelatedObject( faceManager );
 }
 
-void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager, ElementRegionManager const & elementRegionManager )
+/**
+ * @brief Populates the node to element region and node to element subregion mappings.
+ * @param [in] elementRegionMgr The ElementRegionManager associated with this mesh level. Regions and subregions come from it.
+ * @param [in] n2e The node to element maps.
+ * @param [in,out] n2er The face to element region map.
+ * @param [in,out] n2esr The face to element subregion map.
+ *
+ * @warning The @p n2e, @p n2er and @p n2esr need to be allocated at the correct dimensions, but need to be empty.
+ */
+void populateRegions( ElementRegionManager const & elementRegionMgr,
+                      ArrayOfArraysView< localIndex const > const & n2e,
+                      ArrayOfArraysView< localIndex > const & n2er,
+                      ArrayOfArraysView< localIndex > const & n2esr )
+{
+  GEOSX_ERROR_IF_NE( n2e.size(), n2er.size() );
+  GEOSX_ERROR_IF_NE( n2e.size(), n2esr.size() );
+
+  // There is an implicit convention in the (n2e, n2er, n2esr).
+  // The node to element mappings (n2e) binds node indices to multiple element indices (like `n -> (e0, e1,...)`).
+  // The node to regions (n2r) and sub-regions (n2sr) respectively bind
+  // node indices to the regions/sub-regions: `n -> (er0, er1)` and `n -> (esr0, esr1)`.
+  //
+  // It is assumed in the code that triplets obtained at indices 0, 1,... of all these relations,
+  // (respectively (e0, er0, esr0), (e1, er1, esr1),...) are consistent.
+  //
+  // But in some configuration (multi-regions, multi-subregions, parallel computing, ghost cells),
+  // it may happen that a same element indices appear multiple times in a same entry of the node to elements mapping.
+  // For example `n0 -> (e0, e1, e2, e0)` where `e0` appears twice.
+  // These duplicated elements may in fact belong to multiple regions/sub-regions.
+  // This implies a specific care when filling the nodes to elements, regions, sub-regions mappings.
+  //
+  // Thus, the algorithm is the following.
+  //
+  // For each sub-region of each region, we consider each node of each element.
+  // We list all the elements connected to this node.
+  // Then we take the first element that has not already been inserted in the mappings
+  // (we check if the value is still -1),
+  // and we insert it the `er` and `esr` values, before moving to another node.
+  //
+  // The same node index with the same elements will eventually come back during the iterative process.
+  // But this time with another region/sub-region combination.
+  //
+  // It must be noted that we can take the duplicated elements in any order,
+  // as long as the insertions are consistent!
+
+  // The algorithm is equivalent to the algorithm described
+  // in the `populateRegions` in the `FaceManager.cpp` file.
+  //
+  // Since the algorithm is quite short, and because of slight variations
+  // (e.g. the different allocation between faces with a ),
+  // I considered acceptable to duplicate it a bit.
+  // This is surely disputable.
+
+  // This function `f` will be applied on every sub-region.
+  auto f = [&n2e, &n2er, &n2esr]( localIndex er,
+                                  localIndex esr,
+                                  ElementRegionBase const &,
+                                  CellElementSubRegion const & subRegion )
+  {
+    for( localIndex iElement = 0; iElement < subRegion.size(); ++iElement )
+    {
+      for( localIndex iNodeLoc = 0; iNodeLoc < subRegion.numNodesPerElement(); ++iNodeLoc )
+      {
+        // iNodeLoc is the node index in the referential of each cell (0 to 7 for a cube, e.g.).
+        // While iNode is the global index of the node.
+        localIndex const & iNode = subRegion.nodeList( iElement, iNodeLoc );
+
+        // A node may be attached to `numElementsLoc` elements.
+        localIndex const numElementsLoc = n2e[iNode].size();
+        for( localIndex iElementLoc = 0; iElementLoc < numElementsLoc; ++iElementLoc )
+        {
+          // We only consider the elements that match the mapping.
+          if( n2e( iNode, iElementLoc ) != iElement )
+          { continue; }
+
+          // This loop is a small hack to back insert/allocate dummy elements
+          // that will eventually be replaced by the correct values.
+          for( localIndex i = n2er[iNode].size(); i < iElementLoc + 1; ++i )
+          {
+            // By construction n2er and n2esr have the same size, so we use the same loop.
+            n2er.emplaceBack( iNode, -1 );
+            n2esr.emplaceBack( iNode, -1 );
+          }
+
+          // Here we fill the mapping iff it has not already been inserted.
+          if( n2er( iNode, iElementLoc ) < 0 or n2esr( iNode, iElementLoc ) < 0 )
+          {
+            n2er( iNode, iElementLoc ) = er;
+            n2esr( iNode, iElementLoc ) = esr;
+
+            // We only want to insert one unique index that has not been inserted,
+            // so we quit the loop on indices here.
+            break;
+          }
+        }
+      }
+    }
+  };
+
+  elementRegionMgr.forElementSubRegionsComplete< CellElementSubRegion >( f );
+}
+
+void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager,
+                                  ElementRegionManager const & elementRegionManager )
 {
   const localIndex totalNodeElems = cellBlockManager.numNodes();
 
@@ -116,14 +219,15 @@ void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager, 
   toElementRegionList.resize( 0 );
   toElementSubRegionList.resize( 0 );
 
+  // FIXME If there is a strong requirement that `toElementRegionList` and `toElementSubRegionList` share the same capacities as `toElementList`,
+  //       then it's should be interesting to retrieve this information from `toElementList` instead.
+
   // Reserve space for the number of current faces plus some extra.
   double const overAllocationFactor = 0.3;
   localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
   toElementRegionList.reserve( entriesToReserve );
   toElementSubRegionList.reserve( entriesToReserve );
 
-  // FIXME I'm not sure that there is a strong needs that `toElementRegionList` and `toElementSubRegionList`
-  //       get the same capacities as `toElementList`.
   // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
   localIndex const valuesToReserve = totalNodeElems + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
   toElementRegionList.reserveValues( valuesToReserve );
@@ -140,22 +244,7 @@ void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager, 
     toElementSubRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
   }
 
-  elementRegionManager.forElementSubRegionsComplete< CellElementSubRegion >(
-    [&toElementRegionList, &toElementSubRegionList] ( localIndex const er, localIndex const esr, ElementRegionBase const &, CellElementSubRegion const & subRegion )
-  {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
-    for( localIndex elemIdx = 0; elemIdx < subRegion.size(); ++elemIdx )
-    {
-      for( localIndex localNodeIdx = 0; localNodeIdx < subRegion.numNodesPerElement(); ++localNodeIdx )
-      {
-        // localNodeIdx is the node index in the referential of each cell (0 to 7 for a cube, e.g.).
-        // While nodeIdx is the global index of the node.
-        localIndex const nodeIdx = elemToNodeMap( elemIdx, localNodeIdx );
-        toElementRegionList.emplaceBack( nodeIdx, er );
-        toElementSubRegionList.emplaceBack( nodeIdx, esr );
-      }
-    }
-  } );
+  populateRegions( elementRegionManager, toElementList.toViewConst(), toElementRegionList.toView(), toElementSubRegionList.toView() );
 
   this->m_toElements.setElementRegionManager( elementRegionManager );
 }

@@ -398,16 +398,19 @@ public:
   /**
    * @brief Get a mutable accessor to the faces-to-element-index relation.
    * @return non-const reference to faces-to-element-index relation
-   * @details There is an implicit convention here.
-   * @p elementList binds a face index to two elements indices (possibly being -1),
-   * like <tt>f -> (e0, e1)</tt>. @p elementRegionList and @p elementSubRegionList
+   * @details There is an implicit convention here.\n\n
+   * @p elementList binds a face index to two elements indices,
+   * like <tt>f -> (e0, e1)</tt>.
+   * @p elementRegionList and @p elementSubRegionList
    * respectively bind face index to the regions/sub-regions:
-   * <tt>f -> (er0, er1)</tt> and <tt>f -> (esr0, esr1)</tt>.
+   * <tt>f -> (er0, er1)</tt> and <tt>f -> (esr0, esr1)</tt>.\n\n
    * It is assumed in the code that triplets obtained at indices @p 0 and @p 1 of all these pairs,
-   * respectively (`e0`, `er0`, `esr0`) and (`e1`, `er1`, `esr1`),
-   * are consistent. `e0` should belong to both `er0` and `esr0`. Same for index 1.
-   * In particular, any mismatch like <tt>f -> (e0, e1)</tt> and
+   * (respectively <tt>(e0, er0, esr0)</tt> and <tt>(e1, er1, esr1))</tt>,
+   * are consistent. @p e0 should belong to both @p er0 and @p esr0. @p e1 should belong to both @p er1 and @p esr1.\n\n
+   * In particular, any mismatch like @a (e.g.) <tt>f -> (e0, e1)</tt> and
    * <tt>f -> (er1, er0)</tt> will probably result in a bug.
+   * @warning @p e, @p er or @p esr will equal -1 if undefined.
+   * @see geosx::NodeManager::elementList that shares the same kind of pattern.
    */
   array2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
 

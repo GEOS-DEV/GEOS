@@ -369,38 +369,55 @@ public:
   /**
    * @brief Get the mutable nodes-to-elements-regions relation.
    * @return reference to nodes-to-elements-regions relation
+   * @copydetails NodeManager::elementList()
    */
   ArrayOfArrays< localIndex > & elementRegionList() { return m_toElements.m_toElementRegion; }
 
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements-regions relation.
    * @return const reference to nodes-to-elements-regions relation
+   * @copydetails NodeManager::elementList()
    */
   ArrayOfArraysView< localIndex const > elementRegionList() const { return m_toElements.m_toElementRegion.toViewConst(); }
 
   /**
    * @brief Get the mutable nodes-to-elements-subregions relation.
    * @return reference to nodes-to-elements-subregions relation
+   * @copydetails NodeManager::elementList()
    */
   ArrayOfArrays< localIndex > & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements-subregions relation.
    * @return const reference to nodes-to-elements-subregions relation
+   * @copydetails NodeManager::elementList()
    */
   ArrayOfArraysView< localIndex const > elementSubRegionList() const { return m_toElements.m_toElementSubRegion.toViewConst(); }
 
   /**
-   * @brief Get the mutable nodes-to-elements indices.
+   * @brief Get the mutable nodes-to-elements relation.
    * @return reference to nodes-to-elements indices
+   * @details There is an implicit convention here.\n\n
+   * @p elementList binds a node index to multiple elements indices,
+   * like <tt>n -> (e0, e1,...)</tt>.
+   * @p elementRegionList and @p elementSubRegionList
+   * respectively bind node indices to the regions/sub-regions:
+   * <tt>n -> (er0, er1, ...)</tt> and <tt>n -> (esr0, esr1, ...)</tt>.\n\n
+   * It is assumed in the code that triplets obtained at indices @p 0, @p 1, @p ... of all these relations,
+   * (respectively <tt>(e0, er0, esr0)</tt>, <tt>(e1, er1, esr1)</tt>, <tt>...</tt>)
+   * are consistent. @p e0 should belong to both @p er0 and @p esr0. Same pattern for other indices.\n\n
+   * In particular, any mismatch like @a (e.g.) <tt>n -> (e0, e1, ...)</tt> and
+   * <tt>n -> (er1, er0, ...)</tt> will probably result in a bug.
+   * @warning @p e, @p er or @p esr will equal -1 if undefined.
+   * @see geosx::FaceManager::elementList that shares the same kind of pattern.
    */
   ArrayOfArrays< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
 
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements indices.
    * @return const reference to nodes-to-elements indices
+   * @copydetails NodeManager::elementList()
    */
-
   ArrayOfArraysView< localIndex const > elementList() const
   { return m_toElements.m_toElementIndex.toViewConst(); }
 
