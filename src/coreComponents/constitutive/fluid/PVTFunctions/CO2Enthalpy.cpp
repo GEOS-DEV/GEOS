@@ -271,7 +271,6 @@ CO2Enthalpy::calculateCO2Enthalpy( PTTableCoordinates const & tableCoords,
 
   for( localIndex i = 0; i < nPressures; ++i )
   {
-    real64 const PPa = tableCoords.getPressure( i );
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const TC = tableCoords.getTemperature( j );

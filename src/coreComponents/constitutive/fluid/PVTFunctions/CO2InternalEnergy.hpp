@@ -83,7 +83,10 @@ public:
     : PVTFunctionBase( name,
                        componentNames,
                        componentMolarWeight )
-  {}
+  {
+    // reserve for future: more accurate internal energy model should probably have some parameters
+    GEOSX_UNUSED_VAR ( inputParams );
+  }
 
   static string catalogName() { return "CO2InternalEnergy"; }
 
