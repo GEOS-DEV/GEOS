@@ -217,7 +217,6 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
     - CMAKE_BUILD_TYPE=Release
-    - BUILD_AND_TEST_ARGS=--disable-unit-tests
     - HOST_CONFIG=host-configs/TOTAL/pecan-CPU.cmake
     - GCP_BUCKET=geosx/Pecan-CPU
   - stage: builds
