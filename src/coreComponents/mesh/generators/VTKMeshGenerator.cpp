@@ -179,11 +179,8 @@ vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & l
   vtkNew< vtkRedistributeDataSetFilter > rdsf;
   rdsf->SetInputDataObject( &loadedMesh );
   rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
-  GEOSX_LOG_RANK( "11111" );
   rdsf->GenerateGlobalCellIdsOn();
-  GEOSX_LOG_RANK( "22222" );
   rdsf->Update();
-  GEOSX_LOG_RANK( "33333" );
   MpiWrapper::barrier();
 
   // Generate global IDs for vertices and cells
@@ -191,7 +188,6 @@ vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & l
   generator->SetInputDataObject( vtkUnstructuredGrid::SafeDownCast( rdsf->GetOutputDataObject( 0 )));
   generator->Update();
   vtkSmartPointer< vtkUnstructuredGrid > mesh = vtkUnstructuredGrid::SafeDownCast( generator->GetOutputDataObject( 0 ));
-  GEOSX_LOG_RANK( "number of cells after " << mesh->GetNumberOfCells());
   return mesh;
 }
 
@@ -440,7 +436,6 @@ std::vector< vtkDataArray * > findArrayToBeImported( vtkUnstructuredGrid & mesh 
                                                 << "(Only double and float are supported)" );
       continue;
     }
-    GEOSX_LOG_RANK_0( "Importing array " << curArray->GetName() );
     arrayToBeImported.push_back( vtkDataArray::SafeDownCast( curArray ) );
   }
   return arrayToBeImported;
@@ -571,7 +566,6 @@ void writeWedgeVertices( CellBlock::NodeMapType & cellToVertex, std::vector< vtk
  */
 void writeCellBlock( string const & name, std::vector< vtkIdType > const & cellIds, int region_id, int cellType,
                      CellBlockManager & cellBlockManager,
-                     std::vector< vtkDataArray * > const & arraysTobeImported,
                      vtkUnstructuredGrid & mesh )
 {
 
@@ -641,11 +635,11 @@ void importFieldOnCellBlock( string const & name, std::vector< vtkIdType > const
       std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
       for( vtkDataArray * vtkArray : arraysTobeImported )
       {
+        if( materialWrapperNames.count( vtkArray->GetName() ) == 0  ) continue;
         WrapperBase & wrapper = subRegion.getWrapperBase( vtkArray->GetName() );
         if( materialWrapperNames.count( vtkArray->GetName() ) > 0 && wrapper.numArrayDims() > 1 )
         {
           // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
-          GEOSX_LOG_RANK_0( "going in with : " << vtkArray->GetName());
           using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > >;
           types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
           {
@@ -696,16 +690,13 @@ void importFieldOnCellBlock( string const & name, std::vector< vtkIdType > const
 void VTKMeshGenerator::importFields( DomainPartition & domain ) const
 {
 
-  GEOSX_LOG_RANK_0( "import fields" );
   ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( 0 ).getElemManager();
   auto importFieldsForElementType= [&]( string const & name, std::map< int, std::vector< vtkIdType > > const & cellBlocks ) {
     for( auto & cellBlock : cellBlocks )
     {
-      GEOSX_LOG_RANK_0( "importing a cell block" );
       importFieldOnCellBlock( name, cellBlock.second, cellBlock.first, elemManager, m_arraysToBeImported );
     }
   };
-
   importFieldsForElementType( "hexahedron", m_regionsHex );
   importFieldsForElementType( "tetrahedron", m_regionsTetra );
   importFieldsForElementType( "wedges", m_regionsWedges );
@@ -747,7 +738,6 @@ void registerCellBlock( string const & name, std::vector< vtkIdType > const & ce
 void writeCellBlocks( DomainPartition & domain,
                       std::map< int, std::vector< vtkIdType > > & regionsHex, std::map< int, std::vector< vtkIdType > > & regionsTetra,
                       std::map< int, std::vector< vtkIdType > > & regionsWedges, std::map< int, std::vector< vtkIdType > > & regionsPyramids,
-                      std::vector< vtkDataArray * > & arraysToBeImported,
                       vtkUnstructuredGrid & mesh )
 {
   CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
@@ -756,7 +746,7 @@ void writeCellBlocks( DomainPartition & domain,
     for( auto & cellBlock : cellBlocks )
     {
       registerCellBlock( name, cellBlock.second, cellBlock.first, vtkType, cellBlockManager );
-      writeCellBlock( name, cellBlock.second, cellBlock.first, vtkType, cellBlockManager, arraysToBeImported, mesh );
+      writeCellBlock( name, cellBlock.second, cellBlock.first, vtkType, cellBlockManager, mesh );
     }
   };
 
@@ -808,8 +798,6 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   m_vtkMesh =redistributeMesh( *loadedMesh );
   MpiWrapper::barrier();
 
-  GEOSX_LOG_RANK_0( "Successfully redistributed the mesh on the " << controller->GetNumberOfProcesses() << " MPI processes" );
-
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
 
@@ -829,14 +817,11 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   m_arraysToBeImported = findArrayToBeImported( *m_vtkMesh );
 
-  writeCellBlocks( domain, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, m_arraysToBeImported, *m_vtkMesh );
-
-  importFields( domain );
+  writeCellBlocks( domain, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, *m_vtkMesh );
 
   writeSurfaces( nodeManager, allSurfaces, surfaces, *m_vtkMesh );
 
   MpiWrapper::barrier();
-  GEOSX_LOG_RANK_0( "Mesh was loaded successfully" );
 }
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTKMeshGenerator, string const &, Group * const )
 }
