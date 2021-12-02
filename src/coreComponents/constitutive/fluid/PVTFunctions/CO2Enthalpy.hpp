@@ -185,4 +185,4 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
 
 } // end namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2CO2DENSITY_HPP_
+#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_CO2ENTHALPY_HPP_

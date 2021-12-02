@@ -236,4 +236,4 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
 
 } // end namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINECO2DENSITY_HPP_
+#endif //GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINEENTHALPY_HPP_
