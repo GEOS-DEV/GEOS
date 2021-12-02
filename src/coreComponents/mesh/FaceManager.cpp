@@ -101,7 +101,7 @@ void populateRegions( ElementRegionManager const & elementRegionMgr,
   // Please refer to this implementation for thorough explanations.
   //
   // Since the algorithm is quite short, and because of slight variations
-  // (e.g. the different allocation between faces with a ),
+  // (e.g. the different allocation between faces and nodes implementation),
   // I considered acceptable to duplicate it a bit.
   // This is surely disputable
 
