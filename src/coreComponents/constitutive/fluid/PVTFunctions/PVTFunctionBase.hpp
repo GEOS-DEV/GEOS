@@ -30,7 +30,7 @@ namespace constitutive
 namespace PVTProps
 {
 
-enum class PVTFunctionType { UNKNOWN, DENSITY, VISCOSITY, ENTHALPY,  INTERNAL_ENERGY};
+enum class PVTFunctionType { UNKNOWN, DENSITY, VISCOSITY, ENTHALPY, INTERNAL_ENERGY};
 
 class PVTFunctionBaseUpdate
 {
