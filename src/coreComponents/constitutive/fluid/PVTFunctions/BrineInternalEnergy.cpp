@@ -13,10 +13,10 @@
  */
 
 /**
- * @file CO2InternalEnergy.cpp
+ * @file BrineInternalEnergy.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/CO2InternalEnergy.hpp"
+#include "constitutive/fluid/PVTFunctions/BrineInternalEnergy.hpp"
 
 namespace geosx
 {
@@ -29,13 +29,13 @@ namespace constitutive
 namespace PVTProps
 {
 
-CO2InternalEnergy::KernelWrapper
-CO2InternalEnergy::createKernelWrapper() const
+BrineInternalEnergy::KernelWrapper
+BrineInternalEnergy::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, CO2InternalEnergy, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineInternalEnergy, string const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // namespace PVTProps
 

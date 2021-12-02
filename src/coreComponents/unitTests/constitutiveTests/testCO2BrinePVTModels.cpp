@@ -25,9 +25,11 @@
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
 #include "constitutive/fluid/PVTFunctions/BrineEnthalpy.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Enthalpy.hpp"
+#include "constitutive/fluid/PVTFunctions/BrineInternalEnergy.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2InternalEnergy.hpp"
 #include "constitutive/fluid/PVTFunctions/old/BrineEnthalpyFunction.hpp"
 #include "constitutive/fluid/PVTFunctions/old/CO2EnthalpyFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/old/BrineInternalEnergyFunction.hpp"
 #include "constitutive/fluid/PVTFunctions/old/CO2InternalEnergyFunction.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
@@ -1209,6 +1211,141 @@ TEST_F( CO2EnthalpyTest, CO2EnthalpyMolarValuesAndDeriv )
                                       -851126.590796, -824141.279795, -801894.433361 };
   localIndex counter = 0;
   printf ( " CO2Enthalpy Molar old values: \n { " );
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  {
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    {
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        EvalVarArgs const pressure_old = P[iPres];
+        EvalVarArgs const temp_old = TC[iTemp];
+        array1d< EvalVarArgs > comp_old ( 2 );
+        comp_old[0] = comp[0];
+        comp_old[1] = comp[1];
+        EvalVarArgs value_old;
+        real64 value;
+
+        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, false );
+        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, false );
+        checkRelativeError ( value, value_old.m_var, relTol );
+        printf ( " %15lf, ", value_old.m_var );
+
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
+        counter++;
+      }
+    }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
+  }
+  printf ( " } \n " );
+}
+
+class BrineInternalEnergyTest : public ::testing::Test
+{
+public:
+  BrineInternalEnergyTest()
+  {
+    writeTableToFile( filename, pvtLiquidInternalEnergyTableContent );
+
+    pvtFunctionOld = makeOldPVTFunction< BrineInternalEnergyFunction >( filename, key );
+    writeTableToFile( filename, pvtLiquidInternalEnergyTableContent );
+    pvtFunction = makePVTFunction< BrineInternalEnergy >( filename, key );
+
+  }
+
+  ~BrineInternalEnergyTest() override
+  {
+    removeFile( filename );
+  }
+
+protected:
+  string const key = "InternalEnergyFun";
+  string const filename = "pvtliquid.txt";
+  std::unique_ptr< BrineInternalEnergyFunction > pvtFunctionOld;
+  std::unique_ptr< BrineInternalEnergy > pvtFunction;
+};
+
+TEST_F( BrineInternalEnergyTest, BrineInternalEnergyMassValuesAndDeriv )
+{
+  // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
+  // (see the txt file defined at the top of the file for the definition of the coordinates)
+  real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
+  real64 const TC[3] = { 94.5, 95.1, 95.6 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 5e-5;
+
+
+
+  BrineInternalEnergy::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
+  real64 const savedValues[] = {      5106.500000, 5107.100000, 5107.600000, 7640.500000, 7641.100000, 7641.600000,
+                                      12984.500000, 12985.100000, 12985.600000, 5106.500000, 5107.100000, 5107.600000,
+                                      7640.500000, 7641.100000, 7641.600000, 12984.500000, 12985.100000, 12985.600000,
+                                      5106.500000, 5107.100000, 5107.600000, 7640.500000, 7641.100000, 7641.600000,
+                                      12984.500000, 12985.100000, 12985.600000};
+
+
+  localIndex counter = 0;
+  printf ( " BrineInternalEnergy Mass old values: \n { " );
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  {
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    {
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        EvalVarArgs const pressure_old = P[iPres];
+        EvalVarArgs const temp_old = TC[iTemp];
+        array1d< EvalVarArgs > comp_old ( 2 );
+        comp_old[0] = comp[0];
+        comp_old[1] = comp[1];
+        EvalVarArgs value_old;
+        real64 value;
+
+        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, true );
+        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, true );
+        checkRelativeError ( value, value_old.m_var, relTol );
+        printf ( " %15lf, ", value_old.m_var );
+
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+        counter++;
+      }
+    }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
+  }
+  printf ( " } \n " );
+}
+
+TEST_F( BrineInternalEnergyTest, BrineInternalEnergyMolarValuesAndDeriv )
+{
+  // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
+  // (see the txt file defined at the top of the file for the definition of the coordinates)
+  real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
+  real64 const TC[3] = { 94.5, 95.1, 95.6 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 5e-5;
+
+
+
+  BrineInternalEnergy::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
+  real64 const savedValues[] = {      5106.500000, 5107.100000, 5107.600000, 7640.500000, 7641.100000, 7641.600000,
+                                      12984.500000, 12985.100000, 12985.600000, 5106.500000, 5107.100000, 5107.600000,
+                                      7640.500000, 7641.100000, 7641.600000, 12984.500000, 12985.100000, 12985.600000,
+                                      5106.500000, 5107.100000, 5107.600000, 7640.500000, 7641.100000, 7641.600000,
+                                      12984.500000, 12985.100000, 12985.600000};
+  localIndex counter = 0;
+  printf ( " BrineInternalEnergy Molar old values: \n { " );
   for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
     for( localIndex iPres = 0; iPres < 3; ++iPres )
