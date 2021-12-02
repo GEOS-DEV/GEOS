@@ -506,9 +506,15 @@ void ProblemManager::generateMesh()
 
   Group & meshBodies = domain.getMeshBodies();
 
+
+
   for( localIndex a = 0; a < meshBodies.numSubGroups(); ++a )
   {
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
+
+    // clone mesh level
+    meshBody.createMeshLevel( 1, 0 );
+
     for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
     {
       MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( b );
@@ -552,10 +558,7 @@ void ProblemManager::generateMesh()
     }
   }
 
-  GEOSX_THROW_IF_NE( meshBodies.numSubGroups(), 1, InputError );
   MeshBody & meshBody = meshBodies.getGroup< MeshBody >( 0 );
-
-  GEOSX_THROW_IF_NE( meshBody.numSubGroups(), 1, InputError );
   MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( 0 );
 
   FaceManager & faceManager = meshLevel.getFaceManager();
@@ -568,8 +571,6 @@ void ProblemManager::generateMesh()
   edgeManager.setIsExternal( faceManager );
 
 
-  // clone mesh level
-  meshBody.createMeshLevel( 1, 0 );
 
 }
 

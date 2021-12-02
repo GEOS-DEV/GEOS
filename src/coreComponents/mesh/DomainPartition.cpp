@@ -80,7 +80,7 @@ void DomainPartition::generateSets()
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = this->getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel & mesh = this->getMeshBody( 0 ).getMeshLevel( 1 );
   NodeManager const & nodeManager = mesh.getNodeManager();
 
   dataRepository::Group const & nodeSets = nodeManager.sets();
