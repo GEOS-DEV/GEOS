@@ -29,7 +29,7 @@ def main():
     acq.add_xml(args.xml)
     acq.limitedAperture(500)
     #acq.calculDt()
-    
+
     acqs = acq.split(2)
 
     cluster = SLURMCluster(job_name="seismicAcquisition", nodes=1, cores=16,
@@ -46,9 +46,9 @@ def main():
 
     args = []
     for acq in acqs:
-        args.append((maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acq))
+        args.append((maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acq,))
 
-    futures = client.map(acousticShot, args, cores=2, x_partition=2)
+    futures = client.map(acousticShot, args, parallel_tool="mpirun", cmd_line = ["-i", args.xml], cores=2, x_partition=2)
 
 if __name__ == "__main__":
     main()

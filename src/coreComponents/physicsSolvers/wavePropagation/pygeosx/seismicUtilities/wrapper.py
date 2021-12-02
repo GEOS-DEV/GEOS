@@ -35,12 +35,11 @@ for k, v in dict_args.items():
     else:
         args.append(munchify(v))
 
-geosx_args = [sys.argv[0], "-i", ""]
+cmd_args = [sys.argv[0]]
 for arg in sys.argv[1:-5]:
-    geosx_args.append(arg)
+    cmd_args.append(arg)
 
-args.append(geosx_args)
-args.append(rank)
+sys.argv = cmd_args
 
 module = importlib.import_module(module_str)
 func = getattr(module, func_str)

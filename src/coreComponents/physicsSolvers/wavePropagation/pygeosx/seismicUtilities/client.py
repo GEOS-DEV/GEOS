@@ -54,14 +54,19 @@ class Cluster():
         return filename
 
 
-    def _add_job_to_script(self, cores, cmd):
-        if cmd == "srun":
+    def _add_job_to_script(self, cores, parallel_tool):
+        if parallel_tool == "srun":
             self.run = "srun -n %d %s seismicUtilities/wrapper.py " %(cores, self.python)
-        elif cmd == "mpi":
+        elif parallel_tool == "mpirun":
             self.run = "mpirun -np %d %s seismicUtilities/wrapper.py " %(cores, self.python)
 
-    def _add_xml_to_cmd(self, xml):
-        self.run += "-i %s" %xml + " "
+
+    def _add_cmd_line(self, cmd_line):
+        if isinstance(cmd_line, list):
+            for cmd in cmd_line:
+                self.run += "%s " %cmd
+        else:
+            self.run += "%s " %cmd_line
 
 
     def _add_partition_to_cmd(self, x, y, z):
@@ -299,7 +304,8 @@ class Client:
     def submit(self,
                func,
                arg,
-               cmd="srun",
+               cmd_line=None,
+               parallel_tool="srun",
                cores=None,
                x_partition=1,
                y_partition=1,
@@ -310,7 +316,8 @@ class Client:
         thread = Thread(target = self._map,
                         args = (func,
                                 args,
-                                cmd,
+                                cmd_line=None,
+                                parallel_tool="srun",
                                 cores,
                                 x_partition,
                                 y_partition,
@@ -325,7 +332,8 @@ class Client:
     def map(self,
             func,
             args,
-            cmd="srun",
+            cmd_line=None,
+            parallel_tool="srun",
             cores=None,
             x_partition=1,
             y_partition=1,
@@ -336,7 +344,8 @@ class Client:
         thread = Thread(target = self._map,
                         args = (func,
                                 args,
-                                cmd,
+                                cmd_line=None,
+                                parallel_tool="srun",
                                 cores,
                                 x_partition,
                                 y_partition,
@@ -351,7 +360,8 @@ class Client:
     def _submit(self,
                 func,
                 args,
-                cmd,
+                cmd_line=None,
+                parallel_tool="srun",
                 cores=None,
                 x_partition=1,
                 y_partition=1,
@@ -363,7 +373,8 @@ class Client:
                 if cluster.free():
                     future = self.run(func,
                                       args,
-                                      cmd,
+                                      cmd_line=None,
+                                      parallel_tool="srun",
                                       cores,
                                       x_partition,
                                       y_partition,
@@ -382,7 +393,8 @@ class Client:
     def _map(self,
              func,
              args,
-             cmd,
+             cmd_line=None,
+             parallel_tool="srun",
              cores=None,
              x_partition=1,
              y_partition=1,
@@ -402,7 +414,8 @@ class Client:
                     if cluster.free():
                         futures[i] = self.run(func,
                                               work,
-                                              cmd,
+                                              cmd_line=None,
+                                              parallel_tool="srun",
                                               cores,
                                               x_partition,
                                               y_partition,
@@ -421,7 +434,8 @@ class Client:
     def run(self,
             func,
             args,
-            cmd,
+            cmd_line=None,
+            parallel_tool="srun",
             cores=None,
             x_partition=1,
             y_partition=1,
@@ -438,7 +452,9 @@ class Client:
             if cores > cluster.cores:
                 raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
             else:
-                cluster._add_job_to_script(cores, cmd)
+                cluster._add_job_to_script(cores, parallel_tool)
+                if cmd_line is not None:
+                    cluster._add_cmd_line(cmd_line)
                 if x_partition*y_partition*z_partition != cores:
                     raise ValueError("Partition x y z must match x*y*z=cores")
                 else:

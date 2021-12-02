@@ -46,25 +46,25 @@ def main():
     outputWaveFieldInterval = 100
 
 
-    result = acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acquisition, rank=rank)
+    result = acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acquisition)
 
 
 
-def acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acquisition, geosx_args=sys.argv, rank=0):
+def acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acquisition):
     #Loop over the shots
     segyList = []
     ishot=0
     for shot in acquisition.shots:
-        geosx_args[2] = shot.xml
+        sys.argv[2] = shot.xml
         dt = shot.dt
         dtSeismoTrace = dt * outputSeismoTraceInterval
         nsamples = int(maxTime/(dt*outputSeismoTraceInterval))+1
 
         #Initialize GEOSX, get Acoustic Solver, get HDF5 Outputs
         if ishot == 0:
-            problem = pygeosx.initialize(rank, geosx_args)
+            problem = pygeosx.initialize(rank, sys.argv)
         else:
-            problem = pygeosx.reinit(geosx_args)
+            problem = pygeosx.reinit(sys.argv)
 
         acousticSolver = pygeosx.pysolver.Solver("/Solvers/acousticSolver")
         hdf5 = pygeosx.pyhdf5.HDF5()
