@@ -24,7 +24,9 @@
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
 #include "constitutive/fluid/PVTFunctions/BrineEnthalpy.hpp"
+#include "constitutive/fluid/PVTFunctions/CO2Enthalpy.hpp"
 #include "constitutive/fluid/PVTFunctions/old/BrineEnthalpyFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/old/CO2EnthalpyFunction.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 
@@ -1005,40 +1007,36 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 5e-5;
 
-  // EvalVarArgs const pressure = 5.012e6;
-  // EvalVarArgs const temp = 94.5;
-  // array1d< EvalVarArgs > comp ( 2 );
-  // comp[0] = 0.304; comp[1] = 0.696;
-  // EvalVarArgs value;
 
-  // pvtFunctionOld->evaluation( pressure, temp, comp, value, true );
-  // printf ( "Old BrineEnthalpy value=%lf, d_dP=%lf, d_dT=%lf, d_dcomp[0]=%lf, d_dcomp[1] = %lf\n", value.m_var, value.m_der[0],
-  // value.m_der[3], value.m_der[1], value.m_der[2] );
 
   BrineEnthalpy::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
-  // real64 value_enth;
-  // array1d< real64 > comp_enth ( 2 );
-  // comp_enth[0] = 0.304; comp_enth[1] = 0.696;
-
-  // pvtFunctionWrapper.compute( pressure.m_var, temp.m_var, comp_enth.toSliceConst(), value_enth, true );
-  // printf ( "BrineEnthalpy value=%lf\n", value_enth );
-
-  // real64 const savedValues[] = { 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962, 280.2559694,
-  //                                278.9092508, 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962,
-  //                                280.2559694, 278.9092508, 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568,
-  //                                281.9140962, 280.2559694, 278.9092508 };
-
-  // SpanWagnerCO2Density::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
-
+  real64 const savedValues[] =  {  202784.626089, 204375.945101, 205701.054155, 192908.106262, 194557.838762, 195930.799623, 168757.694034,
+                                   170608.937024, 172145.615104, 131916.963741, 133139.453991, 134157.262401, 118280.194833, 119583.338112,
+                                   120667.216762, 84935.089841, 86516.463916, 87826.391207, 81350.747196, 82310.066989, 83108.607112,
+                                   65030.927048, 66086.768454, 66964.378219, 25125.131186, 26513.945643, 27662.079400};
   localIndex counter = 0;
+  printf ( " Mass old values: \n { " );
   for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
     for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
       for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
       {
-        // testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
-        //                                          P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
+        EvalVarArgs const pressure_old = P[iPres];
+        EvalVarArgs const temp_old = TC[iTemp];
+        array1d< EvalVarArgs > comp_old ( 2 );
+        comp_old[0] = comp[0];
+        comp_old[1] = comp[1];
+        EvalVarArgs value_old;
+        real64 value;
+
+        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, true );
+        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, true );
+        checkRelativeError ( value, value_old.m_var, relTol );
+        printf ( " %15lf, ", value_old.m_var );
+
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
         counter++;
       }
@@ -1046,45 +1044,195 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
     comp[0] += deltaComp;
     comp[1] = 1 - comp[0];
   }
+  printf ( " } \n " );
 }
 
-// TEST_F( BrineEnthalpyTest, BrineEnthalpyMolarValuesAndDeriv )
-// {
-//   // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
-//   // (see the txt file defined at the top of the file for the definition of the coordinates)
-//   real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
-//   real64 const TC[3] = { 94.5, 95.1, 95.6 };
-//   array1d< real64 > comp( 2 );
-//   comp[0] = 0.304; comp[1] = 0.696;
-//   real64 const deltaComp = 0.2;
+TEST_F( BrineEnthalpyTest, BrineEnthalpyMolarValuesAndDeriv )
+{
+  // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
+  // (see the txt file defined at the top of the file for the definition of the coordinates)
+  real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
+  real64 const TC[3] = { 94.5, 95.1, 95.6 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
 
-//   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
-//   real64 const relTol = 5e-5;
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 5e-5;
 
-//   real64 const savedValues[] = { 1881.446264, 1876.565603, 1872.538366, 3076.760999, 3066.362862, 3057.819473, 6407.138549, 6369.45385,
-//                                  6338.846609, 1881.446264, 1876.565603, 1872.538366, 3076.760999, 3066.362862, 3057.819473, 6407.138549,
-//                                  6369.45385, 6338.846609, 1881.446264, 1876.565603, 1872.538366, 3076.760999, 3066.362862, 3057.819473,
-//                                  6407.138549, 6369.45385, 6338.846609 };
 
-//   // SpanWagnerCO2Density::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-//   // localIndex counter = 0;
-//   // for( localIndex iComp = 0; iComp < 3; ++iComp )
-//   // {
-//   //   for( localIndex iPres = 0; iPres < 3; ++iPres )
-//   //   {
-//   //     for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
-//   //     {
-//   //       testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
-//   //                                                P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
-//   //       testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
-//   //       counter++;
-//   //     }
-//   //   }
-//   //   comp[0] += deltaComp;
-//   //   comp[1] = 1 - comp[0];
-//   // }
-// }
+  BrineEnthalpy::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
+  real64 const savedValues[] =  {  15234891.499346, 15338606.577025, 15424985.891636, 15102742.031582, 15207238.691387, 15294258.271084,
+                                   14779605.524173, 14886798.427634, 14976008.570783, 11042832.057960, 11121210.933610, 11186485.534383,
+                                   10823742.150877, 10903416.807419, 10969752.900309, 10288015.835964, 10372160.580672, 10442128.397178,
+                                   6850772.616574, 6903815.290194, 6947985.177129, 6544742.270173, 6599594.923452, 6645247.529535,
+                                   5796426.147754, 5857522.733710, 5908248.223573};
+  localIndex counter = 0;
+  printf ( " Molar old values: \n { " );
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  {
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    {
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        EvalVarArgs const pressure_old = P[iPres];
+        EvalVarArgs const temp_old = TC[iTemp];
+        array1d< EvalVarArgs > comp_old ( 2 );
+        comp_old[0] = comp[0];
+        comp_old[1] = comp[1];
+        EvalVarArgs value_old;
+        real64 value;
+
+        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, false );
+        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, false );
+        checkRelativeError ( value, value_old.m_var, relTol );
+        printf ( " %15lf, ", value_old.m_var );
+
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
+        counter++;
+      }
+    }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
+  }
+  printf ( " } \n " );
+}
+
+
+class CO2EnthalpyTest : public ::testing::Test
+{
+public:
+  CO2EnthalpyTest()
+  {
+    writeTableToFile( filename, pvtLiquidOldEnthaplyTableContent );
+    pvtFunctionOld = makeOldPVTFunction< CO2EnthalpyFunction >( filename, key );
+    writeTableToFile( filename, pvtLiquidEnthaplyTableContent );
+    pvtFunction = makePVTFunction< CO2Enthalpy >( filename, key );
+
+  }
+
+  ~CO2EnthalpyTest() override
+  {
+    removeFile( filename );
+  }
+
+protected:
+  string const key = "EnthalpyFun";
+  string const filename = "pvtliquid.txt";
+  std::unique_ptr< CO2EnthalpyFunction > pvtFunctionOld;
+  std::unique_ptr< CO2Enthalpy > pvtFunction;
+};
+
+TEST_F( CO2EnthalpyTest, CO2EnthalpyMassValuesAndDeriv )
+{
+  // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
+  // (see the txt file defined at the top of the file for the definition of the coordinates)
+  real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
+  real64 const TC[3] = { 94.5, 95.1, 95.6 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 5e-5;
+
+
+
+  CO2Enthalpy::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
+  real64 const savedValues[] =   {     28447.084306, 29131.068469, 29700.204529, 9320.187656, 10117.295548, 10779.101555, -37449.569995,
+                                       -36262.216311, -35283.355068, 28447.084306, 29131.068469, 29700.204529, 9320.187656, 10117.295548,
+                                       10779.101555, -37449.569995, -36262.216311, -35283.355068, 28447.084306, 29131.068469, 29700.204529,
+                                       9320.187656, 10117.295548, 10779.101555, -37449.569995, -36262.216311, -35283.355068};
+
+  localIndex counter = 0;
+  printf ( " CO2Enthalpy Mass old values: \n { " );
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  {
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    {
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        EvalVarArgs const pressure_old = P[iPres];
+        EvalVarArgs const temp_old = TC[iTemp];
+        array1d< EvalVarArgs > comp_old ( 2 );
+        comp_old[0] = comp[0];
+        comp_old[1] = comp[1];
+        EvalVarArgs value_old;
+        real64 value;
+
+        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, true );
+        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, true );
+        checkRelativeError ( value, value_old.m_var, relTol );
+        printf ( " %15lf, ", value_old.m_var );
+
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+        counter++;
+      }
+    }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
+  }
+  printf ( " } \n " );
+}
+
+TEST_F( CO2EnthalpyTest, CO2EnthalpyMolarValuesAndDeriv )
+{
+  // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
+  // (see the txt file defined at the top of the file for the definition of the coordinates)
+  real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
+  real64 const TC[3] = { 94.5, 95.1, 95.6 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.304; comp[1] = 0.696;
+  real64 const deltaComp = 0.2;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 5e-5;
+
+
+
+  CO2Enthalpy::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
+  real64 const savedValues[] =   {    646524.643323, 662069.737939, 675004.648394, 211822.446731, 229938.535180, 244979.580788,
+                                      -851126.590796, -824141.279795, -801894.433361, 646524.643323, 662069.737939, 675004.648394,
+                                      211822.446731, 229938.535180, 244979.580788, -851126.590796, -824141.279795, -801894.433361,
+                                      646524.643323, 662069.737939, 675004.648394, 211822.446731, 229938.535180, 244979.580788,
+                                      -851126.590796, -824141.279795, -801894.433361 };
+  localIndex counter = 0;
+  printf ( " CO2Enthalpy Molar old values: \n { " );
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  {
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    {
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        EvalVarArgs const pressure_old = P[iPres];
+        EvalVarArgs const temp_old = TC[iTemp];
+        array1d< EvalVarArgs > comp_old ( 2 );
+        comp_old[0] = comp[0];
+        comp_old[1] = comp[1];
+        EvalVarArgs value_old;
+        real64 value;
+
+        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, false );
+        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, false );
+        checkRelativeError ( value, value_old.m_var, relTol );
+        printf ( " %15lf, ", value_old.m_var );
+
+        testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
+        counter++;
+      }
+    }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
+  }
+  printf ( " } \n " );
+}
 
 
 int main( int argc, char * * argv )

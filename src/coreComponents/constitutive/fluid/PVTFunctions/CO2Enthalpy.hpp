@@ -39,12 +39,10 @@ public:
 
   CO2EnthalpyUpdate( arrayView1d< real64 const > const & componentMolarWeight,
                      TableFunction const & CO2EnthalpyTable,
-                     integer const CO2Index,
-                     integer const waterIndex )
+                     integer const CO2Index )
     : PVTFunctionBaseUpdate( componentMolarWeight ),
     m_CO2EnthalpyTable( CO2EnthalpyTable.createKernelWrapper() ),
-    m_CO2Index( CO2Index ),
-    m_waterIndex( waterIndex )
+    m_CO2Index( CO2Index )
   {}
 
   template< int USD1 >
@@ -82,10 +80,6 @@ protected:
 
   /// Index of the CO2 component
   integer m_CO2Index;
-
-  /// Index of the water component
-  integer m_waterIndex;
-
 };
 
 class CO2Enthalpy : public PVTFunctionBase
@@ -127,10 +121,6 @@ private:
 
   /// Index of the CO2 phase
   integer m_CO2Index;
-
-  /// Index of the water phase
-  integer m_waterIndex;
-
 };
 
 template< int USD1 >
@@ -141,27 +131,15 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
                                  real64 & value,
                                  bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( pressure );
-
-  real64 const enthalpy = m_CO2EnthalpyTable.compute( &temperature );
-  real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( &temperature );
+  GEOSX_UNUSED_VAR( phaseComposition );
+  real64 const input[2] = { pressure, temperature };
 
 
-  //assume there are only CO2 and CO2 here.
+  value = m_CO2EnthalpyTable.compute( input );
 
-  real64 const C = phaseComposition[m_waterIndex];
-
-  real64 const waterMW = m_componentMolarWeight[m_waterIndex];
-  real64 const CO2MW = m_componentMolarWeight[m_CO2Index];
-
-  if( useMass )
+  if( !useMass )
   {
-    real64 const X = C * waterMW / (C * waterMW + (1.0 - C) * CO2MW);
-    value = (1.0 - X ) * CO2Enthalpy + X * enthalpy;
-  }
-  else
-  {
-    value = (1.0 - C ) * CO2Enthalpy / CO2MW + C * enthalpy / waterMW;
+    value /= m_componentMolarWeight[m_CO2Index];
   }
 }
 
@@ -179,28 +157,26 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
                                  arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
                                  bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( pressure );
+  GEOSX_UNUSED_VAR( phaseComposition );
 
-  real64 const enthalpy = m_CO2EnthalpyTable.compute( &temperature );
-  real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( &temperature );
+  real64 const input[2] = { pressure, temperature };
+  real64 CO2EnthalpyDeriv[2];
 
 
-  //assume there are only CO2 and CO2 here.
+  dValue_dPressure = 0;
+  value = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv );
+  dValue_dPressure = CO2EnthalpyDeriv[0];
+  dValue_dTemperature = CO2EnthalpyDeriv[1];
 
-  real64 const C = phaseComposition[m_waterIndex];
-
-  real64 const waterMW = m_componentMolarWeight[m_waterIndex];
-  real64 const CO2MW = m_componentMolarWeight[m_CO2Index];
-
-  if( useMass )
+  if( !useMass )
   {
-    real64 const X = C * waterMW / (C * waterMW + (1.0 - C) * CO2MW);
-    value = (1.0 - X ) * CO2Enthalpy + X * enthalpy;
+    real64 const CO2MWInv = 1 / m_componentMolarWeight[m_CO2Index];
+    value *= CO2MWInv;
+    dValue_dPressure *= CO2MWInv;
+    dValue_dTemperature *= CO2MWInv;
   }
-  else
-  {
-    value = (1.0 - C ) * CO2Enthalpy / CO2MW + C * enthalpy / waterMW;
-  }
+
+  LvArray::forValuesInSlice( dValue_dGlobalCompFraction, []( real64 & val ){ val = 0.0; } );
 }
 
 } // end namespace PVTProps

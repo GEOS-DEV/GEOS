@@ -257,9 +257,6 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
-  string const expectedWaterComponentNames[] = { "Water", "water" };
-  m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
-
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
@@ -289,8 +286,7 @@ CO2Enthalpy::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         *m_CO2EnthalpyTable,
-                        m_CO2Index,
-                        m_waterIndex );
+                        m_CO2Index );
 }
 
 REGISTER_CATALOG_ENTRY( PVTFunctionBase, CO2Enthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const & )
