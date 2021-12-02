@@ -17,7 +17,6 @@ CompressibleSolidCarmanKozenyPermeability   node         :ref:`XML_CompressibleS
 CompressibleSolidConstantPermeability       node         :ref:`XML_CompressibleSolidConstantPermeability`       
 CompressibleSolidParallelPlatesPermeability node         :ref:`XML_CompressibleSolidParallelPlatesPermeability` 
 ConstantPermeability                        node         :ref:`XML_ConstantPermeability`                        
-Contact                                     node         :ref:`XML_Contact`                                     
 Coulomb                                     node         :ref:`XML_Coulomb`                                     
 DamageElasticIsotropic                      node         :ref:`XML_DamageElasticIsotropic`                      
 DamageSpectralElasticIsotropic              node         :ref:`XML_DamageSpectralElasticIsotropic`              
@@ -30,6 +29,7 @@ ElasticIsotropicPressureDependent           node         :ref:`XML_ElasticIsotro
 ElasticOrthotropic                          node         :ref:`XML_ElasticOrthotropic`                          
 ElasticTransverseIsotropic                  node         :ref:`XML_ElasticTransverseIsotropic`                  
 ExtendedDruckerPrager                       node         :ref:`XML_ExtendedDruckerPrager`                       
+FrictionlessContact                         node         :ref:`XML_FrictionlessContact`                         
 ModifiedCamClay                             node         :ref:`XML_ModifiedCamClay`                             
 NullModel                                   node         :ref:`XML_NullModel`                                   
 ParallelPlatesPermeability                  node         :ref:`XML_ParallelPlatesPermeability`                  
