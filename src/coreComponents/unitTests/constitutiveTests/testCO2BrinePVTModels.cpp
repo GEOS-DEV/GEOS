@@ -45,10 +45,10 @@ static const char * pvtLiquidPhillipsTableContent = "DensityFun PhillipsBrineDen
                                                     "ViscosityFun PhillipsBrineViscosity 0.1";
 
 // Temperature is specified in Celcius!!!
-static const char * pvtLiquidOldEnthaplyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 40 300 1 0.2";
+static const char * pvtLiquidOldEnthaplyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 94 96 1 0.2";
 
 //Temperature is specified in Kelvin, should match the range specified in pvtLiquidOldEnthaplyTableContent
-static const char * pvtLiquidEnthaplyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 313.15 573.15 1 0.2";
+static const char * pvtLiquidEnthaplyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 367.15 369.15 1 0.2";
 
 // the last are set relatively high (1e-4) to increase derivative value and check it properly
 static const char * pvtLiquidEzrokhiTableContent = "DensityFun EzrokhiBrineDensity 2.01e-6 -6.34e-7 1e-4\n"
@@ -994,32 +994,34 @@ protected:
 
 TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
 {
-  // // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
-  // // (see the txt file defined at the top of the file for the definition of the coordinates)
-  // real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
-  // real64 const TC[3] = { 94.5, 95.1, 95.6 };
-  // array1d< real64 > comp( 2 );
-  // comp[0] = 0.304; comp[1] = 0.696;
-  // real64 const deltaComp = 0.2;
-
-  // real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
-  // real64 const relTol = 5e-5;
-  EvalVarArgs const pressure = 5.012e6;
-  EvalVarArgs const temp = 100;
-  array1d< EvalVarArgs > comp ( 2 );
+  // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
+  // (see the txt file defined at the top of the file for the definition of the coordinates)
+  real64 const P[3] = { 5.012e6, 7.546e6, 1.289e7 };
+  real64 const TC[3] = { 94.5, 95.1, 95.6 };
+  array1d< real64 > comp( 2 );
   comp[0] = 0.304; comp[1] = 0.696;
-  EvalVarArgs value;
+  real64 const deltaComp = 0.2;
 
-  pvtFunctionOld->evaluation( pressure, temp, comp, value, true );
-  printf ( "Old BrineEnthalpy value=%lf, d_dP=%lf, d_dT=%lf, d_dcomp[0]=%lf, d_dcomp[1] = %lf\n", value.m_var, value.m_der[0], value.m_der[3], value.m_der[1], value.m_der[2] );
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 5e-5;
+
+  // EvalVarArgs const pressure = 5.012e6;
+  // EvalVarArgs const temp = 94.5;
+  // array1d< EvalVarArgs > comp ( 2 );
+  // comp[0] = 0.304; comp[1] = 0.696;
+  // EvalVarArgs value;
+
+  // pvtFunctionOld->evaluation( pressure, temp, comp, value, true );
+  // printf ( "Old BrineEnthalpy value=%lf, d_dP=%lf, d_dT=%lf, d_dcomp[0]=%lf, d_dcomp[1] = %lf\n", value.m_var, value.m_der[0],
+  // value.m_der[3], value.m_der[1], value.m_der[2] );
 
   BrineEnthalpy::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
-  real64 value_enth;
-  array1d< real64 > comp_enth ( 2 );
-  comp_enth[0] = 0.304; comp_enth[1] = 0.696;
+  // real64 value_enth;
+  // array1d< real64 > comp_enth ( 2 );
+  // comp_enth[0] = 0.304; comp_enth[1] = 0.696;
 
-  pvtFunctionWrapper.compute( pressure.m_var, temp.m_var, comp_enth.toSliceConst(), value_enth, true );
-  printf ( "BrineEnthalpy value=%lf\n", value_enth );
+  // pvtFunctionWrapper.compute( pressure.m_var, temp.m_var, comp_enth.toSliceConst(), value_enth, true );
+  // printf ( "BrineEnthalpy value=%lf\n", value_enth );
 
   // real64 const savedValues[] = { 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962, 280.2559694,
   //                                278.9092508, 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962,
@@ -1028,22 +1030,22 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
 
   // SpanWagnerCO2Density::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  // localIndex counter = 0;
-  // for( localIndex iComp = 0; iComp < 3; ++iComp )
-  // {
-  //   for( localIndex iPres = 0; iPres < 3; ++iPres )
-  //   {
-  //     for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
-  //     {
-  //       testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
-  //                                                P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
-  //       testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
-  //       counter++;
-  //     }
-  //   }
-  //   comp[0] += deltaComp;
-  //   comp[1] = 1 - comp[0];
-  // }
+  localIndex counter = 0;
+  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  {
+    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    {
+      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      {
+        // testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
+        //                                          P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+        counter++;
+      }
+    }
+    comp[0] += deltaComp;
+    comp[1] = 1 - comp[0];
+  }
 }
 
 // TEST_F( BrineEnthalpyTest, BrineEnthalpyMolarValuesAndDeriv )

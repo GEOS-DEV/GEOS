@@ -147,7 +147,7 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
                                    bool useMass ) const
 {
   real64 const input[2] = { pressure, temperature };
-  real64 const enthalpy = m_brineEnthalpyTable.compute( &temperature );
+  real64 const brineEnthalpy = m_brineEnthalpyTable.compute( &temperature );
   real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( input );
 
 
@@ -160,12 +160,13 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
 
   if( useMass )
   {
+    // Do we really need to convert here from mole fraction to mass fraction?
     real64 const X = C * waterMW / (C * waterMW + (1.0 - C) * CO2MW);
-    value = (1.0 - X ) * CO2Enthalpy + X * enthalpy;
+    value = (1.0 - X ) * CO2Enthalpy + X * brineEnthalpy;
   }
   else
   {
-    value = (1.0 - C ) * CO2Enthalpy / CO2MW + C * enthalpy / waterMW;
+    value = (1.0 - C ) * CO2Enthalpy / CO2MW + C * brineEnthalpy / waterMW;
   }
 }
 
@@ -184,27 +185,49 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
                                    bool useMass ) const
 {
   real64 const input[2] = { pressure, temperature };
+  real64 brineEnthalpy_dTemperature;
+  real64 dvalue_dC;
+  real64 CO2EnthalpyDeriv[2];
 
-  real64 const enthalpy = m_brineEnthalpyTable.compute( &temperature );
-  real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( input );
+  real64 const brineEnthalpy = m_brineEnthalpyTable.compute( &temperature, &brineEnthalpy_dTemperature );
+  real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv );
 
 
   //assume there are only CO2 and brine here.
 
   real64 const C = phaseComposition[m_waterIndex];
 
-  real64 const waterMW = m_componentMolarWeight[m_waterIndex];
-  real64 const CO2MW = m_componentMolarWeight[m_CO2Index];
+
 
   if( useMass )
   {
+    real64 const waterMW = m_componentMolarWeight[m_waterIndex];
+    real64 const CO2MW = m_componentMolarWeight[m_CO2Index];
+
+    // Do we really need to convert here from mole fraction to mass fraction?
     real64 const X = C * waterMW / (C * waterMW + (1.0 - C) * CO2MW);
-    value = (1.0 - X ) * CO2Enthalpy + X * enthalpy;
+    real64 const dX_dC_denom = C * waterMW - (C - 1.0) * CO2MW;
+    real64 const dX_dC = waterMW * CO2MW / (dX_dC_denom * dX_dC_denom);
+
+    //real64 const X = C;
+    value = (1.0 - X ) * CO2Enthalpy + X * brineEnthalpy;
+    dValue_dPressure = (1.0 - X ) * CO2EnthalpyDeriv[0];
+    dValue_dTemperature = (1.0 - X ) * CO2EnthalpyDeriv[1] + X * brineEnthalpy_dTemperature;
+    dvalue_dC = dX_dC * (brineEnthalpy - CO2Enthalpy);
   }
   else
   {
-    value = (1.0 - C ) * CO2Enthalpy / CO2MW + C * enthalpy / waterMW;
+    real64 const waterMWInv = 1 / m_componentMolarWeight[m_waterIndex];
+    real64 const CO2MWInv = 1 / m_componentMolarWeight[m_CO2Index];
+
+    value = (1.0 - C ) * CO2Enthalpy * CO2MWInv + C * brineEnthalpy * waterMWInv;
+    dValue_dPressure = (1.0 - C ) * CO2EnthalpyDeriv[0] * CO2MWInv;
+    dValue_dTemperature = (1.0 - C ) * CO2EnthalpyDeriv[1] * CO2MWInv + C * brineEnthalpy_dTemperature * waterMWInv;
+    dvalue_dC = brineEnthalpy * waterMWInv - CO2Enthalpy * CO2MWInv;
   }
+
+  dValue_dGlobalCompFraction[m_CO2Index] = dvalue_dC * dPhaseComposition_dGlobalCompFraction[m_waterIndex][m_CO2Index];
+  dValue_dGlobalCompFraction[m_waterIndex] = dvalue_dC * dPhaseComposition_dGlobalCompFraction[m_waterIndex][m_waterIndex];
 }
 
 } // end namespace PVTProps
