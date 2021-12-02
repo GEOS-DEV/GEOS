@@ -97,6 +97,7 @@ void populateRegions( ElementRegionManager const & elementRegionMgr,
 
   // The algorithm is equivalent to the algorithm described
   // in the `populateRegions` in the `NodeManager.cpp` file.
+  // Instead of faces, we'll have nodes.
   // Please refer to this implementation for thorough explanations.
   //
   // Since the algorithm is quite short, and because of slight variations
@@ -124,7 +125,9 @@ void populateRegions( ElementRegionManager const & elementRegionMgr,
         {
           // We only consider the elements that match the mapping.
           if( f2e( iFace, iElementLoc ) != iElement )
-          { continue; }
+          {
+            continue;
+          }
 
           // Here we fill the mapping iff it has not already been inserted.
           if( f2er( iFace, iElementLoc ) < 0 or f2esr( iFace, iElementLoc ) < 0 )

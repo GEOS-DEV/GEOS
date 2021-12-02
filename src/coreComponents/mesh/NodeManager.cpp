@@ -116,27 +116,28 @@ void populateRegions( ElementRegionManager const & elementRegionMgr,
   GEOSX_ERROR_IF_NE( n2e.size(), n2er.size() );
   GEOSX_ERROR_IF_NE( n2e.size(), n2esr.size() );
 
-  // There is an implicit convention in the (n2e, n2er, n2esr).
-  // The node to element mappings (n2e) binds node indices to multiple element indices (like `n -> (e0, e1,...)`).
+  // There is an implicit convention in the (n2e, n2er, n2esr) triplet.
+  // The node to element mapping (n2e) binds node indices to multiple element indices (like `n -> (e0, e1,...)`).
   // The node to regions (n2r) and sub-regions (n2sr) respectively bind
   // node indices to the regions/sub-regions: `n -> (er0, er1)` and `n -> (esr0, esr1)`.
   //
   // It is assumed in the code that triplets obtained at indices 0, 1,... of all these relations,
-  // (respectively (e0, er0, esr0), (e1, er1, esr1),...) are consistent.
+  // (respectively `(e0, er0, esr0)`, `(e1, er1, esr1)`,...) are consistent:
+  // `e0` should belong to both `er0` and `esr0`.
   //
   // But in some configuration (multi-regions, multi-subregions, parallel computing, ghost cells),
-  // it may happen that a same element indices appear multiple times in a same entry of the node to elements mapping.
+  // it may happen that a same element index appear multiple times in a same entry of the node to elements mapping.
   // For example `n0 -> (e0, e1, e2, e0)` where `e0` appears twice.
-  // These duplicated elements may in fact belong to multiple regions/sub-regions.
-  // This implies a specific care when filling the nodes to elements, regions, sub-regions mappings.
+  // These duplicated elements will in fact belong to multiple regions/sub-regions.
+  // This implies a specific care when filling the nodes to regions and sub-regions mappings.
   //
   // Thus, the algorithm is the following.
   //
   // For each sub-region of each region, we consider each node of each element.
   // We list all the elements connected to this node.
   // Then we take the first element that has not already been inserted in the mappings
-  // (we check if the value is still -1),
-  // and we insert it the `er` and `esr` values, before moving to another node.
+  // (we check if the value is still -1), and we insert it using the `er` and `esr` values,
+  // before moving to another node.
   //
   // The same node index with the same elements will eventually come back during the iterative process.
   // But this time with another region/sub-region combination.
@@ -146,6 +147,7 @@ void populateRegions( ElementRegionManager const & elementRegionMgr,
 
   // The algorithm is equivalent to the algorithm described
   // in the `populateRegions` in the `FaceManager.cpp` file.
+  // Instead of nodes, we'll have faces.
   //
   // Since the algorithm is quite short, and because of slight variations
   // (e.g. the different allocation between faces with a ),
@@ -172,7 +174,9 @@ void populateRegions( ElementRegionManager const & elementRegionMgr,
         {
           // We only consider the elements that match the mapping.
           if( n2e( iNode, iElementLoc ) != iElement )
-          { continue; }
+          {
+            continue;
+          }
 
           // This loop is a small hack to back insert/allocate dummy elements
           // that will eventually be replaced by the correct values.
@@ -219,8 +223,9 @@ void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager,
   toElementRegionList.resize( 0 );
   toElementSubRegionList.resize( 0 );
 
-  // FIXME If there is a strong requirement that `toElementRegionList` and `toElementSubRegionList` share the same capacities as `toElementList`,
-  //       then it's should be interesting to retrieve this information from `toElementList` instead.
+  // FIXME If there is a strong requirement that `toElementRegionList` and `toElementSubRegionList`
+  //       share the same capacities as `toElementList`, then it's should be interesting
+  //       to retrieve this information from `toElementList` instead.
 
   // Reserve space for the number of current faces plus some extra.
   double const overAllocationFactor = 0.3;
