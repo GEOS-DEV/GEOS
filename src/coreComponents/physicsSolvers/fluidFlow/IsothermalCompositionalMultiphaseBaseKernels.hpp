@@ -428,13 +428,13 @@ public:
 
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-      phaseAmountKernelOp( ip, phaseAmountNew, phaseAmountOld, dPhaseAmount_dP, dPhaseAmount_dC );
+      phaseAmountKernelOp( ip, stack.localResidual, stack.localJacobian, phaseAmountNew, phaseAmountOld, dPhaseAmount_dP, dPhaseAmount_dC );
 
     }
   }
 
   /**
-   * @brief Compute the local accumulation contributions to the residual and Jacobian
+   * @brief Compute the local volume balance contributions to the residual and Jacobian
    * @tparam FUNC the type of the function that can be used to customize the kernel
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
@@ -474,7 +474,7 @@ public:
 
     // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
     // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolumeNew depends on temperature
-    phaseVolFractionSumKernelOp( oneMinusPhaseVolFracSum );
+    phaseVolFractionSumKernelOp( stack.localResidual, stack.localJacobian, oneMinusPhaseVolFracSum );
   }
 
   /**
@@ -624,7 +624,6 @@ public:
   /**
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] isIsothermal flag specifying whether the assembly is isothermal or non-isothermal
    * @param[in] numComps the number of fluid components
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
@@ -637,8 +636,7 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( bool const isIsothermal,
-                   localIndex const numComps,
+  createAndLaunch( localIndex const numComps,
                    localIndex const numPhases,
                    globalIndex const rankOffset,
                    string const dofKey,
@@ -650,28 +648,12 @@ public:
   {
     internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
-      if( isIsothermal )
-      {
-        localIndex constexpr NUM_COMP = NC();
-        localIndex constexpr NUM_DOF = NC()+1;
-        ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-        kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
-        ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
-        launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
-      }
-      else
-      {
-        GEOSX_ERROR( "CompositionalMultiphaseBase: Thermal simulation is not supported yet: " );
-        /*
-           TODO: uncomment and move when the thermal kernel is ready
-           localIndex constexpr NUM_COMP = NC();
-           localIndex constexpr NUM_DOF = NC()+2;
-           ThermalElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-           kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
-           ThermalElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
-           launch< POLICY, ThermalElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
-         */
-      }
+      localIndex constexpr NUM_COMP = NC();
+      localIndex constexpr NUM_DOF = NC()+1;
+      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
+      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
+      launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
     } );
   }
 

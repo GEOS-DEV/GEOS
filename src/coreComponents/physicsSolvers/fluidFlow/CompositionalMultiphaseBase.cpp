@@ -205,6 +205,10 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         subRegion.registerWrapper< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::dPhaseMobility_dTemperatureString() ).
           setRestartFlags( RestartFlags::NO_WRITE ).
           reference().resizeDimension< 1 >( m_numPhases );
+
+        subRegion.registerWrapper< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseInternalEnergyOldString() ).
+          setRestartFlags( RestartFlags::NO_WRITE ).
+          reference().resizeDimension< 1 >( m_numPhases );
       }
 
       if( m_computeCFLNumbers )
@@ -1009,7 +1013,9 @@ void CompositionalMultiphaseBase::backupFields( MeshLevel & mesh ) const
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] >= 0 )
+      {
         return;
+      }
 
       for( localIndex ip = 0; ip < numPhase; ++ip )
       {
@@ -1024,6 +1030,27 @@ void CompositionalMultiphaseBase::backupFields( MeshLevel & mesh ) const
       }
       totalDensOld[ei] = totalDens[ei][0];
     } );
+
+    if( !m_isothermalFlag )
+    {
+      arrayView3d< real64 const, multifluid::USD_PHASE > const phaseInternalEnergy = fluid.phaseInternalEnergy();
+
+      arrayView2d< real64, compflow::USD_PHASE > const phaseInternalEnergyOld =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseInternalEnergyOldString() );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( elemGhostRank[ei] >= 0 )
+        {
+          return;
+        }
+
+        for( localIndex ip = 0; ip < numPhase; ++ip )
+        {
+          phaseInternalEnergyOld[ei][ip] = phaseInternalEnergy[ei][0][ip];
+        }
+      } );
+    }
   } );
 }
 
@@ -1089,20 +1116,24 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
     CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
-    bool const isIsothermal = true;
-    IsothermalCompositionalMultiphaseBaseKernels::
-      ElementBasedAssemblyKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >
-      ( isIsothermal,
-      m_numComponents,
-      m_numPhases,
-      dofManager.rankOffset(),
-      dofKey,
-      subRegion,
-      fluid,
-      solid,
-      localMatrix,
-      localRhs );
+    if( m_isothermalFlag )
+    {
+      IsothermalCompositionalMultiphaseBaseKernels::
+        ElementBasedAssemblyKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >
+        ( m_numComponents, m_numPhases, dofManager.rankOffset(), dofKey,
+        subRegion, fluid, solid,
+        localMatrix, localRhs );
+    }
+    else
+    {
+      ThermalCompositionalMultiphaseBaseKernels::
+        ElementBasedAssemblyKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >
+        ( m_numComponents, m_numPhases, dofManager.rankOffset(), dofKey,
+        subRegion, fluid, solid,
+        localMatrix, localRhs );
+    }
 
   } );
 }

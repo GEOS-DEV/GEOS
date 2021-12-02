@@ -285,8 +285,6 @@ public:
 
     static constexpr char const * phaseInternalEnergyOldString() { return "phaseInternalEnergyOld"; }
 
-    static constexpr char const * rockInternalEnergyOldString()  { return "rockInternalEnergyOld"; }
-
     // these are allocated on faces for BC application until we can get constitutive models on faces
     static constexpr char const * phaseViscosityString() { return "phaseViscosity"; }
 
