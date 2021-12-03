@@ -1,6 +1,5 @@
-import sys
-#sys.exit()
 from mpi4py import MPI
+import sys
 import os
 sys.path.append(os.getcwd())
 import time

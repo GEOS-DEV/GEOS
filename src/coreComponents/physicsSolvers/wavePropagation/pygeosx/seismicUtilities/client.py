@@ -6,12 +6,10 @@ from queue import Queue
 import uuid
 import copy
 import subprocess
-import numpy as np
-import importlib
-from time import sleep, time, gmtime
+from time import sleep 
 import inspect
-from utils import *
-
+from utils import args_to_json
+from tempfile import mkstemp  
 
 class Cluster():
     def __init__(self,
@@ -51,12 +49,13 @@ class Cluster():
                 f.write(line + "\n")
 
         os.close(handle)
+        
         return filename
 
 
     def _add_job_to_script(self, cores, parallel_tool):
         if parallel_tool == "srun":
-            self.run = "srun -n %d %s seismicUtilities/wrapper.py " %(cores, self.python)
+            self.run = "srun %s seismicUtilities/wrapper.py " %(self.python)
         elif parallel_tool == "mpirun":
             self.run = "mpirun -np %d %s seismicUtilities/wrapper.py " %(cores, self.python)
 
@@ -185,7 +184,7 @@ class SLURMCluster(Cluster):
 
 
     def runJob(self, bashfile):
-        output = subprocess.check_output("/usr/bin/sbatch " + bashfile, shell=True)
+        output = subprocess.check_output("/usr/bin/sbatch "+ bashfile, shell=True)
         return output
 
 
@@ -359,26 +358,26 @@ class Client:
     def _submit(self,
                 func,
                 args,
-                cmd_line=None,
-                parallel_tool="srun",
-                cores=None,
-                x_partition=1,
-                y_partition=1,
-                z_partition=1,
-                future=None):
+                cmd_line,
+                parallel_tool,
+                cores,
+                x_partition,
+                y_partition,
+                z_partition,
+                future):
 
         while True:
             for cluster in self.cluster:
                 if cluster.free():
-                    future = self.run(func,
-                                      args,
-                                      cmd_line,
-                                      parallel_tool,
-                                      cores,
-                                      x_partition,
-                                      y_partition,
-                                      z_partition,
-                                      cluster = cluster)
+                    future[0] = self.run(func,
+                                         args,
+                                         cmd_line,
+                                         parallel_tool,
+                                         cores,
+                                         x_partition,
+                                         y_partition,
+                                         z_partition,
+                                         cluster = cluster)
                     break
             else:
                 sleep(1)
@@ -392,13 +391,13 @@ class Client:
     def _map(self,
              func,
              args,
-             cmd_line=None,
-             parallel_tool="srun",
-             cores=None,
-             x_partition=1,
-             y_partition=1,
-             z_partition=1,
-             futures=None):
+             cmd_line,
+             parallel_tool,
+             cores,
+             x_partition,
+             y_partition,
+             z_partition,
+             futures):
 
         work_queue = Queue()
 
@@ -419,7 +418,6 @@ class Client:
                                               x_partition,
                                               y_partition,
                                               z_partition,
-                                              queue = work_queue,
                                               cluster = cluster)
                         i+=1
                         break
@@ -433,14 +431,13 @@ class Client:
     def run(self,
             func,
             args,
-            cmd_line=None,
-            parallel_tool="srun",
-            cores=None,
-            x_partition=1,
-            y_partition=1,
-            z_partition=1,
-            queue=None,
-            cluster=None):
+            cmd_line,
+            parallel_tool,
+            cores,
+            x_partition,
+            y_partition,
+            z_partition,
+            cluster):
 
         module   = inspect.getmodule(func).__name__
         key      = module + "-" + func.__name__ + "-" +str(x_partition) + "-" + str(y_partition) + "-" + str(z_partition) + "-" + str(uuid.uuid4())
@@ -473,6 +470,8 @@ class Client:
         #os.remove(bashfile)
 
         future = Future(key, output=self.output, cluster=cluster, args=args, job_id=job_id)
+
+        future = None
         cluster.work = future
         cluster.state = "Working"
 
