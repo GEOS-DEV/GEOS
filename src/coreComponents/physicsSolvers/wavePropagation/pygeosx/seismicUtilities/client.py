@@ -67,7 +67,7 @@ class Cluster():
                 self.run += "%s " %cmd
         else:
             self.run += "%s " %cmd_line
-
+            
 
     def _add_partition_to_cmd(self, x, y, z):
         self.run += "-x %d -y %d -z %d" %(x, y, z) + " "
@@ -261,7 +261,6 @@ class LSFCluster(Cluster):
         else:
             self.python = "python"
 
-        print(header_lines)
 
     def free(self):
         if self.work is not None:
@@ -296,14 +295,14 @@ class Client:
     def __init__(self,
                  cluster=None):
 
-        self.cluster = cluster
+        self.cluster = [cluster]
         self.output = self.create_output()
 
 
 
     def submit(self,
                func,
-               arg,
+               args,
                cmd_line=None,
                parallel_tool="srun",
                cores=None,
@@ -311,13 +310,13 @@ class Client:
                y_partition=1,
                z_partition=1):
 
-        future = "In queue"
+        future = ["In queue"]
 
-        thread = Thread(target = self._map,
+        thread = Thread(target = self._submit,
                         args = (func,
                                 args,
-                                cmd_line=None,
-                                parallel_tool="srun",
+                                cmd_line,
+                                parallel_tool,
                                 cores,
                                 x_partition,
                                 y_partition,
@@ -325,7 +324,7 @@ class Client:
                                 future,),
                         )
         thread.start()
-        return futures
+        return future
 
 
 
@@ -344,8 +343,8 @@ class Client:
         thread = Thread(target = self._map,
                         args = (func,
                                 args,
-                                cmd_line=None,
-                                parallel_tool="srun",
+                                cmd_line,
+                                parallel_tool,
                                 cores,
                                 x_partition,
                                 y_partition,
@@ -373,8 +372,8 @@ class Client:
                 if cluster.free():
                     future = self.run(func,
                                       args,
-                                      cmd_line=None,
-                                      parallel_tool="srun",
+                                      cmd_line,
+                                      parallel_tool,
                                       cores,
                                       x_partition,
                                       y_partition,
@@ -414,8 +413,8 @@ class Client:
                     if cluster.free():
                         futures[i] = self.run(func,
                                               work,
-                                              cmd_line=None,
-                                              parallel_tool="srun",
+                                              cmd_line,
+                                              parallel_tool,
                                               cores,
                                               x_partition,
                                               y_partition,
@@ -466,13 +465,12 @@ class Client:
         cluster.finalize_script()
 
         bashfile = cluster.job_file()
-
         output = cluster.runJob(bashfile)
 
         job_id = output.split()[-1].decode()
         cluster.setErrOut(job_id)
         print("Job : " + job_id+ " has been submited")
-        os.remove(bashfile)
+        #os.remove(bashfile)
 
         future = Future(key, output=self.output, cluster=cluster, args=args, job_id=job_id)
         cluster.work = future
@@ -483,14 +481,10 @@ class Client:
 
 
     def scale(self, n=None):
-        cluster_list = [self.cluster]
-
         if n is not None:
             for i in range(n-1):
-                cluster_list.append(copy.deepcopy(self.cluster))
-        if len(cluster_list) > 1:
-            self.cluster=cluster_list
-
+                self.cluster.append(copy.deepcopy(self.cluster))
+        
 
 
     def create_output(self):

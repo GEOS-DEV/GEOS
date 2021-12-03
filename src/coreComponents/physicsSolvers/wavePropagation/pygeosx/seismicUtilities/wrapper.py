@@ -1,7 +1,8 @@
-from mpi4py import MPI
 import sys
+#sys.exit()
+from mpi4py import MPI
 import os
-sys.path.append(os.getcwd() + "/..")
+sys.path.append(os.getcwd())
 import time
 import importlib
 import json
@@ -9,7 +10,6 @@ from munch import munchify
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
-
 
 with open(sys.argv[-3], 'r') as f:
     dict_args = json.load(f)
@@ -19,7 +19,7 @@ args = []
 
 if rank==0:
     time.sleep(1)
-    os.remove(sys.argv[-3])
+    #os.remove(sys.argv[-3])
 
     outputDir = sys.argv[-2]
     keyFile = sys.argv[-1]+".txt"
@@ -27,7 +27,6 @@ if rank==0:
 
 module_str = sys.argv[-5]
 func_str = sys.argv[-4]
-
 
 for k, v in dict_args.items():
     if not isinstance(v, dict):
