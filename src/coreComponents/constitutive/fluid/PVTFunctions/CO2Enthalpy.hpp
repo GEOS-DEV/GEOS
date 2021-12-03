@@ -158,6 +158,10 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
                                  bool useMass ) const
 {
   GEOSX_UNUSED_VAR( phaseComposition );
+  GEOSX_UNUSED_VAR( dPhaseComposition_dPressure );
+  GEOSX_UNUSED_VAR( dPhaseComposition_dTemperature );
+  GEOSX_UNUSED_VAR( dPhaseComposition_dGlobalCompFraction );
+
 
   real64 const input[2] = { pressure, temperature };
   real64 CO2EnthalpyDeriv[2];
