@@ -165,7 +165,7 @@
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/faceElementSubRegion"
-      fieldName="localJump"/>   
+      fieldName="displacementJump"/>   
     </Tasks>
 <!-- SPHINX_TASKS_END -->
 
@@ -183,6 +183,9 @@
     <TimeHistory
       name="timeHistoryOutput1"
       sources="{/Tasks/displacementJumpCollection}"
-      filename="displacementJump_history" />     
+      filename="displacementJump_history" /> 
+      
+    <Restart
+      name="restartOutput"/>      
     </Outputs>
 </Problem>
