@@ -210,7 +210,7 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
   real64 const exponentPowered = pow( 10, exponent );
 
   value = waterVisc * exponentPowered;
-  real64 const dValueCoef = log( 10 ) * value;
+  real64 const dValueCoef = LvArray::math::log( 10 ) * value;
 
   real64 const dValue_dPhaseComp = dValueCoef * exponent_dPhaseComp;
   dValue_dPressure = dValueCoef * exponent_dPressure;
