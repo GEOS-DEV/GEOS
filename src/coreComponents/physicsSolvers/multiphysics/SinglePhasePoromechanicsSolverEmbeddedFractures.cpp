@@ -124,8 +124,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
 void SinglePhasePoromechanicsSolverEmbeddedFractures::setupSystem( DomainPartition & domain,
                                                                    DofManager & dofManager,
                                                                    CRSMatrix< real64, globalIndex > & localMatrix,
-                                                                   array1d< real64 > & localRhs,
-                                                                   array1d< real64 > & localSolution,
+                                                                   ParallelVector & rhs,
+                                                                   ParallelVector & solution,
                                                                    bool const setSparsity )
 {
   // Add missing couplings ( matrix pressure with displacement jump and jump - displacement )
@@ -167,13 +167,14 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupSystem( DomainPartiti
   addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
 
   // Finally, steal the pattern into a CRS matrix
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localRhs.resize( localMatrix.numRows() );
-  localSolution.resize( localMatrix.numRows() );
-
   localMatrix.setName( this->getName() + "/localMatrix" );
-  localRhs.setName( this->getName() + "/localRhs" );
-  localSolution.setName( this->getName() + "/localSolution" );
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+
+  rhs.setName( this->getName() + "/rhs" );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+
+  solution.setName( this->getName() + "/solution" );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 }
 
 void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
@@ -513,8 +514,8 @@ real64 SinglePhasePoromechanicsSolverEmbeddedFractures::solverStep( real64 const
     setupSystem( domain,
                  m_dofManager,
                  m_localMatrix,
-                 m_localRhs,
-                 m_localSolution );
+                 m_rhs,
+                 m_solution );
 
     implicitStepSetup( time_n, dt, domain );
 
@@ -572,9 +573,6 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   //ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-
-  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_fracturesSolver->getContactRelationName() );
 
   this->template forTargetSubRegions< EmbeddedSurfaceSubRegion >( meshLevel, [&] ( localIndex const targetIndex,
                                                                                    auto & subRegion )
@@ -584,8 +582,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
 
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
 
-    arrayView1d< real64 > const effectiveAperture =
-      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString() );
+    arrayView1d< real64 > const hydraulicAperture =
+      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::hydraulicApertureString() );
 
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
@@ -605,6 +603,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
     arrayView1d< real64 const > const & deltaPressure =
       subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
 
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_fracturesSolver->getContactRelationName() );
+
     constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
     {
       using ContactType = TYPEOFREF( castedContact );
@@ -620,7 +620,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
                                           volume,
                                           deltaVolume,
                                           aperture,
-                                          effectiveAperture,
+                                          hydraulicAperture,
                                           fractureTraction,
                                           dTdpf );
 

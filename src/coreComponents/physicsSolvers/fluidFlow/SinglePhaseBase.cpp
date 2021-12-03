@@ -18,17 +18,20 @@
 
 #include "SinglePhaseBase.hpp"
 
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
+#include "functions/TableFunction.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
 namespace geosx
@@ -59,6 +62,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString() ).setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::initialPressureString() );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
@@ -78,6 +82,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( [&] ( auto & subRegion )
     {
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString() ).setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::initialPressureString() );
 
       subRegion.template registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
@@ -203,6 +208,9 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
   resetViews( mesh );
 
+  // Compute hydrostatic equilibrium in the regions for which corresponding field specification tag has been specified
+  computeHydrostaticEquilibrium();
+
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
   // They will be updated in applySystemSolution and ImplicitStepComplete, respectively
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
@@ -213,8 +221,20 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
     subRegion.template getWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).setDefaultValue( defaultDensity );
 
+    // 1. update porosity, permeability, and density/viscosity
+
     updatePorosityAndPermeability( subRegion, targetIndex );
     updateFluidState( subRegion, targetIndex );
+
+    // 2. save the initial density (for use in the single-phase poromechanics solver to compute the deltaBodyForce)
+
+    if( dynamicCast< SingleFluidBase const * >( &fluid ) )
+    {
+      SingleFluidBase const & singleFluid = dynamicCast< SingleFluidBase const & >( fluid );
+      singleFluid.initializeState();
+    }
+
+    // 3. save the initial/old porosity
 
     CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
@@ -230,7 +250,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       ConstitutiveBase & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
       real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
 
-      subRegion.getWrapper< real64_array >( viewKeyStruct::effectiveApertureString() ).
+      subRegion.getWrapper< real64_array >( viewKeyStruct::hydraulicApertureString() ).
         setApplyDefaultValue( region.getDefaultAperture() );
 
       subRegion.getWrapper< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() ).
@@ -238,8 +258,189 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
+  // Save initial pressure field (needed by the poromechanics solvers to compute the deltaPressure needed by the total stress)
+  forTargetSubRegions( mesh, [&]( localIndex const,
+                                  ElementSubRegionBase & subRegion )
+  {
+    arrayView1d< real64 const > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+    arrayView1d< real64 > const initPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialPressureString() );
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      initPres[ei] = pres[ei];
+    } );
+  } );
+
   backupFields( mesh );
 }
+
+void SinglePhaseBase::computeHydrostaticEquilibrium()
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+  // Step 1: count individual equilibriums (there may be multiple ones)
+
+  std::map< string, localIndex > equilNameToEquilId;
+  localIndex equilCounter = 0;
+
+  fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
+  {
+    // collect all the equil name to idx
+    equilNameToEquilId[bc.getName()] = equilCounter;
+    equilCounter++;
+
+    // check that the gravity vector is aligned with the z-axis
+    GEOSX_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
+                    catalogName() << " " << getName() <<
+                    ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
+                    ") is not aligned with the z-axis. \n"
+                    "This is incompatible with the " << EquilibriumInitialCondition::catalogName() << " called " << bc.getName() <<
+                    "used in this simulation. To proceed, you can either: \n" <<
+                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
+                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                    InputError );
+  } );
+
+  if( equilCounter == 0 )
+  {
+    return;
+  }
+
+  // Step 2: find the min elevation and the max elevation in the targetSets
+
+  array1d< real64 > globalMaxElevation( equilNameToEquilId.size() );
+  array1d< real64 > globalMinElevation( equilNameToEquilId.size() );
+  findMinMaxElevationInEquilibriumTarget( domain,
+                                          equilNameToEquilId,
+                                          globalMaxElevation,
+                                          globalMinElevation );
+
+  // Step 3: for each equil, compute a fine table with hydrostatic pressure vs elevation if the region is a target region
+
+  // first compute the region filter
+  std::set< string > regionFilter;
+  for( string const & regionName : targetRegionNames() )
+  {
+    regionFilter.insert( regionName );
+  }
+
+  // then start the actual table construction
+  fsManager.apply< EquilibriumInitialCondition >( 0.0,
+                                                  domain,
+                                                  "ElementRegions",
+                                                  EquilibriumInitialCondition::catalogName(),
+                                                  [&] ( EquilibriumInitialCondition const & fs,
+                                                        string const &,
+                                                        SortedArrayView< localIndex const > const & targetSet,
+                                                        Group & subRegion,
+                                                        string const & )
+  {
+    // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
+
+    integer const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
+    real64 const equilTolerance = fs.getEquilibrationTolerance();
+    real64 const datumElevation = fs.getDatumElevation();
+    real64 const datumPressure = fs.getDatumPressure();
+
+    localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
+    real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
+    real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
+    real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
+    localIndex const numPointsInTable = std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1;
+
+    real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
+    GEOSX_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
+                         SinglePhaseBase::catalogName() << " " << getName()
+                                                        << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
+                                                        << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] << "\n"
+                                                        << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
+                                                        << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
+
+    array1d< array1d< real64 > > elevationValues;
+    array1d< real64 > pressureValues;
+    elevationValues.resize( 1 );
+    elevationValues[0].resize( numPointsInTable );
+    pressureValues.resize( numPointsInTable );
+
+    // Step 3.2: retrieve the fluid model to compute densities
+    // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
+
+    // filter out region not in target
+    Group const & region = subRegion.getParent().getParent();
+    auto it = regionFilter.find( region.getName() );
+    if( it == regionFilter.end() )
+    {
+      return; // the region is not in target, there is nothing to do
+    }
+
+    string const & fluidName = m_fluidModelNames[ targetRegionIndex( region.getName() ) ];
+
+    // filter out the proppant fluid constitutive models
+    ConstitutiveBase & fluid = getConstitutiveModel( subRegion, fluidName );
+    if( !dynamicCast< SingleFluidBase * >( &fluid ) )
+    {
+      return;
+    }
+    SingleFluidBase & singleFluid = dynamicCast< SingleFluidBase & >( fluid );
+
+    // Step 3.3: compute the hydrostatic pressure values
+
+    constitutiveUpdatePassThru( singleFluid, [&] ( auto & castedFluid )
+    {
+      using FluidType = TYPEOFREF( castedFluid );
+      typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+      // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
+      bool const equilHasConverged =
+        HydrostaticPressureKernel::launch( numPointsInTable,
+                                           maxNumEquilIterations,
+                                           equilTolerance,
+                                           gravVector,
+                                           minElevation,
+                                           elevationIncrement,
+                                           datumElevation,
+                                           datumPressure,
+                                           fluidWrapper,
+                                           elevationValues.toNestedView(),
+                                           pressureValues.toView() );
+
+      GEOSX_THROW_IF( !equilHasConverged,
+                      SinglePhaseBase::catalogName() << " " << getName()
+                                                     << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
+                      std::runtime_error );
+    } );
+
+    // Step 3.4: create hydrostatic pressure table
+
+    FunctionManager & functionManager = FunctionManager::getInstance();
+
+    string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
+    TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
+    presTable->setTableCoordinates( elevationValues );
+    presTable->setTableValues( pressureValues );
+    presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
+
+    // Step 4: assign pressure as a function of elevation
+    // TODO: this last step should probably be delayed to wait for the creation of FaceElements
+    arrayView2d< real64 const > const elemCenter =
+      subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
+    arrayView1d< real64 > const pres =
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    {
+      localIndex const k = targetSet[i];
+      real64 const elevation = elemCenter[k][2];
+      pres[k] = presTableWrapper.compute( &elevation );
+    } );
+  } );
+}
+
 
 real64 SinglePhaseBase::solverStep( real64 const & time_n,
                                     real64 const & dt,
@@ -251,7 +452,7 @@ real64 SinglePhaseBase::solverStep( real64 const & time_n,
   real64 dt_return;
 
   // setup dof numbers and linear system
-  setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
 
   implicitStepSetup( time_n, dt, domain );
 
@@ -267,8 +468,8 @@ real64 SinglePhaseBase::solverStep( real64 const & time_n,
 void SinglePhaseBase::setupSystem( DomainPartition & domain,
                                    DofManager & dofManager,
                                    CRSMatrix< real64, globalIndex > & localMatrix,
-                                   array1d< real64 > & localRhs,
-                                   array1d< real64 > & localSolution,
+                                   ParallelVector & rhs,
+                                   ParallelVector & solution,
                                    bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
@@ -277,8 +478,8 @@ void SinglePhaseBase::setupSystem( DomainPartition & domain,
   SolverBase::setupSystem( domain,
                            dofManager,
                            localMatrix,
-                           localRhs,
-                           localSolution,
+                           rhs,
+                           solution,
                            setSparsity );
 }
 
@@ -307,7 +508,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
   forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                           FaceElementSubRegion & subRegion )
   {
-    arrayView1d< real64 const > const aper = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
+    arrayView1d< real64 const > const aper = subRegion.getReference< array1d< real64 > >( viewKeyStruct::hydraulicApertureString() );
     arrayView1d< real64 > const aper0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::aperture0String() );
 
     aper0.setValues< parallelDevicePolicy<> >( aper );

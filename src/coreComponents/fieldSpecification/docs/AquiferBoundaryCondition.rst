@@ -156,14 +156,14 @@ The main Carter-Tracy parameters and the expected units are listed below:
 
 The full list of parameters is provided below:
 
-.. include:: /coreComponents/schema/docs/AquiferBoundaryCondition.rst
+.. include:: /coreComponents/schema/docs/Aquifer.rst
 
 Examples
 ===============
 
 Setting up the **Aquifer** boundary condition requires two additional pieces of information in the XML input file: a set of faces to specify where the aquifer boundary conditions will apply, and an aquifer tag that specifies the physical characteristics of the aquifer and determines how the boundary condition is applied.
 
-1) To specifiy a set of faces: on simple grids, in the **Geometry** block of the XML file, we can define a **Box** that selects and assigns a name to a set of faces. To be included in a set, the faces must be fully enclosed in the **Box** (all vertices of a face must be inside the box for the face to be included to the set). The name of this box is a user-defined string, and it will be used in the aquifer tag to locate the face set. Here is an example of XML code to create such a face set from a box:
+1) To specify a set of faces: on simple grids, in the **Geometry** block of the XML file, we can define a **Box** that selects and assigns a name to a set of faces. To be included in a set, the faces must be fully enclosed in the **Box** (all vertices of a face must be inside the box for the face to be included to the set). The name of this box is a user-defined string, and it will be used in the aquifer tag to locate the face set. Here is an example of XML code to create such a face set from a box:
 
 .. code-block:: xml   
 
