@@ -65,83 +65,296 @@ MeshLevel::MeshLevel( string const & name,
   MeshLevel( name, parent )
 {
 
-//  {
-//  Group & thisGroup = *this;
-//  Group const & sourceGroup = source;
-//  thisGroup = sourceGroup;
-//  this->getParent( parent );
-//  }
 
-
-  localIndex numNodes = source.m_nodeManager.size();
+  localIndex numNodes = source.m_nodeManager.size()+source.m_edgeManager.size()*(order-1)+pow(order,2)*source.m_faceManager.size()+pow(order-1,3)*source.m_elementManager.size();
   // find out how many node there must be on this rank
   m_nodeManager.resize(numNodes);
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager.referencePosition();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager.referencePosition().toView();
 
-  {
-    Group & nodeSets = m_nodeManager.sets();
-    SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
-    allNodes.reserve( m_nodeManager.size() );
+  // {
+  //   Group & nodeSets = m_nodeManager.sets();
+  //   SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+  //   allNodes.reserve( m_nodeManager.size() );
 
-    for( localIndex a=0; a<m_nodeManager.size(); ++a )
-    {
-      allNodes.insert( a );
-    }
+  //   for( localIndex a=0; a<m_nodeManager.size(); ++a )
+  //   {
+  //     allNodes.insert( a );
+  //   }
 
-    // fill coordinate locations here??
-    forAll<parallelDevicePolicy<>>( m_nodeManager.size(),
-                                    [=]( localIndex const a )
-    {
-      for( localIndex i=0; i<3; ++i )
-      {
-        refPosNew(a,i) = refPosSource(a,i); // this needs to be another loop with a linear combination of values.
-      }
-    });
-  }
+  // }
 
+  // forAll<parallelDevicePolicy<>>( m_nodeManager.size(),
+  //                                   [=]( localIndex const a )
+  // {
+  //   for( localIndex i=0; i<3; ++i )
+  //   {
+  //     refPosNew(a,i) = refPosSource(a,i); // this needs to be another loop with a linear combination of values.
+  //   }
+  // });
+  
+  //ArrayOfArraysView< localIndex const > const faceToNodeMapSource = m_faceManager.nodeList().toViewConst();
+  ArrayOfArrays< localIndex > faceToNodeMapNew = m_faceManager.nodeList();
+  
+  localIndex const numNodesPerFace = pow(order+1,2);
+  faceToNodeMapNew.resize(faceToNodeMapNew.size(),numNodesPerFace);
+  
 
+  FaceManager::ElemMapType const & faceToElem = m_faceManager.toElementRelation();
+  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
 
+  
   source.m_elementManager.forElementRegions<CellElementRegion>([&]( CellElementRegion const & sourceRegion )
   {
     CellElementRegion & region = *(dynamic_cast<CellElementRegion *>( m_elementManager.createChild( sourceRegion.getCatalogName(),
                                                                                                         sourceRegion.getName() ) ) );
 
     region.addCellBlockNames( sourceRegion.getCellBlockNames() );
-
+    // std::exit(2);
     sourceRegion.forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion const & sourceSubRegion )
     {
-
+      std::exit(2);
+      std::cout << "hello" << std::endl;
       CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
       newSubRegion.setElementType( sourceSubRegion.getElementType() );
 
       newSubRegion.resize( sourceSubRegion.size() );
+      
+      
+      // Group & sets = newSubRegion.sets();
+      // SortedArray< localIndex > & allElems  = sets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
 
 
-      Group & sets = newSubRegion.sets();
-      SortedArray< localIndex > & allElems  = sets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
-
+      arrayView2d< localIndex const > const & elemToFaces = sourceSubRegion.faceList();
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
-      array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodesNew = sourceSubRegion.nodeList();
+      array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodesNew = newSubRegion.nodeList();
 
-      localIndex const numNodesPerElem = 8;// change to pow( 2+( order>1 ? order-1 : 0 ), 3 );
-      elemsToNodesNew.resize( elemsToNodesNew.size(0), numNodesPerElem );
 
-      for( localIndex k=0; k<newSubRegion.size(); ++k )
+      localIndex const numNodesPerElem = pow(order+1,3);// change to pow( 2+( order>1 ? order-1 : 0 ), 3 );
+      elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
+    
+      // Fill a temporary table which knowing the global number of a degree of freedom and a face, gives you the local number of this degree
+      // of freedom on the considering face
+      array2d < localIndex > localElemToLocalFace(6,numNodesPerElem);
+
+
+      for (localIndex i = 0; i < order+1; i++)//x
       {
-        allElems.insert( k );
-        for( localIndex a=0; a<numNodesPerElem; ++a )
+        for (localIndex j = 0; j < order+1; j++)//y
         {
-          elemsToNodesNew(k,a) = elemsToNodesSource(k,a); // need the logic to map to the nodes here
+          for (localIndex k = 0; k < order+1; i++)//z
+          {
+            localElemToLocalFace[0][(order+1)*order - (order+1)*j + pow(order+1,2)*k] = j + (order+1)*k;
+
+            localElemToLocalFace[1][(order+1)*order + (order+1)*j + pow(order+1,2)*k] = j + (order+1)*k;
+
+            localElemToLocalFace[2][i + pow(order+1,2)*j] = i + (order+1)*j;
+
+            localElemToLocalFace[3][(pow(order+1,2)-1) - i + (order+1)*j] = i + (order+1)*j;
+
+            localElemToLocalFace[4][i + (order+1)*(order-k)] = i + (order+1)*k;
+
+            localElemToLocalFace[5][pow(order+1,2)*order + i + (order+1)*k] = i + (order+1)*k;
+          }
         }
       }
 
+      localIndex count=0;
 
+      for (localIndex e = 0; e < elemsToNodesNew.size(0); e++)
+      {
+        for (localIndex k = 0; k < order+1; k++)
+        {
+          for (localIndex j = 0; j< order+1; j++)
+          {
+            for (localIndex i = 0; i < order+1; i++)
+            {
+              for (localIndex face = 0; face < 6; face++)
+              {
+                localIndex m = localElemToLocalFace[face][i +(order+1)*j + pow(order+1,2)*k];
+                if (m != -1)
+                {
+                  if ( faceToNodeMapNew[elemToFaces[e][face]][m] != -1)
+                  {
+                    for (localIndex l = 0; i < 2; l++)
+                    {
+                      localIndex neighE = faceToElemIndex[elemToFaces[e][face]][l];
+                      if (neighE != e && neighE != -1)
+                      {
+                        for (localIndex n = 0; n < pow(order+1,3); i++)
+                        {
+                          if ( elemsToNodesNew[neighE][n] == faceToNodeMapNew[elemToFaces[e][face]][i + (order+1)*j + pow(order+1,2)*k])
+                          {
+                            elemsToNodesNew[e][i + (order+1)*j + pow(order+1,2)*k] = elemsToNodesNew[neighE][n];
+                          }
+                          break;
+                        }
+                        break;
+                      }
+                    }
+                  }
+                  else
+                  {
+                    elemsToNodesNew[e][i + order*j + pow(order,2)*k] = count;
+
+                    faceToNodeMapNew[elemToFaces[e][face]][m] = count;
+
+                    count++;
+                  }
+                }
+                else
+                {
+                  elemsToNodesNew[e][i + (order+1)*j + pow(order+1,2)*k]=count;
+
+                  count++;
+                }
+              }
+            }
+          }
+        }
+      }
+
+  
+    // Group & nodeSets = m_nodeManager.sets();
+    // SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+    // allNodes.reserve( m_nodeManager.size() );
+    // std::exit(2);
+    // for( localIndex a=0; a<m_nodeManager.size(); ++a )
+    // {
+    //   allNodes.insert( a );
+    // }
+    
+
+      //FIll a temporary array which contains the Gauss-Lobatto points depending on the order
+      array1d< real64 > GaussLobattoPts(order+1);
+
+      if(order==1)
+      {
+        GaussLobattoPts[0] = -1.0;
+        GaussLobattoPts[1] = 1.0;
+      }
+  
+      if(order==3)
+      {
+        GaussLobattoPts[0] = -1.0;
+        GaussLobattoPts[1] = -1./sqrt(5);
+        GaussLobattoPts[2] = 1./sqrt(5);
+        GaussLobattoPts[3] = 1.;
+      }
+
+      if (order==5)
+      {
+        static constexpr real64 sqrt__7_plus_2sqrt7__ = 3.50592393273573196;
+        static constexpr real64 sqrt__7_mins_2sqrt7__ = 1.30709501485960033;
+
+        static constexpr real64 sqrt_inv21 = 0.218217890235992381;
+
+        GaussLobattoPts[0] = -1.0;
+        GaussLobattoPts[1] = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
+        GaussLobattoPts[2] = -sqrt_inv21*sqrt__7_mins_2sqrt7__;
+        GaussLobattoPts[3] = sqrt_inv21*sqrt__7_mins_2sqrt7__;
+        GaussLobattoPts[4] = sqrt_inv21*sqrt__7_plus_2sqrt7__;
+        GaussLobattoPts[5] = 1.0;
+      }
+
+      std::cout << elemsToNodesNew.size(0) << std::endl;
+      std::exit(2);
+      //Fill Position of the nodes: interpolation of the mesh nodes
+      for (localIndex e = 0; e < elemsToNodesNew.size(0); e++)
+      {
+        //Get the space step of the mesh
+
+        std::cout << refPosSource[elemsToNodesNew[e][order+1]][0] << std::endl;
+        std::cout << refPosSource[elemsToNodesNew[e][0]][0] << std::endl;
+        std::exit(2);
+        real64 hx = refPosSource[elemsToNodesNew[e][order+1]][0] - refPosSource[elemsToNodesNew[e][0]][0];
+        real64 hy = refPosSource[elemsToNodesNew[e][order*(order+1)]][1] - refPosSource[elemsToNodesNew[e][0]][1];
+        real64 hz = refPosSource[elemsToNodesNew[e][pow(order+1,2)]][2] - refPosSource[elemsToNodesNew[e][0]][2];
+        //Fill the array
+        for (localIndex k = 0; k < order+1; k++)
+        {
+          for (localIndex j = 0; j < order+1; j++)
+          {
+            for (localIndex i = 0; i < order+1; i++)
+            {
+              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][0] = refPosSource[elemsToNodesNew[e][0]][0] + i*hx*GaussLobattoPts[i];
+              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][1] = refPosSource[elemsToNodesNew[e][0]][1] + i*hy*GaussLobattoPts[j];
+              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][0] = refPosSource[elemsToNodesNew[e][0]][2] + i*hz*GaussLobattoPts[k];
+            }
+          }
+        }
+      }
 
     });
   });
+  // localIndex numNodes = source.m_nodeManager.size()+source.m_edgeManager.size()*(order-1)+pow(order,2)*source.m_faceManager.size()+pow(order-1,3)*source.m_elementManager.size();
+  // // find out how many node there must be on this rank
+  // m_nodeManager.resize(numNodes);
+  // array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodesNew = newSubRegion.nodeList();
+  // arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager.referencePosition();
+  // arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager.referencePosition().toView();
+
+  // {
+  //   Group & nodeSets = m_nodeManager.sets();
+  //   SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+  //   allNodes.reserve( m_nodeManager.size() );
+
+  //   for( localIndex a=0; a<m_nodeManager.size(); ++a )
+  //   {
+  //     allNodes.insert( a );
+  //   }
+
+  // }
+  // //FIll a temporary array which contains the Gauss-Lobatto points depending on the order
+  //     array1d< real64 > GaussLobattoPts(order+1);
+
+  //     if(order==3)
+  //     {
+  //       GaussLobattoPts[0] = -1.0;
+  //       GaussLobattoPts[1] = -1./sqrt(5);
+  //       GaussLobattoPts[2] = 1./sqrt(5);
+  //       GaussLobattoPts[3] = 1.;
+  //     }
+
+  //     if (order==5)
+  //     {
+  //       static constexpr real64 sqrt__7_plus_2sqrt7__ = 3.50592393273573196;
+  //       static constexpr real64 sqrt__7_mins_2sqrt7__ = 1.30709501485960033;
+
+  //       static constexpr real64 sqrt_inv21 = 0.218217890235992381;
+
+  //       GaussLobattoPts[0] = -1.0;
+  //       GaussLobattoPts[1] = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
+  //       GaussLobattoPts[2] = -sqrt_inv21*sqrt__7_mins_2sqrt7__;
+  //       GaussLobattoPts[3] = sqrt_inv21*sqrt__7_mins_2sqrt7__;
+  //       GaussLobattoPts[4] = sqrt_inv21*sqrt__7_plus_2sqrt7__;
+  //       GaussLobattoPts[5] = 1.0;
+  //     }
+
+
+  //     //Fill Position of the nodes: interpolation of the mesh nodes
+  //     for (localIndex e = 0; e < elemsToNodesNew.size(0); e++)
+  //     {
+  //       //Get the space step of the mesh
+  //       real64 hx = refPosSource[elemsToNodesNew[e][order+1]][0] - refPosSource[elemsToNodesNew[e][0]][0];
+  //       real64 hy = refPosSource[elemsToNodesNew[e][order*(order+1)]][1] - refPosSource[elemsToNodesNew[e][0]][1];
+  //       real64 hz = refPosSource[elemsToNodesNew[e][pow(order+1,2)]][2] - refPosSource[elemsToNodesNew[e][0]][2];
+  //       //Fill the array
+  //       for (localIndex k = 0; k < order+1; k++)
+  //       {
+  //         for (localIndex j = 0; j < order+1; j++)
+  //         {
+  //           for (localIndex i = 0; i < order+1; i++)
+  //           {
+  //             refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][0] = refPosSource[elemsToNodesNew[e][0]][0] + i*hx*GaussLobattoPts[i];
+  //             refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][1] = refPosSource[elemsToNodesNew[e][0]][1] + i*hy*GaussLobattoPts[j];
+  //             refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][0] = refPosSource[elemsToNodesNew[e][0]][2] + i*hz*GaussLobattoPts[k];
+  //           }
+  //         }
+  //       }
+  //     }
 }
 
 
