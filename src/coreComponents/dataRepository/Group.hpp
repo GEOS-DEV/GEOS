@@ -1329,6 +1329,14 @@ protected:
   virtual void postRestartInitialization()
   {}
 
+  /**
+   * @brief Performs re-initialization of certain variable depending on the solver being used.
+   */
+  virtual void reinit()
+  {}
+
+
+
   ///@}
 
 private:

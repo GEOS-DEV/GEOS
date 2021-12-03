@@ -672,12 +672,12 @@ public:
   /**
    * @brief Called by Initialize() prior to initializing sub-Groups.
    */
-  virtual void initializePreSubGroups() override {};
+  virtual void initializePreSubGroups() override {}
 
   /**
    * @brief Called by Initialize() after to initializing sub-Groups.
    */
-  virtual void initializePostSubGroups() override {};
+  virtual void initializePostSubGroups() override {}
 
   /**
    * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
@@ -687,13 +687,17 @@ public:
   /**
    * @brief Called by InitializePostInitialConditions() after to initializing sub-Groups.
    */
-  virtual void initializePostInitialConditionsPostSubGroups() override {};
+  virtual void initializePostInitialConditionsPostSubGroups() override {}
 
   /**
    * @brief Performs initialization required after reading from a restart file.
    */
-  virtual void postRestartInitialization() override {};
+  virtual void postRestartInitialization() override {}
 
+  /**
+   * @brief Performs re-initialization of certain variable depending on the solver being used.
+   */
+  virtual void reinit() override {}
 
 
 protected:

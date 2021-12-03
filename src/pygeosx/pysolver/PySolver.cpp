@@ -225,11 +225,23 @@ static PyObject * nonlinearImplicitStep(PySolver * self, PyObject * args)
 }
 
 
+static PyObject * reinit(PySolver * self, PyObject *args)
+{
+  VERIFY_NON_NULL_SELF( self );
+  VERIFY_INITIALIZED( self );
+  GEOSX_UNUSED_VAR( args);
+
+  self->group->postProcessInput();
+
+  Py_RETURN_NONE;
+}
+
 static PyMethodDef PySolver_methods[] = {
 { "explicitStep", (PyCFunction) explicitStep, METH_VARARGS, "explicit Step" },
 { "linearImplicitStep", (PyCFunction) linearImplicitStep, METH_VARARGS, "linear implicit step" },
 { "nonlinearImplicitStep", (PyCFunction) nonlinearImplicitStep, METH_VARARGS, "non linear implicit step" },
 { "postProcessInput", (PyCFunction) postProcessInput, METH_NOARGS, "post processing input"},
+{ "reinit", (PyCFunction) reinit, METH_NOARGS, "re-initialize certain variable depending on the solver being used"},
 { "initPostInitialConditions", (PyCFunction) initPostInitialConditions, METH_NOARGS, "call initializePostInitialConditionsPreSubGroup"},
 { "get_wrapper", (PyCFunction) PyGroup_getWrapper<PySolver>, METH_VARARGS, PyGroup_getWrapperDocString },
 { nullptr, nullptr, 0, nullptr }        /* Sentinel */

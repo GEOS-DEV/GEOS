@@ -65,6 +65,11 @@ public:
 protected:
 
   /**
+   * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
+   */
+  virtual void reinit() override final;
+
+  /**
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
