@@ -19,6 +19,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
@@ -199,11 +200,11 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
       subRegion.getReference< array1d< globalIndex > >( elemDofKey );
 
     arrayView1d< real64 const > const & pres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::pressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
     pres.move( LvArray::MemorySpace::host, false );
 
     arrayView1d< real64 > const & dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaPressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
 
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::globalCompDensityString() );

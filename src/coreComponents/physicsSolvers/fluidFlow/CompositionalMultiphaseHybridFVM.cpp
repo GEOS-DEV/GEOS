@@ -29,6 +29,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
 /**
@@ -205,7 +206,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh )
     arrayView3d< real64 const > const & elemPerm =
       getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] ).permeability();
     arrayView1d< real64 const > const elemGravCoef =
-      subRegion.template getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+      subRegion.template getReference< array1d< real64 > >( extrinsicMeshData::gravityCoefficient::key() );
     arrayView1d< real64 const > const & elemVolume = subRegion.getElementVolume();
     arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
 
@@ -407,7 +408,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
 
   // get the face-centered depth
   arrayView1d< real64 const > const & faceGravCoef =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+    faceManager.getReference< array1d< real64 > >( extrinsicMeshData::gravityCoefficient::key() );
   arrayView1d< real64 const > const & mimFaceGravCoef =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::mimGravityCoefString() );
 
@@ -524,9 +525,9 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
     arrayView1d< real64 const > const & pressure =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::pressure::key() );
     arrayView1d< real64 const > const & dPressure =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::deltaPressure::key() );
 
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
@@ -635,9 +636,9 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
     arrayView1d< real64 const > const & elemPres =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::pressure::key() );
     arrayView1d< real64 const > const & dElemPres =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::deltaPressure::key() );
 
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
@@ -829,7 +830,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
-                               viewKeyStruct::deltaPressureString(),
+                               extrinsicMeshData::deltaPressure::key(),
                                scalingFactor,
                                pressureMask );
 
@@ -857,7 +858,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
 
   std::map< string, string_array > fieldNames;
   fieldNames["face"].emplace_back( string( viewKeyStruct::deltaFacePressureString() ) );
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString() ) );
+  fieldNames["elems"].emplace_back( string( extrinsicMeshData::deltaPressure::key() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString() ) );
   CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                        mesh,

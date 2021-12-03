@@ -30,6 +30,7 @@
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 
 #if defined( __INTEL_COMPILER )
@@ -132,12 +133,9 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     {
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::initialPressureString() );
-
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString() ).
-        setRestartFlags( RestartFlags::NO_WRITE );
+      subRegion.registerExtrinsicData< extrinsicMeshData::pressure >( getName() );
+      subRegion.registerExtrinsicData< extrinsicMeshData::initialPressure >( getName() );
+      subRegion.registerExtrinsicData< extrinsicMeshData::deltaPressure >( getName() );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::bcPressureString() );
 
@@ -451,8 +449,8 @@ void CompositionalMultiphaseBase::updateFluidModel( Group & dataGroup, localInde
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-  arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+  arrayView1d< real64 const > const pres = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::pressure::key() );
+  arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::deltaPressure::key() );
   arrayView1d< real64 const > const temp = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
   arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
     dataGroup.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() );
@@ -589,8 +587,8 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
   //    And the initial total mass density is used to compute a deltaBodyForce
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
-    arrayView1d< real64 const > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-    arrayView1d< real64 > const initPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::initialPressureString() );
+    arrayView1d< real64 const > const pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::pressure::key() );
+    arrayView1d< real64 > const initPres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::initialPressure::key() );
 
     MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
     arrayView3d< real64 const, multifluid::USD_PHASE > const phaseMassDens = fluid.phaseMassDensity();
@@ -816,7 +814,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
     arrayView2d< real64 const > const elemCenter =
       subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 
-    arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+    arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::pressure::key() );
     arrayView1d< real64 > const temp = subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
     arrayView2d< real64, compflow::USD_COMP > const compFrac =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompFractionString() );
@@ -857,7 +855,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString() ) );
+  fieldNames["elems"].emplace_back( string( extrinsicMeshData::pressure::key() ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::globalCompDensityString() ) );
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
@@ -1158,7 +1156,7 @@ bool validateDirichletBC( DomainPartition & domain,
   fsManager.apply( time,
                    domain,
                    "ElementRegions",
-                   keys::pressureString(),
+                   extrinsicMeshData::pressure::key(),
                    [&]( FieldSpecificationBase const &,
                         string const & setName,
                         SortedArrayView< localIndex const > const &,
@@ -1265,7 +1263,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
   fsManager.apply( time + dt,
                    domain,
                    "ElementRegions",
-                   viewKeyStruct::pressureString(),
+                   extrinsicMeshData::pressure::key(),
                    [&]( FieldSpecificationBase const & fs,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
@@ -1302,7 +1300,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
   fsManager.apply( time + dt,
                    domain,
                    "ElementRegions",
-                   viewKeyStruct::pressureString(),
+                   extrinsicMeshData::pressure::key(),
                    [&] ( FieldSpecificationBase const &,
                          string const &,
                          SortedArrayView< localIndex const > const & targetSet,
@@ -1339,9 +1337,9 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
     arrayView1d< globalIndex const > const dofNumber =
       subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< real64 const > const pres =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::pressure::key() );
     arrayView1d< real64 const > const dPres =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::deltaPressure::key() );
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
     arrayView2d< real64 const, compflow::USD_COMP > const dCompDens =
@@ -1441,7 +1439,7 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex, auto & subRegion )
   {
     arrayView1d< real64 > const & dPres =
-      subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+      subRegion.template getReference< array1d< real64 > >( extrinsicMeshData::deltaPressure::key() );
     arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
       subRegion.template getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
 
@@ -1470,12 +1468,12 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 const > const dPres =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::deltaPressure::key() );
     arrayView2d< real64 const, compflow::USD_COMP > const dCompDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::deltaGlobalCompDensityString() );
 
     arrayView1d< real64 > const pres =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::pressure::key() );
     arrayView2d< real64, compflow::USD_COMP > const compDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( viewKeyStruct::globalCompDensityString() );
 

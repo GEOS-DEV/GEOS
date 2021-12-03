@@ -28,6 +28,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -124,7 +125,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     forTargetSubRegions( mesh, [&]( localIndex const,
                                     ElementSubRegionBase & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() ).
+      subRegion.registerExtrinsicData< extrinsicMeshData::gravityCoefficient >( getName() ).
         setApplyDefaultValue( 0.0 );
     } );
 
@@ -137,19 +138,19 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     {
       SurfaceElementRegion & faceRegion = dynamicCast< SurfaceElementRegion & >( region );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() ).
-        setApplyDefaultValue( 0.0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::gravityCoefficient >( getName() );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::aperture0String() ).
+      subRegion.registerExtrinsicData< extrinsicMeshData::aperture0 >( getName() ).
         setDefaultValue( faceRegion.getDefaultAperture() );
 
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::hydraulicApertureString() ).
-        setApplyDefaultValue( faceRegion.getDefaultAperture() ).
-        setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::hydraulicAperture >( getName() ).
+        setDefaultValue( faceRegion.getDefaultAperture() );
+
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() ).setApplyDefaultValue( 0.0 );
+    faceManager.registerExtrinsicData< extrinsicMeshData::gravityCoefficient >( getName() ).
+      setApplyDefaultValue( 0.0 );
   } );
 }
 
@@ -231,7 +232,7 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh )
     arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
 
     arrayView1d< real64 > const gravityCoef =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::gravityCoefficient >();
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
@@ -243,7 +244,7 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh )
     arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
 
     arrayView1d< real64 > const gravityCoef =
-      faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+      faceManager.getExtrinsicData< extrinsicMeshData::gravityCoefficient >();
 
     forAll< parallelHostPolicy >( faceManager.size(), [=] ( localIndex const kf )
     {
@@ -259,8 +260,8 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-  arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+  arrayView1d< real64 const > const & pressure = subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
+  arrayView1d< real64 const > const & deltaPressure = subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
 
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
 
@@ -277,11 +278,11 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-  arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+  arrayView1d< real64 const > const & pressure = subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
+  arrayView1d< real64 const > const & deltaPressure = subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
 
-  arrayView1d< real64 const > const newHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::hydraulicApertureString() );
-  arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct:: viewKeyStruct::aperture0String() );
+  arrayView1d< real64 const > const newHydraulicAperture = subRegion.getExtrinsicData< extrinsicMeshData::hydraulicAperture >();
+  arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getExtrinsicData< extrinsicMeshData::aperture0 >();
 
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
 
@@ -299,12 +300,12 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   m_pressure.clear();
-  m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::pressureString() );
-  m_pressure.setName( getName() + "/accessors/" + viewKeyStruct::pressureString() );
+  m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::pressure::key() );
+  m_pressure.setName( getName() + "/accessors/" + extrinsicMeshData::pressure::key() );
 
   m_deltaPressure.clear();
-  m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::deltaPressureString() );
-  m_deltaPressure.setName( getName() + "/accessors/" + viewKeyStruct::deltaPressureString() );
+  m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::deltaPressure::key() );
+  m_deltaPressure.setName( getName() + "/accessors/" + extrinsicMeshData::deltaPressure::key() );
 
   m_elemGhostRank.clear();
   m_elemGhostRank = elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
@@ -315,8 +316,8 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
   m_volume.setName( getName() + "/accessors/" + ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
 
   m_gravCoef.clear();
-  m_gravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::gravityCoefString() );
-  m_gravCoef.setName( getName() + "/accessors/" + viewKeyStruct::gravityCoefString() );
+  m_gravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::gravityCoefficient::key() );
+  m_gravCoef.setName( getName() + "/accessors/" + extrinsicMeshData::gravityCoefficient::key() );
 
   using keys = PermeabilityBase::viewKeyStruct;
 

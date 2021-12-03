@@ -256,8 +256,8 @@ void WellSolverBase::resetViews( DomainPartition & domain )
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   m_resGravCoef.clear();
-  m_resGravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( FlowSolverBase::viewKeyStruct::gravityCoefString() );
-  m_resGravCoef.setName( getName() + "/accessors/" + FlowSolverBase::viewKeyStruct::gravityCoefString() );
+  m_resGravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::gravityCoefficient::key() );
+  m_resGravCoef.setName( getName() + "/accessors/" + extrinsicMeshData::gravityCoefficient::key() );
 
 }
 

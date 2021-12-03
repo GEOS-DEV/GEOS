@@ -30,6 +30,8 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsFluxKernels.hpp"
@@ -73,7 +75,7 @@ template< typename BASE >
 void SinglePhaseFVM< BASE >::setupDofs( DomainPartition const & domain,
                                         DofManager & dofManager ) const
 {
-  dofManager.addField( BASE::viewKeyStruct::pressureString(),
+  dofManager.addField( extrinsicMeshData::pressure::key(),
                        DofManager::Location::Elem,
                        1,
                        targetRegionNames() );
@@ -82,7 +84,7 @@ void SinglePhaseFVM< BASE >::setupDofs( DomainPartition const & domain,
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  dofManager.addCoupling( BASE::viewKeyStruct::pressureString(), fluxApprox );
+  dofManager.addCoupling( extrinsicMeshData::pressure::key(), fluxApprox );
 }
 
 template< typename BASE >
@@ -110,7 +112,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
 {
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  string const dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
+  string const dofKey = dofManager.getKey( extrinsicMeshData::pressure::key() );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   // compute the norm of local residual scaled by cell pore volume
@@ -121,7 +123,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
     arrayView1d< globalIndex const > const & dofNumber = subRegion.template getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & densOld        = subRegion.template getReference< array1d< real64 > >( BASE::viewKeyStruct::densityOldString() );
+    arrayView1d< real64 const > const & densOld        = subRegion.template getExtrinsicData< extrinsicMeshData::densityOld >();
 
     CoupledSolidBase const & solidModel = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
 
@@ -160,12 +162,12 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   dofManager.addVectorToField( localSolution,
-                               BASE::viewKeyStruct::pressureString(),
-                               BASE::viewKeyStruct::deltaPressureString(),
+                               extrinsicMeshData::pressure::key(),
+                               extrinsicMeshData::deltaPressure::key(),
                                scalingFactor );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( BASE::viewKeyStruct::deltaPressureString() ) );
+  fieldNames["elems"].emplace_back( string( extrinsicMeshData::deltaPressure::key() ) );
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
@@ -186,7 +188,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::pressureString() );
+  string const & dofKey = dofManager.getKey( extrinsicMeshData::pressure::key() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
@@ -232,7 +234,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & dofKey = dofManager.getKey( SinglePhaseProppantBase::viewKeyStruct::pressureString() );
+  string const & dofKey = dofManager.getKey( extrinsicMeshData::pressure::key() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
@@ -286,7 +288,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & pressureDofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
+  string const & pressureDofKey = dofManager.getKey( extrinsicMeshData::pressure::key() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   pressureDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( pressureDofKey );
   pressureDofNumber.setName( this->getName() + "/accessors/" + pressureDofKey );
@@ -343,7 +345,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
+  string const & dofKey = dofManager.getKey( extrinsicMeshData::pressure::key() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
@@ -422,12 +424,12 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
   } );
 
   arrayView1d< real64 const > const presFace =
-    faceManager.getReference< array1d< real64 > >( BASE::viewKeyStruct::facePressureString() );
+    faceManager.getExtrinsicData< extrinsicMeshData::facePressure >();
 
   arrayView1d< real64 const > const gravCoefFace =
-    faceManager.getReference< array1d< real64 > >( BASE::viewKeyStruct::gravityCoefString() );
+    faceManager.getExtrinsicData< extrinsicMeshData::gravityCoefficient >();
 
-  string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
+  string const & dofKey = dofManager.getKey( extrinsicMeshData::pressure::key() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
@@ -436,7 +438,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
   fsManager.apply( time_n + dt,
                    domain,
                    "faceManager",
-                   BASE::viewKeyStruct::pressureString(),
+                   extrinsicMeshData::pressure::key(),
                    [&] ( FieldSpecificationBase const & fs,
                          string const & setName,
                          SortedArrayView< localIndex const > const & targetSet,
@@ -453,7 +455,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
     fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                            time_n + dt,
                                                                            targetGroup,
-                                                                           BASE::viewKeyStruct::facePressureString() );
+                                                                           extrinsicMeshData::facePressure::key() );
 
     // Now run the actual kernel
     BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
@@ -510,7 +512,7 @@ void SinglePhaseFVM< BASE >::applyAquiferBC( real64 const time,
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  string const & elemDofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
+  string const & elemDofKey = dofManager.getKey( extrinsicMeshData::pressure::key() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
     mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + elemDofKey );

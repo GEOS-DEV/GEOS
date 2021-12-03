@@ -18,6 +18,7 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
@@ -254,10 +255,10 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
     arrayView1d< string const > const & phases = fluid.phaseNames();
 
     arrayView1d< real64 > & pres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::pressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
 
     arrayView1d< real64 > & dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::deltaPressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
 
     arrayView2d< real64, compflow::USD_COMP > & compDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseFVM::viewKeyStruct::globalCompDensityString() );
@@ -367,10 +368,10 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
     arrayView1d< string const > const & phases = fluid.phaseNames();
 
     arrayView1d< real64 > & pres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::pressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
 
     arrayView1d< real64 > & dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::deltaPressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
 
     arrayView2d< real64, compflow::USD_COMP > & compDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseFVM::viewKeyStruct::globalCompDensityString() );
@@ -502,11 +503,11 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
       subRegion.getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< real64 const > const & pres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::pressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
     pres.move( LvArray::MemorySpace::host, false );
 
     arrayView1d< real64 > const & dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::deltaPressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
 
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseFVM::viewKeyStruct::globalCompDensityString() );

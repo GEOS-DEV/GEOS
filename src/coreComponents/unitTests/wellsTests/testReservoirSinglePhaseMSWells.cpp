@@ -25,6 +25,7 @@
 #include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoir.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 
@@ -209,9 +210,9 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
 
       // get the primary variables on reservoir elements
       arrayView1d< real64 const > const & pres =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
       arrayView1d< real64 > const & dPres =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
       pres.move( LvArray::MemorySpace::host, false );
 
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
@@ -265,9 +266,9 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
 
     // get the primary variables on well elements
     arrayView1d< real64 const > const & wellElemPressure =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::pressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
     arrayView1d< real64 > const & dWellElemPressure =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaPressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
     wellElemPressure.move( LvArray::MemorySpace::host, false );
 
     arrayView1d< real64 const > const & connRate =

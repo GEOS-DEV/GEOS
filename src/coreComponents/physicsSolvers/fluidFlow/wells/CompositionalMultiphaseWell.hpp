@@ -283,10 +283,6 @@ public:
     static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
     // primary solution field
-    static constexpr char const * pressureString() { return CompositionalMultiphaseBase::viewKeyStruct::pressureString(); }
-
-    static constexpr char const * deltaPressureString() { return CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString(); }
-
     static constexpr char const * globalCompDensityString() { return CompositionalMultiphaseBase::viewKeyStruct::globalCompDensityString(); }
 
     static constexpr char const * deltaGlobalCompDensityString() { return CompositionalMultiphaseBase::viewKeyStruct::deltaGlobalCompDensityString(); }

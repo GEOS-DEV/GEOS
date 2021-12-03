@@ -18,9 +18,11 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEFEMKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEFEMKERNEL_HPP_
+
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "SinglePhasePoromechanicsKernel.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 
 
 namespace geosx
@@ -114,10 +116,10 @@ public:
     m_wDofNumber( jumpDofNumber ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
-    m_fluidDensityOld( embeddedSurfSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
+    m_fluidDensityOld( embeddedSurfSubRegion.template getExtrinsicData< extrinsicMeshData::densityOld >() ),
     m_dFluidDensity_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
-    m_matrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
-    m_deltaMatrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
+    m_matrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::pressure >() ),
+    m_deltaMatrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::deltaPressure >() ),
     m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
     m_tractionVec( embeddedSurfSubRegion.tractionVector() ),
     m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump() ),
@@ -128,7 +130,7 @@ public:
     m_surfaceCenter( embeddedSurfSubRegion.getElementCenter() ),
     m_surfaceArea( embeddedSurfSubRegion.getElementArea() ),
     m_elementVolume( elementSubRegion.getElementVolume() ),
-    m_deltaVolume( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() ) ),
+    m_deltaVolume( elementSubRegion.template getExtrinsicData< extrinsicMeshData::deltaVolume >() ),
     m_fracturedElems( elementSubRegion.fracturedElementsList() ),
     m_cellsToEmbeddedSurfaces( elementSubRegion.embeddedSurfacesList().toViewConst() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },

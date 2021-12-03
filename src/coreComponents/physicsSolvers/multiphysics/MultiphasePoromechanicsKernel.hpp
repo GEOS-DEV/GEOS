@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
@@ -141,11 +142,9 @@ public:
 
     // extract views into common flow solver data
     {
-      using keys = FlowSolverBase::viewKeyStruct;
-
-      m_initialFluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::initialPressureString() );
-      m_fluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::pressureString() );
-      m_deltaFluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::deltaPressureString() );
+      m_initialFluidPressure = elementSubRegion.template getExtrinsicData< extrinsicMeshData::initialPressure >();
+      m_fluidPressure = elementSubRegion.template getExtrinsicData< extrinsicMeshData::pressure >();
+      m_deltaFluidPressure = elementSubRegion.template getExtrinsicData< extrinsicMeshData::deltaPressure >();
     }
 
     // extract views into multiphase solver data
