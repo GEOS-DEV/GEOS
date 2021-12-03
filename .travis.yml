@@ -112,7 +112,7 @@ draft_script: &draft_script
   - if [[ $TRAVIS_PULL_REQUEST == false ]]; then exit 0; fi;
   - |
     is_draft=$(curl -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/$TRAVIS_PULL_REQUEST_SLUG/pulls/$TRAVIS_PULL_REQUEST | \
+        https://api.github.com/repos/$TRAVIS_REPO_SLUG/pulls/$TRAVIS_PULL_REQUEST | \
         jq ".draft")
 
   # CI jobs will be cancelled if PR is a draft.
@@ -135,7 +135,7 @@ assigned_script: &assigned_script
   - if [[ $TRAVIS_PULL_REQUEST == false ]]; then exit 0; fi;
   - |
     is_assigned=$(curl -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/$TRAVIS_PULL_REQUEST_SLUG/pulls/$TRAVIS_PULL_REQUEST | \
+        https://api.github.com/repos/$TRAVIS_REPO_SLUG/pulls/$TRAVIS_PULL_REQUEST | \
         jq ".assignees|length")
   - if [[ $is_assigned == 0 ]]; then exit 1; else exit 0; fi
 
