@@ -266,9 +266,9 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
       pres.move( LvArray::MemorySpace::host, false );
 
       arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseBase::viewKeyStruct::globalCompDensityString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::globalCompDensity >();
       arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
-        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseBase::viewKeyStruct::deltaGlobalCompDensityString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::deltaGlobalCompDensity >();
 
       compDens.move( LvArray::MemorySpace::host, false );
 

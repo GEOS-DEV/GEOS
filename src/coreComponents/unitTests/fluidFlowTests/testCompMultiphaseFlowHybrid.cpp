@@ -20,6 +20,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
@@ -207,11 +208,11 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
       subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
 
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::globalCompDensityString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::globalCompDensity >();
     compDens.move( LvArray::MemorySpace::host, false );
 
     arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaGlobalCompDensityString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::deltaGlobalCompDensity >();
 
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
@@ -281,10 +282,10 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
 
   // get the face-based pressure
   arrayView1d< real64 > const & facePres =
-    faceManager.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::facePressureString() );
+    faceManager.getExtrinsicData< extrinsicMeshData::facePressure >();
   facePres.move( LvArray::MemorySpace::host, false );
   arrayView1d< real64 > const & dFacePres =
-    faceManager.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaFacePressureString() );
+    faceManager.getExtrinsicData< extrinsicMeshData::deltaFacePressure >();
 
   string const faceDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::faceDofFieldString() );
 

@@ -1607,7 +1607,6 @@ void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
   CompositionalMultiphaseBase & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
 
   {
-    using keys = CompositionalMultiphaseBase::viewKeyStruct;
     using namespace compflow;
 
     m_resPres.clear();
@@ -1620,33 +1619,33 @@ void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
     m_deltaResPres.setName( getName() + "/accessors/" + extrinsicMeshData::deltaPressure::key() );
 
     m_resTemp.clear();
-    m_resTemp = elemManager.constructArrayViewAccessor< real64, 1 >( keys::temperatureString() );
-    m_resTemp.setName( getName() + "/accessors/" + keys::temperatureString() );
+    m_resTemp = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::temperature::key() );
+    m_resTemp.setName( getName() + "/accessors/" + extrinsicMeshData::temperature::key() );
 
     m_resCompDens.clear();
     m_resCompDens =
-      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_COMP >( keys::globalCompDensityString() );
-    m_resCompDens.setName( getName() + "/accessors/" + keys::globalCompDensityString() );
+      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_COMP >( extrinsicMeshData::globalCompDensity::key() );
+    m_resCompDens.setName( getName() + "/accessors/" + extrinsicMeshData::globalCompDensity::key() );
 
     m_dResCompFrac_dCompDens.clear();
     m_dResCompFrac_dCompDens =
-      elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_COMP_DC >( keys::dGlobalCompFraction_dGlobalCompDensityString() );
-    m_dResCompFrac_dCompDens.setName( getName() + "/accessors/" + keys::dGlobalCompFraction_dGlobalCompDensityString() );
+      elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_COMP_DC >( extrinsicMeshData::dGlobalCompFraction_dGlobalCompDensity::key() );
+    m_dResCompFrac_dCompDens.setName( getName() + "/accessors/" + extrinsicMeshData::dGlobalCompFraction_dGlobalCompDensity::key() );
 
     m_resPhaseVolFrac.clear();
     m_resPhaseVolFrac =
-      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( keys::phaseVolumeFractionString() );
-    m_resPhaseVolFrac.setName( getName() + "/accessors/" + keys::phaseVolumeFractionString() );
+      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( extrinsicMeshData::phaseVolumeFraction::key() );
+    m_resPhaseVolFrac.setName( getName() + "/accessors/" + extrinsicMeshData::phaseVolumeFraction::key() );
 
     m_dResPhaseVolFrac_dPres.clear();
     m_dResPhaseVolFrac_dPres =
-      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( keys::dPhaseVolumeFraction_dPressureString() );
-    m_dResPhaseVolFrac_dPres.setName( getName() + "/accessors/" + keys::dPhaseVolumeFraction_dPressureString() );
+      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( extrinsicMeshData::dPhaseVolumeFraction_dPressure::key() );
+    m_dResPhaseVolFrac_dPres.setName( getName() + "/accessors/" + extrinsicMeshData::dPhaseVolumeFraction_dPressure::key() );
 
     m_dResPhaseVolFrac_dCompDens.clear();
     m_dResPhaseVolFrac_dCompDens =
-      elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_PHASE_DC >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() );
-    m_dResPhaseVolFrac_dCompDens.setName( getName() + "/accessors/" + keys::dPhaseVolumeFraction_dGlobalCompDensityString() );
+      elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_PHASE_DC >( extrinsicMeshData::dPhaseVolumeFraction_dGlobalCompDensity::key() );
+    m_dResPhaseVolFrac_dCompDens.setName( getName() + "/accessors/" + extrinsicMeshData::dPhaseVolumeFraction_dGlobalCompDensity::key() );
 
   }
   {

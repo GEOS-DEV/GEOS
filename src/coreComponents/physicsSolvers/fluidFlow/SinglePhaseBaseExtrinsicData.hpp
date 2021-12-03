@@ -53,14 +53,6 @@ EXTRINSIC_MESH_DATA_TRAIT( densityOld,
                            WRITE_AND_READ,
                            "Density at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( facePressure,
-                           "facePressure",
-                           array1d< real64 >,
-                           0,
-                           LEVEL_0,
-                           WRITE_AND_READ,
-                           "Face pressure" );
-
 }
 
 }

@@ -18,9 +18,10 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
+
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
@@ -149,24 +150,22 @@ public:
 
     // extract views into multiphase solver data
     {
-      using keys = CompositionalMultiphaseBase::viewKeyStruct;
-
       m_fluidPhaseDensityOld =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseDensityOldString() );
+        elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseDensityOld >();
       m_fluidPhaseCompFracOld =
-        elementSubRegion.template getReference< array3d< real64, compflow::LAYOUT_PHASE_COMP > >( keys::phaseComponentFractionOldString() );
+        elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseComponentFractionOld >();
       m_fluidPhaseSaturationOld =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionOldString() );
+        elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseVolumeFractionOld >();
 
       m_fluidPhaseSaturation =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionString() );
+        elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseVolumeFraction >();
       m_dFluidPhaseSaturation_dPressure =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dPressureString() );
+        elementSubRegion.template getExtrinsicData< extrinsicMeshData::dPhaseVolumeFraction_dPressure >();
       m_dFluidPhaseSaturation_dGlobalCompDensity =
-        elementSubRegion.template getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() );
+        elementSubRegion.template getExtrinsicData< extrinsicMeshData::dPhaseVolumeFraction_dGlobalCompDensity >();
 
       m_dGlobalCompFraction_dGlobalCompDensity =
-        elementSubRegion.template getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() );
+        elementSubRegion.template getExtrinsicData< extrinsicMeshData::dGlobalCompFraction_dGlobalCompDensity >();
     }
   }
 

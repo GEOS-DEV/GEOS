@@ -29,14 +29,6 @@ namespace geosx
 namespace extrinsicMeshData
 {
 
-EXTRINSIC_MESH_DATA_TRAIT( gravityCoefficient,
-                           "gravityCoefficient",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Gravity coefficient (dot product of gravity acceleration by gravity vector" );
-
 EXTRINSIC_MESH_DATA_TRAIT( pressure,
                            "pressure",
                            array1d< real64 >,
@@ -61,6 +53,22 @@ EXTRINSIC_MESH_DATA_TRAIT( deltaPressure,
                            NO_WRITE,
                            "Accumulated pressure updates" );
 
+EXTRINSIC_MESH_DATA_TRAIT( facePressure,
+                           "facePressure",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Face pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( deltaFacePressure,
+                           "deltaFacePressure",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Accumulated face pressure updates" );
+
 EXTRINSIC_MESH_DATA_TRAIT( deltaVolume,
                            "deltaVolume",
                            array1d< real64 >,
@@ -84,6 +92,23 @@ EXTRINSIC_MESH_DATA_TRAIT( hydraulicAperture,
                            LEVEL_0,
                            WRITE_AND_READ,
                            "Hydraulic aperture" );
+
+EXTRINSIC_MESH_DATA_TRAIT( gravityCoefficient,
+                           "gravityCoefficient",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Gravity coefficient (dot product of gravity acceleration by gravity vector)" );
+
+EXTRINSIC_MESH_DATA_TRAIT( mimGravityCoefficient,
+                           "mimGravityCoefficient",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Mimitic gravity coefficient" );
+
 
 }
 

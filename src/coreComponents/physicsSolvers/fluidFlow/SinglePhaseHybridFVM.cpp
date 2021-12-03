@@ -28,7 +28,6 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMExtrinsicData.hpp"
 
 
 /**
