@@ -3,8 +3,9 @@
 ========================= ================== ================================ ======================================================================= 
 Name                      Type               Registered On                    Description                                                             
 ========================= ================== ================================ ======================================================================= 
+indexSeismoTrace          localIndex                                          Count for output pressure at receivers                                  
 maxStableDt               real64                                              Value of the Maximum Stable Timestep for this solver.                   
-pressureNp1AtReceivers    real64_array                                        Pressure value at each receiver for each timestep                       
+pressureNp1AtReceivers    real64_array2d                                      Pressure value at each receiver for each timestep                       
 receiverIsLocal           localIndex_array                                    Flag that indicates whether the receiver is local to this MPI rank      
 receiverNodeIds           localIndex_array2d                                  Indices of the nodes (in the right order) for each receiver point       
 sourceConstants           real64_array2d                                      Constant part of the receiver for the nodes listed in m_receiverNodeIds 

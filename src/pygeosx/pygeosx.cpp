@@ -40,9 +40,9 @@
 namespace geosx
 {
 
-  std::unique_ptr< GeosxState > g_state;
+std::unique_ptr< GeosxState > g_state;
 
-  bool g_alreadyInitialized = false;
+bool g_alreadyInitialized = false;
 
 PyObject * init( PyObject * const pyArgv, bool const performSetup, long const pythonMPIRank=-1 )
 {
@@ -334,7 +334,6 @@ static PyMethodDef pygeosxFuncs[] = {
 
 
 
-
 static constexpr char const * pygeosxDocString =
   "Python driver for GEOSX.";
 
@@ -361,14 +360,14 @@ PyInit_pygeosx()
 {
   import_array();
 
-  PyObject* module = PyModule_Create( &pygeosxModuleFunctions );
-  PyObject* submodule1 = geosx::python::PyInit_pysolver();
-  PyObject* submodule2 = geosx::python::PyInit_pyhdf5();
+  PyObject * module = PyModule_Create( &pygeosxModuleFunctions );
+  PyObject * submodule1 = geosx::python::PyInit_pysolver();
+  PyObject * submodule2 = geosx::python::PyInit_pyhdf5();
 
-  Py_INCREF(submodule1);
+  Py_INCREF( submodule1 );
   PyModule_AddObject( module, "pysolver", submodule1 );
 
-  Py_INCREF(submodule2);
+  Py_INCREF( submodule2 );
   PyModule_AddObject( module, "pyhdf5", submodule2 );
 
   if( !addExitHandler( module ) )
@@ -396,7 +395,7 @@ PyInit_pygeosx()
 
   if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolver2Type(), "Solver2" ) )
   {
-  return nullptr;
+    return nullptr;
   }
 
   // Add the LvArray submodule.
@@ -409,9 +408,6 @@ PyInit_pygeosx()
   // Since we return module we don't want to decrease the reference count.
   return module;
 }
-
-
-
 
 
 

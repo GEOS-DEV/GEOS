@@ -15,9 +15,9 @@
 
 namespace geosx
 {
-  extern std::unique_ptr< GeosxState > g_state;
+extern std::unique_ptr< GeosxState > g_state;
 
-  extern bool g_alreadyInitialized;
+extern bool g_alreadyInitialized;
 
 namespace python
 {
@@ -33,39 +33,39 @@ struct PySolver
   geosx::ProblemManager * pb_manager;
 };
 
-static void PySolver_dealloc(PySolver* self)
+static void PySolver_dealloc( PySolver * self )
 {
-    Py_TYPE(self)->tp_free((PyObject*)self);
+  Py_TYPE( self )->tp_free((PyObject *)self );
 }
 
 
 
-static PyObject * PySolver_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+static PyObject * PySolver_new( PyTypeObject *type, PyObject *args, PyObject *kwds )
 {
   GEOSX_UNUSED_VAR( args, kwds );
   PySolver *self;
   geosx::ProblemManager * pb_manager = &(g_state->getProblemManager());
 
-    self = (PySolver *)type->tp_alloc(type, 0);
-    if (self != nullptr)
+  self = (PySolver *)type->tp_alloc( type, 0 );
+  if( self != nullptr )
+  {
+    self->group = nullptr;
+    self->pb_manager = pb_manager;
+
+    if( self->pb_manager == nullptr )
     {
-      self->group = nullptr;
-      self->pb_manager = pb_manager;
-
-      if (self->pb_manager == nullptr)
-      {
-	Py_DECREF(self);
-	return nullptr;
-      }
-
+      Py_DECREF( self );
+      return nullptr;
     }
 
-    return (PyObject *)self;
+  }
+
+  return (PyObject *)self;
 }
 
 
 
-static int PySolver_init(PySolver *self, PyObject *args, PyObject *kwds)
+static int PySolver_init( PySolver *self, PyObject *args, PyObject *kwds )
 {
   GEOSX_UNUSED_VAR( kwds );
 
@@ -99,11 +99,11 @@ static int PySolver_init(PySolver *self, PyObject *args, PyObject *kwds)
   } );
 
   geosx::EventBase * subEvent = nullptr;
-  for(int currentSubEvent = 0; currentSubEvent<eventManager.numSubGroups(); ++currentSubEvent )
+  for( int currentSubEvent = 0; currentSubEvent<eventManager.numSubGroups(); ++currentSubEvent )
   {
 
     subEvent = static_cast< geosx::EventBase * >( eventManager.getSubGroups()[currentSubEvent]);
-    if (subEvent->getEventName() == path)
+    if( subEvent->getEventName() == path )
     {
       break;
     }
@@ -114,7 +114,7 @@ static int PySolver_init(PySolver *self, PyObject *args, PyObject *kwds)
   }
   PYTHON_ERROR_IF( subEvent == nullptr, PyExc_RuntimeError, "Target not found", -1 );
 
-  group = static_cast<geosx::SolverBase*>(subEvent->getEventTarget());
+  group = static_cast< geosx::SolverBase * >(subEvent->getEventTarget());
   self->group = group;
 
   return 0;
@@ -140,11 +140,11 @@ static PyObject * PySolver_repr( PyObject * const obj ) noexcept
 
 
 
-static PyObject * postProcessInput(PySolver* self, PyObject* args)
+static PyObject * postProcessInput( PySolver * self, PyObject * args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
-  GEOSX_UNUSED_VAR( args);
+  GEOSX_UNUSED_VAR( args );
 
   self->group->postProcessInput();
 
@@ -152,11 +152,11 @@ static PyObject * postProcessInput(PySolver* self, PyObject* args)
 }
 
 
-static PyObject * initPostInitialConditions(PySolver* self, PyObject* args)
+static PyObject * initPostInitialConditions( PySolver * self, PyObject * args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
-  GEOSX_UNUSED_VAR( args);
+  GEOSX_UNUSED_VAR( args );
 
   self->group->initializePostInitialConditionsPreSubGroups();
 
@@ -164,7 +164,7 @@ static PyObject * initPostInitialConditions(PySolver* self, PyObject* args)
 }
 
 
-static PyObject * explicitStep(PySolver * self, PyObject * args)
+static PyObject * explicitStep( PySolver * self, PyObject * args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
@@ -178,14 +178,14 @@ static PyObject * explicitStep(PySolver * self, PyObject * args)
 
   geosx::DomainPartition & domain = self->pb_manager->getDomainPartition();
 
-  self->group->explicitStep(time, dt, 0, domain);
+  self->group->explicitStep( time, dt, 0, domain );
 
   Py_RETURN_NONE;
 }
 
 
 
-static PyObject * linearImplicitStep(PySolver * self, PyObject * args)
+static PyObject * linearImplicitStep( PySolver * self, PyObject * args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
@@ -199,13 +199,13 @@ static PyObject * linearImplicitStep(PySolver * self, PyObject * args)
 
   geosx::DomainPartition & domain = self->pb_manager->getDomainPartition();
 
-  self->group->linearImplicitStep(time, dt, 0, domain);
+  self->group->linearImplicitStep( time, dt, 0, domain );
 
   Py_RETURN_NONE;
 }
 
 
-static PyObject * nonlinearImplicitStep(PySolver * self, PyObject * args)
+static PyObject * nonlinearImplicitStep( PySolver * self, PyObject * args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
@@ -219,17 +219,17 @@ static PyObject * nonlinearImplicitStep(PySolver * self, PyObject * args)
 
   geosx::DomainPartition & domain = self->pb_manager->getDomainPartition();
 
-  self->group->nonlinearImplicitStep(time, dt, 0, domain);
+  self->group->nonlinearImplicitStep( time, dt, 0, domain );
 
   Py_RETURN_NONE;
 }
 
 
-static PyObject * reinit(PySolver * self, PyObject *args)
+static PyObject * reinit( PySolver * self, PyObject *args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
-  GEOSX_UNUSED_VAR( args);
+  GEOSX_UNUSED_VAR( args );
 
   self->group->postProcessInput();
 
@@ -237,14 +237,14 @@ static PyObject * reinit(PySolver * self, PyObject *args)
 }
 
 static PyMethodDef PySolver_methods[] = {
-{ "explicitStep", (PyCFunction) explicitStep, METH_VARARGS, "explicit Step" },
-{ "linearImplicitStep", (PyCFunction) linearImplicitStep, METH_VARARGS, "linear implicit step" },
-{ "nonlinearImplicitStep", (PyCFunction) nonlinearImplicitStep, METH_VARARGS, "non linear implicit step" },
-{ "postProcessInput", (PyCFunction) postProcessInput, METH_NOARGS, "post processing input"},
-{ "reinit", (PyCFunction) reinit, METH_NOARGS, "re-initialize certain variable depending on the solver being used"},
-{ "initPostInitialConditions", (PyCFunction) initPostInitialConditions, METH_NOARGS, "call initializePostInitialConditionsPreSubGroup"},
-{ "get_wrapper", (PyCFunction) PyGroup_getWrapper<PySolver>, METH_VARARGS, PyGroup_getWrapperDocString },
-{ nullptr, nullptr, 0, nullptr }        /* Sentinel */
+  { "explicitStep", (PyCFunction) explicitStep, METH_VARARGS, "explicit Step" },
+  { "linearImplicitStep", (PyCFunction) linearImplicitStep, METH_VARARGS, "linear implicit step" },
+  { "nonlinearImplicitStep", (PyCFunction) nonlinearImplicitStep, METH_VARARGS, "non linear implicit step" },
+  { "postProcessInput", (PyCFunction) postProcessInput, METH_NOARGS, "post processing input"},
+  { "reinit", (PyCFunction) reinit, METH_NOARGS, "re-initialize certain variable depending on the solver being used"},
+  { "initPostInitialConditions", (PyCFunction) initPostInitialConditions, METH_NOARGS, "call initializePostInitialConditionsPreSubGroup"},
+  { "get_wrapper", (PyCFunction) PyGroup_getWrapper< PySolver >, METH_VARARGS, PyGroup_getWrapperDocString },
+  { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
 
 
@@ -271,29 +271,29 @@ static PyTypeObject PySolverType = {
 END_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyModuleDef pysolvermodule = {
-    PyModuleDef_HEAD_INIT,
-    "pysolver",
-    "pysolver module for SolverBase",
-    -1,
-    NULL, NULL, NULL, NULL, NULL
+  PyModuleDef_HEAD_INIT,
+  "pysolver",
+  "pysolver module for SolverBase",
+  -1,
+  NULL, NULL, NULL, NULL, NULL
 };
 
 
 PyMODINIT_FUNC
-PyInit_pysolver(void)
+PyInit_pysolver( void )
 {
-    PyObject* module = PyModule_Create(&pysolvermodule);
+  PyObject * module = PyModule_Create( &pysolvermodule );
 
-    if (PyType_Ready(&PySolverType) < 0)
-        return nullptr;
+  if( PyType_Ready( &PySolverType ) < 0 )
+    return nullptr;
 
-    if (module == nullptr)
-        return nullptr;
+  if( module == nullptr )
+    return nullptr;
 
-    Py_INCREF(&PySolverType);
-    PyModule_AddObject(module, "Solver", (PyObject *)&PySolverType);
+  Py_INCREF( &PySolverType );
+  PyModule_AddObject( module, "Solver", (PyObject *)&PySolverType );
 
-    return module;
+  return module;
 }
 
 PyTypeObject * getPySolverType()

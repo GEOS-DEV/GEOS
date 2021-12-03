@@ -256,7 +256,7 @@ static PyObject * PyGroup_getSolver( PyGroup * const self, PyObject * const args
 
   try
   {
-    geosx::ProblemManager * pbManager = static_cast<geosx::ProblemManager *>(self->group);
+    geosx::ProblemManager * pbManager = static_cast< geosx::ProblemManager * >(self->group);
     geosx::EventManager & eventManager = pbManager->getEventManager();
     eventManager.forSubGroups< geosx::EventBase >( [&]( geosx::EventBase & subEvent )
     {
@@ -264,16 +264,16 @@ static PyObject * PyGroup_getSolver( PyGroup * const self, PyObject * const args
     } );
 
     geosx::EventBase * subEvent = nullptr;
-    for(int currentSubEvent = 0; currentSubEvent<eventManager.numSubGroups(); ++currentSubEvent )
+    for( int currentSubEvent = 0; currentSubEvent<eventManager.numSubGroups(); ++currentSubEvent )
     {
       subEvent = static_cast< geosx::EventBase * >( eventManager.getSubGroups()[currentSubEvent]);
-      if (subEvent->getEventName() == path)
+      if( subEvent->getEventName() == path )
       {
-	break;
+        break;
       }
       else
       {
-	subEvent = nullptr;
+        subEvent = nullptr;
       }
     }
     PYTHON_ERROR_IF( subEvent == nullptr, PyExc_RuntimeError, "Target not found", nullptr );
@@ -339,7 +339,7 @@ static PyMethodDef PyGroup_methods[] = {
   { "groups", (PyCFunction) PyGroup_groups, METH_NOARGS, PyGroup_groupsDocString },
   { "wrappers", (PyCFunction) PyGroup_wrappers, METH_NOARGS, PyGroup_wrappersDocString },
   { "get_group", (PyCFunction) PyGroup_getGroup, METH_VARARGS, PyGroup_getGroupDocString },
-  { "get_wrapper", (PyCFunction) PyGroup_getWrapper<PyGroup>, METH_VARARGS, PyGroup_getWrapperDocString },
+  { "get_wrapper", (PyCFunction) PyGroup_getWrapper< PyGroup >, METH_VARARGS, PyGroup_getWrapperDocString },
   { "get_solver", (PyCFunction) PyGroup_getSolver, METH_VARARGS, PyGroup_getSolverDocString },
   { "register", (PyCFunction) PyGroup_register, METH_VARARGS, PyGroup_registerDocString },
   { nullptr, nullptr, 0, nullptr }             /* Sentinel */

@@ -10,7 +10,7 @@ namespace python
 {
 
 
-PyMODINIT_FUNC PyInit_pyhdf5(void);
+PyMODINIT_FUNC PyInit_pyhdf5( void );
 
 PyTypeObject * getPyHDF5Type();
 

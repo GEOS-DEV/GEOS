@@ -47,7 +47,7 @@ static constexpr char const * PyGroup_getWrapperDocString =
   "    The wrapper at the relative path.";
 
 
-template<typename T>
+template< typename T >
 static PyObject * PyGroup_getWrapper( T * const self, PyObject * const args ) noexcept
 {
   //VERIFY_NON_NULL_SELF( self );

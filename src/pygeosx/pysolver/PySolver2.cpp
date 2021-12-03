@@ -50,11 +50,11 @@ static PyObject * PySolver2_repr( PyObject * const obj ) noexcept
 
 
 
-static PyObject * postProcessInput(PySolver2* self, PyObject* args)
+static PyObject * postProcessInput( PySolver2 * self, PyObject * args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
-  GEOSX_UNUSED_VAR( args);
+  GEOSX_UNUSED_VAR( args );
 
   self->group->postProcessInput();
 
@@ -62,11 +62,11 @@ static PyObject * postProcessInput(PySolver2* self, PyObject* args)
 }
 
 
-static PyObject * initPostInitialConditions(PySolver2* self, PyObject* args)
+static PyObject * initPostInitialConditions( PySolver2 * self, PyObject * args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
-  GEOSX_UNUSED_VAR( args);
+  GEOSX_UNUSED_VAR( args );
 
   self->group->initializePostInitialConditionsPreSubGroups();
 
@@ -77,13 +77,13 @@ static PyObject * initPostInitialConditions(PySolver2* self, PyObject* args)
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyMethodDef PySolver2_methods[] = {
-{ "explicitStep", (PyCFunction) explicitStep<PySolver2>, METH_VARARGS, "explicit Step" },
-{ "linearImplicitStep", (PyCFunction) linearImplicitStep<PySolver2>, METH_VARARGS, "linear implicit step" },
-{ "nonlinearImplicitStep", (PyCFunction) nonlinearImplicitStep<PySolver2>, METH_VARARGS, "non linear implicit step" },
-{ "postProcessInput", (PyCFunction) postProcessInput, METH_NOARGS, "post processing input"},
-{ "initPostInitialConditions", (PyCFunction) initPostInitialConditions, METH_NOARGS, "call initializePostInitialConditionsPreSubGroup"},
-{ "get_wrapper", (PyCFunction) PyGroup_getWrapper<PySolver2>, METH_VARARGS, PyGroup_getWrapperDocString },
-{ nullptr, nullptr, 0, nullptr }        /* Sentinel */
+  { "explicitStep", (PyCFunction) explicitStep< PySolver2 >, METH_VARARGS, "explicit Step" },
+  { "linearImplicitStep", (PyCFunction) linearImplicitStep< PySolver2 >, METH_VARARGS, "linear implicit step" },
+  { "nonlinearImplicitStep", (PyCFunction) nonlinearImplicitStep< PySolver2 >, METH_VARARGS, "non linear implicit step" },
+  { "postProcessInput", (PyCFunction) postProcessInput, METH_NOARGS, "post processing input"},
+  { "initPostInitialConditions", (PyCFunction) initPostInitialConditions, METH_NOARGS, "call initializePostInitialConditionsPreSubGroup"},
+  { "get_wrapper", (PyCFunction) PyGroup_getWrapper< PySolver2 >, METH_VARARGS, PyGroup_getWrapperDocString },
+  { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
 
 
@@ -116,7 +116,7 @@ PyObject * createNewPySolver2( geosx::EventBase * subEvent, geosx::ProblemManage
     return nullptr;
   }
 
-  geosx::SolverBase * solver = static_cast<geosx::SolverBase *>(subEvent->getEventTarget());
+  geosx::SolverBase * solver = static_cast< geosx::SolverBase * >(subEvent->getEventTarget());
   retSolver->group = solver;
   retSolver->pb_manager = pbManager;
 

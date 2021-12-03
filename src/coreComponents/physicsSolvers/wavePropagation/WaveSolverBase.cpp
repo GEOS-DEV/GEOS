@@ -84,7 +84,7 @@ void WaveSolverBase::reinit()
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   postProcessInput();
-  precomputeSourceAndReceiverTerm(mesh);
+  precomputeSourceAndReceiverTerm( mesh );
 }
 
 void WaveSolverBase::initializePreSubGroups()

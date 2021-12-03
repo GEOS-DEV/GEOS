@@ -31,7 +31,7 @@ class ElasticWaveEquationSEM : public SolverBase
 {
 public:
   ElasticWaveEquationSEM( const std::string & name,
-                           Group * const parent );
+                          Group * const parent );
 
   virtual ~ElasticWaveEquationSEM() override;
 
@@ -97,7 +97,7 @@ public:
     static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
 
     static constexpr char const * rickerOrderString() { return "rickerOrder"; }
-    
+
     static constexpr char const * displacementNp1AtReceiversString() { return "displacementNp1AtReceivers"; }
 
     static constexpr char const * outputSismoTraceString() { return "outputSismoTrace";}
@@ -113,7 +113,7 @@ protected:
 
 private:
 
-   /**
+  /**
    * @brief Convert a mesh element point coordinate into a coorinate on the reference element
    * @param coords coordinate of the point
    * @param coordsOnRefElem to contain the coordinate computed in the reference element
@@ -136,7 +136,7 @@ private:
   void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
 
   /// Multiply the precomputed term by the ricker and add to the right-hand side
-  void addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z);
+  void addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z );
 
   /// Apply free surface condition to the face define in the geometry box from the xml
   void applyFreeSurfaceBC( real64 const time, DomainPartition & domain );
@@ -159,13 +159,13 @@ private:
   /// Constant part of the source for the nodes listed in m_sourceNodeIds
   array2d< real64 > m_sourceConstants;
 
-    /// Constant part of the source for the nodes listed in m_sourceNodeIds
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds
   array2d< real64 > m_sourceConstants_x;
 
-    /// Constant part of the source for the nodes listed in m_sourceNodeIds
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds
   array2d< real64 > m_sourceConstants_y;
 
-    /// Constant part of the source for the nodes listed in m_sourceNodeIds
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds
   array2d< real64 > m_sourceConstants_z;
 
   /// Flag that indicates whether the source is local or not to the MPI rank
@@ -189,7 +189,7 @@ private:
   /// Displacement_np1 at the receiver location for each time step for each receiver
   array2d< real64 > m_displacementNp1AtReceivers;
 
-    /// Flag that indicates the order of the Ricker to be used, order 2 by default
+  /// Flag that indicates the order of the Ricker to be used, order 2 by default
   localIndex m_rickerOrder;
 
   /// Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise
@@ -199,11 +199,11 @@ private:
 
 template< typename FE_TYPE >
 bool ElasticWaveEquationSEM::computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
-                                                                    real64 (& coordsOnRefElem)[3],
-                                                                    localIndex const & indexElement,
-                                                                    array1d< array1d< localIndex > > const & faceNodes,
-                                                                    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-                                                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X )
+                                                                   real64 (& coordsOnRefElem)[3],
+                                                                   localIndex const & indexElement,
+                                                                   array1d< array1d< localIndex > > const & faceNodes,
+                                                                   arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                                                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X )
 {
   if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
   {
@@ -329,7 +329,7 @@ EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS_x,
                            NOPLOT,
                            WRITE_AND_READ,
                            "RHS" );
-                          
+
 EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS_y,
                            "rhs_y",
                            array1d< real64 >,
@@ -337,7 +337,7 @@ EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS_y,
                            NOPLOT,
                            WRITE_AND_READ,
                            "RHS" );
-          
+
 EXTRINSIC_MESH_DATA_TRAIT( ForcingRHS_z,
                            "rhs_z",
                            array1d< real64 >,
@@ -409,7 +409,7 @@ EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector_x,
                            NOPLOT,
                            WRITE_AND_READ,
                            "x-component of stiffness vector." );
-                          
+
 EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector_y,
                            "stiffnessVector_y",
                            array1d< real64 >,
@@ -417,7 +417,7 @@ EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector_y,
                            NOPLOT,
                            WRITE_AND_READ,
                            "y-component of stiffness vector." );
-          
+
 EXTRINSIC_MESH_DATA_TRAIT( StiffnessVector_z,
                            "stiffnessVector_z",
                            array1d< real64 >,
@@ -440,7 +440,7 @@ EXTRINSIC_MESH_DATA_TRAIT( LameCoefficientMu,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Second coefficient of Lame." );                        
+                           "Second coefficient of Lame." );
 
 EXTRINSIC_MESH_DATA_TRAIT( FreeSurfaceFaceIndicator,
                            "freeSurfaceFaceIndicator",

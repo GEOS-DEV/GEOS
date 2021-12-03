@@ -9,7 +9,7 @@ namespace python
 {
 
 
-PyMODINIT_FUNC PyInit_pysolver(void);
+PyMODINIT_FUNC PyInit_pysolver( void );
 
 PyTypeObject * getPySolverType();
 
