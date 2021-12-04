@@ -51,7 +51,7 @@ Solid mechanics solver
 
 As fluid flow is not considered, only the solid mechanics solver ``SolidMechanicsLagrangianSSLE`` is required for solving this wellbore problem.  
 
-.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedElasticWellbore_base.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedElasticWellbore_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_SolidMechanicsSolver -->
   :end-before: <!-- SPHINX_SolidMechanicsSolverEnd -->
