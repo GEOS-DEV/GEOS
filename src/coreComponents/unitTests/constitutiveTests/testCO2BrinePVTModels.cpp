@@ -27,10 +27,6 @@
 #include "constitutive/fluid/PVTFunctions/CO2Enthalpy.hpp"
 #include "constitutive/fluid/PVTFunctions/BrineInternalEnergy.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2InternalEnergy.hpp"
-#include "constitutive/fluid/PVTFunctions/old/BrineEnthalpyFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/old/CO2EnthalpyFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/old/BrineInternalEnergyFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/old/CO2InternalEnergyFunction.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 
@@ -43,20 +39,16 @@ using namespace geosx::constitutive;
 using namespace geosx::dataRepository;
 using namespace geosx::stringutilities;
 using namespace geosx::constitutive::PVTProps;
-using namespace geosx::PVTProps;
 
 /// Input tables written into temporary files during testing
 
 static const char * pvtLiquidPhillipsTableContent = "DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 367.15 369.15 1 0.2\n"
                                                     "ViscosityFun PhillipsBrineViscosity 0.1";
 
-// Temperature is specified in Celcius!!!
-static const char * pvtLiquidOldEnthalpyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 94 96 1 0.2";
-
-//Temperature is specified in Kelvin, should match the range specified in pvtLiquidOldEnthalpyTableContent
+// Used also for gas phase
 static const char * pvtLiquidEnthalpyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 367.15 369.15 1 0.2";
 
-// Model has no parameters
+// InternalEnergy model has no parameters
 static const char * pvtLiquidInternalEnergyTableContent = "InternalEnergyFun BrineInternalEnergy";
 
 // the last are set relatively high (1e-4) to increase derivative value and check it properly
@@ -440,41 +432,6 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
 
   return flashModel;
 }
-
-template< typename MODEL >
-std::unique_ptr< MODEL > makeOldPVTFunction( string const & filename,
-                                             string const & key )
-{
-  // define component names and molar weight
-  string_array componentNames;
-  componentNames.resize( 2 );
-  componentNames[0] = "co2"; componentNames[1] = "water";
-
-  array1d< real64 > componentMolarWeight;
-  componentMolarWeight.resize( 2 );
-  componentMolarWeight[0] = 44e-3; componentMolarWeight[1] = 18e-3;
-
-  // read parameters from file
-  std::ifstream is( filename );
-  std::unique_ptr< MODEL > pvtFunction = nullptr;
-  string str;
-  while( std::getline( is, str ) )
-  {
-    string_array const strs = stringutilities::tokenize( str, " " );
-
-    if( strs[0] == key )
-    {
-      pvtFunction = std::make_unique< MODEL >( strs,
-                                               componentNames,
-                                               componentMolarWeight );
-    }
-  }
-  GEOSX_ERROR_IF( pvtFunction == nullptr,
-                  "Could not find " << key << " in " << filename );
-
-  return pvtFunction;
-}
-
 
 class PhillipsBrineViscosityTest : public ::testing::Test
 {
@@ -982,11 +939,8 @@ class BrineEnthalpyTest : public ::testing::Test
 public:
   BrineEnthalpyTest()
   {
-    writeTableToFile( filename, pvtLiquidOldEnthalpyTableContent );
-    pvtFunctionOld = makeOldPVTFunction< BrineEnthalpyFunction >( filename, key );
     writeTableToFile( filename, pvtLiquidEnthalpyTableContent );
     pvtFunction = makePVTFunction< BrineEnthalpy >( filename, key );
-
   }
 
   ~BrineEnthalpyTest() override
@@ -997,7 +951,6 @@ public:
 protected:
   string const key = "EnthalpyFun";
   string const filename = "pvtliquid.txt";
-  std::unique_ptr< BrineEnthalpyFunction > pvtFunctionOld;
   std::unique_ptr< BrineEnthalpy > pvtFunction;
 };
 
@@ -1023,26 +976,12 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
                                       137419.018273, 121682.558928, 123001.503570, 124098.561778, 88756.649542,
                                       90350.327221, 91670.592316 };
   localIndex counter = 0;
-  printf ( " Mass old values: \n { " );
   for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
     for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
       for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
       {
-        EvalVarArgs const pressure_old = P[iPres];
-        EvalVarArgs const temp_old = TC[iTemp];
-        array1d< EvalVarArgs > comp_old ( 2 );
-        comp_old[0] = comp[0];
-        comp_old[1] = comp[1];
-        EvalVarArgs value_old;
-        real64 value;
-
-        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, true );
-        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, true );
-        checkRelativeError ( value, value_old.m_var, relTol );
-        printf ( " %15lf, ", value_old.m_var );
-
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
@@ -1052,7 +991,6 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
     comp[0] += deltaComp;
     comp[1] = 1 - comp[0];
   }
-  printf ( " } \n " );
 }
 
 TEST_F( BrineEnthalpyTest, BrineEnthalpyMolarValuesAndDeriv )
@@ -1077,26 +1015,12 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMolarValuesAndDeriv )
                                    6850772.616574, 6903815.290194, 6947985.177129, 6544742.270173, 6599594.923452, 6645247.529535,
                                    5796426.147754, 5857522.733710, 5908248.223573};
   localIndex counter = 0;
-  printf ( " Molar old values: \n { " );
   for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
     for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
       for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
       {
-        EvalVarArgs const pressure_old = P[iPres];
-        EvalVarArgs const temp_old = TC[iTemp];
-        array1d< EvalVarArgs > comp_old ( 2 );
-        comp_old[0] = comp[0];
-        comp_old[1] = comp[1];
-        EvalVarArgs value_old;
-        real64 value;
-
-        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, false );
-        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, false );
-        checkRelativeError ( value, value_old.m_var, relTol );
-        printf ( " %15lf, ", value_old.m_var );
-
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
@@ -1106,7 +1030,6 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMolarValuesAndDeriv )
     comp[0] += deltaComp;
     comp[1] = 1 - comp[0];
   }
-  printf ( " } \n " );
 }
 
 
@@ -1116,8 +1039,6 @@ public:
   CO2EnthalpyTest()
   {
     // gas enthalpy model repeats liquid parameters (except m), use them here
-    writeTableToFile( filename, pvtLiquidOldEnthalpyTableContent );
-    pvtFunctionOld = makeOldPVTFunction< CO2EnthalpyFunction >( filename, key );
     writeTableToFile( filename, pvtLiquidEnthalpyTableContent );
     pvtFunction = makePVTFunction< CO2Enthalpy >( filename, key );
 
@@ -1131,7 +1052,6 @@ public:
 protected:
   string const key = "EnthalpyFun";
   string const filename = "pvtgas.txt";
-  std::unique_ptr< CO2EnthalpyFunction > pvtFunctionOld;
   std::unique_ptr< CO2Enthalpy > pvtFunction;
 };
 
@@ -1157,26 +1077,12 @@ TEST_F( CO2EnthalpyTest, CO2EnthalpyMassValuesAndDeriv )
                                        9320.187656, 10117.295548, 10779.101555, -37449.569995, -36262.216311, -35283.355068};
 
   localIndex counter = 0;
-  printf ( " CO2Enthalpy Mass old values: \n { " );
   for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
     for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
       for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
       {
-        EvalVarArgs const pressure_old = P[iPres];
-        EvalVarArgs const temp_old = TC[iTemp];
-        array1d< EvalVarArgs > comp_old ( 2 );
-        comp_old[0] = comp[0];
-        comp_old[1] = comp[1];
-        EvalVarArgs value_old;
-        real64 value;
-
-        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, true );
-        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, true );
-        checkRelativeError ( value, value_old.m_var, relTol );
-        printf ( " %15lf, ", value_old.m_var );
-
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
@@ -1186,7 +1092,6 @@ TEST_F( CO2EnthalpyTest, CO2EnthalpyMassValuesAndDeriv )
     comp[0] += deltaComp;
     comp[1] = 1 - comp[0];
   }
-  printf ( " } \n " );
 }
 
 TEST_F( CO2EnthalpyTest, CO2EnthalpyMolarValuesAndDeriv )
@@ -1211,26 +1116,12 @@ TEST_F( CO2EnthalpyTest, CO2EnthalpyMolarValuesAndDeriv )
                                       646524.643323, 662069.737939, 675004.648394, 211822.446731, 229938.535180, 244979.580788,
                                       -851126.590796, -824141.279795, -801894.433361 };
   localIndex counter = 0;
-  printf ( " CO2Enthalpy Molar old values: \n { " );
   for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
     for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
       for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
       {
-        EvalVarArgs const pressure_old = P[iPres];
-        EvalVarArgs const temp_old = TC[iTemp];
-        array1d< EvalVarArgs > comp_old ( 2 );
-        comp_old[0] = comp[0];
-        comp_old[1] = comp[1];
-        EvalVarArgs value_old;
-        real64 value;
-
-        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, false );
-        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, false );
-        checkRelativeError ( value, value_old.m_var, relTol );
-        printf ( " %15lf, ", value_old.m_var );
-
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
@@ -1240,7 +1131,6 @@ TEST_F( CO2EnthalpyTest, CO2EnthalpyMolarValuesAndDeriv )
     comp[0] += deltaComp;
     comp[1] = 1 - comp[0];
   }
-  printf ( " } \n " );
 }
 
 class BrineInternalEnergyTest : public ::testing::Test
@@ -1248,9 +1138,6 @@ class BrineInternalEnergyTest : public ::testing::Test
 public:
   BrineInternalEnergyTest()
   {
-    writeTableToFile( filename, pvtLiquidInternalEnergyTableContent );
-
-    pvtFunctionOld = makeOldPVTFunction< BrineInternalEnergyFunction >( filename, key );
     writeTableToFile( filename, pvtLiquidInternalEnergyTableContent );
     pvtFunction = makePVTFunction< BrineInternalEnergy >( filename, key );
 
@@ -1264,7 +1151,6 @@ public:
 protected:
   string const key = "InternalEnergyFun";
   string const filename = "pvtliquid.txt";
-  std::unique_ptr< BrineInternalEnergyFunction > pvtFunctionOld;
   std::unique_ptr< BrineInternalEnergy > pvtFunction;
 };
 
@@ -1292,26 +1178,12 @@ TEST_F( BrineInternalEnergyTest, BrineInternalEnergyMassValuesAndDeriv )
 
 
   localIndex counter = 0;
-  printf ( " BrineInternalEnergy Mass old values: \n { " );
   for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
     for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
       for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
       {
-        EvalVarArgs const pressure_old = P[iPres];
-        EvalVarArgs const temp_old = TC[iTemp];
-        array1d< EvalVarArgs > comp_old ( 2 );
-        comp_old[0] = comp[0];
-        comp_old[1] = comp[1];
-        EvalVarArgs value_old;
-        real64 value;
-
-        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, true );
-        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, true );
-        checkRelativeError ( value, value_old.m_var, relTol );
-        printf ( " %15lf, ", value_old.m_var );
-
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
@@ -1321,7 +1193,6 @@ TEST_F( BrineInternalEnergyTest, BrineInternalEnergyMassValuesAndDeriv )
     comp[0] += deltaComp;
     comp[1] = 1 - comp[0];
   }
-  printf ( " } \n " );
 }
 
 TEST_F( BrineInternalEnergyTest, BrineInternalEnergyMolarValuesAndDeriv )
@@ -1346,26 +1217,12 @@ TEST_F( BrineInternalEnergyTest, BrineInternalEnergyMolarValuesAndDeriv )
                                       5106.500000, 5107.100000, 5107.600000, 7640.500000, 7641.100000, 7641.600000,
                                       12984.500000, 12985.100000, 12985.600000};
   localIndex counter = 0;
-  printf ( " BrineInternalEnergy Molar old values: \n { " );
   for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
     for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
       for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
       {
-        EvalVarArgs const pressure_old = P[iPres];
-        EvalVarArgs const temp_old = TC[iTemp];
-        array1d< EvalVarArgs > comp_old ( 2 );
-        comp_old[0] = comp[0];
-        comp_old[1] = comp[1];
-        EvalVarArgs value_old;
-        real64 value;
-
-        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, false );
-        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, false );
-        checkRelativeError ( value, value_old.m_var, relTol );
-        printf ( " %15lf, ", value_old.m_var );
-
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
@@ -1375,7 +1232,6 @@ TEST_F( BrineInternalEnergyTest, BrineInternalEnergyMolarValuesAndDeriv )
     comp[0] += deltaComp;
     comp[1] = 1 - comp[0];
   }
-  printf ( " } \n " );
 }
 
 class CO2InternalEnergyTest : public ::testing::Test
@@ -1383,9 +1239,6 @@ class CO2InternalEnergyTest : public ::testing::Test
 public:
   CO2InternalEnergyTest()
   {
-    writeTableToFile( filename, pvtLiquidInternalEnergyTableContent );
-
-    pvtFunctionOld = makeOldPVTFunction< CO2InternalEnergyFunction >( filename, key );
     writeTableToFile( filename, pvtLiquidInternalEnergyTableContent );
     pvtFunction = makePVTFunction< CO2InternalEnergy >( filename, key );
 
@@ -1399,7 +1252,6 @@ public:
 protected:
   string const key = "InternalEnergyFun";
   string const filename = "pvtgas.txt";
-  std::unique_ptr< CO2InternalEnergyFunction > pvtFunctionOld;
   std::unique_ptr< CO2InternalEnergy > pvtFunction;
 };
 
@@ -1427,26 +1279,12 @@ TEST_F( CO2InternalEnergyTest, CO2InternalEnergyMassValuesAndDeriv )
 
 
   localIndex counter = 0;
-  printf ( " CO2InternalEnergy Mass old values: \n { " );
   for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
     for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
       for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
       {
-        EvalVarArgs const pressure_old = P[iPres];
-        EvalVarArgs const temp_old = TC[iTemp];
-        array1d< EvalVarArgs > comp_old ( 2 );
-        comp_old[0] = comp[0];
-        comp_old[1] = comp[1];
-        EvalVarArgs value_old;
-        real64 value;
-
-        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, true );
-        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, true );
-        checkRelativeError ( value, value_old.m_var, relTol );
-        printf ( " %15lf, ", value_old.m_var );
-
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
@@ -1456,7 +1294,6 @@ TEST_F( CO2InternalEnergyTest, CO2InternalEnergyMassValuesAndDeriv )
     comp[0] += deltaComp;
     comp[1] = 1 - comp[0];
   }
-  printf ( " } \n " );
 }
 
 TEST_F( CO2InternalEnergyTest, CO2InternalEnergyMolarValuesAndDeriv )
@@ -1481,26 +1318,12 @@ TEST_F( CO2InternalEnergyTest, CO2InternalEnergyMolarValuesAndDeriv )
                                       5106.500000, 5107.100000, 5107.600000, 7640.500000, 7641.100000, 7641.600000,
                                       12984.500000, 12985.100000, 12985.600000};
   localIndex counter = 0;
-  printf ( " CO2InternalEnergy Molar old values: \n { " );
   for( localIndex iComp = 0; iComp < 3; ++iComp )
   {
     for( localIndex iPres = 0; iPres < 3; ++iPres )
     {
       for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
       {
-        EvalVarArgs const pressure_old = P[iPres];
-        EvalVarArgs const temp_old = TC[iTemp];
-        array1d< EvalVarArgs > comp_old ( 2 );
-        comp_old[0] = comp[0];
-        comp_old[1] = comp[1];
-        EvalVarArgs value_old;
-        real64 value;
-
-        pvtFunctionOld->evaluation( pressure_old, temp_old, comp_old, value_old, false );
-        pvtFunctionWrapper.compute( pressure_old.m_var, temp_old.m_var, comp.toSliceConst(), value, false );
-        checkRelativeError ( value, value_old.m_var, relTol );
-        printf ( " %15lf, ", value_old.m_var );
-
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
@@ -1510,7 +1333,6 @@ TEST_F( CO2InternalEnergyTest, CO2InternalEnergyMolarValuesAndDeriv )
     comp[0] += deltaComp;
     comp[1] = 1 - comp[0];
   }
-  printf ( " } \n " );
 }
 
 
