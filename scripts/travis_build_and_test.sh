@@ -31,13 +31,18 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
-# The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--use-hwthread-cpus" option is added for OpenMPI.
+# The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
 # OpenMPI prevents from running as `root` user by default.
 # And by default user is `root` in a docker container.
 # Using this option therefore offers a minimal and convenient way to run the unit tests.
 #
-# The option `--use-hwthread-cpus` tells OpenMPI to discover the number of hardware threads on the node,
+# The option `--oversubscribe` tells OpenMPI to allow more MPI ranks than the node has cores.
+# This is needed because our unit test `blt_mpi_smoke` is run in parallel with _hard coded_ 4 ranks.
+# While our travis-ci nodes only have 2.
+# 
+# In case we have more powerful nodes, consider removing `--oversubscribe` and use `--use-hwthread-cpus` instead.
+# This will tells OpenMPI to discover the number of hardware threads on the node,
 # and use that as the number of slots available. (There is a distinction between threads and cores).
 GEOSX_BUILD_DIR=/tmp/build
 or_die python scripts/config-build.py \
@@ -45,7 +50,7 @@ or_die python scripts/config-build.py \
               -bt ${CMAKE_BUILD_TYPE} \
               -bp ${GEOSX_BUILD_DIR} \
               -ip ${GEOSX_DIR} \
-              -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--use-hwthread-cpus"'
+              -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"'
 
 or_die cd ${GEOSX_BUILD_DIR}
 
