@@ -150,19 +150,13 @@ public:
 
     // extract views into multiphase solver data
     {
-      m_fluidPhaseDensityOld =
-        elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseDensityOld >();
-      m_fluidPhaseCompFracOld =
-        elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseComponentFractionOld >();
-      m_fluidPhaseSaturationOld =
-        elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseVolumeFractionOld >();
+      m_fluidPhaseDensityOld = elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseDensityOld >();
+      m_fluidPhaseCompFracOld = elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseComponentFractionOld >();
+      m_fluidPhaseSaturationOld = elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseVolumeFractionOld >();
 
-      m_fluidPhaseSaturation =
-        elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseVolumeFraction >();
-      m_dFluidPhaseSaturation_dPressure =
-        elementSubRegion.template getExtrinsicData< extrinsicMeshData::dPhaseVolumeFraction_dPressure >();
-      m_dFluidPhaseSaturation_dGlobalCompDensity =
-        elementSubRegion.template getExtrinsicData< extrinsicMeshData::dPhaseVolumeFraction_dGlobalCompDensity >();
+      m_fluidPhaseSaturation = elementSubRegion.template getExtrinsicData< extrinsicMeshData::phaseVolumeFraction >();
+      m_dFluidPhaseSaturation_dPressure = elementSubRegion.template getExtrinsicData< extrinsicMeshData::dPhaseVolumeFraction_dPressure >();
+      m_dFluidPhaseSaturation_dGlobalCompDensity = elementSubRegion.template getExtrinsicData< extrinsicMeshData::dPhaseVolumeFraction_dGlobalCompDensity >();
 
       m_dGlobalCompFraction_dGlobalCompDensity =
         elementSubRegion.template getExtrinsicData< extrinsicMeshData::dGlobalCompFraction_dGlobalCompDensity >();

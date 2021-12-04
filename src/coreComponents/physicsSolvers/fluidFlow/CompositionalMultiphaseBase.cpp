@@ -352,8 +352,7 @@ void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & d
 
   // outputs
 
-  arrayView2d< real64, compflow::USD_COMP > const & compFrac =
-    dataGroup.getExtrinsicData< extrinsicMeshData::globalCompFraction >();
+  arrayView2d< real64, compflow::USD_COMP > const & compFrac = dataGroup.getExtrinsicData< extrinsicMeshData::globalCompFraction >();
 
   arrayView3d< real64, compflow::USD_COMP_DC > const & dCompFrac_dCompDens =
     dataGroup.getExtrinsicData< extrinsicMeshData::dGlobalCompFraction_dGlobalCompDensity >();
