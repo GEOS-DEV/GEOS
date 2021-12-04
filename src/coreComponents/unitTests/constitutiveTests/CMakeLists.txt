@@ -32,8 +32,7 @@ endif()
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testMultiFluid.cpp
-          testCO2BrinePVTModels.cpp
-        )
+          testCO2BrinePVTModels.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
