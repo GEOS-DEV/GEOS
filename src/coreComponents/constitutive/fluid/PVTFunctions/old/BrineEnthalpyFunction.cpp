@@ -239,7 +239,7 @@ void BrineEnthalpyFunction::evaluation( EvalVarArgs const & pressure, EvalVarArg
   if( useMass )
   {
 
-    EvalVarArgs X = C * waterMW / (C * waterMW + (1.0 - C) * CO2MW);
+    EvalVarArgs X = C;
     X.m_der[m_waterIndex+1] = 1.0;
 
     value = (1.0 - X ) * enth1 + X * enth2;

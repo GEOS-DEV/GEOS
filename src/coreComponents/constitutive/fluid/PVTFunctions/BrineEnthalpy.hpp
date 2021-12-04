@@ -160,9 +160,7 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
 
   if( useMass )
   {
-    // Do we really need to convert here from mole fraction to mass fraction?
-    real64 const X = C * waterMW / (C * waterMW + (1.0 - C) * CO2MW);
-    value = (1.0 - X ) * CO2Enthalpy + X * brineEnthalpy;
+    value = (1.0 - C ) * CO2Enthalpy + C * brineEnthalpy;
   }
   else
   {
@@ -201,31 +199,22 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
 
   if( useMass )
   {
-    real64 const waterMW = m_componentMolarWeight[m_waterIndex];
-    real64 const CO2MW = m_componentMolarWeight[m_CO2Index];
+    value = (1.0 - C ) * CO2Enthalpy + C * brineEnthalpy;
 
-    // Do we really need to convert here from mole fraction to mass fraction?
-    real64 const X = C * waterMW / (C * waterMW + (1.0 - C) * CO2MW);
-    real64 const dX_dC_denom = C * waterMW - (C - 1.0) * CO2MW;
-    real64 const dX_dC = waterMW * CO2MW / (dX_dC_denom * dX_dC_denom);
-
-    dvalue_dC = (brineEnthalpy - CO2Enthalpy) * dX_dC;
-
-    //real64 const X = C;
-    value = (1.0 - X ) * CO2Enthalpy + X * brineEnthalpy;
-    dValue_dPressure = (1.0 - X ) * CO2EnthalpyDeriv[0] +
+    dvalue_dC = brineEnthalpy - CO2Enthalpy;
+    dValue_dPressure = (1.0 - C ) * CO2EnthalpyDeriv[0] +
                        dvalue_dC * dPhaseComposition_dPressure[m_waterIndex];
-    dValue_dTemperature = (1.0 - X ) * CO2EnthalpyDeriv[1] + X * brineEnthalpy_dTemperature +
+    dValue_dTemperature = (1.0 - C ) * CO2EnthalpyDeriv[1] + C * brineEnthalpy_dTemperature +
                           dvalue_dC * dPhaseComposition_dTemperature[m_waterIndex];;
   }
   else
   {
     real64 const waterMWInv = 1 / m_componentMolarWeight[m_waterIndex];
     real64 const CO2MWInv = 1 / m_componentMolarWeight[m_CO2Index];
-    dvalue_dC = brineEnthalpy * waterMWInv - CO2Enthalpy * CO2MWInv;
-
 
     value = (1.0 - C ) * CO2Enthalpy * CO2MWInv + C * brineEnthalpy * waterMWInv;
+
+    dvalue_dC = brineEnthalpy * waterMWInv - CO2Enthalpy * CO2MWInv;
     dValue_dPressure = (1.0 - C ) * CO2EnthalpyDeriv[0] * CO2MWInv +
                        dvalue_dC * dPhaseComposition_dPressure[m_waterIndex];
     dValue_dTemperature = (1.0 - C ) * CO2EnthalpyDeriv[1] * CO2MWInv + C * brineEnthalpy_dTemperature * waterMWInv +
