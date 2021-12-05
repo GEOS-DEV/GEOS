@@ -35,6 +35,7 @@ class ConstitutiveManager;
 class FunctionManager;
 class FieldSpecificationManager;
 struct CommandLineOptions;
+class MeshLevel;
 
 /**
  * @class ProblemManager
@@ -321,7 +322,7 @@ private:
    * Checks all physics solvers for targetRegions and constitutive models to
    * determine the minimum number of quadrature points for each subregion.
    */
-  map< std::pair< string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
+  map< std::pair< string, string >, localIndex > calculateRegionQuadrature( MeshLevel & meshBodies );
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate
@@ -330,7 +331,7 @@ private:
    * @param constitutiveManager The constitutive manager object.
    * @param regionQuadrature The map containing the number of quadrature points for every subregion.
    */
-  void setRegionQuadrature( Group & meshBodies,
+  void setRegionQuadrature( MeshLevel & meshBodies,
                             constitutive::ConstitutiveManager const & constitutiveManager,
                             map< std::pair< string, string >, localIndex > const & regionQuadrature );
 

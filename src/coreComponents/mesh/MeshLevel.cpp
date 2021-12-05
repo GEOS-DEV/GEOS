@@ -114,7 +114,7 @@ MeshLevel::MeshLevel( string const & name,
     // std::exit(2);
     sourceRegion.forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion const & sourceSubRegion )
     {
-      std::exit(2);
+//      std::exit(2);
       std::cout << "hello" << std::endl;
       CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
       newSubRegion.setElementType( sourceSubRegion.getElementType() );
@@ -140,11 +140,11 @@ MeshLevel::MeshLevel( string const & name,
       array2d < localIndex > localElemToLocalFace(6,numNodesPerElem);
 
 
-      for (localIndex i = 0; i < order+1; i++)//x
+      for (localIndex i = 0; i < order+1; ++i)//x
       {
-        for (localIndex j = 0; j < order+1; j++)//y
+        for (localIndex j = 0; j < order+1; ++j)//y
         {
-          for (localIndex k = 0; k < order+1; i++)//z
+          for (localIndex k = 0; k < order+1; ++k)//z
           {
             localElemToLocalFace[0][(order+1)*order - (order+1)*j + pow(order+1,2)*k] = j + (order+1)*k;
 
@@ -165,25 +165,25 @@ MeshLevel::MeshLevel( string const & name,
 
       for (localIndex e = 0; e < elemsToNodesNew.size(0); e++)
       {
-        for (localIndex k = 0; k < order+1; k++)
+        for (localIndex k = 0; k < order+1; ++k)
         {
-          for (localIndex j = 0; j< order+1; j++)
+          for (localIndex j = 0; j< order+1; ++j)
           {
-            for (localIndex i = 0; i < order+1; i++)
+            for (localIndex i = 0; i < order+1; ++i)
             {
-              for (localIndex face = 0; face < 6; face++)
+              for (localIndex face = 0; face < 6; ++face)
               {
                 localIndex m = localElemToLocalFace[face][i +(order+1)*j + pow(order+1,2)*k];
                 if (m != -1)
                 {
                   if ( faceToNodeMapNew[elemToFaces[e][face]][m] != -1)
                   {
-                    for (localIndex l = 0; i < 2; l++)
+                    for (localIndex l = 0; i < 2; ++l)
                     {
                       localIndex neighE = faceToElemIndex[elemToFaces[e][face]][l];
                       if (neighE != e && neighE != -1)
                       {
-                        for (localIndex n = 0; n < pow(order+1,3); i++)
+                        for (localIndex n = 0; n < pow(order+1,3); ++n)
                         {
                           if ( elemsToNodesNew[neighE][n] == faceToNodeMapNew[elemToFaces[e][face]][i + (order+1)*j + pow(order+1,2)*k])
                           {
@@ -477,5 +477,71 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
   }
 
 }
+
+void MeshLevel::generateSets()
+{
+  GEOSX_MARK_FUNCTION;
+
+  NodeManager const & nodeManager = m_nodeManager;
+
+  dataRepository::Group const & nodeSets = nodeManager.sets();
+
+  map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
+  string_array setNames; // just a holder for the names of the sets
+
+  // loop over all wrappers and fill the nodeIndSet arrays for each set
+  for( auto & wrapper : nodeSets.wrappers() )
+  {
+    string const & name = wrapper.second->getName();
+    nodeInSet[name].resize( nodeManager.size() );
+    nodeInSet[name].setValues< serialPolicy >( false );
+
+    if( nodeSets.hasWrapper( name ) )
+    {
+      setNames.emplace_back( name );
+      SortedArrayView< localIndex const > const & set = nodeSets.getReference< SortedArray< localIndex > >( name );
+      for( localIndex const a : set )
+      {
+        nodeInSet[name][a] = true;
+      }
+    }
+  }
+
+
+  ElementRegionManager & elementRegionManager = m_elementManager;
+  elementRegionManager.forElementSubRegions( [&]( auto & subRegion )
+  {
+    dataRepository::Group & elementSets = subRegion.sets();
+
+    auto const & elemToNodeMap = subRegion.nodeList();
+
+    for( string const & setName : setNames )
+    {
+      arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
+
+      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName ).reference();
+      for( localIndex k = 0; k < subRegion.size(); ++k )
+      {
+        localIndex const numNodes = subRegion.numNodesPerElement( k );
+
+        localIndex elementInSet = true;
+        for( localIndex i = 0; i < numNodes; ++i )
+        {
+          if( !nodeInCurSet( elemToNodeMap[ k ][ i ] ) )
+          {
+            elementInSet = false;
+            break;
+          }
+        }
+
+        if( elementInSet )
+        {
+          targetSet.insert( k );
+        }
+      }
+    }
+  } );
+}
+
 
 } /* namespace geosx */

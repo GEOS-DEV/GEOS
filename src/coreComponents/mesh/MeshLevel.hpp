@@ -56,6 +56,9 @@ public:
 
   virtual ~MeshLevel() override;
 
+  void generateSets();
+
+
   /**
    * @brief Collects the nodes, edges, faces, and elements that are adjacent to a given list of nodes.
    * @param[in] seedNodeList the input nodes

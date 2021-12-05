@@ -512,11 +512,14 @@ void ProblemManager::generateMesh()
   {
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
 
-    // clone mesh level
-    meshBody.createMeshLevel( 1, 0 );
 
-    for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
+    for( localIndex b = 0; b < 2; ++b )
     {
+      // clone mesh level
+      if( b>0 )
+      {
+        meshBody.createMeshLevel( b, 0 );
+      }
       MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( b );
 
       NodeManager & nodeManager = meshLevel.getNodeManager();
@@ -538,7 +541,7 @@ void ProblemManager::generateMesh()
       edgeManager.buildEdges( nodeManager, faceManager );
       nodeManager.setEdgeMaps( edgeManager );
 
-      domain.generateSets();
+      meshLevel.generateSets();
 
       elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
       {
@@ -595,13 +598,20 @@ void ProblemManager::applyNumericalMethods()
   ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   Group & meshBodies = domain.getMeshBodies();
 
-  map< std::pair< string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
-
-  setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
+  for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
+  {
+    MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
+    for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
+    {
+      MeshLevel & meshLevel = meshBody.getMeshLevel( b );
+      map< std::pair< string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshLevel );
+      setRegionQuadrature( meshLevel, constitutiveManager, regionQuadrature );
+    }
+  }
 }
 
 
-map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
+map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQuadrature( MeshLevel & meshLevel )
 {
 
   NumericalMethodsManager const &
@@ -624,12 +634,12 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
       FiniteElementDiscretization const * const
       feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( discretizationName );
 
-      for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
+//      for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
       {
-        MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
+//        MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
 //        for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
         {
-          MeshLevel & meshLevel = meshBody.getMeshLevel( 1 );
+//          MeshLevel & meshLevel = meshBody.getMeshLevel( b );
           NodeManager & nodeManager = meshLevel.getNodeManager();
           ElementRegionManager & elemManager = meshLevel.getElemManager();
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
@@ -684,16 +694,16 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 }
 
 
-void ProblemManager::setRegionQuadrature( Group & meshBodies,
+void ProblemManager::setRegionQuadrature( MeshLevel & meshLevel,
                                           ConstitutiveManager const & constitutiveManager,
                                           map< std::pair< string, string >, localIndex > const & regionQuadrature )
 {
-  for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
+//  for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
   {
-    MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
-    for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
+//    MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
+//    for( localIndex b = 0; b < meshBody.numSubGroups(); ++b )
     {
-      MeshLevel & meshLevel = meshBody.getMeshLevel( b );
+//      MeshLevel & meshLevel = meshBody.getMeshLevel( b );
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 
       elemManager.forElementSubRegionsComplete( [&]( localIndex const,

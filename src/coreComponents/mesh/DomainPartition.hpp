@@ -89,7 +89,7 @@ public:
    * A domain contain sets of nodes or elements (that can be used to defined boundary conditions, etc.).
    * This member functions build those sets.
    */
-  void generateSets();
+//  void generateSets();
 
   /**
    * @name MPI functionality
