@@ -34,6 +34,7 @@ template< typename MODEL, typename VAR, typename D_VAR_D_SAT >
 void testNumericalDerivatives( dataRepository::Group & parent,
                                MODEL & model,
                                arraySlice1d< real64 const > const saturationInput,
+                               arraySlice1d< real64 const > const initSaturationInput,
                                real64 const perturbParameter,
                                real64 const relTol,
                                string const & varName,
@@ -45,9 +46,11 @@ void testNumericalDerivatives( dataRepository::Group & parent,
 
   // Copy input values into an array with expected layout
   array2d< real64, compflow::LAYOUT_PHASE > saturationValues( 1, NP );
+  array2d< real64, compflow::LAYOUT_PHASE > initSaturationValues( 1, NP );
   for( localIndex i = 0; i < NP; ++i )
   {
     saturationValues[0][i] = saturationInput[i];
+    initSaturationValues[0][i] = initSaturationInput[i];
   }
   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const saturation = saturationValues[0];
 
@@ -57,6 +60,10 @@ void testNumericalDerivatives( dataRepository::Group & parent,
 
   model.allocateConstitutiveData( model.getParent(), 1 );
   modelCopy.allocateConstitutiveData( model.getParent(), 1 );
+
+  // initialize the model (needed for hysteresis)
+  model.initializeState( initSaturationValues.toViewConst() );
+  modelCopy.initializeState( initSaturationValues.toViewConst() );
 
   // auto to avoid having to spell out unknown layout permutations
   auto const var = varAccessor( model );

@@ -277,13 +277,17 @@ CapillaryPressureBase & makeTableCapPressureThreePhase( string const & name, Gro
 class CapillaryPressureTest : public ConstitutiveTestBase< CapillaryPressureBase >
 {
 public:
-  void test( arraySlice1d< real64 const > const sat, real64 const eps, real64 const tol )
+  void test( arraySlice1d< real64 const > const sat,
+             arraySlice1d< real64 const > const initSat,
+             real64 const eps,
+             real64 const tol )
   {
     arrayView3d< real64 const, USD_CAPPRES > phaseCapPressure;
     arrayView4d< real64 const, USD_CAPPRES_DS > dPhaseCapPressure_dPhaseVolFraction;
     testNumericalDerivatives( m_parent,
                               *m_model,
                               sat,
+                              initSat,
                               eps,
                               tol,
                               "phaseCapPressure",
@@ -308,14 +312,21 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_brooksCoreyCapPressureTwoPha
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.4;
-  real64 const end_sat   = 0.6;
+  real64 const startSat = 0.4;
+  real64 const endSat = 0.6;
   real64 const dS = 1e-1;
+
   array1d< real64 > sat( 2 );
-  sat[0] = start_sat; sat[1] = 1.0-sat[0];
-  while( sat[0] <= end_sat )
+  array1d< real64 > initSat( 2 ); // will be unused for this model
+
+  sat[0] = startSat;
+  initSat[0] = sat[0];
+  sat[1] = 1.0-sat[0];
+  initSat[1] = sat[1];
+
+  while( sat[0] <= endSat )
   {
-    test( sat, eps, tol );
+    test( sat, initSat, eps, tol );
     sat[0] += dS;
     sat[1] = 1 - sat[0];
   }
@@ -329,16 +340,23 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_brooksCoreyCapPressureThreeP
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.4;
-  real64 const end_sat   = 0.6;
+  real64 const startSat = 0.4;
+  real64 const endSat = 0.6;
   real64 const dS = 1e-1;
+
   array1d< real64 > sat( 3 );
-  sat[0] = start_sat;
+  array1d< real64 > initSat( 3 ); // will be unused for this model
+
+  sat[0] = startSat;
+  initSat[0] = sat[0];
   sat[1] = 0.5*(1-sat[0]);
+  initSat[1] = sat[1];
   sat[2] = 1.0-sat[0]-sat[1];
-  while( sat[0] <= end_sat )
+  initSat[2] = sat[2];
+
+  while( sat[0] <= endSat )
   {
-    test( sat, eps, tol );
+    test( sat, initSat, eps, tol );
     sat[0] += dS;
     sat[1] = 0.5 * ( 1-sat[0] );
     sat[2] = 1.0 - sat[0] - sat[1];
@@ -353,14 +371,21 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_vanGenuchtenCapPressureTwoPh
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.4;
-  real64 const end_sat   = 0.6;
-  real64 const dS        = 1e-1;
+  real64 const startSat = 0.4;
+  real64 const endSat = 0.6;
+  real64 const dS = 1e-1;
+
   array1d< real64 > sat( 2 );
-  sat[0] = start_sat; sat[1] = 1-sat[1];
-  while( sat[0] <= end_sat )
+  array1d< real64 > initSat( 2 ); // will be unused for this model
+
+  sat[0] = startSat;
+  initSat[0] = sat[0];
+  sat[1] = 1-sat[1];
+  initSat[1] = sat[1];
+
+  while( sat[0] <= endSat )
   {
-    test( sat, eps, tol );
+    test( sat, initSat, eps, tol );
     sat[0] += dS;
     sat[1] = 1 - sat[0];
   }
@@ -375,16 +400,23 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_vanGenuchtenCapPressureThree
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.4;
-  real64 const end_sat   = 0.6;
-  real64 const dS        = 1e-1;
+  real64 const startSat = 0.4;
+  real64 const endSat = 0.6;
+  real64 const dS = 1e-1;
+
   array1d< real64 > sat( 3 );
-  sat[0] = start_sat;
+  array1d< real64 > initSat( 3 ); // will be unused in this model
+
+  sat[0] = startSat;
+  initSat[0] = sat[0];
   sat[1] = 0.5*(1-sat[0]);
+  initSat[1] = sat[1];
   sat[2] = 1.0-sat[0]-sat[1];
-  while( sat[0] <= end_sat )
+  initSat[2] = sat[2];
+
+  while( sat[0] <= endSat )
   {
-    test( sat, eps, tol );
+    test( sat, initSat, eps, tol );
     sat[0] += dS;
     sat[1] = 0.5*(1-sat[0]);
     sat[2] = 1 - sat[0] - sat[1];
@@ -399,14 +431,21 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_tableCapPressureTwoPhase )
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.25;
-  real64 const end_sat   = 0.75;
+  real64 const startSat = 0.25;
+  real64 const endSat   = 0.75;
   real64 const dS        = 1e-1;
+
   array1d< real64 > sat( 2 );
-  sat[0] = start_sat; sat[1] = 1-sat[1];
-  while( sat[0] <= end_sat )
+  array1d< real64 > initSat( 2 ); // will be unused in this model
+
+  sat[0] = startSat;
+  initSat[0] = sat[0];
+  sat[1] = 1-sat[1];
+  initSat[1] = sat[1];
+
+  while( sat[0] <= endSat )
   {
-    test( sat, eps, tol );
+    test( sat, initSat, eps, tol );
     sat[0] += dS;
     sat[1] = 1 - sat[0];
   }
@@ -421,16 +460,23 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_tableCapPressureThreePhase )
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.25;
-  real64 const end_sat   = 0.75;
-  real64 const dS        = 1e-1;
+  real64 const startSat = 0.25;
+  real64 const endSat = 0.75;
+  real64 const dS = 1e-1;
+
   array1d< real64 > sat( 3 );
-  sat[0] = start_sat;
+  array1d< real64 > initSat( 3 ); // will be unused in this model
+
+  sat[0] = startSat;
+  initSat[0] = sat[0];
   sat[1] = 0.5*(1-sat[0]);
+  initSat[1] = sat[1];
   sat[2] = 1.0-sat[0]-sat[1];
-  while( sat[0] <= end_sat )
+  initSat[2] = sat[2];
+
+  while( sat[0] <= endSat )
   {
-    test( sat, eps, tol );
+    test( sat, initSat, eps, tol );
     sat[0] += dS;
     sat[1] = 0.5*(1-sat[0]);
     sat[2] = 1 - sat[0] - sat[1];

@@ -571,15 +571,27 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
                                                                                    auto & subRegion )
   {
     // 4. Update dependent state quantities
+
+    // 4.1 Update phase volume fraction
     updatePhaseVolumeFraction( subRegion, targetIndex );
+
+    // 4.2 Initialize the relative permeability model using the initial phase volume fraction
+    //     This is needed to handle relative permeability (and later, capillary pressure) hysteresis,
+    //     and must be done before calling updateRelPermModel
+    arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
+      subRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
+    RelativePermeabilityBase & relPerm =
+      getConstitutiveModel< RelativePermeabilityBase >( subRegion, m_relPermModelNames[targetIndex] );
+    relPerm.initializeState( phaseVolFrac );
+
+    // 4.3 Update the other state-dependent quantities
     updatePorosityAndPermeability( subRegion, targetIndex );
     updateRelPermModel( subRegion, targetIndex );
     updatePhaseMobility( subRegion, targetIndex );
     updateCapPressureModel( subRegion, targetIndex );
 
+    // 4.4 Save the initial porosity into the old porosity
     CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
-
-    // saves porosity in oldPorosity
     porousSolid.initializeState();
 
   } );
@@ -1463,10 +1475,12 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
+  // Step 1: save the converged aquifer state
   // note: we have to save the aquifer state **before** updating the pressure,
   // otherwise the aquifer flux is saved with the wrong pressure time level
   saveAquiferConvergedState( time, dt, domain );
 
+  // Step 2: update the primary variables (pressure and compDensity) with the accumulated Newton updates
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 const > const dPres =
@@ -1488,8 +1502,17 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       }
     } );
 
+    // Step 3: save converged state for the porous material
     CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
     porousMaterial.saveConvergedState();
+
+    // Step 4: save converged state for the relperm model to handle hysteresis
+    arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( viewKeyStruct::phaseVolumeFractionString() );
+    RelativePermeabilityBase & relPerm =
+      getConstitutiveModel< RelativePermeabilityBase >( subRegion, m_relPermModelNames[targetIndex] );
+    relPerm.saveConvergedPhaseVolFraction( phaseVolFrac );
+
   } );
 }
 

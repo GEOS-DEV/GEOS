@@ -48,6 +48,7 @@ ProppantSolidProppantPermeability           node :ref:`DATASTRUCTURE_ProppantSol
 StrainDependentPermeability                 node :ref:`DATASTRUCTURE_StrainDependentPermeability`                 
 TableCapillaryPressure                      node :ref:`DATASTRUCTURE_TableCapillaryPressure`                      
 TableRelativePermeability                   node :ref:`DATASTRUCTURE_TableRelativePermeability`                   
+TableRelativePermeabilityHysteresis         node :ref:`DATASTRUCTURE_TableRelativePermeabilityHysteresis`         
 VanGenuchtenBakerRelativePermeability       node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`               
 =========================================== ==== ================================================================ 

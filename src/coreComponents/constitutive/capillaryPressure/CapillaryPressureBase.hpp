@@ -118,6 +118,21 @@ public:
   arrayView3d< real64 const, cappres::USD_CAPPRES > phaseCapPressure() const { return m_phaseCapPressure; }
   arrayView4d< real64 const, cappres::USD_CAPPRES_DS > dPhaseCapPressure_dPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
 
+  /**
+   * @brief Setup the initial step at the beginning of the simulation (needed for hysteresis, but unused for now)
+   * @param[in] initialPhaseVolFraction an array containing the initial phase volume fractions
+   */
+  virtual void initializeState( arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolFraction ) const
+  { GEOSX_UNUSED_VAR( initialPhaseVolFraction ); }
+
+  /**
+   * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis, but unused for now)
+   * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
+   */
+  virtual void saveConvergedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
+  { GEOSX_UNUSED_VAR( phaseVolFraction ); }
+
+
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * phaseNamesString() { return "phaseNames"; }

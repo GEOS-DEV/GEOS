@@ -89,9 +89,9 @@ public:
                             arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
     GEOSX_HOST_DEVICE
-    virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                          arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                          arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
+    void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                  arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                  arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
     GEOSX_HOST_DEVICE
     virtual void update( localIndex const k,
@@ -123,6 +123,7 @@ private:
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
+    static constexpr char const * relPermKernelWrappersString() { return "relPermWrappers"; }
     static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
     static constexpr char const * wettingNonWettingRelPermTableNamesString() { return "wettingNonWettingRelPermTableNames"; }
     static constexpr char const * wettingIntermediateRelPermTableNamesString() { return "wettingIntermediateRelPermTableNames"; }
