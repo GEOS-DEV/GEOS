@@ -171,7 +171,7 @@ void FlowSolverBase::initializePreSubGroups()
 
       string & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
       permName = getConstitutiveName< PermeabilityBase >( subRegion );
-      GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
+      GEOSX_ERROR_IF( permName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
     } );
   } );
 
