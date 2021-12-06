@@ -238,7 +238,7 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
 
   value = waterDensity * exponentPowered;
 
-  real64 const dValueCoef = log( 10 ) * value;
+  real64 const dValueCoef = LvArray::math::log( 10 ) * value;
 
   real64 const dValue_dPhaseComp = dValueCoef * exponent_dPhaseComp;
   dValue_dPressure = dValueCoef * exponent_dPressure + waterDensity_dPressure * exponentPowered;
