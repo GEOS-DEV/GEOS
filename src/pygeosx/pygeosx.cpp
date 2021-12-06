@@ -22,7 +22,6 @@
 #include "PyGroup.hpp"
 #include "PyWrapper.hpp"
 #include "pysolver/PySolver.hpp"
-#include "pysolver/PySolver2.hpp"
 #include "pyhdf5/PyHDF5.hpp"
 #include "mainInterface/initialization.hpp"
 
@@ -389,11 +388,6 @@ PyInit_pygeosx()
   }
 
   if( !LvArray::python::addTypeToModule( module, geosx::python::getPyWrapperType(), "Wrapper" ) )
-  {
-    return nullptr;
-  }
-
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolver2Type(), "Solver2" ) )
   {
     return nullptr;
   }

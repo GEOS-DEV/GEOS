@@ -2,7 +2,6 @@ set( python_headers pygeosx.hpp
                     PyGroup.hpp
                     PyWrapper.hpp
                     pysolver/PySolver.hpp
-                    pysolver/PySolver2.hpp
                     pyhdf5/PyHDF5.hpp
 		    )
 
@@ -10,7 +9,6 @@ set( python_sources pygeosx.cpp
                     PyGroup.cpp
                     PyWrapper.cpp
                     pysolver/PySolver.cpp
-                    pysolver/PySolver2.cpp
                     pyhdf5/PyHDF5.cpp
 		    )
 

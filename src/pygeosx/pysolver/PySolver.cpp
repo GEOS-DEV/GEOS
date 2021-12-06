@@ -236,6 +236,12 @@ static PyObject * reinit( PySolver * self, PyObject *args )
   Py_RETURN_NONE;
 }
 
+
+static PyObject * PySolver_getWrapper( PySolver * self, PyObject *args )
+{
+  GET_WRAPPER( self, args );
+}
+
 static PyMethodDef PySolver_methods[] = {
   { "explicitStep", (PyCFunction) explicitStep, METH_VARARGS, "explicit Step" },
   { "linearImplicitStep", (PyCFunction) linearImplicitStep, METH_VARARGS, "linear implicit step" },
@@ -243,7 +249,7 @@ static PyMethodDef PySolver_methods[] = {
   { "postProcessInput", (PyCFunction) postProcessInput, METH_NOARGS, "post processing input"},
   { "reinit", (PyCFunction) reinit, METH_NOARGS, "re-initialize certain variable depending on the solver being used"},
   { "initPostInitialConditions", (PyCFunction) initPostInitialConditions, METH_NOARGS, "call initializePostInitialConditionsPreSubGroup"},
-  { "get_wrapper", (PyCFunction) PyGroup_getWrapper< PySolver >, METH_VARARGS, PyGroup_getWrapperDocString },
+  { "get_wrapper", (PyCFunction) PySolver_getWrapper, METH_VARARGS, PyGroup_getWrapperDocString },
   { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
 

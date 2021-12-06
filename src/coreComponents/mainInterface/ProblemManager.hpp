@@ -168,11 +168,6 @@ public:
    * @brief Returns a pointer to the DomainPartition
    * @return Pointer to the DomainPartition
    */
-
-  EventManager & getEventManager()
-  {return *m_eventManager;}
-
-
   DomainPartition & getDomainPartition();
 
   /**
@@ -307,6 +302,14 @@ public:
     GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
     return *m_fieldSpecificationManager;
   }
+
+
+  /**
+   * @brief Returns the const EventManager.
+   * @return The const EventManager.
+   */
+  EventManager & getEventManager()
+  {return *m_eventManager;}
 
 protected:
   /**

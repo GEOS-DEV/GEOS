@@ -47,55 +47,42 @@ static constexpr char const * PyGroup_getWrapperDocString =
   "    The wrapper at the relative path.";
 
 
-template< typename T >
-static PyObject * PyGroup_getWrapper( T * const self, PyObject * const args ) noexcept
-{
-  //VERIFY_NON_NULL_SELF( self );
-  //VERIFY_INITIALIZED( self );
-
-  PyObject * unicodePath;
-  PyObject * defaultReturnValue = nullptr;
-  if( !PyArg_ParseTuple( args, "U|O", &unicodePath, &defaultReturnValue ) )
-  {
-    return nullptr;
+#define GET_WRAPPER( self, args ) \
+  PyObject * unicodePath; \
+  PyObject * defaultReturnValue = nullptr; \
+  if( !PyArg_ParseTuple( args, "U|O", &unicodePath, &defaultReturnValue ) ) \
+  { \
+    return nullptr; \
+  } \
+  LvArray::python::PyObjectRef<> asciiPath { PyUnicode_AsASCIIString( unicodePath ) }; \
+  if( asciiPath == nullptr ) \
+  { \
+    return nullptr; \
+  } \
+  char const * const path = PyBytes_AsString( asciiPath ); \
+  if( path == nullptr ) \
+  { \
+    return nullptr; \
+  } \
+  string groupPath, wrapperName; \
+  std::tie( groupPath, wrapperName ) = splitPath( path ); \
+  try \
+  { \
+    dataRepository::Group & group = self->group->getGroupByPath( groupPath ); \
+    dataRepository::WrapperBase & wrapper = group.getWrapperBase( wrapperName ); \
+    return createNewPyWrapper( wrapper ); \
+  } \
+  catch( std::domain_error const & e ) \
+  { \
+    if( defaultReturnValue == nullptr ) \
+    { \
+      PyErr_SetString( PyExc_KeyError, e.what() ); \
+      return nullptr; \
+    } \
+    Py_INCREF( defaultReturnValue ); \
+    return defaultReturnValue; \
   }
 
-  LvArray::python::PyObjectRef<> asciiPath { PyUnicode_AsASCIIString( unicodePath ) };
-  if( asciiPath == nullptr )
-  {
-    return nullptr;
-  }
-
-  char const * const path = PyBytes_AsString( asciiPath );
-  if( path == nullptr )
-  {
-    return nullptr;
-  }
-
-  string groupPath, wrapperName;
-  std::tie( groupPath, wrapperName ) = splitPath( path );
-
-  try
-  {
-    dataRepository::Group & group = self->group->getGroupByPath( groupPath );
-    dataRepository::WrapperBase & wrapper = group.getWrapperBase( wrapperName );
-    return createNewPyWrapper( wrapper );
-  }
-  // If the path isn't valid then either getGroupByPath or getWrapperBase will throw a std::domain_error
-  catch( std::domain_error const & e )
-  {
-    // If no default return value was specified then this results in a Python exception.
-    if( defaultReturnValue == nullptr )
-    {
-      PyErr_SetString( PyExc_KeyError, e.what() );
-      return nullptr;
-    }
-
-    // Otherwise we return the default value.
-    Py_INCREF( defaultReturnValue );
-    return defaultReturnValue;
-  }
-}
 
 
 PyObject * createNewPyGroup( dataRepository::Group & group );
