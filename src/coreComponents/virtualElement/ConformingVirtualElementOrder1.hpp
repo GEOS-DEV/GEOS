@@ -224,9 +224,16 @@ public:
   GEOSX_HOST_DEVICE
   static real64 invJacobianTransformation( int const GEOSX_UNUSED_PARAM( q ),
                                            real64 const (&GEOSX_UNUSED_PARAM( X ))[numNodes][3],
-                                           real64 ( &GEOSX_UNUSED_PARAM( J ) )[3][3] )
+                                           real64 ( & J )[3][3] )
   {
     GEOSX_ERROR( "No reference element map is defined for VEM classes" );
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        J[i][j] = 0.0;
+      }
+    }
     return 0.0;
   }
 
@@ -246,9 +253,16 @@ public:
   GEOSX_FORCE_INLINE
   static real64 calcGradN( localIndex const GEOSX_UNUSED_PARAM( q ),
                            real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3],
-                           real64 ( &GEOSX_UNUSED_PARAM( gradN ) )[maxSupportPoints][3] )
+                           real64 ( & gradN )[maxSupportPoints][3] )
   {
     GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    for( localIndex i = 0; i < maxSupportPoints; ++i )
+    {
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        gradN[i][j] = 0.0;
+      }
+    }
     return 0.0;
   }
 
