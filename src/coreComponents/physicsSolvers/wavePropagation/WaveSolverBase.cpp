@@ -24,6 +24,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {
@@ -80,7 +81,7 @@ WaveSolverBase::~WaveSolverBase()
 
 void WaveSolverBase::reinit()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   postProcessInput();

@@ -272,7 +272,7 @@ public:
    * @brief Get the name of this event target.
    * @return The name of the target of this event.
    */
-  string getEventName() const
+  string getTargetName() const
   { return m_eventTarget; }
 
 protected:

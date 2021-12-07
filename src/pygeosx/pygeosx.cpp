@@ -22,7 +22,7 @@
 #include "PyGroup.hpp"
 #include "PyWrapper.hpp"
 #include "pysolver/PySolver.hpp"
-#include "pyhdf5/PyHDF5.hpp"
+#include "pyhistory/PyHistory.hpp"
 #include "mainInterface/initialization.hpp"
 
 #include "LvArray/src/python/PyArray.hpp"
@@ -359,15 +359,26 @@ PyInit_pygeosx()
 {
   import_array();
 
-  PyObject * module = PyModule_Create( &pygeosxModuleFunctions );
+  LvArray::python::PyObjectRef<> module{ PyModule_Create( &pygeosxModuleFunctions ) };
+  if( module == nullptr )
+  {
+    return nullptr;
+  }
+
   PyObject * submodule1 = geosx::python::PyInit_pysolver();
-  PyObject * submodule2 = geosx::python::PyInit_pyhdf5();
+  PyObject * submodule2 = geosx::python::PyInit_pyhistory();
 
-  Py_INCREF( submodule1 );
-  PyModule_AddObject( module, "pysolver", submodule1 );
+  Py_XINCREF( submodule1 );
+  if(PyModule_AddObject( module, "pysolver", submodule1 ) < 0 )
+  {
+    Py_XDECREF(submodule1);
+  }
 
-  Py_INCREF( submodule2 );
-  PyModule_AddObject( module, "pyhdf5", submodule2 );
+  Py_XINCREF( submodule2 );
+  if(PyModule_AddObject( module, "pyhistory", submodule2 ) < 0 )
+  {
+    Py_XDECREF(submodule2);
+  }
 
   if( !addExitHandler( module ) )
   {

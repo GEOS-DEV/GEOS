@@ -649,44 +649,14 @@ public:
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
 
-  /**
-   * This function provides capability to post process input values prior to
-   * any other initialization operations.
-   */
-  virtual void postProcessInput() override {}
-
-  /**
-   * @brief Called by Initialize() prior to initializing sub-Groups.
-   */
-  virtual void initializePreSubGroups() override {}
-
-  /**
-   * @brief Called by Initialize() after to initializing sub-Groups.
-   */
-  virtual void initializePostSubGroups() override {}
-
-  /**
-   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
-   */
-  virtual void initializePostInitialConditionsPreSubGroups() override {}
-
-  /**
-   * @brief Called by InitializePostInitialConditions() after to initializing sub-Groups.
-   */
-  virtual void initializePostInitialConditionsPostSubGroups() override {}
-
-  /**
-   * @brief Performs initialization required after reading from a restart file.
-   */
-  virtual void postRestartInitialization() override {}
-
-  /**
+    /**
    * @brief Performs re-initialization of certain variable depending on the solver being used.
    */
-  virtual void reinit() override {}
+  virtual void reinit() {}
 
 
 protected:
+
 
   static real64 eisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,

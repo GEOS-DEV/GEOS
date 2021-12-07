@@ -245,10 +245,6 @@ static PyObject * PyGroup_register( PyGroup * const self, PyObject * const args 
   return nullptr;
 }
 
-static PyObject * PyGroup_getWrapper( PyGroup * self, PyObject *args )
-{
-  GET_WRAPPER( self, args );
-}
 
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
@@ -256,7 +252,7 @@ static PyMethodDef PyGroup_methods[] = {
   { "groups", (PyCFunction) PyGroup_groups, METH_NOARGS, PyGroup_groupsDocString },
   { "wrappers", (PyCFunction) PyGroup_wrappers, METH_NOARGS, PyGroup_wrappersDocString },
   { "get_group", (PyCFunction) PyGroup_getGroup, METH_VARARGS, PyGroup_getGroupDocString },
-  { "get_wrapper", (PyCFunction) PyGroup_getWrapper, METH_VARARGS, PyGroup_getWrapperDocString },
+  { "get_wrapper", (PyCFunction) PyGroup_getWrapper< PyGroup >, METH_VARARGS, PyGroup_getWrapperDocString },
   { "register", (PyCFunction) PyGroup_register, METH_VARARGS, PyGroup_registerDocString },
   { nullptr, nullptr, 0, nullptr }             /* Sentinel */
 };

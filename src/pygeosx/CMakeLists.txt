@@ -2,14 +2,14 @@ set( python_headers pygeosx.hpp
                     PyGroup.hpp
                     PyWrapper.hpp
                     pysolver/PySolver.hpp
-                    pyhdf5/PyHDF5.hpp
+                    pyhistory/PyHistory.hpp
 		    )
 
 set( python_sources pygeosx.cpp
                     PyGroup.cpp
                     PyWrapper.cpp
                     pysolver/PySolver.cpp
-                    pyhdf5/PyHDF5.cpp
+                    pyhistory/PyHistory.cpp
 		    )
 
 set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python )
