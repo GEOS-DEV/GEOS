@@ -98,7 +98,7 @@ geosx_totalenergies_cluster_build: &geosx_totalenergies_cluster_build
   - docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOSX_EXPORT_DIR}
     # ... and packing it.
   - GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
-  - tar cvzf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
+  - tar cvf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
     # Uploading to GCP/GCS using gcloud CLI
   - GEOSX_GCLOUD_KEY=/tmp/geosx-key.json
   - openssl aes-256-cbc -K $encrypted_5ac030ea614b_key -iv $encrypted_5ac030ea614b_iv
