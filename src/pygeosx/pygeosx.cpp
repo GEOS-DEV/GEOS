@@ -20,7 +20,6 @@
 // Source includes
 #include "pygeosx.hpp"
 #include "PyGroup.hpp"
-#include "PyWrapper.hpp"
 #include "pysolver/PySolver.hpp"
 #include "pyhistory/PyHistory.hpp"
 #include "mainInterface/initialization.hpp"
@@ -40,7 +39,6 @@ namespace geosx
 {
 
 std::unique_ptr< GeosxState > g_state;
-
 bool g_alreadyInitialized = false;
 
 PyObject * init( PyObject * const pyArgv, bool const performSetup, long const pythonMPIRank=-1 )
@@ -369,15 +367,15 @@ PyInit_pygeosx()
   PyObject * submodule2 = geosx::python::PyInit_pyhistory();
 
   Py_XINCREF( submodule1 );
-  if(PyModule_AddObject( module, "pysolver", submodule1 ) < 0 )
+  if( PyModule_AddObject( module, "pysolver", submodule1 ) < 0 )
   {
-    Py_XDECREF(submodule1);
+    Py_XDECREF( submodule1 );
   }
 
   Py_XINCREF( submodule2 );
-  if(PyModule_AddObject( module, "pyhistory", submodule2 ) < 0 )
+  if( PyModule_AddObject( module, "pyhistory", submodule2 ) < 0 )
   {
-    Py_XDECREF(submodule2);
+    Py_XDECREF( submodule2 );
   }
 
   if( !addExitHandler( module ) )

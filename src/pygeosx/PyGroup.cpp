@@ -20,7 +20,6 @@
 // Source includes
 #include "PyGroup.hpp"
 #include "pygeosx.hpp"
-#include "PyWrapper.hpp"
 #include "pysolver/PySolver.hpp"
 
 #define VERIFY_NON_NULL_SELF( self ) \

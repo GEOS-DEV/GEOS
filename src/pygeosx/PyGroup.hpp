@@ -98,7 +98,6 @@ static PyObject * PyGroup_getWrapper( T * const self, PyObject * const args ) no
 
 
 
-
 PyObject * createNewPyGroup( dataRepository::Group & group );
 
 /**
