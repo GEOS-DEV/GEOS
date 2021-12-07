@@ -93,18 +93,23 @@ MeshLevel::MeshLevel( string const & name,
   //     refPosNew(a,i) = refPosSource(a,i); // this needs to be another loop with a linear combination of values.
   //   }
   // });
-  
-  //ArrayOfArraysView< localIndex const > const faceToNodeMapSource = m_faceManager.nodeList().toViewConst();
-  ArrayOfArrays< localIndex > faceToNodeMapNew = m_faceManager.nodeList();
-  
-  localIndex const numNodesPerFace = pow(order+1,2);
-  faceToNodeMapNew.resize(faceToNodeMapNew.size(),numNodesPerFace);
-  
 
-  FaceManager::ElemMapType const & faceToElem = m_faceManager.toElementRelation();
+  ArrayOfArraysView< localIndex const > const faceToNodeMapSource = source.m_faceManager.nodeList().toViewConst();
+  ArrayOfArrays< localIndex > faceToNodeMapNew = m_faceManager.nodeList();
+
+  localIndex const numNodesPerFace = pow(order+1,2);
+  faceToNodeMapNew.resize(faceToNodeMapSource.size(),numNodesPerFace);
+  //Resize second dimension
+  for (localIndex i = 0; i < faceToNodeMapSource.size(); ++i)
+  {
+      faceToNodeMapNew.resizeArray(i,numNodesPerFace);
+
+  }
+    
+  FaceManager::ElemMapType const & faceToElem = source.m_faceManager.toElementRelation();
+ 
   arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
 
-  
   source.m_elementManager.forElementRegions<CellElementRegion>([&]( CellElementRegion const & sourceRegion )
   {
     CellElementRegion & region = *(dynamic_cast<CellElementRegion *>( m_elementManager.createChild( sourceRegion.getCatalogName(),
@@ -115,13 +120,13 @@ MeshLevel::MeshLevel( string const & name,
     sourceRegion.forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion const & sourceSubRegion )
     {
 //      std::exit(2);
-      std::cout << "hello" << std::endl;
+      //std::cout << "hello" << std::endl;
       CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
       newSubRegion.setElementType( sourceSubRegion.getElementType() );
 
       newSubRegion.resize( sourceSubRegion.size() );
-      
-      
+
+
       // Group & sets = newSubRegion.sets();
       // SortedArray< localIndex > & allElems  = sets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
 
@@ -133,37 +138,137 @@ MeshLevel::MeshLevel( string const & name,
 
 
       localIndex const numNodesPerElem = pow(order+1,3);// change to pow( 2+( order>1 ? order-1 : 0 ), 3 );
+
       elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
-    
+
       // Fill a temporary table which knowing the global number of a degree of freedom and a face, gives you the local number of this degree
       // of freedom on the considering face
       array2d < localIndex > localElemToLocalFace(6,numNodesPerElem);
 
-
-      for (localIndex i = 0; i < order+1; ++i)//x
+      //Init arrays
+      for (localIndex i = 0; i < 6; ++i)
       {
-        for (localIndex j = 0; j < order+1; ++j)//y
+        for (localIndex j = 0; j < pow(order+1,3); ++j)
         {
-          for (localIndex k = 0; k < order+1; ++k)//z
-          {
-            localElemToLocalFace[0][(order+1)*order - (order+1)*j + pow(order+1,2)*k] = j + (order+1)*k;
-
-            localElemToLocalFace[1][(order+1)*order + (order+1)*j + pow(order+1,2)*k] = j + (order+1)*k;
-
-            localElemToLocalFace[2][i + pow(order+1,2)*j] = i + (order+1)*j;
-
-            localElemToLocalFace[3][(pow(order+1,2)-1) - i + (order+1)*j] = i + (order+1)*j;
-
-            localElemToLocalFace[4][i + (order+1)*(order-k)] = i + (order+1)*k;
-
-            localElemToLocalFace[5][pow(order+1,2)*order + i + (order+1)*k] = i + (order+1)*k;
-          }
+          localElemToLocalFace[i][j]=-1;
         }
+        
+      }
+      
+      
+
+      for (localIndex i = 0; i < faceToNodeMapSource.size(); ++i)
+      {
+        for (localIndex j = 0; j < pow(order+1,2); ++j)
+        {
+          faceToNodeMapNew[i][j] = -1;
+        }
+        
+      }
+      
+      
+      // for (localIndex i = 0; i < order+1; ++i)//x
+      // {
+      //   for (localIndex j = 0; j < order+1; ++j)//y
+      //   {
+      //     for (localIndex k = 0; k < order+1; ++k)//z
+      //     {
+
+
+      //       localElemToLocalFace[0][i + pow(order+1,2)*j] = i + (order+1)*j; // front 
+
+      //       localElemToLocalFace[1][k*(order+1) + (order)*i] = i + (order+1)*k; // bottom           
+
+      //       localElemToLocalFace[2][(order+1)*j + pow(order+1,2)*k] = j + (order+1)*k; //left
+
+      //       localElemToLocalFace[3][order + (order+1)*j + pow(order+1,2)*k] = j + (order+1)*k; // right
+
+      //       localElemToLocalFace[4][(pow(order+1,2)-1) - i + pow(order+1,2)*j] = i + (order+1)*j;// back
+
+      //       localElemToLocalFace[5][pow(order+1,2)*order + i + (order+1)*k] = i + (order+1)*k; //top
+      //     }
+      //   }
+      // }
+
+      //Face 0
+      for (localIndex i = 0; i < order+1; i++) //y
+      {
+        for (localIndex j = 0; j < order+1; j++) //x
+        {
+          localElemToLocalFace[0][i + pow(order+1,2)*j] = i + (order+1)*j;
+        }
+        
       }
 
-      localIndex count=0;
+      //Face 1
+      for (localIndex i = 0; i < order+1; i++) //x
+      {
+        for (localIndex k = 0; k < order+1; k++) //z
+        {
+          localElemToLocalFace[1][k+(order+1)*i] = k + (order+1)*i;
+        }
+        
+      }
+      
+      //Face 2
+      for (localIndex k = 0; k < order+1; k++)//z
+      {
+        for (localIndex j = 0; j < order+1; j++)//y
+        {
+          localElemToLocalFace[2][j*pow(order+1,2)+k*(order+1)] = j + (order+1)*k;
+          //localElemToLocalFace[2][j*(order+1)+k*pow(order+1,2)] = j + (order+1)*k;
+        }
+        
+      }
 
-      for (localIndex e = 0; e < elemsToNodesNew.size(0); e++)
+      //Face 3
+      for (localIndex j = 0; j < order+1; j++)//y
+      {
+        for (localIndex k = 0; k < order+1; k++)//z
+        {
+          localElemToLocalFace[3][order +k*(order+1)+j*pow(order+1,2)] = k + (order+1)*j;
+        }
+        
+      }
+
+      //Face 4 
+      for (localIndex j = 0; j < order+1; j++) //y
+      {
+        for (localIndex i = 0; i < order+1; i++)//x
+        {
+          localElemToLocalFace[4][(order+1)+i+j*pow(order+1,2)] = i + (order+1)*j;
+        }
+        
+      }
+
+      //Face 5
+      for (localIndex k = 0; k < order+1; k++)
+      {
+        for (localIndex i = 0; i < order+1; i++)
+        {
+          localElemToLocalFace[5][pow(order+1,2)+i+k*(order+1)] = i + (order+1)*k;
+        }
+        
+      }
+      
+      
+      
+      
+
+      //Initialisation of elemToNodes
+      for (localIndex e = 0; e < elemsToNodesNew.size(0); ++e)
+      {
+        for (localIndex i = 0; i < numNodesPerElem; i++)
+        {
+          elemsToNodesNew[e][i] =-1;
+        }
+        
+      }
+      
+      localIndex count=0;
+      //localIndex count2=0;
+      
+      for (localIndex e = 0; e < elemsToNodesNew.size(0); ++e)
       {
         for (localIndex k = 0; k < order+1; ++k)
         {
@@ -171,61 +276,133 @@ MeshLevel::MeshLevel( string const & name,
           {
             for (localIndex i = 0; i < order+1; ++i)
             {
-              for (localIndex face = 0; face < 6; ++face)
+              localIndex face;
+              for (face = 0; face < 6; ++face)
               {
                 localIndex m = localElemToLocalFace[face][i +(order+1)*j + pow(order+1,2)*k];
+                
                 if (m != -1)
-                {
+                { 
+                //   if (e==1 && face==0 && m==1)
+                // {
+                //   std::cout << faceToNodeMapNew[elemToFaces[e][face]][m] << std::endl;
+                // }
                   if ( faceToNodeMapNew[elemToFaces[e][face]][m] != -1)
                   {
-                    for (localIndex l = 0; i < 2; ++l)
+                    
+                    for (localIndex l = 0; l < 2; ++l)
                     {
                       localIndex neighE = faceToElemIndex[elemToFaces[e][face]][l];
                       if (neighE != e && neighE != -1)
-                      {
+                      { 
+                        //std::cout << face << std::endl;
                         for (localIndex n = 0; n < pow(order+1,3); ++n)
-                        {
-                          if ( elemsToNodesNew[neighE][n] == faceToNodeMapNew[elemToFaces[e][face]][i + (order+1)*j + pow(order+1,2)*k])
-                          {
+                        { 
+                          if ( elemsToNodesNew[neighE][n] == faceToNodeMapNew[elemToFaces[e][face]][m])
+                          { 
+                            //std::cout << n << " " << i +(order+1)*j + pow(order+1,2)*k<<std::endl;
                             elemsToNodesNew[e][i + (order+1)*j + pow(order+1,2)*k] = elemsToNodesNew[neighE][n];
                           }
-                          break;
+                          //break;
                         }
                         break;
                       }
                     }
                   }
+                  
                   else
                   {
-                    elemsToNodesNew[e][i + order*j + pow(order,2)*k] = count;
-
-                    faceToNodeMapNew[elemToFaces[e][face]][m] = count;
-
-                    count++;
+                    //if(elemsToNodesNew[e][i + (order+1)*j + pow(order+1,2)*k]==-1)
+                    //{
+                    //elemsToNodesNew[e][i + (order+1)*j + pow(order+1,2)*k] = count;
+                    // count++;
+                    // break;
+                   // }
+                    localIndex face_n;
+                    for (face_n = 0; face_n < 6; ++face_n)
+                    {
+                      
+                      localIndex mm = localElemToLocalFace[face_n][i +(order+1)*j + pow(order+1,2)*k];
+                      if(mm != -1)
+                      {
+                        //std::cout << m << std::endl;
+                        //std::cout << faceToNodeMapNew[elemToFaces[e][face_n]][mm] << std::endl;
+                        if (faceToNodeMapNew[elemToFaces[e][face_n]][mm] != -1)
+                        { 
+                          //std::cout << "coucou" << std::endl;
+                          elemsToNodesNew[e][i + (order+1)*j + pow(order+1,2)*k] = faceToNodeMapNew[elemToFaces[e][face_n]][mm] ;  
+                                                 
+                          faceToNodeMapNew[elemToFaces[e][face]][m] = faceToNodeMapNew[elemToFaces[e][face_n]][mm] ;
+                          break;
+                        }
+                      }  
+                    }
+                    if (face_n > 5)
+                    {
+                      //std::cout << "coucou" << std::endl;
+                      elemsToNodesNew[e][i + (order+1)*j + pow(order+1,2)*k] = count;
+                      faceToNodeMapNew[elemToFaces[e][face]][m] = count;
+                      count++;
+                      //break;    
+                    }  
                   }
                 }
-                else
+                if (face > 5)
                 {
                   elemsToNodesNew[e][i + (order+1)*j + pow(order+1,2)*k]=count;
-
-                  count++;
+                  count++;  
+                  //break;
                 }
-              }
+              }  
+       
             }
           }
         }
       }
 
-  
-    // Group & nodeSets = m_nodeManager.sets();
-    // SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
-    // allNodes.reserve( m_nodeManager.size() );
-    // std::exit(2);
-    // for( localIndex a=0; a<m_nodeManager.size(); ++a )
-    // {
-    //   allNodes.insert( a );
-    // }
-    
+        // for(localIndex e =0; e < 2; e++)
+        // {
+        // for (localIndex j = 0; j < 6; j++)
+        // {
+        //   for (localIndex i = 0; i < 4; i++)
+        //   {
+        //     std::cout << j << " " << i << " "<< faceToNodeMapNew[elemToFaces[e][j]][i] << std::endl;
+        //   }
+          
+        // }
+        // }
+
+      // for (localIndex i = 0; i < 2; i++)
+      // {
+      //   for (localIndex j = 0; j < 6; j++)
+      //   {
+      //     std::cout << i << " " << j << " " << elemToFaces[i][j] << std::endl;
+      //   }
+        
+      // }
+      
+      
+      // for (localIndex i = 0; i < elemsToNodesNew.size(0); i++)
+      // {
+      //   for (localIndex j= 0; j < numNodesPerElem; j++)
+      //   {
+      //     std::cout << i << " " << j << " " << elemsToNodesNew[i][j] << std::endl;
+      //   }
+        
+      // }
+      
+      // std::exit(2);
+
+     
+
+     Group & nodeSets = m_nodeManager.sets();
+     SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+     allNodes.reserve( m_nodeManager.size() );
+     for( localIndex a=0; a<m_nodeManager.size(); ++a )
+     {
+       allNodes.insert( a );
+     }
+
 
       //FIll a temporary array which contains the Gauss-Lobatto points depending on the order
       array1d< real64 > GaussLobattoPts(order+1);
@@ -235,7 +412,7 @@ MeshLevel::MeshLevel( string const & name,
         GaussLobattoPts[0] = -1.0;
         GaussLobattoPts[1] = 1.0;
       }
-  
+
       if(order==3)
       {
         GaussLobattoPts[0] = -1.0;
@@ -259,16 +436,16 @@ MeshLevel::MeshLevel( string const & name,
         GaussLobattoPts[5] = 1.0;
       }
 
-      std::cout << elemsToNodesNew.size(0) << std::endl;
-      std::exit(2);
+      // std::cout << elemsToNodesNew.size(0) << std::endl;
+      // std::exit(2);
       //Fill Position of the nodes: interpolation of the mesh nodes
       for (localIndex e = 0; e < elemsToNodesNew.size(0); e++)
       {
         //Get the space step of the mesh
 
-        std::cout << refPosSource[elemsToNodesNew[e][order+1]][0] << std::endl;
-        std::cout << refPosSource[elemsToNodesNew[e][0]][0] << std::endl;
-        std::exit(2);
+        // std::cout << refPosSource[elemsToNodesNew[e][order+1]][0] << std::endl;
+        // std::cout << refPosSource[elemsToNodesNew[e][0]][0] << std::endl;
+        // std::exit(2);
         real64 hx = refPosSource[elemsToNodesNew[e][order+1]][0] - refPosSource[elemsToNodesNew[e][0]][0];
         real64 hy = refPosSource[elemsToNodesNew[e][order*(order+1)]][1] - refPosSource[elemsToNodesNew[e][0]][1];
         real64 hz = refPosSource[elemsToNodesNew[e][pow(order+1,2)]][2] - refPosSource[elemsToNodesNew[e][0]][2];
