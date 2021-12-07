@@ -15,7 +15,8 @@ CompositionalMultiphaseFluid                node         :ref:`XML_Compositional
 CompressibleSinglePhaseFluid                node         :ref:`XML_CompressibleSinglePhaseFluid`                
 CompressibleSolidCarmanKozenyPermeability   node         :ref:`XML_CompressibleSolidCarmanKozenyPermeability`   
 CompressibleSolidConstantPermeability       node         :ref:`XML_CompressibleSolidConstantPermeability`       
-CompressibleSolidParallelPlatesPermeability node         :ref:`XML_CompressibleSolidParallelPlatesPermeability` 
+CompressibleSolidParallelPlatesPermeability node         :ref:`XML_CompressibleSolidParallelPlatesPermeability`
+CompressibleSolidSlipDependentPermeability  node         :ref:`XML_CompressibleSolidSlipDependentPermeability` 
 ConstantPermeability                        node         :ref:`XML_ConstantPermeability`                        
 Coulomb                                     node         :ref:`XML_Coulomb`                                     
 DamageElasticIsotropic                      node         :ref:`XML_DamageElasticIsotropic`                      

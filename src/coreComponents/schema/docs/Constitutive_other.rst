@@ -15,7 +15,8 @@ CompositionalMultiphaseFluid                node :ref:`DATASTRUCTURE_Composition
 CompressibleSinglePhaseFluid                node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`                
 CompressibleSolidCarmanKozenyPermeability   node :ref:`DATASTRUCTURE_CompressibleSolidCarmanKozenyPermeability`   
 CompressibleSolidConstantPermeability       node :ref:`DATASTRUCTURE_CompressibleSolidConstantPermeability`       
-CompressibleSolidParallelPlatesPermeability node :ref:`DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability` 
+CompressibleSolidParallelPlatesPermeability node :ref:`DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability`
+CompressibleSolidSlipDependentPermeability  node :ref:`DATASTRUCTURE_CompressibleSolidSlipDependentPermeability` 
 ConstantPermeability                        node :ref:`DATASTRUCTURE_ConstantPermeability`                        
 Coulomb                                     node :ref:`DATASTRUCTURE_Coulomb`                                     
 DamageElasticIsotropic                      node :ref:`DATASTRUCTURE_DamageElasticIsotropic`                      
