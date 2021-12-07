@@ -15,6 +15,7 @@ endTime                                      real64       1e+99    Time at which
 equilibrationTolerance                       real64       0.001    Tolerance in the fixed-point iteration scheme used for hydrostatic initialization                    
 functionName                                 string                Name of function that specifies variation of the boundary condition.                                 
 initialPhaseName                             string                Name of the phase initially saturating the reservoir                                                 
+logLevel                                     integer      0        Log level                                                                                            
 maxNumberOfEquilibrationIterations           integer      5        Maximum number of equilibration iterations                                                           
 name                                         string       required A name is required for any non-unique nodes                                                          
 objectPath                                   string                Path to the target field                                                                             
