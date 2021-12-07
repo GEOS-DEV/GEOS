@@ -12,9 +12,9 @@ Overview
 The slip dependent permeability model defines the relationship between the relative shear displacement and fracture permeability. In this model, fractrues/faults are represented as slip interfaces.
 
 .. math::
-   k =  k_{i} \left[ (M_{mult} - 1) \text{tanh} \left( 3 \frac{ U_{s} }{ U_{s_shreshold} } \right) + 1 \right] 
+   k =  k_{i} \left[ (M_{mult} - 1) \text{tanh} \left( 3 \frac{ U_{s} }{ U_{s_threshold} } \right) + 1 \right] 
 
-where :math:`k_{i}` is the initial fracture permeability; :math:`M_{mult}` is the maximum permeability multiplier; :math:`U_{s}` is the relative shear displacement; :math:`U_{s_shreshold}` is the slip shreshold.
+where :math:`k_{i}` is the initial fracture permeability; :math:`M_{mult}` is the maximum permeability multiplier; :math:`U_{s}` is the relative shear displacement; :math:`U_{s_threshold}` is the slip threshold.
 
 
 Parameters
