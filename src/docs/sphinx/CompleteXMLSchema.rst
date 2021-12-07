@@ -190,6 +190,13 @@ Element: CompressibleSolidParallelPlatesPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability.rst
 
 
+.. _XML_CompressibleSolidSlipDependentPermeability:
+
+Element: CompressibleSolidSlipDependentPermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability.rst
+
+
 .. _XML_ConstantPermeability:
 
 Element: ConstantPermeability
@@ -806,11 +813,11 @@ Element: SourceFlux
 .. include:: ../../coreComponents/schema/docs/SourceFlux.rst
 
 
-.. _XML_StrainDependentPermeability:
+.. _XML_SlipDependentPermeability:
 
-Element: StrainDependentPermeability
+Element: SlipDependentPermeability
 ====================================
-.. include:: ../../coreComponents/schema/docs/StrainDependentPermeability.rst
+.. include:: ../../coreComponents/schema/docs/SlipDependentPermeability.rst
 
 
 .. _XML_SurfaceElementRegion:
@@ -1130,6 +1137,13 @@ Datastructure: CompressibleSolidConstantPermeability
 Datastructure: CompressibleSolidParallelPlatesPermeability
 ==========================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability_other.rst
+
+
+.. _DATASTRUCTURE_CompressibleSolidSlipDependentPermeability:
+
+Datastructure: CompressibleSolidSlipDependentPermeability
+==========================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ConstantPermeability:
@@ -1776,11 +1790,11 @@ Datastructure: SourceFlux
 .. include:: ../../coreComponents/schema/docs/SourceFlux_other.rst
 
 
-.. _DATASTRUCTURE_StrainDependentPermeability:
+.. _DATASTRUCTURE_SlipDependentPermeability:
 
-Datastructure: StrainDependentPermeability
+Datastructure: SlipDependentPermeability
 ==========================================
-.. include:: ../../coreComponents/schema/docs/StrainDependentPermeability_other.rst
+.. include:: ../../coreComponents/schema/docs/SlipDependentPermeability_other.rst
 
 
 .. _DATASTRUCTURE_SurfaceElementRegion:
