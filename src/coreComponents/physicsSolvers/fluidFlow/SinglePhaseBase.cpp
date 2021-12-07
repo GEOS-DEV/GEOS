@@ -27,6 +27,7 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -742,6 +743,15 @@ void SinglePhaseBase::applyBoundaryConditions( real64 time_n,
 
 }
 
+namespace internal
+{
+string const bcLogMessage = string( "SinglePhaseBase {}: at time {}s, " )
+                            + string( "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. " )
+                            + string( "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). " )
+                            + string( "\nThe total number of target elements (including ghost elements) is {}. " )
+                            + string( "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set." );
+}
+
 void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                                         real64 const dt,
                                         DomainPartition & domain,
@@ -759,11 +769,20 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                    "ElementRegions",
                    viewKeyStruct::pressureString(),
                    [&]( FieldSpecificationBase const & fs,
-                        string const &,
+                        string const & setName,
                         SortedArrayView< localIndex const > const & lset,
                         Group & subRegion,
                         string const & )
   {
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                   getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+    }
+
+
     arrayView1d< globalIndex const > const dofNumber =
       subRegion.getReference< array1d< globalIndex > >( dofKey );
 
@@ -806,11 +825,19 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                    "ElementRegions",
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
                    [&]( FieldSpecificationBase const & fs,
-                        string const &,
+                        string const & setName,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                   getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+    }
+
     arrayView1d< globalIndex const > const
     dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
