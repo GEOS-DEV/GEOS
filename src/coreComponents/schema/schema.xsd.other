@@ -1523,7 +1523,7 @@
 	<xsd:complexType name="ProppantSolidProppantPermeabilityType" />
 	<xsd:complexType name="SlipDependentPermeabilityType">
 		<!--dPerm_dDispJump =>  dPerm_dDispJump of the fracture.-->
-		<xsd:attribute name="dPerm_dDispJump" type="real64_array3d" />
+		<xsd:attribute name="dPerm_dDispJump" type="real64_array4d" />
                 <!--dPerm_dPressure =>  dPerm_dPressure of the fracture.-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability =>  permeability of the fracture.-->

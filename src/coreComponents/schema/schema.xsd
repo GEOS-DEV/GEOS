@@ -2650,7 +2650,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="initialPermeability" type="R1Tensor" use="required" />
 		<!--maxPermMultiplier => Maximum permeability multiplier.-->
 		<xsd:attribute name="maxPermMultiplier" type="real64" use="required" />
-                <!--shearDispThreshold => Slip shreshold.-->
+                <!--shearDispThreshold => Slip threshold.-->
 		<xsd:attribute name="shearDispThreshold" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
