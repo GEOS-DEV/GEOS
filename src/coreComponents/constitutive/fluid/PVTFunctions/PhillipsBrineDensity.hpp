@@ -13,7 +13,7 @@
  */
 
 /**
- * @file BrineCO2Density.hpp
+ * @file PhillipsBrineDensity.hpp
  */
 
 #ifndef GEOSX_CONSTITUTIVE_FLUID_PVTFUNCTIONS_BRINECO2DENSITY_HPP_
@@ -33,14 +33,14 @@ namespace constitutive
 namespace PVTProps
 {
 
-class BrineCO2DensityUpdate final : public PVTFunctionBaseUpdate
+class PhillipsBrineDensityUpdate final : public PVTFunctionBaseUpdate
 {
 public:
 
-  BrineCO2DensityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                         TableFunction const & brineDensityTable,
-                         integer const CO2Index,
-                         integer const waterIndex )
+  PhillipsBrineDensityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
+                              TableFunction const & brineDensityTable,
+                              integer const CO2Index,
+                              integer const waterIndex )
     : PVTFunctionBaseUpdate( componentMolarWeight ),
     m_brineDensityTable( brineDensityTable.createKernelWrapper() ),
     m_CO2Index( CO2Index ),
@@ -88,16 +88,16 @@ protected:
 
 };
 
-class BrineCO2Density : public PVTFunctionBase
+class PhillipsBrineDensity : public PVTFunctionBase
 {
 public:
 
-  BrineCO2Density( string const & name,
-                   string_array const & inputParams,
-                   string_array const & componentNames,
-                   array1d< real64 > const & componentMolarWeight );
+  PhillipsBrineDensity( string const & name,
+                        string_array const & inputParams,
+                        string_array const & componentNames,
+                        array1d< real64 > const & componentMolarWeight );
 
-  static string catalogName() { return "BrineCO2Density"; }
+  static string catalogName() { return "PhillipsBrineDensity"; }
 
   virtual string getCatalogName() const final { return catalogName(); }
 
@@ -107,7 +107,7 @@ public:
   }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = BrineCO2DensityUpdate;
+  using KernelWrapper = PhillipsBrineDensityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -131,11 +131,11 @@ private:
 
 template< int USD1 >
 GEOSX_HOST_DEVICE
-void BrineCO2DensityUpdate::compute( real64 const & pressure,
-                                     real64 const & temperature,
-                                     arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                     real64 & value,
-                                     bool useMass ) const
+void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
+                                          real64 const & temperature,
+                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                                          real64 & value,
+                                          bool useMass ) const
 {
   // this method implements the method proposed by E. Garcia (2001)
 
@@ -178,17 +178,17 @@ void BrineCO2DensityUpdate::compute( real64 const & pressure,
 
 template< int USD1, int USD2, int USD3, int USD4 >
 GEOSX_HOST_DEVICE
-void BrineCO2DensityUpdate::compute( real64 const & pressure,
-                                     real64 const & temperature,
-                                     arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                     arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                                     arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                                     arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
-                                     real64 & value,
-                                     real64 & dValue_dPressure,
-                                     real64 & dValue_dTemperature,
-                                     arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
-                                     bool useMass ) const
+void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
+                                          real64 const & temperature,
+                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                                          arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
+                                          arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
+                                          arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                                          real64 & value,
+                                          real64 & dValue_dPressure,
+                                          real64 & dValue_dTemperature,
+                                          arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                                          bool useMass ) const
 {
   // this method implements the method proposed by E. Garcia (2001)
 

@@ -56,15 +56,17 @@ void BiotPorosity::initializeState() const
   localIndex const numQ = numQuad();
 
   arrayView1d< real64 const > referencePorosity = m_referencePorosity;
-  arrayView2d< real64 > newPorosity = m_newPorosity;
-  arrayView2d< real64 >       oldPorosity = m_oldPorosity;
+  arrayView2d< real64 >             newPorosity = m_newPorosity;
+  arrayView2d< real64 >             oldPorosity = m_oldPorosity;
+  arrayView2d< real64 >         initialPorosity = m_initialPorosity;
 
   forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {
-      newPorosity[k][q] = referencePorosity[k];
-      oldPorosity[k][q] = referencePorosity[k];
+      newPorosity[k][q]     = referencePorosity[k];
+      oldPorosity[k][q]     = referencePorosity[k];
+      initialPorosity[k][q] = referencePorosity[k];
     }
   } );
 }

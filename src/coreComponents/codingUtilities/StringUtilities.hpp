@@ -38,15 +38,15 @@ string toLower( string const & input );
 
 /**
  * @brief Join strings or other printable objects with a delimiter.
- * @tparam S    type of delimiter, usually char, char const * or string
  * @tparam IT   type of iterator into the range of objects to join
- * @param delim delimiter used to glue together strings
+ * @tparam S    type of delimiter, usually char, char const * or string
  * @param first iterator to start of the range
  * @param last  iterator past-the-end of the range
- * @return a new string containing input strings concatenated with a delimiter
+ * @param delim delimiter used to glue together strings
+ * @return a string containing input values concatenated with a delimiter
  */
 template< typename IT, typename S = char >
-string join( IT first, IT last, S const & delim = S())
+string join( IT first, IT last, S const & delim = S() )
 {
   if( first == last )
   {

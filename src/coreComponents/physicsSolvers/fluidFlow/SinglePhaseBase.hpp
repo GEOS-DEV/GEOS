@@ -74,8 +74,8 @@ public:
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
+                            ParallelVector & rhs,
+                            ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
   virtual real64
@@ -310,6 +310,11 @@ public:
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  /**
+   * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
+   */
+  void computeHydrostaticEquilibrium();
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
