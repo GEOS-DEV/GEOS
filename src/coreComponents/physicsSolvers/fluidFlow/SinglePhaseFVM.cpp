@@ -425,6 +425,15 @@ SinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
   applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
 }
 
+namespace internal
+{
+string const faceBcLogMessage = string( "SinglePhaseFVM {}: at time {}s, " )
+                                + string( "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. " )
+                                + string( "\nThe total number of target faces (including ghost faces) is {}. " )
+                                + string( "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set." );
+}
+
+
 template< typename BASE >
 void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                                    real64 const dt,
@@ -476,6 +485,14 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                          string const & )
   {
     BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::faceBcLogMessage,
+                                   this->getName(), time_n+dt, AquiferBoundaryCondition::catalogName(),
+                                   fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+    }
+
     if( stencil.size() == 0 )
     {
       return;
@@ -554,10 +571,18 @@ void SinglePhaseFVM< BASE >::applyAquiferBC( real64 const time,
                                                [&] ( AquiferBoundaryCondition const & bc,
                                                      string const & setName,
                                                      SortedArrayView< localIndex const > const &,
-                                                     Group &,
+                                                     Group & targetGroup,
                                                      string const & )
   {
     BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+    if( bc.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::faceBcLogMessage,
+                                   this->getName(), time+dt, AquiferBoundaryCondition::catalogName(),
+                                   bc.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+    }
+
     if( stencil.size() == 0 )
     {
       return;

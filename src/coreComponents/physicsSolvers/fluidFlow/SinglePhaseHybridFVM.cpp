@@ -448,22 +448,21 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const & densOld = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
 
-    ConstitutiveBase const & solidModel = subRegion.template getConstitutiveModel< ConstitutiveBase >( m_solidModelNames[targetIndex] );
+    CoupledSolidBase const & solidModel = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
 
-    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &localResidualNorm] ( auto & castedSolidModel )
-    {
-      arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
+    arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
 
-      SinglePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                                          parallelDeviceReduce >( localRhs,
-                                                                                  rankOffset,
-                                                                                  elemDofNumber,
-                                                                                  elemGhostRank,
-                                                                                  volume,
-                                                                                  densOld,
-                                                                                  porosityOld,
-                                                                                  localResidualNorm );
-    } );
+    SinglePhaseBaseKernels::
+      ResidualNormKernel::
+      launch< parallelDevicePolicy<>,
+              parallelDeviceReduce >( localRhs,
+                                      rankOffset,
+                                      elemDofNumber,
+                                      elemGhostRank,
+                                      volume,
+                                      densOld,
+                                      porosityOld,
+                                      localResidualNorm );
 
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     defaultViscosity += fluid.defaultViscosity();
