@@ -23,4 +23,64 @@
       cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_WellboreMeshEnd -->
+
+  <!-- SPHINX_Gravity -->
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <!-- SPHINX_GravityEnd -->
+
+    <!-- SPHINX_PoroelasticSolver -->
+    <SinglePhasePoromechanics
+      name="poroSolve"
+      solidSolverName="lagsolve"
+      fluidSolverName="SinglePhaseFlow"
+      porousMaterialNames="{ porousRock }"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Omega }">
+      <!-- SPHINX_PoroelasticSolverEnd -->
+      <NonlinearSolverParameters
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        logLevel="2"/>
+    </SinglePhasePoromechanics>
+
+    <!-- SPHINX_SolidMechanicsSolver -->
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      logLevel="0"
+      targetRegions="{ Omega }"
+      solidMaterialNames="{ rock }">
+      <!-- SPHINX_SolidMechanicsSolverEnd -->
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        directParallel="0"
+        logLevel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <!-- SPHINX_SinglePhaseFVM -->
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Omega }"
+      fluidNames="{ water }"
+      solidNames="{ porousRock }"
+      permeabilityNames="{ rockPerm }">
+      <!-- SPHINX_SinglePhaseFVMEnd -->
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-8"
+        logLevel="2"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
 </Problem>

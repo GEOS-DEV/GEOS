@@ -486,6 +486,13 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition & bc )
   {
     localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
+
+    if( bc.getLogLevel() >= 1 )
+    {
+      GEOSX_LOG_RANK_0( GEOSX_FMT( string( "FlowSolverBase {}: at time {}s, " )
+                                   + string( "the <{}> boundary condition '{}' produces a flux of {} kg (or moles if useMass=0). " ),
+                                   getName(), time+dt, AquiferBoundaryCondition::catalogName(), bc.getName(), dt * globalSumFluxes[aquiferIndex] ) );
+    }
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
   } );
 }

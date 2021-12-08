@@ -91,7 +91,7 @@ As demonstrated in this example, to setup a coupled proppant transport solver, w
 
 - the proppant transport solver for the fracture region, a solver of type ``ProppantTransport`` called here ``ProppantTransport`` (see :ref:`ProppantTransport` for more information),
 
-.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_base.xml
+.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_PROPPANT_PROPPANTSOLVER -->
   :end-before: <!-- SPHINX_PROPPANT_PROPPANTSOLVER_END -->
@@ -99,7 +99,7 @@ As demonstrated in this example, to setup a coupled proppant transport solver, w
 
 - the single-phase flow solver, a solver of type ``SinglePhaseProppantFVM`` called here ``SinglePhaseFVM``,
 
-.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_base.xml
+.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_PROPPANT_FLOWSOLVER -->
   :end-before: <!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
@@ -107,7 +107,7 @@ As demonstrated in this example, to setup a coupled proppant transport solver, w
 
 - the coupling solver (``FlowProppantTransport``) that binds the two single-physics solvers above, which is named as ``FlowProppantTransport``
 
-.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_base.xml
+.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_PROPPANT_COUPLEDSOLVER -->
   :end-before: <!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->

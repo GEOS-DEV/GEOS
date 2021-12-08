@@ -26,8 +26,9 @@
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
@@ -1031,6 +1032,15 @@ void CompositionalMultiphaseBase::applyBoundaryConditions( real64 const time_n,
   applyAquiferBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 }
 
+namespace internal
+{
+string const bcLogMessage = string( "CompositionalMultiphaseBase {}: at time {}s, " )
+                            + string( "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. " )
+                            + string( "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). " )
+                            + string( "\nThe total number of target elements (including ghost elements) is {}. " )
+                            + string( "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set." );
+}
+
 void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                      real64 const dt,
                                                      DofManager const & dofManager,
@@ -1049,11 +1059,19 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                    "ElementRegions",
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
                    [&]( FieldSpecificationBase const & fs,
-                        string const &,
+                        string const & setName,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                   getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+    }
+
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank =
       subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
@@ -1244,11 +1262,19 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
                    "ElementRegions",
                    extrinsicMeshData::pressure::key(),
                    [&]( FieldSpecificationBase const & fs,
-                        string const &,
+                        string const & setName,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group & subRegion,
                         string const & )
   {
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+    }
+
     fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                            time + dt,
                                                                            subRegion,
