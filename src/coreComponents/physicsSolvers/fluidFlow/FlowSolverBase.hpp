@@ -83,19 +83,10 @@ public:
     static constexpr char const * referencePorosityString() { return "referencePorosity"; }
     static constexpr char const * permeabilityString() { return "permeability"; }
 
-    // gravity term precomputed values
-    static constexpr char const * gravityCoefString() { return "gravityCoefficient"; }
-
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
-    static constexpr char const * pressureString() { return "pressure"; }
-    static constexpr char const * deltaPressureString() { return "deltaPressure"; }
-    static constexpr char const * initialPressureString() { return "initialPressure"; }
-    static constexpr char const * deltaVolumeString() { return "deltaVolume"; }
-    static constexpr char const * aperture0String() { return "aperture_n"; }
-    static constexpr char const * hydraulicApertureString() { return "hydraulicAperture"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
   };
 

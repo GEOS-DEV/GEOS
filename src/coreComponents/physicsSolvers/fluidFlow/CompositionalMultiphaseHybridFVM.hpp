@@ -133,7 +133,7 @@ public:
                      arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void
-  updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const override;
+  updatePhaseMobility( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const override;
 
   virtual void
   applyAquiferBC( real64 const time,
@@ -156,13 +156,6 @@ public:
 
     // inputs
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
-
-    // primary face-based field
-    static constexpr char const * deltaFacePressureString() { return "deltaFacePressure"; }
-
-    // auxiliary data for the buoyancy term
-    // TODO: change the name
-    static constexpr char const * mimGravityCoefString() { return "mimGravityCoefficient"; }
 
   };
 
