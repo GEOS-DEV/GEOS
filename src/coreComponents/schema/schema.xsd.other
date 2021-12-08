@@ -1763,7 +1763,7 @@
 		<xsd:attribute name="isFaceSeparable" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--mimGravityCoefficient => Mimitic gravity coefficient => CompositionalMultiphaseHybridFVM-->
+		<!--mimGravityCoefficient => Mimetic gravity coefficient => CompositionalMultiphaseHybridFVM-->
 		<xsd:attribute name="mimGravityCoefficient" type="real64_array" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />

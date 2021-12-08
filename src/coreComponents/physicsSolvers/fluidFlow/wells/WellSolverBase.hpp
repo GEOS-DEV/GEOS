@@ -259,7 +259,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // gravity term precomputed values
-    static constexpr char const * gravityCoefString() { return extrinsicMeshData::gravityCoefficient::key(); }
+    static constexpr char const * gravityCoefString() { return extrinsicMeshData::flow::gravityCoefficient::key(); }
 
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }

@@ -30,6 +30,9 @@ namespace geosx
 namespace extrinsicMeshData
 {
 
+namespace flow
+{
+
 using array2dLayoutPhase = array2d< real64, compflow::LAYOUT_PHASE >;
 using array3dLayoutPhase_dC = array3d< real64, compflow::LAYOUT_PHASE_DC >;
 using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
@@ -203,6 +206,8 @@ EXTRINSIC_MESH_DATA_TRAIT( bcPressure,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Boundary condition pressure" );
+
+}
 
 }
 

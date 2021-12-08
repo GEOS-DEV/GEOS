@@ -211,7 +211,7 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
         std::map< string, string_array > fieldNames;
         fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
         fieldNames["node"].emplace_back( keys::TotalDisplacement );
-        fieldNames["elems"].emplace_back( extrinsicMeshData::pressure::key() );
+        fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
         fieldNames["elems"].emplace_back( "elementAperture" );
 
         CommunicationTools::getInstance().synchronizeFields( fieldNames,
@@ -255,9 +255,9 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
     ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
-    arrayView1d< real64 > const hydraulicAperture = subRegion.getExtrinsicData< extrinsicMeshData::hydraulicAperture >();
+    arrayView1d< real64 > const hydraulicAperture = subRegion.getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 > const deltaVolume = subRegion.getExtrinsicData< extrinsicMeshData::deltaVolume >();
+    arrayView1d< real64 > const deltaVolume = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
     arrayView1d< real64 const > const area = subRegion.getElementArea();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
 
@@ -457,7 +457,7 @@ void HydrofractureSolver::setupDofs( DomainPartition const & domain,
   } );
 
   dofManager.addCoupling( keys::TotalDisplacement,
-                          extrinsicMeshData::pressure::key(),
+                          extrinsicMeshData::flow::pressure::key(),
                           DofManager::Connector::Elem,
                           fractureRegions );
 
@@ -535,7 +535,7 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  string const presDofKey = dofManager.getKey( extrinsicMeshData::pressure::key() );
+  string const presDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -595,7 +595,7 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
   NodeManager const & nodeManager = mesh.getNodeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  string const presDofKey = dofManager.getKey( extrinsicMeshData::pressure::key() );
+  string const presDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -736,7 +736,7 @@ HydrofractureSolver::
   fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() );
   fext.zero();
 
-  string const presDofKey = m_dofManager.getKey( extrinsicMeshData::pressure::key() );
+  string const presDofKey = m_dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
   string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = m_dofManager.rankOffset();
@@ -830,7 +830,7 @@ HydrofractureSolver::
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
 
-  string const presDofKey = m_dofManager.getKey( extrinsicMeshData::pressure::key() );
+  string const presDofKey = m_dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
   string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = m_dofManager.rankOffset();
@@ -974,7 +974,7 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
     }
   }
 
-  string const presDofKey = dofManager.getKey( extrinsicMeshData::pressure::key() );
+  string const presDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

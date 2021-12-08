@@ -553,9 +553,9 @@ struct FluxKernel
 
     // get the cell-centered pressures
     arrayView1d< real64 const > const elemPres  =
-      subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
     arrayView1d< real64 const > const dElemPres =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
     // get the element data needed for transmissibility computation
     arrayView2d< real64 const > const elemCenter =
@@ -569,7 +569,7 @@ struct FluxKernel
 
     // get the cell-centered depth
     arrayView1d< real64 const > const elemGravCoef =
-      subRegion.getExtrinsicData< extrinsicMeshData::gravityCoefficient >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
 
     // get the fluid data
     arrayView2d< real64 const > const elemDens = fluid.density();

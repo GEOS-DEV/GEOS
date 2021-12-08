@@ -1534,9 +1534,9 @@ FluxKernel::
 
   // get the cell-centered pressures
   arrayView1d< real64 const > const & elemPres  =
-    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::pressure::key() );
+    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
   arrayView1d< real64 const > const & dElemPres =
-    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::deltaPressure::key() );
+    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
 
   // get the element data needed for transmissibility computation
   arrayView2d< real64 const > const & elemCenter =
@@ -1551,7 +1551,7 @@ FluxKernel::
 
   // get the cell-centered depth
   arrayView1d< real64 const > const & elemGravCoef =
-    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::gravityCoefficient::key() );
+    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::gravityCoefficient::key() );
 
   // assemble the residual and Jacobian element by element
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces

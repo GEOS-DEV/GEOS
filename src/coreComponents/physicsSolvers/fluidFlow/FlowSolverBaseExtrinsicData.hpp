@@ -29,6 +29,9 @@ namespace geosx
 namespace extrinsicMeshData
 {
 
+namespace flow
+{
+
 EXTRINSIC_MESH_DATA_TRAIT( pressure,
                            "pressure",
                            array1d< real64 >,
@@ -107,8 +110,9 @@ EXTRINSIC_MESH_DATA_TRAIT( mimGravityCoefficient,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Mimitic gravity coefficient" );
+                           "Mimetic gravity coefficient" );
 
+}
 
 }
 

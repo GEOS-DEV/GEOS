@@ -200,9 +200,9 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
   {
     arrayView2d< real64, compflow::USD_PHASE > const & phaseOutflux =
-      subRegion.getExtrinsicData< extrinsicMeshData::phaseOutflux >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseOutflux >();
     arrayView2d< real64, compflow::USD_COMP > const & compOutflux =
-      subRegion.getExtrinsicData< extrinsicMeshData::componentOutflux >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::componentOutflux >();
     phaseOutflux.zero();
     compOutflux.zero();
   } );
@@ -214,11 +214,11 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutfluxAccessor =
     mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >,
-                                                 arrayView2d< real64, compflow::USD_PHASE > >( extrinsicMeshData::phaseOutflux::key() );
+                                                 arrayView2d< real64, compflow::USD_PHASE > >( extrinsicMeshData::flow::phaseOutflux::key() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > const & compOutfluxAccessor =
     mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >,
-                                                 arrayView2d< real64, compflow::USD_COMP > >( extrinsicMeshData::componentOutflux::key() );
+                                                 arrayView2d< real64, compflow::USD_COMP > >( extrinsicMeshData::flow::componentOutflux::key() );
 
   fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
   {
@@ -250,21 +250,21 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   {
 
     arrayView2d< real64 const, compflow::USD_PHASE > const & phaseOutflux =
-      subRegion.getExtrinsicData< extrinsicMeshData::phaseOutflux >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseOutflux >();
     arrayView2d< real64 const, compflow::USD_COMP > const & compOutflux =
-      subRegion.getExtrinsicData< extrinsicMeshData::componentOutflux >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::componentOutflux >();
 
-    arrayView1d< real64 > const & phaseCFLNumber = subRegion.getExtrinsicData< extrinsicMeshData::phaseCFLNumber >();
-    arrayView1d< real64 > const & compCFLNumber = subRegion.getExtrinsicData< extrinsicMeshData::componentCFLNumber >();
+    arrayView1d< real64 > const & phaseCFLNumber = subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseCFLNumber >();
+    arrayView1d< real64 > const & compCFLNumber = subRegion.getExtrinsicData< extrinsicMeshData::flow::componentCFLNumber >();
 
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
 
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::globalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
     arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::globalCompFraction >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
     arrayView2d< real64, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::phaseVolumeFraction >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
 
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
@@ -326,7 +326,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
     arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & totalDensOld = subRegion.getExtrinsicData< extrinsicMeshData::totalDensityOld >();
+    arrayView1d< real64 const > const & totalDensOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::totalDensityOld >();
 
     CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
@@ -388,9 +388,9 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::globalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
     arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaGlobalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
 
@@ -453,12 +453,12 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
-    arrayView1d< real64 const > const & pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::pressure::key() );
-    arrayView1d< real64 const > const & dPres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::deltaPressure::key() );
+    arrayView1d< real64 const > const & pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+    arrayView1d< real64 const > const & dPres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::globalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
     arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaGlobalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
     localIndex const subRegionSolutionCheck =
       SolutionCheckKernel::launch< parallelDevicePolicy<>,
@@ -492,13 +492,13 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
-                               extrinsicMeshData::deltaPressure::key(),
+                               extrinsicMeshData::flow::deltaPressure::key(),
                                scalingFactor,
                                pressureMask );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
-                               extrinsicMeshData::deltaGlobalCompDensity::key(),
+                               extrinsicMeshData::flow::deltaGlobalCompDensity::key(),
                                scalingFactor,
                                ~pressureMask );
 
@@ -510,8 +510,8 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   }
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( extrinsicMeshData::deltaPressure::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::deltaGlobalCompDensity::key() );
+  fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaPressure::key() );
+  fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaGlobalCompDensity::key() );
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
 
@@ -524,27 +524,27 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
   // outputs
 
   arrayView2d< real64, compflow::USD_PHASE > const phaseMob =
-    dataGroup.getExtrinsicData< extrinsicMeshData::phaseMobility >();
+    dataGroup.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >();
 
   arrayView2d< real64, compflow::USD_PHASE > const dPhaseMob_dPres =
-    dataGroup.getExtrinsicData< extrinsicMeshData::dPhaseMobility_dPressure >();
+    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dPressure >();
 
   arrayView3d< real64, compflow::USD_PHASE_DC > const dPhaseMob_dComp =
-    dataGroup.getExtrinsicData< extrinsicMeshData::dPhaseMobility_dGlobalCompDensity >();
+    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >();
 
   // inputs
 
   arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-    dataGroup.getExtrinsicData< extrinsicMeshData::phaseVolumeFraction >();
+    dataGroup.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
 
   arrayView2d< real64 const, compflow::USD_PHASE > const dPhaseVolFrac_dPres =
-    dataGroup.getExtrinsicData< extrinsicMeshData::dPhaseVolumeFraction_dPressure >();
+    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >();
 
   arrayView3d< real64 const, compflow::USD_PHASE_DC > const dPhaseVolFrac_dComp =
-    dataGroup.getExtrinsicData< extrinsicMeshData::dPhaseVolumeFraction_dGlobalCompDensity >();
+    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >();
 
   arrayView3d< real64 const, compflow::USD_COMP_DC > const dCompFrac_dCompDens =
-    dataGroup.getExtrinsicData< extrinsicMeshData::dGlobalCompFraction_dGlobalCompDensity >();
+    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >();
 
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 

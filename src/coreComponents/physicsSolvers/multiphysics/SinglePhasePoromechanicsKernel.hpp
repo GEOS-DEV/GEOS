@@ -113,13 +113,13 @@ public:
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
-    m_fluidDensityOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::densityOld >() ),
+    m_fluidDensityOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >() ),
     m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).initialDensity() ),
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::initialPressure >() ),
-    m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::pressure >() ),
-    m_deltaFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::deltaPressure >() )
+    m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >() ),
+    m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
+    m_deltaFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() )
   {}
 
   //*****************************************************************************

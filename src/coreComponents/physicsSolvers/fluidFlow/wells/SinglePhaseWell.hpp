@@ -137,7 +137,7 @@ public:
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
-  virtual string resElementDofName() const override { return extrinsicMeshData::pressure::key(); }
+  virtual string resElementDofName() const override { return extrinsicMeshData::flow::pressure::key(); }
 
   virtual localIndex numFluidComponents() const override { return 1; }
 
@@ -241,7 +241,7 @@ public:
     static constexpr char const * deltaConnRateString() { return "deltaConnectionRate"; }
 
     // backup field for the accumulation term
-    static constexpr char const * densityOldString() { return extrinsicMeshData::densityOld::key(); }
+    static constexpr char const * densityOldString() { return extrinsicMeshData::flow::densityOld::key(); }
 
     // perforation rates
     static constexpr char const * perforationRateString() { return "perforationRate"; }

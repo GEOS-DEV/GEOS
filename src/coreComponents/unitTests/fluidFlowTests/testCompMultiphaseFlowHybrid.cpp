@@ -201,18 +201,18 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
       subRegion.getReference< array1d< globalIndex > >( elemDofKey );
 
     arrayView1d< real64 const > const & pres =
-      subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
     pres.move( LvArray::MemorySpace::host, false );
 
     arrayView1d< real64 > const & dPres =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::globalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
     compDens.move( LvArray::MemorySpace::host, false );
 
     arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaGlobalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
@@ -282,10 +282,10 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
 
   // get the face-based pressure
   arrayView1d< real64 > const & facePres =
-    faceManager.getExtrinsicData< extrinsicMeshData::facePressure >();
+    faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
   facePres.move( LvArray::MemorySpace::host, false );
   arrayView1d< real64 > const & dFacePres =
-    faceManager.getExtrinsicData< extrinsicMeshData::deltaFacePressure >();
+    faceManager.getExtrinsicData< extrinsicMeshData::flow::deltaFacePressure >();
 
   string const faceDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::faceDofFieldString() );
 

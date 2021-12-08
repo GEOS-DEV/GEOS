@@ -191,8 +191,8 @@ void ProppantTransport::updateFluidModel( Group & dataGroup, localIndex const ta
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres  = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::pressure::key() );
-  arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::deltaPressure::key() );
+  arrayView1d< real64 const > const pres  = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+  arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
 
   arrayView2d< real64 const > const componentConc  = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString() );
   arrayView2d< real64 const > const dComponentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString() );
@@ -214,8 +214,8 @@ void ProppantTransport::updateComponentDensity( Group & dataGroup, localIndex co
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::pressure::key() );
-  arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::deltaPressure::key() );
+  arrayView1d< real64 const > const pres = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+  arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
 
   arrayView2d< real64 const > const componentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString() );
   arrayView2d< real64 const > const dComponentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString() );
@@ -950,12 +950,12 @@ void ProppantTransport::resetViews( MeshLevel & mesh )
   ElementRegionManager & elemManager = mesh.getElemManager();
 
   m_pressure.clear();
-  m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::pressure::key() );
-  m_pressure.setName( getName() + "/accessors/" + extrinsicMeshData::pressure::key() );
+  m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::flow::pressure::key() );
+  m_pressure.setName( getName() + "/accessors/" + extrinsicMeshData::flow::pressure::key() );
 
   m_deltaPressure.clear();
-  m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::deltaPressure::key() );
-  m_deltaPressure.setName( getName() + "/accessors/" + extrinsicMeshData::deltaPressure::key() );
+  m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::flow::deltaPressure::key() );
+  m_deltaPressure.setName( getName() + "/accessors/" + extrinsicMeshData::flow::deltaPressure::key() );
 
   m_proppantConcentration.clear();
   m_proppantConcentration = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::proppantConcentrationString() );

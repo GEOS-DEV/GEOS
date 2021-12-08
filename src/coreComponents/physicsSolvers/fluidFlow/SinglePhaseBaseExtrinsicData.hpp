@@ -29,6 +29,9 @@ namespace geosx
 namespace extrinsicMeshData
 {
 
+namespace flow
+{
+
 EXTRINSIC_MESH_DATA_TRAIT( mobility,
                            "mobility",
                            array1d< real64 >,
@@ -50,8 +53,10 @@ EXTRINSIC_MESH_DATA_TRAIT( densityOld,
                            array1d< real64 >,
                            0,
                            NOPLOT,
-                           WRITE_AND_READ,
+                           NO_WRITE,
                            "Density at the previous converged time step" );
+
+}
 
 }
 

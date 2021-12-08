@@ -179,16 +179,16 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
     arrayView1d< string const > const & components = fluid.componentNames();
 
     arrayView2d< real64, compflow::USD_COMP > & compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::globalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
 
     arrayView2d< real64, compflow::USD_COMP > & dCompDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaGlobalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
     arrayView2d< real64, compflow::USD_COMP > & compFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::globalCompFraction >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
 
     arrayView3d< real64, compflow::USD_COMP_DC > & dCompFrac_dCompDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::dGlobalCompFraction_dGlobalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >();
 
     // reset the solver state to zero out variable updates
     solver.resetStateToBeginningOfStep( domain );
@@ -256,25 +256,25 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
     arrayView1d< string const > const & phases = fluid.phaseNames();
 
     arrayView1d< real64 > & pres =
-      subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
     arrayView1d< real64 > & dPres =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
     arrayView2d< real64, compflow::USD_COMP > & compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::globalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
 
     arrayView2d< real64, compflow::USD_COMP > & dCompDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaGlobalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
     arrayView2d< real64, compflow::USD_PHASE > & phaseVolFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::phaseVolumeFraction >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
 
     arrayView2d< real64, compflow::USD_PHASE > & dPhaseVolFrac_dPres =
-      subRegion.getExtrinsicData< extrinsicMeshData::dPhaseVolumeFraction_dPressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >();
 
     arrayView3d< real64, compflow::USD_PHASE_DC > & dPhaseVolFrac_dCompDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::dPhaseVolumeFraction_dGlobalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >();
 
     // reset the solver state to zero out variable updates
     solver.resetStateToBeginningOfStep( domain );
@@ -369,25 +369,25 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
     arrayView1d< string const > const & phases = fluid.phaseNames();
 
     arrayView1d< real64 > & pres =
-      subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
     arrayView1d< real64 > & dPres =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
     arrayView2d< real64, compflow::USD_COMP > & compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::globalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
 
     arrayView2d< real64, compflow::USD_COMP > & dCompDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaGlobalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
     arrayView2d< real64, compflow::USD_PHASE > & phaseMob =
-      subRegion.getExtrinsicData< extrinsicMeshData::phaseMobility >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >();
 
     arrayView2d< real64, compflow::USD_PHASE > & dPhaseMob_dPres =
-      subRegion.getExtrinsicData< extrinsicMeshData::dPhaseMobility_dPressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dPressure >();
 
     arrayView3d< real64, compflow::USD_PHASE_DC > & dPhaseMob_dCompDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::dPhaseMobility_dGlobalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >();
 
     // reset the solver state to zero out variable updates
     solver.resetStateToBeginningOfStep( domain );
@@ -504,18 +504,18 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
       subRegion.getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< real64 const > const & pres =
-      subRegion.getExtrinsicData< extrinsicMeshData::pressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
     pres.move( LvArray::MemorySpace::host, false );
 
     arrayView1d< real64 > const & dPres =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaPressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
     arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::globalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
     compDens.move( LvArray::MemorySpace::host, false );
 
     arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::deltaGlobalCompDensity >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
