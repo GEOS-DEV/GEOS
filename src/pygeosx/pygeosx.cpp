@@ -363,8 +363,8 @@ PyInit_pygeosx()
     return nullptr;
   }
 
-  PyObject * submodule1 = geosx::python::PyInit_pysolver();
-  PyObject * submodule2 = geosx::python::PyInit_pyhistory();
+  LvArray::python::PyObjectRef<> submodule1 = geosx::python::PyInit_pysolver();
+  LvArray::python::PyObjectRef<> submodule2 = geosx::python::PyInit_pyhistory();
 
   Py_XINCREF( submodule1 );
   if( PyModule_AddObject( module, "pysolver", submodule1 ) < 0 )

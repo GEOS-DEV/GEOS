@@ -204,7 +204,6 @@ static PyModuleDef pysolvermodule = {
 PyMODINIT_FUNC
 PyInit_pysolver( void )
 {
-  //PyObject * module = PyModule_Create( &pysolvermodule );
   LvArray::python::PyObjectRef<> module{ PyModule_Create( &pysolvermodule ) };
   if( module == nullptr )
   {
@@ -216,7 +215,7 @@ PyInit_pysolver( void )
     return nullptr;
   }
 
-  return module;
+  return module.release();
 }
 
 PyTypeObject * getPySolverType()
