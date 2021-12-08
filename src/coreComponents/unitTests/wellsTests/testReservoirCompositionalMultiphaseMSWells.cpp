@@ -24,6 +24,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
 #include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoir.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 
@@ -259,15 +260,15 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
 
       // get the primary variables on the reservoir elements
       arrayView1d< real64 const > const & pres =
-        subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::pressureString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
       arrayView1d< real64 > const & dPres =
-        subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
       pres.move( LvArray::MemorySpace::host, false );
 
       arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseBase::viewKeyStruct::globalCompDensityString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
       arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
-        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseBase::viewKeyStruct::deltaGlobalCompDensityString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
       compDens.move( LvArray::MemorySpace::host, false );
 
@@ -354,9 +355,9 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
 
     // get the primary variables on the well elements
     arrayView1d< real64 > const & wellElemPressure =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::pressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
     arrayView1d< real64 > const & dWellElemPressure =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
     wellElemPressure.move( LvArray::MemorySpace::host, false );
 
     arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens =

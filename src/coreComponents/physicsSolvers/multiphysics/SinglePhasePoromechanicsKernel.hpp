@@ -18,9 +18,10 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
-#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
+#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -112,13 +113,13 @@ public:
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
-    m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
+    m_fluidDensityOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >() ),
     m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).initialDensity() ),
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_initialFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::initialPressureString() ) ),
-    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
-    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) )
+    m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >() ),
+    m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
+    m_deltaFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() )
   {}
 
   //*****************************************************************************

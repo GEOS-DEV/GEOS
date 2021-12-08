@@ -26,7 +26,7 @@
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/layouts.hpp"
 #include "functions/TableFunction.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
@@ -343,16 +343,16 @@ public:
     m_porosityOld( solid.getOldPorosity() ),
     m_porosityNew( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
-    m_dCompFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( CompositionalMultiphaseBase::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString() ) ),
-    m_phaseVolFracOld( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionOldString() ) ),
-    m_phaseVolFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionString() ) ),
-    m_dPhaseVolFrac_dPres( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString() ) ),
-    m_dPhaseVolFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString() ) ),
-    m_phaseDensOld( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( CompositionalMultiphaseBase::viewKeyStruct::phaseDensityOldString() ) ),
+    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFracOld( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFractionOld >() ),
+    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
+    m_dPhaseVolFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_phaseDensOld( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseDensityOld >() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens_dPres( fluid.dPhaseDensity_dPressure() ),
     m_dPhaseDens_dComp( fluid.dPhaseDensity_dGlobalCompFraction() ),
-    m_phaseCompFracOld( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_COMP > >( CompositionalMultiphaseBase::viewKeyStruct::phaseComponentFractionOldString() ) ),
+    m_phaseCompFracOld( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseComponentFractionOld >() ),
     m_phaseCompFrac( fluid.phaseCompFraction() ),
     m_dPhaseCompFrac_dPres( fluid.dPhaseCompFraction_dPressure() ),
     m_dPhaseCompFrac_dComp( fluid.dPhaseCompFraction_dGlobalCompFraction() ),
