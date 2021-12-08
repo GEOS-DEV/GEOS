@@ -127,6 +127,9 @@ public:
   real64 const & getPressure( localIndex i ) const { return coords[coordType::PRES][i]; }
   real64 const & getTemperature( localIndex i ) const { return coords[coordType::TEMP][i]; }
 
+  array1d< real64 > const & getPressures( ) const { return coords[coordType::PRES]; }
+  array1d< real64 > const & getTemperatures(  ) const { return coords[coordType::TEMP]; }
+
   array1d< array1d< real64 > > const & getCoords() const { return coords; }
 
 private:
