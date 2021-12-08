@@ -66,7 +66,7 @@ MeshLevel::MeshLevel( string const & name,
 {
 
 
-  localIndex numNodes = source.m_nodeManager.size()+source.m_edgeManager.size()*(order-1)+pow(order,2)*source.m_faceManager.size()+pow(order-1,3)*source.m_elementManager.size();
+  localIndex numNodes = source.m_nodeManager.size()+source.m_edgeManager.size()*(order-1)+pow(order-1,2)*source.m_faceManager.size()+pow(order-1,3)*source.m_elementManager.size();
   // find out how many node there must be on this rank
   m_nodeManager.resize(numNodes);
 
