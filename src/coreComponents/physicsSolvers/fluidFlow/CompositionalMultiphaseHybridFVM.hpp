@@ -133,7 +133,7 @@ public:
                      arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void
-  updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const override;
+  updatePhaseMobility( Group & dataGroup ) const override;
 
   virtual void
   applyAquiferBC( real64 const time,
@@ -173,7 +173,7 @@ public:
 protected:
 
   /// precompute the minGravityCoefficient for the buoyancy term
-  void precomputeData( MeshLevel & mesh ) override;
+  void precomputeData( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
 private:
 
