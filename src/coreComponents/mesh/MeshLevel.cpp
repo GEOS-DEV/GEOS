@@ -215,7 +215,7 @@ MeshLevel::MeshLevel( string const & name,
       {
         for (localIndex j = 0; j < order+1; j++)//y
         {
-          localElemToLocalFace[2][j*pow(order+1,2)+k*(order+1)] = j + (order+1)*k;
+          localElemToLocalFace[2][k*pow(order+1,2)+j*(order+1)] = j + (order+1)*k;
           //localElemToLocalFace[2][j*(order+1)+k*pow(order+1,2)] = j + (order+1)*k;
         }
         
@@ -270,11 +270,11 @@ MeshLevel::MeshLevel( string const & name,
       
       for (localIndex e = 0; e < elemsToNodesNew.size(0); ++e)
       {
-        for (localIndex k = 0; k < order+1; ++k)
+        for (localIndex i = 0; i < order+1; ++i)
         {
           for (localIndex j = 0; j< order+1; ++j)
           {
-            for (localIndex i = 0; i < order+1; ++i)
+            for (localIndex k = 0; k < order+1; ++k)
             {
               localIndex face;
               for (face = 0; face < 6; ++face)
@@ -386,12 +386,18 @@ MeshLevel::MeshLevel( string const & name,
       // {
       //   for (localIndex j= 0; j < numNodesPerElem; j++)
       //   {
+      //     // if (elemsToNodesNew[i][j] == 7)
+      //     // {
+      //     //   std::cout << i << " " << j << " " << elemsToNodesNew[i][j] << std::endl;
+
+      //     // }
+          
       //     std::cout << i << " " << j << " " << elemsToNodesNew[i][j] << std::endl;
       //   }
         
       // }
       
-      // std::exit(2);
+      //std::exit(2);
 
      
 
@@ -439,30 +445,90 @@ MeshLevel::MeshLevel( string const & name,
       // std::cout << elemsToNodesNew.size(0) << std::endl;
       // std::exit(2);
       //Fill Position of the nodes: interpolation of the mesh nodes
+      // for (localIndex e = 0; e < elemsToNodesNew.size(0); e++)
+      // {
+      //   //Get the space step of the mesh
+
+      //   // std::cout << refPosSource[elemsToNodesNew[e][order+1]][0] << std::endl;
+      //   // std::cout << refPosSource[elemsToNodesNew[e][0]][0] << std::endl;
+      //   // std::exit(2);
+      //   real64 hx = refPosSource[elemsToNodesNew[e][order+1]][0] - refPosSource[elemsToNodesNew[e][0]][0];
+      //   real64 hy = refPosSource[elemsToNodesNew[e][order*(order+1)]][1] - refPosSource[elemsToNodesNew[e][0]][1];
+      //   real64 hz = refPosSource[elemsToNodesNew[e][pow(order+1,2)]][2] - refPosSource[elemsToNodesNew[e][0]][2];
+      //   //Fill the array
+      //   for (localIndex k = 0; k < order+1; k++)
+      //   {
+      //     for (localIndex j = 0; j < order+1; j++)
+      //     {
+      //       for (localIndex i = 0; i < order+1; i++)
+      //       {
+      //         refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][0] = refPosSource[elemsToNodesNew[e][0]][0] + i*hx*GaussLobattoPts[i];
+      //         refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][1] = refPosSource[elemsToNodesNew[e][0]][1] + i*hy*GaussLobattoPts[j];
+      //         refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][2] = refPosSource[elemsToNodesNew[e][0]][2] + i*hz*GaussLobattoPts[k];
+      //       }
+      //     }
+      //   }
+      // }
+
+      //Three 1D arrays to contains the GL points in the new coordinates knowing the mesh nodes
+      array1d < real64 > x(order+1);
+      array1d < real64 > y(order+1);
+      array1d < real64 > z(order+1);
+
+      // for (localIndex e = 0; e < elemsToNodesNew.size(0); e++)
+      // {
+      //   for (localIndex i = 0; i < pow(order+1,3); i++)
+      //   {
+      //     std::cout << refPosSource[elemsToNodesSource[e][i]][0] << " " << refPosSource[elemsToNodesSource[e][i]][1] << " " << refPosSource[elemsToNodesSource[e][i]][2] << std::endl;
+      //   }
+        
+      // }
+      // std::exit(2);
+      
       for (localIndex e = 0; e < elemsToNodesNew.size(0); e++)
       {
-        //Get the space step of the mesh
-
-        // std::cout << refPosSource[elemsToNodesNew[e][order+1]][0] << std::endl;
-        // std::cout << refPosSource[elemsToNodesNew[e][0]][0] << std::endl;
-        // std::exit(2);
-        real64 hx = refPosSource[elemsToNodesNew[e][order+1]][0] - refPosSource[elemsToNodesNew[e][0]][0];
-        real64 hy = refPosSource[elemsToNodesNew[e][order*(order+1)]][1] - refPosSource[elemsToNodesNew[e][0]][1];
-        real64 hz = refPosSource[elemsToNodesNew[e][pow(order+1,2)]][2] - refPosSource[elemsToNodesNew[e][0]][2];
-        //Fill the array
-        for (localIndex k = 0; k < order+1; k++)
+        //Fill the three 1D array
+        for (localIndex i = 0; i < order+1; i++)
+        {
+          x[i] = refPosSource[elemsToNodesSource[e][0]][0] + ((refPosSource[elemsToNodesSource[e][1]][0]-refPosSource[elemsToNodesSource[e][0]][0])/2.)*GaussLobattoPts[i]
+               + (refPosSource[elemsToNodesSource[e][1]][0]-refPosSource[elemsToNodesSource[e][0]][0])/2;
+          y[i] = refPosSource[elemsToNodesSource[e][0]][1] + ((refPosSource[elemsToNodesSource[e][2]][1]-refPosSource[elemsToNodesSource[e][0]][1])/2.)*GaussLobattoPts[i]
+               + (refPosSource[elemsToNodesSource[e][2]][1]-refPosSource[elemsToNodesSource[e][0]][1])/2;
+          z[i] = refPosSource[elemsToNodesSource[e][0]][2] + ((refPosSource[elemsToNodesSource[e][4]][2]-refPosSource[elemsToNodesSource[e][0]][2])/2.)*GaussLobattoPts[i]
+               + (refPosSource[elemsToNodesSource[e][4]][2]-refPosSource[elemsToNodesSource[e][0]][2])/2;
+         // std::cout << refPosSource[elemsToNodesNew[e][order*pow(order+1,2)]] << std::endl;
+        }
+        
+        //Fill new refPos array
+        for (localIndex i = 0; i < order+1; i++)
         {
           for (localIndex j = 0; j < order+1; j++)
           {
-            for (localIndex i = 0; i < order+1; i++)
+            for (localIndex k = 0; k < order+1; k++)
             {
-              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][0] = refPosSource[elemsToNodesNew[e][0]][0] + i*hx*GaussLobattoPts[i];
-              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][1] = refPosSource[elemsToNodesNew[e][0]][1] + i*hy*GaussLobattoPts[j];
-              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][0] = refPosSource[elemsToNodesNew[e][0]][2] + i*hz*GaussLobattoPts[k];
+              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][0] = x[i];
+              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][1] = y[j];
+              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][2] = z[k];
             }
+            
           }
+          
         }
+        
+        
       }
+
+      // for (localIndex e = 0; e < elemsToNodesNew.size(0); e++)
+      // {
+      //   for (localIndex i = 0; i < pow(order+1,3); i++)
+      //   {
+      //     std::cout << refPosNew[elemsToNodesNew[e][i]][0] << " " << refPosNew[elemsToNodesNew[e][i]][1] << " " << refPosNew[elemsToNodesNew[e][i]][2] << std::endl;
+      //   }
+        
+      // }
+      // std::exit(2);
+      
+      
 
     });
   });
