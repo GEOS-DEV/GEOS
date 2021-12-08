@@ -272,7 +272,7 @@ public:
    * @param dataGroup group that contains the fields
    */
   void
-  updateFluidState( Group & subRegion, localIndex const targetIndex ) const;
+  updateFluidState( Group & subRegion ) const;
 
 
   /**
@@ -280,14 +280,14 @@ public:
    * @param dataGroup group that contains the fields
    */
   virtual void
-  updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
+  updateFluidModel( Group & dataGroup ) const;
 
   /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
   void
-  updateMobility( Group & dataGroup, localIndex const targetIndex ) const;
+  updateMobility( Group & dataGroup ) const;
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
@@ -316,7 +316,7 @@ public:
    * @param mesh the mesh to operate on
    */
   void
-  backupFields( MeshLevel & mesh ) const;
+  backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
 
 protected:
 

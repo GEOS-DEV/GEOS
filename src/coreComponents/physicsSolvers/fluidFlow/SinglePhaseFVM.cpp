@@ -166,17 +166,20 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                   real64 const scalingFactor,
                                                   DomainPartition & domain )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
   dofManager.addVectorToField( localSolution,
                                BASE::viewKeyStruct::pressureString(),
                                BASE::viewKeyStruct::deltaPressureString(),
                                scalingFactor );
 
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( BASE::viewKeyStruct::deltaPressureString() ) );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
+  {
+    std::map< string, string_array > fieldNames;
+    fieldNames["elems"].emplace_back( string( BASE::viewKeyStruct::deltaPressureString() ) );
 
-  CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+  } );
 }
 
 template<>

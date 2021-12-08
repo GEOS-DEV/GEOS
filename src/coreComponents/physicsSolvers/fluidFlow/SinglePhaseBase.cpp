@@ -118,11 +118,20 @@ void SinglePhaseBase::initializeAquiferBC() const
 
 void SinglePhaseBase::validateFluidModels( DomainPartition const & domain ) const
 {
-  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    MeshLevel const & meshLevel = dynamicCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
-    validateModelMapping< SingleFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
-  }
+    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
+                                                                  ElementSubRegionBase & subRegion )
+    {
+      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
+      GEOSX_THROW_IF( fluidName.empty(),
+                      GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                      InputError );
+    } );
+  } );
 }
 
 SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( ConstitutiveBase const & fluid ) const
@@ -138,8 +147,8 @@ SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( Constitutiv
 
 void SinglePhaseBase::setFluidNames( ElementSubRegionBase & subRegion ) const
 {
-  string & fluidMaterialName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
-  fluidMaterialName = SolverBase::getConstitutiveName<SingleFluidBase>( subRegion );
+  string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  fluidMaterialName = SolverBase::getConstitutiveName< SingleFluidBase >( subRegion );
 }
 
 void SinglePhaseBase::initializePreSubGroups()
@@ -151,14 +160,15 @@ void SinglePhaseBase::initializePreSubGroups()
   initializeAquiferBC();
 }
 
-void SinglePhaseBase::updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const
+void SinglePhaseBase::updateFluidModel( Group & dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
   arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-  SingleFluidBase & fluid = getConstitutiveModel< SingleFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
+  SingleFluidBase & fluid =
+    getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
@@ -167,7 +177,7 @@ void SinglePhaseBase::updateFluidModel( Group & dataGroup, localIndex const targ
   } );
 }
 
-void SinglePhaseBase::updateMobility( Group & dataGroup, localIndex const targetIndex ) const
+void SinglePhaseBase::updateMobility( Group & dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -181,7 +191,8 @@ void SinglePhaseBase::updateMobility( Group & dataGroup, localIndex const target
 
   // input
 
-  ConstitutiveBase & fluid = getConstitutiveModel( dataGroup, m_fluidModelNames[targetIndex] );
+  SingleFluidBase & fluid =
+    getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
   FluidPropViews fluidProps = getFluidProperties( fluid );
 
   SinglePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
@@ -200,51 +211,57 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString() ) );
 
-  CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
-
-  resetViews( mesh );
-
-  // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
-  // They will be updated in applySystemSolution and ImplicitStepComplete, respectively
-  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                                                   auto & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
 
-    real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
-    subRegion.template getWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).setDefaultValue( defaultDensity );
+    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
 
-    updatePorosityAndPermeability( subRegion, targetIndex );
-    updateFluidState( subRegion, targetIndex );
+    resetViews( mesh );
 
-    CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
-
-    porousSolid.initializeState();
-  } );
-
-  mesh.getElemManager().forElementRegions< SurfaceElementRegion >( targetRegionNames(),
-                                                                   [&]( localIndex const targetIndex,
-                                                                        SurfaceElementRegion & region )
-  {
-    region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
+    // They will be updated in applySystemSolution and ImplicitStepComplete, respectively
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                                                                            auto & subRegion )
     {
-      ConstitutiveBase & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
+      ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+
       real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
+      subRegion.template getWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).setDefaultValue( defaultDensity );
 
-      subRegion.getWrapper< real64_array >( viewKeyStruct::effectiveApertureString() ).
-        setApplyDefaultValue( region.getDefaultAperture() );
+      updatePorosityAndPermeability( subRegion, targetIndex );
+      updateFluidState( subRegion, targetIndex );
 
-      subRegion.getWrapper< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() ).
-        setApplyDefaultValue( defaultDensity * region.getDefaultAperture() );
+      CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
+
+      porousSolid.initializeState();
     } );
-  } );
 
-  backupFields( mesh );
+    mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                     [&]( localIndex const targetIndex,
+                                                                          SurfaceElementRegion & region )
+    {
+      region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+      {
+        ConstitutiveBase & fluid = getConstitutiveModel( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() )  );
+        real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
+
+        subRegion.getWrapper< real64_array >( viewKeyStruct::effectiveApertureString() ).
+          setApplyDefaultValue( region.getDefaultAperture() );
+
+        subRegion.getWrapper< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() ).
+          setApplyDefaultValue( defaultDensity * region.getDefaultAperture() );
+      } );
+    } );
+
+    backupFields( mesh, regionNames );
+
+  } );
 }
 
 real64 SinglePhaseBase::solverStep( real64 const & time_n,
@@ -292,41 +309,44 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  resetViews( mesh );
-
-  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                                                   auto & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    arrayView1d< real64 > const & dPres = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
-    arrayView1d< real64 > const & dVol = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString() );
+    resetViews( mesh );
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                   auto & subRegion )
+    {
+      arrayView1d< real64 > const & dPres = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+      arrayView1d< real64 > const & dVol = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString() );
 
-    dPres.zero();
-    dVol.zero();
+      dPres.zero();
+      dVol.zero();
 
-    // This should fix NaN density in newly created fracture elements
-    updatePorosityAndPermeability( subRegion, targetIndex );
-    updateFluidState( subRegion, targetIndex );
+      // This should fix NaN density in newly created fracture elements
+      updatePorosityAndPermeability( subRegion );
+      updateFluidState( subRegion );
+    } );
+
+    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          FaceElementSubRegion & subRegion )
+    {
+      arrayView1d< real64 const > const aper = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
+      arrayView1d< real64 > const aper0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::aperture0String() );
+
+      aper0.setValues< parallelDevicePolicy<> >( aper );
+
+      // Needed coz faceElems don't exist when initializing.
+      CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
+      porousSolid.saveConvergedState();
+
+      updatePorosityAndPermeability( subRegion );
+      updateFluidState( subRegion );
+    } );
+
+    backupFields( mesh, regionNames );
+
   } );
-
-  forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                          FaceElementSubRegion & subRegion )
-  {
-    arrayView1d< real64 const > const aper = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString() );
-    arrayView1d< real64 > const aper0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::aperture0String() );
-
-    aper0.setValues< parallelDevicePolicy<> >( aper );
-
-    // Needed coz faceElems don't exist when initializing.
-    CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
-    porousSolid.saveConvergedState();
-
-    updatePorosityAndPermeability( subRegion, targetIndex );
-    updateFluidState( subRegion, targetIndex );
-  } );
-
-  backupFields( mesh );
 }
 
 void SinglePhaseBase::implicitStepComplete( real64 const & time,
@@ -341,50 +361,54 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
   // otherwise the aquifer flux is saved with the wrong pressure time level
   saveAquiferConvergedState( time, dt, domain );
 
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                  ElementSubRegionBase & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    arrayView1d< real64 const > const dPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
-    arrayView1d< real64 const > const dVol = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString() );
-
-    arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-    arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                   auto & subRegion )
     {
-      pres[ei] += dPres[ei];
-      vol[ei] += dVol[ei];
+      arrayView1d< real64 const > const dPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+      arrayView1d< real64 const > const dVol = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString() );
+
+      arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+      arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        pres[ei] += dPres[ei];
+        vol[ei] += dVol[ei];
+      } );
+
+      CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
+
+      porousSolid.saveConvergedState();
     } );
 
-    CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
-
-    porousSolid.saveConvergedState();
-  } );
-
-
-
-  forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const,
-                                                          FaceElementSubRegion & subRegion )
-  {
-    arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
-    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
-    arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          FaceElementSubRegion & subRegion )
     {
-      if( elemGhostRank[ei] < 0 )
+      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      arrayView1d< real64 const > const densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
+      arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
-        if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
+        if( elemGhostRank[ei] < 0 )
         {
-          creationMass[ei] *= 0.75;
-          if( creationMass[ei]<1.0e-20 )
+          if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
           {
-            creationMass[ei] = 0.0;
+            creationMass[ei] *= 0.75;
+            if( creationMass[ei]<1.0e-20 )
+            {
+              creationMass[ei] = 0.0;
+            }
           }
         }
-      }
+      } );
     } );
+
   } );
 }
 
@@ -434,7 +458,7 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   arrayView2d< real64 const > const density = fluidProps.dens;
   arrayView2d< real64 const > const dDens_dPres = fluidProps.dDens_dPres;
 
-  CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+  CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
 
   arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
   arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
@@ -487,7 +511,7 @@ void SinglePhaseBase::accumulationLaunch( localIndex const targetIndex,
   creationMass = subRegion.getReference< real64_array >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() );
 #endif
 
-  CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+  CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
 
 
   arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
@@ -636,21 +660,26 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   } );
 }
 
-void SinglePhaseBase::updateFluidState( Group & subRegion, localIndex targetIndex ) const
+void SinglePhaseBase::updateFluidState( Group & subRegion ) const
 {
-  updateFluidModel( subRegion, targetIndex );
-  updateMobility( subRegion, targetIndex );
+  updateFluidModel( subRegion );
+  updateMobility( subRegion );
 }
 
 void SinglePhaseBase::updateState( DomainPartition & domain )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  this->template forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
-                                                                                                   auto & subRegion )
+// set mass fraction flag on fluid models
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    updatePorosityAndPermeability( subRegion, targetIndex );
-    updateFluidState( subRegion, targetIndex );
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                   auto & subRegion )
+    {
+      updatePorosityAndPermeability( subRegion );
+      updateFluidState( subRegion );
+    } );
   } );
 }
 
@@ -669,27 +698,34 @@ void SinglePhaseBase::solveSystem( DofManager const & dofManager,
 
 void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                                                   auto & subRegion )
+  // set mass fraction flag on fluid models
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    arrayView1d< real64 > const & dPres =
-      subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-    dPres.zero();
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                   auto & subRegion )
+    {
+      arrayView1d< real64 > const & dPres =
+        subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
 
-    updatePorosityAndPermeability( subRegion, targetIndex );
-    updateFluidState( subRegion, targetIndex );
+      dPres.zero();
+
+      updatePorosityAndPermeability( subRegion );
+      updateFluidState( subRegion );
+    } );
   } );
 }
 
-void SinglePhaseBase::backupFields( MeshLevel & mesh ) const
+void SinglePhaseBase::backupFields( MeshLevel & mesh,
+                                    arrayView1d< string const > const & regionNames ) const
 {
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                  ElementSubRegionBase & subRegion )
+  mesh.getElemManager().forElementSubRegions( regionNames,
+                                              [&]( localIndex const,
+                                                   ElementSubRegionBase & subRegion )
   {
-    ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
+    ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView2d< real64 const > const & dens = getFluidProperties( fluid ).dens;
 
     arrayView1d< real64 > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString() );
@@ -728,27 +764,19 @@ void SinglePhaseBase::resetViews( MeshLevel & mesh )
 void SinglePhaseBase::resetViewsPrivate( ElementRegionManager const & elemManager )
 {
   m_density.clear();
-  m_density = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::densityString(),
-                                                                           targetRegionNames(),
-                                                                           fluidModelNames() );
+  m_density = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( SingleFluidBase::viewKeyStruct::densityString() );
   m_density.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::densityString() );
 
   m_dDens_dPres.clear();
-  m_dDens_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::dDens_dPresString(),
-                                                                               targetRegionNames(),
-                                                                               fluidModelNames() );
+  m_dDens_dPres = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( SingleFluidBase::viewKeyStruct::dDens_dPresString() );
   m_dDens_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dDens_dPresString() );
 
   m_viscosity.clear();
-  m_viscosity = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::viscosityString(),
-                                                                             targetRegionNames(),
-                                                                             fluidModelNames() );
+  m_viscosity = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( SingleFluidBase::viewKeyStruct::viscosityString() );
   m_viscosity.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::viscosityString() );
 
   m_dVisc_dPres.clear();
-  m_dVisc_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::dVisc_dPresString(),
-                                                                               targetRegionNames(),
-                                                                               fluidModelNames() );
+  m_dVisc_dPres = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( SingleFluidBase::viewKeyStruct::dVisc_dPresString() );
   m_dVisc_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dVisc_dPresString() );
 
 }
