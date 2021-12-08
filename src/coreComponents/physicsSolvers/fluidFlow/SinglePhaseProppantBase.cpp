@@ -25,6 +25,7 @@
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/ProppantSolid.hpp"
 #include "constitutive/solid/porosity/ProppantPorosity.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransport.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantBaseKernels.hpp"
 
@@ -83,15 +84,15 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
            slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::viscosityString() ).getDefaultValue() };
 }
 
-void SinglePhaseProppantBase::updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const
+void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres =
-    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
+    dataGroup.getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
   arrayView1d< real64 const > const dPres =
-    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+    dataGroup.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
   arrayView1d< real64 const > const proppantConcentration =
     dataGroup.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::proppantConcentrationString() );
@@ -130,10 +131,13 @@ void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRe
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const proppantPackVolumeFraction = subRegion.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::proppantPackVolumeFractionString() );
+  arrayView1d< real64 const > const proppantPackVolumeFraction =
+    subRegion.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::proppantPackVolumeFractionString() );
 
-  arrayView1d< real64 const > const newHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::hydraulicApertureString() );
-  arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getReference< array1d< real64 > >( viewKeyStruct::aperture0String() );
+  arrayView1d< real64 const > const newHydraulicAperture =
+    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::hydraulicAperture::key() );
+  arrayView1d< real64 const > const oldHydraulicAperture =
+    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::aperture0::key() );
 
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
 
