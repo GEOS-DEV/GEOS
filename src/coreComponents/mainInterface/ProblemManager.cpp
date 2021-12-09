@@ -535,12 +535,15 @@ void ProblemManager::generateMesh()
       elemManager.generateMesh( cellBlockManager );
       nodeManager.setElementMaps( elemManager );
 
-      faceManager.buildFaces( nodeManager, elemManager );
-      nodeManager.setFaceMaps( faceManager );
-
-      edgeManager.buildEdges( nodeManager, faceManager );
-      nodeManager.setEdgeMaps( edgeManager );
-
+      if (b==0)
+      {
+        faceManager.buildFaces( nodeManager, elemManager );
+        nodeManager.setFaceMaps( faceManager );
+    
+        edgeManager.buildEdges( nodeManager, faceManager );
+        nodeManager.setEdgeMaps( edgeManager );
+      }
+      
       meshLevel.generateSets();
 
       elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
