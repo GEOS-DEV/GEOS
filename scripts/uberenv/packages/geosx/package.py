@@ -150,9 +150,9 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
     # depends_on('trilinos +force-new-lapack', when='+trilinos +essl')
 
-    depends_on('hypre@2.20.300 +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
-    depends_on('hypre@2.20.300 +cuda +shared +superlu-dist +mpi +openmp +unified-memory +cusparse', when='+hypre-cuda')
-
+    depends_on('hypre@2.23.0geosx +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
+    depends_on('hypre@2.23.0geosx +cuda +shared +superlu-dist +mpi +openmp +unified-memory +cusparse', when='+hypre-cuda')
+ 
     petsc_build_options = '+shared +mpi'
     petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
     depends_on('petsc@3.13.0: ' + petsc_build_options + petsc_tpls, when='+petsc')
