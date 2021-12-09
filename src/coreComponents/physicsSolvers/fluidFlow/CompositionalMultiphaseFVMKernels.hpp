@@ -28,7 +28,8 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "mesh/ElementRegionManager.hpp"
@@ -224,48 +225,48 @@ public:
 
     // compflow
     {
-      using keys = CompositionalMultiphaseBase::viewKeyStruct;
+      using namespace extrinsicMeshData::flow;
       using namespace compflow;
 
-      m_gravCoefAccessor = elemManager.constructArrayViewAccessor< real64, 1 >( keys::gravityCoefString() );
-      m_gravCoefAccessor.setName( solverName + "/accessors/" + keys::gravityCoefString() );
+      m_gravCoefAccessor = elemManager.constructArrayViewAccessor< real64, 1 >( gravityCoefficient::key() );
+      m_gravCoefAccessor.setName( solverName + "/accessors/" + gravityCoefficient::key() );
       m_gravCoef = m_gravCoefAccessor.toNestedViewConst();
 
-      m_presAccessor = elemManager.constructArrayViewAccessor< real64, 1 >( keys::pressureString() );
-      m_presAccessor.setName( solverName + "/accessors/" + keys::pressureString() );
+      m_presAccessor = elemManager.constructArrayViewAccessor< real64, 1 >( pressure::key() );
+      m_presAccessor.setName( solverName + "/accessors/" + pressure::key() );
       m_pres = m_presAccessor.toNestedViewConst();
 
-      m_dPresAccessor = elemManager.constructArrayViewAccessor< real64, 1 >( keys::deltaPressureString() );
-      m_dPresAccessor.setName( solverName + "/accessors/" + keys::deltaPressureString() );
+      m_dPresAccessor = elemManager.constructArrayViewAccessor< real64, 1 >( deltaPressure::key() );
+      m_dPresAccessor.setName( solverName + "/accessors/" + deltaPressure::key() );
       m_dPres = m_dPresAccessor.toNestedViewConst();
 
       m_dCompFrac_dCompDensAccessor =
-        elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_COMP_DC >( keys::dGlobalCompFraction_dGlobalCompDensityString() );
-      m_dCompFrac_dCompDensAccessor.setName( solverName + "/accessors/" + keys::dGlobalCompFraction_dGlobalCompDensityString() );
+        elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_COMP_DC >( dGlobalCompFraction_dGlobalCompDensity::key() );
+      m_dCompFrac_dCompDensAccessor.setName( solverName + "/accessors/" + dGlobalCompFraction_dGlobalCompDensity::key() );
       m_dCompFrac_dCompDens = m_dCompFrac_dCompDensAccessor.toNestedViewConst();
 
       m_dPhaseVolFrac_dPresAccessor =
-        elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( keys::dPhaseVolumeFraction_dPressureString() );
-      m_dPhaseVolFrac_dPresAccessor.setName( solverName + "/accessors/" + keys::dPhaseVolumeFraction_dPressureString() );
+        elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( dPhaseVolumeFraction_dPressure::key() );
+      m_dPhaseVolFrac_dPresAccessor.setName( solverName + "/accessors/" + dPhaseVolumeFraction_dPressure::key() );
       m_dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPresAccessor.toNestedViewConst();
 
       m_dPhaseVolFrac_dCompDensAccessor =
-        elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_PHASE_DC >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() );
-      m_dPhaseVolFrac_dCompDensAccessor.setName( solverName + "/accessors/" + keys::dPhaseVolumeFraction_dGlobalCompDensityString() );
+        elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_PHASE_DC >( dPhaseVolumeFraction_dGlobalCompDensity::key() );
+      m_dPhaseVolFrac_dCompDensAccessor.setName( solverName + "/accessors/" + dPhaseVolumeFraction_dGlobalCompDensity::key() );
       m_dPhaseVolFrac_dCompDens = m_dPhaseVolFrac_dCompDensAccessor.toNestedViewConst();
 
-      m_phaseMobAccessor = elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( keys::phaseMobilityString() );
-      m_phaseMobAccessor.setName( solverName + "/accessors/" + keys::phaseMobilityString() );
+      m_phaseMobAccessor = elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( phaseMobility::key() );
+      m_phaseMobAccessor.setName( solverName + "/accessors/" + phaseMobility::key() );
       m_phaseMob = m_phaseMobAccessor.toNestedViewConst();
 
       m_dPhaseMob_dPresAccessor =
-        elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( keys::dPhaseMobility_dPressureString() );
-      m_dPhaseMob_dPresAccessor.setName( solverName + "/accessors/" + keys::dPhaseMobility_dPressureString() );
+        elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( dPhaseMobility_dPressure::key() );
+      m_dPhaseMob_dPresAccessor.setName( solverName + "/accessors/" + dPhaseMobility_dPressure::key() );
       m_dPhaseMob_dPres = m_dPhaseMob_dPresAccessor.toNestedViewConst();
 
       m_dPhaseMob_dCompDensAccessor =
-        elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_PHASE_DC >( keys::dPhaseMobility_dGlobalCompDensityString() );
-      m_dPhaseMob_dCompDensAccessor.setName( solverName + "/accessors/" + keys::dPhaseMobility_dGlobalCompDensityString() );
+        elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_PHASE_DC >( dPhaseMobility_dGlobalCompDensity::key() );
+      m_dPhaseMob_dCompDensAccessor.setName( solverName + "/accessors/" + dPhaseMobility_dGlobalCompDensity::key() );
       m_dPhaseMob_dCompDens = m_dPhaseMob_dCompDensAccessor.toNestedViewConst();
     }
 
