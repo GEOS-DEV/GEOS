@@ -22,6 +22,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 
 namespace geosx
 {

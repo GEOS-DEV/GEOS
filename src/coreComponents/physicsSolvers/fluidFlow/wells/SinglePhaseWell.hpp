@@ -20,6 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELL_HPP_
 
 #include "WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geosx
@@ -136,7 +137,7 @@ public:
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
-  virtual string resElementDofName() const override { return SinglePhaseBase::viewKeyStruct::pressureString(); }
+  virtual string resElementDofName() const override { return extrinsicMeshData::flow::pressure::key(); }
 
   virtual localIndex numFluidComponents() const override { return 1; }
 
@@ -236,13 +237,11 @@ public:
     static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }
 
     // primary solution field
-    static constexpr char const * pressureString() { return SinglePhaseBase::viewKeyStruct::pressureString(); }
-    static constexpr char const * deltaPressureString() { return SinglePhaseBase::viewKeyStruct::deltaPressureString(); }
     static constexpr char const * connRateString() { return "connectionRate"; }
     static constexpr char const * deltaConnRateString() { return "deltaConnectionRate"; }
 
     // backup field for the accumulation term
-    static constexpr char const * densityOldString() { return SinglePhaseBase::viewKeyStruct::densityOldString(); }
+    static constexpr char const * densityOldString() { return extrinsicMeshData::flow::densityOld::key(); }
 
     // perforation rates
     static constexpr char const * perforationRateString() { return "perforationRate"; }

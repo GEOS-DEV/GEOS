@@ -245,9 +245,9 @@ void LagrangianContactFlowSolver::updateOpeningForFlow( DomainPartition & domain
       arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
       arrayView1d< real64 > const &
-      aperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::hydraulicApertureString() );
+      aperture = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::hydraulicAperture::key() );
       arrayView1d< real64 > const &
-      deltaVolume = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() );
+      deltaVolume = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaVolume::key() );
 
       forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
       {
@@ -1862,7 +1862,7 @@ void LagrangianContactFlowSolver::setUpDflux_dApertureMatrix( DomainPartition & 
     }
   }
 
-  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const presDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

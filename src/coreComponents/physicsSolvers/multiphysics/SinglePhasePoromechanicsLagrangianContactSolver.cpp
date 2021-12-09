@@ -115,9 +115,9 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   m_flowSolver->setupDofs( domain, dofManager );
 
   dofManager.addCoupling( keys::TotalDisplacement,
-                          FlowSolverBase::viewKeyStruct::pressureString(),
+                          extrinsicMeshData::flow::pressure::key(),
                           DofManager::Connector::Elem );
-  dofManager.addCoupling( FlowSolverBase::viewKeyStruct::pressureString(),
+  dofManager.addCoupling( extrinsicMeshData::flow::pressure::key(),
                           LagrangianContactSolver::viewKeyStruct::tractionString(),
                           DofManager::Connector::None );
 //  dofManager.addCoupling( LagrangianContactSolver::viewKeyStruct::tractionString(),
@@ -253,7 +253,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const pDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   // Assemble K twice!!!
   //m_contactSolver->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
@@ -326,7 +326,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
                                               dofManager,
                                               localMatrix,
                                               localRhs,
-                                              dofManager.getKey( SinglePhaseBase::viewKeyStruct::pressureString() ) );
+                                              dofManager.getKey( extrinsicMeshData::flow::pressure::key() ) );
                                               //" " );
                                               //dofManager.getKey( LagrangianContactSolver::viewKeyStruct::tractionString() ) );
 }
@@ -390,7 +390,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner()
 
     auto flowPrecond = LAInterface::createPreconditioner( m_flowSolver->getLinearSolverParameters() );
     precond->setupBlock( 1,
-                         { { SinglePhaseBase::viewKeyStruct::pressureString(), { 1, true } } },
+                         { { extrinsicMeshData::flow::pressure::key(), { 1, true } } },
                          std::move( flowPrecond ) );
 
     m_precond = std::move( precond );
@@ -407,8 +407,6 @@ void SinglePhasePoromechanicsLagrangianContactSolver::solveSystem( DofManager co
                                                   ParallelVector & rhs,
                                                   ParallelVector & solution )
 {
-            std::cout << "RHS " << rhs.norm2() << std::endl;
-
   SolverBase::solveSystem( dofManager, matrix, rhs, solution );
 
   int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
