@@ -71,7 +71,7 @@ MeshLevel::MeshLevel( string const & name,
   m_nodeManager.resize(numNodes);
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager.referencePosition();
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager.referencePosition().toView();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & refPosNew = m_nodeManager.referencePosition().toView();
 
   // {
   //   Group & nodeSets = m_nodeManager.sets();
@@ -94,12 +94,13 @@ MeshLevel::MeshLevel( string const & name,
   //   }
   // });
 
-  ArrayOfArraysView< localIndex const > const faceToNodeMapSource = source.m_faceManager.nodeList().toViewConst();
-  ArrayOfArrays< localIndex > faceToNodeMapNew = m_faceManager.nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager.nodeList().toViewConst();
+  ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager.nodeList();
 
   localIndex const numNodesPerFace = pow(order+1,2);
   faceToNodeMapNew.resize(faceToNodeMapSource.size(),numNodesPerFace);
   //Resize second dimension
+  
   for (localIndex i = 0; i < faceToNodeMapSource.size(); ++i)
   {
       faceToNodeMapNew.resizeArray(i,numNodesPerFace);
@@ -134,7 +135,7 @@ MeshLevel::MeshLevel( string const & name,
       arrayView2d< localIndex const > const & elemToFaces = sourceSubRegion.faceList();
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
-      array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodesNew = newSubRegion.nodeList();
+      array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
 
 
       localIndex const numNodesPerElem = pow(order+1,3);// change to pow( 2+( order>1 ? order-1 : 0 ), 3 );
@@ -165,6 +166,8 @@ MeshLevel::MeshLevel( string const & name,
         }
         
       }
+
+      
       
       
       // for (localIndex i = 0; i < order+1; ++i)//x
@@ -360,7 +363,11 @@ MeshLevel::MeshLevel( string const & name,
         }
       }
 
-        // for(localIndex e =0; e < 2; e++)
+      // std::cout << faceToNodeMapNew[27] << std::endl;
+      // std::cout << m_faceManager.nodeList()[27] << std::endl;
+      // std::exit(2);
+
+        // for(localIndex e =0; e < 6; e++)
         // {
         // for (localIndex j = 0; j < 6; j++)
         // {
@@ -371,6 +378,7 @@ MeshLevel::MeshLevel( string const & name,
           
         // }
         // }
+        // std::exit(2);
 
       // for (localIndex i = 0; i < 2; i++)
       // {
@@ -401,13 +409,13 @@ MeshLevel::MeshLevel( string const & name,
 
      
 
-     Group & nodeSets = m_nodeManager.sets();
-     SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
-     allNodes.reserve( m_nodeManager.size() );
-     for( localIndex a=0; a<m_nodeManager.size(); ++a )
-     {
-       allNodes.insert( a );
-     }
+    //  Group & nodeSets = m_nodeManager.sets();
+    //  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+    //  allNodes.reserve( m_nodeManager.size() );
+    //  for( localIndex a=0; a<m_nodeManager.size(); ++a )
+    //  {
+    //    allNodes.insert( a );
+    //  }
 
 
       //FIll a temporary array which contains the Gauss-Lobatto points depending on the order
@@ -526,7 +534,7 @@ MeshLevel::MeshLevel( string const & name,
       //   }
         
       // }
-      // std::exit(2);
+       //std::exit(2);
       
       
 
