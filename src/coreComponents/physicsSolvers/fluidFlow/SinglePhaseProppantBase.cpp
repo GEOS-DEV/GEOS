@@ -62,14 +62,23 @@ SinglePhaseProppantBase::SinglePhaseProppantBase( const string & name,
 SinglePhaseProppantBase::~SinglePhaseProppantBase()
 {}
 
-void SinglePhaseProppantBase::validateFluidModels( DomainPartition const & domain ) const
+void SinglePhaseProppantBase::validateFluidModels( DomainPartition & domain ) const
 {
   // Validate fluid models in regions
-  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
+forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    MeshLevel const & meshLevel = dynamicCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
-    validateModelMapping< SlurryFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
-  }
+    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
+                                                                  ElementSubRegionBase & subRegion )
+    {
+      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
+      GEOSX_THROW_IF( fluidName.empty(),
+                      GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                      InputError );
+    } );
+  } );
 }
 
 SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const

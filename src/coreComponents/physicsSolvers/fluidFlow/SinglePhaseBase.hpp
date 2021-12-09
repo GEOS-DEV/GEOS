@@ -127,15 +127,13 @@ public:
                         DomainPartition & domain ) override;
 
   template< typename POLICY >
-  void accumulationLaunch( localIndex const targetIndex,
-                           CellElementSubRegion const & subRegion,
+  void accumulationLaunch( CellElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 
   template< typename POLICY >
-  void accumulationLaunch( localIndex const targetIndex,
-                           SurfaceElementSubRegion const & subRegion,
+  void accumulationLaunch( SurfaceElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
@@ -325,7 +323,7 @@ protected:
    * @param[in] domain the domain partition
    */
   virtual void
-  validateFluidModels( DomainPartition const & domain ) const;
+  validateFluidModels( DomainPartition & domain ) const;
 
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)

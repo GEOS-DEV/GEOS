@@ -45,15 +45,11 @@ public:
 
   // Aliasing public/protected members/methods of SolverBase so we don't
   // have to use this->member etc.
+  using BASE::forMeshTargets;
   using BASE::m_cflFactor;
   using BASE::m_maxStableDt;
   using BASE::m_nextDt;
   using BASE::m_discretizationName;
-  using BASE::targetRegionNames;
-  using BASE::forTargetRegions;
-  using BASE::forTargetRegionsComplete;
-  using BASE::forTargetSubRegions;
-  using BASE::forTargetSubRegionsComplete;
   using BASE::m_dofManager;
   using BASE::m_matrix;
   using BASE::m_rhs;
@@ -66,9 +62,6 @@ public:
 
   // Aliasing public/protected members/methods of FlowSolverBase so we don't
   // have to use this->member etc.
-  using BASE::m_fluidModelNames;
-  using BASE::m_solidModelNames;
-  using BASE::m_permeabilityModelNames;
   using BASE::m_poroElasticFlag;
   using BASE::m_coupledWellsFlag;
   using BASE::m_numDofPerCell;
