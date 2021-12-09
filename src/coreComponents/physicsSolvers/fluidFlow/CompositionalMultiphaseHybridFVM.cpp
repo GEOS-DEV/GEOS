@@ -113,6 +113,22 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
+  MimeticInnerProductBase const & mimeticInnerProductBase =
+    hmDiscretization.getReference< MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
+  if( dynamicCast< QuasiRTInnerProduct const * >( &mimeticInnerProductBase )  ||
+      dynamicCast< QuasiTPFAInnerProduct const * >( &mimeticInnerProductBase )  ||
+      dynamicCast< SimpleInnerProduct const * >( &mimeticInnerProductBase ) )
+  {
+    GEOSX_ERROR( "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
+  }
+
+  string const & coeffName = hmDiscretization.template getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
+  m_transMultName = coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString();
+
+
   m_lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * 1e-8;
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -121,20 +137,6 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
-    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-    HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
-    MimeticInnerProductBase const & mimeticInnerProductBase =
-      hmDiscretization.getReference< MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
-    if( dynamicCast< QuasiRTInnerProduct const * >( &mimeticInnerProductBase )  ||
-        dynamicCast< QuasiTPFAInnerProduct const * >( &mimeticInnerProductBase )  ||
-        dynamicCast< SimpleInnerProduct const * >( &mimeticInnerProductBase ) )
-    {
-      GEOSX_ERROR( "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
-    }
-
-    string const & coeffName = hmDiscretization.template getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
-    m_transMultName = coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString();
 
     CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups();
 

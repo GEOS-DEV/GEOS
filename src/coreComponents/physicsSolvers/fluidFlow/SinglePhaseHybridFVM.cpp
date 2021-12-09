@@ -93,61 +93,66 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
   SinglePhaseBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = mesh.getElemManager();
-  FaceManager const & faceManager = mesh.getFaceManager();
+
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
 
-  // in the flux kernel, we need to make sure that we act only on the target regions
-  // for that, we need the following region filter
-  for( string const & regionName : targetRegionNames() )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    m_regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
-  }
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
 
-  // check that multipliers are stricly larger than 0, which would work with SinglePhaseFVM, but not with SinglePhaseHybridFVM.
-  // To deal with a 0 multiplier, we would just have to skip the corresponding face in the FluxKernel
-  string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
-  arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString() );
+    // in the flux kernel, we need to make sure that we act only on the target regions
+    // for that, we need the following region filter
+    for( string const & regionName : regionNames )
+    {
+      m_regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
+    }
 
-  RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
-  forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
-  {
-    minVal.min( transMultiplier[iface] );
+    // check that multipliers are stricly larger than 0, which would work with SinglePhaseFVM, but not with SinglePhaseHybridFVM.
+    // To deal with a 0 multiplier, we would just have to skip the corresponding face in the FluxKernel
+    string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
+    arrayView1d< real64 const > const & transMultiplier =
+      faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString() );
+
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
+    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+    {
+      minVal.min( transMultiplier[iface] );
+    } );
+
+    GEOSX_THROW_IF_LE_MSG( minVal.get(), 0.0,
+                           catalogName() << " " << getName() <<
+                           "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                           std::runtime_error );
+
+    FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+    fsManager.apply( 0.0,
+                     domain,
+                     "faceManager",
+                     FlowSolverBase::viewKeyStruct::pressureString(),
+                     [&] ( FieldSpecificationBase const & bc,
+                           string const &,
+                           SortedArrayView< localIndex const > const &,
+                           Group &,
+                           string const & )
+    {
+      GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
+                        "A face Dirichlet boundary condition named " << bc.getName() << " was requested in the XML file. \n"
+                                                                                        "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
+
+    } );
+
+    fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
+    {
+      GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
+                        "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
+                                                                                  "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
+    } );
   } );
-
-  GEOSX_THROW_IF_LE_MSG( minVal.get(), 0.0,
-                         catalogName() << " " << getName() <<
-                         "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
-                         std::runtime_error );
-
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  fsManager.apply( 0.0,
-                   domain,
-                   "faceManager",
-                   FlowSolverBase::viewKeyStruct::pressureString(),
-                   [&] ( FieldSpecificationBase const & bc,
-                         string const &,
-                         SortedArrayView< localIndex const > const &,
-                         Group &,
-                         string const & )
-  {
-    GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
-                      "A face Dirichlet boundary condition named " << bc.getName() << " was requested in the XML file. \n"
-                                                                                      "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
-
-  } );
-
-  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
-  {
-    GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
-                      "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
-                                                                                "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
-  } );
-
 }
 
 void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
@@ -160,15 +165,19 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
   SinglePhaseBase::implicitStepSetup( time_n, dt, domain );
 
   // setup the face fields
-  MeshLevel & meshLevel     = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  FaceManager & faceManager = meshLevel.getFaceManager();
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
+  {
+    FaceManager & faceManager = mesh.getFaceManager();
 
-  // get the accumulated pressure updates
-  arrayView1d< real64 > const & dFacePres =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
+    // get the accumulated pressure updates
+    arrayView1d< real64 > const & dFacePres =
+      faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString() );
 
-  // zero out the face pressures
-  dFacePres.zero();
+    // zero out the face pressures
+    dFacePres.zero();
+  } );
 }
 
 void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
