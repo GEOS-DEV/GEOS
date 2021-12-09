@@ -591,7 +591,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
       subRegion.template getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
 
     arrayView1d< real64 const > const oldHydraulicAperture =
-      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::aperture0String() );
+      subRegion.template getExtrinsicData< extrinsicMeshData::flow::aperture0 >();
 
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
