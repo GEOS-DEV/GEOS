@@ -25,9 +25,10 @@
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "functions/TableFunction.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
+#include "mesh/ObjectManagerBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-
 
 namespace geosx
 {
@@ -143,8 +144,6 @@ class ComponentFractionKernel : public PropertyKernelBase< NUM_COMP >
 public:
 
   using Base = PropertyKernelBase< NUM_COMP >;
-  using keys = CompositionalMultiphaseBase::viewKeyStruct;
-
   using Base::numComp;
 
   /**
@@ -152,12 +151,12 @@ public:
    * @param[in] subRegion the element subregion
    * @param[in] fluid the fluid model
    */
-  ComponentFractionKernel( dataRepository::Group & subRegion )
+  ComponentFractionKernel( ObjectManagerBase & subRegion )
     : Base( subRegion ),
-    m_compDens( subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( keys::globalCompDensityString() ) ),
-    m_dCompDens( subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( keys::deltaGlobalCompDensityString() ) ),
-    m_compFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( keys::globalCompFractionString() ) ),
-    m_dCompFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() ) )
+    m_compDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >() ),
+    m_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >() ),
+    m_compFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
+    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() )
   {}
 
   /**
@@ -259,7 +258,7 @@ public:
   template< typename POLICY >
   static void
   createAndLaunch( localIndex const numComp,
-                   dataRepository::Group & subRegion )
+                   ObjectManagerBase & subRegion )
   {
     internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
     {
@@ -285,8 +284,6 @@ class PhaseVolumeFractionKernel : public PropertyKernelBase< NUM_COMP >
 public:
 
   using Base = PropertyKernelBase< NUM_COMP >;
-  using keys = CompositionalMultiphaseBase::viewKeyStruct;
-
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -297,15 +294,15 @@ public:
    * @param[in] subRegion the element subregion
    * @param[in] fluid the fluid model
    */
-  PhaseVolumeFractionKernel( dataRepository::Group & subRegion,
+  PhaseVolumeFractionKernel( ObjectManagerBase & subRegion,
                              MultiFluidBase const & fluid )
     : Base( subRegion ),
-    m_phaseVolFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionString() ) ),
-    m_dPhaseVolFrac_dPres( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dPressureString() ) ),
-    m_dPhaseVolFrac_dComp( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() ) ),
-    m_compDens( subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( keys::globalCompDensityString() ) ),
-    m_dCompDens( subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( keys::deltaGlobalCompDensityString() ) ),
-    m_dCompFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() ) ),
+    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
+    m_dPhaseVolFrac_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_compDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >() ),
+    m_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >() ),
+    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseFrac( fluid.phaseFraction() ),
     m_dPhaseFrac_dPres( fluid.dPhaseFraction_dPressure() ),
     m_dPhaseFrac_dComp( fluid.dPhaseFraction_dGlobalCompFraction() ),
@@ -447,7 +444,7 @@ public:
   createAndLaunch( bool const isIsothermal,
                    localIndex const numComp,
                    localIndex const numPhase,
-                   dataRepository::Group & subRegion,
+                   ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid )
   {
     if( !isIsothermal )
@@ -636,8 +633,6 @@ class ElementBasedAssemblyKernel
 {
 public:
 
-  using keys = CompositionalMultiphaseBase::viewKeyStruct;
-
   /// Compile time value for the number of components
   static constexpr localIndex numComp = NUM_COMP;
 
@@ -674,16 +669,16 @@ public:
     m_porosityOld( solid.getOldPorosity() ),
     m_porosityNew( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
-    m_dCompFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() ) ),
-    m_phaseVolFracOld( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionOldString() ) ),
-    m_phaseVolFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionString() ) ),
-    m_dPhaseVolFrac_dPres( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dPressureString() ) ),
-    m_dPhaseVolFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() ) ),
-    m_phaseDensOld( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseDensityOldString() ) ),
+    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVolFracOld( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFractionOld >() ),
+    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
+    m_dPhaseVolFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_phaseDensOld( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseDensityOld >() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens_dPres( fluid.dPhaseDensity_dPressure() ),
     m_dPhaseDens_dComp( fluid.dPhaseDensity_dGlobalCompFraction() ),
-    m_phaseCompFracOld( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_COMP > >( keys::phaseComponentFractionOldString() ) ),
+    m_phaseCompFracOld( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseComponentFractionOld >() ),
     m_phaseCompFrac( fluid.phaseCompFraction() ),
     m_dPhaseCompFrac_dPres( fluid.dPhaseCompFraction_dPressure() ),
     m_dPhaseCompFrac_dComp( fluid.dPhaseCompFraction_dGlobalCompFraction() ),

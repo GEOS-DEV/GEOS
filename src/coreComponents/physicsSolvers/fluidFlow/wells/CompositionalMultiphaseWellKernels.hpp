@@ -452,6 +452,7 @@ class TotalMassDensityKernel : public CompositionalMultiphaseBaseKernels::Proper
 public:
 
   using Base = CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  // TODO: get rid of this as soon as extrinsicData is available for the wells
   using keys = CompositionalMultiphaseWell::viewKeyStruct;
 
   using Base::numComp;

@@ -24,8 +24,10 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 
 namespace geosx
@@ -50,8 +52,6 @@ class PhaseMobilityKernel : public CompositionalMultiphaseBaseKernels::PropertyK
 public:
 
   using Base = CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
-  using keys = CompositionalMultiphaseBase::viewKeyStruct;
-
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -63,14 +63,14 @@ public:
    * @param[in] fluid the fluid model
    * @param[in] relperm the relperm model
    */
-  PhaseMobilityKernel( dataRepository::Group & subRegion,
+  PhaseMobilityKernel( ObjectManagerBase & subRegion,
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
     : Base( subRegion ),
-    m_phaseVolFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionString() ) ),
-    m_dPhaseVolFrac_dPres( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dPressureString() ) ),
-    m_dPhaseVolFrac_dComp( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() ) ),
-    m_dCompFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() ) ),
+    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
+    m_dPhaseVolFrac_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens_dPres( fluid.dPhaseDensity_dPressure() ),
     m_dPhaseDens_dComp( fluid.dPhaseDensity_dGlobalCompFraction() ),
@@ -79,9 +79,9 @@ public:
     m_dPhaseVisc_dComp( fluid.dPhaseViscosity_dGlobalCompFraction() ),
     m_phaseRelPerm( relperm.phaseRelPerm() ),
     m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
-    m_phaseMob( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseMobilityString() ) ),
-    m_dPhaseMob_dPres( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseMobility_dPressureString() ) ),
-    m_dPhaseMob_dComp( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseMobility_dGlobalCompDensityString() ) )
+    m_phaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >() ),
+    m_dPhaseMob_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dPressure >() ),
+    m_dPhaseMob_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >() )
   {}
 
   /**
@@ -231,7 +231,7 @@ public:
   createAndLaunch( bool const isIsothermal,
                    localIndex const numComp,
                    localIndex const numPhase,
-                   dataRepository::Group & subRegion,
+                   ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid,
                    RelativePermeabilityBase const & relperm )
   {
