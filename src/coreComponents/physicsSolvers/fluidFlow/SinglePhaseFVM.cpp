@@ -131,7 +131,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
       arrayView1d< real64 const > const & densOld        = subRegion.getReference< array1d< real64 > >( BASE::viewKeyStruct::densityOldString() );
 
       CoupledSolidBase const & solidModel =
-        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( BASE::viewKeyStruct::solidNamesString() ) );
+        SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( BASE::viewKeyStruct::solidNamesString() ) );
 
       arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
 
@@ -311,7 +311,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   string const & pressureDofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
+                                                MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
   {
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
@@ -372,7 +372,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
   string const & dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
+                                                MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
   {
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
