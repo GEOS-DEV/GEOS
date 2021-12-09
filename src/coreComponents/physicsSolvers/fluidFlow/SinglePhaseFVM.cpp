@@ -108,28 +108,30 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
                                                       DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localRhs )
 {
-  real64 residual = 0;
+  GEOSX_MARK_FUNCTION;
+
+  real64 residual = 0.0;
   integer numMeshTargets = 0;
+
   string const dofKey = dofManager.getKey( BASE::viewKeyStruct::pressureString() );
   globalIndex const rankOffset = dofManager.rankOffset();
+
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
+                                                MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
     real64 localResidualNorm[3] = { 0.0, 0.0, 0.0 };
-    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
-                                                              [&] ( localIndex const,
-                                                                    auto const & subRegion )
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
     {
-      arrayView1d< globalIndex const > const & dofNumber = subRegion.template getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & densOld        = subRegion.template getReference< array1d< real64 > >( BASE::viewKeyStruct::densityOldString() );
+      arrayView1d< real64 const > const & densOld        = subRegion.getReference< array1d< real64 > >( BASE::viewKeyStruct::densityOldString() );
 
-      string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-      CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, solidMaterialName );
+      CoupledSolidBase const & solidModel =
+        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( BASE::viewKeyStruct::solidNamesString() ) );
 
       arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
 
@@ -142,10 +144,10 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
                                                                                   porosityOld,
                                                                                   localResidualNorm );
 
-    } ) :
+    } );
 
-      // compute global residual norm
-      real64 globalResidualNorm[3] = {0, 0, 0};
+    // compute global residual norm
+    real64 globalResidualNorm[3] = {0, 0, 0};
     MpiWrapper::allReduce( localResidualNorm,
                            globalResidualNorm,
                            3,
@@ -153,7 +155,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
                            MPI_COMM_GEOSX );
 
     residual += sqrt( globalResidualNorm[0] ) / ( ( globalResidualNorm[1] + m_fluxEstimate ) / (globalResidualNorm[2]+1) );
-    numMeshTargets++
+    numMeshTargets++;
   } );
 
   return residual / numMeshTargets;
@@ -199,7 +201,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
   string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::pressureString() );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
+                                                MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
   {
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
@@ -251,7 +253,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
   string const & dofKey = dofManager.getKey( SinglePhaseProppantBase::viewKeyStruct::pressureString() );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
+                                                MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
   {
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
@@ -493,7 +495,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       //       Then we can forget about capturing the fluid model.
       ElementSubRegionBase & subRegion = mesh.getElemManager().getRegion( seri( 0, 0 ) ).getSubRegion( sesri( 0, 0 ) );
 
-      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      string & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
 
       SingleFluidBase & fluidBase = subRegion.template getConstitutiveModel< SingleFluidBase >( fluidName );
 
