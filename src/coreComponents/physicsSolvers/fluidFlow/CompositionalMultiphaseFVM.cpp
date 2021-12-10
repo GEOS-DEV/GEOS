@@ -94,50 +94,6 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  // TODO FRANCOIS: remove the loop below, should not be necessary anymore
-  //                but check impact on CFL and aquifer kernels!
-
-  /*
-   * Force phase compositions to be moved to device.
-   *
-   * An issue with ElementViewAccessors is that if the outer arrays are already on device,
-   * but an inner array gets touched and updated on host, capturing outer arrays in a device kernel
-   * DOES NOT call move() on the inner array (see implementation of NewChaiBuffer::moveNested()).
-   * Here we force the move by launching a dummy kernel.
-   *
-   * This is not a problem in normal solver execution, as these arrays get moved by AccumulationKernel.
-   * But it fails unit tests, which test flux assembly separately.
-   *
-   * TODO: See if this can be fixed in NewChaiBuffer (I have not found a way - Sergey).
-   *       Alternatively, stop using ElementViewAccessors altogether and just roll with
-   *       accessors' outer arrays being moved on every jacobian assembly (maybe disable output).
-   *       Or stop testing through the solver interface and test separate kernels instead.
-   *       Finally, the problem should go away when fluid updates are executed on device.
-   */
-  /*
-     forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
-     {
-     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
-     arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFrac = fluid.phaseCompFraction();
-     arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
-     arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp =
-        fluid.dPhaseCompFraction_dGlobalCompFraction();
-
-     arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseMassDens = fluid.phaseMassDensity();
-     arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
-     arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
-
-     forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                      [phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
-                                       phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp]
-                                      GEOSX_HOST_DEVICE ( localIndex const )
-     {
-      GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
-                        phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp );
-     } );
-     } );
-   */
-
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );

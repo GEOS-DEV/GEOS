@@ -29,6 +29,7 @@
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
@@ -109,6 +110,7 @@ struct PhaseMobilityKernel
           arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseMob_dComp );
 };
 
+
 /******************************** FaceBasedAssemblyKernel ********************************/
 
 /**
@@ -145,6 +147,18 @@ public:
    */
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using AccessorStorage
+    = FluxKernelsHelper::
+        StencilKernelAccessorStorage< extrinsicMeshData::flow::gravityCoefficient,
+                                      extrinsicMeshData::flow::pressure,
+                                      extrinsicMeshData::flow::deltaPressure,
+                                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity,
+                                      extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
+                                      extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
+                                      extrinsicMeshData::flow::phaseMobility,
+                                      extrinsicMeshData::flow::dPhaseMobility_dPressure,
+                                      extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >;
 
   /// Compile time value for the number of components
   static constexpr localIndex numComp = NUM_COMP;
@@ -189,6 +203,7 @@ public:
                            string const & solverName,
                            ElementRegionManager const & elemManager,
                            STENCILWRAPPER const & stencilWrapper,
+                           AccessorStorage const & regularFieldStorage,
                            arrayView1d< string const > const & targetRegionNames,
                            arrayView1d< string const > const & fluidModelNames,
                            arrayView1d< string const > const & relPermModelNames,
@@ -205,6 +220,15 @@ public:
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
     m_sei( stencilWrapper.getElementIndices() ),
+    m_gravCoef( std::get< 0 >( regularFieldStorage.accessors ).toNestedViewConst() ),
+    m_pres( std::get< 1 >( regularFieldStorage.accessors ).toNestedViewConst() ),
+    m_dPres( std::get< 2 >( regularFieldStorage.accessors ).toNestedViewConst() ),
+    m_dCompFrac_dCompDens( std::get< 3 >( regularFieldStorage.accessors ).toNestedViewConst() ),
+    m_dPhaseVolFrac_dPres( std::get< 4 >( regularFieldStorage.accessors ).toNestedViewConst() ),
+    m_dPhaseVolFrac_dCompDens( std::get< 5 >( regularFieldStorage.accessors ).toNestedViewConst() ),
+    m_phaseMob( std::get< 6 >( regularFieldStorage.accessors ).toNestedViewConst() ),
+    m_dPhaseMob_dPres( std::get< 7 >( regularFieldStorage.accessors ).toNestedViewConst() ),
+    m_dPhaseMob_dCompDens( std::get< 8 >( regularFieldStorage.accessors ).toNestedViewConst() ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {
@@ -221,53 +245,6 @@ public:
       m_dofNumberAccessor = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       m_dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
       m_dofNumber = m_dofNumberAccessor.toNestedViewConst();
-    }
-
-    // compflow
-    {
-      using namespace extrinsicMeshData::flow;
-      using namespace compflow;
-
-      m_gravCoefAccessor = elemManager.constructArrayViewAccessor< real64, 1 >( gravityCoefficient::key() );
-      m_gravCoefAccessor.setName( solverName + "/accessors/" + gravityCoefficient::key() );
-      m_gravCoef = m_gravCoefAccessor.toNestedViewConst();
-
-      m_presAccessor = elemManager.constructArrayViewAccessor< real64, 1 >( pressure::key() );
-      m_presAccessor.setName( solverName + "/accessors/" + pressure::key() );
-      m_pres = m_presAccessor.toNestedViewConst();
-
-      m_dPresAccessor = elemManager.constructArrayViewAccessor< real64, 1 >( deltaPressure::key() );
-      m_dPresAccessor.setName( solverName + "/accessors/" + deltaPressure::key() );
-      m_dPres = m_dPresAccessor.toNestedViewConst();
-
-      m_dCompFrac_dCompDensAccessor =
-        elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_COMP_DC >( dGlobalCompFraction_dGlobalCompDensity::key() );
-      m_dCompFrac_dCompDensAccessor.setName( solverName + "/accessors/" + dGlobalCompFraction_dGlobalCompDensity::key() );
-      m_dCompFrac_dCompDens = m_dCompFrac_dCompDensAccessor.toNestedViewConst();
-
-      m_dPhaseVolFrac_dPresAccessor =
-        elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( dPhaseVolumeFraction_dPressure::key() );
-      m_dPhaseVolFrac_dPresAccessor.setName( solverName + "/accessors/" + dPhaseVolumeFraction_dPressure::key() );
-      m_dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPresAccessor.toNestedViewConst();
-
-      m_dPhaseVolFrac_dCompDensAccessor =
-        elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_PHASE_DC >( dPhaseVolumeFraction_dGlobalCompDensity::key() );
-      m_dPhaseVolFrac_dCompDensAccessor.setName( solverName + "/accessors/" + dPhaseVolumeFraction_dGlobalCompDensity::key() );
-      m_dPhaseVolFrac_dCompDens = m_dPhaseVolFrac_dCompDensAccessor.toNestedViewConst();
-
-      m_phaseMobAccessor = elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( phaseMobility::key() );
-      m_phaseMobAccessor.setName( solverName + "/accessors/" + phaseMobility::key() );
-      m_phaseMob = m_phaseMobAccessor.toNestedViewConst();
-
-      m_dPhaseMob_dPresAccessor =
-        elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( dPhaseMobility_dPressure::key() );
-      m_dPhaseMob_dPresAccessor.setName( solverName + "/accessors/" + dPhaseMobility_dPressure::key() );
-      m_dPhaseMob_dPres = m_dPhaseMob_dPresAccessor.toNestedViewConst();
-
-      m_dPhaseMob_dCompDensAccessor =
-        elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_PHASE_DC >( dPhaseMobility_dGlobalCompDensity::key() );
-      m_dPhaseMob_dCompDensAccessor.setName( solverName + "/accessors/" + dPhaseMobility_dGlobalCompDensity::key() );
-      m_dPhaseMob_dCompDens = m_dPhaseMob_dCompDensAccessor.toNestedViewConst();
     }
 
     // fluid
@@ -824,7 +801,6 @@ private:
   /// Views on dof numbers and ghost rank numbers
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_ghostRankAccessor;
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > m_dofNumberAccessor;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_gravCoefAccessor;
   ElementViewConst< arrayView1d< globalIndex const > > m_dofNumber;
   ElementViewConst< arrayView1d< integer const > > m_ghostRank;
   ElementViewConst< arrayView1d< real64 const > > m_gravCoef;
@@ -838,26 +814,18 @@ private:
   // Primary and secondary variables
 
   /// Views on pressure
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_presAccessor;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dPresAccessor;
   ElementViewConst< arrayView1d< real64 const > > m_pres;
   ElementViewConst< arrayView1d< real64 const > > m_dPres;
 
+  /// Views on derivatives of phase volume fractions and comp fractions
+  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dCompFrac_dCompDens;
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseVolFrac_dPres;
+  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseVolFrac_dCompDens;
+
   /// Views on phase mobilities
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseMobAccessor;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseMob_dPresAccessor;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseMob_dCompDensAccessor;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseMob;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseMob_dPres;
   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseMob_dCompDens;
-
-  /// Views on derivatives of phase volume fractions and comp fractions
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dCompFrac_dCompDensAccessor;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseVolFrac_dPresAccessor;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseVolFrac_dCompDensAccessor;
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseVolFrac_dPres;
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseVolFrac_dCompDens;
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dCompFrac_dCompDens;
 
   /// Views on phase mass densities
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, multifluid::USD_PHASE > > m_phaseMassDensAccessor;
@@ -945,27 +913,17 @@ public:
       {
         localIndex constexpr NUM_COMP = NC();
         localIndex constexpr NUM_DOF = NC()+1;
-        FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
-        kernel( numPhases, rankOffset, dofKey, capPressureFlag, solverName, elemManager, stencilWrapper,
-                targetRegionNames, fluidModelNames, relPermModelNames, capPresModelNames, permeabilityModelNames,
-                dt, localMatrix, localRhs );
-        FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >::template
-        launch< POLICY, FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER > >( stencilWrapper.size(), kernel );
+
+        using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+        typename KERNEL_TYPE::AccessorStorage accessorStorage( elemManager, solverName );
+        KERNEL_TYPE kernel( numPhases, rankOffset, dofKey, capPressureFlag, solverName, elemManager, stencilWrapper, accessorStorage,
+                            targetRegionNames, fluidModelNames, relPermModelNames, capPresModelNames, permeabilityModelNames,
+                            dt, localMatrix, localRhs );
+        KERNEL_TYPE::template launch< POLICY, KERNEL_TYPE >( stencilWrapper.size(), kernel );
       }
       else
       {
         GEOSX_ERROR( "CompositionalMultiphaseFVM: Thermal simulation is not supported yet: " );
-        /*
-           TODO: uncomment and move when the thermal kernel is ready
-           localIndex constexpr NUM_COMP = NC();
-           localIndex constexpr NUM_DOF = NC()+2;
-           ThermalFaceBasedAssemblyKernel< STENCILWRAPPER, NUM_COMP, NUM_DOF >
-           kernel( numPhases, rankOffset, dofKey, capPressureFlag, solverName, elemManager, stencilWrapper,
-             targetRegionNames, fluidModelNames, relPermModelNames, capPresModelNames, permeabilityModelNames,
-           dt, localMatrix, localRhs );
-           ThermalFaceBasedAssemblyKernel< STENCILWRAPPER, NUM_COMP, NUM_DOF >::template
-           launch< POLICY, ThermalFaceBasedAssemblyKernel< STENCILWRAPPER, NUM_COMP, NUM_DOF > >( stencilWrapper.size(), kernel );
-         */
       }
     } );
   }
