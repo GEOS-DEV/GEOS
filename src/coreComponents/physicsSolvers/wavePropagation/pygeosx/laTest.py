@@ -1,12 +1,12 @@
 import pygeosx
 import sys
 from seismicUtilities.acquisition import EQUISPACEDAcquisition
-from seismicUtilities.segy import exportToSegy
+#from seismicUtilities.segy import exportToSegy
 from seismicUtilities.acoustic import updateSourceAndReceivers, resetWaveField, setTimeVariables
-from mpi4py import MPI
+#from mpi4py import MPI
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
+#comm = MPI.COMM_WORLD
+#rank = comm.Get_rank()
 
 
 def main():
@@ -50,10 +50,11 @@ def main():
 
 
 
-def acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acquisition):
+def acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acquisition, rank=0):
     #Loop over the shots
     segyList = []
     ishot=0
+    print(acquisition)
     for shot in acquisition.shots:
         sys.argv[2] = shot.xml
         dt = shot.dt
@@ -94,13 +95,13 @@ def acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, ac
             if i % outputWaveFieldInterval == 0:
                 hdf5.collect("waveField", time, dt)
 
-        exportToSegy(table = pressureAtReceivers.to_numpy(),
-                     shot = shot,
-                     filename = "pressure_Shot"+shot.id,
-                     directory = acquisition.output,
-                     rank = rank)
+        #exportToSegy(table = pressureAtReceivers.to_numpy(),
+        #             shot = shot,
+        #             filename = "pressure_Shot"+shot.id,
+        #             directory = acquisition.output,
+        #             rank = rank)
         segyList.append("pressure_Shot"+shot.id)
-
+        print(pressureAtReceivers.to_numpy())
         #Output waveField values
         hdf5.output("waveField", time, dt)
 

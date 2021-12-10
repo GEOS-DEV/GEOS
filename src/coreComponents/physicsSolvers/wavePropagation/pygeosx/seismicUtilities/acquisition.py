@@ -1,6 +1,6 @@
 from copy import deepcopy
 import numpy as np
-import segyio
+#import segyio
 import random
 import os
 import xml.etree.ElementTree as ET
@@ -379,7 +379,7 @@ class Acquisition:
 
 
 
-
+"""
 class SEGYAcquisition(Acquisition):
 
     def __init__(self,
@@ -411,7 +411,7 @@ class SEGYAcquisition(Acquisition):
                     directory,
                     wavelet):
 
-        """Acquisition from .sgy files
+        Acquisition from .sgy files
 
         Parameters
         ----------
@@ -426,7 +426,7 @@ class SEGYAcquisition(Acquisition):
         ------
         shots : list of Shot object
         List of shots configuration
-        """
+        
 
         shot_list = []
 
@@ -469,7 +469,7 @@ class SEGYAcquisition(Acquisition):
 
         self.shots = shots
 
-
+"""
 
 class EQUISPACEDAcquisition(Acquisition):
 

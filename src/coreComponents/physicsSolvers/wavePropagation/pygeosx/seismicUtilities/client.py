@@ -25,7 +25,9 @@ class Cluster():
                  node_list=None,
                  extra=None,
                  env_extra=None,
-                 python=None):
+                 python=None,
+                 launch=None,
+                 gpu=False):
 
         self.name=name
         self.nodes=nodes
@@ -40,8 +42,9 @@ class Cluster():
         self.out=None
         self.state="Free"
         self.work=None
-
-
+        self.launch=launch
+        self.gpu=gpu
+ 
     def job_file(self):
         handle, filename = mkstemp(suffix=".sh", dir=os.getcwd())
         with open(filename, "w") as f:
@@ -53,13 +56,12 @@ class Cluster():
         return filename
 
 
-    def _add_job_to_script(self, cores, parallel_tool):
-        if parallel_tool == "srun":
-            self.run = "srun %s seismicUtilities/wrapper.py " %(self.python)
-        elif parallel_tool == "mpirun":
-            self.run = "mpirun -np %d %s seismicUtilities/wrapper.py " %(cores, self.python)
-
-
+    def _add_job_to_script(self, cores):
+        self.run = "%s -n %d " %(self.launch, cores)
+        if self.gpu==True:
+            self.run += "-g 1 "
+        self.run += "%s seismicUtilities/wrapper.py " %(self.python)    
+        
     def _add_cmd_line(self, cmd_line):
         if isinstance(cmd_line, list):
             for cmd in cmd_line:
@@ -100,7 +102,9 @@ class SLURMCluster(Cluster):
                  node_list=None,
                  extra=None,
                  env_extra=None,
-                 python=None):
+                 python=None,
+                 launch="srun",
+                 gpu=False) :
 
         super().__init__(name,
                          job_name,
@@ -114,7 +118,9 @@ class SLURMCluster(Cluster):
                          node_list,
                          extra,
                          env_extra,
-                         python)
+                         python,
+                         launch,
+                         gpu)
 
         self.type="slurm"
 
@@ -125,10 +131,10 @@ class SLURMCluster(Cluster):
         if nodes is not None:
             header_lines.append("#SBATCH -N %d" % self.nodes)
 
-        if cores is not None:
-            header_lines.append("#SBATCH -n %d" % self.cores)
-        else:
-            raise ValueError("You must specify how much cores you want to use")
+       # if cores is not None:
+       #     header_lines.append("#SBATCH -n %d" % self.cores)
+       # else:
+       #raise ValueError("You must specify how much cores you want to use")
 
         if walltime is not None:
             header_lines.append("#SBATCH -t %s" % self.walltime)
@@ -202,7 +208,9 @@ class LSFCluster(Cluster):
                  node_list=None,
                  extra=None,
                  env_extra=None,
-                 python=None):
+                 python=None,
+                 launch="lrun",
+                 gpu=False):
 
         super().__init__(name,
                          job_name,
@@ -216,21 +224,23 @@ class LSFCluster(Cluster):
                          node_list,
                          extra,
                          env_extra,
-                         python)
+                         python,
+                         launch,
+                         gpu)
 
         self.type="lsf"
 
-        header_lines=["#!/usr/bin/bash"]
+        header_lines=["#!/usr/bin/tcsh"]
         if job_name is not None:
             header_lines.append("#BSUB -J %s" % self.job_name)
 
         if nodes is not None:
             header_lines.append("#BSUB -nnodes %d" % self.nodes)
 
-        if cores is not None:
-            header_lines.append("#BSUB -n %d" % self.cores)
-        else:
-            raise ValueError("You must specify how much cores you want to use")
+        #if cores is not None:
+        #    header_lines.append("#BSUB -n %d" % self.cores)
+        #else:
+        #    raise ValueError("You must specify how much cores you want to use")
 
         if walltime is not None:
             header_lines.append("#BSUB -W %s" % self.walltime)
@@ -276,7 +286,7 @@ class LSFCluster(Cluster):
 
 
     def getJobsList(self):
-        job_list = subprocess.check_output('bjobs -o "jobid" -h', shell=True).decode().split()
+        job_list = subprocess.check_output('bjobs -noheader -o JOBID', shell=True).decode().split()
         return job_list
 
 
@@ -285,9 +295,9 @@ class LSFCluster(Cluster):
         return status
 
 
-    def runJob(self):
-        output = subprocess.check_output("/usr/bin/bsub " + bashfile, shell=True)
-
+    def runJob(self, bashfile):
+        output = subprocess.check_output("bsub " + bashfile, shell=True)
+        return output
 
 
 class Client:
@@ -303,7 +313,6 @@ class Client:
                func,
                args,
                cmd_line=None,
-               parallel_tool="srun",
                cores=None,
                x_partition=1,
                y_partition=1,
@@ -315,7 +324,6 @@ class Client:
                         args = (func,
                                 args,
                                 cmd_line,
-                                parallel_tool,
                                 cores,
                                 x_partition,
                                 y_partition,
@@ -343,7 +351,6 @@ class Client:
                         args = (func,
                                 args,
                                 cmd_line,
-                                parallel_tool,
                                 cores,
                                 x_partition,
                                 y_partition,
@@ -359,7 +366,6 @@ class Client:
                 func,
                 args,
                 cmd_line,
-                parallel_tool,
                 cores,
                 x_partition,
                 y_partition,
@@ -372,7 +378,6 @@ class Client:
                     future[0] = self.run(func,
                                          args,
                                          cmd_line,
-                                         parallel_tool,
                                          cores,
                                          x_partition,
                                          y_partition,
@@ -392,7 +397,6 @@ class Client:
              func,
              args,
              cmd_line,
-             parallel_tool,
              cores,
              x_partition,
              y_partition,
@@ -400,7 +404,7 @@ class Client:
              futures):
 
         work_queue = Queue()
-
+        
         for arg in args:
             work_queue.put(arg)
 
@@ -413,7 +417,6 @@ class Client:
                         futures[i] = self.run(func,
                                               work,
                                               cmd_line,
-                                              parallel_tool,
                                               cores,
                                               x_partition,
                                               y_partition,
@@ -432,7 +435,6 @@ class Client:
             func,
             args,
             cmd_line,
-            parallel_tool,
             cores,
             x_partition,
             y_partition,
@@ -448,7 +450,7 @@ class Client:
             if cores > cluster.cores:
                 raise ValueError("Number of cores requested exceeds the number of cores available on cluster")
             else:
-                cluster._add_job_to_script(cores, parallel_tool)
+                cluster._add_job_to_script(cores)
                 if cmd_line is not None:
                     cluster._add_cmd_line(cmd_line)
                 if x_partition*y_partition*z_partition != cores:
@@ -460,18 +462,21 @@ class Client:
 
         cluster._add_args_to_cmd(cmd_args)
         cluster.finalize_script()
-
+        
         bashfile = cluster.job_file()
         output = cluster.runJob(bashfile)
+        
+        if cluster.type == "slurm":
+            job_id = output.split()[-1].decode()
+        else:
+            job_id = output.split()[1][1:-1].decode() 
 
-        job_id = output.split()[-1].decode()
         cluster.setErrOut(job_id)
         print("Job : " + job_id+ " has been submited")
-        #os.remove(bashfile)
+        os.remove(bashfile)
 
         future = Future(key, output=self.output, cluster=cluster, args=args, job_id=job_id)
 
-        future = None
         cluster.work = future
         cluster.state = "Working"
 
@@ -480,9 +485,11 @@ class Client:
 
 
     def scale(self, n=None):
+        cluster = self.cluster[0]
         if n is not None:
             for i in range(n-1):
-                self.cluster.append(copy.deepcopy(self.cluster))
+                self.cluster.append(copy.deepcopy(cluster))
+                
         
 
 

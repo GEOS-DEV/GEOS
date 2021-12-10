@@ -18,7 +18,7 @@ args = []
 
 if rank==0:
     time.sleep(1)
-    #os.remove(sys.argv[-3])
+    os.remove(sys.argv[-3])
 
     outputDir = sys.argv[-2]
     keyFile = sys.argv[-1]+".txt"
@@ -42,7 +42,7 @@ sys.argv = cmd_args
 module = importlib.import_module(module_str)
 func = getattr(module, func_str)
 
-result = func(*args)
+result = func(*args, rank=rank)
 
 if rank == 0:
     with open(outputFile, 'w') as f:
