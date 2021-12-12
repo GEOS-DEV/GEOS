@@ -110,6 +110,25 @@ public:
 
   virtual std::vector< string > getSubRelationNames() const { return {}; }
 
+  /**
+   * @brief Helper function to register extrinsic data on a constitutive model
+   * @tparam TRAIT the type of extrinsic data
+   * @param[in] extrinsicData the extrinsic data struct corresponding to the object being registered
+   * @param[in] newObject a pointer to the object that is being registered
+   * @return A reference to the newly registered/created Wrapper
+   */
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::type > & registerExtrinsicData( TRAIT const & extrinsicDataTrait,
+                                                                           typename TRAIT::type * newObject )
+  {
+    return registerWrapper( extrinsicDataTrait.key(), newObject ).
+             setApplyDefaultValue( TRAIT::defaultValue ).
+             setPlotLevel( TRAIT::plotLevel ).
+             setRestartFlags( TRAIT::restartFlag ).
+             setDescription( TRAIT::description );
+  }
+
+
 protected:
 
 private:
