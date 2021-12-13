@@ -669,12 +669,14 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
   elemManager.generateMesh( cellBlockManager );
   nodeManager.setElementMaps( elemManager );
 
-  faceManager.buildFaces( nodeManager, elemManager );
-  nodeManager.setFaceMaps( faceManager );
+  if( meshLevel.getName() == MeshLevel::viewStructKeys::baseDiscretizationString() )
+  {
+    faceManager.buildFaces( nodeManager, elemManager );
+    nodeManager.setFaceMaps( faceManager );
 
-  edgeManager.buildEdges( nodeManager, faceManager );
-  nodeManager.setEdgeMaps( edgeManager );
-
+    edgeManager.buildEdges( nodeManager, faceManager );
+    nodeManager.setEdgeMaps( edgeManager );
+  }
   meshLevel.generateSets();
 
   elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
@@ -750,7 +752,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-//                  feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
+                  feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
                                                                                              subRegion.getName() ) ];
