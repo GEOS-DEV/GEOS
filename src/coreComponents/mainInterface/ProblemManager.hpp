@@ -36,7 +36,7 @@ class FunctionManager;
 class FieldSpecificationManager;
 struct CommandLineOptions;
 class MeshLevel;
-
+class FiniteElementDiscretization;
 /**
  * @class ProblemManager
  * @brief This is the class handling the operation flow of the problem being ran in GEOSX
@@ -323,6 +323,15 @@ private:
    * determine the minimum number of quadrature points for each subregion.
    */
   map< std::pair< string, string >, localIndex > calculateRegionQuadrature( MeshLevel & meshBodies );
+
+
+  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d<string const> const >
+  getDiscretizations() const;
+
+  void generateDiscretization( MeshLevel & meshLevel,
+                     Group & cellBlockManager,
+                     Group const * const discretization,
+                     arrayView1d<string const> const & targetRegions );
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate

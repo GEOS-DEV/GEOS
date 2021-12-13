@@ -84,12 +84,16 @@ public:
   struct viewStructKeys
   {
     dataRepository::ViewKey meshLevel                = { "meshLevel" };
+    static constexpr auto baseDiscretizationString() { return "baseDiscretization"; }
+
   } viewKeys;
 
   struct groupStructKeys
   {
     dataRepository::GroupKey vertexManager  = { "vertexManager" };
     dataRepository::GroupKey cellManager    = { "cellManager" };
+
+    static constexpr auto baseDiscretizationString = "baseDiscretization";
 
     static constexpr auto nodeManagerString = "nodeManager";
     static constexpr auto edgeManagerString = "edgeManager";

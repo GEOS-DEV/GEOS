@@ -94,28 +94,73 @@ MeshLevel::MeshLevel( string const & name,
   //   }
   // });
   
-  //ArrayOfArraysView< localIndex const > const faceToNodeMapSource = m_faceManager.nodeList().toViewConst();
+  localIndex const numBasisSupportPoints = order+1;
+
+
+  localIndex const numNodesPerEdge = numBasisSupportPoints;
+  localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2;
+
+  EdgeManager const & edgeManagerSource = source.m_edgeManager;
+  m_edgeManager.resize( edgeManagerSource.size() );
+  EdgeManager::NodeMapType const & edgesToNodesSource = edgeManagerSource.nodeList();
+  EdgeManager::NodeMapType const & edgesToNodes = m_edgeManager.nodeList();
+
+  // start with the number of vertex nodes
+  localIndex numLocalNodes = source.m_nodeManager.size();
+
+  // add the number of non-vertex edge nodes
+  for( localIndex ke=0 ; ke<m_edgeManager.size(); ++ke )
+  {
+    numLocalNodes += numNonVertexNodesPerEdge;
+  }
+
+
+  FaceManager const & faceManagerSource = source.m_faceManager;
+  m_faceManager.resize( faceManagerSource.size() );
+  m_faceManager.edgeList() = source.m_faceManager.edgeList();
+
+
+  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager.nodeList().toViewConst();
   ArrayOfArrays< localIndex > faceToNodeMapNew = m_faceManager.nodeList();
-  
+  ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager.edgeList().toViewConst();
   localIndex const numNodesPerFace = pow(order+1,2);
   faceToNodeMapNew.resize(faceToNodeMapNew.size(),numNodesPerFace);
   
+  // add the number of non-edge face nodes
+  for( localIndex kf=0; kf<m_faceManager.size(); ++kf )
+  {
+    localIndex const numEdgesPerFace = facesToEdges.sizeOfArray(kf);
+    localIndex const numVertexNodesPerFace = facesToNodesMapSource.sizeOfArray(kf);
+    localIndex const numNonEdgeNodesPerFace = numNodesPerFace - numVertexNodesPerFace - numEdgesPerFace*numNonVertexNodesPerEdge;
+
+    numLocalNodes += numNonEdgeNodesPerFace;
+  }
+
+  // add the number of non-face element nodes
+
+
+
+
 
   FaceManager::ElemMapType const & faceToElem = m_faceManager.toElementRelation();
   arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex.toViewConst();
 
   
+
+
+
+
+
+
+
   source.m_elementManager.forElementRegions<CellElementRegion>([&]( CellElementRegion const & sourceRegion )
   {
     CellElementRegion & region = *(dynamic_cast<CellElementRegion *>( m_elementManager.createChild( sourceRegion.getCatalogName(),
                                                                                                         sourceRegion.getName() ) ) );
 
     region.addCellBlockNames( sourceRegion.getCellBlockNames() );
-    // std::exit(2);
     sourceRegion.forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion const & sourceSubRegion )
     {
-//      std::exit(2);
-      std::cout << "hello" << std::endl;
       CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
       newSubRegion.setElementType( sourceSubRegion.getElementType() );
 
@@ -132,7 +177,7 @@ MeshLevel::MeshLevel( string const & name,
       array2d< localIndex, cells::NODE_MAP_PERMUTATION > elemsToNodesNew = newSubRegion.nodeList();
 
 
-      localIndex const numNodesPerElem = pow(order+1,3);// change to pow( 2+( order>1 ? order-1 : 0 ), 3 );
+      localIndex const numNodesPerElem = pow(numBasisSupportPoints,3);
       elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
     
       // Fill a temporary table which knowing the global number of a degree of freedom and a face, gives you the local number of this degree

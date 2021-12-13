@@ -29,6 +29,8 @@
 #include "events/EventManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
+#include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "fileIO/Outputs/OutputManager.hpp"
@@ -501,64 +503,41 @@ void ProblemManager::generateMesh()
   DomainPartition & domain = getDomainPartition();
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
+
+  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d<string const> const >
+  discretizations = getDiscretizations();
+
   meshManager.generateMeshes( domain );
   Group & cellBlockManager = domain.getGroup( keys::cellManager );
 
+
+
   Group & meshBodies = domain.getMeshBodies();
-
-
-
-  for( localIndex a = 0; a < meshBodies.numSubGroups(); ++a )
+  meshBodies.forSubGroups<MeshBody>( [&]( MeshBody & meshBody )
   {
-    MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
+    MeshLevel & baseMesh = meshBody.getMeshLevel( MeshLevel::viewStructKeys::baseDiscretizationString() );
+    array1d<string> junk;
+    this->generateDiscretization( baseMesh, cellBlockManager, nullptr, junk.toViewConst() );
+  } );
 
+  for( auto const & discretizationPair: discretizations )
+  {
+    string const & meshBodyName = discretizationPair.first.first;
+    FiniteElementDiscretization const & discretization = *(discretizationPair.first.second);
+    string const & discretizationName = discretization.getName();
+    arrayView1d< string const > const regionNames = discretizationPair.second;
+    MeshBody & meshBody = meshBodies.getGroup<MeshBody>( meshBodyName );
 
-    for( localIndex b = 0; b < 2; ++b )
-    {
-      // clone mesh level
-      if( b>0 )
-      {
-        meshBody.createMeshLevel( b, 0 );
-      }
-      MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( b );
+    MeshLevel & mesh = meshBody.createMeshLevel( MeshLevel::viewStructKeys::baseDiscretizationString(),
+                                                 discretizationName,
+                                                 discretization.getOrder(),
+                                                 regionNames );
 
-      NodeManager & nodeManager = meshLevel.getNodeManager();
-      EdgeManager & edgeManager = meshLevel.getEdgeManager();
-      FaceManager & faceManager = meshLevel.getFaceManager();
-      ElementRegionManager & elemManager = meshLevel.getElemManager();
+    this->generateDiscretization( mesh,
+                                  cellBlockManager,
+                                  &discretization,
+                                  regionNames );
 
-      GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
-
-      MeshUtilities::generateNodesets( geometricObjects, nodeManager );
-      nodeManager.constructGlobalToLocalMap();
-
-      elemManager.generateMesh( cellBlockManager );
-      nodeManager.setElementMaps( elemManager );
-
-      faceManager.buildFaces( nodeManager, elemManager );
-      nodeManager.setFaceMaps( faceManager );
-
-      edgeManager.buildEdges( nodeManager, faceManager );
-      nodeManager.setEdgeMaps( edgeManager );
-
-      meshLevel.generateSets();
-
-      elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
-      {
-        subRegion.setupRelatedObjectsInRelations( meshLevel );
-        subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
-
-        subRegion.setMaxGlobalIndex();
-      } );
-
-      elemManager.setMaxGlobalIndex();
-
-      elemManager.generateCellToEdgeMaps( faceManager );
-
-      elemManager.generateAggregates( faceManager, nodeManager );
-
-      elemManager.generateWells( meshManager, meshLevel );
-    }
   }
 
   MeshBody & meshBody = meshBodies.getGroup< MeshBody >( 0 );
@@ -609,6 +588,112 @@ void ProblemManager::applyNumericalMethods()
     }
   }
 }
+
+map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d<string const> const >
+ProblemManager::getDiscretizations() const
+{
+
+  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d<string const> const > meshDiscretizations;
+
+  NumericalMethodsManager const &
+  numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+
+  DomainPartition const & domain  = getDomainPartition();
+  Group const & meshBodies = domain.getMeshBodies();
+
+  m_physicsSolverManager->forSubGroups<SolverBase>( [&]( SolverBase const & solver )
+  {
+    string const discretizationName = solver.getDiscretizationName();
+    arrayView1d< string const > const & targetRegions = solver.targetRegionNames();
+
+    FiniteElementDiscretization const &
+    feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( discretizationName );
+
+    for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
+    {
+      MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( a );
+      std::pair< string, FiniteElementDiscretization const * const > key = std::make_pair( meshBody.getName(), &feDiscretization );
+      meshDiscretizations.insert( { key, targetRegions } );
+
+//      for( auto const & regionName : targetRegions )
+//      {
+//        meshDiscretizations.insert( { std::make_pair( meshBody.getName(), regionName ),
+//                                      feDiscretization } );
+//      }
+    }
+  } );
+
+  return meshDiscretizations;
+}
+
+void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
+                                         Group & cellBlockManager,
+                                         Group const * const discretization,
+                                         arrayView1d<string const> const & targetRegions )
+{
+  int order = 1;
+  if( discretization != nullptr )
+  {
+    if( auto const * const feDisc = dynamic_cast< FiniteElementDiscretization const * >(discretization) )
+    {
+      order = feDisc->getOrder();
+    }
+    else
+    {
+      auto const * const
+      fvsDisc = dynamic_cast< FluxApproximationBase const * >(discretization);
+
+      auto const * const
+      fvhDisc = dynamic_cast< HybridMimeticDiscretization const * >(discretization);
+
+      if( fvsDisc!=nullptr && fvhDisc!=nullptr )
+      {
+        GEOSX_ERROR("Group expected to cast to a discretization object.");
+      }
+    }
+  }
+
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+  EdgeManager & edgeManager = meshLevel.getEdgeManager();
+  FaceManager & faceManager = meshLevel.getFaceManager();
+  ElementRegionManager & elemManager = meshLevel.getElemManager();
+
+  GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
+
+  MeshUtilities::generateNodesets( geometricObjects, nodeManager );
+  nodeManager.constructGlobalToLocalMap();
+
+  elemManager.generateMesh( cellBlockManager );
+  nodeManager.setElementMaps( elemManager );
+
+  faceManager.buildFaces( nodeManager, elemManager );
+  nodeManager.setFaceMaps( faceManager );
+
+  edgeManager.buildEdges( nodeManager, faceManager );
+  nodeManager.setEdgeMaps( edgeManager );
+
+  meshLevel.generateSets();
+
+  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+  {
+    subRegion.setupRelatedObjectsInRelations( meshLevel );
+    subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+
+    subRegion.setMaxGlobalIndex();
+  } );
+
+  elemManager.setMaxGlobalIndex();
+
+  elemManager.generateCellToEdgeMaps( faceManager );
+
+  elemManager.generateAggregates( faceManager, nodeManager );
+
+//  elemManager.generateWells( meshManager, meshLevel );
+}
+
 
 
 map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQuadrature( MeshLevel & meshLevel )

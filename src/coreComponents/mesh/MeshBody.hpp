@@ -26,6 +26,11 @@ namespace geosx
 {
 
 class MeshLevel;
+class FiniteElementDiscretization;
+
+
+using DiscretizationContainer = map< std::pair< string, string >, FiniteElementDiscretization const & >;
+using DiscretizationEntry = DiscretizationContainer::value_type;
 
 /**
  * @class MeshBody
@@ -55,23 +60,31 @@ public:
    */
   MeshLevel & createMeshLevel( localIndex const newLevel );
 
-  MeshLevel & createMeshLevel( localIndex const newLevel, localIndex const sourceLevel );
+  MeshLevel & createMeshLevel( string const & name  );
+
+  MeshLevel & createMeshLevel( string const & sourceLevelName,
+                               string const & newLevelName,
+                               int const order,
+                               arrayView1d<string const> const & regions  );
+
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to MeshLevel
    */
-  MeshLevel & getMeshLevel( localIndex const level )
-  { return this->getGroup< MeshLevel >( level ); }
+  template< typename KEY >
+  MeshLevel & getMeshLevel( KEY const & key )
+  { return this->getGroup< MeshLevel >( key ); }
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to const MeshLevel
    */
-  MeshLevel const & getMeshLevel( localIndex const level ) const
-  { return this->getGroup< MeshLevel >( level ); }
+  template< typename KEY >
+  MeshLevel const & getMeshLevel( KEY const & key ) const
+  { return this->getGroup< MeshLevel >( key ); }
 
   /**
    * @brief Set mesh length scale used to define an absolute length tolerance
