@@ -31,45 +31,6 @@ namespace geosx
 namespace FluxKernelsHelper
 {
 
-template< typename ... TRAITS >
-struct StencilKernelAccessorStorage
-{
-  std::tuple< ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > accessors;
-
-  StencilKernelAccessorStorage( ElementRegionManager const & elemManager,
-                                string const & solverName )
-  {
-    std::tuple< ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > & allAccessors = accessors;
-    forEachInTuple( std::tuple< TRAITS ... >{}, [&elemManager, &solverName, &allAccessors]( auto && t, auto idx )
-    {
-      GEOSX_UNUSED_VAR( t );
-      using TRAIT = TYPEOFREF( t );
-
-      auto & acc = std::get< idx() >( allAccessors );
-      acc = elemManager.constructViewAccessor< typename TRAIT::type,
-                                               traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key() );
-      acc.setName( solverName + "/accessors/" + TRAIT::key() );
-    } );
-
-  }
-
-  // TODO: move this somewhere
-  template< class F, class ... Ts, std::size_t ... Is >
-  void forEachInTuple( std::tuple< Ts ... > const & tuple, F func, std::index_sequence< Is ... > )
-  {
-    using expander = int[];
-    (void) expander { 0, ( (void)func( std::get< Is >( tuple ), std::integral_constant< size_t, Is >{} ), 0 )... };
-  }
-
-  template< class F, class ... Ts >
-  void forEachInTuple( std::tuple< Ts ... > const & tuple, F && func )
-  {
-    forEachInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
-  }
-
-};
-
-
 template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 

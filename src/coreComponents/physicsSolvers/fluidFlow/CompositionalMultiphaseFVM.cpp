@@ -104,11 +104,9 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
   {
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
-    bool const isIsothermal = true;
     FaceBasedAssemblyKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >
-      ( isIsothermal,
-      m_numComponents,
+      ( m_numComponents,
       m_numPhases,
       dofManager.rankOffset(),
       elemDofKey,
@@ -118,7 +116,6 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       stencilWrapper,
       targetRegionNames(),
       fluidModelNames(),
-      relPermModelNames(),
       capPresModelNames(),
       permeabilityModelNames(),
       dt,

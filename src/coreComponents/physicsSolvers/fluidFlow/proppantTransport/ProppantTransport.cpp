@@ -23,7 +23,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/slurryFluidSelector.hpp"
 #include "constitutive/fluid/particleFluidSelector.hpp"
-#include "constitutive/permeability/ProppantPermeability.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -1129,21 +1129,22 @@ void ProppantTransport::resetViews( MeshLevel & mesh )
     m_dCollisionFactor_dProppantConcentration.setName( getName() + "/accessors/" + keys::dCollisionFactor_dProppantConcentrationString() );
   }
 
+  {
+    using namespace extrinsicMeshData::permeability;
 
-  m_permeability.clear();
-  m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( ProppantPermeability::viewKeyStruct::permeabilityString(),
-                                                                                targetRegionNames(),
-                                                                                permeabilityModelNames() );
-  m_permeability.setName( getName() + "/accessors/" + ProppantPermeability::viewKeyStruct::permeabilityString() );
+    m_permeability.clear();
+    m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( permeability::key(),
+                                                                                  targetRegionNames(),
+                                                                                  permeabilityModelNames() );
+    m_permeability.setName( getName() + "/accessors/" + permeability::key() );
 
-  m_permeabilityMultiplier.clear();
-  m_permeabilityMultiplier = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( ProppantPermeability::viewKeyStruct::permeabilityMultiplierString(),
-                                                                                          targetRegionNames(),
-                                                                                          permeabilityModelNames() );
-  m_permeabilityMultiplier.setName( getName() + "/accessors/" + ProppantPermeability::viewKeyStruct::permeabilityMultiplierString() );
+    m_permeabilityMultiplier.clear();
+    m_permeabilityMultiplier = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( permeabilityMultiplier::key(),
+                                                                                            targetRegionNames(),
+                                                                                            permeabilityModelNames() );
+    m_permeabilityMultiplier.setName( getName() + "/accessors/" + permeabilityMultiplier::key() );
+  }
 }
-
-
 
 void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                              DomainPartition & domain )

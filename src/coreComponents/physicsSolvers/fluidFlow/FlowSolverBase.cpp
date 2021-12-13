@@ -19,6 +19,7 @@
 #include "FlowSolverBase.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -299,42 +300,45 @@ void FlowSolverBase::resetViews( MeshLevel & mesh )
 {
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  using namespace extrinsicMeshData::flow;
+  {
+    using namespace extrinsicMeshData::flow;
 
-  m_pressure.clear();
-  m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( pressure::key() );
-  m_pressure.setName( getName() + "/accessors/" + pressure::key() );
+    m_pressure.clear();
+    m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( pressure::key() );
+    m_pressure.setName( getName() + "/accessors/" + pressure::key() );
 
-  m_deltaPressure.clear();
-  m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( deltaPressure::key() );
-  m_deltaPressure.setName( getName() + "/accessors/" + deltaPressure::key() );
+    m_deltaPressure.clear();
+    m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( deltaPressure::key() );
+    m_deltaPressure.setName( getName() + "/accessors/" + deltaPressure::key() );
 
-  m_elemGhostRank.clear();
-  m_elemGhostRank = elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-  m_elemGhostRank.setName( getName() + "/accessors/" + ObjectManagerBase::viewKeyStruct::ghostRankString() );
+    m_elemGhostRank.clear();
+    m_elemGhostRank = elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+    m_elemGhostRank.setName( getName() + "/accessors/" + ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-  m_volume.clear();
-  m_volume = elemManager.constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
-  m_volume.setName( getName() + "/accessors/" + ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
+    m_volume.clear();
+    m_volume = elemManager.constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
+    m_volume.setName( getName() + "/accessors/" + ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
 
-  m_gravCoef.clear();
-  m_gravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( gravityCoefficient::key() );
-  m_gravCoef.setName( getName() + "/accessors/" + gravityCoefficient::key() );
+    m_gravCoef.clear();
+    m_gravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( gravityCoefficient::key() );
+    m_gravCoef.setName( getName() + "/accessors/" + gravityCoefficient::key() );
+  }
 
-  using keys = PermeabilityBase::viewKeyStruct;
+  {
+    using namespace extrinsicMeshData::permeability;
 
-  m_permeability.clear();
-  m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::permeabilityString(),
-                                                                                targetRegionNames(),
-                                                                                m_permeabilityModelNames );
-  m_permeability.setName( getName() + "/accessors/" + keys::permeabilityString() );
+    m_permeability.clear();
+    m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( permeability::key(),
+                                                                                  targetRegionNames(),
+                                                                                  m_permeabilityModelNames );
+    m_permeability.setName( getName() + "/accessors/" + permeability::key() );
 
-  m_dPerm_dPressure.clear();
-  m_dPerm_dPressure = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::dPerm_dPressureString(),
-                                                                                   targetRegionNames(),
-                                                                                   m_permeabilityModelNames );
-  m_dPerm_dPressure.setName( getName() + "/accessors/" + keys::dPerm_dPressureString() );
-
+    m_dPerm_dPressure.clear();
+    m_dPerm_dPressure = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( dPerm_dPressure::key(),
+                                                                                     targetRegionNames(),
+                                                                                     m_permeabilityModelNames );
+    m_dPerm_dPressure.setName( getName() + "/accessors/" + dPerm_dPressure::key() );
+  }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   m_elementSeparationCoefficient.clear();
