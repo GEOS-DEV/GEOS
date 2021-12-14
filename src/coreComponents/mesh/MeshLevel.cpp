@@ -65,9 +65,16 @@ MeshLevel::MeshLevel( string const & name,
   MeshLevel( name, parent )
 {
 
+  //  localIndex const numBasisSupportPoints = order+1;
+  //
+  //
+  //  localIndex const numNodesPerEdge = numBasisSupportPoints;
+  //  localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2;
 
-  localIndex numNodes = source.m_nodeManager.size()+source.m_edgeManager.size()*(order-1)+pow(order-1,2)*source.m_faceManager.size()+
-     pow(order-1,3)*source.m_elementManager.size();
+  localIndex const numNodes = source.m_nodeManager.size()
+                            + source.m_edgeManager.size()*(order-1)
+                            + source.m_faceManager.size()*pow(order-1,2)
+                            + source.m_elementManager.getNumberOfElements()*pow(order-1,3);
 
   m_nodeManager.resize(numNodes);
 
@@ -95,11 +102,6 @@ MeshLevel::MeshLevel( string const & name,
   //   }
   // });
   
-//  localIndex const numBasisSupportPoints = order+1;
-//
-//
-//  localIndex const numNodesPerEdge = numBasisSupportPoints;
-//  localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2;
 //
 //  EdgeManager const & edgeManagerSource = source.m_edgeManager;
 //  m_edgeManager.resize( edgeManagerSource.size() );
@@ -401,9 +403,10 @@ MeshLevel::MeshLevel( string const & name,
           {
             for (localIndex i = 0; i < order+1; i++)
             {
-              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][0] = x[i];
-              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][1] = y[j];
-              refPosNew[elemsToNodesNew[e][i+j*(order+1)+k*pow(order+1,2)]][2] = z[k];
+              localIndex const nodeIndex = elemsToNodesNew( e, i+j*(order+1)+k*pow(order+1,2) );
+              refPosNew( nodeIndex, 0 ) = x[i];
+              refPosNew( nodeIndex, 1 ) = y[j];
+              refPosNew( nodeIndex, 2 ) = z[k];
             }
             
           }

@@ -27,9 +27,9 @@
       xCoords="{ 0, 101 }"
       yCoords="{ 0, 101 }"
       zCoords="{ 0, 101 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
-      nz="{ 10 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
 
