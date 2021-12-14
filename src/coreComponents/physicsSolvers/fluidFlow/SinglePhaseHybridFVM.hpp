@@ -149,6 +149,18 @@ public:
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
 
+  virtual void
+  applyAquiferBC( real64 const time,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) const override final;
+
+  virtual void
+  saveAquiferConvergedState( real64 const & time,
+                             real64 const & dt,
+                             DomainPartition & domain ) override;
 
   /**@}*/
 

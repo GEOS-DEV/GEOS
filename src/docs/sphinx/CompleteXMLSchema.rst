@@ -15,6 +15,13 @@ Element: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM.rst
 
 
+.. _XML_Aquifer:
+
+Element: Aquifer
+================
+.. include:: ../../coreComponents/schema/docs/Aquifer.rst
+
+
 .. _XML_Benchmarks:
 
 Element: Benchmarks
@@ -78,11 +85,18 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
-.. _XML_CO2BrineFluid:
+.. _XML_CO2BrineEzrokhiFluid:
 
-Element: CO2BrineFluid
-======================
-.. include:: ../../coreComponents/schema/docs/CO2BrineFluid.rst
+Element: CO2BrineEzrokhiFluid
+=============================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid.rst
+
+
+.. _XML_CO2BrinePhillipsFluid:
+
+Element: CO2BrinePhillipsFluid
+==============================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
 
 
 .. _XML_CarmanKozenyPermeability:
@@ -188,13 +202,6 @@ Element: ConstantPermeability
 Element: Constitutive
 =====================
 .. include:: ../../coreComponents/schema/docs/Constitutive.rst
-
-
-.. _XML_Contact:
-
-Element: Contact
-================
-.. include:: ../../coreComponents/schema/docs/Contact.rst
 
 
 .. _XML_Coulomb:
@@ -365,6 +372,13 @@ Element: FlowProppantTransport
 .. include:: ../../coreComponents/schema/docs/FlowProppantTransport.rst
 
 
+.. _XML_FrictionlessContact:
+
+Element: FrictionlessContact
+============================
+.. include:: ../../coreComponents/schema/docs/FrictionlessContact.rst
+
+
 .. _XML_Functions:
 
 Element: Functions
@@ -398,6 +412,13 @@ Element: HybridMimeticDiscretization
 Element: Hydrofracture
 ======================
 .. include:: ../../coreComponents/schema/docs/Hydrofracture.rst
+
+
+.. _XML_HydrostaticEquilibrium:
+
+Element: HydrostaticEquilibrium
+===============================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium.rst
 
 
 .. _XML_Included:
@@ -820,6 +841,13 @@ Element: SymbolicFunction
 .. include:: ../../coreComponents/schema/docs/SymbolicFunction.rst
 
 
+.. _XML_TableCapillaryPressure:
+
+Element: TableCapillaryPressure
+===============================
+.. include:: ../../coreComponents/schema/docs/TableCapillaryPressure.rst
+
+
 .. _XML_TableFunction:
 
 Element: TableFunction
@@ -936,6 +964,13 @@ Datastructure: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM_other.rst
 
 
+.. _DATASTRUCTURE_Aquifer:
+
+Datastructure: Aquifer
+======================
+.. include:: ../../coreComponents/schema/docs/Aquifer_other.rst
+
+
 .. _DATASTRUCTURE_Benchmarks:
 
 Datastructure: Benchmarks
@@ -999,11 +1034,18 @@ Datastructure: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability_other.rst
 
 
-.. _DATASTRUCTURE_CO2BrineFluid:
+.. _DATASTRUCTURE_CO2BrineEzrokhiFluid:
 
-Datastructure: CO2BrineFluid
-============================
-.. include:: ../../coreComponents/schema/docs/CO2BrineFluid_other.rst
+Datastructure: CO2BrineEzrokhiFluid
+===================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid_other.rst
+
+
+.. _DATASTRUCTURE_CO2BrinePhillipsFluid:
+
+Datastructure: CO2BrinePhillipsFluid
+====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid_other.rst
 
 
 .. _DATASTRUCTURE_CarmanKozenyPermeability:
@@ -1116,13 +1158,6 @@ Datastructure: Constitutive
 Datastructure: ConstitutiveModels
 =================================
 .. include:: ../../coreComponents/schema/docs/ConstitutiveModels_other.rst
-
-
-.. _DATASTRUCTURE_Contact:
-
-Datastructure: Contact
-======================
-.. include:: ../../coreComponents/schema/docs/Contact_other.rst
 
 
 .. _DATASTRUCTURE_Coulomb:
@@ -1300,6 +1335,13 @@ Datastructure: FlowProppantTransport
 .. include:: ../../coreComponents/schema/docs/FlowProppantTransport_other.rst
 
 
+.. _DATASTRUCTURE_FrictionlessContact:
+
+Datastructure: FrictionlessContact
+==================================
+.. include:: ../../coreComponents/schema/docs/FrictionlessContact_other.rst
+
+
 .. _DATASTRUCTURE_Functions:
 
 Datastructure: Functions
@@ -1333,6 +1375,13 @@ Datastructure: HybridMimeticDiscretization
 Datastructure: Hydrofracture
 ============================
 .. include:: ../../coreComponents/schema/docs/Hydrofracture_other.rst
+
+
+.. _DATASTRUCTURE_HydrostaticEquilibrium:
+
+Datastructure: HydrostaticEquilibrium
+=====================================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium_other.rst
 
 
 .. _DATASTRUCTURE_Included:
@@ -1767,6 +1816,13 @@ Datastructure: SurfaceGenerator
 Datastructure: SymbolicFunction
 ===============================
 .. include:: ../../coreComponents/schema/docs/SymbolicFunction_other.rst
+
+
+.. _DATASTRUCTURE_TableCapillaryPressure:
+
+Datastructure: TableCapillaryPressure
+=====================================
+.. include:: ../../coreComponents/schema/docs/TableCapillaryPressure_other.rst
 
 
 .. _DATASTRUCTURE_TableFunction:

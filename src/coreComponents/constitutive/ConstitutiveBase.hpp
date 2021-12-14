@@ -108,6 +108,8 @@ public:
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
 
+  virtual std::vector< string > getSubRelationNames() const { return {}; }
+
 protected:
 
 private:

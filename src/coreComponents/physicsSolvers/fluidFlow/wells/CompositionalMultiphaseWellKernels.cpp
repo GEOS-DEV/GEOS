@@ -17,6 +17,7 @@
  */
 
 #include "CompositionalMultiphaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
 {
@@ -287,6 +288,9 @@ FluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+
+  using namespace CompositionalMultiphaseUtilities;
+
   WellControls::Type const wellType = wellControls.getType();
   arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
 
@@ -410,6 +414,12 @@ FluxKernel::
         oneSidedDofColIndices_dPresCompUp[jdof] = offsetUp + COFFSET::DPRES + jdof;
       }
 
+      // Apply equation/variable change transformation(s)
+      real64 work[NC+1];
+      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, 1, oneSidedFluxJacobian_dRate, work );
+      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, oneSidedFluxJacobian_dPresCompUp, work );
+      shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, oneSidedFlux );
+
       for( localIndex i = 0; i < NC; ++i )
       {
         if( oneSidedEqnRowIndices[i] >= 0 && oneSidedEqnRowIndices[i] < localMatrix.numRows() )
@@ -466,6 +476,12 @@ FluxKernel::
         // dofs are the **upstream** pressure and component densities
         dofColIndices_dPresCompUp[jdof] = offsetUp + COFFSET::DPRES + jdof;
       }
+
+      // Apply equation/variable change transformation(s)
+      real64 work[NC+1];
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, 1, 2, localFluxJacobian_dRate, work );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, 2, localFluxJacobian_dPresCompUp, work );
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, 2, localFlux );
 
       for( localIndex i = 0; i < 2*NC; ++i )
       {
@@ -1310,6 +1326,8 @@ AccumulationKernel::
           arrayView1d< real64 > const & localRhs )
 {
 
+  using namespace CompositionalMultiphaseUtilities;
+
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
 
@@ -1352,6 +1370,11 @@ AccumulationKernel::
     {
       dofColIndices[idof] = wellElemDofNumber[iwelem] + COFFSET::DPRES + idof;
     }
+
+    // Apply equation/variable change transformation(s)
+    real64 work[NC+1];
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, localAccumJacobian, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localAccum );
 
     // add contribution to residual and jacobian
     for( localIndex ic = 0; ic < NC; ++ic )
@@ -1507,18 +1530,19 @@ INST_VolumeBalanceKernel( 3 );
 INST_VolumeBalanceKernel( 4 );
 INST_VolumeBalanceKernel( 5 );
 
-/******************************** PresCompFracInitializationKernel ********************************/
+/******************************** PresTempCompFracInitializationKernel ********************************/
 
 void
-PresCompFracInitializationKernel::
+PresTempCompFracInitializationKernel::
   launch( localIndex const perforationSize,
           localIndex const subRegionSize,
-          localIndex const numComponents,
+          localIndex const numComps,
           localIndex const numPhases,
           localIndex const numPerforations,
           WellControls const & wellControls,
           real64 const & currentTime,
-          ElementViewConst< arrayView1d< real64 const > > const & resPressure,
+          ElementViewConst< arrayView1d< real64 const > > const & resPres,
+          ElementViewConst< arrayView1d< real64 const > > const & resTemp,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const & resCompDens,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & resPhaseMassDens,
@@ -1526,12 +1550,11 @@ PresCompFracInitializationKernel::
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 const > const & wellElemGravCoef,
-          arrayView1d< real64 > const & wellElemPressure,
+          arrayView1d< real64 > const & wellElemPres,
+          arrayView1d< real64 > const & wellElemTemp,
           arrayView2d< real64, compflow::USD_COMP > const & wellElemCompFrac )
 {
-  localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-  localIndex const NC = numComponents;
-  localIndex const NP = numPhases;
+  localIndex constexpr MAX_NUM_COMP = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
   real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
@@ -1540,8 +1563,9 @@ PresCompFracInitializationKernel::
 
   // loop over all perforations to compute an average total mass density and component fraction
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTotalMassDens( 0 );
-  RAJA::ReduceMin< parallelDeviceReduce, real64 > minResPressure( 1e10 );
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxResPressure( 0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTemp( 0 );
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > minResPres( 1e10 );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxResPres( 0 );
   forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
   {
     // get the reservoir (sub)region and element indices
@@ -1549,11 +1573,14 @@ PresCompFracInitializationKernel::
     localIndex const esr = resElementSubRegion[iperf];
     localIndex const ei = resElementIndex[iperf];
 
-    minResPressure.min( resPressure[er][esr][ei] );
-    maxResPressure.max( resPressure[er][esr][ei] );
+    minResPres.min( resPres[er][esr][ei] );
+    maxResPres.max( resPres[er][esr][ei] );
+
+    // increment the temperature
+    sumTemp += resTemp[er][esr][ei];
 
     // increment the average total mass density
-    for( localIndex ip = 0; ip < NP; ++ip )
+    for( localIndex ip = 0; ip < numPhases; ++ip )
     {
       sumTotalMassDens += resPhaseVolFrac[er][esr][ei][ip] * resPhaseMassDens[er][esr][ei][0][ip];
     }
@@ -1562,8 +1589,8 @@ PresCompFracInitializationKernel::
   // TODO: there must a better way to do what is below
   // I would like to define an array of RAJA::ReduceSum to be able to do sum[ic] += ...
   // and put back what is below in the previous kernel.
-  stackArray1d< real64, maxNumComp > sumCompFrac( NC );
-  for( localIndex ic = 0; ic < NC; ++ic )
+  stackArray1d< real64, MAX_NUM_COMP > sumCompFrac( numComps );
+  for( localIndex ic = 0; ic < numComps; ++ic )
   {
     RAJA::ReduceSum< parallelDeviceReduce, real64 > sum( 0.0 );
     forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
@@ -1574,7 +1601,7 @@ PresCompFracInitializationKernel::
       localIndex const ei = resElementIndex[iperf];
 
       real64 perfTotalDens = 0.0;
-      for( localIndex jc = 0; jc < NC; ++jc )
+      for( localIndex jc = 0; jc < numComps; ++jc )
       {
         perfTotalDens += resCompDens[er][esr][ei][jc];
       }
@@ -1584,38 +1611,48 @@ PresCompFracInitializationKernel::
   }
 
   real64 const pres = ( wellControls.getType() == WellControls::Type::PRODUCER )
-                      ? MpiWrapper::min( minResPressure.get() )
-                      : MpiWrapper::max( maxResPressure.get() );
+                      ? MpiWrapper::min( minResPres.get() )
+                      : MpiWrapper::max( maxResPres.get() );
   real64 const avgTotalMassDens = MpiWrapper::sum( sumTotalMassDens.get() ) / numPerforations;
 
-  stackArray1d< real64, maxNumComp > avgCompFrac( NC );
+  stackArray1d< real64, MAX_NUM_COMP > avgCompFrac( numComps );
+  real64 avgTemp = 0;
   // compute average component fraction
   if( wellControls.getType() == WellControls::Type::PRODUCER )
   {
+    // use average temperature from reservoir
+    avgTemp = MpiWrapper::sum( sumTemp.get() ) / numPerforations;
+
     // use average comp frac from reservoir
     real64 compFracSum = 0;
-    real64 const tol = 1e-13;
-    for( localIndex ic = 0; ic < NC; ++ic )
+    for( localIndex ic = 0; ic < numComps; ++ic )
     {
       avgCompFrac[ic] = MpiWrapper::sum( sumCompFrac[ic] ) / numPerforations;
       compFracSum += avgCompFrac[ic];
     }
-    GEOSX_ERROR_IF( compFracSum < 1 - tol || compFracSum > 1 + tol,
-                    "Invalid well initialization: sum of component fractions should be between 0 and 1" );
+
+    real64 const tol = 1e-13;
+    GEOSX_THROW_IF( compFracSum < 1 - tol || compFracSum > 1 + tol,
+                    "Invalid well initialization: sum of component fractions should be between 0 and 1",
+                    InputError );
   }
   else // injector
   {
-    // use average comp frac from XML file
-    for( localIndex ic = 0; ic < NC; ++ic )
+    // use temperature from XML file
+    avgTemp = wellControls.getInjectionTemperature();
+
+    // use comp frac from XML file
+    for( localIndex ic = 0; ic < numComps; ++ic )
     {
       avgCompFrac[ic] = wellControls.getInjectionStream()[ic];
     }
   }
 
-  // set the global component fractions to avgCompFrac
+  // set the global component fractions to avgCompFrac / temperature to avgTemp
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
-    for( localIndex ic = 0; ic < NC; ++ic )
+    wellElemTemp[iwelem] = avgTemp;
+    for( localIndex ic = 0; ic < numComps; ++ic )
     {
       wellElemCompFrac[iwelem][ic] = avgCompFrac[ic];
     }
@@ -1641,13 +1678,14 @@ PresCompFracInitializationKernel::
                       : 2.0 * pres;
   }
 
-  GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
+  GEOSX_THROW_IF( pressureControl <= 0,
+                  "Invalid well initialization: negative pressure was found",
+                  InputError );
 
   // estimate the pressures in the well elements using this avgDens
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
-    wellElemPressure[iwelem] = pressureControl
-                               + avgTotalMassDens * ( wellElemGravCoef[iwelem] - gravCoefControl );
+    wellElemPres[iwelem] = pressureControl + avgTotalMassDens * ( wellElemGravCoef[iwelem] - gravCoefControl );
   } );
 }
 

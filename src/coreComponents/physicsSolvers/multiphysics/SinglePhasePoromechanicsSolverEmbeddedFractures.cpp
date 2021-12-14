@@ -22,7 +22,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "finiteElement/Kinematics.h"
 #include "linearAlgebra/interfaces/dense/BlasLapackLA.hpp"
@@ -33,6 +33,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
@@ -103,7 +104,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
 
   // Add coupling between displacement and cell pressures
   dofManager.addCoupling( keys::TotalDisplacement,
-                          FlowSolverBase::viewKeyStruct::pressureString(),
+                          extrinsicMeshData::flow::pressure::key(),
                           DofManager::Connector::Elem );
 
   // Add coupling between fracture pressure and displacement jump
@@ -115,7 +116,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
     regions.emplace_back( region.getName() );
   } );
 
-  dofManager.addCoupling( FlowSolverBase::viewKeyStruct::pressureString(),
+  dofManager.addCoupling( extrinsicMeshData::flow::pressure::key(),
                           SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString(),
                           DofManager::Connector::Elem,
                           regions );
@@ -124,8 +125,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
 void SinglePhasePoromechanicsSolverEmbeddedFractures::setupSystem( DomainPartition & domain,
                                                                    DofManager & dofManager,
                                                                    CRSMatrix< real64, globalIndex > & localMatrix,
-                                                                   array1d< real64 > & localRhs,
-                                                                   array1d< real64 > & localSolution,
+                                                                   ParallelVector & rhs,
+                                                                   ParallelVector & solution,
                                                                    bool const setSparsity )
 {
   // Add missing couplings ( matrix pressure with displacement jump and jump - displacement )
@@ -167,13 +168,14 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupSystem( DomainPartiti
   addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
 
   // Finally, steal the pattern into a CRS matrix
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localRhs.resize( localMatrix.numRows() );
-  localSolution.resize( localMatrix.numRows() );
-
   localMatrix.setName( this->getName() + "/localMatrix" );
-  localRhs.setName( this->getName() + "/localRhs" );
-  localSolution.setName( this->getName() + "/localSolution" );
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+
+  rhs.setName( this->getName() + "/rhs" );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+
+  solution.setName( this->getName() + "/solution" );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 }
 
 void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & domain,
@@ -188,7 +190,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( Do
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
-  string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const pressureDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -237,7 +239,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( Do
   // 3. Add the number of nonzeros induced by coupling jump (aperture) - fracture pressure due to flux term
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretizationName() );
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
@@ -288,7 +290,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingSparsityPattern
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
-  string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const pressureDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -334,7 +336,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingSparsityPattern
   // 3. Add the sparsity pattern induced by coupling jump (aperture) - fracture pressure due to flux term
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretizationName() );
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
@@ -402,7 +404,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
   arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
-  string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const pDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
@@ -513,8 +515,8 @@ real64 SinglePhasePoromechanicsSolverEmbeddedFractures::solverStep( real64 const
     setupSystem( domain,
                  m_dofManager,
                  m_localMatrix,
-                 m_localRhs,
-                 m_localSolution );
+                 m_rhs,
+                 m_solution );
 
     implicitStepSetup( time_n, dt, domain );
 
@@ -572,10 +574,6 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   //ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-
-  ContactRelationBase const &
-  contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_fracturesSolver->getContactRelationName() );
 
   this->template forTargetSubRegions< EmbeddedSurfaceSubRegion >( meshLevel, [&] ( localIndex const targetIndex,
                                                                                    auto & subRegion )
@@ -585,13 +583,13 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
 
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
 
-    arrayView1d< real64 > const effectiveAperture =
-      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString() );
+    arrayView1d< real64 > const hydraulicAperture =
+      subRegion.template getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
 
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
     arrayView1d< real64 > const deltaVolume =
-      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() );
+      subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
     arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
 
     arrayView2d< real64 > const & fractureTraction =
@@ -601,25 +599,32 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
       subRegion.template getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString() );
 
     arrayView1d< real64 const > const & pressure =
-      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() );
+      subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
     arrayView1d< real64 const > const & deltaPressure =
-      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
+      subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
-    forAll< serialPolicy >( subRegion.size(), [=, &contactRelation] ( localIndex const k )
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_fracturesSolver->getContactRelationName() );
+
+    constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
     {
-      // update aperture to be equal to the normal displacement jump
-      aperture[k] = dispJump[k][0];   // the first component of the jump is the normal one.
+      using ContactType = TYPEOFREF( castedContact );
+      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-      effectiveAperture[k] = contactRelation.effectiveAperture( aperture[k] );
+      PoromechanicsEFEMKernels::StateUpdateKernel::
+        launch< parallelDevicePolicy<> >( subRegion.size(),
+                                          contactWrapper,
+                                          dispJump,
+                                          pressure,
+                                          deltaPressure,
+                                          area,
+                                          volume,
+                                          deltaVolume,
+                                          aperture,
+                                          hydraulicAperture,
+                                          fractureTraction,
+                                          dTdpf );
 
-      deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
-
-      // traction on the fracture to include the pressure contribution
-      contactRelation.addPressureToTraction( pressure[k] + deltaPressure[k], fractureTraction[k] );
-
-      bool open = aperture[k] >= 0 ? true : false;
-      contactRelation.dTraction_dPressure( dTdpf[k], open );
     } );
 
     // update fracture's permeability and porosity

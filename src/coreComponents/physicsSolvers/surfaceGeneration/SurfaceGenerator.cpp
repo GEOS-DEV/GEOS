@@ -188,7 +188,7 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
 
   registerWrapper( viewKeyStruct::nodeBasedSIFString(), &m_nodeBasedSIF ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Rock toughness of the solid material" );
+    setDescription( "Flag for choosing between node or edge based criteria: 1 for node based criterion" );
 
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2092,7 +2092,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
             //Face normal need to be updated here
             real64 fCenter[ 3 ];
-            computationalGeometry::Centroid_3DPolygon( faceToNodeMap[ iFace ],
+            computationalGeometry::centroid_3DPolygon( faceToNodeMap[ iFace ],
                                                        X,
                                                        fCenter,
                                                        faceNormals[ iFace ] );
@@ -2840,7 +2840,9 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
 
   nodeManager.totalDisplacement().move( LvArray::MemorySpace::host, false );
-  elementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+  elementManager.forElementSubRegions< CellElementSubRegion >( targetRegionNames(),
+                                                               [&]( localIndex const,
+                                                                    CellElementSubRegion const & subRegion )
   {
     for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
     {

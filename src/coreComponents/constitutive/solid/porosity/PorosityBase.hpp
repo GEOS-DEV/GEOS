@@ -47,10 +47,12 @@ public:
   PorosityBaseUpdates( arrayView2d< real64 > const & newPorosity,
                        arrayView2d< real64 > const & oldPorosity,
                        arrayView2d< real64 > const & dPorosity_dPressure,
+                       arrayView2d< real64 > const & initialPorosity,
                        arrayView1d< real64 > const & referencePorosity ):
     m_newPorosity( newPorosity ),
     m_oldPorosity( oldPorosity ),
     m_dPorosity_dPressure( dPorosity_dPressure ),
+    m_initialPorosity( initialPorosity ),
     m_referencePorosity ( referencePorosity )
   {}
 
@@ -92,6 +94,15 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 getInitialPorosity( localIndex const k,
+                             localIndex const q ) const
+  {
+    return m_initialPorosity[k][q];
+  }
+
+
+  GEOSX_HOST_DEVICE
   virtual void updateFromPressure( localIndex const k,
                                    localIndex const q,
                                    real64 const & pressure ) const
@@ -106,6 +117,8 @@ protected:
   arrayView2d< real64 > m_oldPorosity;
 
   arrayView2d< real64 > m_dPorosity_dPressure;
+
+  arrayView2d< real64 > m_initialPorosity;
 
   arrayView1d< real64 > m_referencePorosity;
 };
@@ -128,6 +141,7 @@ public:
     static constexpr char const * newPorosityString() { return "porosity"; }
     static constexpr char const * oldPorosityString() { return "oldPorosity"; }
     static constexpr char const * dPorosity_dPressureString() { return "dPorosity_dPressure"; }
+    static constexpr char const * initialPorosityString() { return "initialPorosity"; }
     static constexpr char const * referencePorosityString() { return "referencePorosity"; }
     static constexpr char const * defaultRefererencePorosityString() { return "defaultReferencePorosity"; }
   } viewKeys;
@@ -187,6 +201,11 @@ public:
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
 
+  /**
+   * @brief Initialize newPorosity and oldPorosity.
+   */
+  virtual void initializeState() const;
+
   using KernelWrapper = PorosityBaseUpdates;
 
   /**
@@ -198,6 +217,7 @@ public:
     return KernelWrapper( m_newPorosity,
                           m_oldPorosity,
                           m_dPorosity_dPressure,
+                          m_initialPorosity,
                           m_referencePorosity );
   }
 
@@ -211,13 +231,15 @@ protected:
 
   array2d< real64 > m_dPorosity_dPressure;
 
+  array2d< real64 > m_initialPorosity;
+
   array1d< real64 > m_referencePorosity;
 
   real64 m_defaultReferencePorosity;
 
 };
 
-}/* namespace constitutive */
+} /* namespace constitutive */
 
 } /* namespace geosx */
 

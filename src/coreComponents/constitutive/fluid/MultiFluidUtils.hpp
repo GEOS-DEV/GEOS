@@ -97,8 +97,8 @@ struct MultiFluidVar
   Array< real64, NDIM, PERM > dTemp;        ///< Property temperature derivatives
   Array< real64, NDIM + 1, PERM_DC > dComp; ///< Property compositional derivatives
 
-  using ViewType = MultiFluidVarView< T, NDIM, getUSD( PERM {} ), getUSD( PERM_DC {} ) >;
-  using ViewTypeConst = MultiFluidVarView< T const, NDIM, getUSD( PERM {} ), getUSD( PERM_DC {} ) >;
+  using ViewType = MultiFluidVarView< T, NDIM, getUSD< PERM >, getUSD< PERM_DC > >;
+  using ViewTypeConst = MultiFluidVarView< T const, NDIM, getUSD< PERM >, getUSD< PERM_DC > >;
 
   using SliceType = typename ViewType::SliceType;
   using SliceTypeConst = typename ViewTypeConst::SliceType;

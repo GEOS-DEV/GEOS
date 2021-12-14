@@ -21,8 +21,9 @@
 
 #include "common/TimingMacros.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
 {
@@ -49,22 +50,6 @@ void SinglePhaseReservoir::initializePostInitialConditionsPreSubGroups()
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM;
   }
 }
-
-void SinglePhaseReservoir::setupSystem( DomainPartition & domain,
-                                        DofManager & dofManager,
-                                        CRSMatrix< real64, globalIndex > & localMatrix,
-                                        array1d< real64 > & localRhs,
-                                        array1d< real64 > & localSolution,
-                                        bool const setSparsity )
-{
-  ReservoirSolverBase::setupSystem( domain,
-                                    dofManager,
-                                    localMatrix,
-                                    localRhs,
-                                    localSolution,
-                                    setSparsity );
-}
-
 
 void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & domain,
                                                        DofManager const & dofManager,
@@ -154,13 +139,17 @@ void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & d
   } );
 }
 
-void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void SinglePhaseReservoir::assembleCouplingTerms( real64 const time_n,
                                                   real64 const dt,
                                                   DomainPartition const & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
+  using TAG = WellSolverBase::SubRegionTag;
+  using ROFFSET = SinglePhaseWell::RowOffset;
+  using COFFSET = SinglePhaseWell::ColOffset;
+
   MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
@@ -175,6 +164,15 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion const & subRegion )
   {
+
+    // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
+    // therefore, we do not want to compute perforation rates and we simply assume they are zero
+    WellControls const & wellControls = m_wellSolver->getWellControls( subRegion );
+    if( !wellControls.wellIsOpen( time_n + dt ) )
+    {
+      return;
+    }
+
     PerforationData const * const perforationData = subRegion.getPerforationData();
 
     // get the degrees of freedom
@@ -219,25 +217,23 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
       globalIndex const elemOffset = wellElemDofNumber[iwelem];
 
       // row index on reservoir side
-      eqnRowIndices[WellSolverBase::SubRegionTag::RES] = resDofNumber[er][esr][ei] - rankOffset;
+      eqnRowIndices[TAG::RES] = resDofNumber[er][esr][ei] - rankOffset;
       // column index on reservoir side
-      dofColIndices[WellSolverBase::SubRegionTag::RES] = resDofNumber[er][esr][ei];
+      dofColIndices[TAG::RES] = resDofNumber[er][esr][ei];
 
       // row index on well side
-      eqnRowIndices[WellSolverBase::SubRegionTag::WELL] = LvArray::integerConversion< localIndex >( elemOffset - rankOffset )
-                                                          + SinglePhaseWell::RowOffset::MASSBAL;
+      eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( elemOffset - rankOffset ) + ROFFSET::MASSBAL;
       // column index on well side
-      dofColIndices[WellSolverBase::SubRegionTag::WELL] = elemOffset
-                                                          + SinglePhaseWell::ColOffset::DPRES;
+      dofColIndices[TAG::WELL] = elemOffset + COFFSET::DPRES;
 
       // populate local flux vector and derivatives
-      localPerf[WellSolverBase::SubRegionTag::RES] = dt * perfRate[iperf];
-      localPerf[WellSolverBase::SubRegionTag::WELL] = -localPerf[WellSolverBase::SubRegionTag::RES];
+      localPerf[TAG::RES] = dt * perfRate[iperf];
+      localPerf[TAG::WELL] = -localPerf[TAG::RES];
 
       for( localIndex ke = 0; ke < 2; ++ke )
       {
-        localPerfJacobian[WellSolverBase::SubRegionTag::RES][ke] = dt * dPerfRate_dPres[iperf][ke];
-        localPerfJacobian[WellSolverBase::SubRegionTag::WELL][ke] = -localPerfJacobian[WellSolverBase::SubRegionTag::RES][ke];
+        localPerfJacobian[TAG::RES][ke] = dt * dPerfRate_dPres[iperf][ke];
+        localPerfJacobian[TAG::WELL][ke] = -localPerfJacobian[TAG::RES][ke];
       }
 
       for( localIndex i = 0; i < 2; ++i )

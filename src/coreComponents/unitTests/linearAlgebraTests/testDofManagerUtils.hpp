@@ -52,7 +52,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   commandLine.registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.key() ).
     setApplyDefaultValue( mpiSize );
 
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
   problemManager->processInputFileRecursive( xmlProblemNode );
 
   // Open mesh levels
@@ -250,12 +250,12 @@ localIndex countLocalObjects( MeshLevel const * const mesh, array1d< string > co
  * @param numComp     number of components per cell
  * @param sparsity    the matrix to be populated, must be properly sized.
  */
-template< typename MATRIX >
 void makeSparsityTPFA( MeshLevel const * const mesh,
                        string const & dofIndexKey,
                        string_array const & regions,
+                       globalIndex const rankOffset,
                        localIndex const numComp,
-                       MATRIX & sparsity )
+                       CRSMatrix< real64 > & sparsity )
 {
   ElementRegionManager const & elemManager = mesh->getElemManager();
   FaceManager const & faceManager = mesh->getFaceManager();
@@ -275,31 +275,46 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
   localIndex const numElem = faceToElem.size( 1 );
 
   array1d< globalIndex > localDofIndex( numElem * numComp );
+
   array2d< real64 > localValues( numElem * numComp, numElem * numComp );
   localValues.setValues< serialPolicy >( 1.0 );
 
   // Loop over faces and assemble TPFA-style "flux" contributions
-  forLocalObjects< DofManager::Location::Face >( mesh, regions, [&]( localIndex const kf )
+  for( localIndex kf=0; kf<faceManager.size(); ++kf )
   {
     localIndex const er0 = faceToElem.m_toElementRegion[kf][0];
     localIndex const er1 = faceToElem.m_toElementRegion[kf][1];
 
     if( er0 >= 0 && er1 >= 0 && regionSet.contains( er0 ) && regionSet.contains( er1 ) )
     {
+      localIndex count = 0;
       for( localIndex ke = 0; ke < numElem; ++ke )
       {
         localIndex const er  = faceToElem.m_toElementRegion[kf][ke];
         localIndex const esr = faceToElem.m_toElementSubRegion[kf][ke];
         localIndex const ei  = faceToElem.m_toElementIndex[kf][ke];
 
-        for( localIndex c = 0; c < numComp; ++c )
+        if( er>-1 && esr>-1 && ei>-1 )
         {
-          localDofIndex[ke * numComp + c] = elemDofIndex[er][esr][ei] + c;
+          for( localIndex c = 0; c < numComp; ++c )
+          {
+            localDofIndex[count++] = elemDofIndex[er][esr][ei] + c;
+          }
         }
       }
-      sparsity.insert( localDofIndex, localDofIndex, localValues );
+      std::sort( localDofIndex.begin(), localDofIndex.end() );
+      for( localIndex row=0; row<count; ++row )
+      {
+        localIndex const localDofNumber = localDofIndex[row] - rankOffset;
+        if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+          continue;
+        sparsity.insertNonZeros( localDofNumber,
+                                 localDofIndex.data(),
+                                 localValues.data(),
+                                 count );
+      }
     }
-  } );
+  }
 }
 
 /**
@@ -310,12 +325,12 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
  * @param numComp     number of components per node
  * @param sparsity    the matrix to be populated, must be properly sized.
  */
-template< typename MATRIX >
 void makeSparsityFEM( MeshLevel const * const mesh,
                       string const & dofIndexKey,
                       string_array const & regions,
+                      globalIndex const rankOffset,
                       localIndex const numComp,
-                      MATRIX & sparsity )
+                      CRSMatrix< real64 > & sparsity )
 {
   ElementRegionManager const & elemManager = mesh->getElemManager();
   NodeManager const & nodeManager = mesh->getNodeManager();
@@ -343,8 +358,17 @@ void makeSparsityFEM( MeshLevel const * const mesh,
           localDofIndex[a * numComp + c] = nodeDofIndex[nodeMap[k][a]] + c;
         }
       }
-
-      sparsity.insert( localDofIndex, localDofIndex, localValues );
+      std::sort( localDofIndex.begin(), localDofIndex.end() );
+      for( localIndex row=0; row<(numNode * numComp); ++row )
+      {
+        localIndex const localDofNumber = localDofIndex[row] - rankOffset;
+        if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+          continue;
+        sparsity.insertNonZeros( localDofNumber,
+                                 localDofIndex.data(),
+                                 localValues.data(),
+                                 (numNode * numComp) );
+      }
     }
   } );
 }
@@ -359,14 +383,14 @@ void makeSparsityFEM( MeshLevel const * const mesh,
  * @param numCompElem     number of components per element
  * @param sparsity        the matrix to be populated, must be properly sized.
  */
-template< typename MATRIX >
 void makeSparsityFEM_FVM( MeshLevel const * const mesh,
                           string const & dofIndexKeyNode,
                           string const & dofIndexKeyElem,
                           string_array const & regions,
+                          globalIndex const rankOffset,
                           localIndex const numCompNode,
                           localIndex const numCompElem,
-                          MATRIX & sparsity )
+                          CRSMatrix< real64 > & sparsity )
 {
   ElementRegionManager const & elemManager = mesh->getElemManager();
   NodeManager const & nodeManager = mesh->getNodeManager();
@@ -407,8 +431,31 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
         }
       }
 
-      sparsity.insert( localNodeDofIndex, localElemDofIndex, localValues1 );
-      sparsity.insert( localElemDofIndex, localNodeDofIndex, localValues2 );
+      std::sort( localNodeDofIndex.begin(), localNodeDofIndex.end() );
+      std::sort( localElemDofIndex.begin(), localElemDofIndex.end() );
+
+      for( localIndex row=0; row<(numNode * numCompNode); ++row )
+      {
+        localIndex const localDofNumber = localNodeDofIndex[row] - rankOffset;
+        if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+          continue;
+        sparsity.insertNonZeros( localDofNumber,
+                                 localElemDofIndex.data(),
+                                 localValues1.data(),
+                                 numCompElem );
+      }
+
+      for( localIndex row=0; row<(numCompElem); ++row )
+      {
+        localIndex const localDofNumber = localElemDofIndex[row] - rankOffset;
+        if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+          continue;
+        sparsity.insertNonZeros( localDofNumber,
+                                 localNodeDofIndex.data(),
+                                 localValues2.data(),
+                                 (numNode * numCompNode) );
+      }
+
     }
   } );
 }
@@ -421,12 +468,12 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
  * @param numComp     number of components per cell
  * @param sparsity    the matrix to be populated
  */
-template< typename MATRIX >
 void makeSparsityMass( MeshLevel const * const mesh,
                        string const & dofIndexKey,
                        string_array const & regions,
+                       globalIndex const rankOffset,
                        localIndex const numComp,
-                       MATRIX & sparsity )
+                       CRSMatrix< real64 > & sparsity )
 {
   ElementRegionManager const & elemManager = mesh->getElemManager();
 
@@ -443,7 +490,19 @@ void makeSparsityMass( MeshLevel const * const mesh,
     {
       localDofIndex[c] = elemDofIndex[idx[0]][idx[1]][idx[2]] + c;
     }
-    sparsity.insert( localDofIndex, localDofIndex, localValues );
+
+    std::sort( localDofIndex.begin(), localDofIndex.end() );
+    for( localIndex row=0; row<numComp; ++row )
+    {
+      localIndex const localDofNumber = localDofIndex[row] - rankOffset;
+      if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+        continue;
+      sparsity.insertNonZeros( localDofNumber,
+                               localDofIndex.data(),
+                               localValues.data(),
+                               numComp );
+    }
+
   } );
 }
 
@@ -455,12 +514,12 @@ void makeSparsityMass( MeshLevel const * const mesh,
  * @param numComp     number of components per cell
  * @param sparsity    the matrix to be populated
  */
-template< typename MATRIX >
 void makeSparsityFlux( MeshLevel const * const mesh,
                        string const & dofIndexKey,
                        string_array const & regions,
+                       globalIndex const rankOffset,
                        localIndex const numComp,
-                       MATRIX & sparsity )
+                       CRSMatrix< real64 > & sparsity )
 {
   ElementRegionManager const & elemManager = mesh->getElemManager();
   FaceManager const & faceManager = mesh->getFaceManager();
@@ -490,7 +549,19 @@ void makeSparsityFlux( MeshLevel const * const mesh,
         }
       }
 
-      sparsity.insert( localDofIndex, localDofIndex, localValues );
+      std::sort( localDofIndex.begin(), localDofIndex.end() );
+
+      for( localIndex row=0; row<(numFace*numComp); ++row )
+      {
+        localIndex const localDofNumber = localDofIndex[row] - rankOffset;
+        if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+          continue;
+        sparsity.insertNonZeros( localDofNumber,
+                                 localDofIndex.data(),
+                                 localValues.data(),
+                                 (numFace*numComp) );
+      }
+
     }
   } );
 }

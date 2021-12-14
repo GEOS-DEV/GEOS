@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./CasedElasticWellbore_base.xml"/>
+  </Included>
+
+  <!-- SPHINX_WellboreMesh -->
+  <Mesh>
+    <InternalWellbore
+      name="mesh1"
+      elementTypes="{ C3D8, C3D8, C3D8 }"
+      radius="{ 0.1, 0.106, 0.133, 2.0 }"
+      theta="{ 0, 360 }"
+      zCoords="{ 0, 1 }"
+      nr="{ 1, 1, 3 }"
+      nt="{ 32 }"
+      nz="{ 1 }"
+      trajectory="{ { 0.0, 0.0, 0.0 },
+                    { 0.0, 0.0, 1.0 } }"
+      autoSpaceRadialElems="{ 0, 0, 1 }"
+      useCartesianOuterBoundary="2"
+      cellBlockNames="{ casing, cement, rock }"
+      />
+  </Mesh>
+  <!-- SPHINX_WellboreMeshEnd -->
+
+  <!-- SPHINX_Gravity -->
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <!-- SPHINX_GravityEnd -->
+    <!-- SPHINX_SolidMechanicsSolver -->
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      logLevel="0"
+      targetRegions="{ casing, cement, rock }"
+      solidMaterialNames="{ casing, cement, rock }">
+      <!-- SPHINX_SolidMechanicsSolverEnd -->
+      <NonlinearSolverParameters
+        newtonTol="1.0e-9"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+  </Solvers>
+
+</Problem>

@@ -48,12 +48,14 @@ public:
   BiotPorosityUpdates( arrayView2d< real64 > const & newPorosity,
                        arrayView2d< real64 > const & oldPorosity,
                        arrayView2d< real64 > const & dPorosity_dPressure,
+                       arrayView2d< real64 > const & initialPorosity,
                        arrayView1d< real64 > const & referencePorosity,
                        arrayView1d< real64 > const & biotCoefficient,
                        real64 const & grainBulkModulus ):
     PorosityBaseUpdates( newPorosity,
                          oldPorosity,
                          dPorosity_dPressure,
+                         initialPorosity,
                          referencePorosity ),
     m_biotCoefficient( biotCoefficient ),
     m_grainBulkModulus( grainBulkModulus )
@@ -116,6 +118,9 @@ public:
     static constexpr char const * grainBulkModulusString() { return "grainBulkModulus"; }
   } viewKeys;
 
+
+  virtual void initializeState() const override final;
+
   using KernelWrapper = BiotPorosityUpdates;
 
   /**
@@ -127,6 +132,7 @@ public:
     return KernelWrapper( m_newPorosity,
                           m_oldPorosity,
                           m_dPorosity_dPressure,
+                          m_initialPorosity,
                           m_referencePorosity,
                           m_biotCoefficient,
                           m_grainBulkModulus );

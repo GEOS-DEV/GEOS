@@ -25,7 +25,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/contact/ContactRelationBase.hpp"
+#include "constitutive/contact/ContactBase.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "LvArray/src/output.hpp"
@@ -359,10 +359,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
         real64 N[numNodesPerElem];
         for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
         {
-          real64 elemMass = 0;
           for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
           {
-            elemMass += rho[er][esr][k][q] * detJ[k][q];
             FE_TYPE::calcN( q, N );
 
             for( localIndex a=0; a< numNodesPerElem; ++a )
@@ -442,7 +440,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves; ++solveIter )
     {
-      setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
 
       dtReturn = nonlinearImplicitStep( time_n,
                                         dt,
@@ -843,12 +841,12 @@ void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
 void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                DofManager & dofManager,
                                                CRSMatrix< real64, globalIndex > & localMatrix,
-                                               array1d< real64 > & localRhs,
-                                               array1d< real64 > & localSolution,
+                                               ParallelVector & rhs,
+                                               ParallelVector & solution,
                                                bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -969,9 +967,9 @@ SolidMechanicsLagrangianFEM::
                                        parallelDevicePolicy< 32 > >( targetSet,
                                                                      time_n + dt,
                                                                      targetGroup,
-                                                                     keys::TotalDisplacement,    // TODO fix use of
-                                                                                                 // dummy
-                                                                                                 // name
+                                                                     keys::TotalDisplacement, // TODO fix use of
+                                                                     // dummy
+                                                                     // name
                                                                      dofKey,
                                                                      dofManager.rankOffset(),
                                                                      localMatrix,
@@ -983,7 +981,7 @@ SolidMechanicsLagrangianFEM::
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
     fsManager.applyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
-    applyChomboPressure( dofManager, domain, m_localRhs );
+    applyChomboPressure( dofManager, domain, localRhs );
   }
 
   applyDisplacementBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
@@ -1144,10 +1142,8 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
     ConstitutiveManager const &
     constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
-    ContactRelationBase const &
-    contactRelation = constitutiveManager.getGroup< ContactRelationBase >( m_contactRelationName );
-
-    real64 const contactStiffness = contactRelation.stiffness();
+    ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
+    real64 const contactStiffness = contact.stiffness();
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager.totalDisplacement();
     arrayView2d< real64 > const fc = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::contactForceString() );

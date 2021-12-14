@@ -74,6 +74,13 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  real64 getInitialPorosity( localIndex const k,
+                             localIndex const q ) const
+  {
+    return m_porosityUpdate.getInitialPorosity( k, q );
+  }
+
+  GEOSX_HOST_DEVICE
   virtual void updateStateFromPressure( localIndex const k,
                                         localIndex const q,
                                         real64 const & pressure,
@@ -132,13 +139,6 @@ public:
                                                                     getPermModel() );
   }
 
-  virtual void saveConvergedState() const override final
-  {
-    // getSolidModel().saveConvergedState();
-
-    getPorosityModel().saveConvergedState();
-  }
-
 protected:
 
   SOLID_TYPE const & getSolidModel() const
@@ -149,7 +149,6 @@ protected:
 
   PERM_TYPE const & getPermModel() const
   { return this->getParent().template getGroup< PERM_TYPE >( m_permeabilityModelName ); }
-
 
 };
 
